@@ -48,6 +48,9 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Set lowercase repo name
+      run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
     - name: Verify GitHub CLI
       run: |
         # Ensure we're using the official gh CLI (not npm package)
@@ -67,12 +70,12 @@ jobs:
 
         Production image:
         \`\`\`bash
-        docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+        docker pull ghcr.io/${REPO_LC}:${{ github.ref_name }}
         \`\`\`
 
         Workers image:
         \`\`\`bash
-        docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}-workers
+        docker pull ghcr.io/${REPO_LC}:${{ github.ref_name }}-workers
         \`\`\`"
 
   docker-on-release:
@@ -87,6 +90,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Set lowercase repo name
+      run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -117,12 +123,12 @@ jobs:
         # Use -f to only load docker-bake.hcl (ignore docker-compose.yml which needs env files)
         docker buildx bake -f docker-bake.hcl --push \
           --set "*.platform=linux/amd64" \
-          --set "production.tags=ghcr.io/${{ github.repository }}:${VERSION_NUM}" \
-          --set "production.tags=ghcr.io/${{ github.repository }}:${VERSION}" \
-          --set "production.tags=ghcr.io/${{ github.repository }}:latest" \
-          --set "workers.tags=ghcr.io/${{ github.repository }}:${VERSION_NUM}-workers" \
-          --set "workers.tags=ghcr.io/${{ github.repository }}:${VERSION}-workers" \
-          --set "workers.tags=ghcr.io/${{ github.repository }}:latest-workers" \
+          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}" \
+          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION}" \
+          --set "production.tags=ghcr.io/${REPO_LC}:latest" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-workers" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION}-workers" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:latest-workers" \
           --set "*.args.VERSION=${VERSION}" \
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
@@ -140,6 +146,9 @@ jobs:
       uses: actions/checkout@v4
       with:
         ref: ${{ github.event.inputs.tag }}
+
+    - name: Set lowercase repo name
+      run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -166,8 +175,8 @@ jobs:
         # Use -f to only load docker-bake.hcl (ignore docker-compose.yml which needs env files)
         docker buildx bake -f docker-bake.hcl --push \
           --set "*.platform=linux/amd64" \
-          --set "production.tags=ghcr.io/${{ github.repository }}:${{ github.event.inputs.tag }}" \
-          --set "workers.tags=ghcr.io/${{ github.repository }}:${{ github.event.inputs.tag }}-workers" \
+          --set "production.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers" \
           --set "*.args.VERSION=${{ github.event.inputs.tag }}" \
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
