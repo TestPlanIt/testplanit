@@ -45,22 +45,33 @@ export const Header = () => {
   const [trialDaysRemaining, setTrialDaysRemaining] = useState<number | null>(
     null
   );
+  const [trialContactEmail, setTrialContactEmail] = useState<string>("sales@testplanit.com");
   const versionString = getVersionString();
 
-  // Calculate trial days remaining
+  // Fetch trial configuration from API (env vars are baked in at build time, so we need runtime fetch)
   useEffect(() => {
-    const isTrialInstance =
-      process.env.NEXT_PUBLIC_IS_TRIAL_INSTANCE === "true";
-    const trialEndDate = process.env.NEXT_PUBLIC_TRIAL_END_DATE;
-
-    if (isTrialInstance && trialEndDate) {
-      const end = new Date(trialEndDate);
-      const now = new Date();
-      const diff = Math.ceil(
-        (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      setTrialDaysRemaining(diff);
-    }
+    const fetchTrialConfig = async () => {
+      try {
+        const response = await fetch("/api/config/trial");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.isTrialInstance && data.trialEndDate) {
+            const end = new Date(data.trialEndDate);
+            const now = new Date();
+            const diff = Math.ceil(
+              (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            setTrialDaysRemaining(diff);
+            if (data.contactEmail) {
+              setTrialContactEmail(data.contactEmail);
+            }
+          }
+        }
+      } catch {
+        // Silently fail - trial indicator is not critical
+      }
+    };
+    fetchTrialConfig();
   }, []);
 
   useEffect(() => {
@@ -222,7 +233,7 @@ export const Header = () => {
                     </span>
                   </Badge>
                   <Link
-                    href={`mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL || "sales@testplanit.com"}?subject=TestPlanIt Trial - ${trialDaysRemaining < 0 ? "Expired" : "Upgrade Inquiry"}`}
+                    href={`mailto:${trialContactEmail}?subject=TestPlanIt Trial - ${trialDaysRemaining < 0 ? "Expired" : "Upgrade Inquiry"}`}
                   >
                     {t("Trial.contactSales")}
                   </Link>
