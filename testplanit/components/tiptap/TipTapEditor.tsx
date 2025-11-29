@@ -56,6 +56,7 @@ import { Separator } from "../ui/separator";
 import { cn } from "~/utils";
 import { useTranslations } from "next-intl";
 import { emptyEditorContent } from "~/app/constants";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { useFindManyProjectLlmIntegration } from "~/lib/hooks/project-llm-integration";
 import { tiptapToHtml } from "~/utils/tiptapToHtml";
 import {
@@ -137,37 +138,12 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     async (file: File): Promise<string | null> => {
       setLoading(true);
       try {
-        const response = await fetch(
-          `/api/get-docimage-url?prependString=${projectId}/${file.name}`
+        const fileUrl = await fetchSignedUrl(
+          file,
+          "/api/get-docimage-url",
+          `${projectId}/${file.name}`
         );
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`API Error: ${errorText}`);
-        }
-
-        const data = await response.json();
-        if (!data.success?.url) {
-          throw new Error(
-            "Failed to generate signed URL: Invalid response format"
-          );
-        }
-
-        const signedUrl = data.success.url;
-
-        const uploadResponse = await fetch(signedUrl, {
-          method: "PUT",
-          body: file,
-          headers: {
-            "Content-Type": file.type,
-          },
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error("Failed to upload image to S3");
-        }
-
-        return signedUrl.split("?")[0];
+        return fileUrl;
       } catch (error) {
         console.error("Error uploading image:", error);
         return null;
