@@ -1,0 +1,4 @@
+packages:
+  - 'testplanit'
+  - 'docs'
+  - 'forge-app'

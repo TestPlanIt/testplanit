@@ -1,0 +1,25 @@
+{
+    "name": "testplanit-monorepo",
+    "version": "1.0.0",
+    "description": "TestPlanIt monorepo",
+    "author": "Brad DerManouelian",
+    "license": "ISC",
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "@prisma/client",
+            "@prisma/engines",
+            "aws-sdk",
+            "bcrypt",
+            "canvas",
+            "esbuild",
+            "prisma",
+            "sharp",
+            "unrs-resolver",
+            "zenstack"
+        ],
+        "overrides": {
+            "csstype": "^3.2.0",
+            "next": "~16.0.3"
+        }
+    }
+}
