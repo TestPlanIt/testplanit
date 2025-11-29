@@ -1,0 +1,30 @@
+{
+  "name": "testplanit-workers",
+  "version": "0.4.14",
+  "private": true,
+  "description": "Minimal dependencies for testplanit background workers",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.939.0",
+    "@elastic/elasticsearch": "^9.2.0",
+    "@prisma/client": "6.19.0",
+    "@t3-oss/env-nextjs": "^0.13.8",
+    "@tiptap/core": "^3.11.0",
+    "@tiptap/pm": "^3.11.0",
+    "@tiptap/starter-kit": "^3.11.0",
+    "@zenstackhq/runtime": "^2.22.0",
+    "bcrypt": "^6.0.0",
+    "bullmq": "^5.64.1",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
+    "handlebars": "^4.7.8",
+    "happy-dom": "^20.0.10",
+    "ioredis": "^5.8.2",
+    "nodemailer": "^7.0.10",
+    "stream-chain": "^3.4.0",
+    "stream-json": "^1.9.1",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "prisma": "6.19.0"
+  }
+}

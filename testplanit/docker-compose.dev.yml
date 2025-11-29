@@ -1,0 +1,107 @@
+services:
+  dev:
+    container_name: testplanit-dev
+    build:
+      context: . # Current directory is already testplanit
+      target: development # Use the 'development' stage from Dockerfile
+      dockerfile: Dockerfile # Dockerfile is in the current directory
+    env_file:
+      - .env.development # Load development environment variables
+    environment:
+      VALKEY_URL: "valkey://valkey:6379" # Valkey connection URL
+    volumes:
+      - .:/app # Mount source code for hot-reloading
+      - /app/node_modules # Prevent host node_modules from overwriting container's
+      - /app/.next # Prevent host .next from overwriting container's
+    ports:
+      - "3000:3000"
+    # Use wait script, then execute next dev directly from node_modules
+    entrypoint: ["/usr/local/bin/wait-for-postgres.sh", "postgres", "5432", "./node_modules/.bin/next", "dev"]
+    networks:
+      - testplanit-net
+    depends_on:
+      # Wait for the db-init service to complete successfully
+      db-init:
+        condition: service_completed_successfully
+      # Also depends on postgres itself (though implicitly covered by db-init)
+      postgres:
+        condition: service_healthy
+      # Add dependency on Valkey
+      valkey:
+        condition: service_healthy
+
+  workers-dev:
+    container_name: testplanit-workers-dev
+    build:
+      context: .
+      target: workers
+      dockerfile: Dockerfile
+    env_file:
+      - .env.development
+    environment:
+      VALKEY_URL: "valkey://valkey:6379"
+      NODE_ENV: development
+    networks:
+      - testplanit-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+
+  db-init:
+    # Use the same build context and target as the dev service
+    build:
+      context: . # Current directory is already testplanit
+      target: development # Uses the same base image with deps installed
+      dockerfile: Dockerfile # Dockerfile is in the current directory
+    env_file:
+      - .env.development # Needs DB_URL and other env vars for prisma/zenstack
+    working_dir: /app # Set working directory for commands within the container
+    # Push schema and seed database (no migrations)
+    command: ["sh", "-c", "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh postgres 5432 -- echo 'DB ready, pushing schema...' && pnpm prisma db push --accept-data-loss && echo 'Schema pushed, seeding...' && pnpm tsx prisma/seed.ts && echo 'DB initialized and seeded.'"]
+    networks:
+      - testplanit-net
+    depends_on:
+      postgres:
+        condition: service_healthy # Wait for postgres healthcheck
+
+  postgres:
+    container_name: testplanit-postgres
+    image: postgres:15-alpine # Use a specific Postgres version
+    environment:
+      POSTGRES_USER: user # Must match the user in DATABASE_URL
+      POSTGRES_PASSWORD: password # Must match the password in DATABASE_URL
+      POSTGRES_DB: testplanit_dev # Creates this DB initially. Prod app uses testplanit_prod
+    volumes:
+      - ./docker-data/postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432" # Expose port 5432 for potential external access/debugging
+    networks:
+      - testplanit-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d testplanit_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  valkey:
+    container_name: testplanit-valkey
+    image: valkey/valkey:8-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - testplanit-net
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./docker-data/valkey:/data
+
+networks:
+  testplanit-net:
+    driver: bridge

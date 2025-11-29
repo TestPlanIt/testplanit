@@ -1,0 +1,93 @@
+.editorContent {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+.editorContent p {
+  margin: 4;
+}
+
+.editorContent p:first-child {
+  margin-top: 0;
+}
+
+.editorContent p:last-child {
+  margin-bottom: 0;
+}
+
+.editorContent h1 {
+  margin: 4;
+}
+
+.editorContent h2 {
+  margin: 4;
+}
+
+.editorContent h3 {
+  margin: 4;
+}
+
+.editorContent li {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.editorContent li > p:first-child {
+  display: inline;
+}
+
+.editorContent strong {
+  font-weight: 800;
+}
+
+/* Dark mode overrides for text visibility */
+:global(.dark) .editorContent {
+  color: #e5e7eb !important;
+}
+
+:global(.dark) .editorContent p {
+  color: #e5e7eb !important;
+}
+
+:global(.dark) .editorContent h1,
+:global(.dark) .editorContent h2,
+:global(.dark) .editorContent h3,
+:global(.dark) .editorContent h4,
+:global(.dark) .editorContent h5,
+:global(.dark) .editorContent h6 {
+  color: #f9fafb !important;
+}
+
+:global(.dark) .editorContent strong {
+  color: #f9fafb !important;
+}
+
+:global(.dark) .editorContent a {
+  color: #60a5fa !important;
+}
+
+:global(.dark) .editorContent code {
+  color: #e5e7eb !important;
+  background-color: #374151 !important;
+}
+
+:global(.dark) .editorContent blockquote {
+  color: #d1d5db !important;
+  border-left-color: #6b7280 !important;
+}
+
+:global(.dark) .editorContent ul {
+  color: #e5e7eb !important;
+}
+
+:global(.dark) .editorContent ol {
+  color: #e5e7eb !important;
+}
+
+:global(.dark) .editorContent li {
+  color: #e5e7eb !important;
+}
+
+:global(.dark) .editorContent li::marker {
+  color: #e5e7eb !important;
+}

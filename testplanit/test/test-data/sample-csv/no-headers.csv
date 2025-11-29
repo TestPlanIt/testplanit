@@ -1,0 +1,5 @@
+Login functionality,Test user login with valid credentials,5,High,No
+Logout functionality,Test user can logout successfully,2,Medium,Yes
+Password reset,Test password reset email is sent,8,Medium,No
+User registration,Test new user can register,10,High,No
+Profile update,Test user can update profile info,5,Low,Yes

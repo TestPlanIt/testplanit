@@ -1,0 +1,245 @@
+import {
+  getElasticsearchClient,
+  ENTITY_INDICES,
+} from "./unifiedElasticsearchService";
+import { SearchableEntityType } from "~/types/search";
+import type { Milestones } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
+import { extractTextFromNode } from "~/utils/extractTextFromJson";
+
+const prisma = new PrismaClient();
+
+/**
+ * Type for milestone with all required relations for indexing
+ */
+type MilestoneForIndexing = Milestones & {
+  project: { name: string; iconUrl?: string | null };
+  creator: { name: string; image?: string | null };
+  milestoneType: { name: string; icon?: { name: string } | null };
+  parent?: { name: string } | null;
+};
+
+/**
+ * Index a single milestone to Elasticsearch
+ */
+export async function indexMilestone(milestone: MilestoneForIndexing): Promise<void> {
+  const client = getElasticsearchClient();
+  if (!client) {
+    throw new Error("Elasticsearch client not available");
+  }
+
+  const searchableContent = [
+    milestone.name,
+    milestone.note ? extractTextFromNode(milestone.note) : "",
+    milestone.docs ? extractTextFromNode(milestone.docs) : "",
+  ].join(" ");
+
+
+  const document = {
+    id: milestone.id,
+    projectId: milestone.projectId,
+    projectName: milestone.project.name,
+    projectIconUrl: milestone.project.iconUrl,
+    name: milestone.name,
+    note: milestone.note,
+    docs: milestone.docs,
+    milestoneTypeId: milestone.milestoneTypesId,
+    milestoneTypeName: milestone.milestoneType.name,
+    milestoneTypeIcon: milestone.milestoneType.icon?.name,
+    parentId: milestone.parentId,
+    parentName: milestone.parent?.name,
+    isCompleted: milestone.isCompleted,
+    completedAt: milestone.completedAt,
+    isDeleted: milestone.isDeleted,
+    createdAt: milestone.createdAt,
+    createdById: milestone.createdBy,
+    createdByName: milestone.creator.name,
+    createdByImage: milestone.creator.image,
+    searchableContent,
+  };
+
+  await client.index({
+    index: ENTITY_INDICES[SearchableEntityType.MILESTONE],
+    id: milestone.id.toString(),
+    document,
+    refresh: true,
+  });
+}
+
+/**
+ * Delete a milestone from Elasticsearch
+ */
+export async function deleteMilestoneFromIndex(milestoneId: number): Promise<void> {
+  const client = getElasticsearchClient();
+  if (!client) {
+    console.warn("Elasticsearch client not available");
+    return;
+  }
+
+  try {
+    await client.delete({
+      index: ENTITY_INDICES[SearchableEntityType.MILESTONE],
+      id: milestoneId.toString(),
+      refresh: true,
+    });
+  } catch (error: any) {
+    if (error.meta?.statusCode !== 404) {
+      console.error("Failed to delete milestone from index:", error);
+    }
+  }
+}
+
+/**
+ * Sync a single milestone to Elasticsearch
+ */
+export async function syncMilestoneToElasticsearch(milestoneId: number): Promise<boolean> {
+  const client = getElasticsearchClient();
+  if (!client) {
+    console.warn("Elasticsearch client not available");
+    return false;
+  }
+
+  try {
+    const milestone = await prisma.milestones.findUnique({
+      where: { id: milestoneId },
+      include: {
+        project: true,
+        creator: true,
+        milestoneType: {
+          include: {
+            icon: true,
+          },
+        },
+        parent: true,
+      },
+    });
+
+    if (!milestone) {
+      console.warn(`Milestone ${milestoneId} not found`);
+      return false;
+    }
+
+    // Index milestone including deleted ones (filtering happens at search time based on admin permissions)
+
+    // Index the milestone
+    await indexMilestone(milestone as MilestoneForIndexing);
+    return true;
+  } catch (error) {
+    console.error(`Failed to sync milestone ${milestoneId}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Bulk index milestones for a project
+ */
+export async function syncProjectMilestonesToElasticsearch(
+  projectId: number,
+  db: any
+): Promise<void> {
+  const client = getElasticsearchClient();
+  if (!client) {
+    console.warn("Elasticsearch client not available");
+    return;
+  }
+
+  console.log(`Starting milestone sync for project ${projectId}`);
+
+  const milestones = await db.milestones.findMany({
+    where: {
+      projectId: projectId,
+      // Include deleted items (filtering happens at search time based on admin permissions)
+    },
+    include: {
+      project: true,
+      creator: true,
+      milestoneType: {
+        include: {
+          icon: true,
+        },
+      },
+      parent: true,
+    },
+  });
+
+  if (milestones.length === 0) {
+    console.log("No milestones to index");
+    return;
+  }
+
+  const bulkBody = [];
+  for (const milestone of milestones) {
+    const searchableContent = [
+      milestone.name,
+      milestone.note ? extractTextFromNode(milestone.note) : "",
+      milestone.docs ? extractTextFromNode(milestone.docs) : "",
+    ].join(" ");
+
+
+    bulkBody.push({
+      index: {
+        _index: ENTITY_INDICES[SearchableEntityType.MILESTONE],
+        _id: milestone.id.toString(),
+      },
+    });
+
+    bulkBody.push({
+      id: milestone.id,
+      projectId: milestone.projectId,
+      projectName: milestone.project.name,
+      projectIconUrl: milestone.project.iconUrl,
+      name: milestone.name,
+      note: milestone.note,
+      docs: milestone.docs,
+      milestoneTypeId: milestone.milestoneTypesId,
+      milestoneTypeName: milestone.milestoneType.name,
+      milestoneTypeIcon: milestone.milestoneType.icon?.name,
+      parentId: milestone.parentId,
+      parentName: milestone.parent?.name,
+        isCompleted: milestone.isCompleted,
+      completedAt: milestone.completedAt,
+      isDeleted: milestone.isDeleted,
+      createdAt: milestone.createdAt,
+        createdById: milestone.createdBy,
+      createdByName: milestone.createdBy.name,
+      createdByImage: milestone.createdBy.image,
+        searchableContent,
+    });
+  }
+
+  try {
+    const response = await client.bulk({ body: bulkBody, refresh: true });
+    if (response.errors) {
+      console.error("Bulk indexing errors:", response.errors);
+    }
+    console.log(`Successfully indexed ${milestones.length} milestones`);
+  } catch (error) {
+    console.error("Failed to index milestones:", error);
+  }
+}
+
+/**
+ * Sync all milestones that have a specific parent
+ */
+export async function syncChildMilestonesToElasticsearch(parentId: number): Promise<void> {
+  const client = getElasticsearchClient();
+  if (!client) {
+    console.warn("Elasticsearch client not available");
+    return;
+  }
+
+  try {
+    const childMilestones = await prisma.milestones.findMany({
+      where: {
+        parentId: parentId,
+        // Include deleted items (filtering happens at search time based on admin permissions)
+      },
+    });
+
+    for (const child of childMilestones) {
+      await syncMilestoneToElasticsearch(child.id);
+    }
+  } catch (error) {
+    console.error(`Failed to sync child milestones of parent ${parentId}:`, error);
+  }
+}

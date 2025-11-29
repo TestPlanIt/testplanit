@@ -1,0 +1,31 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "module": "node16",
+    "moduleResolution": "node16",
+    "outDir": "./dist",
+    "rootDir": ".",
+    "declaration": false,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": [
+    "workers/**/*.ts",
+    "scheduler.ts",
+    "lib/**/*.ts",
+    "utils/**/*.ts",
+    "services/**/*.ts",
+    "types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "app/**/*",
+    "components/**/*",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "dist"
+  ]
+}

@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop, 'feature/**', 'hotfix/**', 'release/**', 'users/**' ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Test
+    runs-on: [self-hosted, linux]
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+      NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'https://testplanit.test' }}
+      NODE_OPTIONS: "--max-old-space-size=8192"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: |
+          cd testplanit
+          pnpm install
+
+      - name: Generate ZenStack and Prisma
+        run: |
+          cd testplanit
+          pnpm zenstack generate
+          pnpm prisma generate
+
+      - name: Run linter
+        run: |
+          cd testplanit
+          pnpm lint
+
+      - name: Run unit tests
+        run: |
+          cd testplanit
+          pnpm test

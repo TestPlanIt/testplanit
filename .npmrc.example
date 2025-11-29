@@ -1,0 +1,6 @@
+# This file configures pnpm.
+
+# 1. Copy this file to .npmrc in the monorepo root (`/Users/bdermanouelian/git/testplanit/.npmrc`).
+
+# Hoist ZenStack dependencies (adjust if needed)
+public-hoist-pattern[]=*zenstack*

@@ -1,0 +1,6 @@
+ID,Name,Description,Estimate,Priority,Tags,Automated,Workflow State,Test Runs,Version,Created By,Created At
+1001,"Login Test - Updated","Updated description for login test",30,"High","login,security,updated","true","Ready","Sprint 1,Sprint 2",2,"test.user@example.com","2024-01-15T10:30:00Z"
+1002,"Registration Test - Updated","Updated registration flow test",45,"High","registration,ui,updated","false","In Progress","Sprint 2",2,"test.user@example.com","2024-01-16T14:20:00Z"
+,"New Test Case Without ID","This test case will be created with auto-generated ID",20,"Medium","new,automated","true","Draft","",1,"","2024-01-17T09:00:00Z"
+2001,"API Test - Updated","Updated API endpoint test",15,"Medium","api,backend,updated","true","Ready","Sprint 3",3,"developer@example.com","2024-01-10T08:00:00Z"
+,"Another New Test","This will also get an auto-generated ID",25,"Low","manual,ui","false","Draft","",1,"",""

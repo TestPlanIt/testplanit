@@ -1,0 +1,16 @@
+services:
+  docs-site:
+    build:
+      context: ..
+      dockerfile: ./docs/Dockerfile
+    container_name: testplanit-docs
+    ports:
+      # Map host port 30001 to container port 80
+      - "30001:80"
+    restart: unless-stopped
+    networks:
+      - testplanit-shared
+
+networks:
+  testplanit-shared:
+    external: true

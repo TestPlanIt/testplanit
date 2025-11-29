@@ -1,0 +1,56 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+./node_modules
+./.pnp
+./.pnp.js
+./.yarn/install-state.gz
+
+# testing
+./coverage
+
+# next.js
+**/.next/
+./out/
+
+# production
+./build
+./dist
+
+# misc
+./.DS_Store
+./*.pem
+
+# debug
+./npm-debug.log*
+./yarn-debug.log*
+./yarn-error.log*
+
+# local env files
+./.env*.local
+.env.production
+.env.production.*
+
+# vercel
+./.vercel
+
+# customer-specific docker configurations
+docker-compose.*.yml
+!docker-compose.prod.yml
+!docker-compose.dev.yml
+!docker-compose.yml
+nginx.*.conf
+!nginx.conf
+
+# typescript
+./*.tsbuildinfo
+./next-env.d.ts
+./.env
+./test/reports/*
+
+# next-intl
+messages/*.d.json.ts
+
+# version file (generated at build time)
+.env.production.local
+public/version.json

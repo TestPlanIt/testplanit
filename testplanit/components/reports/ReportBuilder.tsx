@@ -1,0 +1,1903 @@
+"use client";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
+import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
+import { useSearchParams } from "next/navigation";
+import { useRouter, usePathname } from "~/lib/navigation";
+import { useSession } from "next-auth/react";
+import MultiSelect from "react-select";
+import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { Button } from "@/components/ui/button";
+import { HelpPopover } from "@/components/ui/help-popover";
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from "@/components/ui/resizable";
+import { DataTable } from "@/components/tables/DataTable";
+import {
+  VisibilityState,
+  ColumnDef,
+  ExpandedState,
+} from "@tanstack/react-table";
+import { PaginationInfo } from "~/components/tables/PaginationControls";
+import {
+  PaginationProvider,
+  usePagination,
+  defaultPageSizeOptions,
+} from "~/lib/contexts/PaginationContext";
+import { PaginationComponent } from "~/components/tables/Pagination";
+import { ReportChart } from "@/components/dataVisualizations/ReportChart";
+import { DraggableList } from "@/components/DraggableCaseFields";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertCircle,
+  LayoutTemplate,
+  CircleDashed,
+  Bot,
+  Filter,
+  FolderOpen,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
+import {
+  getReportSummary,
+  dimensionToDraggableField,
+  draggableFieldToDimension,
+} from "~/utils/reportUtils";
+import { useReportColumns } from "~/hooks/useReportColumns";
+import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
+import { ReportType } from "~/lib/config/reportTypes";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DateRange } from "react-day-picker";
+import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
+import { DateFormatter } from "~/components/DateFormatter";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod/v4";
+import { Form } from "~/components/ui/form";
+import { useDrillDown } from "~/hooks/useDrillDown";
+import { DrillDownDrawer } from "~/components/reports/DrillDownDrawer";
+import { ReportFilters } from "~/components/reports/ReportFilters";
+import { ReportFilterChips } from "~/components/reports/ReportFilterChips";
+import type {
+  DrillDownContext,
+  DimensionFilters,
+} from "~/lib/types/reportDrillDown";
+
+interface ReportBuilderProps {
+  mode: "project" | "cross-project";
+  projectId?: number;
+  reportTypes: ReportType[];
+  defaultReportType?: string;
+}
+
+// Form schema for date range
+const dateRangeSchema = z.object({
+  dateRange: z
+    .object({
+      from: z.date().optional(),
+      to: z.date().optional(),
+    })
+    .optional(),
+});
+
+type DateRangeFormData = z.infer<typeof dateRangeSchema>;
+
+// Inner component that uses pagination context
+function ReportBuilderContent({
+  mode,
+  projectId,
+  reportTypes,
+  defaultReportType,
+}: ReportBuilderProps) {
+  const { theme } = useTheme();
+  const { data: session } = useSession();
+  const t = useTranslations();
+  const tReports = useTranslations("reports.ui");
+  const tDimensions = useTranslations("reports.dimensions");
+  const tMetrics = useTranslations("reports.metrics");
+  const customStyles = getCustomStyles({ theme });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Use pagination context
+  const {
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    totalItems: totalCount,
+    setTotalItems: setTotalCount,
+    startIndex,
+    endIndex,
+  } = usePagination();
+
+  // Form for date range
+  const form = useForm<DateRangeFormData>({
+    resolver: zodResolver(dateRangeSchema),
+    defaultValues: {
+      dateRange: undefined,
+    },
+  });
+
+  // Panel state
+  const panelRef = useRef<any>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const toggleCollapse = () => {
+    if (panelRef.current) {
+      if (isCollapsed) {
+        panelRef.current.expand();
+      } else {
+        panelRef.current.collapse();
+      }
+      setIsCollapsed(!isCollapsed);
+    }
+  };
+
+  // Split report types into pre-built reports and custom reports
+  const preBuiltReports = useMemo(
+    () => reportTypes.filter((r) => r.id === "automation-trends"),
+    [reportTypes]
+  );
+  const customReports = useMemo(
+    () => reportTypes.filter((r) => r.id !== "automation-trends"),
+    [reportTypes]
+  );
+
+  // Determine the default report type based on the tab and available reports
+  // If no defaultReportType provided, use first pre-built report if on "reports" tab,
+  // otherwise use first custom report
+  const computedDefaultReportType = useMemo(() => {
+    if (defaultReportType) return defaultReportType;
+
+    // Check which tab we're on (from URL or default to "reports")
+    const tabParam = searchParams.get("tab") || "reports";
+
+    // Default to first pre-built report if on reports tab, otherwise first custom report
+    if (tabParam === "reports") {
+      return preBuiltReports.length > 0
+        ? preBuiltReports[0].id
+        : customReports.length > 0
+          ? customReports[0].id
+          : "test-execution";
+    } else {
+      return customReports.length > 0
+        ? customReports[0].id
+        : preBuiltReports.length > 0
+          ? preBuiltReports[0].id
+          : "test-execution";
+    }
+  }, [defaultReportType, searchParams, preBuiltReports, customReports]);
+
+  // Report type state - initialize from URL if available
+  const initialReportType =
+    searchParams.get("reportType") || computedDefaultReportType;
+  const [reportType, setReportType] = useState<string>(initialReportType);
+  const [dimensions, setDimensions] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<any[]>([]);
+  const [results, setResults] = useState<any[] | null>(null);
+  const [allResults, setAllResults] = useState<any[] | null>(null); // Full dataset for charts
+  const chartDataRef = useRef<any[] | null>(null); // Stable reference for chart data
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [compatWarning, setCompatWarning] = useState<string | null>(null);
+
+  // UI state
+  const [dimensionOptions, setDimensionOptions] = useState<any[]>([]);
+  const [metricOptions, setMetricOptions] = useState<any[]>([]);
+  const [filteredDimensionOptions, setFilteredDimensionOptions] = useState<
+    any[]
+  >([]);
+  const [filteredMetricOptions, setFilteredMetricOptions] = useState<any[]>([]);
+  const [lastUsedDimensions, setLastUsedDimensions] = useState<any[]>([]);
+  const [lastUsedMetrics, setLastUsedMetrics] = useState<any[]>([]);
+  const [automationTrendsProjects, setAutomationTrendsProjects] = useState<
+    any[]
+  >([]);
+
+  // Filter state for automation trends
+  const [selectedFilterType, setSelectedFilterType] = useState<string>("");
+  const [selectedFilterValues, setSelectedFilterValues] = useState<
+    Record<string, Array<string | number>>
+  >({});
+  const [filterOptions, setFilterOptions] = useState<any>(null);
+
+  // Legacy state for builder tab priority filter
+  const [selectedPriorityValues, setSelectedPriorityValues] = useState<
+    string[]
+  >([]);
+  const [availablePriorityValues, setAvailablePriorityValues] = useState<
+    { value: string; label: string }[]
+  >([]);
+
+  const [dateGrouping, setDateGrouping] = useState<
+    "daily" | "weekly" | "monthly" | "quarterly" | "annually"
+  >("weekly");
+  const [lastUsedDateGrouping, setLastUsedDateGrouping] = useState<
+    "daily" | "weekly" | "monthly" | "quarterly" | "annually"
+  >("weekly");
+  const lastUsedDimensionsRef = useRef<any[]>([]); // Stable reference for chart
+  const lastUsedMetricsRef = useRef<any[]>([]); // Stable reference for chart
+  const [chartDataVersion, setChartDataVersion] = useState(0); // Version counter for chart updates
+  const [lastUsedDateRange, setLastUsedDateRange] = useState<
+    DateRange | undefined
+  >(undefined);
+
+  // Table state
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [sortConfig, setSortConfig] = useState<{
+    column: string;
+    direction: "asc" | "desc";
+  } | null>(null);
+  const [grouping, setGrouping] = useState<string[]>([]);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
+
+  // Track if this is the initial mount
+  const isInitialMount = useRef(true);
+
+  // Track if we're on the client side (for SSR compatibility)
+  const [isClient, setIsClient] = useState(false);
+
+  // Drill-down functionality
+  const drillDown = useDrillDown();
+
+  // Build filter items for automation trends
+  const filterItems = useMemo(() => {
+    if (!filterOptions) return [];
+
+    const items: any[] = [];
+
+    // Projects filter (cross-project only)
+    if (filterOptions.projects && filterOptions.projects.length > 0) {
+      items.push({
+        id: "projects",
+        name: tReports("filterTypes.projects"),
+        icon: FolderOpen,
+        options: filterOptions.projects.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          count: p.count,
+        })),
+      });
+    }
+
+    // Templates filter
+    if (filterOptions.templates && filterOptions.templates.length > 0) {
+      items.push({
+        id: "templates",
+        name: tReports("filterTypes.templates"),
+        icon: LayoutTemplate,
+        options: filterOptions.templates.map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          count: t.count,
+        })),
+      });
+    }
+
+    // States filter
+    if (filterOptions.states && filterOptions.states.length > 0) {
+      items.push({
+        id: "states",
+        name: tReports("filterTypes.states"),
+        icon: CircleDashed,
+        options: filterOptions.states.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          icon: s.icon,
+          iconColor: s.iconColor,
+          count: s.count,
+        })),
+      });
+    }
+
+    // Automated filter
+    if (filterOptions.automated && filterOptions.automated.length > 0) {
+      items.push({
+        id: "automated",
+        name: tReports("filterTypes.automated"),
+        icon: Bot,
+        options: filterOptions.automated.map((a: any) => ({
+          id: a.value ? 1 : 0,
+          name: a.value
+            ? t("common.fields.automated")
+            : t("common.fields.manual"),
+          count: a.count,
+        })),
+      });
+    }
+
+    // Dynamic fields (Priority, etc.)
+    if (filterOptions.dynamicFields) {
+      Object.entries(filterOptions.dynamicFields).forEach(
+        ([fieldName, field]: [string, any]) => {
+          if (field.type === "Dropdown" || field.type === "Multi-Select") {
+            items.push({
+              id: `dynamic_${field.fieldId}`,
+              name: fieldName,
+              icon: Filter,
+              field: {
+                type: field.type,
+                fieldId: field.fieldId,
+                options: field.options,
+              },
+            });
+          }
+        }
+      );
+    }
+
+    return items;
+  }, [filterOptions, tReports, t]);
+
+  // Build active filter chips from selectedFilterValues
+  const activeFilterChips = useMemo(() => {
+    const chips: Array<{
+      filterType: string;
+      filterName: string;
+      valueId: string | number;
+      valueName: string;
+      icon?: { name: string } | null;
+      iconColor?: { value: string } | null;
+    }> = [];
+
+    Object.entries(selectedFilterValues).forEach(([filterType, values]) => {
+      const filterItem = filterItems.find((item) => item.id === filterType);
+      if (!filterItem || !values || values.length === 0) return;
+
+      values.forEach((valueId) => {
+        let valueName = "";
+        let icon: { name: string } | null = null;
+        let iconColor: { value: string } | null = null;
+
+        // Find the value in the filter options
+        if (filterItem.options) {
+          const option = filterItem.options.find(
+            (opt: any) => opt.id === valueId
+          );
+          if (option) {
+            valueName = option.name;
+            icon = option.icon || null;
+            iconColor = option.iconColor || null;
+          }
+        } else if (filterItem.field?.options) {
+          if (valueId === "none") {
+            valueName = t("common.labels.none");
+          } else {
+            const option = filterItem.field.options.find(
+              (opt: any) => opt.id === valueId
+            );
+            if (option) {
+              valueName = option.name;
+              icon = option.icon || null;
+              iconColor = option.iconColor || null;
+            }
+          }
+        }
+
+        if (valueName) {
+          chips.push({
+            filterType,
+            filterName: filterItem.name,
+            valueId,
+            valueName,
+            icon,
+            iconColor,
+          });
+        }
+      });
+    });
+
+    return chips;
+  }, [selectedFilterValues, filterItems, t]);
+
+  // Handler to remove a single filter
+  const handleRemoveFilter = useCallback(
+    (filterType: string, valueId: string | number) => {
+      setSelectedFilterValues((prev) => {
+        const currentValues = prev[filterType] || [];
+        const newValues = currentValues.filter((v) => v !== valueId);
+
+        if (newValues.length === 0) {
+          const { [filterType]: _, ...rest } = prev;
+          return rest;
+        }
+
+        return { ...prev, [filterType]: newValues };
+      });
+    },
+    []
+  );
+
+  // Handler to clear all filters
+  const handleClearAllFilters = useCallback(() => {
+    setSelectedFilterValues({});
+  }, []);
+
+  // Tab state - initialize from URL or determine from reportType
+  const initialTab = useMemo(() => {
+    const urlTab = searchParams.get("tab");
+    if (urlTab) return urlTab;
+
+    // If no tab in URL, determine it from the reportType
+    const urlReportType = searchParams.get("reportType");
+    if (urlReportType) {
+      const isPreBuilt = preBuiltReports.some((r) => r.id === urlReportType);
+      return isPreBuilt ? "reports" : "builder";
+    }
+
+    // Default to "reports"
+    return "reports";
+  }, [searchParams, preBuiltReports]);
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
+
+  // Sync activeTab with URL tab parameter (for browser back/forward navigation)
+  useEffect(() => {
+    const urlTab = searchParams.get("tab");
+    if (urlTab) {
+      if (urlTab !== activeTab) {
+        setActiveTab(urlTab);
+      }
+    } else {
+      // If no tab in URL, determine it from reportType
+      const urlReportType = searchParams.get("reportType");
+      if (urlReportType) {
+        const isPreBuilt = preBuiltReports.some((r) => r.id === urlReportType);
+        const correctTab = isPreBuilt ? "reports" : "builder";
+        if (correctTab !== activeTab) {
+          setActiveTab(correctTab);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, preBuiltReports]);
+
+  // Handler for metric clicks to open drill-down
+  const handleMetricClick = useCallback(
+    ({
+      metricId,
+      metricLabel,
+      metricValue,
+      row,
+    }: {
+      metricId: string;
+      metricLabel: string;
+      metricValue: number;
+      row: any;
+    }) => {
+      // Extract dimension filters from the row
+      const dimensionFilters: DimensionFilters = {};
+
+      lastUsedDimensions.forEach((dim) => {
+        const dimValue = row[dim.value];
+        if (dimValue) {
+          dimensionFilters[dim.value] = dimValue;
+        }
+      });
+
+      // Get date range from form
+      const dateRange = form.getValues("dateRange");
+
+      // Create drill-down context
+      const context: DrillDownContext = {
+        metricId,
+        metricLabel,
+        metricValue,
+        reportType,
+        mode,
+        projectId,
+        dimensions: dimensionFilters,
+        startDate: dateRange?.from?.toISOString(),
+        endDate: dateRange?.to?.toISOString(),
+      };
+
+      drillDown.handleMetricClick(context);
+    },
+    [lastUsedDimensions, reportType, mode, projectId, form, drillDown]
+  );
+
+  // Use the custom hook for generating columns
+  const standardColumns = useReportColumns(
+    lastUsedDimensions.map((d) => d.value),
+    lastUsedMetrics.map((m) => m.value),
+    lastUsedDimensions,
+    lastUsedMetrics,
+    handleMetricClick
+  );
+
+  // Use automation trends columns for automation-trends report
+  const automationTrendsColumns = useAutomationTrendsColumns(
+    automationTrendsProjects,
+    lastUsedDateGrouping
+  );
+
+  // Choose which columns to use based on report type
+  const columns =
+    reportType === "automation-trends"
+      ? automationTrendsColumns
+      : standardColumns;
+
+  // When lastUsedDimensions change (after running a report), update grouping
+  React.useEffect(() => {
+    if (lastUsedDimensions.length > 1) {
+      // Only group by the first dimension when there are multiple dimensions
+      const firstDimension = lastUsedDimensions[0];
+      const groupingColumn = firstDimension.value;
+      setGrouping([groupingColumn]);
+      // Don't expand all - let the table handle expansion state
+    } else {
+      // No grouping when there's only one dimension
+      setGrouping([]);
+    }
+  }, [lastUsedDimensions]);
+
+  // Get the current report configuration
+  const currentReport = reportTypes.find((r) => r.id === reportType);
+
+  // Set isClient to true when component mounts (for SSR)
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Fetch filter options when report type changes to automation-trends or when filters change
+  useEffect(() => {
+    if (
+      reportType === "automation-trends" ||
+      reportType === "cross-project-automation-trends"
+    ) {
+      // Build filter payload to send to view-options API
+      const filterPayload: any = {};
+
+      // For project-specific mode, include projectId
+      if (mode === "project" && projectId) {
+        filterPayload.projectId = projectId;
+      }
+
+      // Add active filters to get updated counts based on current selection
+      if (Object.keys(selectedFilterValues).length > 0) {
+        // Collect all dynamic field filters
+        const dynamicFieldFilters: Record<number, (string | number)[]> = {};
+
+        Object.entries(selectedFilterValues).forEach(([key, values]) => {
+          if (!values || values.length === 0) return;
+
+          if (key === "projects") {
+            filterPayload.projectIds = values;
+          } else if (key === "templates") {
+            filterPayload.templateIds = values;
+          } else if (key === "states") {
+            filterPayload.stateIds = values;
+          } else if (key === "automated") {
+            filterPayload.automated = values;
+          } else if (key.startsWith("dynamic_")) {
+            // Extract fieldId from the key (format: "dynamic_<fieldId>")
+            const fieldId = parseInt(key.split("_")[1]);
+            if (!isNaN(fieldId)) {
+              dynamicFieldFilters[fieldId] = values;
+            }
+          }
+        });
+
+        // Add dynamic field filters to payload if any exist
+        if (Object.keys(dynamicFieldFilters).length > 0) {
+          filterPayload.dynamicFieldFilters = dynamicFieldFilters;
+        }
+      }
+
+      // Use different API endpoints for project-specific vs cross-project
+      const apiEndpoint =
+        mode === "project"
+          ? "/api/repository-cases/view-options"
+          : "/api/repository-cases/cross-project-view-options";
+
+      // Only fetch for project mode if we have a projectId
+      if (mode === "cross-project" || (mode === "project" && projectId)) {
+        // Fetch filter options from the appropriate API
+        fetch(apiEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(filterPayload),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            setFilterOptions(data);
+          })
+          .catch(() => {
+            // Failed to fetch filter options - ignore
+          });
+      }
+    }
+  }, [reportType, projectId, mode, selectedFilterValues]);
+
+  // Note: No default filter type selection - user must explicitly choose a filter
+
+  // Fetch priority values for builder tab (legacy)
+  useEffect(() => {
+    if (
+      reportType === "automation-trends" &&
+      dimensions.some((d) => d.value === "priority") &&
+      projectId &&
+      mode === "project"
+    ) {
+      // Fetch priority values from the backend
+      fetch(`/api/case-fields/priority/values?projectId=${projectId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.values) {
+            setAvailablePriorityValues(
+              data.values.map((v: string) => ({ value: v, label: v }))
+            );
+          }
+        })
+        .catch(() => {
+          // Failed to fetch priority values - ignore
+        });
+    }
+  }, [reportType, dimensions, projectId, mode]);
+
+  // Handle report type change
+  const handleReportTypeChange = (newReportType: string) => {
+    // Update state immediately for responsive UI
+    setReportType(newReportType);
+
+    // Determine which tab this report belongs to
+    const isPreBuilt = preBuiltReports.some((r) => r.id === newReportType);
+    const newTab = isPreBuilt ? "reports" : "builder";
+    setActiveTab(newTab);
+
+    const newParams = new URLSearchParams();
+    newParams.set("reportType", newReportType);
+    newParams.set("tab", newTab);
+    router.replace(`${pathname}?${newParams.toString()}`);
+  };
+
+  // Handle tab change
+  const handleTabChange = (newTab: string) => {
+    // When switching tabs, select a default report from that tab
+    const targetReports =
+      newTab === "reports" ? preBuiltReports : customReports;
+    if (targetReports.length > 0) {
+      const defaultReport = targetReports[0].id;
+
+      // Update URL - this will trigger useEffect to sync state
+      const newParams = new URLSearchParams(searchParams.toString());
+      newParams.set("reportType", defaultReport);
+      newParams.set("tab", newTab);
+      newParams.set("page", "1");
+      newParams.set("pageSize", "10");
+      router.replace(`${pathname}?${newParams.toString()}`);
+    }
+  };
+
+  // When report type changes, clear all selections and results
+  useEffect(() => {
+    // Skip clearing on initial mount to allow URL parameters to load
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    setDimensions([]);
+    setMetrics([]);
+    setResults(null);
+    setError(null);
+    setCompatWarning(null);
+    setLastUsedDimensions([]);
+    setLastUsedMetrics([]);
+    lastUsedDimensionsRef.current = [];
+    lastUsedMetricsRef.current = [];
+    chartDataRef.current = null;
+    setChartDataVersion(0);
+    setLastUsedDateRange(undefined);
+  }, [reportType]);
+
+  // Load report metadata and URL parameters
+  useEffect(() => {
+    async function fetchMetadata() {
+      if (!currentReport) return;
+
+      try {
+        const url = new URL(currentReport.endpoint, window.location.origin);
+        if (mode === "project" && projectId) {
+          url.searchParams.set("projectId", projectId.toString());
+        }
+
+        const response = await fetch(url.toString(), {
+          method: "GET",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch report metadata");
+        }
+
+        const data = await response.json();
+
+        // Transform to react-select format with translations for display
+        const dimOpts = data.dimensions.map((d: any) => ({
+          value: d.id,
+          label: tDimensions(d.id) || d.label, // Translated label for display
+          apiLabel: d.label, // Keep English label for API data access
+        }));
+        const metOpts = data.metrics.map((m: any) => ({
+          value: m.id,
+          label: tMetrics(m.id) || m.label, // Translated label for display
+          apiLabel: m.label, // Keep English label for API data access
+        }));
+
+        setDimensionOptions(dimOpts);
+        setMetricOptions(metOpts);
+        setFilteredDimensionOptions(dimOpts);
+        setFilteredMetricOptions(metOpts);
+
+        // Load from URL parameters if present
+        const reportTypeParam = searchParams.get("reportType");
+        if (
+          reportTypeParam &&
+          reportTypes.some((r) => r.id === reportTypeParam)
+        ) {
+          setReportType(reportTypeParam);
+        }
+
+        const dimensionsParam = searchParams.get("dimensions");
+        const metricsParam = searchParams.get("metrics");
+        const startDateParam = searchParams.get("startDate");
+        const endDateParam = searchParams.get("endDate");
+
+        // Load date range from URL if present
+        if (startDateParam) {
+          const dateRange: DateRange = {
+            from: new Date(startDateParam),
+            to: endDateParam ? new Date(endDateParam) : undefined,
+          };
+          form.setValue("dateRange", dateRange);
+        }
+
+        if (dimensionsParam) {
+          const dimIds = dimensionsParam.split(",");
+          // Preserve order from URL by mapping instead of filtering
+          const selectedDims = dimIds
+            .map((id) => dimOpts.find((d: any) => d.value === id))
+            .filter(Boolean);
+          setDimensions(selectedDims);
+        }
+
+        if (metricsParam) {
+          const metIds = metricsParam.split(",");
+          // Preserve order from URL by mapping instead of filtering
+          const selectedMets = metIds
+            .map((id) => metOpts.find((m: any) => m.value === id))
+            .filter(Boolean);
+          setMetrics(selectedMets);
+        }
+
+        // Store selections for auto-run
+        if (dimensionsParam && metricsParam) {
+          const dimIds = dimensionsParam.split(",");
+          const metIds = metricsParam.split(",");
+          // Preserve order from URL by mapping instead of filtering
+          const selectedDims = dimIds
+            .map((id) => dimOpts.find((d: any) => d.value === id))
+            .filter(Boolean);
+          const selectedMets = metIds
+            .map((id) => metOpts.find((m: any) => m.value === id))
+            .filter(Boolean);
+
+          if (selectedDims.length > 0 && selectedMets.length > 0) {
+            // Set flag to auto-run after state updates
+            setDimensions(selectedDims);
+            setMetrics(selectedMets);
+            setLastUsedDimensions(selectedDims);
+            setLastUsedMetrics(selectedMets);
+            lastUsedDimensionsRef.current = selectedDims; // Update stable ref
+            lastUsedMetricsRef.current = selectedMets; // Update stable ref
+
+            // Also set the last used date range if present
+            if (startDateParam) {
+              setLastUsedDateRange({
+                from: new Date(startDateParam),
+                to: endDateParam ? new Date(endDateParam) : undefined,
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load report metadata:", err);
+        setError(tReports("errors.failedToLoadMetadata"));
+      }
+    }
+
+    fetchMetadata();
+  }, [
+    reportType,
+    currentReport,
+    mode,
+    projectId,
+    searchParams,
+    reportTypes,
+    tReports,
+    tDimensions,
+    tMetrics,
+    form,
+  ]);
+
+  // Fetch data with current filters, pagination, and sorting
+  const fetchReportData = useCallback(
+    async (
+      selectedDimensions: any[],
+      selectedMetrics: any[],
+      updateUrl: boolean = false
+    ) => {
+      try {
+        const dateRange = form.getValues("dateRange");
+        const body: any = {
+          dimensions: selectedDimensions.map((d) => d.value),
+          metrics: selectedMetrics.map((m) => m.value),
+          page: currentPage,
+          pageSize: pageSize,
+        };
+
+        if (mode === "project" && projectId) {
+          body.projectId = projectId;
+        }
+
+        // For automation trends, add selected filter values and date grouping
+        if (reportType === "automation-trends") {
+          // Build filters object from selectedFilterValues
+          const dynamicFieldFilters: Record<number, (string | number)[]> = {};
+
+          Object.entries(selectedFilterValues).forEach(([key, values]) => {
+            if (!values || values.length === 0) return;
+
+            if (key === "projects") {
+              body.projectIds = values;
+            } else if (key === "templates") {
+              body.templateIds = values;
+            } else if (key === "states") {
+              body.stateIds = values;
+            } else if (key === "automated") {
+              body.automated = values;
+            } else if (key.startsWith("dynamic_")) {
+              // Extract fieldId from the key (format: "dynamic_<fieldId>")
+              const fieldId = parseInt(key.split("_")[1]);
+              if (!isNaN(fieldId)) {
+                dynamicFieldFilters[fieldId] = values;
+              }
+            }
+          });
+
+          // Add dynamic field filters to body if any exist
+          if (Object.keys(dynamicFieldFilters).length > 0) {
+            body.dynamicFieldFilters = dynamicFieldFilters;
+          }
+
+          body.dateGrouping = dateGrouping;
+        }
+
+        // Add sorting parameters if configured
+        if (sortConfig) {
+          // Map frontend column IDs to backend metric IDs
+          const columnIdMap: Record<string, string> = {
+            testResults: "testResultCount",
+            testRuns: "testRunCount",
+            testCases: "testCaseCount",
+            passRate: "passRate",
+            avgElapsedTime: "avgElapsed",
+            totalElapsedTime: "sumElapsed",
+          };
+
+          const backendColumnId =
+            columnIdMap[sortConfig.column] || sortConfig.column;
+          body.sortColumn = backendColumnId;
+          body.sortDirection = sortConfig.direction;
+        }
+
+        // Add date range if specified
+        if (dateRange?.from) {
+          // Convert local date to UTC date string (YYYY-MM-DD format then to ISO)
+          const year = dateRange.from.getFullYear();
+          const month = String(dateRange.from.getMonth() + 1).padStart(2, "0");
+          const day = String(dateRange.from.getDate()).padStart(2, "0");
+          body.startDate = `${year}-${month}-${day}T00:00:00.000Z`;
+
+          if (dateRange.to) {
+            const endYear = dateRange.to.getFullYear();
+            const endMonth = String(dateRange.to.getMonth() + 1).padStart(
+              2,
+              "0"
+            );
+            const endDay = String(dateRange.to.getDate()).padStart(2, "0");
+            body.endDate = `${endYear}-${endMonth}-${endDay}T23:59:59.999Z`;
+          }
+        }
+
+        // Validate request
+        const validation = reportRequestSchema.safeParse({
+          ...body,
+          reportType:
+            mode === "project" ? reportType : `cross-project-${reportType}`,
+        });
+
+        if (!validation.success) {
+          throw new Error(validation.error.issues[0].message);
+        }
+
+        const response = await fetch(currentReport!.endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to run report");
+        }
+
+        const data = await response.json();
+
+        // Handle client-side pagination for automation trends
+        if (
+          reportType === "automation-trends" ||
+          reportType === "cross-project-automation-trends"
+        ) {
+          const allData = data.data || data.results;
+
+          // Store projects for automation trends report
+          if (data.projects) {
+            setAutomationTrendsProjects(data.projects);
+          }
+
+          // Set total count to all data length
+          setTotalCount(allData.length);
+
+          // Slice data for current page
+          if (pageSize === "All") {
+            // Show all data when pageSize is "All"
+            setResults(allData);
+          } else {
+            const startIndex = (currentPage - 1) * (pageSize as number);
+            const endIndex = startIndex + (pageSize as number);
+            setResults(allData.slice(startIndex, endIndex));
+          }
+
+          // Store all data when running a new report
+          if (updateUrl) {
+            setAllResults(allData);
+            chartDataRef.current = allData;
+            setChartDataVersion((prev) => prev + 1);
+          }
+        } else {
+          // Standard server-side pagination for other reports
+          setResults(data.data || data.results); // Support both formats
+
+          // Store projects for automation trends report
+          if (reportType === "automation-trends" && data.projects) {
+            setAutomationTrendsProjects(data.projects);
+          }
+
+          // Only update allResults and chartDataRef when running a new report (not for pagination/sorting)
+          if (updateUrl) {
+            const newAllResults = data.allResults || data.data || data.results;
+            setAllResults(newAllResults);
+            chartDataRef.current = newAllResults; // Update ref with stable reference
+            setChartDataVersion((prev) => prev + 1); // Increment version to trigger chart update
+          }
+          setTotalCount(
+            data.total || data.totalCount || (data.data || data.results).length
+          );
+        }
+
+        // Only update these when running a new report (not just sorting/paginating)
+        if (updateUrl) {
+          setLastUsedDimensions(selectedDimensions);
+          setLastUsedMetrics(selectedMetrics);
+          lastUsedDimensionsRef.current = selectedDimensions; // Update stable ref
+          lastUsedMetricsRef.current = selectedMetrics; // Update stable ref
+          setLastUsedDateRange(
+            dateRange?.from ? (dateRange as DateRange) : undefined
+          );
+          // Update last used date grouping for automation trends
+          if (reportType === "automation-trends") {
+            setLastUsedDateGrouping(dateGrouping);
+          }
+
+          // Update URL with selections
+          const newParams = new URLSearchParams();
+          newParams.set("reportType", reportType);
+          newParams.set(
+            "dimensions",
+            selectedDimensions.map((d) => d.value).join(",")
+          );
+          newParams.set(
+            "metrics",
+            selectedMetrics.map((m) => m.value).join(",")
+          );
+
+          // Add date range to URL if specified, or remove if cleared
+          if (dateRange?.from) {
+            newParams.set("startDate", dateRange.from.toISOString());
+            if (dateRange.to) {
+              newParams.set("endDate", dateRange.to.toISOString());
+            } else {
+              newParams.delete("endDate");
+            }
+          } else {
+            // Remove date parameters when cleared
+            newParams.delete("startDate");
+            newParams.delete("endDate");
+          }
+
+          router.replace(`${pathname}?${newParams.toString()}`);
+        }
+      } catch (err: any) {
+        console.error("Report error:", err);
+        setError(err.message || tReports("errors.failedToRunReport"));
+      }
+    },
+    [
+      form,
+      currentPage,
+      pageSize,
+      mode,
+      projectId,
+      sortConfig,
+      reportType,
+      currentReport,
+      setTotalCount,
+      router,
+      pathname,
+      tReports,
+      dateGrouping,
+      selectedFilterValues,
+    ]
+  );
+
+  const runReport = useCallback(
+    async (selectedDimensions: any[], selectedMetrics: any[]) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        await fetchReportData(selectedDimensions, selectedMetrics, true);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [fetchReportData]
+  );
+
+  // Auto-run report if we have stored selections
+  useEffect(() => {
+    if (
+      lastUsedDimensions.length > 0 &&
+      lastUsedMetrics.length > 0 &&
+      !results &&
+      !loading &&
+      !error
+    ) {
+      runReport(lastUsedDimensions, lastUsedMetrics);
+    }
+  }, [lastUsedDimensions, lastUsedMetrics, results, loading, error, runReport]);
+
+  // Re-fetch data when pagination changes (without full loading state)
+  useEffect(() => {
+    // For automation trends, handle client-side pagination instead of API call
+    if (
+      (reportType === "automation-trends" ||
+        reportType === "cross-project-automation-trends") &&
+      allResults &&
+      allResults.length > 0
+    ) {
+      if (pageSize === "All") {
+        // Show all data when pageSize is "All"
+        setResults(allResults);
+      } else {
+        const startIdx = (currentPage - 1) * pageSize;
+        const endIdx = startIdx + pageSize;
+        setResults(allResults.slice(startIdx, endIdx));
+      }
+    } else if (
+      lastUsedDimensions.length > 0 &&
+      lastUsedMetrics.length > 0 &&
+      results &&
+      reportType !== "automation-trends" &&
+      reportType !== "cross-project-automation-trends"
+    ) {
+      // Standard server-side pagination for other reports
+      fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, pageSize]);
+
+  // Re-fetch data when sort changes (without full loading state)
+  useEffect(() => {
+    if (
+      lastUsedDimensions.length > 0 &&
+      lastUsedMetrics.length > 0 &&
+      results
+    ) {
+      fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortConfig]);
+
+  // Re-fetch data when filters or date grouping change for automation trends
+  useEffect(() => {
+    if (
+      reportType === "automation-trends" &&
+      lastUsedDimensions.length > 0 &&
+      lastUsedMetrics.length > 0 &&
+      results
+    ) {
+      // Automatically re-run report when filters or date grouping change
+      runReport(lastUsedDimensions, lastUsedMetrics);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFilterValues, dateGrouping]);
+
+  // Filter options based on selections
+  useEffect(() => {
+    // For now, no compatibility rules - just use all options
+    setFilteredDimensionOptions(dimensionOptions);
+    setFilteredMetricOptions(metricOptions);
+    setCompatWarning(null);
+  }, [dimensionOptions, metricOptions]);
+
+  const handleRunReport = () => {
+    setCurrentPage(1); // Reset to first page when running new report
+    runReport(dimensions, metrics);
+  };
+
+  const handleDimensionsChange = (newDimensions: any[]) => {
+    setDimensions(newDimensions);
+    setCurrentPage(1); // Reset to first page when dimensions change
+  };
+
+  const handleMetricsChange = (newMetrics: any[]) => {
+    setMetrics(newMetrics);
+    setCurrentPage(1); // Reset to first page when metrics change
+  };
+
+  // Note: Sorting is now done server-side, so we use results directly
+  // Client-side sorting has been removed for better performance with large datasets
+
+  const reportSummary = getReportSummary(lastUsedDimensions, lastUsedMetrics);
+
+  // Create enhanced summary with date range
+  const enhancedReportSummary = React.useMemo(() => {
+    if (!reportSummary) return null;
+
+    if (!lastUsedDateRange?.from) return reportSummary;
+
+    const dateFormatString = session?.user?.preferences?.dateFormat;
+    const timezone = session?.user?.preferences?.timezone;
+
+    return (
+      <span>
+        {reportSummary}
+        {" • "}
+        <DateFormatter
+          date={lastUsedDateRange.from}
+          formatString={dateFormatString}
+          timezone={timezone}
+        />
+        {lastUsedDateRange.to && (
+          <>
+            {" - "}
+            <DateFormatter
+              date={lastUsedDateRange.to}
+              formatString={dateFormatString}
+              timezone={timezone}
+            />
+          </>
+        )}
+      </span>
+    );
+  }, [reportSummary, lastUsedDateRange, session]);
+
+  // Memoize chart props to prevent unnecessary re-renders when pagination/sorting changes
+  // Use refs for stable references that don't change on re-renders
+  const chartDimensions = useMemo(
+    () => {
+      const result = lastUsedDimensionsRef.current.map((d) => ({
+        value: d.value,
+        label: d.label,
+      }));
+      return result;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [chartDataVersion] // Only recompute when chart data version changes
+  );
+
+  const chartMetrics = useMemo(
+    () => {
+      const result = lastUsedMetricsRef.current.map((m) => ({
+        value: m.value,
+        label: m.label,
+        originalLabel: m.apiLabel,
+      }));
+      return result;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [chartDataVersion] // Only recompute when chart data version changes
+  );
+
+  const chartKey = useMemo(
+    () => {
+      const result = chartDataRef.current
+        ? JSON.stringify(chartDataRef.current.slice(0, 5))
+        : null;
+      return result;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [chartDataVersion, allResults] // Only recompute when chart data version changes
+  );
+
+  // Maximum number of data points to render in charts to prevent browser crashes
+  const MAX_CHART_DATA_POINTS = 1000;
+
+  // Memoize the chart component to prevent re-renders when parent re-renders
+  // Use chartDataRef.current for stable reference that doesn't change on pagination
+  const memoizedChart = useMemo(() => {
+    const chartData = chartDataRef.current;
+
+    // For automation trends, we don't need traditional dimensions/metrics
+    // as the chart uses projects and time series data
+    const isAutomationTrends = reportType === "automation-trends";
+
+    if (
+      !chartData ||
+      (!isAutomationTrends &&
+        (chartDimensions.length === 0 || chartMetrics.length === 0))
+    ) {
+      return { chart: null, isTruncated: false, totalDataPoints: 0 };
+    }
+
+    // Limit the number of data points to prevent browser crashes
+    const isTruncated = chartData.length > MAX_CHART_DATA_POINTS;
+    const limitedChartData = isTruncated
+      ? chartData.slice(0, MAX_CHART_DATA_POINTS)
+      : chartData;
+
+    return {
+      chart: (
+        <ReportChart
+          key={chartKey}
+          results={limitedChartData}
+          dimensions={chartDimensions}
+          metrics={chartMetrics}
+          reportType={reportType}
+          projects={automationTrendsProjects}
+        />
+      ),
+      isTruncated,
+      totalDataPoints: chartData.length,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    chartKey,
+    chartDimensions,
+    chartMetrics,
+    chartDataVersion,
+    reportType,
+    automationTrendsProjects,
+  ]); // Depend on version instead of array lengths
+
+  return (
+    <div>
+      <ResizablePanelGroup
+        direction="horizontal"
+        autoSaveId="report-builder-panels"
+      >
+        <ResizablePanel
+          ref={panelRef}
+          defaultSize={25}
+          collapsedSize={0}
+          minSize={20}
+          maxSize={75}
+          collapsible
+          onCollapse={() => setIsCollapsed(true)}
+          onExpand={() => setIsCollapsed(false)}
+          className="p-0 m-0"
+        >
+          <Card
+            shadow="none"
+            className="rounded-none border-y-0 border-l-0 flex flex-col"
+          >
+            <CardContent className="grow overflow-y-auto pb-6">
+              <Tabs
+                value={activeTab}
+                onValueChange={handleTabChange}
+                className="h-full flex flex-col"
+              >
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="reports">
+                    {tReports("tabs.reports")}
+                  </TabsTrigger>
+                  <TabsTrigger value="builder">
+                    {tReports("tabs.reportBuilder")}
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent
+                  value="reports"
+                  className="flex-1 overflow-y-auto mt-0"
+                >
+                  <div className="mb-4">
+                    <h2 className="text-lg font-semibold">
+                      {tReports("tabs.reports")}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {tReports("reportsTabDescription")}
+                    </p>
+                  </div>
+                  <Form {...form}>
+                    <form className="grid gap-4 relative">
+                      {/* Pre-built Report Selection */}
+                      <div className="grid gap-2">
+                        <label className="text-sm font-medium">
+                          {tReports("selectReport")}
+                        </label>
+                        <Select
+                          value={reportType}
+                          onValueChange={handleReportTypeChange}
+                        >
+                          <SelectTrigger data-testid="report-type-select">
+                            <SelectValue>
+                              {currentReport && (
+                                <div className="flex items-center gap-2">
+                                  <currentReport.icon className="h-4 w-4" />
+                                  <span>{currentReport.label}</span>
+                                </div>
+                              )}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {preBuiltReports.map((report) => (
+                              <SelectItem key={report.id} value={report.id}>
+                                <div className="flex items-center gap-2">
+                                  <report.icon className="h-4 w-4" />
+                                  <span>{report.label}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Date Range Selection */}
+                      <div className="grid gap-2">
+                        <DateRangePickerField
+                          control={form.control}
+                          name="dateRange"
+                          label={tReports("dateRange.label")}
+                          helpKey="reportBuilder.dateRange"
+                        />
+                      </div>
+
+                      {/* Date Grouping Selection for Automation Trends */}
+                      {(reportType === "automation-trends" ||
+                        reportType === "cross-project-automation-trends") && (
+                        <div className="grid gap-2">
+                          <label className="text-sm font-medium">
+                            {tReports("dateGrouping.label")}
+                          </label>
+                          <Select
+                            value={dateGrouping}
+                            onValueChange={(value: any) =>
+                              setDateGrouping(value)
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="daily">
+                                {tReports("dateGrouping.daily")}
+                              </SelectItem>
+                              <SelectItem value="weekly">
+                                {tReports("dateGrouping.weekly")}
+                              </SelectItem>
+                              <SelectItem value="monthly">
+                                {tReports("dateGrouping.monthly")}
+                              </SelectItem>
+                              <SelectItem value="quarterly">
+                                {tReports("dateGrouping.quarterly")}
+                              </SelectItem>
+                              <SelectItem value="annually">
+                                {tReports("dateGrouping.annually")}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {/* Filters Section for Automation Trends */}
+                      {(reportType === "automation-trends" ||
+                        reportType === "cross-project-automation-trends") &&
+                        filterItems.length > 0 && (
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tReports("filtersTitle")}
+                              </label>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {tReports("filtersDescription")}
+                            </p>
+                            <ReportFilterChips
+                              activeFilters={activeFilterChips}
+                              onRemoveFilter={handleRemoveFilter}
+                              onClearAll={handleClearAllFilters}
+                            />
+                            <ReportFilters
+                              selectedFilter={selectedFilterType}
+                              onFilterChange={setSelectedFilterType}
+                              filterItems={filterItems}
+                              selectedValues={selectedFilterValues}
+                              onValuesChange={(filterType, values) => {
+                                setSelectedFilterValues((prev) => {
+                                  if (!values || values.length === 0) {
+                                    const { [filterType]: _, ...rest } = prev;
+                                    return rest;
+                                  }
+                                  return { ...prev, [filterType]: values };
+                                });
+                              }}
+                              totalCount={filterOptions?.totalCount || 0}
+                            />
+                          </div>
+                        )}
+
+                      {/* Run Report Button */}
+                      <Button
+                        onClick={handleRunReport}
+                        disabled={loading}
+                        className="w-full"
+                        data-testid="run-report-button"
+                      >
+                        {loading ? (
+                          <>{t("common.status.loading")}</>
+                        ) : (
+                          tReports("runReport")
+                        )}
+                      </Button>
+
+                      {error && (
+                        <div className="rounded-md p-4 text-sm text-destructive bg-destructive/10 border border-destructive/40">
+                          {error}
+                        </div>
+                      )}
+                    </form>
+                  </Form>
+                </TabsContent>
+
+                <TabsContent
+                  value="builder"
+                  className="flex-1 overflow-y-auto mt-0"
+                >
+                  <div className="mb-4">
+                    <h2 className="text-lg font-semibold">
+                      {tReports("title")}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {mode === "cross-project"
+                        ? tReports("crossProjectDescription")
+                        : tReports("description")}
+                    </p>
+                  </div>
+                  <Form {...form}>
+                    <form className="grid gap-4 relative">
+                      {/* Custom Report Type Selection */}
+                      <div className="grid gap-2">
+                        <label className="text-sm font-medium">
+                          {tReports("reportType")}
+                        </label>
+                        <Select
+                          value={reportType}
+                          onValueChange={handleReportTypeChange}
+                        >
+                          <SelectTrigger data-testid="report-type-select">
+                            <SelectValue>
+                              {currentReport && (
+                                <div className="flex items-center gap-2">
+                                  <currentReport.icon className="h-4 w-4" />
+                                  <span>{currentReport.label}</span>
+                                </div>
+                              )}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {customReports.map((report) => (
+                              <SelectItem key={report.id} value={report.id}>
+                                <div className="flex items-center gap-2">
+                                  <report.icon className="h-4 w-4" />
+                                  <span>{report.label}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Date Range Selection */}
+                      <div className="grid gap-2">
+                        <DateRangePickerField
+                          control={form.control}
+                          name="dateRange"
+                          label={tReports("dateRange.label")}
+                          helpKey="reportBuilder.dateRange"
+                        />
+                      </div>
+
+                      {/* Dimensions Selection */}
+                      <div className="grid gap-2">
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm font-medium">
+                            {tReports("dimensions")}
+                          </label>
+                          <HelpPopover helpKey="reportBuilder.dimensions" />
+                        </div>
+
+                        {/* Dimension Order - shown when multiple dimensions selected */}
+                        {dimensions.length > 1 && (
+                          <div className="mb-2">
+                            <label className="text-xs text-muted-foreground mb-1 block">
+                              {tReports("dimensionOrder")}
+                            </label>
+                            <DraggableList
+                              items={dimensions.map(dimensionToDraggableField)}
+                              setItems={(items) =>
+                                setDimensions(
+                                  items.map(draggableFieldToDimension)
+                                )
+                              }
+                              onRemove={(id) =>
+                                setDimensions(
+                                  dimensions.filter((d) => d.value !== id)
+                                )
+                              }
+                            />
+                          </div>
+                        )}
+
+                        <MultiSelect
+                          isMulti
+                          value={dimensions}
+                          onChange={handleDimensionsChange as any}
+                          options={filteredDimensionOptions}
+                          styles={customStyles}
+                          placeholder={tReports("selectDimensions")}
+                          className="basic-multi-select"
+                          classNamePrefix="select"
+                          menuPortalTarget={
+                            isClient ? document.body : undefined
+                          }
+                          menuPosition="fixed"
+                          inputId="dimensions-select"
+                          data-testid="dimensions-select"
+                        />
+                      </div>
+
+                      {/* Priority Filter for Automation Trends */}
+                      {reportType === "automation-trends" &&
+                        dimensions.some((d) => d.value === "priority") && (
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tReports("filtersTitle")} {" - "}{" "}
+                                {tReports("priorityFilter")}
+                              </label>
+                            </div>
+                            <MultiSelect
+                              isMulti
+                              value={selectedPriorityValues.map((v) => ({
+                                value: v,
+                                label: v,
+                              }))}
+                              onChange={(selected: any) => {
+                                setSelectedPriorityValues(
+                                  selected
+                                    ? selected.map((s: any) => s.value)
+                                    : []
+                                );
+                              }}
+                              options={availablePriorityValues}
+                              styles={customStyles}
+                              placeholder="Select priority values (or leave empty for all)"
+                              className="basic-multi-select"
+                              classNamePrefix="select"
+                              menuPortalTarget={
+                                isClient ? document.body : undefined
+                              }
+                              menuPosition="fixed"
+                            />
+                          </div>
+                        )}
+
+                      {/* Metrics Selection - Hidden for automation trends */}
+                      {reportType !== "automation-trends" && (
+                        <div className="grid gap-2">
+                          <div className="flex items-center gap-2">
+                            <label className="text-sm font-medium">
+                              {tReports("metrics")}
+                            </label>
+                            <HelpPopover helpKey="reportBuilder.metrics" />
+                          </div>
+
+                          {/* Metric Order - shown when multiple metrics selected */}
+                          {metrics.length > 1 && (
+                            <div className="mb-2">
+                              <label className="text-xs text-muted-foreground mb-1 block">
+                                {tReports("metricOrder")}
+                              </label>
+                              <DraggableList
+                                items={metrics.map(dimensionToDraggableField)}
+                                setItems={(items) =>
+                                  setMetrics(
+                                    items.map(draggableFieldToDimension)
+                                  )
+                                }
+                                onRemove={(id) =>
+                                  setMetrics(
+                                    metrics.filter((m) => m.value !== id)
+                                  )
+                                }
+                              />
+                            </div>
+                          )}
+
+                          <MultiSelect
+                            isMulti
+                            value={metrics}
+                            onChange={handleMetricsChange as any}
+                            options={filteredMetricOptions}
+                            styles={customStyles}
+                            placeholder={tReports("selectMetrics")}
+                            className="basic-multi-select"
+                            classNamePrefix="select"
+                            menuPortalTarget={
+                              isClient ? document.body : undefined
+                            }
+                            menuPosition="fixed"
+                            inputId="metrics-select"
+                            data-testid="metrics-select"
+                          />
+                        </div>
+                      )}
+
+                      {compatWarning && (
+                        <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
+                          {compatWarning}
+                        </div>
+                      )}
+
+                      {/* Run Report Button */}
+                      <Button
+                        onClick={handleRunReport}
+                        disabled={
+                          loading ||
+                          (reportType === "automation-trends"
+                            ? false // No requirements for automation trends
+                            : dimensions.length === 0 || metrics.length === 0)
+                        }
+                        className="w-full"
+                        data-testid="run-report-button"
+                      >
+                        {loading ? (
+                          <>{t("common.status.loading")}</>
+                        ) : (
+                          tReports("runReport")
+                        )}
+                      </Button>
+
+                      {error && (
+                        <div className="rounded-md p-4 text-sm text-destructive bg-destructive/10 border border-destructive/40">
+                          {error}
+                        </div>
+                      )}
+                    </form>
+                  </Form>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </ResizablePanel>
+
+        <ResizableHandle withHandle className="w-1" />
+        <div>
+          <Button
+            type="button"
+            onClick={toggleCollapse}
+            variant="secondary"
+            className="p-0 -ml-1 rounded-l-none"
+          >
+            {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
+          </Button>
+        </div>
+
+        <ResizablePanel
+          defaultSize={75}
+          collapsedSize={0}
+          collapsible
+          className="min-h-[calc(100vh-14rem)]"
+        >
+          {/* Results Display */}
+          {results && results.length > 0 ? (
+            <ResizablePanelGroup direction="vertical" className="h-full">
+              {/* Visualization Panel */}
+              <ResizablePanel
+                defaultSize={50}
+                minSize={20}
+                collapsedSize={0}
+                collapsible
+              >
+                <Card className="h-full rounded-none border-0 overflow-hidden">
+                  <CardHeader className="pt-2 pb-2">
+                    <CardTitle>{t("common.visualization")}</CardTitle>
+                    {enhancedReportSummary && (
+                      <CardDescription>{enhancedReportSummary}</CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent className="h-[calc(100%-4rem)] p-6">
+                    <div className="h-full w-full">
+                      {memoizedChart.chart}
+                      {memoizedChart.isTruncated && (
+                        <Alert className="mt-4">
+                          <AlertTitle className="flex items-center gap-1">
+                            <AlertCircle className="h-4 w-4 stroke-primary" />
+                            {tReports("chartDataTruncated.title")}
+                          </AlertTitle>
+                          <AlertDescription className="ml-5">
+                            {tReports("chartDataTruncated.message", {
+                              shown: MAX_CHART_DATA_POINTS.toLocaleString(),
+                              total:
+                                memoizedChart.totalDataPoints.toLocaleString(),
+                            })}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </ResizablePanel>
+
+              <ResizableHandle withHandle />
+
+              {/* Results Table Panel */}
+              <ResizablePanel
+                defaultSize={50}
+                minSize={20}
+                collapsedSize={0}
+                collapsible
+              >
+                <Card className="h-full rounded-none border-0 overflow-hidden">
+                  <CardHeader className="pt-2 pb-2">
+                    <div className="flex flex-row items-end justify-between">
+                      <CardTitle>{t("common.results")}</CardTitle>
+                      {totalCount > 0 && (
+                        <div className="flex flex-col items-end">
+                          <div className="justify-end">
+                            <PaginationInfo
+                              startIndex={startIndex}
+                              endIndex={endIndex}
+                              totalRows={totalCount}
+                              searchString=""
+                              pageSize={pageSize}
+                              pageSizeOptions={defaultPageSizeOptions}
+                              handlePageSizeChange={setPageSize}
+                            />
+                          </div>
+                          {pageSize !== "All" &&
+                            totalCount > (pageSize as number) && (
+                              <div className="justify-end -mx-4">
+                                <PaginationComponent
+                                  currentPage={currentPage}
+                                  totalPages={Math.ceil(
+                                    totalCount / (pageSize as number)
+                                  )}
+                                  onPageChange={setCurrentPage}
+                                />
+                              </div>
+                            )}
+                        </div>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="h-[calc(100%-4rem)] overflow-y-auto p-6 pt-0">
+                    <DataTable
+                      columns={columns as ColumnDef<any>[]}
+                      data={results || []}
+                      columnVisibility={columnVisibility}
+                      onColumnVisibilityChange={setColumnVisibility}
+                      sortConfig={sortConfig || undefined}
+                      onSortChange={(columnId: string) => {
+                        setSortConfig((prev) => ({
+                          column: columnId,
+                          direction:
+                            prev?.column === columnId &&
+                            prev.direction === "asc"
+                              ? "desc"
+                              : "asc",
+                        }));
+                      }}
+                      grouping={grouping}
+                      onGroupingChange={setGrouping}
+                      expanded={expanded}
+                      onExpandedChange={setExpanded}
+                    />
+                  </CardContent>
+                </Card>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <Card className="max-w-md">
+                <CardHeader>
+                  <CardTitle>{tReports("noResultsFound")}</CardTitle>
+                  <CardDescription>
+                    {lastUsedDimensions.length > 0 && lastUsedMetrics.length > 0
+                      ? lastUsedDateRange?.from
+                        ? tReports("noDataMatchingCriteriaWithDateFilter")
+                        : tReports("noDataMatchingCriteria")
+                      : reportType === "automation-trends" ||
+                          reportType === "cross-project-automation-trends"
+                        ? tReports("noDataAvailable")
+                        : tReports("selectAtLeastOneDimensionAndMetric")}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </div>
+          )}
+        </ResizablePanel>
+      </ResizablePanelGroup>
+      {/* Drill-down drawer */}
+      <DrillDownDrawer
+        isOpen={drillDown.isOpen}
+        onClose={drillDown.closeDrawer}
+        context={drillDown.context}
+        records={drillDown.records}
+        total={drillDown.total}
+        hasMore={drillDown.hasMore}
+        isLoading={drillDown.isLoading}
+        isLoadingMore={drillDown.isLoadingMore}
+        error={drillDown.error}
+        onLoadMore={drillDown.loadMore}
+        aggregates={drillDown.aggregates}
+      />
+    </div>
+  );
+}
+
+// Wrapper component with PaginationProvider
+export function ReportBuilder(props: ReportBuilderProps) {
+  return (
+    <PaginationProvider defaultPageSize={50}>
+      <ReportBuilderContent {...props} />
+    </PaginationProvider>
+  );
+}

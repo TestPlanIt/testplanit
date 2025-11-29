@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Custom Properties for Light/Dark Theme */
+:root {
+  /* Light theme colors (default) */
+  --testplanit-bg: #f8fafc;
+  --testplanit-card-bg: #ffffff;
+  --testplanit-text: #1e293b;
+  --testplanit-text-muted: #64748b;
+  --testplanit-border: #e2e8f0;
+  --testplanit-primary: #3b82f6;
+  --testplanit-primary-hover: #2563eb;
+  --testplanit-muted-bg: #f1f5f9;
+  --testplanit-hover-bg: #f8fafc;
+}
+
+/* Dark theme colors */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --testplanit-bg: #0f172a;
+    --testplanit-card-bg: #1e293b;
+    --testplanit-text: #f1f5f9;
+    --testplanit-text-muted: #94a3b8;
+    --testplanit-border: #334155;
+    --testplanit-primary: #60a5fa;
+    --testplanit-primary-hover: #3b82f6;
+    --testplanit-muted-bg: #334155;
+    --testplanit-hover-bg: #475569;
+  }
+}
+
+/* Custom styles for TestPlanIt Forge app */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--testplanit-bg);
+  color: var(--testplanit-text);
+}
+
+.completed-test-run {
+  background-color: var(--testplanit-muted-bg);
+  opacity: 0.6;
+}
+
+/* Theme-aware utility classes */
+.testplanit-bg {
+  background-color: var(--testplanit-bg);
+}
+
+.testplanit-card {
+  background-color: var(--testplanit-card-bg);
+  border-color: var(--testplanit-border);
+}
+
+.testplanit-text {
+  color: var(--testplanit-text);
+}
+
+.testplanit-text-muted {
+  color: var(--testplanit-text-muted);
+}
+
+.testplanit-primary {
+  color: var(--testplanit-primary);
+}
+
+.testplanit-primary:hover {
+  color: var(--testplanit-primary-hover);
+}
+
+.testplanit-hover:hover {
+  background-color: var(--testplanit-hover-bg);
+}
+
+.testplanit-muted-bg {
+  background-color: var(--testplanit-muted-bg);
+}
+
+/* Ensure the app takes only the space it needs for iframe auto-sizing */
+html, body, #root {
+  height: auto !important;
+  min-height: unset !important;
+  max-height: none !important;
+  overflow: visible !important;
+  margin: 0;
+  padding: 0;
+}
+
+/* Force the app container to expand naturally */
+.testplanit-bg {
+  min-height: fit-content !important;
+  height: auto !important;
+  max-height: none !important;
+  width: 100%;
+  display: block;
+}
+
+/* Ensure all containers allow natural content flow */
+* {
+  box-sizing: border-box;
+}
+
+/* Remove any height constraints on main containers */
+.p-4, .p-6 {
+  height: auto !important;
+  min-height: unset !important;
+  max-height: none !important;
+  width: 100%;
+}
+
+/* Make sure expandable content doesn't get cut off */
+.testplanit-card {
+  height: auto !important;
+  max-height: none !important;
+  width: 100%;
+}
+
+/* Disable internal scrolling - let Jira handle it */
+body {
+  overflow: visible !important;
+}
+
+/* Ensure containers don't create unnecessary scrolling */
+.mb-4 {
+  width: 100%;
+}
+
+/* Make sure the iframe content expands properly */
+#root {
+  width: 100%;
+  display: block;
+}

@@ -1,0 +1,173 @@
+# Release Workflow
+#
+# This workflow handles creating GitHub releases and building Docker images.
+#
+# Triggers:
+# 1. Tag Push (automatic): Pushing a tag like `v1.0.0` triggers both release creation and Docker builds
+# 2. Manual Dispatch: Manually trigger Docker builds for any existing tag via GitHub Actions UI
+#
+# Docker Images Built:
+# - Production image: ghcr.io/testplanit/testplanit:latest (for Next.js server)
+# - Workers image: ghcr.io/testplanit/testplanit:latest-workers (for background workers)
+#
+# IMPORTANT: Docker images are built with BASE_DOMAIN=testplanit.com which enables a wildcard
+# pattern (*.testplanit.com) for Next.js image optimization. This allows a SINGLE Docker image
+# to serve ALL customer subdomains (e.g., company1.testplanit.com, company2.testplanit.com, etc.)
+# without needing to rebuild for each customer.
+#
+# Manual Trigger Instructions:
+# 1. Go to Actions tab in GitHub
+# 2. Select "Release" workflow
+# 3. Click "Run workflow"
+# 4. Enter the tag name (e.g., v1.0.0)
+# 5. Click "Run workflow" button
+#
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  create-release:
+    runs-on: [self-hosted, linux]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Verify GitHub CLI
+      run: |
+        # Ensure we're using the official gh CLI (not npm package)
+        /usr/bin/gh --version
+
+    - name: Create Release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        /usr/bin/gh release create "${{ github.ref_name }}" \
+          --title "Release ${{ github.ref_name }}" \
+          --notes "## What's Changed
+
+        See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/testplanit/CHANGELOG.md) for details.
+
+        ## Docker Images
+
+        Production image:
+        \`\`\`bash
+        docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+        \`\`\`
+
+        Workers image:
+        \`\`\`bash
+        docker pull ghcr.io/${{ github.repository }}:${{ github.ref_name }}-workers
+        \`\`\`"
+
+  docker-on-release:
+    # Build Docker images when a release tag is pushed
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    needs: create-release
+    runs-on: [self-hosted, linux]
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate version info for Docker build
+      run: |
+        cd testplanit
+        node scripts/generate-version.js
+        mkdir -p public
+        cp public/version.json .docker-version.json || echo "Version file not generated"
+
+    - name: Build and push all Docker images with Bake
+      working-directory: ./testplanit
+      run: |
+        # Extract version from tag (remove 'v' prefix for semver tags)
+        VERSION="${{ github.ref_name }}"
+        VERSION_NUM="${VERSION#v}"
+
+        # Build and push both production and workers targets in a single command
+        # This shares the build cache between targets, avoiding duplicate builds
+        # Use -f to only load docker-bake.hcl (ignore docker-compose.yml which needs env files)
+        docker buildx bake -f docker-bake.hcl --push \
+          --set "*.platform=linux/amd64" \
+          --set "production.tags=ghcr.io/${{ github.repository }}:${VERSION_NUM}" \
+          --set "production.tags=ghcr.io/${{ github.repository }}:${VERSION}" \
+          --set "production.tags=ghcr.io/${{ github.repository }}:latest" \
+          --set "workers.tags=ghcr.io/${{ github.repository }}:${VERSION_NUM}-workers" \
+          --set "workers.tags=ghcr.io/${{ github.repository }}:${VERSION}-workers" \
+          --set "workers.tags=ghcr.io/${{ github.repository }}:latest-workers" \
+          --set "*.args.VERSION=${VERSION}" \
+          --set "*.args.GIT_COMMIT=${{ github.sha }}" \
+          --set "*.args.BASE_DOMAIN=testplanit.com"
+
+  docker-manual:
+    # Build Docker images manually on demand
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: [self-hosted, linux]
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.tag }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate version info for Docker build
+      run: |
+        cd testplanit
+        node scripts/generate-version.js
+        mkdir -p public
+        cp public/version.json .docker-version.json || echo "Version file not generated"
+
+    - name: Build and push all Docker images with Bake
+      working-directory: ./testplanit
+      run: |
+        # Build and push both production and workers targets in a single command
+        # This shares the build cache between targets, avoiding duplicate builds
+        # Use -f to only load docker-bake.hcl (ignore docker-compose.yml which needs env files)
+        docker buildx bake -f docker-bake.hcl --push \
+          --set "*.platform=linux/amd64" \
+          --set "production.tags=ghcr.io/${{ github.repository }}:${{ github.event.inputs.tag }}" \
+          --set "workers.tags=ghcr.io/${{ github.repository }}:${{ github.event.inputs.tag }}-workers" \
+          --set "*.args.VERSION=${{ github.event.inputs.tag }}" \
+          --set "*.args.GIT_COMMIT=${{ github.sha }}" \
+          --set "*.args.BASE_DOMAIN=testplanit.com"

@@ -1,0 +1,3294 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+plugin hooks {
+    provider = '@zenstackhq/tanstack-query'
+    target = 'react'
+    version = 'v5'
+    output = "./lib/hooks"
+}
+
+plugin zod {
+    provider = '@core/zod'
+    version = 'v4'
+}
+
+model AppConfig {
+    key   String @id
+    value Json
+
+    @@deny('delete, update, read', !auth())
+    @@allow ('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+// Account table is required by NextAuth for OAuth providers
+model Account {
+    id                String  @id @default(cuid())
+    userId            String
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String? @db.Text
+    access_token      String? @db.Text
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String? @db.Text
+    session_state     String?
+    user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+    @@index([userId])
+
+    @@deny('all', !auth())
+    @@allow('create', true) // Allow creation during sign-in
+    @@allow('read, update, delete', auth().id == userId || auth().access == 'ADMIN')
+}
+
+// VerificationToken table is required by NextAuth for Magic Link (email) authentication
+model VerificationToken {
+    identifier String
+    token      String   @unique
+    expires    DateTime
+
+    @@unique([identifier, token])
+    @@allow('all', true) // NextAuth needs unrestricted access for token verification
+}
+
+model User {
+    id                      String                  @id @default(cuid())
+    name                    String                  @length(1)
+    email                   String                  @unique @email
+    emailVerified           DateTime?
+    emailVerifToken         String?
+    emailTokenExpires       DateTime?
+    password                String                  @password @omit @length(4)
+    image                   String?
+    accounts                Account[]
+    authMethod              AuthMethod              @default(INTERNAL)
+    externalId              String?                 // For SAML/OAuth user mapping
+    access                  Access                  @default(NONE)
+    roleId                  Int                     @default(1)
+    role                    Roles                   @relation(fields: [roleId], references: [id])
+    isActive                Boolean                 @default(true)
+    isDeleted               Boolean                 @default(false)
+    isApi                   Boolean                 @default(false)
+    createdAt               DateTime                @default(now()) @db.Timestamptz(6)
+    createdById             String?
+    createdBy               User?                   @relation("UserCreator", fields: [createdById], references: [id])
+    updatedAt               DateTime                @updatedAt
+    userPreferences         UserPreferences?
+    createdUsers            User[]                  @relation("UserCreator")
+    projects                ProjectAssignment[]
+    createdProjects         Projects[]              @relation("ProjectCreator")
+    groups                  GroupAssignment[]
+    createdMilestones       Milestones[]
+    repositoryFolders       RepositoryFolders[]
+    repositoryCases         RepositoryCases[]
+    attachments             Attachments[]
+    assignedSessions        Sessions[]              @relation("SessionAssignedTo")
+    createdSessions         Sessions[]              @relation("SessionCreatedBy")
+    sessionResults          SessionResults[]
+    testRunCreatedBy        TestRuns[]              @relation("TestRunCreatedBy")
+    testRunCasesAssigned    TestRunCases[]
+    testRunResults          TestRunResults[]
+    editedTestRunResults    TestRunResults[]        @relation("TestRunResultEditor")
+    createdIssues           Issue[]                 @relation("IssueCreator")
+    projectPermissions      UserProjectPermission[]
+    junitTestSuites         JUnitTestSuite[]
+    junitTestResults        JUnitTestResult[]
+    junitProperties         JUnitProperty[]
+    junitAttachments        JUnitAttachment[]
+    junitTestSteps          JUnitTestStep[]
+    createdCaseLinks        RepositoryCaseLink[]    @relation("UserCreatedCaseLinks")
+    createdSharedStepGroups SharedStepGroup[]
+    notifications           Notification[]
+    userIntegrationAuths    UserIntegrationAuth[]
+    createdEmailDomains     AllowedEmailDomain[]
+    lastActiveAt            DateTime?
+    lastSeenVersion         String?
+    llmUsages               LlmUsage[]
+    testmoImportJobs        TestmoImportJob[]
+    createdComments         Comment[]               @relation("CommentCreator")
+    commentMentions         CommentMention[]        @relation("CommentMentions")
+
+    @@index([isActive, isDeleted])
+    @@index([access])
+    @@deny('delete, update, read', !auth())
+    @@allow('create', true)
+    @@allow('create, delete', (auth().access == 'ADMIN'))
+    @@allow('update', (auth().access == 'ADMIN' || auth() == this))
+    @@allow('read', auth().access != null)
+}
+
+model UserPreferences {
+    id                                  String           @id @default(uuid())
+    userId                              String           @unique
+    user                                User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+    theme                               Theme            @default(Purple)
+    itemsPerPage                        ItemsPerPage     @default(P10)
+    locale                              Locale           @default(en_US)
+    dateFormat                          DateFormat       @default(MM_DD_YYYY_DASH)
+    timeFormat                          TimeFormat       @default(HH_MM_A)
+    timezone                            String           @default("Etc/UTC")
+    notificationMode                    NotificationMode @default(USE_GLOBAL)
+    emailNotifications                  Boolean          @default(true)
+    inAppNotifications                  Boolean          @default(true)
+    hasCompletedWelcomeTour             Boolean          @default(false)
+    hasCompletedInitialPreferencesSetup Boolean          @default(false)
+
+    @@deny('delete, update, read', !auth())
+    @@allow('create', true)
+    @@allow('create,update,delete', auth().id == userId || auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum Theme {
+    Light
+    Dark
+    System
+    Green
+    Orange
+    Purple
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', true)
+}
+
+enum ItemsPerPage {
+    P10   @map("10")
+    P25   @map("25")
+    P50   @map("50")
+    P100  @map("100")
+    P250  @map("250")
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', true)
+}
+
+enum Locale {
+    en_US
+    es_ES
+    fr_FR
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', true) // Allow reads for signup
+}
+
+enum DateFormat {
+    MM_DD_YYYY_SLASH // "MM/dd/yyyy"
+    MM_DD_YYYY_DASH // "MM-dd-yyyy"
+    DD_MM_YYYY_SLASH // "dd/MM/yyyy"
+    DD_MM_YYYY_DASH // "dd-MM-yyyy"
+    YYYY_MM_DD // "yyyy-MM-dd"
+    MMM_D_YYYY // "MMM d, yyyy"
+    D_MMM_YYYY // "d MMM yyyy"
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', true) // Allow reads for signup
+}
+
+enum TimeFormat {
+    HH_MM  // "HH:mm"
+    HH_MM_A  // "hh:mm a"
+    HH_MM_Z  // "HH:mm z"
+    HH_MM_Z_A  // "hh:mm z a"
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', true) // Allow reads for signup
+}
+
+enum Access {
+    NONE
+    USER
+    PROJECTADMIN
+    ADMIN
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum NotificationMode {
+    NONE
+    IN_APP
+    IN_APP_EMAIL_IMMEDIATE
+    IN_APP_EMAIL_DAILY
+    USE_GLOBAL
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN' || auth().id == auth().id)
+    @@allow('read', true) // Allow reads for signup
+}
+
+enum NotificationType {
+    WORK_ASSIGNED
+    SESSION_ASSIGNED
+    SYSTEM_ANNOUNCEMENT
+    USER_REGISTERED
+    COMMENT_MENTION
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model Groups {
+    id                 Int                      @id @default(autoincrement())
+    name               String                   @unique @length(1)
+    externalId         String?
+    url                String?                  @url
+    note               String?
+    isDeleted          Boolean                  @default(false)
+    assignedUsers      GroupAssignment[]
+    projectPermissions GroupProjectPermission[]
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model GroupAssignment {
+    userId  String
+    user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    groupId Int
+    group   Groups @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+    @@id([userId, groupId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model Roles {
+    id                      Int                      @id @default(autoincrement())
+    name                    String                   @unique @length(1)
+    isDefault               Boolean                  @default(false)
+    isDeleted               Boolean                  @default(false)
+    users                   User[]
+    rolePermissions         RolePermission[]
+    defaultForProjects      Projects[]               @relation("ProjectDefaultRole")
+    userProjectPermissions  UserProjectPermission[]  @relation("UserProjectRole")
+    groupProjectPermissions GroupProjectPermission[] @relation("GroupProjectRole")
+
+    @@deny('all', !auth())
+    @@allow('update, create', auth().access == 'ADMIN')
+    @@allow('delete', auth().access == 'ADMIN' && this.isDefault != true)
+    @@allow('read', auth().access != null)
+}
+
+model Projects {
+    id                     Int                         @id @default(autoincrement())
+    name                   String                      @unique @length(1)
+    iconUrl                String?
+    note                   String?
+    docs                   String?
+    isCompleted            Boolean                     @default(false)
+    isDeleted              Boolean                     @default(false)
+    completedAt            DateTime?                   @db.Date
+    createdAt              DateTime                    @default(now()) @db.Timestamptz(6)
+    createdBy              String
+    creator                User                        @relation("ProjectCreator", fields: [createdBy], references: [id])
+    assignedUsers          ProjectAssignment[]
+    assignedStatuses       ProjectStatusAssignment[]
+    milestoneTypes         MilestoneTypesAssignment[]
+    assignedTemplates      TemplateProjectAssignment[]
+    assignedWorkflows      ProjectWorkflowAssignment[]
+    milestones             Milestones[]
+    repositories           Repositories[]
+    repositoryFolders      RepositoryFolders[]
+    repositoryCases        RepositoryCases[]
+    repositoryCaseVersions RepositoryCaseVersions[]
+    sessions               Sessions[]
+    sessionVersions        SessionVersions[]
+    testRuns               TestRuns[]
+    defaultAccessType      ProjectAccessType           @default(GLOBAL_ROLE)
+    defaultRoleId          Int?
+    defaultRole            Roles?                      @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
+    userPermissions        UserProjectPermission[]
+    groupPermissions       GroupProjectPermission[]
+    sharedStepGroups       SharedStepGroup[]
+    projectIntegrations    ProjectIntegration[]
+    projectLlmIntegrations ProjectLlmIntegration[]
+    issues                 Issue[]
+    llmUsages              LlmUsage[]
+    llmFeatureConfigs      LlmFeatureConfig[]
+    llmResponseCaches      LlmResponseCache[]
+    comments               Comment[]
+
+    @@index([isDeleted, isCompleted])
+    @@index([createdBy])
+
+    // Access Control Resolution Order:
+    // 1. System admins always have full access (overrides everything)
+    // 2. Project creators have full access (overrides everything except admin)
+    // 3. Users with explicit project admin role (overrides denials)
+    // 4. Explicit user NO_ACCESS (denies all access, overrides groups)
+    // 5. Explicit user permissions (GLOBAL_ROLE or SPECIFIC_ROLE)
+    // 6. Group permissions (only if no explicit user permissions)
+    // 7. Direct assignment to project with default access
+    // 8. No access (if none of the above apply)
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Admin Override: System admins always have full access
+    @@allow('all', auth().access == 'ADMIN')
+
+    // Project creators have admin access
+    @@allow('all', creator == auth())
+
+    // Users with explicit PROJECTADMIN role on project
+    @@allow('all', userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'])
+
+    // Users with PROJECTADMIN access and assigned to project
+    @@allow('all', assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'])
+
+    // Explicit NO_ACCESS denial (highest priority for non-admins/creators)
+    @@deny('read', userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Read access - ultra simplified to fix query explosion
+    @@allow('read',
+    // Explicit user permissions
+        userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+
+    // Group permissions (only if no explicit user denial)
+        groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+
+    // Direct assignment with defaults
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+
+        (assignedUsers?[user == auth()] &&
+         defaultAccessType == 'SPECIFIC_ROLE' && defaultRole != null) ||
+
+    // Default access for all users (not just assigned)
+        (defaultAccessType == 'GLOBAL_ROLE' && auth().access != 'NONE' && auth().roleId != null) ||
+        (defaultAccessType == 'SPECIFIC_ROLE' && defaultRole != null && auth().access != 'NONE') ||
+        (defaultAccessType == 'DEFAULT' && auth().access != 'NONE')
+    )
+
+    // Explicit NO_ACCESS denial for update/delete
+    @@deny('update,delete', userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Update access for managers and contributors
+    @@allow('update',
+        userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                        role.rolePermissions?[area == 'Documentation' && canAddEdit]] ||
+        groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' &&
+              role.rolePermissions?[area == 'Documentation' && canAddEdit]) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+              auth().role.rolePermissions?[area == 'Documentation' && canAddEdit]))
+         ]
+    )
+
+    // Delete access for authorized users
+    @@allow('delete',
+        userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                        role.rolePermissions?[area == 'Documentation' && canDelete]] ||
+        groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' &&
+              role.rolePermissions?[area == 'Documentation' && canDelete]) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+              auth().role.rolePermissions?[area == 'Documentation' && canDelete]))
+         ]
+    )
+
+    @@deny('all', isDeleted)
+}
+
+model ProjectAssignment {
+    userId    String
+    user      User     @relation(fields: [userId], references: [id])
+    projectId Int
+    project   Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+    @@id([userId, projectId])
+    @@index([projectId])
+    @@index([userId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model ProjectStatusAssignment {
+    statusId  Int
+    status    Status   @relation(fields: [statusId], references: [id])
+    projectId Int
+    project   Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+    @@id([statusId, projectId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model ProjectWorkflowAssignment {
+    workflowId Int
+    workflow   Workflows @relation(fields: [workflowId], references: [id])
+    projectId  Int
+    project    Projects  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+    @@id([workflowId, projectId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model Milestones {
+    id               Int            @id @default(autoincrement())
+    projectId        Int
+    project          Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    rootId           Int?
+    root             Milestones?    @relation("MilestoneRoot", fields: [rootId], references: [id])
+    descendants      Milestones[]   @relation("MilestoneRoot")
+    parentId         Int?
+    parent           Milestones?    @relation("MilestoneParent", fields: [parentId], references: [id], onDelete: Cascade)
+    children         Milestones[]   @relation("MilestoneParent")
+    milestoneType    MilestoneTypes @relation(fields: [milestoneTypesId], references: [id])
+    milestoneTypesId Int
+    name             String         @length(1)
+    note             Json?
+    docs             Json?
+    isStarted        Boolean        @default(false)
+    isCompleted      Boolean        @default(false)
+    isDeleted        Boolean        @default(false)
+    startedAt        DateTime?      @db.Timestamptz(6)
+    completedAt      DateTime?      @db.Timestamptz(6)
+    createdAt        DateTime       @default(now()) @db.Timestamptz(6)
+    creator          User           @relation(fields: [createdBy], references: [id])
+    createdBy        String
+    sessions         Sessions[]
+    testRuns         TestRuns[]
+
+    @@index([projectId, isDeleted])
+    @@index([parentId])
+    @@index([isCompleted, isDeleted])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Read access - inherit from project (simplified)
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Create/update/delete access for users with milestone permissions
+    @@allow('create,update,delete',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'Milestones' && canAddEdit])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  ((accessType == 'SPECIFIC_ROLE' &&
+                                    role.rolePermissions?[area == 'Milestones' && canAddEdit]) ||
+                                   (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                    auth().role.rolePermissions?[area == 'Milestones' && canAddEdit]))]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model MilestoneTypes {
+    id         Int                        @id @default(autoincrement())
+    name       String                     @unique @length(1)
+    iconId     Int?
+    icon       FieldIcon?                 @relation(fields: [iconId], references: [id], onDelete: SetNull)
+    isDefault  Boolean                    @default(false)
+    isDeleted  Boolean                    @default(false)
+    projects   MilestoneTypesAssignment[]
+    milestones Milestones[]
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model MilestoneTypesAssignment {
+    projectId       Int
+    project         Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    milestoneTypeId Int
+    milestoneType   MilestoneTypes @relation(fields: [milestoneTypeId], references: [id])
+
+    @@id([projectId, milestoneTypeId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model FieldIcon {
+    id             Int              @id @default(autoincrement())
+    name           String           @unique @length(1)
+    fieldOptions   FieldOptions[]
+    workflows      Workflows[]
+    milestoneTypes MilestoneTypes[]
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('create,read', auth().access != null)
+}
+
+model ColorFamily {
+    id     Int     @id @default(autoincrement())
+    name   String  @length(1)
+    order  Int     @default(0)
+    colors Color[]
+
+    @@unique([name])
+    @@unique([order])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('create,read', auth().access != null)
+}
+
+model Color {
+    id            Int            @id @default(autoincrement())
+    colorFamilyId Int
+    colorFamily   ColorFamily    @relation(fields: [colorFamilyId], references: [id])
+    value         String         @length(1)
+    order         Int            @default(0)
+    fieldOptions  FieldOptions[]
+    statuses      Status[]
+    workflows     Workflows[]
+
+    @@unique([colorFamilyId, order], name: "colorFamilyId_order")
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('create,read', auth().access != null)
+}
+
+model CaseFields {
+    id                 Int                      @id @default(autoincrement())
+    displayName        String                   @length(1)
+    systemName         String                   @unique @length(1)
+    hint               String?
+    typeId             Int
+    type               CaseFieldTypes           @relation(name: "TypeToCaseFields", fields: [typeId], references: [id])
+    isEnabled          Boolean                  @default(true)
+    isDeleted          Boolean                  @default(false)
+    isRequired         Boolean                  @default(false)
+    isRestricted       Boolean                  @default(false)
+    defaultValue       String?
+    isChecked          Boolean?
+    minValue           Float?
+    maxValue           Float?
+    initialHeight      Int?
+    templates          TemplateCaseAssignment[]
+    fieldOptions       CaseFieldAssignment[]
+    caseFieldValues    CaseFieldValues[]
+    sessionFieldValues SessionFieldValues[]
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN' || auth().access == 'PROJECTADMIN')
+    @@allow('all', auth().access != null) // This is needed in case user has add/edit access to test cases
+}
+
+model ResultFields {
+    id                Int                        @id @default(autoincrement())
+    displayName       String                     @length(1)
+    systemName        String                     @unique @length(1)
+    hint              String?
+    typeId            Int
+    type              CaseFieldTypes             @relation(name: "TypeToResultFields", fields: [typeId], references: [id])
+    isEnabled         Boolean                    @default(true)
+    isDeleted         Boolean                    @default(false)
+    isRequired        Boolean                    @default(false)
+    isRestricted      Boolean                    @default(false)
+    defaultValue      String?
+    isChecked         Boolean?
+    minValue          Float?
+    maxValue          Float?
+    initialHeight     Int?
+    templates         TemplateResultAssignment[]
+    fieldOptions      ResultFieldAssignment[]
+    resultFieldValues ResultFieldValues[]
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model FieldOptions {
+    id           Int                     @id @default(autoincrement())
+    name         String                  @length(1)
+    iconId       Int?
+    icon         FieldIcon?              @relation(fields: [iconId], references: [id], onDelete: SetNull)
+    isEnabled    Boolean                 @default(true)
+    isDeleted    Boolean                 @default(false)
+    iconColorId  Int?
+    iconColor    Color?                  @relation(fields: [iconColorId], references: [id], onDelete: SetNull)
+    isDefault    Boolean                 @default(false)
+    caseFields   CaseFieldAssignment[]
+    resultFields ResultFieldAssignment[]
+    order        Int                     @default(0)
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model CaseFieldTypes {
+    id           Int            @id @default(autoincrement())
+    type         String         @unique @length(1)
+    caseFields   CaseFields[]   @relation("TypeToCaseFields")
+    resultFields ResultFields[] @relation("TypeToResultFields")
+    options      Json?
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model Templates {
+    id              Int                         @id @default(autoincrement())
+    templateName    String                      @unique @length(1)
+    isEnabled       Boolean
+    isDeleted       Boolean                     @default(false)
+    isDefault       Boolean
+    caseFields      TemplateCaseAssignment[]
+    resultFields    TemplateResultAssignment[]
+    projects        TemplateProjectAssignment[]
+    repositoryCases RepositoryCases[]
+    sessions        Sessions[]
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model TemplateProjectAssignment {
+    templateId Int
+    template   Templates @relation(fields: [templateId], references: [id])
+    projectId  Int
+    project    Projects  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+    @@id([templateId, projectId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model TemplateCaseAssignment {
+    caseFieldId Int
+    caseField   CaseFields @relation(fields: [caseFieldId], references: [id], onDelete: Cascade)
+    templateId  Int
+    template    Templates  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+    order       Int        @default(0)
+
+    @@id([caseFieldId, templateId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model TemplateResultAssignment {
+    resultFieldId Int
+    resultField   ResultFields @relation(fields: [resultFieldId], references: [id], onDelete: Cascade)
+    templateId    Int
+    template      Templates    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+    order         Int          @default(0)
+
+    @@id([resultFieldId, templateId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model CaseFieldAssignment {
+    fieldOptionId Int          @default(autoincrement())
+    fieldOption   FieldOptions @relation(fields: [fieldOptionId], references: [id], onDelete: Cascade)
+    caseFieldId   Int
+    caseField     CaseFields   @relation(fields: [caseFieldId], references: [id], onDelete: Cascade)
+
+    @@id([fieldOptionId, caseFieldId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model ResultFieldAssignment {
+    fieldOptionId Int          @default(autoincrement())
+    fieldOption   FieldOptions @relation(fields: [fieldOptionId], references: [id], onDelete: Cascade)
+    resultFieldId Int
+    resultField   ResultFields @relation(fields: [resultFieldId], references: [id], onDelete: Cascade)
+    order         Int          @default(0)
+
+    @@id([fieldOptionId, resultFieldId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model Status {
+    id                 Int                       @id @default(autoincrement())
+    order              Int                       @default(autoincrement())
+    name               String                    @length(1)
+    systemName         String                    @unique @length(1)
+    aliases            String?
+    colorId            Int
+    color              Color                     @relation(fields: [colorId], references: [id])
+    isDeleted          Boolean                   @default(false)
+    isEnabled          Boolean
+    isSuccess          Boolean
+    isFailure          Boolean
+    isCompleted        Boolean
+    scope              StatusScopeAssignment[]
+    projects           ProjectStatusAssignment[]
+    sessionResults     SessionResults[]
+    testRunCases       TestRunCases[]
+    testRunResults     TestRunResults[]
+    testRunStepResults TestRunStepResults[]
+    junitTestResults   JUnitTestResult[]
+    junitTestSteps     JUnitTestStep[]           @relation("JUnitTestStepStatus")
+
+    @@index([isDeleted, isEnabled])
+    @@index([order])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model StatusScope {
+    id       Int                     @id @default(autoincrement())
+    name     String                  @unique @length(1)
+    icon     String?
+    statuses StatusScopeAssignment[]
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model StatusScopeAssignment {
+    statusId Int
+    status   Status      @relation(fields: [statusId], references: [id], onDelete: Cascade)
+    scopeId  Int
+    scope    StatusScope @relation(fields: [scopeId], references: [id])
+
+    @@id([statusId, scopeId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model Workflows {
+    id              Int                         @id @default(autoincrement())
+    order           Int                         @default(autoincrement())
+    name            String                      @length(1)
+    iconId          Int
+    icon            FieldIcon                   @relation(fields: [iconId], references: [id])
+    colorId         Int
+    color           Color                       @relation(fields: [colorId], references: [id])
+    isEnabled       Boolean                     @default(true)
+    isDeleted       Boolean                     @default(false)
+    isDefault       Boolean                     @default(false)
+    workflowType    WorkflowType                @default(NOT_STARTED)
+    scope           WorkflowScope
+    projects        ProjectWorkflowAssignment[]
+    repositoryCases RepositoryCases[]
+    sessions        Sessions[]
+    testRuns        TestRuns[]
+
+    @@index([isDeleted, isEnabled])
+    @@index([scope, isDefault])
+    @@index([order])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum WorkflowType {
+    NOT_STARTED
+    IN_PROGRESS
+    DONE
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum WorkflowScope {
+    CASES
+    RUNS
+    SESSIONS
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model ConfigCategories {
+    id        Int              @id @default(autoincrement())
+    name      String           @length(1)
+    isDeleted Boolean          @default(false)
+    variants  ConfigVariants[]
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model ConfigVariants {
+    id             Int                          @id @default(autoincrement())
+    name           String                       @length(1)
+    isEnabled      Boolean                      @default(true)
+    isDeleted      Boolean                      @default(false)
+    categoryId     Int
+    category       ConfigCategories             @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    configurations ConfigurationConfigVariant[]
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model Configurations {
+    id        Int                          @id @default(autoincrement())
+    name      String                       @length(1)
+    isEnabled Boolean                      @default(true)
+    isDeleted Boolean                      @default(false)
+    variants  ConfigurationConfigVariant[]
+    sessions  Sessions[]
+    testRuns  TestRuns[]
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model ConfigurationConfigVariant {
+    configurationId Int
+    configuration   Configurations @relation(fields: [configurationId], references: [id], onDelete: Cascade)
+    variantId       Int
+    variant         ConfigVariants @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+    @@id([configurationId, variantId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model Tags {
+    id              Int               @id @default(autoincrement())
+    name            String            @unique @length(1)
+    isDeleted       Boolean           @default(false)
+    repositoryCases RepositoryCases[]
+    sessions        Sessions[]
+    testRuns        TestRuns[]
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('create,read,update,delete', auth().access != null)
+}
+
+model Repositories {
+    id         Int                 @id @default(autoincrement())
+    projectId  Int
+    project    Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    isActive   Boolean             @default(true)
+    isArchived Boolean             @default(false)
+    isDeleted  Boolean             @default(false)
+    folders    RepositoryFolders[]
+    cases      RepositoryCases[]
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from project (simplified)
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Update/delete access for project admins
+    @@allow('update,delete',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    // Create access for users with appropriate permissions
+    @@allow('create',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model RepositoryFolders {
+    id           Int                 @id @default(autoincrement())
+    projectId    Int
+    project      Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    repositoryId Int
+    repository   Repositories        @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+    parentId     Int?
+    parent       RepositoryFolders?  @relation("RepositoryFolderParent", fields: [parentId], references: [id], onDelete: Cascade)
+    children     RepositoryFolders[] @relation("RepositoryFolderParent")
+    name         String              @length(1)
+    docs         Json?
+    createdAt    DateTime            @default(now()) @db.Timestamptz(6)
+    creatorId    String
+    creator      User                @relation(fields: [creatorId], references: [id])
+    order        Int                 @default(0)
+    isDeleted    Boolean             @default(false)
+    cases        RepositoryCases[]
+
+    @@unique([projectId, repositoryId, parentId, name, isDeleted])
+    @@index([projectId, repositoryId, isDeleted])
+    @@index([parentId])
+    @@index([order])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Admin override at the top
+    @@allow('all', auth().access == 'ADMIN')
+
+    // Inherit read access from project
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Create/update/delete access for users with repository permissions
+    @@allow('create,update,delete',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' &&
+              (role.name == 'Project Admin' ||
+               role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+              (auth().role.name == 'Project Admin' ||
+               auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])))
+        ] ||
+        (auth().access == 'USER' && auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+}
+
+enum RepositoryCaseSource {
+    MANUAL
+    JUNIT
+    API
+}
+
+enum LinkType {
+    SAME_TEST_DIFFERENT_SOURCE
+    DEPENDS_ON
+}
+
+model RepositoryCaseLink {
+    id          Int             @id @default(autoincrement())
+    caseAId     Int
+    caseA       RepositoryCases @relation("CaseALinks", fields: [caseAId], references: [id], onDelete: Cascade)
+    caseBId     Int
+    caseB       RepositoryCases @relation("CaseBLinks", fields: [caseBId], references: [id], onDelete: Cascade)
+    type        LinkType
+    isDeleted   Boolean         @default(false)
+    createdAt   DateTime        @default(now())
+    createdById String
+    createdBy   User            @relation("UserCreatedCaseLinks", fields: [createdById], references: [id])
+
+    @@unique([caseAId, caseBId, type])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Inherit access from case A's project
+    @@deny('read', caseA.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        caseA.project.creator == auth() ||
+        caseA.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        caseA.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        caseA.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (caseA.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (caseA.project.assignedUsers?[user == auth()] &&
+         caseA.project.defaultAccessType == 'SPECIFIC_ROLE' && caseA.project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on repository permissions
+    @@allow('create,update,delete',
+        caseA.project.creator == auth() ||
+        caseA.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                       (role.name == 'Project Admin' ||
+                                        role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        caseA.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        caseA.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                        ((accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                         (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                          auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model RepositoryCases {
+    id                     Int                      @id @default(autoincrement())
+    projectId              Int
+    project                Projects                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    repositoryId           Int
+    repository             Repositories             @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+    folderId               Int
+    folder                 RepositoryFolders        @relation(fields: [folderId], references: [id], onDelete: Cascade)
+    templateId             Int
+    template               Templates                @relation(fields: [templateId], references: [id])
+    name                   String                   @length(1)
+    className              String?
+    source                 RepositoryCaseSource     @default(MANUAL)
+    stateId                Int
+    state                  Workflows                @relation(fields: [stateId], references: [id])
+    estimate               Int?
+    forecastManual         Int?
+    forecastAutomated      Float?
+    order                  Int                      @default(0)
+    createdAt              DateTime                 @default(now()) @db.Timestamptz(6)
+    creatorId              String
+    creator                User                     @relation(fields: [creatorId], references: [id])
+    automated              Boolean                  @default(false)
+    isArchived             Boolean                  @default(false)
+    isDeleted              Boolean                  @default(false)
+    currentVersion         Int                      @default(1)
+    repositoryCaseVersions RepositoryCaseVersions[]
+    caseFieldValues        CaseFieldValues[]
+    resultFieldValues      ResultFieldValues[]
+    attachments            Attachments[]
+    steps                  Steps[]
+    testRuns               TestRunCases[]
+    tags                   Tags[]
+    issues                 Issue[]
+    junitResults           JUnitTestResult[]        @relation("JUnitResultCase")
+    junitProperties        JUnitProperty[]          @relation("JUnitPropertyCase")
+    junitAttachments       JUnitAttachment[]        @relation("JUnitAttachmentCase")
+    junitTestSteps         JUnitTestStep[]          @relation("JUnitTestStepCase")
+    linksFrom              RepositoryCaseLink[]     @relation("CaseALinks")
+    linksTo                RepositoryCaseLink[]     @relation("CaseBLinks")
+    comments               Comment[]
+
+    @@unique([projectId, name, className, source])
+    @@index([projectId, isDeleted, isArchived])
+    @@index([folderId, order])
+    @@index([repositoryId, isDeleted])
+    @@index([stateId])
+    @@index([automated])
+    @@index([createdAt])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Inherit read access from project
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on role permissions
+    @@allow('create,update,delete',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model RepositoryCaseVersions {
+    id                     Int                      @id @default(autoincrement())
+    repositoryCaseId       Int
+    repositoryCase         RepositoryCases          @relation(fields: [repositoryCaseId], references: [id], onDelete: Cascade)
+    staticProjectId        Int
+    staticProjectName      String                   @length(1)
+    projectId              Int
+    project                Projects                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    repositoryId           Int
+    folderId               Int
+    folderName             String                   @length(1)
+    templateId             Int
+    templateName           String                   @length(1)
+    name                   String                   @length(1)
+    stateId                Int
+    stateName              String                   @length(1)
+    estimate               Int?
+    forecastManual         Int?
+    forecastAutomated      Float?
+    order                  Int                      @default(0)
+    createdAt              DateTime                 @default(now()) @db.Timestamptz(6)
+    creatorId              String
+    creatorName            String                   @length(1)
+    automated              Boolean                  @default(false)
+    isArchived             Boolean                  @default(false)
+    isDeleted              Boolean                  @default(false)
+    version                Int
+    caseFieldVersionValues CaseFieldVersionValues[]
+    steps                  Json?
+    tags                   Json?
+    issues                 Json?
+    links                  Json?
+    attachments            Json?
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Inherit read access from project
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Create/update/delete access for users with repository permissions
+    @@allow('create,update,delete',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model CaseFieldValues {
+    id         Int             @id @default(autoincrement())
+    testCaseId Int
+    testCase   RepositoryCases @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+    fieldId    Int
+    field      CaseFields      @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+    value      Json?
+
+    @@index([testCaseId])
+    @@index([fieldId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Inherit read access from test case's project
+    @@deny('read', testCase.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        testCase.project.creator == auth() ||
+        testCase.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        testCase.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        testCase.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (testCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (testCase.project.assignedUsers?[user == auth()] &&
+         testCase.project.defaultAccessType == 'SPECIFIC_ROLE' && testCase.project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on repository permissions
+    @@allow('create,update,delete',
+        testCase.project.creator == auth() ||
+        testCase.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                          (role.name == 'Project Admin' ||
+                                           role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        testCase.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        testCase.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                           ((accessType == 'SPECIFIC_ROLE' &&
+                                             role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                            (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                             auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model CaseFieldVersionValues {
+    id        Int                    @id @default(autoincrement())
+    versionId Int
+    version   RepositoryCaseVersions @relation(fields: [versionId], references: [id])
+    field     String                 @length(1)
+    value     Json?
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Inherit read access from version's project
+    @@deny('read', version.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        version.project.creator == auth() ||
+        version.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        version.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        version.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (version.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (version.project.assignedUsers?[user == auth()] &&
+         version.project.defaultAccessType == 'SPECIFIC_ROLE' && version.project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on repository permissions
+    @@allow('create,update,delete',
+        version.project.creator == auth() ||
+        version.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                         (role.name == 'Project Admin' ||
+                                          role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        version.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        version.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          ((accessType == 'SPECIFIC_ROLE' &&
+                                            role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                           (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                            auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model ResultFieldValues {
+    id               Int              @id @default(autoincrement())
+    testCaseId       Int?
+    testCase         RepositoryCases? @relation(fields: [testCaseId], references: [id])
+    fieldId          Int
+    field            ResultFields     @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+    value            Json?
+    sessionResultsId Int?
+    sessionResults   SessionResults?  @relation(fields: [sessionResultsId], references: [id], onDelete: Cascade)
+    testRunResultsId Int?
+    testRunResults   TestRunResults?  @relation(fields: [testRunResultsId], references: [id], onDelete: Cascade)
+
+    @@index([testRunResultsId])
+    @@index([sessionResultsId])
+    @@index([fieldId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+    @@allow('create', auth() != null)
+}
+
+model Attachments {
+    id                  Int                 @id @default(autoincrement())
+    testCaseId          Int?
+    testCase            RepositoryCases?    @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+    url                 String
+    name                String              @length(1)
+    note                String?
+    isDeleted           Boolean             @default(false)
+    mimeType            String              @length(1)
+    size                BigInt
+    createdAt           DateTime            @default(now()) @db.Timestamptz(6)
+    createdById         String
+    createdBy           User                @relation(fields: [createdById], references: [id])
+    sessionId           Int?
+    session             Sessions?           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+    sessionResults      SessionResults?     @relation(fields: [sessionResultsId], references: [id], onDelete: Cascade)
+    sessionResultsId    Int?
+    testRuns            TestRuns?           @relation(fields: [testRunsId], references: [id], onDelete: Cascade)
+    testRunsId          Int?
+    testRunResultsId    Int?
+    testRunResults      TestRunResults?     @relation(fields: [testRunResultsId], references: [id], onDelete: Cascade)
+    testRunStepResultId Int?
+    testRunStepResult   TestRunStepResults? @relation(fields: [testRunStepResultId], references: [id], onDelete: Cascade)
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('create, read, update', auth().access != null)
+}
+
+model Steps {
+    id                Int                  @id @default(autoincrement())
+    isDeleted         Boolean              @default(false)
+    step              Json?
+    expectedResult    Json?
+    testCaseId        Int
+    testCase          RepositoryCases      @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+    order             Int                  @default(0)
+    stepResults       TestRunStepResults[]
+    sharedStepGroupId Int?
+    sharedStepGroup   SharedStepGroup?     @relation(fields: [sharedStepGroupId], references: [id], onDelete: SetNull)
+
+    @@index([testCaseId])
+    @@index([sharedStepGroupId])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Inherit read access from test case's project
+    @@deny('read', testCase.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        testCase.project.creator == auth() ||
+        testCase.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        testCase.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        testCase.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (testCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (testCase.project.assignedUsers?[user == auth()] &&
+         testCase.project.defaultAccessType == 'SPECIFIC_ROLE' && testCase.project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on repository permissions
+    @@allow('create,update,delete',
+        testCase.project.creator == auth() ||
+        testCase.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                          (role.name == 'Project Admin' ||
+                                           role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        testCase.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        testCase.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                           ((accessType == 'SPECIFIC_ROLE' &&
+                                             role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                            (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                             auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model Sessions {
+    id                 Int                  @id @default(autoincrement())
+    projectId          Int
+    project            Projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    templateId         Int
+    template           Templates            @relation(fields: [templateId], references: [id])
+    name               String               @length(1)
+    note               Json?
+    mission            Json?
+    configId           Int?
+    configuration      Configurations?      @relation(fields: [configId], references: [id], onDelete: SetNull)
+    milestoneId        Int?
+    milestone          Milestones?          @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+    stateId            Int
+    state              Workflows            @relation(fields: [stateId], references: [id])
+    assignedToId       String?
+    assignedTo         User?                @relation("SessionAssignedTo", fields: [assignedToId], references: [id])
+    estimate           Int?
+    forecastManual     Int?
+    forecastAutomated  Float?
+    elapsed            Int?
+    isCompleted        Boolean              @default(false)
+    isDeleted          Boolean              @default(false)
+    completedAt        DateTime?
+    createdAt          DateTime             @default(now()) @db.Timestamptz(6)
+    createdById        String
+    createdBy          User                 @relation("SessionCreatedBy", fields: [createdById], references: [id])
+    currentVersion     Int                  @default(1)
+    sessionResults     SessionResults[]
+    sessionFieldValues SessionFieldValues[]
+    versions           SessionVersions[]
+    attachments        Attachments[]
+    tags               Tags[]
+    issues             Issue[]
+    comments           Comment[]
+
+    @@index([projectId, isDeleted])
+    @@index([createdById])
+    @@index([assignedToId])
+    @@index([stateId])
+    @@index([isCompleted, createdAt])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Read access - inherit from project (simplified)
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Create access for users with session permissions
+    @@allow('create',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'Sessions' && canAddEdit])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'Sessions' && canAddEdit]]
+    )
+
+    // Update/delete access
+    @@allow('update,delete',
+        auth().id == createdById ||
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'Sessions' && (canAddEdit || canDelete)])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model SessionResults {
+    id                Int                 @id @default(autoincrement())
+    isDeleted         Boolean             @default(false)
+    sessionId         Int
+    session           Sessions            @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+    resultData        Json?
+    createdAt         DateTime            @default(now()) @db.Timestamptz(6)
+    createdById       String
+    createdBy         User                @relation(fields: [createdById], references: [id])
+    statusId          Int
+    status            Status              @relation(fields: [statusId], references: [id])
+    elapsed           Int?
+    attachments       Attachments[]
+    resultFieldValues ResultFieldValues[]
+    issues            Issue[]
+
+    @@index([sessionId])
+    @@index([statusId])
+    @@index([createdAt])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', session.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from session's project
+    @@allow('read',
+        session.project.creator == auth() ||
+        session.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        session.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        session.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (session.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (session.project.assignedUsers?[user == auth()] &&
+         session.project.defaultAccessType == 'SPECIFIC_ROLE' && session.project.defaultRole != null)
+    )
+
+    // Create access for users with session result permissions
+    @@allow('create',
+        session.project.creator == auth() ||
+        session.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                         (role.name == 'Project Admin' ||
+                                          role.rolePermissions?[area == 'SessionResults' && canAddEdit])] ||
+        session.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    // Update/delete access
+    @@allow('update,delete',
+        auth().id == createdById ||
+        session.project.creator == auth() ||
+        session.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        session.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model SessionVersions {
+    id                Int       @id @default(autoincrement())
+    sessionId         Int
+    session           Sessions  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+    name              String    @length(1)
+    staticProjectId   Int
+    staticProjectName String    @length(1)
+    projectId         Int
+    project           Projects  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    templateId        Int
+    templateName      String    @length(1)
+    configId          Int?
+    configurationName String?
+    milestoneId       Int?
+    milestoneName     String?
+    stateId           Int
+    stateName         String    @length(1)
+    assignedToId      String?
+    assignedToName    String?
+    createdById       String
+    createdByName     String    @length(1)
+    estimate          Int?
+    forecastManual    Int?
+    forecastAutomated Float?
+    elapsed           Int?
+    note              Json?
+    mission           Json?
+    isCompleted       Boolean
+    completedAt       DateTime?
+    createdAt         DateTime  @default(now())
+    updatedAt         DateTime  @updatedAt
+    version           Int
+    tags              Json?
+    attachments       Json?
+    issues            Json?
+
+    @@unique([sessionId, version])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Inherit read access from project
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Create access (for versioning)
+    @@allow('create',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'Sessions' && canAddEdit])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model SessionFieldValues {
+    id        Int        @id @default(autoincrement())
+    sessionId Int
+    session   Sessions   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+    fieldId   Int
+    field     CaseFields @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+    value     Json?
+
+    @@index([sessionId])
+    @@index([fieldId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Inherit read access from session's project
+    @@deny('read', session.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        session.project.creator == auth() ||
+        session.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        session.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        session.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (session.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (session.project.assignedUsers?[user == auth()] &&
+         session.project.defaultAccessType == 'SPECIFIC_ROLE' && session.project.defaultRole != null)
+    )
+
+    // Create/update/delete access inherits from session permissions
+    @@allow('create,update,delete',
+        session.project.creator == auth() ||
+        session.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                        (role.name == 'Project Admin' ||
+                                         role.rolePermissions?[area == 'Sessions' && canAddEdit])] ||
+        session.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model TestRuns {
+    id                   Int              @id @default(autoincrement())
+    projectId            Int
+    project              Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    name                 String           @length(1)
+    note                 Json?
+    docs                 Json?
+    configId             Int?
+    configuration        Configurations?  @relation(fields: [configId], references: [id], onDelete: SetNull)
+    milestoneId          Int?
+    milestone            Milestones?      @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+    stateId              Int
+    state                Workflows        @relation(fields: [stateId], references: [id])
+    forecastManual       Int?
+    forecastAutomated    Float?
+    elapsed              Int?
+    isCompleted          Boolean          @default(false)
+    isDeleted            Boolean          @default(false)
+    completedAt          DateTime?
+    createdAt            DateTime         @default(now()) @db.Timestamptz(6)
+    createdById          String
+    createdBy            User             @relation("TestRunCreatedBy", fields: [createdById], references: [id])
+    attachments          Attachments[]
+    testCases            TestRunCases[]
+    results              TestRunResults[]
+    tags                 Tags[]
+    issues               Issue[]
+    testRunType          TestRunType      @default(REGULAR)
+    junitTestSuites      JUnitTestSuite[]
+    comments             Comment[]
+    configurationGroupId String?
+
+    @@index([projectId, isDeleted])
+    @@index([createdById])
+    @@index([stateId])
+    @@index([isCompleted, createdAt])
+    @@index([testRunType])
+    @@index([configurationGroupId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Read access - inherit from project (simplified)
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Create access for users with test run permissions
+    @@allow('create',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'TestRuns' && canAddEdit])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'TestRuns' && canAddEdit]]
+    )
+
+    // Update/delete access
+    @@allow('update,delete',
+        auth().id == createdById ||
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+enum TestRunType {
+    REGULAR
+    JUNIT
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model TestRunCases {
+    id               Int              @id @default(autoincrement())
+    testRunId        Int
+    testRun          TestRuns         @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+    repositoryCaseId Int
+    repositoryCase   RepositoryCases  @relation(fields: [repositoryCaseId], references: [id], onDelete: Cascade)
+    order            Int              @default(0)
+    statusId         Int?
+    status           Status?          @relation(fields: [statusId], references: [id])
+    assignedToId     String?
+    assignedTo       User?            @relation(fields: [assignedToId], references: [id])
+    isCompleted      Boolean          @default(false)
+    notes            Json?
+    startedAt        DateTime?
+    completedAt      DateTime?
+    elapsed          Int?
+    createdAt        DateTime         @default(now()) @db.Timestamptz(6)
+    results          TestRunResults[]
+
+    @@unique([testRunId, repositoryCaseId])
+    @@index([testRunId])
+    @@index([repositoryCaseId])
+    @@index([assignedToId])
+    @@index([statusId])
+    @@index([isCompleted])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from test run's project
+    @@allow('read',
+        testRun.project.creator == auth() ||
+        testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        testRun.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (testRun.project.assignedUsers?[user == auth()] &&
+         testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRun.project.defaultRole != null)
+    )
+
+    // Create access - creator or users with test run permissions
+    @@allow('create',
+        auth().id == testRun.createdById ||
+        testRun.project.creator == auth() ||
+        testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                         (role.name == 'Project Admin' ||
+                                          role.rolePermissions?[area == 'TestRuns' && canAddEdit])] ||
+        testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    // Update access - creator, assignee, or admin
+    @@allow('update',
+        auth().id == testRun.createdById ||
+        auth().id == assignedToId ||
+        testRun.project.creator == auth() ||
+        testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                         (role.name == 'Project Admin' ||
+                                          role.rolePermissions?[area == 'TestRuns' && canAddEdit])] ||
+        testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model TestRunResults {
+    id                 Int                  @id @default(autoincrement())
+    testRunId          Int
+    testRun            TestRuns             @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+    testRunCaseId      Int
+    testRunCase        TestRunCases         @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
+    testRunCaseVersion Int                  @default(1)
+    statusId           Int
+    status             Status               @relation(fields: [statusId], references: [id])
+    executedById       String
+    executedBy         User                 @relation(fields: [executedById], references: [id])
+    executedAt         DateTime             @default(now()) @db.Timestamptz(6)
+    editedById         String?
+    editedBy           User?                @relation("TestRunResultEditor", fields: [editedById], references: [id])
+    editedAt           DateTime?
+    elapsed            Int?
+    notes              Json?
+    evidence           Json?
+    attachments        Attachments[]
+    resultFieldValues  ResultFieldValues[]
+    attempt            Int                  @default(1)
+    stepResults        TestRunStepResults[]
+    isDeleted          Boolean              @default(false)
+    issues             Issue[]
+
+    @@index([testRunCaseId])
+    @@index([executedById])
+    @@index([statusId])
+    @@index([executedAt])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from test run's project
+    @@allow('read',
+        testRun.project.creator == auth() ||
+        testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        testRun.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (testRun.project.assignedUsers?[user == auth()] &&
+         testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRun.project.defaultRole != null)
+    )
+
+    // Create/update access - executor or users with result permissions
+    @@allow('create,update',
+        auth().id == executedById ||
+        testRun.project.creator == auth() ||
+        testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                         (role.name == 'Project Admin' ||
+                                          role.rolePermissions?[area == 'TestRunResults' && canAddEdit])] ||
+        testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model TestRunStepResults {
+    id               Int             @id @default(autoincrement())
+    testRunResultId  Int
+    testRunResult    TestRunResults  @relation(fields: [testRunResultId], references: [id])
+    stepId           Int
+    step             Steps           @relation(fields: [stepId], references: [id], onDelete: Cascade)
+    sharedStepItemId Int?
+    sharedStepItem   SharedStepItem? @relation(fields: [sharedStepItemId], references: [id], onDelete: SetNull, map: "test_run_step_results_shared_step_item_id_fkey")
+    statusId         Int
+    stepStatus       Status          @relation(fields: [statusId], references: [id])
+    notes            Json?
+    evidence         Json?
+    executedAt       DateTime        @default(now()) @db.Timestamptz(6)
+    elapsed          Int?
+    attachments      Attachments[]
+    isDeleted        Boolean         @default(false)
+    issues           Issue[]
+
+    @@index([sharedStepItemId])
+    @@unique([testRunResultId, stepId, sharedStepItemId], map: "uq_tsr_res_step_shareditem")
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', testRunResult.testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from test run result's project
+    @@allow('read',
+        testRunResult.testRun.project.creator == auth() ||
+        testRunResult.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        testRunResult.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        testRunResult.testRun.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (testRunResult.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (testRunResult.testRun.project.assignedUsers?[user == auth()] &&
+         testRunResult.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRunResult.testRun.project.defaultRole != null)
+    )
+
+    // Create/update access - executor or users with result permissions
+    @@allow('create,update',
+        auth().id == testRunResult.executedById ||
+        testRunResult.testRun.project.creator == auth() ||
+        testRunResult.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                                       (role.name == 'Project Admin' ||
+                                                        role.rolePermissions?[area == 'TestRunResults' && canAddEdit])] ||
+        testRunResult.testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model Issue {
+    id                 Int                  @id @default(autoincrement())
+    name               String               @length(1)
+    title              String               @length(1)
+    description        String?
+    status             String?
+    priority           String?              @default("medium")
+    externalId         String?
+    externalKey        String?
+    externalUrl        String?              @url
+    externalStatus     String?
+    externalData       Json?
+    issueTypeId        String?
+    issueTypeName      String?
+    issueTypeIconUrl   String?
+    lastSyncedAt       DateTime?            @db.Timestamptz(6)
+    data               Json?
+    note               Json?
+    isDeleted          Boolean              @default(false)
+    createdAt          DateTime             @default(now()) @db.Timestamptz(6)
+    createdById        String
+    createdBy          User                 @relation("IssueCreator", fields: [createdById], references: [id])
+    repositoryCases    RepositoryCases[]
+    sessions           Sessions[]
+    sessionResults     SessionResults[]
+    testRuns           TestRuns[]
+    testRunResults     TestRunResults[]
+    testRunStepResults TestRunStepResults[]
+    projectId          Int?
+    project            Projects?            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    integrationId      Int?
+    integration        Integration?         @relation(fields: [integrationId], references: [id], onDelete: SetNull)
+
+    @@unique([externalId, integrationId])
+    @@index([externalId])
+    @@index([createdById])
+    @@index([projectId])
+    @@index([integrationId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('create, read, update', auth().access != null)
+}
+
+enum IntegrationProvider {
+    JIRA
+    GITHUB
+    AZURE_DEVOPS
+    SIMPLE_URL
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum LlmProvider {
+    OPENAI
+    ANTHROPIC
+    AZURE_OPENAI
+    GEMINI
+    OLLAMA
+    CUSTOM_LLM
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum IntegrationAuthType {
+    NONE
+    OAUTH2
+    PERSONAL_ACCESS_TOKEN
+    API_KEY
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum IntegrationStatus {
+    ACTIVE
+    INACTIVE
+    ERROR
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model Integration {
+    id                   Int                   @id @default(autoincrement())
+    name                 String                @length(1)
+    provider             IntegrationProvider
+    authType             IntegrationAuthType
+    status               IntegrationStatus     @default(INACTIVE)
+    credentials          Json                     // Encrypted OAuth credentials or API keys
+    settings             Json?                    // Provider-specific settings
+    lastSyncAt           DateTime?
+    isDeleted            Boolean               @default(false)
+    createdAt            DateTime              @default(now())
+    updatedAt            DateTime              @updatedAt
+    userIntegrationAuths UserIntegrationAuth[]
+    projectIntegrations  ProjectIntegration[]
+    issues               Issue[]
+
+    @@unique([name])
+    @@index([provider, status])
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// ============================================
+// LLM/AI Models - Completely separate from Issue Tracking
+// ============================================
+
+model LlmIntegration {
+    id                     Int                     @id @default(autoincrement())
+    name                   String                  @length(1)
+    provider               LlmProvider
+    status                 IntegrationStatus       @default(INACTIVE)
+    credentials            Json                  // Encrypted API keys
+    settings               Json?                 // Provider-specific settings
+    isDeleted              Boolean                 @default(false)
+    createdAt              DateTime                @default(now())
+    updatedAt              DateTime                @updatedAt
+    llmProviderConfig      LlmProviderConfig?
+    ollamaModelRegistry    OllamaModelRegistry[]
+    llmUsages              LlmUsage[]
+    llmFeatureConfigs      LlmFeatureConfig[]
+    llmResponseCaches      LlmResponseCache[]
+    projectLlmIntegrations ProjectLlmIntegration[]
+    llmPromptTemplates     LlmPromptTemplate[]
+    llmRateLimits          LlmRateLimit[]
+
+    @@unique([name])
+    @@index([provider, status])
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model ProjectLlmIntegration {
+    id               String         @id @default(cuid())
+    projectId        Int
+    project          Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    llmIntegrationId Int
+    llmIntegration   LlmIntegration @relation(fields: [llmIntegrationId], references: [id], onDelete: Cascade)
+    config           Json?            // Project-specific LLM configuration
+    isActive         Boolean        @default(true)
+    createdAt        DateTime       @default(now()) @db.Timestamptz(6)
+    updatedAt        DateTime       @updatedAt
+
+    @@unique([projectId, llmIntegrationId])
+    @@index([projectId, isActive])
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+    @@allow('all', auth().access == 'ADMIN' || auth().access == 'PROJECTADMIN')
+}
+
+model UserIntegrationAuth {
+    id             String      @id @default(cuid())
+    userId         String
+    user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    integrationId  Int
+    integration    Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+    accessToken    String                // Encrypted user-specific access token
+    refreshToken   String?               // Encrypted refresh token (for OAuth)
+    tokenExpiresAt DateTime?
+    additionalData Json?                 // Provider-specific user data
+    isActive       Boolean     @default(true)
+    lastUsedAt     DateTime?
+    createdAt      DateTime    @default(now())
+    updatedAt      DateTime    @updatedAt
+
+    @@unique([userId, integrationId])
+    @@index([integrationId, isActive])
+    @@deny('all', !auth())
+    @@allow('read', auth().id == userId || auth().access == 'ADMIN')
+    @@allow('create,update,delete', auth().id == userId)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+enum ApplicationArea {
+    Documentation
+    Milestones
+    TestCaseRepository
+    TestCaseRestrictedFields
+    TestRuns
+    ClosedTestRuns
+    TestRunResults
+    TestRunResultRestrictedFields
+    Sessions
+    SessionsRestrictedFields
+    ClosedSessions
+    SessionResults
+    Tags
+    SharedSteps
+    Issues
+    IssueIntegration
+    Forecasting
+    Reporting
+    Settings
+
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum ProjectAccessType {
+    DEFAULT
+    NO_ACCESS
+    GLOBAL_ROLE
+    SPECIFIC_ROLE
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model RolePermission {
+    roleId     Int
+    role       Roles           @relation(fields: [roleId], references: [id], onDelete: Cascade)
+    area       ApplicationArea
+    canAddEdit Boolean         @default(false)
+    canDelete  Boolean         @default(false)
+    canClose   Boolean         @default(false)
+
+    @@id([roleId, area])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model UserProjectPermission {
+    userId     String
+    user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+    projectId  Int
+    project    Projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    accessType ProjectAccessType @default(DEFAULT)
+    roleId     Int?
+    role       Roles?            @relation("UserProjectRole", fields: [roleId], references: [id], onDelete: SetNull)
+
+    @@id([userId, projectId])
+
+    // Access policies - only admins and project admins can manage explicit permissions
+    @@deny('all', !auth())
+
+    // System admins have full access
+    @@allow('all', auth().access == 'ADMIN')
+
+    // Project creators can manage permissions
+    @@allow('all', project.creator == auth())
+
+    // Project admins can manage permissions
+    @@allow('all', project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'])
+
+    // Users with explicit project admin role can manage permissions
+    @@allow('all', project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'])
+
+    // Users can read their own permissions
+    @@allow('read', user == auth())
+
+    // Project members can see other members' permissions
+    @@allow('read', project.assignedUsers?[user == auth()])
+
+    // Validate that SPECIFIC_ROLE requires a roleId
+    @@deny('create,update', accessType == 'SPECIFIC_ROLE' && roleId == null)
+}
+
+model GroupProjectPermission {
+    groupId    Int
+    group      Groups            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+    projectId  Int
+    project    Projects          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    accessType ProjectAccessType @default(DEFAULT)
+    roleId     Int?
+    role       Roles?            @relation("GroupProjectRole", fields: [roleId], references: [id], onDelete: SetNull)
+
+    @@id([groupId, projectId])
+
+    // Access policies
+    @@deny('all', !auth())
+
+    // System admins have full access
+    @@allow('all', auth().access == 'ADMIN')
+
+    // Project creators can manage permissions
+    @@allow('all', project.creator == auth())
+
+    // Project admins can manage permissions
+    @@allow('all', project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'])
+
+    // Users with explicit project admin role can manage permissions
+    @@allow('all', project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'])
+
+    // Group members can read their group's permissions
+    @@allow('read', group.assignedUsers?[user == auth()])
+
+    // Project members can see group permissions
+    @@allow('read', project.assignedUsers?[user == auth()])
+
+    // Validate that SPECIFIC_ROLE requires a roleId
+    @@deny('create,update', accessType == 'SPECIFIC_ROLE' && roleId == null)
+}
+
+model JUnitTestSuite {
+    id          Int               @id @default(autoincrement())
+    name        String            @length(1)
+    time        Float?
+    tests       Int?
+    failures    Int?
+    errors      Int?
+    skipped     Int?
+    assertions  Int?
+    timestamp   DateTime?
+    file        String?
+    properties  JUnitProperty[]
+    systemOut   String?
+    systemErr   String?
+    results     JUnitTestResult[]
+    parentId    Int?
+    parent      JUnitTestSuite?   @relation("TestSuiteParent", fields: [parentId], references: [id], onDelete: Cascade)
+    children    JUnitTestSuite[]  @relation("TestSuiteParent")
+    testRunId   Int
+    testRun     TestRuns          @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+    createdAt   DateTime          @default(now()) @db.Timestamptz(6)
+    createdById String
+    createdBy   User              @relation(fields: [createdById], references: [id])
+
+    @@index([testRunId])
+    @@index([parentId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Allow read if user has access to the project through any means
+    @@allow('read',
+        testRun.project.creator == auth() ||
+        testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        testRun.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+        (testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (testRun.project.assignedUsers?[user == auth()] &&
+         testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRun.project.defaultRole != null)
+    )
+    @@allow('create,update', auth().id == createdById)
+    @@allow('all', auth().access == 'PROJECTADMIN' || auth().access == 'ADMIN')
+}
+
+model JUnitTestResult {
+    id               Int             @id @default(autoincrement())
+    type             JUnitResultType
+    message          String?
+    content          String?
+    repositoryCaseId Int
+    repositoryCase   RepositoryCases @relation("JUnitResultCase", fields: [repositoryCaseId], references: [id], onDelete: Cascade)
+    executedAt       DateTime?       @db.Timestamptz(6)
+    time             Float?
+    assertions       Int?
+    file             String?
+    line             Int?
+    systemOut        String?
+    systemErr        String?
+    testSuiteId      Int
+    testSuite        JUnitTestSuite  @relation(fields: [testSuiteId], references: [id], onDelete: Cascade)
+    createdAt        DateTime        @default(now()) @db.Timestamptz(6)
+    createdById      String
+    createdBy        User            @relation(fields: [createdById], references: [id])
+    statusId         Int?
+    status           Status?         @relation(fields: [statusId], references: [id])
+
+    @@index([testSuiteId])
+    @@index([repositoryCaseId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial (through test suite's test run)
+    @@deny('read', testSuite.testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from test suite's project
+    @@allow('read',
+        testSuite.testRun.project.creator == auth() ||
+        testSuite.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        testSuite.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        testSuite.testRun.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+        (testSuite.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (testSuite.testRun.project.assignedUsers?[user == auth()] &&
+         testSuite.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testSuite.testRun.project.defaultRole != null)
+    )
+
+    @@allow('create,update', auth().id == createdById)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model JUnitProperty {
+    id               Int              @id @default(autoincrement())
+    name             String           @length(1)
+    value            String?
+    testSuiteId      Int?
+    testSuite        JUnitTestSuite?  @relation(fields: [testSuiteId], references: [id], onDelete: Cascade)
+    repositoryCaseId Int?
+    repositoryCase   RepositoryCases? @relation("JUnitPropertyCase", fields: [repositoryCaseId], references: [id], onDelete: Cascade)
+    createdAt        DateTime         @default(now()) @db.Timestamptz(6)
+    createdById      String
+    createdBy        User             @relation(fields: [createdById], references: [id])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial (check both possible relations)
+    @@deny('read',
+        (testSuite != null && testSuite.testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS']) ||
+        (repositoryCase != null && repositoryCase.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+    )
+
+    // Inherit read access from either test suite's project or repository case's project
+    @@allow('read',
+    // Through test suite
+        (testSuite != null && (
+            testSuite.testRun.project.creator == auth() ||
+            testSuite.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+            testSuite.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+            testSuite.testRun.project.groupPermissions?[
+                group.assignedUsers?[user == auth()] &&
+                accessType == 'SPECIFIC_ROLE' && role != null
+            ] ||
+            (testSuite.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+            (testSuite.testRun.project.assignedUsers?[user == auth()] &&
+             testSuite.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testSuite.testRun.project.defaultRole != null)
+        )) ||
+    // Through repository case
+        (repositoryCase != null && (
+            repositoryCase.project.creator == auth() ||
+            repositoryCase.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+            repositoryCase.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+            repositoryCase.project.groupPermissions?[
+                group.assignedUsers?[user == auth()] &&
+                accessType == 'SPECIFIC_ROLE' && role != null
+            ] ||
+            (repositoryCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+            (repositoryCase.project.assignedUsers?[user == auth()] &&
+             repositoryCase.project.defaultAccessType == 'SPECIFIC_ROLE' && repositoryCase.project.defaultRole != null)
+        ))
+    )
+
+    @@allow('create,update', auth().id == createdById)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model JUnitAttachment {
+    id               Int                 @id @default(autoincrement())
+    name             String              @length(1)
+    value            String              @length(1)
+    type             JUnitAttachmentType
+    repositoryCaseId Int
+    repositoryCase   RepositoryCases     @relation("JUnitAttachmentCase", fields: [repositoryCaseId], references: [id], onDelete: Cascade)
+    createdAt        DateTime            @default(now()) @db.Timestamptz(6)
+    createdById      String
+    createdBy        User                @relation(fields: [createdById], references: [id])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', repositoryCase.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from repository case's project
+    @@allow('read',
+        repositoryCase.project.creator == auth() ||
+        repositoryCase.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        repositoryCase.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        repositoryCase.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+        (repositoryCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (repositoryCase.project.assignedUsers?[user == auth()] &&
+         repositoryCase.project.defaultAccessType == 'SPECIFIC_ROLE' && repositoryCase.project.defaultRole != null)
+    )
+
+    @@allow('create,update', auth().id == createdById)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model JUnitTestStep {
+    id               Int             @id @default(autoincrement())
+    name             String          @length(1)
+    content          String?
+    statusId         Int?
+    stepStatus       Status?         @relation("JUnitTestStepStatus", fields: [statusId], references: [id])
+    repositoryCaseId Int
+    repositoryCase   RepositoryCases @relation("JUnitTestStepCase", fields: [repositoryCaseId], references: [id], onDelete: Cascade)
+    createdAt        DateTime        @default(now()) @db.Timestamptz(6)
+    createdById      String
+    createdBy        User            @relation(fields: [createdById], references: [id])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', repositoryCase.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from repository case's project
+    @@allow('read',
+        repositoryCase.project.creator == auth() ||
+        repositoryCase.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        repositoryCase.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        repositoryCase.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+        (repositoryCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (repositoryCase.project.assignedUsers?[user == auth()] &&
+         repositoryCase.project.defaultAccessType == 'SPECIFIC_ROLE' && repositoryCase.project.defaultRole != null)
+    )
+
+    @@allow('create,update', auth().id == createdById)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+enum JUnitResultType {
+    PASSED
+    FAILURE
+    ERROR
+    SKIPPED
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+enum JUnitAttachmentType {
+    FILE
+    URL
+    INLINE
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model SharedStepGroup {
+    id               Int              @id @default(autoincrement())
+    name             String
+    projectId        Int
+    project          Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    isDeleted        Boolean          @default(false)
+    deletedAt        DateTime?        @db.Timestamptz(6)
+    createdAt        DateTime         @default(now()) @db.Timestamptz(6)
+    updatedAt        DateTime         @updatedAt @db.Timestamptz(6)
+    createdById      String
+    createdBy        User             @relation(fields: [createdById], references: [id])
+    items            SharedStepItem[]
+    placeholderSteps Steps[]
+
+    @@index([projectId])
+    @@index([createdById])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Inherit read access from project
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on shared steps permissions
+    @@allow('create,update,delete',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model SharedStepItem {
+    id                 Int                  @id @default(autoincrement())
+    sharedStepGroupId  Int
+    sharedStepGroup    SharedStepGroup      @relation(fields: [sharedStepGroupId], references: [id], onDelete: Cascade)
+    order              Int
+    step               Json
+    expectedResult     Json
+    createdAt          DateTime             @default(now()) @db.Timestamptz(6)
+    updatedAt          DateTime             @updatedAt @db.Timestamptz(6)
+    testRunStepResults TestRunStepResults[]
+
+    @@index([sharedStepGroupId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', sharedStepGroup.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from shared step group's project
+    @@allow('read',
+        sharedStepGroup.project.creator == auth() ||
+        sharedStepGroup.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        sharedStepGroup.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        sharedStepGroup.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (sharedStepGroup.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (sharedStepGroup.project.assignedUsers?[user == auth()] &&
+         sharedStepGroup.project.defaultAccessType == 'SPECIFIC_ROLE' && sharedStepGroup.project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on shared steps permissions
+    @@allow('create,update,delete',
+        sharedStepGroup.project.creator == auth() ||
+        sharedStepGroup.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                                 (role.name == 'Project Admin' ||
+                                                  role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
+        sharedStepGroup.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model Notification {
+    id                String           @id @default(cuid())
+    userId            String
+    user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+    type              NotificationType
+    title             String
+    message           String
+    data              Json?
+    isRead            Boolean          @default(false)
+    isDeleted         Boolean          @default(false)
+    relatedEntityId   String?
+    relatedEntityType String?
+    createdAt         DateTime         @default(now()) @db.Timestamptz(6)
+    updatedAt         DateTime         @updatedAt
+
+    @@index([userId, isRead, isDeleted])
+    @@index([createdAt])
+    @@index([type])
+    @@deny('all', !auth())
+    @@allow('read', auth().id == userId)
+    @@allow('update', auth().id == userId && (future().isRead != isRead || future().isDeleted != isDeleted))
+    @@allow('create', auth().access != null)
+    @@allow('all', auth().access == 'ADMIN')
+}
+model ProjectIntegration {
+    id            String      @id @default(cuid())
+    projectId     Int
+    project       Projects    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    integrationId Int
+    integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+    config        Json?               // Project-specific integration configuration
+    fieldMappings Json?               // Custom field mappings for this project
+    isActive      Boolean     @default(true)
+    lastSyncAt    DateTime?   @db.Timestamptz(6)
+    syncStatus    String?             // Current sync status (syncing, completed, error, etc.)
+    syncError     String?             // Last sync error message
+    issueCount    Int         @default(0)
+    createdAt     DateTime    @default(now()) @db.Timestamptz(6)
+    updatedAt     DateTime    @updatedAt
+
+    @@unique([projectId, integrationId])
+    @@index([integrationId])
+    @@index([isActive])
+    @@deny('all', !auth())
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Read access - inherit from project (simplified)
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Only project admins can manage integrations
+    @@allow('create,update,delete',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+// LLM Integration Models
+
+model LlmProviderConfig {
+    id                   Int             @id @default(autoincrement())
+    llmIntegrationId     Int?            @unique  // Made optional for migration
+    llmIntegration       LlmIntegration? @relation(fields: [llmIntegrationId], references: [id], onDelete: Cascade)
+
+    // Model configuration
+    defaultModel         String   // e.g., "gpt-4", "claude-3-opus", "llama2"
+    availableModels      Json     // Array of available models with their configs
+
+    // Rate limiting
+    maxTokensPerRequest  Int             @default(4096)
+    maxRequestsPerMinute Int             @default(60)
+    maxRequestsPerDay    Int?      // Optional daily limit
+
+    // Cost tracking (0 for Ollama since it's local)
+    costPerInputToken    Decimal         @db.Decimal(10, 8)
+    costPerOutputToken   Decimal         @db.Decimal(10, 8)
+    monthlyBudget        Decimal?        @db.Decimal(10, 2)
+
+    // Settings
+    defaultTemperature   Float           @default(0.7)
+    defaultMaxTokens     Int             @default(2048)
+    timeout              Int             @default(30000) // milliseconds
+    retryAttempts        Int             @default(3)
+    streamingEnabled     Boolean         @default(false) // Ollama supports streaming
+    isDefault            Boolean         @default(false) // Whether this is the default LLM provider
+
+    // Ollama-specific settings (stored in settings Json)
+    settings             Json?     // Contains baseUrl, keepAlive, numGpu, etc.
+
+    createdAt            DateTime        @default(now()) @db.Timestamptz(6)
+    updatedAt            DateTime        @updatedAt
+
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model OllamaModelRegistry {
+    id               String         @id @default(cuid())
+    llmIntegrationId Int
+    llmIntegration   LlmIntegration @relation(fields: [llmIntegrationId], references: [id])
+
+    // Model information
+    modelName        String   // e.g., "llama2", "mistral", "phi-2"
+    modelTag         String         @default("latest") // e.g., "latest", "7b", "13b"
+    modelSize        BigInt?  // Size in bytes
+    digest           String?  // Model digest for verification
+
+    // Model capabilities
+    contextWindow    Int            @default(2048)
+    capabilities     Json     // ["text", "code", "embeddings"]
+    quantization     String?  // e.g., "Q4_0", "Q5_K_M"
+
+    // Status
+    isInstalled      Boolean        @default(false)
+    isPulling        Boolean        @default(false)
+    pullProgress     Float?   // 0.0 to 1.0
+    lastUsedAt       DateTime?
+    installedAt      DateTime?
+    createdAt        DateTime       @default(now()) @db.Timestamptz(6)
+    updatedAt        DateTime       @updatedAt
+
+    @@unique([llmIntegrationId, modelName, modelTag])
+    @@index([llmIntegrationId, isInstalled])
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model LlmUsage {
+    id               String          @id @default(cuid())
+    llmIntegrationId Int?     // Made optional for migration
+    llmIntegration   LlmIntegration? @relation(fields: [llmIntegrationId], references: [id])
+    projectId        Int?
+    project          Projects?       @relation(fields: [projectId], references: [id])
+    userId           String
+    user             User            @relation(fields: [userId], references: [id])
+
+    // Usage details
+    feature          String   // e.g., "test_case_generation", "bug_analysis"
+    model            String   // Model used
+    promptTokens     Int
+    completionTokens Int
+    totalTokens      Int
+
+    // Cost tracking (0 for local Ollama)
+    inputCost        Decimal         @db.Decimal(10, 6)
+    outputCost       Decimal         @db.Decimal(10, 6)
+    totalCost        Decimal         @db.Decimal(10, 6)
+
+    // Performance
+    latency          Int      // milliseconds
+    success          Boolean
+    error            String?
+
+    createdAt        DateTime        @default(now()) @db.Timestamptz(6)
+
+    @@index([llmIntegrationId])
+    @@index([projectId])
+    @@index([userId])
+    @@index([feature])
+    @@index([createdAt])
+    @@deny('all', !auth())
+    @@allow('read', auth().id == userId || (project != null && project.assignedUsers?[user == auth()]))
+    @@allow('create', auth().access != null)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model LlmPromptTemplate {
+    id               String             @id @default(cuid())
+    name             String             @length(1)
+    feature          String   // e.g., "test_case_generation", "bug_analysis"
+    version          Int                @default(1)
+
+    // Optional association with specific LLM integration
+    llmIntegrationId Int?
+    llmIntegration   LlmIntegration?    @relation(fields: [llmIntegrationId], references: [id])
+
+    // Template configuration
+    systemPrompt     String             @db.Text
+    userPrompt       String             @db.Text  // Can include placeholders like {{context}}
+    variables        Json     // Array of required variables
+    examples         Json?    // Few-shot examples
+
+    // Model preferences
+    recommendedModel String?  // e.g., "gpt-4" for complex tasks
+    minContextWindow Int                @default(2048)
+    maxOutputTokens  Int                @default(2048)
+    temperature      Float              @default(0.7)
+
+    // Metadata
+    description      String?
+    tags             String[] // ["testing", "automation", "analysis"]
+    isActive         Boolean            @default(true)
+    isDefault        Boolean            @default(false) // Default template for a feature
+
+    createdAt        DateTime           @default(now()) @db.Timestamptz(6)
+    updatedAt        DateTime           @updatedAt
+
+    // Relations
+    featureConfigs   LlmFeatureConfig[]
+
+    @@unique([feature, name, version])
+    @@index([feature, isActive, isDefault])
+    @@index([tags])
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+    @@allow('create,update', auth().access == 'ADMIN' || auth().access == 'PROJECTADMIN')
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model LlmFeatureConfig {
+    id                String             @id @default(cuid())
+    projectId         Int
+    project           Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    feature           String   // e.g., "test_case_generation", "bug_analysis"
+
+    // Feature settings
+    enabled           Boolean            @default(false)
+    llmIntegrationId  Int?     // Specific integration to use
+    llmIntegration    LlmIntegration?    @relation(fields: [llmIntegrationId], references: [id])
+    templateId        String?  // Specific template to use
+    template          LlmPromptTemplate? @relation(fields: [templateId], references: [id])
+
+    // Override settings
+    model             String?  // Override default model
+    temperature       Float?   // Override temperature
+    maxTokens         Int?     // Override max tokens
+
+    // Feature-specific configuration
+    autoTrigger       Boolean            @default(false) // Auto-generate on certain events
+    triggerConditions Json?    // Conditions for auto-triggering
+    outputFormat      String?  // Expected output format
+    postProcessing    Json?    // Post-processing rules
+
+    // Usage limits
+    dailyLimit        Int?     // Daily usage limit for this feature
+    monthlyLimit      Int?     // Monthly usage limit
+
+    createdAt         DateTime           @default(now()) @db.Timestamptz(6)
+    updatedAt         DateTime           @updatedAt
+
+    @@unique([projectId, feature])
+    @@index([llmIntegrationId])
+    @@index([templateId])
+    @@deny('all', !auth())
+    @@allow('read', project.assignedUsers?[user == auth()])
+    @@allow('create,update,delete', project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'])
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model LlmResponseCache {
+    id               String         @id @default(cuid())
+
+    // Cache key components
+    feature          String   // e.g., "test_case_generation"
+    model            String   // Model used
+    promptHash       String   // Hash of the prompt
+    contextHash      String?  // Hash of additional context
+
+    // Response data
+    response         Json     // Cached response
+    promptTokens     Int
+    completionTokens Int
+
+    // Metadata
+    projectId        Int?
+    project          Projects?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    llmIntegrationId Int
+    llmIntegration   LlmIntegration @relation(fields: [llmIntegrationId], references: [id])
+
+    // Cache management
+    hits             Int            @default(0) // Number of cache hits
+    lastAccessedAt   DateTime       @default(now()) @db.Timestamptz(6)
+    expiresAt        DateTime       @db.Timestamptz(6)
+
+    createdAt        DateTime       @default(now()) @db.Timestamptz(6)
+
+    @@unique([feature, model, promptHash, contextHash])
+    @@index([expiresAt])
+    @@index([lastAccessedAt])
+    @@index([projectId, feature])
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+    @@allow('create,delete', auth().access == 'ADMIN' || auth().access == 'PROJECTADMIN')
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model LlmRateLimit {
+    id               String          @id @default(cuid())
+
+    // Relation to LLM Integration (optional - only for integration-scoped limits)
+    llmIntegrationId Int?
+    llmIntegration   LlmIntegration? @relation(fields: [llmIntegrationId], references: [id])
+
+    // Scope of rate limiting
+    scope            String   // "global", "integration", "project", "user"
+    scopeId          String?  // ID of the scoped entity
+    feature          String?  // Optional: limit specific features
+
+    // Rate limit configuration
+    windowType       String   // "sliding", "fixed"
+    windowSize       Int      // Window size in seconds
+    maxRequests      Int      // Maximum requests per window
+    maxTokens        Int?     // Maximum tokens per window
+
+    // Current state
+    currentRequests  Int             @default(0)
+    currentTokens    Int             @default(0)
+    windowStart      DateTime        @default(now()) @db.Timestamptz(6)
+
+    // Actions when limit exceeded
+    blockOnExceed    Boolean         @default(true)
+    queueOnExceed    Boolean         @default(false)
+    alertOnExceed    Boolean         @default(false)
+
+    // Priority and overrides
+    priority         Int             @default(0) // Higher priority limits apply first
+    isActive         Boolean         @default(true)
+
+    createdAt        DateTime        @default(now()) @db.Timestamptz(6)
+    updatedAt        DateTime        @updatedAt
+
+    @@unique([scope, scopeId, feature])
+    @@index([scope, isActive])
+    @@index([windowStart])
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+    @@allow('create,update,delete', auth().access == 'ADMIN')
+}
+
+// Custom SSO provider configuration
+model SsoProvider {
+    id         String             @id @default(cuid())
+    name       String             @unique // e.g., "google", "saml-okta", "saml-azure"
+    type       SsoProviderType
+    enabled    Boolean            @default(true)
+    forceSso   Boolean            @default(false) // Force users to use SSO
+    config     Json?            // Provider-specific configuration
+    createdAt  DateTime           @default(now())
+    updatedAt  DateTime           @updatedAt
+    samlConfig SamlConfiguration?
+
+    // Allow everyone (including unauthenticated users) to read SSO providers
+    // This is necessary for the sign-in page to show available SSO options
+    @@allow('read', true)
+
+    // Only admins can create, update, or delete SSO providers
+    @@allow('create,update,delete', auth().access == 'ADMIN')
+}
+
+model AllowedEmailDomain {
+    id        String   @id @default(cuid())
+    domain    String   @unique // e.g., "example.com"
+    enabled   Boolean  @default(true)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    createdBy String?
+    creator   User?    @relation(fields: [createdBy], references: [id])
+
+    // Allow everyone to read allowed domains (needed for sign-up validation)
+    @@allow('read', true)
+
+    // Only admins can manage allowed domains
+    @@allow('create,update,delete', auth().access == 'ADMIN')
+}
+
+model RegistrationSettings {
+    id                    String   @id @default(cuid())
+    restrictEmailDomains  Boolean  @default(false) // Enable/disable domain restrictions
+    allowOpenRegistration Boolean  @default(true)  // Allow any user to register
+    defaultAccess         Access   @default(NONE)  // Default system access for new users
+    createdAt             DateTime @default(now())
+    updatedAt             DateTime @updatedAt
+
+    // Allow everyone to read registration settings (needed for sign-up page)
+    @@allow('read', true)
+
+    // Only admins can manage registration settings
+    @@allow('create,update,delete', auth().access == 'ADMIN')
+}
+
+enum SsoProviderType {
+    GOOGLE
+    SAML
+    APPLE
+    MAGIC_LINK
+
+    @@deny('create,update,delete', !auth())
+    @@allow('read', true)
+    @@allow('update', auth().access == 'ADMIN')
+}
+
+model SamlConfiguration {
+    id                 String      @id @default(cuid())
+    providerId         String      @unique
+    provider           SsoProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+    entryPoint         String      // SSO login URL
+    issuer             String      // SP entity ID
+    cert               String      @db.Text // IdP certificate
+    callbackUrl        String      // ACS URL
+    logoutUrl          String?     // SLO URL
+    attributeMapping   Json        // Map SAML attributes to user fields
+    autoProvisionUsers Boolean     @default(false)
+    defaultAccess      Access      @default(USER) // Default system access for auto-provisioned users
+    createdAt          DateTime    @default(now())
+    updatedAt          DateTime    @updatedAt
+
+    // Allow everyone to read SAML configuration (needed for sign-in page)
+    @@allow('read', true)
+
+    // Only admins can manage SAML configuration
+    @@allow('create,update,delete', auth().access == 'ADMIN')
+}
+
+enum AuthMethod {
+    INTERNAL
+    SSO
+    BOTH
+
+    @@deny('create,update,delete', !auth())
+    @@allow('read', true)
+    @@allow('update', auth().access == 'ADMIN')
+}
+
+enum TestmoImportStatus {
+    QUEUED
+    RUNNING
+    READY
+    COMPLETED
+    FAILED
+    CANCELED
+}
+
+enum TestmoImportPhase {
+    UPLOADING
+    ANALYZING
+    CONFIGURING
+    IMPORTING
+    FINALIZING
+}
+
+model TestmoImportJob {
+    id                     String                @id @default(cuid())
+    createdAt              DateTime              @default(now())
+    updatedAt              DateTime              @updatedAt
+    createdById            String
+    createdBy              User                  @relation(fields: [createdById], references: [id])
+    status                 TestmoImportStatus    @default(QUEUED)
+    statusMessage          String?
+    phase                  TestmoImportPhase?
+    storageKey             String
+    storageBucket          String?
+    originalFileName       String
+    originalFileSize       BigInt?
+    totalDatasets          Int?
+    processedDatasets      Int                   @default(0)
+    totalRows              BigInt?
+    processedRows          BigInt                @default(0)
+    durationMs             Int?
+    startedAt              DateTime?
+    completedAt            DateTime?
+    canceledAt             DateTime?
+    cancelRequested        Boolean               @default(false)
+    error                  String?
+    processedCount         Int                   @default(0)
+    errorCount             Int                   @default(0)
+    skippedCount           Int                   @default(0)
+    totalCount             Int                   @default(0)
+    currentEntity          String?
+    estimatedTimeRemaining String?
+    processingRate         String?
+    activityLog            Json?
+    entityProgress         Json?
+    options                Json?
+    configuration          Json?
+    analysis               Json?
+    analysisGeneratedAt    DateTime?
+    lastImportStartedAt    DateTime?
+    datasets               TestmoImportDataset[]
+
+    @@index([createdById])
+    @@index([status])
+    @@index([createdAt])
+    @@deny('all', !auth())
+    @@allow('read', auth().access == 'ADMIN')
+    @@allow('create,update,delete', auth().access == 'ADMIN')
+}
+
+model TestmoImportDataset {
+    id             Int             @id @default(autoincrement())
+    jobId          String
+    job            TestmoImportJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    name           String
+    rowCount       Int
+    sampleRowCount Int
+    truncated      Boolean
+    schema         Json?
+    sampleRows     Json?
+    allRows        Json?
+    createdAt      DateTime        @default(now())
+
+    @@index([jobId])
+    @@index([name])
+    @@deny('all', !auth())
+    @@allow('read', auth().access == 'ADMIN')
+    @@allow('create,update,delete', auth().access == 'ADMIN')
+}
+
+model TestmoImportStaging {
+    id          String   @id @default(cuid())
+    jobId       String
+    datasetName String
+    rowIndex    Int      // Original order in the dataset
+    rowData     Json
+    fieldName   String?
+    fieldValue  String?  @db.Text
+    text1       String?  @db.Text
+    text2       String?  @db.Text
+    text3       String?  @db.Text
+    text4       String?  @db.Text
+    processed   Boolean  @default(false)
+    error       String?  @db.Text // Store any processing errors
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    @@index([jobId, datasetName, processed])
+    @@index([jobId, processed])
+    @@index([jobId, datasetName, rowIndex])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model TestmoImportMapping {
+    id         String   @id @default(cuid())
+    jobId      String
+    entityType String   // "project", "workflow", "status", "user", "priority", etc.
+    sourceId   Int      // Testmo ID
+    targetId   String?  // TestPlanIt ID (null if creating new)
+    targetType String   // "map" or "create"
+    metadata   Json?    // Additional mapping configuration
+    createdAt  DateTime @default(now())
+
+    @@unique([jobId, entityType, sourceId])
+    @@index([jobId, entityType])
+    @@index([jobId, entityType, sourceId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model Comment {
+    id               String           @id @default(cuid())
+    content          Json             // TipTap JSON format
+    projectId        Int
+    project          Projects         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+    // Polymorphic relationship - one of these will be set
+    repositoryCaseId Int?
+    repositoryCase   RepositoryCases? @relation(fields: [repositoryCaseId], references: [id], onDelete: Cascade)
+    testRunId        Int?
+    testRun          TestRuns?        @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+    sessionId        Int?
+    session          Sessions?        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+    // Creator and metadata
+    creatorId        String
+    creator          User             @relation("CommentCreator", fields: [creatorId], references: [id])
+    createdAt        DateTime         @default(now()) @db.Timestamptz(6)
+    updatedAt        DateTime         @updatedAt
+    isEdited         Boolean          @default(false)
+    isDeleted        Boolean          @default(false)
+
+    // Relations
+    mentionedUsers   CommentMention[]
+
+    @@index([projectId, isDeleted, createdAt])
+    @@index([repositoryCaseId, isDeleted])
+    @@index([testRunId, isDeleted])
+    @@index([sessionId, isDeleted])
+    @@index([creatorId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Read access - inherit from project (same as other entities)
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Create - same as read access
+    @@allow('create',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Update - creator can edit their own comments (with time limit handled in app logic)
+    @@allow('update', creator == auth() && !isDeleted)
+
+    // Delete - creator can soft delete, admins can hard delete
+    @@allow('delete', creator == auth() || auth().access == 'ADMIN')
+
+    // System admins have full access
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model CommentMention {
+    id        String   @id @default(cuid())
+    commentId String
+    comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+    userId    String
+    user      User     @relation("CommentMentions", fields: [userId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+    @@unique([commentId, userId])
+    @@index([userId, createdAt])
+    @@index([commentId])
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+    @@allow('create', auth().access != null)
+    @@allow('all', auth().access == 'ADMIN')
+}

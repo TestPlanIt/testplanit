@@ -1,0 +1,12 @@
+Group Name,Step #,Step Content,Expected Result Content
+"User Authentication",1,"Navigate to the login page","The login page should be displayed with username and password fields"
+"User Authentication",2,"Enter valid username in the username field","The username should be accepted and displayed in the field"
+"User Authentication",3,"Enter valid password in the password field","The password should be masked with asterisks"
+"User Authentication",4,"Click the Login button","The user should be redirected to the dashboard"
+"Product Search",1,"Navigate to the products page","The products page should load with a search bar"
+"Product Search",2,"Enter 'laptop' in the search field","The search term should appear in the search field"
+"Product Search",3,"Click the Search button","A list of laptop products should be displayed"
+"Shopping Cart",1,"Add a product to the shopping cart","The product should appear in the cart with correct details"
+"Shopping Cart",2,"Update the quantity of an item in the cart","The cart should reflect the new quantity and update totals"
+"Shopping Cart",3,"Remove an item from the cart","The item should be removed and totals recalculated"
+"Shopping Cart",4,"Proceed to checkout","The checkout page should load with cart summary"

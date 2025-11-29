@@ -1,0 +1,56 @@
+{
+  "fields": {
+    "schema": {
+      "id": "id",
+      "display_name": "string",
+      "system_name": "string",
+      "type_name": "string"
+    },
+    "data": [
+      {
+        "id": 5,
+        "display_name": "Severity",
+        "system_name": "severity",
+        "type_name": "Dropdown",
+        "is_required": true,
+        "is_restricted": false,
+        "dropdown_options": [
+          "Low",
+          "Medium",
+          "High"
+        ]
+      }
+    ]
+  },
+  "field_values": {
+    "schema": {
+      "id": "id",
+      "field_id": "id",
+      "name": "string"
+    },
+    "data": [
+      { "id": 501, "field_id": 5, "name": "Low" },
+      { "id": 502, "field_id": 5, "name": "Medium" },
+      { "id": 503, "field_id": 5, "name": "High" }
+    ]
+  },
+  "template_fields": {
+    "schema": {
+      "id": "id",
+      "template_name": "string",
+      "field_id": "id",
+      "display_name": "string",
+      "target_type": "string"
+    },
+    "data": [
+      {
+        "id": 1001,
+        "template_name": "Regression",
+        "field_id": 5,
+        "display_name": "Severity",
+        "target_type": "case",
+        "is_required": true
+      }
+    ]
+  }
+}

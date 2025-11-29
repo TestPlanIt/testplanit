@@ -1,0 +1,53 @@
+---
+id: repository-case-details
+title: Test Case Details
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This page provides a comprehensive view of a single test case within your project's repository.
+
+## Case Information
+
+The main section displays key details about the test case:
+
+<img src="/img/screenshots/user-guide/projects/repository/case-details-view.png" alt="Test Case Details View" />
+
+*   **Title:** The name of the test case.
+*   **Description:** Detailed steps or information about the test case. This field supports Markdown for rich text formatting.
+*   **Repository:** The repository this case belongs to.
+*   **Folder:** The specific folder within the repository where the case resides (if applicable).
+*   **Template:** The template used for this test case, defining its custom fields.
+*   **Estimate:** The manually set estimated time (in seconds) required to execute the test case. See [Duration Display](./#duration-display) below for formatting.
+*   **Forecast:** An automatically calculated prediction (in seconds) of how long the test case will take to execute. See [Forecast Calculation](./#forecast-calculation) below for details.
+*   **Priority:** The priority level assigned to the test case.
+*   **Tags:** Any tags associated with the test case for organization and filtering.
+*   **Created:** Timestamp indicating when the test case was created.
+*   **Updated:** Timestamp indicating the last time the test case was modified.
+*   **Custom Fields:** Any additional fields defined by the selected template will be displayed here.
+
+## Duration Display
+
+Both the `Estimate` and `Forecast` fields store time in seconds but are displayed in a human-readable format (e.g., "5 minutes, 30 seconds", "1 hour, 2 minutes"). If no time is recorded (value is 0 or null), it displays "No time recorded".
+
+## Forecast Calculation
+
+The `Forecast` value provides an automated prediction of the test case's execution time. It is distinct from the manually entered `Estimate`.
+
+*   **Calculation:** The forecast is calculated by averaging the `elapsed` time recorded in all associated **Test Run Results** for this specific test case. Results with `null` or `0` elapsed time are excluded from the average.
+*   **Updates:** This calculation is performed automatically by a background job that runs once daily (typically overnight).
+*   **Read-Only:** The forecast value is system-generated and cannot be edited directly by users. It serves as a data-driven insight into expected execution duration based on historical performance.
+*   **Display:** It is shown on the Test Case Details page and can be added as a column in the main [Repository View](./repository.md).
+
+## Versions
+
+The **Versions** tab shows the history of changes made to this test case. Each entry represents a saved version, allowing you to track modifications over time.
+
+<img src="/img/screenshots/user-guide/projects/repository/case-details-versions.png" alt="Test Case Versions Tab" />
+
+*   **Timestamp:** When the version was saved.
+*   **Author:** The user who made the change.
+*   **Changes:** A summary or link to view the specific differences between versions (details depend on implementation).
+
+This feature is crucial for auditing and understanding the evolution of a test case. You can often revert to or compare with previous versions if needed (depending on system capabilities).

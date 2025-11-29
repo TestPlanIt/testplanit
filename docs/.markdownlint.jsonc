@@ -1,0 +1,32 @@
+{
+  "comment": "Configuration for markdownlint, disabling rules handled by Prettier",
+  // Default state for all rules
+  "default": true,
+
+  // MD007/ul-indent: Unordered list indentation
+  // Prettier handles list indentation, often using 4 spaces for nested lists.
+  "MD007": false,
+
+  // MD013/line-length: Line length
+  // Prettier handles line wrapping.
+  "MD013": false,
+
+  // MD047/single-trailing-newline: Files should end with a single newline character
+  // Prettier handles this.
+  "MD047": false,
+
+  // MD025/single-title/single-h1: Multiple top-level headings
+  // Docusaurus uses front matter title, conflicting with first # heading.
+  "MD025": false,
+
+  // MD014/commands-show-output: Dollar signs used before commands without output
+  // Often preferred for clarity in documentation.
+  "MD014": false,
+
+  // MD036/no-emphasis-as-heading: Emphasis used instead of a heading
+  // Disabling as the emphasis usage is intentional in some files.
+  "MD036": false
+
+  // Add any other rules you want to enforce or disable here.
+  // See https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+}

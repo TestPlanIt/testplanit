@@ -1,0 +1,142 @@
+"use client";
+
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "~/lib/navigation";
+import { useFindManyResultFields, useUpdateResultFields } from "~/lib/hooks";
+import { DataTable } from "@/components/tables/DataTable";
+import { getColumns, ExtendedResultFields } from "./resultFieldColumns";
+import { CustomColumnDef } from "@/components/tables/ColumnSelection";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { AddResultFieldModal } from "./AddResultField";
+import { SquareCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
+
+export default function ResultFields() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const t = useTranslations("admin.templates.resultFields");
+  const tCommon = useTranslations("common");
+  const [sortConfig, setSortConfig] = useState<
+    | {
+        column: string;
+        direction: "asc" | "desc";
+      }
+    | undefined
+  >({
+    column: "displayName",
+    direction: "asc",
+  });
+
+  const { mutateAsync: updateResultField } = useUpdateResultFields();
+
+  const handleSortChange = (column: string) => {
+    const direction =
+      sortConfig &&
+      sortConfig.column === column &&
+      sortConfig.direction === "asc"
+        ? "desc"
+        : "asc";
+    setSortConfig({ column, direction });
+  };
+
+  const handleToggle = useCallback(
+    async (id: number, key: keyof ExtendedResultFields, value: boolean) => {
+      try {
+        await updateResultField({
+          where: { id },
+          data: { [key]: value },
+        });
+      } catch (error) {
+        console.error(`Failed to update ${key} for ResultField ${id}`, error);
+      }
+    },
+    [updateResultField]
+  );
+
+  const { data: resultfields, isLoading } = useFindManyResultFields(
+    {
+      where: { isDeleted: false },
+      orderBy: sortConfig
+        ? { [sortConfig.column]: sortConfig.direction }
+        : { displayName: "asc" },
+      include: {
+        type: true,
+        templates: true,
+        fieldOptions: {
+          include: {
+            fieldOption: {
+              include: {
+                icon: true,
+                iconColor: true,
+              },
+            },
+          },
+        },
+      },
+    },
+    {
+      enabled: !!session?.user,
+      refetchOnWindowFocus: true,
+    }
+  );
+
+  const columns: CustomColumnDef<ExtendedResultFields>[] = useMemo(
+    () => getColumns(t, tCommon, session, handleToggle),
+    [session, handleToggle, t, tCommon]
+  );
+
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >(() => {
+    const initialVisibility: Record<string, boolean> = {};
+    columns.forEach((column) => {
+      initialVisibility[column.id as string] = column.meta?.isVisible ?? true;
+    });
+    return initialVisibility;
+  });
+
+  useEffect(() => {
+    if (status !== "loading" && !session) {
+      router.push("/");
+    }
+  }, [status, session, router]);
+
+  if (status === "loading") return null;
+
+  if (session && session.user.access === "ADMIN" && resultfields) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between text-primary">
+            <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
+              <CardTitle>
+                <div className="flex items-center">
+                  <SquareCheck className="mr-1" />
+                  {t("title")}
+                </div>
+              </CardTitle>{" "}
+            </div>
+            <div>
+              <AddResultFieldModal />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between">
+            <DataTable
+              columns={columns}
+              data={resultfields as any[]}
+              onSortChange={handleSortChange}
+              sortConfig={sortConfig}
+              columnVisibility={columnVisibility}
+              onColumnVisibilityChange={setColumnVisibility}
+              isLoading={isLoading}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  return null;
+}

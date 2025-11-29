@@ -1,0 +1,19 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "Pilcrow",
+    "docimage",
+    "tiptap",
+    "testplanit"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    ".next/**",
+    "coverage/**",
+    "dist/**",
+    "build/**",
+    "*.min.js",
+    "pnpm-lock.yaml"
+  ]
+}

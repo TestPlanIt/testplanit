@@ -1,0 +1,28 @@
+{
+  "users": {
+    "schema": {"id": "id", "email": "string", "active": "bool"},
+    "data": [
+      {"id": 1, "email": "qa@example.com", "active": true},
+      {"id": 2, "email": "dev@example.com", "active": false}
+    ]
+  },
+  "statuses": {
+    "schema": {"id": "id", "name": "string", "color": "string"},
+    "data": [
+      {"id": 1, "name": "Passed", "color": "#00FF00"},
+      {"id": 2, "name": "Failed", "color": "#FF0000"}
+    ]
+  },
+  "repository_cases": {
+    "schema": {"id": "id", "project_id": "id", "title": "string"},
+    "data": [
+      {"id": 1001, "project_id": 10, "title": "Login works"},
+      {"id": 1002, "project_id": 10, "title": "Checkout flow"},
+      {"id": 1003, "project_id": 12, "title": "Schedule job"}
+    ]
+  },
+  "runs": {
+    "schema": {"id": "id", "name": "string"},
+    "data": []
+  }
+}

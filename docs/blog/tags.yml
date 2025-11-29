@@ -1,0 +1,9 @@
+welcome:
+  label: Welcome
+  description: Posts welcoming users to TestPlanIt
+  permalink: /welcome
+
+introduction:
+  label: Introduction
+  description: Introductory posts about TestPlanIt features or concepts
+  permalink: /introduction

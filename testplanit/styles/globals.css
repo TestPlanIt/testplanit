@@ -1,0 +1,359 @@
+@import "./tailwind.config.css";
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+
+    /* TestPlanIT Chart Theming Variables - Using theme's semantic colors */
+    --tp-primary-color: hsl(var(--primary));
+    --tp-secondary-color: hsl(var(--secondary-foreground)); /* Example: A contrasting color for test runs */
+    --tp-text-on-primary: hsl(var(--primary-foreground));
+    --tp-text-on-secondary: hsl(var(--primary)); /* Text that contrasts with secondary-foreground */
+    --tp-tooltip-bg: hsl(var(--popover));
+    --tp-tooltip-text: hsl(var(--popover-foreground));
+    --tp-tooltip-border: hsl(var(--border));
+    --tp-axis-label-text: hsl(var(--muted-foreground));
+    --tp-grid-line-color: hsl(var(--border));
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 82%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 82%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 82%;
+    --primary: 210 40% 82%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 40% 78%; /* Reduced brightness for dark mode */
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 222.2 84% 4.9%; /* Adjusted for dark mode */
+    --muted-foreground: 210 40% 75%; /* Reduced brightness for dark mode */
+    --accent: 210 40% 82%; /* Reduced brightness for dark mode */
+    --accent-foreground: 222.2 47.4% 11.2%; /* Adjusted for dark mode */
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 82%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 70%;
+
+    /* TestPlanIT Chart Theming Variables - Dark Mode - Using theme's semantic colors */
+    --tp-primary-color: hsl(var(--primary)); /* primary in dark is light */
+    --tp-secondary-color: hsl(var(--secondary-foreground)); /* secondary-foreground in dark */
+    --tp-text-on-primary: hsl(var(--primary-foreground)); /* primary-foreground in dark is dark */
+    --tp-text-on-secondary: hsl(var(--primary)); /* Text that contrasts with tp-secondary-color */
+    --tp-tooltip-bg: hsl(var(--popover));
+    --tp-tooltip-text: hsl(var(--popover-foreground));
+    --tp-tooltip-border: hsl(var(--border));
+    --tp-axis-label-text: hsl(var(--muted-foreground));
+    --tp-grid-line-color: hsl(var(--border));
+  }
+
+
+  /* Theme wipe transition using scale */
+  @keyframes theme-wipe-expand {
+    0% {
+      transform: translate(-50%, -50%) scale(0);
+      opacity: .8;
+    }
+    70% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.1;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0;
+    }
+  }
+
+  /* Shimmer animation for indeterminate progress bars */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(300%);
+    }
+  }
+
+  .theme-wipe-overlay {
+    position: fixed;
+    left: var(--wipe-x);
+    top: var(--wipe-y);
+    width: 300vmax;
+    height: 300vmax;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    animation: theme-wipe-expand var(--wipe-duration, 1s);
+    will-change: transform, opacity;
+    transform: translate(-50%, -50%) scale(0);
+  }
+
+
+  body a {
+    @apply underline;
+  }
+  body a:hover {
+    @apply text-muted-foreground
+  }
+
+  .no-focus-ring {
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .treeRoot {
+    transition: all 0.3s ease-in-out;
+  }
+
+  .draggingSource {
+    opacity: 0.5;
+  }
+
+  .dropTarget {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .tag-cloud-link-container .tag-cloud-link {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    white-space: nowrap;
+    border-radius: 9999px;
+    padding: 2px 8px;
+    height: 100%;
+  }
+
+  .tag-cloud-link-container .tag-cloud-link:hover {
+    color: hsl(var(--primary-foreground)) !important;
+    background-color: hsl(var(--primary)) !important;
+    border-radius: 9999px !important;
+  }
+
+  .milestone-grid {
+    display: grid;
+    grid-template-columns: 1fr auto auto; /* Three columns: Name (flexible), Status (fixed), Dates (fixed) */
+    gap: 1rem; /* Adjust spacing between columns */
+    align-items: center; /* Vertically align items */
+    width: 100%;
+  }
+
+  .milestone-name {
+    white-space: nowrap; /* Prevent wrapping of milestone names */
+    overflow: hidden; /* Hide overflow */
+    text-overflow: ellipsis; /* Add ellipsis for long names */
+    min-width: 0; /* Allow the container to shrink */
+  }
+
+  .milestone-status {
+    width: 120px; /* Fixed width for status column */
+    text-align: center; /* Center-align status */
+  }
+
+  .milestone-dates {
+    width: 200px; /* Fixed width for dates column */
+    text-align: right; /* Right-align dates */
+  }
+}
+
+/* Custom style for Gantt chart task labels */
+/* Replaced previous .gantt-task-label rule with a more specific one */
+svg[class*="plot-"] .gantt-task-label text {
+  white-space: nowrap !important; /* Crucial for allowing ellipsis with Plot's default 'pre' */
+  font-size: 10px !important;
+}
+
+@keyframes slideDown {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    height: var(--radix-collapsible-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+.orange {
+  --background: 0 0% 100%;
+  --foreground: 20 14.3% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 14.3% 4.1%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 14.3% 4.1%;
+  --primary: 24.6 95% 53.1%;
+  --primary-foreground: 20 89.1% 97.8%;
+  --secondary: 60 4.8% 95.9%;
+  --secondary-foreground: 24 9.8% 10%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --accent: 60 4.8% 95.9%;
+  --accent-foreground: 24 9.8% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  --ring: 24.6 95% 53.1%;
+}
+
+.green {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 142.1 76.2% 36.3%;
+  --primary-foreground: 120 70% 97.3%;
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 142.1 76.2% 36.3%;
+}
+
+.purple {
+  --background: 0 0% 100%;
+  --foreground: 224 71.4% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 224 71.4% 4.1%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 71.4% 4.1%;
+  --primary: 262.1 83.3% 57.8%;
+  --primary-foreground: 220 90% 98%;
+  --secondary: 220 14.3% 95.9%;
+  --secondary-foreground: 220.9 39.3% 11%;
+  --muted: 220 14.3% 95.9%;
+  --muted-foreground: 220 8.9% 46.1%;
+  --accent: 220 14.3% 95.9%;
+  --accent-foreground: 220.9 39.3% 11%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 20% 98%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 262.1 83.3% 57.8%;
+}
+
+/* Style the close button specifically for the TestRunCaseDetails sheet */
+.test-run-details-sheet > button.absolute.right-4.top-4 {
+  background-color: hsl(var(--primary-foreground));
+  color: hsl(var(--primary-background)); /* Optional: Adjust icon color if needed */
+}
+
+.test-run-details-sheet > button.absolute.right-4.top-4:hover {
+  background-color: hsl(var(--primary-foreground) / 0.9); /* Optional: Adjust hover */
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+/* Tooltip specific styles using CSS variables */
+.gantt-tooltip {
+  background-color: var(--tp-tooltip-bg);
+  color: var(--tp-tooltip-text);
+  border: 1px solid var(--tp-tooltip-border);
+}
+
+/* Compact prose styles for TextFromJson component */
+.compact-prose .prose p {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.compact-prose .prose:first-child p:first-child {
+  margin-top: 0;
+}
+
+.compact-prose .prose:last-child p:last-child {
+  margin-bottom: 0;
+}
+
+.compact-prose .ProseMirror p {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.compact-prose .ProseMirror p:first-child {
+  margin-top: 0;
+}
+
+.compact-prose .ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+/* Remove extra spacing from first and last paragraphs in all TipTap editors */
+.ProseMirror p:first-child {
+  margin-top: 0;
+}
+
+.ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+/* Firefox-specific fixes for resizable panels */
+@-moz-document url-prefix() {
+  /* Prevent text selection during drag in Firefox */
+  [data-panel-resize-handle-enabled="true"] {
+    -moz-user-select: none !important;
+    user-select: none !important;
+  }
+
+  /* Ensure proper pointer events during drag */
+  [data-panel-group]:has([data-resize-handle-state="drag"]) * {
+    pointer-events: none !important;
+  }
+
+  [data-panel-resize-handle-enabled="true"] {
+    pointer-events: auto !important;
+  }
+
+  /* Fix for iframe interference in Firefox */
+  [data-panel-group]:has([data-resize-handle-state="drag"]) iframe {
+    pointer-events: none !important;
+  }
+
+}

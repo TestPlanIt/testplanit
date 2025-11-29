@@ -1,0 +1,15 @@
+Name,Folder,Description,Estimate,Priority,Automated
+"Login with valid credentials","Authentication/Login","Test user can login with correct username and password",5,High,false
+"Login with invalid password","Authentication/Login","Test error message appears with wrong password",3,High,false
+"Login with empty fields","Authentication/Login","Test validation for empty username and password",2,High,true
+"Password reset request","Authentication/Password Reset","Test password reset email is sent",8,Medium,false
+"Password reset with invalid email","Authentication/Password Reset","Test error for non-existent email",3,Medium,false
+"User profile view","User Management/Profile","Test viewing user profile information",5,Low,true
+"User profile edit","User Management/Profile","Test editing user profile fields",8,Medium,false
+"Change password","User Management/Security","Test changing user password",5,High,false
+"Enable two-factor auth","User Management/Security","Test enabling 2FA for account",10,High,false
+"Product search","E-commerce/Search","Test searching for products by name",3,High,true
+"Add to cart","E-commerce/Cart","Test adding items to shopping cart",5,High,true
+"Remove from cart","E-commerce/Cart","Test removing items from cart",3,Medium,true
+"Checkout process","E-commerce/Checkout","Test complete checkout workflow",15,High,false
+"Payment processing","E-commerce/Checkout/Payment","Test credit card payment",10,High,false

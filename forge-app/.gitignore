@@ -1,0 +1,14 @@
+# Forge environment credentials
+.env.forge
+
+# Node modules
+node_modules/
+
+# Build output
+static/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store

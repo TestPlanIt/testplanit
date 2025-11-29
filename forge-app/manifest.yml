@@ -1,0 +1,47 @@
+modules:
+  jira:issuePanel:
+    - key: testplanit-panel
+      title: TestPlanIt
+      description: View TestPlanIt test cases, runs, and results directly in Jira issues
+      icon: https://demo.testplanit.com/tpi_logo.svg
+      resource: main
+      resolver:
+        function: resolver
+  jira:adminPage:
+    - key: testplanit-settings
+      title: TestPlanIt Settings
+      description: Configure your TestPlanIt instance URL
+      resource: settings
+      resolver:
+        function: resolver
+  function:
+    - key: resolver
+      handler: index.handler
+
+resources:
+  - key: main
+    path: static/frontend
+  - key: settings
+    path: static/settings
+
+app:
+  id: ari:cloud:ecosystem::app/c8b12a50-e2e5-4967-a75d-2b14e6952599
+  runtime:
+    name: nodejs20.x
+
+permissions:
+  scopes:
+    - read:jira-work
+    - write:jira-work
+    - storage:app
+  external:
+    fetch:
+      backend:
+        - '*.testplanit.com'
+        - testplanit.com
+      client:
+        - '*.testplanit.com'
+        - testplanit.com
+    images:
+      - '*.testplanit.com'
+      - testplanit.com

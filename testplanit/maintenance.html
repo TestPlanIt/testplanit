@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scheduled Maintenance - TestPlanIt</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @keyframes blob {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(30px, -50px) scale(1.1);
+            }
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(to bottom right, #ffffff, rgba(245, 240, 255, 0.3), rgba(237, 229, 255, 0.4));
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        body::before,
+        body::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: blob 7s infinite;
+            z-index: -1;
+        }
+
+        body::before {
+            top: -10%;
+            right: -10%;
+            width: 320px;
+            height: 320px;
+            background: #ddd0ff;
+        }
+
+        body::after {
+            bottom: -10%;
+            left: -10%;
+            width: 320px;
+            height: 320px;
+            background: #c7a7f6;
+            animation-delay: 2s;
+        }
+
+        .container {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+            padding: 56px 48px;
+            text-align: center;
+            position: relative;
+            border: 1px solid rgba(133, 89, 233, 0.1);
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .brand-container {
+            display: flex;
+            flex-direction: column;
+            white-space: nowrap;
+            min-width: 224px;
+            text-align: left;
+        }
+
+        .brand-name {
+            font-size: 48px;
+            font-weight: 600;
+            color: rgb(133, 89, 233);
+            letter-spacing: -0.025em;
+            line-height: 1;
+        }
+
+        .brand-tagline {
+            font-size: 16px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(to right, rgba(133, 89, 233, 0.1), rgba(171, 135, 241, 0.1));
+            color: #6a47d0;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            border: 1px solid rgba(133, 89, 233, 0.2);
+        }
+
+        .status-badge.warning {
+            background: linear-gradient(to right, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.1));
+            color: #b45309;
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .clock-icon {
+            font-size: 20px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #6b7280;
+            margin-bottom: 32px;
+        }
+
+        .info-box {
+            background: linear-gradient(to bottom right, #f5f0ff, #ede5ff);
+            border-left: 4px solid #8559e9;
+            padding: 24px;
+            margin: 32px 0;
+            text-align: left;
+            border-radius: 12px;
+        }
+
+        .info-box.warning {
+            background: linear-gradient(to bottom right, #fffbeb, #fef3c7);
+            border-left-color: #f59e0b;
+        }
+
+        .info-box p {
+            margin-bottom: 12px;
+            font-size: 16px;
+            color: #374151;
+            line-height: 1.6;
+        }
+
+        .info-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-box strong {
+            color: #6a47d0;
+        }
+
+        .info-box.warning strong {
+            color: #b45309;
+        }
+
+        .time-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .time-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-label {
+            font-weight: 500;
+            color: #6b7280;
+        }
+
+        .time-value {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .footer {
+            margin-top: 48px;
+            padding-top: 32px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .footer a {
+            color: #8559e9;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .footer a:hover {
+            color: #6a47d0;
+        }
+
+        .language-sections {
+            text-align: left;
+            margin-top: 32px;
+            padding-top: 32px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .language-section {
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .language-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .language-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .language-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+
+        .language-text {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 40px 28px;
+            }
+
+            .logo {
+                width: 60px;
+                height: 60px;
+                margin-right: 12px;
+            }
+
+            .brand-name {
+                font-size: 32px;
+            }
+
+            .brand-tagline {
+                font-size: 14px;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+
+            .subtitle {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="brand-header">
+            <svg class="logo" width="100%" height="100%" viewBox="0 0 958 727" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+                <g transform="matrix(1,0,0,1,-100.717,-15.0594)">
+                    <g id="Image">
+                        <g>
+                            <path id="path5" d="M556.558,688.163C515.006,681.602 488.636,673.267 453.59,655.618C431.95,644.72 389.225,614.879 389.225,610.663C389.225,610.147 395.675,607.461 403.558,604.695C417.299,599.874 451.009,587.141 479.225,576.115C551.55,547.85 615.036,517.892 704.307,469.901C712.969,465.244 720.611,461.434 721.288,461.434C721.965,461.434 721.371,464.346 719.968,467.906C708.917,495.944 718.366,527.734 742.551,543.884C767.661,560.652 798.878,557.315 820.658,535.534C840.125,516.067 844.63,488 832.336,462.782C829.651,457.274 827.602,452.167 827.784,451.434C827.965,450.701 827.668,450.547 827.122,451.092C826.577,451.637 822.945,449.07 819.051,445.388C811.529,438.274 798.473,431.26 790.249,429.915C787.512,429.467 785.531,428.684 785.845,428.175C786.16,427.666 784.649,427.509 782.488,427.827C780.326,428.144 778.558,428.097 778.558,427.723C778.558,427.349 783.208,424.192 788.891,420.706C811.277,406.978 846.902,383.526 861.891,372.65C868.491,367.861 880.105,359.442 887.7,353.941C895.294,348.44 901.894,344.328 902.366,344.802C902.839,345.277 903.163,360.163 903.088,377.883C902.942,412.373 902.051,420.068 894.551,451.604C888.966,475.083 882.199,494.252 872.016,515.434C861.134,538.069 856.499,545.626 839.044,569.19C819.047,596.186 795.598,618.581 763.775,641.076C731.636,663.795 685.674,681.506 643.058,687.594C635.083,688.733 615.958,689.896 600.558,690.177C577.734,690.595 569.601,690.222 556.558,688.163Z" style="fill:rgb(133,89,233);fill-rule:nonzero;"></path>
+                            <path id="path51" d="M281.589,371.912C282.899,319.323 293.17,278.6 317.153,230.912C326.785,211.759 348.344,179.551 349.437,182.68C350.144,184.701 364.022,187.862 379.668,189.564C404.915,192.312 437.722,188.766 461.319,180.74C466.738,178.897 472.065,177.732 473.158,178.151C474.25,178.57 474.73,178.499 474.224,177.994C473.718,177.488 478.941,174.536 485.83,171.433C508.732,161.119 530.296,145.735 548.15,126.973C563.399,110.949 578.69,87.403 584.451,71.076L586.44,65.439L581.61,65.439C578.954,65.439 577.102,65.118 577.494,64.725C578.369,63.851 616.552,66.34 631.225,68.228C668.427,73.015 704.291,84.579 735.629,101.892C751.284,110.541 751.737,110.809 756.792,114.439C759.09,116.089 761.373,117.439 761.865,117.439C764.486,117.439 797.474,145.091 797.474,145.091L779.966,156.932C684.667,221.381 601.027,268.518 499.225,315.152C443.651,340.609 383.78,365.018 381.05,363.331C380.161,362.782 379.832,362.931 380.292,363.675C381.383,365.441 316.585,388.643 284.069,398.13L280.913,399.051L281.589,371.912Z" style="fill:rgb(133,89,233);fill-rule:nonzero;"></path>
+                            <path id="path52" d="M383.366,149.676L378.174,148.772L384.033,143.414C400.248,128.582 432.799,106.309 453.156,96.117C476.796,84.28 499.186,76.758 526.558,71.458C532.791,70.251 539.004,68.943 540.364,68.551C542.705,67.876 542.695,68.04 540.187,71.638C538.731,73.729 534.665,79.824 531.153,85.183C524.572,95.223 508.831,111.039 495.943,120.56C480.169,132.213 457.787,141.495 432.558,146.848C419.737,149.568 391.931,151.167 383.366,149.676Z" style="fill:rgb(133,89,233);fill-rule:nonzero;"></path>
+                            <path id="path53" d="M316.223,527.83C316.162,526.881 312.843,518.606 308.849,509.439C300.087,489.329 284.728,442.869 288.873,449.014C291.288,452.594 362.631,428.553 427.225,402.395C453.234,391.862 532.014,356.789 549.611,347.909C553.857,345.767 558.057,344.431 558.944,344.94C559.832,345.45 560.131,345.393 559.609,344.815C558.799,343.917 596.768,324.306 600.558,323.665C601.291,323.54 602.191,323.079 602.558,322.639C604.065,320.831 629.226,307.963 629.245,308.99C629.256,309.604 629.706,309.467 630.245,308.686C630.784,307.905 636.625,304.353 643.225,300.792C704.45,267.762 771.378,227.286 813.804,197.63C821.823,192.025 828.918,187.604 829.57,187.805C830.222,188.007 830.475,187.707 830.13,187.139C829.786,186.57 832.065,186.636 832.969,185.801C835.673,183.305 854.969,211.723 867.388,235.439C871.773,243.813 872.704,243.396 863.225,250.97C847.512,263.526 822.144,281.601 797.225,297.998C785.125,305.96 770.125,315.899 763.891,320.085C710.446,355.976 602.892,414.089 522.558,450.482C455.231,480.983 385.297,508.266 335.225,523.565C326.425,526.254 318.575,528.701 317.78,529.004C316.986,529.306 316.285,528.778 316.223,527.83Z" style="fill:rgb(133,89,233);fill-rule:nonzero;"></path>
+                        </g>
+                        <g id="path4" transform="matrix(1,0,0,1,-110.84,-319.938)">
+                            <path d="M675.333,1059.93C658.102,1058.16 628.338,1052.56 611.504,1047.9C552.869,1031.7 498.908,1001.3 447.357,955.412L438.457,947.49L430.228,949.813C373.408,965.857 341.297,971.29 304,971.169C274.88,971.075 265.139,969.312 249.158,961.245C231.58,952.372 216.896,932.982 213.445,914.088C209.167,890.665 214.593,868.923 232.35,838.343C248.157,811.12 283.353,771.909 293.729,769.963C307.856,767.313 316.854,778.118 319.539,800.958L320.357,807.916L311.07,817.625C275.213,855.108 261.73,878.508 265.582,896.567C267.162,903.977 274.077,912.086 282.297,916.169C288.299,919.15 290.015,919.327 312,919.232C344.187,919.093 369.521,914.924 417.747,901.83C491.904,881.696 569.332,852.468 670,806.607C698.506,793.621 765.016,759.758 800,740.42C974.686,643.857 1098.05,542.325 1113.98,482C1118.43,465.174 1113.08,453.534 1097.58,446.266C1089.37,442.42 1087.33,442.047 1071.83,441.559C1055.49,441.044 1045.27,441.954 1023.57,445.855C1008.07,448.641 1006,447.74 989,430.809C978.144,419.997 974.667,415.696 974.667,413.081C974.667,404.957 980.469,402.498 1013.33,396.699C1042.79,391.501 1058.08,390.229 1081.62,391.017C1099.85,391.628 1105.26,392.315 1115.33,395.294C1130.54,399.797 1140.07,405.215 1149.33,414.622C1182.88,448.698 1173.21,502.324 1122.52,563.333C1106.99,582.018 1079.43,609.246 1061.49,623.633L1058.31,626.181L1060.64,642.091C1063.71,663.055 1064.86,714.587 1062.71,735.642C1058.39,778.1 1045.54,822.355 1026.02,862C1007.94,898.706 989.389,925.139 962.035,953.155C903.403,1013.21 841.969,1044.11 753.395,1058.09C737.91,1060.53 691.798,1061.62 675.333,1059.93ZM753.833,1007.49C796.449,1001.4 842.411,983.694 874.55,960.975C906.373,938.48 929.822,916.085 949.819,889.089C967.274,865.525 971.909,857.968 982.791,835.333C992.974,814.152 999.741,794.983 1005.33,771.503C1012.83,739.967 1013.72,732.273 1013.86,697.782C1013.94,680.062 1013.61,665.176 1013.14,664.702C1012.67,664.227 1006.07,668.339 998.475,673.84C990.88,679.341 979.267,687.76 972.667,692.549C953.574,706.402 889.443,748 887.177,748C886.774,748 878.243,753.024 868.222,759.165C858.2,765.305 846.7,772.232 842.667,774.558C838.633,776.884 834.433,779.353 833.333,780.045C831.37,781.281 813.059,791.043 785.333,805.635C712.589,843.919 654.343,870.869 590,896.014C561.785,907.04 528.074,919.773 514.333,924.594C506.45,927.36 500,930.046 500,930.562C500,934.779 542.725,964.619 564.365,975.517C599.411,993.166 625.781,1001.5 667.333,1008.06C680.376,1010.12 688.509,1010.49 711.333,1010.08C726.733,1009.8 745.858,1008.63 753.833,1007.49ZM374.151,849.634C361.922,825.284 349.4,784.618 344.497,753.333C341.503,734.23 341.081,676.574 343.77,654.003C345.824,636.759 352.676,606.147 358.692,587.333C377.297,529.154 408.66,477.831 451.986,434.667C475.346,411.393 509.634,387.129 540.667,371.912C578.684,353.27 610.562,343.984 660,337.151C676.072,334.93 728.114,334.952 746,337.187C798.977,343.81 847.991,361.465 892.627,390.003C945.827,424.017 986.2,466.861 1019.04,524.157L1022.57,530.315L1007.67,542.824C990.801,556.99 982.723,563.215 982.152,562.494C981.937,562.222 979.971,558.7 977.782,554.667C968.699,537.928 965.831,533.358 956.152,520.194C950.568,512.601 944.716,504.469 943.146,502.122C936.893,492.775 914.011,468.964 902.35,459.671C884.936,445.791 873.686,437.333 872.64,437.333C872.148,437.333 869.865,435.983 867.567,434.333C865.269,432.683 862.369,430.733 861.123,430C812.241,401.23 772.863,389.505 711.365,385.407C683.183,383.529 651.399,387.096 615.333,396.184C570.757,407.416 517.659,439.346 481.519,476.651C435.474,524.183 406.062,583.51 395.251,650.667C391.805,672.073 391.084,723.55 393.969,742.184C398.579,771.957 407.621,802.417 420.631,832C424.017,839.7 426.911,846.549 427.061,847.22C427.311,848.342 394.343,858.546 384.33,860.445C380.013,861.264 379.968,861.217 374.151,849.634Z" style="fill:rgb(75,68,91);fill-rule:nonzero;stroke:black;stroke-width:1px;"></path>
+                        </g>
+                        <g transform="matrix(1,0,0,1,-15.0053,-14.7901)">
+                            <circle cx="793.623" cy="507.514" r="33.585" style="fill:rgb(75,68,91);"></circle>
+                        </g>
+                        <g transform="matrix(1.96034,0,0,1.82703,-575.742,-137.148)">
+                            <ellipse cx="621.541" cy="156.312" rx="19.639" ry="20.77" style="fill:rgb(75,68,91);"></ellipse>
+                        </g>
+                        <g transform="matrix(2.22641,0,0,2.07501,-784.658,302.124)">
+                            <ellipse cx="621.541" cy="156.312" rx="19.639" ry="20.77" style="fill:rgb(75,68,91);"></ellipse>
+                        </g>
+                    </g>
+                </g>
+            </svg>
+
+            <div class="brand-container">
+                <span class="brand-name">TestPlanIt</span>
+                <span class="brand-tagline">Test everything under the sun</span>
+            </div>
+        </div>
+
+        <div class="status-badge" id="statusBadge">
+            <span class="clock-icon">🔧</span>
+            <span id="statusText">Scheduled Maintenance</span>
+        </div>
+
+        <h1 id="mainTitle">Scheduled Maintenance</h1>
+
+        <p class="subtitle" id="mainSubtitle">
+            We're currently performing scheduled maintenance to improve your experience. We'll be back online shortly.
+        </p>
+
+        <div class="info-box" id="infoBox">
+            <div class="time-info">
+                <div class="time-row">
+                    <span class="time-label" id="startedLabel">Started:</span>
+                    <span class="time-value" id="startedTime">--</span>
+                </div>
+                <div class="time-row">
+                    <span class="time-label" id="remainingLabel">Time remaining:</span>
+                    <span class="time-value" id="remainingTime">--</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="language-sections">
+            <div class="language-section">
+                <div class="language-label">Espanol</div>
+                <div class="language-title">Mantenimiento programado</div>
+                <div class="language-text">Estamos realizando un mantenimiento programado para mejorar su experiencia. Volveremos a estar en linea en breve.</div>
+            </div>
+            <div class="language-section">
+                <div class="language-label">Francais</div>
+                <div class="language-title">Maintenance programmee</div>
+                <div class="language-text">Nous effectuons actuellement une maintenance programmee pour ameliorer votre experience. Nous serons de retour en ligne sous peu.</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>
+                Questions? Contact us at <a href="mailto:support@testplanit.com">support@testplanit.com</a>
+            </p>
+            <p style="margin-top: 16px;">&copy; 2025 TestPlanIt. Open Source Test Management.</p>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - loaded from maintenance-config.json
+        let config = {
+            startTime: new Date().toISOString(),
+            expectedDuration: 30
+        };
+
+        // Load config from JSON file
+        async function loadConfig() {
+            try {
+                const response = await fetch('/maintenance.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.startTime) config.startTime = data.startTime;
+                    if (data.expectedDuration) config.expectedDuration = data.expectedDuration;
+                }
+            } catch (e) {
+                console.log('Using default maintenance config');
+            }
+            updateDisplay();
+        }
+
+        const translations = {
+            en: {
+                started: 'Started:',
+                remaining: 'Time remaining:',
+                overdue: 'Maintenance is taking longer than expected. Thank you for your patience.',
+                statusOverdue: 'Taking Longer Than Expected'
+            },
+            es: {
+                started: 'Iniciado:',
+                remaining: 'Tiempo restante:',
+                overdue: 'El mantenimiento esta tardando mas de lo esperado. Gracias por su paciencia.',
+                statusOverdue: 'Tardando mas de lo esperado'
+            },
+            fr: {
+                started: 'Commence:',
+                remaining: 'Temps restant:',
+                overdue: 'La maintenance prend plus de temps que prevu. Merci de votre patience.',
+                statusOverdue: 'Prend plus de temps que prevu'
+            },
+            de: {
+                started: 'Gestartet:',
+                remaining: 'Verbleibende Zeit:',
+                overdue: 'Die Wartung dauert langer als erwartet. Vielen Dank fur Ihre Geduld.',
+                statusOverdue: 'Dauert langer als erwartet'
+            },
+            pt: {
+                started: 'Iniciado:',
+                remaining: 'Tempo restante:',
+                overdue: 'A manutencao esta demorando mais do que o esperado. Obrigado pela sua paciencia.',
+                statusOverdue: 'Demorando mais do que o esperado'
+            }
+        };
+
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatDuration(minutes) {
+            if (minutes <= 0) return '0 min';
+            if (minutes < 60) return `${Math.ceil(minutes)} min`;
+            const hours = Math.floor(minutes / 60);
+            const mins = Math.ceil(minutes % 60);
+            return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+        }
+
+        function updateDisplay() {
+            const startDate = new Date(config.startTime);
+            const expectedEnd = new Date(startDate.getTime() + config.expectedDuration * 60 * 1000);
+            const now = new Date();
+            const remainingMs = expectedEnd - now;
+            const remainingMinutes = remainingMs / (60 * 1000);
+
+            // Update started time
+            document.getElementById('startedTime').textContent = formatTime(startDate);
+
+            // Check if overdue
+            if (remainingMinutes <= 0) {
+                // Show overdue state
+                document.getElementById('statusBadge').classList.add('warning');
+                document.getElementById('statusText').textContent = translations.en.statusOverdue;
+                document.getElementById('infoBox').classList.add('warning');
+                document.getElementById('remainingLabel').textContent = '';
+                document.getElementById('remainingTime').textContent = translations.en.overdue;
+            } else {
+                // Show normal countdown
+                document.getElementById('remainingTime').textContent = formatDuration(remainingMinutes);
+            }
+        }
+
+        // Load config and start updates
+        loadConfig();
+
+        // Update every minute
+        setInterval(updateDisplay, 60000);
+    </script>
+</body>
+</html>

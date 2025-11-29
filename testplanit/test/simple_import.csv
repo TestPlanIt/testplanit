@@ -1,0 +1,4 @@
+Name,Folder,Estimate
+Basic Test Case 1,Authentication/Login,300
+Basic Test Case 2,Authentication/Logout,240
+Basic Test Case 3,User Management/Profile,420

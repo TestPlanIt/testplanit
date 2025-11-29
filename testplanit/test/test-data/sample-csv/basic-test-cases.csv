@@ -1,0 +1,25 @@
+Name,Description,Estimate,Priority,Automated,Steps
+"Login with valid credentials","Test user can login with correct username and password",5,High,false,"Step 1: Navigate to login page
+Step 2: Enter valid username
+Step 3: Enter valid password
+Step 4: Click login button
+Expected: User is successfully logged in"
+"Login with invalid password","Test error message appears with wrong password",3,High,false,"Step 1: Navigate to login page
+Step 2: Enter valid username
+Step 3: Enter invalid password
+Step 4: Click login button
+Expected: Error message 'Invalid credentials' is displayed"
+"Logout functionality","Test user can successfully logout",2,Medium,true,"Step 1: Login to application
+Step 2: Click logout button
+Expected: User is redirected to login page"
+"Password reset request","Test password reset email is sent",8,Medium,false,"Step 1: Navigate to login page
+Step 2: Click 'Forgot Password' link
+Step 3: Enter registered email
+Step 4: Click submit
+Expected: Success message and email sent"
+"Remember me checkbox","Test remember me functionality works",5,Low,false,"Step 1: Navigate to login page
+Step 2: Enter credentials
+Step 3: Check 'Remember Me'
+Step 4: Login and close browser
+Step 5: Reopen browser
+Expected: User remains logged in"

@@ -1,0 +1,13 @@
+Group Name,Step,Expected Result,Order
+"User Login","Open the application","Application launches successfully",1
+"User Login","Click on Login link","Login page is displayed",2
+"User Login","Enter username","Username field is populated",3
+"User Login","Enter password","Password field is populated (masked)",4
+"User Login","Click Login button","User is authenticated and redirected to dashboard",5
+"Product Search","Navigate to Products page","Products page loads with search functionality",1
+"Product Search","Enter search term in search box","Search term appears in search field",2
+"Product Search","Click Search button","Relevant products are displayed in results",3
+"Product Search","Select a product from results","Product details page opens",4
+"Data Validation","Check required field validation","Error message appears for empty required fields",1
+"Data Validation","Enter invalid email format","Validation error shows 'Invalid email format'",2
+"Data Validation","Enter password less than 8 characters","Validation error shows 'Password must be at least 8 characters'",3

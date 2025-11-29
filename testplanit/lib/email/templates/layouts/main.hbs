@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{subject}}</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333333;
+      background-color: #f4f4f4;
+    }
+    /* Global link styles */
+    a {
+      color: #8559E9;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    a:visited {
+      color: #8559E9;
+    }
+    .email-wrapper {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+    .email-header {
+      background-color: #ffffff;
+      padding: 30px 40px;
+      text-align: center;
+      border-bottom: 3px solid #8559E9;
+    }
+    .email-header .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+    }
+    .email-header img {
+      height: 40px;
+      width: auto;
+    }
+    .email-header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+      color: #8559E9;
+    }
+    .email-body {
+      padding: 40px;
+    }
+    .email-footer {
+      background-color: #f8f9fa;
+      padding: 30px 40px;
+      text-align: center;
+      font-size: 14px;
+      color: #6c757d;
+    }
+    .email-footer a {
+      color: #8559E9;
+      text-decoration: none;
+    }
+    .email-footer a:hover {
+      text-decoration: underline;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #8559E9;
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 500;
+      margin: 20px 0;
+    }
+    .button:hover {
+      background-color: #7046c7;
+    }
+    .button:visited {
+      color: #ffffff !important;
+    }
+    .button-small {
+      display: inline-block;
+      padding: 8px 16px;
+      background-color: #8559E9;
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: 500;
+      font-size: 14px;
+      margin: 8px 0;
+    }
+    .button-small:hover {
+      background-color: #7046c7;
+    }
+    .button-small:visited {
+      color: #ffffff !important;
+    }
+    .button-secondary {
+      background-color: #6c757d;
+    }
+    .button-secondary:hover {
+      background-color: #5a6268;
+    }
+    .notification-item {
+      padding: 20px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      background-color: #f9fafb;
+    }
+    .notification-item h3 {
+      margin: 0 0 8px 0;
+      color: #1f2937;
+      font-size: 18px;
+    }
+    .notification-item p {
+      margin: 0;
+      color: #4b5563;
+    }
+    /* Rich content styling */
+    .notification-content {
+      margin: 15px 0;
+      color: #4b5563;
+    }
+    .notification-content p {
+      margin: 10px 0;
+    }
+    .notification-content ul,
+    .notification-content ol {
+      margin: 10px 0;
+      padding-left: 25px;
+    }
+    .notification-content li {
+      margin: 5px 0;
+    }
+    .notification-content strong {
+      font-weight: 600;
+      color: #1f2937;
+    }
+    .notification-content em {
+      font-style: italic;
+    }
+    .notification-content a {
+      color: #8559E9;
+      text-decoration: underline;
+    }
+    .notification-content h1,
+    .notification-content h2,
+    .notification-content h3 {
+      margin: 15px 0 10px 0;
+      color: #1f2937;
+    }
+    .notification-content h1 {
+      font-size: 24px;
+    }
+    .notification-content h2 {
+      font-size: 20px;
+    }
+    .notification-content h3 {
+      font-size: 18px;
+    }
+    .notification-content img {
+      max-width: 100%;
+      height: auto;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .notification-content blockquote {
+      border-left: 3px solid #e5e7eb;
+      margin: 10px 0;
+      padding-left: 15px;
+      color: #6b7280;
+    }
+    .notification-content code {
+      background-color: #f3f4f6;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 14px;
+      color: #1f2937;
+    }
+    .notification-content pre {
+      background-color: #f3f4f6;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .notification-content pre code {
+      background: none;
+      padding: 0;
+    }
+    .notification-item a {
+      color: #8559E9;
+      text-decoration: underline;
+    }
+    .notification-item a:hover {
+      color: #7046c7;
+    }
+    .notification-item .timestamp {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 8px;
+    }
+    .divider {
+      height: 1px;
+      background-color: #e5e7eb;
+      margin: 30px 0;
+    }
+    .text-muted {
+      color: #6c757d;
+    }
+    .text-center {
+      text-align: center;
+    }
+    @media only screen and (max-width: 600px) {
+      .email-body {
+        padding: 20px;
+      }
+      .email-header {
+        padding: 20px;
+      }
+      .email-footer {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="email-header">
+      <div class="logo-container">
+        <img src="{{appUrl}}/tpi_logo_square.png" alt="TestPlanIt Logo" />
+        <h1>TestPlanIt</h1>
+      </div>
+    </div>
+
+    <div class="email-body">
+      {{{content}}}
+    </div>
+
+    <div class="email-footer">
+      <p>
+        {{t "email.footer.sentBy"}} <a href="{{appUrl}}">TestPlanIt</a>
+      </p>
+      <p>
+        {{#if unsubscribeUrl}}
+          <a href="{{unsubscribeUrl}}">{{t "email.footer.unsubscribe"}}</a> |
+        {{/if}}
+        <a href="{{appUrl}}/{{locale}}/users/profile/{{userId}}">{{t "email.footer.managePreferences"}}</a>
+      </p>
+      <p class="text-muted">
+        © {{currentYear}} TestPlanIt. {{t "email.footer.allRightsReserved"}}
+      </p>
+    </div>
+  </div>
+</body>
+</html>

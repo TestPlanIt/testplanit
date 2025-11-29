@@ -1,0 +1,117 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-font-family-base: 'Noto Sans', sans-serif;
+  --ifm-font-family-monospace:
+    SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  --ifm-color-primary: #8559e9;
+  --ifm-color-primary-dark: #6a47d0;
+  --ifm-color-primary-darker: #5c3dba;
+  --ifm-color-primary-darkest: #482f94;
+  --ifm-color-primary-light: #9e76ee;
+  --ifm-color-primary-lighter: #ab87f1;
+  --ifm-color-primary-lightest: #c7a7f6;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #9e76ee;
+  --ifm-color-primary-dark: #8559e9;
+  --ifm-color-primary-darker: #7a4fea;
+  --ifm-color-primary-darkest: #6a47d0;
+  --ifm-color-primary-light: #ab87f1;
+  --ifm-color-primary-lighter: #bfa2f0;
+  --ifm-color-primary-lightest: #d9c7f3;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* Custom rule to ensure text in the primary hero banner is white */
+.hero.hero--primary {
+  --ifm-hero-text-color: var(--ifm-color-white, #fff);
+}
+
+/* Custom admonition styling for tips */
+.alert--success {
+  --ifm-alert-background-color: var(--ifm-color-primary-lightest);
+  --ifm-alert-border-color: var(--ifm-color-primary-lighter);
+  --ifm-alert-color: var(--ifm-color-primary-darkest); /* Text color */
+}
+
+[data-theme='dark'] .alert--success {
+  --ifm-alert-background-color: rgba(
+    158,
+    118,
+    238,
+    0.2
+  ); /* Using --ifm-color-primary with alpha */
+  --ifm-alert-border-color: var(--ifm-color-primary);
+  --ifm-alert-color: var(--ifm-color-primary-light); /* Text color */
+}
+
+/* Adjust icon color if needed (uses background color by default) */
+/*
+.alert--success .alert__icon::before {
+  background-color: var(--ifm-color-primary);
+}
+[data-theme='dark'] .alert--success .alert__icon::before {
+   background-color: var(--ifm-color-primary);
+}
+*/
+
+/* Make default headings purple */
+h1 {
+  color: var(--ifm-color-primary-dark);
+}
+
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--ifm-color-primary);
+}
+
+[data-theme='dark'] h1,
+[data-theme='dark'] h2,
+[data-theme='dark'] h3,
+[data-theme='dark'] h4,
+[data-theme='dark'] h5,
+[data-theme='dark'] h6 {
+  color: var(
+    --ifm-color-primary-lightest
+  ); /* Use lightest purple for better contrast in dark mode */
+}
+
+/* Custom admonition styling for info */
+.alert--info {
+  /* Very light purple background */
+  --ifm-alert-background-color: var(--ifm-color-primary-lightest);
+  /* Slightly darker border */
+  --ifm-alert-border-color: var(--ifm-color-primary);
+  /* Darker text for contrast - REMOVED to keep default text color */
+  /* --ifm-alert-color: var(--ifm-color-primary-darkest); */
+}
+
+[data-theme='dark'] .alert--info {
+  /* Very light purple background using alpha */
+  --ifm-alert-background-color: rgba(
+    158,
+    118,
+    238,
+    0.15
+  ); /* Primary color with alpha */
+  /* Primary purple border */
+  --ifm-alert-border-color: var(--ifm-color-primary);
+  /* Light purple text - REMOVED to keep default text color */
+  /* --ifm-alert-color: var(--ifm-color-primary-light); */
+}

@@ -1,0 +1,201 @@
+services:
+  prod:
+    container_name: testplanit-prod
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    env_file:
+      - .env.production
+    ports:
+      - "30000:3000"
+    networks:
+      - testplanit-net
+    restart: unless-stopped
+
+  workers:
+    container_name: testplanit-workers
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: workers
+    env_file:
+      - .env.production
+    networks:
+      - testplanit-net
+    restart: unless-stopped
+    depends_on:
+      prod:
+        condition: service_started
+
+  db-init-prod:
+    container_name: testplanit-db-init
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    env_file:
+      - .env.production
+    working_dir: /app
+    # Push schema and seed database (no migrations)
+    command: ["sh", "-c", "echo 'Waiting for DB...' && /usr/local/bin/wait-for-postgres.sh ${POSTGRES_HOST:-postgres} ${POSTGRES_PORT:-5432} -- echo 'DB ready, pushing schema...' && pnpm prisma db push --accept-data-loss && echo 'Schema pushed, seeding...' && pnpm tsx prisma/seed.ts && echo 'DB initialized and seeded.'"]
+    networks:
+      - testplanit-net
+    profiles:
+      - with-postgres
+
+  minio-init:
+    image: minio/mc:latest
+    networks:
+      - testplanit-net
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        echo 'Waiting for MinIO to be ready...';
+        until /usr/bin/mc alias set local http://minio:9000 minioadmin minioadmin123; do
+          echo 'MinIO not ready, waiting...';
+          sleep 2;
+        done;
+        echo 'MinIO ready, creating bucket...';
+        /usr/bin/mc mb local/testplanit --ignore-existing;
+        echo 'Setting bucket permissions...';
+        /usr/bin/mc anonymous set public local/testplanit;
+        echo 'MinIO initialization complete.';
+      "
+    profiles:
+      - with-minio
+
+  postgres:
+    container_name: testplanit-postgres
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: testplanit_prod
+    volumes:
+      - ./docker-data/postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - testplanit-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d testplanit_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - with-postgres
+
+  valkey:
+    container_name: testplanit-valkey
+    image: valkey/valkey:8-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - testplanit-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./docker-data/valkey:/data
+    profiles:
+      - with-valkey
+
+  # Init service to create elasticsearch directory with proper permissions
+  elasticsearch-init:
+    image: alpine:latest
+    user: root
+    command: >
+      sh -c "
+        mkdir -p /data &&
+        chown -R 1000:1000 /data &&
+        chmod -R 755 /data
+      "
+    volumes:
+      - ./docker-data/elasticsearch:/data
+    profiles:
+      - with-elasticsearch
+
+  elasticsearch:
+    container_name: testplanit-elasticsearch
+    image: elasticsearch:9.0.3
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - testplanit-net
+    restart: unless-stopped
+    volumes:
+      - ./docker-data/elasticsearch:/usr/share/elasticsearch/data
+    user: "1000:1000"
+    depends_on:
+      elasticsearch-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    profiles:
+      - with-elasticsearch
+
+  minio:
+    container_name: testplanit-minio
+    image: minio/minio:latest
+    command: server /data --console-address ":9001" --address ":9000"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+      MINIO_SERVER_URL: ${MINIO_SERVER_URL:-http://localhost:9000}
+    ports:
+      - "9000:9000"  # MinIO API (for external access)
+      - "9001:9001"  # MinIO Console (direct access for admin)
+    networks:
+      - testplanit-net
+    restart: unless-stopped
+    volumes:
+      - ./docker-data/minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    profiles:
+      - with-minio
+
+  # Nginx reverse proxy for internal routing
+  nginx:
+    container_name: testplanit-nginx
+    image: nginx:alpine
+    ports:
+      - "80:80"   # HTTP port (your external reverse proxy should point here)
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./maintenance.html:/etc/nginx/maintenance.html:ro
+    networks:
+      - testplanit-net
+    restart: unless-stopped
+    depends_on:
+      prod:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    profiles:
+      - with-minio
+
+networks:
+  testplanit-net:
+    driver: bridge

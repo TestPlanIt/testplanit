@@ -1,0 +1,16 @@
+bdermanouelian:
+  name: Brad DerManouelian
+  title: TestPlanIt Creator
+  url: https://testplanit.com
+  image_url: https://github.com/therealbrad.png
+  page: true
+  socials:
+    x: TestPlanItHQ
+    linkedin: brad-dermanouelian
+    github: therealbrad
+
+testplanit:
+  name: TestPlanIt Team
+  title: Contributor
+  url: https://testplanit.com
+  image_url: /img/logo.svg

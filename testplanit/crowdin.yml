@@ -1,0 +1,13 @@
+project_id: "778038"
+api_token_env: CROWDIN_PERSONAL_TOKEN
+base_path: "./messages"
+
+# Files to be translated
+files:
+  - source: /en-US.json
+    translation: /%locale%.json
+    languages_mapping:
+      locale:
+        # Map Crowdin locale codes to our locale format
+        es-ES: 'es-ES'
+        fr: 'fr-FR'

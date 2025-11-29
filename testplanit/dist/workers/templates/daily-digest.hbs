@@ -1,0 +1,35 @@
+{{#if userName}}
+<p>{{t "email.greetingWithName" name=userName}}</p>
+{{else}}
+<p>{{t "email.greeting"}}</p>
+{{/if}}
+
+<p>{{t "email.digest.intro"}}</p>
+
+{{#if notifications}}
+  {{#each notifications}}
+    <div class="notification-item">
+      <h3>{{this.title}}</h3>
+      <p>{{this.message}}</p>
+      <p class="timestamp">{{formatDateTime this.createdAt}}</p>
+      {{#if this.url}}
+      <p class="text-center">
+        <a href="{{this.url}}" class="button-small">{{t "email.digest.viewDetails"}}</a>
+      </p>
+      {{/if}}
+    </div>
+  {{/each}}
+
+  <div class="text-center">
+    <a href="{{appUrl}}/{{locale}}?openNotifications=true" class="button">{{t "email.digest.viewAll"}}</a>
+  </div>
+{{else}}
+  <p>{{t "email.digest.noNotifications"}}</p>
+{{/if}}
+
+<div class="divider"></div>
+
+<p class="text-muted">
+  {{t "email.digest.footer"}} 
+  <a href="{{appUrl}}/{{locale}}/users/profile/{{userId}}">{{t "email.digest.profileSettings"}}</a>.
+</p>

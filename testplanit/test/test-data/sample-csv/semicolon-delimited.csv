@@ -1,0 +1,6 @@
+Name;Description;Folder;Priority;Estimate
+Login test;Verify login with valid credentials;Authentication;High;5
+Failed login;Verify error on invalid password;Authentication;High;3
+Session timeout;Test session expires after inactivity;Security>Sessions;Medium;8
+CSRF protection;Verify CSRF token validation;Security>Web;High;10
+XSS prevention;Test XSS attack prevention;Security>Web;High;12

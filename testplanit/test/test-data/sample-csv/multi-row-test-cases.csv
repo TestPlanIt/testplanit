@@ -1,0 +1,13 @@
+Name,Step Number,Step Description,Expected Result,Estimate,Priority
+"Complete checkout process",1,"Navigate to shopping cart","Cart page is displayed",20,High
+"Complete checkout process",2,"Click checkout button","Checkout form is shown",20,High
+"Complete checkout process",3,"Enter shipping information","Form accepts valid data",20,High
+"Complete checkout process",4,"Enter payment details","Payment fields are secure",20,High
+"Complete checkout process",5,"Review order summary","All items and totals correct",20,High
+"Complete checkout process",6,"Click place order","Order confirmation displayed",20,High
+"User registration flow",1,"Click sign up link","Registration form opens",15,High
+"User registration flow",2,"Enter email address","Email validation works",15,High
+"User registration flow",3,"Enter password","Password strength shown",15,High
+"User registration flow",4,"Confirm password","Passwords must match",15,High
+"User registration flow",5,"Accept terms","Checkbox can be checked",15,High
+"User registration flow",6,"Submit form","Account created successfully",15,High

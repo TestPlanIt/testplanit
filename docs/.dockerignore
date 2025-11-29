@@ -1,0 +1,13 @@
+.docusaurus/
+build/
+node_modules/
+.env
+.git/
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+.eslintcache
+*.log
+.DS_Store
+.vscode/

@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "generated_at": "2024-05-01T12:00:00Z",
+    "source": "testmo"
+  },
+  "datasets": {
+    "users": {
+      "schema": {"id": "id", "email": "string"},
+      "data": [
+        {"id": 11, "email": "alice@example.com"},
+        {"id": 12, "email": "bob@example.com"}
+      ]
+    },
+    "projects": {
+      "schema": {"id": "id", "name": "string"},
+      "data": [
+        {"id": 301, "name": "Backend"}
+      ]
+    }
+  }
+}

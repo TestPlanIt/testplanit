@@ -1,0 +1,32 @@
+{{#if userName}}
+<p>{{t "email.greetingWithName" name=userName}}</p>
+{{else}}
+<p>{{t "email.greeting"}}</p>
+{{/if}}
+
+<p>{{t "email.notification.intro"}}</p>
+
+<div class="notification-item">
+  <h3>{{notification.title}}</h3>
+  {{#if notification.htmlMessage}}
+    <div class="notification-content">
+      {{{notification.htmlMessage}}}
+    </div>
+  {{else}}
+    <p>{{notification.message}}</p>
+  {{/if}}
+  <p class="timestamp">{{formatDateTime notification.createdAt}}</p>
+</div>
+
+<div class="text-center">
+  {{#if notificationUrl}}
+  <a href="{{notificationUrl}}" class="button">{{t "email.notification.viewDetails"}}</a>
+  <br><br>
+  {{/if}}
+  <a href="{{appUrl}}/{{locale}}?openNotifications=true" class="button{{#if notificationUrl}} button-secondary{{/if}}">{{t "email.notification.viewAll"}}</a>
+</div>
+
+{{#if additionalInfo}}
+<div class="divider"></div>
+<p class="text-muted">{{additionalInfo}}</p>
+{{/if}}

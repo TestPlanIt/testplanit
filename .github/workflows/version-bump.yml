@@ -1,0 +1,84 @@
+name: Version Bump
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+        - prerelease
+        default: 'patch'
+      prerelease_id:
+        description: 'Prerelease identifier (e.g., alpha, beta, rc)'
+        required: false
+        default: 'beta'
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'pnpm'
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v3
+      with:
+        version: 9
+
+    - name: Install dependencies
+      run: pnpm install
+      working-directory: ./testplanit
+
+    - name: Configure Git
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Bump version
+      id: bump
+      run: |
+        cd testplanit
+        if [ "${{ github.event.inputs.version_type }}" = "prerelease" ]; then
+          pnpm standard-version --prerelease ${{ github.event.inputs.prerelease_id }}
+        else
+          pnpm release:${{ github.event.inputs.version_type }}
+        fi
+
+        # Extract the new version from package.json
+        NEW_VERSION=$(node -p "require('./package.json').version")
+        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Push changes
+      run: |
+        git push --follow-tags origin main
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v5
+      with:
+        title: 'chore(release): v${{ steps.bump.outputs.new_version }}'
+        body: |
+          ## Version Bump
+
+          This PR was automatically created by the Version Bump workflow.
+
+          - Version bumped to: v${{ steps.bump.outputs.new_version }}
+          - Bump type: ${{ github.event.inputs.version_type }}
+
+          Please review the CHANGELOG.md file for the changes included in this release.
+        branch: release/v${{ steps.bump.outputs.new_version }}
+        delete-branch: true
