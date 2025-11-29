@@ -64,7 +64,7 @@ jobs:
           --title "Release ${{ github.ref_name }}" \
           --notes "## What's Changed
 
-        See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/testplanit/CHANGELOG.md) for details.
+        See [CHANGELOG.md](https://github.com/${REPO_LC}/blob/main/testplanit/CHANGELOG.md) for details.
 
         ## Docker Images
 
