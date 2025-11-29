@@ -731,8 +731,15 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // Use a ref to track the previous viewParam to avoid infinite loops
   const prevViewParamRef = useRef(viewParam);
   useEffect(() => {
-    // Only run when viewParam actually changes from external navigation
-    if (viewParam && viewParam !== prevViewParamRef.current) {
+    // Run when viewParam changes OR when viewOptions loads and we have a dynamic field that needs syncing
+    const shouldSync =
+      viewParam &&
+      (viewParam !== prevViewParamRef.current ||
+        (viewParam.startsWith("dynamic_") &&
+          viewOptions &&
+          selectedItem !== viewParam));
+
+    if (shouldSync) {
       prevViewParamRef.current = viewParam;
 
       const validViewTypes = [
@@ -770,7 +777,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         }
       }
     }
-  }, [viewParam, viewOptions]);
+  }, [viewParam, viewOptions, selectedItem]);
 
   const [selectedFilter, setSelectedFilter] = useState<Array<
     string | number
