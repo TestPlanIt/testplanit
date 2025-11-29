@@ -727,31 +727,50 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     return "folders";
   });
 
+  // Sync selectedItem state when URL's view parameter changes (e.g., from folder link click)
+  // Use a ref to track the previous viewParam to avoid infinite loops
+  const prevViewParamRef = useRef(viewParam);
   useEffect(() => {
-    if (!viewOptions || !viewParam) return;
+    // Only run when viewParam actually changes from external navigation
+    if (viewParam && viewParam !== prevViewParamRef.current) {
+      prevViewParamRef.current = viewParam;
 
-    if (viewParam.startsWith("dynamic_")) {
-      const [_, fieldKey] = viewParam.split("_");
-      const [fieldId, fieldType] = fieldKey.split("_");
-      const numericFieldId = parseInt(fieldId);
-      const field = Object.values(viewOptions.dynamicFields).find(
-        (f) => f.fieldId === numericFieldId
-      );
-      if (field) {
+      const validViewTypes = [
+        "folders",
+        "templates",
+        "states",
+        "creators",
+        "automated",
+        "status",
+        "assignedTo",
+        "tags",
+      ];
+
+      if (validViewTypes.includes(viewParam)) {
         setSelectedItem(viewParam);
+      } else if (viewParam.startsWith("dynamic_") && viewOptions) {
+        const [_, fieldKey] = viewParam.split("_");
+        const [fieldId, fieldType] = fieldKey.split("_");
+        const numericFieldId = parseInt(fieldId);
+        const field = Object.values(viewOptions.dynamicFields).find(
+          (f) => f.fieldId === numericFieldId
+        );
+        if (field) {
+          setSelectedItem(viewParam);
 
-        if (
-          field.type === "Link" ||
-          field.type === "Steps" ||
-          field.type === "Checkbox"
-        ) {
-          setSelectedFilter([1]);
-        } else if (field.options && field.options.length > 0) {
-          setSelectedFilter([field.options[0].id]);
+          if (
+            field.type === "Link" ||
+            field.type === "Steps" ||
+            field.type === "Checkbox"
+          ) {
+            setSelectedFilter([1]);
+          } else if (field.options && field.options.length > 0) {
+            setSelectedFilter([field.options[0].id]);
+          }
         }
       }
     }
-  }, [viewOptions, viewParam]);
+  }, [viewParam, viewOptions]);
 
   const [selectedFilter, setSelectedFilter] = useState<Array<
     string | number

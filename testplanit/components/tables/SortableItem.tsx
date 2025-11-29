@@ -196,16 +196,11 @@ function SortableItem<
           let targetDropIndex = hoverIndex;
           if (hoverPosition === "bottom") {
             // When dropping at the bottom of a row, we want to insert after that row
-            // But we need to account for whether we're moving up or down
-            if (dragIndex < hoverIndex) {
-              // Moving down: the target should be hoverIndex + 1, but since we remove
-              // the dragged item first, we don't need the +1
-              targetDropIndex = hoverIndex;
-            } else {
-              // Moving up: we do want to place it after the hovered item
-              targetDropIndex = hoverIndex + 1;
-            }
+            // Always add 1 to place after the hovered item
+            targetDropIndex = hoverIndex + 1;
           }
+          // When hoverPosition === "top", targetDropIndex stays as hoverIndex
+          // which means insert before the hovered item
           onReorder(dragIndex, targetDropIndex);
         }
         setHoverPosition(null);

@@ -323,10 +323,21 @@ const NameCell = React.memo(function NameCell({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="ml-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded truncate max-w-[150px] flex items-center">
+                <button
+                  type="button"
+                  className="ml-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded truncate max-w-[150px] flex items-center hover:bg-muted/80 transition-colors cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.set("view", "folders");
+                    params.set("node", folder.id.toString());
+                    router.push(`${pathname}?${params.toString()}`);
+                  }}
+                >
                   <Folder className="w-3 h-3 mr-1 shrink-0" />
                   {folder.name}
-                </div>
+                </button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-md">
                 <div className="text-xs">{folderPath || folder.name}</div>
@@ -374,10 +385,21 @@ const NameCell = React.memo(function NameCell({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="ml-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded truncate max-w-[150px] flex items-center">
+              <button
+                type="button"
+                className="ml-2 text-muted-foreground text-xs bg-muted px-2 py-0.5 rounded truncate max-w-[150px] flex items-center hover:bg-muted/80 transition-colors cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set("view", "folders");
+                  params.set("node", folder.id.toString());
+                  router.push(`${pathname}?${params.toString()}`);
+                }}
+              >
                 <Folder className="w-3 h-3 mr-1 shrink-0" />
                 {folder.name}
-              </div>
+              </button>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-md">
               <div className="text-xs">{folderPath || folder.name}</div>
