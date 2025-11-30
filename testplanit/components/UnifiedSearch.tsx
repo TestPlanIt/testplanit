@@ -752,8 +752,8 @@ export function UnifiedSearch({
             </SheetTrigger>
             <SheetContent className="w-[400px] sm:w-[540px]">
               <SheetHeader className="sr-only">
-                <SheetTitle>{t("search.filters")}</SheetTitle>
-                <SheetDescription>{t("search.filters")}</SheetDescription>
+                <SheetTitle>{t("search.filters.title")}</SheetTitle>
+                <SheetDescription>{t("search.filters.title")}</SheetDescription>
               </SheetHeader>
               <FacetedSearchFilters
                 entityTypes={selectedEntities}
