@@ -337,6 +337,7 @@ Active contributors may receive:
 ### Becoming a Maintainer
 
 Consistent, high-quality contributors may be invited to become maintainers with:
+
 - Write access to the repository
 - Decision-making input on project direction
 - Access to maintainer resources and support
@@ -344,10 +345,11 @@ Consistent, high-quality contributors may be invited to become maintainers with:
 ## Questions?
 
 If you have questions about contributing, please:
+
 1. Check our [FAQ](https://testplanit.com/faq)
 2. Ask in [GitHub Discussions](https://github.com/testplanit/testplanit/discussions)
-3. Join our [Discord](https://discord.gg/testplanit)
-4. Email us at contributors@testplanit.com
+3. Join our [Discord](https://discord.gg/kpfha4W2JH)
+4. Email us at [opensource@testplanit.com](mailto:opensource@testplanit.com)
 
 Thank you for contributing to TestPlanIt! Your efforts help make test planning better for everyone. 🚀
 

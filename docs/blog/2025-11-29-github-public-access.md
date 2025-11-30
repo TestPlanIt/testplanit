@@ -46,7 +46,7 @@ With the source code now public, I'm looking forward to:
 
 - Star the repo on [GitHub](https://github.com/testplanit/testplanit)
 - Follow [@TestPlanItHQ](https://x.com/TestPlanItHQ) for updates
-- Join our [Community Discord](https://discord.gg/XH67sdgn) to connect with other users
+- Join our [Community Discord](https://discord.gg/kpfha4W2JH) to connect with other users
 - Report issues and suggest features on GitHub
 
 Thank you for your support. Here's to better testing for everyone!

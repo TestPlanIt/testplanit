@@ -22,6 +22,6 @@ Our goal is to provide a tool that adapts to _your_ workflow, not the other way 
 - **Development Insights:** Understand the choices behind our design and architecture.
 - **Community Spotlights:** Highlighting how others are using TestPlanIt.
 
-We encourage you to explore the [TestPlanIt Documentation](/docs/) to get started and join our [Community Discord](https://discord.gg/XH67sdgn) to connect with other users and the development team.
+We encourage you to explore the [TestPlanIt Documentation](/docs/) to get started and join our [Community Discord](https://discord.gg/kpfha4W2JH) to connect with other users and the development team.
 
 Stay tuned for more updates!
