@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { DateFormatter } from "@/components/DateFormatter";
 import { Link, Plug } from "lucide-react";
-import * as icons from "simple-icons";
+import { siJira, siGithub } from "simple-icons";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { EditIntegrationButton } from "./EditIntegrationButton";
 import { DeleteIntegrationButton } from "./DeleteIntegrationButton";
@@ -13,13 +13,13 @@ import { SyncIntegrationButton } from "./SyncIntegrationButton";
 
 const JiraIcon = ({ className }: { className: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-    <path d={icons.siJira.path} />
+    <path d={siJira.path} />
   </svg>
 );
 
 const GithubIcon = ({ className }: { className: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-    <path d={icons.siGithub.path} />
+    <path d={siGithub.path} />
   </svg>
 );
 

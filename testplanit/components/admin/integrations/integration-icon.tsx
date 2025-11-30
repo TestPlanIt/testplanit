@@ -1,7 +1,7 @@
 import { cn } from "~/utils";
 import { Bug } from "lucide-react";
 import { IntegrationProvider } from "@prisma/client";
-import * as icons from "simple-icons";
+import { siJira, siGithub } from "simple-icons";
 
 interface IntegrationIconProps {
   provider: IntegrationProvider;
@@ -16,7 +16,7 @@ export function IntegrationIcon({ provider, className }: IntegrationIconProps) {
       return (
         <div className={cn(baseClass, "bg-blue-500 text-white")}>
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-            <path d={icons.siJira.path} />
+            <path d={siJira.path} />
           </svg>
         </div>
       );
@@ -26,7 +26,7 @@ export function IntegrationIcon({ provider, className }: IntegrationIconProps) {
           className={cn(baseClass, "bg-gray-900 text-white dark:bg-gray-700")}
         >
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-            <path d={icons.siGithub.path} />
+            <path d={siGithub.path} />
           </svg>
         </div>
       );

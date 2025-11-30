@@ -9,36 +9,6 @@ All notable changes to this project will be documented in this file. See [standa
 
 * **release:** update lowercase repo name setting in workflow ([edb0a8e](https://github.com/testplanit/testplanit/commit/edb0a8e74a5ef0bbcd30846f0f91157c6edaee67))
 
-### [0.0.28](https://github.com/testplanit/testplanit/compare/v0.0.27...v0.0.28) (2025-11-30)
-
-### [0.0.27](https://github.com/testplanit/testplanit/compare/v0.0.26...v0.0.27) (2025-11-30)
-
-### [0.0.26](https://github.com/testplanit/testplanit/compare/v0.0.25...v0.0.26) (2025-11-30)
-
-### [0.0.25](https://github.com/testplanit/testplanit/compare/v0.0.24...v0.0.25) (2025-11-30)
-
-### [0.0.24](https://github.com/testplanit/testplanit/compare/v0.0.23...v0.0.24) (2025-11-30)
-
-### [0.0.23](https://github.com/testplanit/testplanit/compare/v0.0.22...v0.0.23) (2025-11-30)
-
-### [0.0.22](https://github.com/testplanit/testplanit/compare/v0.0.21...v0.0.22) (2025-11-30)
-
-### [0.0.21](https://github.com/testplanit/testplanit/compare/v0.0.20...v0.0.21) (2025-11-30)
-
-### [0.0.20](https://github.com/testplanit/testplanit/compare/v0.0.19...v0.0.20) (2025-11-30)
-
-### [0.0.19](https://github.com/testplanit/testplanit/compare/v0.0.18...v0.0.19) (2025-11-30)
-
-### [0.0.18](https://github.com/testplanit/testplanit/compare/v0.0.17...v0.0.18) (2025-11-30)
-
-### [0.0.17](https://github.com/testplanit/testplanit/compare/v0.0.16...v0.0.17) (2025-11-30)
-
-
-### Bug Fixes
-
-* **release:** update lowercase repo name setting in workflow ([edb0a8e](https://github.com/testplanit/testplanit/commit/edb0a8e74a5ef0bbcd30846f0f91157c6edaee67))
-
-### [0.0.16](https://github.com/testplanit/testplanit/compare/v0.0.15...v0.0.16) (2025-11-30)
 
 ### [0.0.15](https://github.com/testplanit/testplanit/compare/v0.0.13...v0.0.15) (2025-11-30)
 
