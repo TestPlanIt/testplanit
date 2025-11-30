@@ -159,14 +159,12 @@ jobs:
 
     - name: Log in to GitHub Container Registry
       run: |
-        # Ensure no credential helper is used - must be done right before login
-        mkdir -p ~/.docker
-        if [ -f ~/.docker/config.json ]; then
-          cat ~/.docker/config.json | python3 -c "import sys,json; c=json.load(sys.stdin); c.pop('credsStore',None); c.pop('credHelpers',None); print(json.dumps(c))" > ~/.docker/config.json.tmp && mv ~/.docker/config.json.tmp ~/.docker/config.json
-        else
-          echo '{}' > ~/.docker/config.json
-        fi
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        # Use isolated config dir to completely bypass keychain
+        export DOCKER_CONFIG="${RUNNER_TEMP}/docker-config"
+        mkdir -p "$DOCKER_CONFIG"
+        echo '{}' > "$DOCKER_CONFIG/config.json"
+        echo "${{ secrets.GITHUB_TOKEN }}" | docker --config "$DOCKER_CONFIG" login ghcr.io -u ${{ github.actor }} --password-stdin
+        echo "DOCKER_CONFIG=$DOCKER_CONFIG" >> $GITHUB_ENV
 
     - name: Generate version info for Docker build
       run: |
@@ -327,14 +325,12 @@ jobs:
 
     - name: Log in to GitHub Container Registry
       run: |
-        # Ensure no credential helper is used - must be done right before login
-        mkdir -p ~/.docker
-        if [ -f ~/.docker/config.json ]; then
-          cat ~/.docker/config.json | python3 -c "import sys,json; c=json.load(sys.stdin); c.pop('credsStore',None); c.pop('credHelpers',None); print(json.dumps(c))" > ~/.docker/config.json.tmp && mv ~/.docker/config.json.tmp ~/.docker/config.json
-        else
-          echo '{}' > ~/.docker/config.json
-        fi
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        # Use isolated config dir to completely bypass keychain
+        export DOCKER_CONFIG="${RUNNER_TEMP}/docker-config"
+        mkdir -p "$DOCKER_CONFIG"
+        echo '{}' > "$DOCKER_CONFIG/config.json"
+        echo "${{ secrets.GITHUB_TOKEN }}" | docker --config "$DOCKER_CONFIG" login ghcr.io -u ${{ github.actor }} --password-stdin
+        echo "DOCKER_CONFIG=$DOCKER_CONFIG" >> $GITHUB_ENV
 
     - name: Generate version info for Docker build
       run: |
