@@ -1,6 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { IntegrationProvider } from "@prisma/client";
 
+// Supported issue tracking providers
+const ISSUE_TRACKING_PROVIDERS = [
+  IntegrationProvider.JIRA,
+  IntegrationProvider.GITHUB,
+];
+
 export class JiraLinkService {
   /**
    * Link a TestPlanIt test case to a Jira issue
@@ -18,13 +24,13 @@ export class JiraLinkService {
       const integration = await prisma.integration.findFirst({
         where: {
           id: integrationId,
-          provider: IntegrationProvider.JIRA,
+          provider: { in: ISSUE_TRACKING_PROVIDERS },
           status: "ACTIVE",
         },
       });
 
       if (!integration) {
-        throw new Error("Invalid or inactive Jira integration");
+        throw new Error("Invalid or inactive issue tracking integration");
       }
 
       // Check if the test case exists
@@ -105,13 +111,13 @@ export class JiraLinkService {
       const integration = await prisma.integration.findFirst({
         where: {
           id: integrationId,
-          provider: IntegrationProvider.JIRA,
+          provider: { in: ISSUE_TRACKING_PROVIDERS },
           status: "ACTIVE",
         },
       });
 
       if (!integration) {
-        throw new Error("Invalid or inactive Jira integration");
+        throw new Error("Invalid or inactive issue tracking integration");
       }
 
       const testRun = await prisma.testRuns.findUnique({
@@ -186,7 +192,7 @@ export class JiraLinkService {
           issues: {
             where: {
               integration: {
-                provider: IntegrationProvider.JIRA,
+                provider: { in: ISSUE_TRACKING_PROVIDERS },
                 status: "ACTIVE",
               },
             },
@@ -237,13 +243,13 @@ export class JiraLinkService {
       const integration = await prisma.integration.findFirst({
         where: {
           id: integrationId,
-          provider: IntegrationProvider.JIRA,
+          provider: { in: ISSUE_TRACKING_PROVIDERS },
           status: "ACTIVE",
         },
       });
 
       if (!integration) {
-        throw new Error("Invalid or inactive Jira integration");
+        throw new Error("Invalid or inactive issue tracking integration");
       }
 
       const session = await prisma.sessions.findUnique({
@@ -317,7 +323,7 @@ export class JiraLinkService {
           issues: {
             where: {
               integration: {
-                provider: IntegrationProvider.JIRA,
+                provider: { in: ISSUE_TRACKING_PROVIDERS },
                 status: "ACTIVE",
               },
             },
@@ -366,7 +372,7 @@ export class JiraLinkService {
             },
           },
           integration: {
-            provider: IntegrationProvider.JIRA,
+            provider: { in: ISSUE_TRACKING_PROVIDERS },
             status: "ACTIVE",
           },
         },
@@ -408,13 +414,13 @@ export class JiraLinkService {
         where: {
           externalId: jiraIssueId,
           integration: {
-            provider: IntegrationProvider.JIRA,
+            provider: { in: ISSUE_TRACKING_PROVIDERS },
           },
         },
       });
 
       if (!issue) {
-        throw new Error("Jira issue not found");
+        throw new Error("Issue not found");
       }
 
       // Disconnect the test case from the issue
@@ -470,13 +476,13 @@ export class JiraLinkService {
         where: {
           externalId: jiraIssueId,
           integration: {
-            provider: IntegrationProvider.JIRA,
+            provider: { in: ISSUE_TRACKING_PROVIDERS },
           },
         },
       });
 
       if (!issue) {
-        throw new Error("Jira issue not found");
+        throw new Error("Issue not found");
       }
 
       // Disconnect the test run from the issue
@@ -532,13 +538,13 @@ export class JiraLinkService {
         where: {
           externalId: jiraIssueId,
           integration: {
-            provider: IntegrationProvider.JIRA,
+            provider: { in: ISSUE_TRACKING_PROVIDERS },
           },
         },
       });
 
       if (!issue) {
-        throw new Error("Jira issue not found");
+        throw new Error("Issue not found");
       }
 
       // Disconnect the session from the issue
@@ -594,13 +600,13 @@ export class JiraLinkService {
         where: {
           externalId: jiraIssueId,
           integration: {
-            provider: IntegrationProvider.JIRA,
+            provider: { in: ISSUE_TRACKING_PROVIDERS },
           },
         },
       });
 
       if (!issue) {
-        throw new Error("Jira issue not found");
+        throw new Error("Issue not found");
       }
 
       // Disconnect the test run result from the issue
@@ -654,13 +660,13 @@ export class JiraLinkService {
         where: {
           externalId: jiraIssueId,
           integration: {
-            provider: IntegrationProvider.JIRA,
+            provider: { in: ISSUE_TRACKING_PROVIDERS },
           },
         },
       });
 
       if (!issue) {
-        throw new Error("Jira issue not found");
+        throw new Error("Issue not found");
       }
 
       // Disconnect the session result from the issue
@@ -717,13 +723,13 @@ export class JiraLinkService {
       const integration = await prisma.integration.findFirst({
         where: {
           id: integrationId,
-          provider: IntegrationProvider.JIRA,
+          provider: { in: ISSUE_TRACKING_PROVIDERS },
           status: "ACTIVE",
         },
       });
 
       if (!integration) {
-        throw new Error("Invalid or inactive Jira integration");
+        throw new Error("Invalid or inactive issue tracking integration");
       }
 
       const testRunResult = await prisma.testRunResults.findUnique({
@@ -810,13 +816,13 @@ export class JiraLinkService {
       const integration = await prisma.integration.findFirst({
         where: {
           id: integrationId,
-          provider: IntegrationProvider.JIRA,
+          provider: { in: ISSUE_TRACKING_PROVIDERS },
           status: "ACTIVE",
         },
       });
 
       if (!integration) {
-        throw new Error("Invalid or inactive Jira integration");
+        throw new Error("Invalid or inactive issue tracking integration");
       }
 
       const sessionResult = await prisma.sessionResults.findUnique({
@@ -895,7 +901,7 @@ export class JiraLinkService {
           issues: {
             where: {
               integration: {
-                provider: IntegrationProvider.JIRA,
+                provider: { in: ISSUE_TRACKING_PROVIDERS },
                 status: "ACTIVE",
               },
             },
@@ -942,7 +948,7 @@ export class JiraLinkService {
           issues: {
             where: {
               integration: {
-                provider: IntegrationProvider.JIRA,
+                provider: { in: ISSUE_TRACKING_PROVIDERS },
                 status: "ACTIVE",
               },
             },
@@ -993,13 +999,13 @@ export class JiraLinkService {
       const integration = await prisma.integration.findFirst({
         where: {
           id: integrationId,
-          provider: IntegrationProvider.JIRA,
+          provider: { in: ISSUE_TRACKING_PROVIDERS },
           status: "ACTIVE",
         },
       });
 
       if (!integration) {
-        throw new Error("Invalid or inactive Jira integration");
+        throw new Error("Invalid or inactive issue tracking integration");
       }
 
       const testRunStepResult = await prisma.testRunStepResults.findUnique({
@@ -1087,13 +1093,13 @@ export class JiraLinkService {
         where: {
           externalId: jiraIssueId,
           integration: {
-            provider: IntegrationProvider.JIRA,
+            provider: { in: ISSUE_TRACKING_PROVIDERS },
           },
         },
       });
 
       if (!issue) {
-        throw new Error("Jira issue not found");
+        throw new Error("Issue not found");
       }
 
       // Disconnect the test run step result from the issue
@@ -1148,7 +1154,7 @@ export class JiraLinkService {
           issues: {
             where: {
               integration: {
-                provider: IntegrationProvider.JIRA,
+                provider: { in: ISSUE_TRACKING_PROVIDERS },
                 status: "ACTIVE",
               },
             },
@@ -1196,7 +1202,7 @@ export class JiraLinkService {
         where: {
           externalId: jiraIssueId,
           integration: {
-            provider: IntegrationProvider.JIRA,
+            provider: { in: ISSUE_TRACKING_PROVIDERS },
           },
         },
         data: {

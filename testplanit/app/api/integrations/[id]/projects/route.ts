@@ -64,8 +64,11 @@ export async function GET(
   } catch (error) {
     console.error("Error fetching integration projects:", error);
 
-    // Check if it's an authentication error
-    if (error instanceof Error && error.message.includes("auth")) {
+    // Check if it's an authentication error from the external API
+    if (error instanceof Error &&
+        (error.message.includes("401") ||
+         error.message.includes("Unauthorized") ||
+         error.message.includes("Bad credentials"))) {
       return NextResponse.json(
         { error: "Authentication expired or invalid" },
         { status: 401 }

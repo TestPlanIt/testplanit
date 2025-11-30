@@ -105,10 +105,10 @@ export class IntegrationManager {
       type: this.mapAuthType(integration.authType),
     };
 
-    // Handle API key authentication
-    if (integration.authType === "API_KEY" && integration.credentials) {
+    // Handle API key or PAT authentication
+    if ((integration.authType === "API_KEY" || integration.authType === "PERSONAL_ACCESS_TOKEN") && integration.credentials) {
       let credentials = integration.credentials as any;
-      
+
       // Check if credentials are encrypted
       if (typeof credentials === "object" && "encrypted" in credentials) {
         // Decrypt credentials
@@ -118,17 +118,19 @@ export class IntegrationManager {
         );
         credentials = JSON.parse(decrypted);
       }
-      
+
       // Add API key auth data from credentials
       if (credentials.email) authData.email = credentials.email;
       if (credentials.apiToken) authData.apiToken = credentials.apiToken;
-      
+      // For GitHub PAT authentication
+      if (credentials.personalAccessToken) authData.apiKey = credentials.personalAccessToken;
+
       // Add baseUrl from settings
       if (integration.settings && typeof integration.settings === "object") {
         const settings = integration.settings as Record<string, any>;
         if (settings.baseUrl) authData.baseUrl = settings.baseUrl;
       }
-      
+
       await adapter.authenticate(authData);
     } 
     // Handle OAuth authentication

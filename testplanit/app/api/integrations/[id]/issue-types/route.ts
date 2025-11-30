@@ -93,11 +93,9 @@ export async function GET(
     }
 
     // Get issue types for the project
+    // Some integrations (like GitHub) don't have issue types - return empty array
     if (!adapter.getIssueTypes) {
-      return NextResponse.json(
-        { error: "This integration does not support fetching issue types" },
-        { status: 400 }
-      );
+      return NextResponse.json({ issueTypes: [] });
     }
     const issueTypes = await adapter.getIssueTypes(projectKey);
 

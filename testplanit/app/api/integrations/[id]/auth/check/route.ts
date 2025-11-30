@@ -29,8 +29,8 @@ export async function GET(
       );
     }
 
-    // If it's an API key integration, it's already authenticated at the integration level
-    if (integration.authType === "API_KEY") {
+    // If it's an API key or PAT integration, it's already authenticated at the integration level
+    if (integration.authType === "API_KEY" || integration.authType === "PERSONAL_ACCESS_TOKEN") {
       return NextResponse.json({ authenticated: true });
     }
 

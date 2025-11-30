@@ -1190,6 +1190,9 @@
           },
           "simple_url": {
             "description": "Connect to a third party system for issue tracking."
+          },
+          "github": {
+            "description": "Connect to GitHub for issue tracking and repository management."
           }
         }
       },
@@ -4920,6 +4923,7 @@
     "projects": {
       "settings": {
         "integrations": {
+          "externalProjectHelp": "## External Project\nSelect the project or repository in the external system to link with this TestPlanIt project.\n\n- Issues created from TestPlanIt will be created in this project\n- Enables issue tracking integration between systems\n- Must have appropriate permissions in the external system",
           "defaultIssueTypeHelp": "## Default Issue Type\nThe issue type that will be pre-selected when creating new issues from TestPlanIt.\n\n- Saves time by defaulting to your most common issue type\n- Can be overridden when creating individual issues\n- Must be a valid issue type for the selected external project\n- Update this if your workflow changes",
           "automaticSyncHelp": "## Automatic Sync\nEnables automatic synchronization of issue status between TestPlanIt and the external system.\n\n- Issues linked to test cases will update their status automatically\n- Helps keep issue tracking consistent across systems\n- May increase API usage with the external service\n- Can be disabled if manual control is preferred"
         }

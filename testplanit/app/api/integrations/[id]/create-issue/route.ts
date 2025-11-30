@@ -16,7 +16,8 @@ const createIssueSchema = z.object({
       }),
     ])
     .optional(),
-  projectId: z.string(),
+  projectId: z.string(), // External project ID (e.g., "owner/repo" for GitHub, project key for Jira)
+  testplanitProjectId: z.number().optional(), // Internal TestPlanIt project ID for database storage
   issueType: z.string().optional(),
   priority: z.string().optional(),
   assigneeId: z.string().optional(),
@@ -117,6 +118,9 @@ export async function POST(
       integration = userIntegrationAuth.integration;
     }
 
+    // Get the internal TestPlanIt project ID from the request or from linked entities
+    let internalProjectId: number = validatedData.testplanitProjectId || 0;
+
     // Check project permissions if linking to TestPlanit entities
     if (
       validatedData.testCaseId ||
@@ -124,35 +128,40 @@ export async function POST(
       validatedData.sessionId
     ) {
       // Get the project ID from the linked entity
-      let projectId: number | null = null;
+      let entityProjectId: number | null = null;
 
       if (validatedData.testCaseId) {
         const testCase = await prisma.repositoryCases.findUnique({
           where: { id: parseInt(validatedData.testCaseId) },
           select: { projectId: true },
         });
-        projectId = testCase?.projectId || null;
+        entityProjectId = testCase?.projectId || null;
       } else if (validatedData.testRunId) {
         const testRun = await prisma.testRuns.findUnique({
           where: { id: parseInt(validatedData.testRunId) },
           select: { projectId: true },
         });
-        projectId = testRun?.projectId || null;
+        entityProjectId = testRun?.projectId || null;
       } else if (validatedData.sessionId) {
         const sessionEntity = await prisma.sessions.findUnique({
           where: { id: parseInt(validatedData.sessionId) },
           select: { projectId: true },
         });
-        projectId = sessionEntity?.projectId || null;
+        entityProjectId = sessionEntity?.projectId || null;
       }
 
-      if (projectId) {
+      // Use entity's project ID as fallback if not provided in request
+      if (!internalProjectId && entityProjectId) {
+        internalProjectId = entityProjectId;
+      }
+
+      if (entityProjectId) {
         // Check if user has access to the project
         const projectAssignment = await prisma.projectAssignment.findUnique({
           where: {
             userId_projectId: {
               userId: session.user.id,
-              projectId: projectId,
+              projectId: entityProjectId,
             },
           },
         });
@@ -382,9 +391,8 @@ export async function POST(
             customFields: createdIssue.customFields,
           },
           integrationId: parseInt(integrationId),
-          projectId: validatedData.projectId
-            ? parseInt(validatedData.projectId)
-            : 0,
+          // Use the internal TestPlanIt project ID (from request or derived from linked entities)
+          projectId: internalProjectId,
           createdById: session.user.id,
           // Link to the appropriate entities
           ...(validatedData.testCaseId && {
@@ -483,7 +491,10 @@ export async function POST(
     }
 
     return NextResponse.json(
-      { error: "Failed to create issue" },
+      {
+        error: "Failed to create issue",
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     );
   }
