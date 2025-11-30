@@ -83,10 +83,10 @@ describe("ElasticsearchReindexWorker", () => {
   describe("ReindexJobData interface", () => {
     it("should accept valid entity types", async () => {
       // Import the module to ensure types are valid
-      const module = await import("./elasticsearchReindexWorker");
+      const workerModule = await import("./elasticsearchReindexWorker");
 
       // The module exports the worker (null due to no valkey connection)
-      expect(module.default).toBeNull();
+      expect(workerModule.default).toBeNull();
 
       // Test that the interface allows these entity types
       const validJobData: import("./elasticsearchReindexWorker").ReindexJobData =
@@ -108,8 +108,8 @@ describe("ElasticsearchReindexWorker", () => {
 
   describe("Worker module", () => {
     it("should export default as null when valkey connection is unavailable", async () => {
-      const module = await import("./elasticsearchReindexWorker");
-      expect(module.default).toBeNull();
+      const workerModule = await import("./elasticsearchReindexWorker");
+      expect(workerModule.default).toBeNull();
     });
   });
 
@@ -148,7 +148,7 @@ describe("ElasticsearchReindexWorker", () => {
       };
 
       expect(withProjectId.projectId).toBe(42);
-      expect(withoutProjectId.projectId).toBeUndefined();
+      expect("projectId" in withoutProjectId).toBe(false);
     });
   });
 });
