@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.17](https://github.com/testplanit/testplanit/compare/v0.0.16...v0.0.17) (2025-11-30)
+
+
+### Features
+
+* add DialogDescription component to various modals for improved accessibility ([3bbe8ea](https://github.com/testplanit/testplanit/commit/3bbe8ea8f5f1797652470776023af8e2077ce6ef))
+
+
+### Bug Fixes
+
+* update BulkEditModal test to use getByRole for improved accessibility and correct UnifiedSearch component to use specific translation keys for filters ([b35fd84](https://github.com/testplanit/testplanit/commit/b35fd84ff6c0b1da7ef45c67cd58a336b72b74c8))
+
+
+### Code Refactoring
+
+* rename module import variable for clarity in ElasticsearchReindexWorker tests ([a392e02](https://github.com/testplanit/testplanit/commit/a392e025c4a42e1c550e885e4a6d0131319daef3))
+
 ### [0.0.16](https://github.com/testplanit/testplanit/compare/v0.0.15...v0.0.16) (2025-11-30)
 
 
