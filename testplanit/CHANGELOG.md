@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.16](https://github.com/testplanit/testplanit/compare/v0.0.15...v0.0.16) (2025-11-30)
+
+
+### Bug Fixes
+
+* **release:** update lowercase repo name setting in workflow ([edb0a8e](https://github.com/testplanit/testplanit/commit/edb0a8e74a5ef0bbcd30846f0f91157c6edaee67))
+
 ### [0.0.28](https://github.com/testplanit/testplanit/compare/v0.0.27...v0.0.28) (2025-11-30)
 
 ### [0.0.27](https://github.com/testplanit/testplanit/compare/v0.0.26...v0.0.27) (2025-11-30)
