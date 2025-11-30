@@ -78,11 +78,11 @@ jobs:
         docker pull ghcr.io/${REPO_LC}:${{ github.ref_name }}-workers
         \`\`\`"
 
-  docker-on-release:
-    # Build Docker images when a release tag is pushed
+  # Build AMD64 images natively on x64 runner
+  build-amd64:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     needs: create-release
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: read
       packages: write
@@ -111,32 +111,126 @@ jobs:
         mkdir -p public
         cp public/version.json .docker-version.json || echo "Version file not generated"
 
-    - name: Build and push all Docker images with Bake
+    - name: Build and push AMD64 images
       working-directory: ./testplanit
       run: |
-        # Extract version from tag (remove 'v' prefix for semver tags)
         VERSION="${{ github.ref_name }}"
         VERSION_NUM="${VERSION#v}"
 
-        # Build and push both production and workers targets in a single command
-        # This shares the build cache between targets, avoiding duplicate builds
-        # Use -f to only load docker-bake.hcl (ignore docker-compose.yml which needs env files)
         docker buildx bake -f docker-bake.hcl --push \
           --set "*.platform=linux/amd64" \
-          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}" \
-          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION}" \
-          --set "production.tags=ghcr.io/${REPO_LC}:latest" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-workers" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION}-workers" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:latest-workers" \
+          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-amd64" \
+          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION}-amd64" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-amd64" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION}-workers-amd64" \
           --set "*.args.VERSION=${VERSION}" \
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
 
-  docker-manual:
-    # Build Docker images manually on demand
-    if: github.event_name == 'workflow_dispatch'
+  # Build ARM64 images natively on macOS arm64 runner
+  build-arm64:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    needs: create-release
+    runs-on: [self-hosted, macOS, arm64]
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set lowercase repo name
+      run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate version info for Docker build
+      run: |
+        cd testplanit
+        node scripts/generate-version.js
+        mkdir -p public
+        cp public/version.json .docker-version.json || echo "Version file not generated"
+
+    - name: Build and push ARM64 images
+      working-directory: ./testplanit
+      run: |
+        VERSION="${{ github.ref_name }}"
+        VERSION_NUM="${VERSION#v}"
+
+        docker buildx bake -f docker-bake.hcl --push \
+          --set "*.platform=linux/arm64" \
+          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-arm64" \
+          --set "production.tags=ghcr.io/${REPO_LC}:${VERSION}-arm64" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-arm64" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:${VERSION}-workers-arm64" \
+          --set "*.args.VERSION=${VERSION}" \
+          --set "*.args.GIT_COMMIT=${{ github.sha }}" \
+          --set "*.args.BASE_DOMAIN=testplanit.com"
+
+  # Merge architecture-specific images into multi-arch manifests
+  merge-manifests:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    needs: [build-amd64, build-arm64]
     runs-on: [self-hosted, linux]
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Set lowercase repo name
+      run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create multi-arch manifests
+      run: |
+        VERSION="${{ github.ref_name }}"
+        VERSION_NUM="${VERSION#v}"
+
+        # Create production manifests
+        docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION_NUM} \
+          ghcr.io/${REPO_LC}:${VERSION_NUM}-amd64 \
+          ghcr.io/${REPO_LC}:${VERSION_NUM}-arm64
+
+        docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION} \
+          ghcr.io/${REPO_LC}:${VERSION}-amd64 \
+          ghcr.io/${REPO_LC}:${VERSION}-arm64
+
+        docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest \
+          ghcr.io/${REPO_LC}:${VERSION}-amd64 \
+          ghcr.io/${REPO_LC}:${VERSION}-arm64
+
+        # Create workers manifests
+        docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION_NUM}-workers \
+          ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-amd64 \
+          ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-arm64
+
+        docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION}-workers \
+          ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
+          ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
+
+        docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest-workers \
+          ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
+          ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
+
+  # Manual build: AMD64 images natively on x64 runner
+  docker-manual-amd64:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: read
       packages: write
@@ -167,16 +261,92 @@ jobs:
         mkdir -p public
         cp public/version.json .docker-version.json || echo "Version file not generated"
 
-    - name: Build and push all Docker images with Bake
+    - name: Build and push AMD64 images
       working-directory: ./testplanit
       run: |
-        # Build and push both production and workers targets in a single command
-        # This shares the build cache between targets, avoiding duplicate builds
-        # Use -f to only load docker-bake.hcl (ignore docker-compose.yml which needs env files)
         docker buildx bake -f docker-bake.hcl --push \
           --set "*.platform=linux/amd64" \
-          --set "production.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}" \
-          --set "workers.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers" \
+          --set "production.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-amd64" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers-amd64" \
           --set "*.args.VERSION=${{ github.event.inputs.tag }}" \
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
+
+  # Manual build: ARM64 images natively on macOS arm64 runner
+  docker-manual-arm64:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: [self-hosted, macOS, arm64]
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.tag }}
+
+    - name: Set lowercase repo name
+      run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Generate version info for Docker build
+      run: |
+        cd testplanit
+        node scripts/generate-version.js
+        mkdir -p public
+        cp public/version.json .docker-version.json || echo "Version file not generated"
+
+    - name: Build and push ARM64 images
+      working-directory: ./testplanit
+      run: |
+        docker buildx bake -f docker-bake.hcl --push \
+          --set "*.platform=linux/arm64" \
+          --set "production.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-arm64" \
+          --set "workers.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers-arm64" \
+          --set "*.args.VERSION=${{ github.event.inputs.tag }}" \
+          --set "*.args.GIT_COMMIT=${{ github.sha }}" \
+          --set "*.args.BASE_DOMAIN=testplanit.com"
+
+  # Manual build: Merge architecture-specific images into multi-arch manifests
+  docker-manual-merge:
+    if: github.event_name == 'workflow_dispatch'
+    needs: [docker-manual-amd64, docker-manual-arm64]
+    runs-on: [self-hosted, linux]
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Set lowercase repo name
+      run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create multi-arch manifests
+      run: |
+        VERSION="${{ github.event.inputs.tag }}"
+
+        # Create production manifest
+        docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION} \
+          ghcr.io/${REPO_LC}:${VERSION}-amd64 \
+          ghcr.io/${REPO_LC}:${VERSION}-arm64
+
+        # Create workers manifest
+        docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION}-workers \
+          ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
+          ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
