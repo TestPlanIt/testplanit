@@ -16,6 +16,7 @@ import { Form } from "@/components/ui/form";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -85,6 +86,9 @@ export function EditAvatarModal({ user }: EditAvatarModalProps) {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
               <DialogTitle>{t("changeProfilePicture")}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {t("changeProfilePicture")}
+              </DialogDescription>
             </DialogHeader>
             <UploadAvatar onUpload={setAvatarUrl} />
             <DialogFooter>

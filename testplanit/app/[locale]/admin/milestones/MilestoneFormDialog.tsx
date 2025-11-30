@@ -20,6 +20,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -246,6 +247,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
           <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
             <DialogHeader>
               <DialogTitle>{t("admin.milestones.wizard.createMilestone")}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {t("admin.milestones.wizard.createMilestone")}
+              </DialogDescription>
             </DialogHeader>
 
             {hasNoCommonTypes ? (

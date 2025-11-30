@@ -62,6 +62,7 @@ import { tiptapToHtml } from "~/utils/tiptapToHtml";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -1076,6 +1077,9 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{tAi("title")}</DialogTitle>
+            <DialogDescription className="sr-only">
+              {tAi("title")}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

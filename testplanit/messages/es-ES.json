@@ -1190,6 +1190,9 @@
           },
           "simple_url": {
             "description": "Conectarse a un sistema de terceros para el seguimiento de incidencias."
+          },
+          "github": {
+            "description": "Conéctese a GitHub para el seguimiento de problemas y la gestión del repositorio."
           }
         }
       },
@@ -4920,6 +4923,7 @@
     "projects": {
       "settings": {
         "integrations": {
+          "externalProjectHelp": "## Proyecto externo\nSeleccione el proyecto o repositorio en el sistema externo para vincular con este proyecto de TestPlanIt.\n\n- Los problemas creados desde TestPlanIt se crearán en este proyecto\n- Habilita la integración del seguimiento de problemas entre sistemas\n- Debe tener los permisos adecuados en el sistema externo",
           "defaultIssueTypeHelp": "## Tipo de problema predeterminado\nEl tipo de asunto que será pre-seleccionado al crear nuevas peticiones desde TestPlanIt.\n\n- Ahorra tiempo por defecto a su tipo de problema más común\n- Puede ser reemplazado al crear problemas individuales\n- Debe ser un tipo de problema válido para el proyecto externo seleccionado\n- Actualice esto si su flujo de trabajo cambia",
           "automaticSyncHelp": "## Sincronización automática\nPermite la sincronización automática del estado de la incidencia entre TestPlanIt y el sistema externo.\n\n- Problemas vinculados a casos de prueba actualizarán su estado automáticamente\n- Ayuda a mantener el seguimiento de problemas consistente en todos los sistemas\n- Puede aumentar el uso de la API con el servicio externo\n- Se puede desactivar si se prefiere el control manual"
         }
@@ -5066,9 +5070,13 @@
       "systemName": "## Nombre del sistema\nEl nombre del estado utilizado por el sistema principal (por ejemplo, consultas de base de datos, informes, etc.).",
       "aliases": "## Alias\nNombres o sinónimos adicionales para este estado que pueden ser usados para vincular estados del sistema externo a este estado.",
       "enabled": "## Indica si este estado está habilitado.",
+      "isEnabled": "## Habilitado\nIndica si este estado está habilitado y disponible para su uso.\n\n- Cuando está habilitado, este estado se puede seleccionar al registrar los resultados de la prueba.\n- Los estados deshabilitados se ocultan de la selección, pero se conservan en los resultados existentes.",
       "success": "## Éxito\nIndica si este estado es un estado exitoso.",
+      "isSuccess": "## Estado de éxito\nIndica si este estado representa un resultado de prueba exitoso.\n\n- Los estados de éxito contribuyen a las métricas de tasa de aprobación.\n- Se utiliza en informes y análisis para rastrear la efectividad de la prueba.",
       "completed": "## Completada\nIndica si este estado es un estado completo.",
+      "isCompleted": "## Estado completado\nIndica si este estado representa una ejecución de prueba completada.\n\n- Los estados completados indican que la prueba ha terminado de ejecutarse.\n- Se utiliza para calcular las tasas de finalización y el seguimiento del progreso.",
       "failure": "## Fallo\nIndica si este estado es un estado fallido.",
+      "isFailure": "## Estado de falla\nIndica si este estado representa un resultado de prueba fallido.\n\n- Los estados de falla contribuyen a las métricas de tasa de fallas.\n- Se utiliza en informes y análisis para identificar problemas.",
       "scope": "## Ámbito\nIndica el alcance de este estado (Prueba de ejecución, sesión, automatización).",
       "projects": "## Proyecta\nIndica los proyectos que pueden usar este estado."
     },

@@ -6,6 +6,7 @@ import { useFindManyProjects } from "~/lib/hooks";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -86,6 +87,9 @@ export const ProjectSelectionDialog: React.FC<ProjectSelectionDialogProps> = ({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>{t("wizard.selectProjects")}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {t("wizard.selectProjects")}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="relative">

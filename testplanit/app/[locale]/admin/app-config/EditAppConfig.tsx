@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -66,6 +67,9 @@ export function EditAppConfigModal({ config }: EditAppConfigModalProps) {
       <DialogContent className="max-w-[800px]">
         <DialogHeader>
           <DialogTitle>{t("editConfig")}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {t("editConfig")}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

@@ -37,17 +37,17 @@ import {
 } from "@/components/ui/form";
 import { LinkIcon, Loader2, Shield, Mail } from "lucide-react";
 import { HelpPopover } from "@/components/ui/help-popover";
-import * as icons from "simple-icons";
+import { siGoogle, siApple } from "simple-icons";
 
 const GoogleIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-    <path d={icons.siGoogle.path} />
+    <path d={siGoogle.path} />
   </svg>
 );
 
 const AppleIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-    <path d={icons.siApple.path} />
+    <path d={siApple.path} />
   </svg>
 );
 

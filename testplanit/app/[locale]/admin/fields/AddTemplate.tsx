@@ -42,6 +42,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -312,6 +313,9 @@ export function AddTemplateModal() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {t("title")}
+              </DialogDescription>
             </DialogHeader>
             <FormField
               control={form.control}

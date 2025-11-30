@@ -19,6 +19,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -1870,6 +1871,9 @@ export function BulkEditModal({
           <DialogTitle>
             {tBulkEdit("title", { count: selectedCaseIds.length })}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {tBulkEdit("title", { count: selectedCaseIds.length })}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grow overflow-y-auto pr-6 pl-2 py-4 space-y-4">

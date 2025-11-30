@@ -93,6 +93,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -1915,6 +1916,9 @@ export default function TestRunPage() {
             <SheetTitle className="sr-only">
               {t("repository.testCase.detailsRegion")}
             </SheetTitle>
+            <SheetDescription className="sr-only">
+              {t("repository.testCase.detailsRegion")}
+            </SheetDescription>
           </SheetHeader>
           {/* Using key to force remount on case change */}
           {selectedTestCaseId && testRunData && (

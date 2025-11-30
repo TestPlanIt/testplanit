@@ -4997,7 +4997,8 @@
     "milestoneType": {
       "icon": "## Milestone Type Icon\nA visual identifier for this milestone type.\n\n- Helps quickly identify the milestone type in lists and dashboards\n- Choose from a variety of predefined icons\n- Can be changed at any time\n- Appears in project navigation and reports",
       "name": "## Milestone Type Name\nA clear, descriptive name that identifies this milestone type in your project.\n\n- Helps team members quickly understand the milestone type's purpose\n- Used in reports and project tracking",
-      "isDefault": "## Default Milestone Type\nIndicates whether this milestone type is the default for your project.\n\n- Default milestone type is pre-selected for new milestones\n- Can be changed at any time"
+      "isDefault": "## Default Milestone Type\nIndicates whether this milestone type is the default for your project.\n\n- Default milestone type is pre-selected for new milestones\n- Can be changed at any time",
+      "projects": "## Associated Projects\nSelect which projects this milestone type will be available for.\n\n- If no projects are selected, the milestone type will be available globally\n- Assigning to specific projects restricts its use to only those projects"
     },
     "tag": {
       "name": "## Tag Name\nA clear, concise, descriptive name or keyword(s) that is used across all projects.\n\n- Helps team members quickly find related test cases, test runs and sessions."
@@ -5070,9 +5071,13 @@
       "systemName": "## System Name\nThe name of the status used by the backend system (e.g. database queries, reports, etc.).",
       "aliases": "## Aliases\nAdditional names or synonyms for this status that can be used to link external system statuses to this status.",
       "enabled": "## Enabled\nIndicates whether this status is enabled.",
+      "isEnabled": "## Enabled\nIndicates whether this status is enabled and available for use.\n\n- When enabled, this status can be selected when recording test results\n- Disabled statuses are hidden from selection but preserved in existing results",
       "success": "## Success\nIndicates whether this status is a success status.",
+      "isSuccess": "## Success Status\nIndicates whether this status represents a successful test outcome.\n\n- Success statuses contribute to pass rate metrics\n- Used in reporting and analytics to track test effectiveness",
       "completed": "## Completed\nIndicates whether this status is a completed status.",
+      "isCompleted": "## Completed Status\nIndicates whether this status represents a completed test execution.\n\n- Completed statuses indicate the test has finished running\n- Used to calculate completion rates and progress tracking",
       "failure": "## Failure\nIndicates whether this status is a failure status.",
+      "isFailure": "## Failure Status\nIndicates whether this status represents a failed test outcome.\n\n- Failure statuses contribute to fail rate metrics\n- Used in reporting and analytics to identify issues",
       "scope": "## Scope\nIndicates the scope of this status (Test Run, Session, Automation).",
       "projects": "## Projects\nIndicates the projects that can use this status."
     },
@@ -5081,8 +5086,10 @@
       "iconColor": "## Icon/Color\nThe icon and color for this workflow.",
       "name": "## Name\nA clear, descriptive name that is used across all projects.\n\n- Helps describe the workflow (e.g. \"Draft\", \"Under Review\", \"Active\", etc.).",
       "workflowType": "## Type\nThe type of workflow (Not Started, In Progress, Completed).",
+      "type": "## Workflow Type\nThe category of workflow state (Not Started, In Progress, Completed).\n\n- Determines how this state affects progress tracking\n- Not Started states indicate work hasn't begun\n- In Progress states show active work\n- Completed states mark finished work",
       "isDefault": "## Default\nIndicates whether this workflow is the default for your project.\n\n- Default workflow is pre-selected for new test runs, sessions and automation.",
       "isEnabled": "## Enabled\nIndicates whether this workflow is enabled.",
+      "isActive": "## Active\nIndicates whether this workflow state is active and available for use.\n\n- Active workflows can be selected when updating test runs, sessions, or automation\n- Inactive workflows are hidden from selection but preserved in existing items",
       "projects": "## Projects\nIndicates the projects that can use this workflow."
     },
     "testResult": {

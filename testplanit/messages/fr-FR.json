@@ -1190,6 +1190,9 @@
           },
           "simple_url": {
             "description": "Se connecter à un système tiers pour le suivi des problèmes."
+          },
+          "github": {
+            "description": "Connectez-vous à GitHub pour le suivi des problèmes et la gestion des dépôts."
           }
         }
       },
@@ -4920,6 +4923,7 @@
     "projects": {
       "settings": {
         "integrations": {
+          "externalProjectHelp": "## Projet externe\nSélectionnez le projet ou le dépôt du système externe à lier à ce projet TestPlanIt.\n\n- Les tickets créés depuis TestPlanIt seront créés dans ce projet.\n- Active l'intégration du suivi des tickets entre les systèmes.\n- Nécessite les autorisations appropriées dans le système externe.",
           "defaultIssueTypeHelp": "## Type de problème par défaut\nType de problème présélectionné lors de la création de nouveaux problèmes depuis TestPlanIt.\n\n- Gain de temps grâce à la sélection par défaut du type de problème le plus fréquent.\n- Peut être modifié lors de la création de problèmes individuels.\n- Doit correspondre à un type de problème valide pour le projet externe sélectionné.\n- À mettre à jour en cas de modification de votre flux de travail.",
           "automaticSyncHelp": "## Synchronisation automatique\nActive la synchronisation automatique du statut des tickets entre TestPlanIt et le système externe.\n\n- Les tickets liés aux cas de test mettront automatiquement à jour leur statut.\n- Permet de maintenir la cohérence du suivi des tickets entre les systèmes.\n- Peut augmenter l'utilisation de l'API avec le service externe.\n- Peut être désactivée si une gestion manuelle est préférée."
         }
@@ -5066,9 +5070,13 @@
       "systemName": "## Nom du système\nLe nom du statut utilisé par le système backend (par exemple, requêtes de base de données, rapports, etc.).",
       "aliases": "## Alias\nNoms ou synonymes supplémentaires pour cet état qui peuvent être utilisés pour lier des états système externes à cet état.",
       "enabled": "## Activé\nIndique si ce statut est activé.",
+      "isEnabled": "## Activé\nIndique si ce statut est activé et disponible.\n\n- Lorsqu'il est activé, ce statut peut être sélectionné lors de l'enregistrement des résultats de test.\n- Les statuts désactivés sont masqués, mais conservés dans les résultats existants.",
       "success": "## Succès\nIndique si ce statut est un statut de succès.",
+      "isSuccess": "## Statut de réussite\nIndique si ce statut représente un résultat de test réussi.\n\n- Les statuts de réussite contribuent aux indicateurs de taux de réussite.\n- Utilisé dans les rapports et les analyses pour suivre l'efficacité des tests.",
       "completed": "## Terminé\nIndique si ce statut est un statut terminé.",
+      "isCompleted": "## Statut Terminé\nIndique si ce statut représente une exécution de test terminée.\n\n- Les statuts Terminés indiquent que le test a terminé son exécution.\n- Utilisé pour calculer les taux d'achèvement et le suivi de la progression.",
       "failure": "## Échec\nIndique si ce statut est un statut d'échec.",
+      "isFailure": "## État d'échec\nIndique si cet état représente un résultat de test échoué.\n\n- Les états d'échec contribuent aux indicateurs de taux d'échec.\n- Utilisé dans les rapports et les analyses pour identifier les problèmes.",
       "scope": "## Portée\nIndique la portée de ce statut (Exécution de test, Session, Automatisation).",
       "projects": "## Projets\nIndique les projets qui peuvent utiliser ce statut."
     },

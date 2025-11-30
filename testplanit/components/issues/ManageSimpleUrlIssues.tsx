@@ -9,6 +9,7 @@ import { X, Plus, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -163,6 +164,9 @@ export function ManageSimpleUrlIssues({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("common.actions.add")} {t("common.fields.issues")}</DialogTitle>
+            <DialogDescription className="sr-only">
+              {t("common.actions.add")} {t("common.fields.issues")}
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">

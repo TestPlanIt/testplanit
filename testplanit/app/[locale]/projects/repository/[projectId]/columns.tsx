@@ -41,6 +41,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -1344,6 +1345,9 @@ export const getColumns = (
               <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
                 <DialogHeader>
                   <DialogTitle>{field.displayName}</DialogTitle>
+                  <DialogDescription className="sr-only">
+                    {field.displayName}
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 overflow-auto">
                   {value === null || value === undefined ? (

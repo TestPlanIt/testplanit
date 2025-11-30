@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "~/utils";
 import { Check, Link } from "lucide-react";
-import * as icons from "simple-icons";
+import { siJira, siGithub } from "simple-icons";
 
 interface IntegrationTypeSelectorProps {
   selectedType: IntegrationProvider | null;
@@ -19,7 +19,7 @@ interface IntegrationTypeSelectorProps {
 
 const JiraIcon = () => (
   <svg viewBox="0 0 24 24" className="h-8 w-8" fill="currentColor">
-    <path d={icons.siJira.path} />
+    <path d={siJira.path} />
   </svg>
 );
 
@@ -38,7 +38,7 @@ const integrationTypes = [
     type: IntegrationProvider.GITHUB,
     icon: () => (
       <svg viewBox="0 0 24 24" className="h-8 w-8" fill="currentColor">
-        <path d={icons.siGithub.path} />
+        <path d={siGithub.path} />
       </svg>
     ),
     color: "text-gray-800 dark:text-gray-200",

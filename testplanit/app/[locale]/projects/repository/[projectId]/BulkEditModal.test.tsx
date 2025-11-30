@@ -1017,7 +1017,7 @@ describe("BulkEditModal", () => {
       );
 
       expect(
-        screen.getByText('[t]repository.bulkEdit.title {"count":2}')
+        screen.getByRole('heading', { name: '[t]repository.bulkEdit.title {"count":2}' })
       ).toBeInTheDocument();
     });
 

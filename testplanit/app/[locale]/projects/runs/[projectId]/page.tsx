@@ -31,6 +31,7 @@ import { CirclePlus, Maximize2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -1423,6 +1424,11 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                   ? zoomedChartDetails.title
                   : t("summary.completionTrendTitle")}
               </DialogTitle>
+              <DialogDescription className="sr-only">
+                {zoomedChartDetails
+                  ? zoomedChartDetails.title
+                  : t("summary.completionTrendTitle")}
+              </DialogDescription>
             </DialogHeader>
             {zoomedChartDetails && (
               <>

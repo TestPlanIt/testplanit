@@ -15,11 +15,11 @@ import {
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { InfoIcon, CheckCircle2, Shield } from "lucide-react";
 import { useFindManySsoProvider } from "~/lib/hooks";
-import * as icons from "simple-icons";
+import { siGoogle } from "simple-icons";
 
 const GoogleIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-    <path d={icons.siGoogle.path} />
+    <path d={siGoogle.path} />
   </svg>
 );
 

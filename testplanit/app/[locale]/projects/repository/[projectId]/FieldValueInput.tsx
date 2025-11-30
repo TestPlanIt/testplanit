@@ -44,6 +44,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -516,6 +517,9 @@ export function FieldValueInput({
                 <DialogTitle>
                   {t("repository.bulkEdit.defineStepsTitle")}
                 </DialogTitle>
+                <DialogDescription className="sr-only">
+                  {t("repository.bulkEdit.defineStepsTitle")}
+                </DialogDescription>
               </DialogHeader>
               <FormProvider {...stepsFormMethods}>
                 <form

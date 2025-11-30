@@ -58,6 +58,7 @@ import JUnitStatusTimeline from "@/components/dataVisualizations/JUnitStatusTime
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -724,6 +725,15 @@ function JunitTableSection({
                       ? t("common.ui.charts.testDurationHistogram")
                       : ""}
               </DialogTitle>
+              <DialogDescription className="sr-only">
+                {zoomedChart === "donut"
+                  ? t("common.ui.charts.resultsDistribution")
+                  : zoomedChart === "timeline"
+                    ? t("common.ui.charts.statusTimeline")
+                    : zoomedChart === "histogram"
+                      ? t("common.ui.charts.testDurationHistogram")
+                      : ""}
+              </DialogDescription>
             </DialogHeader>
             <div className="flex-1 overflow-auto p-4 sm:p-0">
               <div className="flex-1 w-full h-full" style={{ minHeight: 600 }}>

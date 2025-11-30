@@ -48,6 +48,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -773,6 +774,9 @@ export function EditProjectModal({
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {t("title")}
+              </DialogDescription>
             </DialogHeader>
 
             <Tabs

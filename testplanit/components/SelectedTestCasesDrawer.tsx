@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -282,6 +283,9 @@ export function SelectedTestCasesDrawer({
       <SheetContent className="h-full p-0 sm:max-w-4xl">
         <div className="flex h-full flex-col">
           <SheetHeader className="border-b p-4">
+            <SheetDescription className="sr-only">
+              {t("common.labels.selectedTestCases")}
+            </SheetDescription>
             <SheetTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span>{t("common.labels.selectedTestCases")}</span>
