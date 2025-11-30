@@ -127,7 +127,7 @@ jobs:
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
 
-  # Build ARM64 images natively on macOS arm64 runner
+  # Build ARM64 images natively on macOS arm64 runner (using Colima)
   build-arm64:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     needs: create-release
@@ -147,13 +147,11 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Log in to GitHub Container Registry
-      run: |
-        # Use isolated Docker config to avoid macOS Keychain issues
-        export DOCKER_CONFIG="$RUNNER_TEMP/.docker"
-        mkdir -p "$DOCKER_CONFIG"
-        echo '{"credsStore":""}' > "$DOCKER_CONFIG/config.json"
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-        echo "DOCKER_CONFIG=$DOCKER_CONFIG" >> $GITHUB_ENV
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Generate version info for Docker build
       run: |
@@ -281,7 +279,7 @@ jobs:
           --set "*.args.GIT_COMMIT=${{ github.sha }}" \
           --set "*.args.BASE_DOMAIN=testplanit.com"
 
-  # Manual build: ARM64 images natively on macOS arm64 runner
+  # Manual build: ARM64 images natively on macOS arm64 runner (using Colima)
   docker-manual-arm64:
     if: github.event_name == 'workflow_dispatch'
     runs-on: [self-hosted, macOS, arm64]
@@ -302,13 +300,11 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Log in to GitHub Container Registry
-      run: |
-        # Use isolated Docker config to avoid macOS Keychain issues
-        export DOCKER_CONFIG="$RUNNER_TEMP/.docker"
-        mkdir -p "$DOCKER_CONFIG"
-        echo '{"credsStore":""}' > "$DOCKER_CONFIG/config.json"
-        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-        echo "DOCKER_CONFIG=$DOCKER_CONFIG" >> $GITHUB_ENV
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Generate version info for Docker build
       run: |
