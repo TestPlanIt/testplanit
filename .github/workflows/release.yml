@@ -148,10 +148,12 @@ jobs:
 
     - name: Log in to GitHub Container Registry
       run: |
-        # Disable keychain credential store for headless macOS
-        mkdir -p ~/.docker
-        echo '{"credsStore":""}' > ~/.docker/config.json
+        # Use isolated Docker config to avoid macOS Keychain issues
+        export DOCKER_CONFIG="$RUNNER_TEMP/.docker"
+        mkdir -p "$DOCKER_CONFIG"
+        echo '{"credsStore":""}' > "$DOCKER_CONFIG/config.json"
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        echo "DOCKER_CONFIG=$DOCKER_CONFIG" >> $GITHUB_ENV
 
     - name: Generate version info for Docker build
       run: |
@@ -210,10 +212,6 @@ jobs:
           ghcr.io/${REPO_LC}:${VERSION}-amd64 \
           ghcr.io/${REPO_LC}:${VERSION}-arm64
 
-        docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest \
-          ghcr.io/${REPO_LC}:${VERSION}-amd64 \
-          ghcr.io/${REPO_LC}:${VERSION}-arm64
-
         # Create workers manifests
         docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION_NUM}-workers \
           ghcr.io/${REPO_LC}:${VERSION_NUM}-workers-amd64 \
@@ -223,9 +221,20 @@ jobs:
           ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
           ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
 
-        docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest-workers \
-          ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
-          ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
+        # Only update 'latest' if this is the newest semantic version
+        LATEST_TAG=$(git tag -l 'v*' | sort -V | tail -n1)
+        if [ "$VERSION" = "$LATEST_TAG" ]; then
+          echo "Updating 'latest' tags to $VERSION"
+          docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest \
+            ghcr.io/${REPO_LC}:${VERSION}-amd64 \
+            ghcr.io/${REPO_LC}:${VERSION}-arm64
+
+          docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest-workers \
+            ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
+            ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
+        else
+          echo "Skipping 'latest' update - $VERSION is not the latest release (latest: $LATEST_TAG)"
+        fi
 
   # Manual build: AMD64 images natively on x64 runner
   docker-manual-amd64:
@@ -294,10 +303,12 @@ jobs:
 
     - name: Log in to GitHub Container Registry
       run: |
-        # Disable keychain credential store for headless macOS
-        mkdir -p ~/.docker
-        echo '{"credsStore":""}' > ~/.docker/config.json
+        # Use isolated Docker config to avoid macOS Keychain issues
+        export DOCKER_CONFIG="$RUNNER_TEMP/.docker"
+        mkdir -p "$DOCKER_CONFIG"
+        echo '{"credsStore":""}' > "$DOCKER_CONFIG/config.json"
         echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        echo "DOCKER_CONFIG=$DOCKER_CONFIG" >> $GITHUB_ENV
 
     - name: Generate version info for Docker build
       run: |
