@@ -210,8 +210,8 @@ export abstract class BaseAdapter implements IssueAdapter {
             ).toString("base64");
             headers["Authorization"] = `Basic ${credentials}`;
           } else if (this.config.provider === "GITHUB") {
-            // GitHub: Bearer works with both classic and fine-grained PATs
-            headers["Authorization"] = `Bearer ${this.authData.apiKey}`;
+            // GitHub: token prefix works with both classic and fine-grained PATs
+            headers["Authorization"] = `token ${this.authData.apiKey}`;
           } else {
             // Default to X-API-Key header
             headers["X-API-Key"] = this.authData.apiKey;

@@ -5,7 +5,7 @@ title: 'Issue Tracking and External Integrations'
 
 # Issue Tracking and External Integrations
 
-TestPlanIt provides comprehensive issue tracking capabilities, allowing you to track bugs, tasks, and other issues directly within the platform or integrate with external issue tracking systems like Jira, GitHub Issues, Azure DevOps, and more.
+TestPlanIt provides comprehensive issue tracking capabilities, allowing you to track bugs, tasks, and other issues directly within the platform or integrate with external issue tracking systems like Jira, GitHub Issues, and more.
 
 ## Internal Issue Management
 
@@ -88,18 +88,7 @@ Connect to GitHub for issue tracking and repository integration.
 - Track issue status across both platforms
 - Personal Access Token authentication
 
-### 3. **Azure DevOps Integration**
-
-Integrate with Azure DevOps for work item tracking.
-
-**Features:**
-
-- Create work items (bugs, tasks, etc.) from TestPlanIt
-- Support for Azure DevOps projects
-- Personal Access Token authentication
-- Custom field mapping
-
-### 4. **Simple URL Integration**
+### 3. **Simple URL Integration**
 
 A flexible integration for any issue tracking system that uses URL-based linking.
 
@@ -122,7 +111,7 @@ A flexible integration for any issue tracking system that uses URL-based linking
 
 1. Navigate to **Administration** → **Integrations**
 2. Click **Add Integration**
-3. Select your integration type (Jira, GitHub, Azure DevOps, or Simple URL)
+3. Select your integration type (Jira, GitHub, or Simple URL)
 4. Fill in the integration details:
 
 ```yaml
@@ -178,19 +167,6 @@ Benefits:
 
 ```text
 Personal Access Token: Generated from GitHub settings
-```
-
-#### Azure DevOps
-
-1. Generate PAT in Azure DevOps User Settings
-2. Required scopes:
-   - Work Items (Read & Write)
-   - Project and Team (Read)
-3. Configure in TestPlanIt:
-
-```text
-Personal Access Token: Generated from Azure DevOps
-Organization URL: https://dev.azure.com/your-org
 ```
 
 #### Simple URL
@@ -461,9 +437,6 @@ curl -u email@company.com:api_token \
 curl -H "Authorization: token YOUR_PAT" \
   https://api.github.com/user
 
-# Test Azure DevOps connection
-curl -u :YOUR_PAT \
-  https://dev.azure.com/your-org/_apis/projects
 ```
 
 ### Common Issues
@@ -560,12 +533,6 @@ curl -u :YOUR_PAT \
 - Read repository metadata
 - Write issues
 - Read user info
-
-**Azure DevOps:**
-
-- View project-level information
-- View work items
-- Create/update work items
 
 ## API Reference
 
