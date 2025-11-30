@@ -141,8 +141,30 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   async getIssue(issueId: string): Promise<IssueData> {
+    // For GitHub, issueId could be just a number (e.g., "123") or include repo context (e.g., "owner/repo#123")
+    let owner = this.owner;
+    let repo = this.repo;
+    let issueNumber = issueId;
+
+    // Check if issueId includes repo context (format: "owner/repo#123")
+    const repoIssueMatch = issueId.match(/^([^/]+)\/([^#]+)#(\d+)$/);
+    if (repoIssueMatch) {
+      owner = repoIssueMatch[1];
+      repo = repoIssueMatch[2];
+      issueNumber = repoIssueMatch[3];
+    } else if (issueId.startsWith("#")) {
+      // Just a number with # prefix
+      issueNumber = issueId.substring(1);
+    }
+
+    if (!owner || !repo) {
+      throw new Error(
+        "GitHub repository not configured. Cannot fetch issue without owner/repo context."
+      );
+    }
+
     const response = await this.makeRequest<any>(
-      this.buildUrl(`/repos/{owner}/{repo}/issues/${issueId}`)
+      `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}`
     );
 
     return this.mapGitHubIssue(response);
@@ -154,6 +176,9 @@ export class GitHubAdapter extends BaseAdapter {
     hasMore: boolean;
   }> {
     const searchQuery: string[] = [];
+
+    // Always add is:issue to filter out pull requests (required by GitHub API)
+    searchQuery.push("is:issue");
 
     // Add repo filter
     if (this.owner && this.repo) {
@@ -184,7 +209,7 @@ export class GitHubAdapter extends BaseAdapter {
     }
 
     const params = new URLSearchParams({
-      q: searchQuery.join(" ") || "is:issue",
+      q: searchQuery.join(" "),
       per_page: (options.limit || 30).toString(),
       page: Math.floor(
         (options.offset || 0) / (options.limit || 30) + 1
@@ -288,6 +313,26 @@ export class GitHubAdapter extends BaseAdapter {
   }
 
   private mapGitHubIssue(githubIssue: any): IssueData {
+    // Extract owner/repo from repository_url (for search results) or html_url
+    let owner = this.owner;
+    let repo = this.repo;
+
+    if (githubIssue.repository_url) {
+      // Format: https://api.github.com/repos/owner/repo
+      const match = githubIssue.repository_url.match(/\/repos\/([^/]+)\/([^/]+)$/);
+      if (match) {
+        owner = match[1];
+        repo = match[2];
+      }
+    } else if (githubIssue.html_url) {
+      // Format: https://github.com/owner/repo/issues/123
+      const match = githubIssue.html_url.match(/github\.com\/([^/]+)\/([^/]+)\/issues/);
+      if (match) {
+        owner = match[1];
+        repo = match[2];
+      }
+    }
+
     return {
       id: githubIssue.number.toString(),
       key: `#${githubIssue.number}`,
@@ -310,7 +355,11 @@ export class GitHubAdapter extends BaseAdapter {
           }
         : undefined,
       labels: githubIssue.labels.map((label: any) => label.name),
-      customFields: {},
+      // Store repo context in customFields for sync support
+      customFields: {
+        _github_owner: owner,
+        _github_repo: repo,
+      },
       createdAt: new Date(githubIssue.created_at),
       updatedAt: new Date(githubIssue.updated_at),
       url: githubIssue.html_url,

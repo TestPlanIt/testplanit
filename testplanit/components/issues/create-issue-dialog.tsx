@@ -435,24 +435,28 @@ export function CreateIssueDialog({
           description: values.description,
           priority: values.priority,
           customFields: customFieldValues,
+          // Include internal TestPlanIt project ID for database storage
+          testplanitProjectId: projectId,
         };
 
         if (useIntegration && activeIntegration) {
           // Use the project's configured external project ID from config
           const integrationConfig =
             (activeIntegration.config as Record<string, any>) || {};
+          // projectId is the external project identifier (e.g., "owner/repo" for GitHub)
           payload.projectId =
             integrationConfig.externalProjectId ||
             integrationConfig.externalProjectKey ||
             "";
-          // Use the selected issue type
+          // Use the selected issue type (only for providers that support it)
           if (selectedIssueType) {
             payload.issueType = selectedIssueType.id;
-          } else {
-            // Try common issue type IDs as fallback
+          } else if (activeIntegration.integration?.provider !== "GITHUB") {
+            // Try common issue type IDs as fallback (for Jira, Azure DevOps, etc.)
             const commonTypes = ["10001", "10002", "10003", "10004", "10005"];
             payload.issueType = commonTypes[0];
           }
+          // For GitHub, we don't need issue type - it doesn't have that concept
         }
 
         // Add entity linking information
@@ -685,11 +689,14 @@ export function CreateIssueDialog({
               return null;
             })()}
 
-            {useIntegration && activeIntegration && !authError && (() => {
-              const config = activeIntegration.config as Record<string, any>;
-              const hasExternalProject = config?.externalProjectKey || config?.externalProjectId;
-              return hasExternalProject;
-            })() && (
+            {/* Only show issue type selector for providers that support it (not GitHub) */}
+            {useIntegration && activeIntegration && !authError &&
+              activeIntegration.integration?.provider !== "GITHUB" &&
+              (() => {
+                const config = activeIntegration.config as Record<string, any>;
+                const hasExternalProject = config?.externalProjectKey || config?.externalProjectId;
+                return hasExternalProject;
+              })() && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">
                   {t("issues.issueType")}

@@ -459,8 +459,33 @@ export class SyncService {
         );
       }
 
+      // For GitHub issues, we need to get the repo context from the stored issue data
+      let issueIdForSync = externalIssueId;
+      if (integration.provider === "GITHUB") {
+        // Fetch the stored issue to get the repo context
+        const storedIssue = await userDb.issue.findFirst({
+          where: {
+            integrationId,
+            OR: [
+              { externalId: externalIssueId },
+              { externalKey: externalIssueId },
+            ],
+          },
+        });
+
+        if (storedIssue?.data) {
+          const data = storedIssue.data as Record<string, any>;
+          const customFields = data.customFields as Record<string, any> | undefined;
+          if (customFields?._github_owner && customFields?._github_repo) {
+            // Construct compound ID for GitHub: owner/repo#number
+            const issueNumber = externalIssueId.replace(/^#/, "");
+            issueIdForSync = `${customFields._github_owner}/${customFields._github_repo}#${issueNumber}`;
+          }
+        }
+      }
+
       // Fetch fresh issue data from external system
-      const issueData = await adapter.syncIssue(externalIssueId);
+      const issueData = await adapter.syncIssue(issueIdForSync);
 
       // Update cache
       await issueCache.set(integrationId, issueData.id, issueData);

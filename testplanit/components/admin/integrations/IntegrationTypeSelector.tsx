@@ -34,16 +34,15 @@ const integrationTypes = [
     icon: JiraIcon,
     color: "text-blue-600",
   },
-  // Temporarily disabled for testing
-  // {
-  //   type: IntegrationProvider.GITHUB,
-  //   icon: () => (
-  //     <svg viewBox="0 0 24 24" className="h-8 w-8" fill="currentColor">
-  //       <path d={icons.siGithub.path} />
-  //     </svg>
-  //   ),
-  //   color: "text-gray-800 dark:text-gray-200",
-  // },
+  {
+    type: IntegrationProvider.GITHUB,
+    icon: () => (
+      <svg viewBox="0 0 24 24" className="h-8 w-8" fill="currentColor">
+        <path d={icons.siGithub.path} />
+      </svg>
+    ),
+    color: "text-gray-800 dark:text-gray-200",
+  },
   // These are commented out until implementation is ready
   // {
   //   type: IntegrationProvider.GITLAB,

@@ -191,8 +191,19 @@ export function SearchIssuesDialog({
     setAuthError(null);
 
     try {
+      // Get external project ID from integration config (for GitHub this is owner/repo)
+      const integrationConfig = (activeIntegration.config as Record<string, any>) || {};
+      const externalProjectId = integrationConfig.externalProjectId || integrationConfig.externalProjectKey || "";
+
+      const searchParams = new URLSearchParams({
+        q: debouncedSearchQuery,
+      });
+      if (externalProjectId) {
+        searchParams.set("projectId", externalProjectId);
+      }
+
       const response = await fetch(
-        `/api/integrations/${activeIntegration.integrationId}/search?q=${encodeURIComponent(debouncedSearchQuery)}`
+        `/api/integrations/${activeIntegration.integrationId}/search?${searchParams.toString()}`
       );
 
       if (response.status === 401) {
