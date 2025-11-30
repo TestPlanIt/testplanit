@@ -30,6 +30,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -261,6 +262,9 @@ export function AddRoleModal() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
               <DialogTitle>{t("admin.roles.add.title")}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {t("admin.roles.add.title")}
+              </DialogDescription>
             </DialogHeader>
             <FormField
               control={control}

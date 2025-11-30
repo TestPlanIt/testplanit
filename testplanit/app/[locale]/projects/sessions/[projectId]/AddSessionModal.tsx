@@ -38,6 +38,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -667,6 +668,9 @@ export function AddSessionModal({
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
               <DialogTitle>{t("sessions.addSession.title")}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {t("sessions.addSession.title")}
+              </DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-[60%_5%_35%] gap-x-4">
               <div className="space-y-4">

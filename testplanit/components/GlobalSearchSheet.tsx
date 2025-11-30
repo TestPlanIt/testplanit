@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -68,6 +69,9 @@ export function GlobalSearchSheet({ isOpen, onClose }: GlobalSearchSheetProps) {
       <SheetContent className="sm:max-w-3xl overflow-y-auto" data-testid="global-search-sheet">
         <SheetHeader>
           <SheetTitle>{t("search.title")}</SheetTitle>
+          <SheetDescription className="sr-only">
+            {t("search.title")}
+          </SheetDescription>
         </SheetHeader>
 
         <div className="mt-6">

@@ -281,7 +281,7 @@ describe("checkRateLimit", () => {
 
 describe("getSecurityHeaders", () => {
   it("should return required security headers", () => {
-    const headers = getSecurityHeaders();
+    const headers = getSecurityHeaders() as Record<string, string>;
 
     expect(headers["X-Content-Type-Options"]).toBe("nosniff");
     expect(headers["X-Frame-Options"]).toBe("DENY");
@@ -351,12 +351,12 @@ describe("getSecureCookieOptions", () => {
   it("should set secure based on NODE_ENV", () => {
     const originalNodeEnv = process.env.NODE_ENV;
 
-    process.env.NODE_ENV = "production";
+    Object.defineProperty(process.env, "NODE_ENV", { value: "production", writable: true });
     expect(getSecureCookieOptions().secure).toBe(true);
 
-    process.env.NODE_ENV = "development";
+    Object.defineProperty(process.env, "NODE_ENV", { value: "development", writable: true });
     expect(getSecureCookieOptions().secure).toBe(false);
 
-    process.env.NODE_ENV = originalNodeEnv;
+    Object.defineProperty(process.env, "NODE_ENV", { value: originalNodeEnv, writable: true });
   });
 });

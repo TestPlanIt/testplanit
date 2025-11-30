@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -132,6 +133,9 @@ export function CompleteSessionDialog({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("sessions.completeDialog.title")}</DialogTitle>
+            <DialogDescription className="sr-only">
+              {t("sessions.completeDialog.title")}
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <p className="text-muted-foreground">
@@ -215,6 +219,9 @@ export function CompleteSessionDialog({
               <div>{t("sessions.complete.title")}</div>
             </div>
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {t("sessions.complete.title")}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>

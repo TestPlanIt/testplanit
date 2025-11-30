@@ -14,6 +14,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -350,6 +351,9 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{tLinkedCases("addLinkedTestCase")}</DialogTitle>
+                <DialogDescription className="sr-only">
+                  {tLinkedCases("addLinkedTestCase")}
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>

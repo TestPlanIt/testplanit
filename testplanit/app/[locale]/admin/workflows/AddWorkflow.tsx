@@ -43,6 +43,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -254,6 +255,9 @@ export function AddWorkflowsModal() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
               <DialogTitle>{t("add.title")}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {t("add.title")}
+              </DialogDescription>
             </DialogHeader>
             <FormItem>
               <FormLabel className="flex items-center">

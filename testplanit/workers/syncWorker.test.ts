@@ -36,9 +36,9 @@ describe("SyncWorker", () => {
     it("should call performSync with correct parameters", async () => {
       const jobData = {
         userId: "user-123",
-        integrationId: "integration-456",
-        projectId: 1,
-        data: { query: "test" },
+        integrationId: 456,
+        projectId: "1",
+        data: { forceRefresh: true },
       };
 
       mockPerformSync.mockResolvedValue({
@@ -89,8 +89,8 @@ describe("SyncWorker", () => {
 
       const result = await syncService.performSync(
         "user-123",
-        "integration-456",
-        1,
+        456,
+        "1",
         {},
         {} as Job
       );
@@ -104,8 +104,8 @@ describe("SyncWorker", () => {
     it("should call performIssueRefresh with correct parameters", async () => {
       const jobData = {
         userId: "user-123",
-        integrationId: "integration-456",
-        issueId: 789,
+        integrationId: 456,
+        issueId: "789",
       };
 
       mockPerformIssueRefresh.mockResolvedValue({
@@ -142,8 +142,8 @@ describe("SyncWorker", () => {
 
       const result = await syncService.performIssueRefresh(
         "user-123",
-        "integration-456",
-        999
+        456,
+        "999"
       );
 
       expect(result.success).toBe(false);
@@ -177,8 +177,8 @@ describe("SyncService interface", () => {
 
     const result = await syncService.performSync(
       "user-123",
-      "integration-456",
-      1,
+      456,
+      "1",
       {},
       {} as Job
     );
@@ -194,7 +194,7 @@ describe("SyncService interface", () => {
     );
 
     await expect(
-      syncService.performSync("user-123", "integration-456", 1, {}, {} as Job)
+      syncService.performSync("user-123", 456, "1", {}, {} as Job)
     ).rejects.toThrow("Network error");
   });
 
@@ -206,7 +206,7 @@ describe("SyncService interface", () => {
     );
 
     await expect(
-      syncService.performIssueRefresh("user-123", "integration-456", 123)
+      syncService.performIssueRefresh("user-123", 456, "123")
     ).rejects.toThrow("Database error");
   });
 });

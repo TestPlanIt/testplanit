@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -124,6 +125,9 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
               <div>{t("common.dialogs.complete.title")}</div>
             </div>
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            {t("common.dialogs.complete.title")}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>{t("common.dialogs.complete.description")}</div>

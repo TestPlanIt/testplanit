@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -697,6 +698,12 @@ export function UnifiedSearch({
                       "Select Entity Types"
                     )}
                   </SheetTitle>
+                  <SheetDescription className="sr-only">
+                    {t("search.entityTypes.repositoryCase").replace(
+                      "Repository Cases",
+                      "Select Entity Types"
+                    )}
+                  </SheetDescription>
                 </SheetHeader>
                 <div className="mt-6">
                   <EntityTypeSelector
@@ -744,6 +751,10 @@ export function UnifiedSearch({
               </Button>
             </SheetTrigger>
             <SheetContent className="w-[400px] sm:w-[540px]">
+              <SheetHeader className="sr-only">
+                <SheetTitle>{t("search.filters")}</SheetTitle>
+                <SheetDescription>{t("search.filters")}</SheetDescription>
+              </SheetHeader>
               <FacetedSearchFilters
                 entityTypes={selectedEntities}
                 filters={filters}

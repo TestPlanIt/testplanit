@@ -41,6 +41,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -295,6 +296,9 @@ export function EditStatusModal({ status }: EditStatusModalProps) {
           >
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {t("title")}
+              </DialogDescription>
             </DialogHeader>
             <div className="flex items-center gap-2">
               <div className="w-16 h-full">

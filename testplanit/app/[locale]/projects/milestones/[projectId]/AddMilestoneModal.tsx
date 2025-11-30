@@ -25,6 +25,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -265,6 +266,9 @@ export function AddMilestoneModal() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
               <DialogTitle>{t("milestones.actions.add")}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {t("milestones.actions.add")}
+              </DialogDescription>
             </DialogHeader>
             <FormField
               control={control}

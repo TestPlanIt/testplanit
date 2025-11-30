@@ -54,6 +54,7 @@ import { toHumanReadable } from "~/utils/duration";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -998,6 +999,11 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                   ? zoomedChartDetails.title
                   : t("sessions.summary.workDistributionTitle")}
               </DialogTitle>
+              <DialogDescription className="sr-only">
+                {zoomedChartDetails
+                  ? zoomedChartDetails.title
+                  : t("sessions.summary.workDistributionTitle")}
+              </DialogDescription>
             </DialogHeader>
             {zoomedChartDetails && (
               <div className="flex-1 overflow-hidden p-4 sm:p-0">

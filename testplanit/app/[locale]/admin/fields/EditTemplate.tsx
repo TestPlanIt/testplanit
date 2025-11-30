@@ -47,6 +47,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -361,6 +362,9 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-fit">
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {t("title")}
+              </DialogDescription>
             </DialogHeader>
             <FormField
               control={control}

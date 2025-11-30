@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -79,6 +80,9 @@ export function AddAppConfigModal() {
       <DialogContent data-testid="add-app-config-modal">
         <DialogHeader>
           <DialogTitle>{t("addConfig")}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {t("addConfig")}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">

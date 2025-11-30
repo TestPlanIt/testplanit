@@ -23,6 +23,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -174,6 +175,9 @@ export function AddFolderModal({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
               <DialogTitle>{t("repository.addFolder")}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {t("repository.addFolder")}
+              </DialogDescription>
               <div className="text-sm text-muted-foreground">
                 {parent?.name ? (
                   <div>
