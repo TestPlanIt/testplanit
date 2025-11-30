@@ -146,7 +146,7 @@ jobs:
     - name: Start Colima
       run: |
         if ! colima status 2>/dev/null; then
-          colima start --cpu 4 --memory 8
+          colima start --cpu 4 --memory 12
         fi
         docker context use colima
 
@@ -306,7 +306,7 @@ jobs:
     - name: Start Colima
       run: |
         if ! colima status 2>/dev/null; then
-          colima start --cpu 4 --memory 8
+          colima start --cpu 4 --memory 12
         fi
         docker context use colima
 
