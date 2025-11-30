@@ -143,15 +143,23 @@ jobs:
     - name: Set lowercase repo name
       run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
+    - name: Start Colima and configure Docker
+      run: |
+        if ! colima status 2>/dev/null; then
+          colima start
+        fi
+        docker context use colima
+        # Remove keychain credential helper while preserving other config
+        if [ -f ~/.docker/config.json ]; then
+          cat ~/.docker/config.json | python3 -c "import sys,json; c=json.load(sys.stdin); c.pop('credsStore',None); c.pop('credHelpers',None); print(json.dumps(c))" > ~/.docker/config.json.tmp && mv ~/.docker/config.json.tmp ~/.docker/config.json
+        fi
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
     - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Generate version info for Docker build
       run: |
@@ -296,15 +304,23 @@ jobs:
     - name: Set lowercase repo name
       run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
+    - name: Start Colima and configure Docker
+      run: |
+        if ! colima status 2>/dev/null; then
+          colima start
+        fi
+        docker context use colima
+        # Remove keychain credential helper while preserving other config
+        if [ -f ~/.docker/config.json ]; then
+          cat ~/.docker/config.json | python3 -c "import sys,json; c=json.load(sys.stdin); c.pop('credsStore',None); c.pop('credHelpers',None); print(json.dumps(c))" > ~/.docker/config.json.tmp && mv ~/.docker/config.json.tmp ~/.docker/config.json
+        fi
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
     - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
     - name: Generate version info for Docker build
       run: |
