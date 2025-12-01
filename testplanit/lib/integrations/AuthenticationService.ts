@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prismaBase";
 import { EncryptionService, getMasterKey } from "@/utils/encryption";
 import crypto from "crypto";
 
