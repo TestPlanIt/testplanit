@@ -56,6 +56,14 @@ export async function GET(request: NextRequest) {
     const currentTenantId = getCurrentTenantId();
     const multiTenant = isMultiTenantMode();
 
+    // Validate multi-tenant configuration
+    if (multiTenant && !currentTenantId) {
+      return NextResponse.json(
+        { error: "Multi-tenant mode is enabled but INSTANCE_TENANT_ID is not configured" },
+        { status: 500 }
+      );
+    }
+
     const queueStats = await Promise.all(
       queues.map(async ({ name, queue }) => {
         if (!queue) {
@@ -74,7 +82,7 @@ export async function GET(request: NextRequest) {
           // In multi-tenant mode, we need to count jobs filtered by tenantId
           // In single-tenant mode, use the standard counts
           let counts;
-          if (multiTenant && currentTenantId) {
+          if (multiTenant) {
             // Get all jobs and filter by tenantId
             const [waiting, active, completed, failed, delayed, paused] = await Promise.all([
               queue.getJobs(['waiting'], 0, 1000),
