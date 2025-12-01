@@ -14,7 +14,7 @@ const createTestConfig = (
   integration: {
     id: 1,
     name: "Test Custom LLM",
-    provider: "CUSTOM",
+    provider: "CUSTOM_LLM",
     status: "ACTIVE",
     credentials: {},
     settings: {

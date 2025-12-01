@@ -253,7 +253,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
-          });
+          } as any);
         });
 
         const result = await completeMilestoneCascade({
@@ -287,7 +287,7 @@ describe("milestoneActions", () => {
             milestones: { update: mockUpdate, updateMany: mockUpdateMany },
             testRuns: { updateMany: mockUpdateMany },
             sessions: { updateMany: mockUpdateMany },
-          });
+          } as any);
         });
 
         const result = await completeMilestoneCascade({
@@ -320,7 +320,7 @@ describe("milestoneActions", () => {
             milestones: { update: mockUpdate, updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
-          });
+          } as any);
         });
 
         await completeMilestoneCascade({
@@ -357,7 +357,7 @@ describe("milestoneActions", () => {
             milestones: { update: mockUpdate, updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
-          });
+          } as any);
         });
 
         await completeMilestoneCascade({
@@ -392,7 +392,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
-          });
+          } as any);
         });
 
         const result = await completeMilestoneCascade({
@@ -424,7 +424,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
-          });
+          } as any);
         });
 
         const result = await completeMilestoneCascade({
@@ -484,7 +484,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
-          });
+          } as any);
         });
 
         const result = await completeMilestoneCascade({
@@ -572,7 +572,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
-          });
+          } as any);
         });
 
         await completeMilestoneCascade({
@@ -608,7 +608,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
-          });
+          } as any);
         });
 
         await completeMilestoneCascade({
@@ -649,7 +649,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: mockMilestonesUpdateMany },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
-          });
+          } as any);
         });
 
         const completionDate = new Date("2024-06-15");

@@ -5,13 +5,9 @@ import { processProjectsWithEffectiveMembers } from "./projectUtils";
 const createMockProject = (overrides: any = {}) => ({
   id: 1,
   name: "Test Project",
-  description: null,
-  key: "TP",
   isDeleted: false,
   createdAt: new Date(),
-  updatedAt: new Date(),
   createdBy: "user-1",
-  iconId: null,
   defaultAccessType: "NO_ACCESS",
   defaultRoleId: null,
   creator: { id: "user-1", name: "Creator" },
@@ -345,7 +341,6 @@ describe("projectUtils", () => {
         const project = createMockProject({
           id: 42,
           name: "My Project",
-          key: "MP",
           defaultAccessType: "NO_ACCESS",
         });
 
@@ -353,7 +348,6 @@ describe("projectUtils", () => {
 
         expect(result[0].id).toBe(42);
         expect(result[0].name).toBe("My Project");
-        expect(result[0].key).toBe("MP");
         expect(result[0].creator).toBeDefined();
         expect(result[0]._count).toBeDefined();
       });
