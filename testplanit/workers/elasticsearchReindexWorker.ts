@@ -1,7 +1,6 @@
 import { Worker, Job } from "bullmq";
 import valkeyConnection from "../lib/valkey";
 import { ELASTICSEARCH_REINDEX_QUEUE_NAME } from "../lib/queueNames";
-import { prisma } from "@/lib/prisma";
 import {
   syncProjectCasesToElasticsearch,
   initializeElasticsearchIndexes,
@@ -14,15 +13,28 @@ import { syncProjectMilestonesToElasticsearch } from "~/services/milestoneSearch
 import { syncAllProjectsToElasticsearch } from "~/services/projectSearch";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { pathToFileURL } from "node:url";
+import {
+  getPrismaClientForJob,
+  isMultiTenantMode,
+  MultiTenantJobData,
+  disconnectAllTenantClients,
+  validateMultiTenantJobData,
+} from "../lib/multiTenantPrisma";
 
-export interface ReindexJobData {
+export interface ReindexJobData extends MultiTenantJobData {
   entityType: "all" | "repositoryCases" | "testRuns" | "sessions" | "sharedSteps" | "issues" | "milestones" | "projects";
   projectId?: number;
   userId: string; // User who initiated the reindex
 }
 
 const processor = async (job: Job<ReindexJobData>) => {
-  console.log(`Processing Elasticsearch reindex job ${job.id}`);
+  console.log(`Processing Elasticsearch reindex job ${job.id}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+
+  // Validate multi-tenant job data if in multi-tenant mode
+  validateMultiTenantJobData(job.data);
+
+  // Get the appropriate Prisma client (tenant-specific or default)
+  const prisma = getPrismaClientForJob(job.data);
 
   const { entityType, projectId } = job.data;
 
@@ -248,6 +260,13 @@ let worker: Worker | null = null;
 
 // Function to start the worker
 const startWorker = async () => {
+  // Log multi-tenant mode status
+  if (isMultiTenantMode()) {
+    console.log("Elasticsearch reindex worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Elasticsearch reindex worker starting in SINGLE-TENANT mode");
+  }
+
   if (valkeyConnection) {
     worker = new Worker(ELASTICSEARCH_REINDEX_QUEUE_NAME, processor, {
       connection: valkeyConnection,
@@ -279,6 +298,10 @@ const startWorker = async () => {
     console.log("Shutting down Elasticsearch reindex worker...");
     if (worker) {
       await worker.close();
+    }
+    // Disconnect all tenant Prisma clients in multi-tenant mode
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
     }
     process.exit(0);
   });

@@ -1,10 +1,12 @@
 "use server";
 
-import { prisma } from "../lib/prisma";
+import { PrismaClient } from "@prisma/client";
+import { prisma as defaultPrisma } from "../lib/prisma";
 
 type UpdateRepositoryCaseForecastOptions = {
   skipTestRunUpdate?: boolean;
   collectAffectedTestRuns?: boolean;
+  prismaClient?: PrismaClient; // Optional: use provided client for multi-tenant support
 };
 
 type UpdateRepositoryCaseForecastResult = {
@@ -14,6 +16,11 @@ type UpdateRepositoryCaseForecastResult = {
 
 type UpdateTestRunForecastOptions = {
   alreadyRefreshedCaseIds?: Set<number>;
+  prismaClient?: PrismaClient; // Optional: use provided client for multi-tenant support
+};
+
+type GetUniqueCaseGroupIdsOptions = {
+  prismaClient?: PrismaClient; // Optional: use provided client for multi-tenant support
 };
 
 /**
@@ -26,6 +33,8 @@ export async function updateRepositoryCaseForecast(
   repositoryCaseId: number,
   options: UpdateRepositoryCaseForecastOptions = {}
 ): Promise<UpdateRepositoryCaseForecastResult> {
+  const prisma = options.prismaClient || defaultPrisma;
+
   if (process.env.DEBUG_FORECAST) {
     console.log(
       `Calculating group forecast for RepositoryCase ID: ${repositoryCaseId}`
@@ -170,6 +179,7 @@ export async function updateRepositoryCaseForecast(
       for (const testRunId of uniqueAffectedTestRunIds) {
         await updateTestRunForecast(testRunId, {
           alreadyRefreshedCaseIds: new Set(uniqueCaseIds),
+          prismaClient: prisma,
         });
       }
     }
@@ -196,6 +206,8 @@ export async function updateTestRunForecast(
   testRunId: number,
   options: UpdateTestRunForecastOptions = {}
 ): Promise<void> {
+  const prisma = options.prismaClient || defaultPrisma;
+
   if (process.env.DEBUG_FORECAST) console.log(`Updating forecast for TestRun ID: ${testRunId}`);
   try {
     // 1. Fetch all TestRunCases for this TestRun, including their status system name
@@ -232,7 +244,7 @@ export async function updateTestRunForecast(
 
         const result = await updateRepositoryCaseForecast(
           repositoryCaseId,
-          { skipTestRunUpdate: true }
+          { skipTestRunUpdate: true, prismaClient: prisma }
         );
 
         if (result.updatedCaseIds.length > 0) {
@@ -333,9 +345,14 @@ export async function updateTestRunForecast(
 
 /**
  * Fetches all RepositoryCase IDs that are not deleted or archived.
+ * @param options Optional options including prismaClient for multi-tenant support
  * @returns An array of active RepositoryCase IDs.
  */
-export async function getActiveRepositoryCaseIds(): Promise<number[]> {
+export async function getActiveRepositoryCaseIds(
+  options: GetUniqueCaseGroupIdsOptions = {}
+): Promise<number[]> {
+  const prisma = options.prismaClient || defaultPrisma;
+
   if (process.env.DEBUG_FORECAST) console.log("Fetching active repository case IDs...");
   try {
     const cases = await prisma.repositoryCases.findMany({
@@ -360,9 +377,14 @@ export async function getActiveRepositoryCaseIds(): Promise<number[]> {
  * Fetches unique case group representatives to avoid recalculating the same linked groups.
  * For each group of cases linked by SAME_TEST_DIFFERENT_SOURCE, returns only one representative case ID.
  * Processes cases in batches to avoid hitting database bind variable limits.
+ * @param options Optional options including prismaClient for multi-tenant support
  * @returns An array of representative RepositoryCase IDs, one per unique group.
  */
-export async function getUniqueCaseGroupIds(): Promise<number[]> {
+export async function getUniqueCaseGroupIds(
+  options: GetUniqueCaseGroupIdsOptions = {}
+): Promise<number[]> {
+  const prisma = options.prismaClient || defaultPrisma;
+
   if (process.env.DEBUG_FORECAST) console.log("Fetching unique case group representatives...");
   try {
     const BATCH_SIZE = 1000;

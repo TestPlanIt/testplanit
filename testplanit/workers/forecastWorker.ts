@@ -7,11 +7,21 @@ import {
   updateTestRunForecast,
 } from "../services/forecastService";
 import { pathToFileURL } from "node:url";
-import { prisma } from "../lib/prisma";
+import {
+  getPrismaClientForJob,
+  isMultiTenantMode,
+  MultiTenantJobData,
+  disconnectAllTenantClients,
+  validateMultiTenantJobData,
+} from "../lib/multiTenantPrisma";
 
-// Define expected job data structures (optional but good practice)
-interface UpdateSingleCaseJobData {
+// Define expected job data structures with multi-tenant support
+interface UpdateSingleCaseJobData extends MultiTenantJobData {
   repositoryCaseId: number;
+}
+
+interface UpdateAllCasesJobData extends MultiTenantJobData {
+  // No additional fields required for this job type
 }
 
 // Define job names for clarity and export them for the scheduler
@@ -19,9 +29,15 @@ export const JOB_UPDATE_SINGLE_CASE = "update-single-case-forecast";
 export const JOB_UPDATE_ALL_CASES = "update-all-cases-forecast";
 
 const processor = async (job: Job) => {
-  console.log(`Processing job ${job.id} of type ${job.name}`);
+  console.log(`Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
   let successCount = 0;
   let failCount = 0;
+
+  // Validate multi-tenant job data if in multi-tenant mode
+  validateMultiTenantJobData(job.data);
+
+  // Get the appropriate Prisma client (tenant-specific or default)
+  const prisma = getPrismaClientForJob(job.data);
 
   switch (job.name) {
     case JOB_UPDATE_SINGLE_CASE:
@@ -32,7 +48,9 @@ const processor = async (job: Job) => {
         );
       }
       try {
-        await updateRepositoryCaseForecast(singleData.repositoryCaseId);
+        await updateRepositoryCaseForecast(singleData.repositoryCaseId, {
+          prismaClient: prisma,
+        });
         successCount = 1;
         console.log(
           `Job ${job.id} completed: Updated forecast for case ${singleData.repositoryCaseId}`
@@ -53,7 +71,7 @@ const processor = async (job: Job) => {
       successCount = 0;
       failCount = 0;
       // Use unique case group IDs to avoid recalculating the same linked groups multiple times
-      const caseIds = await getUniqueCaseGroupIds();
+      const caseIds = await getUniqueCaseGroupIds({ prismaClient: prisma });
 
       // Track affected TestRuns to update them once at the end
       const affectedTestRunIds = new Set<number>();
@@ -64,6 +82,7 @@ const processor = async (job: Job) => {
           const result = await updateRepositoryCaseForecast(caseId, {
             skipTestRunUpdate: true,
             collectAffectedTestRuns: true,
+            prismaClient: prisma,
           });
 
           // Collect affected TestRun IDs
@@ -99,7 +118,7 @@ const processor = async (job: Job) => {
         select: { id: true },
       });
 
-      const activeTestRunIds = activeTestRuns.map((tr) => tr.id);
+      const activeTestRunIds = activeTestRuns.map((tr: { id: number }) => tr.id);
       const skippedCompletedCount =
         affectedTestRunIds.size - activeTestRunIds.length;
 
@@ -111,7 +130,7 @@ const processor = async (job: Job) => {
 
       for (const testRunId of activeTestRunIds) {
         try {
-          await updateTestRunForecast(testRunId);
+          await updateTestRunForecast(testRunId, { prismaClient: prisma });
           testRunSuccessCount++;
         } catch (error) {
           console.error(
@@ -143,6 +162,13 @@ const processor = async (job: Job) => {
 };
 
 async function startWorker() {
+  // Log multi-tenant mode status
+  if (isMultiTenantMode()) {
+    console.log("Forecast worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Forecast worker starting in SINGLE-TENANT mode");
+  }
+
   // Initialize the worker only if Valkey connection exists
   if (valkeyConnection) {
     const worker = new Worker(FORECAST_QUEUE_NAME, processor, {
@@ -178,6 +204,10 @@ async function startWorker() {
     const shutdown = async () => {
       console.log("Shutting down forecast worker...");
       await worker.close();
+      // Disconnect all tenant Prisma clients in multi-tenant mode
+      if (isMultiTenantMode()) {
+        await disconnectAllTenantClients();
+      }
       console.log("Forecast worker shut down gracefully.");
       process.exit(0);
     };

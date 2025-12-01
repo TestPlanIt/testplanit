@@ -3,6 +3,7 @@ import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
 import { getAllQueues } from "@/lib/queues";
 import { Queue } from "bullmq";
+import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
 
 function getQueueByName(queueName: string): Queue | null {
   const allQueues = getAllQueues();
@@ -15,6 +16,22 @@ function getQueueByName(queueName: string): Queue | null {
     'elasticsearch-reindex': allQueues.elasticsearchReindexQueue
   };
   return queueMap[queueName] ?? null;
+}
+
+/**
+ * Check if job belongs to the current tenant
+ * In single-tenant mode, always returns true
+ * In multi-tenant mode, checks job.data.tenantId matches current instance
+ */
+function jobBelongsToCurrentTenant(job: any): boolean {
+  const multiTenant = isMultiTenantMode();
+  const currentTenantId = getCurrentTenantId();
+
+  if (!multiTenant || !currentTenantId) {
+    return true; // Single-tenant mode or no tenant configured
+  }
+
+  return job.data?.tenantId === currentTenantId;
 }
 
 // Helper function to safely remove a job (handles both regular and repeatable jobs)
@@ -142,6 +159,11 @@ export async function GET(
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
+    // Check tenant access in multi-tenant mode
+    if (!jobBelongsToCurrentTenant(job)) {
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
+    }
+
     const state = await job.getState();
     const logs = await queue.getJobLogs(jobId);
 
@@ -202,6 +224,11 @@ export async function POST(
     const job = await queue.getJob(jobId);
 
     if (!job) {
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
+    }
+
+    // Check tenant access in multi-tenant mode
+    if (!jobBelongsToCurrentTenant(job)) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
@@ -271,6 +298,11 @@ export async function DELETE(
     const job = await queue.getJob(jobId);
 
     if (!job) {
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
+    }
+
+    // Check tenant access in multi-tenant mode
+    if (!jobBelongsToCurrentTenant(job)) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 

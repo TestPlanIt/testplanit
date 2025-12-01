@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
 import { getAllQueues } from "@/lib/queues";
+import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
 
 // GET: Get all queues with their stats
 export async function GET(request: NextRequest) {
@@ -51,6 +52,10 @@ export async function GET(request: NextRequest) {
       { name: 'elasticsearch-reindex', queue: allQueues.elasticsearchReindexQueue }
     ];
 
+    // Get current tenant ID for filtering in multi-tenant mode
+    const currentTenantId = getCurrentTenantId();
+    const multiTenant = isMultiTenantMode();
+
     const queueStats = await Promise.all(
       queues.map(async ({ name, queue }) => {
         if (!queue) {
@@ -64,10 +69,38 @@ export async function GET(request: NextRequest) {
         }
 
         try {
-          const [counts, isPaused] = await Promise.all([
-            queue.getJobCounts(),
-            queue.isPaused()
-          ]);
+          const isPaused = await queue.isPaused();
+
+          // In multi-tenant mode, we need to count jobs filtered by tenantId
+          // In single-tenant mode, use the standard counts
+          let counts;
+          if (multiTenant && currentTenantId) {
+            // Get all jobs and filter by tenantId
+            const [waiting, active, completed, failed, delayed, paused] = await Promise.all([
+              queue.getJobs(['waiting'], 0, 1000),
+              queue.getJobs(['active'], 0, 1000),
+              queue.getJobs(['completed'], 0, 1000),
+              queue.getJobs(['failed'], 0, 1000),
+              queue.getJobs(['delayed'], 0, 1000),
+              queue.getJobs(['paused'], 0, 1000)
+            ]);
+
+            // Filter jobs by tenantId
+            const filterByTenant = (jobs: any[]) =>
+              jobs.filter(job => job.data?.tenantId === currentTenantId).length;
+
+            counts = {
+              waiting: filterByTenant(waiting),
+              active: filterByTenant(active),
+              completed: filterByTenant(completed),
+              failed: filterByTenant(failed),
+              delayed: filterByTenant(delayed),
+              paused: filterByTenant(paused)
+            };
+          } else {
+            // Single-tenant mode: use standard counts
+            counts = await queue.getJobCounts();
+          }
 
           return {
             name,

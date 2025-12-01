@@ -4,9 +4,10 @@ import { integrationManager } from "../IntegrationManager";
 import { enhance } from "@zenstackhq/runtime";
 import type { IssueData } from "../adapters/IssueAdapter";
 import type { IssueAdapter } from "../adapters/IssueAdapter";
-import { JobsOptions } from "bullmq";
-import { prisma } from "@/lib/prisma";
+import { JobsOptions, Job } from "bullmq";
+import { prisma as defaultPrisma } from "@/lib/prisma";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
+import { PrismaClient } from "@prisma/client";
 
 export interface SyncJobData {
   userId: string;
@@ -15,6 +16,10 @@ export interface SyncJobData {
   issueId?: string;
   action: "sync" | "create" | "update" | "refresh";
   data?: any;
+}
+
+export interface SyncServiceOptions {
+  prismaClient?: PrismaClient; // Optional: use provided client for multi-tenant support
 }
 
 export interface SyncOptions {
@@ -185,8 +190,10 @@ export class SyncService {
     integrationId: number,
     projectId?: string,
     options: SyncOptions = {},
-    job?: any // BullMQ Job for progress reporting
+    job?: Job, // BullMQ Job for progress reporting
+    serviceOptions: SyncServiceOptions = {}
   ): Promise<{ synced: number; errors: string[] }> {
+    const prisma = serviceOptions.prismaClient || defaultPrisma;
     const errors: string[] = [];
     let syncedCount = 0;
 
@@ -381,8 +388,10 @@ export class SyncService {
   async performIssueRefresh(
     userId: string,
     integrationId: number,
-    externalIssueId: string
+    externalIssueId: string,
+    serviceOptions: SyncServiceOptions = {}
   ): Promise<{ success: boolean; error?: string }> {
+    const prisma = serviceOptions.prismaClient || defaultPrisma;
     try {
       // Get full user object for enhance
       const user = await prisma.user.findUnique({
