@@ -1,4 +1,4 @@
-import { forecastQueue, notificationQueue } from "./lib/queues";
+import { getForecastQueue, getNotificationQueue } from "./lib/queues";
 import { FORECAST_QUEUE_NAME, NOTIFICATION_QUEUE_NAME } from "./lib/queues";
 import { JOB_UPDATE_ALL_CASES } from "./workers/forecastWorker";
 import { JOB_SEND_DAILY_DIGEST } from "./workers/notificationWorker";
@@ -10,6 +10,9 @@ const CRON_SCHEDULE_DAILY_8AM = "0 8 * * *"; // For daily digest emails
 
 async function scheduleJobs() {
   console.log("Attempting to schedule jobs...");
+
+  const forecastQueue = getForecastQueue();
+  const notificationQueue = getNotificationQueue();
 
   if (!forecastQueue || !notificationQueue) {
     console.error("Required queues are not initialized. Cannot schedule jobs.");

@@ -1,6 +1,6 @@
 import { Worker, Job } from "bullmq";
 import valkeyConnection from "../lib/valkey";
-import { NOTIFICATION_QUEUE_NAME, emailQueue } from "../lib/queues";
+import { NOTIFICATION_QUEUE_NAME, getEmailQueue } from "../lib/queues";
 import { PrismaClient } from "@prisma/client";
 import { pathToFileURL } from "node:url";
 
@@ -77,7 +77,7 @@ const processor = async (job: Job) => {
 
         // Queue email if needed based on notification mode
         if (notificationMode === "IN_APP_EMAIL_IMMEDIATE") {
-          await emailQueue?.add("send-notification-email", {
+          await getEmailQueue()?.add("send-notification-email", {
             notificationId: notification.id,
             userId: createData.userId,
             immediate: true,
@@ -161,7 +161,7 @@ const processor = async (job: Job) => {
           });
 
           if (notifications.length > 0) {
-            await emailQueue?.add("send-digest-email", {
+            await getEmailQueue()?.add("send-digest-email", {
               userId: userPref.userId,
               notifications: notifications.map((n) => ({
                 id: n.id,

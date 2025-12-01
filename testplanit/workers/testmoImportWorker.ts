@@ -19,7 +19,7 @@ import bcrypt from "bcrypt";
 import valkeyConnection from "../lib/valkey";
 import {
   TESTMO_IMPORT_QUEUE_NAME,
-  elasticsearchReindexQueue,
+  getElasticsearchReindexQueue,
 } from "../lib/queues";
 import type { ReindexJobData } from "./elasticsearchReindexWorker";
 import { analyzeTestmoExport } from "../services/imports/testmo/TestmoExportAnalyzer";
@@ -7048,6 +7048,7 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string) {
 
     // Trigger full Elasticsearch reindex after successful import
     // This ensures all imported data is searchable
+    const elasticsearchReindexQueue = getElasticsearchReindexQueue();
     if (elasticsearchReindexQueue) {
       try {
         logMessage(

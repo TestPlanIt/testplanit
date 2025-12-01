@@ -30,10 +30,14 @@ export async function indexTestRun(testRun: TestRunForIndexing): Promise<void> {
     throw new Error("Elasticsearch client not available");
   }
 
+  // Extract text from TipTap JSON for note and docs fields
+  const noteText = testRun.note ? extractTextFromNode(testRun.note) : "";
+  const docsText = testRun.docs ? extractTextFromNode(testRun.docs) : "";
+
   const searchableContent = [
     testRun.name,
-    testRun.note ? extractTextFromNode(testRun.note) : "",
-    testRun.docs ? extractTextFromNode(testRun.docs) : "",
+    noteText,
+    docsText,
     testRun.tags.map((t) => t.name).join(" "),
   ].join(" ");
 
@@ -42,8 +46,8 @@ export async function indexTestRun(testRun: TestRunForIndexing): Promise<void> {
     projectId: testRun.projectId,
     projectName: testRun.project.name,
     name: testRun.name,
-    note: testRun.note,
-    docs: testRun.docs,
+    note: noteText,
+    docs: docsText,
     configId: testRun.configId,
     configurationName: testRun.configuration?.name,
     milestoneId: testRun.milestoneId,
@@ -171,10 +175,14 @@ export async function syncProjectTestRunsToElasticsearch(
 
   const bulkBody = [];
   for (const testRun of testRuns) {
+    // Extract text from TipTap JSON for note and docs fields
+    const noteText = testRun.note ? extractTextFromNode(testRun.note) : "";
+    const docsText = testRun.docs ? extractTextFromNode(testRun.docs) : "";
+
     const searchableContent = [
       testRun.name,
-      testRun.note ? extractTextFromNode(testRun.note) : "",
-      testRun.docs ? extractTextFromNode(testRun.docs) : "",
+      noteText,
+      docsText,
       testRun.tags.map((t: any) => t.name).join(" "),
     ].join(" ");
 
@@ -190,8 +198,8 @@ export async function syncProjectTestRunsToElasticsearch(
       projectId: testRun.projectId,
       projectName: testRun.project.name,
       name: testRun.name,
-      note: testRun.note,
-      docs: testRun.docs,
+      note: noteText,
+      docs: docsText,
       configId: testRun.configId,
       configurationName: testRun.configuration?.name,
       milestoneId: testRun.milestoneId,
@@ -217,10 +225,24 @@ export async function syncProjectTestRunsToElasticsearch(
     const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
 
     if (bulkResponse.errors) {
-      const errors = bulkResponse.items.filter(
+      const errorItems = bulkResponse.items.filter(
         (item: any) => item.index?.error
       );
-      console.error("Bulk indexing errors:", errors);
+      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      // Log detailed error information
+      errorItems.slice(0, 10).forEach((item: any) => {
+        if (item.index?.error) {
+          console.error(`  Failed to index document ${item.index._id}:`);
+          console.error(`    Error type: ${item.index.error.type}`);
+          console.error(`    Error reason: ${item.index.error.reason}`);
+          if (item.index.error.caused_by) {
+            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+          }
+        }
+      });
+      if (errorItems.length > 10) {
+        console.error(`  ... and ${errorItems.length - 10} more errors`);
+      }
     } else {
       console.log(`Successfully indexed ${testRuns.length} test runs`);
     }

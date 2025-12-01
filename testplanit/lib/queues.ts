@@ -19,50 +19,26 @@ export {
   ELASTICSEARCH_REINDEX_QUEUE_NAME,
 };
 
-let forecastQueue: Queue | null = null;
-let notificationQueue: Queue | null = null;
-let emailQueue: Queue | null = null;
-let syncQueue: Queue | null = null;
-let testmoImportQueue: Queue | null = null;
-let elasticsearchReindexQueue: Queue | null = null;
+// Lazy-initialized queue instances
+let _forecastQueue: Queue | null = null;
+let _notificationQueue: Queue | null = null;
+let _emailQueue: Queue | null = null;
+let _syncQueue: Queue | null = null;
+let _testmoImportQueue: Queue | null = null;
+let _elasticsearchReindexQueue: Queue | null = null;
 
-// Initialize queue only if Valkey connection exists
-if (valkeyConnection) {
-  // Create and export the forecast queue instance
-  forecastQueue = new Queue(FORECAST_QUEUE_NAME, {
-    connection: valkeyConnection,
-    defaultJobOptions: {
-      // Configuration for jobs in this queue (optional)
-      attempts: 3, // Number of times to retry a failed job
-      backoff: {
-        type: "exponential", // Exponential backoff strategy
-        delay: 5000, // Initial delay 5s
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7, // keep up to 7 days
-        count: 1000, // keep up to 1000 jobs
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14, // keep up to 14 days
-      },
-    },
-  });
+/**
+ * Get the forecast queue instance (lazy initialization)
+ * Only creates the queue when first accessed
+ */
+export function getForecastQueue(): Queue | null {
+  if (_forecastQueue) return _forecastQueue;
+  if (!valkeyConnection) {
+    console.warn(`Valkey connection not available, Queue "${FORECAST_QUEUE_NAME}" not initialized.`);
+    return null;
+  }
 
-  console.log(`Queue "${FORECAST_QUEUE_NAME}" initialized.`);
-
-  // Optional: Add basic event listeners for logging/monitoring
-  forecastQueue.on("error", (error) => {
-    console.error(`Queue ${FORECAST_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${FORECAST_QUEUE_NAME}" not initialized.`
-  );
-}
-
-// Initialize notification queue
-if (valkeyConnection) {
-  notificationQueue = new Queue(NOTIFICATION_QUEUE_NAME, {
+  _forecastQueue = new Queue(FORECAST_QUEUE_NAME, {
     connection: valkeyConnection,
     defaultJobOptions: {
       attempts: 3,
@@ -71,29 +47,72 @@ if (valkeyConnection) {
         delay: 5000,
       },
       removeOnComplete: {
-        age: 3600 * 24 * 7, // keep up to 7 days
+        age: 3600 * 24 * 7,
         count: 1000,
       },
       removeOnFail: {
-        age: 3600 * 24 * 14, // keep up to 14 days
+        age: 3600 * 24 * 14,
+      },
+    },
+  });
+
+  console.log(`Queue "${FORECAST_QUEUE_NAME}" initialized.`);
+
+  _forecastQueue.on("error", (error) => {
+    console.error(`Queue ${FORECAST_QUEUE_NAME} error:`, error);
+  });
+
+  return _forecastQueue;
+}
+
+/**
+ * Get the notification queue instance (lazy initialization)
+ */
+export function getNotificationQueue(): Queue | null {
+  if (_notificationQueue) return _notificationQueue;
+  if (!valkeyConnection) {
+    console.warn(`Valkey connection not available, Queue "${NOTIFICATION_QUEUE_NAME}" not initialized.`);
+    return null;
+  }
+
+  _notificationQueue = new Queue(NOTIFICATION_QUEUE_NAME, {
+    connection: valkeyConnection,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 5000,
+      },
+      removeOnComplete: {
+        age: 3600 * 24 * 7,
+        count: 1000,
+      },
+      removeOnFail: {
+        age: 3600 * 24 * 14,
       },
     },
   });
 
   console.log(`Queue "${NOTIFICATION_QUEUE_NAME}" initialized.`);
 
-  notificationQueue.on("error", (error) => {
+  _notificationQueue.on("error", (error) => {
     console.error(`Queue ${NOTIFICATION_QUEUE_NAME} error:`, error);
   });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${NOTIFICATION_QUEUE_NAME}" not initialized.`
-  );
+
+  return _notificationQueue;
 }
 
-// Initialize email queue
-if (valkeyConnection) {
-  emailQueue = new Queue(EMAIL_QUEUE_NAME, {
+/**
+ * Get the email queue instance (lazy initialization)
+ */
+export function getEmailQueue(): Queue | null {
+  if (_emailQueue) return _emailQueue;
+  if (!valkeyConnection) {
+    console.warn(`Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`);
+    return null;
+  }
+
+  _emailQueue = new Queue(EMAIL_QUEUE_NAME, {
     connection: valkeyConnection,
     defaultJobOptions: {
       attempts: 5,
@@ -102,29 +121,35 @@ if (valkeyConnection) {
         delay: 10000,
       },
       removeOnComplete: {
-        age: 3600 * 24 * 30, // keep up to 30 days
+        age: 3600 * 24 * 30,
         count: 5000,
       },
       removeOnFail: {
-        age: 3600 * 24 * 30, // keep up to 30 days
+        age: 3600 * 24 * 30,
       },
     },
   });
 
   console.log(`Queue "${EMAIL_QUEUE_NAME}" initialized.`);
 
-  emailQueue.on("error", (error) => {
+  _emailQueue.on("error", (error) => {
     console.error(`Queue ${EMAIL_QUEUE_NAME} error:`, error);
   });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`
-  );
+
+  return _emailQueue;
 }
 
-// Initialize sync queue
-if (valkeyConnection) {
-  syncQueue = new Queue(SYNC_QUEUE_NAME, {
+/**
+ * Get the sync queue instance (lazy initialization)
+ */
+export function getSyncQueue(): Queue | null {
+  if (_syncQueue) return _syncQueue;
+  if (!valkeyConnection) {
+    console.warn(`Valkey connection not available, Queue "${SYNC_QUEUE_NAME}" not initialized.`);
+    return null;
+  }
+
+  _syncQueue = new Queue(SYNC_QUEUE_NAME, {
     connection: valkeyConnection,
     defaultJobOptions: {
       attempts: 3,
@@ -133,29 +158,35 @@ if (valkeyConnection) {
         delay: 5000,
       },
       removeOnComplete: {
-        age: 3600 * 24 * 3, // keep up to 3 days
+        age: 3600 * 24 * 3,
         count: 500,
       },
       removeOnFail: {
-        age: 3600 * 24 * 7, // keep up to 7 days
+        age: 3600 * 24 * 7,
       },
     },
   });
 
   console.log(`Queue "${SYNC_QUEUE_NAME}" initialized.`);
 
-  syncQueue.on("error", (error) => {
+  _syncQueue.on("error", (error) => {
     console.error(`Queue ${SYNC_QUEUE_NAME} error:`, error);
   });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${SYNC_QUEUE_NAME}" not initialized.`
-  );
+
+  return _syncQueue;
 }
 
-// Initialize Testmo import queue
-if (valkeyConnection) {
-  testmoImportQueue = new Queue(TESTMO_IMPORT_QUEUE_NAME, {
+/**
+ * Get the Testmo import queue instance (lazy initialization)
+ */
+export function getTestmoImportQueue(): Queue | null {
+  if (_testmoImportQueue) return _testmoImportQueue;
+  if (!valkeyConnection) {
+    console.warn(`Valkey connection not available, Queue "${TESTMO_IMPORT_QUEUE_NAME}" not initialized.`);
+    return null;
+  }
+
+  _testmoImportQueue = new Queue(TESTMO_IMPORT_QUEUE_NAME, {
     connection: valkeyConnection,
     defaultJobOptions: {
       attempts: 1,
@@ -171,41 +202,57 @@ if (valkeyConnection) {
 
   console.log(`Queue "${TESTMO_IMPORT_QUEUE_NAME}" initialized.`);
 
-  testmoImportQueue.on("error", (error) => {
+  _testmoImportQueue.on("error", (error) => {
     console.error(`Queue ${TESTMO_IMPORT_QUEUE_NAME} error:`, error);
   });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${TESTMO_IMPORT_QUEUE_NAME}" not initialized.`
-  );
+
+  return _testmoImportQueue;
 }
 
-// Initialize Elasticsearch reindex queue
-if (valkeyConnection) {
-  elasticsearchReindexQueue = new Queue(ELASTICSEARCH_REINDEX_QUEUE_NAME, {
+/**
+ * Get the Elasticsearch reindex queue instance (lazy initialization)
+ */
+export function getElasticsearchReindexQueue(): Queue | null {
+  if (_elasticsearchReindexQueue) return _elasticsearchReindexQueue;
+  if (!valkeyConnection) {
+    console.warn(`Valkey connection not available, Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" not initialized.`);
+    return null;
+  }
+
+  _elasticsearchReindexQueue = new Queue(ELASTICSEARCH_REINDEX_QUEUE_NAME, {
     connection: valkeyConnection,
     defaultJobOptions: {
-      attempts: 1, // Don't retry reindex jobs automatically
+      attempts: 1,
       removeOnComplete: {
-        age: 3600 * 24 * 7, // keep up to 7 days
+        age: 3600 * 24 * 7,
         count: 50,
       },
       removeOnFail: {
-        age: 3600 * 24 * 14, // keep up to 14 days
+        age: 3600 * 24 * 14,
       },
     },
   });
 
   console.log(`Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" initialized.`);
 
-  elasticsearchReindexQueue.on("error", (error) => {
+  _elasticsearchReindexQueue.on("error", (error) => {
     console.error(`Queue ${ELASTICSEARCH_REINDEX_QUEUE_NAME} error:`, error);
   });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" not initialized.`
-  );
+
+  return _elasticsearchReindexQueue;
 }
 
-// Export the potentially null queues
-export { forecastQueue, notificationQueue, emailQueue, syncQueue, testmoImportQueue, elasticsearchReindexQueue };
+/**
+ * Get all queues (initializes all of them)
+ * Use this only when you need access to all queues (e.g., admin dashboard)
+ */
+export function getAllQueues() {
+  return {
+    forecastQueue: getForecastQueue(),
+    notificationQueue: getNotificationQueue(),
+    emailQueue: getEmailQueue(),
+    syncQueue: getSyncQueue(),
+    testmoImportQueue: getTestmoImportQueue(),
+    elasticsearchReindexQueue: getElasticsearchReindexQueue(),
+  };
+}

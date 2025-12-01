@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import {
-  testmoImportQueue,
+  getTestmoImportQueue,
   TESTMO_IMPORT_QUEUE_NAME,
 } from "~/lib/queues";
 import { serializeImportJob } from "~/services/imports/testmo/jobPresenter";
@@ -12,12 +12,14 @@ import { JOB_PROCESS_TESTMO_IMPORT } from "~/services/imports/testmo/constants";
 
 const bucketName = process.env.AWS_BUCKET_NAME;
 
-function ensureQueueAvailable() {
-  if (!testmoImportQueue) {
+function getQueue() {
+  const queue = getTestmoImportQueue();
+  if (!queue) {
     throw new Error(
       `BullMQ queue "${TESTMO_IMPORT_QUEUE_NAME}" is not available (Valkey connection missing).`
     );
   }
+  return queue;
 }
 
 export async function POST(request: NextRequest) {
@@ -56,7 +58,7 @@ export async function POST(request: NextRequest) {
       originalFileSize = BigInt(Math.max(0, Math.floor(fileSizeBytes)));
     }
 
-    ensureQueueAvailable();
+    const testmoImportQueue = getQueue();
 
     const jobRecord = await db.testmoImportJob.create({
       data: {
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await testmoImportQueue!.add(JOB_PROCESS_TESTMO_IMPORT, {
+    await testmoImportQueue.add(JOB_PROCESS_TESTMO_IMPORT, {
       jobId: jobRecord.id,
       mode: "analyze",
     });

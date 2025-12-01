@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import {
-  testmoImportQueue,
+  getTestmoImportQueue,
   TESTMO_IMPORT_QUEUE_NAME,
 } from "~/lib/queues";
 import { JOB_PROCESS_TESTMO_IMPORT } from "~/services/imports/testmo/constants";
@@ -16,12 +16,14 @@ interface RouteContext {
   }>;
 }
 
-function ensureQueueAvailable() {
-  if (!testmoImportQueue) {
+function getQueue() {
+  const queue = getTestmoImportQueue();
+  if (!queue) {
     throw new Error(
       `BullMQ queue "${TESTMO_IMPORT_QUEUE_NAME}" is not available (Valkey connection missing).`
     );
   }
+  return queue;
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
@@ -59,9 +61,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    ensureQueueAvailable();
+    const testmoImportQueue = getQueue();
 
-    const queuedJob = await testmoImportQueue!.add(
+    const queuedJob = await testmoImportQueue.add(
       JOB_PROCESS_TESTMO_IMPORT,
       {
         jobId,

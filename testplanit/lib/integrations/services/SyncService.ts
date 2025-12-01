@@ -1,4 +1,4 @@
-import { syncQueue } from "../../queues";
+import { getSyncQueue } from "../../queues";
 import { issueCache } from "../cache/IssueCache";
 import { integrationManager } from "../IntegrationManager";
 import { enhance } from "@zenstackhq/runtime";
@@ -32,6 +32,7 @@ export class SyncService {
     integrationId: number,
     options: SyncOptions = {}
   ): Promise<string | null> {
+    const syncQueue = getSyncQueue();
     if (!syncQueue) {
       console.error("Sync queue not initialized");
       return null;
@@ -67,6 +68,7 @@ export class SyncService {
     projectId: string,
     options: SyncOptions = {}
   ): Promise<string | null> {
+    const syncQueue = getSyncQueue();
     if (!syncQueue) {
       console.error("Sync queue not initialized");
       return null;
@@ -92,6 +94,7 @@ export class SyncService {
     integrationId: number,
     issueData: any
   ): Promise<string | null> {
+    const syncQueue = getSyncQueue();
     if (!syncQueue) {
       console.error("Sync queue not initialized");
       return null;
@@ -123,6 +126,7 @@ export class SyncService {
     issueId: string,
     updateData: any
   ): Promise<string | null> {
+    const syncQueue = getSyncQueue();
     if (!syncQueue) {
       console.error("Sync queue not initialized");
       return null;
@@ -148,6 +152,7 @@ export class SyncService {
     integrationId: number,
     issueId: string
   ): Promise<string | null> {
+    const syncQueue = getSyncQueue();
     if (!syncQueue) {
       console.error("Sync queue not initialized");
       return null;

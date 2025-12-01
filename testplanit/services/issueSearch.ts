@@ -111,12 +111,15 @@ export async function indexIssue(issue: IssueForIndexing): Promise<void> {
     return;
   }
 
+  // Extract text from TipTap JSON for note field
+  const noteText = issue.note ? extractTextFromNode(issue.note) : "";
+
   const searchableContent = [
     issue.name,
     issue.title,
     issue.description || "",
     issue.externalId || "",
-    issue.note ? extractTextFromNode(issue.note) : "",
+    noteText,
     issue.integration?.name || "",
   ].join(" ");
 
@@ -129,7 +132,7 @@ export async function indexIssue(issue: IssueForIndexing): Promise<void> {
     title: issue.title,
     description: issue.description,
     externalId: issue.externalId,
-    note: issue.note,
+    note: noteText,
     url: (issue.data as any)?.url,
     issueSystem: issue.integration?.name || "Unknown",
     isDeleted: issue.isDeleted,
@@ -371,12 +374,15 @@ export async function syncProjectIssuesToElasticsearch(
       continue;
     }
 
+    // Extract text from TipTap JSON for note field
+    const noteText = issue.note ? extractTextFromNode(issue.note) : "";
+
     const searchableContent = [
       issue.name,
       issue.title,
       issue.description || "",
       issue.externalId || "",
-      issue.note ? extractTextFromNode(issue.note) : "",
+      noteText,
       issue.integration?.name || "",
     ].join(" ");
 
@@ -396,7 +402,7 @@ export async function syncProjectIssuesToElasticsearch(
       title: issue.title,
       description: issue.description,
       externalId: issue.externalId,
-      note: issue.note,
+      note: noteText,
       url: (issue.data as any)?.url,
       issueSystem: issue.integration?.name || "Unknown",
       isDeleted: issue.isDeleted,
@@ -416,13 +422,31 @@ export async function syncProjectIssuesToElasticsearch(
   }
 
   try {
-    const response = await client.bulk({ body: bulkBody, refresh: true });
-    if (response.errors) {
-      console.error("Bulk indexing errors:", response.errors);
+    const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
+    if (bulkResponse.errors) {
+      const errorItems = bulkResponse.items.filter(
+        (item: any) => item.index?.error
+      );
+      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      // Log detailed error information
+      errorItems.slice(0, 10).forEach((item: any) => {
+        if (item.index?.error) {
+          console.error(`  Failed to index document ${item.index._id}:`);
+          console.error(`    Error type: ${item.index.error.type}`);
+          console.error(`    Error reason: ${item.index.error.reason}`);
+          if (item.index.error.caused_by) {
+            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+          }
+        }
+      });
+      if (errorItems.length > 10) {
+        console.error(`  ... and ${errorItems.length - 10} more errors`);
+      }
+    } else {
+      console.log(
+        `Successfully indexed ${bulkBody.length / 2} issues (${skippedCount} orphaned issues skipped)`
+      );
     }
-    console.log(
-      `Successfully indexed ${bulkBody.length / 2} issues (${skippedCount} orphaned issues skipped)`
-    );
   } catch (error) {
     console.error("Failed to index issues:", error);
   }

@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
-import {
-  forecastQueue,
-  notificationQueue,
-  emailQueue,
-  syncQueue,
-  testmoImportQueue,
-  elasticsearchReindexQueue
-} from "@/lib/queues";
+import { getAllQueues } from "@/lib/queues";
 
 // GET: Get all queues with their stats
 export async function GET(request: NextRequest) {
@@ -48,13 +41,14 @@ export async function GET(request: NextRequest) {
       'elasticsearch-reindex': parseInt(process.env.ELASTICSEARCH_REINDEX_CONCURRENCY || String(defaultConcurrency['elasticsearch-reindex']), 10)
     };
 
+    const allQueues = getAllQueues();
     const queues = [
-      { name: 'forecast-updates', queue: forecastQueue },
-      { name: 'notifications', queue: notificationQueue },
-      { name: 'emails', queue: emailQueue },
-      { name: 'issue-sync', queue: syncQueue },
-      { name: 'testmo-imports', queue: testmoImportQueue },
-      { name: 'elasticsearch-reindex', queue: elasticsearchReindexQueue }
+      { name: 'forecast-updates', queue: allQueues.forecastQueue },
+      { name: 'notifications', queue: allQueues.notificationQueue },
+      { name: 'emails', queue: allQueues.emailQueue },
+      { name: 'issue-sync', queue: allQueues.syncQueue },
+      { name: 'testmo-imports', queue: allQueues.testmoImportQueue },
+      { name: 'elasticsearch-reindex', queue: allQueues.elasticsearchReindexQueue }
     ];
 
     const queueStats = await Promise.all(

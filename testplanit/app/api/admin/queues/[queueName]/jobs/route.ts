@@ -1,24 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
-import {
-  forecastQueue,
-  notificationQueue,
-  emailQueue,
-  syncQueue,
-  testmoImportQueue,
-  elasticsearchReindexQueue
-} from "@/lib/queues";
+import { getAllQueues } from "@/lib/queues";
 import { Queue } from "bullmq";
 
-const queueMap: Record<string, Queue | null> = {
-  'forecast-updates': forecastQueue,
-  'notifications': notificationQueue,
-  'emails': emailQueue,
-  'issue-sync': syncQueue,
-  'testmo-imports': testmoImportQueue,
-  'elasticsearch-reindex': elasticsearchReindexQueue
-};
+function getQueueByName(queueName: string): Queue | null {
+  const allQueues = getAllQueues();
+  const queueMap: Record<string, Queue | null> = {
+    'forecast-updates': allQueues.forecastQueue,
+    'notifications': allQueues.notificationQueue,
+    'emails': allQueues.emailQueue,
+    'issue-sync': allQueues.syncQueue,
+    'testmo-imports': allQueues.testmoImportQueue,
+    'elasticsearch-reindex': allQueues.elasticsearchReindexQueue
+  };
+  return queueMap[queueName] ?? null;
+}
 
 // GET: Get jobs from a specific queue
 export async function GET(
@@ -41,7 +38,7 @@ export async function GET(
     }
 
     const { queueName } = await params;
-    const queue = queueMap[queueName];
+    const queue = getQueueByName(queueName);
 
     if (!queue) {
       return NextResponse.json({ error: "Queue not found" }, { status: 404 });
