@@ -2235,7 +2235,7 @@
     "generateTestCases": {
       "buttonText": "Générer des cas de test",
       "title": "Générer des cas de test avec l'IA",
-      "description": "Utilisez l'IA pour générer automatiquement des cas de test complets à partir de problèmes externes tels que les tickets Jira.",
+      "description": "Utiliser l'IA pour générer automatiquement des scénarios de test complets à partir de problèmes ou de documents externes.",
       "steps": {
         "selectIssue": "Sélectionner la source",
         "selectTemplate": "Choisissez un modèle",
@@ -2245,6 +2245,9 @@
       "selectSource": {
         "title": "Sélectionner la source des exigences",
         "description": "Choisissez si vous souhaitez générer des cas de test à partir d'un problème ou d'un document d'exigences.",
+        "folderContextTip": "{count, plural, =0 {Aucun cas de test n'existe dans le dossier «{folderName}». Assurez-vous d'avoir sélectionné le bon dossier avant de continuer.} =1 {Un cas de test du dossier «{folderName}» sera utilisé comme contexte lors de la génération de nouveaux cas de test. Assurez-vous d'avoir sélectionné le bon dossier avant de continuer.} other {# cas de test du dossier «{folderName}» seront utilisés comme contexte lors de la génération de nouveaux cas de test. Assurez-vous d'avoir sélectionné le bon dossier avant de continuer.}}",
+        "folderContextTipMax": "{count} of the test cases in the \"{folderName}\" folder will be used as context when generating new test cases. Make sure you have selected the correct folder before proceeding.",
+        "currentFolder": "dossier actuel",
         "fromIssue": "Extrait du numéro",
         "fromDocument": "Extrait du document",
         "documentTitle": "Titre du document",
@@ -4997,7 +5000,8 @@
     "milestoneType": {
       "icon": "## Icône de type d'étape\nIdentifiant visuel de ce type d'étape.\n\n- Permet d'identifier rapidement l'étape dans les listes et les tableaux de bord.\n- Choisissez parmi une variété d'icônes prédéfinies.\n- Peut être modifié à tout moment.\n- Apparaît dans la navigation du projet et les rapports.",
       "name": "## Nom du type d'étape\nUn nom clair et descriptif qui identifie ce type d'étape dans votre projet.\n\n- Aide les membres de l'équipe à comprendre rapidement l'objectif de ce type d'étape.\n- Utilisé dans les rapports et le suivi de projet.",
-      "isDefault": "## Type de jalon par défaut\nIndique si ce type de jalon est celui par défaut pour votre projet.\n\n- Le type de jalon par défaut est présélectionné pour les nouveaux jalons.\n- Peut être modifié à tout moment."
+      "isDefault": "## Type de jalon par défaut\nIndique si ce type de jalon est celui par défaut pour votre projet.\n\n- Le type de jalon par défaut est présélectionné pour les nouveaux jalons.\n- Peut être modifié à tout moment.",
+      "projects": "## Projets associés\nSélectionnez les projets pour lesquels ce type d'étape sera disponible.\n\n- Si aucun projet n'est sélectionné, l'étape sera disponible globalement.\n- L'attribution à des projets spécifiques limite son utilisation à ces seuls projets."
     },
     "tag": {
       "name": "## Nom de la balise\nUn nom ou des mots-clés clairs, concis et descriptifs, utilisés dans tous les projets.\n\n- Permet aux membres de l'équipe de trouver rapidement les cas de test, les exécutions de test et les sessions associés."
@@ -5085,8 +5089,10 @@
       "iconColor": "## Icône/Couleur\nL'icône et la couleur de ce flux de travail.",
       "name": "## Nom\nUn nom clair et descriptif utilisé dans tous les projets.\n\n- Permet de décrire le flux de travail (par exemple « Brouillon », « En cours de révision », « Actif », etc.).",
       "workflowType": "## Type\nLe type de flux de travail (Non démarré, En cours, Terminé).",
+      "type": "## Type de flux de travail\nCatégorie d'état du flux de travail (Non démarré, En cours, Terminé).\n\n- Détermine l'impact de cet état sur le suivi de la progression.\n- L'état « Non démarré » indique que le travail n'a pas commencé.\n- L'état « En cours » indique le travail en cours.\n- L'état « Terminé » indique le travail achevé.",
       "isDefault": "## Par défaut\nIndique si ce flux de travail est celui par défaut de votre projet.\n\n- Le flux de travail par défaut est présélectionné pour les nouvelles exécutions de tests, les sessions et l'automatisation.",
       "isEnabled": "## Activé\nIndique si ce flux de travail est activé.",
+      "isActive": "## Actif\nIndique si cet état de workflow est actif et disponible.\n\n- Les workflows actifs peuvent être sélectionnés lors de la mise à jour des exécutions de tests, des sessions ou de l'automatisation.\n- Les workflows inactifs sont masqués, mais conservés dans les éléments existants.",
       "projects": "## Projets\nIndique les projets qui peuvent utiliser ce flux de travail."
     },
     "testResult": {

@@ -590,7 +590,10 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
       // Convert HTML to TipTap JSON using the same extensions as the editor
       const extensions = [
-        StarterKit,
+        StarterKit.configure({
+          link: false,
+          underline: false,
+        }),
         Underline,
         Link,
         ImageWithResize.configure({

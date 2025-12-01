@@ -48,6 +48,7 @@ import {
   Tag,
   SquarePen,
   ListChecks,
+  Info,
 } from "lucide-react";
 import { SearchIssuesDialog } from "@/components/issues/search-issues-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -147,6 +148,7 @@ interface LlmErrorState {
 
 interface GenerateTestCasesWizardProps {
   folderId: number;
+  folderName?: string | null;
   onImportComplete?: () => void;
 }
 
@@ -174,6 +176,7 @@ const stepTitles = [
 
 export function GenerateTestCasesWizard({
   folderId,
+  folderName,
   onImportComplete,
 }: GenerateTestCasesWizardProps) {
   const t = useTranslations("repository");
@@ -289,23 +292,54 @@ export function GenerateTestCasesWizard({
   });
 
   // Fetch existing test cases in current folder for context
-  const { data: existingTestCases } = useFindManyRepositoryCases({
-    where: {
-      folderId: folderId,
-      isDeleted: false,
-      isArchived: false,
-    },
-    select: {
-      name: true,
-      order: true,
-      template: {
-        select: {
-          templateName: true,
+  const { data: existingTestCases } = useFindManyRepositoryCases(
+    {
+      where: {
+        projectId: projectId,
+        folderId: { equals: folderId },
+        isDeleted: false,
+        isArchived: false,
+      },
+      select: {
+        name: true,
+        order: true,
+        template: {
+          select: {
+            templateName: true,
+          },
+        },
+        caseFieldValues: {
+          select: {
+            value: true,
+            field: {
+              select: {
+                displayName: true,
+                type: {
+                  select: {
+                    type: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        steps: {
+          select: {
+            step: true,
+            expectedResult: true,
+            order: true,
+          },
+          orderBy: {
+            order: "asc",
+          },
         },
       },
+      take: 50, // Limit for context
     },
-    take: 50, // Limit for context
-  });
+    {
+      enabled: open && folderId > 0,
+    }
+  );
 
   // Fetch the maximum order value separately for accurate ordering
   const { data: maxOrderData } = useFindManyRepositoryCases({
@@ -700,10 +734,64 @@ export function GenerateTestCasesWizard({
           context: {
             userNotes,
             existingTestCases:
-              existingTestCases?.map((tc) => ({
-                name: tc.name,
-                template: tc.template?.templateName,
-              })) || [],
+              existingTestCases?.map((tc) => {
+                // Extract text from the first text/long text field for context
+                // Helper to extract plain text from TipTap JSON
+                const extractPlainText = (value: any): string => {
+                  if (!value) return "";
+                  if (typeof value === "string") {
+                    // Try to parse as TipTap JSON
+                    try {
+                      const parsed = JSON.parse(value);
+                      if (parsed?.type === "doc" && parsed?.content) {
+                        return extractPlainText(parsed);
+                      }
+                    } catch {
+                      // Not JSON, return as-is
+                      return value;
+                    }
+                    return value;
+                  }
+                  if (typeof value === "object" && value?.content) {
+                    // TipTap JSON structure - recursively extract text
+                    return value.content
+                      .map((node: any) => {
+                        if (node.type === "text") return node.text || "";
+                        if (node.content) return extractPlainText(node);
+                        return "";
+                      })
+                      .join(" ")
+                      .trim();
+                  }
+                  return "";
+                };
+
+                // Find first text field with content (Text Long or Text String types)
+                const textField = tc.caseFieldValues?.find((cfv: any) => {
+                  const fieldType = cfv.field?.type?.type?.toLowerCase();
+                  return (
+                    (fieldType === "text long" || fieldType === "text string") &&
+                    cfv.value
+                  );
+                });
+
+                const description = textField?.value
+                  ? extractPlainText(textField.value).substring(0, 200)
+                  : undefined;
+
+                return {
+                  name: tc.name,
+                  template: tc.template?.templateName,
+                  description,
+                  steps:
+                    tc.steps && tc.steps.length > 0
+                      ? tc.steps.map((s: any) => ({
+                          step: extractPlainText(s.step),
+                          expectedResult: extractPlainText(s.expectedResult),
+                        }))
+                      : undefined,
+                };
+              }) || [],
             folderContext: folderId,
           },
           quantity,
@@ -2387,7 +2475,7 @@ export function GenerateTestCasesWizard({
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[900px] lg:max-w-[1200px] max-h-[90vh] flex flex-col overflow-hidden">
-          <DialogHeader className="flex-shrink-0">
+          <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Bot className="w-5 h-5" />
               {t("generateTestCases.title")}
@@ -2395,9 +2483,32 @@ export function GenerateTestCasesWizard({
             <DialogDescription>
               {t("generateTestCases.description")}
             </DialogDescription>
+            <Alert className="mt-2 bg-primary/10 border-primary/50">
+              <AlertDescription>
+                <div className="flex items-center gap-2 text-xs text-left">
+                  <Info className="w-4 h-4 text-muted-foreground shrink-0" />
+                  {(existingTestCases?.length ?? 0) >= 50
+                    ? t(
+                        "generateTestCases.selectSource.folderContextTipMax",
+                        {
+                          count: existingTestCases?.length ?? 0,
+                          folderName:
+                            folderName ??
+                            t("generateTestCases.selectSource.currentFolder"),
+                        }
+                      )
+                    : t("generateTestCases.selectSource.folderContextTip", {
+                        count: existingTestCases?.length ?? 0,
+                        folderName:
+                          folderName ??
+                          t("generateTestCases.selectSource.currentFolder"),
+                      })}
+                </div>
+              </AlertDescription>
+            </Alert>
           </DialogHeader>
 
-          <div className="px-6 py-4 flex-shrink-0">
+          <div className="px-6 py-4 shrink-0">
             <WizardProgress
               steps={wizardSteps}
               activeStep={currentStep}
@@ -2407,8 +2518,8 @@ export function GenerateTestCasesWizard({
             />
           </div>
 
-          <ScrollArea className="flex-1 min-h-0 pr-4">
-            <div className="space-y-6">
+          <div className="flex-1 min-h-0 px-4 overflow-y-auto">
+            <div className="space-y-6 pb-4">
               {isImporting && (
                 <LoadingSpinnerAlert
                   message={t("generateTestCases.importing", {
@@ -2514,7 +2625,7 @@ export function GenerateTestCasesWizard({
 
               {/* Step 1: Select Source */}
               {currentStep === WizardStep.SELECT_ISSUE && (
-                <Card>
+                <Card shadow="none">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Search className="w-5 h-5" />
@@ -2551,7 +2662,7 @@ export function GenerateTestCasesWizard({
                       {hasActiveIntegrations && (
                         <TabsContent value="issue" className="mt-4">
                           {selectedIssue ? (
-                            <div className="border rounded-lg p-4">
+                            <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
                               <div className="flex items-start justify-between mb-3">
                                 <div className="space-y-3 flex-1">
                                   {/* Header with issue key and external link */}
@@ -2665,7 +2776,7 @@ export function GenerateTestCasesWizard({
 
                       <TabsContent value="document" className="mt-4">
                         {documentRequirements ? (
-                          <div className="border rounded-lg p-4">
+                          <div className="border rounded-lg p-4 max-h-64 overflow-y-auto">
                             <div className="flex items-start justify-between">
                               <div className="space-y-2">
                                 <h4 className="font-medium">
@@ -2735,7 +2846,7 @@ export function GenerateTestCasesWizard({
 
               {/* Step 2: Select Template */}
               {currentStep === WizardStep.SELECT_TEMPLATE && (
-                <Card>
+                <Card shadow="none">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="w-5 h-5" />
@@ -2810,7 +2921,7 @@ export function GenerateTestCasesWizard({
                             </Button>
                           </div>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
                           {templates
                             ?.find((t) => t.id === selectedTemplateId)
                             ?.caseFields.slice()
@@ -2869,7 +2980,7 @@ export function GenerateTestCasesWizard({
 
               {/* Step 3: Add Notes */}
               {currentStep === WizardStep.ADD_NOTES && (
-                <Card>
+                <Card shadow="none">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Settings className="w-5 h-5" />
@@ -2879,7 +2990,7 @@ export function GenerateTestCasesWizard({
                       {t("generateTestCases.addNotes.description")}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className=" overflow-y-auto">
                     <div className="mb-4">
                       <Label className="text-sm font-medium mb-2 block">
                         {t("generateTestCases.addNotes.quantity")}
@@ -3015,7 +3126,7 @@ export function GenerateTestCasesWizard({
 
               {/* Step 4: Review Generated Test Cases */}
               {currentStep === WizardStep.REVIEW_GENERATED && (
-                <Card>
+                <Card shadow="none">
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -3117,10 +3228,10 @@ export function GenerateTestCasesWizard({
                 </Card>
               )}
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Dialog Footer */}
-          <div className="flex items-center justify-between mt-6 pt-4 border-t flex-shrink-0">
+          <div className="flex items-center justify-between mt-6 pt-4 border-t shrink-0">
             <div className="flex items-center gap-2">
               {currentStep > WizardStep.SELECT_ISSUE && (
                 <Button
