@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NotificationService } from "./notificationService";
-import { notificationQueue } from "../queues";
+import { getNotificationQueue } from "../queues";
 import { NotificationType } from "@prisma/client";
 
 // Mock the queue
+const mockQueue = {
+  add: vi.fn(),
+};
+
 vi.mock("../queues", () => ({
-  notificationQueue: {
-    add: vi.fn(),
-  },
+  getNotificationQueue: vi.fn(() => mockQueue),
 }));
 
 describe("NotificationService", () => {
@@ -18,7 +20,7 @@ describe("NotificationService", () => {
   describe("createNotification", () => {
     it("should add a notification job to the queue", async () => {
       const mockJobId = "job-123";
-      vi.mocked(notificationQueue!.add).mockResolvedValue({ id: mockJobId } as any);
+      mockQueue.add.mockResolvedValue({ id: mockJobId } as any);
 
       const params = {
         userId: "user-123",
@@ -32,7 +34,7 @@ describe("NotificationService", () => {
 
       const jobId = await NotificationService.createNotification(params);
 
-      expect(notificationQueue!.add).toHaveBeenCalledWith(
+      expect(mockQueue.add).toHaveBeenCalledWith(
         "create-notification",
         params,
         {
@@ -44,9 +46,7 @@ describe("NotificationService", () => {
     });
 
     it("should handle queue not available", async () => {
-      const originalQueue = notificationQueue;
-      // Mocking queue as null for testing
-      (notificationQueue as any) = null;
+      vi.mocked(getNotificationQueue).mockReturnValueOnce(null);
 
       const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
@@ -64,14 +64,12 @@ describe("NotificationService", () => {
       );
       expect(result).toBeUndefined();
 
-      // Restoring original queue after test
-      (notificationQueue as any) = originalQueue;
       consoleWarnSpy.mockRestore();
     });
 
     it("should handle queue errors", async () => {
       const error = new Error("Queue error");
-      vi.mocked(notificationQueue!.add).mockRejectedValue(error);
+      mockQueue.add.mockRejectedValue(error);
 
       const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -98,7 +96,7 @@ describe("NotificationService", () => {
   describe("createWorkAssignmentNotification", () => {
     it("should create a notification for test run case assignment", async () => {
       const mockJobId = "job-456";
-      vi.mocked(notificationQueue!.add).mockResolvedValue({ id: mockJobId } as any);
+      mockQueue.add.mockResolvedValue({ id: mockJobId } as any);
 
       const result = await NotificationService.createWorkAssignmentNotification(
         "assignee-123",
@@ -110,7 +108,7 @@ describe("NotificationService", () => {
         "case-789"
       );
 
-      expect(notificationQueue!.add).toHaveBeenCalledWith(
+      expect(mockQueue.add).toHaveBeenCalledWith(
         "create-notification",
         {
           userId: "assignee-123",
@@ -137,7 +135,7 @@ describe("NotificationService", () => {
 
     it("should create a notification for session assignment", async () => {
       const mockJobId = "job-789";
-      vi.mocked(notificationQueue!.add).mockResolvedValue({ id: mockJobId } as any);
+      mockQueue.add.mockResolvedValue({ id: mockJobId } as any);
 
       const result = await NotificationService.createWorkAssignmentNotification(
         "assignee-123",
@@ -149,7 +147,7 @@ describe("NotificationService", () => {
         "session-123"
       );
 
-      expect(notificationQueue!.add).toHaveBeenCalledWith(
+      expect(mockQueue.add).toHaveBeenCalledWith(
         "create-notification",
         {
           userId: "assignee-123",
@@ -178,7 +176,7 @@ describe("NotificationService", () => {
   describe("bulk assignment notifications", () => {
     it("should create notifications for multiple test case assignments", async () => {
       const mockJobId = "job-bulk-123";
-      vi.mocked(notificationQueue!.add).mockResolvedValue({ id: mockJobId } as any);
+      mockQueue.add.mockResolvedValue({ id: mockJobId } as any);
 
       // Simulate bulk assignment to multiple test cases
       const assigneeId = "assignee-123";
@@ -209,7 +207,7 @@ describe("NotificationService", () => {
         }
       });
 
-      expect(notificationQueue!.add).toHaveBeenCalledWith(
+      expect(mockQueue.add).toHaveBeenCalledWith(
         "create-notification",
         expect.objectContaining({
           userId: assigneeId,
@@ -229,7 +227,7 @@ describe("NotificationService", () => {
 
     it("should handle bulk assignment with grouping by test run", async () => {
       const mockJobId = "job-bulk-grouped";
-      vi.mocked(notificationQueue!.add).mockResolvedValue({ id: mockJobId } as any);
+      mockQueue.add.mockResolvedValue({ id: mockJobId } as any);
 
       // Simulate bulk assignment grouped by test runs
       const testRunGroups = [
@@ -268,7 +266,7 @@ describe("NotificationService", () => {
         }
       });
 
-      expect(notificationQueue!.add).toHaveBeenCalledWith(
+      expect(mockQueue.add).toHaveBeenCalledWith(
         "create-notification",
         expect.objectContaining({
           data: expect.objectContaining({
@@ -292,7 +290,7 @@ describe("NotificationService", () => {
   describe("notification preferences", () => {
     it("should respect user preference overrides when creating notifications", async () => {
       const mockJobId = "job-pref-123";
-      vi.mocked(notificationQueue!.add).mockResolvedValue({ id: mockJobId } as any);
+      mockQueue.add.mockResolvedValue({ id: mockJobId } as any);
 
       // Create a notification with user preference data
       const result = await NotificationService.createNotification({
@@ -308,7 +306,7 @@ describe("NotificationService", () => {
 
       // The service should still queue the job, but with preference data
       // The worker will decide whether to actually create the notification
-      expect(notificationQueue!.add).toHaveBeenCalledWith(
+      expect(mockQueue.add).toHaveBeenCalledWith(
         "create-notification",
         expect.objectContaining({
           data: expect.objectContaining({
@@ -324,7 +322,7 @@ describe("NotificationService", () => {
 
     it("should include global notification settings in the notification data", async () => {
       const mockJobId = "job-global-123";
-      vi.mocked(notificationQueue!.add).mockResolvedValue({ id: mockJobId } as any);
+      mockQueue.add.mockResolvedValue({ id: mockJobId } as any);
 
       // Create a notification with global settings reference
       const result = await NotificationService.createNotification({
@@ -338,7 +336,7 @@ describe("NotificationService", () => {
         }
       });
 
-      expect(notificationQueue!.add).toHaveBeenCalledWith(
+      expect(mockQueue.add).toHaveBeenCalledWith(
         "create-notification",
         expect.objectContaining({
           data: expect.objectContaining({
@@ -358,13 +356,13 @@ describe("NotificationService", () => {
       // This test covers the logic in the server actions
       // where we check if newAssigneeId === previousAssigneeId
       const mockJobId = "job-no-change";
-      vi.mocked(notificationQueue!.add).mockResolvedValue({ id: mockJobId } as any);
+      mockQueue.add.mockResolvedValue({ id: mockJobId } as any);
 
       // In the actual implementation, the server action would return early
       // and not call createNotification if assignee hasn't changed
       // This test documents that behavior
-      const callCount = vi.mocked(notificationQueue!.add).mock.calls.length;
-      
+      const callCount = mockQueue.add.mock.calls.length;
+
       // Simulate no call when assignee is the same
       expect(callCount).toBe(0);
     });
@@ -372,12 +370,12 @@ describe("NotificationService", () => {
     it("should not create notification when unassigning (null assignee)", async () => {
       // This test covers the logic where we don't notify on unassignment
       const mockJobId = "job-unassign";
-      vi.mocked(notificationQueue!.add).mockResolvedValue({ id: mockJobId } as any);
+      mockQueue.add.mockResolvedValue({ id: mockJobId } as any);
 
       // In the actual implementation, the server action would return early
       // and not call createNotification if newAssigneeId is null
-      const callCount = vi.mocked(notificationQueue!.add).mock.calls.length;
-      
+      const callCount = mockQueue.add.mock.calls.length;
+
       // Simulate no call when unassigning
       expect(callCount).toBe(0);
     });

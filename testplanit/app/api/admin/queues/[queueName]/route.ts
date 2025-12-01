@@ -1,24 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
-import {
-  forecastQueue,
-  notificationQueue,
-  emailQueue,
-  syncQueue,
-  testmoImportQueue,
-  elasticsearchReindexQueue
-} from "@/lib/queues";
+import { getAllQueues } from "@/lib/queues";
 import { Queue } from "bullmq";
 
-const queueMap: Record<string, Queue | null> = {
-  'forecast-updates': forecastQueue,
-  'notifications': notificationQueue,
-  'emails': emailQueue,
-  'issue-sync': syncQueue,
-  'testmo-imports': testmoImportQueue,
-  'elasticsearch-reindex': elasticsearchReindexQueue
-};
+function getQueueByName(queueName: string): Queue | null {
+  const allQueues = getAllQueues();
+  const queueMap: Record<string, Queue | null> = {
+    'forecast-updates': allQueues.forecastQueue,
+    'notifications': allQueues.notificationQueue,
+    'emails': allQueues.emailQueue,
+    'issue-sync': allQueues.syncQueue,
+    'testmo-imports': allQueues.testmoImportQueue,
+    'elasticsearch-reindex': allQueues.elasticsearchReindexQueue
+  };
+  return queueMap[queueName] ?? null;
+}
 
 // Helper function to safely remove a job (handles both regular and repeatable jobs)
 async function removeJob(
@@ -124,7 +121,7 @@ export async function POST(
     }
 
     const { queueName } = await params;
-    const queue = queueMap[queueName];
+    const queue = getQueueByName(queueName);
 
     if (!queue) {
       return NextResponse.json({ error: "Queue not found" }, { status: 404 });
@@ -204,7 +201,7 @@ export async function DELETE(
     }
 
     const { queueName } = await params;
-    const queue = queueMap[queueName];
+    const queue = getQueueByName(queueName);
 
     if (!queue) {
       return NextResponse.json({ error: "Queue not found" }, { status: 404 });

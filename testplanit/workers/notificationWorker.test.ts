@@ -32,10 +32,12 @@ vi.mock("@prisma/client", () => {
 });
 
 // Mock the email queue
+const mockEmailQueue = {
+  add: vi.fn(),
+};
+
 vi.mock("../lib/queues", () => ({
-  emailQueue: {
-    add: vi.fn(),
-  },
+  getEmailQueue: vi.fn(() => mockEmailQueue),
   NOTIFICATION_QUEUE_NAME: "notifications",
 }));
 
@@ -104,8 +106,7 @@ describe("NotificationWorker", () => {
         },
       });
 
-      const { emailQueue } = await import("../lib/queues");
-      expect(emailQueue!.add).toHaveBeenCalledWith("send-notification-email", {
+      expect(mockEmailQueue.add).toHaveBeenCalledWith("send-notification-email", {
         notificationId: mockNotification.id,
         userId: jobData.userId,
         immediate: true,
@@ -138,8 +139,7 @@ describe("NotificationWorker", () => {
 
       await processor(mockJob);
 
-      const { emailQueue } = await import("../lib/queues");
-      expect(emailQueue!.add).not.toHaveBeenCalled();
+      expect(mockEmailQueue.add).not.toHaveBeenCalled();
     });
 
     it("should skip notification when mode is NONE", async () => {
@@ -279,8 +279,7 @@ describe("NotificationWorker", () => {
         orderBy: { createdAt: "desc" },
       });
 
-      const { emailQueue } = await import("../lib/queues");
-      expect(emailQueue!.add).toHaveBeenCalledWith("send-digest-email", {
+      expect(mockEmailQueue.add).toHaveBeenCalledWith("send-digest-email", {
         userId: "user-123",
         notifications: mockNotifications.map((n) => ({
           id: n.id,
@@ -315,8 +314,7 @@ describe("NotificationWorker", () => {
 
       await processor(mockJob);
 
-      const { emailQueue } = await import("../lib/queues");
-      expect(emailQueue!.add).not.toHaveBeenCalled();
+      expect(mockEmailQueue.add).not.toHaveBeenCalled();
     });
   });
 

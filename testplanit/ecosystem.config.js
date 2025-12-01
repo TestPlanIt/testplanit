@@ -46,8 +46,8 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: '4G',
-      node_args: '--max-old-space-size=3072',
+      max_memory_restart: '512M',
+      node_args: '--max-old-space-size=384',
       env: {
         NODE_ENV: 'production'
       }
@@ -59,8 +59,8 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: '10G',
-      node_args: '--max-old-space-size=8192',
+      max_memory_restart: '512M',
+      node_args: '--max-old-space-size=384',
       env: {
         NODE_ENV: 'production'
       }
@@ -72,8 +72,8 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: '4G',
-      node_args: '--max-old-space-size=3072',
+      max_memory_restart: '512M',
+      node_args: '--max-old-space-size=384',
       env: {
         NODE_ENV: 'production'
       }
@@ -85,8 +85,8 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: '4G',
-      node_args: '--max-old-space-size=3072',
+      max_memory_restart: '512M',
+      node_args: '--max-old-space-size=384',
       env: {
         NODE_ENV: 'production'
       }

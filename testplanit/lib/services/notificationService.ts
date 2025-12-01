@@ -1,4 +1,4 @@
-import { notificationQueue } from "../queues";
+import { getNotificationQueue } from "../queues";
 import { JOB_CREATE_NOTIFICATION } from "../../workers/notificationWorker";
 import { NotificationType } from "@prisma/client";
 
@@ -17,6 +17,7 @@ export class NotificationService {
    * Create a notification for a user
    */
   static async createNotification(params: CreateNotificationParams) {
+    const notificationQueue = getNotificationQueue();
     if (!notificationQueue) {
       console.warn("Notification queue not available, notification not created");
       return;

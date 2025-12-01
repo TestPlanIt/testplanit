@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
-import { elasticsearchReindexQueue } from "@/lib/queues";
+import { getElasticsearchReindexQueue } from "@/lib/queues";
 
 export async function GET(
   request: NextRequest,
@@ -25,6 +25,7 @@ export async function GET(
     }
 
     // Check if queue is available
+    const elasticsearchReindexQueue = getElasticsearchReindexQueue();
     if (!elasticsearchReindexQueue) {
       return NextResponse.json({
         error: "Background job queue is not available"

@@ -1,7 +1,8 @@
-import { forecastQueue } from "../lib/queues";
+import { getForecastQueue } from "../lib/queues";
 import { JOB_UPDATE_ALL_CASES } from "../workers/forecastWorker";
 
 async function triggerForecastRecalculation() {
+  const forecastQueue = getForecastQueue();
   if (!forecastQueue) {
     console.error("Forecast queue not initialized. Make sure Valkey/Redis is running.");
     process.exit(1);
