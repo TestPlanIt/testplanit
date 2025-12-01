@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
 import { getElasticsearchReindexQueue } from "@/lib/queues";
+import { isMultiTenantMode, getCurrentTenantId } from "@/lib/multiTenantPrisma";
 
 export async function GET(
   request: NextRequest,
@@ -40,6 +41,17 @@ export async function GET(
         { error: "Job not found" },
         { status: 404 }
       );
+    }
+
+    // Check tenant access in multi-tenant mode
+    if (isMultiTenantMode()) {
+      const currentTenantId = getCurrentTenantId();
+      if (currentTenantId && job.data?.tenantId !== currentTenantId) {
+        return NextResponse.json(
+          { error: "Job not found" },
+          { status: 404 }
+        );
+      }
     }
 
     const state = await job.getState();

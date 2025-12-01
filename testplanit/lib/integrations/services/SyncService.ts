@@ -8,6 +8,7 @@ import { JobsOptions, Job } from "bullmq";
 import { prisma as defaultPrisma } from "@/lib/prisma";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
 import { PrismaClient } from "@prisma/client";
+import { getCurrentTenantId } from "../../multiTenantPrisma";
 
 export interface SyncJobData {
   userId: string;
@@ -16,6 +17,7 @@ export interface SyncJobData {
   issueId?: string;
   action: "sync" | "create" | "update" | "refresh";
   data?: any;
+  tenantId?: string; // For multi-tenant support
 }
 
 export interface SyncServiceOptions {
@@ -48,6 +50,7 @@ export class SyncService {
       integrationId,
       action: "sync",
       data: options,
+      tenantId: getCurrentTenantId(),
     };
 
     const jobOptions: JobsOptions = {
@@ -85,6 +88,7 @@ export class SyncService {
       projectId,
       action: "sync",
       data: options,
+      tenantId: getCurrentTenantId(),
     };
 
     const job = await syncQueue.add("sync-project-issues", jobData);
@@ -110,6 +114,7 @@ export class SyncService {
       integrationId,
       action: "create",
       data: issueData,
+      tenantId: getCurrentTenantId(),
     };
 
     const job = await syncQueue.add("create-issue", jobData, {
@@ -143,6 +148,7 @@ export class SyncService {
       issueId,
       action: "update",
       data: updateData,
+      tenantId: getCurrentTenantId(),
     };
 
     const job = await syncQueue.add("update-issue", jobData);
@@ -168,6 +174,7 @@ export class SyncService {
       integrationId,
       issueId,
       action: "refresh",
+      tenantId: getCurrentTenantId(),
     };
 
     const job = await syncQueue.add("refresh-issue", jobData, {
