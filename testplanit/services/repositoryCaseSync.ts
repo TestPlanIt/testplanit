@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import {
   createRepositoryCaseIndex,
   RepositoryCaseDocument,
@@ -10,8 +10,7 @@ import {
 } from "./elasticsearchIndexing";
 import { extractTextFromNode } from "../utils/extractTextFromJson";
 import { buildCustomFieldDocuments } from "./unifiedElasticsearchService";
-
-const prisma = new PrismaClient();
+import { prisma as defaultPrisma } from "../lib/prismaBase";
 
 /**
  * Safely extract text from a step field that might be JSON string or object
@@ -39,7 +38,7 @@ function extractStepText(stepData: any): string {
 export async function buildRepositoryCaseDocument(
   caseId: number
 ): Promise<RepositoryCaseDocument | null> {
-  const repoCase = await prisma.repositoryCases.findUnique({
+  const repoCase = await defaultPrisma.repositoryCases.findUnique({
     where: { id: caseId },
     include: {
       project: true,
@@ -188,7 +187,7 @@ export async function buildRepositoryCaseDocument(
  * Build the full folder path for a folder
  */
 async function buildFolderPath(folderId: number): Promise<string> {
-  const folder = await prisma.repositoryFolders.findUnique({
+  const folder = await defaultPrisma.repositoryFolders.findUnique({
     where: { id: folderId },
     include: { parent: true },
   });
@@ -200,7 +199,7 @@ async function buildFolderPath(folderId: number): Promise<string> {
 
   while (current.parent) {
     path.unshift(current.parent.name);
-    const nextParent = await prisma.repositoryFolders.findUnique({
+    const nextParent = await defaultPrisma.repositoryFolders.findUnique({
       where: { id: current.parent.id },
       include: { parent: true },
     });
@@ -246,7 +245,7 @@ export async function syncProjectCasesToElasticsearch(
     // Ensure index exists
     await createRepositoryCaseIndex();
 
-    const totalCases = await prisma.repositoryCases.count({
+    const totalCases = await defaultPrisma.repositoryCases.count({
       where: {
         projectId,
         isArchived: false, // Only exclude archived, include deleted items
@@ -263,7 +262,7 @@ export async function syncProjectCasesToElasticsearch(
     let hasMore = true;
 
     while (hasMore) {
-      const cases = await prisma.repositoryCases.findMany({
+      const cases = await defaultPrisma.repositoryCases.findMany({
         where: {
           projectId,
           isArchived: false, // Only exclude archived, include deleted items

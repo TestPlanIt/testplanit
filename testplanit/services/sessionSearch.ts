@@ -3,11 +3,9 @@ import {
   ENTITY_INDICES,
 } from "./unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
-import type { Sessions, Prisma } from "@prisma/client";
-import { PrismaClient } from "@prisma/client";
+import type { Sessions, Prisma, PrismaClient } from "@prisma/client";
+import { prisma as defaultPrisma } from "~/lib/prismaBase";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
-
-const prisma = new PrismaClient();
 
 /**
  * Type for session with all required relations for indexing
@@ -126,7 +124,7 @@ export async function syncSessionToElasticsearch(sessionId: number): Promise<boo
   }
 
   try {
-    const session = await prisma.sessions.findUnique({
+    const session = await defaultPrisma.sessions.findUnique({
       where: { id: sessionId },
       include: {
         project: true,

@@ -162,9 +162,9 @@ export function getTenantPrismaClient(tenantId: string): PrismaClient {
  */
 export function getPrismaClientForJob(jobData: { tenantId?: string }): PrismaClient {
   if (!isMultiTenantMode()) {
-    // Single-tenant mode: use default Prisma client
+    // Single-tenant mode: use lightweight Prisma client (no ES sync extensions)
     // Import lazily to avoid circular dependencies
-    const { prisma } = require("./prisma");
+    const { prisma } = require("./prismaBase");
     return prisma;
   }
 

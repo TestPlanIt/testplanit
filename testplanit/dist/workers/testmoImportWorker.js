@@ -25,13 +25,30 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 // workers/testmoImportWorker.ts
 var import_bullmq2 = require("bullmq");
 var import_client_s3 = require("@aws-sdk/client-s3");
-var import_client4 = require("@prisma/client");
+var import_client5 = require("@prisma/client");
 var import_core2 = require("@tiptap/core");
 var import_model2 = require("@tiptap/pm/model");
 var import_happy_dom2 = require("happy-dom");
 var import_starter_kit2 = __toESM(require("@tiptap/starter-kit"));
 var import_node_url2 = require("node:url");
 var import_bcrypt = __toESM(require("bcrypt"));
+
+// lib/multiTenantPrisma.ts
+var import_client = require("@prisma/client");
+function isMultiTenantMode() {
+  return process.env.MULTI_TENANT_MODE === "true";
+}
+var tenantClients = /* @__PURE__ */ new Map();
+async function disconnectAllTenantClients() {
+  const disconnectPromises = [];
+  for (const [tenantId, client] of tenantClients) {
+    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
+    disconnectPromises.push(client.$disconnect());
+  }
+  await Promise.all(disconnectPromises);
+  tenantClients.clear();
+  console.log("All tenant Prisma clients disconnected");
+}
 
 // lib/valkey.ts
 var import_ioredis = __toESM(require("ioredis"));
@@ -67,189 +84,35 @@ var valkey_default = valkeyConnection;
 var import_bullmq = require("bullmq");
 
 // lib/queueNames.ts
-var FORECAST_QUEUE_NAME = "forecast-updates";
-var NOTIFICATION_QUEUE_NAME = "notifications";
-var EMAIL_QUEUE_NAME = "emails";
-var SYNC_QUEUE_NAME = "issue-sync";
 var TESTMO_IMPORT_QUEUE_NAME = "testmo-imports";
 var ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
 
 // lib/queues.ts
-var forecastQueue = null;
-var notificationQueue = null;
-var emailQueue = null;
-var syncQueue = null;
-var testmoImportQueue = null;
-var elasticsearchReindexQueue = null;
-if (valkey_default) {
-  forecastQueue = new import_bullmq.Queue(FORECAST_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      // Configuration for jobs in this queue (optional)
-      attempts: 3,
-      // Number of times to retry a failed job
-      backoff: {
-        type: "exponential",
-        // Exponential backoff strategy
-        delay: 5e3
-        // Initial delay 5s
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        // keep up to 7 days
-        count: 1e3
-        // keep up to 1000 jobs
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14
-        // keep up to 14 days
-      }
-    }
-  });
-  console.log(`Queue "${FORECAST_QUEUE_NAME}" initialized.`);
-  forecastQueue.on("error", (error) => {
-    console.error(`Queue ${FORECAST_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${FORECAST_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  notificationQueue = new import_bullmq.Queue(NOTIFICATION_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5e3
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        // keep up to 7 days
-        count: 1e3
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14
-        // keep up to 14 days
-      }
-    }
-  });
-  console.log(`Queue "${NOTIFICATION_QUEUE_NAME}" initialized.`);
-  notificationQueue.on("error", (error) => {
-    console.error(`Queue ${NOTIFICATION_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${NOTIFICATION_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  emailQueue = new import_bullmq.Queue(EMAIL_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 5,
-      backoff: {
-        type: "exponential",
-        delay: 1e4
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 30,
-        // keep up to 30 days
-        count: 5e3
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 30
-        // keep up to 30 days
-      }
-    }
-  });
-  console.log(`Queue "${EMAIL_QUEUE_NAME}" initialized.`);
-  emailQueue.on("error", (error) => {
-    console.error(`Queue ${EMAIL_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  syncQueue = new import_bullmq.Queue(SYNC_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5e3
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 3,
-        // keep up to 3 days
-        count: 500
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 7
-        // keep up to 7 days
-      }
-    }
-  });
-  console.log(`Queue "${SYNC_QUEUE_NAME}" initialized.`);
-  syncQueue.on("error", (error) => {
-    console.error(`Queue ${SYNC_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${SYNC_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  testmoImportQueue = new import_bullmq.Queue(TESTMO_IMPORT_QUEUE_NAME, {
+var _elasticsearchReindexQueue = null;
+function getElasticsearchReindexQueue() {
+  if (_elasticsearchReindexQueue) return _elasticsearchReindexQueue;
+  if (!valkey_default) {
+    console.warn(`Valkey connection not available, Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" not initialized.`);
+    return null;
+  }
+  _elasticsearchReindexQueue = new import_bullmq.Queue(ELASTICSEARCH_REINDEX_QUEUE_NAME, {
     connection: valkey_default,
     defaultJobOptions: {
       attempts: 1,
       removeOnComplete: {
-        age: 3600 * 24 * 30,
-        count: 100
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 30
-      }
-    }
-  });
-  console.log(`Queue "${TESTMO_IMPORT_QUEUE_NAME}" initialized.`);
-  testmoImportQueue.on("error", (error) => {
-    console.error(`Queue ${TESTMO_IMPORT_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${TESTMO_IMPORT_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  elasticsearchReindexQueue = new import_bullmq.Queue(ELASTICSEARCH_REINDEX_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 1,
-      // Don't retry reindex jobs automatically
-      removeOnComplete: {
         age: 3600 * 24 * 7,
-        // keep up to 7 days
         count: 50
       },
       removeOnFail: {
         age: 3600 * 24 * 14
-        // keep up to 14 days
       }
     }
   });
   console.log(`Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" initialized.`);
-  elasticsearchReindexQueue.on("error", (error) => {
+  _elasticsearchReindexQueue.on("error", (error) => {
     console.error(`Queue ${ELASTICSEARCH_REINDEX_QUEUE_NAME} error:`, error);
   });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" not initialized.`
-  );
+  return _elasticsearchReindexQueue;
 }
 
 // services/imports/testmo/TestmoExportAnalyzer.ts
@@ -2823,7 +2686,7 @@ async function importUserGroups(tx, configuration, datasetRows) {
 }
 
 // workers/testmoImport/automationImports.ts
-var import_client = require("@prisma/client");
+var import_client2 = require("@prisma/client");
 var projectNameCache = /* @__PURE__ */ new Map();
 var templateNameCache = /* @__PURE__ */ new Map();
 var workflowNameCache = /* @__PURE__ */ new Map();
@@ -3267,7 +3130,7 @@ var importAutomationCases = async (prisma2, configuration, datasetRows, projectI
                 isArchived: repositoryCase.isArchived,
                 isDeleted: repositoryCase.isDeleted,
                 version: repositoryCase.currentVersion,
-                steps: import_client.Prisma.JsonNull,
+                steps: import_client2.Prisma.JsonNull,
                 tags: [],
                 issues: [],
                 links: [],
@@ -3290,7 +3153,7 @@ var importAutomationCases = async (prisma2, configuration, datasetRows, projectI
                 data: caseFieldValues.map((fieldValue) => ({
                   versionId: caseVersion.id,
                   field: fieldValue.field.displayName || fieldValue.field.systemName,
-                  value: fieldValue.value ?? import_client.Prisma.JsonNull
+                  value: fieldValue.value ?? import_client2.Prisma.JsonNull
                 }))
               });
             }
@@ -3522,18 +3385,18 @@ var importAutomationRunTests = async (prisma2, _configuration, datasetRows, proj
       return false;
     };
     if (hasCandidateIncluding("skip", "skipped", "block", "blocked", "omit")) {
-      return import_client.JUnitResultType.SKIPPED;
+      return import_client2.JUnitResultType.SKIPPED;
     }
     if (hasCandidateIncluding("error", "exception")) {
-      return import_client.JUnitResultType.ERROR;
+      return import_client2.JUnitResultType.ERROR;
     }
     if (resolvedStatus?.isFailure || hasCandidateIncluding("fail", "failed")) {
-      return import_client.JUnitResultType.FAILURE;
+      return import_client2.JUnitResultType.FAILURE;
     }
     if (resolvedStatus?.isSuccess) {
-      return import_client.JUnitResultType.PASSED;
+      return import_client2.JUnitResultType.PASSED;
     }
-    return import_client.JUnitResultType.PASSED;
+    return import_client2.JUnitResultType.PASSED;
   };
   const entityName = "automationRunTests";
   const progressEntry = context.entityProgress[entityName] ?? (context.entityProgress[entityName] = {
@@ -3939,7 +3802,7 @@ var reconcileLegacyJUnitSuiteLinks = async (tx, suiteIds) => {
       UPDATE "JUnitTestResult" AS r
       SET "testSuiteId" = s."id"
       FROM "JUnitTestSuite" AS s
-      WHERE s."id" IN (${import_client.Prisma.join(chunk)})
+      WHERE s."id" IN (${import_client2.Prisma.join(chunk)})
         AND r."testSuiteId" = s."testRunId"
         AND r."testSuiteId" IN (SELECT id FROM "TestRuns")
         AND r."testSuiteId" NOT IN (SELECT id FROM "JUnitTestSuite");
@@ -3989,13 +3852,13 @@ var recomputeJUnitSuiteStats = async (tx, suiteIds) => {
     suiteStats.total += count;
     suiteStats.time += timeSum;
     switch (entry.type) {
-      case import_client.JUnitResultType.FAILURE:
+      case import_client2.JUnitResultType.FAILURE:
         suiteStats.failures += count;
         break;
-      case import_client.JUnitResultType.ERROR:
+      case import_client2.JUnitResultType.ERROR:
         suiteStats.errors += count;
         break;
-      case import_client.JUnitResultType.SKIPPED:
+      case import_client2.JUnitResultType.SKIPPED:
         suiteStats.skipped += count;
         break;
       default:
@@ -4918,7 +4781,7 @@ var importRunLinks = async (tx, configuration, datasetRows, testRunIdMap, contex
 };
 
 // workers/testmoImport/templateImports.ts
-var import_client2 = require("@prisma/client");
+var import_client3 = require("@prisma/client");
 var SYSTEM_NAME_REGEX = /^[A-Za-z][A-Za-z0-9_]*$/;
 var generateSystemName = (value) => {
   const normalized = value.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").replace(/^[^a-z]+/, "");
@@ -5220,7 +5083,7 @@ async function importTemplateFields(tx, configuration, templateMap, datasetRows)
       appliedAssignments.add(assignmentKey);
       details.assignmentsCreated += 1;
     } catch (error) {
-      if (!(error instanceof import_client2.Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
+      if (!(error instanceof import_client3.Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
         throw error;
       }
       appliedAssignments.add(assignmentKey);
@@ -5460,19 +5323,19 @@ async function importTemplateFields(tx, configuration, templateMap, datasetRows)
 }
 
 // workers/testmoImport/issueImports.ts
-var import_client3 = require("@prisma/client");
+var import_client4 = require("@prisma/client");
 var PROGRESS_UPDATE_INTERVAL = 500;
 var mapIssueTargetType = (testmoType) => {
   switch (testmoType) {
     case 1:
     case 4:
-      return import_client3.IntegrationProvider.JIRA;
+      return import_client4.IntegrationProvider.JIRA;
     case 2:
-      return import_client3.IntegrationProvider.GITHUB;
+      return import_client4.IntegrationProvider.GITHUB;
     case 3:
-      return import_client3.IntegrationProvider.AZURE_DEVOPS;
+      return import_client4.IntegrationProvider.AZURE_DEVOPS;
     default:
-      return import_client3.IntegrationProvider.SIMPLE_URL;
+      return import_client4.IntegrationProvider.SIMPLE_URL;
   }
 };
 var importIssueTargets = async (tx, configuration, context, persistProgress) => {
@@ -5520,7 +5383,7 @@ var importIssueTargets = async (tx, configuration, context, persistProgress) => 
         `Issue target ${sourceId} requires a name before it can be created.`
       );
     }
-    const provider = config.provider ? config.provider : config.testmoType ? mapIssueTargetType(config.testmoType) : import_client3.IntegrationProvider.SIMPLE_URL;
+    const provider = config.provider ? config.provider : config.testmoType ? mapIssueTargetType(config.testmoType) : import_client4.IntegrationProvider.SIMPLE_URL;
     const existing = await tx.integration.findFirst({
       where: {
         name,
@@ -5538,8 +5401,8 @@ var importIssueTargets = async (tx, configuration, context, persistProgress) => 
         data: {
           name,
           provider,
-          authType: import_client3.IntegrationAuthType.NONE,
-          status: import_client3.IntegrationStatus.INACTIVE,
+          authType: import_client4.IntegrationAuthType.NONE,
+          status: import_client4.IntegrationStatus.INACTIVE,
           credentials: {},
           // Empty credentials for now
           settings: {
@@ -5572,13 +5435,13 @@ var constructExternalUrl = (provider, baseUrl, externalKey) => {
   }
   const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
   switch (provider) {
-    case import_client3.IntegrationProvider.JIRA:
+    case import_client4.IntegrationProvider.JIRA:
       return `${cleanBaseUrl}/browse/${externalKey}`;
-    case import_client3.IntegrationProvider.GITHUB:
+    case import_client4.IntegrationProvider.GITHUB:
       return `${cleanBaseUrl}/issues/${externalKey}`;
-    case import_client3.IntegrationProvider.AZURE_DEVOPS:
+    case import_client4.IntegrationProvider.AZURE_DEVOPS:
       return `${cleanBaseUrl}/_workitems/edit/${externalKey}`;
-    case import_client3.IntegrationProvider.SIMPLE_URL:
+    case import_client4.IntegrationProvider.SIMPLE_URL:
       if (baseUrl.includes("{issueId}")) {
         return baseUrl.replace("{issueId}", externalKey);
       }
@@ -6013,7 +5876,7 @@ var createProjectIntegrations = async (tx, datasetRows, projectIdMap, integratio
 
 // workers/testmoImportWorker.ts
 var import_meta = {};
-var prisma = new import_client4.PrismaClient();
+var prisma = new import_client5.PrismaClient();
 var projectNameCache2 = /* @__PURE__ */ new Map();
 var templateNameCache2 = /* @__PURE__ */ new Map();
 var workflowNameCache2 = /* @__PURE__ */ new Map();
@@ -6144,9 +6007,9 @@ var s3Client = new import_client_s3.S3Client({
   // Retry transient network errors
 });
 var FINAL_STATUSES = /* @__PURE__ */ new Set(["COMPLETED", "FAILED", "CANCELED"]);
-var VALID_APPLICATION_AREAS = new Set(Object.values(import_client4.ApplicationArea));
-var VALID_WORKFLOW_TYPES = new Set(Object.values(import_client4.WorkflowType));
-var VALID_WORKFLOW_SCOPES = new Set(Object.values(import_client4.WorkflowScope));
+var VALID_APPLICATION_AREAS = new Set(Object.values(import_client5.ApplicationArea));
+var VALID_WORKFLOW_TYPES = new Set(Object.values(import_client5.WorkflowType));
+var VALID_WORKFLOW_SCOPES = new Set(Object.values(import_client5.WorkflowScope));
 var SYSTEM_NAME_REGEX2 = /^[A-Za-z][A-Za-z0-9_]*$/;
 var DEFAULT_STATUS_COLOR_HEX = "#B1B2B3";
 var MAX_INT_32 = 2147483647;
@@ -6903,12 +6766,12 @@ async function importUsers(tx, configuration, importJob) {
     created: 0,
     mapped: 0
   };
-  const validAccessValues = new Set(Object.values(import_client4.Access));
+  const validAccessValues = new Set(Object.values(import_client5.Access));
   const resolveAccess = (value) => {
     if (value && validAccessValues.has(value)) {
       return value;
     }
-    return import_client4.Access.USER;
+    return import_client5.Access.USER;
   };
   const ensureRoleExists = async (roleId) => {
     const role = await tx.roles.findUnique({ where: { id: roleId } });
@@ -7038,7 +6901,7 @@ var importProjects = async (tx, datasetRows, importJob, userIdMap, statusIdMap, 
     where: {
       isDefault: true,
       isDeleted: false,
-      scope: import_client4.WorkflowScope.CASES
+      scope: import_client5.WorkflowScope.CASES
     },
     select: { id: true }
   });
@@ -7357,7 +7220,7 @@ var importSessions = async (tx, datasetRows, projectIdMap, milestoneIdMap, confi
   });
   const defaultWorkflowState = await tx.workflows.findFirst({
     where: {
-      scope: import_client4.WorkflowScope.SESSIONS,
+      scope: import_client5.WorkflowScope.SESSIONS,
       isDeleted: false
     },
     select: { id: true }
@@ -8283,7 +8146,7 @@ var importRepositoryCases = async (datasetRows, projectIdMap, repositoryIdMap, c
     select: { id: true }
   });
   const defaultCaseWorkflow = await prisma.workflows.findFirst({
-    where: { scope: import_client4.WorkflowScope.CASES, isDefault: true },
+    where: { scope: import_client5.WorkflowScope.CASES, isDefault: true },
     select: { id: true }
   });
   const fallbackCreator = importJob.createdById;
@@ -8834,7 +8697,7 @@ var importRepositoryCases = async (datasetRows, projectIdMap, repositoryIdMap, c
               isArchived: repositoryCase.isArchived,
               isDeleted: repositoryCase.isDeleted,
               version: repositoryCase.currentVersion,
-              steps: stepsForVersion.length > 0 ? stepsForVersion : import_client4.Prisma.JsonNull,
+              steps: stepsForVersion.length > 0 ? stepsForVersion : import_client5.Prisma.JsonNull,
               tags: [],
               issues: [],
               links: [],
@@ -8857,7 +8720,7 @@ var importRepositoryCases = async (datasetRows, projectIdMap, repositoryIdMap, c
               data: caseFieldValuesForVersion.map((fieldValue) => ({
                 versionId: caseVersion.id,
                 field: fieldValue.field.displayName || fieldValue.field.systemName,
-                value: fieldValue.value ?? import_client4.Prisma.JsonNull
+                value: fieldValue.value ?? import_client5.Prisma.JsonNull
               }))
             });
           }
@@ -9917,7 +9780,7 @@ async function importStatuses(tx, configuration) {
         }
       });
     } catch (error) {
-      if (error instanceof import_client4.Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      if (error instanceof import_client5.Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
         const duplicate = await tx.status.findFirst({
           where: {
             OR: [{ name }, { systemName }],
@@ -11310,6 +11173,7 @@ async function processImportMode(importJob, jobId) {
         configuration: toInputJsonValue(serializedConfiguration)
       }
     });
+    const elasticsearchReindexQueue = getElasticsearchReindexQueue();
     if (elasticsearchReindexQueue) {
       try {
         logMessage(
@@ -11531,11 +11395,11 @@ async function processor(job) {
     }
     processedDatasets += 1;
     processedRows += BigInt(dataset.rowCount);
-    const schemaValue = dataset.schema !== void 0 && dataset.schema !== null ? JSON.parse(JSON.stringify(dataset.schema)) : import_client4.Prisma.JsonNull;
+    const schemaValue = dataset.schema !== void 0 && dataset.schema !== null ? JSON.parse(JSON.stringify(dataset.schema)) : import_client5.Prisma.JsonNull;
     const sampleRowsValue = dataset.sampleRows.length > 0 ? JSON.parse(
       JSON.stringify(dataset.sampleRows)
-    ) : import_client4.Prisma.JsonNull;
-    const allRowsValue = dataset.allRows && dataset.allRows.length > 0 ? JSON.parse(JSON.stringify(dataset.allRows)) : import_client4.Prisma.JsonNull;
+    ) : import_client5.Prisma.JsonNull;
+    const allRowsValue = dataset.allRows && dataset.allRows.length > 0 ? JSON.parse(JSON.stringify(dataset.allRows)) : import_client5.Prisma.JsonNull;
     await prisma.testmoImportDataset.create({
       data: {
         jobId,
@@ -11603,8 +11467,8 @@ async function processor(job) {
         processedRows,
         durationMs: summary.meta.durationMs,
         analysisGeneratedAt: /* @__PURE__ */ new Date(),
-        configuration: import_client4.Prisma.JsonNull,
-        options: import_client4.Prisma.JsonNull,
+        configuration: import_client5.Prisma.JsonNull,
+        options: import_client5.Prisma.JsonNull,
         analysis: analysisPayload,
         processedCount: 0,
         errorCount: 0,
@@ -11613,8 +11477,8 @@ async function processor(job) {
         currentEntity: null,
         estimatedTimeRemaining: null,
         processingRate: null,
-        activityLog: import_client4.Prisma.JsonNull,
-        entityProgress: import_client4.Prisma.JsonNull
+        activityLog: import_client5.Prisma.JsonNull,
+        entityProgress: import_client5.Prisma.JsonNull
       }
     });
     if (processedDatasets === 0 && summary.meta.totalDatasets === 0) {
@@ -11653,6 +11517,12 @@ async function processor(job) {
   }
 }
 async function startWorker() {
+  if (isMultiTenantMode()) {
+    console.log("Testmo import worker starting in MULTI-TENANT mode");
+    console.warn("WARNING: Testmo import currently only supports single-tenant mode. Multi-tenant support requires refactoring.");
+  } else {
+    console.log("Testmo import worker starting in SINGLE-TENANT mode");
+  }
   if (!valkey_default) {
     console.warn(
       "Valkey connection not available. Testmo import worker cannot start."
@@ -11679,6 +11549,9 @@ async function startWorker() {
     console.log("Shutting down Testmo import worker...");
     await worker.close();
     await prisma.$disconnect();
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
+    }
     console.log("Testmo import worker shut down gracefully.");
     process.exit(0);
   };

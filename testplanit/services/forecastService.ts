@@ -1,7 +1,7 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
-import { prisma as defaultPrisma } from "../lib/prisma";
+import type { PrismaClient } from "@prisma/client";
+import { prisma as defaultPrisma } from "../lib/prismaBase";
 
 type UpdateRepositoryCaseForecastOptions = {
   skipTestRunUpdate?: boolean;

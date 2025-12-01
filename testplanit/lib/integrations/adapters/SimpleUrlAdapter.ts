@@ -7,7 +7,7 @@ import {
   IssueSearchOptions,
 } from "./IssueAdapter";
 import { BaseAdapter } from "./BaseAdapter";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prismaBase";
 
 /**
  * Simple URL adapter for basic issue tracking integrations

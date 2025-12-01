@@ -3,11 +3,9 @@ import {
   ENTITY_INDICES,
 } from "./unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
-import type { Milestones } from "@prisma/client";
-import { PrismaClient } from "@prisma/client";
+import type { Milestones, PrismaClient } from "@prisma/client";
+import { prisma as defaultPrisma } from "~/lib/prismaBase";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
-
-const prisma = new PrismaClient();
 
 /**
  * Type for milestone with all required relations for indexing
@@ -104,7 +102,7 @@ export async function syncMilestoneToElasticsearch(milestoneId: number): Promise
   }
 
   try {
-    const milestone = await prisma.milestones.findUnique({
+    const milestone = await defaultPrisma.milestones.findUnique({
       where: { id: milestoneId },
       include: {
         project: true,
@@ -255,7 +253,7 @@ export async function syncChildMilestonesToElasticsearch(parentId: number): Prom
   }
 
   try {
-    const childMilestones = await prisma.milestones.findMany({
+    const childMilestones = await defaultPrisma.milestones.findMany({
       where: {
         parentId: parentId,
         // Include deleted items (filtering happens at search time based on admin permissions)

@@ -18,29 +18,32 @@ export async function GET(
     // Check if user is admin
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { access: true }
+      select: { access: true },
     });
 
-    if (user?.access !== 'ADMIN') {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (user?.access !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     // Check if queue is available
     const elasticsearchReindexQueue = getElasticsearchReindexQueue();
     if (!elasticsearchReindexQueue) {
-      return NextResponse.json({
-        error: "Background job queue is not available"
-      }, { status: 503 });
+      return NextResponse.json(
+        {
+          error: "Background job queue is not available",
+        },
+        { status: 503 }
+      );
     }
 
     const { jobId } = await params;
     const job = await elasticsearchReindexQueue.getJob(jobId);
 
     if (!job) {
-      return NextResponse.json(
-        { error: "Job not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
     // Check tenant access in multi-tenant mode
@@ -56,10 +59,7 @@ export async function GET(
       }
 
       if (job.data?.tenantId !== currentTenantId) {
-        return NextResponse.json(
-          { error: "Job not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Job not found" }, { status: 404 });
       }
     }
 

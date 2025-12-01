@@ -5,6 +5,9 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -26,6 +29,32 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// lib/prismaBase.ts
+var prismaBase_exports = {};
+__export(prismaBase_exports, {
+  prisma: () => prisma
+});
+var import_client, prismaClient, prisma;
+var init_prismaBase = __esm({
+  "lib/prismaBase.ts"() {
+    "use strict";
+    import_client = require("@prisma/client");
+    if (process.env.NODE_ENV === "production") {
+      prismaClient = new import_client.PrismaClient({
+        errorFormat: "pretty"
+      });
+    } else {
+      if (!global.prismaBase) {
+        global.prismaBase = new import_client.PrismaClient({
+          errorFormat: "colorless"
+        });
+      }
+      prismaClient = global.prismaBase;
+    }
+    prisma = prismaClient;
+  }
+});
 
 // workers/emailWorker.ts
 var emailWorker_exports = {};
@@ -69,193 +98,7 @@ var valkey_default = valkeyConnection;
 var import_bullmq = require("bullmq");
 
 // lib/queueNames.ts
-var FORECAST_QUEUE_NAME = "forecast-updates";
-var NOTIFICATION_QUEUE_NAME = "notifications";
 var EMAIL_QUEUE_NAME = "emails";
-var SYNC_QUEUE_NAME = "issue-sync";
-var TESTMO_IMPORT_QUEUE_NAME = "testmo-imports";
-var ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
-
-// lib/queues.ts
-var forecastQueue = null;
-var notificationQueue = null;
-var emailQueue = null;
-var syncQueue = null;
-var testmoImportQueue = null;
-var elasticsearchReindexQueue = null;
-if (valkey_default) {
-  forecastQueue = new import_bullmq.Queue(FORECAST_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      // Configuration for jobs in this queue (optional)
-      attempts: 3,
-      // Number of times to retry a failed job
-      backoff: {
-        type: "exponential",
-        // Exponential backoff strategy
-        delay: 5e3
-        // Initial delay 5s
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        // keep up to 7 days
-        count: 1e3
-        // keep up to 1000 jobs
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14
-        // keep up to 14 days
-      }
-    }
-  });
-  console.log(`Queue "${FORECAST_QUEUE_NAME}" initialized.`);
-  forecastQueue.on("error", (error) => {
-    console.error(`Queue ${FORECAST_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${FORECAST_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  notificationQueue = new import_bullmq.Queue(NOTIFICATION_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5e3
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        // keep up to 7 days
-        count: 1e3
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14
-        // keep up to 14 days
-      }
-    }
-  });
-  console.log(`Queue "${NOTIFICATION_QUEUE_NAME}" initialized.`);
-  notificationQueue.on("error", (error) => {
-    console.error(`Queue ${NOTIFICATION_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${NOTIFICATION_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  emailQueue = new import_bullmq.Queue(EMAIL_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 5,
-      backoff: {
-        type: "exponential",
-        delay: 1e4
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 30,
-        // keep up to 30 days
-        count: 5e3
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 30
-        // keep up to 30 days
-      }
-    }
-  });
-  console.log(`Queue "${EMAIL_QUEUE_NAME}" initialized.`);
-  emailQueue.on("error", (error) => {
-    console.error(`Queue ${EMAIL_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  syncQueue = new import_bullmq.Queue(SYNC_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5e3
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 3,
-        // keep up to 3 days
-        count: 500
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 7
-        // keep up to 7 days
-      }
-    }
-  });
-  console.log(`Queue "${SYNC_QUEUE_NAME}" initialized.`);
-  syncQueue.on("error", (error) => {
-    console.error(`Queue ${SYNC_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${SYNC_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  testmoImportQueue = new import_bullmq.Queue(TESTMO_IMPORT_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 1,
-      removeOnComplete: {
-        age: 3600 * 24 * 30,
-        count: 100
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 30
-      }
-    }
-  });
-  console.log(`Queue "${TESTMO_IMPORT_QUEUE_NAME}" initialized.`);
-  testmoImportQueue.on("error", (error) => {
-    console.error(`Queue ${TESTMO_IMPORT_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${TESTMO_IMPORT_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  elasticsearchReindexQueue = new import_bullmq.Queue(ELASTICSEARCH_REINDEX_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 1,
-      // Don't retry reindex jobs automatically
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        // keep up to 7 days
-        count: 50
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14
-        // keep up to 14 days
-      }
-    }
-  });
-  console.log(`Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" initialized.`);
-  elasticsearchReindexQueue.on("error", (error) => {
-    console.error(`Queue ${ELASTICSEARCH_REINDEX_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" not initialized.`
-  );
-}
-
-// workers/emailWorker.ts
-var import_client = require("@prisma/client");
 
 // lib/email/notificationTemplates.ts
 var import_nodemailer = __toESM(require("nodemailer"));
@@ -670,16 +513,120 @@ function isTipTapContent(content) {
   }
 }
 
+// lib/multiTenantPrisma.ts
+var import_client2 = require("@prisma/client");
+function isMultiTenantMode() {
+  return process.env.MULTI_TENANT_MODE === "true";
+}
+var tenantClients = /* @__PURE__ */ new Map();
+var tenantConfigs = null;
+function loadTenantConfigs() {
+  if (tenantConfigs) {
+    return tenantConfigs;
+  }
+  tenantConfigs = /* @__PURE__ */ new Map();
+  const configJson = process.env.TENANT_CONFIGS;
+  if (configJson) {
+    try {
+      const configs = JSON.parse(configJson);
+      for (const [tenantId, config] of Object.entries(configs)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex
+        });
+      }
+      console.log(`Loaded ${tenantConfigs.size} tenant configurations from TENANT_CONFIGS`);
+    } catch (error) {
+      console.error("Failed to parse TENANT_CONFIGS:", error);
+    }
+  }
+  for (const [key, value] of Object.entries(process.env)) {
+    const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
+    if (match && value) {
+      const tenantId = match[1].toLowerCase();
+      if (!tenantConfigs.has(tenantId)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: value,
+          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
+          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`]
+        });
+      }
+    }
+  }
+  if (tenantConfigs.size === 0) {
+    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+  }
+  return tenantConfigs;
+}
+function getTenantConfig(tenantId) {
+  const configs = loadTenantConfigs();
+  return configs.get(tenantId);
+}
+function createTenantPrismaClient(config) {
+  const client = new import_client2.PrismaClient({
+    datasources: {
+      db: {
+        url: config.databaseUrl
+      }
+    },
+    errorFormat: "pretty"
+  });
+  return client;
+}
+function getTenantPrismaClient(tenantId) {
+  let client = tenantClients.get(tenantId);
+  if (client) {
+    return client;
+  }
+  const config = getTenantConfig(tenantId);
+  if (!config) {
+    throw new Error(`No configuration found for tenant: ${tenantId}`);
+  }
+  client = createTenantPrismaClient(config);
+  tenantClients.set(tenantId, client);
+  console.log(`Created Prisma client for tenant: ${tenantId}`);
+  return client;
+}
+function getPrismaClientForJob(jobData) {
+  if (!isMultiTenantMode()) {
+    const { prisma: prisma2 } = (init_prismaBase(), __toCommonJS(prismaBase_exports));
+    return prisma2;
+  }
+  if (!jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+  return getTenantPrismaClient(jobData.tenantId);
+}
+async function disconnectAllTenantClients() {
+  const disconnectPromises = [];
+  for (const [tenantId, client] of tenantClients) {
+    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
+    disconnectPromises.push(client.$disconnect());
+  }
+  await Promise.all(disconnectPromises);
+  tenantClients.clear();
+  console.log("All tenant Prisma clients disconnected");
+}
+function validateMultiTenantJobData(jobData) {
+  if (isMultiTenantMode() && !jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+}
+
 // workers/emailWorker.ts
 var import_meta3 = {};
-var prisma = new import_client.PrismaClient();
 var processor = async (job) => {
-  console.log(`Processing email job ${job.id} of type ${job.name}`);
+  console.log(`Processing email job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  validateMultiTenantJobData(job.data);
+  const prisma2 = getPrismaClientForJob(job.data);
   switch (job.name) {
     case "send-notification-email":
       const notificationData = job.data;
       try {
-        const notification = await prisma.notification.findUnique({
+        const notification = await prisma2.notification.findUnique({
           where: { id: notificationData.notificationId },
           include: {
             user: {
@@ -784,7 +731,7 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
     case "send-digest-email":
       const digestData = job.data;
       try {
-        const user = await prisma.user.findUnique({
+        const user = await prisma2.user.findUnique({
           where: { id: digestData.userId },
           include: {
             userPreferences: true
@@ -794,7 +741,7 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
           console.log("User or email not found");
           return;
         }
-        const fullNotifications = await prisma.notification.findMany({
+        const fullNotifications = await prisma2.notification.findMany({
           where: {
             id: { in: digestData.notifications.map((n) => n.id) }
           }
@@ -887,7 +834,7 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
           locale: formatLocaleForUrl(user.userPreferences?.locale || "en_US"),
           translations: digestTranslations
         });
-        await prisma.notification.updateMany({
+        await prisma2.notification.updateMany({
           where: {
             id: { in: digestData.notifications.map((n) => n.id) }
           },
@@ -907,6 +854,11 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
 };
 var worker = null;
 var startWorker = async () => {
+  if (isMultiTenantMode()) {
+    console.log("Email worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Email worker starting in SINGLE-TENANT mode");
+  }
   if (valkey_default) {
     worker = new import_bullmq2.Worker(EMAIL_QUEUE_NAME, processor, {
       connection: valkey_default,
@@ -930,7 +882,9 @@ var startWorker = async () => {
     if (worker) {
       await worker.close();
     }
-    await prisma.$disconnect();
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
+    }
     process.exit(0);
   });
 };

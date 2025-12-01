@@ -1,6 +1,7 @@
 import { Client } from "@elastic/elasticsearch";
 import { SearchableEntityType, CustomFieldDocument } from "~/types/search";
 import { getElasticsearchClient } from "./elasticsearchService";
+import { prisma } from "~/lib/prismaBase";
 
 // Re-export for convenience
 export { getElasticsearchClient };
@@ -342,15 +343,10 @@ export const ENTITY_MAPPINGS = {
  */
 async function getElasticsearchSettings() {
   try {
-    const { PrismaClient } = await import("@prisma/client");
-    const prisma = new PrismaClient();
-    
     const config = await prisma.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" }
     });
-    
-    await prisma.$disconnect();
-    
+
     // Default to 0 for single-node clusters
     return {
       numberOfReplicas: config?.value ? (config.value as number) : 0

@@ -8,12 +8,12 @@ import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
 function getQueueByName(queueName: string): Queue | null {
   const allQueues = getAllQueues();
   const queueMap: Record<string, Queue | null> = {
-    'forecast-updates': allQueues.forecastQueue,
-    'notifications': allQueues.notificationQueue,
-    'emails': allQueues.emailQueue,
-    'issue-sync': allQueues.syncQueue,
-    'testmo-imports': allQueues.testmoImportQueue,
-    'elasticsearch-reindex': allQueues.elasticsearchReindexQueue
+    "forecast-updates": allQueues.forecastQueue,
+    notifications: allQueues.notificationQueue,
+    emails: allQueues.emailQueue,
+    "issue-sync": allQueues.syncQueue,
+    "testmo-imports": allQueues.testmoImportQueue,
+    "elasticsearch-reindex": allQueues.elasticsearchReindexQueue,
   };
   return queueMap[queueName] ?? null;
 }
@@ -31,11 +31,14 @@ export async function GET(
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { access: true }
+      select: { access: true },
     });
 
-    if (user?.access !== 'ADMIN') {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (user?.access !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     const { queueName } = await params;
@@ -47,9 +50,9 @@ export async function GET(
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
-    const state = searchParams.get('state') || 'all';
-    const start = parseInt(searchParams.get('start') || '0');
-    const end = parseInt(searchParams.get('end') || '50');
+    const state = searchParams.get("state") || "all";
+    const start = parseInt(searchParams.get("start") || "0");
+    const end = parseInt(searchParams.get("end") || "50");
 
     // Get current tenant ID for filtering in multi-tenant mode
     const currentTenantId = getCurrentTenantId();
@@ -68,22 +71,28 @@ export async function GET(
       if (!multiTenant) {
         return jobs;
       }
-      return jobs.filter(job => job.data?.tenantId === currentTenantId);
+      return jobs.filter((job) => job.data?.tenantId === currentTenantId);
     };
 
     let jobs: Job[];
-    if (state === 'all') {
+    if (state === "all") {
       // Get jobs from all states
       const [waiting, active, completed, failed, delayed] = await Promise.all([
-        queue.getJobs(['waiting'], 0, 1000),
-        queue.getJobs(['active'], 0, 1000),
-        queue.getJobs(['completed'], 0, 1000),
-        queue.getJobs(['failed'], 0, 1000),
-        queue.getJobs(['delayed'], 0, 1000)
+        queue.getJobs(["waiting"], 0, 1000),
+        queue.getJobs(["active"], 0, 1000),
+        queue.getJobs(["completed"], 0, 1000),
+        queue.getJobs(["failed"], 0, 1000),
+        queue.getJobs(["delayed"], 0, 1000),
       ]);
 
       // Filter by tenant first, then apply pagination
-      const allJobs = filterByTenant([...waiting, ...active, ...completed, ...failed, ...delayed]);
+      const allJobs = filterByTenant([
+        ...waiting,
+        ...active,
+        ...completed,
+        ...failed,
+        ...delayed,
+      ]);
       jobs = allJobs.slice(start, end);
     } else {
       const stateJobs = await queue.getJobs([state as any], 0, 1000);
@@ -108,7 +117,7 @@ export async function GET(
           failedReason: job.failedReason,
           finishedOn: job.finishedOn,
           processedOn: job.processedOn,
-          state
+          state,
         };
       })
     );

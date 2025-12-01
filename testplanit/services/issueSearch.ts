@@ -3,11 +3,9 @@ import {
   ENTITY_INDICES,
 } from "./unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
-import type { Issue } from "@prisma/client";
-import { PrismaClient } from "@prisma/client";
+import type { Issue, PrismaClient } from "@prisma/client";
+import { prisma as defaultPrisma } from "~/lib/prismaBase";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
-
-const prisma = new PrismaClient();
 
 /**
  * Type for issue with all required relations for indexing
@@ -178,8 +176,10 @@ export async function deleteIssueFromIndex(issueId: number): Promise<void> {
  * Sync a single issue to Elasticsearch
  */
 export async function syncIssueToElasticsearch(
-  issueId: number
+  issueId: number,
+  prismaClient?: PrismaClient
 ): Promise<boolean> {
+  const prisma = prismaClient || defaultPrisma;
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");

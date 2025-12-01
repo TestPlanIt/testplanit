@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prismaBase";
 import type { Integration, IntegrationProvider } from "@prisma/client";
 import { IssueAdapter } from "./adapters/IssueAdapter";
 import { JiraAdapter } from "./adapters/JiraAdapter";

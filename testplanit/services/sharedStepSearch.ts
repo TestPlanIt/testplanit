@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import {
   getElasticsearchClient,
   ENTITY_INDICES,
@@ -6,8 +6,7 @@ import {
 } from "./unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
-
-const prisma = new PrismaClient();
+import { prisma as defaultPrisma } from "~/lib/prismaBase";
 
 /**
  * Document structure for shared steps in Elasticsearch
@@ -38,7 +37,7 @@ export interface SharedStepDocument {
 export async function buildSharedStepDocument(
   stepGroupId: number
 ): Promise<SharedStepDocument | null> {
-  const stepGroup = await prisma.sharedStepGroup.findUnique({
+  const stepGroup = await defaultPrisma.sharedStepGroup.findUnique({
     where: { id: stepGroupId },
     include: {
       project: true,
@@ -189,7 +188,7 @@ export async function syncProjectSharedStepsToElasticsearch(
     // Ensure index exists
     await createEntityIndex(SearchableEntityType.SHARED_STEP);
 
-    const totalSteps = await prisma.sharedStepGroup.count({
+    const totalSteps = await defaultPrisma.sharedStepGroup.count({
       where: {
         projectId,
         // Include deleted items (filtering happens at search time based on admin permissions)
@@ -204,7 +203,7 @@ export async function syncProjectSharedStepsToElasticsearch(
     let hasMore = true;
 
     while (hasMore) {
-      const steps = await prisma.sharedStepGroup.findMany({
+      const steps = await defaultPrisma.sharedStepGroup.findMany({
         where: {
           projectId,
           // Include deleted items (filtering happens at search time based on admin permissions)
