@@ -344,6 +344,7 @@ export function GenerateTestCasesWizard({
   // Fetch the maximum order value separately for accurate ordering
   const { data: maxOrderData } = useFindManyRepositoryCases({
     where: {
+      projectId: projectId,
       folderId: folderId,
       isDeleted: false,
       isArchived: false,
@@ -770,7 +771,8 @@ export function GenerateTestCasesWizard({
                 const textField = tc.caseFieldValues?.find((cfv: any) => {
                   const fieldType = cfv.field?.type?.type?.toLowerCase();
                   return (
-                    (fieldType === "text long" || fieldType === "text string") &&
+                    (fieldType === "text long" ||
+                      fieldType === "text string") &&
                     cfv.value
                   );
                 });
@@ -2488,15 +2490,12 @@ export function GenerateTestCasesWizard({
                 <div className="flex items-center gap-2 text-xs text-left">
                   <Info className="w-4 h-4 text-muted-foreground shrink-0" />
                   {(existingTestCases?.length ?? 0) >= 50
-                    ? t(
-                        "generateTestCases.selectSource.folderContextTipMax",
-                        {
-                          count: existingTestCases?.length ?? 0,
-                          folderName:
-                            folderName ??
-                            t("generateTestCases.selectSource.currentFolder"),
-                        }
-                      )
+                    ? t("generateTestCases.selectSource.folderContextTipMax", {
+                        count: existingTestCases?.length ?? 0,
+                        folderName:
+                          folderName ??
+                          t("generateTestCases.selectSource.currentFolder"),
+                      })
                     : t("generateTestCases.selectSource.folderContextTip", {
                         count: existingTestCases?.length ?? 0,
                         folderName:
