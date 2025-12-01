@@ -8,7 +8,10 @@ import { Color } from "@tiptap/extension-color";
 import { emptyEditorContent } from "~/app/constants/backend";
 
 const tiptapConversionExtensions = [
-  StarterKit,
+  StarterKit.configure({
+    link: false,
+    underline: false,
+  }),
   Underline,
   Link,
   TextStyle,

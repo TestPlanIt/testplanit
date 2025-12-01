@@ -2235,7 +2235,7 @@
     "generateTestCases": {
       "buttonText": "Generar Casos de Prueba",
       "title": "Generar casos de prueba con IA",
-      "description": "Utilice IA para generar automáticamente casos de prueba completos a partir de problemas externos como boletos Jira.",
+      "description": "Utilice IA para generar automáticamente casos de prueba completos a partir de problemas o documentos externos.",
       "steps": {
         "selectIssue": "Seleccionar fuente",
         "selectTemplate": "Elegir plantilla",
@@ -2245,6 +2245,9 @@
       "selectSource": {
         "title": "Seleccionar Fuente de Requisitos",
         "description": "Elija si desea generar casos de prueba a partir de un problema o de un documento de requisitos.",
+        "folderContextTip": "{count, plural, =0 {No hay casos de prueba en la carpeta \"{folderName}\". Asegúrese de haber seleccionado la carpeta correcta antes de continuar.} =1 {1 caso de prueba en la carpeta \"{folderName}\" se usará como contexto al generar nuevos casos de prueba. Asegúrese de haber seleccionado la carpeta correcta antes de continuar.} other {# casos de prueba en la carpeta \"{folderName}\" se usarán como contexto al generar nuevos casos de prueba. Asegúrese de haber seleccionado la carpeta correcta antes de continuar.}}",
+        "folderContextTipMax": "Los casos de prueba {count} de la carpeta \"{folderName}\" se usarán como contexto al generar nuevos casos de prueba. Asegúrese de haber seleccionado la carpeta correcta antes de continuar.",
+        "currentFolder": "carpeta actual",
         "fromIssue": "De la emisión",
         "fromDocument": "Desde documento",
         "documentTitle": "Título del documento",
@@ -4997,7 +5000,8 @@
     "milestoneType": {
       "icon": "## Icono de tipo de hito\nUn identificador visual para este tipo de hito.\n\n- Ayuda a identificar rápidamente el tipo de hito en listas y paneles\n- Elija entre una variedad de iconos predefinidos\n- Puede cambiarse en cualquier momento\n- Aparece en la navegación del proyecto e informes",
       "name": "## Nombre del tipo de hito\nUn nombre claro y descriptivo que identifica este tipo de hito en tu proyecto.\n\n- Ayuda a los miembros del equipo a entender rápidamente el propósito del tipo de hito\n- Utilizado en informes y seguimiento del proyecto",
-      "isDefault": "## Tipo de hito predeterminado\nIndica si este tipo de hito es el predeterminado para tu proyecto.\n\n- El tipo de hito predeterminado está preseleccionado para los nuevos hitos\n- Se puede cambiar en cualquier momento"
+      "isDefault": "## Tipo de hito predeterminado\nIndica si este tipo de hito es el predeterminado para tu proyecto.\n\n- El tipo de hito predeterminado está preseleccionado para los nuevos hitos\n- Se puede cambiar en cualquier momento",
+      "projects": "## Proyectos asociados\nSeleccione para qué proyectos estará disponible este tipo de hito.\n\n- Si no se selecciona ningún proyecto, el tipo de hito estará disponible globalmente.\n- Asignar a proyectos específicos restringe su uso solo a esos proyectos."
     },
     "tag": {
       "name": "## Nombre de la etiqueta\nUn nombre claro, conciso, descriptivo o palabras clave que se utilizan en todos los proyectos.\n\n- Ayuda a los miembros del equipo a encontrar rápidamente casos de prueba, ejecuciones de pruebas y sesiones."
@@ -5085,8 +5089,10 @@
       "iconColor": "## Icono/Color\nEl icono y el color de este flujo de trabajo.",
       "name": "## Nombre\nUn nombre claro y descriptivo que se utiliza en todos los proyectos.\n\n- Ayuda a describir el flujo de trabajo (por ejemplo, \"Borrador\", \"Bajo revisión\", \"Activo\", etc.).",
       "workflowType": "## Escribe\nEl tipo de flujo de trabajo (no iniciado, en progreso, completado).",
+      "type": "## Tipo de flujo de trabajo\nLa categoría del estado del flujo de trabajo (No iniciado, En progreso, Completado).\n\n- Determina cómo este estado afecta el seguimiento del progreso\n- Los estados No iniciado indican que el trabajo no ha comenzado\n- Los estados En progreso muestran el trabajo activo\n- Los estados Completado marcan el trabajo terminado",
       "isDefault": "## Por defecto\nIndica si este flujo de trabajo es el predeterminado para tu proyecto.\n\n- El flujo de trabajo predeterminado está preseleccionado para nuevas ejecuciones de pruebas, sesiones y automatización.",
       "isEnabled": "## Habilitado\\nIndica si este flujo de trabajo está activo.",
+      "isActive": "## Activo\nIndica si este estado de flujo de trabajo está activo y disponible para su uso.\n\n- Los flujos de trabajo activos se pueden seleccionar al actualizar ejecuciones de pruebas, sesiones o automatización.\n- Los flujos de trabajo inactivos se ocultan de la selección, pero se conservan en los elementos existentes.",
       "projects": "## Proyecta\nIndica los proyectos que pueden usar este flujo de trabajo."
     },
     "testResult": {

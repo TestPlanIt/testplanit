@@ -444,6 +444,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     return stats?.totalCaseCount ?? null;
   }, [selectedFolderId, folderStatsData]);
 
+  // Get the name of the selected folder
+  const selectedFolderName = useMemo(() => {
+    if (!selectedFolderId || folderHierarchy.length === 0) return null;
+    const folder = folderHierarchy.find((f) => f.id === selectedFolderId);
+    return folder?.text ?? null;
+  }, [selectedFolderId, folderHierarchy]);
+
   const { data: testRunCasesWithLoading, isLoading: isLoadingTestRunCases } =
     useFindManyTestRunCases(
       {
@@ -1116,6 +1123,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                               />
                               <GenerateTestCasesWizard
                                 folderId={selectedFolderId ?? 0}
+                                folderName={selectedFolderName}
                                 onImportComplete={refetchFolderStats}
                               />
                               <AddCaseModal folderId={selectedFolderId ?? 0} />

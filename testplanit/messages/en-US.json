@@ -2235,7 +2235,7 @@
     "generateTestCases": {
       "buttonText": "Generate Test Cases",
       "title": "Generate Test Cases with AI",
-      "description": "Use AI to automatically generate comprehensive test cases from external issues like Jira tickets.",
+      "description": "Use AI to automatically generate comprehensive test cases from external issues or documents.",
       "steps": {
         "selectIssue": "Select Source",
         "selectTemplate": "Choose Template",
@@ -2245,6 +2245,9 @@
       "selectSource": {
         "title": "Select Requirements Source",
         "description": "Choose whether to generate test cases from an issue or a requirements document.",
+        "folderContextTip": "{count, plural, =0 {There are no existing test cases in the \"{folderName}\" folder. Make sure you have selected the correct folder before proceeding.} =1 {1 test case in the \"{folderName}\" folder will be used as context when generating new test cases. Make sure you have selected the correct folder before proceeding.} other {# test cases in the \"{folderName}\" folder will be used as context when generating new test cases. Make sure you have selected the correct folder before proceeding.}}",
+        "folderContextTipMax": "{count} of the test cases in the \"{folderName}\" folder will be used as context when generating new test cases. Make sure you have selected the correct folder before proceeding.",
+        "currentFolder": "current folder",
         "fromIssue": "From Issue",
         "fromDocument": "From Document",
         "documentTitle": "Document Title",

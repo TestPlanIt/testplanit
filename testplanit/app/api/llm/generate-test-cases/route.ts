@@ -35,6 +35,11 @@ interface GenerationContext {
   existingTestCases?: Array<{
     name: string;
     template: string;
+    description?: string;
+    steps?: Array<{
+      step: string;
+      expectedResult: string;
+    }>;
   }>;
   folderContext: number;
 }
@@ -234,6 +239,7 @@ REQUIREMENTS:
 ${autoGenerateTags ? '- TAGS: Include 2-4 relevant tags per test case that categorize the test (e.g., "UI", "API", "Security", "Performance", "Integration", "Smoke", "Regression", "Functional", "Edge Case", "Mobile", "Desktop", etc.)' : ""}
 - DO NOT create generic test cases - they must validate the specific issue requirements
 - DO NOT leave optional text fields empty - they provide critical context for test execution
+- IMPORTANT: If existing test cases are provided, DO NOT generate duplicates or test cases that cover the same scenarios. Focus on NEW test scenarios not already covered.
 
 Return ONLY the JSON.`;
 }
@@ -258,10 +264,23 @@ STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}
   }
 
   if (context.existingTestCases && context.existingTestCases.length > 0) {
-    prompt += `\n\nEXISTING TEST CASES IN FOLDER (avoid duplicates):`;
-    context.existingTestCases.slice(0, 5).forEach((tc, i) => {
+    prompt += `\n\nEXISTING TEST CASES IN FOLDER - DO NOT DUPLICATE THESE:`;
+    context.existingTestCases.forEach((tc, i) => {
       prompt += `\n${i + 1}. ${tc.name}`;
+      if (tc.description) {
+        prompt += `\n   Description: ${tc.description}`;
+      }
+      if (tc.steps && tc.steps.length > 0) {
+        prompt += `\n   Steps:`;
+        tc.steps.forEach((step, stepIndex) => {
+          prompt += `\n     ${stepIndex + 1}. ${step.step}`;
+          if (step.expectedResult) {
+            prompt += ` → Expected: ${step.expectedResult}`;
+          }
+        });
+      }
     });
+    prompt += `\n\nCRITICAL: Do NOT generate test cases that duplicate or substantially overlap with the existing test cases listed above. Each new test case must cover different functionality, scenarios, or edge cases not already tested.`;
   }
 
   prompt += `\n\nBased on this issue, generate specific test cases that validate the requirements and functionality described above. Make test case names and descriptions specific to this issue, not generic. Focus on what needs to be tested to verify this specific feature/fix works correctly.`;
