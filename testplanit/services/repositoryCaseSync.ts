@@ -1,4 +1,3 @@
-import { PrismaClient } from "@prisma/client";
 import {
   createRepositoryCaseIndex,
   RepositoryCaseDocument,
@@ -10,8 +9,7 @@ import {
 } from "./elasticsearchIndexing";
 import { extractTextFromNode } from "../utils/extractTextFromJson";
 import { buildCustomFieldDocuments } from "./unifiedElasticsearchService";
-
-const prisma = new PrismaClient();
+import { prisma } from "../lib/prismaBase";
 
 /**
  * Safely extract text from a step field that might be JSON string or object

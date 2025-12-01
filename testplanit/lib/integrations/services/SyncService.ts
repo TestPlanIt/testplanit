@@ -5,7 +5,7 @@ import { enhance } from "@zenstackhq/runtime";
 import type { IssueData } from "../adapters/IssueAdapter";
 import type { IssueAdapter } from "../adapters/IssueAdapter";
 import { JobsOptions } from "bullmq";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prismaBase";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
 
 export interface SyncJobData {

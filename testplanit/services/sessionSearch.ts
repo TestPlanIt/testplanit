@@ -4,10 +4,8 @@ import {
 } from "./unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
 import type { Sessions, Prisma } from "@prisma/client";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "~/lib/prismaBase";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
-
-const prisma = new PrismaClient();
 
 /**
  * Type for session with all required relations for indexing

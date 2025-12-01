@@ -1,4 +1,3 @@
-import { PrismaClient } from "@prisma/client";
 import {
   getElasticsearchClient,
   ENTITY_INDICES,
@@ -6,8 +5,7 @@ import {
 } from "./unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
-
-const prisma = new PrismaClient();
+import { prisma } from "~/lib/prismaBase";
 
 /**
  * Document structure for shared steps in Elasticsearch

@@ -1,7 +1,7 @@
 import { Worker, Job } from "bullmq";
 import valkeyConnection from "../lib/valkey";
 import { ELASTICSEARCH_REINDEX_QUEUE_NAME } from "../lib/queueNames";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prismaBase";
 import {
   syncProjectCasesToElasticsearch,
   initializeElasticsearchIndexes,

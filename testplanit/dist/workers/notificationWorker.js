@@ -73,85 +73,18 @@ var valkey_default = valkeyConnection;
 var import_bullmq = require("bullmq");
 
 // lib/queueNames.ts
-var FORECAST_QUEUE_NAME = "forecast-updates";
 var NOTIFICATION_QUEUE_NAME = "notifications";
 var EMAIL_QUEUE_NAME = "emails";
-var SYNC_QUEUE_NAME = "issue-sync";
-var TESTMO_IMPORT_QUEUE_NAME = "testmo-imports";
-var ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
 
 // lib/queues.ts
-var forecastQueue = null;
-var notificationQueue = null;
-var emailQueue = null;
-var syncQueue = null;
-var testmoImportQueue = null;
-var elasticsearchReindexQueue = null;
-if (valkey_default) {
-  forecastQueue = new import_bullmq.Queue(FORECAST_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      // Configuration for jobs in this queue (optional)
-      attempts: 3,
-      // Number of times to retry a failed job
-      backoff: {
-        type: "exponential",
-        // Exponential backoff strategy
-        delay: 5e3
-        // Initial delay 5s
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        // keep up to 7 days
-        count: 1e3
-        // keep up to 1000 jobs
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14
-        // keep up to 14 days
-      }
-    }
-  });
-  console.log(`Queue "${FORECAST_QUEUE_NAME}" initialized.`);
-  forecastQueue.on("error", (error) => {
-    console.error(`Queue ${FORECAST_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${FORECAST_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  notificationQueue = new import_bullmq.Queue(NOTIFICATION_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5e3
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        // keep up to 7 days
-        count: 1e3
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14
-        // keep up to 14 days
-      }
-    }
-  });
-  console.log(`Queue "${NOTIFICATION_QUEUE_NAME}" initialized.`);
-  notificationQueue.on("error", (error) => {
-    console.error(`Queue ${NOTIFICATION_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${NOTIFICATION_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  emailQueue = new import_bullmq.Queue(EMAIL_QUEUE_NAME, {
+var _emailQueue = null;
+function getEmailQueue() {
+  if (_emailQueue) return _emailQueue;
+  if (!valkey_default) {
+    console.warn(`Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`);
+    return null;
+  }
+  _emailQueue = new import_bullmq.Queue(EMAIL_QUEUE_NAME, {
     connection: valkey_default,
     defaultJobOptions: {
       attempts: 5,
@@ -161,101 +94,18 @@ if (valkey_default) {
       },
       removeOnComplete: {
         age: 3600 * 24 * 30,
-        // keep up to 30 days
         count: 5e3
       },
       removeOnFail: {
         age: 3600 * 24 * 30
-        // keep up to 30 days
       }
     }
   });
   console.log(`Queue "${EMAIL_QUEUE_NAME}" initialized.`);
-  emailQueue.on("error", (error) => {
+  _emailQueue.on("error", (error) => {
     console.error(`Queue ${EMAIL_QUEUE_NAME} error:`, error);
   });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  syncQueue = new import_bullmq.Queue(SYNC_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5e3
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 3,
-        // keep up to 3 days
-        count: 500
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 7
-        // keep up to 7 days
-      }
-    }
-  });
-  console.log(`Queue "${SYNC_QUEUE_NAME}" initialized.`);
-  syncQueue.on("error", (error) => {
-    console.error(`Queue ${SYNC_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${SYNC_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  testmoImportQueue = new import_bullmq.Queue(TESTMO_IMPORT_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 1,
-      removeOnComplete: {
-        age: 3600 * 24 * 30,
-        count: 100
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 30
-      }
-    }
-  });
-  console.log(`Queue "${TESTMO_IMPORT_QUEUE_NAME}" initialized.`);
-  testmoImportQueue.on("error", (error) => {
-    console.error(`Queue ${TESTMO_IMPORT_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${TESTMO_IMPORT_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  elasticsearchReindexQueue = new import_bullmq.Queue(ELASTICSEARCH_REINDEX_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 1,
-      // Don't retry reindex jobs automatically
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        // keep up to 7 days
-        count: 50
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14
-        // keep up to 14 days
-      }
-    }
-  });
-  console.log(`Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" initialized.`);
-  elasticsearchReindexQueue.on("error", (error) => {
-    console.error(`Queue ${ELASTICSEARCH_REINDEX_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" not initialized.`
-  );
+  return _emailQueue;
 }
 
 // workers/notificationWorker.ts
@@ -301,7 +151,7 @@ var processor = async (job) => {
           }
         });
         if (notificationMode === "IN_APP_EMAIL_IMMEDIATE") {
-          await emailQueue?.add("send-notification-email", {
+          await getEmailQueue()?.add("send-notification-email", {
             notificationId: notification.id,
             userId: createData.userId,
             immediate: true
@@ -369,7 +219,7 @@ var processor = async (job) => {
             orderBy: { createdAt: "desc" }
           });
           if (notifications.length > 0) {
-            await emailQueue?.add("send-digest-email", {
+            await getEmailQueue()?.add("send-digest-email", {
               userId: userPref.userId,
               notifications: notifications.map((n) => ({
                 id: n.id,

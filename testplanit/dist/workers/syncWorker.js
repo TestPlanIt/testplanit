@@ -66,115 +66,18 @@ if (valkeyUrl && !skipConnection) {
 var valkey_default = valkeyConnection;
 
 // lib/queueNames.ts
-var FORECAST_QUEUE_NAME = "forecast-updates";
-var NOTIFICATION_QUEUE_NAME = "notifications";
-var EMAIL_QUEUE_NAME = "emails";
 var SYNC_QUEUE_NAME = "issue-sync";
-var TESTMO_IMPORT_QUEUE_NAME = "testmo-imports";
-var ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
 
 // lib/queues.ts
 var import_bullmq = require("bullmq");
-var forecastQueue = null;
-var notificationQueue = null;
-var emailQueue = null;
-var syncQueue = null;
-var testmoImportQueue = null;
-var elasticsearchReindexQueue = null;
-if (valkey_default) {
-  forecastQueue = new import_bullmq.Queue(FORECAST_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      // Configuration for jobs in this queue (optional)
-      attempts: 3,
-      // Number of times to retry a failed job
-      backoff: {
-        type: "exponential",
-        // Exponential backoff strategy
-        delay: 5e3
-        // Initial delay 5s
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        // keep up to 7 days
-        count: 1e3
-        // keep up to 1000 jobs
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14
-        // keep up to 14 days
-      }
-    }
-  });
-  console.log(`Queue "${FORECAST_QUEUE_NAME}" initialized.`);
-  forecastQueue.on("error", (error) => {
-    console.error(`Queue ${FORECAST_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${FORECAST_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  notificationQueue = new import_bullmq.Queue(NOTIFICATION_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5e3
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        // keep up to 7 days
-        count: 1e3
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14
-        // keep up to 14 days
-      }
-    }
-  });
-  console.log(`Queue "${NOTIFICATION_QUEUE_NAME}" initialized.`);
-  notificationQueue.on("error", (error) => {
-    console.error(`Queue ${NOTIFICATION_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${NOTIFICATION_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  emailQueue = new import_bullmq.Queue(EMAIL_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 5,
-      backoff: {
-        type: "exponential",
-        delay: 1e4
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 30,
-        // keep up to 30 days
-        count: 5e3
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 30
-        // keep up to 30 days
-      }
-    }
-  });
-  console.log(`Queue "${EMAIL_QUEUE_NAME}" initialized.`);
-  emailQueue.on("error", (error) => {
-    console.error(`Queue ${EMAIL_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  syncQueue = new import_bullmq.Queue(SYNC_QUEUE_NAME, {
+var _syncQueue = null;
+function getSyncQueue() {
+  if (_syncQueue) return _syncQueue;
+  if (!valkey_default) {
+    console.warn(`Valkey connection not available, Queue "${SYNC_QUEUE_NAME}" not initialized.`);
+    return null;
+  }
+  _syncQueue = new import_bullmq.Queue(SYNC_QUEUE_NAME, {
     connection: valkey_default,
     defaultJobOptions: {
       attempts: 3,
@@ -184,72 +87,18 @@ if (valkey_default) {
       },
       removeOnComplete: {
         age: 3600 * 24 * 3,
-        // keep up to 3 days
         count: 500
       },
       removeOnFail: {
         age: 3600 * 24 * 7
-        // keep up to 7 days
       }
     }
   });
   console.log(`Queue "${SYNC_QUEUE_NAME}" initialized.`);
-  syncQueue.on("error", (error) => {
+  _syncQueue.on("error", (error) => {
     console.error(`Queue ${SYNC_QUEUE_NAME} error:`, error);
   });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${SYNC_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  testmoImportQueue = new import_bullmq.Queue(TESTMO_IMPORT_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 1,
-      removeOnComplete: {
-        age: 3600 * 24 * 30,
-        count: 100
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 30
-      }
-    }
-  });
-  console.log(`Queue "${TESTMO_IMPORT_QUEUE_NAME}" initialized.`);
-  testmoImportQueue.on("error", (error) => {
-    console.error(`Queue ${TESTMO_IMPORT_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${TESTMO_IMPORT_QUEUE_NAME}" not initialized.`
-  );
-}
-if (valkey_default) {
-  elasticsearchReindexQueue = new import_bullmq.Queue(ELASTICSEARCH_REINDEX_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 1,
-      // Don't retry reindex jobs automatically
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        // keep up to 7 days
-        count: 50
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14
-        // keep up to 14 days
-      }
-    }
-  });
-  console.log(`Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" initialized.`);
-  elasticsearchReindexQueue.on("error", (error) => {
-    console.error(`Queue ${ELASTICSEARCH_REINDEX_QUEUE_NAME} error:`, error);
-  });
-} else {
-  console.warn(
-    `Valkey connection not available, Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" not initialized.`
-  );
+  return _syncQueue;
 }
 
 // lib/integrations/cache/IssueCache.ts
@@ -453,11 +302,8 @@ var IssueCache = class {
 var issueCache = new IssueCache();
 
 // lib/prisma.ts
-var import_client8 = require("@prisma/client");
+var import_client2 = require("@prisma/client");
 var import_runtime = require("@zenstackhq/runtime");
-
-// services/repositoryCaseSync.ts
-var import_client = require("@prisma/client");
 
 // services/elasticsearchService.ts
 var import_elasticsearch = require("@elastic/elasticsearch");
@@ -1050,8 +896,20 @@ function buildCustomFieldDocuments(fieldValues) {
   });
 }
 
+// lib/prismaBase.ts
+var import_client = require("@prisma/client");
+var prismaClient;
+if (process.env.NODE_ENV === "production") {
+  prismaClient = new import_client.PrismaClient({ errorFormat: "pretty" });
+} else {
+  if (!global.prismaBase) {
+    global.prismaBase = new import_client.PrismaClient({ errorFormat: "colorless" });
+  }
+  prismaClient = global.prismaBase;
+}
+var prisma = prismaClient;
+
 // services/repositoryCaseSync.ts
-var prisma = new import_client.PrismaClient();
 function extractStepText(stepData) {
   if (!stepData) return "";
   try {
@@ -1232,17 +1090,17 @@ async function syncRepositoryCaseToElasticsearch(caseId) {
 }
 
 // services/testRunSearch.ts
-var import_client2 = require("@prisma/client");
-var prisma2 = new import_client2.PrismaClient();
 async function indexTestRun(testRun) {
   const client = getElasticsearchClient();
   if (!client) {
     throw new Error("Elasticsearch client not available");
   }
+  const noteText = testRun.note ? extractTextFromNode(testRun.note) : "";
+  const docsText = testRun.docs ? extractTextFromNode(testRun.docs) : "";
   const searchableContent = [
     testRun.name,
-    testRun.note ? extractTextFromNode(testRun.note) : "",
-    testRun.docs ? extractTextFromNode(testRun.docs) : "",
+    noteText,
+    docsText,
     testRun.tags.map((t) => t.name).join(" ")
   ].join(" ");
   const document = {
@@ -1250,8 +1108,8 @@ async function indexTestRun(testRun) {
     projectId: testRun.projectId,
     projectName: testRun.project.name,
     name: testRun.name,
-    note: testRun.note,
-    docs: testRun.docs,
+    note: noteText,
+    docs: docsText,
     configId: testRun.configId,
     configurationName: testRun.configuration?.name,
     milestoneId: testRun.milestoneId,
@@ -1285,7 +1143,7 @@ async function syncTestRunToElasticsearch(testRunId) {
     return false;
   }
   try {
-    const testRun = await prisma2.testRuns.findUnique({
+    const testRun = await prisma.testRuns.findUnique({
       where: { id: testRunId },
       include: {
         project: true,
@@ -1309,17 +1167,17 @@ async function syncTestRunToElasticsearch(testRunId) {
 }
 
 // services/sessionSearch.ts
-var import_client3 = require("@prisma/client");
-var prisma3 = new import_client3.PrismaClient();
 async function indexSession(session) {
   const client = getElasticsearchClient();
   if (!client) {
     throw new Error("Elasticsearch client not available");
   }
+  const noteText = session.note ? extractTextFromNode(session.note) : "";
+  const missionText = session.mission ? extractTextFromNode(session.mission) : "";
   const searchableContent = [
     session.name,
-    session.note ? extractTextFromNode(session.note) : "",
-    session.mission ? extractTextFromNode(session.mission) : "",
+    noteText,
+    missionText,
     session.tags.map((t) => t.name).join(" ")
   ].join(" ");
   const document = {
@@ -1329,8 +1187,8 @@ async function indexSession(session) {
     templateId: session.templateId,
     templateName: session.template.templateName,
     name: session.name,
-    note: session.note,
-    mission: session.mission,
+    note: noteText,
+    mission: missionText,
     configId: session.configId,
     configurationName: session.configuration?.name,
     milestoneId: session.milestoneId,
@@ -1366,7 +1224,7 @@ async function syncSessionToElasticsearch(sessionId) {
     return false;
   }
   try {
-    const session = await prisma3.sessions.findUnique({
+    const session = await prisma.sessions.findUnique({
       where: { id: sessionId },
       include: {
         project: true,
@@ -1392,10 +1250,8 @@ async function syncSessionToElasticsearch(sessionId) {
 }
 
 // services/sharedStepSearch.ts
-var import_client4 = require("@prisma/client");
-var prisma4 = new import_client4.PrismaClient();
 async function buildSharedStepDocument(stepGroupId) {
-  const stepGroup = await prisma4.sharedStepGroup.findUnique({
+  const stepGroup = await prisma.sharedStepGroup.findUnique({
     where: { id: stepGroupId },
     include: {
       project: true,
@@ -1477,8 +1333,6 @@ async function syncSharedStepToElasticsearch(stepId) {
 }
 
 // services/issueSearch.ts
-var import_client5 = require("@prisma/client");
-var prisma5 = new import_client5.PrismaClient();
 function getProjectFromIssue(issue) {
   if (issue.project) {
     return issue.project;
@@ -1513,12 +1367,13 @@ async function indexIssue(issue) {
     console.warn(`Issue ${issue.id} (${issue.name}) has no linked project, skipping indexing`);
     return;
   }
+  const noteText = issue.note ? extractTextFromNode(issue.note) : "";
   const searchableContent = [
     issue.name,
     issue.title,
     issue.description || "",
     issue.externalId || "",
-    issue.note ? extractTextFromNode(issue.note) : "",
+    noteText,
     issue.integration?.name || ""
   ].join(" ");
   const document = {
@@ -1530,7 +1385,7 @@ async function indexIssue(issue) {
     title: issue.title,
     description: issue.description,
     externalId: issue.externalId,
-    note: issue.note,
+    note: noteText,
     url: issue.data?.url,
     issueSystem: issue.integration?.name || "Unknown",
     isDeleted: issue.isDeleted,
@@ -1554,7 +1409,7 @@ async function syncIssueToElasticsearch(issueId) {
     return false;
   }
   try {
-    const issue = await prisma5.issue.findUnique({
+    const issue = await prisma.issue.findUnique({
       where: { id: issueId },
       include: {
         createdBy: true,
@@ -1629,17 +1484,17 @@ async function syncIssueToElasticsearch(issueId) {
 }
 
 // services/milestoneSearch.ts
-var import_client6 = require("@prisma/client");
-var prisma6 = new import_client6.PrismaClient();
 async function indexMilestone(milestone) {
   const client = getElasticsearchClient();
   if (!client) {
     throw new Error("Elasticsearch client not available");
   }
+  const noteText = milestone.note ? extractTextFromNode(milestone.note) : "";
+  const docsText = milestone.docs ? extractTextFromNode(milestone.docs) : "";
   const searchableContent = [
     milestone.name,
-    milestone.note ? extractTextFromNode(milestone.note) : "",
-    milestone.docs ? extractTextFromNode(milestone.docs) : ""
+    noteText,
+    docsText
   ].join(" ");
   const document = {
     id: milestone.id,
@@ -1647,8 +1502,8 @@ async function indexMilestone(milestone) {
     projectName: milestone.project.name,
     projectIconUrl: milestone.project.iconUrl,
     name: milestone.name,
-    note: milestone.note,
-    docs: milestone.docs,
+    note: noteText,
+    docs: docsText,
     milestoneTypeId: milestone.milestoneTypesId,
     milestoneTypeName: milestone.milestoneType.name,
     milestoneTypeIcon: milestone.milestoneType.icon?.name,
@@ -1677,7 +1532,7 @@ async function syncMilestoneToElasticsearch(milestoneId) {
     return false;
   }
   try {
-    const milestone = await prisma6.milestones.findUnique({
+    const milestone = await prisma.milestones.findUnique({
       where: { id: milestoneId },
       include: {
         project: true,
@@ -1703,8 +1558,6 @@ async function syncMilestoneToElasticsearch(milestoneId) {
 }
 
 // services/projectSearch.ts
-var import_client7 = require("@prisma/client");
-var prisma7 = new import_client7.PrismaClient();
 async function indexProject(project) {
   const client = getElasticsearchClient();
   if (!client) {
@@ -1742,7 +1595,7 @@ async function syncProjectToElasticsearch(projectId) {
     return false;
   }
   try {
-    const project = await prisma7.projects.findUnique({
+    const project = await prisma.projects.findUnique({
       where: { id: projectId },
       include: {
         creator: true
@@ -1761,10 +1614,10 @@ async function syncProjectToElasticsearch(projectId) {
 }
 
 // lib/prisma.ts
-var prismaClient;
+var prismaClient2;
 var dbClient;
 function createPrismaClient(errorFormat) {
-  const baseClient = new import_client8.PrismaClient({ errorFormat });
+  const baseClient = new import_client2.PrismaClient({ errorFormat });
   const client = baseClient.$extends({
     query: {
       repositoryCases: {
@@ -1948,17 +1801,17 @@ function createPrismaClient(errorFormat) {
   return client;
 }
 if (process.env.NODE_ENV === "production") {
-  prismaClient = createPrismaClient("pretty");
-  dbClient = (0, import_runtime.enhance)(prismaClient);
+  prismaClient2 = createPrismaClient("pretty");
+  dbClient = (0, import_runtime.enhance)(prismaClient2);
 } else {
   if (!global.prisma) {
     global.prisma = createPrismaClient("colorless");
     global.db = (0, import_runtime.enhance)(global.prisma);
   }
-  prismaClient = global.prisma;
+  prismaClient2 = global.prisma;
   dbClient = global.db;
 }
-var prisma8 = prismaClient;
+var prisma2 = prismaClient2;
 
 // lib/integrations/adapters/BaseAdapter.ts
 var BaseAdapter = class {
@@ -3378,13 +3231,30 @@ var GitHubAdapter = class extends BaseAdapter {
     return this.mapGitHubIssue(response);
   }
   async getIssue(issueId) {
+    let owner = this.owner;
+    let repo = this.repo;
+    let issueNumber = issueId;
+    const repoIssueMatch = issueId.match(/^([^/]+)\/([^#]+)#(\d+)$/);
+    if (repoIssueMatch) {
+      owner = repoIssueMatch[1];
+      repo = repoIssueMatch[2];
+      issueNumber = repoIssueMatch[3];
+    } else if (issueId.startsWith("#")) {
+      issueNumber = issueId.substring(1);
+    }
+    if (!owner || !repo) {
+      throw new Error(
+        "GitHub repository not configured. Cannot fetch issue without owner/repo context."
+      );
+    }
     const response = await this.makeRequest(
-      this.buildUrl(`/repos/{owner}/{repo}/issues/${issueId}`)
+      `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}`
     );
     return this.mapGitHubIssue(response);
   }
   async searchIssues(options) {
     const searchQuery = [];
+    searchQuery.push("is:issue");
     if (this.owner && this.repo) {
       searchQuery.push(`repo:${this.owner}/${this.repo}`);
     } else if (options.projectId) {
@@ -3404,7 +3274,7 @@ var GitHubAdapter = class extends BaseAdapter {
       searchQuery.push(options.labels.map((l) => `label:"${l}"`).join(" "));
     }
     const params = new URLSearchParams({
-      q: searchQuery.join(" ") || "is:issue",
+      q: searchQuery.join(" "),
       per_page: (options.limit || 30).toString(),
       page: Math.floor(
         (options.offset || 0) / (options.limit || 30) + 1
@@ -3483,6 +3353,21 @@ var GitHubAdapter = class extends BaseAdapter {
     return "open";
   }
   mapGitHubIssue(githubIssue) {
+    let owner = this.owner;
+    let repo = this.repo;
+    if (githubIssue.repository_url) {
+      const match = githubIssue.repository_url.match(/\/repos\/([^/]+)\/([^/]+)$/);
+      if (match) {
+        owner = match[1];
+        repo = match[2];
+      }
+    } else if (githubIssue.html_url) {
+      const match = githubIssue.html_url.match(/github\.com\/([^/]+)\/([^/]+)\/issues/);
+      if (match) {
+        owner = match[1];
+        repo = match[2];
+      }
+    }
     return {
       id: githubIssue.number.toString(),
       key: `#${githubIssue.number}`,
@@ -3502,7 +3387,11 @@ var GitHubAdapter = class extends BaseAdapter {
         email: githubIssue.user.email
       } : void 0,
       labels: githubIssue.labels.map((label) => label.name),
-      customFields: {},
+      // Store repo context in customFields for sync support
+      customFields: {
+        _github_owner: owner,
+        _github_repo: repo
+      },
       createdAt: new Date(githubIssue.created_at),
       updatedAt: new Date(githubIssue.updated_at),
       url: githubIssue.html_url
@@ -4058,8 +3947,8 @@ var SimpleUrlAdapter = class extends BaseAdapter {
         { externalKey: { contains: query, mode: "insensitive" } }
       ];
     }
-    const total = await prisma8.issue.count({ where });
-    const dbIssues = await prisma8.issue.findMany({
+    const total = await prisma2.issue.count({ where });
+    const dbIssues = await prisma2.issue.findMany({
       where,
       take: limit,
       orderBy: { createdAt: "desc" },
@@ -4241,7 +4130,7 @@ var IntegrationManager = class _IntegrationManager {
     if (this.adapterCache.has(integrationId)) {
       return this.adapterCache.get(integrationId);
     }
-    const integration = await prisma8.integration.findUnique({
+    const integration = await prisma2.integration.findUnique({
       where: { id: parseInt(integrationId) },
       include: {
         userIntegrationAuths: {
@@ -4269,7 +4158,7 @@ var IntegrationManager = class _IntegrationManager {
     const authData = {
       type: this.mapAuthType(integration.authType)
     };
-    if (integration.authType === "API_KEY" && integration.credentials) {
+    if ((integration.authType === "API_KEY" || integration.authType === "PERSONAL_ACCESS_TOKEN") && integration.credentials) {
       let credentials = integration.credentials;
       if (typeof credentials === "object" && "encrypted" in credentials) {
         const decrypted = EncryptionService.decrypt(
@@ -4280,6 +4169,7 @@ var IntegrationManager = class _IntegrationManager {
       }
       if (credentials.email) authData.email = credentials.email;
       if (credentials.apiToken) authData.apiToken = credentials.apiToken;
+      if (credentials.personalAccessToken) authData.apiKey = credentials.personalAccessToken;
       if (integration.settings && typeof integration.settings === "object") {
         const settings = integration.settings;
         if (settings.baseUrl) authData.baseUrl = settings.baseUrl;
@@ -4398,6 +4288,7 @@ var SyncService = class {
    * Queue a sync job for an integration
    */
   async queueSync(userId, integrationId, options = {}) {
+    const syncQueue = getSyncQueue();
     if (!syncQueue) {
       console.error("Sync queue not initialized");
       return null;
@@ -4424,6 +4315,7 @@ var SyncService = class {
    * Queue a project-specific sync
    */
   async queueProjectSync(userId, integrationId, projectId, options = {}) {
+    const syncQueue = getSyncQueue();
     if (!syncQueue) {
       console.error("Sync queue not initialized");
       return null;
@@ -4442,6 +4334,7 @@ var SyncService = class {
    * Queue issue creation
    */
   async queueIssueCreate(userId, integrationId, issueData) {
+    const syncQueue = getSyncQueue();
     if (!syncQueue) {
       console.error("Sync queue not initialized");
       return null;
@@ -4465,6 +4358,7 @@ var SyncService = class {
    * Queue issue update
    */
   async queueIssueUpdate(userId, integrationId, issueId, updateData) {
+    const syncQueue = getSyncQueue();
     if (!syncQueue) {
       console.error("Sync queue not initialized");
       return null;
@@ -4483,6 +4377,7 @@ var SyncService = class {
    * Queue issue refresh (sync single issue from external system)
    */
   async queueIssueRefresh(userId, integrationId, issueId) {
+    const syncQueue = getSyncQueue();
     if (!syncQueue) {
       console.error("Sync queue not initialized");
       return null;
@@ -4511,7 +4406,7 @@ var SyncService = class {
     const errors = [];
     let syncedCount = 0;
     try {
-      const user = await prisma8.user.findUnique({
+      const user = await prisma.user.findUnique({
         where: { id: userId },
         include: {
           role: {
@@ -4524,7 +4419,7 @@ var SyncService = class {
       if (!user) {
         throw new Error("User not found");
       }
-      const userDb = (0, import_runtime2.enhance)(prisma8, { user }, { kinds: ["delegate"] });
+      const userDb = (0, import_runtime2.enhance)(prisma, { user }, { kinds: ["delegate"] });
       const integration = await userDb.integration.findUnique({
         where: { id: integrationId },
         include: {
@@ -4647,7 +4542,7 @@ var SyncService = class {
    */
   async performIssueRefresh(userId, integrationId, externalIssueId) {
     try {
-      const user = await prisma8.user.findUnique({
+      const user = await prisma.user.findUnique({
         where: { id: userId },
         include: {
           role: {
@@ -4660,7 +4555,7 @@ var SyncService = class {
       if (!user) {
         throw new Error("User not found");
       }
-      const userDb = (0, import_runtime2.enhance)(prisma8, { user }, { kinds: ["delegate"] });
+      const userDb = (0, import_runtime2.enhance)(prisma, { user }, { kinds: ["delegate"] });
       const integration = await userDb.integration.findUnique({
         where: { id: integrationId },
         include: {
@@ -4704,7 +4599,27 @@ var SyncService = class {
           "This integration does not support syncing individual issues"
         );
       }
-      const issueData = await adapter.syncIssue(externalIssueId);
+      let issueIdForSync = externalIssueId;
+      if (integration.provider === "GITHUB") {
+        const storedIssue = await userDb.issue.findFirst({
+          where: {
+            integrationId,
+            OR: [
+              { externalId: externalIssueId },
+              { externalKey: externalIssueId }
+            ]
+          }
+        });
+        if (storedIssue?.data) {
+          const data = storedIssue.data;
+          const customFields = data.customFields;
+          if (customFields?._github_owner && customFields?._github_repo) {
+            const issueNumber = externalIssueId.replace(/^#/, "");
+            issueIdForSync = `${customFields._github_owner}/${customFields._github_repo}#${issueNumber}`;
+          }
+        }
+      }
+      const issueData = await adapter.syncIssue(issueIdForSync);
       await issueCache.set(integrationId, issueData.id, issueData);
       await this.updateExistingIssue(userDb, integrationId, issueData);
       return { success: true };

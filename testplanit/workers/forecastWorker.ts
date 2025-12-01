@@ -7,7 +7,7 @@ import {
   updateTestRunForecast,
 } from "../services/forecastService";
 import { pathToFileURL } from "node:url";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../lib/prismaBase";
 
 // Define expected job data structures (optional but good practice)
 interface UpdateSingleCaseJobData {

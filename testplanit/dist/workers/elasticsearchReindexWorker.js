@@ -68,12 +68,18 @@ var valkey_default = valkeyConnection;
 // lib/queueNames.ts
 var ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
 
-// lib/prisma.ts
-var import_client8 = require("@prisma/client");
-var import_runtime = require("@zenstackhq/runtime");
-
-// services/repositoryCaseSync.ts
+// lib/prismaBase.ts
 var import_client = require("@prisma/client");
+var prismaClient;
+if (process.env.NODE_ENV === "production") {
+  prismaClient = new import_client.PrismaClient({ errorFormat: "pretty" });
+} else {
+  if (!global.prismaBase) {
+    global.prismaBase = new import_client.PrismaClient({ errorFormat: "colorless" });
+  }
+  prismaClient = global.prismaBase;
+}
+var prisma = prismaClient;
 
 // services/elasticsearchService.ts
 var import_elasticsearch = require("@elastic/elasticsearch");
@@ -228,12 +234,12 @@ var repositoryCaseMapping = {
 };
 async function getElasticsearchSettings() {
   try {
-    const { PrismaClient: PrismaClient9 } = await import("@prisma/client");
-    const prisma9 = new PrismaClient9();
-    const config = await prisma9.appConfig.findUnique({
+    const { PrismaClient: PrismaClient2 } = await import("@prisma/client");
+    const prisma2 = new PrismaClient2();
+    const config = await prisma2.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" }
     });
-    await prisma9.$disconnect();
+    await prisma2.$disconnect();
     return {
       numberOfReplicas: config?.value ? config.value : 0
     };
@@ -277,35 +283,6 @@ async function createRepositoryCaseIndex() {
 }
 
 // services/elasticsearchIndexing.ts
-async function indexRepositoryCase(caseData) {
-  const client = getElasticsearchClient();
-  if (!client) return false;
-  try {
-    const searchableContent = [
-      caseData.name,
-      caseData.className,
-      caseData.tags?.map((t) => t.name).join(" "),
-      caseData.steps?.map((s) => {
-        const stepContent = `${s.step} ${s.expectedResult}`;
-        return s.isSharedStep && s.sharedStepGroupName ? `${stepContent} ${s.sharedStepGroupName}` : stepContent;
-      }).join(" "),
-      caseData.customFields?.map((cf) => cf.value).join(" ")
-    ].filter(Boolean).join(" ");
-    await client.index({
-      index: REPOSITORY_CASE_INDEX,
-      id: caseData.id.toString(),
-      document: {
-        ...caseData,
-        searchableContent
-      }
-    });
-    console.log(`Indexed repository case ${caseData.id} in Elasticsearch`);
-    return true;
-  } catch (error) {
-    console.error(`Failed to index repository case ${caseData.id}:`, error);
-    return false;
-  }
-}
 async function bulkIndexRepositoryCases(cases) {
   const client = getElasticsearchClient();
   if (!client || cases.length === 0) return false;
@@ -350,27 +327,6 @@ async function bulkIndexRepositoryCases(cases) {
     return true;
   } catch (error) {
     console.error("Failed to bulk index repository cases:", error);
-    return false;
-  }
-}
-async function deleteRepositoryCase(caseId) {
-  const client = getElasticsearchClient();
-  if (!client) return false;
-  try {
-    await client.delete({
-      index: REPOSITORY_CASE_INDEX,
-      id: caseId.toString()
-    });
-    console.log(`Deleted repository case ${caseId} from Elasticsearch`);
-    return true;
-  } catch (error) {
-    if (error.statusCode === 404) {
-      console.log(
-        `Repository case ${caseId} not found in Elasticsearch (already deleted)`
-      );
-      return true;
-    }
-    console.error(`Failed to delete repository case ${caseId}:`, error);
     return false;
   }
 }
@@ -715,12 +671,12 @@ var ENTITY_MAPPINGS = {
 };
 async function getElasticsearchSettings2() {
   try {
-    const { PrismaClient: PrismaClient9 } = await import("@prisma/client");
-    const prisma9 = new PrismaClient9();
-    const config = await prisma9.appConfig.findUnique({
+    const { PrismaClient: PrismaClient2 } = await import("@prisma/client");
+    const prisma2 = new PrismaClient2();
+    const config = await prisma2.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" }
     });
-    await prisma9.$disconnect();
+    await prisma2.$disconnect();
     return {
       numberOfReplicas: config?.value ? config.value : 0
     };
@@ -878,7 +834,6 @@ function buildCustomFieldDocuments(fieldValues) {
 }
 
 // services/repositoryCaseSync.ts
-var prisma = new import_client.PrismaClient();
 function extractStepText(stepData) {
   if (!stepData) return "";
   try {
@@ -1045,18 +1000,6 @@ async function buildFolderPath(folderId) {
   }
   return "/" + path.join("/");
 }
-async function syncRepositoryCaseToElasticsearch(caseId) {
-  const doc = await buildRepositoryCaseDocument(caseId);
-  if (!doc) {
-    await deleteRepositoryCase(caseId);
-    return true;
-  }
-  if (doc.isArchived) {
-    await deleteRepositoryCase(caseId);
-    return true;
-  }
-  return await indexRepositoryCase(doc);
-}
 async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progressCallback) {
   try {
     await createRepositoryCaseIndex();
@@ -1132,336 +1075,9 @@ async function initializeElasticsearchIndexes() {
   }
 }
 
-// services/testRunSearch.ts
-var import_client2 = require("@prisma/client");
-var prisma2 = new import_client2.PrismaClient();
-async function indexTestRun(testRun) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    throw new Error("Elasticsearch client not available");
-  }
-  const searchableContent = [
-    testRun.name,
-    testRun.note ? extractTextFromNode(testRun.note) : "",
-    testRun.docs ? extractTextFromNode(testRun.docs) : "",
-    testRun.tags.map((t) => t.name).join(" ")
-  ].join(" ");
-  const document = {
-    id: testRun.id,
-    projectId: testRun.projectId,
-    projectName: testRun.project.name,
-    name: testRun.name,
-    note: testRun.note,
-    docs: testRun.docs,
-    configId: testRun.configId,
-    configurationName: testRun.configuration?.name,
-    milestoneId: testRun.milestoneId,
-    milestoneName: testRun.milestone?.name,
-    stateId: testRun.stateId,
-    stateName: testRun.state.name,
-    forecastManual: testRun.forecastManual,
-    forecastAutomated: testRun.forecastAutomated,
-    elapsed: testRun.elapsed,
-    isCompleted: testRun.isCompleted,
-    isDeleted: testRun.isDeleted,
-    completedAt: testRun.completedAt,
-    testRunType: testRun.testRunType,
-    createdAt: testRun.createdAt,
-    createdById: testRun.createdById,
-    createdByName: testRun.createdBy.name,
-    tags: testRun.tags.map((tag) => ({ id: tag.id, name: tag.name })),
-    searchableContent
-  };
-  await client.index({
-    index: ENTITY_INDICES["test_run" /* TEST_RUN */],
-    id: testRun.id.toString(),
-    document,
-    refresh: true
-  });
-}
-async function syncTestRunToElasticsearch(testRunId) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    console.warn("Elasticsearch client not available");
-    return false;
-  }
-  try {
-    const testRun = await prisma2.testRuns.findUnique({
-      where: { id: testRunId },
-      include: {
-        project: true,
-        createdBy: true,
-        state: true,
-        configuration: true,
-        milestone: true,
-        tags: true
-      }
-    });
-    if (!testRun) {
-      console.warn(`Test run ${testRunId} not found`);
-      return false;
-    }
-    await indexTestRun(testRun);
-    return true;
-  } catch (error) {
-    console.error(`Failed to sync test run ${testRunId}:`, error);
-    return false;
-  }
-}
-async function syncProjectTestRunsToElasticsearch(projectId, db) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    console.warn("Elasticsearch client not available");
-    return;
-  }
-  console.log(`Starting test run sync for project ${projectId}`);
-  const testRuns = await db.testRuns.findMany({
-    where: {
-      projectId
-      // Include deleted items (filtering happens at search time based on admin permissions)
-    },
-    include: {
-      project: true,
-      createdBy: true,
-      state: true,
-      configuration: true,
-      milestone: true,
-      tags: true
-    }
-  });
-  if (testRuns.length === 0) {
-    console.log("No test runs to index");
-    return;
-  }
-  const bulkBody = [];
-  for (const testRun of testRuns) {
-    const searchableContent = [
-      testRun.name,
-      testRun.note ? extractTextFromNode(testRun.note) : "",
-      testRun.docs ? extractTextFromNode(testRun.docs) : "",
-      testRun.tags.map((t) => t.name).join(" ")
-    ].join(" ");
-    bulkBody.push({
-      index: {
-        _index: ENTITY_INDICES["test_run" /* TEST_RUN */],
-        _id: testRun.id.toString()
-      }
-    });
-    bulkBody.push({
-      id: testRun.id,
-      projectId: testRun.projectId,
-      projectName: testRun.project.name,
-      name: testRun.name,
-      note: testRun.note,
-      docs: testRun.docs,
-      configId: testRun.configId,
-      configurationName: testRun.configuration?.name,
-      milestoneId: testRun.milestoneId,
-      milestoneName: testRun.milestone?.name,
-      stateId: testRun.stateId,
-      stateName: testRun.state.name,
-      forecastManual: testRun.forecastManual,
-      forecastAutomated: testRun.forecastAutomated,
-      elapsed: testRun.elapsed,
-      isCompleted: testRun.isCompleted,
-      isDeleted: testRun.isDeleted,
-      completedAt: testRun.completedAt,
-      testRunType: testRun.testRunType,
-      createdAt: testRun.createdAt,
-      createdById: testRun.createdById,
-      createdByName: testRun.createdBy.name,
-      tags: testRun.tags.map((tag) => ({ id: tag.id, name: tag.name })),
-      searchableContent
-    });
-  }
-  try {
-    const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
-    if (bulkResponse.errors) {
-      const errors = bulkResponse.items.filter(
-        (item) => item.index?.error
-      );
-      console.error("Bulk indexing errors:", errors);
-    } else {
-      console.log(`Successfully indexed ${testRuns.length} test runs`);
-    }
-  } catch (error) {
-    console.error("Failed to bulk index test runs:", error);
-    throw error;
-  }
-}
-
-// services/sessionSearch.ts
-var import_client3 = require("@prisma/client");
-var prisma3 = new import_client3.PrismaClient();
-async function indexSession(session) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    throw new Error("Elasticsearch client not available");
-  }
-  const searchableContent = [
-    session.name,
-    session.note ? extractTextFromNode(session.note) : "",
-    session.mission ? extractTextFromNode(session.mission) : "",
-    session.tags.map((t) => t.name).join(" ")
-  ].join(" ");
-  const document = {
-    id: session.id,
-    projectId: session.projectId,
-    projectName: session.project.name,
-    templateId: session.templateId,
-    templateName: session.template.templateName,
-    name: session.name,
-    note: session.note,
-    mission: session.mission,
-    configId: session.configId,
-    configurationName: session.configuration?.name,
-    milestoneId: session.milestoneId,
-    milestoneName: session.milestone?.name,
-    stateId: session.stateId,
-    stateName: session.state.name,
-    assignedToId: session.assignedToId,
-    assignedToName: session.assignedTo?.name,
-    estimate: session.estimate,
-    forecastManual: session.forecastManual,
-    forecastAutomated: session.forecastAutomated,
-    elapsed: session.elapsed,
-    isCompleted: session.isCompleted,
-    isDeleted: session.isDeleted,
-    completedAt: session.completedAt,
-    createdAt: session.createdAt,
-    createdById: session.createdById,
-    createdByName: session.createdBy.name,
-    tags: session.tags.map((tag) => ({ id: tag.id, name: tag.name })),
-    searchableContent
-  };
-  await client.index({
-    index: ENTITY_INDICES["session" /* SESSION */],
-    id: session.id.toString(),
-    document,
-    refresh: true
-  });
-}
-async function syncSessionToElasticsearch(sessionId) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    console.warn("Elasticsearch client not available");
-    return false;
-  }
-  try {
-    const session = await prisma3.sessions.findUnique({
-      where: { id: sessionId },
-      include: {
-        project: true,
-        createdBy: true,
-        assignedTo: true,
-        state: true,
-        template: true,
-        configuration: true,
-        milestone: true,
-        tags: true
-      }
-    });
-    if (!session) {
-      console.warn(`Session ${sessionId} not found`);
-      return false;
-    }
-    await indexSession(session);
-    return true;
-  } catch (error) {
-    console.error(`Failed to sync session ${sessionId}:`, error);
-    return false;
-  }
-}
-async function syncProjectSessionsToElasticsearch(projectId, db) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    console.warn("Elasticsearch client not available");
-    return;
-  }
-  const sessions = await db.sessions.findMany({
-    where: {
-      projectId
-      // Include deleted items (filtering happens at search time based on admin permissions)
-    },
-    include: {
-      project: true,
-      createdBy: true,
-      assignedTo: true,
-      state: true,
-      template: true,
-      configuration: true,
-      milestone: true,
-      tags: true
-    }
-  });
-  if (sessions.length === 0) {
-    return;
-  }
-  const bulkBody = [];
-  for (const session of sessions) {
-    const searchableContent = [
-      session.name,
-      session.note ? extractTextFromNode(session.note) : "",
-      session.mission ? extractTextFromNode(session.mission) : "",
-      session.tags.map((t) => t.name).join(" ")
-    ].join(" ");
-    bulkBody.push({
-      index: {
-        _index: ENTITY_INDICES["session" /* SESSION */],
-        _id: session.id.toString()
-      }
-    });
-    bulkBody.push({
-      id: session.id,
-      projectId: session.projectId,
-      projectName: session.project.name,
-      templateId: session.templateId,
-      templateName: session.template.templateName,
-      name: session.name,
-      note: session.note,
-      mission: session.mission,
-      configId: session.configId,
-      configurationName: session.configuration?.name,
-      milestoneId: session.milestoneId,
-      milestoneName: session.milestone?.name,
-      stateId: session.stateId,
-      stateName: session.state.name,
-      assignedToId: session.assignedToId,
-      assignedToName: session.assignedTo?.name,
-      estimate: session.estimate,
-      forecastManual: session.forecastManual,
-      forecastAutomated: session.forecastAutomated,
-      elapsed: session.elapsed,
-      isCompleted: session.isCompleted,
-      isDeleted: session.isDeleted,
-      completedAt: session.completedAt,
-      createdAt: session.createdAt,
-      createdById: session.createdById,
-      createdByName: session.createdBy.name,
-      tags: session.tags.map((tag) => ({ id: tag.id, name: tag.name })),
-      searchableContent
-    });
-  }
-  try {
-    const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
-    if (bulkResponse.errors) {
-      const errors = bulkResponse.items.filter(
-        (item) => item.index?.error
-      );
-      console.error("Bulk indexing errors:", errors);
-    } else {
-    }
-  } catch (error) {
-    console.error("Failed to bulk index sessions:", error);
-    throw error;
-  }
-}
-
 // services/sharedStepSearch.ts
-var import_client4 = require("@prisma/client");
-var prisma4 = new import_client4.PrismaClient();
 async function buildSharedStepDocument(stepGroupId) {
-  const stepGroup = await prisma4.sharedStepGroup.findUnique({
+  const stepGroup = await prisma.sharedStepGroup.findUnique({
     where: { id: stepGroupId },
     include: {
       project: true,
@@ -1536,15 +1152,10 @@ async function indexSharedStep(stepData) {
     return false;
   }
 }
-async function syncSharedStepToElasticsearch(stepId) {
-  const doc = await buildSharedStepDocument(stepId);
-  if (!doc) return false;
-  return await indexSharedStep(doc);
-}
 async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100) {
   try {
     await createEntityIndex("shared_step" /* SHARED_STEP */);
-    const totalSteps = await prisma4.sharedStepGroup.count({
+    const totalSteps = await prisma.sharedStepGroup.count({
       where: {
         projectId
         // Include deleted items (filtering happens at search time based on admin permissions)
@@ -1556,7 +1167,7 @@ async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100)
     let processed = 0;
     let hasMore = true;
     while (hasMore) {
-      const steps = await prisma4.sharedStepGroup.findMany({
+      const steps = await prisma.sharedStepGroup.findMany({
         where: {
           projectId
           // Include deleted items (filtering happens at search time based on admin permissions)
@@ -1591,9 +1202,207 @@ async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100)
   }
 }
 
+// services/testRunSearch.ts
+async function syncProjectTestRunsToElasticsearch(projectId, db) {
+  const client = getElasticsearchClient();
+  if (!client) {
+    console.warn("Elasticsearch client not available");
+    return;
+  }
+  console.log(`Starting test run sync for project ${projectId}`);
+  const testRuns = await db.testRuns.findMany({
+    where: {
+      projectId
+      // Include deleted items (filtering happens at search time based on admin permissions)
+    },
+    include: {
+      project: true,
+      createdBy: true,
+      state: true,
+      configuration: true,
+      milestone: true,
+      tags: true
+    }
+  });
+  if (testRuns.length === 0) {
+    console.log("No test runs to index");
+    return;
+  }
+  const bulkBody = [];
+  for (const testRun of testRuns) {
+    const noteText = testRun.note ? extractTextFromNode(testRun.note) : "";
+    const docsText = testRun.docs ? extractTextFromNode(testRun.docs) : "";
+    const searchableContent = [
+      testRun.name,
+      noteText,
+      docsText,
+      testRun.tags.map((t) => t.name).join(" ")
+    ].join(" ");
+    bulkBody.push({
+      index: {
+        _index: ENTITY_INDICES["test_run" /* TEST_RUN */],
+        _id: testRun.id.toString()
+      }
+    });
+    bulkBody.push({
+      id: testRun.id,
+      projectId: testRun.projectId,
+      projectName: testRun.project.name,
+      name: testRun.name,
+      note: noteText,
+      docs: docsText,
+      configId: testRun.configId,
+      configurationName: testRun.configuration?.name,
+      milestoneId: testRun.milestoneId,
+      milestoneName: testRun.milestone?.name,
+      stateId: testRun.stateId,
+      stateName: testRun.state.name,
+      forecastManual: testRun.forecastManual,
+      forecastAutomated: testRun.forecastAutomated,
+      elapsed: testRun.elapsed,
+      isCompleted: testRun.isCompleted,
+      isDeleted: testRun.isDeleted,
+      completedAt: testRun.completedAt,
+      testRunType: testRun.testRunType,
+      createdAt: testRun.createdAt,
+      createdById: testRun.createdById,
+      createdByName: testRun.createdBy.name,
+      tags: testRun.tags.map((tag) => ({ id: tag.id, name: tag.name })),
+      searchableContent
+    });
+  }
+  try {
+    const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
+    if (bulkResponse.errors) {
+      const errorItems = bulkResponse.items.filter(
+        (item) => item.index?.error
+      );
+      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      errorItems.slice(0, 10).forEach((item) => {
+        if (item.index?.error) {
+          console.error(`  Failed to index document ${item.index._id}:`);
+          console.error(`    Error type: ${item.index.error.type}`);
+          console.error(`    Error reason: ${item.index.error.reason}`);
+          if (item.index.error.caused_by) {
+            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+          }
+        }
+      });
+      if (errorItems.length > 10) {
+        console.error(`  ... and ${errorItems.length - 10} more errors`);
+      }
+    } else {
+      console.log(`Successfully indexed ${testRuns.length} test runs`);
+    }
+  } catch (error) {
+    console.error("Failed to bulk index test runs:", error);
+    throw error;
+  }
+}
+
+// services/sessionSearch.ts
+async function syncProjectSessionsToElasticsearch(projectId, db) {
+  const client = getElasticsearchClient();
+  if (!client) {
+    console.warn("Elasticsearch client not available");
+    return;
+  }
+  const sessions = await db.sessions.findMany({
+    where: {
+      projectId
+      // Include deleted items (filtering happens at search time based on admin permissions)
+    },
+    include: {
+      project: true,
+      createdBy: true,
+      assignedTo: true,
+      state: true,
+      template: true,
+      configuration: true,
+      milestone: true,
+      tags: true
+    }
+  });
+  if (sessions.length === 0) {
+    return;
+  }
+  const bulkBody = [];
+  for (const session of sessions) {
+    const noteText = session.note ? extractTextFromNode(session.note) : "";
+    const missionText = session.mission ? extractTextFromNode(session.mission) : "";
+    const searchableContent = [
+      session.name,
+      noteText,
+      missionText,
+      session.tags.map((t) => t.name).join(" ")
+    ].join(" ");
+    bulkBody.push({
+      index: {
+        _index: ENTITY_INDICES["session" /* SESSION */],
+        _id: session.id.toString()
+      }
+    });
+    bulkBody.push({
+      id: session.id,
+      projectId: session.projectId,
+      projectName: session.project.name,
+      templateId: session.templateId,
+      templateName: session.template.templateName,
+      name: session.name,
+      note: noteText,
+      mission: missionText,
+      configId: session.configId,
+      configurationName: session.configuration?.name,
+      milestoneId: session.milestoneId,
+      milestoneName: session.milestone?.name,
+      stateId: session.stateId,
+      stateName: session.state.name,
+      assignedToId: session.assignedToId,
+      assignedToName: session.assignedTo?.name,
+      estimate: session.estimate,
+      forecastManual: session.forecastManual,
+      forecastAutomated: session.forecastAutomated,
+      elapsed: session.elapsed,
+      isCompleted: session.isCompleted,
+      isDeleted: session.isDeleted,
+      completedAt: session.completedAt,
+      createdAt: session.createdAt,
+      createdById: session.createdById,
+      createdByName: session.createdBy.name,
+      tags: session.tags.map((tag) => ({ id: tag.id, name: tag.name })),
+      searchableContent
+    });
+  }
+  try {
+    const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
+    if (bulkResponse.errors) {
+      const errorItems = bulkResponse.items.filter(
+        (item) => item.index?.error
+      );
+      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      errorItems.slice(0, 10).forEach((item) => {
+        if (item.index?.error) {
+          console.error(`  Failed to index document ${item.index._id}:`);
+          console.error(`    Error type: ${item.index.error.type}`);
+          console.error(`    Error reason: ${item.index.error.reason}`);
+          if (item.index.error.caused_by) {
+            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+          }
+        }
+      });
+      if (errorItems.length > 10) {
+        console.error(`  ... and ${errorItems.length - 10} more errors`);
+      }
+    } else {
+      console.log(`Successfully indexed ${sessions.length} sessions`);
+    }
+  } catch (error) {
+    console.error("Failed to bulk index sessions:", error);
+    throw error;
+  }
+}
+
 // services/issueSearch.ts
-var import_client5 = require("@prisma/client");
-var prisma5 = new import_client5.PrismaClient();
 function getProjectFromIssue(issue) {
   if (issue.project) {
     return issue.project;
@@ -1617,130 +1426,6 @@ function getProjectFromIssue(issue) {
     return issue.testRunStepResults[0].testRunResult.testRun.project;
   }
   return null;
-}
-async function indexIssue(issue) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    throw new Error("Elasticsearch client not available");
-  }
-  const projectInfo = getProjectFromIssue(issue);
-  if (!projectInfo) {
-    console.warn(`Issue ${issue.id} (${issue.name}) has no linked project, skipping indexing`);
-    return;
-  }
-  const searchableContent = [
-    issue.name,
-    issue.title,
-    issue.description || "",
-    issue.externalId || "",
-    issue.note ? extractTextFromNode(issue.note) : "",
-    issue.integration?.name || ""
-  ].join(" ");
-  const document = {
-    id: issue.id,
-    projectId: projectInfo.id,
-    projectName: projectInfo.name,
-    projectIconUrl: projectInfo.iconUrl,
-    name: issue.name,
-    title: issue.title,
-    description: issue.description,
-    externalId: issue.externalId,
-    note: issue.note,
-    url: issue.data?.url,
-    issueSystem: issue.integration?.name || "Unknown",
-    isDeleted: issue.isDeleted,
-    createdAt: issue.createdAt,
-    createdById: issue.createdById,
-    createdByName: issue.createdBy.name,
-    createdByImage: issue.createdBy.image,
-    searchableContent
-  };
-  await client.index({
-    index: ENTITY_INDICES["issue" /* ISSUE */],
-    id: issue.id.toString(),
-    document,
-    refresh: true
-  });
-}
-async function syncIssueToElasticsearch(issueId) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    console.warn("Elasticsearch client not available");
-    return false;
-  }
-  try {
-    const issue = await prisma5.issue.findUnique({
-      where: { id: issueId },
-      include: {
-        createdBy: true,
-        integration: true,
-        // Include direct project relationship (preferred)
-        project: true,
-        // Fallback: Check all possible relationships to find project
-        repositoryCases: {
-          take: 1,
-          include: {
-            project: true
-          }
-        },
-        sessions: {
-          take: 1,
-          include: {
-            project: true
-          }
-        },
-        testRuns: {
-          take: 1,
-          include: {
-            project: true
-          }
-        },
-        sessionResults: {
-          take: 1,
-          include: {
-            session: {
-              include: {
-                project: true
-              }
-            }
-          }
-        },
-        testRunResults: {
-          take: 1,
-          include: {
-            testRun: {
-              include: {
-                project: true
-              }
-            }
-          }
-        },
-        testRunStepResults: {
-          take: 1,
-          include: {
-            testRunResult: {
-              include: {
-                testRun: {
-                  include: {
-                    project: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-    if (!issue) {
-      console.warn(`Issue ${issueId} not found`);
-      return false;
-    }
-    await indexIssue(issue);
-    return true;
-  } catch (error) {
-    console.error(`Failed to sync issue ${issueId}:`, error);
-    return false;
-  }
 }
 async function syncProjectIssuesToElasticsearch(projectId, db) {
   const client = getElasticsearchClient();
@@ -1835,12 +1520,13 @@ async function syncProjectIssuesToElasticsearch(projectId, db) {
       skippedCount++;
       continue;
     }
+    const noteText = issue.note ? extractTextFromNode(issue.note) : "";
     const searchableContent = [
       issue.name,
       issue.title,
       issue.description || "",
       issue.externalId || "",
-      issue.note ? extractTextFromNode(issue.note) : "",
+      noteText,
       issue.integration?.name || ""
     ].join(" ");
     bulkBody.push({
@@ -1858,7 +1544,7 @@ async function syncProjectIssuesToElasticsearch(projectId, db) {
       title: issue.title,
       description: issue.description,
       externalId: issue.externalId,
-      note: issue.note,
+      note: noteText,
       url: issue.data?.url,
       issueSystem: issue.integration?.name || "Unknown",
       isDeleted: issue.isDeleted,
@@ -1876,91 +1562,36 @@ async function syncProjectIssuesToElasticsearch(projectId, db) {
     return;
   }
   try {
-    const response = await client.bulk({ body: bulkBody, refresh: true });
-    if (response.errors) {
-      console.error("Bulk indexing errors:", response.errors);
+    const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
+    if (bulkResponse.errors) {
+      const errorItems = bulkResponse.items.filter(
+        (item) => item.index?.error
+      );
+      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      errorItems.slice(0, 10).forEach((item) => {
+        if (item.index?.error) {
+          console.error(`  Failed to index document ${item.index._id}:`);
+          console.error(`    Error type: ${item.index.error.type}`);
+          console.error(`    Error reason: ${item.index.error.reason}`);
+          if (item.index.error.caused_by) {
+            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+          }
+        }
+      });
+      if (errorItems.length > 10) {
+        console.error(`  ... and ${errorItems.length - 10} more errors`);
+      }
+    } else {
+      console.log(
+        `Successfully indexed ${bulkBody.length / 2} issues (${skippedCount} orphaned issues skipped)`
+      );
     }
-    console.log(
-      `Successfully indexed ${bulkBody.length / 2} issues (${skippedCount} orphaned issues skipped)`
-    );
   } catch (error) {
     console.error("Failed to index issues:", error);
   }
 }
 
 // services/milestoneSearch.ts
-var import_client6 = require("@prisma/client");
-var prisma6 = new import_client6.PrismaClient();
-async function indexMilestone(milestone) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    throw new Error("Elasticsearch client not available");
-  }
-  const searchableContent = [
-    milestone.name,
-    milestone.note ? extractTextFromNode(milestone.note) : "",
-    milestone.docs ? extractTextFromNode(milestone.docs) : ""
-  ].join(" ");
-  const document = {
-    id: milestone.id,
-    projectId: milestone.projectId,
-    projectName: milestone.project.name,
-    projectIconUrl: milestone.project.iconUrl,
-    name: milestone.name,
-    note: milestone.note,
-    docs: milestone.docs,
-    milestoneTypeId: milestone.milestoneTypesId,
-    milestoneTypeName: milestone.milestoneType.name,
-    milestoneTypeIcon: milestone.milestoneType.icon?.name,
-    parentId: milestone.parentId,
-    parentName: milestone.parent?.name,
-    isCompleted: milestone.isCompleted,
-    completedAt: milestone.completedAt,
-    isDeleted: milestone.isDeleted,
-    createdAt: milestone.createdAt,
-    createdById: milestone.createdBy,
-    createdByName: milestone.creator.name,
-    createdByImage: milestone.creator.image,
-    searchableContent
-  };
-  await client.index({
-    index: ENTITY_INDICES["milestone" /* MILESTONE */],
-    id: milestone.id.toString(),
-    document,
-    refresh: true
-  });
-}
-async function syncMilestoneToElasticsearch(milestoneId) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    console.warn("Elasticsearch client not available");
-    return false;
-  }
-  try {
-    const milestone = await prisma6.milestones.findUnique({
-      where: { id: milestoneId },
-      include: {
-        project: true,
-        creator: true,
-        milestoneType: {
-          include: {
-            icon: true
-          }
-        },
-        parent: true
-      }
-    });
-    if (!milestone) {
-      console.warn(`Milestone ${milestoneId} not found`);
-      return false;
-    }
-    await indexMilestone(milestone);
-    return true;
-  } catch (error) {
-    console.error(`Failed to sync milestone ${milestoneId}:`, error);
-    return false;
-  }
-}
 async function syncProjectMilestonesToElasticsearch(projectId, db) {
   const client = getElasticsearchClient();
   if (!client) {
@@ -1990,10 +1621,12 @@ async function syncProjectMilestonesToElasticsearch(projectId, db) {
   }
   const bulkBody = [];
   for (const milestone of milestones) {
+    const noteText = milestone.note ? extractTextFromNode(milestone.note) : "";
+    const docsText = milestone.docs ? extractTextFromNode(milestone.docs) : "";
     const searchableContent = [
       milestone.name,
-      milestone.note ? extractTextFromNode(milestone.note) : "",
-      milestone.docs ? extractTextFromNode(milestone.docs) : ""
+      noteText,
+      docsText
     ].join(" ");
     bulkBody.push({
       index: {
@@ -2007,8 +1640,8 @@ async function syncProjectMilestonesToElasticsearch(projectId, db) {
       projectName: milestone.project.name,
       projectIconUrl: milestone.project.iconUrl,
       name: milestone.name,
-      note: milestone.note,
-      docs: milestone.docs,
+      note: noteText,
+      docs: docsText,
       milestoneTypeId: milestone.milestoneTypesId,
       milestoneTypeName: milestone.milestoneType.name,
       milestoneTypeIcon: milestone.milestoneType.icon?.name,
@@ -2025,73 +1658,34 @@ async function syncProjectMilestonesToElasticsearch(projectId, db) {
     });
   }
   try {
-    const response = await client.bulk({ body: bulkBody, refresh: true });
-    if (response.errors) {
-      console.error("Bulk indexing errors:", response.errors);
+    const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
+    if (bulkResponse.errors) {
+      const errorItems = bulkResponse.items.filter(
+        (item) => item.index?.error
+      );
+      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      errorItems.slice(0, 10).forEach((item) => {
+        if (item.index?.error) {
+          console.error(`  Failed to index document ${item.index._id}:`);
+          console.error(`    Error type: ${item.index.error.type}`);
+          console.error(`    Error reason: ${item.index.error.reason}`);
+          if (item.index.error.caused_by) {
+            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+          }
+        }
+      });
+      if (errorItems.length > 10) {
+        console.error(`  ... and ${errorItems.length - 10} more errors`);
+      }
+    } else {
+      console.log(`Successfully indexed ${milestones.length} milestones`);
     }
-    console.log(`Successfully indexed ${milestones.length} milestones`);
   } catch (error) {
     console.error("Failed to index milestones:", error);
   }
 }
 
 // services/projectSearch.ts
-var import_client7 = require("@prisma/client");
-var prisma7 = new import_client7.PrismaClient();
-async function indexProject(project) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    throw new Error("Elasticsearch client not available");
-  }
-  const searchableContent = [
-    project.name,
-    project.note ? extractTextFromNode(project.note) : "",
-    project.docs ? extractTextFromNode(project.docs) : ""
-  ].join(" ");
-  const document = {
-    id: project.id,
-    name: project.name,
-    iconUrl: project.iconUrl,
-    note: project.note,
-    docs: project.docs,
-    isDeleted: project.isDeleted,
-    createdAt: project.createdAt,
-    createdById: project.createdBy,
-    createdByName: project.creator.name,
-    createdByImage: project.creator.image,
-    searchableContent
-  };
-  await client.index({
-    index: ENTITY_INDICES["project" /* PROJECT */],
-    id: project.id.toString(),
-    document,
-    refresh: true
-  });
-}
-async function syncProjectToElasticsearch(projectId) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    console.warn("Elasticsearch client not available");
-    return false;
-  }
-  try {
-    const project = await prisma7.projects.findUnique({
-      where: { id: projectId },
-      include: {
-        creator: true
-      }
-    });
-    if (!project) {
-      console.warn(`Project ${projectId} not found`);
-      return false;
-    }
-    await indexProject(project);
-    return true;
-  } catch (error) {
-    console.error(`Failed to sync project ${projectId}:`, error);
-    return false;
-  }
-}
 async function syncAllProjectsToElasticsearch() {
   const client = getElasticsearchClient();
   if (!client) {
@@ -2099,7 +1693,7 @@ async function syncAllProjectsToElasticsearch() {
     return;
   }
   console.log("Starting project sync");
-  const projects = await prisma7.projects.findMany({
+  const projects = await prisma.projects.findMany({
     where: {
       // Include deleted items (filtering happens at search time based on admin permissions)
     },
@@ -2149,206 +1743,6 @@ async function syncAllProjectsToElasticsearch() {
   }
 }
 
-// lib/prisma.ts
-var prismaClient;
-var dbClient;
-function createPrismaClient(errorFormat) {
-  const baseClient = new import_client8.PrismaClient({ errorFormat });
-  const client = baseClient.$extends({
-    query: {
-      repositoryCases: {
-        async create({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncRepositoryCaseToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync repository case ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        },
-        async update({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncRepositoryCaseToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync repository case ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        },
-        async upsert({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncRepositoryCaseToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync repository case ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        },
-        async delete({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncRepositoryCaseToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync repository case ${result.id} to Elasticsearch after delete:`, error);
-            });
-          }
-          return result;
-        }
-      },
-      testRuns: {
-        async create({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncTestRunToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync test run ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        },
-        async update({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncTestRunToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync test run ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        }
-      },
-      sessions: {
-        async create({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncSessionToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync session ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        },
-        async update({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncSessionToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync session ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        },
-        async upsert({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncSessionToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync session ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        },
-        async delete({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncSessionToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync session ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        }
-      },
-      sharedStepGroups: {
-        async create({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncSharedStepToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync shared step ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        },
-        async update({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncSharedStepToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync shared step ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        }
-      },
-      issues: {
-        async create({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncIssueToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync issue ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        },
-        async update({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncIssueToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync issue ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        }
-      },
-      milestones: {
-        async create({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncMilestoneToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync milestone ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        },
-        async update({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncMilestoneToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync milestone ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        }
-      },
-      projects: {
-        async create({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncProjectToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync project ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        },
-        async update({ args, query }) {
-          const result = await query(args);
-          if (result?.id) {
-            syncProjectToElasticsearch(result.id).catch((error) => {
-              console.error(`Failed to sync project ${result.id} to Elasticsearch:`, error);
-            });
-          }
-          return result;
-        }
-      }
-    }
-  });
-  return client;
-}
-if (process.env.NODE_ENV === "production") {
-  prismaClient = createPrismaClient("pretty");
-  dbClient = (0, import_runtime.enhance)(prismaClient);
-} else {
-  if (!global.prisma) {
-    global.prisma = createPrismaClient("colorless");
-    global.db = (0, import_runtime.enhance)(global.prisma);
-  }
-  prismaClient = global.prisma;
-  dbClient = global.db;
-}
-var prisma8 = prismaClient;
-
 // workers/elasticsearchReindexWorker.ts
 var import_node_url = require("node:url");
 var import_meta = {};
@@ -2367,9 +1761,9 @@ var processor = async (job) => {
       await job.log("Initializing Elasticsearch indexes...");
       await initializeElasticsearchIndexes();
     }
-    const projects = projectId ? await prisma8.projects.findMany({
+    const projects = projectId ? await prisma.projects.findMany({
       where: { id: projectId, isDeleted: false }
-    }) : await prisma8.projects.findMany({
+    }) : await prisma.projects.findMany({
       where: { isDeleted: false }
     });
     await job.updateProgress(10);
@@ -2386,32 +1780,32 @@ var processor = async (job) => {
     const totalCounts = {};
     for (const project of projects) {
       if (entityType === "all" || entityType === "repositoryCases") {
-        totalCounts.repositoryCases = (totalCounts.repositoryCases || 0) + await prisma8.repositoryCases.count({
+        totalCounts.repositoryCases = (totalCounts.repositoryCases || 0) + await prisma.repositoryCases.count({
           where: { projectId: project.id, isDeleted: false, isArchived: false }
         });
       }
       if (entityType === "all" || entityType === "sharedSteps") {
-        totalCounts.sharedSteps = (totalCounts.sharedSteps || 0) + await prisma8.sharedStepGroup.count({
+        totalCounts.sharedSteps = (totalCounts.sharedSteps || 0) + await prisma.sharedStepGroup.count({
           where: { projectId: project.id, isDeleted: false }
         });
       }
       if (entityType === "all" || entityType === "testRuns") {
-        totalCounts.testRuns = (totalCounts.testRuns || 0) + await prisma8.testRuns.count({
+        totalCounts.testRuns = (totalCounts.testRuns || 0) + await prisma.testRuns.count({
           where: { projectId: project.id, isDeleted: false }
         });
       }
       if (entityType === "all" || entityType === "sessions") {
-        totalCounts.sessions = (totalCounts.sessions || 0) + await prisma8.sessions.count({
+        totalCounts.sessions = (totalCounts.sessions || 0) + await prisma.sessions.count({
           where: { projectId: project.id, isDeleted: false }
         });
       }
       if (entityType === "all" || entityType === "issues") {
-        totalCounts.issues = (totalCounts.issues || 0) + await prisma8.issue.count({
+        totalCounts.issues = (totalCounts.issues || 0) + await prisma.issue.count({
           where: { isDeleted: false, testRuns: { some: { projectId: project.id } } }
         });
       }
       if (entityType === "all" || entityType === "milestones") {
-        totalCounts.milestones = (totalCounts.milestones || 0) + await prisma8.milestones.count({
+        totalCounts.milestones = (totalCounts.milestones || 0) + await prisma.milestones.count({
           where: { projectId: project.id, isDeleted: false }
         });
       }
@@ -2424,7 +1818,7 @@ var processor = async (job) => {
       await job.updateProgress(currentProgress);
       await job.log("Indexing projects...");
       await syncAllProjectsToElasticsearch();
-      results.projects = await prisma8.projects.count({
+      results.projects = await prisma.projects.count({
         where: { isDeleted: false }
       });
     }
@@ -2433,7 +1827,7 @@ var processor = async (job) => {
       await job.updateProgress(currentProgress);
       await job.log(`Processing project: ${project.name}`);
       if (entityType === "all" || entityType === "repositoryCases") {
-        const count = await prisma8.repositoryCases.count({
+        const count = await prisma.repositoryCases.count({
           where: {
             projectId: project.id,
             isDeleted: false,
@@ -2454,7 +1848,7 @@ var processor = async (job) => {
         }
       }
       if (entityType === "all" || entityType === "sharedSteps") {
-        const count = await prisma8.sharedStepGroup.count({
+        const count = await prisma.sharedStepGroup.count({
           where: {
             projectId: project.id,
             isDeleted: false
@@ -2467,7 +1861,7 @@ var processor = async (job) => {
         }
       }
       if (entityType === "all" || entityType === "testRuns") {
-        const count = await prisma8.testRuns.count({
+        const count = await prisma.testRuns.count({
           where: {
             projectId: project.id,
             isDeleted: false
@@ -2475,12 +1869,12 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} test runs for project ${project.name}`);
-          await syncProjectTestRunsToElasticsearch(project.id, prisma8);
+          await syncProjectTestRunsToElasticsearch(project.id, prisma);
           results.testRuns += count;
         }
       }
       if (entityType === "all" || entityType === "sessions") {
-        const count = await prisma8.sessions.count({
+        const count = await prisma.sessions.count({
           where: {
             projectId: project.id,
             isDeleted: false
@@ -2488,12 +1882,12 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} sessions for project ${project.name}`);
-          await syncProjectSessionsToElasticsearch(project.id, prisma8);
+          await syncProjectSessionsToElasticsearch(project.id, prisma);
           results.sessions += count;
         }
       }
       if (entityType === "all" || entityType === "issues") {
-        const count = await prisma8.issue.count({
+        const count = await prisma.issue.count({
           where: {
             isDeleted: false,
             testRuns: {
@@ -2505,12 +1899,12 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} issues for project ${project.name}`);
-          await syncProjectIssuesToElasticsearch(project.id, prisma8);
+          await syncProjectIssuesToElasticsearch(project.id, prisma);
           results.issues += count;
         }
       }
       if (entityType === "all" || entityType === "milestones") {
-        const count = await prisma8.milestones.count({
+        const count = await prisma.milestones.count({
           where: {
             projectId: project.id,
             isDeleted: false
@@ -2518,7 +1912,7 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} milestones for project ${project.name}`);
-          await syncProjectMilestonesToElasticsearch(project.id, prisma8);
+          await syncProjectMilestonesToElasticsearch(project.id, prisma);
           results.milestones += count;
         }
       }
