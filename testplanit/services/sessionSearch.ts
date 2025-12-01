@@ -41,10 +41,14 @@ export async function indexSession(session: SessionForIndexing): Promise<void> {
     throw new Error("Elasticsearch client not available");
   }
 
+  // Extract text from TipTap JSON for note and mission fields
+  const noteText = session.note ? extractTextFromNode(session.note) : "";
+  const missionText = session.mission ? extractTextFromNode(session.mission) : "";
+
   const searchableContent = [
     session.name,
-    session.note ? extractTextFromNode(session.note) : "",
-    session.mission ? extractTextFromNode(session.mission) : "",
+    noteText,
+    missionText,
     session.tags.map((t) => t.name).join(" "),
   ].join(" ");
 
@@ -56,8 +60,8 @@ export async function indexSession(session: SessionForIndexing): Promise<void> {
     templateId: session.templateId,
     templateName: session.template.templateName,
     name: session.name,
-    note: session.note,
-    mission: session.mission,
+    note: noteText,
+    mission: missionText,
     configId: session.configId,
     configurationName: session.configuration?.name,
     milestoneId: session.milestoneId,
@@ -189,10 +193,14 @@ export async function syncProjectSessionsToElasticsearch(
 
   const bulkBody = [];
   for (const session of sessions) {
+    // Extract text from TipTap JSON for note and mission fields
+    const noteText = session.note ? extractTextFromNode(session.note) : "";
+    const missionText = session.mission ? extractTextFromNode(session.mission) : "";
+
     const searchableContent = [
       session.name,
-      session.note ? extractTextFromNode(session.note) : "",
-      session.mission ? extractTextFromNode(session.mission) : "",
+      noteText,
+      missionText,
       session.tags.map((t: any) => t.name).join(" "),
     ].join(" ");
 
@@ -211,8 +219,8 @@ export async function syncProjectSessionsToElasticsearch(
       templateId: session.templateId,
       templateName: session.template.templateName,
       name: session.name,
-      note: session.note,
-      mission: session.mission,
+      note: noteText,
+      mission: missionText,
       configId: session.configId,
       configurationName: session.configuration?.name,
       milestoneId: session.milestoneId,
@@ -240,11 +248,26 @@ export async function syncProjectSessionsToElasticsearch(
     const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
 
     if (bulkResponse.errors) {
-      const errors = bulkResponse.items.filter(
+      const errorItems = bulkResponse.items.filter(
         (item: any) => item.index?.error
       );
-      console.error("Bulk indexing errors:", errors);
+      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      // Log detailed error information
+      errorItems.slice(0, 10).forEach((item: any) => {
+        if (item.index?.error) {
+          console.error(`  Failed to index document ${item.index._id}:`);
+          console.error(`    Error type: ${item.index.error.type}`);
+          console.error(`    Error reason: ${item.index.error.reason}`);
+          if (item.index.error.caused_by) {
+            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+          }
+        }
+      });
+      if (errorItems.length > 10) {
+        console.error(`  ... and ${errorItems.length - 10} more errors`);
+      }
     } else {
+      console.log(`Successfully indexed ${sessions.length} sessions`);
     }
   } catch (error) {
     console.error("Failed to bulk index sessions:", error);

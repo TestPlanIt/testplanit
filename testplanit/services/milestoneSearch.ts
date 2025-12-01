@@ -28,10 +28,14 @@ export async function indexMilestone(milestone: MilestoneForIndexing): Promise<v
     throw new Error("Elasticsearch client not available");
   }
 
+  // Extract text from TipTap JSON for note and docs fields
+  const noteText = milestone.note ? extractTextFromNode(milestone.note) : "";
+  const docsText = milestone.docs ? extractTextFromNode(milestone.docs) : "";
+
   const searchableContent = [
     milestone.name,
-    milestone.note ? extractTextFromNode(milestone.note) : "",
-    milestone.docs ? extractTextFromNode(milestone.docs) : "",
+    noteText,
+    docsText,
   ].join(" ");
 
 
@@ -41,8 +45,8 @@ export async function indexMilestone(milestone: MilestoneForIndexing): Promise<v
     projectName: milestone.project.name,
     projectIconUrl: milestone.project.iconUrl,
     name: milestone.name,
-    note: milestone.note,
-    docs: milestone.docs,
+    note: noteText,
+    docs: docsText,
     milestoneTypeId: milestone.milestoneTypesId,
     milestoneTypeName: milestone.milestoneType.name,
     milestoneTypeIcon: milestone.milestoneType.icon?.name,
@@ -169,10 +173,14 @@ export async function syncProjectMilestonesToElasticsearch(
 
   const bulkBody = [];
   for (const milestone of milestones) {
+    // Extract text from TipTap JSON for note and docs fields
+    const noteText = milestone.note ? extractTextFromNode(milestone.note) : "";
+    const docsText = milestone.docs ? extractTextFromNode(milestone.docs) : "";
+
     const searchableContent = [
       milestone.name,
-      milestone.note ? extractTextFromNode(milestone.note) : "",
-      milestone.docs ? extractTextFromNode(milestone.docs) : "",
+      noteText,
+      docsText,
     ].join(" ");
 
 
@@ -189,8 +197,8 @@ export async function syncProjectMilestonesToElasticsearch(
       projectName: milestone.project.name,
       projectIconUrl: milestone.project.iconUrl,
       name: milestone.name,
-      note: milestone.note,
-      docs: milestone.docs,
+      note: noteText,
+      docs: docsText,
       milestoneTypeId: milestone.milestoneTypesId,
       milestoneTypeName: milestone.milestoneType.name,
       milestoneTypeIcon: milestone.milestoneType.icon?.name,
@@ -208,11 +216,29 @@ export async function syncProjectMilestonesToElasticsearch(
   }
 
   try {
-    const response = await client.bulk({ body: bulkBody, refresh: true });
-    if (response.errors) {
-      console.error("Bulk indexing errors:", response.errors);
+    const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
+    if (bulkResponse.errors) {
+      const errorItems = bulkResponse.items.filter(
+        (item: any) => item.index?.error
+      );
+      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      // Log detailed error information
+      errorItems.slice(0, 10).forEach((item: any) => {
+        if (item.index?.error) {
+          console.error(`  Failed to index document ${item.index._id}:`);
+          console.error(`    Error type: ${item.index.error.type}`);
+          console.error(`    Error reason: ${item.index.error.reason}`);
+          if (item.index.error.caused_by) {
+            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+          }
+        }
+      });
+      if (errorItems.length > 10) {
+        console.error(`  ... and ${errorItems.length - 10} more errors`);
+      }
+    } else {
+      console.log(`Successfully indexed ${milestones.length} milestones`);
     }
-    console.log(`Successfully indexed ${milestones.length} milestones`);
   } catch (error) {
     console.error("Failed to index milestones:", error);
   }
