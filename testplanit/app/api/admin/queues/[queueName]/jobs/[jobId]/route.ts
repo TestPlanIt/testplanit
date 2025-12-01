@@ -8,12 +8,12 @@ import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
 function getQueueByName(queueName: string): Queue | null {
   const allQueues = getAllQueues();
   const queueMap: Record<string, Queue | null> = {
-    'forecast-updates': allQueues.forecastQueue,
-    'notifications': allQueues.notificationQueue,
-    'emails': allQueues.emailQueue,
-    'issue-sync': allQueues.syncQueue,
-    'testmo-imports': allQueues.testmoImportQueue,
-    'elasticsearch-reindex': allQueues.elasticsearchReindexQueue
+    "forecast-updates": allQueues.forecastQueue,
+    notifications: allQueues.notificationQueue,
+    emails: allQueues.emailQueue,
+    "issue-sync": allQueues.syncQueue,
+    "testmo-imports": allQueues.testmoImportQueue,
+    "elasticsearch-reindex": allQueues.elasticsearchReindexQueue,
   };
   return queueMap[queueName] ?? null;
 }
@@ -22,13 +22,21 @@ function getQueueByName(queueName: string): Queue | null {
  * Check if job belongs to the current tenant
  * In single-tenant mode, always returns true
  * In multi-tenant mode, checks job.data.tenantId matches current instance
+ * @throws Error if in multi-tenant mode but no tenant ID is configured
  */
 function jobBelongsToCurrentTenant(job: any): boolean {
   const multiTenant = isMultiTenantMode();
   const currentTenantId = getCurrentTenantId();
 
-  if (!multiTenant || !currentTenantId) {
-    return true; // Single-tenant mode or no tenant configured
+  if (!multiTenant) {
+    return true; // Single-tenant mode
+  }
+
+  // In multi-tenant mode, tenant ID must be configured
+  if (!currentTenantId) {
+    throw new Error(
+      "Multi-tenant mode enabled but INSTANCE_TENANT_ID not configured"
+    );
   }
 
   return job.data?.tenantId === currentTenantId;
@@ -45,10 +53,10 @@ async function removeJob(
   let repeatKey: string | undefined;
 
   // Check if this is a repeatable job (ID starts with "repeat:")
-  if (jobId && jobId.startsWith('repeat:')) {
+  if (jobId && jobId.startsWith("repeat:")) {
     isRepeatable = true;
     // Extract the repeat key from the job ID format: repeat:{key}:{timestamp}
-    const parts = jobId.split(':');
+    const parts = jobId.split(":");
     if (parts.length >= 2) {
       repeatKey = parts[1];
     }
@@ -56,9 +64,11 @@ async function removeJob(
 
   // Check if job is currently locked (active)
   const state = await job.getState();
-  if (state === 'active' && !force) {
-    const jobType = isRepeatable ? 'active scheduled' : 'active';
-    throw new Error(`Cannot remove ${jobType} job. The job is currently being processed by a worker. Please wait for it to complete or use force removal.`);
+  if (state === "active" && !force) {
+    const jobType = isRepeatable ? "active scheduled" : "active";
+    throw new Error(
+      `Cannot remove ${jobType} job. The job is currently being processed by a worker. Please wait for it to complete or use force removal.`
+    );
   }
 
   // For repeatable jobs, remove the schedule first
@@ -66,14 +76,14 @@ async function removeJob(
     try {
       // Get all repeatable jobs to find the one with matching key
       const repeatableJobs = await queue.getRepeatableJobs();
-      const repeatableJob = repeatableJobs.find(rj => rj.key === repeatKey);
+      const repeatableJob = repeatableJobs.find((rj) => rj.key === repeatKey);
 
       if (repeatableJob) {
         // Remove the repeatable schedule (prevents future jobs)
         await queue.removeRepeatableByKey(repeatKey);
       }
     } catch (error: any) {
-      console.warn('Failed to remove repeatable schedule:', error.message);
+      console.warn("Failed to remove repeatable schedule:", error.message);
       // Continue anyway to try to remove the current instance
     }
   }
@@ -82,9 +92,11 @@ async function removeJob(
   try {
     await job.remove();
   } catch (error: any) {
-    if (error.message?.includes('locked')) {
+    if (error.message?.includes("locked")) {
       if (!force) {
-        throw new Error('Job is locked by a worker. Use force removal to remove it anyway.');
+        throw new Error(
+          "Job is locked by a worker. Use force removal to remove it anyway."
+        );
       }
 
       // Force removal: Try multiple times with delays
@@ -94,14 +106,14 @@ async function removeJob(
 
       while (attempts < maxAttempts) {
         attempts++;
-        await new Promise(resolve => setTimeout(resolve, 200 * attempts));
+        await new Promise((resolve) => setTimeout(resolve, 200 * attempts));
 
         try {
           await job.remove();
           return true; // Success!
         } catch (retryError: any) {
           lastError = retryError;
-          if (!retryError.message?.includes('locked')) {
+          if (!retryError.message?.includes("locked")) {
             throw retryError; // Different error, throw it
           }
         }
@@ -109,15 +121,20 @@ async function removeJob(
 
       // All attempts failed - but for repeatable jobs, this is a partial success
       if (isRepeatable) {
-        console.warn(`Repeatable job instance ${jobId} is still locked, but schedule has been removed.`);
+        console.warn(
+          `Repeatable job instance ${jobId} is still locked, but schedule has been removed.`
+        );
         // Return success since the schedule is gone - this instance will eventually timeout
         return {
           partialSuccess: true,
-          message: 'The repeatable schedule has been removed successfully. This specific job instance is still locked by a worker that may have crashed. It will not recur. The lock will automatically expire, or you can restart the worker to clear it.'
+          message:
+            "The repeatable schedule has been removed successfully. This specific job instance is still locked by a worker that may have crashed. It will not recur. The lock will automatically expire, or you can restart the worker to clear it.",
         };
       }
 
-      throw new Error(`Failed to remove locked job after ${maxAttempts} attempts. Try again later or restart the worker.`);
+      throw new Error(
+        `Failed to remove locked job after ${maxAttempts} attempts. Try again later or restart the worker.`
+      );
     } else {
       throw error;
     }
@@ -139,11 +156,14 @@ export async function GET(
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { access: true }
+      select: { access: true },
     });
 
-    if (user?.access !== 'ADMIN') {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (user?.access !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     const { queueName, jobId } = await params;
@@ -182,8 +202,8 @@ export async function GET(
         finishedOn: job.finishedOn,
         processedOn: job.processedOn,
         state,
-        logs
-      }
+        logs,
+      },
     });
   } catch (error: any) {
     console.error("Error fetching job details:", error);
@@ -207,11 +227,14 @@ export async function POST(
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { access: true }
+      select: { access: true },
     });
 
-    if (user?.access !== 'ADMIN') {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (user?.access !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     const { queueName, jobId } = await params;
@@ -235,29 +258,29 @@ export async function POST(
     const { action, force = false } = await request.json();
 
     switch (action) {
-      case 'retry':
+      case "retry":
         await job.retry();
-        return NextResponse.json({ success: true, message: 'Job retried' });
+        return NextResponse.json({ success: true, message: "Job retried" });
 
-      case 'promote':
+      case "promote":
         await job.promote();
-        return NextResponse.json({ success: true, message: 'Job promoted' });
+        return NextResponse.json({ success: true, message: "Job promoted" });
 
-      case 'remove': {
+      case "remove": {
         const result = await removeJob(queue, job, force);
         // Handle partial success (repeatable job schedule removed but instance locked)
-        if (typeof result === 'object' && result.partialSuccess) {
+        if (typeof result === "object" && result.partialSuccess) {
           return NextResponse.json({
             success: true,
             partialSuccess: true,
-            message: result.message
+            message: result.message,
           });
         }
-        return NextResponse.json({ success: true, message: 'Job removed' });
+        return NextResponse.json({ success: true, message: "Job removed" });
       }
 
       default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+        return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
   } catch (error: any) {
     console.error("Error performing job action:", error);
@@ -281,11 +304,14 @@ export async function DELETE(
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { access: true }
+      select: { access: true },
     });
 
-    if (user?.access !== 'ADMIN') {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (user?.access !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     const { queueName, jobId } = await params;
@@ -308,20 +334,20 @@ export async function DELETE(
 
     // Check for force parameter in query string
     const { searchParams } = new URL(request.url);
-    const force = searchParams.get('force') === 'true';
+    const force = searchParams.get("force") === "true";
 
     const result = await removeJob(queue, job, force);
 
     // Handle partial success (repeatable job schedule removed but instance locked)
-    if (typeof result === 'object' && result.partialSuccess) {
+    if (typeof result === "object" && result.partialSuccess) {
       return NextResponse.json({
         success: true,
         partialSuccess: true,
-        message: result.message
+        message: result.message,
       });
     }
 
-    return NextResponse.json({ success: true, message: 'Job removed' });
+    return NextResponse.json({ success: true, message: "Job removed" });
   } catch (error: any) {
     console.error("Error removing job:", error);
     return NextResponse.json(

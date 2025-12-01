@@ -55,9 +55,17 @@ export async function GET(
     const currentTenantId = getCurrentTenantId();
     const multiTenant = isMultiTenantMode();
 
+    // In multi-tenant mode, tenant ID must be configured
+    if (multiTenant && !currentTenantId) {
+      return NextResponse.json(
+        { error: "Multi-tenant mode enabled but tenant ID not configured" },
+        { status: 500 }
+      );
+    }
+
     // Helper to filter jobs by tenant
     const filterByTenant = (jobs: Job[]): Job[] => {
-      if (!multiTenant || !currentTenantId) {
+      if (!multiTenant) {
         return jobs;
       }
       return jobs.filter(job => job.data?.tenantId === currentTenantId);

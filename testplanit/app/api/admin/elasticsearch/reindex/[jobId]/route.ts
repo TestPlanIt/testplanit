@@ -46,7 +46,16 @@ export async function GET(
     // Check tenant access in multi-tenant mode
     if (isMultiTenantMode()) {
       const currentTenantId = getCurrentTenantId();
-      if (currentTenantId && job.data?.tenantId !== currentTenantId) {
+
+      // In multi-tenant mode, tenant ID must be configured
+      if (!currentTenantId) {
+        return NextResponse.json(
+          { error: "Multi-tenant mode enabled but tenant ID not configured" },
+          { status: 500 }
+        );
+      }
+
+      if (job.data?.tenantId !== currentTenantId) {
         return NextResponse.json(
           { error: "Job not found" },
           { status: 404 }
