@@ -3,123 +3,383 @@
  * and scoped locally.
  */
 
+/* ========================================
+   HERO SECTION - Marketing Website Style
+   ======================================== */
+
+.heroSection {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    to bottom right,
+    #ffffff,
+    rgba(245, 240, 255, 0.3),
+    rgba(250, 245, 255, 0.4)
+  );
+  padding: 6rem 0;
+}
+
+.blobContainer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  width: 20rem;
+  height: 20rem;
+  border-radius: 50%;
+  filter: blur(48px);
+}
+
+.blob1 {
+  top: -10rem;
+  right: -10rem;
+  background: rgba(221, 208, 255, 0.3);
+}
+
+.blob2 {
+  bottom: -10rem;
+  left: -10rem;
+  background: rgba(233, 213, 255, 0.3);
+}
+
+.blob3 {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(251, 207, 232, 0.2);
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  max-width: 56rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Logo */
+.logoWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.logoGlow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, var(--brand-500), var(--purple-500));
+  border-radius: 2rem;
+  filter: blur(40px);
+  opacity: 0.4;
+  transform: scale(1.2);
+}
+
+.logoImage {
+  position: relative;
+  height: 5rem;
+  width: auto;
+}
+
+/* Hero title with gradient text */
+.heroTitle {
+  font-size: 2.5 rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  margin-bottom: 2rem;
+}
+
+@media screen and (min-width: 640px) {
+  .heroTitle {
+    font-size: 3.5rem;
+  }
+}
+
+.heroSubtitle {
+  font-size: 1.125rem;
+  line-height: 1.75;
+  color: #4b5563;
+  max-width: 36rem;
+  margin: 0 auto 2.5rem;
+}
+
+/* Button styles matching marketing website */
+.buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white !important;
+  background: linear-gradient(to right, var(--brand-600), var(--purple-600));
+  border-radius: 0.375rem;
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  text-decoration: none !important;
+}
+
+.primaryButton:hover {
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transform: scale(1.05);
+  text-decoration: none !important;
+}
+
+.buttonArrow {
+  display: inline-block;
+  margin-left: 0.125rem;
+  transition: transform 0.3s ease;
+}
+
+.primaryButton:hover .buttonArrow {
+  transform: translateX(4px);
+}
+
+.secondaryButton {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827 !important;
+  text-decoration: none !important;
+  transition: color 0.3s ease;
+}
+
+.secondaryButton:hover {
+  color: var(--brand-600) !important;
+  text-decoration: none !important;
+}
+
+/* ========================================
+   FEATURES SECTION - Marketing Website Style
+   ======================================== */
+
+.featuresSection {
+  padding: 6rem 0;
+  background: white;
+}
+
+.sectionHeader {
+  max-width: 56rem;
+  margin: 0 auto 4rem;
+  text-align: center;
+}
+
+.sectionTitle {
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+@media screen and (min-width: 640px) {
+  .sectionTitle {
+    font-size: 2.25rem;
+  }
+}
+
+.sectionSubtitle {
+  font-size: 1.125rem;
+  color: #4b5563;
+  margin: 0;
+}
+
+/* Feature grid */
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 2rem;
+}
+
+@media screen and (min-width: 640px) {
+  .featureGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .featureGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Feature card - Marketing website style */
+.featureCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.featureCard:hover {
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: var(--brand-300);
+  transform: translateY(-8px);
+}
+
+/* Gradient overlay on hover */
+.featureCardOverlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  background: linear-gradient(to bottom right, var(--brand-500), var(--purple-600));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.featureCard:hover .featureCardOverlay {
+  opacity: 0.05;
+}
+
+/* Corner decoration */
+.featureCorner {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 5rem;
+  height: 5rem;
+  background: linear-gradient(to bottom right, rgba(245, 240, 255, 0.5), rgba(250, 245, 255, 0.5));
+  border-bottom-left-radius: 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
+}
+
+.featureCard:hover .featureCorner {
+  opacity: 1;
+}
+
+/* Feature icon wrapper with gradient backgrounds */
+.featureIconWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.75rem;
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.featureCard:hover .featureIconWrapper {
+  transform: scale(1.1);
+}
+
+.featureIcon {
+  color: white;
+}
+
+/* Icon color variants - matching marketing website */
+.iconpurple {
+  background: linear-gradient(to bottom right, #a855f7, var(--brand-600));
+}
+
+.iconblue {
+  background: linear-gradient(to bottom right, #3b82f6, #0891b2);
+}
+
+.icongreen {
+  background: linear-gradient(to bottom right, #22c55e, #10b981);
+}
+
+.iconyellow {
+  background: linear-gradient(to bottom right, #eab308, #f97316);
+}
+
+.iconpink {
+  background: linear-gradient(to bottom right, #ec4899, #f43f5e);
+}
+
+.iconindigo {
+  background: linear-gradient(to bottom right, #6366f1, #a855f7);
+}
+
+/* Feature content */
+.featureContent {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.featureTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+  transition: color 0.3s ease;
+}
+
+.featureCard:hover .featureTitle {
+  color: var(--brand-600);
+}
+
+.featureDescription {
+  font-size: 1rem;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0 0 1rem 0;
+  flex: 1;
+}
+
+.featureLink {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--brand-600) !important;
+  text-decoration: none !important;
+  transition: color 0.3s ease;
+}
+
+.featureLink:hover {
+  color: var(--brand-700) !important;
+  text-decoration: none !important;
+}
+
+/* Legacy styles for compatibility */
+.features {
+  display: flex;
+  align-items: center;
+  padding: 2rem 0;
+  width: 100%;
+}
+
 .heroBanner {
   padding: 4rem 0;
   text-align: center;
   position: relative;
   overflow: hidden;
-}
-
-@media screen and (max-width: 996px) {
-  .heroBanner {
-    padding: 2rem;
-  }
-}
-
-.buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.featureGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 2rem;
-  margin: 0;
-  padding: 0;
-}
-
-.featureCard {
-  background: var(--ifm-card-background-color);
-  border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 8px;
-  padding: 0;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.featureCard:hover {
-  border-color: var(--ifm-color-primary);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  transform: translateY(-4px);
-}
-
-.featureHeader {
-  background: linear-gradient(to bottom, var(--ifm-color-primary), var(--ifm-color-primary-light));
-  padding: 1.5rem 2rem;
-  min-height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: left;
-  gap: 1rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.featureIcon {
-  color: white;
-  flex-shrink: 0;
-}
-
-.featureTitle {
-  color: white;
-  font-size: 1.4rem;
-  font-weight: 600;
-  margin: 0;
-  text-align: left;
-}
-
-.featureContent {
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  grow: 1;
-}
-
-.featureDescription {
-  color: var(--ifm-color-emphasis-900);
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-  grow: 1;
-  text-align: left;
-}
-
-.featureLink {
-  color: var(--ifm-color-primary) !important;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  text-align: center;
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--ifm-color-primary);
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  align-self: flex-start;
-}
-
-.featureLink:hover {
-  background-color: var(--ifm-color-primary);
-  color: white !important;
-  text-decoration: none;
-}
-
-/* Dark mode support */
-[data-theme='dark'] .featureCard {
-  background: var(--ifm-card-background-color);
-  border-color: var(--ifm-color-emphasis-300);
-}
-
-[data-theme='dark'] .featureHeader {
-  background: linear-gradient(to bottom, rgba(158, 118, 238, 0.3), rgba(158, 118, 238, 0.15));
-  border-bottom: 1px solid var(--ifm-color-primary);
-}
-
-[data-theme='dark'] .featureDescription {
-  color: var(--ifm-color-secondary-lightest);
 }
 
 /* Sparkles icon styling */
@@ -130,27 +390,86 @@
   vertical-align: middle;
 }
 
+/* Dark mode adjustments */
+[data-theme='dark'] .heroSection {
+  background: linear-gradient(
+    to bottom right,
+    #1f2937,
+    rgba(45, 29, 94, 0.3),
+    rgba(88, 28, 135, 0.2)
+  );
+}
+
+[data-theme='dark'] .heroSubtitle {
+  color: #d1d5db;
+}
+
+[data-theme='dark'] .sectionSubtitle {
+  color: #d1d5db;
+}
+
+[data-theme='dark'] .featuresSection {
+  background: #111827;
+}
+
+[data-theme='dark'] .featureCard {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+[data-theme='dark'] .featureCard:hover {
+  border-color: var(--brand-400);
+}
+
+[data-theme='dark'] .featureTitle {
+  color: #f9fafb;
+}
+
+[data-theme='dark'] .featureCard:hover .featureTitle {
+  color: var(--brand-400);
+}
+
+[data-theme='dark'] .featureDescription {
+  color: #9ca3af;
+}
+
+[data-theme='dark'] .secondaryButton {
+  color: #f9fafb !important;
+}
+
+[data-theme='dark'] .secondaryButton:hover {
+  color: var(--brand-400) !important;
+}
+
+[data-theme='dark'] .featureCorner {
+  background: linear-gradient(to bottom right, rgba(88, 28, 135, 0.3), rgba(45, 29, 94, 0.3));
+}
+
 /* Responsive adjustments */
 @media screen and (max-width: 768px) {
+  .heroSection {
+    padding: 3rem 1rem;
+  }
+
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+
+  .logoImage {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .featuresSection {
+    padding: 3rem 1rem;
+  }
+
   .featureGrid {
-    grid-template-columns: 1fr;
     gap: 1.5rem;
-  }
-
-  .featureHeader {
-    padding: 1.25rem 1.5rem;
-    gap: 0.75rem;
-  }
-
-  .featureContent {
-    padding: 1.5rem;
-  }
-
-  .featureTitle {
-    font-size: 1.2rem;
-  }
-
-  .sparkles {
-    margin-right: 0.25rem;
   }
 }

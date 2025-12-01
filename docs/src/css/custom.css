@@ -4,7 +4,7 @@
  * work well for content-centric websites.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 
 /* You can override the default Infima variables here. */
 :root {
@@ -12,6 +12,31 @@
   --ifm-font-family-monospace:
     SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
     monospace;
+
+  /* Extended brand color palette (matching marketing website) */
+  --brand-50: #f5f0ff;
+  --brand-100: #ede5ff;
+  --brand-200: #ddd0ff;
+  --brand-300: #c7a7f6;
+  --brand-400: #ab87f1;
+  --brand-500: #9e76ee;
+  --brand-600: #8559e9;
+  --brand-700: #6a47d0;
+  --brand-800: #5c3dba;
+  --brand-900: #482f94;
+  --brand-950: #2d1d5e;
+
+  /* Purple palette for gradients */
+  --purple-50: #faf5ff;
+  --purple-100: #f3e8ff;
+  --purple-200: #e9d5ff;
+  --purple-500: #a855f7;
+  --purple-600: #9333ea;
+
+  /* Pink palette for gradients */
+  --pink-500: #ec4899;
+  --pink-600: #db2777;
+
   --ifm-color-primary: #8559e9;
   --ifm-color-primary-dark: #6a47d0;
   --ifm-color-primary-darker: #5c3dba;
@@ -68,17 +93,23 @@
 }
 */
 
-/* Make default headings purple */
+/* Make default headings purple with tighter tracking */
 h1 {
-  color: var(--ifm-color-primary-dark);
+  color: var(--brand-600);
+  letter-spacing: -0.025em;
 }
 
-h2,
+h2 {
+  color: var(--ifm-color-primary);
+  letter-spacing: -0.02em;
+}
+
 h3,
 h4,
 h5,
 h6 {
   color: var(--ifm-color-primary);
+  letter-spacing: -0.015em;
 }
 
 [data-theme='dark'] h1,
@@ -114,4 +145,94 @@ h6 {
   --ifm-alert-border-color: var(--ifm-color-primary);
   /* Light purple text - REMOVED to keep default text color */
   /* --ifm-alert-color: var(--ifm-color-primary-light); */
+}
+
+/* ========================================
+   MARKETING WEBSITE ANIMATIONS
+   ======================================== */
+
+/* Blob floating animation */
+@keyframes blob {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+}
+
+/* Gradient text animation */
+@keyframes gradient-x {
+  0%,
+  100% {
+    background-size: 200% 200%;
+    background-position: left center;
+  }
+  50% {
+    background-size: 200% 200%;
+    background-position: right center;
+  }
+}
+
+/* Slow pulse animation */
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Animation utility classes */
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 3s ease infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(
+    to right,
+    var(--brand-600),
+    var(--purple-600),
+    var(--pink-600)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
