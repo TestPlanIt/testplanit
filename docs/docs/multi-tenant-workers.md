@@ -18,7 +18,7 @@ In multi-tenant mode:
 
 ## Architecture
 
-```
+```text
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │   Tenant A      │     │   Tenant B      │     │   Tenant C      │
 │   Web App       │     │   Web App       │     │   Web App       │
@@ -134,6 +134,7 @@ pnpm scheduler
 ```
 
 This creates separate scheduled jobs per tenant:
+
 - `update-all-cases-forecast-tenant-a`
 - `update-all-cases-forecast-tenant-b`
 - `send-daily-digest-tenant-a`
@@ -142,6 +143,7 @@ This creates separate scheduled jobs per tenant:
 ## Job Queue Admin UI
 
 In multi-tenant mode, the Admin > Job Queues page automatically filters:
+
 - **Job counts** show only jobs for the current tenant
 - **Job list** shows only jobs belonging to the current tenant
 - **Job actions** (retry, remove, etc.) are restricted to the current tenant's jobs
@@ -164,6 +166,7 @@ All workers support multi-tenant mode:
 ### Testmo Import Worker Note
 
 The Testmo Import Worker is memory-intensive and processes large JSON files. In multi-tenant deployments:
+
 - Consider running separate import workers per tenant if imports are frequent
 - Set `TESTMO_IMPORT_CONCURRENCY=1` to limit memory usage
 - Monitor memory during large imports
@@ -215,7 +218,7 @@ volumes:
 
 Workers log tenant information for each job:
 
-```
+```text
 Processing sync job 123 of type sync-issues for tenant tenant-a
 Processing notification job 456 of type create-notification for tenant tenant-b
 ```
@@ -233,6 +236,7 @@ pm2 logs | grep "tenant-a"
 ### Admin UI
 
 Each tenant's admin UI shows:
+
 - Job counts for their tenant only
 - Job details and logs for their jobs
 - No visibility into other tenants' jobs
@@ -243,19 +247,22 @@ Each tenant's admin UI shows:
 
 1. Verify `MULTI_TENANT_MODE=true` on workers
 2. Check tenant configuration is loaded:
+
    ```bash
    # Worker startup should log:
    # "Loaded 2 tenant configurations from TENANT_CONFIGS"
    ```
+
 3. Verify job data includes `tenantId`
 
 ### Missing tenant configuration
 
-```
+```text
 Error: No configuration found for tenant: tenant-x
 ```
 
 Add the missing tenant to `TENANT_CONFIGS` or create environment variables:
+
 ```bash
 TENANT_TENANT_X_DATABASE_URL="postgresql://..."
 ```
