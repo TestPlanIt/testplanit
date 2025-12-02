@@ -7,8 +7,8 @@ const originalEnv = { ...process.env };
 const resetModule = async () => {
   vi.resetModules();
   // Clear tenant configs cache by re-importing
-  const module = await import("./multiTenantPrisma");
-  return module;
+  const multiTenantModule = await import("./multiTenantPrisma");
+  return multiTenantModule;
 };
 
 describe("multiTenantPrisma", () => {
