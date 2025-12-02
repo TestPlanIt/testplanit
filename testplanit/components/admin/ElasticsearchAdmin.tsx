@@ -61,7 +61,11 @@ interface JobStatus {
   failedReason?: string;
 }
 
-export function ElasticsearchAdmin() {
+interface ElasticsearchAdminProps {
+  isMultiTenantMode?: boolean;
+}
+
+export function ElasticsearchAdmin({ isMultiTenantMode = false }: ElasticsearchAdminProps) {
   const t = useTranslations("admin.elasticsearch");
   const { toast } = useToast();
 
@@ -405,59 +409,61 @@ export function ElasticsearchAdmin() {
         </CardContent>
       </Card>
 
-      {/* Settings Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("settings.title")}</CardTitle>
-          <CardDescription>{t("settings.description")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="replicas">{t("settings.numberOfReplicas")}</Label>
-              <div className="flex items-center space-x-4">
-                <Input
-                  id="replicas"
-                  type="number"
-                  min="0"
-                  max="10"
-                  value={numberOfReplicas}
-                  onChange={(e) =>
-                    setNumberOfReplicas(parseInt(e.target.value) || 0)
-                  }
-                  className="w-32"
-                  disabled={savingReplicas}
-                />
-                <Button
-                  onClick={saveReplicaSettings}
-                  disabled={savingReplicas}
-                  size="sm"
-                >
-                  {savingReplicas ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {t("settings.saving")}
-                    </>
-                  ) : (
-                    t("settings.save")
-                  )}
-                </Button>
+      {/* Settings Card - Hidden in multi-tenant mode since ES config is shared */}
+      {!isMultiTenantMode && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("settings.title")}</CardTitle>
+            <CardDescription>{t("settings.description")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="replicas">{t("settings.numberOfReplicas")}</Label>
+                <div className="flex items-center space-x-4">
+                  <Input
+                    id="replicas"
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={numberOfReplicas}
+                    onChange={(e) =>
+                      setNumberOfReplicas(parseInt(e.target.value) || 0)
+                    }
+                    className="w-32"
+                    disabled={savingReplicas}
+                  />
+                  <Button
+                    onClick={saveReplicaSettings}
+                    disabled={savingReplicas}
+                    size="sm"
+                  >
+                    {savingReplicas ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {t("settings.saving")}
+                      </>
+                    ) : (
+                      t("settings.save")
+                    )}
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t("settings.replicasHelp")}
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {t("settings.replicasHelp")}
-              </p>
-            </div>
 
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>{t("settings.note.title")}</AlertTitle>
-              <AlertDescription>
-                {t("settings.note.description")}
-              </AlertDescription>
-            </Alert>
-          </div>
-        </CardContent>
-      </Card>
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>{t("settings.note.title")}</AlertTitle>
+                <AlertDescription>
+                  {t("settings.note.description")}
+                </AlertDescription>
+              </Alert>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Reindex Card */}
       <Card>
