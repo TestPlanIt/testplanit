@@ -2,6 +2,7 @@
 // Multi-tenant Prisma client factory for shared worker containers
 
 import { PrismaClient } from "@prisma/client";
+import * as fs from "fs";
 
 /**
  * Tenant configuration interface
@@ -44,9 +45,53 @@ const tenantClients: Map<string, PrismaClient> = new Map();
 let tenantConfigs: Map<string, TenantConfig> | null = null;
 
 /**
- * Load tenant configurations from environment variable
- * Expected format: TENANT_CONFIGS='{"tenant1": {"databaseUrl": "...", "elasticsearchNode": "..."}, ...}'
- * Or from individual environment variables: TENANT_<ID>_DATABASE_URL, TENANT_<ID>_ELASTICSEARCH_NODE
+ * Path to the tenant config file (can be set via TENANT_CONFIG_FILE env var)
+ */
+const TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+
+/**
+ * Load tenant configurations from file
+ */
+function loadTenantsFromFile(filePath: string): Map<string, TenantConfig> {
+  const configs = new Map<string, TenantConfig>();
+
+  try {
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(fileContent) as Record<string, Omit<TenantConfig, "tenantId">>;
+      for (const [tenantId, config] of Object.entries(parsed)) {
+        configs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex,
+        });
+      }
+      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+    }
+  } catch (error) {
+    console.error(`Failed to load tenant configs from ${filePath}:`, error);
+  }
+
+  return configs;
+}
+
+/**
+ * Reload tenant configurations from file (for dynamic updates)
+ * This allows adding new tenants without restarting workers
+ */
+export function reloadTenantConfigs(): Map<string, TenantConfig> {
+  // Clear cached configs
+  tenantConfigs = null;
+  // Reload
+  return loadTenantConfigs();
+}
+
+/**
+ * Load tenant configurations from:
+ * 1. Config file (TENANT_CONFIG_FILE env var or /config/tenants.json)
+ * 2. TENANT_CONFIGS environment variable (JSON string)
+ * 3. Individual environment variables: TENANT_<ID>_DATABASE_URL, etc.
  */
 export function loadTenantConfigs(): Map<string, TenantConfig> {
   if (tenantConfigs) {
@@ -55,7 +100,13 @@ export function loadTenantConfigs(): Map<string, TenantConfig> {
 
   tenantConfigs = new Map();
 
-  // Try loading from JSON config first
+  // Priority 1: Load from config file
+  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
+  for (const [tenantId, config] of fileConfigs) {
+    tenantConfigs.set(tenantId, config);
+  }
+
+  // Priority 2: Load from TENANT_CONFIGS env var (can override file configs)
   const configJson = process.env.TENANT_CONFIGS;
   if (configJson) {
     try {
@@ -68,13 +119,13 @@ export function loadTenantConfigs(): Map<string, TenantConfig> {
           elasticsearchIndex: config.elasticsearchIndex,
         });
       }
-      console.log(`Loaded ${tenantConfigs.size} tenant configurations from TENANT_CONFIGS`);
+      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
     } catch (error) {
       console.error("Failed to parse TENANT_CONFIGS:", error);
     }
   }
 
-  // Also check for individual tenant environment variables
+  // Priority 3: Individual tenant environment variables
   // Format: TENANT_<TENANT_ID>_DATABASE_URL, TENANT_<TENANT_ID>_ELASTICSEARCH_NODE
   for (const [key, value] of Object.entries(process.env)) {
     const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
@@ -133,6 +184,7 @@ function createTenantPrismaClient(config: TenantConfig): PrismaClient {
 /**
  * Get or create a Prisma client for a specific tenant
  * Caches clients to reuse connections
+ * Supports dynamic tenant addition by reloading configs if tenant not found
  */
 export function getTenantPrismaClient(tenantId: string): PrismaClient {
   // Check cache first
@@ -142,7 +194,15 @@ export function getTenantPrismaClient(tenantId: string): PrismaClient {
   }
 
   // Get tenant config
-  const config = getTenantConfig(tenantId);
+  let config = getTenantConfig(tenantId);
+
+  // If not found, try reloading configs (tenant may have been added dynamically)
+  if (!config) {
+    console.log(`Tenant ${tenantId} not found in cache, reloading configurations...`);
+    reloadTenantConfigs();
+    config = getTenantConfig(tenantId);
+  }
+
   if (!config) {
     throw new Error(`No configuration found for tenant: ${tenantId}`);
   }
