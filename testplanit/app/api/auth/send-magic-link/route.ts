@@ -43,11 +43,22 @@ export async function POST(req: NextRequest) {
     const token = crypto.randomBytes(32).toString("hex");
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // Store the token in the database
+    // Hash the token the same way NextAuth does before storing
+    // NextAuth uses: sha256(token + secret)
+    const secret = process.env.NEXTAUTH_SECRET;
+    if (!secret) {
+      throw new Error("NEXTAUTH_SECRET is not configured");
+    }
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(`${token}${secret}`)
+      .digest("hex");
+
+    // Store the HASHED token in the database (NextAuth will hash the URL token and compare)
     await prisma.verificationToken.create({
       data: {
         identifier: email,
-        token,
+        token: hashedToken,
         expires,
       },
     });
