@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.10](https://github.com/testplanit/testplanit/compare/v0.1.9...v0.1.10) (2025-12-02)
+
+
+### Bug Fixes
+
+* **auth:** Clarify comments in magic link token hashing logic ([ccb5ee7](https://github.com/testplanit/testplanit/commit/ccb5ee784a7f8558cdb6dee929d173965d4e68de))
+
 ### [0.1.9](https://github.com/testplanit/testplanit/compare/v0.1.8...v0.1.9) (2025-12-02)
 
 
