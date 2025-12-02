@@ -1,0 +1,269 @@
+// lib/multiTenantPrisma.ts
+// Multi-tenant Prisma client factory for shared worker containers
+
+import { PrismaClient } from "@prisma/client";
+import * as fs from "fs";
+
+/**
+ * Tenant configuration interface
+ */
+export interface TenantConfig {
+  tenantId: string;
+  databaseUrl: string;
+  elasticsearchNode?: string;
+  elasticsearchIndex?: string;
+}
+
+/**
+ * Check if multi-tenant mode is enabled
+ */
+export function isMultiTenantMode(): boolean {
+  return process.env.MULTI_TENANT_MODE === "true";
+}
+
+/**
+ * Get the current instance's tenant ID
+ * In multi-tenant mode, each web app instance belongs to a single tenant
+ * Set via INSTANCE_TENANT_ID environment variable
+ * Returns undefined in single-tenant mode or if not configured
+ */
+export function getCurrentTenantId(): string | undefined {
+  if (!isMultiTenantMode()) {
+    return undefined;
+  }
+  return process.env.INSTANCE_TENANT_ID;
+}
+
+/**
+ * Cache of Prisma clients per tenant to avoid creating new connections for each job
+ */
+const tenantClients: Map<string, PrismaClient> = new Map();
+
+/**
+ * Tenant configurations loaded from environment or config file
+ */
+let tenantConfigs: Map<string, TenantConfig> | null = null;
+
+/**
+ * Path to the tenant config file (can be set via TENANT_CONFIG_FILE env var)
+ */
+const TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+
+/**
+ * Load tenant configurations from file
+ */
+function loadTenantsFromFile(filePath: string): Map<string, TenantConfig> {
+  const configs = new Map<string, TenantConfig>();
+
+  try {
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(fileContent) as Record<string, Omit<TenantConfig, "tenantId">>;
+      for (const [tenantId, config] of Object.entries(parsed)) {
+        configs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex,
+        });
+      }
+      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+    }
+  } catch (error) {
+    console.error(`Failed to load tenant configs from ${filePath}:`, error);
+  }
+
+  return configs;
+}
+
+/**
+ * Reload tenant configurations from file (for dynamic updates)
+ * This allows adding new tenants without restarting workers
+ */
+export function reloadTenantConfigs(): Map<string, TenantConfig> {
+  // Clear cached configs
+  tenantConfigs = null;
+  // Reload
+  return loadTenantConfigs();
+}
+
+/**
+ * Load tenant configurations from:
+ * 1. Config file (TENANT_CONFIG_FILE env var or /config/tenants.json)
+ * 2. TENANT_CONFIGS environment variable (JSON string)
+ * 3. Individual environment variables: TENANT_<ID>_DATABASE_URL, etc.
+ */
+export function loadTenantConfigs(): Map<string, TenantConfig> {
+  if (tenantConfigs) {
+    return tenantConfigs;
+  }
+
+  tenantConfigs = new Map();
+
+  // Priority 1: Load from config file
+  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
+  for (const [tenantId, config] of fileConfigs) {
+    tenantConfigs.set(tenantId, config);
+  }
+
+  // Priority 2: Load from TENANT_CONFIGS env var (can override file configs)
+  const configJson = process.env.TENANT_CONFIGS;
+  if (configJson) {
+    try {
+      const configs = JSON.parse(configJson) as Record<string, Omit<TenantConfig, "tenantId">>;
+      for (const [tenantId, config] of Object.entries(configs)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex,
+        });
+      }
+      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+    } catch (error) {
+      console.error("Failed to parse TENANT_CONFIGS:", error);
+    }
+  }
+
+  // Priority 3: Individual tenant environment variables
+  // Format: TENANT_<TENANT_ID>_DATABASE_URL, TENANT_<TENANT_ID>_ELASTICSEARCH_NODE
+  for (const [key, value] of Object.entries(process.env)) {
+    const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
+    if (match && value) {
+      const tenantId = match[1].toLowerCase();
+      if (!tenantConfigs.has(tenantId)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: value,
+          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
+          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
+        });
+      }
+    }
+  }
+
+  if (tenantConfigs.size === 0) {
+    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+  }
+
+  return tenantConfigs;
+}
+
+/**
+ * Get tenant configuration by ID
+ */
+export function getTenantConfig(tenantId: string): TenantConfig | undefined {
+  const configs = loadTenantConfigs();
+  return configs.get(tenantId);
+}
+
+/**
+ * Get all tenant IDs
+ */
+export function getAllTenantIds(): string[] {
+  const configs = loadTenantConfigs();
+  return Array.from(configs.keys());
+}
+
+/**
+ * Create a Prisma client for a specific tenant
+ */
+function createTenantPrismaClient(config: TenantConfig): PrismaClient {
+  const client = new PrismaClient({
+    datasources: {
+      db: {
+        url: config.databaseUrl,
+      },
+    },
+    errorFormat: "pretty",
+  });
+
+  return client;
+}
+
+/**
+ * Get or create a Prisma client for a specific tenant
+ * Caches clients to reuse connections
+ * Supports dynamic tenant addition by reloading configs if tenant not found
+ */
+export function getTenantPrismaClient(tenantId: string): PrismaClient {
+  // Check cache first
+  let client = tenantClients.get(tenantId);
+  if (client) {
+    return client;
+  }
+
+  // Get tenant config
+  let config = getTenantConfig(tenantId);
+
+  // If not found, try reloading configs (tenant may have been added dynamically)
+  if (!config) {
+    console.log(`Tenant ${tenantId} not found in cache, reloading configurations...`);
+    reloadTenantConfigs();
+    config = getTenantConfig(tenantId);
+  }
+
+  if (!config) {
+    throw new Error(`No configuration found for tenant: ${tenantId}`);
+  }
+
+  // Create and cache new client
+  client = createTenantPrismaClient(config);
+  tenantClients.set(tenantId, client);
+  console.log(`Created Prisma client for tenant: ${tenantId}`);
+
+  return client;
+}
+
+/**
+ * Get a Prisma client based on job data
+ * In single-tenant mode, returns the default client
+ * In multi-tenant mode, returns tenant-specific client
+ */
+export function getPrismaClientForJob(jobData: { tenantId?: string }): PrismaClient {
+  if (!isMultiTenantMode()) {
+    // Single-tenant mode: use lightweight Prisma client (no ES sync extensions)
+    // Import lazily to avoid circular dependencies
+    const { prisma } = require("./prismaBase");
+    return prisma;
+  }
+
+  // Multi-tenant mode: require tenantId
+  if (!jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+
+  return getTenantPrismaClient(jobData.tenantId);
+}
+
+/**
+ * Disconnect all tenant clients (for graceful shutdown)
+ */
+export async function disconnectAllTenantClients(): Promise<void> {
+  const disconnectPromises: Promise<void>[] = [];
+
+  for (const [tenantId, client] of tenantClients) {
+    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
+    disconnectPromises.push(client.$disconnect());
+  }
+
+  await Promise.all(disconnectPromises);
+  tenantClients.clear();
+  console.log("All tenant Prisma clients disconnected");
+}
+
+/**
+ * Base interface for job data that supports multi-tenancy
+ */
+export interface MultiTenantJobData {
+  tenantId?: string; // Optional in single-tenant mode, required in multi-tenant mode
+}
+
+/**
+ * Validate job data for multi-tenant mode
+ */
+export function validateMultiTenantJobData(jobData: MultiTenantJobData): void {
+  if (isMultiTenantMode() && !jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+}

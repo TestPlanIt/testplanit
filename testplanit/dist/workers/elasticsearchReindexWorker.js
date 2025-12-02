@@ -5,6 +5,9 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -26,6 +29,28 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// lib/prismaBase.ts
+var prismaBase_exports = {};
+__export(prismaBase_exports, {
+  prisma: () => prisma
+});
+var import_client, prismaClient, prisma;
+var init_prismaBase = __esm({
+  "lib/prismaBase.ts"() {
+    "use strict";
+    import_client = require("@prisma/client");
+    if (process.env.NODE_ENV === "production") {
+      prismaClient = new import_client.PrismaClient({ errorFormat: "pretty" });
+    } else {
+      if (!global.prismaBase) {
+        global.prismaBase = new import_client.PrismaClient({ errorFormat: "colorless" });
+      }
+      prismaClient = global.prismaBase;
+    }
+    prisma = prismaClient;
+  }
+});
 
 // workers/elasticsearchReindexWorker.ts
 var elasticsearchReindexWorker_exports = {};
@@ -67,19 +92,6 @@ var valkey_default = valkeyConnection;
 
 // lib/queueNames.ts
 var ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
-
-// lib/prismaBase.ts
-var import_client = require("@prisma/client");
-var prismaClient;
-if (process.env.NODE_ENV === "production") {
-  prismaClient = new import_client.PrismaClient({ errorFormat: "pretty" });
-} else {
-  if (!global.prismaBase) {
-    global.prismaBase = new import_client.PrismaClient({ errorFormat: "colorless" });
-  }
-  prismaClient = global.prismaBase;
-}
-var prisma = prismaClient;
 
 // services/elasticsearchService.ts
 var import_elasticsearch = require("@elastic/elasticsearch");
@@ -140,6 +152,7 @@ var env = (0, import_env_nextjs.createEnv)({
 });
 
 // services/elasticsearchService.ts
+init_prismaBase();
 var esClient = null;
 function getElasticsearchClient() {
   if (!env.ELASTICSEARCH_NODE) {
@@ -166,6 +179,12 @@ function getElasticsearchClient() {
   return esClient;
 }
 var REPOSITORY_CASE_INDEX = "testplanit-repository-cases";
+function getRepositoryCaseIndexName(tenantId) {
+  if (tenantId) {
+    return `testplanit-${tenantId}-repository-cases`;
+  }
+  return REPOSITORY_CASE_INDEX;
+}
 var repositoryCaseMapping = {
   properties: {
     id: { type: "integer" },
@@ -232,14 +251,12 @@ var repositoryCaseMapping = {
     searchableContent: { type: "text" }
   }
 };
-async function getElasticsearchSettings() {
+async function getElasticsearchSettings(prismaClient2) {
+  const prisma2 = prismaClient2 || prisma;
   try {
-    const { PrismaClient: PrismaClient2 } = await import("@prisma/client");
-    const prisma2 = new PrismaClient2();
     const config = await prisma2.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" }
     });
-    await prisma2.$disconnect();
     return {
       numberOfReplicas: config?.value ? config.value : 0
     };
@@ -248,17 +265,18 @@ async function getElasticsearchSettings() {
     return { numberOfReplicas: 0 };
   }
 }
-async function createRepositoryCaseIndex() {
+async function createRepositoryCaseIndex(prismaClient2, tenantId) {
   const client = getElasticsearchClient();
   if (!client) return false;
+  const indexName = getRepositoryCaseIndexName(tenantId);
   try {
-    const settings = await getElasticsearchSettings();
+    const settings = await getElasticsearchSettings(prismaClient2);
     const exists = await client.indices.exists({
-      index: REPOSITORY_CASE_INDEX
+      index: indexName
     });
     if (!exists) {
       await client.indices.create({
-        index: REPOSITORY_CASE_INDEX,
+        index: indexName,
         settings: {
           number_of_shards: 1,
           number_of_replicas: settings.numberOfReplicas,
@@ -273,19 +291,21 @@ async function createRepositoryCaseIndex() {
         },
         mappings: repositoryCaseMapping
       });
+      console.log(`Created Elasticsearch index: ${indexName}`);
     } else {
     }
     return true;
   } catch (error) {
-    console.error("Failed to create/update Elasticsearch index:", error);
+    console.error(`Failed to create/update Elasticsearch index ${indexName}:`, error);
     return false;
   }
 }
 
 // services/elasticsearchIndexing.ts
-async function bulkIndexRepositoryCases(cases) {
+async function bulkIndexRepositoryCases(cases, tenantId) {
   const client = getElasticsearchClient();
   if (!client || cases.length === 0) return false;
+  const indexName = getRepositoryCaseIndexName(tenantId);
   try {
     const operations = cases.flatMap((caseData) => {
       const searchableContent = [
@@ -300,7 +320,7 @@ async function bulkIndexRepositoryCases(cases) {
       ].filter(Boolean).join(" ");
       return [
         {
-          index: { _index: REPOSITORY_CASE_INDEX, _id: caseData.id.toString() }
+          index: { _index: indexName, _id: caseData.id.toString() }
         },
         { ...caseData, searchableContent }
       ];
@@ -343,6 +363,23 @@ var extractTextFromNode = (node) => {
 };
 
 // services/unifiedElasticsearchService.ts
+init_prismaBase();
+var BASE_INDEX_NAMES = {
+  ["repository_case" /* REPOSITORY_CASE */]: "repository-cases",
+  ["shared_step" /* SHARED_STEP */]: "shared-steps",
+  ["test_run" /* TEST_RUN */]: "test-runs",
+  ["session" /* SESSION */]: "sessions",
+  ["project" /* PROJECT */]: "projects",
+  ["issue" /* ISSUE */]: "issues",
+  ["milestone" /* MILESTONE */]: "milestones"
+};
+function getEntityIndexName(entityType, tenantId) {
+  const baseName = BASE_INDEX_NAMES[entityType];
+  if (tenantId) {
+    return `testplanit-${tenantId}-${baseName}`;
+  }
+  return `testplanit-${baseName}`;
+}
 var ENTITY_INDICES = {
   ["repository_case" /* REPOSITORY_CASE */]: "testplanit-repository-cases",
   ["shared_step" /* SHARED_STEP */]: "testplanit-shared-steps",
@@ -669,14 +706,12 @@ var ENTITY_MAPPINGS = {
     }
   }
 };
-async function getElasticsearchSettings2() {
+async function getElasticsearchSettings2(prismaClient2) {
+  const prisma2 = prismaClient2 || prisma;
   try {
-    const { PrismaClient: PrismaClient2 } = await import("@prisma/client");
-    const prisma2 = new PrismaClient2();
     const config = await prisma2.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" }
     });
-    await prisma2.$disconnect();
     return {
       numberOfReplicas: config?.value ? config.value : 0
     };
@@ -685,13 +720,13 @@ async function getElasticsearchSettings2() {
     return { numberOfReplicas: 0 };
   }
 }
-async function createEntityIndex(entityType) {
+async function createEntityIndex(entityType, prismaClient2, tenantId) {
   const client = getElasticsearchClient();
   if (!client) return false;
-  const indexName = ENTITY_INDICES[entityType];
+  const indexName = getEntityIndexName(entityType, tenantId);
   const mapping = ENTITY_MAPPINGS[entityType];
   try {
-    const settings = await getElasticsearchSettings2();
+    const settings = await getElasticsearchSettings2(prismaClient2);
     const indexExists = await client.indices.exists({ index: indexName });
     if (!indexExists) {
       await client.indices.create({
@@ -710,11 +745,12 @@ async function createEntityIndex(entityType) {
           }
         }
       });
+      console.log(`Created Elasticsearch index: ${indexName}`);
       return true;
     }
     return true;
   } catch (error) {
-    console.error(`Failed to create index for ${entityType}:`, error);
+    console.error(`Failed to create index ${indexName} for ${entityType}:`, error);
     return false;
   }
 }
@@ -834,6 +870,7 @@ function buildCustomFieldDocuments(fieldValues) {
 }
 
 // services/repositoryCaseSync.ts
+init_prismaBase();
 function extractStepText(stepData) {
   if (!stepData) return "";
   try {
@@ -846,8 +883,9 @@ function extractStepText(stepData) {
     return typeof stepData === "string" ? stepData : "";
   }
 }
-async function buildRepositoryCaseDocument(caseId) {
-  const repoCase = await prisma.repositoryCases.findUnique({
+async function buildRepositoryCaseDocument(caseId, prismaClient2) {
+  const prisma2 = prismaClient2 || prisma;
+  const repoCase = await prisma2.repositoryCases.findUnique({
     where: { id: caseId },
     include: {
       project: true,
@@ -895,7 +933,7 @@ async function buildRepositoryCaseDocument(caseId) {
     }
   });
   if (!repoCase) return null;
-  const folderPath = await buildFolderPath(repoCase.folderId);
+  const folderPath = await buildFolderPath(repoCase.folderId, prisma2);
   return {
     id: repoCase.id,
     projectId: repoCase.projectId,
@@ -981,8 +1019,8 @@ async function buildRepositoryCaseDocument(caseId) {
     })
   };
 }
-async function buildFolderPath(folderId) {
-  const folder = await prisma.repositoryFolders.findUnique({
+async function buildFolderPath(folderId, prisma2 = prisma) {
+  const folder = await prisma2.repositoryFolders.findUnique({
     where: { id: folderId },
     include: { parent: true }
   });
@@ -991,7 +1029,7 @@ async function buildFolderPath(folderId) {
   let current = folder;
   while (current.parent) {
     path.unshift(current.parent.name);
-    const nextParent = await prisma.repositoryFolders.findUnique({
+    const nextParent = await prisma2.repositoryFolders.findUnique({
       where: { id: current.parent.id },
       include: { parent: true }
     });
@@ -1000,10 +1038,11 @@ async function buildFolderPath(folderId) {
   }
   return "/" + path.join("/");
 }
-async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progressCallback) {
+async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progressCallback, prismaClient2, tenantId) {
+  const prisma2 = prismaClient2 || prisma;
   try {
-    await createRepositoryCaseIndex();
-    const totalCases = await prisma.repositoryCases.count({
+    await createRepositoryCaseIndex(prisma2, tenantId);
+    const totalCases = await prisma2.repositoryCases.count({
       where: {
         projectId,
         isArchived: false
@@ -1018,7 +1057,7 @@ async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progr
     let processed = 0;
     let hasMore = true;
     while (hasMore) {
-      const cases = await prisma.repositoryCases.findMany({
+      const cases = await prisma2.repositoryCases.findMany({
         where: {
           projectId,
           isArchived: false
@@ -1034,13 +1073,13 @@ async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progr
       }
       const documents = [];
       for (const caseItem of cases) {
-        const doc = await buildRepositoryCaseDocument(caseItem.id);
+        const doc = await buildRepositoryCaseDocument(caseItem.id, prisma2);
         if (doc) {
           documents.push(doc);
         }
       }
       if (documents.length > 0) {
-        const success = await bulkIndexRepositoryCases(documents);
+        const success = await bulkIndexRepositoryCases(documents, tenantId);
         if (!success) {
           console.error(`Failed to index batch starting at ${processed}`);
           return false;
@@ -1064,11 +1103,11 @@ async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progr
     return false;
   }
 }
-async function initializeElasticsearchIndexes() {
+async function initializeElasticsearchIndexes(prismaClient2, tenantId) {
   try {
-    const created = await createRepositoryCaseIndex();
+    const created = await createRepositoryCaseIndex(prismaClient2, tenantId);
     if (created) {
-      console.log("Elasticsearch indexes initialized successfully");
+      console.log(`Elasticsearch indexes initialized successfully${tenantId ? ` (tenant: ${tenantId})` : ""}`);
     }
   } catch (error) {
     console.error("Failed to initialize Elasticsearch indexes:", error);
@@ -1076,8 +1115,10 @@ async function initializeElasticsearchIndexes() {
 }
 
 // services/sharedStepSearch.ts
-async function buildSharedStepDocument(stepGroupId) {
-  const stepGroup = await prisma.sharedStepGroup.findUnique({
+init_prismaBase();
+async function buildSharedStepDocument(stepGroupId, prismaClient2) {
+  const prisma2 = prismaClient2 || prisma;
+  const stepGroup = await prisma2.sharedStepGroup.findUnique({
     where: { id: stepGroupId },
     include: {
       project: true,
@@ -1136,38 +1177,40 @@ async function buildSharedStepDocument(stepGroupId) {
     searchableContent
   };
 }
-async function indexSharedStep(stepData) {
+async function indexSharedStep(stepData, tenantId) {
   const client = getElasticsearchClient();
   if (!client) return false;
+  const indexName = getEntityIndexName("shared_step" /* SHARED_STEP */, tenantId);
   try {
     await client.index({
-      index: ENTITY_INDICES["shared_step" /* SHARED_STEP */],
+      index: indexName,
       id: stepData.id.toString(),
       document: stepData
     });
-    console.log(`Indexed shared step ${stepData.id} in Elasticsearch`);
+    console.log(`Indexed shared step ${stepData.id} in Elasticsearch index ${indexName}`);
     return true;
   } catch (error) {
     console.error(`Failed to index shared step ${stepData.id}:`, error);
     return false;
   }
 }
-async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100) {
+async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100, prismaClient2, tenantId) {
+  const prisma2 = prismaClient2 || prisma;
   try {
-    await createEntityIndex("shared_step" /* SHARED_STEP */);
-    const totalSteps = await prisma.sharedStepGroup.count({
+    await createEntityIndex("shared_step" /* SHARED_STEP */, prisma2, tenantId);
+    const totalSteps = await prisma2.sharedStepGroup.count({
       where: {
         projectId
         // Include deleted items (filtering happens at search time based on admin permissions)
       }
     });
     console.log(
-      `Syncing ${totalSteps} shared steps for project ${projectId}...`
+      `Syncing ${totalSteps} shared steps for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}...`
     );
     let processed = 0;
     let hasMore = true;
     while (hasMore) {
-      const steps = await prisma.sharedStepGroup.findMany({
+      const steps = await prisma2.sharedStepGroup.findMany({
         where: {
           projectId
           // Include deleted items (filtering happens at search time based on admin permissions)
@@ -1181,9 +1224,9 @@ async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100)
         break;
       }
       for (const step of steps) {
-        const doc = await buildSharedStepDocument(step.id);
+        const doc = await buildSharedStepDocument(step.id, prisma2);
         if (doc) {
-          await indexSharedStep(doc);
+          await indexSharedStep(doc, tenantId);
         }
       }
       processed += steps.length;
@@ -1203,13 +1246,15 @@ async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100)
 }
 
 // services/testRunSearch.ts
-async function syncProjectTestRunsToElasticsearch(projectId, db) {
+init_prismaBase();
+async function syncProjectTestRunsToElasticsearch(projectId, db, tenantId) {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
-  console.log(`Starting test run sync for project ${projectId}`);
+  const indexName = getEntityIndexName("test_run" /* TEST_RUN */, tenantId);
+  console.log(`Starting test run sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
   const testRuns = await db.testRuns.findMany({
     where: {
       projectId
@@ -1240,7 +1285,7 @@ async function syncProjectTestRunsToElasticsearch(projectId, db) {
     ].join(" ");
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES["test_run" /* TEST_RUN */],
+        _index: indexName,
         _id: testRun.id.toString()
       }
     });
@@ -1301,7 +1346,8 @@ async function syncProjectTestRunsToElasticsearch(projectId, db) {
 }
 
 // services/sessionSearch.ts
-async function syncProjectSessionsToElasticsearch(projectId, db) {
+init_prismaBase();
+async function syncProjectSessionsToElasticsearch(projectId, db, tenantId) {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
@@ -1338,7 +1384,7 @@ async function syncProjectSessionsToElasticsearch(projectId, db) {
     ].join(" ");
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES["session" /* SESSION */],
+        _index: getEntityIndexName("session" /* SESSION */, tenantId),
         _id: session.id.toString()
       }
     });
@@ -1403,6 +1449,7 @@ async function syncProjectSessionsToElasticsearch(projectId, db) {
 }
 
 // services/issueSearch.ts
+init_prismaBase();
 function getProjectFromIssue(issue) {
   if (issue.project) {
     return issue.project;
@@ -1427,13 +1474,14 @@ function getProjectFromIssue(issue) {
   }
   return null;
 }
-async function syncProjectIssuesToElasticsearch(projectId, db) {
+async function syncProjectIssuesToElasticsearch(projectId, db, tenantId) {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
-  console.log(`Starting issue sync for project ${projectId}`);
+  const indexName = getEntityIndexName("issue" /* ISSUE */, tenantId);
+  console.log(`Starting issue sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
   const issues = await db.issue.findMany({
     where: {
       // Include deleted items (filtering happens at search time based on admin permissions)
@@ -1531,7 +1579,7 @@ async function syncProjectIssuesToElasticsearch(projectId, db) {
     ].join(" ");
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES["issue" /* ISSUE */],
+        _index: indexName,
         _id: issue.id.toString()
       }
     });
@@ -1592,13 +1640,15 @@ async function syncProjectIssuesToElasticsearch(projectId, db) {
 }
 
 // services/milestoneSearch.ts
-async function syncProjectMilestonesToElasticsearch(projectId, db) {
+init_prismaBase();
+async function syncProjectMilestonesToElasticsearch(projectId, db, tenantId) {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
-  console.log(`Starting milestone sync for project ${projectId}`);
+  const indexName = getEntityIndexName("milestone" /* MILESTONE */, tenantId);
+  console.log(`Starting milestone sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
   const milestones = await db.milestones.findMany({
     where: {
       projectId
@@ -1630,7 +1680,7 @@ async function syncProjectMilestonesToElasticsearch(projectId, db) {
     ].join(" ");
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES["milestone" /* MILESTONE */],
+        _index: indexName,
         _id: milestone.id.toString()
       }
     });
@@ -1686,14 +1736,17 @@ async function syncProjectMilestonesToElasticsearch(projectId, db) {
 }
 
 // services/projectSearch.ts
-async function syncAllProjectsToElasticsearch() {
+init_prismaBase();
+async function syncAllProjectsToElasticsearch(prismaClient2, tenantId) {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
-  console.log("Starting project sync");
-  const projects = await prisma.projects.findMany({
+  const prisma2 = prismaClient2 || prisma;
+  const indexName = getEntityIndexName("project" /* PROJECT */, tenantId);
+  console.log(`Starting project sync${tenantId ? ` (tenant: ${tenantId})` : ""}`);
+  const projects = await prisma2.projects.findMany({
     where: {
       // Include deleted items (filtering happens at search time based on admin permissions)
     },
@@ -1714,7 +1767,7 @@ async function syncAllProjectsToElasticsearch() {
     ].join(" ");
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES["project" /* PROJECT */],
+        _index: indexName,
         _id: project.id.toString()
       }
     });
@@ -1745,10 +1798,153 @@ async function syncAllProjectsToElasticsearch() {
 
 // workers/elasticsearchReindexWorker.ts
 var import_node_url = require("node:url");
+
+// lib/multiTenantPrisma.ts
+var import_client2 = require("@prisma/client");
+var fs = __toESM(require("fs"));
+function isMultiTenantMode() {
+  return process.env.MULTI_TENANT_MODE === "true";
+}
+var tenantClients = /* @__PURE__ */ new Map();
+var tenantConfigs = null;
+var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+function loadTenantsFromFile(filePath) {
+  const configs = /* @__PURE__ */ new Map();
+  try {
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(fileContent);
+      for (const [tenantId, config] of Object.entries(parsed)) {
+        configs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex
+        });
+      }
+      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+    }
+  } catch (error) {
+    console.error(`Failed to load tenant configs from ${filePath}:`, error);
+  }
+  return configs;
+}
+function reloadTenantConfigs() {
+  tenantConfigs = null;
+  return loadTenantConfigs();
+}
+function loadTenantConfigs() {
+  if (tenantConfigs) {
+    return tenantConfigs;
+  }
+  tenantConfigs = /* @__PURE__ */ new Map();
+  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
+  for (const [tenantId, config] of fileConfigs) {
+    tenantConfigs.set(tenantId, config);
+  }
+  const configJson = process.env.TENANT_CONFIGS;
+  if (configJson) {
+    try {
+      const configs = JSON.parse(configJson);
+      for (const [tenantId, config] of Object.entries(configs)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex
+        });
+      }
+      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+    } catch (error) {
+      console.error("Failed to parse TENANT_CONFIGS:", error);
+    }
+  }
+  for (const [key, value] of Object.entries(process.env)) {
+    const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
+    if (match && value) {
+      const tenantId = match[1].toLowerCase();
+      if (!tenantConfigs.has(tenantId)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: value,
+          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
+          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`]
+        });
+      }
+    }
+  }
+  if (tenantConfigs.size === 0) {
+    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+  }
+  return tenantConfigs;
+}
+function getTenantConfig(tenantId) {
+  const configs = loadTenantConfigs();
+  return configs.get(tenantId);
+}
+function createTenantPrismaClient(config) {
+  const client = new import_client2.PrismaClient({
+    datasources: {
+      db: {
+        url: config.databaseUrl
+      }
+    },
+    errorFormat: "pretty"
+  });
+  return client;
+}
+function getTenantPrismaClient(tenantId) {
+  let client = tenantClients.get(tenantId);
+  if (client) {
+    return client;
+  }
+  let config = getTenantConfig(tenantId);
+  if (!config) {
+    console.log(`Tenant ${tenantId} not found in cache, reloading configurations...`);
+    reloadTenantConfigs();
+    config = getTenantConfig(tenantId);
+  }
+  if (!config) {
+    throw new Error(`No configuration found for tenant: ${tenantId}`);
+  }
+  client = createTenantPrismaClient(config);
+  tenantClients.set(tenantId, client);
+  console.log(`Created Prisma client for tenant: ${tenantId}`);
+  return client;
+}
+function getPrismaClientForJob(jobData) {
+  if (!isMultiTenantMode()) {
+    const { prisma: prisma2 } = (init_prismaBase(), __toCommonJS(prismaBase_exports));
+    return prisma2;
+  }
+  if (!jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+  return getTenantPrismaClient(jobData.tenantId);
+}
+async function disconnectAllTenantClients() {
+  const disconnectPromises = [];
+  for (const [tenantId, client] of tenantClients) {
+    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
+    disconnectPromises.push(client.$disconnect());
+  }
+  await Promise.all(disconnectPromises);
+  tenantClients.clear();
+  console.log("All tenant Prisma clients disconnected");
+}
+function validateMultiTenantJobData(jobData) {
+  if (isMultiTenantMode() && !jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+}
+
+// workers/elasticsearchReindexWorker.ts
 var import_meta = {};
 var processor = async (job) => {
-  console.log(`Processing Elasticsearch reindex job ${job.id}`);
-  const { entityType, projectId } = job.data;
+  console.log(`Processing Elasticsearch reindex job ${job.id}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  validateMultiTenantJobData(job.data);
+  const prisma2 = getPrismaClientForJob(job.data);
+  const { entityType, projectId, tenantId } = job.data;
   try {
     const esClient2 = getElasticsearchClient();
     if (!esClient2) {
@@ -1759,11 +1955,11 @@ var processor = async (job) => {
     if (entityType === "all" || entityType === "repositoryCases") {
       await job.updateProgress(5);
       await job.log("Initializing Elasticsearch indexes...");
-      await initializeElasticsearchIndexes();
+      await initializeElasticsearchIndexes(prisma2, tenantId);
     }
-    const projects = projectId ? await prisma.projects.findMany({
+    const projects = projectId ? await prisma2.projects.findMany({
       where: { id: projectId, isDeleted: false }
-    }) : await prisma.projects.findMany({
+    }) : await prisma2.projects.findMany({
       where: { isDeleted: false }
     });
     await job.updateProgress(10);
@@ -1780,32 +1976,32 @@ var processor = async (job) => {
     const totalCounts = {};
     for (const project of projects) {
       if (entityType === "all" || entityType === "repositoryCases") {
-        totalCounts.repositoryCases = (totalCounts.repositoryCases || 0) + await prisma.repositoryCases.count({
+        totalCounts.repositoryCases = (totalCounts.repositoryCases || 0) + await prisma2.repositoryCases.count({
           where: { projectId: project.id, isDeleted: false, isArchived: false }
         });
       }
       if (entityType === "all" || entityType === "sharedSteps") {
-        totalCounts.sharedSteps = (totalCounts.sharedSteps || 0) + await prisma.sharedStepGroup.count({
+        totalCounts.sharedSteps = (totalCounts.sharedSteps || 0) + await prisma2.sharedStepGroup.count({
           where: { projectId: project.id, isDeleted: false }
         });
       }
       if (entityType === "all" || entityType === "testRuns") {
-        totalCounts.testRuns = (totalCounts.testRuns || 0) + await prisma.testRuns.count({
+        totalCounts.testRuns = (totalCounts.testRuns || 0) + await prisma2.testRuns.count({
           where: { projectId: project.id, isDeleted: false }
         });
       }
       if (entityType === "all" || entityType === "sessions") {
-        totalCounts.sessions = (totalCounts.sessions || 0) + await prisma.sessions.count({
+        totalCounts.sessions = (totalCounts.sessions || 0) + await prisma2.sessions.count({
           where: { projectId: project.id, isDeleted: false }
         });
       }
       if (entityType === "all" || entityType === "issues") {
-        totalCounts.issues = (totalCounts.issues || 0) + await prisma.issue.count({
+        totalCounts.issues = (totalCounts.issues || 0) + await prisma2.issue.count({
           where: { isDeleted: false, testRuns: { some: { projectId: project.id } } }
         });
       }
       if (entityType === "all" || entityType === "milestones") {
-        totalCounts.milestones = (totalCounts.milestones || 0) + await prisma.milestones.count({
+        totalCounts.milestones = (totalCounts.milestones || 0) + await prisma2.milestones.count({
           where: { projectId: project.id, isDeleted: false }
         });
       }
@@ -1817,8 +2013,8 @@ var processor = async (job) => {
     if (entityType === "all" || entityType === "projects") {
       await job.updateProgress(currentProgress);
       await job.log("Indexing projects...");
-      await syncAllProjectsToElasticsearch();
-      results.projects = await prisma.projects.count({
+      await syncAllProjectsToElasticsearch(prisma2, tenantId);
+      results.projects = await prisma2.projects.count({
         where: { isDeleted: false }
       });
     }
@@ -1827,7 +2023,7 @@ var processor = async (job) => {
       await job.updateProgress(currentProgress);
       await job.log(`Processing project: ${project.name}`);
       if (entityType === "all" || entityType === "repositoryCases") {
-        const count = await prisma.repositoryCases.count({
+        const count = await prisma2.repositoryCases.count({
           where: {
             projectId: project.id,
             isDeleted: false,
@@ -1842,13 +2038,13 @@ var processor = async (job) => {
             await job.updateProgress(Math.min(overallProgress, 90));
             await job.log(message);
           };
-          await syncProjectCasesToElasticsearch(project.id, 100, progressCallback);
+          await syncProjectCasesToElasticsearch(project.id, 100, progressCallback, prisma2, tenantId);
           results.repositoryCases += count;
           processedDocuments = results.repositoryCases;
         }
       }
       if (entityType === "all" || entityType === "sharedSteps") {
-        const count = await prisma.sharedStepGroup.count({
+        const count = await prisma2.sharedStepGroup.count({
           where: {
             projectId: project.id,
             isDeleted: false
@@ -1856,12 +2052,12 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} shared steps for project ${project.name}`);
-          await syncProjectSharedStepsToElasticsearch(project.id);
+          await syncProjectSharedStepsToElasticsearch(project.id, 100, prisma2, tenantId);
           results.sharedSteps += count;
         }
       }
       if (entityType === "all" || entityType === "testRuns") {
-        const count = await prisma.testRuns.count({
+        const count = await prisma2.testRuns.count({
           where: {
             projectId: project.id,
             isDeleted: false
@@ -1869,12 +2065,12 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} test runs for project ${project.name}`);
-          await syncProjectTestRunsToElasticsearch(project.id, prisma);
+          await syncProjectTestRunsToElasticsearch(project.id, prisma2, tenantId);
           results.testRuns += count;
         }
       }
       if (entityType === "all" || entityType === "sessions") {
-        const count = await prisma.sessions.count({
+        const count = await prisma2.sessions.count({
           where: {
             projectId: project.id,
             isDeleted: false
@@ -1882,12 +2078,12 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} sessions for project ${project.name}`);
-          await syncProjectSessionsToElasticsearch(project.id, prisma);
+          await syncProjectSessionsToElasticsearch(project.id, prisma2, tenantId);
           results.sessions += count;
         }
       }
       if (entityType === "all" || entityType === "issues") {
-        const count = await prisma.issue.count({
+        const count = await prisma2.issue.count({
           where: {
             isDeleted: false,
             testRuns: {
@@ -1899,12 +2095,12 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} issues for project ${project.name}`);
-          await syncProjectIssuesToElasticsearch(project.id, prisma);
+          await syncProjectIssuesToElasticsearch(project.id, prisma2, tenantId);
           results.issues += count;
         }
       }
       if (entityType === "all" || entityType === "milestones") {
-        const count = await prisma.milestones.count({
+        const count = await prisma2.milestones.count({
           where: {
             projectId: project.id,
             isDeleted: false
@@ -1912,7 +2108,7 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} milestones for project ${project.name}`);
-          await syncProjectMilestonesToElasticsearch(project.id, prisma);
+          await syncProjectMilestonesToElasticsearch(project.id, prisma2, tenantId);
           results.milestones += count;
         }
       }
@@ -1937,6 +2133,11 @@ var processor = async (job) => {
 };
 var worker = null;
 var startWorker = async () => {
+  if (isMultiTenantMode()) {
+    console.log("Elasticsearch reindex worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Elasticsearch reindex worker starting in SINGLE-TENANT mode");
+  }
   if (valkey_default) {
     worker = new import_bullmq.Worker(ELASTICSEARCH_REINDEX_QUEUE_NAME, processor, {
       connection: valkey_default,
@@ -1966,6 +2167,9 @@ var startWorker = async () => {
     console.log("Shutting down Elasticsearch reindex worker...");
     if (worker) {
       await worker.close();
+    }
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
     }
     process.exit(0);
   });

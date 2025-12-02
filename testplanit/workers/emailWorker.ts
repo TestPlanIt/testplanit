@@ -1,7 +1,6 @@
 import { Worker, Job } from "bullmq";
 import valkeyConnection from "../lib/valkey";
 import { EMAIL_QUEUE_NAME } from "../lib/queues";
-import { PrismaClient } from "@prisma/client";
 import {
   sendNotificationEmail,
   sendDigestEmail,
@@ -13,16 +12,21 @@ import {
   formatLocaleForUrl,
 } from "../lib/server-translations";
 import { tiptapToHtml, isTipTapContent } from "../utils/tiptapToHtml";
+import {
+  getPrismaClientForJob,
+  isMultiTenantMode,
+  MultiTenantJobData,
+  disconnectAllTenantClients,
+  validateMultiTenantJobData,
+} from "../lib/multiTenantPrisma";
 
-const prisma = new PrismaClient();
-
-interface SendNotificationEmailJobData {
+interface SendNotificationEmailJobData extends MultiTenantJobData {
   notificationId: string;
   userId: string;
   immediate: boolean;
 }
 
-interface SendDigestEmailJobData {
+interface SendDigestEmailJobData extends MultiTenantJobData {
   userId: string;
   notifications: Array<{
     id: string;
@@ -34,7 +38,13 @@ interface SendDigestEmailJobData {
 }
 
 const processor = async (job: Job) => {
-  console.log(`Processing email job ${job.id} of type ${job.name}`);
+  console.log(`Processing email job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+
+  // Validate multi-tenant job data if in multi-tenant mode
+  validateMultiTenantJobData(job.data);
+
+  // Get the appropriate Prisma client (tenant-specific or default)
+  const prisma = getPrismaClientForJob(job.data);
 
   switch (job.name) {
     case "send-notification-email":
@@ -191,7 +201,7 @@ const processor = async (job: Job) => {
 
         // Build URLs and translate content for each notification
         const notificationsWithUrls = await Promise.all(
-          fullNotifications.map(async (notification) => {
+          fullNotifications.map(async (notification: any) => {
             const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
             const userLocale = user.userPreferences?.locale || "en_US";
             const urlLocale = formatLocaleForUrl(userLocale);
@@ -323,6 +333,13 @@ let worker: Worker | null = null;
 
 // Function to start the worker
 const startWorker = async () => {
+  // Log multi-tenant mode status
+  if (isMultiTenantMode()) {
+    console.log("Email worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Email worker starting in SINGLE-TENANT mode");
+  }
+
   if (valkeyConnection) {
     worker = new Worker(EMAIL_QUEUE_NAME, processor, {
       connection: valkeyConnection,
@@ -352,7 +369,10 @@ const startWorker = async () => {
     if (worker) {
       await worker.close();
     }
-    await prisma.$disconnect();
+    // Disconnect all tenant Prisma clients in multi-tenant mode
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
+    }
     process.exit(0);
   });
 };

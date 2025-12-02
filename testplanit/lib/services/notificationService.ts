@@ -1,6 +1,7 @@
 import { getNotificationQueue } from "../queues";
 import { JOB_CREATE_NOTIFICATION } from "../../workers/notificationWorker";
 import { NotificationType } from "@prisma/client";
+import { getCurrentTenantId } from "../multiTenantPrisma";
 
 interface CreateNotificationParams {
   userId: string;
@@ -24,7 +25,12 @@ export class NotificationService {
     }
 
     try {
-      const job = await notificationQueue.add(JOB_CREATE_NOTIFICATION, params, {
+      const jobData = {
+        ...params,
+        tenantId: getCurrentTenantId(),
+      };
+
+      const job = await notificationQueue.add(JOB_CREATE_NOTIFICATION, jobData, {
         removeOnComplete: true,
         removeOnFail: false,
       });

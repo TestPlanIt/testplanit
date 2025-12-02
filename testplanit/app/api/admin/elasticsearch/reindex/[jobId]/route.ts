@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
 import { getElasticsearchReindexQueue } from "@/lib/queues";
+import { isMultiTenantMode, getCurrentTenantId } from "@/lib/multiTenantPrisma";
 
 export async function GET(
   request: NextRequest,
@@ -17,29 +18,49 @@ export async function GET(
     // Check if user is admin
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { access: true }
+      select: { access: true },
     });
 
-    if (user?.access !== 'ADMIN') {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (user?.access !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     // Check if queue is available
     const elasticsearchReindexQueue = getElasticsearchReindexQueue();
     if (!elasticsearchReindexQueue) {
-      return NextResponse.json({
-        error: "Background job queue is not available"
-      }, { status: 503 });
+      return NextResponse.json(
+        {
+          error: "Background job queue is not available",
+        },
+        { status: 503 }
+      );
     }
 
     const { jobId } = await params;
     const job = await elasticsearchReindexQueue.getJob(jobId);
 
     if (!job) {
-      return NextResponse.json(
-        { error: "Job not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
+    }
+
+    // Check tenant access in multi-tenant mode
+    if (isMultiTenantMode()) {
+      const currentTenantId = getCurrentTenantId();
+
+      // In multi-tenant mode, tenant ID must be configured
+      if (!currentTenantId) {
+        return NextResponse.json(
+          { error: "Multi-tenant mode enabled but tenant ID not configured" },
+          { status: 500 }
+        );
+      }
+
+      if (job.data?.tenantId !== currentTenantId) {
+        return NextResponse.json({ error: "Job not found" }, { status: 404 });
+      }
     }
 
     const state = await job.getState();

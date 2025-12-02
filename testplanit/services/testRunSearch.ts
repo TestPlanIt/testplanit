@@ -1,10 +1,10 @@
 import {
   getElasticsearchClient,
-  ENTITY_INDICES,
+  getEntityIndexName,
 } from "./unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
-import type { TestRuns, Prisma } from "@prisma/client";
-import { prisma } from "~/lib/prismaBase";
+import type { TestRuns, Prisma, PrismaClient } from "@prisma/client";
+import { prisma as defaultPrisma } from "~/lib/prismaBase";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 
 /**
@@ -21,12 +21,19 @@ type TestRunForIndexing = TestRuns & {
 
 /**
  * Index a single test run to Elasticsearch
+ * @param testRun - The test run to index
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function indexTestRun(testRun: TestRunForIndexing): Promise<void> {
+export async function indexTestRun(
+  testRun: TestRunForIndexing,
+  tenantId?: string
+): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     throw new Error("Elasticsearch client not available");
   }
+
+  const indexName = getEntityIndexName(SearchableEntityType.TEST_RUN, tenantId);
 
   // Extract text from TipTap JSON for note and docs fields
   const noteText = testRun.note ? extractTextFromNode(testRun.note) : "";
@@ -67,7 +74,7 @@ export async function indexTestRun(testRun: TestRunForIndexing): Promise<void> {
   };
 
   await client.index({
-    index: ENTITY_INDICES[SearchableEntityType.TEST_RUN],
+    index: indexName,
     id: testRun.id.toString(),
     document,
     refresh: true,
@@ -76,17 +83,24 @@ export async function indexTestRun(testRun: TestRunForIndexing): Promise<void> {
 
 /**
  * Delete a test run from Elasticsearch
+ * @param testRunId - The ID of the test run to delete
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function deleteTestRunFromIndex(testRunId: number): Promise<void> {
+export async function deleteTestRunFromIndex(
+  testRunId: number,
+  tenantId?: string
+): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
 
+  const indexName = getEntityIndexName(SearchableEntityType.TEST_RUN, tenantId);
+
   try {
     await client.delete({
-      index: ENTITY_INDICES[SearchableEntityType.TEST_RUN],
+      index: indexName,
       id: testRunId.toString(),
       refresh: true,
     });
@@ -99,8 +113,13 @@ export async function deleteTestRunFromIndex(testRunId: number): Promise<void> {
 
 /**
  * Sync a single test run to Elasticsearch
+ * @param testRunId - The ID of the test run to sync
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function syncTestRunToElasticsearch(testRunId: number): Promise<boolean> {
+export async function syncTestRunToElasticsearch(
+  testRunId: number,
+  tenantId?: string
+): Promise<boolean> {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
@@ -108,7 +127,7 @@ export async function syncTestRunToElasticsearch(testRunId: number): Promise<boo
   }
 
   try {
-    const testRun = await prisma.testRuns.findUnique({
+    const testRun = await defaultPrisma.testRuns.findUnique({
       where: { id: testRunId },
       include: {
         project: true,
@@ -128,7 +147,7 @@ export async function syncTestRunToElasticsearch(testRunId: number): Promise<boo
     // Index test run including deleted ones (filtering happens at search time based on admin permissions)
 
     // Index the test run
-    await indexTestRun(testRun as TestRunForIndexing);
+    await indexTestRun(testRun as TestRunForIndexing, tenantId);
     return true;
   } catch (error) {
     console.error(`Failed to sync test run ${testRunId}:`, error);
@@ -138,10 +157,14 @@ export async function syncTestRunToElasticsearch(testRunId: number): Promise<boo
 
 /**
  * Bulk index test runs for a project
+ * @param projectId - The project ID to sync test runs for
+ * @param db - Prisma client instance
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncProjectTestRunsToElasticsearch(
   projectId: number,
-  db: any
+  db: any,
+  tenantId?: string
 ): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
@@ -149,7 +172,9 @@ export async function syncProjectTestRunsToElasticsearch(
     return;
   }
 
-  console.log(`Starting test run sync for project ${projectId}`);
+  const indexName = getEntityIndexName(SearchableEntityType.TEST_RUN, tenantId);
+
+  console.log(`Starting test run sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
 
   const testRuns = await db.testRuns.findMany({
     where: {
@@ -186,7 +211,7 @@ export async function syncProjectTestRunsToElasticsearch(
 
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES[SearchableEntityType.TEST_RUN],
+        _index: indexName,
         _id: testRun.id.toString(),
       },
     });
@@ -252,26 +277,31 @@ export async function syncProjectTestRunsToElasticsearch(
 
 /**
  * Search for test runs
+ * @param params - Search parameters
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function searchTestRuns(params: {
-  query?: string;
-  projectIds?: number[];
-  stateIds?: number[];
-  configurationIds?: number[];
-  milestoneIds?: number[];
-  isCompleted?: boolean;
-  testRunType?: string;
-  customFields?: Array<{
-    fieldId: number;
-    fieldType: string;
-    operator: string;
-    value: any;
-    value2?: any;
-  }>;
-  from?: number;
-  size?: number;
-  sort?: Array<{ field: string; order: "asc" | "desc" }>;
-}): Promise<{
+export async function searchTestRuns(
+  params: {
+    query?: string;
+    projectIds?: number[];
+    stateIds?: number[];
+    configurationIds?: number[];
+    milestoneIds?: number[];
+    isCompleted?: boolean;
+    testRunType?: string;
+    customFields?: Array<{
+      fieldId: number;
+      fieldType: string;
+      operator: string;
+      value: any;
+      value2?: any;
+    }>;
+    from?: number;
+    size?: number;
+    sort?: Array<{ field: string; order: "asc" | "desc" }>;
+  },
+  tenantId?: string
+): Promise<{
   hits: any[];
   total: number;
   took: number;
@@ -280,6 +310,8 @@ export async function searchTestRuns(params: {
   if (!client) {
     return { hits: [], total: 0, took: 0 };
   }
+
+  const indexName = getEntityIndexName(SearchableEntityType.TEST_RUN, tenantId);
 
   const must: any[] = [];
   const filter: any[] = [];
@@ -329,7 +361,7 @@ export async function searchTestRuns(params: {
   }
 
   const searchBody: any = {
-    index: ENTITY_INDICES[SearchableEntityType.TEST_RUN],
+    index: indexName,
     from: params.from || 0,
     size: params.size || 20,
     query: {

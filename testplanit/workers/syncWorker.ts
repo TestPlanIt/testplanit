@@ -3,11 +3,28 @@ import valkeyConnection from "../lib/valkey";
 import { SYNC_QUEUE_NAME } from "../lib/queueNames";
 import { syncService, SyncJobData } from "../lib/integrations/services/SyncService";
 import { pathToFileURL } from "node:url";
+import {
+  getPrismaClientForJob,
+  isMultiTenantMode,
+  MultiTenantJobData,
+  disconnectAllTenantClients,
+  validateMultiTenantJobData,
+} from "../lib/multiTenantPrisma";
+
+// Extend SyncJobData with multi-tenant support
+interface MultiTenantSyncJobData extends SyncJobData, MultiTenantJobData {}
 
 const processor = async (job: Job) => {
-  console.log(`Processing sync job ${job.id} of type ${job.name}`);
+  console.log(`Processing sync job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
 
-  const jobData = job.data as SyncJobData;
+  // Validate multi-tenant job data if in multi-tenant mode
+  validateMultiTenantJobData(job.data);
+
+  // Get the appropriate Prisma client (tenant-specific or default)
+  const prisma = getPrismaClientForJob(job.data);
+  const serviceOptions = { prismaClient: prisma };
+
+  const jobData = job.data as MultiTenantSyncJobData;
 
   switch (job.name) {
     case "sync-issues":
@@ -17,7 +34,8 @@ const processor = async (job: Job) => {
           jobData.integrationId,
           jobData.projectId,
           jobData.data,
-          job // Pass job for progress reporting
+          job, // Pass job for progress reporting
+          serviceOptions
         );
 
         if (result.errors.length > 0) {
@@ -45,7 +63,8 @@ const processor = async (job: Job) => {
           jobData.integrationId,
           jobData.projectId,
           jobData.data,
-          job // Pass job for progress reporting
+          job, // Pass job for progress reporting
+          serviceOptions
         );
 
         if (result.errors.length > 0) {
@@ -71,7 +90,8 @@ const processor = async (job: Job) => {
         const result = await syncService.performIssueRefresh(
           jobData.userId,
           jobData.integrationId,
-          jobData.issueId
+          jobData.issueId,
+          serviceOptions
         );
 
         if (!result.success) {
@@ -122,6 +142,13 @@ let worker: Worker | null = null;
 
 // Function to start the worker
 const startWorker = async () => {
+  // Log multi-tenant mode status
+  if (isMultiTenantMode()) {
+    console.log("Sync worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Sync worker starting in SINGLE-TENANT mode");
+  }
+
   if (valkeyConnection) {
     worker = new Worker(SYNC_QUEUE_NAME, processor, {
       connection: valkeyConnection,
@@ -153,6 +180,10 @@ const startWorker = async () => {
     console.log("Shutting down sync worker...");
     if (worker) {
       await worker.close();
+    }
+    // Disconnect all tenant Prisma clients in multi-tenant mode
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
     }
     process.exit(0);
   });

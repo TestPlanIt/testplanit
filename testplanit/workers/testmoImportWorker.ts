@@ -16,6 +16,10 @@ import StarterKit from "@tiptap/starter-kit";
 import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
 import bcrypt from "bcrypt";
+import {
+  isMultiTenantMode,
+  disconnectAllTenantClients,
+} from "../lib/multiTenantPrisma";
 import valkeyConnection from "../lib/valkey";
 import {
   TESTMO_IMPORT_QUEUE_NAME,
@@ -120,6 +124,10 @@ import {
 // TAGS
 // - milestone_automation_tags
 
+// TODO(multi-tenant): This worker currently uses a single global Prisma client.
+// For full multi-tenant support, the prisma client would need to be passed through
+// all import functions. This is a significant refactor due to the size and complexity
+// of this import worker. For now, Testmo imports are only supported in single-tenant mode.
 const prisma = new PrismaClient();
 
 const projectNameCache = new Map<number, string>();
@@ -7481,6 +7489,14 @@ async function processor(job: Job<{ jobId: string; mode?: TestmoQueueMode }>) {
 }
 
 async function startWorker() {
+  // Log multi-tenant mode status
+  if (isMultiTenantMode()) {
+    console.log("Testmo import worker starting in MULTI-TENANT mode");
+    console.warn("WARNING: Testmo import currently only supports single-tenant mode. Multi-tenant support requires refactoring.");
+  } else {
+    console.log("Testmo import worker starting in SINGLE-TENANT mode");
+  }
+
   if (!valkeyConnection) {
     console.warn(
       "Valkey connection not available. Testmo import worker cannot start."
@@ -7513,6 +7529,10 @@ async function startWorker() {
     console.log("Shutting down Testmo import worker...");
     await worker.close();
     await prisma.$disconnect();
+    // Disconnect all tenant Prisma clients in multi-tenant mode
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
+    }
     console.log("Testmo import worker shut down gracefully.");
     process.exit(0);
   };

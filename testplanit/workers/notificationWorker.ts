@@ -1,13 +1,17 @@
 import { Worker, Job } from "bullmq";
 import valkeyConnection from "../lib/valkey";
 import { NOTIFICATION_QUEUE_NAME, getEmailQueue } from "../lib/queues";
-import { PrismaClient } from "@prisma/client";
 import { pathToFileURL } from "node:url";
+import {
+  getPrismaClientForJob,
+  isMultiTenantMode,
+  MultiTenantJobData,
+  disconnectAllTenantClients,
+  validateMultiTenantJobData,
+} from "../lib/multiTenantPrisma";
 
-const prisma = new PrismaClient();
-
-// Define job data structures
-interface CreateNotificationJobData {
+// Define job data structures with multi-tenant support
+interface CreateNotificationJobData extends MultiTenantJobData {
   userId: string;
   type: string;
   title: string;
@@ -17,8 +21,12 @@ interface CreateNotificationJobData {
   data?: any;
 }
 
-interface ProcessUserNotificationsJobData {
+interface ProcessUserNotificationsJobData extends MultiTenantJobData {
   userId: string;
+}
+
+interface SendDailyDigestJobData extends MultiTenantJobData {
+  // No additional fields required
 }
 
 // Define job names
@@ -27,7 +35,13 @@ export const JOB_PROCESS_USER_NOTIFICATIONS = "process-user-notifications";
 export const JOB_SEND_DAILY_DIGEST = "send-daily-digest";
 
 const processor = async (job: Job) => {
-  console.log(`Processing notification job ${job.id} of type ${job.name}`);
+  console.log(`Processing notification job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+
+  // Validate multi-tenant job data if in multi-tenant mode
+  validateMultiTenantJobData(job.data);
+
+  // Get the appropriate Prisma client (tenant-specific or default)
+  const prisma = getPrismaClientForJob(job.data);
 
   switch (job.name) {
     case JOB_CREATE_NOTIFICATION:
@@ -76,11 +90,13 @@ const processor = async (job: Job) => {
         });
 
         // Queue email if needed based on notification mode
+        // Note: In multi-tenant mode, the email job should also include tenantId
         if (notificationMode === "IN_APP_EMAIL_IMMEDIATE") {
           await getEmailQueue()?.add("send-notification-email", {
             notificationId: notification.id,
             userId: createData.userId,
             immediate: true,
+            tenantId: createData.tenantId, // Pass tenantId for multi-tenant support
           });
         }
 
@@ -117,6 +133,8 @@ const processor = async (job: Job) => {
       break;
 
     case JOB_SEND_DAILY_DIGEST:
+      const digestData = job.data as SendDailyDigestJobData;
+
       try {
         // Get global settings from AppConfig
         const globalSettings = await prisma.appConfig.findUnique({
@@ -163,12 +181,13 @@ const processor = async (job: Job) => {
           if (notifications.length > 0) {
             await getEmailQueue()?.add("send-digest-email", {
               userId: userPref.userId,
-              notifications: notifications.map((n) => ({
+              notifications: notifications.map((n: any) => ({
                 id: n.id,
                 title: n.title,
                 message: n.message,
                 createdAt: n.createdAt,
               })),
+              tenantId: digestData.tenantId, // Pass tenantId for multi-tenant support
             });
           }
         }
@@ -189,6 +208,13 @@ let worker: Worker | null = null;
 
 // Function to start the worker
 const startWorker = async () => {
+  // Log multi-tenant mode status
+  if (isMultiTenantMode()) {
+    console.log("Notification worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Notification worker starting in SINGLE-TENANT mode");
+  }
+
   if (valkeyConnection) {
     worker = new Worker(NOTIFICATION_QUEUE_NAME, processor, {
       connection: valkeyConnection,
@@ -222,7 +248,10 @@ const startWorker = async () => {
     if (worker) {
       await worker.close();
     }
-    await prisma.$disconnect();
+    // Disconnect all tenant Prisma clients in multi-tenant mode
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
+    }
     process.exit(0);
   });
 };

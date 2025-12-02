@@ -1,12 +1,23 @@
 import { getSyncQueue } from "../../queues";
 import { issueCache } from "../cache/IssueCache";
 import { integrationManager } from "../IntegrationManager";
-import { enhance } from "@zenstackhq/runtime";
 import type { IssueData } from "../adapters/IssueAdapter";
 import type { IssueAdapter } from "../adapters/IssueAdapter";
-import { JobsOptions } from "bullmq";
-import { prisma } from "@/lib/prismaBase";
+import { JobsOptions, Job } from "bullmq";
+import { prisma as defaultPrisma } from "@/lib/prismaBase";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
+import type { PrismaClient } from "@prisma/client";
+import { getCurrentTenantId } from "../../multiTenantPrisma";
+
+// Lazy-load zenstack enhance to reduce worker memory at startup
+let _enhance: typeof import("@zenstackhq/runtime").enhance | null = null;
+async function getEnhance() {
+  if (!_enhance) {
+    const { enhance } = await import("@zenstackhq/runtime");
+    _enhance = enhance;
+  }
+  return _enhance;
+}
 
 export interface SyncJobData {
   userId: string;
@@ -15,6 +26,11 @@ export interface SyncJobData {
   issueId?: string;
   action: "sync" | "create" | "update" | "refresh";
   data?: any;
+  tenantId?: string; // For multi-tenant support
+}
+
+export interface SyncServiceOptions {
+  prismaClient?: PrismaClient; // Optional: use provided client for multi-tenant support
 }
 
 export interface SyncOptions {
@@ -43,6 +59,7 @@ export class SyncService {
       integrationId,
       action: "sync",
       data: options,
+      tenantId: getCurrentTenantId(),
     };
 
     const jobOptions: JobsOptions = {
@@ -80,6 +97,7 @@ export class SyncService {
       projectId,
       action: "sync",
       data: options,
+      tenantId: getCurrentTenantId(),
     };
 
     const job = await syncQueue.add("sync-project-issues", jobData);
@@ -105,6 +123,7 @@ export class SyncService {
       integrationId,
       action: "create",
       data: issueData,
+      tenantId: getCurrentTenantId(),
     };
 
     const job = await syncQueue.add("create-issue", jobData, {
@@ -138,6 +157,7 @@ export class SyncService {
       issueId,
       action: "update",
       data: updateData,
+      tenantId: getCurrentTenantId(),
     };
 
     const job = await syncQueue.add("update-issue", jobData);
@@ -163,6 +183,7 @@ export class SyncService {
       integrationId,
       issueId,
       action: "refresh",
+      tenantId: getCurrentTenantId(),
     };
 
     const job = await syncQueue.add("refresh-issue", jobData, {
@@ -185,8 +206,10 @@ export class SyncService {
     integrationId: number,
     projectId?: string,
     options: SyncOptions = {},
-    job?: any // BullMQ Job for progress reporting
+    job?: Job, // BullMQ Job for progress reporting
+    serviceOptions: SyncServiceOptions = {}
   ): Promise<{ synced: number; errors: string[] }> {
+    const prisma = serviceOptions.prismaClient || defaultPrisma;
     const errors: string[] = [];
     let syncedCount = 0;
 
@@ -207,7 +230,8 @@ export class SyncService {
         throw new Error("User not found");
       }
 
-      // Get user context for database operations
+      // Get user context for database operations (lazy-load enhance to reduce memory)
+      const enhance = await getEnhance();
       const userDb = enhance(prisma, { user }, { kinds: ["delegate"] });
 
       // Get the integration
@@ -381,8 +405,10 @@ export class SyncService {
   async performIssueRefresh(
     userId: string,
     integrationId: number,
-    externalIssueId: string
+    externalIssueId: string,
+    serviceOptions: SyncServiceOptions = {}
   ): Promise<{ success: boolean; error?: string }> {
+    const prisma = serviceOptions.prismaClient || defaultPrisma;
     try {
       // Get full user object for enhance
       const user = await prisma.user.findUnique({
@@ -400,7 +426,8 @@ export class SyncService {
         throw new Error("User not found");
       }
 
-      // Get user context for database operations
+      // Get user context for database operations (lazy-load enhance to reduce memory)
+      const enhance = await getEnhance();
       const userDb = enhance(prisma, { user }, { kinds: ["delegate"] });
 
       // Get the integration

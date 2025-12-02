@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { getElasticsearchReindexQueue } from "@/lib/queues";
 import { ReindexJobData } from "~/workers/elasticsearchReindexWorker";
+import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,6 +49,7 @@ export async function POST(request: NextRequest) {
       entityType,
       projectId,
       userId: session.user.id,
+      tenantId: getCurrentTenantId(),
     };
 
     const job = await elasticsearchReindexQueue.add("reindex", jobData);

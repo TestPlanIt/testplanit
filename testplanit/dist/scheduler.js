@@ -5,6 +5,13 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -21,6 +28,29 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// lib/prismaBase.ts
+var prismaBase_exports = {};
+__export(prismaBase_exports, {
+  prisma: () => prisma
+});
+var import_client, prismaClient, prisma;
+var init_prismaBase = __esm({
+  "lib/prismaBase.ts"() {
+    "use strict";
+    import_client = require("@prisma/client");
+    if (process.env.NODE_ENV === "production") {
+      prismaClient = new import_client.PrismaClient({ errorFormat: "pretty" });
+    } else {
+      if (!global.prismaBase) {
+        global.prismaBase = new import_client.PrismaClient({ errorFormat: "colorless" });
+      }
+      prismaClient = global.prismaBase;
+    }
+    prisma = prismaClient;
+  }
+});
 
 // lib/queues.ts
 var import_bullmq = require("bullmq");
@@ -155,28 +185,17 @@ function getEmailQueue() {
 // workers/forecastWorker.ts
 var import_bullmq2 = require("bullmq");
 
-// lib/prismaBase.ts
-var import_client = require("@prisma/client");
-var prismaClient;
-if (process.env.NODE_ENV === "production") {
-  prismaClient = new import_client.PrismaClient({ errorFormat: "pretty" });
-} else {
-  if (!global.prismaBase) {
-    global.prismaBase = new import_client.PrismaClient({ errorFormat: "colorless" });
-  }
-  prismaClient = global.prismaBase;
-}
-var prisma = prismaClient;
-
 // services/forecastService.ts
+init_prismaBase();
 async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
+  const prisma2 = options.prismaClient || prisma;
   if (process.env.DEBUG_FORECAST) {
     console.log(
       `Calculating group forecast for RepositoryCase ID: ${repositoryCaseId}`
     );
   }
   try {
-    const caseAndLinks = await prisma.repositoryCases.findUnique({
+    const caseAndLinks = await prisma2.repositoryCases.findUnique({
       where: { id: repositoryCaseId },
       select: {
         id: true,
@@ -199,7 +218,7 @@ async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
     ];
     const uniqueCaseIds = Array.from(new Set(linkedIds));
     if (process.env.DEBUG_FORECAST) console.log("[Forecast] Group case IDs:", uniqueCaseIds);
-    const allCases = await prisma.repositoryCases.findMany({
+    const allCases = await prisma2.repositoryCases.findMany({
       where: { id: { in: uniqueCaseIds } },
       select: { id: true, source: true }
     });
@@ -208,12 +227,12 @@ async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
     if (process.env.DEBUG_FORECAST) console.log("[Forecast] manualCaseIds:", manualCaseIds);
     let manualResults = [];
     if (manualCaseIds.length) {
-      const testRunCases = await prisma.testRunCases.findMany({
+      const testRunCases = await prisma2.testRunCases.findMany({
         where: { repositoryCaseId: { in: manualCaseIds } },
         select: { id: true }
       });
       const testRunCaseIds = testRunCases.map((trc) => trc.id);
-      manualResults = testRunCaseIds.length ? await prisma.testRunResults.findMany({
+      manualResults = testRunCaseIds.length ? await prisma2.testRunResults.findMany({
         where: {
           testRunCaseId: { in: testRunCaseIds },
           isDeleted: false,
@@ -227,7 +246,7 @@ async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
     if (process.env.DEBUG_FORECAST) console.log("[Forecast] manualDurations:", manualDurations);
     const junitCaseIds = allCases.filter((c) => c.source === "JUNIT").map((c) => c.id);
     if (process.env.DEBUG_FORECAST) console.log("[Forecast] junitCaseIds:", junitCaseIds);
-    const junitResults = junitCaseIds.length ? await prisma.jUnitTestResult.findMany({
+    const junitResults = junitCaseIds.length ? await prisma2.jUnitTestResult.findMany({
       where: {
         repositoryCaseId: { in: junitCaseIds },
         time: { gt: 0 }
@@ -245,7 +264,7 @@ async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
     ) : null;
     if (process.env.DEBUG_FORECAST) console.log("[Forecast] avgManual:", avgManual, "avgJunit:", avgJunit);
     for (const caseId of uniqueCaseIds) {
-      await prisma.repositoryCases.update({
+      await prisma2.repositoryCases.update({
         where: { id: caseId },
         data: {
           forecastManual: avgManual,
@@ -258,7 +277,7 @@ async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
         `Updated forecastManual=${avgManual}, forecastAutomated=${avgJunit} for cases: [${uniqueCaseIds.join(", ")}]`
       );
     }
-    const affectedTestRunCases = await prisma.testRunCases.findMany({
+    const affectedTestRunCases = await prisma2.testRunCases.findMany({
       where: {
         repositoryCaseId: { in: uniqueCaseIds }
       },
@@ -272,7 +291,8 @@ async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
     if (!options.skipTestRunUpdate && uniqueAffectedTestRunIds.length > 0) {
       for (const testRunId of uniqueAffectedTestRunIds) {
         await updateTestRunForecast(testRunId, {
-          alreadyRefreshedCaseIds: new Set(uniqueCaseIds)
+          alreadyRefreshedCaseIds: new Set(uniqueCaseIds),
+          prismaClient: prisma2
         });
       }
     }
@@ -289,9 +309,10 @@ async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
   }
 }
 async function updateTestRunForecast(testRunId, options = {}) {
+  const prisma2 = options.prismaClient || prisma;
   if (process.env.DEBUG_FORECAST) console.log(`Updating forecast for TestRun ID: ${testRunId}`);
   try {
-    let testRunCasesWithDetails = await prisma.testRunCases.findMany({
+    let testRunCasesWithDetails = await prisma2.testRunCases.findMany({
       where: { testRunId },
       select: {
         repositoryCaseId: true,
@@ -316,7 +337,7 @@ async function updateTestRunForecast(testRunId, options = {}) {
         }
         const result = await updateRepositoryCaseForecast(
           repositoryCaseId,
-          { skipTestRunUpdate: true }
+          { skipTestRunUpdate: true, prismaClient: prisma2 }
         );
         if (result.updatedCaseIds.length > 0) {
           refreshedAnyCase = true;
@@ -326,7 +347,7 @@ async function updateTestRunForecast(testRunId, options = {}) {
         }
       }
       if (refreshedAnyCase) {
-        testRunCasesWithDetails = await prisma.testRunCases.findMany({
+        testRunCasesWithDetails = await prisma2.testRunCases.findMany({
           where: { testRunId },
           select: {
             repositoryCaseId: true,
@@ -343,7 +364,7 @@ async function updateTestRunForecast(testRunId, options = {}) {
       (trc) => trc.status === null || trc.status?.systemName === "UNTESTED"
     ).map((trc) => trc.repositoryCaseId);
     if (!repositoryCaseIdsToForecast.length) {
-      await prisma.testRuns.update({
+      await prisma2.testRuns.update({
         where: { id: testRunId },
         data: {
           forecastManual: null,
@@ -357,7 +378,7 @@ async function updateTestRunForecast(testRunId, options = {}) {
       }
       return;
     }
-    const repositoryCases = await prisma.repositoryCases.findMany({
+    const repositoryCases = await prisma2.repositoryCases.findMany({
       where: { id: { in: repositoryCaseIdsToForecast } },
       select: { forecastManual: true, forecastAutomated: true }
     });
@@ -375,7 +396,7 @@ async function updateTestRunForecast(testRunId, options = {}) {
         hasAutomated = true;
       }
     }
-    await prisma.testRuns.update({
+    await prisma2.testRuns.update({
       where: { id: testRunId },
       data: {
         forecastManual: hasManual ? totalForecastManual : null,
@@ -395,13 +416,14 @@ async function updateTestRunForecast(testRunId, options = {}) {
     throw error;
   }
 }
-async function getUniqueCaseGroupIds() {
+async function getUniqueCaseGroupIds(options = {}) {
+  const prisma2 = options.prismaClient || prisma;
   if (process.env.DEBUG_FORECAST) console.log("Fetching unique case group representatives...");
   try {
     const BATCH_SIZE = 1e3;
     const processedCaseIds = /* @__PURE__ */ new Set();
     const uniqueRepresentatives = [];
-    const allCaseIds = await prisma.repositoryCases.findMany({
+    const allCaseIds = await prisma2.repositoryCases.findMany({
       where: {
         isDeleted: false,
         isArchived: false
@@ -414,7 +436,7 @@ async function getUniqueCaseGroupIds() {
     if (process.env.DEBUG_FORECAST) console.log(`Processing ${totalCases} active cases in batches of ${BATCH_SIZE}...`);
     for (let i = 0; i < allCaseIds.length; i += BATCH_SIZE) {
       const batchIds = allCaseIds.slice(i, i + BATCH_SIZE).map((c) => c.id);
-      const casesWithLinks = await prisma.repositoryCases.findMany({
+      const casesWithLinks = await prisma2.repositoryCases.findMany({
         where: {
           id: { in: batchIds }
         },
@@ -462,13 +484,160 @@ async function getUniqueCaseGroupIds() {
 
 // workers/forecastWorker.ts
 var import_node_url = require("node:url");
+
+// lib/multiTenantPrisma.ts
+var import_client2 = require("@prisma/client");
+var fs = __toESM(require("fs"));
+function isMultiTenantMode() {
+  return process.env.MULTI_TENANT_MODE === "true";
+}
+var tenantClients = /* @__PURE__ */ new Map();
+var tenantConfigs = null;
+var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+function loadTenantsFromFile(filePath) {
+  const configs = /* @__PURE__ */ new Map();
+  try {
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(fileContent);
+      for (const [tenantId, config] of Object.entries(parsed)) {
+        configs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex
+        });
+      }
+      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+    }
+  } catch (error) {
+    console.error(`Failed to load tenant configs from ${filePath}:`, error);
+  }
+  return configs;
+}
+function reloadTenantConfigs() {
+  tenantConfigs = null;
+  return loadTenantConfigs();
+}
+function loadTenantConfigs() {
+  if (tenantConfigs) {
+    return tenantConfigs;
+  }
+  tenantConfigs = /* @__PURE__ */ new Map();
+  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
+  for (const [tenantId, config] of fileConfigs) {
+    tenantConfigs.set(tenantId, config);
+  }
+  const configJson = process.env.TENANT_CONFIGS;
+  if (configJson) {
+    try {
+      const configs = JSON.parse(configJson);
+      for (const [tenantId, config] of Object.entries(configs)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex
+        });
+      }
+      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+    } catch (error) {
+      console.error("Failed to parse TENANT_CONFIGS:", error);
+    }
+  }
+  for (const [key, value] of Object.entries(process.env)) {
+    const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
+    if (match && value) {
+      const tenantId = match[1].toLowerCase();
+      if (!tenantConfigs.has(tenantId)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: value,
+          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
+          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`]
+        });
+      }
+    }
+  }
+  if (tenantConfigs.size === 0) {
+    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+  }
+  return tenantConfigs;
+}
+function getTenantConfig(tenantId) {
+  const configs = loadTenantConfigs();
+  return configs.get(tenantId);
+}
+function getAllTenantIds() {
+  const configs = loadTenantConfigs();
+  return Array.from(configs.keys());
+}
+function createTenantPrismaClient(config) {
+  const client = new import_client2.PrismaClient({
+    datasources: {
+      db: {
+        url: config.databaseUrl
+      }
+    },
+    errorFormat: "pretty"
+  });
+  return client;
+}
+function getTenantPrismaClient(tenantId) {
+  let client = tenantClients.get(tenantId);
+  if (client) {
+    return client;
+  }
+  let config = getTenantConfig(tenantId);
+  if (!config) {
+    console.log(`Tenant ${tenantId} not found in cache, reloading configurations...`);
+    reloadTenantConfigs();
+    config = getTenantConfig(tenantId);
+  }
+  if (!config) {
+    throw new Error(`No configuration found for tenant: ${tenantId}`);
+  }
+  client = createTenantPrismaClient(config);
+  tenantClients.set(tenantId, client);
+  console.log(`Created Prisma client for tenant: ${tenantId}`);
+  return client;
+}
+function getPrismaClientForJob(jobData) {
+  if (!isMultiTenantMode()) {
+    const { prisma: prisma2 } = (init_prismaBase(), __toCommonJS(prismaBase_exports));
+    return prisma2;
+  }
+  if (!jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+  return getTenantPrismaClient(jobData.tenantId);
+}
+async function disconnectAllTenantClients() {
+  const disconnectPromises = [];
+  for (const [tenantId, client] of tenantClients) {
+    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
+    disconnectPromises.push(client.$disconnect());
+  }
+  await Promise.all(disconnectPromises);
+  tenantClients.clear();
+  console.log("All tenant Prisma clients disconnected");
+}
+function validateMultiTenantJobData(jobData) {
+  if (isMultiTenantMode() && !jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+}
+
+// workers/forecastWorker.ts
 var import_meta = {};
 var JOB_UPDATE_SINGLE_CASE = "update-single-case-forecast";
 var JOB_UPDATE_ALL_CASES = "update-all-cases-forecast";
 var processor = async (job) => {
-  console.log(`Processing job ${job.id} of type ${job.name}`);
+  console.log(`Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
   let successCount = 0;
   let failCount = 0;
+  validateMultiTenantJobData(job.data);
+  const prisma2 = getPrismaClientForJob(job.data);
   switch (job.name) {
     case JOB_UPDATE_SINGLE_CASE:
       const singleData = job.data;
@@ -478,7 +647,9 @@ var processor = async (job) => {
         );
       }
       try {
-        await updateRepositoryCaseForecast(singleData.repositoryCaseId);
+        await updateRepositoryCaseForecast(singleData.repositoryCaseId, {
+          prismaClient: prisma2
+        });
         successCount = 1;
         console.log(
           `Job ${job.id} completed: Updated forecast for case ${singleData.repositoryCaseId}`
@@ -496,13 +667,14 @@ var processor = async (job) => {
       console.log(`Job ${job.id}: Starting update for all active cases.`);
       successCount = 0;
       failCount = 0;
-      const caseIds = await getUniqueCaseGroupIds();
+      const caseIds = await getUniqueCaseGroupIds({ prismaClient: prisma2 });
       const affectedTestRunIds = /* @__PURE__ */ new Set();
       for (const caseId of caseIds) {
         try {
           const result = await updateRepositoryCaseForecast(caseId, {
             skipTestRunUpdate: true,
-            collectAffectedTestRuns: true
+            collectAffectedTestRuns: true,
+            prismaClient: prisma2
           });
           for (const testRunId of result.affectedTestRunIds) {
             affectedTestRunIds.add(testRunId);
@@ -522,7 +694,7 @@ var processor = async (job) => {
       console.log(
         `Job ${job.id}: Filtering ${affectedTestRunIds.size} affected test runs...`
       );
-      const activeTestRuns = await prisma.testRuns.findMany({
+      const activeTestRuns = await prisma2.testRuns.findMany({
         where: {
           id: { in: Array.from(affectedTestRunIds) },
           isCompleted: false
@@ -538,7 +710,7 @@ var processor = async (job) => {
       let testRunFailCount = 0;
       for (const testRunId of activeTestRunIds) {
         try {
-          await updateTestRunForecast(testRunId);
+          await updateTestRunForecast(testRunId, { prismaClient: prisma2 });
           testRunSuccessCount++;
         } catch (error) {
           console.error(
@@ -563,6 +735,11 @@ var processor = async (job) => {
   return { status: "completed", successCount, failCount };
 };
 async function startWorker() {
+  if (isMultiTenantMode()) {
+    console.log("Forecast worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Forecast worker starting in SINGLE-TENANT mode");
+  }
   if (valkey_default) {
     const worker2 = new import_bullmq2.Worker(FORECAST_QUEUE_NAME, processor, {
       connection: valkey_default,
@@ -591,6 +768,9 @@ async function startWorker() {
     const shutdown = async () => {
       console.log("Shutting down forecast worker...");
       await worker2.close();
+      if (isMultiTenantMode()) {
+        await disconnectAllTenantClients();
+      }
       console.log("Forecast worker shut down gracefully.");
       process.exit(0);
     };
@@ -612,15 +792,15 @@ if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_ur
 
 // workers/notificationWorker.ts
 var import_bullmq3 = require("bullmq");
-var import_client2 = require("@prisma/client");
 var import_node_url2 = require("node:url");
 var import_meta2 = {};
-var prisma2 = new import_client2.PrismaClient();
 var JOB_CREATE_NOTIFICATION = "create-notification";
 var JOB_PROCESS_USER_NOTIFICATIONS = "process-user-notifications";
 var JOB_SEND_DAILY_DIGEST = "send-daily-digest";
 var processor2 = async (job) => {
-  console.log(`Processing notification job ${job.id} of type ${job.name}`);
+  console.log(`Processing notification job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  validateMultiTenantJobData(job.data);
+  const prisma2 = getPrismaClientForJob(job.data);
   switch (job.name) {
     case JOB_CREATE_NOTIFICATION:
       const createData = job.data;
@@ -657,7 +837,9 @@ var processor2 = async (job) => {
           await getEmailQueue()?.add("send-notification-email", {
             notificationId: notification.id,
             userId: createData.userId,
-            immediate: true
+            immediate: true,
+            tenantId: createData.tenantId
+            // Pass tenantId for multi-tenant support
           });
         }
         console.log(
@@ -688,6 +870,7 @@ var processor2 = async (job) => {
       }
       break;
     case JOB_SEND_DAILY_DIGEST:
+      const digestData = job.data;
       try {
         const globalSettings = await prisma2.appConfig.findUnique({
           where: { key: "notificationSettings" }
@@ -729,7 +912,9 @@ var processor2 = async (job) => {
                 title: n.title,
                 message: n.message,
                 createdAt: n.createdAt
-              }))
+              })),
+              tenantId: digestData.tenantId
+              // Pass tenantId for multi-tenant support
             });
           }
         }
@@ -745,6 +930,11 @@ var processor2 = async (job) => {
 };
 var worker = null;
 var startWorker2 = async () => {
+  if (isMultiTenantMode()) {
+    console.log("Notification worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Notification worker starting in SINGLE-TENANT mode");
+  }
   if (valkey_default) {
     worker = new import_bullmq3.Worker(NOTIFICATION_QUEUE_NAME, processor2, {
       connection: valkey_default,
@@ -772,7 +962,9 @@ var startWorker2 = async () => {
     if (worker) {
       await worker.close();
     }
-    await prisma2.$disconnect();
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
+    }
     process.exit(0);
   });
 };
@@ -796,6 +988,11 @@ async function scheduleJobs() {
     process.exit(1);
   }
   try {
+    const multiTenant = isMultiTenantMode();
+    const tenantIds = multiTenant ? getAllTenantIds() : [void 0];
+    if (multiTenant) {
+      console.log(`Multi-tenant mode enabled. Scheduling jobs for ${tenantIds.length} tenants.`);
+    }
     const repeatableJobs = await forecastQueue.getRepeatableJobs();
     let removedCount = 0;
     for (const job of repeatableJobs) {
@@ -810,25 +1007,23 @@ async function scheduleJobs() {
     if (removedCount > 0) {
       console.log(`Removed ${removedCount} old repeatable forecast jobs.`);
     }
-    await forecastQueue.add(
-      JOB_UPDATE_ALL_CASES,
-      // Job name from worker
-      {},
-      // No specific data needed
-      {
-        repeat: {
-          // BullMQ v3+ uses pattern instead of cron
-          // For older versions use: cron: CRON_SCHEDULE_DAILY_3AM
-          pattern: CRON_SCHEDULE_DAILY_3AM
-          // tz: 'UTC', // Example: Explicitly set timezone if needed
-        },
-        jobId: JOB_UPDATE_ALL_CASES
-        // Use the job name as a predictable ID
-      }
-    );
-    console.log(
-      `Successfully scheduled repeatable job "${JOB_UPDATE_ALL_CASES}" with pattern "${CRON_SCHEDULE_DAILY_3AM}" on queue "${FORECAST_QUEUE_NAME}".`
-    );
+    for (const tenantId of tenantIds) {
+      const jobId = tenantId ? `${JOB_UPDATE_ALL_CASES}-${tenantId}` : JOB_UPDATE_ALL_CASES;
+      await forecastQueue.add(
+        JOB_UPDATE_ALL_CASES,
+        { tenantId },
+        // Include tenantId for multi-tenant support
+        {
+          repeat: {
+            pattern: CRON_SCHEDULE_DAILY_3AM
+          },
+          jobId
+        }
+      );
+      console.log(
+        `Successfully scheduled repeatable job "${JOB_UPDATE_ALL_CASES}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_3AM}" on queue "${FORECAST_QUEUE_NAME}".`
+      );
+    }
     const notificationRepeatableJobs = await notificationQueue.getRepeatableJobs();
     let removedNotificationCount = 0;
     for (const job of notificationRepeatableJobs) {
@@ -845,19 +1040,23 @@ async function scheduleJobs() {
         `Removed ${removedNotificationCount} old repeatable notification jobs.`
       );
     }
-    await notificationQueue.add(
-      JOB_SEND_DAILY_DIGEST,
-      {},
-      {
-        repeat: {
-          pattern: CRON_SCHEDULE_DAILY_8AM
-        },
-        jobId: JOB_SEND_DAILY_DIGEST
-      }
-    );
-    console.log(
-      `Successfully scheduled repeatable job "${JOB_SEND_DAILY_DIGEST}" with pattern "${CRON_SCHEDULE_DAILY_8AM}" on queue "${NOTIFICATION_QUEUE_NAME}".`
-    );
+    for (const tenantId of tenantIds) {
+      const jobId = tenantId ? `${JOB_SEND_DAILY_DIGEST}-${tenantId}` : JOB_SEND_DAILY_DIGEST;
+      await notificationQueue.add(
+        JOB_SEND_DAILY_DIGEST,
+        { tenantId },
+        // Include tenantId for multi-tenant support
+        {
+          repeat: {
+            pattern: CRON_SCHEDULE_DAILY_8AM
+          },
+          jobId
+        }
+      );
+      console.log(
+        `Successfully scheduled repeatable job "${JOB_SEND_DAILY_DIGEST}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_8AM}" on queue "${NOTIFICATION_QUEUE_NAME}".`
+      );
+    }
   } catch (error) {
     console.error("Error scheduling jobs:", error);
     process.exit(1);

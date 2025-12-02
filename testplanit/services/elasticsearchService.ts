@@ -1,5 +1,8 @@
 import { Client } from "@elastic/elasticsearch";
 import { env } from "../env.js";
+import { prisma as defaultPrisma } from "../lib/prismaBase";
+
+type PrismaClientType = typeof defaultPrisma;
 
 // Create singleton instance
 let esClient: Client | null = null;
@@ -54,6 +57,18 @@ export async function testElasticsearchConnection(): Promise<boolean> {
  * Repository Case index configuration
  */
 export const REPOSITORY_CASE_INDEX = "testplanit-repository-cases";
+
+/**
+ * Get the repository case index name, optionally prefixed with tenant ID
+ * In multi-tenant mode: testplanit-{tenantId}-repository-cases
+ * In single-tenant mode: testplanit-repository-cases
+ */
+export function getRepositoryCaseIndexName(tenantId?: string): string {
+  if (tenantId) {
+    return `testplanit-${tenantId}-repository-cases`;
+  }
+  return REPOSITORY_CASE_INDEX;
+}
 
 /**
  * Repository Case mapping for Elasticsearch
@@ -128,17 +143,13 @@ export const repositoryCaseMapping = {
 /**
  * Get Elasticsearch replica settings from database
  */
-async function getElasticsearchSettings() {
+async function getElasticsearchSettings(prismaClient?: PrismaClientType) {
+  const prisma = prismaClient || defaultPrisma;
   try {
-    const { PrismaClient } = await import("@prisma/client");
-    const prisma = new PrismaClient();
-    
     const config = await prisma.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" }
     });
-    
-    await prisma.$disconnect();
-    
+
     // Default to 0 for single-node clusters
     return {
       numberOfReplicas: config?.value ? (config.value as number) : 0
@@ -151,24 +162,31 @@ async function getElasticsearchSettings() {
 
 /**
  * Create or update the repository cases index
+ * @param prismaClient - Optional Prisma client for getting settings
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function createRepositoryCaseIndex(): Promise<boolean> {
+export async function createRepositoryCaseIndex(
+  prismaClient?: PrismaClientType,
+  tenantId?: string
+): Promise<boolean> {
   const client = getElasticsearchClient();
   if (!client) return false;
 
+  const indexName = getRepositoryCaseIndexName(tenantId);
+
   try {
     // Get settings from database
-    const settings = await getElasticsearchSettings();
-    
+    const settings = await getElasticsearchSettings(prismaClient);
+
     // Check if index exists
     const exists = await client.indices.exists({
-      index: REPOSITORY_CASE_INDEX,
+      index: indexName,
     });
 
     if (!exists) {
       // Create index with mapping
       await client.indices.create({
-        index: REPOSITORY_CASE_INDEX,
+        index: indexName,
         settings: {
           number_of_shards: 1,
           number_of_replicas: settings.numberOfReplicas,
@@ -183,13 +201,14 @@ export async function createRepositoryCaseIndex(): Promise<boolean> {
         },
         mappings: repositoryCaseMapping,
       });
+      console.log(`Created Elasticsearch index: ${indexName}`);
     } else {
       // Index already exists, skip update to avoid field type conflicts
     }
 
     return true;
   } catch (error) {
-    console.error("Failed to create/update Elasticsearch index:", error);
+    console.error(`Failed to create/update Elasticsearch index ${indexName}:`, error);
     return false;
   }
 }

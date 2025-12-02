@@ -1,11 +1,13 @@
 import {
   getElasticsearchClient,
-  ENTITY_INDICES,
   createEntityIndex,
+  getEntityIndexName,
 } from "./unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
-import { prisma } from "~/lib/prismaBase";
+import { prisma as defaultPrisma } from "~/lib/prismaBase";
+
+type PrismaClientType = typeof defaultPrisma;
 
 /**
  * Document structure for shared steps in Elasticsearch
@@ -34,8 +36,10 @@ export interface SharedStepDocument {
  * Build a shared step document for Elasticsearch from Prisma data
  */
 export async function buildSharedStepDocument(
-  stepGroupId: number
+  stepGroupId: number,
+  prismaClient?: PrismaClientType
 ): Promise<SharedStepDocument | null> {
+  const prisma = prismaClient || defaultPrisma;
   const stepGroup = await prisma.sharedStepGroup.findUnique({
     where: { id: stepGroupId },
     include: {
@@ -113,21 +117,26 @@ export async function buildSharedStepDocument(
 
 /**
  * Index a shared step group in Elasticsearch
+ * @param stepData - The shared step document to index
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function indexSharedStep(
-  stepData: SharedStepDocument
+  stepData: SharedStepDocument,
+  tenantId?: string
 ): Promise<boolean> {
   const client = getElasticsearchClient();
   if (!client) return false;
 
+  const indexName = getEntityIndexName(SearchableEntityType.SHARED_STEP, tenantId);
+
   try {
     await client.index({
-      index: ENTITY_INDICES[SearchableEntityType.SHARED_STEP],
+      index: indexName,
       id: stepData.id.toString(),
       document: stepData,
     });
 
-    console.log(`Indexed shared step ${stepData.id} in Elasticsearch`);
+    console.log(`Indexed shared step ${stepData.id} in Elasticsearch index ${indexName}`);
     return true;
   } catch (error) {
     console.error(`Failed to index shared step ${stepData.id}:`, error);
@@ -137,18 +146,25 @@ export async function indexSharedStep(
 
 /**
  * Delete a shared step from Elasticsearch
+ * @param stepId - The ID of the shared step to delete
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function deleteSharedStep(stepId: number): Promise<boolean> {
+export async function deleteSharedStep(
+  stepId: number,
+  tenantId?: string
+): Promise<boolean> {
   const client = getElasticsearchClient();
   if (!client) return false;
 
+  const indexName = getEntityIndexName(SearchableEntityType.SHARED_STEP, tenantId);
+
   try {
     await client.delete({
-      index: ENTITY_INDICES[SearchableEntityType.SHARED_STEP],
+      index: indexName,
       id: stepId.toString(),
     });
 
-    console.log(`Deleted shared step ${stepId} from Elasticsearch`);
+    console.log(`Deleted shared step ${stepId} from Elasticsearch index ${indexName}`);
     return true;
   } catch (error) {
     // 404 is expected if document doesn't exist
@@ -165,27 +181,37 @@ export async function deleteSharedStep(stepId: number): Promise<boolean> {
 
 /**
  * Sync a shared step to Elasticsearch after create/update
+ * @param stepId - The ID of the shared step to sync
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncSharedStepToElasticsearch(
-  stepId: number
+  stepId: number,
+  tenantId?: string
 ): Promise<boolean> {
   const doc = await buildSharedStepDocument(stepId);
   if (!doc) return false;
 
   // Index shared step including deleted ones (filtering happens at search time based on admin permissions)
-  return await indexSharedStep(doc);
+  return await indexSharedStep(doc, tenantId);
 }
 
 /**
  * Sync all shared steps for a project to Elasticsearch
+ * @param projectId - The project ID to sync shared steps for
+ * @param batchSize - Number of shared steps to process per batch
+ * @param prismaClient - Optional Prisma client for multi-tenant mode
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncProjectSharedStepsToElasticsearch(
   projectId: number,
-  batchSize: number = 100
+  batchSize: number = 100,
+  prismaClient?: PrismaClientType,
+  tenantId?: string
 ): Promise<boolean> {
+  const prisma = prismaClient || defaultPrisma;
   try {
     // Ensure index exists
-    await createEntityIndex(SearchableEntityType.SHARED_STEP);
+    await createEntityIndex(SearchableEntityType.SHARED_STEP, prisma, tenantId);
 
     const totalSteps = await prisma.sharedStepGroup.count({
       where: {
@@ -195,7 +221,7 @@ export async function syncProjectSharedStepsToElasticsearch(
     });
 
     console.log(
-      `Syncing ${totalSteps} shared steps for project ${projectId}...`
+      `Syncing ${totalSteps} shared steps for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}...`
     );
 
     let processed = 0;
@@ -219,9 +245,9 @@ export async function syncProjectSharedStepsToElasticsearch(
 
       // Build and index documents for this batch
       for (const step of steps) {
-        const doc = await buildSharedStepDocument(step.id);
+        const doc = await buildSharedStepDocument(step.id, prisma);
         if (doc) {
-          await indexSharedStep(doc);
+          await indexSharedStep(doc, tenantId);
         }
       }
 

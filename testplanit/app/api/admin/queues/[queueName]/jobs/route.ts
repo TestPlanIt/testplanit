@@ -2,17 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
 import { getAllQueues } from "@/lib/queues";
-import { Queue } from "bullmq";
+import { Queue, Job } from "bullmq";
+import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
 
 function getQueueByName(queueName: string): Queue | null {
   const allQueues = getAllQueues();
   const queueMap: Record<string, Queue | null> = {
-    'forecast-updates': allQueues.forecastQueue,
-    'notifications': allQueues.notificationQueue,
-    'emails': allQueues.emailQueue,
-    'issue-sync': allQueues.syncQueue,
-    'testmo-imports': allQueues.testmoImportQueue,
-    'elasticsearch-reindex': allQueues.elasticsearchReindexQueue
+    "forecast-updates": allQueues.forecastQueue,
+    notifications: allQueues.notificationQueue,
+    emails: allQueues.emailQueue,
+    "issue-sync": allQueues.syncQueue,
+    "testmo-imports": allQueues.testmoImportQueue,
+    "elasticsearch-reindex": allQueues.elasticsearchReindexQueue,
   };
   return queueMap[queueName] ?? null;
 }
@@ -30,11 +31,14 @@ export async function GET(
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { access: true }
+      select: { access: true },
     });
 
-    if (user?.access !== 'ADMIN') {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (user?.access !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     const { queueName } = await params;
@@ -46,24 +50,54 @@ export async function GET(
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
-    const state = searchParams.get('state') || 'all';
-    const start = parseInt(searchParams.get('start') || '0');
-    const end = parseInt(searchParams.get('end') || '50');
+    const state = searchParams.get("state") || "all";
+    const start = parseInt(searchParams.get("start") || "0");
+    const end = parseInt(searchParams.get("end") || "50");
 
-    let jobs;
-    if (state === 'all') {
+    // Get current tenant ID for filtering in multi-tenant mode
+    const currentTenantId = getCurrentTenantId();
+    const multiTenant = isMultiTenantMode();
+
+    // In multi-tenant mode, tenant ID must be configured
+    if (multiTenant && !currentTenantId) {
+      return NextResponse.json(
+        { error: "Multi-tenant mode enabled but tenant ID not configured" },
+        { status: 500 }
+      );
+    }
+
+    // Helper to filter jobs by tenant
+    const filterByTenant = (jobs: Job[]): Job[] => {
+      if (!multiTenant) {
+        return jobs;
+      }
+      return jobs.filter((job) => job.data?.tenantId === currentTenantId);
+    };
+
+    let jobs: Job[];
+    if (state === "all") {
       // Get jobs from all states
       const [waiting, active, completed, failed, delayed] = await Promise.all([
-        queue.getJobs(['waiting'], start, end),
-        queue.getJobs(['active'], start, end),
-        queue.getJobs(['completed'], start, end),
-        queue.getJobs(['failed'], start, end),
-        queue.getJobs(['delayed'], start, end)
+        queue.getJobs(["waiting"], 0, 1000),
+        queue.getJobs(["active"], 0, 1000),
+        queue.getJobs(["completed"], 0, 1000),
+        queue.getJobs(["failed"], 0, 1000),
+        queue.getJobs(["delayed"], 0, 1000),
       ]);
 
-      jobs = [...waiting, ...active, ...completed, ...failed, ...delayed];
+      // Filter by tenant first, then apply pagination
+      const allJobs = filterByTenant([
+        ...waiting,
+        ...active,
+        ...completed,
+        ...failed,
+        ...delayed,
+      ]);
+      jobs = allJobs.slice(start, end);
     } else {
-      jobs = await queue.getJobs([state as any], start, end);
+      const stateJobs = await queue.getJobs([state as any], 0, 1000);
+      const filteredJobs = filterByTenant(stateJobs);
+      jobs = filteredJobs.slice(start, end);
     }
 
     // Format jobs for response
@@ -83,7 +117,7 @@ export async function GET(
           failedReason: job.failedReason,
           finishedOn: job.finishedOn,
           processedOn: job.processedOn,
-          state
+          state,
         };
       })
     );

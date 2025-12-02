@@ -132,8 +132,8 @@ export default function Cases({
 
   // Calculate derived pagination values
   const effectivePageSize = typeof pageSize === 'number' ? pageSize : totalItems;
-  const startIndex = (currentPage - 1) * effectivePageSize;
-  const endIndex = Math.min(startIndex + effectivePageSize, totalItems);
+  const startIndex = totalItems > 0 ? (currentPage - 1) * effectivePageSize + 1 : 0;
+  const endIndex = Math.min(startIndex + effectivePageSize - 1, totalItems);
   const totalPages = effectivePageSize > 0 ? Math.ceil(totalItems / effectivePageSize) : 1;
 
   const [sortConfig, setSortConfig] = useState<

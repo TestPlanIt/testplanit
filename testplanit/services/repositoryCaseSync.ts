@@ -9,7 +9,9 @@ import {
 } from "./elasticsearchIndexing";
 import { extractTextFromNode } from "../utils/extractTextFromJson";
 import { buildCustomFieldDocuments } from "./unifiedElasticsearchService";
-import { prisma } from "../lib/prismaBase";
+import { prisma as defaultPrisma } from "../lib/prismaBase";
+
+type PrismaClientType = typeof defaultPrisma;
 
 /**
  * Safely extract text from a step field that might be JSON string or object
@@ -35,8 +37,10 @@ function extractStepText(stepData: any): string {
  * Build a repository case document for Elasticsearch from Prisma data
  */
 export async function buildRepositoryCaseDocument(
-  caseId: number
+  caseId: number,
+  prismaClient?: PrismaClientType
 ): Promise<RepositoryCaseDocument | null> {
+  const prisma = prismaClient || defaultPrisma;
   const repoCase = await prisma.repositoryCases.findUnique({
     where: { id: caseId },
     include: {
@@ -88,7 +92,7 @@ export async function buildRepositoryCaseDocument(
   if (!repoCase) return null;
 
   // Build folder path
-  const folderPath = await buildFolderPath(repoCase.folderId);
+  const folderPath = await buildFolderPath(repoCase.folderId, prisma);
 
   return {
     id: repoCase.id,
@@ -185,7 +189,10 @@ export async function buildRepositoryCaseDocument(
 /**
  * Build the full folder path for a folder
  */
-async function buildFolderPath(folderId: number): Promise<string> {
+async function buildFolderPath(
+  folderId: number,
+  prisma: PrismaClientType = defaultPrisma
+): Promise<string> {
   const folder = await prisma.repositoryFolders.findUnique({
     where: { id: folderId },
     include: { parent: true },
@@ -234,15 +241,23 @@ export async function syncRepositoryCaseToElasticsearch(
 
 /**
  * Sync all repository cases for a project to Elasticsearch
+ * @param projectId - The project ID to sync cases for
+ * @param batchSize - Number of cases to process per batch
+ * @param progressCallback - Optional callback for progress updates
+ * @param prismaClient - Optional Prisma client for tenant-specific queries
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncProjectCasesToElasticsearch(
   projectId: number,
   batchSize: number = 100,
-  progressCallback?: (processed: number, total: number, message: string) => void | Promise<void>
+  progressCallback?: (processed: number, total: number, message: string) => void | Promise<void>,
+  prismaClient?: PrismaClientType,
+  tenantId?: string
 ): Promise<boolean> {
+  const prisma = prismaClient || defaultPrisma;
   try {
     // Ensure index exists
-    await createRepositoryCaseIndex();
+    await createRepositoryCaseIndex(prisma, tenantId);
 
     const totalCases = await prisma.repositoryCases.count({
       where: {
@@ -280,7 +295,7 @@ export async function syncProjectCasesToElasticsearch(
       const documents: RepositoryCaseDocument[] = [];
 
       for (const caseItem of cases) {
-        const doc = await buildRepositoryCaseDocument(caseItem.id);
+        const doc = await buildRepositoryCaseDocument(caseItem.id, prisma);
         if (doc) {
           documents.push(doc);
         }
@@ -288,7 +303,7 @@ export async function syncProjectCasesToElasticsearch(
 
       // Bulk index this batch
       if (documents.length > 0) {
-        const success = await bulkIndexRepositoryCases(documents);
+        const success = await bulkIndexRepositoryCases(documents, tenantId);
         if (!success) {
           console.error(`Failed to index batch starting at ${processed}`);
           return false;
@@ -317,12 +332,17 @@ export async function syncProjectCasesToElasticsearch(
 
 /**
  * Initialize Elasticsearch indexes on application startup
+ * @param prismaClient - Optional Prisma client for tenant-specific queries
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function initializeElasticsearchIndexes(): Promise<void> {
+export async function initializeElasticsearchIndexes(
+  prismaClient?: PrismaClientType,
+  tenantId?: string
+): Promise<void> {
   try {
-    const created = await createRepositoryCaseIndex();
+    const created = await createRepositoryCaseIndex(prismaClient, tenantId);
     if (created) {
-      console.log("Elasticsearch indexes initialized successfully");
+      console.log(`Elasticsearch indexes initialized successfully${tenantId ? ` (tenant: ${tenantId})` : ""}`);
     }
   } catch (error) {
     console.error("Failed to initialize Elasticsearch indexes:", error);

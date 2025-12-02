@@ -11,6 +11,7 @@ import type { RepositoryCaseDocument } from "./elasticsearchService";
 vi.mock("./elasticsearchService", () => ({
   getElasticsearchClient: vi.fn(),
   REPOSITORY_CASE_INDEX: "test-repository-cases",
+  getRepositoryCaseIndexName: vi.fn(() => "test-repository-cases"),
 }));
 
 describe("elasticsearchIndexing", () => {

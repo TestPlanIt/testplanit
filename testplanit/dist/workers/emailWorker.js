@@ -5,6 +5,9 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -26,6 +29,28 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// lib/prismaBase.ts
+var prismaBase_exports = {};
+__export(prismaBase_exports, {
+  prisma: () => prisma
+});
+var import_client, prismaClient, prisma;
+var init_prismaBase = __esm({
+  "lib/prismaBase.ts"() {
+    "use strict";
+    import_client = require("@prisma/client");
+    if (process.env.NODE_ENV === "production") {
+      prismaClient = new import_client.PrismaClient({ errorFormat: "pretty" });
+    } else {
+      if (!global.prismaBase) {
+        global.prismaBase = new import_client.PrismaClient({ errorFormat: "colorless" });
+      }
+      prismaClient = global.prismaBase;
+    }
+    prisma = prismaClient;
+  }
+});
 
 // workers/emailWorker.ts
 var emailWorker_exports = {};
@@ -70,9 +95,6 @@ var import_bullmq = require("bullmq");
 
 // lib/queueNames.ts
 var EMAIL_QUEUE_NAME = "emails";
-
-// workers/emailWorker.ts
-var import_client = require("@prisma/client");
 
 // lib/email/notificationTemplates.ts
 var import_nodemailer = __toESM(require("nodemailer"));
@@ -487,16 +509,156 @@ function isTipTapContent(content) {
   }
 }
 
+// lib/multiTenantPrisma.ts
+var import_client2 = require("@prisma/client");
+var fs3 = __toESM(require("fs"));
+function isMultiTenantMode() {
+  return process.env.MULTI_TENANT_MODE === "true";
+}
+var tenantClients = /* @__PURE__ */ new Map();
+var tenantConfigs = null;
+var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+function loadTenantsFromFile(filePath) {
+  const configs = /* @__PURE__ */ new Map();
+  try {
+    if (fs3.existsSync(filePath)) {
+      const fileContent = fs3.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(fileContent);
+      for (const [tenantId, config] of Object.entries(parsed)) {
+        configs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex
+        });
+      }
+      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+    }
+  } catch (error) {
+    console.error(`Failed to load tenant configs from ${filePath}:`, error);
+  }
+  return configs;
+}
+function reloadTenantConfigs() {
+  tenantConfigs = null;
+  return loadTenantConfigs();
+}
+function loadTenantConfigs() {
+  if (tenantConfigs) {
+    return tenantConfigs;
+  }
+  tenantConfigs = /* @__PURE__ */ new Map();
+  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
+  for (const [tenantId, config] of fileConfigs) {
+    tenantConfigs.set(tenantId, config);
+  }
+  const configJson = process.env.TENANT_CONFIGS;
+  if (configJson) {
+    try {
+      const configs = JSON.parse(configJson);
+      for (const [tenantId, config] of Object.entries(configs)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex
+        });
+      }
+      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+    } catch (error) {
+      console.error("Failed to parse TENANT_CONFIGS:", error);
+    }
+  }
+  for (const [key, value] of Object.entries(process.env)) {
+    const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
+    if (match && value) {
+      const tenantId = match[1].toLowerCase();
+      if (!tenantConfigs.has(tenantId)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: value,
+          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
+          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`]
+        });
+      }
+    }
+  }
+  if (tenantConfigs.size === 0) {
+    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+  }
+  return tenantConfigs;
+}
+function getTenantConfig(tenantId) {
+  const configs = loadTenantConfigs();
+  return configs.get(tenantId);
+}
+function createTenantPrismaClient(config) {
+  const client = new import_client2.PrismaClient({
+    datasources: {
+      db: {
+        url: config.databaseUrl
+      }
+    },
+    errorFormat: "pretty"
+  });
+  return client;
+}
+function getTenantPrismaClient(tenantId) {
+  let client = tenantClients.get(tenantId);
+  if (client) {
+    return client;
+  }
+  let config = getTenantConfig(tenantId);
+  if (!config) {
+    console.log(`Tenant ${tenantId} not found in cache, reloading configurations...`);
+    reloadTenantConfigs();
+    config = getTenantConfig(tenantId);
+  }
+  if (!config) {
+    throw new Error(`No configuration found for tenant: ${tenantId}`);
+  }
+  client = createTenantPrismaClient(config);
+  tenantClients.set(tenantId, client);
+  console.log(`Created Prisma client for tenant: ${tenantId}`);
+  return client;
+}
+function getPrismaClientForJob(jobData) {
+  if (!isMultiTenantMode()) {
+    const { prisma: prisma2 } = (init_prismaBase(), __toCommonJS(prismaBase_exports));
+    return prisma2;
+  }
+  if (!jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+  return getTenantPrismaClient(jobData.tenantId);
+}
+async function disconnectAllTenantClients() {
+  const disconnectPromises = [];
+  for (const [tenantId, client] of tenantClients) {
+    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
+    disconnectPromises.push(client.$disconnect());
+  }
+  await Promise.all(disconnectPromises);
+  tenantClients.clear();
+  console.log("All tenant Prisma clients disconnected");
+}
+function validateMultiTenantJobData(jobData) {
+  if (isMultiTenantMode() && !jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+}
+
 // workers/emailWorker.ts
 var import_meta3 = {};
-var prisma = new import_client.PrismaClient();
 var processor = async (job) => {
-  console.log(`Processing email job ${job.id} of type ${job.name}`);
+  console.log(`Processing email job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  validateMultiTenantJobData(job.data);
+  const prisma2 = getPrismaClientForJob(job.data);
   switch (job.name) {
     case "send-notification-email":
       const notificationData = job.data;
       try {
-        const notification = await prisma.notification.findUnique({
+        const notification = await prisma2.notification.findUnique({
           where: { id: notificationData.notificationId },
           include: {
             user: {
@@ -601,7 +763,7 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
     case "send-digest-email":
       const digestData = job.data;
       try {
-        const user = await prisma.user.findUnique({
+        const user = await prisma2.user.findUnique({
           where: { id: digestData.userId },
           include: {
             userPreferences: true
@@ -611,7 +773,7 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
           console.log("User or email not found");
           return;
         }
-        const fullNotifications = await prisma.notification.findMany({
+        const fullNotifications = await prisma2.notification.findMany({
           where: {
             id: { in: digestData.notifications.map((n) => n.id) }
           }
@@ -704,7 +866,7 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
           locale: formatLocaleForUrl(user.userPreferences?.locale || "en_US"),
           translations: digestTranslations
         });
-        await prisma.notification.updateMany({
+        await prisma2.notification.updateMany({
           where: {
             id: { in: digestData.notifications.map((n) => n.id) }
           },
@@ -724,6 +886,11 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
 };
 var worker = null;
 var startWorker = async () => {
+  if (isMultiTenantMode()) {
+    console.log("Email worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Email worker starting in SINGLE-TENANT mode");
+  }
   if (valkey_default) {
     worker = new import_bullmq2.Worker(EMAIL_QUEUE_NAME, processor, {
       connection: valkey_default,
@@ -747,7 +914,9 @@ var startWorker = async () => {
     if (worker) {
       await worker.close();
     }
-    await prisma.$disconnect();
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
+    }
     process.exit(0);
   });
 };

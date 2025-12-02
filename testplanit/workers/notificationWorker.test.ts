@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { PrismaClient } from "@prisma/client";
 import { Job } from "bullmq";
 
 // Create mock prisma instance
@@ -19,18 +18,6 @@ const mockPrisma = {
   $disconnect: vi.fn(),
 };
 
-// Mock Prisma with a proper constructor
-vi.mock("@prisma/client", () => {
-  return {
-    PrismaClient: class {
-      notification = mockPrisma.notification;
-      userPreferences = mockPrisma.userPreferences;
-      appConfig = mockPrisma.appConfig;
-      $disconnect = mockPrisma.$disconnect;
-    },
-  };
-});
-
 // Mock the email queue
 const mockEmailQueue = {
   add: vi.fn(),
@@ -44,6 +31,14 @@ vi.mock("../lib/queues", () => ({
 // Mock Valkey connection to null to prevent worker creation
 vi.mock("../lib/valkey", () => ({
   default: null,
+}));
+
+// Mock the multiTenantPrisma module to return our mock prisma client
+vi.mock("../lib/multiTenantPrisma", () => ({
+  getPrismaClientForJob: vi.fn(() => mockPrisma),
+  isMultiTenantMode: vi.fn(() => false),
+  validateMultiTenantJobData: vi.fn(),
+  disconnectAllTenantClients: vi.fn(),
 }));
 
 describe("NotificationWorker", () => {

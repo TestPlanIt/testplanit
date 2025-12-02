@@ -5,6 +5,9 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -26,6 +29,28 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// lib/prismaBase.ts
+var prismaBase_exports = {};
+__export(prismaBase_exports, {
+  prisma: () => prisma
+});
+var import_client, prismaClient, prisma;
+var init_prismaBase = __esm({
+  "lib/prismaBase.ts"() {
+    "use strict";
+    import_client = require("@prisma/client");
+    if (process.env.NODE_ENV === "production") {
+      prismaClient = new import_client.PrismaClient({ errorFormat: "pretty" });
+    } else {
+      if (!global.prismaBase) {
+        global.prismaBase = new import_client.PrismaClient({ errorFormat: "colorless" });
+      }
+      prismaClient = global.prismaBase;
+    }
+    prisma = prismaClient;
+  }
+});
 
 // workers/syncWorker.ts
 var syncWorker_exports = {};
@@ -301,18 +326,8 @@ var IssueCache = class {
 };
 var issueCache = new IssueCache();
 
-// lib/prismaBase.ts
-var import_client = require("@prisma/client");
-var prismaClient;
-if (process.env.NODE_ENV === "production") {
-  prismaClient = new import_client.PrismaClient({ errorFormat: "pretty" });
-} else {
-  if (!global.prismaBase) {
-    global.prismaBase = new import_client.PrismaClient({ errorFormat: "colorless" });
-  }
-  prismaClient = global.prismaBase;
-}
-var prisma = prismaClient;
+// lib/integrations/IntegrationManager.ts
+init_prismaBase();
 
 // lib/integrations/adapters/BaseAdapter.ts
 var BaseAdapter = class {
@@ -2357,6 +2372,7 @@ Metadata: ${JSON.stringify(metadata, null, 2)}` : ""}`;
 };
 
 // lib/integrations/adapters/SimpleUrlAdapter.ts
+init_prismaBase();
 var SimpleUrlAdapter = class extends BaseAdapter {
   /**
    * Get the capabilities of this adapter
@@ -2783,7 +2799,7 @@ var IntegrationManager = class _IntegrationManager {
 var integrationManager = IntegrationManager.getInstance();
 
 // lib/integrations/services/SyncService.ts
-var import_runtime = require("@zenstackhq/runtime");
+init_prismaBase();
 
 // services/elasticsearchService.ts
 var import_elasticsearch = require("@elastic/elasticsearch");
@@ -2844,6 +2860,7 @@ var env = (0, import_env_nextjs.createEnv)({
 });
 
 // services/elasticsearchService.ts
+init_prismaBase();
 var esClient = null;
 function getElasticsearchClient() {
   if (!env.ELASTICSEARCH_NODE) {
@@ -2871,6 +2888,23 @@ function getElasticsearchClient() {
 }
 
 // services/unifiedElasticsearchService.ts
+init_prismaBase();
+var BASE_INDEX_NAMES = {
+  ["repository_case" /* REPOSITORY_CASE */]: "repository-cases",
+  ["shared_step" /* SHARED_STEP */]: "shared-steps",
+  ["test_run" /* TEST_RUN */]: "test-runs",
+  ["session" /* SESSION */]: "sessions",
+  ["project" /* PROJECT */]: "projects",
+  ["issue" /* ISSUE */]: "issues",
+  ["milestone" /* MILESTONE */]: "milestones"
+};
+function getEntityIndexName(entityType, tenantId) {
+  const baseName = BASE_INDEX_NAMES[entityType];
+  if (tenantId) {
+    return `testplanit-${tenantId}-${baseName}`;
+  }
+  return `testplanit-${baseName}`;
+}
 var ENTITY_INDICES = {
   ["repository_case" /* REPOSITORY_CASE */]: "testplanit-repository-cases",
   ["shared_step" /* SHARED_STEP */]: "testplanit-shared-steps",
@@ -3198,6 +3232,9 @@ var ENTITY_MAPPINGS = {
   }
 };
 
+// services/issueSearch.ts
+init_prismaBase();
+
 // utils/extractTextFromJson.ts
 var extractTextFromNode = (node) => {
   if (!node) return "";
@@ -3234,11 +3271,12 @@ function getProjectFromIssue(issue) {
   }
   return null;
 }
-async function indexIssue(issue) {
+async function indexIssue(issue, tenantId) {
   const client = getElasticsearchClient();
   if (!client) {
     throw new Error("Elasticsearch client not available");
   }
+  const indexName = getEntityIndexName("issue" /* ISSUE */, tenantId);
   const projectInfo = getProjectFromIssue(issue);
   if (!projectInfo) {
     console.warn(`Issue ${issue.id} (${issue.name}) has no linked project, skipping indexing`);
@@ -3273,20 +3311,21 @@ async function indexIssue(issue) {
     searchableContent
   };
   await client.index({
-    index: ENTITY_INDICES["issue" /* ISSUE */],
+    index: indexName,
     id: issue.id.toString(),
     document,
     refresh: true
   });
 }
-async function syncIssueToElasticsearch(issueId) {
+async function syncIssueToElasticsearch(issueId, prismaClient2, tenantId) {
+  const prisma2 = prismaClient2 || prisma;
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return false;
   }
   try {
-    const issue = await prisma.issue.findUnique({
+    const issue = await prisma2.issue.findUnique({
       where: { id: issueId },
       include: {
         createdBy: true,
@@ -3352,7 +3391,7 @@ async function syncIssueToElasticsearch(issueId) {
       console.warn(`Issue ${issueId} not found`);
       return false;
     }
-    await indexIssue(issue);
+    await indexIssue(issue, tenantId);
     return true;
   } catch (error) {
     console.error(`Failed to sync issue ${issueId}:`, error);
@@ -3360,7 +3399,160 @@ async function syncIssueToElasticsearch(issueId) {
   }
 }
 
+// lib/multiTenantPrisma.ts
+var import_client2 = require("@prisma/client");
+var fs = __toESM(require("fs"));
+function isMultiTenantMode() {
+  return process.env.MULTI_TENANT_MODE === "true";
+}
+function getCurrentTenantId() {
+  if (!isMultiTenantMode()) {
+    return void 0;
+  }
+  return process.env.INSTANCE_TENANT_ID;
+}
+var tenantClients = /* @__PURE__ */ new Map();
+var tenantConfigs = null;
+var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+function loadTenantsFromFile(filePath) {
+  const configs = /* @__PURE__ */ new Map();
+  try {
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(fileContent);
+      for (const [tenantId, config] of Object.entries(parsed)) {
+        configs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex
+        });
+      }
+      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+    }
+  } catch (error) {
+    console.error(`Failed to load tenant configs from ${filePath}:`, error);
+  }
+  return configs;
+}
+function reloadTenantConfigs() {
+  tenantConfigs = null;
+  return loadTenantConfigs();
+}
+function loadTenantConfigs() {
+  if (tenantConfigs) {
+    return tenantConfigs;
+  }
+  tenantConfigs = /* @__PURE__ */ new Map();
+  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
+  for (const [tenantId, config] of fileConfigs) {
+    tenantConfigs.set(tenantId, config);
+  }
+  const configJson = process.env.TENANT_CONFIGS;
+  if (configJson) {
+    try {
+      const configs = JSON.parse(configJson);
+      for (const [tenantId, config] of Object.entries(configs)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex
+        });
+      }
+      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+    } catch (error) {
+      console.error("Failed to parse TENANT_CONFIGS:", error);
+    }
+  }
+  for (const [key, value] of Object.entries(process.env)) {
+    const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
+    if (match && value) {
+      const tenantId = match[1].toLowerCase();
+      if (!tenantConfigs.has(tenantId)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: value,
+          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
+          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`]
+        });
+      }
+    }
+  }
+  if (tenantConfigs.size === 0) {
+    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+  }
+  return tenantConfigs;
+}
+function getTenantConfig(tenantId) {
+  const configs = loadTenantConfigs();
+  return configs.get(tenantId);
+}
+function createTenantPrismaClient(config) {
+  const client = new import_client2.PrismaClient({
+    datasources: {
+      db: {
+        url: config.databaseUrl
+      }
+    },
+    errorFormat: "pretty"
+  });
+  return client;
+}
+function getTenantPrismaClient(tenantId) {
+  let client = tenantClients.get(tenantId);
+  if (client) {
+    return client;
+  }
+  let config = getTenantConfig(tenantId);
+  if (!config) {
+    console.log(`Tenant ${tenantId} not found in cache, reloading configurations...`);
+    reloadTenantConfigs();
+    config = getTenantConfig(tenantId);
+  }
+  if (!config) {
+    throw new Error(`No configuration found for tenant: ${tenantId}`);
+  }
+  client = createTenantPrismaClient(config);
+  tenantClients.set(tenantId, client);
+  console.log(`Created Prisma client for tenant: ${tenantId}`);
+  return client;
+}
+function getPrismaClientForJob(jobData) {
+  if (!isMultiTenantMode()) {
+    const { prisma: prisma2 } = (init_prismaBase(), __toCommonJS(prismaBase_exports));
+    return prisma2;
+  }
+  if (!jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+  return getTenantPrismaClient(jobData.tenantId);
+}
+async function disconnectAllTenantClients() {
+  const disconnectPromises = [];
+  for (const [tenantId, client] of tenantClients) {
+    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
+    disconnectPromises.push(client.$disconnect());
+  }
+  await Promise.all(disconnectPromises);
+  tenantClients.clear();
+  console.log("All tenant Prisma clients disconnected");
+}
+function validateMultiTenantJobData(jobData) {
+  if (isMultiTenantMode() && !jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+}
+
 // lib/integrations/services/SyncService.ts
+var _enhance = null;
+async function getEnhance() {
+  if (!_enhance) {
+    const { enhance } = await import("@zenstackhq/runtime");
+    _enhance = enhance;
+  }
+  return _enhance;
+}
 var SyncService = class {
   /**
    * Queue a sync job for an integration
@@ -3375,7 +3567,8 @@ var SyncService = class {
       userId,
       integrationId,
       action: "sync",
-      data: options
+      data: options,
+      tenantId: getCurrentTenantId()
     };
     const jobOptions = {
       attempts: 3,
@@ -3403,7 +3596,8 @@ var SyncService = class {
       integrationId,
       projectId,
       action: "sync",
-      data: options
+      data: options,
+      tenantId: getCurrentTenantId()
     };
     const job = await syncQueue.add("sync-project-issues", jobData);
     return job.id || null;
@@ -3421,7 +3615,8 @@ var SyncService = class {
       userId,
       integrationId,
       action: "create",
-      data: issueData
+      data: issueData,
+      tenantId: getCurrentTenantId()
     };
     const job = await syncQueue.add("create-issue", jobData, {
       attempts: 2,
@@ -3446,7 +3641,8 @@ var SyncService = class {
       integrationId,
       issueId,
       action: "update",
-      data: updateData
+      data: updateData,
+      tenantId: getCurrentTenantId()
     };
     const job = await syncQueue.add("update-issue", jobData);
     return job.id || null;
@@ -3464,7 +3660,8 @@ var SyncService = class {
       userId,
       integrationId,
       issueId,
-      action: "refresh"
+      action: "refresh",
+      tenantId: getCurrentTenantId()
     };
     const job = await syncQueue.add("refresh-issue", jobData, {
       attempts: 3,
@@ -3480,11 +3677,12 @@ var SyncService = class {
   /**
    * Perform immediate sync (used by worker)
    */
-  async performSync(userId, integrationId, projectId, options = {}, job) {
+  async performSync(userId, integrationId, projectId, options = {}, job, serviceOptions = {}) {
+    const prisma2 = serviceOptions.prismaClient || prisma;
     const errors = [];
     let syncedCount = 0;
     try {
-      const user = await prisma.user.findUnique({
+      const user = await prisma2.user.findUnique({
         where: { id: userId },
         include: {
           role: {
@@ -3497,7 +3695,8 @@ var SyncService = class {
       if (!user) {
         throw new Error("User not found");
       }
-      const userDb = (0, import_runtime.enhance)(prisma, { user }, { kinds: ["delegate"] });
+      const enhance = await getEnhance();
+      const userDb = enhance(prisma2, { user }, { kinds: ["delegate"] });
       const integration = await userDb.integration.findUnique({
         where: { id: integrationId },
         include: {
@@ -3618,9 +3817,10 @@ var SyncService = class {
   /**
    * Refresh a single issue from the external system
    */
-  async performIssueRefresh(userId, integrationId, externalIssueId) {
+  async performIssueRefresh(userId, integrationId, externalIssueId, serviceOptions = {}) {
+    const prisma2 = serviceOptions.prismaClient || prisma;
     try {
-      const user = await prisma.user.findUnique({
+      const user = await prisma2.user.findUnique({
         where: { id: userId },
         include: {
           role: {
@@ -3633,7 +3833,8 @@ var SyncService = class {
       if (!user) {
         throw new Error("User not found");
       }
-      const userDb = (0, import_runtime.enhance)(prisma, { user }, { kinds: ["delegate"] });
+      const enhance = await getEnhance();
+      const userDb = enhance(prisma2, { user }, { kinds: ["delegate"] });
       const integration = await userDb.integration.findUnique({
         where: { id: integrationId },
         include: {
@@ -3779,7 +3980,10 @@ var syncService = new SyncService();
 var import_node_url = require("node:url");
 var import_meta = {};
 var processor = async (job) => {
-  console.log(`Processing sync job ${job.id} of type ${job.name}`);
+  console.log(`Processing sync job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  validateMultiTenantJobData(job.data);
+  const prisma2 = getPrismaClientForJob(job.data);
+  const serviceOptions = { prismaClient: prisma2 };
   const jobData = job.data;
   switch (job.name) {
     case "sync-issues":
@@ -3789,8 +3993,9 @@ var processor = async (job) => {
           jobData.integrationId,
           jobData.projectId,
           jobData.data,
-          job
+          job,
           // Pass job for progress reporting
+          serviceOptions
         );
         if (result.errors.length > 0) {
           console.warn(
@@ -3814,8 +4019,9 @@ var processor = async (job) => {
           jobData.integrationId,
           jobData.projectId,
           jobData.data,
-          job
+          job,
           // Pass job for progress reporting
+          serviceOptions
         );
         if (result.errors.length > 0) {
           console.warn(
@@ -3837,7 +4043,8 @@ var processor = async (job) => {
         const result = await syncService.performIssueRefresh(
           jobData.userId,
           jobData.integrationId,
-          jobData.issueId
+          jobData.issueId,
+          serviceOptions
         );
         if (!result.success) {
           throw new Error(result.error || "Failed to refresh issue");
@@ -3876,6 +4083,11 @@ var processor = async (job) => {
 };
 var worker = null;
 var startWorker = async () => {
+  if (isMultiTenantMode()) {
+    console.log("Sync worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Sync worker starting in SINGLE-TENANT mode");
+  }
   if (valkey_default) {
     worker = new import_bullmq2.Worker(SYNC_QUEUE_NAME, processor, {
       connection: valkey_default,
@@ -3905,6 +4117,9 @@ var startWorker = async () => {
     console.log("Shutting down sync worker...");
     if (worker) {
       await worker.close();
+    }
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
     }
     process.exit(0);
   });

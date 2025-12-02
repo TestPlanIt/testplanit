@@ -1,10 +1,10 @@
 import {
   getElasticsearchClient,
-  ENTITY_INDICES,
+  getEntityIndexName,
 } from "./unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
-import type { Sessions, Prisma } from "@prisma/client";
-import { prisma } from "~/lib/prismaBase";
+import type { Sessions, Prisma, PrismaClient } from "@prisma/client";
+import { prisma as defaultPrisma } from "~/lib/prismaBase";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 
 /**
@@ -32,8 +32,10 @@ type SessionForIndexing = Sessions & {
 
 /**
  * Index a single session to Elasticsearch
+ * @param session - The session to index
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function indexSession(session: SessionForIndexing): Promise<void> {
+export async function indexSession(session: SessionForIndexing, tenantId?: string): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     throw new Error("Elasticsearch client not available");
@@ -83,7 +85,7 @@ export async function indexSession(session: SessionForIndexing): Promise<void> {
   };
 
   await client.index({
-    index: ENTITY_INDICES[SearchableEntityType.SESSION],
+    index: getEntityIndexName(SearchableEntityType.SESSION, tenantId),
     id: session.id.toString(),
     document,
     refresh: true,
@@ -92,8 +94,10 @@ export async function indexSession(session: SessionForIndexing): Promise<void> {
 
 /**
  * Delete a session from Elasticsearch
+ * @param sessionId - The ID of the session to delete
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function deleteSessionFromIndex(sessionId: number): Promise<void> {
+export async function deleteSessionFromIndex(sessionId: number, tenantId?: string): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
@@ -102,7 +106,7 @@ export async function deleteSessionFromIndex(sessionId: number): Promise<void> {
 
   try {
     await client.delete({
-      index: ENTITY_INDICES[SearchableEntityType.SESSION],
+      index: getEntityIndexName(SearchableEntityType.SESSION, tenantId),
       id: sessionId.toString(),
       refresh: true,
     });
@@ -124,7 +128,7 @@ export async function syncSessionToElasticsearch(sessionId: number): Promise<boo
   }
 
   try {
-    const session = await prisma.sessions.findUnique({
+    const session = await defaultPrisma.sessions.findUnique({
       where: { id: sessionId },
       include: {
         project: true,
@@ -156,10 +160,14 @@ export async function syncSessionToElasticsearch(sessionId: number): Promise<boo
 
 /**
  * Bulk index sessions for a project
+ * @param projectId - The project ID to sync sessions for
+ * @param db - Prisma client instance
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncProjectSessionsToElasticsearch(
   projectId: number,
-  db: any
+  db: any,
+  tenantId?: string
 ): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
@@ -205,7 +213,7 @@ export async function syncProjectSessionsToElasticsearch(
 
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES[SearchableEntityType.SESSION],
+        _index: getEntityIndexName(SearchableEntityType.SESSION, tenantId),
         _id: session.id.toString(),
       },
     });
@@ -275,27 +283,32 @@ export async function syncProjectSessionsToElasticsearch(
 
 /**
  * Search for sessions
+ * @param params - Search parameters
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function searchSessions(params: {
-  query?: string;
-  projectIds?: number[];
-  templateIds?: number[];
-  stateIds?: number[];
-  assignedToIds?: string[];
-  configurationIds?: number[];
-  milestoneIds?: number[];
-  isCompleted?: boolean;
-  customFields?: Array<{
-    fieldId: number;
-    fieldType: string;
-    operator: string;
-    value: any;
-    value2?: any;
-  }>;
-  from?: number;
-  size?: number;
-  sort?: Array<{ field: string; order: "asc" | "desc" }>;
-}): Promise<{
+export async function searchSessions(
+  params: {
+    query?: string;
+    projectIds?: number[];
+    templateIds?: number[];
+    stateIds?: number[];
+    assignedToIds?: string[];
+    configurationIds?: number[];
+    milestoneIds?: number[];
+    isCompleted?: boolean;
+    customFields?: Array<{
+      fieldId: number;
+      fieldType: string;
+      operator: string;
+      value: any;
+      value2?: any;
+    }>;
+    from?: number;
+    size?: number;
+    sort?: Array<{ field: string; order: "asc" | "desc" }>;
+  },
+  tenantId?: string
+): Promise<{
   hits: any[];
   total: number;
   took: number;
@@ -356,7 +369,7 @@ export async function searchSessions(params: {
   }
 
   const searchBody: any = {
-    index: ENTITY_INDICES[SearchableEntityType.SESSION],
+    index: getEntityIndexName(SearchableEntityType.SESSION, tenantId),
     from: params.from || 0,
     size: params.size || 20,
     query: {

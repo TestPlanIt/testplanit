@@ -2,6 +2,14 @@
 
 This monorepo contains the source code and related files for the TestPlanIt project.
 
+## Screenshots
+
+![Test Cases](testplanit/assets/test-cases.png)
+![Test Runs](testplanit/assets/test-runs.png)
+![Sessions](testplanit/assets/sessions.png)
+![Reports](testplanit/assets/reports.png)
+
+
 ## Structure
 
 This repository uses [pnpm workspaces](https://pnpm.io/workspaces) to manage multiple packages.

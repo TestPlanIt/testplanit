@@ -2,6 +2,7 @@ import { getForecastQueue, getNotificationQueue } from "./lib/queues";
 import { FORECAST_QUEUE_NAME, NOTIFICATION_QUEUE_NAME } from "./lib/queues";
 import { JOB_UPDATE_ALL_CASES } from "./workers/forecastWorker";
 import { JOB_SEND_DAILY_DIGEST } from "./workers/notificationWorker";
+import { isMultiTenantMode, getAllTenantIds } from "./lib/multiTenantPrisma";
 
 // Define the cron schedule (e.g., every day at 3:00 AM server time)
 // Uses standard cron syntax: min hour day(month) month day(week)
@@ -20,7 +21,14 @@ async function scheduleJobs() {
   }
 
   try {
-    // Clean up any old versions of the repeatable job first
+    const multiTenant = isMultiTenantMode();
+    const tenantIds = multiTenant ? getAllTenantIds() : [undefined];
+
+    if (multiTenant) {
+      console.log(`Multi-tenant mode enabled. Scheduling jobs for ${tenantIds.length} tenants.`);
+    }
+
+    // Clean up any old versions of the repeatable forecast jobs first
     const repeatableJobs = await forecastQueue.getRepeatableJobs();
     let removedCount = 0;
     for (const job of repeatableJobs) {
@@ -37,26 +45,29 @@ async function scheduleJobs() {
       console.log(`Removed ${removedCount} old repeatable forecast jobs.`);
     }
 
-    // Add the repeatable job to update all cases
-    await forecastQueue.add(
-      JOB_UPDATE_ALL_CASES, // Job name from worker
-      {}, // No specific data needed
-      {
-        repeat: {
-          // BullMQ v3+ uses pattern instead of cron
-          // For older versions use: cron: CRON_SCHEDULE_DAILY_3AM
-          pattern: CRON_SCHEDULE_DAILY_3AM,
-          // tz: 'UTC', // Example: Explicitly set timezone if needed
-        },
-        jobId: JOB_UPDATE_ALL_CASES, // Use the job name as a predictable ID
-      }
-    );
+    // Schedule forecast jobs for each tenant (or single job if not multi-tenant)
+    for (const tenantId of tenantIds) {
+      const jobId = tenantId
+        ? `${JOB_UPDATE_ALL_CASES}-${tenantId}`
+        : JOB_UPDATE_ALL_CASES;
 
-    console.log(
-      `Successfully scheduled repeatable job "${JOB_UPDATE_ALL_CASES}" with pattern "${CRON_SCHEDULE_DAILY_3AM}" on queue "${FORECAST_QUEUE_NAME}".`
-    );
+      await forecastQueue.add(
+        JOB_UPDATE_ALL_CASES,
+        { tenantId }, // Include tenantId for multi-tenant support
+        {
+          repeat: {
+            pattern: CRON_SCHEDULE_DAILY_3AM,
+          },
+          jobId,
+        }
+      );
 
-    // Schedule daily digest notifications
+      console.log(
+        `Successfully scheduled repeatable job "${JOB_UPDATE_ALL_CASES}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_3AM}" on queue "${FORECAST_QUEUE_NAME}".`
+      );
+    }
+
+    // Clean up any old versions of the repeatable notification jobs
     const notificationRepeatableJobs =
       await notificationQueue.getRepeatableJobs();
     let removedNotificationCount = 0;
@@ -75,21 +86,27 @@ async function scheduleJobs() {
       );
     }
 
-    // Add the repeatable job for daily digest
-    await notificationQueue.add(
-      JOB_SEND_DAILY_DIGEST,
-      {},
-      {
-        repeat: {
-          pattern: CRON_SCHEDULE_DAILY_8AM,
-        },
-        jobId: JOB_SEND_DAILY_DIGEST,
-      }
-    );
+    // Schedule notification digest jobs for each tenant (or single job if not multi-tenant)
+    for (const tenantId of tenantIds) {
+      const jobId = tenantId
+        ? `${JOB_SEND_DAILY_DIGEST}-${tenantId}`
+        : JOB_SEND_DAILY_DIGEST;
 
-    console.log(
-      `Successfully scheduled repeatable job "${JOB_SEND_DAILY_DIGEST}" with pattern "${CRON_SCHEDULE_DAILY_8AM}" on queue "${NOTIFICATION_QUEUE_NAME}".`
-    );
+      await notificationQueue.add(
+        JOB_SEND_DAILY_DIGEST,
+        { tenantId }, // Include tenantId for multi-tenant support
+        {
+          repeat: {
+            pattern: CRON_SCHEDULE_DAILY_8AM,
+          },
+          jobId,
+        }
+      );
+
+      console.log(
+        `Successfully scheduled repeatable job "${JOB_SEND_DAILY_DIGEST}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_8AM}" on queue "${NOTIFICATION_QUEUE_NAME}".`
+      );
+    }
   } catch (error) {
     console.error("Error scheduling jobs:", error);
     process.exit(1); // Exit if scheduling fails

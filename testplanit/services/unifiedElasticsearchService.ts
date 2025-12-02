@@ -1,11 +1,42 @@
 import { Client } from "@elastic/elasticsearch";
 import { SearchableEntityType, CustomFieldDocument } from "~/types/search";
 import { getElasticsearchClient } from "./elasticsearchService";
+import { prisma as defaultPrisma } from "~/lib/prismaBase";
+
+type PrismaClientType = typeof defaultPrisma;
 
 // Re-export for convenience
 export { getElasticsearchClient };
 
-// Index names for each entity type
+// Base index names for each entity type (without tenant prefix)
+const BASE_INDEX_NAMES = {
+  [SearchableEntityType.REPOSITORY_CASE]: "repository-cases",
+  [SearchableEntityType.SHARED_STEP]: "shared-steps",
+  [SearchableEntityType.TEST_RUN]: "test-runs",
+  [SearchableEntityType.SESSION]: "sessions",
+  [SearchableEntityType.PROJECT]: "projects",
+  [SearchableEntityType.ISSUE]: "issues",
+  [SearchableEntityType.MILESTONE]: "milestones",
+} as const;
+
+/**
+ * Get the index name for an entity type, optionally prefixed with tenant ID
+ * In multi-tenant mode: testplanit-{tenantId}-{entityType}
+ * In single-tenant mode: testplanit-{entityType}
+ */
+export function getEntityIndexName(
+  entityType: SearchableEntityType,
+  tenantId?: string
+): string {
+  const baseName = BASE_INDEX_NAMES[entityType];
+  if (tenantId) {
+    return `testplanit-${tenantId}-${baseName}`;
+  }
+  return `testplanit-${baseName}`;
+}
+
+// Legacy constant for backward compatibility (single-tenant mode)
+// @deprecated Use getEntityIndexName() instead for multi-tenant support
 export const ENTITY_INDICES = {
   [SearchableEntityType.REPOSITORY_CASE]: "testplanit-repository-cases",
   [SearchableEntityType.SHARED_STEP]: "testplanit-shared-steps",
@@ -340,17 +371,13 @@ export const ENTITY_MAPPINGS = {
 /**
  * Get Elasticsearch replica settings from database
  */
-async function getElasticsearchSettings() {
+async function getElasticsearchSettings(prismaClient?: PrismaClientType) {
+  const prisma = prismaClient || defaultPrisma;
   try {
-    const { PrismaClient } = await import("@prisma/client");
-    const prisma = new PrismaClient();
-    
     const config = await prisma.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" }
     });
-    
-    await prisma.$disconnect();
-    
+
     // Default to 0 for single-node clusters
     return {
       numberOfReplicas: config?.value ? (config.value as number) : 0
@@ -363,20 +390,25 @@ async function getElasticsearchSettings() {
 
 /**
  * Create index for a specific entity type
+ * @param entityType - The type of entity to create an index for
+ * @param prismaClient - Optional Prisma client for getting settings
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function createEntityIndex(
-  entityType: SearchableEntityType
+  entityType: SearchableEntityType,
+  prismaClient?: PrismaClientType,
+  tenantId?: string
 ): Promise<boolean> {
   const client = getElasticsearchClient();
   if (!client) return false;
 
-  const indexName = ENTITY_INDICES[entityType];
+  const indexName = getEntityIndexName(entityType, tenantId);
   const mapping = ENTITY_MAPPINGS[entityType];
 
   try {
     // Get settings from database
-    const settings = await getElasticsearchSettings();
-    
+    const settings = await getElasticsearchSettings(prismaClient);
+
     const indexExists = await client.indices.exists({ index: indexName });
 
     if (!indexExists) {
@@ -397,24 +429,30 @@ export async function createEntityIndex(
         },
       });
 
+      console.log(`Created Elasticsearch index: ${indexName}`);
       return true;
     }
 
     return true;
   } catch (error) {
-    console.error(`Failed to create index for ${entityType}:`, error);
+    console.error(`Failed to create index ${indexName} for ${entityType}:`, error);
     return false;
   }
 }
 
 /**
  * Create all entity indices
+ * @param prismaClient - Optional Prisma client for getting settings
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function createAllEntityIndices(): Promise<void> {
+export async function createAllEntityIndices(
+  prismaClient?: PrismaClientType,
+  tenantId?: string
+): Promise<void> {
   const entityTypes = Object.values(SearchableEntityType);
 
   for (const entityType of entityTypes) {
-    await createEntityIndex(entityType);
+    await createEntityIndex(entityType, prismaClient, tenantId);
   }
 }
 
@@ -593,15 +631,18 @@ export function buildCustomFieldDocuments(
 
 /**
  * Get all indices for a list of entity types
+ * @param entityTypes - Optional list of entity types to get indices for
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export function getIndicesForEntityTypes(
-  entityTypes?: SearchableEntityType[]
+  entityTypes?: SearchableEntityType[],
+  tenantId?: string
 ): string[] {
-  if (!entityTypes || entityTypes.length === 0) {
-    return Object.values(ENTITY_INDICES);
-  }
+  const types = entityTypes && entityTypes.length > 0
+    ? entityTypes
+    : Object.values(SearchableEntityType);
 
-  return entityTypes.map((type) => ENTITY_INDICES[type]);
+  return types.map((type) => getEntityIndexName(type, tenantId));
 }
 
 /**

@@ -22,9 +22,12 @@ vi.mock("@prisma/client", async () => {
     },
     $disconnect: vi.fn(),
   };
-  
+
   return {
-    PrismaClient: vi.fn(() => mockPrismaClient),
+    PrismaClient: class {
+      appConfig = mockPrismaClient.appConfig;
+      $disconnect = mockPrismaClient.$disconnect;
+    },
   };
 });
 

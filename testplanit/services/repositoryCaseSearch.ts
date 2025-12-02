@@ -1,6 +1,6 @@
 import {
   getElasticsearchClient,
-  REPOSITORY_CASE_INDEX,
+  getRepositoryCaseIndexName,
 } from "./elasticsearchService";
 
 export interface SearchFilters {
@@ -242,12 +242,17 @@ function buildAggregations(facets?: string[]) {
 
 /**
  * Search repository cases with full-text search, filtering, and facets
+ * @param options - Search options including query, filters, pagination, etc.
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function searchRepositoryCases(
-  options: SearchOptions
+  options: SearchOptions,
+  tenantId?: string
 ): Promise<SearchResult | null> {
   const client = getElasticsearchClient();
   if (!client) return null;
+
+  const indexName = getRepositoryCaseIndexName(tenantId);
 
   try {
     const query = buildQuery(options);
@@ -288,7 +293,7 @@ export async function searchRepositoryCases(
 
     // Execute search
     const response = await client.search({
-      index: REPOSITORY_CASE_INDEX,
+      index: indexName,
       query,
       aggs,
       sort,
@@ -348,18 +353,25 @@ export async function searchRepositoryCases(
 
 /**
  * Get search suggestions for autocomplete
+ * @param prefix - The search prefix for autocomplete
+ * @param field - The field to search (name or tags)
+ * @param size - Number of suggestions to return
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function getSearchSuggestions(
   prefix: string,
   field: "name" | "tags" = "name",
-  size: number = 10
+  size: number = 10,
+  tenantId?: string
 ): Promise<string[]> {
   const client = getElasticsearchClient();
   if (!client || !prefix.trim()) return [];
 
+  const indexName = getRepositoryCaseIndexName(tenantId);
+
   try {
     const response = await client.search({
-      index: REPOSITORY_CASE_INDEX,
+      index: indexName,
       suggest: {
         suggestions: {
           prefix,
@@ -392,14 +404,21 @@ export async function getSearchSuggestions(
 
 /**
  * Get a single repository case by ID from Elasticsearch
+ * @param id - The repository case ID
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function getRepositoryCaseById(id: number): Promise<any | null> {
+export async function getRepositoryCaseById(
+  id: number,
+  tenantId?: string
+): Promise<any | null> {
   const client = getElasticsearchClient();
   if (!client) return null;
 
+  const indexName = getRepositoryCaseIndexName(tenantId);
+
   try {
     const response = await client.get({
-      index: REPOSITORY_CASE_INDEX,
+      index: indexName,
       id: id.toString(),
     });
 
@@ -415,18 +434,23 @@ export async function getRepositoryCaseById(id: number): Promise<any | null> {
 
 /**
  * Count repository cases matching the search criteria
+ * @param options - Search options
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function countRepositoryCases(
-  options: Omit<SearchOptions, "pagination" | "sort" | "highlight" | "facets">
+  options: Omit<SearchOptions, "pagination" | "sort" | "highlight" | "facets">,
+  tenantId?: string
 ): Promise<number> {
   const client = getElasticsearchClient();
   if (!client) return 0;
+
+  const indexName = getRepositoryCaseIndexName(tenantId);
 
   try {
     const query = buildQuery(options);
 
     const response = await client.count({
-      index: REPOSITORY_CASE_INDEX,
+      index: indexName,
       query,
     });
 

@@ -1,17 +1,22 @@
 import {
   getElasticsearchClient,
-  REPOSITORY_CASE_INDEX,
+  getRepositoryCaseIndexName,
   RepositoryCaseDocument,
 } from "./elasticsearchService";
 
 /**
  * Index a repository case in Elasticsearch
+ * @param caseData - The repository case data to index
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function indexRepositoryCase(
-  caseData: RepositoryCaseDocument
+  caseData: RepositoryCaseDocument,
+  tenantId?: string
 ): Promise<boolean> {
   const client = getElasticsearchClient();
   if (!client) return false;
+
+  const indexName = getRepositoryCaseIndexName(tenantId);
 
   try {
     // Build searchable content from various fields
@@ -22,7 +27,7 @@ export async function indexRepositoryCase(
       caseData.steps?.map((s) => {
         const stepContent = `${s.step} ${s.expectedResult}`;
         // Include shared step group name if it's a shared step
-        return s.isSharedStep && s.sharedStepGroupName 
+        return s.isSharedStep && s.sharedStepGroupName
           ? `${stepContent} ${s.sharedStepGroupName}`
           : stepContent;
       }).join(" "),
@@ -32,7 +37,7 @@ export async function indexRepositoryCase(
       .join(" ");
 
     await client.index({
-      index: REPOSITORY_CASE_INDEX,
+      index: indexName,
       id: caseData.id.toString(),
       document: {
         ...caseData,
@@ -50,12 +55,17 @@ export async function indexRepositoryCase(
 
 /**
  * Bulk index repository cases
+ * @param cases - Array of repository case data to index
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function bulkIndexRepositoryCases(
-  cases: RepositoryCaseDocument[]
+  cases: RepositoryCaseDocument[],
+  tenantId?: string
 ): Promise<boolean> {
   const client = getElasticsearchClient();
   if (!client || cases.length === 0) return false;
+
+  const indexName = getRepositoryCaseIndexName(tenantId);
 
   try {
     const operations = cases.flatMap((caseData) => {
@@ -67,7 +77,7 @@ export async function bulkIndexRepositoryCases(
         caseData.steps?.map((s) => {
           const stepContent = `${s.step} ${s.expectedResult}`;
           // Include shared step group name if it's a shared step
-          return s.isSharedStep && s.sharedStepGroupName 
+          return s.isSharedStep && s.sharedStepGroupName
             ? `${stepContent} ${s.sharedStepGroupName}`
             : stepContent;
         }).join(" "),
@@ -78,7 +88,7 @@ export async function bulkIndexRepositoryCases(
 
       return [
         {
-          index: { _index: REPOSITORY_CASE_INDEX, _id: caseData.id.toString() },
+          index: { _index: indexName, _id: caseData.id.toString() },
         },
         { ...caseData, searchableContent },
       ];
@@ -115,14 +125,21 @@ export async function bulkIndexRepositoryCases(
 
 /**
  * Delete a repository case from Elasticsearch
+ * @param caseId - The ID of the repository case to delete
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function deleteRepositoryCase(caseId: number): Promise<boolean> {
+export async function deleteRepositoryCase(
+  caseId: number,
+  tenantId?: string
+): Promise<boolean> {
   const client = getElasticsearchClient();
   if (!client) return false;
 
+  const indexName = getRepositoryCaseIndexName(tenantId);
+
   try {
     await client.delete({
-      index: REPOSITORY_CASE_INDEX,
+      index: indexName,
       id: caseId.toString(),
     });
 
