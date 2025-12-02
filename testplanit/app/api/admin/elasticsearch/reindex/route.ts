@@ -17,11 +17,14 @@ export async function POST(request: NextRequest) {
     // Check if user is admin
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { access: true }
+      select: { access: true },
     });
 
-    if (user?.access !== 'ADMIN') {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (user?.access !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     // Parse request body
@@ -31,17 +34,23 @@ export async function POST(request: NextRequest) {
     // Check Elasticsearch connection
     const esClient = getElasticsearchClient();
     if (!esClient) {
-      return NextResponse.json({
-        error: "Elasticsearch is not configured or unavailable"
-      }, { status: 503 });
+      return NextResponse.json(
+        {
+          error: "Elasticsearch is not configured or unavailable",
+        },
+        { status: 503 }
+      );
     }
 
     // Check if queue is available
     const elasticsearchReindexQueue = getElasticsearchReindexQueue();
     if (!elasticsearchReindexQueue) {
-      return NextResponse.json({
-        error: "Background job queue is not available"
-      }, { status: 503 });
+      return NextResponse.json(
+        {
+          error: "Background job queue is not available",
+        },
+        { status: 503 }
+      );
     }
 
     // Add job to queue
@@ -57,7 +66,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       jobId: job.id,
-      message: "Reindex job queued successfully"
+      message: "Reindex job queued successfully",
     });
   } catch (error: any) {
     console.error("Admin reindex error:", error);
@@ -78,18 +87,21 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { access: true }
+      select: { access: true },
     });
 
-    if (user?.access !== 'ADMIN') {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (user?.access !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     const esClient = getElasticsearchClient();
     if (!esClient) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         available: false,
-        message: "Elasticsearch is not configured" 
+        message: "Elasticsearch is not configured",
       });
     }
 
@@ -100,11 +112,24 @@ export async function GET(request: NextRequest) {
       // Filter indices by tenant prefix
       // Multi-tenant: testplanit-{tenantId}-*
       // Single-tenant: testplanit-* (but not testplanit-{anyTenantId}-*)
-      const indexPattern = tenantId ? `testplanit-${tenantId}-*` : "testplanit-*";
-      const indices = await esClient.cat.indices({ index: indexPattern, format: "json" });
+      const indexPattern = tenantId
+        ? `testplanit-${tenantId}-*`
+        : "testplanit-*";
+      const indices = await esClient.cat.indices({
+        index: indexPattern,
+        format: "json",
+      });
 
       // In single-tenant mode, filter out any tenant-prefixed indices
-      const knownEntities = ["repository-cases", "shared-steps", "test-runs", "sessions", "projects", "issues", "milestones"];
+      const knownEntities = [
+        "repository-cases",
+        "shared-steps",
+        "test-runs",
+        "sessions",
+        "projects",
+        "issues",
+        "milestones",
+      ];
       const filteredIndices = tenantId
         ? indices
         : indices.filter((idx: any) => {
@@ -123,13 +148,13 @@ export async function GET(request: NextRequest) {
           name: idx.index,
           docs: parseInt(idx["docs.count"] || "0"),
           size: idx["store.size"],
-          health: idx.health
-        }))
+          health: idx.health,
+        })),
       });
     } catch (error) {
       return NextResponse.json({
         available: false,
-        message: "Elasticsearch is not responding"
+        message: "Elasticsearch is not responding",
       });
     }
   } catch (error: any) {
