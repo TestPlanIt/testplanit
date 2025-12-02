@@ -1,7 +1,6 @@
 import { getSyncQueue } from "../../queues";
 import { issueCache } from "../cache/IssueCache";
 import { integrationManager } from "../IntegrationManager";
-import { enhance } from "@zenstackhq/runtime";
 import type { IssueData } from "../adapters/IssueAdapter";
 import type { IssueAdapter } from "../adapters/IssueAdapter";
 import { JobsOptions, Job } from "bullmq";
@@ -9,6 +8,16 @@ import { prisma as defaultPrisma } from "@/lib/prismaBase";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
 import type { PrismaClient } from "@prisma/client";
 import { getCurrentTenantId } from "../../multiTenantPrisma";
+
+// Lazy-load zenstack enhance to reduce worker memory at startup
+let _enhance: typeof import("@zenstackhq/runtime").enhance | null = null;
+async function getEnhance() {
+  if (!_enhance) {
+    const { enhance } = await import("@zenstackhq/runtime");
+    _enhance = enhance;
+  }
+  return _enhance;
+}
 
 export interface SyncJobData {
   userId: string;
@@ -221,7 +230,8 @@ export class SyncService {
         throw new Error("User not found");
       }
 
-      // Get user context for database operations
+      // Get user context for database operations (lazy-load enhance to reduce memory)
+      const enhance = await getEnhance();
       const userDb = enhance(prisma, { user }, { kinds: ["delegate"] });
 
       // Get the integration
@@ -416,7 +426,8 @@ export class SyncService {
         throw new Error("User not found");
       }
 
-      // Get user context for database operations
+      // Get user context for database operations (lazy-load enhance to reduce memory)
+      const enhance = await getEnhance();
       const userDb = enhance(prisma, { user }, { kinds: ["delegate"] });
 
       // Get the integration
