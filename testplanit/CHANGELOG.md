@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.12](https://github.com/testplanit/testplanit/compare/v0.1.11...v0.1.12) (2025-12-02)
+
+
+### Features
+
+* **elasticsearch:** Add multi-tenant mode support in ElasticsearchAdmin ([1003b40](https://github.com/testplanit/testplanit/commit/1003b40259ce51457f6ce46f018dcf31648f1166))
+
 ### [0.1.11](https://github.com/testplanit/testplanit/compare/v0.1.10...v0.1.11) (2025-12-02)
 
 
