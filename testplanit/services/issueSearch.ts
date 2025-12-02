@@ -1,6 +1,6 @@
 import {
   getElasticsearchClient,
-  ENTITY_INDICES,
+  getEntityIndexName,
 } from "./unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
 import type { Issue, PrismaClient } from "@prisma/client";
@@ -93,12 +93,19 @@ function getProjectFromIssue(issue: IssueForIndexing): {
 
 /**
  * Index a single issue to Elasticsearch
+ * @param issue - The issue to index
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function indexIssue(issue: IssueForIndexing): Promise<void> {
+export async function indexIssue(
+  issue: IssueForIndexing,
+  tenantId?: string
+): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     throw new Error("Elasticsearch client not available");
   }
+
+  const indexName = getEntityIndexName(SearchableEntityType.ISSUE, tenantId);
 
   // Try to get project info from any linked relationship
   const projectInfo = getProjectFromIssue(issue);
@@ -142,7 +149,7 @@ export async function indexIssue(issue: IssueForIndexing): Promise<void> {
   };
 
   await client.index({
-    index: ENTITY_INDICES[SearchableEntityType.ISSUE],
+    index: indexName,
     id: issue.id.toString(),
     document,
     refresh: true,
@@ -151,17 +158,24 @@ export async function indexIssue(issue: IssueForIndexing): Promise<void> {
 
 /**
  * Delete an issue from Elasticsearch
+ * @param issueId - The ID of the issue to delete
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function deleteIssueFromIndex(issueId: number): Promise<void> {
+export async function deleteIssueFromIndex(
+  issueId: number,
+  tenantId?: string
+): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
 
+  const indexName = getEntityIndexName(SearchableEntityType.ISSUE, tenantId);
+
   try {
     await client.delete({
-      index: ENTITY_INDICES[SearchableEntityType.ISSUE],
+      index: indexName,
       id: issueId.toString(),
       refresh: true,
     });
@@ -174,10 +188,14 @@ export async function deleteIssueFromIndex(issueId: number): Promise<void> {
 
 /**
  * Sync a single issue to Elasticsearch
+ * @param issueId - The ID of the issue to sync
+ * @param prismaClient - Optional Prisma client for tenant-specific queries
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncIssueToElasticsearch(
   issueId: number,
-  prismaClient?: PrismaClient
+  prismaClient?: PrismaClient,
+  tenantId?: string
 ): Promise<boolean> {
   const prisma = prismaClient || defaultPrisma;
   const client = getElasticsearchClient();
@@ -257,7 +275,7 @@ export async function syncIssueToElasticsearch(
 
     // Index issue including deleted ones (filtering happens at search time based on admin permissions)
     // Note: indexIssue will skip issues without a valid project link
-    await indexIssue(issue as IssueForIndexing);
+    await indexIssue(issue as IssueForIndexing, tenantId);
     return true;
   } catch (error) {
     console.error(`Failed to sync issue ${issueId}:`, error);
@@ -267,10 +285,14 @@ export async function syncIssueToElasticsearch(
 
 /**
  * Bulk index issues for a project
+ * @param projectId - The project ID to sync issues for
+ * @param db - Prisma client instance
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncProjectIssuesToElasticsearch(
   projectId: number,
-  db: any
+  db: any,
+  tenantId?: string
 ): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
@@ -278,7 +300,9 @@ export async function syncProjectIssuesToElasticsearch(
     return;
   }
 
-  console.log(`Starting issue sync for project ${projectId}`);
+  const indexName = getEntityIndexName(SearchableEntityType.ISSUE, tenantId);
+
+  console.log(`Starting issue sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
 
   // Find issues either by direct projectId or through any relationship
   const issues = await db.issue.findMany({
@@ -388,7 +412,7 @@ export async function syncProjectIssuesToElasticsearch(
 
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES[SearchableEntityType.ISSUE],
+        _index: indexName,
         _id: issue.id.toString(),
       },
     });

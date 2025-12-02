@@ -2893,6 +2893,22 @@ function getElasticsearchClient() {
 
 // services/unifiedElasticsearchService.ts
 init_prismaBase();
+var BASE_INDEX_NAMES = {
+  ["repository_case" /* REPOSITORY_CASE */]: "repository-cases",
+  ["shared_step" /* SHARED_STEP */]: "shared-steps",
+  ["test_run" /* TEST_RUN */]: "test-runs",
+  ["session" /* SESSION */]: "sessions",
+  ["project" /* PROJECT */]: "projects",
+  ["issue" /* ISSUE */]: "issues",
+  ["milestone" /* MILESTONE */]: "milestones"
+};
+function getEntityIndexName(entityType, tenantId) {
+  const baseName = BASE_INDEX_NAMES[entityType];
+  if (tenantId) {
+    return `testplanit-${tenantId}-${baseName}`;
+  }
+  return `testplanit-${baseName}`;
+}
 var ENTITY_INDICES = {
   ["repository_case" /* REPOSITORY_CASE */]: "testplanit-repository-cases",
   ["shared_step" /* SHARED_STEP */]: "testplanit-shared-steps",
@@ -3259,11 +3275,12 @@ function getProjectFromIssue(issue) {
   }
   return null;
 }
-async function indexIssue(issue) {
+async function indexIssue(issue, tenantId) {
   const client = getElasticsearchClient();
   if (!client) {
     throw new Error("Elasticsearch client not available");
   }
+  const indexName = getEntityIndexName("issue" /* ISSUE */, tenantId);
   const projectInfo = getProjectFromIssue(issue);
   if (!projectInfo) {
     console.warn(`Issue ${issue.id} (${issue.name}) has no linked project, skipping indexing`);
@@ -3298,13 +3315,13 @@ async function indexIssue(issue) {
     searchableContent
   };
   await client.index({
-    index: ENTITY_INDICES["issue" /* ISSUE */],
+    index: indexName,
     id: issue.id.toString(),
     document,
     refresh: true
   });
 }
-async function syncIssueToElasticsearch(issueId, prismaClient2) {
+async function syncIssueToElasticsearch(issueId, prismaClient2, tenantId) {
   const prisma2 = prismaClient2 || prisma;
   const client = getElasticsearchClient();
   if (!client) {
@@ -3378,7 +3395,7 @@ async function syncIssueToElasticsearch(issueId, prismaClient2) {
       console.warn(`Issue ${issueId} not found`);
       return false;
     }
-    await indexIssue(issue);
+    await indexIssue(issue, tenantId);
     return true;
   } catch (error) {
     console.error(`Failed to sync issue ${issueId}:`, error);

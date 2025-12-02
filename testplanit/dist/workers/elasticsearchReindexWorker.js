@@ -183,6 +183,12 @@ function getElasticsearchClient() {
   return esClient;
 }
 var REPOSITORY_CASE_INDEX = "testplanit-repository-cases";
+function getRepositoryCaseIndexName(tenantId) {
+  if (tenantId) {
+    return `testplanit-${tenantId}-repository-cases`;
+  }
+  return REPOSITORY_CASE_INDEX;
+}
 var repositoryCaseMapping = {
   properties: {
     id: { type: "integer" },
@@ -263,17 +269,18 @@ async function getElasticsearchSettings(prismaClient2) {
     return { numberOfReplicas: 0 };
   }
 }
-async function createRepositoryCaseIndex(prismaClient2) {
+async function createRepositoryCaseIndex(prismaClient2, tenantId) {
   const client = getElasticsearchClient();
   if (!client) return false;
+  const indexName = getRepositoryCaseIndexName(tenantId);
   try {
     const settings = await getElasticsearchSettings(prismaClient2);
     const exists = await client.indices.exists({
-      index: REPOSITORY_CASE_INDEX
+      index: indexName
     });
     if (!exists) {
       await client.indices.create({
-        index: REPOSITORY_CASE_INDEX,
+        index: indexName,
         settings: {
           number_of_shards: 1,
           number_of_replicas: settings.numberOfReplicas,
@@ -288,19 +295,21 @@ async function createRepositoryCaseIndex(prismaClient2) {
         },
         mappings: repositoryCaseMapping
       });
+      console.log(`Created Elasticsearch index: ${indexName}`);
     } else {
     }
     return true;
   } catch (error) {
-    console.error("Failed to create/update Elasticsearch index:", error);
+    console.error(`Failed to create/update Elasticsearch index ${indexName}:`, error);
     return false;
   }
 }
 
 // services/elasticsearchIndexing.ts
-async function bulkIndexRepositoryCases(cases) {
+async function bulkIndexRepositoryCases(cases, tenantId) {
   const client = getElasticsearchClient();
   if (!client || cases.length === 0) return false;
+  const indexName = getRepositoryCaseIndexName(tenantId);
   try {
     const operations = cases.flatMap((caseData) => {
       const searchableContent = [
@@ -315,7 +324,7 @@ async function bulkIndexRepositoryCases(cases) {
       ].filter(Boolean).join(" ");
       return [
         {
-          index: { _index: REPOSITORY_CASE_INDEX, _id: caseData.id.toString() }
+          index: { _index: indexName, _id: caseData.id.toString() }
         },
         { ...caseData, searchableContent }
       ];
@@ -359,6 +368,22 @@ var extractTextFromNode = (node) => {
 
 // services/unifiedElasticsearchService.ts
 init_prismaBase();
+var BASE_INDEX_NAMES = {
+  ["repository_case" /* REPOSITORY_CASE */]: "repository-cases",
+  ["shared_step" /* SHARED_STEP */]: "shared-steps",
+  ["test_run" /* TEST_RUN */]: "test-runs",
+  ["session" /* SESSION */]: "sessions",
+  ["project" /* PROJECT */]: "projects",
+  ["issue" /* ISSUE */]: "issues",
+  ["milestone" /* MILESTONE */]: "milestones"
+};
+function getEntityIndexName(entityType, tenantId) {
+  const baseName = BASE_INDEX_NAMES[entityType];
+  if (tenantId) {
+    return `testplanit-${tenantId}-${baseName}`;
+  }
+  return `testplanit-${baseName}`;
+}
 var ENTITY_INDICES = {
   ["repository_case" /* REPOSITORY_CASE */]: "testplanit-repository-cases",
   ["shared_step" /* SHARED_STEP */]: "testplanit-shared-steps",
@@ -699,10 +724,10 @@ async function getElasticsearchSettings2(prismaClient2) {
     return { numberOfReplicas: 0 };
   }
 }
-async function createEntityIndex(entityType, prismaClient2) {
+async function createEntityIndex(entityType, prismaClient2, tenantId) {
   const client = getElasticsearchClient();
   if (!client) return false;
-  const indexName = ENTITY_INDICES[entityType];
+  const indexName = getEntityIndexName(entityType, tenantId);
   const mapping = ENTITY_MAPPINGS[entityType];
   try {
     const settings = await getElasticsearchSettings2(prismaClient2);
@@ -724,11 +749,12 @@ async function createEntityIndex(entityType, prismaClient2) {
           }
         }
       });
+      console.log(`Created Elasticsearch index: ${indexName}`);
       return true;
     }
     return true;
   } catch (error) {
-    console.error(`Failed to create index for ${entityType}:`, error);
+    console.error(`Failed to create index ${indexName} for ${entityType}:`, error);
     return false;
   }
 }
@@ -1016,10 +1042,10 @@ async function buildFolderPath(folderId, prisma2 = prisma) {
   }
   return "/" + path.join("/");
 }
-async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progressCallback, prismaClient2) {
+async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progressCallback, prismaClient2, tenantId) {
   const prisma2 = prismaClient2 || prisma;
   try {
-    await createRepositoryCaseIndex(prisma2);
+    await createRepositoryCaseIndex(prisma2, tenantId);
     const totalCases = await prisma2.repositoryCases.count({
       where: {
         projectId,
@@ -1057,7 +1083,7 @@ async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progr
         }
       }
       if (documents.length > 0) {
-        const success = await bulkIndexRepositoryCases(documents);
+        const success = await bulkIndexRepositoryCases(documents, tenantId);
         if (!success) {
           console.error(`Failed to index batch starting at ${processed}`);
           return false;
@@ -1081,11 +1107,11 @@ async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progr
     return false;
   }
 }
-async function initializeElasticsearchIndexes(prismaClient2) {
+async function initializeElasticsearchIndexes(prismaClient2, tenantId) {
   try {
-    const created = await createRepositoryCaseIndex(prismaClient2);
+    const created = await createRepositoryCaseIndex(prismaClient2, tenantId);
     if (created) {
-      console.log("Elasticsearch indexes initialized successfully");
+      console.log(`Elasticsearch indexes initialized successfully${tenantId ? ` (tenant: ${tenantId})` : ""}`);
     }
   } catch (error) {
     console.error("Failed to initialize Elasticsearch indexes:", error);
@@ -1155,26 +1181,27 @@ async function buildSharedStepDocument(stepGroupId, prismaClient2) {
     searchableContent
   };
 }
-async function indexSharedStep(stepData) {
+async function indexSharedStep(stepData, tenantId) {
   const client = getElasticsearchClient();
   if (!client) return false;
+  const indexName = getEntityIndexName("shared_step" /* SHARED_STEP */, tenantId);
   try {
     await client.index({
-      index: ENTITY_INDICES["shared_step" /* SHARED_STEP */],
+      index: indexName,
       id: stepData.id.toString(),
       document: stepData
     });
-    console.log(`Indexed shared step ${stepData.id} in Elasticsearch`);
+    console.log(`Indexed shared step ${stepData.id} in Elasticsearch index ${indexName}`);
     return true;
   } catch (error) {
     console.error(`Failed to index shared step ${stepData.id}:`, error);
     return false;
   }
 }
-async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100, prismaClient2) {
+async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100, prismaClient2, tenantId) {
   const prisma2 = prismaClient2 || prisma;
   try {
-    await createEntityIndex("shared_step" /* SHARED_STEP */, prisma2);
+    await createEntityIndex("shared_step" /* SHARED_STEP */, prisma2, tenantId);
     const totalSteps = await prisma2.sharedStepGroup.count({
       where: {
         projectId
@@ -1182,7 +1209,7 @@ async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100,
       }
     });
     console.log(
-      `Syncing ${totalSteps} shared steps for project ${projectId}...`
+      `Syncing ${totalSteps} shared steps for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}...`
     );
     let processed = 0;
     let hasMore = true;
@@ -1203,7 +1230,7 @@ async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100,
       for (const step of steps) {
         const doc = await buildSharedStepDocument(step.id, prisma2);
         if (doc) {
-          await indexSharedStep(doc);
+          await indexSharedStep(doc, tenantId);
         }
       }
       processed += steps.length;
@@ -1224,13 +1251,14 @@ async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100,
 
 // services/testRunSearch.ts
 init_prismaBase();
-async function syncProjectTestRunsToElasticsearch(projectId, db) {
+async function syncProjectTestRunsToElasticsearch(projectId, db, tenantId) {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
-  console.log(`Starting test run sync for project ${projectId}`);
+  const indexName = getEntityIndexName("test_run" /* TEST_RUN */, tenantId);
+  console.log(`Starting test run sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
   const testRuns = await db.testRuns.findMany({
     where: {
       projectId
@@ -1261,7 +1289,7 @@ async function syncProjectTestRunsToElasticsearch(projectId, db) {
     ].join(" ");
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES["test_run" /* TEST_RUN */],
+        _index: indexName,
         _id: testRun.id.toString()
       }
     });
@@ -1323,7 +1351,7 @@ async function syncProjectTestRunsToElasticsearch(projectId, db) {
 
 // services/sessionSearch.ts
 init_prismaBase();
-async function syncProjectSessionsToElasticsearch(projectId, db) {
+async function syncProjectSessionsToElasticsearch(projectId, db, tenantId) {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
@@ -1360,7 +1388,7 @@ async function syncProjectSessionsToElasticsearch(projectId, db) {
     ].join(" ");
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES["session" /* SESSION */],
+        _index: getEntityIndexName("session" /* SESSION */, tenantId),
         _id: session.id.toString()
       }
     });
@@ -1450,13 +1478,14 @@ function getProjectFromIssue(issue) {
   }
   return null;
 }
-async function syncProjectIssuesToElasticsearch(projectId, db) {
+async function syncProjectIssuesToElasticsearch(projectId, db, tenantId) {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
-  console.log(`Starting issue sync for project ${projectId}`);
+  const indexName = getEntityIndexName("issue" /* ISSUE */, tenantId);
+  console.log(`Starting issue sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
   const issues = await db.issue.findMany({
     where: {
       // Include deleted items (filtering happens at search time based on admin permissions)
@@ -1554,7 +1583,7 @@ async function syncProjectIssuesToElasticsearch(projectId, db) {
     ].join(" ");
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES["issue" /* ISSUE */],
+        _index: indexName,
         _id: issue.id.toString()
       }
     });
@@ -1616,13 +1645,14 @@ async function syncProjectIssuesToElasticsearch(projectId, db) {
 
 // services/milestoneSearch.ts
 init_prismaBase();
-async function syncProjectMilestonesToElasticsearch(projectId, db) {
+async function syncProjectMilestonesToElasticsearch(projectId, db, tenantId) {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
-  console.log(`Starting milestone sync for project ${projectId}`);
+  const indexName = getEntityIndexName("milestone" /* MILESTONE */, tenantId);
+  console.log(`Starting milestone sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
   const milestones = await db.milestones.findMany({
     where: {
       projectId
@@ -1654,7 +1684,7 @@ async function syncProjectMilestonesToElasticsearch(projectId, db) {
     ].join(" ");
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES["milestone" /* MILESTONE */],
+        _index: indexName,
         _id: milestone.id.toString()
       }
     });
@@ -1711,14 +1741,15 @@ async function syncProjectMilestonesToElasticsearch(projectId, db) {
 
 // services/projectSearch.ts
 init_prismaBase();
-async function syncAllProjectsToElasticsearch(prismaClient2) {
+async function syncAllProjectsToElasticsearch(prismaClient2, tenantId) {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
   const prisma2 = prismaClient2 || prisma;
-  console.log("Starting project sync");
+  const indexName = getEntityIndexName("project" /* PROJECT */, tenantId);
+  console.log(`Starting project sync${tenantId ? ` (tenant: ${tenantId})` : ""}`);
   const projects = await prisma2.projects.findMany({
     where: {
       // Include deleted items (filtering happens at search time based on admin permissions)
@@ -1740,7 +1771,7 @@ async function syncAllProjectsToElasticsearch(prismaClient2) {
     ].join(" ");
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES["project" /* PROJECT */],
+        _index: indexName,
         _id: project.id.toString()
       }
     });
@@ -1917,7 +1948,7 @@ var processor = async (job) => {
   console.log(`Processing Elasticsearch reindex job ${job.id}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
   validateMultiTenantJobData(job.data);
   const prisma2 = getPrismaClientForJob(job.data);
-  const { entityType, projectId } = job.data;
+  const { entityType, projectId, tenantId } = job.data;
   try {
     const esClient2 = getElasticsearchClient();
     if (!esClient2) {
@@ -1928,7 +1959,7 @@ var processor = async (job) => {
     if (entityType === "all" || entityType === "repositoryCases") {
       await job.updateProgress(5);
       await job.log("Initializing Elasticsearch indexes...");
-      await initializeElasticsearchIndexes(prisma2);
+      await initializeElasticsearchIndexes(prisma2, tenantId);
     }
     const projects = projectId ? await prisma2.projects.findMany({
       where: { id: projectId, isDeleted: false }
@@ -1986,7 +2017,7 @@ var processor = async (job) => {
     if (entityType === "all" || entityType === "projects") {
       await job.updateProgress(currentProgress);
       await job.log("Indexing projects...");
-      await syncAllProjectsToElasticsearch(prisma2);
+      await syncAllProjectsToElasticsearch(prisma2, tenantId);
       results.projects = await prisma2.projects.count({
         where: { isDeleted: false }
       });
@@ -2011,7 +2042,7 @@ var processor = async (job) => {
             await job.updateProgress(Math.min(overallProgress, 90));
             await job.log(message);
           };
-          await syncProjectCasesToElasticsearch(project.id, 100, progressCallback, prisma2);
+          await syncProjectCasesToElasticsearch(project.id, 100, progressCallback, prisma2, tenantId);
           results.repositoryCases += count;
           processedDocuments = results.repositoryCases;
         }
@@ -2025,7 +2056,7 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} shared steps for project ${project.name}`);
-          await syncProjectSharedStepsToElasticsearch(project.id, 100, prisma2);
+          await syncProjectSharedStepsToElasticsearch(project.id, 100, prisma2, tenantId);
           results.sharedSteps += count;
         }
       }
@@ -2038,7 +2069,7 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} test runs for project ${project.name}`);
-          await syncProjectTestRunsToElasticsearch(project.id, prisma2);
+          await syncProjectTestRunsToElasticsearch(project.id, prisma2, tenantId);
           results.testRuns += count;
         }
       }
@@ -2051,7 +2082,7 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} sessions for project ${project.name}`);
-          await syncProjectSessionsToElasticsearch(project.id, prisma2);
+          await syncProjectSessionsToElasticsearch(project.id, prisma2, tenantId);
           results.sessions += count;
         }
       }
@@ -2068,7 +2099,7 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} issues for project ${project.name}`);
-          await syncProjectIssuesToElasticsearch(project.id, prisma2);
+          await syncProjectIssuesToElasticsearch(project.id, prisma2, tenantId);
           results.issues += count;
         }
       }
@@ -2081,7 +2112,7 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} milestones for project ${project.name}`);
-          await syncProjectMilestonesToElasticsearch(project.id, prisma2);
+          await syncProjectMilestonesToElasticsearch(project.id, prisma2, tenantId);
           results.milestones += count;
         }
       }

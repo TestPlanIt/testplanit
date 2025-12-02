@@ -36,7 +36,7 @@ const processor = async (job: Job<ReindexJobData>) => {
   // Get the appropriate Prisma client (tenant-specific or default)
   const prisma = getPrismaClientForJob(job.data);
 
-  const { entityType, projectId } = job.data;
+  const { entityType, projectId, tenantId } = job.data;
 
   try {
     // Check Elasticsearch connection
@@ -52,7 +52,7 @@ const processor = async (job: Job<ReindexJobData>) => {
     if (entityType === "all" || entityType === "repositoryCases") {
       await job.updateProgress(5);
       await job.log("Initializing Elasticsearch indexes...");
-      await initializeElasticsearchIndexes(prisma);
+      await initializeElasticsearchIndexes(prisma, tenantId);
     }
 
     const projects = projectId
@@ -121,7 +121,7 @@ const processor = async (job: Job<ReindexJobData>) => {
     if (entityType === "all" || entityType === "projects") {
       await job.updateProgress(currentProgress);
       await job.log("Indexing projects...");
-      await syncAllProjectsToElasticsearch(prisma);
+      await syncAllProjectsToElasticsearch(prisma, tenantId);
       results.projects = await prisma.projects.count({
         where: { isDeleted: false }
       });
@@ -152,7 +152,7 @@ const processor = async (job: Job<ReindexJobData>) => {
             await job.log(message);
           };
 
-          await syncProjectCasesToElasticsearch(project.id, 100, progressCallback, prisma);
+          await syncProjectCasesToElasticsearch(project.id, 100, progressCallback, prisma, tenantId);
           results.repositoryCases += count;
           processedDocuments = results.repositoryCases;
         }
@@ -167,7 +167,7 @@ const processor = async (job: Job<ReindexJobData>) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} shared steps for project ${project.name}`);
-          await syncProjectSharedStepsToElasticsearch(project.id, 100, prisma);
+          await syncProjectSharedStepsToElasticsearch(project.id, 100, prisma, tenantId);
           results.sharedSteps += count;
         }
       }
@@ -181,7 +181,7 @@ const processor = async (job: Job<ReindexJobData>) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} test runs for project ${project.name}`);
-          await syncProjectTestRunsToElasticsearch(project.id, prisma);
+          await syncProjectTestRunsToElasticsearch(project.id, prisma, tenantId);
           results.testRuns += count;
         }
       }
@@ -195,7 +195,7 @@ const processor = async (job: Job<ReindexJobData>) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} sessions for project ${project.name}`);
-          await syncProjectSessionsToElasticsearch(project.id, prisma);
+          await syncProjectSessionsToElasticsearch(project.id, prisma, tenantId);
           results.sessions += count;
         }
       }
@@ -213,7 +213,7 @@ const processor = async (job: Job<ReindexJobData>) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} issues for project ${project.name}`);
-          await syncProjectIssuesToElasticsearch(project.id, prisma);
+          await syncProjectIssuesToElasticsearch(project.id, prisma, tenantId);
           results.issues += count;
         }
       }
@@ -227,7 +227,7 @@ const processor = async (job: Job<ReindexJobData>) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} milestones for project ${project.name}`);
-          await syncProjectMilestonesToElasticsearch(project.id, prisma);
+          await syncProjectMilestonesToElasticsearch(project.id, prisma, tenantId);
           results.milestones += count;
         }
       }

@@ -1,6 +1,6 @@
 import {
   getElasticsearchClient,
-  ENTITY_INDICES,
+  getEntityIndexName,
 } from "./unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
 import type { Milestones, PrismaClient } from "@prisma/client";
@@ -19,12 +19,19 @@ type MilestoneForIndexing = Milestones & {
 
 /**
  * Index a single milestone to Elasticsearch
+ * @param milestone - The milestone to index
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function indexMilestone(milestone: MilestoneForIndexing): Promise<void> {
+export async function indexMilestone(
+  milestone: MilestoneForIndexing,
+  tenantId?: string
+): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     throw new Error("Elasticsearch client not available");
   }
+
+  const indexName = getEntityIndexName(SearchableEntityType.MILESTONE, tenantId);
 
   // Extract text from TipTap JSON for note and docs fields
   const noteText = milestone.note ? extractTextFromNode(milestone.note) : "";
@@ -61,7 +68,7 @@ export async function indexMilestone(milestone: MilestoneForIndexing): Promise<v
   };
 
   await client.index({
-    index: ENTITY_INDICES[SearchableEntityType.MILESTONE],
+    index: indexName,
     id: milestone.id.toString(),
     document,
     refresh: true,
@@ -70,17 +77,24 @@ export async function indexMilestone(milestone: MilestoneForIndexing): Promise<v
 
 /**
  * Delete a milestone from Elasticsearch
+ * @param milestoneId - The ID of the milestone to delete
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function deleteMilestoneFromIndex(milestoneId: number): Promise<void> {
+export async function deleteMilestoneFromIndex(
+  milestoneId: number,
+  tenantId?: string
+): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
 
+  const indexName = getEntityIndexName(SearchableEntityType.MILESTONE, tenantId);
+
   try {
     await client.delete({
-      index: ENTITY_INDICES[SearchableEntityType.MILESTONE],
+      index: indexName,
       id: milestoneId.toString(),
       refresh: true,
     });
@@ -93,8 +107,13 @@ export async function deleteMilestoneFromIndex(milestoneId: number): Promise<voi
 
 /**
  * Sync a single milestone to Elasticsearch
+ * @param milestoneId - The ID of the milestone to sync
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function syncMilestoneToElasticsearch(milestoneId: number): Promise<boolean> {
+export async function syncMilestoneToElasticsearch(
+  milestoneId: number,
+  tenantId?: string
+): Promise<boolean> {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
@@ -124,7 +143,7 @@ export async function syncMilestoneToElasticsearch(milestoneId: number): Promise
     // Index milestone including deleted ones (filtering happens at search time based on admin permissions)
 
     // Index the milestone
-    await indexMilestone(milestone as MilestoneForIndexing);
+    await indexMilestone(milestone as MilestoneForIndexing, tenantId);
     return true;
   } catch (error) {
     console.error(`Failed to sync milestone ${milestoneId}:`, error);
@@ -134,10 +153,14 @@ export async function syncMilestoneToElasticsearch(milestoneId: number): Promise
 
 /**
  * Bulk index milestones for a project
+ * @param projectId - The project ID to sync milestones for
+ * @param db - Prisma client instance
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncProjectMilestonesToElasticsearch(
   projectId: number,
-  db: any
+  db: any,
+  tenantId?: string
 ): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
@@ -145,7 +168,9 @@ export async function syncProjectMilestonesToElasticsearch(
     return;
   }
 
-  console.log(`Starting milestone sync for project ${projectId}`);
+  const indexName = getEntityIndexName(SearchableEntityType.MILESTONE, tenantId);
+
+  console.log(`Starting milestone sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
 
   const milestones = await db.milestones.findMany({
     where: {
@@ -184,7 +209,7 @@ export async function syncProjectMilestonesToElasticsearch(
 
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES[SearchableEntityType.MILESTONE],
+        _index: indexName,
         _id: milestone.id.toString(),
       },
     });
@@ -244,8 +269,13 @@ export async function syncProjectMilestonesToElasticsearch(
 
 /**
  * Sync all milestones that have a specific parent
+ * @param parentId - The parent milestone ID
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function syncChildMilestonesToElasticsearch(parentId: number): Promise<void> {
+export async function syncChildMilestonesToElasticsearch(
+  parentId: number,
+  tenantId?: string
+): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
@@ -261,7 +291,7 @@ export async function syncChildMilestonesToElasticsearch(parentId: number): Prom
     });
 
     for (const child of childMilestones) {
-      await syncMilestoneToElasticsearch(child.id);
+      await syncMilestoneToElasticsearch(child.id, tenantId);
     }
   } catch (error) {
     console.error(`Failed to sync child milestones of parent ${parentId}:`, error);

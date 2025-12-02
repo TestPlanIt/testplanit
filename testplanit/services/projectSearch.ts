@@ -1,6 +1,6 @@
 import {
   getElasticsearchClient,
-  ENTITY_INDICES,
+  getEntityIndexName,
 } from "./unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
 import type { Projects } from "@prisma/client";
@@ -18,12 +18,19 @@ type ProjectForIndexing = Projects & {
 
 /**
  * Index a single project to Elasticsearch
+ * @param project - The project to index
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function indexProject(project: ProjectForIndexing): Promise<void> {
+export async function indexProject(
+  project: ProjectForIndexing,
+  tenantId?: string
+): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     throw new Error("Elasticsearch client not available");
   }
+
+  const indexName = getEntityIndexName(SearchableEntityType.PROJECT, tenantId);
 
   const searchableContent = [
     project.name,
@@ -46,7 +53,7 @@ export async function indexProject(project: ProjectForIndexing): Promise<void> {
   };
 
   await client.index({
-    index: ENTITY_INDICES[SearchableEntityType.PROJECT],
+    index: indexName,
     id: project.id.toString(),
     document,
     refresh: true,
@@ -55,17 +62,24 @@ export async function indexProject(project: ProjectForIndexing): Promise<void> {
 
 /**
  * Delete a project from Elasticsearch
+ * @param projectId - The ID of the project to delete
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function deleteProjectFromIndex(projectId: number): Promise<void> {
+export async function deleteProjectFromIndex(
+  projectId: number,
+  tenantId?: string
+): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
 
+  const indexName = getEntityIndexName(SearchableEntityType.PROJECT, tenantId);
+
   try {
     await client.delete({
-      index: ENTITY_INDICES[SearchableEntityType.PROJECT],
+      index: indexName,
       id: projectId.toString(),
       refresh: true,
     });
@@ -78,8 +92,13 @@ export async function deleteProjectFromIndex(projectId: number): Promise<void> {
 
 /**
  * Sync a single project to Elasticsearch
+ * @param projectId - The ID of the project to sync
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
-export async function syncProjectToElasticsearch(projectId: number): Promise<boolean> {
+export async function syncProjectToElasticsearch(
+  projectId: number,
+  tenantId?: string
+): Promise<boolean> {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
@@ -102,7 +121,7 @@ export async function syncProjectToElasticsearch(projectId: number): Promise<boo
     // Index project including deleted ones (filtering happens at search time based on admin permissions)
 
     // Index the project
-    await indexProject(project);
+    await indexProject(project, tenantId);
     return true;
   } catch (error) {
     console.error(`Failed to sync project ${projectId}:`, error);
@@ -112,9 +131,12 @@ export async function syncProjectToElasticsearch(projectId: number): Promise<boo
 
 /**
  * Sync all projects to Elasticsearch
+ * @param prismaClient - Optional Prisma client for tenant-specific queries
+ * @param tenantId - Optional tenant ID for multi-tenant mode
  */
 export async function syncAllProjectsToElasticsearch(
-  prismaClient?: PrismaClientType
+  prismaClient?: PrismaClientType,
+  tenantId?: string
 ): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
@@ -123,8 +145,9 @@ export async function syncAllProjectsToElasticsearch(
   }
 
   const prisma = prismaClient || defaultPrisma;
+  const indexName = getEntityIndexName(SearchableEntityType.PROJECT, tenantId);
 
-  console.log("Starting project sync");
+  console.log(`Starting project sync${tenantId ? ` (tenant: ${tenantId})` : ""}`);
 
   const projects = await prisma.projects.findMany({
     where: {
@@ -150,7 +173,7 @@ export async function syncAllProjectsToElasticsearch(
 
     bulkBody.push({
       index: {
-        _index: ENTITY_INDICES[SearchableEntityType.PROJECT],
+        _index: indexName,
         _id: project.id.toString(),
       },
     });
