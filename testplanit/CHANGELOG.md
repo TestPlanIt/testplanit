@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.11](https://github.com/testplanit/testplanit/compare/v0.1.10...v0.1.11) (2025-12-02)
+
+
+### Bug Fixes
+
+* Invalidate cached Prisma clients when tenant credentials change ([437c8dc](https://github.com/testplanit/testplanit/commit/437c8dcfa17851f9c68ef929473c2ba47c5ff0c5))
+
 ### [0.1.10](https://github.com/testplanit/testplanit/compare/v0.1.9...v0.1.10) (2025-12-02)
 
 
