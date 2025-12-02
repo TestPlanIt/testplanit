@@ -95,13 +95,31 @@ export async function GET(request: NextRequest) {
 
     try {
       const health = await esClient.cluster.health();
-      const indices = await esClient.cat.indices({ format: "json" });
-      
+      const tenantId = getCurrentTenantId();
+
+      // Filter indices by tenant prefix
+      // Multi-tenant: testplanit-{tenantId}-*
+      // Single-tenant: testplanit-* (but not testplanit-{anyTenantId}-*)
+      const indexPattern = tenantId ? `testplanit-${tenantId}-*` : "testplanit-*";
+      const indices = await esClient.cat.indices({ index: indexPattern, format: "json" });
+
+      // In single-tenant mode, filter out any tenant-prefixed indices
+      const knownEntities = ["repository-cases", "shared-steps", "test-runs", "sessions", "projects", "issues", "milestones"];
+      const filteredIndices = tenantId
+        ? indices
+        : indices.filter((idx: any) => {
+            // Single-tenant indices: testplanit-repository-cases
+            // Multi-tenant indices: testplanit-tenantid-repository-cases
+            // Only show indices matching known single-tenant entity names
+            const entityPart = (idx.index || "").replace("testplanit-", "");
+            return knownEntities.includes(entityPart);
+          });
+
       return NextResponse.json({
         available: true,
         health: health.status,
         numberOfNodes: health.number_of_nodes,
-        indices: indices.map((idx: any) => ({
+        indices: filteredIndices.map((idx: any) => ({
           name: idx.index,
           docs: parseInt(idx["docs.count"] || "0"),
           size: idx["store.size"],
