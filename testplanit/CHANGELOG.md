@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.9](https://github.com/testplanit/testplanit/compare/v0.1.8...v0.1.9) (2025-12-02)
+
+
+### Features
+
+* **auth:** Hash magic link token before storing in database ([0d7ce6e](https://github.com/testplanit/testplanit/commit/0d7ce6eee218016f85029d1433d5b0302aec3277))
+
 ### [0.1.8](https://github.com/testplanit/testplanit/compare/v0.1.7...v0.1.8) (2025-12-02)
 
 
