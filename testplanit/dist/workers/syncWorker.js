@@ -2803,7 +2803,6 @@ var IntegrationManager = class _IntegrationManager {
 var integrationManager = IntegrationManager.getInstance();
 
 // lib/integrations/services/SyncService.ts
-var import_runtime = require("@zenstackhq/runtime");
 init_prismaBase();
 
 // services/elasticsearchService.ts
@@ -3389,6 +3388,7 @@ async function syncIssueToElasticsearch(issueId, prismaClient2) {
 
 // lib/multiTenantPrisma.ts
 var import_client2 = require("@prisma/client");
+var fs = __toESM(require("fs"));
 function isMultiTenantMode() {
   return process.env.MULTI_TENANT_MODE === "true";
 }
@@ -3400,11 +3400,41 @@ function getCurrentTenantId() {
 }
 var tenantClients = /* @__PURE__ */ new Map();
 var tenantConfigs = null;
+var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+function loadTenantsFromFile(filePath) {
+  const configs = /* @__PURE__ */ new Map();
+  try {
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(fileContent);
+      for (const [tenantId, config] of Object.entries(parsed)) {
+        configs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex
+        });
+      }
+      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+    }
+  } catch (error) {
+    console.error(`Failed to load tenant configs from ${filePath}:`, error);
+  }
+  return configs;
+}
+function reloadTenantConfigs() {
+  tenantConfigs = null;
+  return loadTenantConfigs();
+}
 function loadTenantConfigs() {
   if (tenantConfigs) {
     return tenantConfigs;
   }
   tenantConfigs = /* @__PURE__ */ new Map();
+  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
+  for (const [tenantId, config] of fileConfigs) {
+    tenantConfigs.set(tenantId, config);
+  }
   const configJson = process.env.TENANT_CONFIGS;
   if (configJson) {
     try {
@@ -3417,7 +3447,7 @@ function loadTenantConfigs() {
           elasticsearchIndex: config.elasticsearchIndex
         });
       }
-      console.log(`Loaded ${tenantConfigs.size} tenant configurations from TENANT_CONFIGS`);
+      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
     } catch (error) {
       console.error("Failed to parse TENANT_CONFIGS:", error);
     }
@@ -3461,7 +3491,12 @@ function getTenantPrismaClient(tenantId) {
   if (client) {
     return client;
   }
-  const config = getTenantConfig(tenantId);
+  let config = getTenantConfig(tenantId);
+  if (!config) {
+    console.log(`Tenant ${tenantId} not found in cache, reloading configurations...`);
+    reloadTenantConfigs();
+    config = getTenantConfig(tenantId);
+  }
   if (!config) {
     throw new Error(`No configuration found for tenant: ${tenantId}`);
   }
@@ -3497,6 +3532,14 @@ function validateMultiTenantJobData(jobData) {
 }
 
 // lib/integrations/services/SyncService.ts
+var _enhance = null;
+async function getEnhance() {
+  if (!_enhance) {
+    const { enhance } = await import("@zenstackhq/runtime");
+    _enhance = enhance;
+  }
+  return _enhance;
+}
 var SyncService = class {
   /**
    * Queue a sync job for an integration
@@ -3639,7 +3682,8 @@ var SyncService = class {
       if (!user) {
         throw new Error("User not found");
       }
-      const userDb = (0, import_runtime.enhance)(prisma2, { user }, { kinds: ["delegate"] });
+      const enhance = await getEnhance();
+      const userDb = enhance(prisma2, { user }, { kinds: ["delegate"] });
       const integration = await userDb.integration.findUnique({
         where: { id: integrationId },
         include: {
@@ -3776,7 +3820,8 @@ var SyncService = class {
       if (!user) {
         throw new Error("User not found");
       }
-      const userDb = (0, import_runtime.enhance)(prisma2, { user }, { kinds: ["delegate"] });
+      const enhance = await getEnhance();
+      const userDb = enhance(prisma2, { user }, { kinds: ["delegate"] });
       const integration = await userDb.integration.findUnique({
         where: { id: integrationId },
         include: {

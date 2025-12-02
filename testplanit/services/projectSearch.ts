@@ -3,9 +3,11 @@ import {
   ENTITY_INDICES,
 } from "./unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
-import type { Projects, PrismaClient } from "@prisma/client";
+import type { Projects } from "@prisma/client";
 import { prisma as defaultPrisma } from "~/lib/prismaBase";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
+
+type PrismaClientType = typeof defaultPrisma;
 
 /**
  * Type for project with all required relations for indexing
@@ -111,16 +113,20 @@ export async function syncProjectToElasticsearch(projectId: number): Promise<boo
 /**
  * Sync all projects to Elasticsearch
  */
-export async function syncAllProjectsToElasticsearch(): Promise<void> {
+export async function syncAllProjectsToElasticsearch(
+  prismaClient?: PrismaClientType
+): Promise<void> {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
 
+  const prisma = prismaClient || defaultPrisma;
+
   console.log("Starting project sync");
 
-  const projects = await defaultPrisma.projects.findMany({
+  const projects = await prisma.projects.findMany({
     where: {
       // Include deleted items (filtering happens at search time based on admin permissions)
     },

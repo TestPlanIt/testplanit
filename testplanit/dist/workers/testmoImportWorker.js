@@ -39,6 +39,7 @@ function isMultiTenantMode() {
   return process.env.MULTI_TENANT_MODE === "true";
 }
 var tenantClients = /* @__PURE__ */ new Map();
+var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
 async function disconnectAllTenantClients() {
   const disconnectPromises = [];
   for (const [tenantId, client] of tenantClients) {

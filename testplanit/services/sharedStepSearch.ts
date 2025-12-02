@@ -1,4 +1,3 @@
-import type { PrismaClient } from "@prisma/client";
 import {
   getElasticsearchClient,
   ENTITY_INDICES,
@@ -7,6 +6,8 @@ import {
 import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { prisma as defaultPrisma } from "~/lib/prismaBase";
+
+type PrismaClientType = typeof defaultPrisma;
 
 /**
  * Document structure for shared steps in Elasticsearch
@@ -35,9 +36,11 @@ export interface SharedStepDocument {
  * Build a shared step document for Elasticsearch from Prisma data
  */
 export async function buildSharedStepDocument(
-  stepGroupId: number
+  stepGroupId: number,
+  prismaClient?: PrismaClientType
 ): Promise<SharedStepDocument | null> {
-  const stepGroup = await defaultPrisma.sharedStepGroup.findUnique({
+  const prisma = prismaClient || defaultPrisma;
+  const stepGroup = await prisma.sharedStepGroup.findUnique({
     where: { id: stepGroupId },
     include: {
       project: true,
@@ -182,13 +185,15 @@ export async function syncSharedStepToElasticsearch(
  */
 export async function syncProjectSharedStepsToElasticsearch(
   projectId: number,
-  batchSize: number = 100
+  batchSize: number = 100,
+  prismaClient?: PrismaClientType
 ): Promise<boolean> {
+  const prisma = prismaClient || defaultPrisma;
   try {
     // Ensure index exists
     await createEntityIndex(SearchableEntityType.SHARED_STEP);
 
-    const totalSteps = await defaultPrisma.sharedStepGroup.count({
+    const totalSteps = await prisma.sharedStepGroup.count({
       where: {
         projectId,
         // Include deleted items (filtering happens at search time based on admin permissions)
@@ -203,7 +208,7 @@ export async function syncProjectSharedStepsToElasticsearch(
     let hasMore = true;
 
     while (hasMore) {
-      const steps = await defaultPrisma.sharedStepGroup.findMany({
+      const steps = await prisma.sharedStepGroup.findMany({
         where: {
           projectId,
           // Include deleted items (filtering happens at search time based on admin permissions)
@@ -220,7 +225,7 @@ export async function syncProjectSharedStepsToElasticsearch(
 
       // Build and index documents for this batch
       for (const step of steps) {
-        const doc = await buildSharedStepDocument(step.id);
+        const doc = await buildSharedStepDocument(step.id, prisma);
         if (doc) {
           await indexSharedStep(doc);
         }

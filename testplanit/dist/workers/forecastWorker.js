@@ -400,16 +400,47 @@ var import_node_url = require("node:url");
 
 // lib/multiTenantPrisma.ts
 var import_client2 = require("@prisma/client");
+var fs = __toESM(require("fs"));
 function isMultiTenantMode() {
   return process.env.MULTI_TENANT_MODE === "true";
 }
 var tenantClients = /* @__PURE__ */ new Map();
 var tenantConfigs = null;
+var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+function loadTenantsFromFile(filePath) {
+  const configs = /* @__PURE__ */ new Map();
+  try {
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(fileContent);
+      for (const [tenantId, config] of Object.entries(parsed)) {
+        configs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex
+        });
+      }
+      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+    }
+  } catch (error) {
+    console.error(`Failed to load tenant configs from ${filePath}:`, error);
+  }
+  return configs;
+}
+function reloadTenantConfigs() {
+  tenantConfigs = null;
+  return loadTenantConfigs();
+}
 function loadTenantConfigs() {
   if (tenantConfigs) {
     return tenantConfigs;
   }
   tenantConfigs = /* @__PURE__ */ new Map();
+  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
+  for (const [tenantId, config] of fileConfigs) {
+    tenantConfigs.set(tenantId, config);
+  }
   const configJson = process.env.TENANT_CONFIGS;
   if (configJson) {
     try {
@@ -422,7 +453,7 @@ function loadTenantConfigs() {
           elasticsearchIndex: config.elasticsearchIndex
         });
       }
-      console.log(`Loaded ${tenantConfigs.size} tenant configurations from TENANT_CONFIGS`);
+      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
     } catch (error) {
       console.error("Failed to parse TENANT_CONFIGS:", error);
     }
@@ -466,7 +497,12 @@ function getTenantPrismaClient(tenantId) {
   if (client) {
     return client;
   }
-  const config = getTenantConfig(tenantId);
+  let config = getTenantConfig(tenantId);
+  if (!config) {
+    console.log(`Tenant ${tenantId} not found in cache, reloading configurations...`);
+    reloadTenantConfigs();
+    config = getTenantConfig(tenantId);
+  }
   if (!config) {
     throw new Error(`No configuration found for tenant: ${tenantId}`);
   }

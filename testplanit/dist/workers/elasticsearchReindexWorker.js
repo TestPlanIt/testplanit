@@ -859,8 +859,9 @@ function extractStepText(stepData) {
     return typeof stepData === "string" ? stepData : "";
   }
 }
-async function buildRepositoryCaseDocument(caseId) {
-  const repoCase = await prisma.repositoryCases.findUnique({
+async function buildRepositoryCaseDocument(caseId, prismaClient2) {
+  const prisma2 = prismaClient2 || prisma;
+  const repoCase = await prisma2.repositoryCases.findUnique({
     where: { id: caseId },
     include: {
       project: true,
@@ -908,7 +909,7 @@ async function buildRepositoryCaseDocument(caseId) {
     }
   });
   if (!repoCase) return null;
-  const folderPath = await buildFolderPath(repoCase.folderId);
+  const folderPath = await buildFolderPath(repoCase.folderId, prisma2);
   return {
     id: repoCase.id,
     projectId: repoCase.projectId,
@@ -994,8 +995,8 @@ async function buildRepositoryCaseDocument(caseId) {
     })
   };
 }
-async function buildFolderPath(folderId) {
-  const folder = await prisma.repositoryFolders.findUnique({
+async function buildFolderPath(folderId, prisma2 = prisma) {
+  const folder = await prisma2.repositoryFolders.findUnique({
     where: { id: folderId },
     include: { parent: true }
   });
@@ -1004,7 +1005,7 @@ async function buildFolderPath(folderId) {
   let current = folder;
   while (current.parent) {
     path.unshift(current.parent.name);
-    const nextParent = await prisma.repositoryFolders.findUnique({
+    const nextParent = await prisma2.repositoryFolders.findUnique({
       where: { id: current.parent.id },
       include: { parent: true }
     });
@@ -1013,10 +1014,11 @@ async function buildFolderPath(folderId) {
   }
   return "/" + path.join("/");
 }
-async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progressCallback) {
+async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progressCallback, prismaClient2) {
+  const prisma2 = prismaClient2 || prisma;
   try {
     await createRepositoryCaseIndex();
-    const totalCases = await prisma.repositoryCases.count({
+    const totalCases = await prisma2.repositoryCases.count({
       where: {
         projectId,
         isArchived: false
@@ -1031,7 +1033,7 @@ async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progr
     let processed = 0;
     let hasMore = true;
     while (hasMore) {
-      const cases = await prisma.repositoryCases.findMany({
+      const cases = await prisma2.repositoryCases.findMany({
         where: {
           projectId,
           isArchived: false
@@ -1047,7 +1049,7 @@ async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progr
       }
       const documents = [];
       for (const caseItem of cases) {
-        const doc = await buildRepositoryCaseDocument(caseItem.id);
+        const doc = await buildRepositoryCaseDocument(caseItem.id, prisma2);
         if (doc) {
           documents.push(doc);
         }
@@ -1090,8 +1092,9 @@ async function initializeElasticsearchIndexes() {
 
 // services/sharedStepSearch.ts
 init_prismaBase();
-async function buildSharedStepDocument(stepGroupId) {
-  const stepGroup = await prisma.sharedStepGroup.findUnique({
+async function buildSharedStepDocument(stepGroupId, prismaClient2) {
+  const prisma2 = prismaClient2 || prisma;
+  const stepGroup = await prisma2.sharedStepGroup.findUnique({
     where: { id: stepGroupId },
     include: {
       project: true,
@@ -1166,10 +1169,11 @@ async function indexSharedStep(stepData) {
     return false;
   }
 }
-async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100) {
+async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100, prismaClient2) {
+  const prisma2 = prismaClient2 || prisma;
   try {
     await createEntityIndex("shared_step" /* SHARED_STEP */);
-    const totalSteps = await prisma.sharedStepGroup.count({
+    const totalSteps = await prisma2.sharedStepGroup.count({
       where: {
         projectId
         // Include deleted items (filtering happens at search time based on admin permissions)
@@ -1181,7 +1185,7 @@ async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100)
     let processed = 0;
     let hasMore = true;
     while (hasMore) {
-      const steps = await prisma.sharedStepGroup.findMany({
+      const steps = await prisma2.sharedStepGroup.findMany({
         where: {
           projectId
           // Include deleted items (filtering happens at search time based on admin permissions)
@@ -1195,7 +1199,7 @@ async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100)
         break;
       }
       for (const step of steps) {
-        const doc = await buildSharedStepDocument(step.id);
+        const doc = await buildSharedStepDocument(step.id, prisma2);
         if (doc) {
           await indexSharedStep(doc);
         }
@@ -1705,14 +1709,15 @@ async function syncProjectMilestonesToElasticsearch(projectId, db) {
 
 // services/projectSearch.ts
 init_prismaBase();
-async function syncAllProjectsToElasticsearch() {
+async function syncAllProjectsToElasticsearch(prismaClient2) {
   const client = getElasticsearchClient();
   if (!client) {
     console.warn("Elasticsearch client not available");
     return;
   }
+  const prisma2 = prismaClient2 || prisma;
   console.log("Starting project sync");
-  const projects = await prisma.projects.findMany({
+  const projects = await prisma2.projects.findMany({
     where: {
       // Include deleted items (filtering happens at search time based on admin permissions)
     },
@@ -1767,16 +1772,47 @@ var import_node_url = require("node:url");
 
 // lib/multiTenantPrisma.ts
 var import_client2 = require("@prisma/client");
+var fs = __toESM(require("fs"));
 function isMultiTenantMode() {
   return process.env.MULTI_TENANT_MODE === "true";
 }
 var tenantClients = /* @__PURE__ */ new Map();
 var tenantConfigs = null;
+var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+function loadTenantsFromFile(filePath) {
+  const configs = /* @__PURE__ */ new Map();
+  try {
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(fileContent);
+      for (const [tenantId, config] of Object.entries(parsed)) {
+        configs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex
+        });
+      }
+      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+    }
+  } catch (error) {
+    console.error(`Failed to load tenant configs from ${filePath}:`, error);
+  }
+  return configs;
+}
+function reloadTenantConfigs() {
+  tenantConfigs = null;
+  return loadTenantConfigs();
+}
 function loadTenantConfigs() {
   if (tenantConfigs) {
     return tenantConfigs;
   }
   tenantConfigs = /* @__PURE__ */ new Map();
+  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
+  for (const [tenantId, config] of fileConfigs) {
+    tenantConfigs.set(tenantId, config);
+  }
   const configJson = process.env.TENANT_CONFIGS;
   if (configJson) {
     try {
@@ -1789,7 +1825,7 @@ function loadTenantConfigs() {
           elasticsearchIndex: config.elasticsearchIndex
         });
       }
-      console.log(`Loaded ${tenantConfigs.size} tenant configurations from TENANT_CONFIGS`);
+      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
     } catch (error) {
       console.error("Failed to parse TENANT_CONFIGS:", error);
     }
@@ -1833,7 +1869,12 @@ function getTenantPrismaClient(tenantId) {
   if (client) {
     return client;
   }
-  const config = getTenantConfig(tenantId);
+  let config = getTenantConfig(tenantId);
+  if (!config) {
+    console.log(`Tenant ${tenantId} not found in cache, reloading configurations...`);
+    reloadTenantConfigs();
+    config = getTenantConfig(tenantId);
+  }
   if (!config) {
     throw new Error(`No configuration found for tenant: ${tenantId}`);
   }
@@ -1943,7 +1984,7 @@ var processor = async (job) => {
     if (entityType === "all" || entityType === "projects") {
       await job.updateProgress(currentProgress);
       await job.log("Indexing projects...");
-      await syncAllProjectsToElasticsearch();
+      await syncAllProjectsToElasticsearch(prisma2);
       results.projects = await prisma2.projects.count({
         where: { isDeleted: false }
       });
@@ -1968,7 +2009,7 @@ var processor = async (job) => {
             await job.updateProgress(Math.min(overallProgress, 90));
             await job.log(message);
           };
-          await syncProjectCasesToElasticsearch(project.id, 100, progressCallback);
+          await syncProjectCasesToElasticsearch(project.id, 100, progressCallback, prisma2);
           results.repositoryCases += count;
           processedDocuments = results.repositoryCases;
         }
@@ -1982,7 +2023,7 @@ var processor = async (job) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} shared steps for project ${project.name}`);
-          await syncProjectSharedStepsToElasticsearch(project.id);
+          await syncProjectSharedStepsToElasticsearch(project.id, 100, prisma2);
           results.sharedSteps += count;
         }
       }

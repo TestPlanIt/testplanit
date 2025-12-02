@@ -1,4 +1,3 @@
-import type { PrismaClient } from "@prisma/client";
 import {
   createRepositoryCaseIndex,
   RepositoryCaseDocument,
@@ -11,6 +10,8 @@ import {
 import { extractTextFromNode } from "../utils/extractTextFromJson";
 import { buildCustomFieldDocuments } from "./unifiedElasticsearchService";
 import { prisma as defaultPrisma } from "../lib/prismaBase";
+
+type PrismaClientType = typeof defaultPrisma;
 
 /**
  * Safely extract text from a step field that might be JSON string or object
@@ -36,9 +37,11 @@ function extractStepText(stepData: any): string {
  * Build a repository case document for Elasticsearch from Prisma data
  */
 export async function buildRepositoryCaseDocument(
-  caseId: number
+  caseId: number,
+  prismaClient?: PrismaClientType
 ): Promise<RepositoryCaseDocument | null> {
-  const repoCase = await defaultPrisma.repositoryCases.findUnique({
+  const prisma = prismaClient || defaultPrisma;
+  const repoCase = await prisma.repositoryCases.findUnique({
     where: { id: caseId },
     include: {
       project: true,
@@ -89,7 +92,7 @@ export async function buildRepositoryCaseDocument(
   if (!repoCase) return null;
 
   // Build folder path
-  const folderPath = await buildFolderPath(repoCase.folderId);
+  const folderPath = await buildFolderPath(repoCase.folderId, prisma);
 
   return {
     id: repoCase.id,
@@ -186,8 +189,11 @@ export async function buildRepositoryCaseDocument(
 /**
  * Build the full folder path for a folder
  */
-async function buildFolderPath(folderId: number): Promise<string> {
-  const folder = await defaultPrisma.repositoryFolders.findUnique({
+async function buildFolderPath(
+  folderId: number,
+  prisma: PrismaClientType = defaultPrisma
+): Promise<string> {
+  const folder = await prisma.repositoryFolders.findUnique({
     where: { id: folderId },
     include: { parent: true },
   });
@@ -199,7 +205,7 @@ async function buildFolderPath(folderId: number): Promise<string> {
 
   while (current.parent) {
     path.unshift(current.parent.name);
-    const nextParent = await defaultPrisma.repositoryFolders.findUnique({
+    const nextParent = await prisma.repositoryFolders.findUnique({
       where: { id: current.parent.id },
       include: { parent: true },
     });
@@ -239,13 +245,15 @@ export async function syncRepositoryCaseToElasticsearch(
 export async function syncProjectCasesToElasticsearch(
   projectId: number,
   batchSize: number = 100,
-  progressCallback?: (processed: number, total: number, message: string) => void | Promise<void>
+  progressCallback?: (processed: number, total: number, message: string) => void | Promise<void>,
+  prismaClient?: PrismaClientType
 ): Promise<boolean> {
+  const prisma = prismaClient || defaultPrisma;
   try {
     // Ensure index exists
     await createRepositoryCaseIndex();
 
-    const totalCases = await defaultPrisma.repositoryCases.count({
+    const totalCases = await prisma.repositoryCases.count({
       where: {
         projectId,
         isArchived: false, // Only exclude archived, include deleted items
@@ -262,7 +270,7 @@ export async function syncProjectCasesToElasticsearch(
     let hasMore = true;
 
     while (hasMore) {
-      const cases = await defaultPrisma.repositoryCases.findMany({
+      const cases = await prisma.repositoryCases.findMany({
         where: {
           projectId,
           isArchived: false, // Only exclude archived, include deleted items
@@ -281,7 +289,7 @@ export async function syncProjectCasesToElasticsearch(
       const documents: RepositoryCaseDocument[] = [];
 
       for (const caseItem of cases) {
-        const doc = await buildRepositoryCaseDocument(caseItem.id);
+        const doc = await buildRepositoryCaseDocument(caseItem.id, prisma);
         if (doc) {
           documents.push(doc);
         }

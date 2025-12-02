@@ -121,7 +121,7 @@ const processor = async (job: Job<ReindexJobData>) => {
     if (entityType === "all" || entityType === "projects") {
       await job.updateProgress(currentProgress);
       await job.log("Indexing projects...");
-      await syncAllProjectsToElasticsearch();
+      await syncAllProjectsToElasticsearch(prisma);
       results.projects = await prisma.projects.count({
         where: { isDeleted: false }
       });
@@ -152,7 +152,7 @@ const processor = async (job: Job<ReindexJobData>) => {
             await job.log(message);
           };
 
-          await syncProjectCasesToElasticsearch(project.id, 100, progressCallback);
+          await syncProjectCasesToElasticsearch(project.id, 100, progressCallback, prisma);
           results.repositoryCases += count;
           processedDocuments = results.repositoryCases;
         }
@@ -167,7 +167,7 @@ const processor = async (job: Job<ReindexJobData>) => {
         });
         if (count > 0) {
           await job.log(`Syncing ${count} shared steps for project ${project.name}`);
-          await syncProjectSharedStepsToElasticsearch(project.id);
+          await syncProjectSharedStepsToElasticsearch(project.id, 100, prisma);
           results.sharedSteps += count;
         }
       }
