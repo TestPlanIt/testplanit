@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.8](https://github.com/testplanit/testplanit/compare/v0.1.7...v0.1.8) (2025-12-02)
+
+
+### Features
+
+* Enhance Elasticsearch index filtering for multi-tenant support ([63662b6](https://github.com/testplanit/testplanit/commit/63662b6b0e5c1d0bf98252dc4b82531e785256ee))
+
 ### [0.1.7](https://github.com/testplanit/testplanit/compare/v0.1.6...v0.1.7) (2025-12-02)
 
 ### [0.1.6](https://github.com/testplanit/testplanit/compare/v0.1.5...v0.1.6) (2025-12-01)
