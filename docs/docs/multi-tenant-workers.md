@@ -13,6 +13,7 @@ In multi-tenant mode:
 - **Web Application Instances**: Each tenant runs their own web application container with their own database
 - **Shared Workers**: A single worker container processes background jobs for all tenants
 - **Job Isolation**: Jobs include a `tenantId` field to ensure data isolation
+- **Elasticsearch Isolation**: Each tenant has separate Elasticsearch indices with tenant-prefixed names (e.g., `testplanit-tenant-a-repository-cases`)
 - **Admin UI Filtering**: The job queue admin UI only shows jobs for the current tenant
 
 ## Architecture
@@ -37,6 +38,13 @@ In multi-tenant mode:
               ┌─────────────────────┐
               │   Shared Workers    │
               │   (Multi-tenant)    │
+              └──────────┬──────────┘
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │   Elasticsearch     │
+              │  (Tenant-prefixed   │
+              │      indices)       │
               └─────────────────────┘
 ```
 
@@ -263,10 +271,87 @@ Each tenant database URL must be accessible from the worker container. Verify ne
 ## Security Considerations
 
 1. **Database Isolation**: Each tenant has a separate database; workers connect dynamically based on job data
-2. **Job Data**: The `tenantId` in job data determines which database is used; tampering could cause cross-tenant access
-3. **Network Security**: Ensure worker container can only reach authorized tenant databases
-4. **Credentials**: Use separate database credentials per tenant when possible
-5. **Valkey Security**: Use authentication on shared Valkey instance
+2. **Elasticsearch Isolation**: Each tenant has separate Elasticsearch indices with tenant-prefixed names
+3. **Job Data**: The `tenantId` in job data determines which database and ES indices are used; tampering could cause cross-tenant access
+4. **Network Security**: Ensure worker container can only reach authorized tenant databases
+5. **Credentials**: Use separate database credentials per tenant when possible
+6. **Valkey Security**: Use authentication on shared Valkey instance
+
+## Elasticsearch Index Isolation
+
+In multi-tenant mode, Elasticsearch indices are automatically prefixed with the tenant ID to ensure complete data isolation between tenants.
+
+### Index Naming Convention
+
+| Entity Type | Single-Tenant Index | Multi-Tenant Index (Tenant A) |
+|-------------|---------------------|-------------------------------|
+| Repository Cases | `testplanit-repository-cases` | `testplanit-tenant-a-repository-cases` |
+| Shared Steps | `testplanit-shared-steps` | `testplanit-tenant-a-shared-steps` |
+| Test Runs | `testplanit-test-runs` | `testplanit-tenant-a-test-runs` |
+| Sessions | `testplanit-sessions` | `testplanit-tenant-a-sessions` |
+| Projects | `testplanit-projects` | `testplanit-tenant-a-projects` |
+| Issues | `testplanit-issues` | `testplanit-tenant-a-issues` |
+| Milestones | `testplanit-milestones` | `testplanit-tenant-a-milestones` |
+
+### How It Works
+
+When a worker processes an Elasticsearch job (e.g., reindexing):
+
+1. The job includes the `tenantId` from the web application that created it
+2. The worker retrieves the tenant-specific Prisma client for database access
+3. All Elasticsearch operations use tenant-prefixed index names
+4. Search results and counts reflect only that tenant's data
+
+```javascript
+// Example: Index name generation
+function getEntityIndexName(entityType, tenantId) {
+  const baseName = "repository-cases"; // or other entity type
+  if (tenantId) {
+    return `testplanit-${tenantId}-${baseName}`;
+  }
+  return `testplanit-${baseName}`;
+}
+```
+
+### Benefits
+
+- **Complete Data Isolation**: Each tenant's search data is in separate indices
+- **Accurate Counts**: Index document counts show only that tenant's data
+- **Independent Management**: Indices can be managed (reindexed, deleted) per tenant
+- **Simplified Search**: No need for tenant filters in search queries
+
+### Reindexing Per Tenant
+
+When reindexing Elasticsearch, the reindex worker automatically uses the correct tenant-prefixed indices:
+
+```bash
+# Worker logs show tenant-specific operations
+Processing Elasticsearch reindex job 123 for tenant tenant-a
+Initializing Elasticsearch indexes (tenant: tenant-a)
+Starting test run sync for project 1 (tenant: tenant-a)
+```
+
+### Shared Elasticsearch Cluster
+
+All tenants can share a single Elasticsearch cluster. The tenant prefix in index names provides logical separation without requiring separate clusters:
+
+```yaml
+# docker-compose.yml
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  workers:
+    environment:
+      - MULTI_TENANT_MODE=true
+      - ELASTICSEARCH_NODE=http://elasticsearch:9200
+      # Each tenant's data goes to prefixed indices automatically
+```
 
 ## Migration from Single-Tenant
 
@@ -276,6 +361,10 @@ To migrate an existing single-tenant deployment to multi-tenant:
 2. **Update Workers**: Configure `MULTI_TENANT_MODE=true` and tenant configs
 3. **Rerun Scheduler**: Clear old scheduled jobs and run scheduler with multi-tenant config
 4. **Existing Jobs**: Jobs without `tenantId` will fail in multi-tenant mode; let them complete or remove them first
+5. **Reindex Elasticsearch**: Trigger a full reindex to create tenant-prefixed indices:
+   - Go to Admin > Elasticsearch in each tenant's web app
+   - Click "Reindex All" to create the new tenant-prefixed indices
+   - Optionally delete the old non-prefixed indices after verifying search works
 
 ## Performance Considerations
 
