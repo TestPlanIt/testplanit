@@ -191,7 +191,7 @@ export async function syncProjectSharedStepsToElasticsearch(
   const prisma = prismaClient || defaultPrisma;
   try {
     // Ensure index exists
-    await createEntityIndex(SearchableEntityType.SHARED_STEP);
+    await createEntityIndex(SearchableEntityType.SHARED_STEP, prisma);
 
     const totalSteps = await prisma.sharedStepGroup.count({
       where: {

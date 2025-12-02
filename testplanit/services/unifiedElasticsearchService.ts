@@ -1,7 +1,9 @@
 import { Client } from "@elastic/elasticsearch";
 import { SearchableEntityType, CustomFieldDocument } from "~/types/search";
 import { getElasticsearchClient } from "./elasticsearchService";
-import { prisma } from "~/lib/prismaBase";
+import { prisma as defaultPrisma } from "~/lib/prismaBase";
+
+type PrismaClientType = typeof defaultPrisma;
 
 // Re-export for convenience
 export { getElasticsearchClient };
@@ -341,7 +343,8 @@ export const ENTITY_MAPPINGS = {
 /**
  * Get Elasticsearch replica settings from database
  */
-async function getElasticsearchSettings() {
+async function getElasticsearchSettings(prismaClient?: PrismaClientType) {
+  const prisma = prismaClient || defaultPrisma;
   try {
     const config = await prisma.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" }
@@ -361,7 +364,8 @@ async function getElasticsearchSettings() {
  * Create index for a specific entity type
  */
 export async function createEntityIndex(
-  entityType: SearchableEntityType
+  entityType: SearchableEntityType,
+  prismaClient?: PrismaClientType
 ): Promise<boolean> {
   const client = getElasticsearchClient();
   if (!client) return false;
@@ -371,7 +375,7 @@ export async function createEntityIndex(
 
   try {
     // Get settings from database
-    const settings = await getElasticsearchSettings();
+    const settings = await getElasticsearchSettings(prismaClient);
     
     const indexExists = await client.indices.exists({ index: indexName });
 
@@ -406,11 +410,11 @@ export async function createEntityIndex(
 /**
  * Create all entity indices
  */
-export async function createAllEntityIndices(): Promise<void> {
+export async function createAllEntityIndices(prismaClient?: PrismaClientType): Promise<void> {
   const entityTypes = Object.values(SearchableEntityType);
 
   for (const entityType of entityTypes) {
-    await createEntityIndex(entityType);
+    await createEntityIndex(entityType, prismaClient);
   }
 }
 

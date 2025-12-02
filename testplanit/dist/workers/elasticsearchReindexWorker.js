@@ -249,9 +249,10 @@ var repositoryCaseMapping = {
     searchableContent: { type: "text" }
   }
 };
-async function getElasticsearchSettings() {
+async function getElasticsearchSettings(prismaClient2) {
+  const prisma2 = prismaClient2 || prisma;
   try {
-    const config = await prisma.appConfig.findUnique({
+    const config = await prisma2.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" }
     });
     return {
@@ -262,11 +263,11 @@ async function getElasticsearchSettings() {
     return { numberOfReplicas: 0 };
   }
 }
-async function createRepositoryCaseIndex() {
+async function createRepositoryCaseIndex(prismaClient2) {
   const client = getElasticsearchClient();
   if (!client) return false;
   try {
-    const settings = await getElasticsearchSettings();
+    const settings = await getElasticsearchSettings(prismaClient2);
     const exists = await client.indices.exists({
       index: REPOSITORY_CASE_INDEX
     });
@@ -684,9 +685,10 @@ var ENTITY_MAPPINGS = {
     }
   }
 };
-async function getElasticsearchSettings2() {
+async function getElasticsearchSettings2(prismaClient2) {
+  const prisma2 = prismaClient2 || prisma;
   try {
-    const config = await prisma.appConfig.findUnique({
+    const config = await prisma2.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" }
     });
     return {
@@ -697,13 +699,13 @@ async function getElasticsearchSettings2() {
     return { numberOfReplicas: 0 };
   }
 }
-async function createEntityIndex(entityType) {
+async function createEntityIndex(entityType, prismaClient2) {
   const client = getElasticsearchClient();
   if (!client) return false;
   const indexName = ENTITY_INDICES[entityType];
   const mapping = ENTITY_MAPPINGS[entityType];
   try {
-    const settings = await getElasticsearchSettings2();
+    const settings = await getElasticsearchSettings2(prismaClient2);
     const indexExists = await client.indices.exists({ index: indexName });
     if (!indexExists) {
       await client.indices.create({
@@ -1017,7 +1019,7 @@ async function buildFolderPath(folderId, prisma2 = prisma) {
 async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progressCallback, prismaClient2) {
   const prisma2 = prismaClient2 || prisma;
   try {
-    await createRepositoryCaseIndex();
+    await createRepositoryCaseIndex(prisma2);
     const totalCases = await prisma2.repositoryCases.count({
       where: {
         projectId,
@@ -1079,9 +1081,9 @@ async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progr
     return false;
   }
 }
-async function initializeElasticsearchIndexes() {
+async function initializeElasticsearchIndexes(prismaClient2) {
   try {
-    const created = await createRepositoryCaseIndex();
+    const created = await createRepositoryCaseIndex(prismaClient2);
     if (created) {
       console.log("Elasticsearch indexes initialized successfully");
     }
@@ -1172,7 +1174,7 @@ async function indexSharedStep(stepData) {
 async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100, prismaClient2) {
   const prisma2 = prismaClient2 || prisma;
   try {
-    await createEntityIndex("shared_step" /* SHARED_STEP */);
+    await createEntityIndex("shared_step" /* SHARED_STEP */, prisma2);
     const totalSteps = await prisma2.sharedStepGroup.count({
       where: {
         projectId
@@ -1926,7 +1928,7 @@ var processor = async (job) => {
     if (entityType === "all" || entityType === "repositoryCases") {
       await job.updateProgress(5);
       await job.log("Initializing Elasticsearch indexes...");
-      await initializeElasticsearchIndexes();
+      await initializeElasticsearchIndexes(prisma2);
     }
     const projects = projectId ? await prisma2.projects.findMany({
       where: { id: projectId, isDeleted: false }

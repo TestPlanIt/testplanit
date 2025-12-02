@@ -251,7 +251,7 @@ export async function syncProjectCasesToElasticsearch(
   const prisma = prismaClient || defaultPrisma;
   try {
     // Ensure index exists
-    await createRepositoryCaseIndex();
+    await createRepositoryCaseIndex(prisma);
 
     const totalCases = await prisma.repositoryCases.count({
       where: {
@@ -327,9 +327,9 @@ export async function syncProjectCasesToElasticsearch(
 /**
  * Initialize Elasticsearch indexes on application startup
  */
-export async function initializeElasticsearchIndexes(): Promise<void> {
+export async function initializeElasticsearchIndexes(prismaClient?: PrismaClientType): Promise<void> {
   try {
-    const created = await createRepositoryCaseIndex();
+    const created = await createRepositoryCaseIndex(prismaClient);
     if (created) {
       console.log("Elasticsearch indexes initialized successfully");
     }

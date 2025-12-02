@@ -52,7 +52,7 @@ const processor = async (job: Job<ReindexJobData>) => {
     if (entityType === "all" || entityType === "repositoryCases") {
       await job.updateProgress(5);
       await job.log("Initializing Elasticsearch indexes...");
-      await initializeElasticsearchIndexes();
+      await initializeElasticsearchIndexes(prisma);
     }
 
     const projects = projectId

@@ -1,6 +1,8 @@
 import { Client } from "@elastic/elasticsearch";
 import { env } from "../env.js";
-import { prisma } from "../lib/prismaBase";
+import { prisma as defaultPrisma } from "../lib/prismaBase";
+
+type PrismaClientType = typeof defaultPrisma;
 
 // Create singleton instance
 let esClient: Client | null = null;
@@ -129,7 +131,8 @@ export const repositoryCaseMapping = {
 /**
  * Get Elasticsearch replica settings from database
  */
-async function getElasticsearchSettings() {
+async function getElasticsearchSettings(prismaClient?: PrismaClientType) {
+  const prisma = prismaClient || defaultPrisma;
   try {
     const config = await prisma.appConfig.findUnique({
       where: { key: "elasticsearch_replicas" }
@@ -148,13 +151,13 @@ async function getElasticsearchSettings() {
 /**
  * Create or update the repository cases index
  */
-export async function createRepositoryCaseIndex(): Promise<boolean> {
+export async function createRepositoryCaseIndex(prismaClient?: PrismaClientType): Promise<boolean> {
   const client = getElasticsearchClient();
   if (!client) return false;
 
   try {
     // Get settings from database
-    const settings = await getElasticsearchSettings();
+    const settings = await getElasticsearchSettings(prismaClient);
     
     // Check if index exists
     const exists = await client.indices.exists({
