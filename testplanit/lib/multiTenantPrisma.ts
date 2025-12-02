@@ -36,8 +36,13 @@ export function getCurrentTenantId(): string | undefined {
 
 /**
  * Cache of Prisma clients per tenant to avoid creating new connections for each job
+ * Stores both the client and the database URL used to create it (for credential change detection)
  */
-const tenantClients: Map<string, PrismaClient> = new Map();
+interface CachedClient {
+  client: PrismaClient;
+  databaseUrl: string;
+}
+const tenantClients: Map<string, CachedClient> = new Map();
 
 /**
  * Tenant configurations loaded from environment or config file
@@ -185,31 +190,36 @@ function createTenantPrismaClient(config: TenantConfig): PrismaClient {
  * Get or create a Prisma client for a specific tenant
  * Caches clients to reuse connections
  * Supports dynamic tenant addition by reloading configs if tenant not found
+ * Automatically invalidates cached clients when credentials change
  */
 export function getTenantPrismaClient(tenantId: string): PrismaClient {
-  // Check cache first
-  let client = tenantClients.get(tenantId);
-  if (client) {
-    return client;
-  }
-
-  // Get tenant config
-  let config = getTenantConfig(tenantId);
-
-  // If not found, try reloading configs (tenant may have been added dynamically)
-  if (!config) {
-    console.log(`Tenant ${tenantId} not found in cache, reloading configurations...`);
-    reloadTenantConfigs();
-    config = getTenantConfig(tenantId);
-  }
+  // Always reload config from file to get latest credentials
+  reloadTenantConfigs();
+  const config = getTenantConfig(tenantId);
 
   if (!config) {
     throw new Error(`No configuration found for tenant: ${tenantId}`);
   }
 
+  // Check cache - but invalidate if credentials have changed
+  const cached = tenantClients.get(tenantId);
+  if (cached) {
+    if (cached.databaseUrl === config.databaseUrl) {
+      // Credentials unchanged, reuse cached client
+      return cached.client;
+    } else {
+      // Credentials changed - disconnect old client and create new one
+      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
+      cached.client.$disconnect().catch((err) => {
+        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
+      });
+      tenantClients.delete(tenantId);
+    }
+  }
+
   // Create and cache new client
-  client = createTenantPrismaClient(config);
-  tenantClients.set(tenantId, client);
+  const client = createTenantPrismaClient(config);
+  tenantClients.set(tenantId, { client, databaseUrl: config.databaseUrl });
   console.log(`Created Prisma client for tenant: ${tenantId}`);
 
   return client;
@@ -242,9 +252,9 @@ export function getPrismaClientForJob(jobData: { tenantId?: string }): PrismaCli
 export async function disconnectAllTenantClients(): Promise<void> {
   const disconnectPromises: Promise<void>[] = [];
 
-  for (const [tenantId, client] of tenantClients) {
+  for (const [tenantId, cached] of tenantClients) {
     console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
-    disconnectPromises.push(client.$disconnect());
+    disconnectPromises.push(cached.client.$disconnect());
   }
 
   await Promise.all(disconnectPromises);

@@ -42,9 +42,9 @@ var tenantClients = /* @__PURE__ */ new Map();
 var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
 async function disconnectAllTenantClients() {
   const disconnectPromises = [];
-  for (const [tenantId, client] of tenantClients) {
+  for (const [tenantId, cached] of tenantClients) {
     console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
-    disconnectPromises.push(client.$disconnect());
+    disconnectPromises.push(cached.client.$disconnect());
   }
   await Promise.all(disconnectPromises);
   tenantClients.clear();

@@ -3500,21 +3500,25 @@ function createTenantPrismaClient(config) {
   return client;
 }
 function getTenantPrismaClient(tenantId) {
-  let client = tenantClients.get(tenantId);
-  if (client) {
-    return client;
-  }
-  let config = getTenantConfig(tenantId);
-  if (!config) {
-    console.log(`Tenant ${tenantId} not found in cache, reloading configurations...`);
-    reloadTenantConfigs();
-    config = getTenantConfig(tenantId);
-  }
+  reloadTenantConfigs();
+  const config = getTenantConfig(tenantId);
   if (!config) {
     throw new Error(`No configuration found for tenant: ${tenantId}`);
   }
-  client = createTenantPrismaClient(config);
-  tenantClients.set(tenantId, client);
+  const cached = tenantClients.get(tenantId);
+  if (cached) {
+    if (cached.databaseUrl === config.databaseUrl) {
+      return cached.client;
+    } else {
+      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
+      cached.client.$disconnect().catch((err) => {
+        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
+      });
+      tenantClients.delete(tenantId);
+    }
+  }
+  const client = createTenantPrismaClient(config);
+  tenantClients.set(tenantId, { client, databaseUrl: config.databaseUrl });
   console.log(`Created Prisma client for tenant: ${tenantId}`);
   return client;
 }
@@ -3530,9 +3534,9 @@ function getPrismaClientForJob(jobData) {
 }
 async function disconnectAllTenantClients() {
   const disconnectPromises = [];
-  for (const [tenantId, client] of tenantClients) {
+  for (const [tenantId, cached] of tenantClients) {
     console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
-    disconnectPromises.push(client.$disconnect());
+    disconnectPromises.push(cached.client.$disconnect());
   }
   await Promise.all(disconnectPromises);
   tenantClients.clear();
