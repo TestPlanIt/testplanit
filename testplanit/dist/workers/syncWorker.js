@@ -41,14 +41,10 @@ var init_prismaBase = __esm({
     "use strict";
     import_client = require("@prisma/client");
     if (process.env.NODE_ENV === "production") {
-      prismaClient = new import_client.PrismaClient({
-        errorFormat: "pretty"
-      });
+      prismaClient = new import_client.PrismaClient({ errorFormat: "pretty" });
     } else {
       if (!global.prismaBase) {
-        global.prismaBase = new import_client.PrismaClient({
-          errorFormat: "colorless"
-        });
+        global.prismaBase = new import_client.PrismaClient({ errorFormat: "colorless" });
       }
       prismaClient = global.prismaBase;
     }

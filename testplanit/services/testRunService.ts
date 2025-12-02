@@ -1,6 +1,6 @@
 "use server";
 import type { TestRunCases, RepositoryCases } from "@prisma/client";
-import { prisma } from "../lib/prismaBase";
+import { prisma } from "~/lib/prismaBase";
 
 // Define a type for the structure returned by the findMany query
 type TestRunCaseWithForecast = TestRunCases & {

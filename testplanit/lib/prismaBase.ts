@@ -1,34 +1,23 @@
-/**
- * Lightweight Prisma client for workers and services that don't need ES sync extensions.
- * This avoids loading heavy dependencies and creating multiple PrismaClient instances.
- *
- * Use this for:
- * - Workers (forecastWorker, syncWorker, etc.)
- * - Services called by workers (forecastService, issueSearch, etc.)
- * - Integration adapters and managers
- *
- * Use lib/prisma.ts for:
- * - Next.js app routes and server actions (needs ES sync extensions)
- */
+// lib/prismaBase.ts
+// Base Prisma client without Elasticsearch sync extensions
+// Use this for workers and services that don't need auto-ES sync
 
 import { PrismaClient } from "@prisma/client";
 
+// Declare global types
 declare global {
   var prismaBase: PrismaClient | undefined;
 }
 
 let prismaClient: PrismaClient;
 
+// Create a simple PrismaClient without extensions
 if (process.env.NODE_ENV === "production") {
-  prismaClient = new PrismaClient({
-    errorFormat: "pretty",
-  });
+  prismaClient = new PrismaClient({ errorFormat: "pretty" });
 } else {
-  // In development, reuse the client to avoid too many connections
+  // Reuse global instance in development to prevent hot-reload issues
   if (!global.prismaBase) {
-    global.prismaBase = new PrismaClient({
-      errorFormat: "colorless",
-    });
+    global.prismaBase = new PrismaClient({ errorFormat: "colorless" });
   }
   prismaClient = global.prismaBase;
 }
