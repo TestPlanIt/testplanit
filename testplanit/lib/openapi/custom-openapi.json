@@ -1,0 +1,828 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "TestPlanIt Custom API",
+    "version": "1.0.0",
+    "description": "Custom API endpoints for TestPlanIt (non-ZenStack endpoints)"
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "API Server"
+    }
+  ],
+  "tags": [
+    { "name": "Authentication", "description": "Authentication and authorization endpoints" },
+    { "name": "JUnit Import", "description": "Import JUnit XML test results" },
+    { "name": "Search", "description": "Search functionality" },
+    { "name": "File Upload", "description": "File upload and attachment endpoints" },
+    { "name": "Users", "description": "User management endpoints" },
+    { "name": "Test Runs", "description": "Test run management" },
+    { "name": "Sessions", "description": "Exploratory testing sessions" },
+    { "name": "Milestones", "description": "Milestone management" },
+    { "name": "Projects", "description": "Project management" },
+    { "name": "Tags", "description": "Tag management" },
+    { "name": "Repository", "description": "Test case repository" },
+    { "name": "Admin", "description": "Administrative endpoints" },
+    { "name": "Integrations", "description": "External integrations (Jira, etc.)" }
+  ],
+  "paths": {
+    "/junit/import": {
+      "post": {
+        "tags": ["JUnit Import"],
+        "summary": "Import JUnit XML results",
+        "description": "Import JUnit XML test results to create a new test run with test cases, or append results to an existing test run. Returns a Server-Sent Events stream with progress updates.",
+        "operationId": "importJunit",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "projectId", "files"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Name for the test run"
+                  },
+                  "projectId": {
+                    "type": "string",
+                    "description": "Project ID"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    },
+                    "description": "One or more JUnit XML files"
+                  },
+                  "stateId": {
+                    "type": "string",
+                    "description": "Workflow state ID for the test run"
+                  },
+                  "parentFolderId": {
+                    "type": "string",
+                    "description": "Folder ID for storing test cases (creates 'JUnit Imports' folder if not provided)"
+                  },
+                  "testRunId": {
+                    "type": "string",
+                    "description": "Existing test run ID to append results to (must be of type JUNIT)"
+                  },
+                  "configId": {
+                    "type": "string",
+                    "description": "Configuration ID"
+                  },
+                  "milestoneId": {
+                    "type": "string",
+                    "description": "Milestone ID"
+                  },
+                  "tagIds": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Tag IDs to associate with the test run"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Server-Sent Events stream with progress updates",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "progress": { "type": "number" },
+                    "status": { "type": "string" },
+                    "complete": { "type": "boolean" },
+                    "testRunId": { "type": "integer" },
+                    "error": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "post": {
+        "tags": ["Search"],
+        "summary": "Unified search",
+        "description": "Elasticsearch-based search across test cases, sessions, and test runs",
+        "operationId": "search",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["query"],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "Search query string"
+                  },
+                  "filters": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "array",
+                        "items": { "type": "string", "enum": ["repository_cases", "sessions", "test_runs"] }
+                      },
+                      "projectId": { "type": "string" },
+                      "tags": {
+                        "type": "array",
+                        "items": { "type": "string" }
+                      },
+                      "dateRange": {
+                        "type": "object",
+                        "properties": {
+                          "field": { "type": "string" },
+                          "from": { "type": "string", "format": "date" },
+                          "to": { "type": "string", "format": "date" }
+                        }
+                      }
+                    }
+                  },
+                  "sort": {
+                    "type": "array",
+                    "items": { "type": "object" }
+                  },
+                  "limit": { "type": "integer", "default": 25 },
+                  "offset": { "type": "integer", "default": 0 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hits": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    },
+                    "total": { "type": "integer" },
+                    "facets": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/jwt": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Generate JWT token",
+        "description": "Generate a JWT token for API authentication",
+        "operationId": "generateJwt",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JWT token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": { "type": "string" },
+                    "expiresAt": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/get-attachment-url": {
+      "post": {
+        "tags": ["File Upload"],
+        "summary": "Get attachment upload URL",
+        "description": "Get a presigned URL for uploading attachments to S3/MinIO",
+        "operationId": "getAttachmentUrl",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["fileName", "fileSize", "contentType"],
+                "properties": {
+                  "fileName": { "type": "string" },
+                  "fileSize": { "type": "integer" },
+                  "contentType": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upload URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploadUrl": { "type": "string", "format": "uri" },
+                    "fileKey": { "type": "string" },
+                    "expires": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload-attachment": {
+      "post": {
+        "tags": ["File Upload"],
+        "summary": "Upload attachment",
+        "description": "Upload an attachment file directly (server-side proxy)",
+        "operationId": "uploadAttachment",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upload successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": { "type": "string", "format": "uri" },
+                    "fileKey": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/change-password": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Change user password",
+        "description": "Change the password for a user",
+        "operationId": "changePassword",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["currentPassword", "newPassword"],
+                "properties": {
+                  "currentPassword": { "type": "string" },
+                  "newPassword": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully"
+          },
+          "400": {
+            "description": "Invalid current password or weak new password"
+          }
+        }
+      }
+    },
+    "/users/{userId}/dashboard": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get user dashboard",
+        "description": "Get dashboard data for a user including assigned test cases and sessions",
+        "operationId": "getUserDashboard",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "assignedTestCases": { "type": "array", "items": { "type": "object" } },
+                    "assignedSessions": { "type": "array", "items": { "type": "object" } },
+                    "recentActivity": { "type": "array", "items": { "type": "object" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/test-runs/{testRunId}/summary": {
+      "get": {
+        "tags": ["Test Runs"],
+        "summary": "Get test run summary",
+        "description": "Get execution summary statistics for a test run",
+        "operationId": "getTestRunSummary",
+        "parameters": [
+          {
+            "name": "testRunId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test run summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": { "type": "integer" },
+                    "passed": { "type": "integer" },
+                    "failed": { "type": "integer" },
+                    "blocked": { "type": "integer" },
+                    "skipped": { "type": "integer" },
+                    "passRate": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions/{sessionId}/summary": {
+      "get": {
+        "tags": ["Sessions"],
+        "summary": "Get session summary",
+        "description": "Get execution summary for an exploratory testing session",
+        "operationId": "getSessionSummary",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session summary",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/milestones/{milestoneId}/summary": {
+      "get": {
+        "tags": ["Milestones"],
+        "summary": "Get milestone summary",
+        "description": "Get summary statistics for a milestone",
+        "operationId": "getMilestoneSummary",
+        "parameters": [
+          {
+            "name": "milestoneId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Milestone summary",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{projectId}/cases/bulk-edit": {
+      "post": {
+        "tags": ["Projects", "Repository"],
+        "summary": "Bulk edit test cases",
+        "description": "Bulk edit multiple test cases in a project",
+        "operationId": "bulkEditCases",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["caseIds", "updates"],
+                "properties": {
+                  "caseIds": {
+                    "type": "array",
+                    "items": { "type": "integer" }
+                  },
+                  "updates": {
+                    "type": "object",
+                    "properties": {
+                      "folderId": { "type": "integer" },
+                      "stateId": { "type": "integer" },
+                      "templateId": { "type": "integer" },
+                      "tags": { "type": "array", "items": { "type": "integer" } }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cases updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "updated": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tags/counts": {
+      "post": {
+        "tags": ["Tags"],
+        "summary": "Get tag counts",
+        "description": "Get counts of items using specific tags",
+        "operationId": "getTagCounts",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tagIds": {
+                    "type": "array",
+                    "items": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tag counts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": { "type": "integer" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/repository/import-generated-test-cases": {
+      "post": {
+        "tags": ["Repository"],
+        "summary": "Import AI-generated test cases",
+        "description": "Import test cases generated by AI into the repository",
+        "operationId": "importGeneratedTestCases",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["projectId", "folderId", "testCases"],
+                "properties": {
+                  "projectId": { "type": "string" },
+                  "folderId": { "type": "string" },
+                  "testCases": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "title": { "type": "string" },
+                        "description": { "type": "string" },
+                        "steps": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "action": { "type": "string" },
+                              "expected": { "type": "string" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Test cases imported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "imported": { "type": "integer" },
+                    "caseIds": {
+                      "type": "array",
+                      "items": { "type": "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/trash/{itemType}": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get trashed items",
+        "description": "Get deleted/trashed items of a specific type",
+        "operationId": "getTrashedItems",
+        "parameters": [
+          {
+            "name": "itemType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["projects", "testCases", "testRuns", "sessions", "milestones", "users"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of trashed items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "object" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/trash/{itemType}/{itemId}": {
+      "patch": {
+        "tags": ["Admin"],
+        "summary": "Restore trashed item",
+        "description": "Restore a soft-deleted item",
+        "operationId": "restoreTrashedItem",
+        "parameters": [
+          {
+            "name": "itemType",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item restored"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Admin"],
+        "summary": "Permanently delete item",
+        "description": "Permanently delete a trashed item",
+        "operationId": "permanentlyDeleteItem",
+        "parameters": [
+          {
+            "name": "itemType",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item permanently deleted"
+          }
+        }
+      }
+    },
+    "/get-user-permissions": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Check user permissions",
+        "description": "Check user permissions for a project",
+        "operationId": "getUserPermissions",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["projectId"],
+                "properties": {
+                  "projectId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "canRead": { "type": "boolean" },
+                    "canWrite": { "type": "boolean" },
+                    "canDelete": { "type": "boolean" },
+                    "canAdmin": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/jira/issue-details-with-comments": {
+      "get": {
+        "tags": ["Integrations"],
+        "summary": "Get Jira issue details with comments",
+        "description": "Get Jira issue details including comments",
+        "operationId": "getJiraIssueDetailsWithComments",
+        "parameters": [
+          {
+            "name": "integrationId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "issueKey",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Issue details with comments",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "details": { "type": "object" }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "next-auth.session-token",
+        "description": "NextAuth.js session cookie"
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token authentication"
+      }
+    }
+  },
+  "security": [
+    { "cookieAuth": [] },
+    { "bearerAuth": [] }
+  ]
+}

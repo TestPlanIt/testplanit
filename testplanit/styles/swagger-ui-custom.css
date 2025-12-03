@@ -1,0 +1,577 @@
+/**
+ * Custom Swagger UI styles for TestPlanIt branding
+ * These styles override the default swagger-ui-react styles
+ */
+
+/* ===== Base Layout ===== */
+.swagger-ui {
+  font-family: inherit;
+}
+
+.swagger-ui .wrapper {
+  max-width: 1400px;
+  padding: 0 1rem;
+}
+
+/* ===== Typography ===== */
+.swagger-ui .info .title {
+  font-family: inherit;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+}
+
+.swagger-ui .info .description,
+.swagger-ui .info .description p,
+.swagger-ui .info .description a {
+  font-family: inherit;
+  color: hsl(var(--muted-foreground));
+}
+
+.swagger-ui .info a {
+  color: hsl(var(--primary));
+}
+
+.swagger-ui .info a:hover {
+  color: hsl(var(--primary) / 0.8);
+}
+
+/* ===== Headers & Info Block ===== */
+.swagger-ui .info {
+  margin: 2rem 0;
+}
+
+.swagger-ui .info hgroup.main {
+  margin-bottom: 1.5rem;
+}
+
+.swagger-ui .info .title small {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ===== Tags (Operation Groups) ===== */
+.swagger-ui .opblock-tag {
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: hsl(var(--foreground));
+  border-bottom: 1px solid hsl(var(--border));
+  padding: 1rem 0;
+  margin: 0;
+}
+
+.swagger-ui .opblock-tag:hover {
+  background: hsl(var(--accent));
+}
+
+.swagger-ui .opblock-tag small {
+  font-family: inherit;
+  color: hsl(var(--muted-foreground));
+  font-weight: 400;
+}
+
+/* ===== Operation Blocks ===== */
+.swagger-ui .opblock {
+  margin: 0 0 0.75rem 0;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  border: 1px solid hsl(var(--border));
+}
+
+.swagger-ui .opblock .opblock-summary {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.swagger-ui .opblock .opblock-summary-method {
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.75rem;
+  border-radius: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  min-width: 5rem;
+  text-align: center;
+}
+
+.swagger-ui .opblock .opblock-summary-path {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.875rem;
+  color: hsl(var(--foreground));
+}
+
+.swagger-ui .opblock .opblock-summary-description {
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* HTTP Method Colors - Customized for TestPlanIt */
+.swagger-ui .opblock.opblock-get {
+  background: hsl(210 100% 97%);
+  border-color: hsl(210 100% 85%);
+}
+
+.swagger-ui .opblock.opblock-get .opblock-summary-method {
+  background: hsl(210 100% 50%);
+}
+
+.swagger-ui .opblock.opblock-get .opblock-summary {
+  border-color: hsl(210 100% 85%);
+}
+
+.swagger-ui .opblock.opblock-post {
+  background: hsl(142 76% 96%);
+  border-color: hsl(142 76% 80%);
+}
+
+.swagger-ui .opblock.opblock-post .opblock-summary-method {
+  background: hsl(142 76% 36%);
+}
+
+.swagger-ui .opblock.opblock-post .opblock-summary {
+  border-color: hsl(142 76% 80%);
+}
+
+.swagger-ui .opblock.opblock-put {
+  background: hsl(38 92% 95%);
+  border-color: hsl(38 92% 75%);
+}
+
+.swagger-ui .opblock.opblock-put .opblock-summary-method {
+  background: hsl(38 92% 50%);
+}
+
+.swagger-ui .opblock.opblock-put .opblock-summary {
+  border-color: hsl(38 92% 75%);
+}
+
+.swagger-ui .opblock.opblock-delete {
+  background: hsl(0 84% 97%);
+  border-color: hsl(0 84% 85%);
+}
+
+.swagger-ui .opblock.opblock-delete .opblock-summary-method {
+  background: hsl(0 84% 60%);
+}
+
+.swagger-ui .opblock.opblock-delete .opblock-summary {
+  border-color: hsl(0 84% 85%);
+}
+
+.swagger-ui .opblock.opblock-patch {
+  background: hsl(280 60% 97%);
+  border-color: hsl(280 60% 85%);
+}
+
+.swagger-ui .opblock.opblock-patch .opblock-summary-method {
+  background: hsl(280 60% 50%);
+}
+
+.swagger-ui .opblock.opblock-patch .opblock-summary {
+  border-color: hsl(280 60% 85%);
+}
+
+/* ===== Operation Body/Content ===== */
+.swagger-ui .opblock-body {
+  background: hsl(var(--background));
+}
+
+.swagger-ui .opblock-body pre {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  background: hsl(var(--muted));
+  border-radius: 0.375rem;
+  padding: 1rem;
+  color: hsl(var(--foreground));
+}
+
+.swagger-ui .opblock-section-header {
+  background: hsl(var(--muted));
+  box-shadow: none;
+  padding: 0.5rem 1rem;
+}
+
+.swagger-ui .opblock-section-header h4 {
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+/* ===== Parameters ===== */
+.swagger-ui .parameters-col_name {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  color: hsl(var(--foreground));
+}
+
+.swagger-ui .parameters-col_description {
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.swagger-ui .parameter__name {
+  font-weight: 600;
+}
+
+.swagger-ui .parameter__name.required::after {
+  color: hsl(0 84% 60%);
+}
+
+.swagger-ui .parameter__type {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.swagger-ui table tbody tr td {
+  border-color: hsl(var(--border));
+  padding: 0.75rem 0.5rem;
+}
+
+/* ===== Models/Schemas ===== */
+.swagger-ui section.models {
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+}
+
+.swagger-ui section.models h4 {
+  font-family: inherit;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
+
+.swagger-ui section.models .model-container {
+  background: hsl(var(--background));
+  border-radius: 0.375rem;
+  margin: 0.5rem 0;
+}
+
+.swagger-ui .model-box {
+  background: hsl(var(--muted));
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+}
+
+.swagger-ui .model {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  color: hsl(var(--foreground));
+}
+
+.swagger-ui .model-title {
+  font-family: inherit;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.swagger-ui .prop-type {
+  color: hsl(210 100% 50%);
+}
+
+.swagger-ui .prop-format {
+  color: hsl(var(--muted-foreground));
+}
+
+/* ===== Buttons ===== */
+.swagger-ui .btn {
+  font-family: inherit;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.swagger-ui .btn.execute {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border: none;
+}
+
+.swagger-ui .btn.execute:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+
+.swagger-ui .btn.cancel {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+}
+
+.swagger-ui .btn.cancel:hover {
+  background: hsl(var(--accent));
+}
+
+.swagger-ui .btn.authorize {
+  background: hsl(142 76% 36%);
+  color: white;
+  border: none;
+}
+
+.swagger-ui .btn.authorize:hover {
+  background: hsl(142 76% 30%);
+}
+
+/* ===== Inputs ===== */
+.swagger-ui input[type="text"],
+.swagger-ui input[type="password"],
+.swagger-ui input[type="search"],
+.swagger-ui input[type="email"],
+.swagger-ui input[type="file"],
+.swagger-ui textarea,
+.swagger-ui select {
+  font-family: inherit;
+  font-size: 0.875rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.swagger-ui input:focus,
+.swagger-ui textarea:focus,
+.swagger-ui select:focus {
+  outline: none;
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+}
+
+/* ===== Response Section ===== */
+.swagger-ui .responses-inner {
+  padding: 1rem;
+}
+
+.swagger-ui .response-col_status {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.swagger-ui .response-col_description {
+  font-family: inherit;
+  color: hsl(var(--muted-foreground));
+}
+
+.swagger-ui .responses-table .response td {
+  padding: 0.75rem 0;
+  border-color: hsl(var(--border));
+}
+
+/* Response status code badges */
+.swagger-ui .response-col_status .response-undocumented {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ===== Code Highlighting ===== */
+.swagger-ui .highlight-code {
+  background: hsl(var(--muted));
+  border-radius: 0.375rem;
+}
+
+.swagger-ui .highlight-code pre {
+  background: transparent;
+  margin: 0;
+}
+
+/* ===== Tabs ===== */
+.swagger-ui .tab {
+  font-family: inherit;
+}
+
+.swagger-ui .tab li {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  padding: 0.5rem 1rem;
+}
+
+.swagger-ui .tab li.active {
+  color: hsl(var(--foreground));
+}
+
+.swagger-ui .tab li button.tablinks {
+  font-family: inherit;
+  color: inherit;
+}
+
+/* ===== Loading ===== */
+.swagger-ui .loading-container {
+  padding: 2rem;
+}
+
+.swagger-ui .loading-container .loading::after {
+  border-color: hsl(var(--primary)) transparent transparent transparent;
+}
+
+/* ===== Authorization ===== */
+.swagger-ui .auth-wrapper {
+  padding: 1rem;
+}
+
+.swagger-ui .auth-container {
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.swagger-ui .auth-container h4 {
+  font-family: inherit;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+/* ===== Dialog/Modal ===== */
+.swagger-ui .dialog-ux .modal-ux {
+  background: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+.swagger-ui .dialog-ux .modal-ux-header {
+  border-color: hsl(var(--border));
+  padding: 1rem 1.5rem;
+}
+
+.swagger-ui .dialog-ux .modal-ux-header h3 {
+  font-family: inherit;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.swagger-ui .dialog-ux .modal-ux-content {
+  padding: 1.5rem;
+}
+
+/* ===== Expand/Collapse Icons ===== */
+.swagger-ui .expand-operation,
+.swagger-ui .expand-methods {
+  opacity: 0.6;
+}
+
+.swagger-ui .expand-operation:hover,
+.swagger-ui .expand-methods:hover {
+  opacity: 1;
+}
+
+/* ===== Dark Mode Support ===== */
+.dark .swagger-ui .opblock.opblock-get {
+  background: hsl(210 100% 10%);
+  border-color: hsl(210 100% 25%);
+}
+
+.dark .swagger-ui .opblock.opblock-post {
+  background: hsl(142 76% 10%);
+  border-color: hsl(142 76% 25%);
+}
+
+.dark .swagger-ui .opblock.opblock-put {
+  background: hsl(38 92% 10%);
+  border-color: hsl(38 92% 25%);
+}
+
+.dark .swagger-ui .opblock.opblock-delete {
+  background: hsl(0 84% 10%);
+  border-color: hsl(0 84% 25%);
+}
+
+.dark .swagger-ui .opblock.opblock-patch {
+  background: hsl(280 60% 10%);
+  border-color: hsl(280 60% 25%);
+}
+
+.dark .swagger-ui .opblock-body pre {
+  background: hsl(222.2 84% 8%);
+}
+
+.dark .swagger-ui .model-box {
+  background: hsl(222.2 84% 8%);
+}
+
+.dark .swagger-ui section.models {
+  border-color: hsl(var(--border));
+  background: hsl(var(--background));
+}
+
+.dark .swagger-ui .highlight-code {
+  background: hsl(222.2 84% 8%);
+}
+
+/* ===== Try It Out Section ===== */
+.swagger-ui .try-out__btn {
+  font-family: inherit;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+/* ===== Curl Command ===== */
+.swagger-ui .curl-command {
+  background: hsl(var(--muted));
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+}
+
+.swagger-ui .curl-command pre {
+  background: transparent;
+  margin: 0;
+}
+
+/* ===== Server Selection ===== */
+.swagger-ui .servers > label {
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: hsl(var(--foreground));
+}
+
+.swagger-ui .servers > label select {
+  margin-left: 0.5rem;
+}
+
+/* ===== Scrollbar Styling ===== */
+.swagger-ui ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.swagger-ui ::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+.swagger-ui ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+.swagger-ui ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* ===== No Results ===== */
+.swagger-ui .no-margin {
+  padding: 1rem;
+}
+
+/* ===== Links ===== */
+.swagger-ui a {
+  color: hsl(var(--primary));
+}
+
+.swagger-ui a:hover {
+  color: hsl(var(--primary) / 0.8);
+}
+
+/* ===== Topbar (hide if using custom header) ===== */
+.swagger-ui .topbar {
+  display: none;
+}

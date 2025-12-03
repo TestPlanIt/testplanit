@@ -19,6 +19,15 @@ plugin zod {
     version = 'v4'
 }
 
+plugin openapi {
+    provider = '@zenstackhq/openapi'
+    output = './lib/openapi/zenstack-openapi.json'
+    title = 'TestPlanIt API'
+    version = '1.0.0'
+    description = 'Auto-generated API documentation for ZenStack data models'
+    prefix = '/api/model'
+}
+
 model AppConfig {
     key   String @id
     value Json
