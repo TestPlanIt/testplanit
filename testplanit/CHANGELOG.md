@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.13](https://github.com/testplanit/testplanit/compare/v0.1.12...v0.1.13) (2025-12-03)
+
+
+### Features
+
+* **api:** Enhance API documentation and integrate Swagger UI ([#6](https://github.com/testplanit/testplanit/issues/6)) ([8b6d6b2](https://github.com/testplanit/testplanit/commit/8b6d6b218d9d92277aee963ae43a83da4b83fa6d))
+
 ### [0.1.12](https://github.com/testplanit/testplanit/compare/v0.1.11...v0.1.12) (2025-12-02)
 
 
