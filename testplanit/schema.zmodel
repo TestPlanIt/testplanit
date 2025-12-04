@@ -973,7 +973,10 @@ model Repositories {
         project.creator == auth() ||
         project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                 role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
-        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]]
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -1593,7 +1596,10 @@ model SessionResults {
         session.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                          (role.name == 'Project Admin' ||
                                           role.rolePermissions?[area == 'SessionResults' && canAddEdit])] ||
-        session.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+        session.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        session.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'SessionResults' && canAddEdit]]
     )
 
     // Update/delete access
@@ -1671,7 +1677,10 @@ model SessionVersions {
         project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                 (role.name == 'Project Admin' ||
                                  role.rolePermissions?[area == 'Sessions' && canAddEdit])] ||
-        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'Sessions' && canAddEdit]]
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -1866,7 +1875,10 @@ model TestRunCases {
         testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                          (role.name == 'Project Admin' ||
                                           role.rolePermissions?[area == 'TestRuns' && canAddEdit])] ||
-        testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+        testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'TestRuns' && canAddEdit]]
     )
 
     // Update access - creator, assignee, or admin
