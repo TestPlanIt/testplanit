@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.23](https://github.com///compare/v0.1.22...v0.1.23) (2025-12-04)
+
+
+### Features
+
+* **multiTenant:** Enhance storage mode detection and add baseUrl to tenant configurations 60af2f4
+* **multiTenant:** Update tenant configuration to include baseUrl in environment variable format f7be7de
+
+
+### Bug Fixes
+
+* **layout:** Refactor storage mode detection logic for clarity 3c060e5
+
 ### [0.1.22](https://github.com/testplanit/testplanit/compare/v0.1.21...v0.1.22) (2025-12-04)
 
 
