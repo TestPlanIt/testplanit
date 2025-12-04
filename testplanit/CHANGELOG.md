@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.31](https://github.com/testplanit/testplanit/compare/v0.1.30...v0.1.31) (2025-12-04)
+
+
+### Features
+
+* **permissions:** Enhance access control for project roles ([39292f6](https://github.com/testplanit/testplanit/commit/39292f6dc34f9f72b9b3fe301544ad4bd636262a))
+
 ### [0.1.30](https://github.com/testplanit/testplanit/compare/v0.1.29...v0.1.30) (2025-12-04)
 
 ### [0.1.29](https://github.com/testplanit/testplanit/compare/v0.1.28...v0.1.29) (2025-12-04)
