@@ -11,6 +11,7 @@ interface NotificationEmailData {
   locale?: string;
   translations?: Record<string, string>;
   htmlMessage?: string;
+  baseUrl?: string;
 }
 
 interface DigestEmailData {
@@ -26,6 +27,7 @@ interface DigestEmailData {
   }>;
   locale?: string;
   translations?: Record<string, string>;
+  baseUrl?: string;
 }
 
 const getTransporter = () => {
@@ -42,7 +44,7 @@ const getTransporter = () => {
 
 export async function sendNotificationEmail(data: NotificationEmailData) {
   const transporter = getTransporter();
-  
+
   // Render the email using Handlebars template
   const { html, subject } = await renderEmailTemplate('notification', {
     userName: data.userName,
@@ -53,7 +55,7 @@ export async function sendNotificationEmail(data: NotificationEmailData) {
       createdAt: new Date(),
     },
     notificationUrl: data.notificationUrl,
-    appUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+    appUrl: data.baseUrl || process.env.NEXTAUTH_URL || 'http://localhost:3000',
     locale: data.locale || 'en-US',
     userId: data.userId,
     currentYear: new Date().getFullYear(),
@@ -78,12 +80,12 @@ export async function sendNotificationEmail(data: NotificationEmailData) {
 
 export async function sendDigestEmail(data: DigestEmailData) {
   const transporter = getTransporter();
-  
+
   // Render the email using Handlebars template
   const { html, subject } = await renderEmailTemplate('daily-digest', {
     userName: data.userName,
     notifications: data.notifications,
-    appUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+    appUrl: data.baseUrl || process.env.NEXTAUTH_URL || 'http://localhost:3000',
     locale: data.locale || 'en-US',
     userId: data.userId,
     currentYear: new Date().getFullYear(),

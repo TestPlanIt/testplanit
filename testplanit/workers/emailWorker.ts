@@ -169,6 +169,7 @@ const processor = async (job: Job) => {
           locale: urlLocale,
           translations: emailTranslations,
           htmlMessage,
+          baseUrl,
         });
 
         console.log(`Sent notification email to ${notification.user.email}`);
@@ -311,6 +312,7 @@ const processor = async (job: Job) => {
           notifications: notificationsWithUrls,
           locale: formatLocaleForUrl(user.userPreferences?.locale || "en_US"),
           translations: digestTranslations,
+          baseUrl: digestBaseUrl,
         });
 
         // Mark notifications as read after sending digest
