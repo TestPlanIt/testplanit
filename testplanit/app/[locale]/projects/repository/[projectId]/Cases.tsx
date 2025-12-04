@@ -2166,7 +2166,6 @@ export default function Cases({
   const handleCreateTestRun = useCallback(() => {
     if (selectedCaseIdsForBulkEdit.length > 0 && isValidProjectId) {
       // Store selected case IDs in sessionStorage to avoid URL length limits
-      console.log("Storing to sessionStorage:", selectedCaseIdsForBulkEdit);
       sessionStorage.setItem(
         "createTestRun_selectedCases",
         JSON.stringify(selectedCaseIdsForBulkEdit)

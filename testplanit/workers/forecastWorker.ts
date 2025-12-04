@@ -289,9 +289,13 @@ const processor = async (job: Job) => {
 
           const dueDate = new Date(milestone.completedAt);
           const timeDiff = dueDate.getTime() - now.getTime();
-          // Use Math.floor to ensure negative fractional days round away from zero
-          // Math.ceil(-0.5) = 0 (wrong), Math.floor(-0.5) = -1 (correct for overdue detection)
-          const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+          // Use conditional rounding:
+          // - Future dates (timeDiff >= 0): Math.ceil rounds up (conservative, only notify when truly within window)
+          // - Overdue dates (timeDiff < 0): Math.floor rounds down (correctly catches any overdue amount)
+          const daysDiff =
+            timeDiff >= 0
+              ? Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+              : Math.floor(timeDiff / (1000 * 60 * 60 * 24));
           const isOverdue = daysDiff < 0;
 
           // Check if notification should be sent

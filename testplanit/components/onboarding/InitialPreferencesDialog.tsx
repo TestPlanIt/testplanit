@@ -299,10 +299,6 @@ export function InitialPreferencesDialog() {
         hasCompletedInitialPreferencesSetup: true,
       };
 
-      console.log("Form data:", data);
-      console.log("Update data:", updateData);
-      console.log("User preferences ID:", userPreferences.id);
-
       await updateUserPreferences({
         where: { id: userPreferences.id },
         data: updateData,

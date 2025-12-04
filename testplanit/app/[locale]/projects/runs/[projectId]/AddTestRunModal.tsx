@@ -1109,7 +1109,6 @@ export default function AddTestRunModal({
   // Sync selectedCaseIds when initialSelectedCaseIds changes (e.g., from sessionStorage)
   useEffect(() => {
     if (open && initialSelectedCaseIds && initialSelectedCaseIds.length > 0) {
-      console.log("Setting selectedCaseIds to:", initialSelectedCaseIds);
       setSelectedCaseIds(initialSelectedCaseIds);
     }
   }, [open, initialSelectedCaseIds]);

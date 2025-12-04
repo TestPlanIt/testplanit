@@ -387,12 +387,19 @@ describe("Milestone Due Notifications Job", () => {
   });
 
   describe("Due date calculation", () => {
+    // Helper function matching the actual implementation
+    const calculateDaysDiff = (timeDiff: number) => {
+      return timeDiff >= 0
+        ? Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+        : Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    };
+
     it("should correctly calculate days until due date", () => {
       const now = new Date("2025-12-04T12:00:00Z");
       const dueDate = new Date("2025-12-10T12:00:00Z");
 
       const timeDiff = dueDate.getTime() - now.getTime();
-      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      const daysDiff = calculateDaysDiff(timeDiff);
 
       expect(daysDiff).toBe(6);
     });
@@ -402,7 +409,7 @@ describe("Milestone Due Notifications Job", () => {
       const pastDueDate = new Date("2025-12-01T12:00:00Z");
 
       const timeDiff = pastDueDate.getTime() - now.getTime();
-      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      const daysDiff = calculateDaysDiff(timeDiff);
       const isOverdue = daysDiff < 0;
 
       expect(daysDiff).toBeLessThan(0);
@@ -415,7 +422,7 @@ describe("Milestone Due Notifications Job", () => {
       const pastDueDate = new Date("2025-12-04T06:00:00Z");
 
       const timeDiff = pastDueDate.getTime() - now.getTime();
-      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      const daysDiff = calculateDaysDiff(timeDiff);
       const isOverdue = daysDiff < 0;
 
       // Math.floor(-0.25) = -1, correctly identifies as overdue
@@ -423,16 +430,33 @@ describe("Milestone Due Notifications Job", () => {
       expect(isOverdue).toBe(true);
     });
 
-    it("should send notification when within notifyDaysBefore threshold", () => {
+    it("should not notify too early for fractional future days", () => {
       const now = new Date("2025-12-04T12:00:00Z");
-      const dueDate = new Date("2025-12-07T12:00:00Z"); // 3 days away
+      // Due in 5.8 days (should round UP to 6, NOT down to 5)
+      const dueDate = new Date("2025-12-10T07:12:00Z"); // ~5.8 days away
       const notifyDaysBefore = 5;
 
       const timeDiff = dueDate.getTime() - now.getTime();
-      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      const daysDiff = calculateDaysDiff(timeDiff);
       const isOverdue = daysDiff < 0;
       const shouldNotify = isOverdue || daysDiff <= notifyDaysBefore;
 
+      // Math.ceil(5.8) = 6, so 6 <= 5 is false - don't notify yet
+      expect(daysDiff).toBe(6);
+      expect(shouldNotify).toBe(false);
+    });
+
+    it("should send notification when within notifyDaysBefore threshold", () => {
+      const now = new Date("2025-12-04T12:00:00Z");
+      const dueDate = new Date("2025-12-07T12:00:00Z"); // exactly 3 days away
+      const notifyDaysBefore = 5;
+
+      const timeDiff = dueDate.getTime() - now.getTime();
+      const daysDiff = calculateDaysDiff(timeDiff);
+      const isOverdue = daysDiff < 0;
+      const shouldNotify = isOverdue || daysDiff <= notifyDaysBefore;
+
+      expect(daysDiff).toBe(3);
       expect(shouldNotify).toBe(true);
     });
 
@@ -442,7 +466,7 @@ describe("Milestone Due Notifications Job", () => {
       const notifyDaysBefore = 5;
 
       const timeDiff = dueDate.getTime() - now.getTime();
-      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      const daysDiff = calculateDaysDiff(timeDiff);
       const isOverdue = daysDiff < 0;
       const shouldNotify = isOverdue || daysDiff <= notifyDaysBefore;
 
@@ -455,7 +479,7 @@ describe("Milestone Due Notifications Job", () => {
       const notifyDaysBefore = 5;
 
       const timeDiff = pastDueDate.getTime() - now.getTime();
-      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      const daysDiff = calculateDaysDiff(timeDiff);
       const isOverdue = daysDiff < 0;
       const shouldNotify = isOverdue || daysDiff <= notifyDaysBefore;
 

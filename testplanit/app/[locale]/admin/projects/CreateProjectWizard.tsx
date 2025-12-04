@@ -739,14 +739,6 @@ export function CreateProjectWizard({
         return;
       }
 
-      console.log("Submitting project with data:", {
-        name: data.name,
-        selectedTemplates: data.selectedTemplates,
-        selectedWorkflows: data.selectedWorkflows,
-        selectedStatuses: data.selectedStatuses,
-        userId: session?.user.id,
-      });
-
       // Create the project
       const defaultRoleIdToSend =
         data.defaultRoleId === "NONE" || data.defaultRoleId === null

@@ -31,7 +31,6 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user || !user.isActive) {
-      console.log(`User not found or inactive for email: ${email}`);
       // Still return success to prevent enumeration
       return NextResponse.json({
         success: true,
@@ -76,8 +75,6 @@ export async function POST(req: NextRequest) {
 
     const url = `${baseUrl}/api/auth/callback/email?callbackUrl=${encodeURIComponent(finalCallbackUrl)}&token=${token}&email=${encodeURIComponent(email)}`;
 
-    console.log(`Sending magic link to ${email} with URL: ${url}`);
-
     // Send the email using nodemailer (same as NextAuth)
     const nodemailer = await import("nodemailer");
     const transport = nodemailer.createTransport({
@@ -105,8 +102,6 @@ export async function POST(req: NextRequest) {
         </div>
       `,
     });
-
-    console.log(`✓ Magic link sent successfully to ${email}`);
 
     return NextResponse.json({
       success: true,

@@ -40,16 +40,8 @@ export function elasticsearchSyncMiddleware() {
       }
 
       // Handle bulk operations
-      if (params.action === "createMany") {
-        // For createMany, we need to query the created records
-        // This is more complex as Prisma doesn't return the created records
-        console.log("Bulk create detected - manual sync required");
-      }
-
-      if (params.action === "updateMany" || params.action === "deleteMany") {
-        // For bulk operations, we might need to reindex affected cases
-        console.log(`Bulk ${params.action} detected - manual sync may be required`);
-      }
+      // Note: For createMany/updateMany/deleteMany, manual sync may be required
+      // as Prisma doesn't return individual records for bulk operations
 
       return result;
     }

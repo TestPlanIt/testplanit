@@ -14,7 +14,6 @@ interface RequestBody {
 }
 
 export async function POST(request: NextRequest) {
-  const startTime = Date.now();
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -514,11 +513,6 @@ export async function POST(request: NextRequest) {
     const totalCount = await prisma.repositoryCases.count({
       where: baseWhere,
     });
-
-    const duration = Date.now() - startTime;
-    console.log(
-      `[CrossProjectViewOptions API] Completed in ${duration}ms, totalCount: ${totalCount}`
-    );
 
     return NextResponse.json({
       projects: projectsWithCounts,
