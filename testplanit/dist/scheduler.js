@@ -1268,7 +1268,7 @@ var processor2 = async (job) => {
           if (!milestone.completedAt) continue;
           const dueDate = new Date(milestone.completedAt);
           const timeDiff = dueDate.getTime() - now.getTime();
-          const daysDiff = Math.floor(timeDiff / (1e3 * 60 * 60 * 24));
+          const daysDiff = timeDiff >= 0 ? Math.ceil(timeDiff / (1e3 * 60 * 60 * 24)) : Math.floor(timeDiff / (1e3 * 60 * 60 * 24));
           const isOverdue = daysDiff < 0;
           const shouldNotify = isOverdue || daysDiff <= milestone.notifyDaysBefore;
           console.log(
