@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.27](https://github.com/testplanit/testplanit/compare/v0.1.26...v0.1.27) (2025-12-04)
+
+
+### Bug Fixes
+
+* **release:** Update GitHub CLI commands for consistency ([94e252b](https://github.com/testplanit/testplanit/commit/94e252b7119f8ad97f33c77647045cfcccdb1948))
+
 ### [0.1.26](https://github.com/testplanit/testplanit/compare/v0.1.25...v0.1.26) (2025-12-04)
 
 
