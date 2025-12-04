@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect } from "react";
 import { ReportBuilder } from "~/components/reports/ReportBuilder";
-import { getCrossProjectReportTypes } from "~/lib/config/reportTypes";
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import { useRouter } from "~/lib/navigation";
@@ -36,8 +35,6 @@ export default function AdminReportsPage() {
     return null;
   }
 
-  const reportTypes = getCrossProjectReportTypes(tReports);
-
   return (
     <main>
       <Card>
@@ -58,7 +55,7 @@ export default function AdminReportsPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <ReportBuilder mode="cross-project" reportTypes={reportTypes} />
+          <ReportBuilder mode="cross-project" />
         </CardContent>
       </Card>
     </main>

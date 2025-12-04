@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/card";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { ReportBuilder } from "~/components/reports/ReportBuilder";
-import { getProjectReportTypes } from "~/lib/config/reportTypes";
 
 interface PageProps {
   params: Promise<{
@@ -124,7 +123,6 @@ export default async function ProjectReportsPage({ params }: PageProps) {
   }
 
   const t = await getTranslations("reports.ui");
-  const reportTypes = getProjectReportTypes(t);
 
   return (
     <main>
@@ -144,7 +142,6 @@ export default async function ProjectReportsPage({ params }: PageProps) {
           <ReportBuilder
             mode="project"
             projectId={projectId}
-            reportTypes={reportTypes}
           />
         </CardContent>
       </Card>

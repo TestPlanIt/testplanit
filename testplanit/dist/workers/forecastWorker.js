@@ -1018,7 +1018,9 @@ var JOB_UPDATE_ALL_CASES = "update-all-cases-forecast";
 var JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
 var JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";
 var processor2 = async (job) => {
-  console.log(`Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  console.log(
+    `Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
+  );
   let successCount = 0;
   let failCount = 0;
   validateMultiTenantJobData(job.data);
@@ -1086,7 +1088,9 @@ var processor2 = async (job) => {
         },
         select: { id: true }
       });
-      const activeTestRunIds = activeTestRuns.map((tr) => tr.id);
+      const activeTestRunIds = activeTestRuns.map(
+        (tr) => tr.id
+      );
       const skippedCompletedCount = affectedTestRunIds.size - activeTestRunIds.length;
       console.log(
         `Job ${job.id}: Updating ${activeTestRunIds.length} active test runs (skipped ${skippedCompletedCount} completed)...`
@@ -1115,7 +1119,9 @@ var processor2 = async (job) => {
       }
       break;
     case JOB_AUTO_COMPLETE_MILESTONES:
-      console.log(`Job ${job.id}: Starting auto-completion check for milestones.`);
+      console.log(
+        `Job ${job.id}: Starting auto-completion check for milestones.`
+      );
       try {
         const now = /* @__PURE__ */ new Date();
         const milestonesToComplete = await prisma2.milestones.findMany({
@@ -1159,7 +1165,10 @@ var processor2 = async (job) => {
           `Job ${job.id} completed: Auto-completed ${successCount} milestones. Failed: ${failCount}`
         );
       } catch (error) {
-        console.error(`Job ${job.id}: Error in auto-complete milestones job`, error);
+        console.error(
+          `Job ${job.id}: Error in auto-complete milestones job`,
+          error
+        );
         throw error;
       }
       break;
@@ -1231,7 +1240,7 @@ var processor2 = async (job) => {
           if (!milestone.completedAt) continue;
           const dueDate = new Date(milestone.completedAt);
           const timeDiff = dueDate.getTime() - now.getTime();
-          const daysDiff = Math.ceil(timeDiff / (1e3 * 60 * 60 * 24));
+          const daysDiff = Math.floor(timeDiff / (1e3 * 60 * 60 * 24));
           const isOverdue = daysDiff < 0;
           const shouldNotify = isOverdue || daysDiff <= milestone.notifyDaysBefore;
           console.log(
@@ -1299,7 +1308,10 @@ var processor2 = async (job) => {
           `Job ${job.id} completed: Sent ${successCount} milestone notifications. Failed: ${failCount}`
         );
       } catch (error) {
-        console.error(`Job ${job.id}: Error in milestone due notifications job`, error);
+        console.error(
+          `Job ${job.id}: Error in milestone due notifications job`,
+          error
+        );
         throw error;
       }
       break;

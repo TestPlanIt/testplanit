@@ -67,7 +67,7 @@ import {
 } from "~/utils/reportUtils";
 import { useReportColumns } from "~/hooks/useReportColumns";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
-import { ReportType } from "~/lib/config/reportTypes";
+import { ReportType, getProjectReportTypes, getCrossProjectReportTypes } from "~/lib/config/reportTypes";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
@@ -88,7 +88,6 @@ import type {
 interface ReportBuilderProps {
   mode: "project" | "cross-project";
   projectId?: number;
-  reportTypes: ReportType[];
   defaultReportType?: string;
 }
 
@@ -108,7 +107,6 @@ type DateRangeFormData = z.infer<typeof dateRangeSchema>;
 function ReportBuilderContent({
   mode,
   projectId,
-  reportTypes,
   defaultReportType,
 }: ReportBuilderProps) {
   const { theme } = useTheme();
@@ -121,6 +119,13 @@ function ReportBuilderContent({
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+
+  // Get report types based on mode - done inside client component to avoid passing functions across server/client boundary
+  const reportTypes = useMemo(() => {
+    return mode === "cross-project"
+      ? getCrossProjectReportTypes(tReports)
+      : getProjectReportTypes(tReports);
+  }, [mode, tReports]);
 
   // Use pagination context
   const {
