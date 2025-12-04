@@ -171,6 +171,7 @@ export const getColumns = (
       <div className="text-center">
         <Switch
           checked={row.original.isApi}
+          disabled={row.original.access === "ADMIN"}
           onCheckedChange={(checked) =>
             handleToggle(row.original.id, "isApi", checked)
           }
