@@ -18,6 +18,7 @@ import {
   MultiTenantJobData,
   disconnectAllTenantClients,
   validateMultiTenantJobData,
+  getTenantConfig,
 } from "../lib/multiTenantPrisma";
 
 interface SendNotificationEmailJobData extends MultiTenantJobData {
@@ -70,7 +71,9 @@ const processor = async (job: Job) => {
 
         // Build notification URL based on type and data
         let notificationUrl: string | undefined;
-        const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+        // In multi-tenant mode, use the tenant's baseUrl from config; otherwise fall back to NEXTAUTH_URL
+        const tenantConfig = notificationData.tenantId ? getTenantConfig(notificationData.tenantId) : undefined;
+        const baseUrl = tenantConfig?.baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000";
         const userLocale = notification.user.userPreferences?.locale || "en_US";
         const urlLocale = formatLocaleForUrl(userLocale);
 
@@ -200,9 +203,12 @@ const processor = async (job: Job) => {
         });
 
         // Build URLs and translate content for each notification
+        // In multi-tenant mode, use the tenant's baseUrl from config
+        const digestTenantConfig = digestData.tenantId ? getTenantConfig(digestData.tenantId) : undefined;
+        const digestBaseUrl = digestTenantConfig?.baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000";
         const notificationsWithUrls = await Promise.all(
           fullNotifications.map(async (notification: any) => {
-            const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+            const baseUrl = digestBaseUrl;
             const userLocale = user.userPreferences?.locale || "en_US";
             const urlLocale = formatLocaleForUrl(userLocale);
             const data = (notification.data as any) || {};

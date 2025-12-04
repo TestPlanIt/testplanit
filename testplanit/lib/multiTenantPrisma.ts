@@ -12,6 +12,7 @@ export interface TenantConfig {
   databaseUrl: string;
   elasticsearchNode?: string;
   elasticsearchIndex?: string;
+  baseUrl?: string;
 }
 
 /**
@@ -74,6 +75,7 @@ function loadTenantsFromFile(filePath: string): Map<string, TenantConfig> {
           databaseUrl: config.databaseUrl,
           elasticsearchNode: config.elasticsearchNode,
           elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl,
         });
       }
       console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
@@ -126,6 +128,7 @@ export function loadTenantConfigs(): Map<string, TenantConfig> {
           databaseUrl: config.databaseUrl,
           elasticsearchNode: config.elasticsearchNode,
           elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl,
         });
       }
       console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
