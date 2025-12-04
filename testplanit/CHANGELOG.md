@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.24](https://github.com/testplanit/testplanit/compare/v0.1.23...v0.1.24) (2025-12-04)
+
+
+### Features
+
+* Milestone auto-completion and due date notifications ([#10](https://github.com/testplanit/testplanit/issues/10)) ([665b5a2](https://github.com/testplanit/testplanit/commit/665b5a208090246f7f75eccf54ae79451ea9450e))
+
+
+### Bug Fixes
+
+* Improve days difference calculation for milestone notifications ([2954364](https://github.com/testplanit/testplanit/commit/29543646b65784a4e474c40419924ba067178e5c))
+
+
+### Code Refactoring
+
+* Remove console.log statements for cleaner code ([280e68d](https://github.com/testplanit/testplanit/commit/280e68d671446231a66561a36e0b4193cf656170))
+* **reports:** Remove reportTypes prop from ReportBuilder and fetch report types internally ([c29b5d0](https://github.com/testplanit/testplanit/commit/c29b5d0a8d081671b82d4bf2fe51c3791a24ffb4))
+
 ### [0.1.23](https://github.com///compare/v0.1.22...v0.1.23) (2025-12-04)
 
 
