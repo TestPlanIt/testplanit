@@ -11,7 +11,7 @@ import {
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 
 import { Button } from "@/components/ui/button";
@@ -174,12 +174,14 @@ export function AddUserModal() {
   });
 
   const {
-    watch,
     setValue,
     handleSubmit,
     control,
     formState: { errors },
   } = form;
+
+  // Watch access field for conditional rendering (useWatch is safe for render)
+  const accessValue = useWatch({ control, name: "access" });
 
   useEffect(() => {
     if (roles) {
@@ -190,14 +192,6 @@ export function AddUserModal() {
       }
     }
   }, [roles, setValue, form]);
-
-  // Watch access field to auto-enable isApi for ADMIN users
-  const accessValue = watch("access");
-  useEffect(() => {
-    if (accessValue === "ADMIN") {
-      setValue("isApi", true);
-    }
-  }, [accessValue, setValue]);
 
   // Update onSubmit to use the form validation schema type and construct API payload
   async function onSubmit(data: z.infer<typeof AddUserFormValidationSchema>) {
@@ -399,7 +393,16 @@ export function AddUserModal() {
                         control={control}
                         name="access"
                         render={({ field: { onChange, value } }) => (
-                          <Select onValueChange={onChange} value={value}>
+                          <Select
+                            onValueChange={(newValue) => {
+                              onChange(newValue);
+                              // Auto-enable isApi for ADMIN users
+                              if (newValue === "ADMIN") {
+                                setValue("isApi", true);
+                              }
+                            }}
+                            value={value}
+                          >
                             <SelectTrigger>
                               <SelectValue
                                 placeholder={tCommon("fields.access")}
@@ -579,7 +582,7 @@ export function AddUserModal() {
                     {tCommon("fields.apiAccess")}
                     {accessValue === "ADMIN" && (
                       <span className="text-muted-foreground text-xs ml-2">
-                        ({tCommon("fields.requiredForAdmin")})
+                        {"("}{tCommon("fields.requiredForAdmin")}{")"}
                       </span>
                     )}
                     <HelpPopover helpKey="user.api" />

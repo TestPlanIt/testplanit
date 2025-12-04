@@ -15,7 +15,7 @@ import {
 import { User, Roles } from "@prisma/client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 
 import { Button } from "@/components/ui/button";
@@ -185,20 +185,14 @@ export function EditUserModal({ user }: EditUserModalProps) {
   }, [open, defaultFormValues, form]);
 
   const {
-    watch,
     setValue,
     handleSubmit,
     control,
     formState: { errors },
   } = form;
 
-  // Watch access field to auto-enable isApi for ADMIN users
-  const accessValue = watch("access");
-  useEffect(() => {
-    if (accessValue === "ADMIN") {
-      setValue("isApi", true);
-    }
-  }, [accessValue, setValue]);
+  // Watch access field for conditional rendering (useWatch is safe for render)
+  const accessValue = useWatch({ control, name: "access" });
 
   // Update onSubmit to use the form validation schema type and construct API payload
   async function onSubmit(data: z.infer<typeof EditUserFormValidationSchema>) {
@@ -382,7 +376,13 @@ export function EditUserModal({ user }: EditUserModalProps) {
                         name="access"
                         render={({ field: { onChange, value } }) => (
                           <Select
-                            onValueChange={onChange}
+                            onValueChange={(newValue) => {
+                              onChange(newValue);
+                              // Auto-enable isApi for ADMIN users
+                              if (newValue === "ADMIN") {
+                                setValue("isApi", true);
+                              }
+                            }}
                             value={value}
                             disabled={user?.id === session?.user?.id}
                           >
@@ -577,7 +577,7 @@ export function EditUserModal({ user }: EditUserModalProps) {
                     {tCommon("fields.apiAccess")}
                     {accessValue === "ADMIN" && (
                       <span className="text-muted-foreground text-xs ml-2">
-                        ({tCommon("fields.requiredForAdmin")})
+                        {"("}{tCommon("fields.requiredForAdmin")}{")"}
                       </span>
                     )}
                     <HelpPopover helpKey="user.api" />
