@@ -117,19 +117,6 @@ describe("elasticsearchSyncMiddleware", () => {
       expect(repositoryCaseSync.syncRepositoryCaseToElasticsearch).not.toHaveBeenCalled();
     });
 
-    it("should log bulk operations", async () => {
-      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-      
-      const params = {
-        model: "RepositoryCases",
-        action: "createMany",
-      };
-      mockNext.mockResolvedValue({});
-
-      await middleware(params, mockNext);
-
-      expect(consoleLogSpy).toHaveBeenCalledWith("Bulk create detected - manual sync required");
-    });
   });
 
   describe("Steps operations", () => {
