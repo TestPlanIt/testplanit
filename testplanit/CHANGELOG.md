@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.21](https://github.com/testplanit/testplanit/compare/v0.1.20...v0.1.21) (2025-12-04)
+
+
+### Features
+
+* **multiTenant:** Add baseUrl to TenantConfig and update email worker to utilize tenant-specific base URLs for notifications ([28dc26e](https://github.com/testplanit/testplanit/commit/28dc26eac1675f23f7638bcc3b169fc7ff713044))
+
 ### [0.1.20](https://github.com/testplanit/testplanit/compare/v0.1.19...v0.1.20) (2025-12-04)
 
 
