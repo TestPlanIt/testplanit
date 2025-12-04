@@ -64,7 +64,7 @@ const FormSchema = z.object({
   completedAt: z.date().optional(),
   automaticCompletion: z.boolean(),
   enableNotifications: z.boolean(),
-  notifyDaysBefore: z.number().min(1),
+  notifyDaysBefore: z.number().min(0),
   milestoneTypeId: z.number({
     error: (issue) =>
       issue.input === undefined ? "Please select a Milestone Type" : undefined,

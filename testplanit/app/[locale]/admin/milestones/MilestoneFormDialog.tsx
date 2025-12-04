@@ -56,7 +56,7 @@ const FormSchema = z.object({
   completedAt: z.date().optional(),
   automaticCompletion: z.boolean(),
   enableNotifications: z.boolean(),
-  notifyDaysBefore: z.number().min(1),
+  notifyDaysBefore: z.number().min(0),
   milestoneTypeId: z.number({
     error: (issue) =>
       issue.input === undefined ? "Please select a Milestone Type" : undefined,
@@ -122,9 +122,7 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
 
     return allMilestoneTypes.filter((milestoneType) => {
       // Check if this milestone type is assigned to ALL selected projects
-      const assignedProjectIds = milestoneType.projects.map(
-        (p) => p.projectId
-      );
+      const assignedProjectIds = milestoneType.projects.map((p) => p.projectId);
       return selectedProjectIds.every((projectId) =>
         assignedProjectIds.includes(projectId)
       );
@@ -242,7 +240,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
           isCompleted: data.isCompleted,
           startedAt: data.startedAt,
           completedAt: data.completedAt,
-          automaticCompletion: data.completedAt ? data.automaticCompletion : false,
+          automaticCompletion: data.completedAt
+            ? data.automaticCompletion
+            : false,
           notifyDaysBefore:
             data.completedAt && data.enableNotifications
               ? data.notifyDaysBefore
@@ -266,7 +266,8 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
     }
   }
 
-  const hasNoCommonTypes = !milestoneTypesLoading && commonMilestoneTypes.length === 0;
+  const hasNoCommonTypes =
+    !milestoneTypesLoading && commonMilestoneTypes.length === 0;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -274,7 +275,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
         <Form {...form}>
           <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
             <DialogHeader>
-              <DialogTitle>{t("admin.milestones.wizard.createMilestone")}</DialogTitle>
+              <DialogTitle>
+                {t("admin.milestones.wizard.createMilestone")}
+              </DialogTitle>
               <DialogDescription className="sr-only">
                 {t("admin.milestones.wizard.createMilestone")}
               </DialogDescription>
@@ -283,7 +286,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
             {hasNoCommonTypes ? (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{t("admin.milestones.wizard.noCommonTypesTitle")}</AlertTitle>
+                <AlertTitle>
+                  {t("admin.milestones.wizard.noCommonTypesTitle")}
+                </AlertTitle>
                 <AlertDescription>
                   {t("admin.milestones.wizard.noCommonTypesDescription")}
                 </AlertDescription>
@@ -300,7 +305,10 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                         <HelpPopover helpKey="milestone.name" />
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder={t("common.fields.name")} {...field} />
+                        <Input
+                          placeholder={t("common.fields.name")}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -360,14 +368,16 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectGroup>
-                                  {milestoneTypesOptions.map((milestoneType) => (
-                                    <SelectItem
-                                      key={milestoneType.value}
-                                      value={milestoneType.value}
-                                    >
-                                      {milestoneType.label}
-                                    </SelectItem>
-                                  ))}
+                                  {milestoneTypesOptions.map(
+                                    (milestoneType) => (
+                                      <SelectItem
+                                        key={milestoneType.value}
+                                        value={milestoneType.value}
+                                      >
+                                        {milestoneType.label}
+                                      </SelectItem>
+                                    )
+                                  )}
                                 </SelectGroup>
                               </SelectContent>
                             </Select>
@@ -508,7 +518,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                                   disabled={!hasDueDate || !enableNotifications}
                                   {...daysField}
                                   onChange={(e) =>
-                                    daysField.onChange(parseInt(e.target.value) || 1)
+                                    daysField.onChange(
+                                      parseInt(e.target.value) || 1
+                                    )
                                   }
                                   className="max-w-[80px]"
                                 />
@@ -540,7 +552,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                           }}
                           readOnly={false}
                           className="h-auto"
-                          placeholder={t("milestones.placeholders.documentation")}
+                          placeholder={t(
+                            "milestones.placeholders.documentation"
+                          )}
                           projectId={selectedProjectIds[0]?.toString()}
                         />
                       </FormControl>

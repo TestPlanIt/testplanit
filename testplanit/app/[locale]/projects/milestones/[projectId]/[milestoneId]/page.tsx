@@ -146,7 +146,7 @@ export default function MilestoneDetailsPage() {
     completedAt: z.date().optional().nullable(),
     automaticCompletion: z.boolean(),
     enableNotifications: z.boolean(),
-    notifyDaysBefore: z.number().min(1),
+    notifyDaysBefore: z.number().min(0),
     milestoneTypesId: z.number(),
     parentId: z.number().optional().nullable(),
   });
