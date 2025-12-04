@@ -9,6 +9,7 @@ import {
 } from "~/lib/queues";
 import { JOB_PROCESS_TESTMO_IMPORT } from "~/services/imports/testmo/constants";
 import { serializeImportJob } from "~/services/imports/testmo/jobPresenter";
+import { getCurrentTenantId, isMultiTenantMode } from "~/lib/multiTenantPrisma";
 
 interface RouteContext {
   params: Promise<{
@@ -61,6 +62,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
+    // Testmo imports are not yet supported in multi-tenant mode
+    // The worker uses a single global PrismaClient and would need significant refactoring
+    if (isMultiTenantMode()) {
+      return NextResponse.json(
+        { error: "Testmo imports are not yet supported in multi-tenant deployments." },
+        { status: 400 }
+      );
+    }
+
     const testmoImportQueue = getQueue();
 
     const queuedJob = await testmoImportQueue.add(
@@ -68,6 +78,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       {
         jobId,
         mode: "import",
+        tenantId: getCurrentTenantId(), // Include for future multi-tenant support
       },
       {
         removeOnComplete: false,

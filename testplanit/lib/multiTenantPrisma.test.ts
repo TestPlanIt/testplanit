@@ -45,19 +45,25 @@ describe("multiTenantPrisma", () => {
   });
 
   describe("getCurrentTenantId", () => {
-    it("should return undefined in single-tenant mode", async () => {
+    it("should return tenant ID when INSTANCE_TENANT_ID is set (regardless of MULTI_TENANT_MODE)", async () => {
+      // This allows web app instances to include tenant ID in jobs for the shared worker
       process.env.INSTANCE_TENANT_ID = "tenant-a";
+      const { getCurrentTenantId } = await resetModule();
+      expect(getCurrentTenantId()).toBe("tenant-a");
+    });
+
+    it("should return undefined when INSTANCE_TENANT_ID is not set", async () => {
       const { getCurrentTenantId } = await resetModule();
       expect(getCurrentTenantId()).toBeUndefined();
     });
 
-    it("should return undefined when INSTANCE_TENANT_ID is not set", async () => {
+    it("should return undefined when INSTANCE_TENANT_ID is not set even with MULTI_TENANT_MODE", async () => {
       process.env.MULTI_TENANT_MODE = "true";
       const { getCurrentTenantId } = await resetModule();
       expect(getCurrentTenantId()).toBeUndefined();
     });
 
-    it("should return tenant ID in multi-tenant mode", async () => {
+    it("should return tenant ID in multi-tenant mode with INSTANCE_TENANT_ID", async () => {
       process.env.MULTI_TENANT_MODE = "true";
       process.env.INSTANCE_TENANT_ID = "tenant-a";
       const { getCurrentTenantId } = await resetModule();
@@ -379,7 +385,7 @@ describe("Tenant filtering helpers", () => {
       expect(jobData.tenantId).toBe("tenant-x");
     });
 
-    it("should have undefined tenantId in single-tenant mode", async () => {
+    it("should have undefined tenantId when INSTANCE_TENANT_ID is not set", async () => {
       const { getCurrentTenantId } = await resetModule();
 
       const baseJobData = {
@@ -393,6 +399,26 @@ describe("Tenant filtering helpers", () => {
       };
 
       expect(jobData.tenantId).toBeUndefined();
+    });
+
+    it("should include tenantId in job data when INSTANCE_TENANT_ID is set (single-tenant with tenant ID)", async () => {
+      // This is the key use case: web app has INSTANCE_TENANT_ID but not MULTI_TENANT_MODE
+      // Jobs should still include tenantId so the shared worker can route them
+      process.env.INSTANCE_TENANT_ID = "tenant-y";
+
+      const { getCurrentTenantId } = await resetModule();
+
+      const baseJobData = {
+        userId: "user-123",
+        action: "sync",
+      };
+
+      const jobData = {
+        ...baseJobData,
+        tenantId: getCurrentTenantId(),
+      };
+
+      expect(jobData.tenantId).toBe("tenant-y");
     });
   });
 });

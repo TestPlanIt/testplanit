@@ -23,14 +23,18 @@ export function isMultiTenantMode(): boolean {
 
 /**
  * Get the current instance's tenant ID
- * In multi-tenant mode, each web app instance belongs to a single tenant
- * Set via INSTANCE_TENANT_ID environment variable
- * Returns undefined in single-tenant mode or if not configured
+ * In multi-tenant deployments, each web app instance belongs to a single tenant.
+ * Set via INSTANCE_TENANT_ID environment variable.
+ *
+ * Note: This returns the tenant ID whenever INSTANCE_TENANT_ID is set,
+ * regardless of whether MULTI_TENANT_MODE is enabled. This allows web app
+ * instances to include their tenant ID in queued jobs, which the shared
+ * worker (running with MULTI_TENANT_MODE=true) can then use to route
+ * database operations to the correct tenant.
+ *
+ * Returns undefined if INSTANCE_TENANT_ID is not configured.
  */
 export function getCurrentTenantId(): string | undefined {
-  if (!isMultiTenantMode()) {
-    return undefined;
-  }
   return process.env.INSTANCE_TENANT_ID;
 }
 
