@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.18](https://github.com/testplanit/testplanit/compare/v0.1.17...v0.1.18) (2025-12-04)
+
+
+### Code Refactoring
+
+* **users:** Simplify access field watching in user modals ([ae3f2e4](https://github.com/testplanit/testplanit/commit/ae3f2e41b201421e87ca1d4515a819e5cf4b0331))
+
 ### [0.1.17](https://github.com/testplanit/testplanit/compare/v0.1.16...v0.1.17) (2025-12-04)
 
 ### [0.1.16](https://github.com/testplanit/testplanit/compare/v0.1.15...v0.1.16) (2025-12-04)
