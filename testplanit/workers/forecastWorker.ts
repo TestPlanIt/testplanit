@@ -32,7 +32,9 @@ export const JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
 export const JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";
 
 const processor = async (job: Job) => {
-  console.log(`Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  console.log(
+    `Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
+  );
   let successCount = 0;
   let failCount = 0;
 
@@ -121,7 +123,9 @@ const processor = async (job: Job) => {
         select: { id: true },
       });
 
-      const activeTestRunIds = activeTestRuns.map((tr: { id: number }) => tr.id);
+      const activeTestRunIds = activeTestRuns.map(
+        (tr: { id: number }) => tr.id
+      );
       const skippedCompletedCount =
         affectedTestRunIds.size - activeTestRunIds.length;
 
@@ -158,7 +162,9 @@ const processor = async (job: Job) => {
       break;
 
     case JOB_AUTO_COMPLETE_MILESTONES:
-      console.log(`Job ${job.id}: Starting auto-completion check for milestones.`);
+      console.log(
+        `Job ${job.id}: Starting auto-completion check for milestones.`
+      );
       try {
         // Find all milestones that should be auto-completed
         const now = new Date();
@@ -205,7 +211,10 @@ const processor = async (job: Job) => {
           `Job ${job.id} completed: Auto-completed ${successCount} milestones. Failed: ${failCount}`
         );
       } catch (error) {
-        console.error(`Job ${job.id}: Error in auto-complete milestones job`, error);
+        console.error(
+          `Job ${job.id}: Error in auto-complete milestones job`,
+          error
+        );
         throw error;
       }
       break;
@@ -280,12 +289,15 @@ const processor = async (job: Job) => {
 
           const dueDate = new Date(milestone.completedAt);
           const timeDiff = dueDate.getTime() - now.getTime();
-          const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+          // Use Math.floor to ensure negative fractional days round away from zero
+          // Math.ceil(-0.5) = 0 (wrong), Math.floor(-0.5) = -1 (correct for overdue detection)
+          const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
           const isOverdue = daysDiff < 0;
 
           // Check if notification should be sent
           // Send if: overdue OR within notifyDaysBefore days of due date
-          const shouldNotify = isOverdue || daysDiff <= milestone.notifyDaysBefore;
+          const shouldNotify =
+            isOverdue || daysDiff <= milestone.notifyDaysBefore;
 
           console.log(
             `Job ${job.id}: Milestone "${milestone.name}" (ID: ${milestone.id}) - daysDiff: ${daysDiff}, notifyDaysBefore: ${milestone.notifyDaysBefore}, isOverdue: ${isOverdue}, shouldNotify: ${shouldNotify}`
@@ -374,7 +386,10 @@ const processor = async (job: Job) => {
           `Job ${job.id} completed: Sent ${successCount} milestone notifications. Failed: ${failCount}`
         );
       } catch (error) {
-        console.error(`Job ${job.id}: Error in milestone due notifications job`, error);
+        console.error(
+          `Job ${job.id}: Error in milestone due notifications job`,
+          error
+        );
         throw error;
       }
       break;

@@ -392,7 +392,7 @@ describe("Milestone Due Notifications Job", () => {
       const dueDate = new Date("2025-12-10T12:00:00Z");
 
       const timeDiff = dueDate.getTime() - now.getTime();
-      const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
 
       expect(daysDiff).toBe(6);
     });
@@ -402,10 +402,24 @@ describe("Milestone Due Notifications Job", () => {
       const pastDueDate = new Date("2025-12-01T12:00:00Z");
 
       const timeDiff = pastDueDate.getTime() - now.getTime();
-      const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
       const isOverdue = daysDiff < 0;
 
       expect(daysDiff).toBeLessThan(0);
+      expect(isOverdue).toBe(true);
+    });
+
+    it("should correctly identify milestones overdue by less than 24 hours", () => {
+      const now = new Date("2025-12-04T12:00:00Z");
+      // Due date was 6 hours ago (less than 24 hours)
+      const pastDueDate = new Date("2025-12-04T06:00:00Z");
+
+      const timeDiff = pastDueDate.getTime() - now.getTime();
+      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      const isOverdue = daysDiff < 0;
+
+      // Math.floor(-0.25) = -1, correctly identifies as overdue
+      expect(daysDiff).toBe(-1);
       expect(isOverdue).toBe(true);
     });
 
@@ -415,7 +429,7 @@ describe("Milestone Due Notifications Job", () => {
       const notifyDaysBefore = 5;
 
       const timeDiff = dueDate.getTime() - now.getTime();
-      const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
       const isOverdue = daysDiff < 0;
       const shouldNotify = isOverdue || daysDiff <= notifyDaysBefore;
 
@@ -428,7 +442,7 @@ describe("Milestone Due Notifications Job", () => {
       const notifyDaysBefore = 5;
 
       const timeDiff = dueDate.getTime() - now.getTime();
-      const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
       const isOverdue = daysDiff < 0;
       const shouldNotify = isOverdue || daysDiff <= notifyDaysBefore;
 
@@ -441,7 +455,7 @@ describe("Milestone Due Notifications Job", () => {
       const notifyDaysBefore = 5;
 
       const timeDiff = pastDueDate.getTime() - now.getTime();
-      const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
       const isOverdue = daysDiff < 0;
       const shouldNotify = isOverdue || daysDiff <= notifyDaysBefore;
 
