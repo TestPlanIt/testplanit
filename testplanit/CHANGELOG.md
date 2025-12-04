@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.28](https://github.com/testplanit/testplanit/compare/v0.1.27...v0.1.28) (2025-12-04)
+
+
+### Bug Fixes
+
+* **users:** Disable API toggle for ADMIN access level ([29f3df9](https://github.com/testplanit/testplanit/commit/29f3df9561fcdad5174355f4179076151c46eb1f))
+
 ### [0.1.27](https://github.com/testplanit/testplanit/compare/v0.1.26...v0.1.27) (2025-12-04)
 
 
