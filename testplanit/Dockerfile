@@ -299,7 +299,9 @@ COPY --from=build /app/env.js ./env.js
 COPY --from=build /app/tsconfig.json ./tsconfig.json
 
 # Copy translation files for email worker
+# Copy to both /app/messages (for reference) and /app/dist/messages (where server-translations.ts looks)
 COPY --from=build /app/messages ./messages
+COPY --from=build /app/messages ./dist/messages
 
 # Copy scripts (needed for fix-zenstack-symlink.js)
 COPY --from=build /app/scripts ./scripts
