@@ -10,6 +10,11 @@ All notable changes to this project will be documented in this file. See [standa
 * **file-storage:** Enhance file upload documentation and implement server action for proxy mode ([95782cc](https://github.com/testplanit/testplanit/commit/95782ccf774eece0918405d5c03377b04cdebefb))
 * **multi-tenant:** Implement tenant ID handling for Testmo imports ([665efba](https://github.com/testplanit/testplanit/commit/665efbac8cc95cd5342bc7dccb53e343e60b189f))
 
+
+### Bug Fixes
+
+* **tags:** Correct tab content and pagination for sessions and test runs ([ade7a39](https://github.com/testplanit/testplanit/commit/ade7a3927e930db8019c2d407e02c62c5bffcc02))
+
 ### [0.1.14](https://github.com/testplanit/testplanit/compare/v0.1.13...v0.1.14) (2025-12-04)
 
 

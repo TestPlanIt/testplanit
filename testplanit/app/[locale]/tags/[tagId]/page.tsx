@@ -413,11 +413,11 @@ function TagDetail() {
               <TabsTrigger value="cases">
                 {t("common.table.columns.testCases")} {`(${casesCount ?? 0})`}
               </TabsTrigger>
-              <TabsTrigger value="sessions">
-                {t("common.table.columns.sessions")} {`(${sessionsCount ?? 0})`}
-              </TabsTrigger>
               <TabsTrigger value="testRuns">
                 {t("common.fields.testRuns")} {`(${testRunsCount ?? 0})`}
+              </TabsTrigger>
+              <TabsTrigger value="sessions">
+                {t("common.table.columns.sessions")} {`(${sessionsCount ?? 0})`}
               </TabsTrigger>
             </TabsList>
 
@@ -457,42 +457,6 @@ function TagDetail() {
               )}
             </TabsContent>
 
-            <TabsContent value="sessions">
-              {(sessionsCount ?? 0) > 0 && (
-                <div className="mb-4 flex justify-end items-center gap-4">
-                  <PaginationInfo
-                    startIndex={sessionsStartIndex}
-                    endIndex={sessionsEndIndex}
-                    totalRows={sessionsCount ?? 0}
-                    searchString={searchString}
-                    pageSize={sessionsPageSize}
-                    pageSizeOptions={pageSizeOptions}
-                    handlePageSizeChange={setSessionsPageSize}
-                  />
-                  <PaginationComponent
-                    currentPage={sessionsPage}
-                    totalPages={sessionsTotalPages}
-                    onPageChange={setSessionsPage}
-                  />
-                </div>
-              )}
-              <DataTable
-                columns={sessionColumns}
-                data={mappedSessions}
-                onSortChange={() => {}}
-                sortConfig={{ column: "name", direction: "asc" }}
-                columnVisibility={{}}
-                onColumnVisibilityChange={() => {}}
-                isLoading={isLoadingSessions}
-                pageSize={effectiveSessionsPageSize}
-              />
-              {(sessionsCount ?? 0) === 0 && !isLoadingSessions && (
-                <div className="text-center text-muted-foreground py-8">
-                  {t("tags.detail.noResults")}
-                </div>
-              )}
-            </TabsContent>
-
             <TabsContent value="testRuns">
               {(testRunsCount ?? 0) > 0 && (
                 <div className="mb-4 flex justify-end items-center gap-4">
@@ -523,6 +487,42 @@ function TagDetail() {
                 pageSize={effectiveTestRunsPageSize}
               />
               {(testRunsCount ?? 0) === 0 && !isLoadingTestRuns && (
+                <div className="text-center text-muted-foreground py-8">
+                  {t("tags.detail.noResults")}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="sessions">
+              {(sessionsCount ?? 0) > 0 && (
+                <div className="mb-4 flex justify-end items-center gap-4">
+                  <PaginationInfo
+                    startIndex={sessionsStartIndex}
+                    endIndex={sessionsEndIndex}
+                    totalRows={sessionsCount ?? 0}
+                    searchString={searchString}
+                    pageSize={sessionsPageSize}
+                    pageSizeOptions={pageSizeOptions}
+                    handlePageSizeChange={setSessionsPageSize}
+                  />
+                  <PaginationComponent
+                    currentPage={sessionsPage}
+                    totalPages={sessionsTotalPages}
+                    onPageChange={setSessionsPage}
+                  />
+                </div>
+              )}
+              <DataTable
+                columns={sessionColumns}
+                data={mappedSessions}
+                onSortChange={() => {}}
+                sortConfig={{ column: "name", direction: "asc" }}
+                columnVisibility={{}}
+                onColumnVisibilityChange={() => {}}
+                isLoading={isLoadingSessions}
+                pageSize={effectiveSessionsPageSize}
+              />
+              {(sessionsCount ?? 0) === 0 && !isLoadingSessions && (
                 <div className="text-center text-muted-foreground py-8">
                   {t("tags.detail.noResults")}
                 </div>
