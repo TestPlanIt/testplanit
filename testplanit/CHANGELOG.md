@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.22](https://github.com/testplanit/testplanit/compare/v0.1.21...v0.1.22) (2025-12-04)
+
+
+### Features
+
+* **email:** Add baseUrl to notification and digest email data for tenant-specific URLs ([7474df6](https://github.com/testplanit/testplanit/commit/7474df6c90eff155cf2485deb4088cb9100b7f09))
+
 ### [0.1.21](https://github.com/testplanit/testplanit/compare/v0.1.20...v0.1.21) (2025-12-04)
 
 
