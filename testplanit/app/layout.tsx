@@ -59,7 +59,7 @@ export default function RootLayout({
   // 1. Multi-tenant mode is enabled (always needs proxy for storage isolation), OR
   // 2. IS_HOSTED is true and no public endpoint is configured
   const storageMode =
-    isMultiTenant || (isHosted && !hasPublicEndpoint) ? "proxy" : "direct";
+    (isMultiTenant || (isHosted && !hasPublicEndpoint)) ? "proxy" : "direct";
 
   return (
     <html lang="en" className={`${notoSans.variable}`}>
