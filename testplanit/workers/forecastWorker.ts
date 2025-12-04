@@ -14,6 +14,7 @@ import {
   disconnectAllTenantClients,
   validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
+import { NotificationService } from "../lib/services/notificationService";
 
 // Define expected job data structures with multi-tenant support
 interface UpdateSingleCaseJobData extends MultiTenantJobData {
@@ -27,9 +28,13 @@ interface UpdateAllCasesJobData extends MultiTenantJobData {
 // Define job names for clarity and export them for the scheduler
 export const JOB_UPDATE_SINGLE_CASE = "update-single-case-forecast";
 export const JOB_UPDATE_ALL_CASES = "update-all-cases-forecast";
+export const JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
+export const JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";
 
 const processor = async (job: Job) => {
-  console.log(`Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  console.log(
+    `Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
+  );
   let successCount = 0;
   let failCount = 0;
 
@@ -118,7 +123,9 @@ const processor = async (job: Job) => {
         select: { id: true },
       });
 
-      const activeTestRunIds = activeTestRuns.map((tr: { id: number }) => tr.id);
+      const activeTestRunIds = activeTestRuns.map(
+        (tr: { id: number }) => tr.id
+      );
       const skippedCompletedCount =
         affectedTestRunIds.size - activeTestRunIds.length;
 
@@ -151,6 +158,239 @@ const processor = async (job: Job) => {
           `Job ${job.id} finished with ${failCount} case failures and ${testRunFailCount} test run failures.`
         );
         // throw new Error(`Completed with failures.`); // Uncomment to mark job as failed
+      }
+      break;
+
+    case JOB_AUTO_COMPLETE_MILESTONES:
+      console.log(
+        `Job ${job.id}: Starting auto-completion check for milestones.`
+      );
+      try {
+        // Find all milestones that should be auto-completed
+        const now = new Date();
+        const milestonesToComplete = await prisma.milestones.findMany({
+          where: {
+            isCompleted: false,
+            isDeleted: false,
+            automaticCompletion: true,
+            completedAt: {
+              lte: now, // Due date has passed
+            },
+          },
+          select: {
+            id: true,
+            name: true,
+            projectId: true,
+          },
+        });
+
+        console.log(
+          `Job ${job.id}: Found ${milestonesToComplete.length} milestones to auto-complete.`
+        );
+
+        for (const milestone of milestonesToComplete) {
+          try {
+            await prisma.milestones.update({
+              where: { id: milestone.id },
+              data: { isCompleted: true },
+            });
+            successCount++;
+            console.log(
+              `Job ${job.id}: Auto-completed milestone "${milestone.name}" (ID: ${milestone.id})`
+            );
+          } catch (error) {
+            failCount++;
+            console.error(
+              `Job ${job.id}: Failed to auto-complete milestone ${milestone.id}`,
+              error
+            );
+          }
+        }
+
+        console.log(
+          `Job ${job.id} completed: Auto-completed ${successCount} milestones. Failed: ${failCount}`
+        );
+      } catch (error) {
+        console.error(
+          `Job ${job.id}: Error in auto-complete milestones job`,
+          error
+        );
+        throw error;
+      }
+      break;
+
+    case JOB_MILESTONE_DUE_NOTIFICATIONS:
+      console.log(`Job ${job.id}: Starting milestone due notifications check.`);
+      try {
+        const now = new Date();
+
+        // Find all milestones that need notifications
+        // Include all users who have participated in the milestone:
+        // - Milestone creator
+        // - Test run creators and users with assigned/executed work
+        // - Session creators and assigned users
+        const milestonesToNotify = await prisma.milestones.findMany({
+          where: {
+            isCompleted: false,
+            isDeleted: false,
+            notifyDaysBefore: { gt: 0 },
+            completedAt: { not: null }, // Has a due date
+          },
+          select: {
+            id: true,
+            name: true,
+            completedAt: true,
+            notifyDaysBefore: true,
+            createdBy: true, // Milestone creator
+            project: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            // Get all users who have participated in this milestone's test runs
+            testRuns: {
+              where: {
+                isDeleted: false,
+              },
+              select: {
+                createdById: true, // Test run creator
+                testCases: {
+                  select: {
+                    assignedToId: true, // Assigned user
+                    results: {
+                      select: {
+                        executedById: true, // User who executed the result
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            // Get all users who have participated in this milestone's sessions
+            sessions: {
+              where: {
+                isDeleted: false,
+              },
+              select: {
+                createdById: true, // Session creator
+                assignedToId: true, // Assigned user
+              },
+            },
+          },
+        });
+
+        console.log(
+          `Job ${job.id}: Found ${milestonesToNotify.length} milestones to check for notifications.`
+        );
+
+        for (const milestone of milestonesToNotify) {
+          if (!milestone.completedAt) continue;
+
+          const dueDate = new Date(milestone.completedAt);
+          const timeDiff = dueDate.getTime() - now.getTime();
+          // Use Math.floor to ensure negative fractional days round away from zero
+          // Math.ceil(-0.5) = 0 (wrong), Math.floor(-0.5) = -1 (correct for overdue detection)
+          const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+          const isOverdue = daysDiff < 0;
+
+          // Check if notification should be sent
+          // Send if: overdue OR within notifyDaysBefore days of due date
+          const shouldNotify =
+            isOverdue || daysDiff <= milestone.notifyDaysBefore;
+
+          console.log(
+            `Job ${job.id}: Milestone "${milestone.name}" (ID: ${milestone.id}) - daysDiff: ${daysDiff}, notifyDaysBefore: ${milestone.notifyDaysBefore}, isOverdue: ${isOverdue}, shouldNotify: ${shouldNotify}`
+          );
+
+          if (!shouldNotify) continue;
+
+          // Collect unique user IDs from all participants
+          const userIds = new Set<string>();
+
+          // Add milestone creator
+          if (milestone.createdBy) {
+            userIds.add(milestone.createdBy);
+          }
+
+          // Add test run creators, assigned users, and result executors
+          for (const testRun of milestone.testRuns) {
+            // Test run creator
+            if (testRun.createdById) {
+              userIds.add(testRun.createdById);
+            }
+
+            for (const testCase of testRun.testCases) {
+              // Assigned user
+              if (testCase.assignedToId) {
+                userIds.add(testCase.assignedToId);
+              }
+
+              // Users who executed results
+              for (const result of testCase.results) {
+                if (result.executedById) {
+                  userIds.add(result.executedById);
+                }
+              }
+            }
+          }
+
+          // Add session creators and assigned users
+          for (const session of milestone.sessions) {
+            // Session creator
+            if (session.createdById) {
+              userIds.add(session.createdById);
+            }
+
+            // Assigned user
+            if (session.assignedToId) {
+              userIds.add(session.assignedToId);
+            }
+          }
+
+          if (userIds.size === 0) {
+            console.log(
+              `Job ${job.id}: Milestone "${milestone.name}" (ID: ${milestone.id}) - no participating users found, skipping notifications`
+            );
+            continue;
+          }
+
+          console.log(
+            `Job ${job.id}: Milestone "${milestone.name}" (ID: ${milestone.id}) - sending notifications to ${userIds.size} users`
+          );
+
+          // Send notifications to each user
+          for (const userId of userIds) {
+            try {
+              await NotificationService.createMilestoneDueNotification(
+                userId,
+                milestone.name,
+                milestone.project.name,
+                dueDate,
+                milestone.id,
+                milestone.project.id,
+                isOverdue
+              );
+              successCount++;
+            } catch (error) {
+              failCount++;
+              console.error(
+                `Job ${job.id}: Failed to send notification for milestone ${milestone.id} to user ${userId}`,
+                error
+              );
+            }
+          }
+        }
+
+        console.log(
+          `Job ${job.id} completed: Sent ${successCount} milestone notifications. Failed: ${failCount}`
+        );
+      } catch (error) {
+        console.error(
+          `Job ${job.id}: Error in milestone due notifications job`,
+          error
+        );
+        throw error;
       }
       break;
 

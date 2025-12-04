@@ -22,6 +22,7 @@ TestPlanIt currently supports the following notification types:
 - **Work Assigned** - When a test case or exploratory testing session is assigned to you
 - **Comment Mentions** - When someone mentions you in a comment (@username)
 - **System Announcements** - Important system-wide announcements and updates
+- **Milestone Due Reminder** - When a milestone's due date is approaching or overdue
 
 ## Notification Center UI
 
@@ -164,6 +165,40 @@ When someone mentions you with `@username`:
 - System updates
 - Policy changes
 - Important deadlines
+
+#### Milestone Due Reminder Notifications
+
+When a milestone's due date is approaching or has passed, notifications are automatically sent to all users who have participated in the milestone's work.
+
+**Recipients Include**:
+
+- Milestone creator
+- Test run creators for runs in the milestone
+- Users assigned to test cases
+- Users who have executed test results
+- Session creators for sessions in the milestone
+- Users assigned to sessions
+
+**Notification Variants**:
+
+- **Due Soon**: Sent when the milestone is within the configured notification window (e.g., 5 days before due date)
+- **Overdue**: Sent when the milestone's due date has passed
+
+**Features**:
+
+- Each user receives only one notification per milestone per day (deduplicated)
+- Notifications link directly to the milestone details page
+- Processing occurs daily at 6:00 AM server time
+- Overdue notifications continue until the milestone is marked complete
+
+**Enabling Milestone Notifications**:
+
+1. Navigate to the milestone details page
+2. Set a due date for the milestone
+3. Enable the "Notify days before due date" toggle
+4. Configure how many days before the due date to start notifications
+
+For more details, see [Milestone Details - Due Date Notifications](./projects/milestone-details.md#due-date-notifications).
 
 ## User Preferences
 

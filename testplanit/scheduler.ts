@@ -1,12 +1,17 @@
 import { getForecastQueue, getNotificationQueue } from "./lib/queues";
 import { FORECAST_QUEUE_NAME, NOTIFICATION_QUEUE_NAME } from "./lib/queues";
-import { JOB_UPDATE_ALL_CASES } from "./workers/forecastWorker";
+import {
+  JOB_UPDATE_ALL_CASES,
+  JOB_AUTO_COMPLETE_MILESTONES,
+  JOB_MILESTONE_DUE_NOTIFICATIONS,
+} from "./workers/forecastWorker";
 import { JOB_SEND_DAILY_DIGEST } from "./workers/notificationWorker";
 import { isMultiTenantMode, getAllTenantIds } from "./lib/multiTenantPrisma";
 
 // Define the cron schedule (e.g., every day at 3:00 AM server time)
 // Uses standard cron syntax: min hour day(month) month day(week)
 const CRON_SCHEDULE_DAILY_3AM = "0 3 * * *";
+const CRON_SCHEDULE_DAILY_6AM = "0 6 * * *"; // For milestone auto-completion and notifications
 const CRON_SCHEDULE_DAILY_8AM = "0 8 * * *"; // For daily digest emails
 
 async function scheduleJobs() {
@@ -33,7 +38,11 @@ async function scheduleJobs() {
     let removedCount = 0;
     for (const job of repeatableJobs) {
       // Check job name specifically - avoids removing unrelated repeatable jobs
-      if (job.name === JOB_UPDATE_ALL_CASES) {
+      if (
+        job.name === JOB_UPDATE_ALL_CASES ||
+        job.name === JOB_AUTO_COMPLETE_MILESTONES ||
+        job.name === JOB_MILESTONE_DUE_NOTIFICATIONS
+      ) {
         console.log(
           `Removing existing repeatable job "${job.name}" with key: ${job.key}`
         );
@@ -64,6 +73,46 @@ async function scheduleJobs() {
 
       console.log(
         `Successfully scheduled repeatable job "${JOB_UPDATE_ALL_CASES}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_3AM}" on queue "${FORECAST_QUEUE_NAME}".`
+      );
+
+      // Schedule milestone auto-completion job
+      const autoCompleteJobId = tenantId
+        ? `${JOB_AUTO_COMPLETE_MILESTONES}-${tenantId}`
+        : JOB_AUTO_COMPLETE_MILESTONES;
+
+      await forecastQueue.add(
+        JOB_AUTO_COMPLETE_MILESTONES,
+        { tenantId },
+        {
+          repeat: {
+            pattern: CRON_SCHEDULE_DAILY_6AM,
+          },
+          jobId: autoCompleteJobId,
+        }
+      );
+
+      console.log(
+        `Successfully scheduled repeatable job "${JOB_AUTO_COMPLETE_MILESTONES}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_6AM}" on queue "${FORECAST_QUEUE_NAME}".`
+      );
+
+      // Schedule milestone due notifications job
+      const notificationsJobId = tenantId
+        ? `${JOB_MILESTONE_DUE_NOTIFICATIONS}-${tenantId}`
+        : JOB_MILESTONE_DUE_NOTIFICATIONS;
+
+      await forecastQueue.add(
+        JOB_MILESTONE_DUE_NOTIFICATIONS,
+        { tenantId },
+        {
+          repeat: {
+            pattern: CRON_SCHEDULE_DAILY_6AM,
+          },
+          jobId: notificationsJobId,
+        }
+      );
+
+      console.log(
+        `Successfully scheduled repeatable job "${JOB_MILESTONE_DUE_NOTIFICATIONS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_6AM}" on queue "${FORECAST_QUEUE_NAME}".`
       );
     }
 

@@ -1245,7 +1245,11 @@
       "parent": "Étape importante pour les parents",
       "started": "Commencé",
       "startDate": "Date de début",
-      "dueDate": "Date d'échéance"
+      "dueDate": "Date d'échéance",
+      "automaticCompletion": "Saisie automatique à la date d'échéance",
+      "notifyDaysBefore": "Prévenez quelques jours avant la date d'échéance",
+      "notifyDaysBeforeValue": "Prévenir {count, plural, one {# jour} other {# jours}} avant la date d'échéance",
+      "dueDateNotifications": "notifications de date d'échéance"
     },
     "labels": {
       "description": "Description",
@@ -1338,6 +1342,10 @@
       "processing": "Traitement...",
       "confirmAndCompleteAll": "Confirmer et compléter tout",
       "completeButton": "Complet"
+    },
+    "notifications": {
+      "dueSoon": "L'étape importante «{name}» est prévue pour le {dueDate}",
+      "overdue": "L'étape importante «{name}» était prévue pour le {dueDate}"
     }
   },
   "sessions": {
@@ -4674,7 +4682,13 @@
         "inProject": "dans le projet",
         "testRun": "Essai :",
         "casesInProject": "{count, plural, =1 {# cas} other {# cas}} dans",
-        "sentBy": "Envoyé par {name}"
+        "sentBy": "Envoyé par {name}",
+        "milestoneDueSoonTitle": "Étape importante à venir",
+        "milestoneOverdueTitle": "Étape importante en retard",
+        "milestoneDueSoon": "L'étape \"{milestoneName}\" du projet \"{projectName}\" est prévue pour le {dueDate}.",
+        "milestoneOverdue": "L'étape «{milestoneName}» du projet «{projectName}» était prévue pour le {dueDate} et est maintenant en retard.",
+        "milestoneNotificationReason": "Vous recevez cette notification car vous avez participé aux travaux liés à cette étape importante (tests, sessions ou en tant que créateur de l'étape).",
+        "milestoneNotificationContinue": "Vous continuerez à recevoir des rappels quotidiens jusqu'à ce que cette étape soit franchie."
       }
     },
     "issues": {
@@ -4962,7 +4976,9 @@
       "dueDate": "## Date d'échéance\nDate cible pour la réalisation de cette étape.\n\n- Définit les attentes en matière de délai.\n- Utilisé pour la planification du calendrier du projet.\n- Permet de suivre l'avancement de l'étape par rapport au calendrier.",
       "parent": "## Jalon parent\nRelie ce jalon à un jalon parent, créant ainsi une hiérarchie.\n\n- Organise les jalons en groupes logiques.\n- Affiche les dépendances et les relations.\n- Permet de suivre l'avancement des initiatives de plus grande envergure.",
       "description": "## Description\nInformations détaillées sur l'objectif, les exigences et la portée de l'étape.\n\n- Fournit le contexte aux membres de l'équipe.\n- Documente les exigences et les objectifs clés.\n- Favorise la collaboration et l'alignement.",
-      "documentation": "## Documentation\nInformations complémentaires, références et documents justificatifs.\n\n- Spécifications techniques\n- Documents de conception\n- Références externes\n- Comptes rendus de réunion et décisions"
+      "documentation": "## Documentation\nInformations complémentaires, références et documents justificatifs.\n\n- Spécifications techniques\n- Documents de conception\n- Références externes\n- Comptes rendus de réunion et décisions",
+      "automaticCompletion": "## Clôture automatique à l'échéance\nMarque automatiquement cette étape comme terminée lorsque sa date d'échéance est atteinte.\n\n- L'étape sera terminée à l'heure prévue à la date d'échéance.\n- Utile pour les étapes à durée limitée qui doivent se clôturer quel que soit leur état d'achèvement.\n- Peut être annulé en clôturant manuellement l'étape avant la date d'échéance.\n- Nécessite la définition d'une date d'échéance.",
+      "notifyDaysBefore": "## Notifications avant l'échéance\nEnvoyer des notifications aux membres de l'équipe concernés lorsque la date d'échéance approche.\n\n- Activer les notifications, désactiver pour les désactiver.\n- Saisir le nombre de jours avant l'échéance pour commencer l'envoi de rappels.\n- Les notifications sont envoyées aux utilisateurs affectés aux tests et sessions de cette étape.\n- Les étapes en retard continueront d'envoyer des rappels jusqu'à leur réalisation."
     },
     "session": {
       "name": "## Nom de la session\nUn nom clair et descriptif qui identifie l'objectif de votre session de test.\n\n- Doit être unique et significatif.\n- Aide les membres de l'équipe à comprendre ce qui est testé.\n- Utilisé dans les rapports et le suivi.",

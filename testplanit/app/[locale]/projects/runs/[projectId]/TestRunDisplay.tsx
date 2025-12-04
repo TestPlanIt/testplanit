@@ -10,7 +10,6 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { sortMilestones } from "~/utils/milestoneUtils";
 import {
   getStatus,
-  getCondition,
   getStatusStyle,
   createColorMap,
   ColorMap,
@@ -23,7 +22,6 @@ import { MilestonesWithTypes } from "~/utils/milestoneUtils";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
 import { useTranslations } from "next-intl";
-import { useRouter } from "~/lib/navigation";
 import { useParams } from "next/navigation";
 import { useFindManyTestRunCases } from "~/lib/hooks/test-run-cases";
 
@@ -90,7 +88,7 @@ const testRunPropSelect = {
           name: true,
         },
       },
-    }
+    },
   },
   results: { select: { id: true } },
 } as const;

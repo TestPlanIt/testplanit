@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted]
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}

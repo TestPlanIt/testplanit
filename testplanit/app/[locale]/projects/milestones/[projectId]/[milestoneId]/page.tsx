@@ -144,6 +144,9 @@ export default function MilestoneDetailsPage() {
     isCompleted: z.boolean(),
     startedAt: z.date().optional().nullable(),
     completedAt: z.date().optional().nullable(),
+    automaticCompletion: z.boolean(),
+    enableNotifications: z.boolean(),
+    notifyDaysBefore: z.number().min(0),
     milestoneTypesId: z.number(),
     parentId: z.number().optional().nullable(),
   });
@@ -165,6 +168,22 @@ export default function MilestoneDetailsPage() {
         milestoneType: {
           include: {
             icon: true,
+          },
+        },
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            image: true,
+          },
+        },
+        children: {
+          include: {
+            milestoneType: {
+              include: {
+                icon: true,
+              },
+            },
           },
         },
       },
@@ -334,6 +353,12 @@ export default function MilestoneDetailsPage() {
         completedAt: milestone.completedAt
           ? new Date(milestone.completedAt)
           : undefined,
+        automaticCompletion: milestone.automaticCompletion ?? false,
+        enableNotifications: (milestone.notifyDaysBefore ?? 0) > 0,
+        notifyDaysBefore:
+          milestone.notifyDaysBefore && milestone.notifyDaysBefore > 0
+            ? milestone.notifyDaysBefore
+            : 5,
         milestoneTypesId: milestone.milestoneTypesId,
         parentId: milestone.parentId ?? undefined,
       });
@@ -363,9 +388,16 @@ export default function MilestoneDetailsPage() {
 
     setIsSubmitting(true);
     try {
+      // Transform enableNotifications checkbox to notifyDaysBefore value
+      const { enableNotifications, ...restData } = data;
       const updateData = {
-        ...data,
+        ...restData,
         parentId: data.parentId ? Number(data.parentId) : null,
+        automaticCompletion: data.completedAt
+          ? data.automaticCompletion
+          : false,
+        notifyDaysBefore:
+          data.completedAt && enableNotifications ? data.notifyDaysBefore : 0,
       };
 
       await updateMilestone({
@@ -408,6 +440,12 @@ export default function MilestoneDetailsPage() {
         completedAt: milestone.completedAt
           ? new Date(milestone.completedAt)
           : undefined,
+        automaticCompletion: milestone.automaticCompletion ?? false,
+        enableNotifications: (milestone.notifyDaysBefore ?? 0) > 0,
+        notifyDaysBefore:
+          milestone.notifyDaysBefore && milestone.notifyDaysBefore > 0
+            ? milestone.notifyDaysBefore
+            : 5,
         milestoneTypesId: milestone?.milestoneTypesId,
         parentId: milestone?.parentId ?? undefined,
       });
@@ -892,7 +930,7 @@ export default function MilestoneDetailsPage() {
         <CompleteMilestoneDialog
           open={isCompleteDialogOpen}
           onOpenChange={setIsCompleteDialogOpen}
-          milestoneToComplete={milestone as MilestonesWithTypes}
+          milestoneToComplete={milestone as unknown as MilestonesWithTypes}
           onCompleteSuccess={() => {
             toast.success(t("toast.updated", { name: milestone.name }));
             router.refresh();

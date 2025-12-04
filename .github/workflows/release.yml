@@ -37,7 +37,7 @@ on:
 
 jobs:
   create-release:
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
@@ -187,7 +187,7 @@ jobs:
   merge-manifests:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     needs: [build-amd64, build-arm64]
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted]
     permissions:
       contents: read
       packages: write
@@ -347,7 +347,7 @@ jobs:
   docker-manual-merge:
     if: github.event_name == 'workflow_dispatch'
     needs: [docker-manual-amd64, docker-manual-arm64]
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted]
     permissions:
       contents: read
       packages: write

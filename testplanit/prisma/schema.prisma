@@ -73,6 +73,7 @@ enum NotificationType {
   SYSTEM_ANNOUNCEMENT
   USER_REGISTERED
   COMMENT_MENTION
+  MILESTONE_DUE_REMINDER
 }
 
 enum WorkflowType {
@@ -419,34 +420,38 @@ model ProjectWorkflowAssignment {
 }
 
 model Milestones {
-  id               Int            @id() @default(autoincrement())
-  projectId        Int
-  project          Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  rootId           Int?
-  root             Milestones?    @relation("MilestoneRoot", fields: [rootId], references: [id])
-  descendants      Milestones[]   @relation("MilestoneRoot")
-  parentId         Int?
-  parent           Milestones?    @relation("MilestoneParent", fields: [parentId], references: [id], onDelete: Cascade)
-  children         Milestones[]   @relation("MilestoneParent")
-  milestoneType    MilestoneTypes @relation(fields: [milestoneTypesId], references: [id])
-  milestoneTypesId Int
-  name             String
-  note             Json?
-  docs             Json?
-  isStarted        Boolean        @default(false)
-  isCompleted      Boolean        @default(false)
-  isDeleted        Boolean        @default(false)
-  startedAt        DateTime?      @db.Timestamptz(6)
-  completedAt      DateTime?      @db.Timestamptz(6)
-  createdAt        DateTime       @default(now()) @db.Timestamptz(6)
-  creator          User           @relation(fields: [createdBy], references: [id])
-  createdBy        String
-  sessions         Sessions[]
-  testRuns         TestRuns[]
+  id                  Int            @id() @default(autoincrement())
+  projectId           Int
+  project             Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rootId              Int?
+  root                Milestones?    @relation("MilestoneRoot", fields: [rootId], references: [id])
+  descendants         Milestones[]   @relation("MilestoneRoot")
+  parentId            Int?
+  parent              Milestones?    @relation("MilestoneParent", fields: [parentId], references: [id], onDelete: Cascade)
+  children            Milestones[]   @relation("MilestoneParent")
+  milestoneType       MilestoneTypes @relation(fields: [milestoneTypesId], references: [id])
+  milestoneTypesId    Int
+  name                String
+  note                Json?
+  docs                Json?
+  isStarted           Boolean        @default(false)
+  isCompleted         Boolean        @default(false)
+  isDeleted           Boolean        @default(false)
+  automaticCompletion Boolean        @default(false)
+  notifyDaysBefore    Int            @default(0)
+  startedAt           DateTime?      @db.Timestamptz(6)
+  completedAt         DateTime?      @db.Timestamptz(6)
+  createdAt           DateTime       @default(now()) @db.Timestamptz(6)
+  creator             User           @relation(fields: [createdBy], references: [id])
+  createdBy           String
+  sessions            Sessions[]
+  testRuns            TestRuns[]
 
   @@index([projectId, isDeleted])
   @@index([parentId])
   @@index([isCompleted, isDeleted])
+  @@index([isCompleted, automaticCompletion, completedAt])
+  @@index([isCompleted, notifyDaysBefore, completedAt])
 }
 
 model MilestoneTypes {

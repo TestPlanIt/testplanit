@@ -1073,6 +1073,14 @@ const metadata: ModelMeta = {
                     name: "isDeleted",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, automaticCompletion: {
+                    name: "automaticCompletion",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, notifyDaysBefore: {
+                    name: "notifyDaysBefore",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 0 }] }],
                 }, startedAt: {
                     name: "startedAt",
                     type: "DateTime",

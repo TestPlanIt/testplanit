@@ -93,6 +93,41 @@ export class NotificationService {
   }
 
   /**
+   * Create a milestone due reminder notification
+   */
+  static async createMilestoneDueNotification(
+    userId: string,
+    milestoneName: string,
+    projectName: string,
+    dueDate: Date,
+    milestoneId: number,
+    projectId: number,
+    isOverdue: boolean
+  ) {
+    const title = isOverdue ? "Milestone Overdue" : "Milestone Due Soon";
+    const message = isOverdue
+      ? `Milestone "${milestoneName}" in project "${projectName}" was due on ${dueDate.toLocaleDateString()}`
+      : `Milestone "${milestoneName}" in project "${projectName}" is due on ${dueDate.toLocaleDateString()}`;
+
+    return this.createNotification({
+      userId,
+      type: NotificationType.MILESTONE_DUE_REMINDER,
+      title,
+      message,
+      relatedEntityId: milestoneId.toString(),
+      relatedEntityType: "Milestone",
+      data: {
+        milestoneName,
+        projectName,
+        projectId,
+        milestoneId,
+        dueDate: dueDate.toISOString(),
+        isOverdue,
+      },
+    });
+  }
+
+  /**
    * Create a user registration notification for all System Admins
    */
   static async createUserRegistrationNotification(

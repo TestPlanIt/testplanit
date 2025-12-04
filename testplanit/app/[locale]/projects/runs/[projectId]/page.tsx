@@ -264,10 +264,10 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     if (shouldOpenByUrl) {
       // Read selected cases from sessionStorage instead of URL to avoid length limits
       const storedCases = sessionStorage.getItem("createTestRun_selectedCases");
-      console.log("Reading from sessionStorage:", storedCases);
+      // console.log("Reading from sessionStorage:", storedCases);
       const casesFromStorage = storedCases ? JSON.parse(storedCases) : [];
 
-      console.log("Parsed cases from storage:", casesFromStorage);
+      // console.log("Parsed cases from storage:", casesFromStorage);
       setModalSelectedTestCases(casesFromStorage);
 
       // Don't clear sessionStorage here - clear it when modal closes to avoid fast refresh issues
@@ -557,7 +557,6 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
       }
     });
   });
-  const uniqueResponsibleUsers = Array.from(responsibleUsers);
 
   // Query for completed test runs with server-side pagination and filtering
   const {

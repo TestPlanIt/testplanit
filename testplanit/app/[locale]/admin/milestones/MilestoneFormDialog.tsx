@@ -54,6 +54,9 @@ const FormSchema = z.object({
   isCompleted: z.boolean(),
   startedAt: z.date().optional(),
   completedAt: z.date().optional(),
+  automaticCompletion: z.boolean(),
+  enableNotifications: z.boolean(),
+  notifyDaysBefore: z.number().min(0),
   milestoneTypeId: z.number({
     error: (issue) =>
       issue.input === undefined ? "Please select a Milestone Type" : undefined,
@@ -119,9 +122,7 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
 
     return allMilestoneTypes.filter((milestoneType) => {
       // Check if this milestone type is assigned to ALL selected projects
-      const assignedProjectIds = milestoneType.projects.map(
-        (p) => p.projectId
-      );
+      const assignedProjectIds = milestoneType.projects.map((p) => p.projectId);
       return selectedProjectIds.every((projectId) =>
         assignedProjectIds.includes(projectId)
       );
@@ -159,6 +160,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
       isCompleted: false,
       startedAt: undefined,
       completedAt: undefined,
+      automaticCompletion: false,
+      enableNotifications: true,
+      notifyDaysBefore: 5,
       milestoneTypeId: defaultMilestoneTypeId,
     },
   });
@@ -169,7 +173,12 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
     formState: { errors },
     setValue,
     reset,
+    watch,
   } = form;
+
+  const completedAt = watch("completedAt");
+  const enableNotifications = watch("enableNotifications");
+  const hasDueDate = !!completedAt;
 
   useEffect(() => {
     if (defaultMilestoneTypeId) {
@@ -188,12 +197,24 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
         isCompleted: false,
         startedAt: undefined,
         completedAt: undefined,
+        automaticCompletion: false,
+        enableNotifications: true,
+        notifyDaysBefore: 5,
         milestoneTypeId: defaultMilestoneTypeId,
       });
       setNoteContent({});
       setDocsContent({});
     }
   }, [open, reset, defaultMilestoneTypeId]);
+
+  // Toggle enableNotifications based on due date presence
+  useEffect(() => {
+    if (completedAt) {
+      setValue("enableNotifications", true);
+    } else {
+      setValue("enableNotifications", false);
+    }
+  }, [completedAt, setValue]);
 
   if (!session || !session.user.access) {
     return null;
@@ -219,6 +240,13 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
           isCompleted: data.isCompleted,
           startedAt: data.startedAt,
           completedAt: data.completedAt,
+          automaticCompletion: data.completedAt
+            ? data.automaticCompletion
+            : false,
+          notifyDaysBefore:
+            data.completedAt && data.enableNotifications
+              ? data.notifyDaysBefore
+              : 0,
         },
         session.user.id
       );
@@ -238,7 +266,8 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
     }
   }
 
-  const hasNoCommonTypes = !milestoneTypesLoading && commonMilestoneTypes.length === 0;
+  const hasNoCommonTypes =
+    !milestoneTypesLoading && commonMilestoneTypes.length === 0;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -246,7 +275,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
         <Form {...form}>
           <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
             <DialogHeader>
-              <DialogTitle>{t("admin.milestones.wizard.createMilestone")}</DialogTitle>
+              <DialogTitle>
+                {t("admin.milestones.wizard.createMilestone")}
+              </DialogTitle>
               <DialogDescription className="sr-only">
                 {t("admin.milestones.wizard.createMilestone")}
               </DialogDescription>
@@ -255,7 +286,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
             {hasNoCommonTypes ? (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{t("admin.milestones.wizard.noCommonTypesTitle")}</AlertTitle>
+                <AlertTitle>
+                  {t("admin.milestones.wizard.noCommonTypesTitle")}
+                </AlertTitle>
                 <AlertDescription>
                   {t("admin.milestones.wizard.noCommonTypesDescription")}
                 </AlertDescription>
@@ -272,7 +305,10 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                         <HelpPopover helpKey="milestone.name" />
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder={t("common.fields.name")} {...field} />
+                        <Input
+                          placeholder={t("common.fields.name")}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -332,14 +368,16 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectGroup>
-                                  {milestoneTypesOptions.map((milestoneType) => (
-                                    <SelectItem
-                                      key={milestoneType.value}
-                                      value={milestoneType.value}
-                                    >
-                                      {milestoneType.label}
-                                    </SelectItem>
-                                  ))}
+                                  {milestoneTypesOptions.map(
+                                    (milestoneType) => (
+                                      <SelectItem
+                                        key={milestoneType.value}
+                                        value={milestoneType.value}
+                                      >
+                                        {milestoneType.label}
+                                      </SelectItem>
+                                    )
+                                  )}
                                 </SelectGroup>
                               </SelectContent>
                             </Select>
@@ -429,6 +467,71 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                       )}
                     />
                   </div>
+                  <div className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormField
+                      control={control}
+                      name="automaticCompletion"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={!hasDueDate}
+                            />
+                          </FormControl>
+                          <FormLabel className="flex items-center">
+                            {t("milestones.fields.automaticCompletion")}
+                            <HelpPopover helpKey="milestone.automaticCompletion" />
+                          </FormLabel>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <FormField
+                      control={control}
+                      name="enableNotifications"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={!hasDueDate}
+                            />
+                          </FormControl>
+                          <FormLabel className="flex items-center">
+                            {t("milestones.fields.notifyDaysBefore")}
+                            <HelpPopover helpKey="milestone.notifyDaysBefore" />
+                          </FormLabel>
+                          <FormField
+                            control={control}
+                            name="notifyDaysBefore"
+                            render={({ field: daysField }) => (
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  placeholder="5"
+                                  disabled={!hasDueDate || !enableNotifications}
+                                  {...daysField}
+                                  onChange={(e) =>
+                                    daysField.onChange(
+                                      parseInt(e.target.value) || 1
+                                    )
+                                  }
+                                  className="max-w-[80px]"
+                                />
+                              </FormControl>
+                            )}
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
                 <FormField
                   control={control}
@@ -449,7 +552,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                           }}
                           readOnly={false}
                           className="h-auto"
-                          placeholder={t("milestones.placeholders.documentation")}
+                          placeholder={t(
+                            "milestones.placeholders.documentation"
+                          )}
                           projectId={selectedProjectIds[0]?.toString()}
                         />
                       </FormControl>

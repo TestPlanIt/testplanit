@@ -380,4 +380,191 @@ describe("NotificationService", () => {
       expect(callCount).toBe(0);
     });
   });
+
+  describe("createMilestoneDueNotification", () => {
+    it("should create a notification for milestone due soon", async () => {
+      const mockJobId = "job-milestone-due";
+      mockQueue.add.mockResolvedValue({ id: mockJobId } as any);
+
+      const dueDate = new Date("2025-12-15");
+      const result = await NotificationService.createMilestoneDueNotification(
+        "user-123",
+        "Release 2.0",
+        "Project Alpha",
+        dueDate,
+        42,
+        100,
+        false // not overdue
+      );
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        {
+          userId: "user-123",
+          type: NotificationType.MILESTONE_DUE_REMINDER,
+          title: "Milestone Due Soon",
+          message: expect.stringContaining('Milestone "Release 2.0" in project "Project Alpha" is due on'),
+          relatedEntityId: "42",
+          relatedEntityType: "Milestone",
+          data: {
+            milestoneName: "Release 2.0",
+            projectName: "Project Alpha",
+            projectId: 100,
+            milestoneId: 42,
+            dueDate: dueDate.toISOString(),
+            isOverdue: false,
+          },
+        },
+        {
+          removeOnComplete: true,
+          removeOnFail: false,
+        }
+      );
+
+      expect(result).toBe(mockJobId);
+    });
+
+    it("should create a notification for overdue milestone", async () => {
+      const mockJobId = "job-milestone-overdue";
+      mockQueue.add.mockResolvedValue({ id: mockJobId } as any);
+
+      const dueDate = new Date("2025-11-01");
+      const result = await NotificationService.createMilestoneDueNotification(
+        "user-456",
+        "Sprint 5 Complete",
+        "Mobile App",
+        dueDate,
+        99,
+        200,
+        true // overdue
+      );
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        {
+          userId: "user-456",
+          type: NotificationType.MILESTONE_DUE_REMINDER,
+          title: "Milestone Overdue",
+          message: expect.stringContaining('Milestone "Sprint 5 Complete" in project "Mobile App" was due on'),
+          relatedEntityId: "99",
+          relatedEntityType: "Milestone",
+          data: {
+            milestoneName: "Sprint 5 Complete",
+            projectName: "Mobile App",
+            projectId: 200,
+            milestoneId: 99,
+            dueDate: dueDate.toISOString(),
+            isOverdue: true,
+          },
+        },
+        {
+          removeOnComplete: true,
+          removeOnFail: false,
+        }
+      );
+
+      expect(result).toBe(mockJobId);
+    });
+
+    it("should include correct title based on overdue status", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-123" } as any);
+
+      const dueDate = new Date();
+
+      // Test non-overdue
+      await NotificationService.createMilestoneDueNotification(
+        "user-1",
+        "Test Milestone",
+        "Test Project",
+        dueDate,
+        1,
+        1,
+        false
+      );
+
+      expect(mockQueue.add).toHaveBeenLastCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          title: "Milestone Due Soon",
+        }),
+        expect.any(Object)
+      );
+
+      // Test overdue
+      await NotificationService.createMilestoneDueNotification(
+        "user-1",
+        "Test Milestone",
+        "Test Project",
+        dueDate,
+        1,
+        1,
+        true
+      );
+
+      expect(mockQueue.add).toHaveBeenLastCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          title: "Milestone Overdue",
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it("should store milestone and project IDs for URL building", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-123" } as any);
+
+      const milestoneId = 42;
+      const projectId = 100;
+      const dueDate = new Date();
+
+      await NotificationService.createMilestoneDueNotification(
+        "user-1",
+        "Test Milestone",
+        "Test Project",
+        dueDate,
+        milestoneId,
+        projectId,
+        false
+      );
+
+      expect(mockQueue.add).toHaveBeenCalledWith(
+        "create-notification",
+        expect.objectContaining({
+          relatedEntityId: milestoneId.toString(),
+          relatedEntityType: "Milestone",
+          data: expect.objectContaining({
+            milestoneId,
+            projectId,
+          }),
+        }),
+        expect.any(Object)
+      );
+    });
+
+    it("should handle queue errors gracefully", async () => {
+      const error = new Error("Queue error");
+      mockQueue.add.mockRejectedValue(error);
+
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      await expect(
+        NotificationService.createMilestoneDueNotification(
+          "user-1",
+          "Test Milestone",
+          "Test Project",
+          new Date(),
+          1,
+          1,
+          false
+        )
+      ).rejects.toThrow("Queue error");
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Failed to queue notification:",
+        error
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+  });
 });

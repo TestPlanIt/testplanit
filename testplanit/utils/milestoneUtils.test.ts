@@ -276,6 +276,8 @@ const baseMockMilestone: Milestones = {
   completedAt: null,
   createdAt: new Date("2024-01-01T00:00:00.000Z"),
   createdBy: "user1",
+  automaticCompletion: false,
+  notifyDaysBefore: 0,
 };
 
 // Mock Milestone Type and Icon for MilestonesWithTypes

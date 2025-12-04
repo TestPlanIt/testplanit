@@ -1245,7 +1245,11 @@
       "parent": "Hito Padre",
       "started": "Iniciado",
       "startDate": "Fecha de inicio",
-      "dueDate": "Fecha de fin"
+      "dueDate": "Fecha de fin",
+      "automaticCompletion": "Completar automáticamente en la fecha de vencimiento",
+      "notifyDaysBefore": "Notificar días antes de la fecha de vencimiento",
+      "notifyDaysBeforeValue": "Notificar {count, plural, one {# día} other {# días}} antes de la fecha de vencimiento",
+      "dueDateNotifications": "Notificaciones de fecha de vencimiento"
     },
     "labels": {
       "description": "Descripción",
@@ -1338,6 +1342,10 @@
       "processing": "Procesando...",
       "confirmAndCompleteAll": "Confirmar y completar todo",
       "completeButton": "Complete"
+    },
+    "notifications": {
+      "dueSoon": "El hito \"{name}\" vence el {dueDate}",
+      "overdue": "El hito \"{name}\" debía cumplirse el {dueDate}"
     }
   },
   "sessions": {
@@ -4674,7 +4682,13 @@
         "inProject": "en proyecto",
         "testRun": "Prueba de ejecución:",
         "casesInProject": "{count, plural, =1 {# caso} other {# casos}} en",
-        "sentBy": "Enviado por {name}"
+        "sentBy": "Enviado por {name}",
+        "milestoneDueSoonTitle": "Hito que se cumplirá pronto",
+        "milestoneOverdueTitle": "Hito atrasado",
+        "milestoneDueSoon": "El hito \"{milestoneName}\" en el proyecto \"{projectName}\" vence el {dueDate}.",
+        "milestoneOverdue": "El hito \"{milestoneName}\" en el proyecto \"{projectName}\" debía cumplirse el {dueDate} y ahora está vencido.",
+        "milestoneNotificationReason": "Recibe esta notificación porque ha participado en el trabajo asociado con este hito (ejecuciones de prueba, sesiones o como creador del hito).",
+        "milestoneNotificationContinue": "Continuará recibiendo recordatorios diarios hasta que este hito se marque como completado."
       }
     },
     "issues": {
@@ -4962,7 +4976,9 @@
       "dueDate": "## Fecha de vencimiento\nLa fecha objetivo para completar este hito.\n\n- Establecer las expectativas de fecha límite\n- Utilizado para la planificación de la línea de tiempo del proyecto\n- Ayuda a rastrear el progreso del hito con respecto a la programación",
       "parent": "## Hito Padre\nEnlace este hito a un hito padre, creando una jerarquía.\n\n- Organiza hitos en grupos lógicos\n- Muestra dependencias y relaciones\n- Ayuda a rastrear el progreso de iniciativas más grandes",
       "description": "## Descripción\nInformación detallada sobre el propósito, los requisitos y el ámbito del hito.\n\n- Contexto de proveedores para los miembros del equipo\n- Requisitos y objetivos clave\n- Soporta colaboración y alineación",
-      "documentation": "## Documentación\nMás detalles, referencias y materiales de soporte.\n\n- Especificaciones técnicas\n- Documentos de diseño\n- Referencias externas\n- Notas y decisiones de reuniones"
+      "documentation": "## Documentación\nMás detalles, referencias y materiales de soporte.\n\n- Especificaciones técnicas\n- Documentos de diseño\n- Referencias externas\n- Notas y decisiones de reuniones",
+      "automaticCompletion": "## Completar automáticamente en la fecha de vencimiento\nMarca automáticamente este hito como completado cuando se alcanza su fecha de vencimiento.\n\n- El hito se completará a la hora programada en la fecha de vencimiento\n- Útil para hitos con límite de tiempo que deben cerrarse independientemente del estado de finalización\n- Se puede anular completando manualmente el hito antes de la fecha de vencimiento\n- Requiere que se establezca una fecha de vencimiento",
+      "notifyDaysBefore": "## Notificar días antes de la fecha de vencimiento\nEnvíe notificaciones a los miembros del equipo asignados cuando se acerque la fecha de vencimiento del hito.\n\n- Active para habilitar las notificaciones, desactívelas para deshabilitarlas\n- Ingrese el número de días antes de la fecha de vencimiento para comenzar a enviar recordatorios\n- Las notificaciones se envían a los usuarios asignados a ejecuciones de prueba y sesiones dentro de este hito\n- Los hitos vencidos continuarán enviando recordatorios hasta que se completen"
     },
     "session": {
       "name": "## Nombre de la sesión\nUn nombre claro y descriptivo que identifica el propósito de su sesión de prueba.\n\n- Debe ser único y significativo\n- Ayuda a los miembros del equipo a entender lo que se está probando\n- Utilizado en informes y seguimiento",

@@ -18,6 +18,8 @@ export interface MilestoneFormData {
   isCompleted: boolean;
   startedAt?: Date;
   completedAt?: Date;
+  automaticCompletion: boolean;
+  notifyDaysBefore: number;
 }
 
 const AddMilestonesToProjectsWizard = (): React.ReactElement => {
@@ -63,6 +65,8 @@ const AddMilestonesToProjectsWizard = (): React.ReactElement => {
             isCompleted: formData.isCompleted,
             startedAt: formData.startedAt,
             completedAt: formData.completedAt,
+            automaticCompletion: formData.automaticCompletion,
+            notifyDaysBefore: formData.notifyDaysBefore,
             createdAt: new Date(),
             creator: {
               connect: { id: userId },
