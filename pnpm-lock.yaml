@@ -6,7 +6,6 @@ settings:
 
 overrides:
   csstype: ^3.2.0
-  next: ~16.0.5
 
 importers:
 
@@ -581,7 +580,7 @@ importers:
         specifier: ^5.1.6
         version: 5.1.6
       next:
-        specifier: ~16.0.5
+        specifier: ~16.0.7
         version: 16.0.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.57.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       next-auth:
         specifier: ^4.24.13
@@ -12679,7 +12678,7 @@ packages:
     resolution: {integrity: sha512-sgObCfcfL7BzIK76SS5TnQtc3yo2Oifp/yIpfv6fMfeBOiBJkDWF3A2y9+yqnmJ4JKc2C+nMjSjmgDeTwgN1rQ==}
     peerDependencies:
       '@auth/core': 0.34.3
-      next: ~16.0.5
+      next: ^12.2.5 || ^13 || ^14 || ^15 || ^16
       nodemailer: ^7.0.7
       react: ^17.0.2 || ^18 || ^19
       react-dom: ^17.0.2 || ^18 || ^19
@@ -12695,7 +12694,7 @@ packages:
   next-intl@4.5.8:
     resolution: {integrity: sha512-BdN6494nvt09WtmW5gbWdwRhDDHC/Sg7tBMhN7xfYds3vcRCngSDXat81gmJkblw9jYOv8zXzzFJyu5VYXnJzg==}
     peerDependencies:
-      next: ~16.0.5
+      next: ^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || >=19.0.0-rc <19.0.0 || ^19.0.0
       typescript: ^5.0.0
     peerDependenciesMeta:
@@ -12734,7 +12733,7 @@ packages:
     peerDependencies:
       '@remix-run/react': '>=1.0.0'
       motion: '>=11'
-      next: ~16.0.5
+      next: '>=13.0.0'
       react: '>=18'
       react-dom: '>=18'
       react-router: '>=7.0.0'
