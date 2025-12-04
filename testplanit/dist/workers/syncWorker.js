@@ -3406,9 +3406,6 @@ function isMultiTenantMode() {
   return process.env.MULTI_TENANT_MODE === "true";
 }
 function getCurrentTenantId() {
-  if (!isMultiTenantMode()) {
-    return void 0;
-  }
   return process.env.INSTANCE_TENANT_ID;
 }
 var tenantClients = /* @__PURE__ */ new Map();

@@ -14,9 +14,92 @@ const middleware = createMiddleware({
   localePrefix: "always",
 });
 
+/**
+ * Determines if a request is coming from an external API client (not a browser on the same origin).
+ *
+ * This checks for browser-specific headers that indicate the request originated from a
+ * same-origin browser context. External API clients (curl, Postman, scripts, etc.) won't
+ * have these headers.
+ */
+function isExternalApiRequest(request: NextRequest): boolean {
+  // Check Sec-Fetch-Site header - browsers set this for all requests
+  // "same-origin" means the request came from the same origin (browser app)
+  // External API clients don't set this header
+  const secFetchSite = request.headers.get("sec-fetch-site");
+  if (secFetchSite === "same-origin" || secFetchSite === "same-site") {
+    return false;
+  }
+
+  // Check Origin header - if it matches our host, it's same-origin
+  const origin = request.headers.get("origin");
+  const host = request.headers.get("host");
+  if (origin && host) {
+    try {
+      const originUrl = new URL(origin);
+      if (originUrl.host === host) {
+        return false;
+      }
+    } catch {
+      // Invalid URL, treat as external
+    }
+  }
+
+  // Check Referer header - if it matches our host, likely same-origin browser request
+  const referer = request.headers.get("referer");
+  if (referer && host) {
+    try {
+      const refererUrl = new URL(referer);
+      if (refererUrl.host === host) {
+        return false;
+      }
+    } catch {
+      // Invalid URL, treat as external
+    }
+  }
+
+  // No browser-specific headers found - treat as external API request
+  return true;
+}
+
 export default async function middlewareWithPreferences(request: NextRequest) {
   const url = new URL(request.url);
   const pathname = url.pathname;
+
+  // Check if this is an API route (excluding auth routes which need to remain accessible)
+  const isApiRoute = pathname.startsWith("/api/");
+  const isAuthRoute = pathname.startsWith("/api/auth/");
+
+  if (isApiRoute && !isAuthRoute) {
+    // Get the JWT token for API routes
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    // If no token, let the API route handler deal with it (return 401)
+    if (!token) {
+      return NextResponse.next();
+    }
+
+    // ADMINs always have API access
+    if (token.access === "ADMIN") {
+      return NextResponse.next();
+    }
+
+    // Check if this is an external API request
+    if (isExternalApiRequest(request)) {
+      // For external API requests, user must have isApi enabled
+      if (!token.isApi) {
+        return NextResponse.json(
+          { error: "External API access not enabled for this account" },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Allow the request
+    return NextResponse.next();
+  }
 
   // Check trial expiration status
   const trialEndDate = process.env.TRIAL_END_DATE;
@@ -137,6 +220,11 @@ export default async function middlewareWithPreferences(request: NextRequest) {
 }
 
 export const config = {
-  // Match only internationalized pathnames
-  matcher: ["/((?!api|_next|.*\\..*|_vercel|favicon.ico).*)"],
+  // Match internationalized pathnames and API routes (for external API access control)
+  matcher: [
+    // Match all API routes (for external API access control)
+    "/api/:path*",
+    // Match all internationalized pathnames (excluding static files)
+    "/((?!_next|.*\\..*|_vercel|favicon.ico).*)",
+  ],
 };

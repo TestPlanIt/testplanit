@@ -58,6 +58,18 @@ async function build() {
     } else {
       console.warn('⚠ Email templates directory not found at', templatesSource);
     }
+
+    // Copy translation messages to dist directory
+    // The server-translations.ts uses __dirname to find messages relative to the compiled file
+    const messagesSource = path.join(rootDir, 'messages');
+    const messagesDest = path.join(distDir, 'messages');
+
+    if (fs.existsSync(messagesSource)) {
+      fs.cpSync(messagesSource, messagesDest, { recursive: true });
+      console.log('✓ Translation messages copied to dist/messages');
+    } else {
+      console.warn('⚠ Messages directory not found at', messagesSource);
+    }
   } catch (error) {
     console.error('Build failed:', error);
     process.exit(1);

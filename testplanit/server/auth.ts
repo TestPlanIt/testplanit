@@ -112,6 +112,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     access?: "USER" | "PROJECTADMIN" | "ADMIN" | "NONE" | null;
     provider?: string;
+    isApi?: boolean;
   }
 }
 
@@ -413,15 +414,16 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           token.provider = account.provider;
         }
 
-        // Fetch and store user access level in JWT for middleware access control
+        // Fetch and store user access level and isApi flag in JWT for middleware access control
         // Fetch on sign in, explicit update, or if access is missing (for existing tokens)
         if (account || trigger === "update" || !token.access) {
           const user = await db.user.findUnique({
             where: { id: token.sub },
-            select: { access: true },
+            select: { access: true, isApi: true },
           });
           if (user) {
             token.access = user.access;
+            token.isApi = user.isApi;
           }
         }
 
@@ -627,15 +629,16 @@ export const authOptions: NextAuthOptions = {
         token.provider = account.provider;
       }
 
-      // Fetch and store user access level in JWT for middleware access control
+      // Fetch and store user access level and isApi flag in JWT for middleware access control
       // Fetch on sign in, explicit update, or if access is missing (for existing tokens)
       if (account || trigger === "update" || !token.access) {
         const user = await db.user.findUnique({
           where: { id: token.sub },
-          select: { access: true },
+          select: { access: true, isApi: true },
         });
         if (user) {
           token.access = user.access;
+          token.isApi = user.isApi;
         }
       }
 
