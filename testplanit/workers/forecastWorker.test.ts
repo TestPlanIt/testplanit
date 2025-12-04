@@ -100,4 +100,49 @@ describe("ForecastWorker job constants", () => {
     expect(typeof JOB_UPDATE_ALL_CASES).toBe("string");
     expect(JOB_UPDATE_ALL_CASES).toBe("update-all-cases-forecast");
   });
+
+  it("should export JOB_AUTO_COMPLETE_MILESTONES constant", async () => {
+    const { JOB_AUTO_COMPLETE_MILESTONES } = await import("./forecastWorker");
+    expect(typeof JOB_AUTO_COMPLETE_MILESTONES).toBe("string");
+    expect(JOB_AUTO_COMPLETE_MILESTONES).toBe("auto-complete-milestones");
+  });
+
+  it("should export JOB_MILESTONE_DUE_NOTIFICATIONS constant", async () => {
+    const { JOB_MILESTONE_DUE_NOTIFICATIONS } = await import("./forecastWorker");
+    expect(typeof JOB_MILESTONE_DUE_NOTIFICATIONS).toBe("string");
+    expect(JOB_MILESTONE_DUE_NOTIFICATIONS).toBe("milestone-due-notifications");
+  });
+});
+
+describe("Milestone job constants", () => {
+  it("should have unique job names for all milestone jobs", async () => {
+    const {
+      JOB_UPDATE_SINGLE_CASE,
+      JOB_UPDATE_ALL_CASES,
+      JOB_AUTO_COMPLETE_MILESTONES,
+      JOB_MILESTONE_DUE_NOTIFICATIONS,
+    } = await import("./forecastWorker");
+
+    const jobNames = [
+      JOB_UPDATE_SINGLE_CASE,
+      JOB_UPDATE_ALL_CASES,
+      JOB_AUTO_COMPLETE_MILESTONES,
+      JOB_MILESTONE_DUE_NOTIFICATIONS,
+    ];
+
+    // Check all job names are unique
+    const uniqueJobNames = new Set(jobNames);
+    expect(uniqueJobNames.size).toBe(jobNames.length);
+  });
+
+  it("should use descriptive job names for milestone features", async () => {
+    const { JOB_AUTO_COMPLETE_MILESTONES, JOB_MILESTONE_DUE_NOTIFICATIONS } =
+      await import("./forecastWorker");
+
+    // Job names should be descriptive and follow naming convention
+    expect(JOB_AUTO_COMPLETE_MILESTONES).toContain("milestone");
+    expect(JOB_AUTO_COMPLETE_MILESTONES).toContain("auto-complete");
+    expect(JOB_MILESTONE_DUE_NOTIFICATIONS).toContain("milestone");
+    expect(JOB_MILESTONE_DUE_NOTIFICATIONS).toContain("notification");
+  });
 });

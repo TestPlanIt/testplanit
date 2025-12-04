@@ -1876,7 +1876,8 @@ function loadTenantConfigs() {
           tenantId,
           databaseUrl: value,
           elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
-          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`]
+          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
+          baseUrl: process.env[`TENANT_${match[1]}_BASE_URL`]
         });
       }
     }

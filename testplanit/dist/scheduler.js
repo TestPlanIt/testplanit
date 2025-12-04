@@ -52,6 +52,90 @@ var init_prismaBase = __esm({
   }
 });
 
+// env.js
+var import_env_nextjs, import_v4, env;
+var init_env = __esm({
+  "env.js"() {
+    "use strict";
+    import_env_nextjs = require("@t3-oss/env-nextjs");
+    import_v4 = require("zod/v4");
+    env = (0, import_env_nextjs.createEnv)({
+      /**
+       * Specify your server-side environment variables schema here. This way you can ensure the app
+       * isn't built with invalid env vars.
+       */
+      server: {
+        DATABASE_URL: import_v4.z.string().refine(
+          (str) => !str.includes("YOUR_MYSQL_URL_HERE"),
+          "You forgot to change the default URL"
+        ),
+        NODE_ENV: import_v4.z.enum(["development", "test", "production"]).prefault("development"),
+        NEXTAUTH_SECRET: process.env.NODE_ENV === "production" ? import_v4.z.string() : import_v4.z.string().optional(),
+        NEXTAUTH_URL: import_v4.z.preprocess(
+          // This makes Vercel deployments not fail if you don't set NEXTAUTH_URL
+          // Since NextAuth.js automatically uses the VERCEL_URL if present.
+          (str) => process.env.VERCEL_URL ?? str,
+          // VERCEL_URL doesn't include `https` so it cant be validated as a URL
+          process.env.VERCEL ? import_v4.z.string() : import_v4.z.url()
+        ),
+        ELASTICSEARCH_NODE: import_v4.z.url().optional()
+      },
+      /**
+       * Specify your client-side environment variables schema here. This way you can ensure the app
+       * isn't built with invalid env vars. To expose them to the client, prefix them with
+       * `NEXT_PUBLIC_`.
+       */
+      client: {
+        // NEXT_PUBLIC_CLIENTVAR: z.string(),
+      },
+      /**
+       * You can't destruct `process.env` as a regular object in the Next.js edge runtimes (e.g.
+       * middlewares) or client-side so we need to destruct manually.
+       */
+      runtimeEnv: {
+        DATABASE_URL: process.env.DATABASE_URL,
+        NODE_ENV: process.env.NODE_ENV,
+        NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+        ELASTICSEARCH_NODE: process.env.ELASTICSEARCH_NODE
+      },
+      /**
+       * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
+       * useful for Docker builds.
+       */
+      skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+      /**
+       * Makes it so that empty strings are treated as undefined. `SOME_VAR: z.string()` and
+       * `SOME_VAR=''` will throw an error.
+       */
+      emptyStringAsUndefined: true
+    });
+  }
+});
+
+// server/db.ts
+var db_exports = {};
+__export(db_exports, {
+  db: () => db
+});
+var import_client3, createPrismaClient, globalForPrisma, db;
+var init_db = __esm({
+  "server/db.ts"() {
+    "use strict";
+    import_client3 = require("@prisma/client");
+    init_env();
+    createPrismaClient = () => {
+      const client = new import_client3.PrismaClient({
+        log: env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"]
+      });
+      return client;
+    };
+    globalForPrisma = globalThis;
+    db = globalForPrisma.prisma ?? createPrismaClient();
+    if (env.NODE_ENV !== "production") globalForPrisma.prisma = db;
+  }
+});
+
 // lib/queues.ts
 var import_bullmq = require("bullmq");
 
@@ -183,7 +267,7 @@ function getEmailQueue() {
 }
 
 // workers/forecastWorker.ts
-var import_bullmq2 = require("bullmq");
+var import_bullmq3 = require("bullmq");
 
 // services/forecastService.ts
 init_prismaBase();
@@ -483,13 +567,16 @@ async function getUniqueCaseGroupIds(options = {}) {
 }
 
 // workers/forecastWorker.ts
-var import_node_url = require("node:url");
+var import_node_url2 = require("node:url");
 
 // lib/multiTenantPrisma.ts
 var import_client2 = require("@prisma/client");
 var fs = __toESM(require("fs"));
 function isMultiTenantMode() {
   return process.env.MULTI_TENANT_MODE === "true";
+}
+function getCurrentTenantId() {
+  return process.env.INSTANCE_TENANT_ID;
 }
 var tenantClients = /* @__PURE__ */ new Map();
 var tenantConfigs = null;
@@ -556,7 +643,8 @@ function loadTenantConfigs() {
           tenantId,
           databaseUrl: value,
           elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
-          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`]
+          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
+          baseUrl: process.env[`TENANT_${match[1]}_BASE_URL`]
         });
       }
     }
@@ -634,176 +722,14 @@ function validateMultiTenantJobData(jobData) {
   }
 }
 
-// workers/forecastWorker.ts
-var import_meta = {};
-var JOB_UPDATE_SINGLE_CASE = "update-single-case-forecast";
-var JOB_UPDATE_ALL_CASES = "update-all-cases-forecast";
-var processor = async (job) => {
-  console.log(`Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
-  let successCount = 0;
-  let failCount = 0;
-  validateMultiTenantJobData(job.data);
-  const prisma2 = getPrismaClientForJob(job.data);
-  switch (job.name) {
-    case JOB_UPDATE_SINGLE_CASE:
-      const singleData = job.data;
-      if (!singleData || typeof singleData.repositoryCaseId !== "number") {
-        throw new Error(
-          `Invalid data for job ${job.id}: repositoryCaseId missing or not a number.`
-        );
-      }
-      try {
-        await updateRepositoryCaseForecast(singleData.repositoryCaseId, {
-          prismaClient: prisma2
-        });
-        successCount = 1;
-        console.log(
-          `Job ${job.id} completed: Updated forecast for case ${singleData.repositoryCaseId}`
-        );
-      } catch (error) {
-        failCount = 1;
-        console.error(
-          `Job ${job.id} failed for case ${singleData.repositoryCaseId}`,
-          error
-        );
-        throw error;
-      }
-      break;
-    case JOB_UPDATE_ALL_CASES:
-      console.log(`Job ${job.id}: Starting update for all active cases.`);
-      successCount = 0;
-      failCount = 0;
-      const caseIds = await getUniqueCaseGroupIds({ prismaClient: prisma2 });
-      const affectedTestRunIds = /* @__PURE__ */ new Set();
-      for (const caseId of caseIds) {
-        try {
-          const result = await updateRepositoryCaseForecast(caseId, {
-            skipTestRunUpdate: true,
-            collectAffectedTestRuns: true,
-            prismaClient: prisma2
-          });
-          for (const testRunId of result.affectedTestRunIds) {
-            affectedTestRunIds.add(testRunId);
-          }
-          successCount++;
-        } catch (error) {
-          console.error(
-            `Job ${job.id}: Failed to update forecast for case ${caseId}`,
-            error
-          );
-          failCount++;
-        }
-      }
-      console.log(
-        `Job ${job.id}: Processed ${caseIds.length} unique case groups. Success: ${successCount}, Failed: ${failCount}`
-      );
-      console.log(
-        `Job ${job.id}: Filtering ${affectedTestRunIds.size} affected test runs...`
-      );
-      const activeTestRuns = await prisma2.testRuns.findMany({
-        where: {
-          id: { in: Array.from(affectedTestRunIds) },
-          isCompleted: false
-        },
-        select: { id: true }
-      });
-      const activeTestRunIds = activeTestRuns.map((tr) => tr.id);
-      const skippedCompletedCount = affectedTestRunIds.size - activeTestRunIds.length;
-      console.log(
-        `Job ${job.id}: Updating ${activeTestRunIds.length} active test runs (skipped ${skippedCompletedCount} completed)...`
-      );
-      let testRunSuccessCount = 0;
-      let testRunFailCount = 0;
-      for (const testRunId of activeTestRunIds) {
-        try {
-          await updateTestRunForecast(testRunId, { prismaClient: prisma2 });
-          testRunSuccessCount++;
-        } catch (error) {
-          console.error(
-            `Job ${job.id}: Failed to update forecast for test run ${testRunId}`,
-            error
-          );
-          testRunFailCount++;
-        }
-      }
-      console.log(
-        `Job ${job.id} completed: Updated ${testRunSuccessCount} test runs. Failed: ${testRunFailCount}. Skipped ${skippedCompletedCount} completed.`
-      );
-      if (failCount > 0 || testRunFailCount > 0) {
-        console.warn(
-          `Job ${job.id} finished with ${failCount} case failures and ${testRunFailCount} test run failures.`
-        );
-      }
-      break;
-    default:
-      throw new Error(`Unknown job type: ${job.name}`);
-  }
-  return { status: "completed", successCount, failCount };
-};
-async function startWorker() {
-  if (isMultiTenantMode()) {
-    console.log("Forecast worker starting in MULTI-TENANT mode");
-  } else {
-    console.log("Forecast worker starting in SINGLE-TENANT mode");
-  }
-  if (valkey_default) {
-    const worker2 = new import_bullmq2.Worker(FORECAST_QUEUE_NAME, processor, {
-      connection: valkey_default,
-      concurrency: 5,
-      limiter: {
-        max: 100,
-        duration: 1e3
-      }
-    });
-    worker2.on("completed", (job, result) => {
-      console.info(
-        `Worker: Job ${job.id} (${job.name}) completed successfully. Result:`,
-        result
-      );
-    });
-    worker2.on("failed", (job, err) => {
-      console.error(
-        `Worker: Job ${job?.id} (${job?.name}) failed with error:`,
-        err
-      );
-    });
-    worker2.on("error", (err) => {
-      console.error("Worker encountered an error:", err);
-    });
-    console.log("Forecast worker started and listening for jobs...");
-    const shutdown = async () => {
-      console.log("Shutting down forecast worker...");
-      await worker2.close();
-      if (isMultiTenantMode()) {
-        await disconnectAllTenantClients();
-      }
-      console.log("Forecast worker shut down gracefully.");
-      process.exit(0);
-    };
-    process.on("SIGTERM", shutdown);
-    process.on("SIGINT", shutdown);
-  } else {
-    console.warn(
-      "Valkey connection not available. Forecast worker cannot start."
-    );
-    process.exit(1);
-  }
-}
-if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || typeof import_meta === "undefined" || import_meta.url === void 0) {
-  startWorker().catch((err) => {
-    console.error("Failed to start worker:", err);
-    process.exit(1);
-  });
-}
-
 // workers/notificationWorker.ts
-var import_bullmq3 = require("bullmq");
-var import_node_url2 = require("node:url");
-var import_meta2 = {};
+var import_bullmq2 = require("bullmq");
+var import_node_url = require("node:url");
+var import_meta = {};
 var JOB_CREATE_NOTIFICATION = "create-notification";
 var JOB_PROCESS_USER_NOTIFICATIONS = "process-user-notifications";
 var JOB_SEND_DAILY_DIGEST = "send-daily-digest";
-var processor2 = async (job) => {
+var processor = async (job) => {
   console.log(`Processing notification job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
   validateMultiTenantJobData(job.data);
   const prisma2 = getPrismaClientForJob(job.data);
@@ -935,14 +861,14 @@ var processor2 = async (job) => {
   }
 };
 var worker = null;
-var startWorker2 = async () => {
+var startWorker = async () => {
   if (isMultiTenantMode()) {
     console.log("Notification worker starting in MULTI-TENANT mode");
   } else {
     console.log("Notification worker starting in SINGLE-TENANT mode");
   }
   if (valkey_default) {
-    worker = new import_bullmq3.Worker(NOTIFICATION_QUEUE_NAME, processor2, {
+    worker = new import_bullmq2.Worker(NOTIFICATION_QUEUE_NAME, processor, {
       connection: valkey_default,
       concurrency: 5
     });
@@ -974,16 +900,501 @@ var startWorker2 = async () => {
     process.exit(0);
   });
 };
-if (typeof import_meta2 !== "undefined" && import_meta2.url === (0, import_node_url2.pathToFileURL)(process.argv[1]).href || (typeof import_meta2 === "undefined" || import_meta2.url === void 0)) {
+if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || (typeof import_meta === "undefined" || import_meta.url === void 0)) {
   console.log("Notification worker running...");
-  startWorker2().catch((err) => {
+  startWorker().catch((err) => {
     console.error("Failed to start notification worker:", err);
+    process.exit(1);
+  });
+}
+
+// lib/services/notificationService.ts
+var import_client4 = require("@prisma/client");
+var NotificationService = class {
+  /**
+   * Create a notification for a user
+   */
+  static async createNotification(params) {
+    const notificationQueue = getNotificationQueue();
+    if (!notificationQueue) {
+      console.warn("Notification queue not available, notification not created");
+      return;
+    }
+    try {
+      const jobData = {
+        ...params,
+        tenantId: getCurrentTenantId()
+      };
+      const job = await notificationQueue.add(JOB_CREATE_NOTIFICATION, jobData, {
+        removeOnComplete: true,
+        removeOnFail: false
+      });
+      console.log(`Queued notification job ${job.id} for user ${params.userId}`);
+      return job.id;
+    } catch (error) {
+      console.error("Failed to queue notification:", error);
+      throw error;
+    }
+  }
+  /**
+   * Create a work assignment notification
+   */
+  static async createWorkAssignmentNotification(assignedToId, entityType, entityName, projectName, assignedById, assignedByName, entityId) {
+    const title = `New ${entityType === "TestRunCase" ? "Test Case" : "Session"} Assignment`;
+    const message = `${assignedByName} assigned you to ${entityType === "TestRunCase" ? "test case" : "session"} "${entityName}" in project "${projectName}"`;
+    return this.createNotification({
+      userId: assignedToId,
+      type: entityType === "TestRunCase" ? import_client4.NotificationType.WORK_ASSIGNED : import_client4.NotificationType.SESSION_ASSIGNED,
+      title,
+      message,
+      relatedEntityId: entityId,
+      relatedEntityType: entityType,
+      data: {
+        assignedById,
+        assignedByName,
+        projectName,
+        entityName
+      }
+    });
+  }
+  /**
+   * Mark notifications as read
+   */
+  static async markNotificationsAsRead(notificationIds, userId) {
+    return notificationIds;
+  }
+  /**
+   * Get unread notification count for a user
+   */
+  static async getUnreadCount(userId) {
+    return 0;
+  }
+  /**
+   * Create a milestone due reminder notification
+   */
+  static async createMilestoneDueNotification(userId, milestoneName, projectName, dueDate, milestoneId, projectId, isOverdue) {
+    const title = isOverdue ? "Milestone Overdue" : "Milestone Due Soon";
+    const message = isOverdue ? `Milestone "${milestoneName}" in project "${projectName}" was due on ${dueDate.toLocaleDateString()}` : `Milestone "${milestoneName}" in project "${projectName}" is due on ${dueDate.toLocaleDateString()}`;
+    return this.createNotification({
+      userId,
+      type: import_client4.NotificationType.MILESTONE_DUE_REMINDER,
+      title,
+      message,
+      relatedEntityId: milestoneId.toString(),
+      relatedEntityType: "Milestone",
+      data: {
+        milestoneName,
+        projectName,
+        projectId,
+        milestoneId,
+        dueDate: dueDate.toISOString(),
+        isOverdue
+      }
+    });
+  }
+  /**
+   * Create a user registration notification for all System Admins
+   */
+  static async createUserRegistrationNotification(newUserName, newUserEmail, newUserId, registrationMethod) {
+    const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
+    try {
+      const systemAdmins = await db2.user.findMany({
+        where: {
+          access: "ADMIN",
+          isActive: true,
+          isDeleted: false
+        },
+        select: {
+          id: true
+        }
+      });
+      if (systemAdmins.length === 0) {
+        console.warn("No system administrators found to notify");
+        return;
+      }
+      const title = "New User Registration";
+      const method = registrationMethod === "sso" ? "SSO" : "registration form";
+      const message = `${newUserName} (${newUserEmail}) has registered via ${method}`;
+      const notificationPromises = systemAdmins.map(
+        (admin) => this.createNotification({
+          userId: admin.id,
+          type: import_client4.NotificationType.USER_REGISTERED,
+          title,
+          message,
+          relatedEntityId: newUserId,
+          relatedEntityType: "User",
+          data: {
+            newUserName,
+            newUserEmail,
+            newUserId,
+            registrationMethod
+          }
+        })
+      );
+      await Promise.all(notificationPromises);
+      console.log(`Created user registration notifications for ${systemAdmins.length} system administrators`);
+    } catch (error) {
+      console.error("Failed to create user registration notifications:", error);
+    }
+  }
+};
+
+// workers/forecastWorker.ts
+var import_meta2 = {};
+var JOB_UPDATE_SINGLE_CASE = "update-single-case-forecast";
+var JOB_UPDATE_ALL_CASES = "update-all-cases-forecast";
+var JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
+var JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";
+var processor2 = async (job) => {
+  console.log(`Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  let successCount = 0;
+  let failCount = 0;
+  validateMultiTenantJobData(job.data);
+  const prisma2 = getPrismaClientForJob(job.data);
+  switch (job.name) {
+    case JOB_UPDATE_SINGLE_CASE:
+      const singleData = job.data;
+      if (!singleData || typeof singleData.repositoryCaseId !== "number") {
+        throw new Error(
+          `Invalid data for job ${job.id}: repositoryCaseId missing or not a number.`
+        );
+      }
+      try {
+        await updateRepositoryCaseForecast(singleData.repositoryCaseId, {
+          prismaClient: prisma2
+        });
+        successCount = 1;
+        console.log(
+          `Job ${job.id} completed: Updated forecast for case ${singleData.repositoryCaseId}`
+        );
+      } catch (error) {
+        failCount = 1;
+        console.error(
+          `Job ${job.id} failed for case ${singleData.repositoryCaseId}`,
+          error
+        );
+        throw error;
+      }
+      break;
+    case JOB_UPDATE_ALL_CASES:
+      console.log(`Job ${job.id}: Starting update for all active cases.`);
+      successCount = 0;
+      failCount = 0;
+      const caseIds = await getUniqueCaseGroupIds({ prismaClient: prisma2 });
+      const affectedTestRunIds = /* @__PURE__ */ new Set();
+      for (const caseId of caseIds) {
+        try {
+          const result = await updateRepositoryCaseForecast(caseId, {
+            skipTestRunUpdate: true,
+            collectAffectedTestRuns: true,
+            prismaClient: prisma2
+          });
+          for (const testRunId of result.affectedTestRunIds) {
+            affectedTestRunIds.add(testRunId);
+          }
+          successCount++;
+        } catch (error) {
+          console.error(
+            `Job ${job.id}: Failed to update forecast for case ${caseId}`,
+            error
+          );
+          failCount++;
+        }
+      }
+      console.log(
+        `Job ${job.id}: Processed ${caseIds.length} unique case groups. Success: ${successCount}, Failed: ${failCount}`
+      );
+      console.log(
+        `Job ${job.id}: Filtering ${affectedTestRunIds.size} affected test runs...`
+      );
+      const activeTestRuns = await prisma2.testRuns.findMany({
+        where: {
+          id: { in: Array.from(affectedTestRunIds) },
+          isCompleted: false
+        },
+        select: { id: true }
+      });
+      const activeTestRunIds = activeTestRuns.map((tr) => tr.id);
+      const skippedCompletedCount = affectedTestRunIds.size - activeTestRunIds.length;
+      console.log(
+        `Job ${job.id}: Updating ${activeTestRunIds.length} active test runs (skipped ${skippedCompletedCount} completed)...`
+      );
+      let testRunSuccessCount = 0;
+      let testRunFailCount = 0;
+      for (const testRunId of activeTestRunIds) {
+        try {
+          await updateTestRunForecast(testRunId, { prismaClient: prisma2 });
+          testRunSuccessCount++;
+        } catch (error) {
+          console.error(
+            `Job ${job.id}: Failed to update forecast for test run ${testRunId}`,
+            error
+          );
+          testRunFailCount++;
+        }
+      }
+      console.log(
+        `Job ${job.id} completed: Updated ${testRunSuccessCount} test runs. Failed: ${testRunFailCount}. Skipped ${skippedCompletedCount} completed.`
+      );
+      if (failCount > 0 || testRunFailCount > 0) {
+        console.warn(
+          `Job ${job.id} finished with ${failCount} case failures and ${testRunFailCount} test run failures.`
+        );
+      }
+      break;
+    case JOB_AUTO_COMPLETE_MILESTONES:
+      console.log(`Job ${job.id}: Starting auto-completion check for milestones.`);
+      try {
+        const now = /* @__PURE__ */ new Date();
+        const milestonesToComplete = await prisma2.milestones.findMany({
+          where: {
+            isCompleted: false,
+            isDeleted: false,
+            automaticCompletion: true,
+            completedAt: {
+              lte: now
+              // Due date has passed
+            }
+          },
+          select: {
+            id: true,
+            name: true,
+            projectId: true
+          }
+        });
+        console.log(
+          `Job ${job.id}: Found ${milestonesToComplete.length} milestones to auto-complete.`
+        );
+        for (const milestone of milestonesToComplete) {
+          try {
+            await prisma2.milestones.update({
+              where: { id: milestone.id },
+              data: { isCompleted: true }
+            });
+            successCount++;
+            console.log(
+              `Job ${job.id}: Auto-completed milestone "${milestone.name}" (ID: ${milestone.id})`
+            );
+          } catch (error) {
+            failCount++;
+            console.error(
+              `Job ${job.id}: Failed to auto-complete milestone ${milestone.id}`,
+              error
+            );
+          }
+        }
+        console.log(
+          `Job ${job.id} completed: Auto-completed ${successCount} milestones. Failed: ${failCount}`
+        );
+      } catch (error) {
+        console.error(`Job ${job.id}: Error in auto-complete milestones job`, error);
+        throw error;
+      }
+      break;
+    case JOB_MILESTONE_DUE_NOTIFICATIONS:
+      console.log(`Job ${job.id}: Starting milestone due notifications check.`);
+      try {
+        const now = /* @__PURE__ */ new Date();
+        const milestonesToNotify = await prisma2.milestones.findMany({
+          where: {
+            isCompleted: false,
+            isDeleted: false,
+            notifyDaysBefore: { gt: 0 },
+            completedAt: { not: null }
+            // Has a due date
+          },
+          select: {
+            id: true,
+            name: true,
+            completedAt: true,
+            notifyDaysBefore: true,
+            createdBy: true,
+            // Milestone creator
+            project: {
+              select: {
+                id: true,
+                name: true
+              }
+            },
+            // Get all users who have participated in this milestone's test runs
+            testRuns: {
+              where: {
+                isDeleted: false
+              },
+              select: {
+                createdById: true,
+                // Test run creator
+                testCases: {
+                  select: {
+                    assignedToId: true,
+                    // Assigned user
+                    results: {
+                      select: {
+                        executedById: true
+                        // User who executed the result
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            // Get all users who have participated in this milestone's sessions
+            sessions: {
+              where: {
+                isDeleted: false
+              },
+              select: {
+                createdById: true,
+                // Session creator
+                assignedToId: true
+                // Assigned user
+              }
+            }
+          }
+        });
+        console.log(
+          `Job ${job.id}: Found ${milestonesToNotify.length} milestones to check for notifications.`
+        );
+        for (const milestone of milestonesToNotify) {
+          if (!milestone.completedAt) continue;
+          const dueDate = new Date(milestone.completedAt);
+          const timeDiff = dueDate.getTime() - now.getTime();
+          const daysDiff = Math.ceil(timeDiff / (1e3 * 60 * 60 * 24));
+          const isOverdue = daysDiff < 0;
+          const shouldNotify = isOverdue || daysDiff <= milestone.notifyDaysBefore;
+          console.log(
+            `Job ${job.id}: Milestone "${milestone.name}" (ID: ${milestone.id}) - daysDiff: ${daysDiff}, notifyDaysBefore: ${milestone.notifyDaysBefore}, isOverdue: ${isOverdue}, shouldNotify: ${shouldNotify}`
+          );
+          if (!shouldNotify) continue;
+          const userIds = /* @__PURE__ */ new Set();
+          if (milestone.createdBy) {
+            userIds.add(milestone.createdBy);
+          }
+          for (const testRun of milestone.testRuns) {
+            if (testRun.createdById) {
+              userIds.add(testRun.createdById);
+            }
+            for (const testCase of testRun.testCases) {
+              if (testCase.assignedToId) {
+                userIds.add(testCase.assignedToId);
+              }
+              for (const result of testCase.results) {
+                if (result.executedById) {
+                  userIds.add(result.executedById);
+                }
+              }
+            }
+          }
+          for (const session of milestone.sessions) {
+            if (session.createdById) {
+              userIds.add(session.createdById);
+            }
+            if (session.assignedToId) {
+              userIds.add(session.assignedToId);
+            }
+          }
+          if (userIds.size === 0) {
+            console.log(
+              `Job ${job.id}: Milestone "${milestone.name}" (ID: ${milestone.id}) - no participating users found, skipping notifications`
+            );
+            continue;
+          }
+          console.log(
+            `Job ${job.id}: Milestone "${milestone.name}" (ID: ${milestone.id}) - sending notifications to ${userIds.size} users`
+          );
+          for (const userId of userIds) {
+            try {
+              await NotificationService.createMilestoneDueNotification(
+                userId,
+                milestone.name,
+                milestone.project.name,
+                dueDate,
+                milestone.id,
+                milestone.project.id,
+                isOverdue
+              );
+              successCount++;
+            } catch (error) {
+              failCount++;
+              console.error(
+                `Job ${job.id}: Failed to send notification for milestone ${milestone.id} to user ${userId}`,
+                error
+              );
+            }
+          }
+        }
+        console.log(
+          `Job ${job.id} completed: Sent ${successCount} milestone notifications. Failed: ${failCount}`
+        );
+      } catch (error) {
+        console.error(`Job ${job.id}: Error in milestone due notifications job`, error);
+        throw error;
+      }
+      break;
+    default:
+      throw new Error(`Unknown job type: ${job.name}`);
+  }
+  return { status: "completed", successCount, failCount };
+};
+async function startWorker2() {
+  if (isMultiTenantMode()) {
+    console.log("Forecast worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Forecast worker starting in SINGLE-TENANT mode");
+  }
+  if (valkey_default) {
+    const worker2 = new import_bullmq3.Worker(FORECAST_QUEUE_NAME, processor2, {
+      connection: valkey_default,
+      concurrency: 5,
+      limiter: {
+        max: 100,
+        duration: 1e3
+      }
+    });
+    worker2.on("completed", (job, result) => {
+      console.info(
+        `Worker: Job ${job.id} (${job.name}) completed successfully. Result:`,
+        result
+      );
+    });
+    worker2.on("failed", (job, err) => {
+      console.error(
+        `Worker: Job ${job?.id} (${job?.name}) failed with error:`,
+        err
+      );
+    });
+    worker2.on("error", (err) => {
+      console.error("Worker encountered an error:", err);
+    });
+    console.log("Forecast worker started and listening for jobs...");
+    const shutdown = async () => {
+      console.log("Shutting down forecast worker...");
+      await worker2.close();
+      if (isMultiTenantMode()) {
+        await disconnectAllTenantClients();
+      }
+      console.log("Forecast worker shut down gracefully.");
+      process.exit(0);
+    };
+    process.on("SIGTERM", shutdown);
+    process.on("SIGINT", shutdown);
+  } else {
+    console.warn(
+      "Valkey connection not available. Forecast worker cannot start."
+    );
+    process.exit(1);
+  }
+}
+if (typeof import_meta2 !== "undefined" && import_meta2.url === (0, import_node_url2.pathToFileURL)(process.argv[1]).href || typeof import_meta2 === "undefined" || import_meta2.url === void 0) {
+  startWorker2().catch((err) => {
+    console.error("Failed to start worker:", err);
     process.exit(1);
   });
 }
 
 // scheduler.ts
 var CRON_SCHEDULE_DAILY_3AM = "0 3 * * *";
+var CRON_SCHEDULE_DAILY_6AM = "0 6 * * *";
 var CRON_SCHEDULE_DAILY_8AM = "0 8 * * *";
 async function scheduleJobs() {
   console.log("Attempting to schedule jobs...");
@@ -1002,7 +1413,7 @@ async function scheduleJobs() {
     const repeatableJobs = await forecastQueue.getRepeatableJobs();
     let removedCount = 0;
     for (const job of repeatableJobs) {
-      if (job.name === JOB_UPDATE_ALL_CASES) {
+      if (job.name === JOB_UPDATE_ALL_CASES || job.name === JOB_AUTO_COMPLETE_MILESTONES || job.name === JOB_MILESTONE_DUE_NOTIFICATIONS) {
         console.log(
           `Removing existing repeatable job "${job.name}" with key: ${job.key}`
         );
@@ -1028,6 +1439,34 @@ async function scheduleJobs() {
       );
       console.log(
         `Successfully scheduled repeatable job "${JOB_UPDATE_ALL_CASES}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_3AM}" on queue "${FORECAST_QUEUE_NAME}".`
+      );
+      const autoCompleteJobId = tenantId ? `${JOB_AUTO_COMPLETE_MILESTONES}-${tenantId}` : JOB_AUTO_COMPLETE_MILESTONES;
+      await forecastQueue.add(
+        JOB_AUTO_COMPLETE_MILESTONES,
+        { tenantId },
+        {
+          repeat: {
+            pattern: CRON_SCHEDULE_DAILY_6AM
+          },
+          jobId: autoCompleteJobId
+        }
+      );
+      console.log(
+        `Successfully scheduled repeatable job "${JOB_AUTO_COMPLETE_MILESTONES}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_6AM}" on queue "${FORECAST_QUEUE_NAME}".`
+      );
+      const notificationsJobId = tenantId ? `${JOB_MILESTONE_DUE_NOTIFICATIONS}-${tenantId}` : JOB_MILESTONE_DUE_NOTIFICATIONS;
+      await forecastQueue.add(
+        JOB_MILESTONE_DUE_NOTIFICATIONS,
+        { tenantId },
+        {
+          repeat: {
+            pattern: CRON_SCHEDULE_DAILY_6AM
+          },
+          jobId: notificationsJobId
+        }
+      );
+      console.log(
+        `Successfully scheduled repeatable job "${JOB_MILESTONE_DUE_NOTIFICATIONS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_6AM}" on queue "${FORECAST_QUEUE_NAME}".`
       );
     }
     const notificationRepeatableJobs = await notificationQueue.getRepeatableJobs();

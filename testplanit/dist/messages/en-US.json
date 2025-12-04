@@ -1245,7 +1245,11 @@
       "parent": "Parent Milestone",
       "started": "Started",
       "startDate": "Start Date",
-      "dueDate": "Due Date"
+      "dueDate": "Due Date",
+      "automaticCompletion": "Auto-complete on due date",
+      "notifyDaysBefore": "Notify days before due date",
+      "notifyDaysBeforeValue": "Notify {count, plural, one {# day} other {# days}} before due date",
+      "dueDateNotifications": "Due date notifications"
     },
     "labels": {
       "description": "Description",
@@ -1338,6 +1342,10 @@
       "processing": "Processing...",
       "confirmAndCompleteAll": "Confirm & Complete All",
       "completeButton": "Complete"
+    },
+    "notifications": {
+      "dueSoon": "Milestone \"{name}\" is due on {dueDate}",
+      "overdue": "Milestone \"{name}\" was due on {dueDate}"
     }
   },
   "sessions": {
@@ -4674,7 +4682,13 @@
         "inProject": "in project",
         "testRun": "Test Run:",
         "casesInProject": "{count, plural, =1 {# case} other {# cases}} in",
-        "sentBy": "Sent by {name}"
+        "sentBy": "Sent by {name}",
+        "milestoneDueSoonTitle": "Milestone Due Soon",
+        "milestoneOverdueTitle": "Milestone Overdue",
+        "milestoneDueSoon": "Milestone \"{milestoneName}\" in project \"{projectName}\" is due on {dueDate}.",
+        "milestoneOverdue": "Milestone \"{milestoneName}\" in project \"{projectName}\" was due on {dueDate} and is now overdue.",
+        "milestoneNotificationReason": "You are receiving this notification because you have participated in work associated with this milestone (test runs, sessions, or as the milestone creator).",
+        "milestoneNotificationContinue": "You will continue to receive daily reminders until this milestone is marked as complete."
       }
     },
     "issues": {
@@ -4962,7 +4976,9 @@
       "dueDate": "## Due Date\nThe target date for completing this milestone.\n\n- Sets deadline expectations\n- Used for project timeline planning\n- Helps track milestone progress against schedule",
       "parent": "## Parent Milestone\nLinks this milestone to a parent milestone, creating a hierarchy.\n\n- Organizes milestones into logical groups\n- Shows dependencies and relationships\n- Helps track progress of larger initiatives",
       "description": "## Description\nDetailed information about the milestone's purpose, requirements, and scope.\n\n- Provides context for team members\n- Documents key requirements and objectives\n- Supports collaboration and alignment",
-      "documentation": "## Documentation\nAdditional details, references, and supporting materials.\n\n- Technical specifications\n- Design documents\n- External references\n- Meeting notes and decisions"
+      "documentation": "## Documentation\nAdditional details, references, and supporting materials.\n\n- Technical specifications\n- Design documents\n- External references\n- Meeting notes and decisions",
+      "automaticCompletion": "## Auto-Complete on Due Date\nAutomatically marks this milestone as completed when its due date is reached.\n\n- Milestone will be completed at the scheduled time on the due date\n- Useful for time-boxed milestones that should close regardless of completion status\n- Can be overridden by manually completing the milestone before the due date\n- Requires a due date to be set",
+      "notifyDaysBefore": "## Notify Days Before Due Date\nSend notifications to assigned team members when the milestone due date is approaching.\n\n- Toggle on to enable notifications, off to disable\n- Enter the number of days before the due date to start sending reminders\n- Notifications are sent to users assigned to test runs and sessions within this milestone\n- Overdue milestones will continue to send reminders until completed"
     },
     "session": {
       "name": "## Session Name\nA clear, descriptive name that identifies the purpose of your testing session.\n\n- Should be unique and meaningful\n- Helps team members understand what is being tested\n- Used in reports and tracking",

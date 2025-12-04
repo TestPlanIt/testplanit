@@ -327,7 +327,7 @@ export function useSuspenseCountMilestones<TArgs extends Prisma.MilestonesCountA
     return useSuspenseModelQuery<TQueryFnData, TData, TError>('Milestones', `${endpoint}/milestones/count`, args, options, fetch);
 }
 
-export function useCheckMilestones<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; projectId?: number; rootId?: number; parentId?: number; milestoneTypesId?: number; name?: string; isStarted?: boolean; isCompleted?: boolean; isDeleted?: boolean; createdBy?: string }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckMilestones<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; projectId?: number; rootId?: number; parentId?: number; milestoneTypesId?: number; name?: string; isStarted?: boolean; isCompleted?: boolean; isDeleted?: boolean; automaticCompletion?: boolean; notifyDaysBefore?: number; createdBy?: string }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('Milestones', `${endpoint}/milestones/check`, args, options, fetch);
 }

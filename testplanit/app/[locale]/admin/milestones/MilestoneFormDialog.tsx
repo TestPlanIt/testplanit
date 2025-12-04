@@ -54,6 +54,9 @@ const FormSchema = z.object({
   isCompleted: z.boolean(),
   startedAt: z.date().optional(),
   completedAt: z.date().optional(),
+  automaticCompletion: z.boolean(),
+  enableNotifications: z.boolean(),
+  notifyDaysBefore: z.number().min(1),
   milestoneTypeId: z.number({
     error: (issue) =>
       issue.input === undefined ? "Please select a Milestone Type" : undefined,
@@ -159,6 +162,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
       isCompleted: false,
       startedAt: undefined,
       completedAt: undefined,
+      automaticCompletion: false,
+      enableNotifications: true,
+      notifyDaysBefore: 5,
       milestoneTypeId: defaultMilestoneTypeId,
     },
   });
@@ -169,7 +175,12 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
     formState: { errors },
     setValue,
     reset,
+    watch,
   } = form;
+
+  const completedAt = watch("completedAt");
+  const enableNotifications = watch("enableNotifications");
+  const hasDueDate = !!completedAt;
 
   useEffect(() => {
     if (defaultMilestoneTypeId) {
@@ -188,12 +199,24 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
         isCompleted: false,
         startedAt: undefined,
         completedAt: undefined,
+        automaticCompletion: false,
+        enableNotifications: true,
+        notifyDaysBefore: 5,
         milestoneTypeId: defaultMilestoneTypeId,
       });
       setNoteContent({});
       setDocsContent({});
     }
   }, [open, reset, defaultMilestoneTypeId]);
+
+  // Toggle enableNotifications based on due date presence
+  useEffect(() => {
+    if (completedAt) {
+      setValue("enableNotifications", true);
+    } else {
+      setValue("enableNotifications", false);
+    }
+  }, [completedAt, setValue]);
 
   if (!session || !session.user.access) {
     return null;
@@ -219,6 +242,11 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
           isCompleted: data.isCompleted,
           startedAt: data.startedAt,
           completedAt: data.completedAt,
+          automaticCompletion: data.completedAt ? data.automaticCompletion : false,
+          notifyDaysBefore:
+            data.completedAt && data.enableNotifications
+              ? data.notifyDaysBefore
+              : 0,
         },
         session.user.id
       );
@@ -423,6 +451,69 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                             label={t("milestones.fields.dueDate")}
                             placeholder={t("milestones.fields.dueDate")}
                             helpKey="milestone.dueDate"
+                          />
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormField
+                      control={control}
+                      name="automaticCompletion"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={!hasDueDate}
+                            />
+                          </FormControl>
+                          <FormLabel className="flex items-center">
+                            {t("milestones.fields.automaticCompletion")}
+                            <HelpPopover helpKey="milestone.automaticCompletion" />
+                          </FormLabel>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <FormField
+                      control={control}
+                      name="enableNotifications"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={!hasDueDate}
+                            />
+                          </FormControl>
+                          <FormLabel className="flex items-center">
+                            {t("milestones.fields.notifyDaysBefore")}
+                            <HelpPopover helpKey="milestone.notifyDaysBefore" />
+                          </FormLabel>
+                          <FormField
+                            control={control}
+                            name="notifyDaysBefore"
+                            render={({ field: daysField }) => (
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  placeholder="5"
+                                  disabled={!hasDueDate || !enableNotifications}
+                                  {...daysField}
+                                  onChange={(e) =>
+                                    daysField.onChange(parseInt(e.target.value) || 1)
+                                  }
+                                  className="max-w-[80px]"
+                                />
+                              </FormControl>
+                            )}
                           />
                           <FormMessage />
                         </FormItem>

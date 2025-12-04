@@ -12,6 +12,7 @@ interface NotificationEmailData {
   translations?: Record<string, string>;
   htmlMessage?: string;
   baseUrl?: string;
+  additionalInfo?: string;
 }
 
 interface DigestEmailData {
@@ -61,6 +62,7 @@ export async function sendNotificationEmail(data: NotificationEmailData) {
     currentYear: new Date().getFullYear(),
     subject: `TestPlanIt: ${data.notificationTitle}`,
     translations: data.translations || {},
+    additionalInfo: data.additionalInfo,
   });
 
   const emailData = {

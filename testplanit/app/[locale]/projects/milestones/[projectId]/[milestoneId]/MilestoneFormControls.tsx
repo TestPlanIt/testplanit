@@ -1,7 +1,10 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { MoreHorizontal } from "lucide-react";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { UserDisplay } from "@/components/search/UserDisplay";
 import {
   Select,
   SelectContent,
@@ -53,7 +56,32 @@ export default function MilestoneFormControls({
   projectId,
   milestoneId,
 }: MilestoneFormControlsProps) {
-  const { control } = useFormContext();
+  const { control, watch, setValue } = useFormContext();
+  const completedAt = watch("completedAt");
+  const enableNotifications = watch("enableNotifications");
+  const hasDueDate = !!completedAt;
+  const prevCompletedAtRef = useRef<Date | undefined | null>(undefined);
+  const isInitialMount = useRef(true);
+
+  // Toggle enableNotifications based on due date presence (only on user changes, not initial load)
+  useEffect(() => {
+    // Skip the initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      prevCompletedAtRef.current = completedAt;
+      return;
+    }
+
+    // Only react if completedAt actually changed
+    const prevHadDueDate = !!prevCompletedAtRef.current;
+    const nowHasDueDate = !!completedAt;
+
+    if (prevHadDueDate !== nowHasDueDate) {
+      setValue("enableNotifications", nowHasDueDate);
+    }
+
+    prevCompletedAtRef.current = completedAt;
+  }, [completedAt, setValue]);
   const { theme } = useTheme();
   const t = useTranslations("milestones");
   const tCommon = useTranslations("common");
@@ -215,6 +243,65 @@ export default function MilestoneFormControls({
               placeholder={t("labels.dueDate")}
               disabled={!isEditMode}
             />
+            <FormField
+              control={control}
+              name="automaticCompletion"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={!isEditMode || !hasDueDate}
+                    />
+                  </FormControl>
+                  <FormLabel className="flex items-center">
+                    {t("fields.automaticCompletion")}
+                    <HelpPopover helpKey="milestone.automaticCompletion" />
+                  </FormLabel>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="enableNotifications"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={!isEditMode || !hasDueDate}
+                    />
+                  </FormControl>
+                  <FormLabel className="flex items-center">
+                    {t("fields.notifyDaysBefore")}
+                    <HelpPopover helpKey="milestone.notifyDaysBefore" />
+                  </FormLabel>
+                  <FormField
+                    control={control}
+                    name="notifyDaysBefore"
+                    render={({ field: daysField }) => (
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          placeholder="5"
+                          disabled={!isEditMode || !hasDueDate || !enableNotifications}
+                          {...daysField}
+                          onChange={(e) =>
+                            daysField.onChange(parseInt(e.target.value) || 1)
+                          }
+                          className="max-w-[80px]"
+                        />
+                      </FormControl>
+                    )}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
         </>
       ) : (
@@ -242,6 +329,34 @@ export default function MilestoneFormControls({
               }
               isCompleted={milestone.isCompleted}
             />
+            {milestone.completedAt && (
+              <div className="space-y-1 pt-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <Switch
+                    checked={milestone.automaticCompletion}
+                    disabled
+                    className="scale-75"
+                  />
+                  <span className="text-muted-foreground">
+                    {t("fields.automaticCompletion")}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Switch
+                    checked={milestone.notifyDaysBefore > 0}
+                    disabled
+                    className="scale-75"
+                  />
+                  <span className="text-muted-foreground">
+                    {milestone.notifyDaysBefore > 0
+                      ? t("fields.notifyDaysBeforeValue", {
+                          count: milestone.notifyDaysBefore,
+                        })
+                      : t("fields.dueDateNotifications")}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         )
       )}
@@ -362,6 +477,18 @@ export default function MilestoneFormControls({
           </FormItem>
         )}
       />
+
+      {milestone?.creator && (
+        <div className="space-y-2">
+          <FormLabel>{tCommon("fields.createdBy")}</FormLabel>
+          <UserDisplay
+            userId={milestone.creator.id}
+            userName={milestone.creator.name}
+            userImage={milestone.creator.image}
+            size="small"
+          />
+        </div>
+      )}
     </div>
   );
 }

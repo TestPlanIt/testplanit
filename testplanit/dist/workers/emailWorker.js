@@ -253,7 +253,8 @@ async function sendNotificationEmail(data) {
     userId: data.userId,
     currentYear: (/* @__PURE__ */ new Date()).getFullYear(),
     subject: `TestPlanIt: ${data.notificationTitle}`,
-    translations: data.translations || {}
+    translations: data.translations || {},
+    additionalInfo: data.additionalInfo
   });
   const emailData = {
     from: `"TestPlanIt" <${process.env.EMAIL_FROM}>`,
@@ -580,7 +581,8 @@ function loadTenantConfigs() {
           tenantId,
           databaseUrl: value,
           elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
-          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`]
+          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
+          baseUrl: process.env[`TENANT_${match[1]}_BASE_URL`]
         });
       }
     }
@@ -692,6 +694,10 @@ var processor = async (job) => {
           if (data.projectId && data.sessionId) {
             notificationUrl = `${baseUrl}/${urlLocale}/projects/sessions/${data.projectId}/${data.sessionId}`;
           }
+        } else if (notification.type === "MILESTONE_DUE_REMINDER") {
+          if (data.projectId && data.milestoneId) {
+            notificationUrl = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
+          }
         }
         let translatedTitle = notification.title;
         let translatedMessage = notification.message;
@@ -738,6 +744,18 @@ var processor = async (job) => {
 
 ${await getServerTranslation(userLocale, "components.notifications.content.sentBy", { name: data.sentByName })}`;
           }
+        } else if (notification.type === "MILESTONE_DUE_REMINDER") {
+          const isOverdue = data.isOverdue === true;
+          translatedTitle = await getServerTranslation(
+            userLocale,
+            isOverdue ? "components.notifications.content.milestoneOverdueTitle" : "components.notifications.content.milestoneDueSoonTitle"
+          );
+          const formattedDueDate = data.dueDate ? new Date(data.dueDate).toLocaleDateString(userLocale.replace("_", "-")) : "";
+          translatedMessage = await getServerTranslation(
+            userLocale,
+            isOverdue ? "components.notifications.content.milestoneOverdue" : "components.notifications.content.milestoneDueSoon",
+            { milestoneName: data.milestoneName, projectName: data.projectName, dueDate: formattedDueDate }
+          );
         }
         const emailTranslations = await getServerTranslations(userLocale, [
           "email.greeting",
@@ -750,6 +768,18 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
           "email.footer.managePreferences",
           "email.footer.allRightsReserved"
         ]);
+        let additionalInfo;
+        if (notification.type === "MILESTONE_DUE_REMINDER") {
+          const reasonMessage = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.milestoneNotificationReason"
+          );
+          const continueMessage = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.milestoneNotificationContinue"
+          );
+          additionalInfo = `${reasonMessage} ${continueMessage}`;
+        }
         await sendNotificationEmail({
           to: notification.user.email,
           userId: notification.userId,
@@ -760,7 +790,8 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
           locale: urlLocale,
           translations: emailTranslations,
           htmlMessage,
-          baseUrl
+          baseUrl,
+          additionalInfo
         });
         console.log(`Sent notification email to ${notification.user.email}`);
       } catch (error) {
@@ -813,6 +844,10 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
                   url = `${baseUrl}/${urlLocale}/projects/sessions/${data.projectId}/${data.sessionId}`;
                 }
               }
+            } else if (notification.type === "MILESTONE_DUE_REMINDER") {
+              if (data.projectId && data.milestoneId) {
+                url = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
+              }
             }
             let translatedTitle = notification.title;
             let translatedMessage = notification.message;
@@ -840,6 +875,18 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
                 "components.notifications.content.commentMentionTitle"
               );
               translatedMessage = `${data.creatorName} ${await getServerTranslation(userLocale, "components.notifications.content.mentionedYouInComment")} "${data.entityName}" ${await getServerTranslation(userLocale, "components.notifications.content.inProject")} "${data.projectName}"`;
+            } else if (notification.type === "MILESTONE_DUE_REMINDER") {
+              const isOverdue = data.isOverdue === true;
+              translatedTitle = await getServerTranslation(
+                userLocale,
+                isOverdue ? "components.notifications.content.milestoneOverdueTitle" : "components.notifications.content.milestoneDueSoonTitle"
+              );
+              const formattedDueDate = data.dueDate ? new Date(data.dueDate).toLocaleDateString(userLocale.replace("_", "-")) : "";
+              translatedMessage = await getServerTranslation(
+                userLocale,
+                isOverdue ? "components.notifications.content.milestoneOverdue" : "components.notifications.content.milestoneDueSoon",
+                { milestoneName: data.milestoneName, projectName: data.projectName, dueDate: formattedDueDate }
+              );
             }
             return {
               id: notification.id,
