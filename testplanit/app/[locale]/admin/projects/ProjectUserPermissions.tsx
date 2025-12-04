@@ -276,14 +276,6 @@ export function ProjectUserPermissions({
               const currentRoleId = permission.roleId;
               const userEffectiveAccess = effectiveAccess.get(userId);
 
-              // Debug logging
-              console.log(`User ${userId} permission state:`, {
-                currentAccessType,
-                currentRoleId,
-                permission,
-                userEffectiveAccess,
-              });
-
               // Always use the current form state for display to reflect changes immediately
               if (
                 currentAccessType === "PROJECT_DEFAULT" ||

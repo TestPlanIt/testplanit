@@ -99,6 +99,10 @@ const nextConfig = {
     // Limit number of workers to reduce memory usage during build
     workerThreads: false,
     cpus: 4,
+    // Increase body size limit for server actions (file uploads)
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
   },
   images: {
     remotePatterns: [

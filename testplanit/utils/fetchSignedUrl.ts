@@ -1,3 +1,5 @@
+import { uploadFile } from "~/app/actions/uploadFile";
+
 /**
  * Detects if the current environment should use server-side upload proxy.
  * Returns true for hosted instances (trials and paid) when MinIO is not publicly accessible.
@@ -23,23 +25,20 @@ function shouldUseUploadProxy(): boolean {
   return false;
 }
 
-/**
- * Converts GET presigned URL endpoints to POST upload endpoints.
- * Example: /api/get-attachment-url/ -> /api/upload-attachment
- */
-function getUploadEndpoint(presignedEndpoint: string): string {
-  // Normalize endpoint (remove trailing slash and query params)
+// Map API endpoints to upload types for server action
+type UploadType = "project-icon" | "avatar" | "docimage" | "attachment";
+
+function getUploadType(presignedEndpoint: string): UploadType | null {
   const normalized = presignedEndpoint.split('?')[0].replace(/\/$/, '');
 
-  const endpointMap: Record<string, string> = {
-    "/api/get-attachment-url": "/api/upload-attachment",
-    "/api/get-project-icon-url": "/api/upload-project-icon",
-    "/api/get-avatar-url": "/api/upload-avatar",
-    "/api/get-docimage-url": "/api/upload-docimage",
-    "/api/imports/testmo/upload-url": "/api/upload-testmo-import",
+  const endpointMap: Record<string, UploadType> = {
+    "/api/get-project-icon-url": "project-icon",
+    "/api/get-avatar-url": "avatar",
+    "/api/get-docimage-url": "docimage",
+    "/api/get-attachment-url": "attachment",
   };
 
-  return endpointMap[normalized] || normalized.replace("/get-", "/upload-").replace("-url", "");
+  return endpointMap[normalized] || null;
 }
 
 export async function fetchSignedUrl(
@@ -64,27 +63,25 @@ export async function fetchSignedUrl(
     const useProxy = shouldUseUploadProxy();
 
     if (useProxy) {
-      // Server-side upload proxy approach (for hosted instances)
-      const uploadEndpoint = getUploadEndpoint(apiEndpoint);
+      // Server action approach (for hosted instances)
+      // This bypasses the 1MB route handler body size limit
+      const uploadType = getUploadType(apiEndpoint);
+      if (!uploadType) {
+        throw new Error(`Unsupported upload endpoint: ${apiEndpoint}`);
+      }
+
       const formData = new FormData();
       formData.append("file", file);
       if (prependString) {
         formData.append("prependString", prependString);
       }
 
-      const uploadResponse = await fetch(uploadEndpoint, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error(`HTTP error! status: ${uploadResponse.status}`);
+      const result = await uploadFile(formData, uploadType);
+      if (result.error) {
+        throw new Error(result.error);
       }
 
-      const uploadData = await uploadResponse.json();
-      if (uploadData.error) throw new Error(uploadData.error);
-
-      return uploadData.success.url;
+      return result.success!.url;
     } else {
       // Standard presigned URL approach (for public S3/MinIO)
       const urlWithPrepend = prependString

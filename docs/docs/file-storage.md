@@ -139,18 +139,49 @@ Users can attach files in several ways:
 3. **Rich Text Editor**: Paste images directly into rich text fields
 4. **Bulk Upload**: Select multiple files at once
 
+### Storage Modes
+
+TestPlanIt supports two upload modes depending on your deployment:
+
+#### Direct Mode (Default)
+
+Used when S3/MinIO is publicly accessible from the browser:
+
+1. Frontend requests a presigned URL from the API
+2. Browser uploads directly to S3/MinIO using the presigned URL
+3. No file data passes through the Next.js server
+
+This is the most efficient mode as files upload directly to storage.
+
+#### Proxy Mode
+
+Used for hosted instances where MinIO is not publicly accessible:
+
+1. Browser sends file to a Next.js server action
+2. Server action uploads the file to S3/MinIO
+3. Server returns the stored file URL
+
+Set proxy mode by configuring `STORAGE_MODE=proxy` in your environment.
+
+:::info Technical Note
+Proxy mode uses Next.js Server Actions instead of Route Handlers. This is because Next.js App Router Route Handlers have a hardcoded 1MB body size limit that cannot be configured. Server Actions support configurable body size limits via `experimental.serverActions.bodySizeLimit` in `next.config.mjs`.
+:::
+
 ### Upload Flow
 
 1. **File Selection**: User selects or drops files
 2. **Validation**: System checks file type and size limits
-3. **Signed URL Request**: Frontend requests upload URL from API
-4. **Direct Upload**: File uploads directly to S3/MinIO
+3. **Mode Detection**: System determines direct vs proxy mode
+4. **Upload**:
+   - *Direct mode*: Frontend requests presigned URL, uploads directly to S3/MinIO
+   - *Proxy mode*: Frontend calls server action, which uploads to S3/MinIO
 5. **Metadata Storage**: File information stored in database
 6. **Attachment Link**: File linked to parent entity
 
 ### File Size Limits
 
 Default limits (configurable):
+
 - **Maximum file size**: 100MB per file
 - **Total attachments**: No limit per entity
 - **Concurrent uploads**: 5 files maximum
@@ -217,6 +248,7 @@ Content-Type: application/json
 ```
 
 Response:
+
 ```json
 {
   "uploadUrl": "https://s3.amazonaws.com/bucket/file?signature=...",
@@ -229,6 +261,7 @@ Response:
 Files are accessed directly through signed URLs generated during upload. The system does not provide a separate download API endpoint - instead, files are downloaded directly from S3/MinIO using the signed URLs provided during the upload process.
 
 **Direct Download:**
+
 - Files are accessed via signed URLs from S3/MinIO
 - URLs are generated with appropriate expiration times
 - Access is controlled through the original upload permissions
@@ -239,6 +272,7 @@ Files are accessed directly through signed URLs generated during upload. The sys
 
 **Issue**: Files fail to upload
 **Solutions**:
+
 - Check file size against limits
 - Verify file type is supported
 - Ensure storage backend is accessible
@@ -248,6 +282,7 @@ Files are accessed directly through signed URLs generated during upload. The sys
 
 **Issue**: Cannot download attachments
 **Solutions**:
+
 - Verify user has access to parent entity
 - Check if attachment still exists in storage
 - Ensure storage credentials are valid
@@ -257,6 +292,7 @@ Files are accessed directly through signed URLs generated during upload. The sys
 
 **Issue**: Storage backend not working
 **Solutions**:
+
 - Verify environment variables are set
 - Test S3/MinIO connectivity
 - Check bucket exists and is accessible
@@ -266,6 +302,7 @@ Files are accessed directly through signed URLs generated during upload. The sys
 
 **Issue**: Slow upload/download speeds
 **Solutions**:
+
 - Check network bandwidth
 - Consider using CDN for downloads
 - Optimize file sizes before upload
@@ -307,6 +344,7 @@ AWS_CLOUDFRONT_DISTRIBUTION_ID=E123456789ABCD
 ### Backup and Archival
 
 Consider implementing:
+
 - **Automated backups** of attachment storage
 - **Lifecycle policies** for old attachments
 - **Cross-region replication** for disaster recovery
