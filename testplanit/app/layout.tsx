@@ -50,10 +50,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Determine storage mode: "proxy" for hosted instances without public MinIO, "direct" for self-hosted or public S3
+  // Determine storage mode: "proxy" for multi-tenant/hosted instances without public MinIO, "direct" for self-hosted or public S3
+  const isMultiTenant = process.env.MULTI_TENANT_MODE === "true";
   const isHosted = process.env.IS_HOSTED === "true";
   const hasPublicEndpoint = !!process.env.AWS_PUBLIC_ENDPOINT_URL;
-  const storageMode = isHosted && !hasPublicEndpoint ? "proxy" : "direct";
+
+  // Use proxy mode when:
+  // 1. Multi-tenant mode is enabled (always needs proxy for storage isolation), OR
+  // 2. IS_HOSTED is true and no public endpoint is configured
+  const storageMode =
+    isMultiTenant || (isHosted && !hasPublicEndpoint) ? "proxy" : "direct";
 
   return (
     <html lang="en" className={`${notoSans.variable}`}>

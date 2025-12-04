@@ -3422,7 +3422,8 @@ function loadTenantsFromFile(filePath) {
           tenantId,
           databaseUrl: config.databaseUrl,
           elasticsearchNode: config.elasticsearchNode,
-          elasticsearchIndex: config.elasticsearchIndex
+          elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl
         });
       }
       console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
@@ -3454,7 +3455,8 @@ function loadTenantConfigs() {
           tenantId,
           databaseUrl: config.databaseUrl,
           elasticsearchNode: config.elasticsearchNode,
-          elasticsearchIndex: config.elasticsearchIndex
+          elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl
         });
       }
       console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);

@@ -248,7 +248,7 @@ async function sendNotificationEmail(data) {
       createdAt: /* @__PURE__ */ new Date()
     },
     notificationUrl: data.notificationUrl,
-    appUrl: process.env.NEXTAUTH_URL || "http://localhost:3000",
+    appUrl: data.baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000",
     locale: data.locale || "en-US",
     userId: data.userId,
     currentYear: (/* @__PURE__ */ new Date()).getFullYear(),
@@ -273,7 +273,7 @@ async function sendDigestEmail(data) {
   const { html, subject } = await renderEmailTemplate("daily-digest", {
     userName: data.userName,
     notifications: data.notifications,
-    appUrl: process.env.NEXTAUTH_URL || "http://localhost:3000",
+    appUrl: data.baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000",
     locale: data.locale || "en-US",
     userId: data.userId,
     currentYear: (/* @__PURE__ */ new Date()).getFullYear(),
@@ -529,7 +529,8 @@ function loadTenantsFromFile(filePath) {
           tenantId,
           databaseUrl: config.databaseUrl,
           elasticsearchNode: config.elasticsearchNode,
-          elasticsearchIndex: config.elasticsearchIndex
+          elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl
         });
       }
       console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
@@ -561,7 +562,8 @@ function loadTenantConfigs() {
           tenantId,
           databaseUrl: config.databaseUrl,
           elasticsearchNode: config.elasticsearchNode,
-          elasticsearchIndex: config.elasticsearchIndex
+          elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl
         });
       }
       console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
@@ -677,7 +679,8 @@ var processor = async (job) => {
           return;
         }
         let notificationUrl;
-        const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+        const tenantConfig = notificationData.tenantId ? getTenantConfig(notificationData.tenantId) : void 0;
+        const baseUrl = tenantConfig?.baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000";
         const userLocale = notification.user.userPreferences?.locale || "en_US";
         const urlLocale = formatLocaleForUrl(userLocale);
         const data = notification.data || {};
@@ -756,7 +759,8 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
           notificationUrl,
           locale: urlLocale,
           translations: emailTranslations,
-          htmlMessage
+          htmlMessage,
+          baseUrl
         });
         console.log(`Sent notification email to ${notification.user.email}`);
       } catch (error) {
@@ -782,9 +786,11 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
             id: { in: digestData.notifications.map((n) => n.id) }
           }
         });
+        const digestTenantConfig = digestData.tenantId ? getTenantConfig(digestData.tenantId) : void 0;
+        const digestBaseUrl = digestTenantConfig?.baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000";
         const notificationsWithUrls = await Promise.all(
           fullNotifications.map(async (notification) => {
-            const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+            const baseUrl = digestBaseUrl;
             const userLocale = user.userPreferences?.locale || "en_US";
             const urlLocale = formatLocaleForUrl(userLocale);
             const data = notification.data || {};
@@ -868,7 +874,8 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
           userName: user.name,
           notifications: notificationsWithUrls,
           locale: formatLocaleForUrl(user.userPreferences?.locale || "en_US"),
-          translations: digestTranslations
+          translations: digestTranslations,
+          baseUrl: digestBaseUrl
         });
         await prisma2.notification.updateMany({
           where: {

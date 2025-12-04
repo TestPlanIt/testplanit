@@ -2,7 +2,11 @@ import { uploadFile } from "~/app/actions/uploadFile";
 
 /**
  * Detects if the current environment should use server-side upload proxy.
- * Returns true for hosted instances (trials and paid) when MinIO is not publicly accessible.
+ * Returns true for multi-tenant/hosted instances when MinIO is not publicly accessible.
+ *
+ * Detection methods (in order of priority):
+ * 1. Global __STORAGE_MODE__ variable set in HTML head (most reliable)
+ * 2. Meta tag storage-mode
  */
 function shouldUseUploadProxy(): boolean {
   // Check if we're in a browser environment
