@@ -191,6 +191,14 @@ export function AddUserModal() {
     }
   }, [roles, setValue, form]);
 
+  // Watch access field to auto-enable isApi for ADMIN users
+  const accessValue = watch("access");
+  useEffect(() => {
+    if (accessValue === "ADMIN") {
+      setValue("isApi", true);
+    }
+  }, [accessValue, setValue]);
+
   // Update onSubmit to use the form validation schema type and construct API payload
   async function onSubmit(data: z.infer<typeof AddUserFormValidationSchema>) {
     setIsSubmitting(true);
@@ -564,10 +572,16 @@ export function AddUserModal() {
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
+                      disabled={accessValue === "ADMIN"}
                     />
                   </FormControl>
                   <FormLabel className="flex items-center">
                     {tCommon("fields.apiAccess")}
+                    {accessValue === "ADMIN" && (
+                      <span className="text-muted-foreground text-xs ml-2">
+                        ({tCommon("fields.requiredForAdmin")})
+                      </span>
+                    )}
                     <HelpPopover helpKey="user.api" />
                   </FormLabel>
                   <FormMessage />

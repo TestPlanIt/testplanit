@@ -254,6 +254,7 @@
       "usersCreated": "Utilisateurs créés",
       "groups": "Groupes",
       "apiAccess": "Accès API",
+      "requiredForAdmin": "requis pour l'administration",
       "account": "Compte",
       "accountHistory": "Historique du compte",
       "activity": "Activité",

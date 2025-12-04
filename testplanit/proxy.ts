@@ -69,7 +69,12 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   const isApiRoute = pathname.startsWith("/api/");
   const isAuthRoute = pathname.startsWith("/api/auth/");
 
-  if (isApiRoute && !isAuthRoute) {
+  // Auth routes should pass through without any middleware processing
+  if (isAuthRoute) {
+    return NextResponse.next();
+  }
+
+  if (isApiRoute) {
     // Get the JWT token for API routes
     const token = await getToken({
       req: request,
