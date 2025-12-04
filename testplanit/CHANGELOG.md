@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.16](https://github.com/testplanit/testplanit/compare/v0.1.15...v0.1.16) (2025-12-04)
+
+
+### Features
+
+* **api:** Implement external API request detection and enhance JWT handling ([6924a79](https://github.com/testplanit/testplanit/commit/6924a79b093ec7f133fc6c0c5969c3f96c6e9f34))
+
+### [0.1.14](https://github.com/testplanit/testplanit/compare/v0.1.13...v0.1.14) (2025-12-03)
+
+
+### Bug Fixes
+
+* **tags:** Correct tab content and pagination for sessions and test runs ([ade7a39](https://github.com/testplanit/testplanit/commit/ade7a3927e930db8019c2d407e02c62c5bffcc02))
+
 ### [0.1.15](https://github.com/testplanit/testplanit/compare/v0.1.13...v0.1.15) (2025-12-04)
 
 
