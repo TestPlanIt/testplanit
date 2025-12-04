@@ -138,7 +138,7 @@ export function loadTenantConfigs(): Map<string, TenantConfig> {
   }
 
   // Priority 3: Individual tenant environment variables
-  // Format: TENANT_<TENANT_ID>_DATABASE_URL, TENANT_<TENANT_ID>_ELASTICSEARCH_NODE
+  // Format: TENANT_<TENANT_ID>_DATABASE_URL, TENANT_<TENANT_ID>_ELASTICSEARCH_NODE, TENANT_<TENANT_ID>_BASE_URL
   for (const [key, value] of Object.entries(process.env)) {
     const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
     if (match && value) {
@@ -149,6 +149,7 @@ export function loadTenantConfigs(): Map<string, TenantConfig> {
           databaseUrl: value,
           elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
           elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
+          baseUrl: process.env[`TENANT_${match[1]}_BASE_URL`],
         });
       }
     }
