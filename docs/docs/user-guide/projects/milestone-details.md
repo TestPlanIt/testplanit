@@ -124,13 +124,13 @@ Each user receives only one notification per milestone per day, even if they app
 **Due Soon Notification**:
 
 - Title: "Milestone Due Soon"
-- Message: Milestone "{name}" in project "{project}" is due on {date}
+- Message: Milestone "\{name\}" in project "\{project\}" is due on \{date\}
 - Links directly to the milestone details page
 
 **Overdue Notification**:
 
 - Title: "Milestone Overdue"
-- Message: Milestone "{name}" in project "{project}" was due on {date}
+- Message: Milestone "\{name\}" in project "\{project\}" was due on \{date\}
 - Links directly to the milestone details page
 
 ### Notification Delivery
