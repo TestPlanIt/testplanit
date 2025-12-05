@@ -3,9 +3,9 @@ import MilestoneDisplay from "@/projects/milestones/[projectId]/MilestoneDisplay
 import { Link } from "~/lib/navigation";
 import { LinkIcon, Milestone } from "lucide-react";
 import { useFindManyMilestones } from "~/lib/hooks";
-import Loading from "@/components/LoadingSpinner";
 import { MilestonesWithTypes } from "~/utils/milestoneUtils";
 import { useTranslations } from "next-intl";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface MilestonesSectionProps {
   projectId: number;
@@ -49,7 +49,7 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
           </h3>
         </div>
         <div className="p-6 flex-1 flex justify-center items-center">
-          <Loading />
+          <LoadingSpinner />
         </div>
       </div>
     );

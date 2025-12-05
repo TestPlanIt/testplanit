@@ -8,10 +8,10 @@ import {
   useFindManyWorkflows,
   useGroupByRepositoryCases,
 } from "~/lib/hooks";
-import { Loading } from "@/components/Loading";
 import { useTranslations } from "next-intl";
 import ProjectOverviewSunburstChart from "@/components/dataVisualizations/ProjectOverviewSunburstChart";
 import { Separator } from "@/components/ui/separator";
+import LoadingSpinner from "~/components/LoadingSpinner";
 
 interface RepositoryCasesSectionProps {
   projectId: number;
@@ -224,7 +224,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
   if (isLoading || isFetching || repositoryCasesLatestFive === undefined) {
     return (
       <div className="flex justify-center items-center py-8">
-        <Loading />
+        <LoadingSpinner />
       </div>
     );
   }

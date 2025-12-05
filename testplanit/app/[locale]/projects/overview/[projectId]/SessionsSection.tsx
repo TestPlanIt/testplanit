@@ -3,9 +3,9 @@ import { Link } from "~/lib/navigation";
 import { Compass, LinkIcon } from "lucide-react";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
 import { useFindManySessions } from "~/lib/hooks";
-import Loading from "@/components/LoadingSpinner";
 import { useTranslations } from "next-intl";
 import SessionResultsSummary from "~/components/SessionResultsSummary";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface SessionsSectionProps {
   projectId: number;
@@ -43,7 +43,7 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
   if (isLoadingSessions || isLoadingCount) {
     return (
       <div className="flex justify-center items-center py-8">
-        <Loading />
+        <LoadingSpinner />
       </div>
     );
   }

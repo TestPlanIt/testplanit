@@ -3,7 +3,6 @@ import { Link } from "~/lib/navigation";
 import { PlayCircle, LinkIcon, Combine } from "lucide-react";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
 import { useFindManyTestRuns } from "~/lib/hooks";
-import Loading from "@/components/LoadingSpinner";
 import { useTranslations } from "next-intl";
 import { TestRunCasesSummary } from "~/components/TestRunCasesSummary";
 import {
@@ -12,6 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface TestRunsSectionProps {
   projectId: number;
@@ -57,7 +57,7 @@ const TestRunsSection: React.FC<TestRunsSectionProps> = ({ projectId }) => {
   if (isLoadingTestRuns || isLoadingCount) {
     return (
       <div className="flex justify-center items-center py-8">
-        <Loading />
+        <LoadingSpinner />
       </div>
     );
   }

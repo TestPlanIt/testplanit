@@ -3,8 +3,8 @@ import { Link, useRouter } from "~/lib/navigation";
 import { LinkIcon, TagsIcon } from "lucide-react";
 import { useFindManyTags } from "~/lib/hooks";
 import { BubbleChart } from "~/components/dataVisualizations/BubbleChart";
-import Loading from "@/components/LoadingSpinner";
 import { useTranslations } from "next-intl";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface TagsSectionProps {
   projectId: number;
@@ -127,7 +127,7 @@ const TagsSection: React.FC<TagsSectionProps> = ({ projectId }) => {
   if (isLoadingTags) {
     return (
       <div className="flex justify-center items-center py-8">
-        <Loading />
+        <LoadingSpinner />
       </div>
     );
   }
