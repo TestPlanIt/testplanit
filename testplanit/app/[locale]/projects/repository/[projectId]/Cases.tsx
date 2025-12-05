@@ -1017,13 +1017,17 @@ export default function Cases({
 
   // Calculate total count based on mode
   const totalRepositoryCases = useMemo(() => {
+    // If we know the selected folder has 0 cases, return 0 immediately
+    if (viewType === "folders" && selectedFolderCaseCount === 0) {
+      return 0;
+    }
     if (isRunMode) {
       // In run mode, use the test run cases count
       return testRunCasesCountData || 0;
     }
     // In repository mode, use the repository cases count
     return filteredCountData || 0;
-  }, [isRunMode, testRunCasesCountData, filteredCountData]);
+  }, [isRunMode, testRunCasesCountData, filteredCountData, viewType, selectedFolderCaseCount]);
 
   // Update total items in pagination context
   useEffect(() => {
