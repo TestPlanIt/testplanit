@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.36](https://github.com/TestPlanIt/testplanit/compare/v0.1.35...v0.1.36) (2025-12-05)
+
+
+### Bug Fixes
+
+* **tags:** simplify access control logic ([3945a39](https://github.com/TestPlanIt/testplanit/commit/3945a39936f46ef22ada05fb34efe31d823280c7))
+
 ## [0.1.35](https://github.com/TestPlanIt/testplanit/compare/v0.1.34...v0.1.35) (2025-12-05)
 
 
