@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.35](https://github.com/TestPlanIt/testplanit/compare/v0.1.34...v0.1.35) (2025-12-05)
+
+
+### Build System
+
+* **release:** migrate from standard-version to release-please ([117f60a](https://github.com/TestPlanIt/testplanit/commit/117f60aaff113516735cd4008cfbf8e9dbc7f50f))
+
 ### [0.1.34](https://github.com/testplanit/testplanit/compare/v0.1.33...v0.1.34) (2025-12-05)
 
 
