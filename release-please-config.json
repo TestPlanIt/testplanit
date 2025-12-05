@@ -3,6 +3,8 @@
   "packages": {
     "testplanit": {
       "release-type": "node",
+      "component": "testplanit",
+      "include-component-in-tag": false,
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
       "draft": false,
