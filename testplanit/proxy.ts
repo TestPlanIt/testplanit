@@ -152,9 +152,6 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     pathWithoutLocale === route || pathWithoutLocale.startsWith(`${route}/`)
   );
 
-  // Check if this is the root route (home page)
-  const isRootRoute = pathWithoutLocale === "" || pathWithoutLocale === "/";
-
   // Get the JWT token from the request for all protected routes
   let token = null;
   if (!isPublicRoute) {
@@ -165,18 +162,14 @@ export default async function middlewareWithPreferences(request: NextRequest) {
 
     // For unauthenticated users trying to access protected routes
     if (!token) {
-      // Redirect root route to signin for better UX
-      if (isRootRoute) {
-        const pathSegments = pathname.split("/").filter(Boolean);
-        const locale = pathSegments[0] || defaultLocale;
-        const redirectUrl = new URL(request.url);
-        redirectUrl.pathname = `/${locale}/signin`;
-        redirectUrl.search = ""; // Clear any query params
-        redirectUrl.hash = ""; // Clear any hash
-        return NextResponse.redirect(redirectUrl);
-      }
-      // Return 404 for other protected routes
-      return new NextResponse(null, { status: 404 });
+      // Redirect to signin page
+      const pathSegments = pathname.split("/").filter(Boolean);
+      const locale = pathSegments[0] || defaultLocale;
+      const redirectUrl = new URL(request.url);
+      redirectUrl.pathname = `/${locale}/signin`;
+      redirectUrl.search = ""; // Clear any query params
+      redirectUrl.hash = ""; // Clear any hash
+      return NextResponse.redirect(redirectUrl);
     }
   }
 
