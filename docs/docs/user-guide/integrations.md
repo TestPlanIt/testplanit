@@ -536,7 +536,7 @@ curl -H "Authorization: token YOUR_PAT" \
 
 ## API Reference
 
-For programmatic access to issue and integration features, see the [API Documentation](/docs/api-reference/#issues).
+For programmatic access to issue and integration features, see the [API Documentation](/docs/api-reference).
 
 ### Key Endpoints
 
