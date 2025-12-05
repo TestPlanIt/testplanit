@@ -8,7 +8,7 @@ import {
   useCreateMilestones,
 } from "~/lib/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -166,11 +166,10 @@ export function AddMilestoneModal() {
     control,
     formState: { errors },
     setValue,
-    watch,
   } = form;
 
-  const completedAt = watch("completedAt");
-  const enableNotifications = watch("enableNotifications");
+  const completedAt = useWatch({ control, name: "completedAt" });
+  const enableNotifications = useWatch({ control, name: "enableNotifications" });
   const hasDueDate = !!completedAt;
 
   useEffect(() => {
