@@ -58,8 +58,7 @@ function Tags() {
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
 
-  const isAdmin = session?.user?.access === "ADMIN";
-  const accessFilterReady = isAdmin || !!session?.user?.id;
+  const accessFilterReady = !!session?.user?.id;
 
   const effectivePageSize =
     typeof pageSize === "number" ? pageSize : totalItems;
@@ -78,21 +77,11 @@ function Tags() {
     };
   }, [debouncedSearchString]);
 
-  const relationProjectFilter = useMemo(() => {
-    if (isAdmin || !session?.user?.id) {
-      return undefined;
-    }
-
-    return {
-      project: {
-        assignedUsers: {
-          some: {
-            userId: session.user.id,
-          },
-        },
-      },
-    };
-  }, [isAdmin, session?.user?.id]);
+  // Note: We don't need a manual project filter here anymore.
+  // ZenStack's access policies on RepositoryCases, Sessions, and TestRuns
+  // will automatically filter out data the user doesn't have access to.
+  // This handles all access types: assignedUsers, userPermissions,
+  // groupPermissions, and project defaultAccessType (GLOBAL_ROLE).
 
   const tagsWhere = useMemo(() => {
     if (!accessFilterReady) {
@@ -111,7 +100,6 @@ function Tags() {
         [relation]: {
           some: {
             isDeleted: false,
-            ...(relationProjectFilter ?? {}),
           },
         },
       })
@@ -121,7 +109,7 @@ function Tags() {
       ...baseWhere,
       OR: relations,
     };
-  }, [accessFilterReady, nameFilter, relationProjectFilter]);
+  }, [accessFilterReady, nameFilter]);
 
   const orderBy = useMemo(() => {
     if (!sortConfig?.column || sortConfig.column === "name") {
