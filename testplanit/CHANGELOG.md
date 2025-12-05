@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.34](https://github.com/testplanit/testplanit/compare/v0.1.33...v0.1.34) (2025-12-05)
+
+
+### Code Refactoring
+
+* **proxy:** Simplify root route handling in middleware ([c338484](https://github.com/testplanit/testplanit/commit/c338484707e8d3934d68336e2ecc3ddd2140240f))
+
 ### [0.1.33](https://github.com/testplanit/testplanit/compare/v0.1.32...v0.1.33) (2025-12-05)
 
 
