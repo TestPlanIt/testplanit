@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.33](https://github.com/testplanit/testplanit/compare/v0.1.32...v0.1.33) (2025-12-05)
+
+
+### Bug Fixes
+
+* **docker:** Replace postgresql15-client with postgresql-client in Dockerfile for compatibility ([deb29ec](https://github.com/testplanit/testplanit/commit/deb29ecffdb0faba1afeae6d269fd5642da4f249))
+
 ### [0.1.32](https://github.com/testplanit/testplanit/compare/v0.1.31...v0.1.32) (2025-12-04)
 
 
