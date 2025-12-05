@@ -19,6 +19,7 @@ import {
   SquarePlay,
   FlaskConical,
   CheckCircle2,
+  MessageSquare,
 } from "lucide-react";
 import { useFindFirstStatus } from "~/lib/hooks";
 import { toHumanReadable } from "~/utils/duration";
@@ -335,6 +336,30 @@ export function MilestoneSummary({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          {/* Display comments count if any exist */}
+          {summaryData.commentsCount > 0 && (
+            <Link
+              href={`/projects/milestones/${projectId}/${milestoneId}#comments`}
+              className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors text-xs"
+            >
+              <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1">
+                      <MessageSquare className="h-3 w-3" />
+                      {summaryData.commentsCount}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {tCommon("plural.comment", {
+                      count: summaryData.commentsCount,
+                    })}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </Link>
+          )}
 
           {/* Display aggregated issues list if any exist */}
           {summaryData.issues && summaryData.issues.length > 0 && (

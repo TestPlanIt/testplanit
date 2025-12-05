@@ -27,9 +27,10 @@ export class CommentService {
    * @param creatorName Name of the user who created the comment
    * @param projectId Project ID where the comment was made
    * @param projectName Name of the project
-   * @param entityType Type of entity (RepositoryCase, TestRun, Session)
+   * @param entityType Type of entity (RepositoryCase, TestRun, Session, Milestone)
    * @param entityName Name of the entity
    * @param entityId ID of the entity (for building link)
+   * @param milestoneTypeIconName Optional icon name for milestone type
    * @returns Array of user IDs that were mentioned
    */
   static async processMentions(
@@ -39,9 +40,10 @@ export class CommentService {
     creatorName: string,
     projectId: number,
     projectName: string,
-    entityType: "RepositoryCase" | "TestRun" | "Session",
+    entityType: "RepositoryCase" | "TestRun" | "Session" | "Milestone",
     entityName: string,
-    entityId: string
+    entityId: string,
+    milestoneTypeIconName?: string
   ): Promise<string[]> {
     const mentionedUserIds = extractMentionedUserIds(content);
 
@@ -84,7 +86,9 @@ export class CommentService {
           ? "test case"
           : entityType === "TestRun"
             ? "test run"
-            : "session";
+            : entityType === "Milestone"
+              ? "milestone"
+              : "session";
 
       let message: string;
       let relatedEntityId: string | undefined;
@@ -121,6 +125,10 @@ export class CommentService {
       } else if (entityType === "Session") {
         notificationData.sessionId = parseInt(entityId);
         notificationData.sessionName = entityName;
+      } else if (entityType === "Milestone") {
+        notificationData.milestoneId = parseInt(entityId);
+        notificationData.milestoneName = entityName;
+        notificationData.milestoneTypeIconName = milestoneTypeIconName;
       }
 
       return NotificationService.createNotification({

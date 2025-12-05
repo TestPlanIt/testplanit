@@ -8,6 +8,7 @@ import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { SessionNameDisplay } from "@/components/SessionNameDisplay";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
+import { MilestoneNameDisplay } from "@/components/MilestoneNameDisplay";
 import { ExternalLink, Megaphone } from "lucide-react";
 import TextFromJson from "@/components/TextFromJson";
 
@@ -211,6 +212,18 @@ export function NotificationContent({
             session={{
               id: data.sessionId,
               name: data.sessionName || data.entityName,
+            }}
+            showIcon={true}
+          />
+        );
+      } else if (data.entityType === "Milestone" && data.milestoneId) {
+        entityLink = `/projects/milestones/${data.projectId}/${data.milestoneId}`;
+        entityNameDisplay = (
+          <MilestoneNameDisplay
+            milestone={{
+              id: data.milestoneId,
+              name: data.milestoneName || data.entityName,
+              milestoneTypeIconName: data.milestoneTypeIconName,
             }}
             showIcon={true}
           />

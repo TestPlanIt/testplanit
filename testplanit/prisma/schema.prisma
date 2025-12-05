@@ -446,6 +446,7 @@ model Milestones {
   createdBy           String
   sessions            Sessions[]
   testRuns            TestRuns[]
+  comments            Comment[]
 
   @@index([projectId, isDeleted])
   @@index([parentId])
@@ -1844,6 +1845,8 @@ model Comment {
   testRun          TestRuns?        @relation(fields: [testRunId], references: [id], onDelete: Cascade)
   sessionId        Int?
   session          Sessions?        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  milestoneId      Int?
+  milestone        Milestones?      @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
   creatorId        String
   creator          User             @relation("CommentCreator", fields: [creatorId], references: [id])
   createdAt        DateTime         @default(now()) @db.Timestamptz(6)
@@ -1856,6 +1859,7 @@ model Comment {
   @@index([repositoryCaseId, isDeleted])
   @@index([testRunId, isDeleted])
   @@index([sessionId, isDeleted])
+  @@index([milestoneId, isDeleted])
   @@index([creatorId])
 }
 

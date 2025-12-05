@@ -5,7 +5,7 @@ title: Comments & Mentions
 
 # Comments & Mentions
 
-TestPlanIt's commenting system enables team collaboration by allowing users to add contextual comments and discussions directly on test cases, test runs, and exploratory sessions. The mention feature ensures the right team members are notified about important discussions.
+TestPlanIt's commenting system enables team collaboration by allowing users to add contextual comments and discussions directly on test cases, test runs, exploratory sessions, and milestones. The mention feature ensures the right team members are notified about important discussions.
 
 ## Overview
 
@@ -24,12 +24,13 @@ Comments can be added to:
 - **Test Cases** - In the repository, on individual test case details pages
 - **Test Runs** - On test run overview and details pages
 - **Exploratory Sessions** - On session details pages
+- **Milestones** - On milestone details pages
 
 ## Adding Comments
 
 ### Creating a New Comment
 
-1. Navigate to a test case, test run, or session
+1. Navigate to a test case, test run, session, or milestone
 2. Scroll to the **Comments** section (usually at the bottom of the page)
 3. Click in the comment editor field
 4. Type your comment using the rich text editor
@@ -115,7 +116,7 @@ When you're mentioned in a comment:
 3. The notification includes:
    - Who mentioned you
    - The comment content preview
-   - Which item was commented on (test case, run, or session)
+   - Which item was commented on (test case, run, session, or milestone)
    - A direct link to the comment
 
 ### Notification Settings
@@ -179,6 +180,23 @@ Use comments on exploratory sessions for:
 - "Found 3 usability issues in the checkout flow - will create formal test cases"
 - "@product - Is the slow loading time on the search page expected?"
 - "Covered all main user workflows. No critical issues found."
+
+### Milestone Comments
+
+Use comments on milestones for:
+
+- **Progress Updates** - Communicate milestone progress to stakeholders
+- **Risk Communication** - Alert team about risks to milestone delivery
+- **Scope Discussions** - Discuss milestone scope changes
+- **Coordination** - Coordinate between test runs and sessions in a milestone
+- **Status Reporting** - Document milestone status changes and reasons
+
+**Example Scenarios:**
+
+- "@project-manager - All test runs are now complete. Ready for sign-off."
+- "Adding two additional test runs to cover the new requirements from sprint planning"
+- "@qa-team - Please prioritize the payment tests - they're blocking this milestone"
+- "Milestone completion delayed due to environment issues. New target: end of week."
 
 ## Best Practices
 

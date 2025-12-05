@@ -31,7 +31,7 @@ interface Comment {
 
 interface CommentListProps {
   projectId: number;
-  entityType: "repositoryCase" | "testRun" | "session";
+  entityType: "repositoryCase" | "testRun" | "session" | "milestone";
   entityId: number;
   initialComments: Comment[];
   currentUserId: string;
@@ -68,6 +68,8 @@ export function CommentList({
         input.testRunId = entityId;
       } else if (entityType === "session") {
         input.sessionId = entityId;
+      } else if (entityType === "milestone") {
+        input.milestoneId = entityId;
       }
 
       const result = await createComment(input);

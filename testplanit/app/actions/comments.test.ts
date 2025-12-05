@@ -158,6 +158,24 @@ describe("comments actions", () => {
           "Comment must be associated with exactly one entity"
         );
       });
+
+      it("should return error when all four entities are specified", async () => {
+        mockGetServerAuthSession.mockResolvedValue(mockSession);
+
+        const result = await createComment({
+          content: validContent,
+          projectId: 1,
+          repositoryCaseId: 1,
+          testRunId: 2,
+          sessionId: 3,
+          milestoneId: 4,
+        });
+
+        expect(result.success).toBe(false);
+        expect(result.error).toBe(
+          "Comment must be associated with exactly one entity"
+        );
+      });
     });
 
     describe("successful creation", () => {
@@ -252,6 +270,32 @@ describe("comments actions", () => {
           })
         );
       });
+
+      it("should create comment for milestone", async () => {
+        mockGetServerAuthSession.mockResolvedValue(mockSession);
+        mockDb.comment.create.mockResolvedValue({
+          ...mockCreatedComment,
+          repositoryCaseId: null,
+          milestoneId: 4,
+          repositoryCase: null,
+          milestone: { id: 4, name: "Test Milestone" },
+        });
+
+        const result = await createComment({
+          content: validContent,
+          projectId: 1,
+          milestoneId: 4,
+        });
+
+        expect(result.success).toBe(true);
+        expect(mockDb.comment.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              milestoneId: 4,
+            }),
+          })
+        );
+      });
     });
 
     describe("mentions handling", () => {
@@ -292,7 +336,8 @@ describe("comments actions", () => {
           "Test Project",
           "RepositoryCase",
           "Test Case",
-          "1"
+          "1",
+          undefined // milestoneTypeIconName is undefined for non-milestone entities
         );
       });
 
@@ -690,6 +735,23 @@ describe("comments actions", () => {
             where: expect.objectContaining({
               isDeleted: false,
               sessionId: 3,
+            }),
+          })
+        );
+      });
+
+      it("should fetch comments for milestone", async () => {
+        mockGetServerAuthSession.mockResolvedValue(mockSession);
+        mockDb.comment.findMany.mockResolvedValue([]);
+
+        const result = await getCommentsForEntity("milestone", 4);
+
+        expect(result.success).toBe(true);
+        expect(mockDb.comment.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: expect.objectContaining({
+              isDeleted: false,
+              milestoneId: 4,
             }),
           })
         );

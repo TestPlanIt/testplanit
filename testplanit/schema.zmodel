@@ -491,6 +491,7 @@ model Milestones {
     createdBy           String
     sessions            Sessions[]
     testRuns            TestRuns[]
+    comments            Comment[]
 
     @@index([projectId, isDeleted])
     @@index([parentId])
@@ -971,26 +972,26 @@ model Repositories {
     // Create access for users with appropriate permissions
     @@allow('create',
         project.creator == auth() ||
-        // User with SPECIFIC_ROLE access type
+    // User with SPECIFIC_ROLE access type
         project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                 role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
-        // User with GLOBAL_ROLE access type (use their global role)
+    // User with GLOBAL_ROLE access type (use their global role)
         project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
                                 auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
-        // System PROJECTADMIN assigned to project
+    // System PROJECTADMIN assigned to project
         project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
-        // Group with SPECIFIC_ROLE access type
+    // Group with SPECIFIC_ROLE access type
         project.groupPermissions?[group.assignedUsers?[user == auth()] &&
                                   accessType == 'SPECIFIC_ROLE' &&
                                   role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
-        // Group with GLOBAL_ROLE access type
+    // Group with GLOBAL_ROLE access type
         project.groupPermissions?[group.assignedUsers?[user == auth()] &&
                                   accessType == 'GLOBAL_ROLE' &&
                                   auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
-        // Project default GLOBAL_ROLE - user's global role has permission
+    // Project default GLOBAL_ROLE - user's global role has permission
         (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
          auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
-        // Project default SPECIFIC_ROLE - project's default role has permission
+    // Project default SPECIFIC_ROLE - project's default role has permission
         (project.assignedUsers?[user == auth()] &&
          project.defaultAccessType == 'SPECIFIC_ROLE' &&
          project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
@@ -1610,27 +1611,27 @@ model SessionResults {
     // Create access for users with session result permissions
     @@allow('create',
         session.project.creator == auth() ||
-        // User with SPECIFIC_ROLE access type
+    // User with SPECIFIC_ROLE access type
         session.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                          (role.name == 'Project Admin' ||
                                           role.rolePermissions?[area == 'SessionResults' && canAddEdit])] ||
-        // User with GLOBAL_ROLE access type (use their global role)
+    // User with GLOBAL_ROLE access type (use their global role)
         session.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
                                          auth().role.rolePermissions?[area == 'SessionResults' && canAddEdit]] ||
-        // System PROJECTADMIN assigned to project
+    // System PROJECTADMIN assigned to project
         session.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
-        // Group with SPECIFIC_ROLE access type
+    // Group with SPECIFIC_ROLE access type
         session.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
                                           accessType == 'SPECIFIC_ROLE' &&
                                           role.rolePermissions?[area == 'SessionResults' && canAddEdit]] ||
-        // Group with GLOBAL_ROLE access type
+    // Group with GLOBAL_ROLE access type
         session.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
                                           accessType == 'GLOBAL_ROLE' &&
                                           auth().role.rolePermissions?[area == 'SessionResults' && canAddEdit]] ||
-        // Project default GLOBAL_ROLE - user's global role has permission
+    // Project default GLOBAL_ROLE - user's global role has permission
         (session.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
          auth().role.rolePermissions?[area == 'SessionResults' && canAddEdit]) ||
-        // Project default SPECIFIC_ROLE - project's default role has permission
+    // Project default SPECIFIC_ROLE - project's default role has permission
         (session.project.assignedUsers?[user == auth()] &&
          session.project.defaultAccessType == 'SPECIFIC_ROLE' &&
          session.project.defaultRole.rolePermissions?[area == 'SessionResults' && canAddEdit])
@@ -1708,27 +1709,27 @@ model SessionVersions {
     // Create access (for versioning)
     @@allow('create',
         project.creator == auth() ||
-        // User with SPECIFIC_ROLE access type
+    // User with SPECIFIC_ROLE access type
         project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                 (role.name == 'Project Admin' ||
                                  role.rolePermissions?[area == 'Sessions' && canAddEdit])] ||
-        // User with GLOBAL_ROLE access type (use their global role)
+    // User with GLOBAL_ROLE access type (use their global role)
         project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
                                 auth().role.rolePermissions?[area == 'Sessions' && canAddEdit]] ||
-        // System PROJECTADMIN assigned to project
+    // System PROJECTADMIN assigned to project
         project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
-        // Group with SPECIFIC_ROLE access type
+    // Group with SPECIFIC_ROLE access type
         project.groupPermissions?[group.assignedUsers?[user == auth()] &&
                                   accessType == 'SPECIFIC_ROLE' &&
                                   role.rolePermissions?[area == 'Sessions' && canAddEdit]] ||
-        // Group with GLOBAL_ROLE access type
+    // Group with GLOBAL_ROLE access type
         project.groupPermissions?[group.assignedUsers?[user == auth()] &&
                                   accessType == 'GLOBAL_ROLE' &&
                                   auth().role.rolePermissions?[area == 'Sessions' && canAddEdit]] ||
-        // Project default GLOBAL_ROLE - user's global role has permission
+    // Project default GLOBAL_ROLE - user's global role has permission
         (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
          auth().role.rolePermissions?[area == 'Sessions' && canAddEdit]) ||
-        // Project default SPECIFIC_ROLE - project's default role has permission
+    // Project default SPECIFIC_ROLE - project's default role has permission
         (project.assignedUsers?[user == auth()] &&
          project.defaultAccessType == 'SPECIFIC_ROLE' &&
          project.defaultRole.rolePermissions?[area == 'Sessions' && canAddEdit])
@@ -1923,27 +1924,27 @@ model TestRunCases {
     @@allow('create',
         auth().id == testRun.createdById ||
         testRun.project.creator == auth() ||
-        // User with SPECIFIC_ROLE access type
+    // User with SPECIFIC_ROLE access type
         testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                          (role.name == 'Project Admin' ||
                                           role.rolePermissions?[area == 'TestRuns' && canAddEdit])] ||
-        // User with GLOBAL_ROLE access type (use their global role)
+    // User with GLOBAL_ROLE access type (use their global role)
         testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
                                          auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
-        // System PROJECTADMIN assigned to project
+    // System PROJECTADMIN assigned to project
         testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
-        // Group with SPECIFIC_ROLE access type
+    // Group with SPECIFIC_ROLE access type
         testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
                                           accessType == 'SPECIFIC_ROLE' &&
                                           role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
-        // Group with GLOBAL_ROLE access type
+    // Group with GLOBAL_ROLE access type
         testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
                                           accessType == 'GLOBAL_ROLE' &&
                                           auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
-        // Project default GLOBAL_ROLE - user's global role has permission
+    // Project default GLOBAL_ROLE - user's global role has permission
         (testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
          auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
-        // Project default SPECIFIC_ROLE - project's default role has permission
+    // Project default SPECIFIC_ROLE - project's default role has permission
         (testRun.project.assignedUsers?[user == auth()] &&
          testRun.project.defaultAccessType == 'SPECIFIC_ROLE' &&
          testRun.project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit])
@@ -3307,6 +3308,8 @@ model Comment {
     testRun          TestRuns?        @relation(fields: [testRunId], references: [id], onDelete: Cascade)
     sessionId        Int?
     session          Sessions?        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+    milestoneId      Int?
+    milestone        Milestones?      @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
 
     // Creator and metadata
     creatorId        String
@@ -3323,6 +3326,7 @@ model Comment {
     @@index([repositoryCaseId, isDeleted])
     @@index([testRunId, isDeleted])
     @@index([sessionId, isDeleted])
+    @@index([milestoneId, isDeleted])
     @@index([creatorId])
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')

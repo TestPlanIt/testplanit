@@ -7,3 +7,18 @@ introduction:
   label: Introduction
   description: Introductory posts about TestPlanIt features or concepts
   permalink: /introduction
+
+opensource:
+  label: Open Source
+  description: Posts about open source and community
+  permalink: /opensource
+
+announcement:
+  label: Announcement
+  description: Important announcements and news
+  permalink: /announcement
+
+release:
+  label: Release
+  description: Release notes and version updates
+  permalink: /release

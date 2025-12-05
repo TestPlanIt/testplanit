@@ -16,6 +16,7 @@ interface CreateCommentInput {
   repositoryCaseId?: number;
   testRunId?: number;
   sessionId?: number;
+  milestoneId?: number;
 }
 
 interface UpdateCommentInput {
@@ -39,6 +40,7 @@ export async function createComment(input: CreateCommentInput) {
     input.repositoryCaseId,
     input.testRunId,
     input.sessionId,
+    input.milestoneId,
   ].filter((id) => id !== undefined).length;
 
   if (entityCount !== 1) {
@@ -58,6 +60,7 @@ export async function createComment(input: CreateCommentInput) {
         repositoryCaseId: input.repositoryCaseId,
         testRunId: input.testRunId,
         sessionId: input.sessionId,
+        milestoneId: input.milestoneId,
       },
       include: {
         creator: {
@@ -91,6 +94,21 @@ export async function createComment(input: CreateCommentInput) {
             name: true,
           },
         },
+        milestone: {
+          select: {
+            id: true,
+            name: true,
+            milestoneType: {
+              select: {
+                icon: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -103,9 +121,10 @@ export async function createComment(input: CreateCommentInput) {
     }
 
     // Determine entity details for notifications
-    let entityType: "RepositoryCase" | "TestRun" | "Session";
+    let entityType: "RepositoryCase" | "TestRun" | "Session" | "Milestone";
     let entityName: string;
     let entityId: string;
+    let milestoneTypeIconName: string | undefined;
 
     if (comment.repositoryCase) {
       entityType = "RepositoryCase";
@@ -119,6 +138,11 @@ export async function createComment(input: CreateCommentInput) {
       entityType = "Session";
       entityName = comment.session.name;
       entityId = comment.session.id.toString();
+    } else if (comment.milestone) {
+      entityType = "Milestone";
+      entityName = comment.milestone.name;
+      entityId = comment.milestone.id.toString();
+      milestoneTypeIconName = comment.milestone.milestoneType?.icon?.name;
     } else {
       throw new Error("Comment entity not found");
     }
@@ -134,7 +158,8 @@ export async function createComment(input: CreateCommentInput) {
         comment.project.name,
         entityType,
         entityName,
-        entityId
+        entityId,
+        milestoneTypeIconName
       );
     }
 
@@ -193,6 +218,21 @@ export async function updateComment(input: UpdateCommentInput) {
             name: true,
           },
         },
+        milestone: {
+          select: {
+            id: true,
+            name: true,
+            milestoneType: {
+              select: {
+                icon: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -238,9 +278,10 @@ export async function updateComment(input: UpdateCommentInput) {
     }
 
     // Determine entity details for notifications
-    let entityType: "RepositoryCase" | "TestRun" | "Session";
+    let entityType: "RepositoryCase" | "TestRun" | "Session" | "Milestone";
     let entityName: string;
     let entityId: string;
+    let milestoneTypeIconName: string | undefined;
 
     if (existingComment.repositoryCase) {
       entityType = "RepositoryCase";
@@ -254,6 +295,11 @@ export async function updateComment(input: UpdateCommentInput) {
       entityType = "Session";
       entityName = existingComment.session.name;
       entityId = existingComment.session.id.toString();
+    } else if (existingComment.milestone) {
+      entityType = "Milestone";
+      entityName = existingComment.milestone.name;
+      entityId = existingComment.milestone.id.toString();
+      milestoneTypeIconName = existingComment.milestone.milestoneType?.icon?.name;
     } else {
       throw new Error("Comment entity not found");
     }
@@ -269,7 +315,8 @@ export async function updateComment(input: UpdateCommentInput) {
         existingComment.project.name,
         entityType,
         entityName,
-        entityId
+        entityId,
+        milestoneTypeIconName
       );
     }
 
@@ -332,7 +379,7 @@ export async function deleteComment(commentId: string) {
 }
 
 export async function getCommentsForEntity(
-  entityType: "repositoryCase" | "testRun" | "session",
+  entityType: "repositoryCase" | "testRun" | "session" | "milestone",
   entityId: number
 ) {
   const session = await getServerAuthSession();
@@ -351,6 +398,8 @@ export async function getCommentsForEntity(
       whereClause.testRunId = entityId;
     } else if (entityType === "session") {
       whereClause.sessionId = entityId;
+    } else if (entityType === "milestone") {
+      whereClause.milestoneId = entityId;
     }
 
     const comments = await db.comment.findMany({

@@ -124,13 +124,13 @@ Each user receives only one notification per milestone per day, even if they app
 **Due Soon Notification**:
 
 - Title: "Milestone Due Soon"
-- Message: Milestone "{name}" in project "{project}" is due on {date}
+- Message: Milestone "\{name\}" in project "\{project\}" is due on \{date\}
 - Links directly to the milestone details page
 
 **Overdue Notification**:
 
 - Title: "Milestone Overdue"
-- Message: Milestone "{name}" in project "{project}" was due on {date}
+- Message: Milestone "\{name\}" in project "\{project\}" was due on \{date\}
 - Links directly to the milestone details page
 
 ### Notification Delivery
@@ -147,3 +147,32 @@ For more details on notification preferences, see [Notifications](../notificatio
 :::note
 Notification settings are disabled when no due date is set. Setting a due date automatically enables notifications with a default of 5 days before the due date.
 :::
+
+## Comments
+
+The milestone details page includes a **Comments** section at the bottom, allowing team members to discuss milestone progress, communicate blockers, and coordinate testing activities.
+
+### Adding Comments
+
+1. Scroll to the **Comments** section at the bottom of the page
+2. Click in the comment editor field
+3. Type your comment using the rich text editor
+4. Use `@` to mention team members who should be notified
+5. Click **Post Comment** to publish
+
+### Comment Notifications
+
+When you mention a user in a milestone comment:
+
+- They receive an in-app notification with a link to the milestone
+- Based on their notification preferences, they may also receive an email
+- The notification includes the milestone name and custom icon for easy identification
+
+### Example Comments
+
+- **Progress Updates**: "@project-manager - All test runs are now complete. Ready for sign-off."
+- **Risk Communication**: "Milestone at risk due to blocked test environment. @devops please advise."
+- **Scope Changes**: "Adding additional test runs per new requirements from stakeholder meeting."
+- **Coordination**: "@qa-team - Please prioritize the payment tests before end of sprint."
+
+For more details on the commenting system, see [Comments & Mentions](../comments.md).

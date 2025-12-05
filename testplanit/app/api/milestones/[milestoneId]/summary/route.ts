@@ -11,6 +11,7 @@ export type MilestoneSummaryData = {
   completionRate: number;
   totalElapsed: number;
   totalEstimate: number;
+  commentsCount: number;
   segments: Array<{
     id: string;
     type: "test-run" | "session";
@@ -103,6 +104,14 @@ export async function GET(
     // (# of test results with isCompleted=true) / (# of total test cases in test runs) × 100
     const completionRate = await calculateMilestoneCompletion(milestoneId);
 
+    // Get comment count for this milestone
+    const commentsCount = await prisma.comment.count({
+      where: {
+        milestoneId,
+        isDeleted: false,
+      },
+    });
+
     // Get all unique issues from test runs and sessions
     const issueIds = new Set<number>();
     const testRunIds = testRunSegments.map((seg) => seg.sourceId);
@@ -193,6 +202,7 @@ export async function GET(
       completionRate,
       totalElapsed,
       totalEstimate,
+      commentsCount,
       segments: allSegments,
       issues: issues.map((issue) => ({
         ...issue,
