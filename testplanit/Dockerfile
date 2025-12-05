@@ -10,7 +10,7 @@ RUN apk add --no-cache libc6-compat
 # Add build tools needed for native addons like bcrypt
 RUN apk add --no-cache --virtual .gyp python3 make g++
 # Add postgresql client for pg_isready used in wait script
-RUN apk add --no-cache postgresql15-client
+RUN apk add --no-cache postgresql-client
 # Add curl for health checks
 RUN apk add --no-cache curl
 # Install pnpm globally
@@ -236,7 +236,7 @@ ENV NODE_ENV=production
 WORKDIR /app
 
 # Add postgresql client for pg_isready used in wait script
-RUN apk add --no-cache postgresql15-client
+RUN apk add --no-cache postgresql-client
 
 # Install PM2 globally
 RUN npm install -g pm2
