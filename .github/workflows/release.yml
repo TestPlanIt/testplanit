@@ -1,7 +1,7 @@
 # Release Workflow
 #
 # This workflow builds Docker images when a tag is pushed.
-# GitHub Releases are created by release-please, not this workflow.
+# GitHub Releases are created by semantic-release, which also triggers this workflow.
 #
 # Triggers:
 # 1. Tag Push (automatic): Pushing a tag like `v1.0.0` triggers Docker builds

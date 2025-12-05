@@ -3,16 +3,8 @@ name: CI
 on:
   push:
     branches: [ main, develop, 'feature/**', 'hotfix/**', 'release/**', 'users/**' ]
-    # Skip CI for release-please version bumps (changelog, package.json version changes)
-    paths-ignore:
-      - 'testplanit/CHANGELOG.md'
-      - '.release-please-manifest.json'
   pull_request:
     branches: [ main, develop ]
-    # Skip CI for release-please PRs that only update version files
-    paths-ignore:
-      - 'testplanit/CHANGELOG.md'
-      - '.release-please-manifest.json'
 
 permissions:
   contents: read
@@ -21,8 +13,8 @@ jobs:
   test:
     name: Test
     runs-on: [self-hosted]
-    # Skip CI on release-please branches (the code was already tested before merge)
-    if: ${{ !startsWith(github.head_ref || github.ref_name, 'release-please--') }}
+    # Skip CI on release commits from semantic-release
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
