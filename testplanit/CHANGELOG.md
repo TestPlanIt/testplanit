@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.39](https://github.com/TestPlanIt/testplanit/compare/v0.1.38...v0.1.39) (2025-12-05)
+
+
+### Features
+
+* **milestones:** add comments support ([#15](https://github.com/TestPlanIt/testplanit/issues/15)) ([a5e60b2](https://github.com/TestPlanIt/testplanit/commit/a5e60b2d6a150e0a618d3f0f93e819d9c7aebf1c))
+
 ## [0.1.38](https://github.com/TestPlanIt/testplanit/compare/v0.1.37...v0.1.38) (2025-12-05)
 
 
