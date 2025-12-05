@@ -1,0 +1,36 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    "testplanit": {
+      "release-type": "node",
+      "component": "testplanit",
+      "changelog-path": "CHANGELOG.md",
+      "bump-minor-pre-major": true,
+      "bump-patch-for-minor-pre-major": true,
+      "draft": false,
+      "prerelease": false,
+      "include-component-in-tag": false,
+      "include-v-in-tag": true,
+      "changelog-sections": [
+        {"type": "feat", "section": "Features"},
+        {"type": "feature", "section": "Features"},
+        {"type": "fix", "section": "Bug Fixes"},
+        {"type": "perf", "section": "Performance Improvements"},
+        {"type": "revert", "section": "Reverts"},
+        {"type": "docs", "section": "Documentation"},
+        {"type": "style", "section": "Styles"},
+        {"type": "chore", "section": "Miscellaneous Chores"},
+        {"type": "refactor", "section": "Code Refactoring"},
+        {"type": "test", "section": "Tests"},
+        {"type": "build", "section": "Build System"},
+        {"type": "ci", "section": "Continuous Integration"}
+      ],
+      "extra-files": []
+    }
+  },
+  "sequential-calls": false,
+  "group-pull-request-title-pattern": "chore(release): ${version}",
+  "pull-request-title-pattern": "chore(release): ${version}",
+  "pull-request-header": "## Release PR",
+  "separate-pull-requests": false
+}

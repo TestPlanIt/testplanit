@@ -1,0 +1,43 @@
+# Release Please Workflow
+#
+# This workflow automates releases using release-please.
+# It creates/updates a release PR when commits are pushed to main,
+# and creates GitHub releases + tags when the PR is merged.
+#
+# How it works:
+# 1. On every push to main, release-please analyzes commits since the last release
+# 2. If there are releasable changes, it creates/updates a Release PR with:
+#    - Version bump in package.json
+#    - Updated CHANGELOG.md
+# 3. When the Release PR is merged, release-please:
+#    - Creates a GitHub Release
+#    - Creates a git tag (e.g., v0.1.35)
+# 4. The tag push triggers the existing release.yml workflow for Docker builds
+#
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

@@ -48,10 +48,7 @@
     "elasticsearch:reindex:fresh": "tsx scripts/reindexAllEntities.ts --fresh",
     "elasticsearch:reindex:cases": "tsx scripts/reindexElasticsearch.ts",
     "resetdb": "bash ./scripts/resetdb.sh",
-    "release": "standard-version && git push --follow-tags origin main",
-    "release:minor": "standard-version --release-as minor && git push --follow-tags origin main",
-    "release:major": "standard-version --release-as major && git push --follow-tags origin main",
-    "release:patch": "standard-version --release-as patch && git push --follow-tags origin main"
+    "release:info": "echo 'Releases are now managed by release-please. Push to main and a Release PR will be created automatically.'"
   },
   "dependencies": {
     "@atlaskit/editor-jira-transformer": "^14.1.4",
@@ -310,7 +307,6 @@
     "resize-observer-polyfill": "^1.5.1",
     "shadcn": "^3.5.1",
     "sharp": "^0.34.5",
-    "standard-version": "^9.5.0",
     "tailwindcss": "^4.1.17",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",

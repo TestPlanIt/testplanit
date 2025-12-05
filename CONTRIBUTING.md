@@ -12,6 +12,7 @@ First off, thank you for considering contributing to TestPlanIt! It's people lik
 - [Style Guidelines](#style-guidelines)
 - [Commit Guidelines](#commit-guidelines)
 - [Pull Request Process](#pull-request-process)
+- [Release Process](#release-process)
 - [Community](#community)
 - [Recognition](#recognition)
 
@@ -302,6 +303,45 @@ Fixes #456
    - Delete your feature branch
    - Pull latest changes to your local main
    - Celebrate your contribution! 🎉
+
+## Release Process
+
+We use [release-please](https://github.com/googleapis/release-please) to automate releases. Version bumps are determined automatically based on commit messages.
+
+### How It Works
+
+1. **Push commits to main** with conventional commit messages
+2. **Release-please creates a Release PR** automatically with:
+   - Version bump in package.json
+   - Updated CHANGELOG.md
+3. **Merge the Release PR** to trigger:
+   - Git tag creation (e.g., `v0.1.35`)
+   - GitHub Release creation
+   - Docker image builds
+
+### Version Bump Rules
+
+| Commit Type | Version Bump | Example |
+|-------------|--------------|---------|
+| `fix:` | Patch (0.1.34 → 0.1.35) | `fix: resolve login timeout` |
+| `feat:` | Minor (0.1.34 → 0.2.0) | `feat: add dark mode toggle` |
+| `feat!:` or `BREAKING CHANGE:` | Major (0.1.34 → 1.0.0) | `feat!: redesign API` |
+
+### Forcing a Specific Version
+
+To override automatic version detection, add a `Release-As` footer to your commit:
+
+```bash
+feat: major redesign
+
+Release-As: 1.0.0
+```
+
+### Release Workflow
+
+```text
+Push to main → Release PR created → Review & Merge → Tag + Release + Docker builds
+```
 
 ## Community
 
