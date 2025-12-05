@@ -336,7 +336,8 @@ describe("comments actions", () => {
           "Test Project",
           "RepositoryCase",
           "Test Case",
-          "1"
+          "1",
+          undefined // milestoneTypeIconName is undefined for non-milestone entities
         );
       });
 
