@@ -27,7 +27,7 @@ interface Comment {
 
 interface CommentsSectionProps {
   projectId: number;
-  entityType: "repositoryCase" | "testRun" | "session";
+  entityType: "repositoryCase" | "testRun" | "session" | "milestone";
   entityId: number;
   currentUserId: string;
   isAdmin: boolean;

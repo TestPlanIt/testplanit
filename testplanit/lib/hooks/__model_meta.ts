@@ -1117,6 +1117,12 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'milestone',
+                }, comments: {
+                    name: "comments",
+                    type: "Comment",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'milestone',
                 },
             }, uniqueConstraints: {
                 id: {
@@ -6952,6 +6958,21 @@ const metadata: ModelMeta = {
                     isRelationOwner: true,
                     onDeleteAction: 'Cascade',
                     foreignKeyMapping: { "id": "sessionId" },
+                }, milestoneId: {
+                    name: "milestoneId",
+                    type: "Int",
+                    isOptional: true,
+                    isForeignKey: true,
+                    relationField: 'milestone',
+                }, milestone: {
+                    name: "milestone",
+                    type: "Milestones",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'comments',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "milestoneId" },
                 }, creatorId: {
                     name: "creatorId",
                     type: "String",
@@ -7049,6 +7070,7 @@ const metadata: ModelMeta = {
         groups: ['GroupAssignment', 'GroupProjectPermission'],
         roles: ['RolePermission'],
         projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'ProjectIntegration', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
+        milestones: ['Comment'],
         caseFields: ['TemplateCaseAssignment', 'CaseFieldAssignment', 'CaseFieldValues', 'SessionFieldValues'],
         resultFields: ['TemplateResultAssignment', 'ResultFieldAssignment', 'ResultFieldValues'],
         fieldOptions: ['CaseFieldAssignment', 'ResultFieldAssignment'],

@@ -733,6 +733,8 @@ var processor = async (job) => {
               notificationUrl = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}`;
             } else if (data.entityType === "Session" && data.sessionId) {
               notificationUrl = `${baseUrl}/${urlLocale}/projects/sessions/${data.projectId}/${data.sessionId}`;
+            } else if (data.entityType === "Milestone" && data.milestoneId) {
+              notificationUrl = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
             }
           }
         } else if (notification.type === "SYSTEM_ANNOUNCEMENT") {
@@ -842,6 +844,8 @@ ${await getServerTranslation(userLocale, "components.notifications.content.sentB
                   url = `${baseUrl}/${urlLocale}/projects/runs/${data.projectId}/${data.testRunId}`;
                 } else if (data.entityType === "Session" && data.sessionId) {
                   url = `${baseUrl}/${urlLocale}/projects/sessions/${data.projectId}/${data.sessionId}`;
+                } else if (data.entityType === "Milestone" && data.milestoneId) {
+                  url = `${baseUrl}/${urlLocale}/projects/milestones/${data.projectId}/${data.milestoneId}`;
                 }
               }
             } else if (notification.type === "MILESTONE_DUE_REMINDER") {

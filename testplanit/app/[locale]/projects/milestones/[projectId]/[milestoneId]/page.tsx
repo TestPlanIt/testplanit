@@ -76,6 +76,7 @@ import ChildMilestoneItem from "./ChildMilestoneItem";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
+import { CommentsSection } from "~/components/comments/CommentsSection";
 
 interface MilestoneForecastData {
   manualEstimate: number;
@@ -898,6 +899,17 @@ export default function MilestoneDetailsPage() {
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
+            {!isEditMode && milestone && sessionAuth?.user && (
+              <div id="comments" className="mt-6 px-4">
+                <CommentsSection
+                  projectId={Number(projectId)}
+                  entityType="milestone"
+                  entityId={milestone.id}
+                  currentUserId={sessionAuth.user.id}
+                  isAdmin={sessionAuth.user.access === "ADMIN"}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
       </form>
