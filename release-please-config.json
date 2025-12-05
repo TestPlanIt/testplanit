@@ -26,7 +26,7 @@
       ]
     }
   },
-  "sequential-calls": false,
+  "sequential-calls": true,
   "pull-request-header": "## Release PR",
   "separate-pull-requests": false
 }
