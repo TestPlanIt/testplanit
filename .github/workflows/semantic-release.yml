@@ -11,13 +11,14 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
+  actions: write
 
 jobs:
   release:
     name: Release
     runs-on: [self-hosted]
     # Skip release commits
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
     env:
       NODE_OPTIONS: "--max-old-space-size=6144"
     steps:
@@ -65,6 +66,6 @@ jobs:
       - name: Trigger Docker build
         if: steps.release.outputs.released == 'true'
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run release.yml -f tag=${{ steps.release.outputs.version }}
