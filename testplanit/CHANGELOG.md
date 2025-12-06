@@ -1,3 +1,10 @@
+## [0.2.4](https://github.com/TestPlanIt/testplanit/compare/v0.2.3...v0.2.4) (2025-12-06)
+
+
+### Bug Fixes
+
+* **permissions:** enhance access control for notifications and user data retrieval ([d9037ec](https://github.com/TestPlanIt/testplanit/commit/d9037ec4abe22d33ca468ce5705eb46f889ca94c))
+
 ## [0.2.3](https://github.com/TestPlanIt/testplanit/compare/v0.2.2...v0.2.3) (2025-12-06)
 
 
