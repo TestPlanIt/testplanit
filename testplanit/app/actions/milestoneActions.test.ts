@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { completeMilestoneCascade } from "./milestoneActions";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
+import { checkUserPermission } from "./permissions";
 
 // Mock dependencies
 vi.mock("~/lib/prisma", () => ({
@@ -31,6 +32,10 @@ vi.mock("~/server/auth", () => ({
   getServerAuthSession: vi.fn(),
 }));
 
+vi.mock("./permissions", () => ({
+  checkUserPermission: vi.fn(),
+}));
+
 describe("milestoneActions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -57,6 +62,11 @@ describe("milestoneActions", () => {
 
     const mockDoneRunWorkflow = { id: 10 };
     const mockDoneSessionWorkflow = { id: 20 };
+
+    beforeEach(() => {
+      // Default: allow permission for most tests
+      vi.mocked(checkUserPermission).mockResolvedValue(true);
+    });
 
     describe("authentication", () => {
       it("should return error when user is not authenticated", async () => {

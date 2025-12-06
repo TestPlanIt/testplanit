@@ -1334,15 +1334,28 @@ model CaseFieldValues {
     // Create/update/delete access based on repository permissions
     @@allow('create,update,delete',
         testCase.project.creator == auth() ||
+        // User with SPECIFIC_ROLE access type
         testCase.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                           (role.name == 'Project Admin' ||
                                            role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        // User with GLOBAL_ROLE access type
+        testCase.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                          auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        // System PROJECTADMIN assigned to project
         testCase.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        // Group with SPECIFIC_ROLE or GLOBAL_ROLE access type
         testCase.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
                                            ((accessType == 'SPECIFIC_ROLE' &&
                                              role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
                                             (accessType == 'GLOBAL_ROLE' && auth().role != null &&
-                                             auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))]
+                                             auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))] ||
+        // Project default GLOBAL_ROLE - user's global role has permission
+        (testCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+        // Project default SPECIFIC_ROLE - project's default role has permission
+        (testCase.project.assignedUsers?[user == auth()] &&
+         testCase.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         testCase.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -1379,15 +1392,28 @@ model CaseFieldVersionValues {
     // Create/update/delete access based on repository permissions
     @@allow('create,update,delete',
         version.project.creator == auth() ||
+        // User with SPECIFIC_ROLE access type
         version.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                          (role.name == 'Project Admin' ||
                                           role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+        // User with GLOBAL_ROLE access type
+        version.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+        // System PROJECTADMIN assigned to project
         version.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        // Group with SPECIFIC_ROLE or GLOBAL_ROLE access type
         version.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
                                           ((accessType == 'SPECIFIC_ROLE' &&
                                             role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
                                            (accessType == 'GLOBAL_ROLE' && auth().role != null &&
-                                            auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))]
+                                            auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))] ||
+        // Project default GLOBAL_ROLE - user's global role has permission
+        (version.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+        // Project default SPECIFIC_ROLE - project's default role has permission
+        (version.project.assignedUsers?[user == auth()] &&
+         version.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         version.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
     )
 
     @@allow('all', auth().access == 'ADMIN')

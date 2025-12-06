@@ -74,7 +74,7 @@ describe("admin-system-notifications", () => {
       ];
 
       vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers as any);
-      vi.mocked(prisma.notification.create).mockResolvedValue({} as any);
+      vi.mocked(NotificationService.createNotification).mockResolvedValue(undefined);
 
       const result = await createSystemNotification({
         title: "System Update",
@@ -95,22 +95,19 @@ describe("admin-system-notifications", () => {
         },
       });
 
-      // Verify notifications created for each user
-      expect(prisma.notification.create).toHaveBeenCalledTimes(3);
+      // Verify notifications created for each user via NotificationService
+      expect(NotificationService.createNotification).toHaveBeenCalledTimes(3);
       mockUsers.forEach((user) => {
-        expect(prisma.notification.create).toHaveBeenCalledWith({
+        expect(NotificationService.createNotification).toHaveBeenCalledWith({
+          userId: user.id,
+          type: "SYSTEM_ANNOUNCEMENT",
+          title: "System Update",
+          message: "We have updated the system",
           data: {
-            userId: user.id,
-            type: "SYSTEM_ANNOUNCEMENT",
-            title: "System Update",
-            message: "We have updated the system",
-            isRead: false,
-            data: {
-              sentById: "admin1",
-              sentByName: "Admin User",
-              sentAt: expect.any(String),
-              richContent: "We have updated the system",
-            },
+            sentById: "admin1",
+            sentByName: "Admin User",
+            sentAt: expect.any(String),
+            richContent: "We have updated the system",
           },
         });
       });
@@ -122,7 +119,7 @@ describe("admin-system-notifications", () => {
       } as any);
 
       vi.mocked(prisma.user.findMany).mockResolvedValue([{ id: "user1" }] as any);
-      vi.mocked(prisma.notification.create).mockResolvedValue({} as any);
+      vi.mocked(NotificationService.createNotification).mockResolvedValue(undefined);
 
       const richContent = {
         type: "doc",
@@ -144,20 +141,17 @@ describe("admin-system-notifications", () => {
 
       expect(result.success).toBe(true);
 
-      // Verify rich content is preserved and plain text extracted
-      expect(prisma.notification.create).toHaveBeenCalledWith({
+      // Verify rich content is preserved and plain text extracted via NotificationService
+      expect(NotificationService.createNotification).toHaveBeenCalledWith({
+        userId: "user1",
+        type: "SYSTEM_ANNOUNCEMENT",
+        title: "Rich Notification",
+        message: "Hello  world", // Plain text extracted (with space between nodes)
         data: {
-          userId: "user1",
-          type: "SYSTEM_ANNOUNCEMENT",
-          title: "Rich Notification",
-          message: "Hello  world", // Plain text extracted (with space between nodes)
-          isRead: false,
-          data: {
-            sentById: "admin1",
-            sentByName: "Admin User",
-            sentAt: expect.any(String),
-            richContent: richContent, // Original rich content preserved
-          },
+          sentById: "admin1",
+          sentByName: "Admin User",
+          sentAt: expect.any(String),
+          richContent: richContent, // Original rich content preserved
         },
       });
     });

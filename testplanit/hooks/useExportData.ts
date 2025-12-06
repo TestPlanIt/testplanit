@@ -335,9 +335,11 @@ export function useExportData<
         // Fetch data based on scope
         if (options.scope === "selected") {
           // First check if all selected items are in currentData
-          const currentDataIds = currentData.map(item => item.id);
-          const allSelectedInCurrentData = selectedIds.every(id => currentDataIds.includes(id));
-          
+          const currentDataIds = currentData.map((item) => item.id);
+          const allSelectedInCurrentData = selectedIds.every((id) =>
+            currentDataIds.includes(id)
+          );
+
           if (allSelectedInCurrentData) {
             // All selected items are in current page data
             dataToExportInitial = currentData.filter((item) =>
@@ -352,10 +354,13 @@ export function useExportData<
               setIsExporting(false);
               return;
             }
-            
+
             // Fetch all data that matches the current filters
-            const allDataResult = await fetchAllData({ ...options, scope: "allFiltered" });
-            
+            const allDataResult = await fetchAllData({
+              ...options,
+              scope: "allFiltered",
+            });
+
             // Filter to only include selected items
             dataToExportInitial = allDataResult.filter((item) =>
               selectedIds.includes(item.id)
@@ -391,7 +396,6 @@ export function useExportData<
         if (dataToExportInitial.length === 0) {
           console.warn("No data to export.");
           setIsExporting(false);
-          // TODO: Show a message to the user (e.g., toast notification)
           return;
         }
 
