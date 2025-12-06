@@ -18,6 +18,8 @@ jobs:
     runs-on: [self-hosted]
     # Skip release commits
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    env:
+      NODE_OPTIONS: "--max-old-space-size=6144"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
