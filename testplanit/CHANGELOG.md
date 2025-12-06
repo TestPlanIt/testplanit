@@ -1,3 +1,10 @@
+# [0.2.0](https://github.com/TestPlanIt/testplanit/compare/v0.1.40...v0.2.0) (2025-12-06)
+
+
+### Features
+
+* **ProjectRepository:** implement auto-paging for selected test case in run mode ([e8d638c](https://github.com/TestPlanIt/testplanit/commit/e8d638c870bdfe2a6a93d7a3430fd95ef8bc7fd6))
+
 ## [0.1.40](https://github.com/TestPlanIt/testplanit/compare/v0.1.39...v0.1.40) (2025-12-06)
 
 
