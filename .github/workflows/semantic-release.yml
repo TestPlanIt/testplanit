@@ -56,16 +56,28 @@ jobs:
           npx semantic-release 2>&1 | tee release-output.txt
           # Extract the version if a release was made
           if grep -q "Published release" release-output.txt; then
-            VERSION=$(grep -oP "Published release \K[0-9]+\.[0-9]+\.[0-9]+" release-output.txt || true)
-            echo "version=v${VERSION}" >> $GITHUB_OUTPUT
-            echo "released=true" >> $GITHUB_OUTPUT
+            VERSION=$(grep -oP "Published release \K[0-9]+\.[0-9]+\.[0-9]+" release-output.txt || echo "")
+            if [ -n "$VERSION" ]; then
+              echo "version=v${VERSION}" >> $GITHUB_OUTPUT
+              echo "released=true" >> $GITHUB_OUTPUT
+            else
+              echo "Warning: Found 'Published release' but could not extract version number"
+              echo "released=false" >> $GITHUB_OUTPUT
+            fi
           else
             echo "released=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Trigger Docker build
-        if: steps.release.outputs.released == 'true'
+        if: steps.release.outputs.released == 'true' && steps.release.outputs.version != '' && steps.release.outputs.version != 'v'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run release.yml -f tag=${{ steps.release.outputs.version }}
+          VERSION="${{ steps.release.outputs.version }}"
+          if [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Triggering Docker build for version: $VERSION"
+            gh workflow run release.yml -f tag=$VERSION
+          else
+            echo "Error: Invalid version format: $VERSION"
+            exit 1
+          fi
