@@ -1932,7 +1932,8 @@
         "comingSoon": "Coming Soon",
         "cancel": "Cancel",
         "export": "Export",
-        "exporting": "Exporting..."
+        "exporting": "Exporting...",
+        "exportError": "Export failed. Please try again."
       },
       "importWizard": {
         "title": "Import Test Cases",
@@ -2239,7 +2240,8 @@
       "comingSoon": "Coming Soon",
       "cancel": "Cancel",
       "export": "Export",
-      "exporting": "Exporting..."
+      "exporting": "Exporting...",
+      "exportError": "Export failed. Please try again."
     },
     "generateTestCases": {
       "buttonText": "Generate Test Cases",

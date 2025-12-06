@@ -62,8 +62,7 @@ function Issues() {
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
-  const isAdmin = session?.user?.access === "ADMIN";
-  const accessFilterReady = isAdmin || !!session?.user?.id;
+  const accessFilterReady = !!session?.user?.id;
 
   const effectivePageSize =
     typeof pageSize === "number" ? pageSize : totalItems;
@@ -100,23 +99,11 @@ function Issues() {
     };
   }, [debouncedSearchString]);
 
-  // Build access filter for non-admin users
-  // Issues are visible if they're associated with any accessible project
-  const relationProjectFilter = useMemo(() => {
-    if (isAdmin || !session?.user?.id) {
-      return undefined;
-    }
-
-    return {
-      project: {
-        assignedUsers: {
-          some: {
-            userId: session.user.id,
-          },
-        },
-      },
-    };
-  }, [isAdmin, session?.user?.id]);
+  // Note: We don't need a manual project filter here anymore.
+  // ZenStack's access policies on RepositoryCases, Sessions, TestRuns, etc.
+  // will automatically filter out data the user doesn't have access to.
+  // This handles all access types: assignedUsers, userPermissions,
+  // groupPermissions, and project defaultAccessType (GLOBAL_ROLE/SPECIFIC_ROLE).
 
   // Build the where clause for issues
   const issuesWhere = useMemo(() => {
@@ -124,23 +111,13 @@ function Issues() {
       return null;
     }
 
-    const baseWhere = {
-      isDeleted: false,
-      ...searchFilter,
-    };
-
-    // For admins, just return base where
-    if (isAdmin) {
-      return baseWhere;
-    }
-
-    // For non-admins, issue is visible if associated with any accessible project
+    // Issue is visible if associated with any accessible project relation.
+    // ZenStack's access policies handle the permission filtering automatically.
     const relations = [
       {
         repositoryCases: {
           some: {
             isDeleted: false,
-            ...(relationProjectFilter ?? {}),
           },
         },
       },
@@ -148,7 +125,6 @@ function Issues() {
         sessions: {
           some: {
             isDeleted: false,
-            ...(relationProjectFilter ?? {}),
           },
         },
       },
@@ -157,7 +133,6 @@ function Issues() {
           some: {
             session: {
               isDeleted: false,
-              ...(relationProjectFilter ?? {}),
             },
           },
         },
@@ -166,7 +141,6 @@ function Issues() {
         testRuns: {
           some: {
             isDeleted: false,
-            ...(relationProjectFilter ?? {}),
           },
         },
       },
@@ -175,7 +149,6 @@ function Issues() {
           some: {
             testRun: {
               isDeleted: false,
-              ...(relationProjectFilter ?? {}),
             },
           },
         },
@@ -186,7 +159,6 @@ function Issues() {
             testRunResult: {
               testRun: {
                 isDeleted: false,
-                ...(relationProjectFilter ?? {}),
               },
             },
           },
@@ -208,7 +180,7 @@ function Issues() {
     return {
       AND: conditions,
     };
-  }, [accessFilterReady, searchFilter, isAdmin, relationProjectFilter]);
+  }, [accessFilterReady, searchFilter]);
 
   const orderBy = useMemo(() => {
     if (!sortConfig?.column) {

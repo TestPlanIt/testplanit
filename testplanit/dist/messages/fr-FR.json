@@ -1932,7 +1932,8 @@
         "comingSoon": "À venir",
         "cancel": "Annuler",
         "export": "Exporter",
-        "exporting": "Exportation..."
+        "exporting": "Exportation...",
+        "exportError": "L'exportation a échoué. Veuillez réessayer."
       },
       "importWizard": {
         "title": "Importer les cas de test",
@@ -2239,7 +2240,8 @@
       "comingSoon": "À venir",
       "cancel": "Annuler",
       "export": "Exporter",
-      "exporting": "Exportation..."
+      "exporting": "Exportation...",
+      "exportError": "L'exportation a échoué. Veuillez réessayer."
     },
     "generateTestCases": {
       "buttonText": "Générer des cas de test",

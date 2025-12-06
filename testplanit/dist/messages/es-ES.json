@@ -1932,7 +1932,8 @@
         "comingSoon": "Próximamente",
         "cancel": "Cancelar",
         "export": "Exportar",
-        "exporting": "Exportando..."
+        "exporting": "Exportando...",
+        "exportError": "Error en la exportación. Inténtalo de nuevo."
       },
       "importWizard": {
         "title": "Importar Casos de Prueba",
@@ -2239,7 +2240,8 @@
       "comingSoon": "Próximamente",
       "cancel": "Cancelar",
       "export": "Exportar",
-      "exporting": "Exportando..."
+      "exporting": "Exportando...",
+      "exportError": "Error en la exportación. Inténtalo de nuevo."
     },
     "generateTestCases": {
       "buttonText": "Generar Casos de Prueba",
