@@ -2,32 +2,34 @@
 
 ## Overview
 
-This data model is designed for a comprehensive test management and quality assurance platform. It facilitates the creation, organization, and execution of test cases and sessions, tracking their results against milestones and projects. The application supports granular user access control, integration with external systems (like issue trackers and LLMs), and robust reporting capabilities, enabling teams to manage their software quality lifecycle efficiently.
+This data model defines the schema for a comprehensive test management application, supporting user authentication, project organization, test case management with versioning, test execution (sessions and test runs), issue tracking integration, and advanced AI/LLM capabilities. It emphasizes granular access control, collaboration, and extensibility.
 
 ## Functionality
 
-- User and Access Management: Secure user authentication, role-based access control, and customizable permissions for individuals and groups across projects.
-- Project Management: Organize testing efforts into distinct projects, each with its own configurations, integrations, and access policies.
-- Test Case Management: Create, organize, version, and link test cases within repositories and folders, supporting manual and automated testing definitions.
-- Test Execution Management: Plan and execute test runs and exploratory sessions, assigning testers, tracking progress, and recording results with detailed steps and attachments.
-- Milestone Tracking: Define and track project milestones, associating them with test runs and sessions to monitor progress towards release goals.
-- Integrations: Seamlessly connect with third-party tools such as Jira, GitHub, Azure DevOps for issue tracking, and various Large Language Model (LLM) providers for AI-assisted testing features.
-- Custom Fields and Templates: Define custom fields for test cases and results, and create reusable templates to standardize testing processes.
-- Reporting and Analytics: Capture and analyze test results, session data, and LLM usage to gain insights into quality trends and project health.
-- Notifications: Keep users informed about assignments, system announcements, and mentions through in-app and email notifications.
-- Data Import: Support for importing existing test data from platforms like Testmo to facilitate migration and onboarding.
+- User authentication and authorization through internal methods, OAuth (NextAuth), and SAML.
+- Role-based and project-specific access control for fine-grained permissions.
+- Management of projects, milestones, repositories, and test cases.
+- Customizable fields and templates for test cases, sessions, and test results.
+- Tracking of exploratory testing sessions and scheduled test runs.
+- Detailed logging of test results, including steps and attachments.
+- Integration with external issue tracking systems (Jira, GitHub, Azure DevOps).
+- AI/LLM integrations for features like test case generation, bug analysis, and content creation.
+- Notification system for user events and reminders.
+- Import functionality for external test management tools like Testmo and JUnit XML reports.
+- Collaboration features through comments and user mentions.
+- Versioning for critical entities like test cases and sessions to track changes.
 
 ## Enums
 
 ### Access
-Defines system-wide access levels for users, ranging from 'NONE' to 'ADMIN'.
+
 - NONE
 - USER
 - PROJECTADMIN
 - ADMIN
 
 ### ApplicationArea
-Defines distinct functional areas within the application (e.g., 'Documentation', 'Milestones', 'TestRuns') to which role permissions can be assigned.
+
 - Documentation
 - Milestones
 - TestCaseRepository
@@ -49,13 +51,13 @@ Defines distinct functional areas within the application (e.g., 'Documentation',
 - Settings
 
 ### AuthMethod
-Specifies how a user authenticates (e.g., INTERNAL password, SSO, or BOTH).
+
 - INTERNAL
 - SSO
 - BOTH
 
 ### DateFormat
-Defines various date format preferences users can choose (e.g., MM/dd/yyyy, yyyy-MM-dd).
+
 - MM_DD_YYYY_SLASH
 - MM_DD_YYYY_DASH
 - DD_MM_YYYY_SLASH
@@ -65,27 +67,27 @@ Defines various date format preferences users can choose (e.g., MM/dd/yyyy, yyyy
 - D_MMM_YYYY
 
 ### IntegrationAuthType
-Defines the authentication methods for integrations (e.g., OAUTH2, PERSONAL_ACCESS_TOKEN, API_KEY).
+
 - NONE
 - OAUTH2
 - PERSONAL_ACCESS_TOKEN
 - API_KEY
 
 ### IntegrationProvider
-Lists supported third-party integration providers (e.g., JIRA, GITHUB, AZURE_DEVOPS, SIMPLE_URL).
+
 - JIRA
 - GITHUB
 - AZURE_DEVOPS
 - SIMPLE_URL
 
 ### IntegrationStatus
-Describes the current operational status of an integration (e.g., ACTIVE, INACTIVE, ERROR).
+
 - ACTIVE
 - INACTIVE
 - ERROR
 
 ### ItemsPerPage
-Defines the number of items displayed per page in listings and tables (e.g., 10, 25, 50).
+
 - P10
 - P25
 - P50
@@ -93,25 +95,25 @@ Defines the number of items displayed per page in listings and tables (e.g., 10,
 - P250
 
 ### JUnitAttachmentType
-Defines the type of JUnit attachment (e.g., FILE, URL, INLINE content).
+
 - FILE
 - URL
 - INLINE
 
 ### JUnitResultType
-Categorizes the outcome of a JUnit test result (e.g., PASSED, FAILURE, ERROR, SKIPPED).
+
 - PASSED
 - FAILURE
 - ERROR
 - SKIPPED
 
 ### LinkType
-Defines the type of relationship between linked repository cases (e.g., SAME_TEST_DIFFERENT_SOURCE, DEPENDS_ON).
+
 - SAME_TEST_DIFFERENT_SOURCE
 - DEPENDS_ON
 
 ### LlmProvider
-Lists supported Large Language Model providers (e.g., OPENAI, ANTHROPIC, AZURE_OPENAI, GEMINI, OLLAMA, CUSTOM_LLM).
+
 - OPENAI
 - ANTHROPIC
 - AZURE_OPENAI
@@ -120,13 +122,13 @@ Lists supported Large Language Model providers (e.g., OPENAI, ANTHROPIC, AZURE_O
 - CUSTOM_LLM
 
 ### Locale
-Defines available localization options for the application's language and regional settings (e.g., en_US, es_ES, fr_FR).
+
 - en_US
 - es_ES
 - fr_FR
 
 ### NotificationMode
-Defines how users prefer to receive notifications (e.g., IN_APP, IN_APP_EMAIL_IMMEDIATE, USE_GLOBAL).
+
 - NONE
 - IN_APP
 - IN_APP_EMAIL_IMMEDIATE
@@ -134,34 +136,36 @@ Defines how users prefer to receive notifications (e.g., IN_APP, IN_APP_EMAIL_IM
 - USE_GLOBAL
 
 ### NotificationType
-Categorizes different types of notifications users can receive (e.g., WORK_ASSIGNED, SYSTEM_ANNOUNCEMENT).
+
 - WORK_ASSIGNED
 - SESSION_ASSIGNED
 - SYSTEM_ANNOUNCEMENT
 - USER_REGISTERED
 - COMMENT_MENTION
+- MILESTONE_DUE_REMINDER
 
 ### ProjectAccessType
-Defines how access is determined for a user or group within a project (e.g., DEFAULT, NO_ACCESS, GLOBAL_ROLE, SPECIFIC_ROLE).
+
 - DEFAULT
 - NO_ACCESS
 - GLOBAL_ROLE
 - SPECIFIC_ROLE
 
 ### RepositoryCaseSource
-Indicates the origin of a test case, such as 'MANUAL', 'JUNIT' import, or 'API' creation.
+
 - MANUAL
 - JUNIT
 - API
 
 ### SsoProviderType
-Defines the type of Single Sign-On provider (e.g., GOOGLE, SAML, APPLE).
+
 - GOOGLE
 - SAML
 - APPLE
+- MAGIC_LINK
 
 ### TestmoImportPhase
-Tracks the current phase of a Testmo import job, indicating what stage of processing it is in (e.g., UPLOADING, ANALYZING, IMPORTING).
+
 - UPLOADING
 - ANALYZING
 - CONFIGURING
@@ -169,7 +173,7 @@ Tracks the current phase of a Testmo import job, indicating what stage of proces
 - FINALIZING
 
 ### TestmoImportStatus
-Tracks the overall status of a Testmo import job, from 'QUEUED' to 'COMPLETED' or 'FAILED'.
+
 - QUEUED
 - RUNNING
 - READY
@@ -178,12 +182,12 @@ Tracks the overall status of a Testmo import job, from 'QUEUED' to 'COMPLETED' o
 - CANCELED
 
 ### TestRunType
-Categorizes types of test runs (e.g., 'REGULAR' for standard test execution, 'JUNIT' for automated test result imports).
+
 - REGULAR
 - JUNIT
 
 ### Theme
-Defines available visual themes for the user interface, such as Light, Dark, System, and various accent colors.
+
 - Light
 - Dark
 - System
@@ -192,20 +196,20 @@ Defines available visual themes for the user interface, such as Light, Dark, Sys
 - Purple
 
 ### TimeFormat
-Defines various time format preferences users can choose (e.g., HH:mm, hh:mm a).
+
 - HH_MM
 - HH_MM_A
 - HH_MM_Z
 - HH_MM_Z_A
 
 ### WorkflowScope
-Defines the entities to which a workflow applies (e.g., CASES, RUNS, SESSIONS).
+
 - CASES
 - RUNS
 - SESSIONS
 
 ### WorkflowType
-Classifies workflows into general categories like 'NOT_STARTED', 'IN_PROGRESS', or 'DONE'.
+
 - NOT_STARTED
 - IN_PROGRESS
 - DONE
@@ -299,10 +303,12 @@ Classifies workflows into general categories like 'NOT_STARTED', 'IN_PROGRESS', 
 - [UserIntegrationAuth](#userintegrationauth)
 - [UserPreferences](#userpreferences)
 - [UserProjectPermission](#userprojectpermission)
+- [VerificationToken](#verificationtoken)
 - [Workflows](#workflows)
 
 ### Account
-Stores user account information, typically for OAuth providers, and is required by NextAuth for authentication.
+
+Stores user account information for OAuth providers, required by NextAuth.
 ```mermaid
 erDiagram
 "Account" {
@@ -323,11 +329,14 @@ erDiagram
 "Account" }o--|| "User": user
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow creation of accounts for all users (primarily during the sign-in/sign-up process).
-- Allow read, update, and delete operations if the authenticated user is the owner of the account or has 'ADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Allows creation of accounts, primarily during the sign-in process.
+- Allows read, update, and delete operations if the authenticated user's ID matches the account's userId or if the authenticated user has 'ADMIN' access.
+
 ### AllowedEmailDomain
-Specifies email domains from which users are allowed to register, used for restricting sign-up.
+
+Specifies email domains that are permitted for user registration.
 ```mermaid
 erDiagram
 "AllowedEmailDomain" {
@@ -342,10 +351,13 @@ erDiagram
 "AllowedEmailDomain" }o--|| "User": creator
 
 ```
-- Allow read access for all users, including unauthenticated users (necessary for sign-up validation).
-- Allow create, update, and delete operations only for authenticated users with 'ADMIN' access.
+
+- Allows read operations to all users, including unauthenticated ones, for sign-up validation.
+- Allows create, update, and delete operations only if the authenticated user has 'ADMIN' access.
+
 ### AppConfig
-Stores application-wide configuration settings as key-value pairs.
+
+Stores global application configuration settings as key-value pairs.
 ```mermaid
 erDiagram
 "AppConfig" {
@@ -356,11 +368,14 @@ erDiagram
 
 
 ```
-- Deny delete, update, and read access to unauthenticated users.
-- Allow all operations for authenticated users who have 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies delete, update, and read operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### Attachments
-Files or media attached to test cases, sessions, test runs, or results.
+
+Manages file attachments associated with test cases, sessions, test runs, and results.
 ```mermaid
 erDiagram
 "Attachments" {
@@ -390,12 +405,15 @@ erDiagram
 "Attachments" }o--|| "TestRunStepResults": testRunStepResult
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow create, read, and update operations for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows create, read, and update operations if the authenticated user has any access level (not null).
+
 ### CaseFieldAssignment
-Assigns specific field options to a custom test case field.
+
+Assigns predefined field options to a specific case field.
 ```mermaid
 erDiagram
 "CaseFieldAssignment" {
@@ -407,11 +425,14 @@ erDiagram
 "CaseFieldAssignment" }o--|| "CaseFields": caseField
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### CaseFields
-Defines custom fields that can be associated with test cases in the repository, including their type, validation, and default values.
+
+Defines customizable fields that can be associated with test cases, allowing flexible data collection.
 ```mermaid
 erDiagram
 "CaseFields" {
@@ -438,11 +459,14 @@ erDiagram
 "CaseFields" ||--o{ "SessionFieldValues": sessionFieldValues
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' or 'PROJECTADMIN' access.
-- Allow all operations for any authenticated user (this is a broad rule, implying that if a user has add/edit access to test cases, they should have it for fields).
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access or 'PROJECTADMIN' access.
+- Allows all operations if the authenticated user has any access level (not null), which is required for users with add/edit access to test cases.
+
 ### CaseFieldTypes
-Defines the data types for custom test case and result fields (e.g., text, number, dropdown) and their specific options.
+
+Defines the various types of custom fields available for test cases and results (e.g., text, number, checkbox).
 ```mermaid
 erDiagram
 "CaseFieldTypes" {
@@ -455,11 +479,14 @@ erDiagram
 "CaseFieldTypes" ||--o{ "ResultFields": resultFields
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### CaseFieldValues
-Stores the actual values for custom test case fields for a specific test case.
+
+Stores the actual values for custom case fields associated with a specific test case.
 ```mermaid
 erDiagram
 "CaseFieldValues" {
@@ -473,14 +500,25 @@ erDiagram
 "CaseFieldValues" }o--|| "CaseFields": field
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with the test case.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator of the test case's project, or has explicit user/group permissions for that project, or if that project's default access type allows it for an authenticated user with a valid role.
-- Allow create, update, and delete access if the authenticated user is the project creator of the test case's project, or has 'Project Admin' role in that project, or has 'canAddEdit' permission for the 'TestCaseRepository' application area via their user or group role, or has a system-wide 'PROJECTADMIN' access level and is assigned to that project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the test case's project.
+- Allows read access if the authenticated user is the test case's project creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the test case's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the test case's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create, update, and delete operations if the authenticated user is the test case's project creator.
+- Allows create, update, and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission for the test case's project and their role is 'Project Admin' or grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the authenticated user has explicit 'GLOBAL_ROLE' project permission for the test case's project and their global role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the test case's project.
+- Allows create, update, and delete operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions for the test case's project, and their role (or global role) grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the test case's project's default access type is 'GLOBAL_ROLE' and the user's global role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the user is assigned to the test case's project and its default access type is 'SPECIFIC_ROLE', and the project's default role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### CaseFieldVersionValues
-Stores custom field values for a specific version of a test case.
+
+Stores the values of custom case fields for a specific version of a test case.
 ```mermaid
 erDiagram
 "CaseFieldVersionValues" {
@@ -493,14 +531,25 @@ erDiagram
 "CaseFieldVersionValues" }o--|| "RepositoryCaseVersions": version
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with the test case version.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator of the version's project, or has explicit user/group permissions for that project, or if that project's default access type allows it for an authenticated user with a valid role.
-- Allow create, update, and delete access if the authenticated user is the project creator of the version's project, or has 'Project Admin' role in that project, or has 'canAddEdit' permission for the 'TestCaseRepository' application area via their user or group role, or has a system-wide 'PROJECTADMIN' access level and is assigned to that project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the version's project.
+- Allows read access if the authenticated user is the version's project creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the version's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the version's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create, update, and delete operations if the authenticated user is the version's project creator.
+- Allows create, update, and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission for the version's project and their role is 'Project Admin' or grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the authenticated user has explicit 'GLOBAL_ROLE' project permission for the version's project and their global role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the version's project.
+- Allows create, update, and delete operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions for the version's project, and their role (or global role) grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the version's project's default access type is 'GLOBAL_ROLE' and the user's global role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the user is assigned to the version's project and its default access type is 'SPECIFIC_ROLE', and the project's default role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### Color
-Defines specific colors that can be used for field options, statuses, and workflows.
+
+Defines individual colors, associated with a color family. Used for status indicators and other UI elements.
 ```mermaid
 erDiagram
 "Color" {
@@ -516,11 +565,14 @@ erDiagram
 "Color" ||--o{ "Workflows": workflows
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow create and read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows creation and read operations if the authenticated user has any access level (not null).
+
 ### ColorFamily
-Organizes colors into families for better visual management and consistency.
+
+Organizes colors into families for consistent visual branding and selection.
 ```mermaid
 erDiagram
 "ColorFamily" {
@@ -532,11 +584,14 @@ erDiagram
 "ColorFamily" ||--o{ "Color": colors
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow create and read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows creation and read operations if the authenticated user has any access level (not null).
+
 ### Comment
-Represents a user comment, attached polymorphically to various entities like test cases, test runs, or sessions, supporting rich text content.
+
+Represents a comment made by a user on various entities like test cases, test runs, or milestones.
 ```mermaid
 erDiagram
 "Comment" {
@@ -546,6 +601,7 @@ erDiagram
   Int repositoryCaseId FK "?"
   Int testRunId FK "?"
   Int sessionId FK "?"
+  Int milestoneId FK "?"
   String creatorId FK
   DateTime createdAt
   DateTime updatedAt
@@ -557,20 +613,26 @@ erDiagram
 "Comment" }o--|| "RepositoryCases": repositoryCase
 "Comment" }o--|| "TestRuns": testRun
 "Comment" }o--|| "Sessions": session
+"Comment" }o--|| "Milestones": milestone
 "Comment" }o--|| "User": creator
 "Comment" ||--o{ "CommentMention": mentionedUsers
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the associated project.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user has any form of access (project creator, explicit user/group permissions, or default project access) to the associated project.
-- Allow create access if the authenticated user has any form of access (project creator, explicit user/group permissions, or default project access) to the associated project.
-- Allow update operations if the authenticated user is the creator of the comment and the comment is not deleted.
-- Allow delete operations if the authenticated user is the creator of the comment or has 'ADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the associated project.
+- Allows read access if the authenticated user is the project's creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows creation operations using the same logic as read access to ensure users can comment on entities they can view.
+- Allows update operations if the authenticated user is the creator of the comment and the comment is not deleted.
+- Allows deletion operations if the authenticated user is the creator of the comment or has 'ADMIN' access.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### CommentMention
-Records when a user is mentioned within a comment, facilitating notifications.
+
+Records when a user is mentioned within a comment.
 ```mermaid
 erDiagram
 "CommentMention" {
@@ -584,11 +646,15 @@ erDiagram
 "CommentMention" }o--|| "User": user
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read and create operations for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user has any access level (not null).
+- Allows creation operations if the authenticated user has any access level (not null).
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### ConfigCategories
-Categories for configurations, used to group related configuration variants.
+
+Categorizes test configurations, helping to organize different sets of test environments or settings.
 ```mermaid
 erDiagram
 "ConfigCategories" {
@@ -600,11 +666,14 @@ erDiagram
 "ConfigCategories" ||--o{ "ConfigVariants": variants
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### ConfigurationConfigVariant
-Links specific configuration variants to a configuration.
+
+Links configurations to their constituent config variants.
 ```mermaid
 erDiagram
 "ConfigurationConfigVariant" {
@@ -616,11 +685,14 @@ erDiagram
 "ConfigurationConfigVariant" }o--|| "ConfigVariants": variant
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### Configurations
-Collections of configuration variants used for test runs or sessions, enabling testing under different setups.
+
+Defines a specific test configuration, composed of various config variants.
 ```mermaid
 erDiagram
 "Configurations" {
@@ -635,11 +707,14 @@ erDiagram
 "Configurations" ||--o{ "TestRuns": testRuns
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### ConfigVariants
-Individual configuration variants that belong to a configuration category.
+
+Represents different variants within a configuration category (e.g., Browser: Chrome, Firefox).
 ```mermaid
 erDiagram
 "ConfigVariants" {
@@ -654,11 +729,14 @@ erDiagram
 "ConfigVariants" ||--o{ "ConfigurationConfigVariant": configurations
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### FieldIcon
-Stores icons that can be associated with various fields, workflows, or milestone types for visual representation.
+
+Stores icon definitions that can be used across various fields and entities for visual representation.
 ```mermaid
 erDiagram
 "FieldIcon" {
@@ -671,11 +749,14 @@ erDiagram
 "FieldIcon" ||--o{ "MilestoneTypes": milestoneTypes
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow create and read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows creation and read operations if the authenticated user has any access level (not null).
+
 ### FieldOptions
-Provides predefined options for custom fields, including name, icon, and color, and can be assigned to case or result fields.
+
+Provides predefined options for customizable fields, often used for dropdowns or multi-select fields.
 ```mermaid
 erDiagram
 "FieldOptions" {
@@ -695,11 +776,14 @@ erDiagram
 "FieldOptions" ||--o{ "ResultFieldAssignment": resultFields
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### GroupAssignment
-Links users to groups, assigning a user to a specific group.
+
+Links users to specific groups, defining group membership.
 ```mermaid
 erDiagram
 "GroupAssignment" {
@@ -711,11 +795,14 @@ erDiagram
 "GroupAssignment" }o--|| "Groups": group
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### GroupProjectPermission
-Explicitly defines a group's access type and role for a specific project.
+
+Defines explicit, group-specific access permissions for a project.
 ```mermaid
 erDiagram
 "GroupProjectPermission" {
@@ -730,16 +817,19 @@ erDiagram
 "GroupProjectPermission" }o--|| "Roles": role
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny create and update operations if the 'accessType' is 'SPECIFIC_ROLE' but no 'roleId' is provided.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow all operations for the user who created the project.
-- Allow all operations if the authenticated user has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
-- Allow all operations if the authenticated user has an explicit 'Project Admin' role assigned within the project.
-- Allow read access if the authenticated user is a member of the group.
-- Allow read access if the authenticated user is assigned to the project (to see group permissions).
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows all operations if the authenticated user is the project's creator.
+- Allows all operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows all operations if the authenticated user has an explicit 'Project Admin' role within the project.
+- Allows read operations if the authenticated user is part of the group.
+- Allows read operations if the authenticated user is assigned to the project.
+- Denies creation and update operations if 'accessType' is 'SPECIFIC_ROLE' but 'roleId' is not provided.
+
 ### Groups
-Represents groups of users, allowing for collective assignment of permissions and easier management.
+
+Manages user groups for organizing users and assigning group-level permissions.
 ```mermaid
 erDiagram
 "Groups" {
@@ -755,11 +845,14 @@ erDiagram
 "Groups" ||--o{ "GroupProjectPermission": projectPermissions
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### Integration
-Configures connections to external third-party systems like Jira, GitHub, or Azure DevOps.
+
+Defines a general integration with external systems, such as issue trackers.
 ```mermaid
 erDiagram
 "Integration" {
@@ -781,11 +874,14 @@ erDiagram
 "Integration" ||--o{ "Issue": issues
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow read access for any authenticated user.
-- Allow all operations for authenticated users with 'ADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user has any access level (not null).
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### Issue
-Represents an issue or bug, potentially linked to external bug tracking systems, associated with various testing entities.
+
+Represents an issue (e.g., bug, defect) linked from an external integration or created within the application.
 ```mermaid
 erDiagram
 "Issue" {
@@ -824,12 +920,15 @@ erDiagram
 "Issue" }o--|| "Integration": integration
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow create, read, and update operations for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows create, read, and update operations if the authenticated user has any access level (not null).
+
 ### JUnitAttachment
-Stores attachments related to JUnit test results or repository cases.
+
+Stores attachments related to JUnit test cases.
 ```mermaid
 erDiagram
 "JUnitAttachment" {
@@ -846,14 +945,19 @@ erDiagram
 "JUnitAttachment" }o--|| "User": createdBy
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with the repository case.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user has any form of access (project creator, explicit user/group permissions, or default project access) to the project associated with the repository case.
-- Allow create and update operations if the authenticated user is the creator of the JUnit attachment.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the repository case's project.
+- Allows read access if the authenticated user is the repository case's project creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the repository case's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the repository case's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create and update operations if the authenticated user is the creator of the JUnit attachment.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### JUnitProperty
-Stores properties associated with JUnit test suites or repository cases, typically key-value pairs.
+
+Stores properties associated with JUnit test suites or test cases.
 ```mermaid
 erDiagram
 "JUnitProperty" {
@@ -871,14 +975,18 @@ erDiagram
 "JUnitProperty" }o--|| "User": createdBy
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with either the test suite's test run or the repository case.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user has any form of access (project creator, explicit user/group permissions, or default project access) to the project associated with the test suite's test run (if present) or the repository case (if present).
-- Allow create and update operations if the authenticated user is the creator of the JUnit property.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the test suite's test run's project (if linked to a test suite) or the repository case's project (if linked to a repository case).
+- Allows read access through the test suite if the authenticated user has read access to the test suite's test run's project.
+- Allows read access through the repository case if the authenticated user has read access to the repository case's project.
+- Allows create and update operations if the authenticated user is the creator of the JUnit property.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### JUnitTestResult
-Stores individual JUnit test results, linked to a test suite and a repository case.
+
+Represents an individual test result from a JUnit XML report, linked to a repository case.
 ```mermaid
 erDiagram
 "JUnitTestResult" {
@@ -906,14 +1014,19 @@ erDiagram
 "JUnitTestResult" }o--|| "Status": status
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with the test suite's test run.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator of the test suite's test run project, or has explicit user/group permissions for that project, or if that project's default access type allows it for an authenticated user with a valid role.
-- Allow create and update operations if the authenticated user is the creator of the JUnit test result.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the test suite's test run's project.
+- Allows read access if the authenticated user is the test suite's test run's project creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the test suite's test run's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the test suite's test run's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create and update operations if the authenticated user is the creator of the JUnit test result.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### JUnitTestStep
-Represents individual steps within a JUnit test, linked to a repository case, providing granular detail on test execution.
+
+Represents a step within a JUnit test case.
 ```mermaid
 erDiagram
 "JUnitTestStep" {
@@ -931,14 +1044,19 @@ erDiagram
 "JUnitTestStep" }o--|| "User": createdBy
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with the repository case.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user has any form of access (project creator, explicit user/group permissions, or default project access) to the project associated with the repository case.
-- Allow create and update operations if the authenticated user is the creator of the JUnit test step.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the repository case's project.
+- Allows read access if the authenticated user is the repository case's project creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the repository case's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the repository case's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create and update operations if the authenticated user is the creator of the JUnit test step.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### JUnitTestSuite
-Represents a JUnit test suite, containing test results and properties, typically imported from CI/CD systems.
+
+Represents a test suite from a JUnit XML report, containing metadata about a group of tests.
 ```mermaid
 erDiagram
 "JUnitTestSuite" {
@@ -968,14 +1086,19 @@ erDiagram
 "JUnitTestSuite" }o--|| "User": createdBy
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with the test run.
-- Allow all operations for authenticated users with 'ADMIN' access or 'PROJECTADMIN' access.
-- Allow read access if the authenticated user is the project creator of the test run's project, or has explicit user/group permissions for that project, or if that project's default access type allows it for an authenticated user with a valid role.
-- Allow create and update operations if the authenticated user is the creator of the JUnit test suite.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the test run's project.
+- Allows read access if the authenticated user is the test run's project creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the test run's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the test run's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create and update operations if the authenticated user is the creator of the JUnit test suite.
+- Allows all operations if the authenticated user has 'PROJECTADMIN' access or 'ADMIN' access.
+
 ### LlmFeatureConfig
-Configures specific LLM features at the project level, including enabling/disabling, choosing integrations/templates, and setting overrides and usage limits.
+
+Configures specific LLM features for a project, including enabled status, integration, and template overrides.
 ```mermaid
 erDiagram
 "LlmFeatureConfig" {
@@ -1003,12 +1126,15 @@ erDiagram
 "LlmFeatureConfig" }o--|| "LlmPromptTemplate": template
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is assigned to the project.
-- Allow create, update, and delete operations if the authenticated user is a 'PROJECTADMIN' assigned to the project.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user is assigned to the project.
+- Allows create, update, and delete operations if the authenticated user is assigned to the project and has 'PROJECTADMIN' access.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### LlmIntegration
-Configures connections to external Large Language Model (LLM) providers like OpenAI, Anthropic, etc.
+
+Defines a Large Language Model (LLM) integration, used for AI-powered features.
 ```mermaid
 erDiagram
 "LlmIntegration" {
@@ -1033,11 +1159,14 @@ erDiagram
 "LlmIntegration" ||--o{ "LlmRateLimit": llmRateLimits
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow read access for any authenticated user.
-- Allow all operations for authenticated users with 'ADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user has any access level (not null).
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### LlmPromptTemplate
-Stores reusable prompt templates for various LLM features, with system and user prompts, variables, and model preferences.
+
+Defines reusable templates for LLM prompts, including system and user prompts, variables, and model preferences.
 ```mermaid
 erDiagram
 "LlmPromptTemplate" {
@@ -1066,12 +1195,15 @@ erDiagram
 "LlmPromptTemplate" ||--o{ "LlmFeatureConfig": featureConfigs
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
-- Allow create and update operations for authenticated users with 'ADMIN' or 'PROJECTADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user has any access level (not null).
+- Allows create and update operations if the authenticated user has 'ADMIN' access or 'PROJECTADMIN' access.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### LlmProviderConfig
-Stores configurations for specific LLM providers, including model details, rate limits, and cost tracking.
+
+Configures specific settings for an LLM provider, including model details, rate limits, and cost tracking.
 ```mermaid
 erDiagram
 "LlmProviderConfig" {
@@ -1099,11 +1231,14 @@ erDiagram
 "LlmProviderConfig" ||--o| "LlmIntegration": llmIntegration
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user has any access level (not null).
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### LlmRateLimit
-Defines and tracks rate limits for LLM usage across different scopes (global, integration, project, user).
+
+Defines rate limits for LLM usage, applicable at global, integration, project, or user scopes.
 ```mermaid
 erDiagram
 "LlmRateLimit" {
@@ -1131,12 +1266,14 @@ erDiagram
 "LlmRateLimit" }o--|| "LlmIntegration": llmIntegration
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
-- Allow create, update, and delete operations for authenticated users with 'ADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user has any access level (not null).
+- Allows create, update, and delete operations if the authenticated user has 'ADMIN' access.
+
 ### LlmResponseCache
-Caches responses from LLM interactions to improve performance and reduce costs, uniquely identified by feature, model, and prompt/context hash.
+
+Caches LLM responses to optimize performance and reduce API calls.
 ```mermaid
 erDiagram
 "LlmResponseCache" {
@@ -1160,12 +1297,15 @@ erDiagram
 "LlmResponseCache" }o--|| "LlmIntegration": llmIntegration
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
-- Allow create and delete operations for authenticated users with 'ADMIN' or 'PROJECTADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user has any access level (not null).
+- Allows create and delete operations if the authenticated user has 'ADMIN' access or 'PROJECTADMIN' access.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### LlmUsage
-Tracks the usage of LLM features, including token counts, costs, and performance metrics, linked to users and projects.
+
+Tracks usage and cost details for LLM interactions within the application.
 ```mermaid
 erDiagram
 "LlmUsage" {
@@ -1192,12 +1332,15 @@ erDiagram
 "LlmUsage" }o--|| "User": user
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the user who performed the LLM usage or is assigned to the project (if applicable).
-- Allow create operations for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user's ID matches the userId, or if the user is assigned to the project associated with the usage.
+- Allows creation operations if the authenticated user has any access level (not null).
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### Milestones
-Represents project milestones, used for tracking progress and organizing work, with hierarchical support.
+
+Represents project milestones, used for tracking progress and deadlines within a project.
 ```mermaid
 erDiagram
 "Milestones" {
@@ -1212,6 +1355,8 @@ erDiagram
   Boolean isStarted
   Boolean isCompleted
   Boolean isDeleted
+  Boolean automaticCompletion
+  Int notifyDaysBefore
   DateTime startedAt  "?"
   DateTime completedAt  "?"
   DateTime createdAt
@@ -1227,16 +1372,25 @@ erDiagram
 "Milestones" }o--|| "User": creator
 "Milestones" ||--o{ "Sessions": sessions
 "Milestones" ||--o{ "TestRuns": testRuns
+"Milestones" ||--o{ "Comment": comments
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the associated project.
-- Allow read access if the authenticated user is the project creator, or has explicit user/group permissions for the project, or if the project's default access type allows it for an authenticated user with a valid role.
-- Allow create, update, and delete access if the authenticated user is the project creator, or has 'Project Admin' role in the project, or has 'canAddEdit' permission for the 'Milestones' application area via their user or group role, or has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
-- Allow all operations for authenticated users with 'ADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the associated project.
+- Allows read access if the authenticated user is the project's creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create, update, and delete operations if the authenticated user is the project's creator.
+- Allows create, update, and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role is 'Project Admin' or grants 'canAddEdit' in the 'Milestones' area.
+- Allows create, update, and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows create, update, and delete operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, and their role (or global role) is 'Project Admin' or grants 'canAddEdit' in the 'Milestones' area.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### MilestoneTypes
-Defines different types of milestones (e.g., Release, Sprint), allowing for categorization and custom icons.
+
+Defines different categories or types of milestones, each with a name, icon, and default status.
 ```mermaid
 erDiagram
 "MilestoneTypes" {
@@ -1252,11 +1406,14 @@ erDiagram
 "MilestoneTypes" ||--o{ "Milestones": milestones
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### MilestoneTypesAssignment
-Links milestone types to projects, making specific types available for use within a project.
+
+Connects milestone types to specific projects, allowing project-specific availability of milestone types.
 ```mermaid
 erDiagram
 "MilestoneTypesAssignment" {
@@ -1268,11 +1425,14 @@ erDiagram
 "MilestoneTypesAssignment" }o--|| "MilestoneTypes": milestoneType
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### Notification
-Stores notifications for users, such as work assignments, system announcements, or comment mentions.
+
+Manages user notifications, including type, message, and read status.
 ```mermaid
 erDiagram
 "Notification" {
@@ -1293,13 +1453,16 @@ erDiagram
 "Notification" }o--|| "User": user
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the recipient of the notification.
-- Allow update operations if the authenticated user is the recipient and is modifying the 'isRead' or 'isDeleted' status of the notification.
-- Allow create operations for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user's ID matches the userId or if the authenticated user has 'ADMIN' access.
+- Allows update operations if the authenticated user's ID matches the userId and they are updating 'isRead' or 'isDeleted' fields.
+- Allows creation operations if the authenticated user has any access level (not null).
+- Allows deletion operations if the authenticated user has 'ADMIN' access.
+
 ### OllamaModelRegistry
-Manages the registry of Ollama models, tracking their installation status, capabilities, and usage.
+
+Registers and tracks available Ollama models, including their installation status and capabilities.
 ```mermaid
 erDiagram
 "OllamaModelRegistry" {
@@ -1324,11 +1487,14 @@ erDiagram
 "OllamaModelRegistry" }o--|| "LlmIntegration": llmIntegration
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user has any access level (not null).
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### ProjectAssignment
-Links users to projects, indicating a user's direct involvement in a project.
+
+Connects users to projects, indicating their direct involvement.
 ```mermaid
 erDiagram
 "ProjectAssignment" {
@@ -1340,11 +1506,14 @@ erDiagram
 "ProjectAssignment" }o--|| "Projects": project
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### ProjectIntegration
-Associates external integrations with specific projects, allowing project-level configuration and activation.
+
+Links an external integration to a project, with project-specific configurations and field mappings.
 ```mermaid
 erDiagram
 "ProjectIntegration" {
@@ -1366,13 +1535,20 @@ erDiagram
 "ProjectIntegration" }o--|| "Integration": integration
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the associated project.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator, or has explicit user/group permissions for the project, or if the project's default access type allows it for an authenticated user with a valid role.
-- Allow create, update, and delete access if the authenticated user is the project creator, or has an explicit 'Project Admin' role in the project, or has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
+
+- Denies all operations to unauthenticated users.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the associated project.
+- Allows read access if the authenticated user is the project's creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create, update, and delete operations if the authenticated user is the project's creator.
+- Allows create, update, and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role is 'Project Admin'.
+- Allows create, update, and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### ProjectLlmIntegration
-Associates LLM integrations with specific projects, allowing project-level configuration and activation of AI features.
+
+Links a specific LLM integration to a project, with project-specific configurations.
 ```mermaid
 erDiagram
 "ProjectLlmIntegration" {
@@ -1389,11 +1565,14 @@ erDiagram
 "ProjectLlmIntegration" }o--|| "LlmIntegration": llmIntegration
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow read access for any authenticated user.
-- Allow all operations for authenticated users with 'ADMIN' or 'PROJECTADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user has any access level (not null).
+- Allows all operations if the authenticated user has 'ADMIN' access or 'PROJECTADMIN' access.
+
 ### Projects
-Represents a project, acting as a container for test cases, test runs, milestones, and other related entities. It has complex, granular access control based on user roles, group assignments, and explicit project permissions.
+
+Represents a project, a core entity for organizing test artifacts, users, and integrations.
 ```mermaid
 erDiagram
 "Projects" {
@@ -1438,20 +1617,29 @@ erDiagram
 "Projects" ||--o{ "Comment": comments
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny all operations if the project is marked as deleted.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow all operations for the user who created the project.
-- Allow all operations for authenticated users who have an explicit 'Project Admin' role assigned within this project.
-- Allow all operations for authenticated users with a system-wide 'PROJECTADMIN' access level who are also assigned to this project.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for this project.
-- Allow read access if the user has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or if the user belongs to a group with such permissions (and no explicit user denial overrides), or if the project's default access type (GLOBAL_ROLE, SPECIFIC_ROLE, or DEFAULT) allows it for an authenticated user with a valid role and not 'NONE' access.
-- Deny update and delete access if the authenticated user has 'NO_ACCESS' explicitly defined for this project.
-- Allow update access if the user has explicit 'SPECIFIC_ROLE' permission within the project and their role has 'canAddEdit' for 'Documentation', or if they belong to a group with such permissions (for 'Documentation' area).
-- Allow delete access if the user has explicit 'SPECIFIC_ROLE' permission within the project and their role has 'canDelete' for 'Documentation', or if they belong to a group with such permissions (for 'Documentation' area).
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows all operations if the authenticated user is the project's creator.
+- Allows all operations if the authenticated user has an explicit 'Project Admin' role within the project.
+- Allows all operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the project.
+- Allows read access if the authenticated user has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions.
+- Allows read access if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, and has a valid role.
+- Allows read access if the project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows read access if the project's default access type is 'DEFAULT' and the user has a valid access level (not 'NONE').
+- Denies update and delete access if the authenticated user has an explicit 'NO_ACCESS' permission for the project.
+- Allows update access if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role grants 'canAddEdit' in the 'Documentation' area.
+- Allows update access if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, and their role (or global role) grants 'canAddEdit' in the 'Documentation' area.
+- Allows delete access if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role grants 'canDelete' in the 'Documentation' area.
+- Allows delete access if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, and their role (or global role) grants 'canDelete' in the 'Documentation' area.
+- Denies all operations if the project is marked as deleted.
+
 ### ProjectStatusAssignment
-Associates specific statuses with a project, defining the available statuses for entities within that project.
+
+Associates specific statuses with a project, allowing project-specific status configurations.
 ```mermaid
 erDiagram
 "ProjectStatusAssignment" {
@@ -1463,11 +1651,14 @@ erDiagram
 "ProjectStatusAssignment" }o--|| "Projects": project
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### ProjectWorkflowAssignment
-Associates specific workflows with a project, defining the available workflows for entities within that project.
+
+Associates specific workflows with a project.
 ```mermaid
 erDiagram
 "ProjectWorkflowAssignment" {
@@ -1479,17 +1670,21 @@ erDiagram
 "ProjectWorkflowAssignment" }o--|| "Projects": project
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### RegistrationSettings
-Global settings controlling user registration behavior, such as email domain restrictions and open registration.
+
+Global settings controlling user registration behavior, such as email domain restrictions and default access levels.
 ```mermaid
 erDiagram
 "RegistrationSettings" {
   String id PK
   Boolean restrictEmailDomains
   Boolean allowOpenRegistration
+  Access defaultAccess
   DateTime createdAt
   DateTime updatedAt
 }
@@ -1497,10 +1692,13 @@ erDiagram
 
 
 ```
-- Allow read access for all users, including unauthenticated users (necessary for sign-up page).
-- Allow create, update, and delete operations only for authenticated users with 'ADMIN' access.
+
+- Allows read operations to all users, including unauthenticated ones, for displaying sign-up options.
+- Allows create, update, and delete operations only if the authenticated user has 'ADMIN' access.
+
 ### Repositories
-Stores test cases and test folders for a project, serving as the main container for test artifacts.
+
+Manages test case repositories within a project.
 ```mermaid
 erDiagram
 "Repositories" {
@@ -1516,15 +1714,26 @@ erDiagram
 "Repositories" ||--o{ "RepositoryCases": cases
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the associated project.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator, or has explicit user/group permissions for the project, or if the project's default access type allows it for an authenticated user with a valid role.
-- Allow update and delete access if the authenticated user is the project creator, or has an explicit 'Project Admin' role in the project, or has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
-- Allow create access if the authenticated user is the project creator, or has an explicit 'Project Admin' role in the project, or has 'canAddEdit' permission for the 'TestCaseRepository' application area via user permissions, or has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the associated project.
+- Allows read access if the authenticated user is the project's creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows update and delete operations if the authenticated user is the project's creator, has explicit 'SPECIFIC_ROLE' project permission with 'Project Admin' role, or has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows creation operations if the authenticated user is the project's creator.
+- Allows creation operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows creation operations if the authenticated user has explicit 'GLOBAL_ROLE' project permission and their global role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows creation operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows creation operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, and their role (or global role) grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows creation operations if the project's default access type is 'GLOBAL_ROLE' and the user's global role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows creation operations if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE', and the project's default role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### RepositoryCaseLink
-Defines relationships between test cases, such as dependencies or different source mappings.
+
+Manages links between repository test cases, indicating relationships like dependencies or different sources for the same test.
 ```mermaid
 erDiagram
 "RepositoryCaseLink" {
@@ -1542,14 +1751,22 @@ erDiagram
 "RepositoryCaseLink" }o--|| "User": createdBy
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with 'caseA' (the primary linked test case).
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator of 'caseA''s project, or has explicit user/group permissions for that project, or if that project's default access type allows it for an authenticated user with a valid role.
-- Allow create, update, and delete access if the authenticated user is the project creator of 'caseA''s project, or has 'Project Admin' role in that project, or has 'canAddEdit' permission for the 'TestCaseRepository' application area via their user or group role, or has a system-wide 'PROJECTADMIN' access level and is assigned to that project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the project associated with case A.
+- Allows read access if the authenticated user is the project's creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions for case A's project, or is part of a group with such permissions and a valid role.
+- Allows read access if case A's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to case A's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create, update, and delete operations if the authenticated user is case A's project's creator.
+- Allows create, update, and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission for case A's project and their role is 'Project Admin' or grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to case A's project.
+- Allows create, update, and delete operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions for case A's project, and their role (or global role) grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### RepositoryCases
-Represents individual test cases stored in a repository, including their details, workflow state, and versions.
+
+Represents individual test cases stored in a repository, including details like name, template, state, and versioning.
 ```mermaid
 erDiagram
 "RepositoryCases" {
@@ -1597,14 +1814,25 @@ erDiagram
 "RepositoryCases" ||--o{ "Comment": comments
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the associated project.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator, or has explicit user/group permissions for the project, or if the project's default access type allows it for an authenticated user with a valid role.
-- Allow create, update, and delete access if the authenticated user is the project creator, or has an explicit 'Project Admin' role in the project, or has 'canAddEdit' permission for the 'TestCaseRepository' application area via their user or group role, or has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the associated project.
+- Allows read access if the authenticated user is the project's creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create, update, and delete operations if the authenticated user is the project's creator.
+- Allows create, update, and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role is 'Project Admin' or grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the authenticated user has explicit 'GLOBAL_ROLE' project permission and their global role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows create, update, and delete operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, and their role (or global role) grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the project's default access type is 'GLOBAL_ROLE' and the user's global role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE', and the project's default role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### RepositoryCaseVersions
-Stores historical versions of test cases, allowing for tracking changes over time.
+
+Stores historical versions of test cases, preserving their state at different points in time.
 ```mermaid
 erDiagram
 "RepositoryCaseVersions" {
@@ -1644,14 +1872,22 @@ erDiagram
 "RepositoryCaseVersions" ||--o{ "CaseFieldVersionValues": caseFieldVersionValues
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the associated project.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator, or has explicit user/group permissions for the project, or if the project's default access type allows it for an authenticated user with a valid role.
-- Allow create, update, and delete access if the authenticated user is the project creator, or has an explicit 'Project Admin' role in the project, or has 'canAddEdit' permission for the 'TestCaseRepository' application area via their user or group role, or has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the associated project.
+- Allows read access if the authenticated user is the project's creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create, update, and delete operations if the authenticated user is the project's creator.
+- Allows create, update, and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role is 'Project Admin' or grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows create, update, and delete operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' project permissions, and their role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### RepositoryFolders
-Organizes test cases within a repository into a hierarchical folder structure.
+
+Organizes test cases within repositories into a hierarchical folder structure.
 ```mermaid
 erDiagram
 "RepositoryFolders" {
@@ -1675,14 +1911,23 @@ erDiagram
 "RepositoryFolders" ||--o{ "RepositoryCases": cases
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the associated project.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator, or has explicit user/group permissions for the project, or if the project's default access type allows it for an authenticated user with a valid role.
-- Allow create, update, and delete access if the authenticated user is the project creator, or has 'Project Admin' role in the project, or has 'canAddEdit' permission for the 'TestCaseRepository' application area via their user or group role, or has a system-wide 'PROJECTADMIN' access level and is assigned to the project, or is a regular 'USER' with 'canAddEdit' for 'TestCaseRepository'.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the associated project.
+- Allows read access if the authenticated user is the project's creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create, update, and delete operations if the authenticated user is the project's creator.
+- Allows create, update, and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role is 'Project Admin' or grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, and their role (or global role) is 'Project Admin' or grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the authenticated user has 'USER' system access and their role grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+
 ### ResultFieldAssignment
-Assigns specific field options to a custom test result field, defining their order.
+
+Assigns predefined field options to a specific result field.
 ```mermaid
 erDiagram
 "ResultFieldAssignment" {
@@ -1695,11 +1940,14 @@ erDiagram
 "ResultFieldAssignment" }o--|| "ResultFields": resultField
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### ResultFields
-Defines custom fields that can be associated with test results, including their type, validation, and default values.
+
+Defines customizable fields that can be associated with test results, allowing flexible data collection for outcomes.
 ```mermaid
 erDiagram
 "ResultFields" {
@@ -1725,11 +1973,14 @@ erDiagram
 "ResultFields" ||--o{ "ResultFieldValues": resultFieldValues
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### ResultFieldValues
-Stores the actual values for custom result fields for a session result or test run result.
+
+Stores the actual values for custom result fields associated with a session result or test run result.
 ```mermaid
 erDiagram
 "ResultFieldValues" {
@@ -1747,12 +1998,15 @@ erDiagram
 "ResultFieldValues" }o--|| "TestRunResults": testRunResults
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
-- Allow create operations for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+- Allows creation operations if the user is authenticated.
+
 ### RolePermission
-Defines specific permissions for a role across different application areas (e.g., 'canAddEdit' for 'Documentation').
+
+Defines granular permissions for a specific role across different application areas.
 ```mermaid
 erDiagram
 "RolePermission" {
@@ -1766,11 +2020,14 @@ erDiagram
 "RolePermission" }o--|| "Roles": role
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### Roles
-Defines user roles within the system, which are then used to grant permissions.
+
+Defines different roles within the application, each with a set of permissions.
 ```mermaid
 erDiagram
 "Roles" {
@@ -1787,12 +2044,15 @@ erDiagram
 "Roles" ||--o{ "GroupProjectPermission": groupProjectPermissions
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow update and create operations for authenticated users with 'ADMIN' access.
-- Allow delete operations for authenticated users with 'ADMIN' access, provided the role is not a default role.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows update and creation operations if the authenticated user has 'ADMIN' access.
+- Allows deletion operations if the authenticated user has 'ADMIN' access and the role is not a default role.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### SamlConfiguration
-Stores specific configuration details for SAML-based SSO providers.
+
+Stores specific configuration details for SAML SSO providers.
 ```mermaid
 erDiagram
 "SamlConfiguration" {
@@ -1813,10 +2073,13 @@ erDiagram
 "SamlConfiguration" |o--|| "SsoProvider": provider
 
 ```
-- Allow read access for all users, including unauthenticated users (necessary for sign-in page).
-- Allow create, update, and delete operations only for authenticated users with 'ADMIN' access.
+
+- Allows read operations to all users, including unauthenticated ones, for displaying sign-in options.
+- Allows create, update, and delete operations only if the authenticated user has 'ADMIN' access.
+
 ### SessionFieldValues
-Stores the actual values for custom fields associated with a specific session.
+
+Stores the actual values for custom case fields associated with a specific session.
 ```mermaid
 erDiagram
 "SessionFieldValues" {
@@ -1830,14 +2093,21 @@ erDiagram
 "SessionFieldValues" }o--|| "CaseFields": field
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with the session.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator of the session's project, or has explicit user/group permissions for that project, or if that project's default access type allows it for an authenticated user with a valid role.
-- Allow create, update, and delete access if the authenticated user is the project creator of the session's project, or has 'Project Admin' role in that project, or has 'canAddEdit' permission for the 'Sessions' application area via user permissions, or has a system-wide 'PROJECTADMIN' access level and is assigned to that project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the session's project.
+- Allows read access if the authenticated user is the session's project creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the session's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the session's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create, update, and delete operations if the authenticated user is the session's project creator.
+- Allows create, update, and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission for the session's project and their role is 'Project Admin' or grants 'canAddEdit' in the 'Sessions' area.
+- Allows create, update, and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the session's project.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### SessionResults
-Stores the outcome and details of a specific session execution, including status, attachments, and field values.
+
+Records the results of an exploratory testing session, including status, elapsed time, and custom field values.
 ```mermaid
 erDiagram
 "SessionResults" {
@@ -1859,15 +2129,29 @@ erDiagram
 "SessionResults" }o--o{ "Issue": issues
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with the session.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator of the session's project, or has explicit user/group permissions for that project, or if that project's default access type allows it for an authenticated user with a valid role.
-- Allow create access if the authenticated user is the project creator of the session's project, or has 'Project Admin' role in that project, or has 'canAddEdit' permission for the 'SessionResults' application area via user permissions, or has a system-wide 'PROJECTADMIN' access level and is assigned to that project.
-- Allow update and delete access if the authenticated user is the session result creator, or is the project creator of the session's project, or has 'Project Admin' role in that project via user permissions, or has a system-wide 'PROJECTADMIN' access level and is assigned to that project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the session's project.
+- Allows read access if the authenticated user is the session's project creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the session's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the session's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows creation operations if the authenticated user is the session's project creator.
+- Allows creation operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission for the session's project and their role is 'Project Admin' or grants 'canAddEdit' in the 'SessionResults' area.
+- Allows creation operations if the authenticated user has explicit 'GLOBAL_ROLE' project permission for the session's project and their global role grants 'canAddEdit' in the 'SessionResults' area.
+- Allows creation operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the session's project.
+- Allows creation operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions for the session's project, and their role (or global role) grants 'canAddEdit' in the 'SessionResults' area.
+- Allows creation operations if the session's project's default access type is 'GLOBAL_ROLE' and the user's global role grants 'canAddEdit' in the 'SessionResults' area.
+- Allows creation operations if the user is assigned to the session's project and its default access type is 'SPECIFIC_ROLE', and the project's default role grants 'canAddEdit' in the 'SessionResults' area.
+- Allows update and delete operations if the authenticated user is the creator of the session result.
+- Allows update and delete operations if the authenticated user is the session's project creator.
+- Allows update and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission for the session's project and their role is 'Project Admin'.
+- Allows update and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the session's project.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### Sessions
-Represents a testing session, typically used for exploratory testing, with details on mission, configuration, and results.
+
+Represents exploratory testing sessions, including mission, configuration, assigned users, and results.
 ```mermaid
 erDiagram
 "Sessions" {
@@ -1909,15 +2193,26 @@ erDiagram
 "Sessions" ||--o{ "Comment": comments
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the associated project.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator, or has explicit user/group permissions for the project, or if the project's default access type allows it for an authenticated user with a valid role.
-- Allow create access if the authenticated user is the project creator, or has 'Project Admin' role in the project, or has 'canAddEdit' permission for the 'Sessions' application area via their user or group role, or has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
-- Allow update and delete access if the authenticated user is the session creator, or is the project creator, or has 'Project Admin' role in the project, or has 'canAddEdit' or 'canDelete' permission for the 'Sessions' application area via user permissions, or has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the associated project.
+- Allows read access if the authenticated user is the project's creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows creation operations if the authenticated user is the project's creator.
+- Allows creation operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role is 'Project Admin' or grants 'canAddEdit' in the 'Sessions' area.
+- Allows creation operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows creation operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' project permissions, and their role grants 'canAddEdit' in the 'Sessions' area.
+- Allows update and delete operations if the authenticated user is the creator of the session.
+- Allows update and delete operations if the authenticated user is the project's creator.
+- Allows update and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role is 'Project Admin' or grants 'canAddEdit' or 'canDelete' in the 'Sessions' area.
+- Allows update and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### SessionVersions
-Stores historical versions of sessions, including their static project, template, and configuration details.
+
+Stores historical versions of testing sessions, preserving their state at different points in time.
 ```mermaid
 erDiagram
 "SessionVersions" {
@@ -1959,14 +2254,25 @@ erDiagram
 "SessionVersions" }o--|| "Projects": project
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the associated project.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator, or has explicit user/group permissions for the project, or if the project's default access type allows it for an authenticated user with a valid role.
-- Allow create access if the authenticated user is the project creator, or has 'Project Admin' role in the project, or has 'canAddEdit' permission for the 'Sessions' application area via user permissions, or has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the associated project.
+- Allows read access if the authenticated user is the project's creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows creation operations if the authenticated user is the project's creator.
+- Allows creation operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role is 'Project Admin' or grants 'canAddEdit' in the 'Sessions' area.
+- Allows creation operations if the authenticated user has explicit 'GLOBAL_ROLE' project permission and their global role grants 'canAddEdit' in the 'Sessions' area.
+- Allows creation operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows creation operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, and their role (or global role) grants 'canAddEdit' in the 'Sessions' area.
+- Allows creation operations if the project's default access type is 'GLOBAL_ROLE' and the user's global role grants 'canAddEdit' in the 'Sessions' area.
+- Allows creation operations if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE', and the project's default role grants 'canAddEdit' in the 'Sessions' area.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### SharedStepGroup
-Groups reusable test steps that can be included in multiple test cases, promoting reusability and consistency.
+
+Manages groups of reusable test steps that can be inserted into multiple test cases.
 ```mermaid
 erDiagram
 "SharedStepGroup" {
@@ -1986,14 +2292,22 @@ erDiagram
 "SharedStepGroup" ||--o{ "Steps": placeholderSteps
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the associated project.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator, or has explicit user/group permissions for the project, or if the project's default access type allows it for an authenticated user with a valid role.
-- Allow create, update, and delete access if the authenticated user is the project creator, or has 'Project Admin' role in the project, or has 'canAddEdit' or 'canDelete' permission for the 'SharedSteps' application area via their user or group role, or has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the associated project.
+- Allows read access if the authenticated user is the project's creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create, update, and delete operations if the authenticated user is the project's creator.
+- Allows create, update, and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role is 'Project Admin' or grants 'canAddEdit' or 'canDelete' in the 'SharedSteps' area.
+- Allows create, update, and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows create, update, and delete operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' project permissions, and their role grants 'canAddEdit' or 'canDelete' in the 'SharedSteps' area.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### SharedStepItem
-Individual steps within a SharedStepGroup, defining the action and expected result for a reusable step.
+
+Represents an individual step within a shared step group.
 ```mermaid
 erDiagram
 "SharedStepItem" {
@@ -2010,14 +2324,21 @@ erDiagram
 "SharedStepItem" ||--o{ "TestRunStepResults": testRunStepResults
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with the shared step group.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator of the shared step group's project, or has explicit user/group permissions for that project, or if that project's default access type allows it for an authenticated user with a valid role.
-- Allow create, update, and delete access if the authenticated user is the project creator of the shared step group's project, or has 'Project Admin' role in that project, or has 'canAddEdit' or 'canDelete' permission for the 'SharedSteps' application area via user permissions, or has a system-wide 'PROJECTADMIN' access level and is assigned to that project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the shared step group's project.
+- Allows read access if the authenticated user is the shared step group's project creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the shared step group's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the shared step group's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create, update, and delete operations if the authenticated user is the shared step group's project creator.
+- Allows create, update, and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission for the shared step group's project and their role is 'Project Admin' or grants 'canAddEdit' or 'canDelete' in the 'SharedSteps' area.
+- Allows create, update, and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the shared step group's project.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### SsoProvider
-Configures various Single Sign-On (SSO) providers (e.g., Google, SAML) for user authentication.
+
+Configures Single Sign-On (SSO) providers like Google or SAML.
 ```mermaid
 erDiagram
 "SsoProvider" {
@@ -2034,10 +2355,13 @@ erDiagram
 "SsoProvider" ||--o| "SamlConfiguration": samlConfig
 
 ```
-- Allow read access for all users, including unauthenticated users (necessary for sign-in page to display options).
-- Allow create, update, and delete operations only for authenticated users with 'ADMIN' access.
+
+- Allows read operations to all users, including unauthenticated ones, to display available SSO options.
+- Allows create, update, and delete operations only if the authenticated user has 'ADMIN' access.
+
 ### Status
-Defines various statuses (e.g., Passed, Failed, Blocked) for test cases, results, and other entities, including their color and behavior.
+
+Defines various statuses (e.g., Passed, Failed, Blocked) that can be applied to test results or other entities.
 ```mermaid
 erDiagram
 "Status" {
@@ -2065,11 +2389,14 @@ erDiagram
 "Status" ||--o{ "JUnitTestStep": junitTestSteps
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### StatusScope
-Defines scopes for statuses, categorizing where a status can be applied (e.g., for cases, runs, sessions).
+
+Categorizes statuses by their scope of application (e.g., Cases, Runs, Sessions).
 ```mermaid
 erDiagram
 "StatusScope" {
@@ -2081,11 +2408,14 @@ erDiagram
 "StatusScope" ||--o{ "StatusScopeAssignment": statuses
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow update operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows update operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### StatusScopeAssignment
-Links statuses to status scopes, specifying which statuses are valid for certain entity types.
+
+Links statuses to their respective scopes.
 ```mermaid
 erDiagram
 "StatusScopeAssignment" {
@@ -2097,11 +2427,14 @@ erDiagram
 "StatusScopeAssignment" }o--|| "StatusScope": scope
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### Steps
-Individual steps within a test case, outlining the actions and expected results.
+
+Defines the individual steps within a test case, including descriptions and expected results.
 ```mermaid
 erDiagram
 "Steps" {
@@ -2119,14 +2452,22 @@ erDiagram
 "Steps" }o--|| "SharedStepGroup": sharedStepGroup
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with the test case.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator of the test case's project, or has explicit user/group permissions for that project, or if that project's default access type allows it for an authenticated user with a valid role.
-- Allow create, update, and delete access if the authenticated user is the project creator of the test case's project, or has 'Project Admin' role in that project, or has 'canAddEdit' permission for the 'TestCaseRepository' application area via their user or group role, or has a system-wide 'PROJECTADMIN' access level and is assigned to that project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the test case's project.
+- Allows read access if the authenticated user is the test case's project creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the test case's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the test case's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create, update, and delete operations if the authenticated user is the test case's project creator.
+- Allows create, update, and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission for the test case's project and their role is 'Project Admin' or grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows create, update, and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the test case's project.
+- Allows create, update, and delete operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions for the test case's project, and their role (or global role) grants 'canAddEdit' in the 'TestCaseRepository' area.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### Tags
-Labels that can be applied to test cases, sessions, and test runs for categorization and filtering.
+
+Provides a flexible way to categorize and organize test cases, sessions, and test runs.
 ```mermaid
 erDiagram
 "Tags" {
@@ -2140,12 +2481,15 @@ erDiagram
 "Tags" }o--o{ "TestRuns": testRuns
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow create, read, update, and delete operations for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows create, read, update, and delete operations if the authenticated user has any access level (not null).
+
 ### TemplateCaseAssignment
-Associates custom fields with a template for test cases, defining their order.
+
+Associates specific case fields with a template, defining which fields are included in that template.
 ```mermaid
 erDiagram
 "TemplateCaseAssignment" {
@@ -2158,11 +2502,14 @@ erDiagram
 "TemplateCaseAssignment" }o--|| "Templates": template
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### TemplateProjectAssignment
-Links templates to projects, making specific templates available for use within a project.
+
+Links templates to specific projects, making them available for use within those projects.
 ```mermaid
 erDiagram
 "TemplateProjectAssignment" {
@@ -2174,11 +2521,14 @@ erDiagram
 "TemplateProjectAssignment" }o--|| "Projects": project
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### TemplateResultAssignment
-Associates custom fields with a template for test results, defining their order.
+
+Associates specific result fields with a template, defining which fields are included in that template.
 ```mermaid
 erDiagram
 "TemplateResultAssignment" {
@@ -2191,11 +2541,14 @@ erDiagram
 "TemplateResultAssignment" }o--|| "Templates": template
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### Templates
-Reusable templates for creating test cases or sessions, pre-configuring custom fields.
+
+Defines templates for test cases and sessions, pre-configuring fields and other settings for reusability.
 ```mermaid
 erDiagram
 "Templates" {
@@ -2213,11 +2566,14 @@ erDiagram
 "Templates" ||--o{ "Sessions": sessions
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### TestmoImportDataset
-Represents a dataset within a Testmo import job, containing schema and sample rows.
+
+Represents a dataset within a Testmo import job, detailing its structure and sample rows.
 ```mermaid
 erDiagram
 "TestmoImportDataset" {
@@ -2236,10 +2592,14 @@ erDiagram
 "TestmoImportDataset" }o--|| "TestmoImportJob": job
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow read, create, update, and delete operations for authenticated users with 'ADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user has 'ADMIN' access.
+- Allows create, update, and delete operations if the authenticated user has 'ADMIN' access.
+
 ### TestmoImportJob
-Represents a job for importing data from Testmo, tracking its status, progress, and configuration.
+
+Manages jobs for importing data from Testmo, tracking status and progress.
 ```mermaid
 erDiagram
 "TestmoImportJob" {
@@ -2284,10 +2644,14 @@ erDiagram
 "TestmoImportJob" ||--o{ "TestmoImportDataset": datasets
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow read, create, update, and delete operations for authenticated users with 'ADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user has 'ADMIN' access.
+- Allows create, update, and delete operations if the authenticated user has 'ADMIN' access.
+
 ### TestmoImportMapping
-Stores mappings between Testmo entities (e.g., projects, workflows) and corresponding entities in the application during import.
+
+Defines how entities from Testmo (source) map to entities in the application (target) during import.
 ```mermaid
 erDiagram
 "TestmoImportMapping" {
@@ -2304,10 +2668,13 @@ erDiagram
 
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### TestmoImportStaging
-Stores staging data for Testmo imports, holding raw rows before processing.
+
+Temporarily stores individual rows of data during a Testmo import process.
 ```mermaid
 erDiagram
 "TestmoImportStaging" {
@@ -2331,10 +2698,13 @@ erDiagram
 
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### TestRunCases
-Links specific test cases from a repository to a test run, allowing assignment and status tracking within the run.
+
+Links specific test cases from a repository to a test run, including status and assignment details.
 ```mermaid
 erDiagram
 "TestRunCases" {
@@ -2359,15 +2729,31 @@ erDiagram
 "TestRunCases" ||--o{ "TestRunResults": results
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with the test run.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator of the test run's project, or has explicit user/group permissions for that project, or if that project's default access type allows it for an authenticated user with a valid role.
-- Allow create access if the authenticated user is the test run creator, or is the project creator of the test run's project, or has 'Project Admin' role in that project, or has 'canAddEdit' permission for the 'TestRuns' application area via user permissions, or has a system-wide 'PROJECTADMIN' access level and is assigned to that project.
-- Allow update access if the authenticated user is the test run creator, or is assigned to the test run case, or is the project creator of the test run's project, or has 'Project Admin' role in that project, or has 'canAddEdit' permission for the 'TestRuns' application area via user permissions, or has a system-wide 'PROJECTADMIN' access level and is assigned to that project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the test run's project.
+- Allows read access if the authenticated user is the test run's project creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the test run's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the test run's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows creation operations if the authenticated user is the creator of the test run.
+- Allows creation operations if the authenticated user is the test run's project creator.
+- Allows creation operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission for the test run's project and their role is 'Project Admin' or grants 'canAddEdit' in the 'TestRuns' area.
+- Allows creation operations if the authenticated user has explicit 'GLOBAL_ROLE' project permission for the test run's project and their global role grants 'canAddEdit' in the 'TestRuns' area.
+- Allows creation operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the test run's project.
+- Allows creation operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions for the test run's project, and their role (or global role) grants 'canAddEdit' in the 'TestRuns' area.
+- Allows creation operations if the test run's project's default access type is 'GLOBAL_ROLE' and the user's global role grants 'canAddEdit' in the 'TestRuns' area.
+- Allows creation operations if the user is assigned to the test run's project and its default access type is 'SPECIFIC_ROLE', and the project's default role grants 'canAddEdit' in the 'TestRuns' area.
+- Allows update operations if the authenticated user is the creator of the test run.
+- Allows update operations if the authenticated user is assigned to the test run case.
+- Allows update operations if the authenticated user is the test run's project creator.
+- Allows update operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission for the test run's project and their role is 'Project Admin' or grants 'canAddEdit' in the 'TestRuns' area.
+- Allows update operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the test run's project.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### TestRunResults
-Stores the results of executing a test case within a test run, including status, executor, and notes.
+
+Records the detailed result of a single test case execution within a test run.
 ```mermaid
 erDiagram
 "TestRunResults" {
@@ -2398,14 +2784,22 @@ erDiagram
 "TestRunResults" }o--o{ "Issue": issues
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with the test run.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator of the test run's project, or has explicit user/group permissions for that project, or if that project's default access type allows it for an authenticated user with a valid role.
-- Allow create and update access if the authenticated user is the executor of the result, or is the project creator of the test run's project, or has 'Project Admin' role in that project, or has 'canAddEdit' permission for the 'TestRunResults' application area via user permissions, or has a system-wide 'PROJECTADMIN' access level and is assigned to that project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the test run's project.
+- Allows read access if the authenticated user is the test run's project creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the test run's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the test run's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create and update operations if the authenticated user is the executor of the test run result.
+- Allows create and update operations if the authenticated user is the test run's project creator.
+- Allows create and update operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission for the test run's project and their role is 'Project Admin' or grants 'canAddEdit' in the 'TestRunResults' area.
+- Allows create and update operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the test run's project.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### TestRuns
-Represents a planned execution of test cases, often linked to milestones and configurations.
+
+Represents scheduled test runs, organizing the execution of multiple test cases.
 ```mermaid
 erDiagram
 "TestRuns" {
@@ -2426,6 +2820,7 @@ erDiagram
   DateTime createdAt
   String createdById FK
   TestRunType testRunType
+  String configurationGroupId  "?"
 }
 
 "TestRuns" }o--|| "Projects": project
@@ -2442,15 +2837,26 @@ erDiagram
 "TestRuns" ||--o{ "Comment": comments
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the associated project.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator, or has explicit user/group permissions for the project, or if the project's default access type allows it for an authenticated user with a valid role.
-- Allow create access if the authenticated user is the project creator, or has 'Project Admin' role in the project, or has 'canAddEdit' permission for the 'TestRuns' application area via their user or group role, or has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
-- Allow update and delete access if the authenticated user is the test run creator, or is the project creator, or has 'Project Admin' role in the project, or has 'canAddEdit' or 'canDelete' permission for the 'TestRuns' application area via user permissions, or has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the associated project.
+- Allows read access if the authenticated user is the project's creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the project and the project's default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows creation operations if the authenticated user is the project's creator.
+- Allows creation operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role is 'Project Admin' or grants 'canAddEdit' in the 'TestRuns' area.
+- Allows creation operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows creation operations if the authenticated user is part of a group with 'SPECIFIC_ROLE' project permissions, and their role grants 'canAddEdit' in the 'TestRuns' area.
+- Allows update and delete operations if the authenticated user is the creator of the test run.
+- Allows update and delete operations if the authenticated user is the project's creator.
+- Allows update and delete operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission and their role is 'Project Admin' or grants 'canAddEdit' or 'canDelete' in the 'TestRuns' area.
+- Allows update and delete operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### TestRunStepResults
-Stores the outcome for individual steps within a test case's execution result.
+
+Records the outcome of an individual step within a test run result.
 ```mermaid
 erDiagram
 "TestRunStepResults" {
@@ -2474,14 +2880,22 @@ erDiagram
 "TestRunStepResults" }o--o{ "Issue": issues
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny all operations for authenticated users with 'NONE' access level.
-- Deny read access if the authenticated user has 'NO_ACCESS' explicitly defined for the project associated with the test run result's test run.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access if the authenticated user is the project creator of the test run result's project, or has explicit user/group permissions for that project, or if that project's default access type allows it for an authenticated user with a valid role.
-- Allow create and update access if the authenticated user is the executor of the parent test run result, or is the project creator of the test run result's project, or has 'Project Admin' role in that project, or has 'canAddEdit' permission for the 'TestRunResults' application area via user permissions, or has a system-wide 'PROJECTADMIN' access level and is assigned to that project.
+
+- Denies all operations to unauthenticated users.
+- Denies all operations to authenticated users with 'NONE' system access.
+- Denies read access if the authenticated user has an explicit 'NO_ACCESS' permission for the test run result's project.
+- Allows read access if the authenticated user is the test run result's project creator, has explicit 'SPECIFIC_ROLE' or 'GLOBAL_ROLE' project permissions, or is part of a group with such permissions and a valid role.
+- Allows read access if the test run result's project's default access type is 'GLOBAL_ROLE' and the user has a global role (not 'NONE').
+- Allows read access if the user is assigned to the test run result's project and its default access type is 'SPECIFIC_ROLE' with a defined default role.
+- Allows create and update operations if the authenticated user is the executor of the test run result.
+- Allows create and update operations if the authenticated user is the test run result's project creator.
+- Allows create and update operations if the authenticated user has explicit 'SPECIFIC_ROLE' project permission for the test run result's project and their role is 'Project Admin' or grants 'canAddEdit' in the 'TestRunResults' area.
+- Allows create and update operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the test run result's project.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### User
-Represents a user within the application, including authentication details, roles, and preferences, and is linked to various activities and creations.
+
+Represents a user within the application, including authentication details, access levels, roles, and relationships to other entities.
 ```mermaid
 erDiagram
 "User" {
@@ -2504,6 +2918,7 @@ erDiagram
   String createdById FK "?"
   DateTime updatedAt
   DateTime lastActiveAt  "?"
+  String lastSeenVersion  "?"
 }
 
 "User" ||--o{ "Account": accounts
@@ -2543,13 +2958,16 @@ erDiagram
 "User" ||--o{ "CommentMention": commentMentions
 
 ```
-- Deny delete, update, and read access to unauthenticated users.
-- Allow creation of new user accounts for any user.
-- Allow create and delete operations for authenticated users with 'ADMIN' access.
-- Allow update operations if the authenticated user has 'ADMIN' access or is modifying their own user record.
-- Allow read access for any authenticated user.
+
+- Denies delete, update, and read operations to unauthenticated users.
+- Allows creation of new users.
+- Allows creation and deletion of users if the authenticated user has 'ADMIN' access.
+- Allows update operations if the authenticated user has 'ADMIN' access or is updating their own user record.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### UserIntegrationAuth
-Stores user-specific authentication tokens and data for third-party integrations.
+
+Stores user-specific authentication details for external integrations (e.g., OAuth tokens).
 ```mermaid
 erDiagram
 "UserIntegrationAuth" {
@@ -2570,12 +2988,15 @@ erDiagram
 "UserIntegrationAuth" }o--|| "Integration": integration
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow read access if the authenticated user is the owner of the authentication record or has 'ADMIN' access.
-- Allow create, update, and delete operations if the authenticated user is the owner of the authentication record.
-- Allow all operations for authenticated users with 'ADMIN' access.
+
+- Denies all operations to unauthenticated users.
+- Allows read operations if the authenticated user's ID matches the userId or if the authenticated user has 'ADMIN' access.
+- Allows create, update, and delete operations if the authenticated user's ID matches the userId.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+
 ### UserPreferences
-Stores individual user preferences such as theme, items per page, locale, date/time formats, timezone, and notification settings.
+
+Stores individual user preferences such as theme, items per page, locale, date/time format, timezone, and notification settings.
 ```mermaid
 erDiagram
 "UserPreferences" {
@@ -2591,16 +3012,21 @@ erDiagram
   Boolean emailNotifications
   Boolean inAppNotifications
   Boolean hasCompletedWelcomeTour
+  Boolean hasCompletedInitialPreferencesSetup
 }
 
 "UserPreferences" |o--|| "User": user
 
 ```
-- Deny delete, update, and read access to unauthenticated users.
-- Allow create, update, and delete operations if the authenticated user is the owner of the preferences or has 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies delete, update, and read operations to unauthenticated users.
+- Allows creation of user preferences.
+- Allows creation, update, and deletion operations if the authenticated user's ID matches the user preferences' userId or if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
+
 ### UserProjectPermission
-Explicitly defines a user's access type and role for a specific project, overriding default project access.
+
+Defines explicit, user-specific access permissions for a project, overriding global or group roles.
 ```mermaid
 erDiagram
 "UserProjectPermission" {
@@ -2615,16 +3041,36 @@ erDiagram
 "UserProjectPermission" }o--|| "Roles": role
 
 ```
-- Deny all operations to unauthenticated users.
-- Deny create and update operations if the 'accessType' is 'SPECIFIC_ROLE' but no 'roleId' is provided.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow all operations for the user who created the project.
-- Allow all operations if the authenticated user has a system-wide 'PROJECTADMIN' access level and is assigned to the project.
-- Allow all operations if the authenticated user has an explicit 'Project Admin' role assigned within the project.
-- Allow read access if the authenticated user is viewing their own project permissions.
-- Allow read access if the authenticated user is assigned to the project (to see other members' permissions).
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows all operations if the authenticated user is the project's creator.
+- Allows all operations if the authenticated user has system-level 'PROJECTADMIN' access and is assigned to the project.
+- Allows all operations if the authenticated user has an explicit 'Project Admin' role within the project.
+- Allows read operations if the authenticated user is viewing their own permissions.
+- Allows read operations if the authenticated user is assigned to the project.
+- Denies creation and update operations if 'accessType' is 'SPECIFIC_ROLE' but 'roleId' is not provided.
+
+### VerificationToken
+
+Stores tokens for magic link (email) authentication, required by NextAuth.
+```mermaid
+erDiagram
+"VerificationToken" {
+  String identifier
+  String token PK
+  DateTime expires
+}
+
+
+
+```
+
+- Allows all operations, as NextAuth requires unrestricted access for token verification.
+
 ### Workflows
-Defines workflows with states, icons, and colors, used to manage the lifecycle of cases, runs, or sessions.
+
+Defines workflows for managing the lifecycle of test cases, sessions, and test runs.
 ```mermaid
 erDiagram
 "Workflows" {
@@ -2648,19 +3094,19 @@ erDiagram
 "Workflows" ||--o{ "TestRuns": testRuns
 
 ```
-- Deny all operations to unauthenticated users.
-- Allow all operations for authenticated users with 'ADMIN' access.
-- Allow read access for any authenticated user.
+
+- Denies all operations to unauthenticated users.
+- Allows all operations if the authenticated user has 'ADMIN' access.
+- Allows read operations if the authenticated user has any access level (not null).
 
 ## Security Considerations
 
-- Granular Access Control: The application employs a sophisticated access control system, particularly for project-related data. Access to core entities like Projects, Milestones, Repositories, TestRuns, and Sessions is highly restricted and depends on a combination of system-wide access levels, project roles, explicit user permissions, and group permissions. This helps prevent unauthorized data access and modification.
-- Role-Based Access Control (RBAC): User permissions are managed through roles and application areas, ensuring that users can only perform actions relevant to their assigned responsibilities (e.g., 'canAddEdit' for 'Documentation').
-- Admin Override: System administrators ('ADMIN' access level) generally have full access to all data and can bypass most access policies. This privilege requires careful management of admin accounts.
-- Project Creator Privileges: The creator of a project retains full administrative control over that project, similar to a project administrator.
-- User Self-Management: Users are typically allowed to read and update their own preferences and manage their personal integration authentications, reducing the need for administrative intervention for common user tasks.
-- Authentication Requirement: Most data models enforce a strict policy of denying all operations to unauthenticated users, ensuring that core system resources are protected behind an authentication wall.
-- Explicit Denials: The use of explicit 'NO_ACCESS' permissions and checks for deleted entities provides strong mechanisms to enforce restrictions and data integrity.
-- Sensitive Data Handling: While the schema defines JSON fields for credentials (e.g., Integration.credentials, LlmIntegration.credentials, UserIntegrationAuth.accessToken), it is critical that these fields are encrypted at rest and in transit, and that passwords (e.g., User.password) are always hashed and never exposed.
-- Input Validation: Fields with `@email`, `@url`, and `@length` attributes provide basic input validation, which helps mitigate common vulnerabilities such as injection attacks or buffer overflows.
-- Polymorphic Relationships: The 'Comment' model demonstrates a polymorphic relationship, associating comments with different parent entities. Access control for such comments correctly cascades from the parent entity's project permissions.
+- Robust user authentication and authorization are critical, leveraging NextAuth for secure handling of internal credentials, OAuth, and SAML.
+- Sensitive user data, such as passwords, are omitted from queries by default and should be securely stored (e.g., hashed).
+- Access to system-level configuration and sensitive operations (e.g., user deletion, role management) is strictly restricted to 'ADMIN' users.
+- Project-level entities implement complex access control policies, ensuring users can only access data relevant to their assigned projects and roles, with explicit deny rules for 'NO_ACCESS'.
+- Integration credentials and LLM API keys are stored in encrypted format (indicated by 'Json' type for credentials and notes about encryption).
+- All critical data modification actions are tied to authenticated users, with `createdBy` fields for auditability.
+- Many models explicitly deny access to unauthenticated users (`!auth()`) and users with 'NONE' access, enforcing a secure by default posture.
+- User preferences and registration settings are publicly readable where necessary for application functionality (e.g., signup pages), but modification is restricted to the user themselves or administrators.
+- The system provides mechanisms for controlling user registration (allowed email domains, open registration) and default access levels for new users.
