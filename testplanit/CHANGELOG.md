@@ -1,3 +1,10 @@
+## [0.2.2](https://github.com/TestPlanIt/testplanit/compare/v0.2.1...v0.2.2) (2025-12-06)
+
+
+### Bug Fixes
+
+* **permissions:** improve access control checks and notification handling ([c7984c7](https://github.com/TestPlanIt/testplanit/commit/c7984c7b7b11e8863a43785243a25176e2364121))
+
 ## [0.2.1](https://github.com/TestPlanIt/testplanit/compare/v0.2.0...v0.2.1) (2025-12-06)
 
 
