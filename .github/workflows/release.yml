@@ -320,6 +320,11 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
     - name: Create multi-arch manifests
       run: |
         VERSION="${{ github.event.inputs.tag }}"
@@ -333,3 +338,18 @@ jobs:
         docker buildx imagetools create -t ghcr.io/${REPO_LC}:${VERSION}-workers \
           ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
           ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
+
+        # Update 'latest' if this is the newest semantic version
+        LATEST_TAG=$(git tag -l 'v*' | sort -V | tail -n1)
+        if [ "$VERSION" = "$LATEST_TAG" ]; then
+          echo "Updating 'latest' tags to $VERSION"
+          docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest \
+            ghcr.io/${REPO_LC}:${VERSION}-amd64 \
+            ghcr.io/${REPO_LC}:${VERSION}-arm64
+
+          docker buildx imagetools create -t ghcr.io/${REPO_LC}:latest-workers \
+            ghcr.io/${REPO_LC}:${VERSION}-workers-amd64 \
+            ghcr.io/${REPO_LC}:${VERSION}-workers-arm64
+        else
+          echo "Skipping 'latest' update - $VERSION is not the latest release (latest: $LATEST_TAG)"
+        fi
