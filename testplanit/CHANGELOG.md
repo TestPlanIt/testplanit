@@ -1,3 +1,10 @@
+## [0.2.1](https://github.com/TestPlanIt/testplanit/compare/v0.2.0...v0.2.1) (2025-12-06)
+
+
+### Bug Fixes
+
+* **permissions:** enhance project access control logic ([8151e83](https://github.com/TestPlanIt/testplanit/commit/8151e83c72a3a2c91ed455a794b86ab4c50f8345))
+
 # [0.2.0](https://github.com/TestPlanIt/testplanit/compare/v0.1.40...v0.2.0) (2025-12-06)
 
 
