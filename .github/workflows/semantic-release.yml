@@ -43,6 +43,7 @@ jobs:
           pnpm install --frozen-lockfile
 
       - name: Release
+        id: release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           GIT_AUTHOR_NAME: github-actions[bot]
@@ -51,4 +52,19 @@ jobs:
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
         run: |
           cd testplanit
-          npx semantic-release
+          npx semantic-release 2>&1 | tee release-output.txt
+          # Extract the version if a release was made
+          if grep -q "Published release" release-output.txt; then
+            VERSION=$(grep -oP "Published release \K[0-9]+\.[0-9]+\.[0-9]+" release-output.txt || true)
+            echo "version=v${VERSION}" >> $GITHUB_OUTPUT
+            echo "released=true" >> $GITHUB_OUTPUT
+          else
+            echo "released=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Trigger Docker build
+        if: steps.release.outputs.released == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: |
+          gh workflow run release.yml -f tag=${{ steps.release.outputs.version }}
