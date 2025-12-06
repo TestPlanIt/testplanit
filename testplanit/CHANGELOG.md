@@ -1,3 +1,10 @@
+## [0.2.5](https://github.com/TestPlanIt/testplanit/compare/v0.2.4...v0.2.5) (2025-12-06)
+
+
+### Bug Fixes
+
+* **api:** add cache-control headers to prevent stale API responses ([5a8ac7f](https://github.com/TestPlanIt/testplanit/commit/5a8ac7f45400d7250013c03c7f931c6f07db56ac))
+
 ## [0.2.4](https://github.com/TestPlanIt/testplanit/compare/v0.2.3...v0.2.4) (2025-12-06)
 
 
