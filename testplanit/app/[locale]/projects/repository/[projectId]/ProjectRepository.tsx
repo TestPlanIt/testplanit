@@ -948,17 +948,41 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
 
   const { currentPage, setCurrentPage, pageSize } = usePagination();
 
-  // TODO: Re-implement auto-paging without full case data
-  // The auto-paging feature needs to be reimplemented to work with the optimized queries
-  // React.useEffect(() => {
-  //   if (
-  //     isRunMode &&
-  //     selectedTestCaseId &&
-  //     typeof pageSize === "number"
-  //   ) {
-  //     // Need to fetch case order/index without loading all cases
-  //   }
-  // }, [isRunMode, selectedTestCaseId, pageSize, setCurrentPage]);
+  // Fetch minimal case position data for auto-paging in run mode
+  const { data: casePositions } = useFindManyTestRunCases(
+    {
+      where: { testRunId: Number(params.runId) },
+      orderBy: { order: "asc" },
+      select: { repositoryCaseId: true },
+    },
+    {
+      enabled:
+        isRunMode &&
+        !!params.runId &&
+        !isNaN(Number(params.runId)) &&
+        !!selectedTestCaseId,
+    }
+  );
+
+  // Auto-navigate to page containing the selected test case
+  useEffect(() => {
+    if (
+      casePositions &&
+      selectedTestCaseId &&
+      typeof pageSize === "number" &&
+      pageSize > 0
+    ) {
+      const index = casePositions.findIndex(
+        (c) => c.repositoryCaseId === selectedTestCaseId
+      );
+      if (index >= 0) {
+        const targetPage = Math.floor(index / pageSize) + 1;
+        if (targetPage !== currentPage) {
+          setCurrentPage(targetPage);
+        }
+      }
+    }
+  }, [casePositions, selectedTestCaseId, pageSize, currentPage, setCurrentPage]);
 
   if (isComponentLoading) {
     return null;
