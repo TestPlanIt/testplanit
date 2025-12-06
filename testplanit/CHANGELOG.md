@@ -1,3 +1,10 @@
+## [0.2.3](https://github.com/TestPlanIt/testplanit/compare/v0.2.2...v0.2.3) (2025-12-06)
+
+
+### Bug Fixes
+
+* **ci:** improve version extraction and Docker build trigger logic in semantic-release workflow ([b873eaa](https://github.com/TestPlanIt/testplanit/commit/b873eaa68ead89e5e14c0a241affb54a938b498e))
+
 ## [0.2.2](https://github.com/TestPlanIt/testplanit/compare/v0.2.1...v0.2.2) (2025-12-06)
 
 
