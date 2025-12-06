@@ -1,8 +1,10 @@
 "use server";
 
 import { z } from "zod/v4";
+import { ApplicationArea } from "@prisma/client";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
+import { checkUserPermission } from "./permissions";
 
 const CompleteMilestoneSchema = z.object({
   milestoneId: z.number(),
@@ -43,12 +45,6 @@ export async function completeMilestoneCascade(
   const { milestoneId, completionDate, isPreview, forceCompleteDependencies } =
     parseResult.data;
 
-  // TODO: Add user permission checks here (e.g., can the current user complete this milestone?)
-  // const user = await getCurrentUser(); // Example: Get current user
-  // if (!user || !hasPermissionToComplete(user, milestoneId)) {
-  //   return { status: 'error', message: 'Unauthorized' };
-  // }
-
   // Helper function to get all descendant milestone IDs
   async function getAllDescendantMilestoneIds(
     startMilestoneId: number,
@@ -77,10 +73,10 @@ export async function completeMilestoneCascade(
     return allDescendantIds;
   }
 
-  // Fetch the milestone to check its current startedAt status
+  // Fetch the milestone to check its current status and get projectId
   const currentMilestone = await prisma.milestones.findUnique({
     where: { id: milestoneId },
-    select: { startedAt: true, projectId: true }, // Also select projectId
+    select: { startedAt: true, projectId: true },
   });
 
   if (!currentMilestone) {
@@ -88,6 +84,22 @@ export async function completeMilestoneCascade(
   }
 
   const { projectId } = currentMilestone;
+
+  // Check user permission to complete milestones in this project
+  const hasPermission = await checkUserPermission(
+    session.user.id,
+    projectId,
+    session,
+    ApplicationArea.Milestones,
+    "canClose"
+  );
+
+  if (!hasPermission) {
+    return {
+      status: "error",
+      message: "You do not have permission to complete milestones in this project.",
+    };
+  }
 
   // --- Determine target completed stateId for Test Runs and Sessions ---
   let completedTestRunStateId: number | undefined = undefined;

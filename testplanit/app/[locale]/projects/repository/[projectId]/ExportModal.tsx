@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -107,7 +108,7 @@ export function ExportModal({
       });
     } catch (error) {
       console.error("Export failed inside modal:", error);
-      // TODO: Show user-friendly error feedback (e.g., toast)
+      toast.error(t("exportError"));
     } finally {
       setIsExporting(false);
     }

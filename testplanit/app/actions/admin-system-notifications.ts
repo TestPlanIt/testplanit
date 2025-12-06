@@ -15,7 +15,7 @@ export async function createSystemNotification(data: {
   message: string;
 }) {
   const session = await getServerAuthSession();
-  
+
   if (!session?.user?.id || session.user.access !== "ADMIN") {
     return {
       success: false,
@@ -59,23 +59,18 @@ export async function createSystemNotification(data: {
       displayMessage = validated.message;
     }
 
-    // Create notifications for all users
-    // Always create notifications directly in database for now
-    // TODO: Re-enable queue system when worker is running in test environment
+    // Queue notifications for all users via the notification service
     const notificationPromises = activeUsers.map((user) =>
-      prisma.notification.create({
+      NotificationService.createNotification({
+        userId: user.id,
+        type: "SYSTEM_ANNOUNCEMENT",
+        title: validated.title,
+        message: displayMessage.substring(0, 500), // Limit plain text message
         data: {
-          userId: user.id,
-          type: "SYSTEM_ANNOUNCEMENT",
-          title: validated.title,
-          message: displayMessage.substring(0, 500), // Limit plain text message
-          isRead: false,
-          data: {
-            sentById: session.user.id,
-            sentByName: session.user.name || "Administrator",
-            sentAt: new Date().toISOString(),
-            richContent: messageContent, // Store the full TipTap content
-          },
+          sentById: session.user.id,
+          sentByName: session.user.name || "Administrator",
+          sentAt: new Date().toISOString(),
+          richContent: messageContent, // Store the full TipTap content
         },
       })
     );
@@ -88,14 +83,14 @@ export async function createSystemNotification(data: {
     };
   } catch (error) {
     console.error("Failed to create system notification:", error);
-    
+
     if (error instanceof z.ZodError) {
       return {
         success: false,
         error: "Invalid input. Please check your title and message.",
       };
     }
-    
+
     return {
       success: false,
       error: "Failed to send system notification. Please try again.",
@@ -108,7 +103,7 @@ export async function getSystemNotificationHistory(options?: {
   pageSize?: number;
 }) {
   const session = await getServerAuthSession();
-  
+
   if (!session?.user?.id || session.user.access !== "ADMIN") {
     return {
       success: false,
