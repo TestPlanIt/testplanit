@@ -1,3 +1,10 @@
+## [0.1.40](https://github.com/TestPlanIt/testplanit/compare/v0.1.39...v0.1.40) (2025-12-06)
+
+
+### Bug Fixes
+
+* **tags:** enhance project access logic to include PROJECTADMIN role ([7972ac1](https://github.com/TestPlanIt/testplanit/commit/7972ac1abceea74c0b2f1cee46120c08cf1677fa))
+
 # Changelog
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
