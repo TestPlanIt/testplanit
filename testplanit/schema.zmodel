@@ -2791,10 +2791,10 @@ model Notification {
     @@index([createdAt])
     @@index([type])
     @@deny('all', !auth())
-    @@allow('read', auth().id == userId)
+    @@allow('read', auth().id == userId || auth().access == 'ADMIN')
     @@allow('update', auth().id == userId && (future().isRead != isRead || future().isDeleted != isDeleted))
     @@allow('create', auth().access != null)
-    @@allow('all', auth().access == 'ADMIN')
+    @@allow('delete', auth().access == 'ADMIN')
 }
 model ProjectIntegration {
     id            String      @id @default(cuid())

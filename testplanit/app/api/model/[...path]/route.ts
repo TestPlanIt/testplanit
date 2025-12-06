@@ -12,7 +12,13 @@ async function getPrisma() {
   if (userId) {
     user = await prisma.user.findUnique({
       where: { id: userId },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        access: true,
+        isActive: true,
+        isDeleted: true,
         role: {
           include: {
             rolePermissions: true,
