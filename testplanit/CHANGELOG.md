@@ -1,3 +1,10 @@
+## [0.2.6](https://github.com/TestPlanIt/testplanit/compare/v0.2.5...v0.2.6) (2025-12-06)
+
+
+### Bug Fixes
+
+* **issues:** simplify access control logic and remove redundant project filter ([86d6632](https://github.com/TestPlanIt/testplanit/commit/86d663236a9e19e0c1a0b00dd679bb93d72d640e))
+
 ## [0.2.5](https://github.com/TestPlanIt/testplanit/compare/v0.2.4...v0.2.5) (2025-12-06)
 
 
