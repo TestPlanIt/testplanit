@@ -75,6 +75,9 @@ interface MagicSelectState {
 // Percentage options for batch sizes
 const BATCH_PERCENTAGES = [10, 20, 30, 40, 50] as const;
 
+// Minimum test case count to enable batching UI
+const BATCH_THRESHOLD = 200;
+
 const DEFAULT_BATCH_SIZE = "all";
 
 // Generate dynamic batch size options based on total case count
@@ -415,37 +418,42 @@ export function MagicSelectDialog({
               )}
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="batchSize">{t("configure.batchSize")}</Label>
-                  <Select
-                    value={batchSize}
-                    onValueChange={setBatchSize}
-                  >
-                    <SelectTrigger className="w-[220px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getBatchSizeOptions(state.totalCaseCount).map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.value === "all"
-                            ? t("configure.batchSizeAll")
-                            : t("configure.batchSizePercent", { percent: option.percent ?? 0, count: option.count })}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Only show batch size selector when there are many test cases */}
+                {state.totalCaseCount > BATCH_THRESHOLD && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="batchSize">{t("configure.batchSize")}</Label>
+                      <Select
+                        value={batchSize}
+                        onValueChange={setBatchSize}
+                      >
+                        <SelectTrigger className="w-[220px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getBatchSizeOptions(state.totalCaseCount).map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.value === "all"
+                                ? t("configure.batchSizeAll")
+                                : t("configure.batchSizePercent", { percent: option.percent ?? 0, count: option.count })}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                <div className="text-sm text-muted-foreground bg-muted/50 rounded-md p-3">
-                  <p>
-                    {t("configure.requestsNeeded", { count: batchesNeeded })}
-                  </p>
-                  {batchesNeeded > 1 && (
-                    <p className="mt-1 text-xs">
-                      {t("configure.batchNote")}
-                    </p>
-                  )}
-                </div>
+                    <div className="text-sm text-muted-foreground bg-muted/50 rounded-md p-3">
+                      <p>
+                        {t("configure.requestsNeeded", { count: batchesNeeded })}
+                      </p>
+                      {batchesNeeded > 1 && (
+                        <p className="mt-1 text-xs">
+                          {t("configure.batchNote")}
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
 
                 {/* Clarification Input */}
                 <div className="space-y-2">
@@ -466,7 +474,7 @@ export function MagicSelectDialog({
           {state.status === "loading" && (
             <div className="flex flex-col items-center justify-center py-8 space-y-4">
               <LoadingSpinner className="h-8 w-8" />
-              {state.batchProgress && (
+              {state.batchProgress && state.batchProgress.totalBatches > 1 && (
                 <>
                   <div className="w-full max-w-xs space-y-2">
                     <Progress value={progressPercent} className="h-2" />
@@ -477,11 +485,11 @@ export function MagicSelectDialog({
                       })}
                     </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t("loading.analyzing")}
-                  </p>
                 </>
               )}
+              <p className="text-xs text-muted-foreground">
+                {t("loading.analyzing")}
+              </p>
             </div>
           )}
 

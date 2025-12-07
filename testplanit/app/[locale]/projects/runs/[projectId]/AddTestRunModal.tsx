@@ -472,12 +472,15 @@ const BasicInfoDialog = React.memo(
                   {tCommon("fields.issues")}
                   <HelpPopover helpKey="testRun.issues" />
                 </FormLabel>
-                <UnifiedIssueManager
-                  projectId={Number(projectId)}
-                  linkedIssueIds={linkedIssueIds}
-                  setLinkedIssueIds={setLinkedIssueIds}
-                  entityType="testRun"
-                />
+                <div className="max-h-40 overflow-y-auto">
+                  <UnifiedIssueManager
+                    projectId={Number(projectId)}
+                    linkedIssueIds={linkedIssueIds}
+                    setLinkedIssueIds={setLinkedIssueIds}
+                    entityType="testRun"
+                    maxBadgeWidth="max-w-48"
+                  />
+                </div>
                 <FormField
                   control={basicInfoForm.control}
                   name="attachments"

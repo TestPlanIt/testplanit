@@ -18,6 +18,7 @@ interface UnifiedIssueManagerProps {
   setLinkedIssueIds: (ids: number[]) => void;
   entityType?: 'testCase' | 'testRun' | 'session' | 'testRunResult' | 'testRunStepResult' | 'sessionResult';
   entityId?: number;
+  maxBadgeWidth?: string; // Tailwind max-width class for issue badges (e.g., "max-w-xs", "max-w-full")
 }
 
 export function UnifiedIssueManager({
@@ -26,6 +27,7 @@ export function UnifiedIssueManager({
   setLinkedIssueIds,
   entityType = 'testCase',
   entityId,
+  maxBadgeWidth,
 }: UnifiedIssueManagerProps) {
   const t = useTranslations();
   
@@ -59,6 +61,7 @@ export function UnifiedIssueManager({
         onIssuesChange={(issueIds) => {
           setLinkedIssueIds(issueIds);
         }}
+        maxBadgeWidth={maxBadgeWidth}
       />
     );
   }

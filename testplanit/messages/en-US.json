@@ -2439,7 +2439,7 @@
       "title": "Magic Select",
       "description": "AI-powered test case selection based on your test run context",
       "button": "Magic Select",
-      "counting": "Counting test cases...",
+      "counting": "Looking for relevant test cases...",
       "reasoning": "AI Reasoning",
       "reviewSelection": "Review suggested test cases",
       "viewSuggested": "View Suggested Cases",

@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, Bug } from "lucide-react";
 import { SearchIssuesDialog } from "./search-issues-dialog";
-import { useUpsertIssue, useFindManyIssue, useFindManyProjectIntegration } from "~/lib/hooks";
+import {
+  useUpsertIssue,
+  useFindManyIssue,
+  useFindManyProjectIntegration,
+} from "~/lib/hooks";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 
@@ -17,6 +21,7 @@ interface DeferredIssueManagerProps {
   disabled?: boolean;
   label?: string;
   linkedIssueIds?: number[]; // The actual Issue IDs to display
+  maxBadgeWidth?: string; // Tailwind max-width class for issue badges (e.g., "max-w-xs", "max-w-full")
 }
 
 /**
@@ -30,31 +35,35 @@ export function DeferredIssueManager({
   disabled = false,
   label,
   linkedIssueIds = [],
+  maxBadgeWidth = "max-w-xl",
 }: DeferredIssueManagerProps) {
   const t = useTranslations();
   const { data: session } = useSession();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  
+
   const { mutateAsync: upsertIssue } = useUpsertIssue();
-  
+
   // Utility function to format provider names for display
   const formatProviderName = (provider: string): string => {
     switch (provider?.toLowerCase()) {
-      case 'jira':
-        return 'Jira';
-      case 'github':
-        return 'GitHub';
-      case 'gitlab':
-        return 'GitLab';
-      case 'azure_devops':
-        return 'Azure DevOps';
-      case 'linear':
-        return 'Linear';
-      case 'simple_url':
-        return ''; // Empty string to avoid "Link Issue Issue"
+      case "jira":
+        return "Jira";
+      case "github":
+        return "GitHub";
+      case "gitlab":
+        return "GitLab";
+      case "azure_devops":
+        return "Azure DevOps";
+      case "linear":
+        return "Linear";
+      case "simple_url":
+        return ""; // Empty string to avoid "Link Issue Issue"
       default:
         // Capitalize first letter and replace underscores with spaces
-        return provider ? provider.charAt(0).toUpperCase() + provider.slice(1).toLowerCase().replace(/_/g, ' ') : '';
+        return provider
+          ? provider.charAt(0).toUpperCase() +
+              provider.slice(1).toLowerCase().replace(/_/g, " ")
+          : "";
     }
   };
 
@@ -68,9 +77,9 @@ export function DeferredIssueManager({
       integration: true,
     },
   });
-  
+
   const activeIntegration = projectIntegrations?.[0];
-  
+
   // Fetch the actual Issue records to display
   const { data: issues, refetch } = useFindManyIssue({
     where: {
@@ -80,13 +89,13 @@ export function DeferredIssueManager({
   });
 
   const handleRemoveIssue = (issueId: number) => {
-    const updatedIds = linkedIssueIds.filter(id => id !== issueId);
+    const updatedIds = linkedIssueIds.filter((id) => id !== issueId);
     onIssuesChange(updatedIds);
   };
 
   const handleAddIssue = async (issue: any) => {
     if (!issue.isExternal || !session?.user?.id) return;
-    
+
     // console.log("DeferredIssueManager: Creating issue:", {
     //   key: issue.key,
     //   id: issue.id,
@@ -96,14 +105,15 @@ export function DeferredIssueManager({
     //   userId: session.user.id,
     //   integrationId: activeIntegration?.integrationId || activeIntegration?.integration?.id
     // });
-    
-    const integrationId = activeIntegration?.integrationId || activeIntegration?.integration?.id;
-    
+
+    const integrationId =
+      activeIntegration?.integrationId || activeIntegration?.integration?.id;
+
     if (!integrationId) {
       toast.error(t("common.errors.issueManagement.noActiveIntegration"));
       return;
     }
-    
+
     try {
       // Use upsert to handle cases where the issue already exists
       const newIssue = await upsertIssue({
@@ -140,13 +150,13 @@ export function DeferredIssueManager({
           externalData: issue,
         },
       });
-      
+
       // console.log("DeferredIssueManager: Issue created successfully:", {
       //   id: newIssue?.id,
       //   name: newIssue?.name,
       //   externalKey: newIssue?.externalKey
       // });
-      
+
       if (newIssue) {
         // Add the new Issue ID to the linked issues
         const updatedIds = [...linkedIssueIds, newIssue.id];
@@ -165,37 +175,40 @@ export function DeferredIssueManager({
       {label && (
         <div className="text-sm font-medium text-foreground">{label}</div>
       )}
-      
+
       <div className="flex flex-wrap gap-2">
         {issues?.map((issue) => (
-          <Badge 
-            key={issue.id} 
-            className="hover:bg-accent hover:text-accent-foreground hover:border-primary transition-colors group"
+          <Badge
+            key={issue.id}
+            className={`hover:bg-accent hover:text-accent-foreground hover:border-primary transition-colors group overflow-hidden ${maxBadgeWidth}`}
           >
-            <div className="flex items-center">
+            <div className="flex items-center min-w-0">
               <Bug className="w-4 h-4 shrink-0 mr-1" />
               {issue.externalUrl ? (
                 <a
                   href={issue.externalUrl}
-                  className="overflow-hidden truncate max-w-xl flex items-center hover:text-inherit"
+                  className="min-w-0 truncate hover:text-inherit"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
+                  title={`${issue.externalKey || issue.name}: ${issue.title}`}
                 >
-                  <span className="truncate">
-                    {issue.externalKey || issue.name}: {issue.title}
-                  </span>
+                  {issue.externalKey || issue.name}: {issue.title}
                 </a>
               ) : (
-                <span className="overflow-hidden truncate max-w-xl">
+                <span
+                  className="min-w-0 truncate"
+                  title={`${issue.externalKey || issue.name}: ${issue.title}`}
+                >
                   {issue.externalKey || issue.name}: {issue.title}
                 </span>
               )}
               <button
                 type="button"
+                title="Remove issue"
                 onClick={() => handleRemoveIssue(issue.id)}
                 disabled={disabled}
-                className="ml-2 opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"
+                className="ml-2 shrink-0 opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -212,8 +225,10 @@ export function DeferredIssueManager({
         disabled={disabled}
       >
         <Plus className="h-4 w-4" />
-        {t("issues.linkExternalIssue", { 
-          provider: formatProviderName(activeIntegration?.integration?.provider || 'Issue') 
+        {t("issues.linkExternalIssue", {
+          provider: formatProviderName(
+            activeIntegration?.integration?.provider || "Issue"
+          ),
         })}
       </Button>
 
@@ -221,7 +236,7 @@ export function DeferredIssueManager({
         open={isSearchOpen}
         onOpenChange={setIsSearchOpen}
         projectId={projectId}
-        linkedIssueIds={linkedIssueIds.map(id => String(id))}
+        linkedIssueIds={linkedIssueIds.map((id) => String(id))}
         onIssueSelected={(issue) => {
           handleAddIssue(issue);
           setIsSearchOpen(false);

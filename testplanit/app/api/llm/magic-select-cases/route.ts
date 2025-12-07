@@ -45,21 +45,34 @@ interface CompressedTestCase {
   linksFrom: number[];
 }
 
-// Truncation limits for token optimization
-const TRUNCATION_LIMITS = {
-  testCaseName: 80, // Test case names
-  textLongField: 100, // Text Long (rich text) field values
-  otherField: 100, // Other field types
-  issueDescription: 250, // Issue descriptions
-} as const;
+// Helper to parse env var as number with fallback
+const parseEnvInt = (envVar: string | undefined, defaultValue: number): number => {
+  if (!envVar) return defaultValue;
+  const parsed = parseInt(envVar, 10);
+  return isNaN(parsed) ? defaultValue : parsed;
+};
 
-// Search configuration for pre-filtering test cases
+const parseEnvFloat = (envVar: string | undefined, defaultValue: number): number => {
+  if (!envVar) return defaultValue;
+  const parsed = parseFloat(envVar);
+  return isNaN(parsed) ? defaultValue : parsed;
+};
+
+// Truncation limits for token optimization (configurable via env vars)
+const TRUNCATION_LIMITS = {
+  testCaseName: parseEnvInt(process.env.MAGIC_SELECT_TRUNCATE_CASE_NAME, 80),
+  textLongField: parseEnvInt(process.env.MAGIC_SELECT_TRUNCATE_TEXT_LONG, 100),
+  otherField: parseEnvInt(process.env.MAGIC_SELECT_TRUNCATE_OTHER_FIELD, 100),
+  issueDescription: parseEnvInt(process.env.MAGIC_SELECT_TRUNCATE_ISSUE_DESC, 250),
+};
+
+// Search configuration for pre-filtering test cases (configurable via env vars)
 const SEARCH_CONFIG = {
-  searchPreFilterThreshold: 250, // Only pre-filter if repository has more than this many cases
-  minKeywordLength: 3, // Minimum keyword length to include
-  minSearchScore: 50.0, // Minimum Elasticsearch score to consider a match relevant
-  maxSearchResults: 2000, // Maximum number of results to return from search
-} as const;
+  searchPreFilterThreshold: parseEnvInt(process.env.MAGIC_SELECT_SEARCH_THRESHOLD, 250),
+  minKeywordLength: parseEnvInt(process.env.MAGIC_SELECT_MIN_KEYWORD_LENGTH, 3),
+  minSearchScore: parseEnvFloat(process.env.MAGIC_SELECT_MIN_SEARCH_SCORE, 50.0),
+  maxSearchResults: parseEnvInt(process.env.MAGIC_SELECT_MAX_SEARCH_RESULTS, 2000),
+};
 
 // Extract keywords from test run metadata for search pre-filtering
 function extractSearchKeywords(

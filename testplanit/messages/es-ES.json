@@ -2436,56 +2436,56 @@
       "creatingProgress": "Creando la ejecución de prueba {current} de {total}..."
     },
     "magicSelect": {
-      "title": "Selección Mágica",
-      "description": "Selección de casos de prueba con IA basada en el contexto de tu ejecución",
-      "button": "Selección Mágica",
-      "counting": "Contando casos de prueba...",
-      "reasoning": "Razonamiento de la IA",
-      "reviewSelection": "Revisar casos de prueba sugeridos",
-      "viewSuggested": "Ver Casos Sugeridos",
+      "title": "Selección mágica",
+      "description": "Selección de casos de prueba impulsada por IA en función del contexto de ejecución de la prueba",
+      "button": "Selección mágica",
+      "counting": "Buscando casos de prueba relevantes...",
+      "reasoning": "Razonamiento de IA",
+      "reviewSelection": "Revisar los casos de prueba sugeridos",
+      "viewSuggested": "Ver casos sugeridos",
       "tokenUsage": "{total} tokens utilizados",
-      "noLlmIntegration": "Las funciones de IA requieren una integración LLM. Configúrala en la configuración del proyecto.",
+      "noLlmIntegration": "Las funciones de IA requieren una integración LLM. Configúrela en la configuración del proyecto.",
       "configure": {
-        "title": "Configurar Selección",
+        "title": "Configurar selección",
         "description": "Se encontraron {count, plural, =1 {# caso de prueba} other {# casos de prueba}} en el repositorio",
-        "descriptionFiltered": "Se encontraron {count, plural, =1 {# caso de prueba relevante} other {# casos de prueba relevantes}} de {total, plural, =1 {# total} other {# totales}} en el repositorio",
+        "descriptionFiltered": "Se encontraron {count, plural, =1 {# casos de prueba relevantes} other {# casos de prueba relevantes}} de {total, plural, =1 {# total} other {# total}} en el repositorio",
         "noMatchesTitle": "No se encontraron casos de prueba coincidentes",
-        "noMatchesDescription": "El nombre y la descripción de la ejecución de prueba no coincidieron con ningún caso de prueba. Vuelva al paso anterior y agregue detalles más específicos como nombres de funciones, nombres de componentes o palabras clave que aparezcan en sus casos de prueba.",
-        "maxResultsTitle": "Muchos casos de prueba coinciden",
-        "maxResultsDescription": "Los criterios de búsqueda coincidieron con un gran número de casos de prueba. Para obtener resultados más específicos, vuelva al paso anterior y agregue más detalles al nombre o la descripción de la ejecución de prueba.",
+        "noMatchesDescription": "El nombre y la descripción de la ejecución de prueba no coincidieron con ningún caso de prueba. Regrese al paso anterior y agregue detalles más específicos, como nombres de funciones, nombres de componentes o palabras clave que aparecen en sus casos de prueba.",
+        "maxResultsTitle": "Número máximo de casos de prueba coincidentes",
+        "maxResultsDescription": "Los criterios de búsqueda coincidieron con un gran número de casos de prueba. Para obtener resultados más específicos, vuelva al paso anterior y añada detalles más específicos a la ejecución de la prueba.",
         "batchSize": "Tamaño del lote",
         "batchSizeAll": "Todos los casos (solicitud única)",
         "batchSizePercent": "{percent}% ({count} casos)",
-        "requestsNeeded": "{count, plural, =1 {Se realizará # solicitud de IA} other {Se realizarán # solicitudes de IA}}",
-        "batchNote": "Los resultados de todos los lotes se combinarán"
+        "requestsNeeded": "{count, plural, =1 {# Se realizará una solicitud de IA} other {# Se realizarán solicitudes de IA}}",
+        "batchNote": "Se combinarán los resultados de todos los lotes."
       },
       "loading": {
         "batch": "Procesando lote {current} de {total}",
         "analyzing": "Analizando casos de prueba..."
       },
       "success": {
-        "title": "Casos de Prueba Sugeridos",
-        "description": "{count, plural, =1 {# caso de prueba seleccionado} other {# casos de prueba seleccionados}} basado en el contexto de tu ejecución",
+        "title": "Casos de prueba sugeridos",
+        "description": "{count, plural, =1 {# caso de prueba seleccionado} other {# casos de prueba seleccionados}} según el contexto de ejecución de la prueba",
         "linkedCasesAdded": "{count, plural, =1 {# caso vinculado incluido automáticamente} other {# casos vinculados incluidos automáticamente}}"
       },
       "noSuggestions": {
-        "title": "Sin Casos de Prueba Coincidentes",
-        "description": "Ningún caso de prueba coincide con los criterios. Intenta agregar más contexto o aclaraciones."
+        "title": "No hay casos de prueba coincidentes",
+        "description": "Ningún caso de prueba cumplió con los criterios. Intenta añadir más contexto o aclaración."
       },
       "clarification": {
         "label": "Contexto adicional (opcional)",
-        "placeholder": "Agrega contexto adicional para ayudar a seleccionar casos de prueba relevantes...",
-        "refine": "Refinar Selección"
+        "placeholder": "Agregue contexto adicional para ayudar a seleccionar casos de prueba relevantes...",
+        "refine": "Refinar selección"
       },
       "actions": {
-        "start": "Iniciar Selección",
-        "startBatched": "Iniciar Selección ({count} lotes)",
-        "accept": "Agregar a la Selección",
-        "retry": "Intentar de Nuevo"
+        "start": "Selección de inicio",
+        "startBatched": "Selección de inicio ({count} lotes)",
+        "accept": "Añadir a la selección",
+        "retry": "Intentar otra vez"
       },
       "errors": {
-        "title": "Selección Fallida",
-        "generic": "Ocurrió un error al seleccionar los casos de prueba. Por favor, inténtalo de nuevo."
+        "title": "Selección fallida",
+        "generic": "Se produjo un error al seleccionar los casos de prueba. Inténtalo de nuevo."
       }
     },
     "delete": {
