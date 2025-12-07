@@ -2448,7 +2448,7 @@
       "configure": {
         "title": "Configure Selection",
         "description": "Found {count, plural, =1 {# test case} other {# test cases}} in the repository",
-        "descriptionFiltered": "Found {count, plural, =1 {# relevant test case} other {# relevant test cases}} from {total, plural, =1 {# total} other {# total}} in the repository",
+        "descriptionFiltered": "Found {count, plural, =1 {# possibly relevant test case} other {# possibly relevant test cases}} from {total, plural, =1 {# total} other {# total}} in the repository",
         "noMatchesTitle": "No Matching Test Cases Found",
         "noMatchesDescription": "The test run name and description didn't match any test cases. Go back to the previous step and add more specific details like feature names, component names, or keywords that appear in your test cases.",
         "maxResultsTitle": "Maximum Number of Test Cases Match",
@@ -2478,14 +2478,15 @@
         "refine": "Refine Selection"
       },
       "actions": {
-        "start": "Start Selection",
-        "startBatched": "Start Selection ({count} batches)",
+        "start": "Analyze Test Cases",
+        "startBatched": "Analyze Test Cases ({count} batches)",
         "accept": "Add to Selection",
         "retry": "Try Again"
       },
       "errors": {
         "title": "Selection Failed",
-        "generic": "An error occurred while selecting test cases. Please try again."
+        "generic": "An error occurred while selecting test cases. Please try again.",
+        "noTestRunName": "Please enter a test run name before using Magic Select."
       }
     },
     "delete": {

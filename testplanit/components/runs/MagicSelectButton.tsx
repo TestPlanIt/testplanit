@@ -67,7 +67,7 @@ export function MagicSelectButton({
           <TooltipTrigger asChild>
             <span>
               <Button size="lg" variant="outline" disabled>
-                <Wand2 className="h-4 w-4 mr-2" />
+                <Wand2 className="h-4 w-4" />
                 {t("button")}
               </Button>
             </span>
@@ -87,7 +87,7 @@ export function MagicSelectButton({
         onClick={() => setDialogOpen(true)}
         disabled={isLoading || !testRunMetadata.name}
       >
-        <Wand2 className="h-4 w-4 mr-2" />
+        <Wand2 className="h-4 w-4" />
         {t("button")}
       </Button>
 

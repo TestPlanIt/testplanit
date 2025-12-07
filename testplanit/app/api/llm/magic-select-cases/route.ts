@@ -683,101 +683,130 @@ export async function POST(request: NextRequest) {
             .filter((word) => word.length >= 3);
           const nameQuery = nameTerms.join(" ");
 
-          const searchResponse = await esClient.search({
-            index: indexName,
-            query: {
-              bool: {
-                filter: [
-                  { term: { projectId: projectId } },
-                  { term: { isArchived: false } },
-                ],
-                must: [
-                  {
-                    bool: {
-                      should: [
-                        // Exact phrase matching on test run name (highest priority)
-                        {
-                          match_phrase: {
-                            name: {
-                              query: testRunMetadata.name,
-                              boost: 20,
-                            },
+          // Build the search query
+          const searchQuery = {
+            bool: {
+              filter: [
+                { term: { projectId: projectId } },
+                { term: { isArchived: false } },
+              ],
+              must: [
+                {
+                  bool: {
+                    should: [
+                      // Exact phrase matching on test run name (highest priority)
+                      {
+                        match_phrase: {
+                          name: {
+                            query: testRunMetadata.name,
+                            boost: 20,
                           },
                         },
-                        // Match on key terms from test run name
-                        {
-                          match: {
-                            name: {
-                              query: nameQuery,
-                              operator: "or",
-                              minimum_should_match: "2", // At least 2 words must match
-                              boost: 10,
-                            },
+                      },
+                      // Match on key terms from test run name
+                      {
+                        match: {
+                          name: {
+                            query: nameQuery,
+                            operator: "or" as const,
+                            minimum_should_match: "2", // At least 2 words must match
+                            boost: 10,
                           },
                         },
-                        // Searchable content with test run name terms
-                        {
-                          match: {
-                            searchableContent: {
-                              query: nameQuery,
-                              operator: "or",
-                              minimum_should_match: "2",
-                              boost: 5,
-                            },
+                      },
+                      // Searchable content with test run name terms
+                      {
+                        match: {
+                          searchableContent: {
+                            query: nameQuery,
+                            operator: "or" as const,
+                            minimum_should_match: "2",
+                            boost: 5,
                           },
                         },
-                        // Broader search with all keywords (lower priority)
-                        {
-                          match: {
-                            searchableContent: {
-                              query: searchKeywords,
-                              operator: "or",
-                              minimum_should_match: "3", // At least 3 keywords must match
-                              boost: 1,
-                            },
+                      },
+                      // Broader search with all keywords (lower priority)
+                      {
+                        match: {
+                          searchableContent: {
+                            query: searchKeywords,
+                            operator: "or" as const,
+                            minimum_should_match: "3", // At least 3 keywords must match
+                            boost: 1,
                           },
                         },
-                      ],
-                      minimum_should_match: 1,
-                    },
+                      },
+                    ],
+                    minimum_should_match: 1,
                   },
-                ],
-              },
+                },
+              ],
             },
-            min_score: SEARCH_CONFIG.minSearchScore,
-            size: SEARCH_CONFIG.maxSearchResults,
-            _source: false, // We only need IDs
-            track_total_hits: true,
-          });
+          };
 
           console.log("Name terms for search:", nameQuery);
 
-          const hits = searchResponse.hits.hits;
-          if (hits.length > 0) {
-            searchResultIds = hits
-              .filter((hit) => hit._id !== undefined)
-              .map((hit) => parseInt(hit._id!, 10));
-            searchPreFiltered = true;
-            console.log(
-              "Search returned",
-              searchResultIds.length,
-              "matching cases (min score:",
-              SEARCH_CONFIG.minSearchScore,
-              ")"
-            );
+          // Progressive score reduction: start with configured min score, reduce if no results
+          // Score thresholds to try (will stop at the first one that returns results)
+          const scoreThresholds = [
+            SEARCH_CONFIG.minSearchScore,
+            SEARCH_CONFIG.minSearchScore * 0.5,
+            SEARCH_CONFIG.minSearchScore * 0.25,
+            SEARCH_CONFIG.minSearchScore * 0.1,
+            1, // Very low threshold as last resort
+          ];
 
-            // Log score distribution for debugging
-            const scores = hits.map((h) => h._score ?? 0);
-            console.log(
-              "Score range:",
-              Math.min(...scores).toFixed(2),
-              "-",
-              Math.max(...scores).toFixed(2)
-            );
-          } else {
-            console.log(
-              "Search returned no results above score threshold, using all available cases"
-            );
+          for (const minScore of scoreThresholds) {
+            const searchResponse = await esClient.search({
+              index: indexName,
+              query: searchQuery,
+              min_score: minScore,
+              size: SEARCH_CONFIG.maxSearchResults,
+              _source: false, // We only need IDs
+              track_total_hits: true,
+            });
+
+            const hits = searchResponse.hits.hits;
+            if (hits.length > 0) {
+              searchResultIds = hits
+                .filter((hit) => hit._id !== undefined)
+                .map((hit) => parseInt(hit._id!, 10));
+              searchPreFiltered = true;
+
+              console.log(
+                "Search returned",
+                searchResultIds.length,
+                "matching cases (min score:",
+                minScore,
+                minScore < SEARCH_CONFIG.minSearchScore
+                  ? `reduced from ${SEARCH_CONFIG.minSearchScore}`
+                  : "",
+                ")"
+              );
+
+              // Log score distribution for debugging
+              const scores = hits.map((h) => h._score ?? 0);
+              console.log(
+                "Score range:",
+                Math.min(...scores).toFixed(2),
+                "-",
+                Math.max(...scores).toFixed(2)
+              );
+              break;
+            } else if (minScore === scoreThresholds[scoreThresholds.length - 1]) {
+              // Last threshold and still no results
+              console.log(
+                "Search returned no results even at minimum score threshold (",
+                minScore,
+                "), using all available cases"
+              );
+            } else {
+              console.log(
+                "No results at min_score",
+                minScore,
+                "- trying lower threshold..."
+              );
+            }
           }
         } catch (searchError) {
           console.error(

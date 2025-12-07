@@ -2448,7 +2448,7 @@
       "configure": {
         "title": "Configurer la sélection",
         "description": "Cas de test trouvé {count, plural, =1 {# cas de test} other {# cas de test}} dans le dépôt",
-        "descriptionFiltered": "Trouvé {count, plural, =1 {# cas de test pertinent} other {# cas de test pertinents}} de {total, plural, =1 {# total} other {# total}} dans le dépôt",
+        "descriptionFiltered": "Trouvé {count, plural, =1 {# cas de test potentiellement pertinent} other {# cas de test potentiellement pertinents}} de {total, plural, =1 {# total} other {# total}} dans le dépôt",
         "noMatchesTitle": "Aucun cas de test correspondant trouvé",
         "noMatchesDescription": "Le nom et la description de l'exécution de test ne correspondent à aucun cas de test. Revenez à l'étape précédente et ajoutez des détails plus précis, tels que les noms des fonctionnalités, des composants ou les mots-clés qui apparaissent dans vos cas de test.",
         "maxResultsTitle": "Nombre maximal de cas de test correspondants",
@@ -2478,14 +2478,15 @@
         "refine": "Affiner la sélection"
       },
       "actions": {
-        "start": "Commencer la sélection",
-        "startBatched": "Démarrer la sélection ({count} lots)",
+        "start": "Analyser les cas de test",
+        "startBatched": "Analyser les cas de test ({count} lots)",
         "accept": "Ajouter à la sélection",
         "retry": "Essayer à nouveau"
       },
       "errors": {
         "title": "La sélection a échoué",
-        "generic": "Une erreur s'est produite lors de la sélection des cas de test. Veuillez réessayer."
+        "generic": "Une erreur s'est produite lors de la sélection des cas de test. Veuillez réessayer.",
+        "noTestRunName": "Veuillez saisir un nom pour l'exécution de test avant d'utiliser Magic Select."
       }
     },
     "delete": {

@@ -136,6 +136,16 @@ export function MagicSelectDialog({
 
   // Fetch total case count when dialog opens
   const fetchCaseCount = useCallback(async () => {
+    // Guard: require a test run name before making API call
+    if (!testRunMetadata.name || testRunMetadata.name.trim() === "") {
+      setState((prev) => ({
+        ...prev,
+        status: "error",
+        errorMessage: t("errors.noTestRunName"),
+      }));
+      return;
+    }
+
     setState((prev) => ({
       ...prev,
       status: "counting",
@@ -580,7 +590,7 @@ export function MagicSelectDialog({
                   size="sm"
                   onClick={handleRefine}
                 >
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                  <RefreshCw className="h-4 w-4" />
                   {t("clarification.refine")}
                 </Button>
               </div>
@@ -601,7 +611,7 @@ export function MagicSelectDialog({
           </Button>
           {state.status === "configuring" && (
             <Button onClick={runMagicSelect}>
-              <Sparkles className="h-4 w-4 mr-2" />
+              <Sparkles className="h-4 w-4" />
               {batchesNeeded > 1
                 ? t("actions.startBatched", { count: batchesNeeded })
                 : t("actions.start")}
@@ -609,13 +619,13 @@ export function MagicSelectDialog({
           )}
           {state.status === "success" && state.suggestedCaseIds.length > 0 && (
             <Button onClick={handleAccept}>
-              <Sparkles className="h-4 w-4 mr-2" />
+              <Sparkles className="h-4 w-4" />
               {t("actions.accept")}
             </Button>
           )}
           {state.status === "error" && (
             <Button onClick={fetchCaseCount}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-4 w-4" />
               {t("actions.retry")}
             </Button>
           )}

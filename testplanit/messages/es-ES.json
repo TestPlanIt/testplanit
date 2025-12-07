@@ -2448,7 +2448,7 @@
       "configure": {
         "title": "Configurar selección",
         "description": "Se encontraron {count, plural, =1 {# caso de prueba} other {# casos de prueba}} en el repositorio",
-        "descriptionFiltered": "Se encontraron {count, plural, =1 {# casos de prueba relevantes} other {# casos de prueba relevantes}} de {total, plural, =1 {# total} other {# total}} en el repositorio",
+        "descriptionFiltered": "Se encontraron {count, plural, =1 {# casos de prueba posiblemente relevantes} other {# casos de prueba posiblemente relevantes}} de {total, plural, =1 {# total} other {# total}} en el repositorio",
         "noMatchesTitle": "No se encontraron casos de prueba coincidentes",
         "noMatchesDescription": "El nombre y la descripción de la ejecución de prueba no coincidieron con ningún caso de prueba. Regrese al paso anterior y agregue detalles más específicos, como nombres de funciones, nombres de componentes o palabras clave que aparecen en sus casos de prueba.",
         "maxResultsTitle": "Número máximo de casos de prueba coincidentes",
@@ -2478,14 +2478,15 @@
         "refine": "Refinar selección"
       },
       "actions": {
-        "start": "Selección de inicio",
-        "startBatched": "Selección de inicio ({count} lotes)",
+        "start": "Analizar casos de prueba",
+        "startBatched": "Analizar casos de prueba (lotes{count} )",
         "accept": "Añadir a la selección",
         "retry": "Intentar otra vez"
       },
       "errors": {
         "title": "Selección fallida",
-        "generic": "Se produjo un error al seleccionar los casos de prueba. Inténtalo de nuevo."
+        "generic": "Se produjo un error al seleccionar los casos de prueba. Inténtalo de nuevo.",
+        "noTestRunName": "Ingrese un nombre de ejecución de prueba antes de utilizar Magic Select."
       }
     },
     "delete": {
