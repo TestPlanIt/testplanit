@@ -2435,6 +2435,59 @@
       },
       "creatingProgress": "Creating test run {current} of {total}..."
     },
+    "magicSelect": {
+      "title": "Magic Select",
+      "description": "AI-powered test case selection based on your test run context",
+      "button": "Magic Select",
+      "counting": "Counting test cases...",
+      "reasoning": "AI Reasoning",
+      "reviewSelection": "Review suggested test cases",
+      "viewSuggested": "View Suggested Cases",
+      "tokenUsage": "{total} tokens used",
+      "noLlmIntegration": "AI features require an LLM integration. Configure one in project settings.",
+      "configure": {
+        "title": "Configure Selection",
+        "description": "Found {count, plural, =1 {# test case} other {# test cases}} in the repository",
+        "descriptionFiltered": "Found {count, plural, =1 {# relevant test case} other {# relevant test cases}} from {total, plural, =1 {# total} other {# total}} in the repository",
+        "noMatchesTitle": "No Matching Test Cases Found",
+        "noMatchesDescription": "The test run name and description didn't match any test cases. Go back to the previous step and add more specific details like feature names, component names, or keywords that appear in your test cases.",
+        "maxResultsTitle": "Maximum Number of Test Cases Match",
+        "maxResultsDescription": "The search criteria matched a large number of test cases. For more targeted results, go back to the previous step and add more specific details to the test run.",
+        "batchSize": "Batch size",
+        "batchSizeAll": "All cases (single request)",
+        "batchSizePercent": "{percent}% ({count} cases)",
+        "requestsNeeded": "{count, plural, =1 {# AI request will be made} other {# AI requests will be made}}",
+        "batchNote": "Results from all batches will be combined"
+      },
+      "loading": {
+        "batch": "Processing batch {current} of {total}",
+        "analyzing": "Analyzing test cases..."
+      },
+      "success": {
+        "title": "Suggested Test Cases",
+        "description": "{count, plural, =1 {# test case selected} other {# test cases selected}} based on your test run context",
+        "linkedCasesAdded": "{count, plural, =1 {# linked case automatically included} other {# linked cases automatically included}}"
+      },
+      "noSuggestions": {
+        "title": "No Matching Test Cases",
+        "description": "No test cases matched the criteria. Try adding more context or clarification."
+      },
+      "clarification": {
+        "label": "Additional context (optional)",
+        "placeholder": "Add additional context to help select relevant test cases...",
+        "refine": "Refine Selection"
+      },
+      "actions": {
+        "start": "Start Selection",
+        "startBatched": "Start Selection ({count} batches)",
+        "accept": "Add to Selection",
+        "retry": "Try Again"
+      },
+      "errors": {
+        "title": "Selection Failed",
+        "generic": "An error occurred while selecting test cases. Please try again."
+      }
+    },
     "delete": {
       "title": "Delete Test Run",
       "description": "Are you sure you want to delete this test run?",

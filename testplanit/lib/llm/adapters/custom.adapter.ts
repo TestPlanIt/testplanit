@@ -90,11 +90,13 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
     const customRequest = this.buildCustomRequest(request, false);
 
     try {
+      // Use request timeout if provided, otherwise fall back to config timeout
+      const timeout = request.timeout ?? this.getTimeout();
       const response = await fetch(this.endpoint, {
         method: "POST",
         headers: this.getCustomHeaders(),
         body: JSON.stringify(customRequest),
-        signal: AbortSignal.timeout(this.getTimeout()),
+        signal: AbortSignal.timeout(timeout),
       });
 
       if (!response.ok) {
@@ -123,11 +125,13 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
 
     const customRequest = this.buildCustomRequest(request, true);
 
+    // Use request timeout if provided, otherwise fall back to config timeout
+    const timeout = request.timeout ?? this.getTimeout();
     const response = await fetch(this.endpoint, {
       method: "POST",
       headers: this.getCustomHeaders(),
       body: JSON.stringify(customRequest),
-      signal: AbortSignal.timeout(this.getTimeout()),
+      signal: AbortSignal.timeout(timeout),
     });
 
     if (!response.ok) {
