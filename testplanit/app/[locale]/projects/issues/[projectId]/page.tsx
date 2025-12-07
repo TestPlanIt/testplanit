@@ -8,6 +8,7 @@ import {
   useFindManyIssue,
   useFindFirstProjects,
   useCountIssue,
+  useGroupByIssue,
 } from "~/lib/hooks";
 import { DataTable } from "@/components/tables/DataTable";
 import { useIssueColumns } from "./columns";
@@ -22,6 +23,13 @@ import {
   CardContent,
   CardDescription,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 import {
   usePagination,
@@ -93,6 +101,9 @@ function ProjectIssues() {
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
 
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [priorityFilter, setPriorityFilter] = useState<string>("");
+
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const hasInitializedRef = useRef(false);
   const [shouldPreventPageReset, setShouldPreventPageReset] =
@@ -102,6 +113,84 @@ function ProjectIssues() {
   const effectivePageSize =
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
+
+  // Build project filter for groupBy queries
+  const projectFilterForGroupBy = useMemo(() => {
+    if (projectId === null) return {};
+    return {
+      OR: [
+        { repositoryCases: { some: { projectId } } },
+        { sessions: { some: { projectId } } },
+        { testRuns: { some: { projectId } } },
+        { sessionResults: { some: { session: { projectId } } } },
+        { testRunResults: { some: { testRun: { projectId } } } },
+        {
+          testRunStepResults: {
+            some: { testRunResult: { testRun: { projectId } } },
+          },
+        },
+      ],
+    };
+  }, [projectId]);
+
+  // Fetch distinct status values for the filter dropdown (scoped to this project)
+  const { data: statusOptions } = useGroupByIssue(
+    {
+      by: ["status"],
+      where: { isDeleted: false, ...projectFilterForGroupBy },
+      orderBy: { status: "asc" },
+    },
+    {
+      enabled: !!session?.user && projectId !== null,
+    }
+  );
+
+  // Fetch distinct priority values for the filter dropdown (scoped to this project)
+  const { data: priorityOptions } = useGroupByIssue(
+    {
+      by: ["priority"],
+      where: { isDeleted: false, ...projectFilterForGroupBy },
+      orderBy: { priority: "asc" },
+    },
+    {
+      enabled: !!session?.user && projectId !== null,
+    }
+  );
+
+  // Extract unique non-null values, combining options with mismatched casing
+  const statuses = useMemo(() => {
+    if (!statusOptions) return [];
+    const seen = new Map<string, string>();
+    statusOptions
+      .map((item) => item.status)
+      .filter((s): s is string => s !== null && s.trim() !== "")
+      .forEach((s) => {
+        const lower = s.toLowerCase();
+        if (!seen.has(lower)) {
+          seen.set(lower, s);
+        }
+      });
+    return Array.from(seen.values()).sort((a, b) =>
+      a.toLowerCase().localeCompare(b.toLowerCase())
+    );
+  }, [statusOptions]);
+
+  const priorities = useMemo(() => {
+    if (!priorityOptions) return [];
+    const seen = new Map<string, string>();
+    priorityOptions
+      .map((item) => item.priority)
+      .filter((p): p is string => p !== null && p.trim() !== "")
+      .forEach((p) => {
+        const lower = p.toLowerCase();
+        if (!seen.has(lower)) {
+          seen.set(lower, p);
+        }
+      });
+    return Array.from(seen.values()).sort((a, b) =>
+      a.toLowerCase().localeCompare(b.toLowerCase())
+    );
+  }, [priorityOptions]);
 
   // Build search filter for name, title, and description
   const searchFilter = useMemo(() => {
@@ -176,10 +265,24 @@ function ProjectIssues() {
       conditions.push(searchFilter);
     }
 
+    // Add status filter if selected (case-insensitive)
+    if (statusFilter) {
+      conditions.push({
+        status: { equals: statusFilter, mode: "insensitive" as const },
+      });
+    }
+
+    // Add priority filter if selected (case-insensitive)
+    if (priorityFilter) {
+      conditions.push({
+        priority: { equals: priorityFilter, mode: "insensitive" as const },
+      });
+    }
+
     return {
       AND: conditions,
     };
-  }, [projectId, searchFilter]);
+  }, [projectId, searchFilter, statusFilter, priorityFilter]);
 
   const orderBy = useMemo(() => {
     if (!sortConfig?.column) {
@@ -543,6 +646,12 @@ function ProjectIssues() {
     hasInitializedRef.current = false; // Reset scroll initialization
   }, [pageSize, setCurrentPage]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+    setIsTableReady(false); // Reset when filters change
+    hasInitializedRef.current = false; // Reset scroll initialization
+  }, [statusFilter, priorityFilter, setCurrentPage]);
+
   // Reset table ready state when page changes
   useEffect(() => {
     setIsTableReady(false);
@@ -614,13 +723,53 @@ function ProjectIssues() {
         <CardContent>
           <div className="flex flex-row items-start">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-              <div className="text-muted-foreground w-full text-nowrap">
+              <div className="flex items-center gap-2 text-muted-foreground w-full flex-wrap">
                 <Filter
                   key="issue-filter"
                   placeholder={t("Pages.Issues.filterPlaceholder")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
                 />
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) =>
+                    setStatusFilter(value === "all" ? "" : value)
+                  }
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder={t("common.fields.status")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      {t("common.filters.allStatuses")}
+                    </SelectItem>
+                    {statuses.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={priorityFilter}
+                  onValueChange={(value) =>
+                    setPriorityFilter(value === "all" ? "" : value)
+                  }
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder={t("common.fields.priority")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      {t("common.filters.allPriorities")}
+                    </SelectItem>
+                    {priorities.map((priority) => (
+                      <SelectItem key={priority} value={priority}>
+                        {priority}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

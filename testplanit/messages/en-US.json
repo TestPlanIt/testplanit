@@ -188,6 +188,10 @@
       "medium": "Medium",
       "high": "High"
     },
+    "filters": {
+      "allStatuses": "All Statuses",
+      "allPriorities": "All Priorities"
+    },
     "fields": {
       "name": "Name",
       "users": "Users",

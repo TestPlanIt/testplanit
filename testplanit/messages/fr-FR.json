@@ -188,6 +188,10 @@
       "medium": "Moyen",
       "high": "Haut"
     },
+    "filters": {
+      "allStatuses": "Tous les statuts",
+      "allPriorities": "Toutes les priorités"
+    },
     "fields": {
       "name": "Nom",
       "users": "Utilisateurs",

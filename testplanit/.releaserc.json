@@ -2,8 +2,32 @@
   "branches": ["main"],
   "tagFormat": "v${version}",
   "plugins": [
-    "@semantic-release/commit-analyzer",
-    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "angular",
+        "releaseRules": [
+          { "type": "enhance", "release": "patch" }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "angular",
+        "presetConfig": {
+          "types": [
+            { "type": "feat", "section": "Features" },
+            { "type": "fix", "section": "Bug Fixes" },
+            { "type": "enhance", "section": "Enhancements" },
+            { "type": "perf", "section": "Performance Improvements" },
+            { "type": "refactor", "section": "Code Refactoring", "hidden": true },
+            { "type": "docs", "section": "Documentation", "hidden": true },
+            { "type": "chore", "section": "Chores", "hidden": true }
+          ]
+        }
+      }
+    ],
     [
       "@semantic-release/changelog",
       {
