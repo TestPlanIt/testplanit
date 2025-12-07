@@ -1,3 +1,10 @@
+## [0.4.1](https://github.com/TestPlanIt/testplanit/compare/v0.4.0...v0.4.1) (2025-12-07)
+
+
+### Bug Fixes
+
+* **issues:** add status and priority filters to issues page ([182be68](https://github.com/TestPlanIt/testplanit/commit/182be680cf33cfbeb8bacf57d72189bde79c192e))
+
 # [0.4.0](https://github.com/TestPlanIt/testplanit/compare/v0.3.0...v0.4.0) (2025-12-07)
 
 
