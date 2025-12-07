@@ -1,3 +1,10 @@
+# [0.4.0](https://github.com/TestPlanIt/testplanit/compare/v0.3.0...v0.4.0) (2025-12-07)
+
+
+### Features
+
+* bump version to 0.3.0 and add Magic Select announcement ([d98b977](https://github.com/TestPlanIt/testplanit/commit/d98b977115d8fe2634bcf51bafc5ac71bc4c1ecf))
+
 ## [0.2.7](https://github.com/TestPlanIt/testplanit/compare/v0.2.6...v0.2.7) (2025-12-07)
 
 
