@@ -21,7 +21,6 @@ export { Paragraph } from "@tiptap/extension-paragraph";
 export { CodeBlock } from "@tiptap/extension-code-block";
 export { BulletList } from "@tiptap/extension-bullet-list";
 export { OrderedList } from "@tiptap/extension-ordered-list";
-export { Collaboration } from "@tiptap/extension-collaboration";
 export { TaskItem } from "@tiptap/extension-task-item";
 export { TaskList } from "@tiptap/extension-task-list";
 export { FileHandler } from "@tiptap/extension-file-handler";

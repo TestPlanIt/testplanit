@@ -196,26 +196,6 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **Repository**: https://github.com/observablehq/plot
 - **Copyright**: Copyright (c) 2020-2023 Observable, Inc.
 
-## Real-Time Collaboration
-
-### Yjs
-- **Version**: 13.x
-- **License**: MIT
-- **Repository**: https://github.com/yjs/yjs
-- **Copyright**: Copyright (c) 2015 Kevin Jahns
-
-### Hocuspocus
-- **Version**: 3.x
-- **License**: MIT
-- **Repository**: https://github.com/ueberdosis/hocuspocus
-- **Copyright**: Copyright (c) 2021 überdosis GmbH
-
-### y-prosemirror
-- **Version**: 1.x
-- **License**: MIT
-- **Repository**: https://github.com/yjs/y-prosemirror
-- **Copyright**: Copyright (c) 2019 Kevin Jahns
-
 ## Backend Dependencies
 
 ### Node.js
