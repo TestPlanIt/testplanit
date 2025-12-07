@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "~/server/auth";
 import { prisma } from "~/lib/prisma";
 import { z } from "zod/v4";
+import { ProjectAccessType } from "@prisma/client";
 
 // Schema for bulk edit request
 const bulkEditSchema = z.object({
@@ -83,21 +84,63 @@ export async function POST(
 
     // Verify user has access to the project
     const isAdmin = session.user.access === "ADMIN";
-    const project = isAdmin
-      ? await prisma.projects.findUnique({
-          where: { id: projectId, isDeleted: false },
-        })
-      : await prisma.projects.findFirst({
-          where: {
-            id: projectId,
-            isDeleted: false,
-            userPermissions: {
-              some: {
-                userId: session.user.id,
+    const isProjectAdmin = session.user.access === "PROJECTADMIN";
+
+    // Build the where clause for project access
+    // This needs to account for all access paths: userPermissions, groupPermissions,
+    // assignedUsers, and project defaultAccessType (GLOBAL_ROLE)
+    const projectAccessWhere = isAdmin
+      ? { id: projectId, isDeleted: false }
+      : {
+          id: projectId,
+          isDeleted: false,
+          OR: [
+            // Direct user permissions
+            {
+              userPermissions: {
+                some: {
+                  userId: session.user.id,
+                  accessType: { not: ProjectAccessType.NO_ACCESS },
+                },
               },
             },
-          },
-        });
+            // Group permissions
+            {
+              groupPermissions: {
+                some: {
+                  group: {
+                    assignedUsers: {
+                      some: {
+                        userId: session.user.id,
+                      },
+                    },
+                  },
+                  accessType: { not: ProjectAccessType.NO_ACCESS },
+                },
+              },
+            },
+            // Project default GLOBAL_ROLE (any authenticated user with a role)
+            {
+              defaultAccessType: ProjectAccessType.GLOBAL_ROLE,
+            },
+            // Direct assignment to project with PROJECTADMIN access
+            ...(isProjectAdmin
+              ? [
+                  {
+                    assignedUsers: {
+                      some: {
+                        userId: session.user.id,
+                      },
+                    },
+                  },
+                ]
+              : []),
+          ],
+        };
+
+    const project = await prisma.projects.findFirst({
+      where: projectAccessWhere,
+    });
 
     if (!project) {
       return NextResponse.json(

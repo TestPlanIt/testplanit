@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
 import { emptyEditorContent } from "~/app/constants/backend";
+import { ProjectAccessType } from "@prisma/client";
 
 interface GeneratedTestCase {
   id: string;
@@ -54,6 +55,57 @@ export async function POST(request: NextRequest) {
 
     // Verify user has access to the project and folder
     const isAdmin = session.user.access === "ADMIN";
+    const isProjectAdmin = session.user.access === "PROJECTADMIN";
+
+    // Build the project access condition
+    // This needs to account for all access paths: userPermissions, groupPermissions,
+    // assignedUsers, and project defaultAccessType (GLOBAL_ROLE)
+    const projectAccessCondition = isAdmin
+      ? {}
+      : {
+          OR: [
+            // Direct user permissions
+            {
+              userPermissions: {
+                some: {
+                  userId: session.user.id,
+                  accessType: { not: ProjectAccessType.NO_ACCESS },
+                },
+              },
+            },
+            // Group permissions
+            {
+              groupPermissions: {
+                some: {
+                  group: {
+                    assignedUsers: {
+                      some: {
+                        userId: session.user.id,
+                      },
+                    },
+                  },
+                  accessType: { not: ProjectAccessType.NO_ACCESS },
+                },
+              },
+            },
+            // Project default GLOBAL_ROLE (any authenticated user with a role)
+            {
+              defaultAccessType: ProjectAccessType.GLOBAL_ROLE,
+            },
+            // Direct assignment to project with PROJECTADMIN access
+            ...(isProjectAdmin
+              ? [
+                  {
+                    assignedUsers: {
+                      some: {
+                        userId: session.user.id,
+                      },
+                    },
+                  },
+                ]
+              : []),
+          ],
+        };
 
     const folder = await prisma.repositoryFolders.findFirst({
       where: {
@@ -61,15 +113,7 @@ export async function POST(request: NextRequest) {
         project: {
           id: projectId,
           isDeleted: false,
-          ...(isAdmin
-            ? {}
-            : {
-                userPermissions: {
-                  some: {
-                    userId: session.user.id,
-                  },
-                },
-              }),
+          ...projectAccessCondition,
         },
         isDeleted: false,
       },

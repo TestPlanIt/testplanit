@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
+import { ProjectAccessType } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,38 +24,71 @@ export async function GET(request: NextRequest) {
 
     // Verify user has access to the project
     const isAdmin = session.user.access === "ADMIN";
+    const isProjectAdmin = session.user.access === "PROJECTADMIN";
 
-    const project = isAdmin
-      ? await prisma.projects.findUnique({
-          where: { id: parseInt(projectId), isDeleted: false },
+    // Build the where clause for project access
+    // This needs to account for all access paths: userPermissions, groupPermissions,
+    // assignedUsers, and project defaultAccessType (GLOBAL_ROLE)
+    const projectAccessWhere = isAdmin
+      ? { id: parseInt(projectId), isDeleted: false }
+      : {
+          id: parseInt(projectId),
+          isDeleted: false,
+          OR: [
+            // Direct user permissions
+            {
+              userPermissions: {
+                some: {
+                  userId: session.user.id,
+                  accessType: { not: ProjectAccessType.NO_ACCESS },
+                },
+              },
+            },
+            // Group permissions
+            {
+              groupPermissions: {
+                some: {
+                  group: {
+                    assignedUsers: {
+                      some: {
+                        userId: session.user.id,
+                      },
+                    },
+                  },
+                  accessType: { not: ProjectAccessType.NO_ACCESS },
+                },
+              },
+            },
+            // Project default GLOBAL_ROLE (any authenticated user with a role)
+            {
+              defaultAccessType: ProjectAccessType.GLOBAL_ROLE,
+            },
+            // Direct assignment to project with PROJECTADMIN access
+            ...(isProjectAdmin
+              ? [
+                  {
+                    assignedUsers: {
+                      some: {
+                        userId: session.user.id,
+                      },
+                    },
+                  },
+                ]
+              : []),
+          ],
+        };
+
+    const project = await prisma.projects.findFirst({
+      where: projectAccessWhere,
+      include: {
+        projectIntegrations: {
+          where: { isActive: true },
           include: {
-            projectIntegrations: {
-              where: { isActive: true },
-              include: {
-                integration: true,
-              },
-            },
+            integration: true,
           },
-        })
-      : await prisma.projects.findFirst({
-          where: {
-            id: parseInt(projectId),
-            isDeleted: false,
-            userPermissions: {
-              some: {
-                userId: session.user.id,
-              },
-            },
-          },
-          include: {
-            projectIntegrations: {
-              where: { isActive: true },
-              include: {
-                integration: true,
-              },
-            },
-          },
-        });
+        },
+      },
+    });
 
     if (!project) {
       return NextResponse.json(

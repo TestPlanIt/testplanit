@@ -4,6 +4,7 @@ import { authOptions } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import type { LlmRequest } from "@/lib/llm/types";
+import { ProjectAccessType } from "@prisma/client";
 
 interface IssueData {
   key: string;
@@ -335,46 +336,75 @@ export async function POST(request: NextRequest) {
 
     // Verify user has access to the project and check for active LLM integration
     const isAdmin = session.user.access === "ADMIN";
+    const isProjectAdmin = session.user.access === "PROJECTADMIN";
 
-    const project = isAdmin
-      ? await prisma.projects.findUnique({
-          where: { id: projectId, isDeleted: false },
-          include: {
-            projectLlmIntegrations: {
-              where: { isActive: true },
-              include: {
-                llmIntegration: {
-                  include: {
-                    llmProviderConfig: true,
-                  },
+    // Build the where clause for project access
+    // This needs to account for all access paths: userPermissions, groupPermissions,
+    // assignedUsers, and project defaultAccessType (GLOBAL_ROLE)
+    const projectAccessWhere = isAdmin
+      ? { id: projectId, isDeleted: false }
+      : {
+          id: projectId,
+          isDeleted: false,
+          OR: [
+            // Direct user permissions
+            {
+              userPermissions: {
+                some: {
+                  userId: session.user.id,
+                  accessType: { not: ProjectAccessType.NO_ACCESS },
                 },
               },
             },
-          },
-        })
-      : await prisma.projects.findFirst({
-          where: {
-            id: projectId,
-            isDeleted: false,
-            userPermissions: {
-              some: {
-                userId: session.user.id,
-              },
-            },
-          },
-          include: {
-            projectLlmIntegrations: {
-              where: { isActive: true },
-              include: {
-                llmIntegration: {
-                  include: {
-                    llmProviderConfig: true,
+            // Group permissions
+            {
+              groupPermissions: {
+                some: {
+                  group: {
+                    assignedUsers: {
+                      some: {
+                        userId: session.user.id,
+                      },
+                    },
                   },
+                  accessType: { not: ProjectAccessType.NO_ACCESS },
                 },
               },
             },
+            // Project default GLOBAL_ROLE (any authenticated user with a role)
+            {
+              defaultAccessType: ProjectAccessType.GLOBAL_ROLE,
+            },
+            // Direct assignment to project with PROJECTADMIN access
+            ...(isProjectAdmin
+              ? [
+                  {
+                    assignedUsers: {
+                      some: {
+                        userId: session.user.id,
+                      },
+                    },
+                  },
+                ]
+              : []),
+          ],
+        };
+
+    const project = await prisma.projects.findFirst({
+      where: projectAccessWhere,
+      include: {
+        projectLlmIntegrations: {
+          where: { isActive: true },
+          include: {
+            llmIntegration: {
+              include: {
+                llmProviderConfig: true,
+              },
+            },
           },
-        });
+        },
+      },
+    });
 
     if (!project) {
       return NextResponse.json(

@@ -3,11 +3,71 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "~/server/auth";
 import { prisma } from "~/lib/prisma";
 import { z } from "zod/v4";
+import { ProjectAccessType } from "@prisma/client";
 
 const createProjectIntegrationSchema = z.object({
   integrationId: z.number(),
   config: z.record(z.string(), z.any()).optional(),
 });
+
+// Helper function to build project access where clause
+function buildProjectAccessWhere(
+  projectId: number,
+  userId: string,
+  isAdmin: boolean,
+  isProjectAdmin: boolean
+) {
+  if (isAdmin) {
+    return { id: projectId, isDeleted: false };
+  }
+
+  return {
+    id: projectId,
+    isDeleted: false,
+    OR: [
+      // Direct user permissions
+      {
+        userPermissions: {
+          some: {
+            userId: userId,
+            accessType: { not: ProjectAccessType.NO_ACCESS },
+          },
+        },
+      },
+      // Group permissions
+      {
+        groupPermissions: {
+          some: {
+            group: {
+              assignedUsers: {
+                some: {
+                  userId: userId,
+                },
+              },
+            },
+            accessType: { not: ProjectAccessType.NO_ACCESS },
+          },
+        },
+      },
+      // Project default GLOBAL_ROLE (any authenticated user with a role)
+      {
+        defaultAccessType: ProjectAccessType.GLOBAL_ROLE,
+      },
+      // Direct assignment to project with PROJECTADMIN access
+      ...(isProjectAdmin
+        ? [
+            {
+              assignedUsers: {
+                some: {
+                  userId: userId,
+                },
+              },
+            },
+          ]
+        : []),
+    ],
+  };
+}
 
 export async function GET(
   request: NextRequest,
@@ -24,20 +84,18 @@ export async function GET(
 
     // Check if user has access to this project
     const isAdmin = session.user.access === "ADMIN";
+    const isProjectAdmin = session.user.access === "PROJECTADMIN";
 
-    const project = isAdmin
-      ? await prisma.projects.findUnique({ where: { id: projectId, isDeleted: false } })
-      : await prisma.projects.findFirst({
-          where: {
-            id: projectId,
-            isDeleted: false,
-            userPermissions: {
-              some: {
-                userId: session.user.id,
-              },
-            },
-          },
-        });
+    const projectAccessWhere = buildProjectAccessWhere(
+      projectId,
+      session.user.id,
+      isAdmin,
+      isProjectAdmin
+    );
+
+    const project = await prisma.projects.findFirst({
+      where: projectAccessWhere,
+    });
 
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
@@ -77,21 +135,19 @@ export async function POST(
     const projectId = parseInt(projectIdParam);
 
     // Check if user has Manager or Admin access to this project
-    const isSystemAdmin = session.user.access === "ADMIN" || session.user.access === "PROJECTADMIN";
+    const isAdmin = session.user.access === "ADMIN";
+    const isProjectAdmin = session.user.access === "PROJECTADMIN";
 
-    const project = isSystemAdmin
-      ? await prisma.projects.findUnique({ where: { id: projectId, isDeleted: false } })
-      : await prisma.projects.findFirst({
-          where: {
-            id: projectId,
-            isDeleted: false,
-            userPermissions: {
-              some: {
-                userId: session.user.id,
-              },
-            },
-          },
-        });
+    const projectAccessWhere = buildProjectAccessWhere(
+      projectId,
+      session.user.id,
+      isAdmin,
+      isProjectAdmin
+    );
+
+    const project = await prisma.projects.findFirst({
+      where: projectAccessWhere,
+    });
 
     if (!project) {
       return NextResponse.json(
