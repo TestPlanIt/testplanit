@@ -21,12 +21,18 @@ export interface UpgradeNotification {
 }
 
 export const upgradeNotifications: Record<string, UpgradeNotification> = {
-  // Add upgrade notifications here as new versions are released
-  // Example:
-  // "0.3.43": {
-  //   title: "New Feature: Enhanced Search",
-  //   message: "Search now supports custom field filtering and advanced operators."
-  // },
+  "0.3.0": {
+    title: "New Feature: Magic Select",
+    message: `
+      <p>Use AI to automatically select relevant test cases when creating a test run.</p>
+      <ul>
+        <li>Click the <strong>Magic Select</strong> button when creating a test run</li>
+        <li>AI analyzes your test run name, description, documentation, tags, and linked issues to find the best matches</li>
+        <li>Review and adjust the suggested test cases before accepting</li>
+      </ul>
+      <p>Requires an LLM integration configured in your project settings.</p>
+    `,
+  },
 };
 
 /**
