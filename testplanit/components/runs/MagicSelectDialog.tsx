@@ -25,7 +25,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle, RefreshCw, Sparkles, CheckCircle2, Settings2, Info } from "lucide-react";
+import {
+  AlertCircle,
+  RefreshCw,
+  Sparkles,
+  CheckCircle2,
+  Settings2,
+  Info,
+} from "lucide-react";
 
 interface MagicSelectDialogProps {
   open: boolean;
@@ -81,7 +88,9 @@ const BATCH_THRESHOLD = 200;
 const DEFAULT_BATCH_SIZE = "all";
 
 // Generate dynamic batch size options based on total case count
-function getBatchSizeOptions(totalCaseCount: number): Array<{ value: string; count: number; percent?: number }> {
+function getBatchSizeOptions(
+  totalCaseCount: number
+): Array<{ value: string; count: number; percent?: number }> {
   const options: Array<{ value: string; count: number; percent?: number }> = [
     { value: "all", count: totalCaseCount },
   ];
@@ -106,8 +115,8 @@ export function MagicSelectDialog({
   currentSelection,
   onAccept,
 }: MagicSelectDialogProps) {
-  const t = useTranslations("runs.magicSelect");
   const tCommon = useTranslations("common");
+  const t = useTranslations("runs.magicSelect");
 
   const [state, setState] = useState<MagicSelectState>({
     status: "idle",
@@ -166,7 +175,9 @@ export function MagicSelectDialog({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.details || data.error || "Failed to count test cases");
+        throw new Error(
+          data.details || data.error || "Failed to count test cases"
+        );
       }
 
       setState((prev) => ({
@@ -183,10 +194,13 @@ export function MagicSelectDialog({
       setState((prev) => ({
         ...prev,
         status: "error",
-        errorMessage: error instanceof Error ? error.message : "An unexpected error occurred",
+        errorMessage:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
       }));
     }
-  }, [projectId, testRunMetadata]);
+  }, [projectId, t, testRunMetadata]);
 
   // Run magic select with batching
   const runMagicSelect = useCallback(async () => {
@@ -233,7 +247,8 @@ export function MagicSelectDialog({
           projectId,
           testRunMetadata,
           clarification: clarification || undefined,
-          excludeCaseIds: currentSelection.length > 0 ? currentSelection : undefined,
+          excludeCaseIds:
+            currentSelection.length > 0 ? currentSelection : undefined,
         };
 
         // Only add pagination params if batching
@@ -251,7 +266,9 @@ export function MagicSelectDialog({
         const data = await response.json();
 
         if (!response.ok) {
-          throw new Error(data.details || data.error || "Failed to select test cases");
+          throw new Error(
+            data.details || data.error || "Failed to select test cases"
+          );
         }
 
         // Aggregate results
@@ -295,11 +312,22 @@ export function MagicSelectDialog({
       setState((prev) => ({
         ...prev,
         status: "error",
-        errorMessage: error instanceof Error ? error.message : "An unexpected error occurred",
+        errorMessage:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
         batchProgress: null,
       }));
     }
-  }, [projectId, testRunMetadata, clarification, currentSelection, batchSize, state.totalCaseCount, getEffectiveBatchSize]);
+  }, [
+    projectId,
+    testRunMetadata,
+    clarification,
+    currentSelection,
+    batchSize,
+    state.totalCaseCount,
+    getEffectiveBatchSize,
+  ]);
 
   // Auto-fetch count when dialog opens
   // We track the previous open state to detect when it transitions from closed to open
@@ -360,9 +388,13 @@ export function MagicSelectDialog({
     }));
   }, []);
 
-  const batchesNeeded = batchSize === "all" ? 1 : Math.ceil(state.totalCaseCount / parseInt(batchSize, 10));
+  const batchesNeeded =
+    batchSize === "all"
+      ? 1
+      : Math.ceil(state.totalCaseCount / parseInt(batchSize, 10));
   const progressPercent = state.batchProgress
-    ? (state.batchProgress.currentBatch / state.batchProgress.totalBatches) * 100
+    ? (state.batchProgress.currentBatch / state.batchProgress.totalBatches) *
+      100
     : 0;
 
   return (
@@ -432,29 +464,38 @@ export function MagicSelectDialog({
                 {state.totalCaseCount > BATCH_THRESHOLD && (
                   <>
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="batchSize">{t("configure.batchSize")}</Label>
-                      <Select
-                        value={batchSize}
-                        onValueChange={setBatchSize}
-                      >
+                      <Label htmlFor="batchSize">
+                        {t("configure.batchSize")}
+                      </Label>
+                      <Select value={batchSize} onValueChange={setBatchSize}>
                         <SelectTrigger className="w-[220px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {getBatchSizeOptions(state.totalCaseCount).map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.value === "all"
-                                ? t("configure.batchSizeAll")
-                                : t("configure.batchSizePercent", { percent: option.percent ?? 0, count: option.count })}
-                            </SelectItem>
-                          ))}
+                          {getBatchSizeOptions(state.totalCaseCount).map(
+                            (option) => (
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
+                                {option.value === "all"
+                                  ? t("configure.batchSizeAll")
+                                  : t("configure.batchSizePercent", {
+                                      percent: option.percent ?? 0,
+                                      count: option.count,
+                                    })}
+                              </SelectItem>
+                            )
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="text-sm text-muted-foreground bg-muted/50 rounded-md p-3">
                       <p>
-                        {t("configure.requestsNeeded", { count: batchesNeeded })}
+                        {t("configure.requestsNeeded", {
+                          count: batchesNeeded,
+                        })}
                       </p>
                       {batchesNeeded > 1 && (
                         <p className="mt-1 text-xs">
@@ -467,7 +508,9 @@ export function MagicSelectDialog({
 
                 {/* Clarification Input */}
                 <div className="space-y-2">
-                  <Label htmlFor="clarification">{t("clarification.label")}</Label>
+                  <Label htmlFor="clarification">
+                    {t("clarification.label")}
+                  </Label>
                   <Textarea
                     id="clarification"
                     value={clarification}
@@ -524,10 +567,14 @@ export function MagicSelectDialog({
                     <CheckCircle2 className="h-4 w-4" />
                     <AlertTitle className="flex items-center gap-2">
                       {t("success.title")}
-                      <Badge variant="secondary">{state.suggestedCaseIds.length}</Badge>
+                      <Badge variant="secondary">
+                        {state.suggestedCaseIds.length}
+                      </Badge>
                     </AlertTitle>
                     <AlertDescription>
-                      {t("success.description", { count: state.suggestedCaseIds.length })}
+                      {t("success.description", {
+                        count: state.suggestedCaseIds.length,
+                      })}
                       {state.metadata &&
                         state.metadata.linkedCasesAdded > 0 && (
                           <span className="block mt-1 text-xs">
@@ -542,7 +589,9 @@ export function MagicSelectDialog({
                   {/* Reasoning */}
                   {state.reasoning.length > 0 && (
                     <div className="text-sm text-muted-foreground bg-muted/50 rounded-md p-3 max-h-32 overflow-y-auto">
-                      <Label className="text-xs font-medium">{t("reasoning")}</Label>
+                      <Label className="text-xs font-medium">
+                        {t("reasoning")}
+                      </Label>
                       {state.reasoning.map((r, i) => (
                         <p key={i} className="mt-1">
                           {state.reasoning.length > 1 && `Batch ${i + 1}: `}
@@ -585,11 +634,7 @@ export function MagicSelectDialog({
 
               {/* Refine option */}
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRefine}
-                >
+                <Button variant="outline" size="sm" onClick={handleRefine}>
                   <RefreshCw className="h-4 w-4" />
                   {t("clarification.refine")}
                 </Button>
