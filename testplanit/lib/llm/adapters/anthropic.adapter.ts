@@ -94,11 +94,13 @@ export class AnthropicAdapter extends BaseLlmAdapter {
     }
 
     try {
+      // Use request timeout if provided, otherwise fall back to config timeout
+      const timeout = request.timeout ?? this.getTimeout();
       const response = await fetch(`${this.baseUrl}/messages`, {
         method: "POST",
         headers: this.getAnthropicHeaders(),
         body: JSON.stringify(anthropicRequest),
-        signal: AbortSignal.timeout(this.getTimeout()),
+        signal: AbortSignal.timeout(timeout),
       });
 
       if (!response.ok) {
@@ -147,11 +149,13 @@ export class AnthropicAdapter extends BaseLlmAdapter {
       anthropicRequest.system = systemMessage;
     }
 
+    // Use request timeout if provided, otherwise fall back to config timeout
+    const timeout = request.timeout ?? this.getTimeout();
     const response = await fetch(`${this.baseUrl}/messages`, {
       method: "POST",
       headers: this.getAnthropicHeaders(),
       body: JSON.stringify(anthropicRequest),
-      signal: AbortSignal.timeout(this.getTimeout()),
+      signal: AbortSignal.timeout(timeout),
     });
 
     if (!response.ok) {

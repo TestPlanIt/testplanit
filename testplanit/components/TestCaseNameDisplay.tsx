@@ -50,11 +50,11 @@ export function TestCaseNameDisplay({
   let icon = null;
   if (showIcon) {
     if (isDeleted) {
-      icon = <Trash2 className="shrink-0 mt-0.5" />;
+      icon = <Trash2 className="shrink-0 mt-0.5 h-4 w-4" />;
     } else if (source === "JUNIT") {
-      icon = <Bot className="shrink-0 mt-0.5" />;
+      icon = <Bot className="shrink-0 mt-0.5 h-4 w-4" />;
     } else {
-      icon = <ListChecks className="shrink-0 mt-0.5" />;
+      icon = <ListChecks className="shrink-0 mt-0.5 h-4 w-4" />;
     }
   }
 

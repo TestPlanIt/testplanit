@@ -40,6 +40,7 @@ next-env.d.ts
 testplanit/.env.development
 testplanit/.env.production
 testplanit/.env*
+!testplanit/.env.example
 test/reports/*
 testplanit/node_modules/*
 testplanit/test/reports/*

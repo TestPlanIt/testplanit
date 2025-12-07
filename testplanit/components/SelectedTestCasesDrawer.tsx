@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface SelectedTestCasesDrawerProps {
   selectedTestCases: number[];
@@ -29,6 +30,8 @@ interface SelectedTestCasesDrawerProps {
   projectId: number;
   trigger?: React.ReactNode;
   isEditMode?: boolean;
+  useCheckboxes?: boolean; // Use checkboxes instead of remove buttons for selection
+  allAvailableCases?: number[]; // When using checkboxes, this is the full list to display (selected + unselected)
 }
 
 export function SelectedTestCasesDrawer({
@@ -37,6 +40,8 @@ export function SelectedTestCasesDrawer({
   projectId,
   trigger,
   isEditMode = true,
+  useCheckboxes = false,
+  allAvailableCases,
 }: SelectedTestCasesDrawerProps) {
   const t = useTranslations();
   const { data: session } = useSession();
@@ -65,8 +70,12 @@ export function SelectedTestCasesDrawer({
   // Page size options
   const pageSizeOptions: (number | "All")[] = [25, 50, 100, 250];
 
+  // When using checkboxes with allAvailableCases, display those instead of just selected
+  const casesToDisplay =
+    useCheckboxes && allAvailableCases ? allAvailableCases : selectedTestCases;
+
   // Calculate pagination values
-  const totalItems = selectedTestCases.length;
+  const totalItems = casesToDisplay.length;
   const effectivePageSize = pageSize === "All" ? totalItems : pageSize;
   const totalPages = Math.max(1, Math.ceil(totalItems / effectivePageSize));
   const startIndex = (currentPage - 1) * effectivePageSize + 1;
@@ -85,8 +94,8 @@ export function SelectedTestCasesDrawer({
 
   // Fetch test cases for current page
   useEffect(() => {
-    // Only fetch when drawer is open and there are selected test cases
-    if (!open || selectedTestCases.length === 0) {
+    // Only fetch when drawer is open and there are cases to display
+    if (!open || casesToDisplay.length === 0) {
       return;
     }
 
@@ -104,7 +113,7 @@ export function SelectedTestCasesDrawer({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              caseIds: selectedTestCases,
+              caseIds: casesToDisplay,
               skip,
               take,
             }),
@@ -126,7 +135,7 @@ export function SelectedTestCasesDrawer({
     };
 
     fetchTestCases();
-  }, [selectedTestCases, open, projectId, currentPage, effectivePageSize]);
+  }, [casesToDisplay, open, projectId, currentPage, effectivePageSize]);
 
   const handlePageSizeChange = (newSize: number | "All") => {
     setPageSize(newSize);
@@ -137,16 +146,40 @@ export function SelectedTestCasesDrawer({
     testCase: (typeof fetchedTestCases)[0],
     globalIndex: number
   ) => {
+    const isSelected = selectedTestCases.includes(testCase.id);
+
+    const handleToggle = () => {
+      if (isSelected) {
+        onSelectionChange(selectedTestCases.filter((id) => id !== testCase.id));
+      } else {
+        onSelectionChange([...selectedTestCases, testCase.id]);
+      }
+    };
+
     return (
       <div
         key={testCase.id}
-        className="w-full hover:bg-accent rounded-md pb-2 group"
+        className={`w-full hover:bg-accent rounded-md pb-2 group ${
+          useCheckboxes && !isSelected ? "opacity-50" : ""
+        }`}
       >
         <div className="flex items-start w-full px-2 pt-1 group">
-          {/* Index column */}
-          <div className="shrink-0 w-8 text-right text-muted-foreground text-sm">
-            {globalIndex}
-          </div>
+          {/* Checkbox column (when using checkboxes) */}
+          {isEditMode && useCheckboxes && (
+            <div className="shrink-0 w-8 flex items-center justify-center pt-1">
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={handleToggle}
+                aria-label={`Select ${testCase.name}`}
+              />
+            </div>
+          )}
+          {/* Index column (when not using checkboxes) */}
+          {!useCheckboxes && (
+            <div className="shrink-0 w-8 text-right text-muted-foreground text-sm">
+              {globalIndex}
+            </div>
+          )}
           {/* Name column */}
           <div className="flex-1 min-w-0 ml-2">
             <CaseDisplay
@@ -180,8 +213,8 @@ export function SelectedTestCasesDrawer({
               </span>
             )}
           </div>
-          {/* Remove button column */}
-          {isEditMode && (
+          {/* Remove button column (when not using checkboxes) */}
+          {isEditMode && !useCheckboxes && (
             <div className="shrink-0 w-10 flex justify-end items-center ml-2">
               <Button
                 type="button"
@@ -333,7 +366,7 @@ export function SelectedTestCasesDrawer({
 
           {/* Test cases list */}
           <div className="flex-1 overflow-y-auto p-4">
-            {selectedTestCases.length === 0 ? (
+            {casesToDisplay.length === 0 ? (
               <div className="text-center text-sm text-muted-foreground py-8">
                 {t("common.labels.noTestCasesSelected")}
               </div>

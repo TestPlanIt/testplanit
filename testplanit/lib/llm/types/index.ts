@@ -33,6 +33,7 @@ export interface LlmRequest {
   projectId?: number;
   feature: string;
   metadata?: Record<string, any>;
+  timeout?: number; // Optional timeout override in milliseconds
 }
 
 export interface LlmResponse {

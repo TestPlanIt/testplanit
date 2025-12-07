@@ -74,6 +74,7 @@ import {
   getAssignmentsForRunCases,
   type GetAssignmentsResponse,
 } from "~/app/actions/getAssignmentsForRunCases";
+import { MagicSelectButton } from "@/components/runs/MagicSelectButton";
 
 interface WorkflowOption {
   value: string;
@@ -471,12 +472,15 @@ const BasicInfoDialog = React.memo(
                   {tCommon("fields.issues")}
                   <HelpPopover helpKey="testRun.issues" />
                 </FormLabel>
-                <UnifiedIssueManager
-                  projectId={Number(projectId)}
-                  linkedIssueIds={linkedIssueIds}
-                  setLinkedIssueIds={setLinkedIssueIds}
-                  entityType="testRun"
-                />
+                <div className="max-h-40 overflow-y-auto">
+                  <UnifiedIssueManager
+                    projectId={Number(projectId)}
+                    linkedIssueIds={linkedIssueIds}
+                    setLinkedIssueIds={setLinkedIssueIds}
+                    entityType="testRun"
+                    maxBadgeWidth="max-w-48"
+                  />
+                </div>
                 <FormField
                   control={basicInfoForm.control}
                   name="attachments"
@@ -547,6 +551,7 @@ const TestCasesDialog = React.memo(
     tCommon,
     form,
     projectId,
+    linkedIssueIds,
   }: any) => {
     // Local pagination state for the modal (independent from parent page)
     const [modalCurrentPage, setModalCurrentPage] = useState(1);
@@ -676,49 +681,62 @@ const TestCasesDialog = React.memo(
         <DialogHeader className="p-6 pb-0 pr-4">
           <DialogTitle>{t("selectCases")}</DialogTitle>
           <DialogDescription className="flex justify-between items-start text-muted-foreground">
-            <div className="flex items-start text-sm divide-x divide-muted-foreground -ml-2">
-              {(isLoadingForecast || isLoadingTestCasesForDrawer) &&
-              selectedTestCases.length > 0 ? (
-                <div className="px-2">
-                  <LoadingSpinner className="w-4 h-4" />
-                </div>
-              ) : forecastData ? (
-                <>
-                  {forecastData.manualEstimate > 0 && (
-                    <div className="px-2">
-                      <ForecastDisplay
-                        seconds={forecastData.manualEstimate}
-                        className="text-xs"
-                        type="manual"
-                      />
-                    </div>
-                  )}
-                  {forecastData.automatedEstimate > 0 && (
-                    <div className="px-2">
-                      <ForecastDisplay
-                        seconds={forecastData.automatedEstimate}
-                        type="automated"
-                        className="text-xs"
-                        round={false}
-                      />
-                    </div>
-                  )}
-                  {forecastData.mixedEstimate > 0 &&
-                    forecastData.mixedEstimate !==
-                      forecastData.manualEstimate &&
-                    forecastData.mixedEstimate !==
-                      forecastData.automatedEstimate && (
+            <div className="flex items-center gap-4">
+              <MagicSelectButton
+                projectId={Number(projectId)}
+                testRunMetadata={{
+                  name: form.getValues("name"),
+                  description: form.getValues("note"),
+                  docs: form.getValues("docs"),
+                  linkedIssueIds: linkedIssueIds || [],
+                }}
+                selectedTestCases={selectedTestCases}
+                onSuggestionsAccepted={setSelectedTestCases}
+              />
+              <div className="flex items-start text-sm divide-x divide-muted-foreground">
+                {(isLoadingForecast || isLoadingTestCasesForDrawer) &&
+                selectedTestCases.length > 0 ? (
+                  <div className="px-2">
+                    <LoadingSpinner className="w-4 h-4" />
+                  </div>
+                ) : forecastData ? (
+                  <>
+                    {forecastData.manualEstimate > 0 && (
                       <div className="px-2">
                         <ForecastDisplay
-                          seconds={forecastData.mixedEstimate}
-                          type="mixed"
+                          seconds={forecastData.manualEstimate}
+                          className="text-xs"
+                          type="manual"
+                        />
+                      </div>
+                    )}
+                    {forecastData.automatedEstimate > 0 && (
+                      <div className="px-2">
+                        <ForecastDisplay
+                          seconds={forecastData.automatedEstimate}
+                          type="automated"
                           className="text-xs"
                           round={false}
                         />
                       </div>
                     )}
-                </>
-              ) : null}
+                    {forecastData.mixedEstimate > 0 &&
+                      forecastData.mixedEstimate !==
+                        forecastData.manualEstimate &&
+                      forecastData.mixedEstimate !==
+                        forecastData.automatedEstimate && (
+                        <div className="px-2">
+                          <ForecastDisplay
+                            seconds={forecastData.mixedEstimate}
+                            type="mixed"
+                            className="text-xs"
+                            round={false}
+                          />
+                        </div>
+                      )}
+                  </>
+                ) : null}
+              </div>
             </div>
             <SelectedTestCasesDrawer
               selectedTestCases={selectedTestCases}
@@ -1384,6 +1402,7 @@ export default function AddTestRunModal({
             tCommon: tCommon,
             form: form,
             projectId: projectId?.toString() || "",
+            linkedIssueIds: linkedIssueIds,
           }
         : {};
 

@@ -382,6 +382,22 @@ docker exec testplanit-nginx rm /etc/nginx/maintenance.json
 
 ### Security
 
+- **Encryption Key**: Set `ENCRYPTION_KEY` for encrypting sensitive data stored in the database (e.g., integration credentials, API tokens). Generate a secure 256-bit key:
+
+  ```bash
+  openssl rand -hex 32
+  ```
+
+  Add it to your `.env.production`:
+
+  ```bash
+  ENCRYPTION_KEY=your-generated-64-character-hex-string
+  ```
+
+  :::warning
+  The encryption key must remain consistent across deployments. If you change or lose this key, encrypted data will become unreadable. Store it securely and include it in your backup procedures.
+  :::
+
 - **Secrets Management**: Never commit production secrets to git. Use secure methods:
   - Host environment variables
   - Docker secrets

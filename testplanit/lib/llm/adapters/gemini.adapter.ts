@@ -125,13 +125,15 @@ export class GeminiAdapter extends BaseLlmAdapter {
     };
 
     try {
+      // Use request timeout if provided, otherwise fall back to config timeout
+      const timeout = request.timeout ?? this.getTimeout();
       const response = await fetch(`${this.baseUrl}/models/${model}:generateContent?key=${this.apiKey}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(geminiRequest),
-        signal: AbortSignal.timeout(this.getTimeout()),
+        signal: AbortSignal.timeout(timeout),
       });
 
       if (!response.ok) {
@@ -273,13 +275,15 @@ export class GeminiAdapter extends BaseLlmAdapter {
       ],
     };
 
+    // Use request timeout if provided, otherwise fall back to config timeout
+    const timeout = request.timeout ?? this.getTimeout();
     const response = await fetch(`${this.baseUrl}/models/${model}:streamGenerateContent?key=${this.apiKey}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(geminiRequest),
-      signal: AbortSignal.timeout(this.getTimeout()),
+      signal: AbortSignal.timeout(timeout),
     });
 
     if (!response.ok) {

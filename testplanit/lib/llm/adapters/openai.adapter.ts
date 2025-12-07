@@ -89,11 +89,13 @@ export class OpenAIAdapter extends BaseLlmAdapter {
     };
 
     try {
+      // Use request timeout if provided, otherwise fall back to config timeout
+      const timeout = request.timeout ?? this.getTimeout();
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: "POST",
         headers: this.getOpenAIHeaders(),
         body: JSON.stringify(openAIRequest),
-        signal: AbortSignal.timeout(this.getTimeout()),
+        signal: AbortSignal.timeout(timeout),
       });
 
       if (!response.ok) {
@@ -131,11 +133,13 @@ export class OpenAIAdapter extends BaseLlmAdapter {
       stream: true,
     };
 
+    // Use request timeout if provided, otherwise fall back to config timeout
+    const timeout = request.timeout ?? this.getTimeout();
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
       method: "POST",
       headers: this.getOpenAIHeaders(),
       body: JSON.stringify(openAIRequest),
-      signal: AbortSignal.timeout(this.getTimeout()),
+      signal: AbortSignal.timeout(timeout),
     });
 
     if (!response.ok) {

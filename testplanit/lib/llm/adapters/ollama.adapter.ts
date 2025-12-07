@@ -97,11 +97,13 @@ export class OllamaAdapter extends BaseLlmAdapter {
     };
 
     try {
+      // Use request timeout if provided, otherwise fall back to config timeout
+      const timeout = request.timeout ?? this.getTimeout();
       const response = await fetch(`${this.baseUrl}/api/chat`, {
         method: "POST",
         headers: this.getHeaders(),
         body: JSON.stringify(ollamaRequest),
-        signal: AbortSignal.timeout(this.getTimeout()),
+        signal: AbortSignal.timeout(timeout),
       });
 
       if (!response.ok) {
@@ -153,11 +155,13 @@ export class OllamaAdapter extends BaseLlmAdapter {
       keep_alive: this.keepAlive,
     };
 
+    // Use request timeout if provided, otherwise fall back to config timeout
+    const timeout = request.timeout ?? this.getTimeout();
     const response = await fetch(`${this.baseUrl}/api/chat`, {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify(ollamaRequest),
-      signal: AbortSignal.timeout(this.getTimeout()),
+      signal: AbortSignal.timeout(timeout),
     });
 
     if (!response.ok) {
