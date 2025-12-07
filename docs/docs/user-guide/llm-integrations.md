@@ -557,6 +557,32 @@ For repositories with many test cases (default: 250+), Magic Select uses Elastic
 
 This significantly reduces AI processing time and cost for large repositories.
 
+#### Progressive Score Reduction
+
+When the initial search doesn't find results above the configured minimum score threshold, Magic Select automatically tries progressively lower thresholds to ensure relevant cases are found:
+
+1. **Initial threshold**: Uses the configured `MAGIC_SELECT_MIN_SEARCH_SCORE` (default: 50.0)
+2. **50% reduction**: If no results, tries half the threshold (25.0)
+3. **75% reduction**: If still no results, tries quarter threshold (12.5)
+4. **90% reduction**: Tries 10% of original (5.0)
+5. **Minimum threshold**: As a last resort, uses a score of 1
+
+This adaptive approach ensures that even queries with weak keyword matches (like generic test run names) will still return relevant results rather than falling back to analyzing all test cases, which would be slow and expensive for large repositories.
+
+**Example log output:**
+
+```text
+=== Magic Select Search Pre-filter ===
+Total cases in project: 23695
+Search keywords: cloud forgot password functionality
+Name terms for search: test run for cloud
+No results at min_score 50 - trying lower threshold...
+No results at min_score 25 - trying lower threshold...
+Search returned 342 matching cases (min score: 12.5 reduced from 50)
+Score range: 12.50 - 89.32
+=== End Search Pre-filter ===
+```
+
 #### Linked Case Expansion
 
 After the AI suggests test cases, Magic Select automatically includes any test cases that are linked to the suggestions:

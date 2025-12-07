@@ -2435,6 +2435,60 @@
       },
       "creatingProgress": "Création d'une exécution de test {current} de {total}..."
     },
+    "magicSelect": {
+      "title": "Magic Select",
+      "description": "Sélection de cas de test automatisée par l'IA en fonction du contexte d'exécution de vos tests",
+      "button": "Magic Select",
+      "counting": "Recherche de cas de test pertinents...",
+      "reasoning": "Raisonnement IA",
+      "reviewSelection": "Examiner les cas de test suggérés",
+      "viewSuggested": "Voir les cas suggérés",
+      "tokenUsage": "{total} jetons utilisés",
+      "noLlmIntegration": "Les fonctionnalités d'IA nécessitent une intégration LLM. Configurez-en une dans les paramètres du projet.",
+      "configure": {
+        "title": "Configurer la sélection",
+        "description": "Cas de test trouvé {count, plural, =1 {# cas de test} other {# cas de test}} dans le dépôt",
+        "descriptionFiltered": "Trouvé {count, plural, =1 {# cas de test potentiellement pertinent} other {# cas de test potentiellement pertinents}} de {total, plural, =1 {# total} other {# total}} dans le dépôt",
+        "noMatchesTitle": "Aucun cas de test correspondant trouvé",
+        "noMatchesDescription": "Le nom et la description de l'exécution de test ne correspondent à aucun cas de test. Revenez à l'étape précédente et ajoutez des détails plus précis, tels que les noms des fonctionnalités, des composants ou les mots-clés qui apparaissent dans vos cas de test.",
+        "maxResultsTitle": "Nombre maximal de cas de test correspondants",
+        "maxResultsDescription": "Les critères de recherche ont permis de trouver de nombreux cas de test correspondants. Pour des résultats plus ciblés, revenez à l'étape précédente et ajoutez des détails plus précis à l'exécution du test.",
+        "batchSize": "Taille du lot",
+        "batchSizeAll": "Tous les cas (demande unique)",
+        "batchSizePercent": "{percent}% ({count} cas)",
+        "requestsNeeded": "{count, plural, =1 {# Une requête IA sera effectuée} other {# Des requêtes IA seront effectuées}}",
+        "batchNote": "Les résultats de tous les lots seront combinés."
+      },
+      "loading": {
+        "batch": "Traitement du lot {current} de {total}",
+        "analyzing": "Analyse des cas de test..."
+      },
+      "success": {
+        "title": "Cas de test suggérés",
+        "description": "{count, plural, =1 {# cas de test sélectionné} other {# cas de test sélectionnés}} en fonction du contexte d'exécution de vos tests",
+        "linkedCasesAdded": "{count, plural, =1 {# cas liés inclus automatiquement} other {# cas liés inclus automatiquement}}"
+      },
+      "noSuggestions": {
+        "title": "Aucun cas de test correspondant",
+        "description": "Aucun cas de test ne correspond aux critères. Veuillez ajouter du contexte ou des précisions."
+      },
+      "clarification": {
+        "label": "Contexte supplémentaire (facultatif)",
+        "placeholder": "Ajoutez un contexte supplémentaire pour faciliter la sélection des cas de test pertinents...",
+        "refine": "Affiner la sélection"
+      },
+      "actions": {
+        "start": "Analyser les cas de test",
+        "startBatched": "Analyser les cas de test ({count} lots)",
+        "accept": "Ajouter à la sélection",
+        "retry": "Essayer à nouveau"
+      },
+      "errors": {
+        "title": "La sélection a échoué",
+        "generic": "Une erreur s'est produite lors de la sélection des cas de test. Veuillez réessayer.",
+        "noTestRunName": "Veuillez saisir un nom pour l'exécution de test avant d'utiliser Magic Select."
+      }
+    },
     "delete": {
       "title": "Supprimer l'essai",
       "description": "Êtes-vous sûr de vouloir supprimer cet essai ?",
