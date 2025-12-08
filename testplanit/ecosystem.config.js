@@ -90,6 +90,19 @@ module.exports = {
       env: {
         NODE_ENV: 'production'
       }
+    },
+    {
+      name: 'audit-log-worker',
+      script: isDev ? 'tsx' : 'node',
+      args: isDev ? 'workers/auditLogWorker.ts' : 'dist/workers/auditLogWorker.js',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+      node_args: '--max-old-space-size=384',
+      env: {
+        NODE_ENV: 'production'
+      }
     }
   ]
 };
