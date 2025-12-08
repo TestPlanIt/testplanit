@@ -1307,6 +1307,34 @@ export default function TestCaseDetails() {
       );
       await Promise.all(createCaseFieldVersionValuesPromises);
 
+      // Sync CaseFieldValues (the main table that's displayed on the details page)
+      const existingFieldValues = testcase.caseFieldValues || [];
+      const caseFieldValuesSyncPromises = formFields.map(
+        async ({ fieldId, value }: { fieldId: number; value: any }) => {
+          const existingValue = existingFieldValues.find(
+            (cfv) => cfv.fieldId === fieldId
+          );
+
+          if (existingValue) {
+            // Update existing field value
+            await updateCaseFieldValues({
+              where: { id: existingValue.id },
+              data: { value: value ?? null },
+            });
+          } else if (value !== undefined && value !== null && value !== "") {
+            // Create new field value only if there's an actual value
+            await createCaseFieldValues({
+              data: {
+                testCase: { connect: { id: Number(caseId) } },
+                field: { connect: { id: fieldId } },
+                value: value,
+              },
+            });
+          }
+        }
+      );
+      await Promise.all(caseFieldValuesSyncPromises);
+
       setIsSubmitting(false);
       setIsEditMode(false);
       refetch();
