@@ -27,7 +27,8 @@
             "zenstack"
         ],
         "overrides": {
-            "csstype": "^3.2.0"
+            "csstype": "^3.2.0",
+            "@csstools/css-syntax-patches-for-csstree": "^1.0.20"
         }
     }
 }
