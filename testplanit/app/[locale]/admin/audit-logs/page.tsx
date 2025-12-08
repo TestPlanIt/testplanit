@@ -29,22 +29,52 @@ import { Label } from "@/components/ui/label";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
 import { AuditAction } from "@prisma/client";
 import { ShieldCheck } from "lucide-react";
+import type { Session } from "next-auth";
 
 type PageSizeOption = number | "All";
 
 export default function AuditLogsPage() {
   return (
     <PaginationProvider>
-      <AuditLogsList />
+      <AuditLogsGuard />
     </PaginationProvider>
   );
 }
 
-function AuditLogsList() {
-  const t = useTranslations("admin.auditLogs");
-  const tCommon = useTranslations("common");
+/**
+ * Auth guard component that handles session loading and authorization.
+ * Renders AuditLogsContent only after auth checks pass.
+ */
+function AuditLogsGuard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+
+  useEffect(() => {
+    if (status !== "loading" && !session) {
+      router.push("/");
+    }
+  }, [status, session, router]);
+
+  // Show nothing while loading
+  if (status === "loading") {
+    return null;
+  }
+
+  // Redirect handled by useEffect, show nothing for non-admins
+  if (!session || session.user.access !== "ADMIN") {
+    return null;
+  }
+
+  // Only render content when we have a valid admin session
+  return <AuditLogsContent session={session} />;
+}
+
+/**
+ * Main audit logs content component.
+ * Only rendered after auth checks pass, so session is guaranteed to be valid.
+ */
+function AuditLogsContent({ session }: { session: Session }) {
+  const t = useTranslations("admin.auditLogs");
   const {
     currentPage,
     setCurrentPage,
@@ -82,11 +112,27 @@ function AuditLogsList() {
     if (debouncedSearchString) {
       conditions.push({
         OR: [
-          { entityName: { contains: debouncedSearchString, mode: "insensitive" } },
-          { userEmail: { contains: debouncedSearchString, mode: "insensitive" } },
-          { userName: { contains: debouncedSearchString, mode: "insensitive" } },
-          { entityType: { contains: debouncedSearchString, mode: "insensitive" } },
-          { entityId: { contains: debouncedSearchString, mode: "insensitive" } },
+          {
+            entityName: {
+              contains: debouncedSearchString,
+              mode: "insensitive",
+            },
+          },
+          {
+            userEmail: { contains: debouncedSearchString, mode: "insensitive" },
+          },
+          {
+            userName: { contains: debouncedSearchString, mode: "insensitive" },
+          },
+          {
+            entityType: {
+              contains: debouncedSearchString,
+              mode: "insensitive",
+            },
+          },
+          {
+            entityId: { contains: debouncedSearchString, mode: "insensitive" },
+          },
         ],
       });
     }
@@ -103,10 +149,7 @@ function AuditLogsList() {
   }, [debouncedSearchString, actionFilter, entityTypeFilter]);
 
   // Get total count
-  const { data: totalCount } = useCountAuditLog(
-    { where: whereClause },
-    { enabled: !!session?.user }
-  );
+  const { data: totalCount } = useCountAuditLog({ where: whereClause });
 
   // Update total items in pagination context
   useEffect(() => {
@@ -131,20 +174,16 @@ function AuditLogsList() {
       skip: skip,
     },
     {
-      enabled: !!session?.user,
       refetchOnWindowFocus: false,
     }
   );
 
   // Get unique entity types for filter
-  const { data: entityTypes } = useFindManyAuditLog(
-    {
-      select: { entityType: true },
-      distinct: ["entityType"],
-      orderBy: { entityType: "asc" },
-    },
-    { enabled: !!session?.user }
-  );
+  const { data: entityTypes } = useFindManyAuditLog({
+    select: { entityType: true },
+    distinct: ["entityType"],
+    orderBy: { entityType: "asc" },
+  });
 
   const pageSizeOptions: PageSizeOption[] = useMemo(() => {
     if (totalItems <= 10) {
@@ -167,12 +206,6 @@ function AuditLogsList() {
     setCurrentPage(1);
   }, [pageSize, setCurrentPage]);
 
-  useEffect(() => {
-    if (status !== "loading" && !session) {
-      router.push("/");
-    }
-  }, [status, session, router]);
-
   const handleViewDetails = useCallback((log: ExtendedAuditLog) => {
     setSelectedLog(log);
   }, []);
@@ -185,12 +218,6 @@ function AuditLogsList() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
-
-  if (status === "loading") return null;
-
-  if (!session || session.user.access !== "ADMIN") {
-    return null;
-  }
 
   const handleSortChange = (column: string) => {
     const direction =
@@ -257,7 +284,9 @@ function AuditLogsList() {
               </div>
 
               <div className="w-[180px]">
-                <Label className="text-sm mb-1 block">{t("filterAction")}</Label>
+                <Label className="text-sm mb-1 block">
+                  {t("filterAction")}
+                </Label>
                 <Select
                   value={actionFilter}
                   onValueChange={(value) =>

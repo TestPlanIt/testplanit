@@ -284,7 +284,7 @@ export function NotificationContent({
         <div className="space-y-1">
           {hasHtmlContent ? (
             <div
-              className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
+              className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none prose-strong:text-foreground prose-strong:font-semibold"
               dangerouslySetInnerHTML={{ __html: notification.data.htmlContent }}
             />
           ) : hasRichContent ? (
