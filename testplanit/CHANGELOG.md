@@ -1,3 +1,10 @@
+# [0.5.0](https://github.com/TestPlanIt/testplanit/compare/v0.4.1...v0.5.0) (2025-12-08)
+
+
+### Features
+
+* add audit logging for compliance and traceability ([#18](https://github.com/TestPlanIt/testplanit/issues/18)) ([7695a46](https://github.com/TestPlanIt/testplanit/commit/7695a461cb9129cfc0c62b75638dff71fa39064d))
+
 ## [0.4.1](https://github.com/TestPlanIt/testplanit/compare/v0.4.0...v0.4.1) (2025-12-07)
 
 
