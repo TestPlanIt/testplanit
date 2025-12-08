@@ -1,3 +1,10 @@
+## [0.5.2](https://github.com/TestPlanIt/testplanit/compare/v0.5.1...v0.5.2) (2025-12-08)
+
+
+### Bug Fixes
+
+* **build:** add auditLogWorker to entry points ([001a432](https://github.com/TestPlanIt/testplanit/commit/001a43233580e90dfc5e8e88e9841b635e5d67e9))
+
 ## [0.5.1](https://github.com/TestPlanIt/testplanit/compare/v0.5.0...v0.5.1) (2025-12-08)
 
 # [0.5.0](https://github.com/TestPlanIt/testplanit/compare/v0.4.1...v0.5.0) (2025-12-08)
