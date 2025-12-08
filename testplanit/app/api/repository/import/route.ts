@@ -12,6 +12,7 @@ import {
   RepositoryCaseSource,
 } from "@prisma/client";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
+import { auditBulkCreate } from "~/lib/services/auditLog";
 
 function parseTags(value: any): string[] {
   if (!value) return [];
@@ -825,6 +826,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Some cases failed to import", errors, importedCount },
         { status: 400 }
+      );
+    }
+
+    // Audit the bulk import
+    if (importedCount > 0) {
+      auditBulkCreate("RepositoryCases", importedCount, body.projectId, {
+        source: "CSV Import",
+        templateId: body.templateId,
+        importLocation: body.importLocation,
+      }).catch((error) =>
+        console.error("[AuditLog] Failed to audit repository import:", error)
       );
     }
 

@@ -854,6 +854,12 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'project',
+                }, auditLogs: {
+                    name: "auditLogs",
+                    type: "AuditLog",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'project',
                 },
             }, uniqueConstraints: {
                 id: {
@@ -7060,6 +7066,73 @@ const metadata: ModelMeta = {
                 }, commentId_userId: {
                     name: "commentId_userId",
                     fields: ["commentId", "userId"]
+                },
+            },
+        },
+        auditLog: {
+            name: 'AuditLog', fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, userId: {
+                    name: "userId",
+                    type: "String",
+                    isOptional: true,
+                }, userEmail: {
+                    name: "userEmail",
+                    type: "String",
+                    isOptional: true,
+                }, userName: {
+                    name: "userName",
+                    type: "String",
+                    isOptional: true,
+                }, action: {
+                    name: "action",
+                    type: "AuditAction",
+                }, entityType: {
+                    name: "entityType",
+                    type: "String",
+                }, entityId: {
+                    name: "entityId",
+                    type: "String",
+                }, entityName: {
+                    name: "entityName",
+                    type: "String",
+                    isOptional: true,
+                }, changes: {
+                    name: "changes",
+                    type: "Json",
+                    isOptional: true,
+                }, metadata: {
+                    name: "metadata",
+                    type: "Json",
+                    isOptional: true,
+                }, timestamp: {
+                    name: "timestamp",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, projectId: {
+                    name: "projectId",
+                    type: "Int",
+                    isOptional: true,
+                    isForeignKey: true,
+                    relationField: 'project',
+                }, project: {
+                    name: "project",
+                    type: "Projects",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'auditLogs',
+                    isRelationOwner: true,
+                    onDeleteAction: 'SetNull',
+                    foreignKeyMapping: { "id": "projectId" },
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
                 },
             },
         },

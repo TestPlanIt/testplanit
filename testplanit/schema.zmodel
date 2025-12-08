@@ -336,6 +336,7 @@ model Projects {
     llmFeatureConfigs      LlmFeatureConfig[]
     llmResponseCaches      LlmResponseCache[]
     comments               Comment[]
+    auditLogs              AuditLog[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -3432,4 +3433,70 @@ model CommentMention {
     @@allow('read', auth().access != null)
     @@allow('create', auth().access != null)
     @@allow('all', auth().access == 'ADMIN')
+}
+
+// =============================================================================
+// Audit Logging
+// =============================================================================
+
+enum AuditAction {
+    CREATE
+    UPDATE
+    DELETE
+    BULK_CREATE
+    BULK_UPDATE
+    BULK_DELETE
+    LOGIN
+    LOGOUT
+    LOGIN_FAILED
+    SESSION_INVALIDATED
+    PASSWORD_CHANGED
+    PASSWORD_RESET
+    PERMISSION_GRANT
+    PERMISSION_REVOKE
+    ROLE_CHANGED
+    API_KEY_CREATED
+    API_KEY_REGENERATED
+    DATA_EXPORTED
+    SSO_CONFIG_CHANGED
+    SYSTEM_CONFIG_CHANGED
+}
+
+model AuditLog {
+    id         String      @id @default(cuid())
+
+    // Actor information
+    userId     String?     @db.Text
+    userEmail  String?     @db.Text
+    userName   String?     @db.Text
+
+    // Action details
+    action     AuditAction
+    entityType String      @db.VarChar(100)
+    entityId   String      @db.Text
+    entityName String?     @db.Text
+
+    // Change tracking
+    changes    Json? // { field: { old: value, new: value } }
+    metadata   Json? // Additional context (IP, user agent, request ID, etc.)
+
+    // Timestamps
+    timestamp  DateTime    @default(now()) @db.Timestamptz(6)
+
+    // Multi-tenant support (optional project association)
+    projectId  Int?
+    project    Projects?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+    // Indexes for efficient querying
+    @@index([entityType, entityId])
+    @@index([userId, timestamp])
+    @@index([projectId, timestamp])
+    @@index([timestamp])
+    @@index([action])
+
+    // Immutability: Audit logs should never be modified or deleted via app
+    // Only admins can read, and only the system (bypassing ZenStack) can create
+    @@deny('all', !auth())
+    @@deny('update, delete', true)
+    @@allow('read', auth().access == 'ADMIN')
 }

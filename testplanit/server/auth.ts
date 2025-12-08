@@ -14,6 +14,7 @@ import jwt from "jsonwebtoken";
 import { db } from "~/server/db";
 import { createCustomPrismaAdapter } from "./auth-adapter";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
+import { auditAuthEvent } from "~/lib/services/auditLog";
 
 /**
  * Helper function to generate Apple client secret from database config
@@ -353,6 +354,11 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
 
           // Prevent inactive users from signing in
           if (dbUser && !dbUser.isActive) {
+            // Audit failed login - inactive user
+            auditAuthEvent("LOGIN_FAILED", dbUser.id, user.email || "", {
+              reason: "user_inactive",
+              provider: account?.provider,
+            }).catch(console.error);
             // Add delay for timing attack protection (make it look like we're processing)
             if (account?.provider === "email") {
               await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -362,6 +368,11 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
 
           // Magic Link (email provider) should ONLY allow existing users to sign in
           if (account?.provider === "email" && !dbUser) {
+            // Audit failed login - user not found via magic link
+            auditAuthEvent("LOGIN_FAILED", null, user.email || "", {
+              reason: "user_not_found",
+              provider: "email",
+            }).catch(console.error);
             // Add delay for timing attack protection
             await new Promise((resolve) => setTimeout(resolve, 3000));
             return false; // Reject sign-in if user doesn't exist
@@ -371,6 +382,11 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           if (!dbUser && user.email) {
             const isDomainAllowed = await isEmailDomainAllowed(user.email);
             if (!isDomainAllowed) {
+              // Audit failed login - domain not allowed
+              auditAuthEvent("LOGIN_FAILED", null, user.email, {
+                reason: "domain_not_allowed",
+                provider: account?.provider,
+              }).catch(console.error);
               return false; // Reject sign-in if domain is not allowed
             }
           }
@@ -385,6 +401,13 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
                 data: { authMethod: "BOTH" },
               });
             }
+            // Audit successful OAuth/SSO login
+            auditAuthEvent("LOGIN", dbUser.id, dbUser.email, {
+              provider: account?.provider,
+            }).catch(console.error);
+          } else {
+            // New user via OAuth - will be created by adapter
+            // Audit will happen when user is created via Prisma extension
           }
 
           return true;
@@ -402,10 +425,11 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
 
         // Prevent inactive users from signing in
         if (dbUser && !dbUser.isActive) {
+          // Already audited in authorize function
           return false;
         }
 
-        // For credentials provider, always allow (already checked in authorize function)
+        // For credentials provider, always allow (already checked and audited in authorize function)
         return true;
       },
       async jwt({ token, account, trigger }) {
@@ -712,12 +736,34 @@ function authorize(prisma: PrismaClient) {
         isActive: true,
       },
     });
-    if (!maybeUser?.password) return null;
+    if (!maybeUser?.password) {
+      // Audit failed login - user not found (don't reveal this to user)
+      auditAuthEvent("LOGIN_FAILED", null, credentials.email, {
+        reason: "user_not_found",
+      }).catch(console.error);
+      return null;
+    }
     // Check if user is active
-    if (!maybeUser.isActive) return null;
+    if (!maybeUser.isActive) {
+      // Audit failed login - inactive user
+      auditAuthEvent("LOGIN_FAILED", maybeUser.id, credentials.email, {
+        reason: "user_inactive",
+      }).catch(console.error);
+      return null;
+    }
     // verify the input password with stored hash
     const isValid = await compare(credentials.password, maybeUser.password);
-    if (!isValid) return null;
+    if (!isValid) {
+      // Audit failed login - wrong password
+      auditAuthEvent("LOGIN_FAILED", maybeUser.id, credentials.email, {
+        reason: "invalid_password",
+      }).catch(console.error);
+      return null;
+    }
+    // Audit successful login
+    auditAuthEvent("LOGIN", maybeUser.id, maybeUser.email, {
+      provider: "credentials",
+    }).catch(console.error);
     return {
       id: maybeUser.id,
       email: maybeUser.email,

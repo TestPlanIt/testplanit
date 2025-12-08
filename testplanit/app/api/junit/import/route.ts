@@ -4,6 +4,7 @@ import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
 import { JUnitResultType } from "@prisma/client";
 import { progressMessages } from "./progress-messages";
+import { auditBulkCreate } from "~/lib/services/auditLog";
 
 // Helper function to find matching status
 async function findMatchingStatus(junitStatus: string, projectId: number) {
@@ -707,6 +708,18 @@ export async function POST(request: NextRequest) {
         }
 
         sendProgress(95, progressMessages.finalizing);
+
+        // Audit the JUnit import
+        const importedCount = caseOrder - 1;
+        if (importedCount > 0) {
+          auditBulkCreate("JUnitTestResult", importedCount, projectId, {
+            source: "JUnit XML Import",
+            testRunId,
+            fileCount: files.length,
+          }).catch((error) =>
+            console.error("[AuditLog] Failed to audit JUnit import:", error)
+          );
+        }
 
         // Send completion
         sendProgress(100, progressMessages.completed);

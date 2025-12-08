@@ -5,6 +5,7 @@ import { CustomColumnDef } from "../components/tables/ColumnSelection";
 import { Projects, CaseFields } from "@prisma/client";
 import { format } from "date-fns";
 import { extractTextFromNode } from "../utils/extractTextFromJson";
+import { logDataExport } from "../lib/services/auditClient";
 
 // --- Start: Added Helper Functions ---
 // Helper function to parse JSON safely
@@ -608,6 +609,14 @@ export function useExportData<
           link.click();
           document.body.removeChild(link);
           URL.revokeObjectURL(url);
+
+          // Log export for audit trail
+          logDataExport({
+            exportType: "CSV",
+            entityType: fileNamePrefix,
+            recordCount: transformedAndFormattedData.length,
+            projectId: project?.id,
+          });
         }
         // PDF Export Logic (Placeholder)
         else if (options.format === "pdf") {
