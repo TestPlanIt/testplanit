@@ -30,7 +30,11 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
   const t = useTranslations();
   const router = useRouter();
   const [isClientLoading, setIsClientLoading] = useState(true);
-  const { session, isLoading: isAuthLoading, isAuthenticated } = useRequireAuth();
+  const {
+    session,
+    isLoading: isAuthLoading,
+    isAuthenticated,
+  } = useRequireAuth();
 
   const { permissions, isLoading: isLoadingPermissions } =
     useProjectPermissions(projectId, ApplicationArea.Milestones);
@@ -50,7 +54,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     {
       enabled: isAuthenticated, // Only query when session is authenticated
       retry: 3, // Retry a few times in case of race conditions
-      retryDelay: 1000 // Wait 1 second between retries
+      retryDelay: 1000, // Wait 1 second between retries
     }
   );
 
@@ -134,8 +138,12 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     return (
       <Card className="flex flex-col w-full min-w-[400px] h-full">
         <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">{t("common.errors.projectNotFound")}</h2>
-          <p className="text-muted-foreground">{t("common.errors.projectNotFoundDescription")}</p>
+          <h2 className="text-2xl font-semibold mb-2">
+            {t("common.errors.projectNotFound")}
+          </h2>
+          <p className="text-muted-foreground">
+            {t("common.errors.projectNotFoundDescription")}
+          </p>
         </CardContent>
       </Card>
     );
@@ -161,7 +169,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
               </div>
             </CardTitle>
             <CardDescription className="uppercase">
-              <span className="flex items-center gap-2 uppercase">
+              <span className="flex items-center gap-2 uppercase shrink-0">
                 <ProjectIcon iconUrl={project?.iconUrl} />
                 {project?.name}
               </span>

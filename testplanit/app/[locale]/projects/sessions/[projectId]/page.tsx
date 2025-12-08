@@ -666,7 +666,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                 </div>
               </CardTitle>
               <CardDescription className="uppercase">
-                <span className="flex items-center gap-2 uppercase">
+                <span className="flex items-center gap-2 uppercase shrink-0">
                   <ProjectIcon iconUrl={project?.iconUrl} />
                   {project?.name}
                 </span>
@@ -1050,7 +1050,10 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
 export default function ProjectSessionsPage(props: ProjectSessionsProps) {
   return (
     <PaginationProvider defaultPageSize={25}>
-      <ProjectSessions params={props.params} searchParams={props.searchParams} />
+      <ProjectSessions
+        params={props.params}
+        searchParams={props.searchParams}
+      />
     </PaginationProvider>
   );
 }

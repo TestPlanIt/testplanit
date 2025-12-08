@@ -590,14 +590,26 @@ function ProjectIssues() {
             const cells = targetRow.querySelectorAll("td");
 
             // Apply highlight to row with outline (doesn't affect layout)
-            (targetRow as HTMLElement).style.setProperty("outline", "4px solid hsl(var(--primary))", "important");
-            (targetRow as HTMLElement).style.setProperty("outline-offset", "-2px", "important");
+            (targetRow as HTMLElement).style.setProperty(
+              "outline",
+              "4px solid hsl(var(--primary))",
+              "important"
+            );
+            (targetRow as HTMLElement).style.setProperty(
+              "outline-offset",
+              "-2px",
+              "important"
+            );
 
             // Apply background to each cell
             cells.forEach((cell) => {
               const htmlCell = cell as HTMLElement;
               // Apply highlight background
-              htmlCell.style.setProperty("background-color", "hsl(var(--primary) / 0.15)", "important");
+              htmlCell.style.setProperty(
+                "background-color",
+                "hsl(var(--primary) / 0.15)",
+                "important"
+              );
             });
 
             // Clear interval and remove listeners after successful scroll
@@ -714,7 +726,7 @@ function ProjectIssues() {
             <CardTitle>{t("Pages.Issues.title")}</CardTitle>
           </div>
           <CardDescription className="uppercase">
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 shrink-0">
               <ProjectIcon iconUrl={project?.iconUrl} />
               {project?.name}
             </span>

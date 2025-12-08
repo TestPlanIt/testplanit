@@ -54,7 +54,7 @@ export const getColumns = (
       size: 500,
       cell: ({ row }) => (
         <div className="flex items-start gap-1">
-          <span className="mt-1">
+          <span className="mt-1 shrink-0">
             <ProjectIcon iconUrl={row.original.iconUrl} />
           </span>
           <ProjectNameCell
@@ -140,7 +140,9 @@ export const getColumns = (
         <div className="whitespace-nowrap">
           <DateFormatter
             date={getValue() as Date | string}
-            formatString={session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"}
+            formatString={
+              session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"
+            }
             timezone={session.user.preferences?.timezone || "Etc/UTC"}
           />
         </div>
@@ -175,7 +177,9 @@ export const getColumns = (
         <div className="whitespace-nowrap">
           <DateFormatter
             date={getValue() as Date | string}
-            formatString={session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"}
+            formatString={
+              session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"
+            }
             timezone={session.user.preferences?.timezone || "Etc/UTC"}
           />
         </div>

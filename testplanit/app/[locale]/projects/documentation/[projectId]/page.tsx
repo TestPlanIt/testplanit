@@ -53,7 +53,11 @@ export default function ProjectDocumentation({
     | { type: string; content: any }
     | null
   >(null);
-  const { data: project, refetch: refetchProject, isLoading: isProjectLoading } = useFindFirstProjects(
+  const {
+    data: project,
+    refetch: refetchProject,
+    isLoading: isProjectLoading,
+  } = useFindFirstProjects(
     {
       where: {
         AND: [{ isDeleted: false }, { id: parseInt(projectId) }],
@@ -100,7 +104,11 @@ export default function ProjectDocumentation({
 
     // Only redirect to 404 if we're sure the user doesn't have access
     // (session is loaded, project loading is complete, and project is null)
-    if (!isProjectLoading && project === null && sessionStatus === "authenticated") {
+    if (
+      !isProjectLoading &&
+      project === null &&
+      sessionStatus === "authenticated"
+    ) {
       router.push("/404");
       return;
     }
@@ -157,11 +165,11 @@ export default function ProjectDocumentation({
   };
 
   // Determine overall loading state (consider permissions loading and session loading)
-  const isOverallLoading = 
-    sessionStatus === "loading" || 
-    isLoading || 
-    isLoadingPermissions || 
-    isProjectLoading || 
+  const isOverallLoading =
+    sessionStatus === "loading" ||
+    isLoading ||
+    isLoadingPermissions ||
+    isProjectLoading ||
     docs === null;
 
   // Optional: Add error handling for permissions fetch
@@ -206,7 +214,7 @@ export default function ProjectDocumentation({
               </div>
             </CardTitle>
             <CardDescription className="uppercase flex w-full items-top items-center gap-2">
-              <span className="flex items-center gap-2 uppercase">
+              <span className="flex items-center gap-2 uppercase shrink-0">
                 <ProjectIcon iconUrl={project?.iconUrl} />
                 {project?.name}
               </span>

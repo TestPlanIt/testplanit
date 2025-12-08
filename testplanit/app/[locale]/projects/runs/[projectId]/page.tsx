@@ -1025,7 +1025,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                 </div>
               </CardTitle>
               <CardDescription className="uppercase">
-                <span className="flex items-center gap-2 uppercase">
+                <span className="flex items-center gap-2 uppercase shrink-0">
                   <ProjectIcon iconUrl={project?.iconUrl} />
                   {project?.name}
                 </span>

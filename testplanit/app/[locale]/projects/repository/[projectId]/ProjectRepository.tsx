@@ -215,7 +215,12 @@ interface ViewOptions {
     count?: number;
   }>;
   testRunOptions?: {
-    statuses: Array<{ id: number; name: string; color?: { value: string }; count: number }>;
+    statuses: Array<{
+      id: number;
+      name: string;
+      color?: { value: string };
+      count: number;
+    }>;
     assignedTo: Array<{ id: string; name: string; count: number }>;
     untestedCount: number;
     unassignedCount: number;
@@ -432,10 +437,12 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   });
 
   // Fetch folder statistics to optimize queries
-  const { data: folderStatsData, refetch: refetchFolderStats } = useFolderStats({
-    projectId: numericProjectId,
-    enabled: isValidProjectId,
-  });
+  const { data: folderStatsData, refetch: refetchFolderStats } = useFolderStats(
+    {
+      projectId: numericProjectId,
+      enabled: isValidProjectId,
+    }
+  );
 
   // Get the total case count for the selected folder
   const selectedFolderCaseCount = useMemo(() => {
@@ -565,15 +572,17 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
 
     // Convert dynamic fields to the expected format
     const dynamicFields: Record<string, DynamicField> = {};
-    Object.entries(viewOptionsData.dynamicFields).forEach(([key, field]: [string, any]) => {
-      dynamicFields[key] = {
-        type: field.type,
-        fieldId: field.fieldId,
-        options: field.options,
-        values: field.values ? new Set(field.values) : new Set(),
-        counts: field.counts,
-      };
-    });
+    Object.entries(viewOptionsData.dynamicFields).forEach(
+      ([key, field]: [string, any]) => {
+        dynamicFields[key] = {
+          type: field.type,
+          fieldId: field.fieldId,
+          options: field.options,
+          values: field.values ? new Set(field.values) : new Set(),
+          counts: field.counts,
+        };
+      }
+    );
 
     return {
       templates: viewOptionsData.templates,
@@ -633,8 +642,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
             name: t("repository.views.unassigned"),
             count: viewOptionsData?.testRunOptions?.unassignedCount || 0,
           },
-          ...(viewOptionsData?.testRunOptions?.assignedTo || []).sort((a: any, b: any) =>
-            a.name.localeCompare(b.name)
+          ...(viewOptionsData?.testRunOptions?.assignedTo || []).sort(
+            (a: any, b: any) => a.name.localeCompare(b.name)
           ),
         ],
       },
@@ -695,7 +704,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
 
     // For non-run mode, just return baseItems (which now includes Tags) and dynamicFields
     return [...baseItems, ...dynamicFields];
-  }, [viewOptions.dynamicFields, t, isRunMode, viewOptionsData, viewOptions.tags]);
+  }, [
+    viewOptions.dynamicFields,
+    t,
+    isRunMode,
+    viewOptionsData,
+    viewOptions.tags,
+  ]);
 
   const [selectedItem, setSelectedItem] = useState<string>(() => {
     const validViewTypes = [
@@ -982,7 +997,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         }
       }
     }
-  }, [casePositions, selectedTestCaseId, pageSize, currentPage, setCurrentPage]);
+  }, [
+    casePositions,
+    selectedTestCaseId,
+    pageSize,
+    currentPage,
+    setCurrentPage,
+  ]);
 
   if (isComponentLoading) {
     return null;
@@ -1027,7 +1048,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                   </div>
                 </CardTitle>
                 <CardDescription className="uppercase">
-                  <span className="flex items-center gap-2 uppercase">
+                  <span className="flex items-center gap-2 uppercase shrink-0">
                     <ProjectIcon iconUrl={project?.iconUrl} />
                     {project?.name}
                   </span>

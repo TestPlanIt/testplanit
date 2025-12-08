@@ -42,7 +42,11 @@ export default function ProjectTagListPage() {
 }
 
 function TagList() {
-  const { session, isLoading: isAuthLoading, isAuthenticated } = useRequireAuth();
+  const {
+    session,
+    isLoading: isAuthLoading,
+    isAuthenticated,
+  } = useRequireAuth();
   const router = useRouter();
   const { projectId } = useParams<{ projectId: string }>();
   const t = useTranslations();
@@ -388,7 +392,13 @@ function TagList() {
   );
 
   // Wait for all data to load - this prevents the flash
-  if (isAuthLoading || isLoadingTags || isLoadingCases || isLoadingSessions || isLoadingRuns) {
+  if (
+    isAuthLoading ||
+    isLoadingTags ||
+    isLoadingCases ||
+    isLoadingSessions ||
+    isLoadingRuns
+  ) {
     return null;
   }
 
@@ -418,7 +428,7 @@ function TagList() {
             </div>
           </CardTitle>
           <CardDescription className="uppercase">
-            <span className="flex items-center gap-2 uppercase">
+            <span className="flex items-center gap-2 uppercase shrink-0">
               <ProjectIcon iconUrl={project?.iconUrl} />
               {project?.name}
             </span>

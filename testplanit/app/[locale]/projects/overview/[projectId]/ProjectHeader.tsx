@@ -26,7 +26,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         </div>
       </CardTitle>
       <CardDescription className="flex w-full items-start justify-between ">
-        <span className="flex items-center gap-2 uppercase">
+        <span className="flex items-center gap-2 uppercase shrink-0">
           <ProjectIcon iconUrl={project.iconUrl} />
           {project.name}
         </span>

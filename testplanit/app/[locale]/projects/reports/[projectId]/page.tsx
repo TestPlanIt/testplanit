@@ -132,17 +132,14 @@ export default async function ProjectReportsPage({ params }: PageProps) {
             <CardTitle>{t("projectReports")}</CardTitle>
           </div>
           <CardDescription className="uppercase">
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 shrink-0">
               <ProjectIcon iconUrl={project.iconUrl} />
               {project.name}
             </span>
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <ReportBuilder
-            mode="project"
-            projectId={projectId}
-          />
+          <ReportBuilder mode="project" projectId={projectId} />
         </CardContent>
       </Card>
     </main>
