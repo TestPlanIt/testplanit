@@ -1,3 +1,11 @@
+## [0.5.3](https://github.com/TestPlanIt/testplanit/compare/v0.5.2...v0.5.3) (2025-12-08)
+
+
+### Bug Fixes
+
+* **auditLog:** validate projectId existence before logging and handle non-existent projects ([75e85a8](https://github.com/TestPlanIt/testplanit/commit/75e85a8e194b1316a81eabfaf07528fef1584b3d))
+* **testCase:** sync case field values on details page ([1fc701a](https://github.com/TestPlanIt/testplanit/commit/1fc701a526021901d62a184c6184b2af3a9786f6))
+
 ## [0.5.2](https://github.com/TestPlanIt/testplanit/compare/v0.5.1...v0.5.2) (2025-12-08)
 
 
