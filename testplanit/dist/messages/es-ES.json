@@ -28,6 +28,7 @@
       "create": "Crear",
       "submit": "Enviar",
       "close": "Cerrar",
+      "done": "Hecho",
       "verify": "Verificar",
       "signIn": "Iniciar sesión",
       "signOut": "Cerrar sesión",
@@ -4728,8 +4729,11 @@
         "entityId": "ID de entidad",
         "entityName": "Nombre de la entidad",
         "user": "Usuario",
-        "project": "Proyecto"
-      }
+        "project": "Proyecto",
+        "email": "Correo electrónico",
+        "userId": "ID de usuario"
+      },
+      "system": "Sistema"
     }
   },
   "components": {
@@ -5539,21 +5543,32 @@
       "dateRange": {
         "label": "Date Range",
         "selectDateRange": "Seleccionar rango de fechas",
+        "chooseStartDate": "Elija la fecha de inicio",
+        "chooseEndDate": "Elija la fecha de finalización",
+        "categories": {
+          "day": "Día",
+          "week": "Semana",
+          "month": "Mes",
+          "quarter": "Cuarto",
+          "year": "Año"
+        },
         "today": "Hoy",
         "yesterday": "Ayer",
         "last7Days": "Últimos 7 días",
-        "last14Days": "Últimos 14 días",
         "last30Days": "Últimos 30 días",
-        "last90Days": "Últimos 90 días",
         "thisWeek": "Esta semana",
         "lastWeek": "Última semana",
+        "last2Weeks": "Últimas 2 semanas",
         "thisMonth": "Este mes",
-        "previousMonth": "Mes anterior",
+        "lastMonth": "Mes pasado",
+        "last3Months": "Últimos 3 meses",
         "thisQuarter": "Este trimestre",
-        "previousQuarter": "Cuarto anterior",
+        "lastQuarter": "Último trimestre",
         "thisYear": "Este año",
         "lastYear": "Año pasado",
-        "custom": "Personalizado"
+        "last12Months": "Últimos 12 meses",
+        "allTime": "Todo el tiempo",
+        "custom": "Rango de fechas personalizado"
       },
       "dateGrouping": {
         "label": "Agrupar por",

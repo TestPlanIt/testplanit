@@ -28,6 +28,7 @@
       "create": "Créer",
       "submit": "Soumettre",
       "close": "Fermer",
+      "done": "Fait",
       "verify": "Vérifier",
       "signIn": "Se connecter",
       "signOut": "Se déconnecter",
@@ -4728,8 +4729,11 @@
         "entityId": "ID d'entité",
         "entityName": "Nom de l'entité",
         "user": "Utilisateur",
-        "project": "Projet"
-      }
+        "project": "Projet",
+        "email": "E-mail",
+        "userId": "ID de l'utilisateur"
+      },
+      "system": "Système"
     }
   },
   "components": {
@@ -5539,21 +5543,32 @@
       "dateRange": {
         "label": "Période couverte",
         "selectDateRange": "Sélectionnez une plage de dates",
+        "chooseStartDate": "Choisissez la date de début",
+        "chooseEndDate": "Choisissez la date de fin",
+        "categories": {
+          "day": "Jour",
+          "week": "Semaine",
+          "month": "Mois",
+          "quarter": "Quart",
+          "year": "Année"
+        },
         "today": "Aujourd'hui",
         "yesterday": "Hier",
         "last7Days": "Les 7 derniers jours",
-        "last14Days": "Les 14 derniers jours",
         "last30Days": "30 derniers jours",
-        "last90Days": "90 derniers jours",
         "thisWeek": "Cette semaine",
         "lastWeek": "La semaine dernière",
+        "last2Weeks": "Les 2 dernières semaines",
         "thisMonth": "Ce mois-ci",
-        "previousMonth": "Le mois précédent",
+        "lastMonth": "Mois dernier",
+        "last3Months": "Les 3 derniers mois",
         "thisQuarter": "Ce trimestre",
-        "previousQuarter": "Trimestre précédent",
+        "lastQuarter": "dernier trimestre",
         "thisYear": "Cette année",
         "lastYear": "L'année dernière",
-        "custom": "Coutume"
+        "last12Months": "Les 12 derniers mois",
+        "allTime": "Tout le temps",
+        "custom": "Plage de dates personnalisée"
       },
       "dateGrouping": {
         "label": "Grouper par",

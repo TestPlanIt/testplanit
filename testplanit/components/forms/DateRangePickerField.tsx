@@ -21,12 +21,14 @@ import { Control } from "react-hook-form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { useState } from "react";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { DateRange } from "react-day-picker";
 import {
   startOfMonth,
@@ -62,6 +64,11 @@ interface PredefinedRange {
   getValue: () => DateRange;
 }
 
+interface RangeCategory {
+  label: string;
+  ranges: Record<string, PredefinedRange>;
+}
+
 export function DateRangePickerField({
   control,
   name,
@@ -82,117 +89,173 @@ export function DateRangePickerField({
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const predefinedRanges: Record<string, PredefinedRange> = {
-    today: {
-      label: tReports("dateRange.today"),
-      getValue: () => ({
-        from: startOfDay(today),
-        to: endOfDay(today),
-      }),
-    },
-    yesterday: {
-      label: tReports("dateRange.yesterday"),
-      getValue: () => ({
-        from: startOfDay(subDays(today, 1)),
-        to: endOfDay(subDays(today, 1)),
-      }),
-    },
-    last7days: {
-      label: tReports("dateRange.last7Days"),
-      getValue: () => ({
-        from: subDays(today, 6),
-        to: today,
-      }),
-    },
-    last14days: {
-      label: tReports("dateRange.last14Days"),
-      getValue: () => ({
-        from: subDays(today, 13),
-        to: today,
-      }),
-    },
-    last30days: {
-      label: tReports("dateRange.last30Days"),
-      getValue: () => ({
-        from: subDays(today, 29),
-        to: today,
-      }),
-    },
-    last90days: {
-      label: tReports("dateRange.last90Days"),
-      getValue: () => ({
-        from: subDays(today, 89),
-        to: today,
-      }),
-    },
-    thisWeek: {
-      label: tReports("dateRange.thisWeek"),
-      getValue: () => ({
-        from: startOfWeek(today, { weekStartsOn: 1 }), // Monday as start of week
-        to: endOfWeek(today, { weekStartsOn: 1 }),
-      }),
-    },
-    lastWeek: {
-      label: tReports("dateRange.lastWeek"),
-      getValue: () => {
-        const lastWeek = subWeeks(today, 1);
-        return {
-          from: startOfWeek(lastWeek, { weekStartsOn: 1 }),
-          to: endOfWeek(lastWeek, { weekStartsOn: 1 }),
-        };
+  const rangeCategories: Record<string, RangeCategory> = {
+    day: {
+      label: tReports("dateRange.categories.day"),
+      ranges: {
+        today: {
+          label: tReports("dateRange.today"),
+          getValue: () => ({
+            from: startOfDay(today),
+            to: endOfDay(today),
+          }),
+        },
+        yesterday: {
+          label: tReports("dateRange.yesterday"),
+          getValue: () => ({
+            from: startOfDay(subDays(today, 1)),
+            to: endOfDay(subDays(today, 1)),
+          }),
+        },
+        last7Days: {
+          label: tReports("dateRange.last7Days"),
+          getValue: () => ({
+            from: subDays(today, 6),
+            to: today,
+          }),
+        },
+        last30Days: {
+          label: tReports("dateRange.last30Days"),
+          getValue: () => ({
+            from: subDays(today, 29),
+            to: today,
+          }),
+        },
       },
     },
-    thisMonth: {
-      label: tReports("dateRange.thisMonth"),
-      getValue: () => ({
-        from: startOfMonth(today),
-        to: endOfMonth(today),
-      }),
-    },
-    previousMonth: {
-      label: tReports("dateRange.previousMonth"),
-      getValue: () => {
-        const previousMonth = subMonths(today, 1);
-        return {
-          from: startOfMonth(previousMonth),
-          to: endOfMonth(previousMonth),
-        };
+    week: {
+      label: tReports("dateRange.categories.week"),
+      ranges: {
+        thisWeek: {
+          label: tReports("dateRange.thisWeek"),
+          getValue: () => ({
+            from: startOfWeek(today, { weekStartsOn: 1 }),
+            to: endOfWeek(today, { weekStartsOn: 1 }),
+          }),
+        },
+        lastWeek: {
+          label: tReports("dateRange.lastWeek"),
+          getValue: () => {
+            const lastWeek = subWeeks(today, 1);
+            return {
+              from: startOfWeek(lastWeek, { weekStartsOn: 1 }),
+              to: endOfWeek(lastWeek, { weekStartsOn: 1 }),
+            };
+          },
+        },
+        last2Weeks: {
+          label: tReports("dateRange.last2Weeks"),
+          getValue: () => ({
+            from: subWeeks(today, 2),
+            to: today,
+          }),
+        },
       },
     },
-    thisQuarter: {
-      label: tReports("dateRange.thisQuarter"),
-      getValue: () => ({
-        from: startOfQuarter(today),
-        to: endOfQuarter(today),
-      }),
-    },
-    previousQuarter: {
-      label: tReports("dateRange.previousQuarter"),
-      getValue: () => {
-        const previousQuarter = subMonths(today, 3);
-        return {
-          from: startOfQuarter(previousQuarter),
-          to: endOfQuarter(previousQuarter),
-        };
+    month: {
+      label: tReports("dateRange.categories.month"),
+      ranges: {
+        thisMonth: {
+          label: tReports("dateRange.thisMonth"),
+          getValue: () => ({
+            from: startOfMonth(today),
+            to: endOfMonth(today),
+          }),
+        },
+        lastMonth: {
+          label: tReports("dateRange.lastMonth"),
+          getValue: () => {
+            const lastMonth = subMonths(today, 1);
+            return {
+              from: startOfMonth(lastMonth),
+              to: endOfMonth(lastMonth),
+            };
+          },
+        },
+        last3Months: {
+          label: tReports("dateRange.last3Months"),
+          getValue: () => ({
+            from: subMonths(today, 3),
+            to: today,
+          }),
+        },
       },
     },
-    thisYear: {
-      label: tReports("dateRange.thisYear"),
-      getValue: () => ({
-        from: startOfYear(today),
-        to: endOfYear(today),
-      }),
-    },
-    lastYear: {
-      label: tReports("dateRange.lastYear"),
-      getValue: () => {
-        const lastYear = subYears(today, 1);
-        return {
-          from: startOfYear(lastYear),
-          to: endOfYear(lastYear),
-        };
+    quarter: {
+      label: tReports("dateRange.categories.quarter"),
+      ranges: {
+        thisQuarter: {
+          label: tReports("dateRange.thisQuarter"),
+          getValue: () => ({
+            from: startOfQuarter(today),
+            to: endOfQuarter(today),
+          }),
+        },
+        lastQuarter: {
+          label: tReports("dateRange.lastQuarter"),
+          getValue: () => {
+            const lastQuarter = subMonths(today, 3);
+            return {
+              from: startOfQuarter(lastQuarter),
+              to: endOfQuarter(lastQuarter),
+            };
+          },
+        },
       },
     },
+    year: {
+      label: tReports("dateRange.categories.year"),
+      ranges: {
+        thisYear: {
+          label: tReports("dateRange.thisYear"),
+          getValue: () => ({
+            from: startOfYear(today),
+            to: endOfYear(today),
+          }),
+        },
+        lastYear: {
+          label: tReports("dateRange.lastYear"),
+          getValue: () => {
+            const lastYear = subYears(today, 1);
+            return {
+              from: startOfYear(lastYear),
+              to: endOfYear(lastYear),
+            };
+          },
+        },
+        last12Months: {
+          label: tReports("dateRange.last12Months"),
+          getValue: () => ({
+            from: subMonths(today, 12),
+            to: today,
+          }),
+        },
+      },
+    },
+  };
+
+  // Helper to find a range by key across all categories
+  const findRangeByKey = (
+    key: string
+  ): { range: PredefinedRange; categoryKey: string } | undefined => {
+    for (const [categoryKey, category] of Object.entries(rangeCategories)) {
+      if (key in category.ranges) {
+        return { range: category.ranges[key], categoryKey };
+      }
+    }
+    return undefined;
+  };
+
+  // Get display label for selected preset
+  const getSelectedLabel = (): string => {
+    if (selectedPreset === "custom") {
+      return tReports("dateRange.custom");
+    }
+    if (selectedPreset === "allTime") {
+      return tReports("dateRange.allTime");
+    }
+    const found = findRangeByKey(selectedPreset);
+    return found?.range.label || tReports("dateRange.custom");
   };
 
   const formatDateRange = (dateRange: DateRange | undefined) => {
@@ -250,51 +313,94 @@ export function DateRangePickerField({
               align="center"
               sideOffset={5}
             >
-              <div className="p-2 space-y-2">
-                <Select
-                  value={selectedPreset}
-                  onValueChange={(value) => {
-                    setSelectedPreset(value);
-                    if (value !== "custom" && predefinedRanges[value]) {
-                      const range = predefinedRanges[value].getValue();
-                      field.onChange(range);
-                    }
-                  }}
-                >
-                  <SelectTrigger data-testid="date-range-preset-select">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="custom">
-                      {tReports("dateRange.custom")}
-                    </SelectItem>
-                    {Object.entries(predefinedRanges).map(([key, range]) => (
-                      <SelectItem key={key} value={key}>
-                        {range.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="px-3 py-2 text-sm text-muted-foreground text-center border-b border-border">
+                {!field.value?.from
+                  ? tReports("dateRange.chooseStartDate")
+                  : tReports("dateRange.chooseEndDate")}
               </div>
-              <div className="border-t border-border">
+              <div className="p-2 border-b border-border">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between"
+                      data-testid="date-range-preset-select"
+                    >
+                      {getSelectedLabel()}
+                      <CalendarDays className="ml-2 h-4 w-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56">
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSelectedPreset("custom");
+                      }}
+                    >
+                      {tReports("dateRange.custom")}
+                    </DropdownMenuItem>
+                    {Object.entries(rangeCategories).map(
+                      ([categoryKey, category]) => (
+                        <DropdownMenuSub key={categoryKey}>
+                          <DropdownMenuSubTrigger>
+                            {category.label}
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent>
+                            {Object.entries(category.ranges).map(
+                              ([rangeKey, range]) => (
+                                <DropdownMenuItem
+                                  key={rangeKey}
+                                  onClick={() => {
+                                    setSelectedPreset(rangeKey);
+                                    const rangeValue = range.getValue();
+                                    field.onChange(rangeValue);
+                                  }}
+                                >
+                                  {range.label}
+                                </DropdownMenuItem>
+                              )
+                            )}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                      )
+                    )}
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSelectedPreset("allTime");
+                        field.onChange(undefined);
+                      }}
+                    >
+                      {tReports("dateRange.allTime")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div>
                 <Calendar
                   mode="range"
                   selected={field.value}
                   onSelect={(range) => {
                     field.onChange(range);
-                    if (range?.from && range?.to) {
-                      setPopoverOpen(false);
-                    }
                   }}
                   disabled={(date) => date > maxDate || date < minDate}
                   autoFocus
                   numberOfMonths={2}
                 />
               </div>
-              <div className="p-2 border-t border-border">
+              <div className="p-2 border-t border-border flex gap-2">
                 <Button
                   variant="ghost"
-                  className="w-full justify-center text-sm"
+                  className="flex-1 justify-center text-sm"
+                  onClick={() => {
+                    field.onChange(undefined);
+                    setSelectedPreset("custom");
+                  }}
+                  disabled={!field.value}
+                >
+                  {t("reset")}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex-1 justify-center text-sm"
                   onClick={() => {
                     field.onChange(undefined);
                     setSelectedPreset("custom");
@@ -303,6 +409,15 @@ export function DateRangePickerField({
                   disabled={!field.value}
                 >
                   {t("clear")}
+                </Button>
+                <Button
+                  variant="default"
+                  className="flex-1 justify-center text-sm"
+                  onClick={() => {
+                    setPopoverOpen(false);
+                  }}
+                >
+                  {t("done")}
                 </Button>
               </div>
             </PopoverContent>
