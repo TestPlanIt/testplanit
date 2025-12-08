@@ -141,7 +141,7 @@ export const getColumns = (
             <span className="text-xs text-muted-foreground">{email}</span>
           )}
           {!name && !email && (
-            <span className="text-muted-foreground">System</span>
+            <span className="text-muted-foreground">{t("system")}</span>
           )}
         </div>
       );

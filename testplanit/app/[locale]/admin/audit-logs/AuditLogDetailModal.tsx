@@ -96,13 +96,13 @@ export function AuditLogDetailModal({
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
-                    Email
+                    {t("columns.email")}
                   </label>
                   <p className="text-sm">{log.userEmail || "-"}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
-                    User ID
+                    {t("columns.userId")}
                   </label>
                   <p className="text-sm font-mono">{log.userId || "-"}</p>
                 </div>

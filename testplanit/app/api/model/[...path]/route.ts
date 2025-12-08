@@ -2,7 +2,11 @@ import { enhance } from "@zenstackhq/runtime";
 import { NextRequestHandler } from "@zenstackhq/server/next";
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "~/lib/prisma";
-import { setAuditContext, getAuditContext } from "~/lib/auditContext";
+import {
+  setAuditContext,
+  getAuditContext,
+  extractIpAddress,
+} from "~/lib/auditContext";
 import { captureAuditEvent, type AuditEvent } from "~/lib/services/auditLog";
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
@@ -52,7 +56,10 @@ function getAuditAction(operation: string): AuditAction | null {
 }
 
 // Extract entity name from result
-function extractEntityName(entityType: string, result: any): string | undefined {
+function extractEntityName(
+  entityType: string,
+  result: any
+): string | undefined {
   if (!result) return undefined;
 
   const nameFields: Record<string, string | string[]> = {
@@ -73,7 +80,10 @@ function extractEntityName(entityType: string, result: any): string | undefined 
   if (!field) return undefined;
 
   if (Array.isArray(field)) {
-    return field.map(f => result[f]).filter(Boolean).join(":");
+    return field
+      .map((f) => result[f])
+      .filter(Boolean)
+      .join(":");
   }
 
   return result[field];
@@ -89,7 +99,7 @@ async function getPrisma() {
     userId: userId,
     userEmail: session?.user?.email ?? undefined,
     userName: session?.user?.name ?? undefined,
-    ipAddress: headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || undefined,
+    ipAddress: extractIpAddress(headersList as unknown as Headers),
     userAgent: headersList.get("user-agent") || undefined,
   });
 
@@ -127,7 +137,9 @@ async function getPrisma() {
 const baseHandler = NextRequestHandler({ getPrisma, useAppDir: true });
 
 // Parse ZenStack path to extract model and operation
-function parseZenStackPath(path: string[]): { model: string; operation: string } | null {
+function parseZenStackPath(
+  path: string[]
+): { model: string; operation: string } | null {
   // ZenStack paths are like: /api/model/{model}/{operation}
   // e.g., ["repositoryCases", "create"] or ["repositoryCases", "findMany"]
   if (path.length >= 2) {
@@ -137,7 +149,10 @@ function parseZenStackPath(path: string[]): { model: string; operation: string }
 }
 
 // Wrapper to add cache-control headers and audit logging
-async function handler(req: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+async function handler(
+  req: NextRequest,
+  context: { params: Promise<{ path: string[] }> }
+) {
   const params = await context.params;
   const parsedPath = parseZenStackPath(params.path);
   const isMutation = ["POST", "PUT", "PATCH", "DELETE"].includes(req.method);
@@ -167,12 +182,20 @@ async function handler(req: NextRequest, context: { params: Promise<{ path: stri
   });
 
   // Prevent caching of API responses - this is critical to avoid stale 410/error responses
-  newResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  newResponse.headers.set(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  );
   newResponse.headers.set("Pragma", "no-cache");
   newResponse.headers.set("Expires", "0");
 
   // Audit logging for successful mutations
-  if (isMutation && response.ok && parsedPath && AUDITED_ENTITIES.has(parsedPath.model)) {
+  if (
+    isMutation &&
+    response.ok &&
+    parsedPath &&
+    AUDITED_ENTITIES.has(parsedPath.model)
+  ) {
     const auditAction = getAuditAction(parsedPath.operation);
 
     if (auditAction) {
@@ -181,7 +204,8 @@ async function handler(req: NextRequest, context: { params: Promise<{ path: stri
         const data = result?.data;
 
         if (data) {
-          const entityId = data.id || data.key || `${parsedPath.operation}-${Date.now()}`;
+          const entityId =
+            data.id || data.key || `${parsedPath.operation}-${Date.now()}`;
           const entityName = extractEntityName(parsedPath.model, data);
           const projectId = data.projectId;
 
@@ -214,7 +238,9 @@ async function handler(req: NextRequest, context: { params: Promise<{ path: stri
             projectId: typeof projectId === "number" ? projectId : undefined,
             metadata: {
               operation: parsedPath.operation,
-              ...(auditAction.startsWith("BULK_") && data.count ? { count: data.count } : {}),
+              ...(auditAction.startsWith("BULK_") && data.count
+                ? { count: data.count }
+                : {}),
             },
           };
 

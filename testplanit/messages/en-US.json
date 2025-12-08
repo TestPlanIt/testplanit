@@ -4728,8 +4728,11 @@
         "entityId": "Entity ID",
         "entityName": "Entity Name",
         "user": "User",
-        "project": "Project"
-      }
+        "project": "Project",
+        "email": "Email",
+        "userId": "User ID"
+      },
+      "system": "System"
     }
   },
   "components": {

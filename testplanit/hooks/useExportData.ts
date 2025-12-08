@@ -641,6 +641,7 @@ export function useExportData<
       isRunMode,
       testRunCasesData,
       isDefaultSort,
+      project?.id,
     ]
   );
 
