@@ -7,6 +7,9 @@ const mockPrisma = {
   auditLog: {
     create: vi.fn(),
   },
+  projects: {
+    findUnique: vi.fn(),
+  },
   $disconnect: vi.fn(),
 };
 
@@ -27,6 +30,8 @@ describe("AuditLogWorker", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
+    // By default, mock projects.findUnique to return a valid project
+    mockPrisma.projects.findUnique.mockResolvedValue({ id: 1 });
   });
 
   describe("processor", () => {
@@ -432,6 +437,65 @@ describe("AuditLogWorker", () => {
           entityName: "SAML",
           metadata: expect.objectContaining({
             originalAction: "UPDATE",
+          }),
+        }),
+      });
+    });
+
+    it("should handle non-existent project gracefully", async () => {
+      // Mock project not found
+      mockPrisma.projects.findUnique.mockResolvedValue(null);
+
+      const jobData: AuditLogJobData = {
+        event: {
+          action: "BULK_CREATE",
+          entityType: "RepositoryCases",
+          entityId: "bulk-9999",
+          entityName: "10 RepositoryCases",
+          projectId: 999, // Non-existent project
+          metadata: {
+            count: 10,
+          },
+        },
+        context: {
+          userId: "user-123",
+          userEmail: "test@example.com",
+        },
+        queuedAt: new Date().toISOString(),
+      };
+
+      mockPrisma.auditLog.create.mockResolvedValue({
+        id: "audit-9",
+        ...jobData.event,
+        projectId: null,
+      });
+
+      const { processor } = await import("./auditLogWorker");
+
+      const mockJob = {
+        id: "job-132",
+        name: "audit-event",
+        data: jobData,
+      } as Job<AuditLogJobData>;
+
+      await processor(mockJob);
+
+      // Should have checked if project exists
+      expect(mockPrisma.projects.findUnique).toHaveBeenCalledWith({
+        where: { id: 999 },
+        select: { id: true },
+      });
+
+      // Should create audit log without projectId but with originalProjectId in metadata
+      expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          action: "BULK_CREATE",
+          entityType: "RepositoryCases",
+          entityId: "bulk-9999",
+          projectId: null,
+          metadata: expect.objectContaining({
+            count: 10,
+            originalProjectId: 999,
           }),
         }),
       });

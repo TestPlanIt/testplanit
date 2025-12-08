@@ -109,7 +109,10 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           const result = await query(args);
           // Audit bulk create
           if (result?.count > 0) {
-            const projectId = args.data?.[0]?.projectId;
+            // args.data is an array of objects for createMany
+            // Ensure projectId is a valid number before passing to audit
+            const rawProjectId = args.data?.[0]?.projectId;
+            const projectId = typeof rawProjectId === 'number' && rawProjectId > 0 ? rawProjectId : undefined;
             auditBulkCreate("RepositoryCases", result.count, projectId).catch((error: any) => {
               console.error(`Failed to audit repository case bulk create:`, error);
             });

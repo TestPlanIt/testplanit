@@ -53,6 +53,25 @@ const processor = async (job: Job<AuditLogJobData>) => {
       }
     }
 
+    // Validate projectId exists before creating audit log to prevent foreign key constraint errors
+    // The project might have been deleted between when the event was queued and now
+    let validatedProjectId: number | null = null;
+    if (event.projectId) {
+      const projectExists = await prisma.projects.findUnique({
+        where: { id: event.projectId },
+        select: { id: true },
+      });
+      if (projectExists) {
+        validatedProjectId = event.projectId;
+      } else {
+        // Project no longer exists - store the original projectId in metadata for reference
+        metadata.originalProjectId = event.projectId;
+        console.warn(
+          `[AuditLogWorker] Project ${event.projectId} no longer exists, creating audit log without project association`
+        );
+      }
+    }
+
     // Create the audit log entry
     // Note: We use the raw Prisma client here to bypass ZenStack access control
     // since audit logs should be created by the system, not by users directly
@@ -67,7 +86,7 @@ const processor = async (job: Job<AuditLogJobData>) => {
         entityName: event.entityName || null,
         changes: event.changes as Prisma.InputJsonValue | undefined,
         metadata: Object.keys(metadata).length > 0 ? (metadata as Prisma.InputJsonValue) : undefined,
-        projectId: event.projectId || null,
+        projectId: validatedProjectId,
       },
     });
 

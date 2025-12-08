@@ -273,6 +273,21 @@ var processor = async (job) => {
         delete metadata[key];
       }
     }
+    let validatedProjectId = null;
+    if (event.projectId) {
+      const projectExists = await prisma2.projects.findUnique({
+        where: { id: event.projectId },
+        select: { id: true }
+      });
+      if (projectExists) {
+        validatedProjectId = event.projectId;
+      } else {
+        metadata.originalProjectId = event.projectId;
+        console.warn(
+          `[AuditLogWorker] Project ${event.projectId} no longer exists, creating audit log without project association`
+        );
+      }
+    }
     await prisma2.auditLog.create({
       data: {
         userId,
@@ -284,7 +299,7 @@ var processor = async (job) => {
         entityName: event.entityName || null,
         changes: event.changes,
         metadata: Object.keys(metadata).length > 0 ? metadata : void 0,
-        projectId: event.projectId || null
+        projectId: validatedProjectId
       }
     });
     console.log(
