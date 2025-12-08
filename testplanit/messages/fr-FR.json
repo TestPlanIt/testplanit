@@ -341,7 +341,8 @@
       "configKeys": {
         "edit_results_duration": "Durée de modification des résultats",
         "project_docs_default": "Documentation du projet par défaut",
-        "notificationSettings": "Paramètres globaux de notification"
+        "notificationSettings": "Paramètres globaux de notification",
+        "elasticsearch_replicas": "Réplicas Elasticsearch"
       },
       "options": {
         "icon": "Icône",
