@@ -4,6 +4,7 @@ import { authOptions } from "~/server/auth";
 import { prisma } from "~/lib/prisma";
 import { z } from "zod/v4";
 import { ProjectAccessType } from "@prisma/client";
+import { auditBulkUpdate } from "~/lib/services/auditLog";
 
 // Schema for bulk edit request
 const bulkEditSchema = z.object({
@@ -396,6 +397,18 @@ export async function POST(
     }, {
       timeout: 60000, // 60 seconds timeout for large bulk operations
     });
+
+    // Audit the bulk update
+    if (result.casesUpdated > 0) {
+      auditBulkUpdate(
+        "RepositoryCases",
+        result.casesUpdated,
+        { caseIds: validatedData.caseIds },
+        projectId
+      ).catch((error) =>
+        console.error("[AuditLog] Failed to audit bulk edit:", error)
+      );
+    }
 
     return NextResponse.json({
       success: true,

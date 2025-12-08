@@ -7,6 +7,7 @@ import {
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
   ELASTICSEARCH_REINDEX_QUEUE_NAME,
+  AUDIT_LOG_QUEUE_NAME,
 } from "./queueNames";
 
 // Re-export queue names for backward compatibility
@@ -17,6 +18,7 @@ export {
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
   ELASTICSEARCH_REINDEX_QUEUE_NAME,
+  AUDIT_LOG_QUEUE_NAME,
 };
 
 // Lazy-initialized queue instances
@@ -26,6 +28,7 @@ let _emailQueue: Queue | null = null;
 let _syncQueue: Queue | null = null;
 let _testmoImportQueue: Queue | null = null;
 let _elasticsearchReindexQueue: Queue | null = null;
+let _auditLogQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -243,6 +246,46 @@ export function getElasticsearchReindexQueue(): Queue | null {
 }
 
 /**
+ * Get the audit log queue instance (lazy initialization)
+ * Used for async audit log processing to avoid blocking mutations
+ */
+export function getAuditLogQueue(): Queue | null {
+  if (_auditLogQueue) return _auditLogQueue;
+  if (!valkeyConnection) {
+    console.warn(`Valkey connection not available, Queue "${AUDIT_LOG_QUEUE_NAME}" not initialized.`);
+    return null;
+  }
+
+  _auditLogQueue = new Queue(AUDIT_LOG_QUEUE_NAME, {
+    connection: valkeyConnection,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 5000,
+      },
+      // Long retention for audit logs - keep completed jobs for 1 year
+      removeOnComplete: {
+        age: 3600 * 24 * 365, // 1 year
+        count: 100000,
+      },
+      // Keep failed jobs for investigation
+      removeOnFail: {
+        age: 3600 * 24 * 90, // 90 days
+      },
+    },
+  });
+
+  console.log(`Queue "${AUDIT_LOG_QUEUE_NAME}" initialized.`);
+
+  _auditLogQueue.on("error", (error) => {
+    console.error(`Queue ${AUDIT_LOG_QUEUE_NAME} error:`, error);
+  });
+
+  return _auditLogQueue;
+}
+
+/**
  * Get all queues (initializes all of them)
  * Use this only when you need access to all queues (e.g., admin dashboard)
  */
@@ -254,5 +297,6 @@ export function getAllQueues() {
     syncQueue: getSyncQueue(),
     testmoImportQueue: getTestmoImportQueue(),
     elasticsearchReindexQueue: getElasticsearchReindexQueue(),
+    auditLogQueue: getAuditLogQueue(),
   };
 }

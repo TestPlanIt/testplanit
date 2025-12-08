@@ -2637,7 +2637,8 @@
       "reports": "Rapports",
       "notifications": "Notifications",
       "elasticsearch": "Moteur de recherche",
-      "queues": "Files d'attente pour les tâches"
+      "queues": "Files d'attente pour les tâches",
+      "auditLogs": "Journaux d'audit"
     },
     "imports": {
       "title": "Importation de données",
@@ -4703,6 +4704,35 @@
           "confirm": "Forcer la suppression"
         }
       }
+    },
+    "auditLogs": {
+      "title": "Journaux d'audit",
+      "description": "Consultez l'historique d'audit à l'échelle du système pour le suivi de la sécurité et de la conformité.",
+      "filterPlaceholder": "Recherche par entité, utilisateur ou action...",
+      "filterAction": "Action",
+      "filterEntityType": "Type d'entité",
+      "allActions": "Toutes les actions",
+      "allEntityTypes": "Tous les types d'entités",
+      "showing": "Affichage des entrées {start} à {end} sur {total}",
+      "viewDetails": "Voir les détails",
+      "detailTitle": "Détails du journal d'audit",
+      "userInfo": "Informations utilisateur",
+      "changes": "Changements",
+      "metadata": "Métadonnées",
+      "oldValue": "Vieux",
+      "newValue": "Nouveau",
+      "columns": {
+        "timestamp": "Horodatage",
+        "action": "Action",
+        "entityType": "Type d'entité",
+        "entityId": "ID d'entité",
+        "entityName": "Nom de l'entité",
+        "user": "Utilisateur",
+        "project": "Projet",
+        "email": "E-mail",
+        "userId": "ID de l'utilisateur"
+      },
+      "system": "Système"
     }
   },
   "components": {

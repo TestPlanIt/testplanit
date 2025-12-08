@@ -4,6 +4,7 @@ import { authOptions } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
 import { emptyEditorContent } from "~/app/constants/backend";
 import { ProjectAccessType } from "@prisma/client";
+import { auditBulkCreate } from "~/lib/services/auditLog";
 
 interface GeneratedTestCase {
   id: string;
@@ -535,6 +536,19 @@ export async function POST(request: NextRequest) {
         console.error(`Error importing test case ${testCase.name}:`, error);
         errors.push(`Failed to import "${testCase.name}": ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
+    }
+
+    // Audit the bulk import
+    if (importedCases.length > 0) {
+      auditBulkCreate("RepositoryCases", importedCases.length, projectId, {
+        source: "AI Generated Test Cases",
+        templateId,
+        folderId,
+        sourceType: sourceInfo?.type,
+        sourceKey: sourceInfo?.issueKey || sourceInfo?.documentTitle,
+      }).catch((error) =>
+        console.error("[AuditLog] Failed to audit AI test case import:", error)
+      );
     }
 
     return NextResponse.json({

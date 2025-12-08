@@ -2637,7 +2637,8 @@
       "reports": "Reports",
       "notifications": "Notifications",
       "elasticsearch": "Search Engine",
-      "queues": "Job Queues"
+      "queues": "Job Queues",
+      "auditLogs": "Audit Logs"
     },
     "imports": {
       "title": "Data Imports",
@@ -4703,6 +4704,35 @@
           "confirm": "Force Remove"
         }
       }
+    },
+    "auditLogs": {
+      "title": "Audit Logs",
+      "description": "View system-wide audit trail for security and compliance tracking",
+      "filterPlaceholder": "Search by entity, user, or action...",
+      "filterAction": "Action",
+      "filterEntityType": "Entity Type",
+      "allActions": "All Actions",
+      "allEntityTypes": "All Entity Types",
+      "showing": "Showing {start} to {end} of {total} entries",
+      "viewDetails": "View Details",
+      "detailTitle": "Audit Log Details",
+      "userInfo": "User Information",
+      "changes": "Changes",
+      "metadata": "Metadata",
+      "oldValue": "Old",
+      "newValue": "New",
+      "columns": {
+        "timestamp": "Timestamp",
+        "action": "Action",
+        "entityType": "Entity Type",
+        "entityId": "Entity ID",
+        "entityName": "Entity Name",
+        "user": "User",
+        "project": "Project",
+        "email": "Email",
+        "userId": "User ID"
+      },
+      "system": "System"
     }
   },
   "components": {

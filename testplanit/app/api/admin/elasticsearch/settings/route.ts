@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
+import { auditSystemConfigChange } from "~/lib/services/auditLog";
 
 // GET: Retrieve current replica settings
 export async function GET(request: NextRequest) {
@@ -64,6 +65,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get old value for audit
+    const oldConfig = await prisma.appConfig.findUnique({
+      where: { key: "elasticsearch_replicas" }
+    });
+    const oldValue = oldConfig?.value ?? null;
+
     // Save to database
     await prisma.appConfig.upsert({
       where: { key: "elasticsearch_replicas" },
@@ -73,6 +80,11 @@ export async function POST(request: NextRequest) {
         value: numberOfReplicas
       }
     });
+
+    // Audit the config change
+    auditSystemConfigChange("elasticsearch_replicas", oldValue, numberOfReplicas).catch(
+      (error) => console.error("[AuditLog] Failed to audit ES settings change:", error)
+    );
 
     return NextResponse.json({ success: true, numberOfReplicas });
   } catch (error: any) {

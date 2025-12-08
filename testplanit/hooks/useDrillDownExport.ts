@@ -10,6 +10,7 @@ import type {
 } from "~/lib/types/reportDrillDown";
 import { format } from "date-fns";
 import { toHumanReadable } from "~/utils/duration";
+import { logDataExport } from "~/lib/services/auditClient";
 
 interface UseDrillDownExportProps {
   /** The drill-down context */
@@ -396,6 +397,18 @@ export function useDrillDownExport({
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(link.href);
+
+      // Log export for audit trail
+      logDataExport({
+        exportType: "DrillDown-CSV",
+        entityType: context.metricId,
+        recordCount: allRecords.length,
+        filters: {
+          metricLabel: context.metricLabel,
+          dimensions: context.dimensions,
+        },
+        projectId: context.projectId,
+      });
     } catch (error) {
       console.error("Export error:", error);
       throw error;

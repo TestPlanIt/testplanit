@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { createSAMLClient } from "~/server/saml-provider";
+import { auditAuthEvent } from "~/lib/services/auditLog";
 
 export async function POST(request: NextRequest) {
   try {
@@ -122,11 +123,17 @@ export async function POST(request: NextRequest) {
     // Update user record to track logout
     await db.user.update({
       where: { id: session.user.id },
-      data: { 
+      data: {
         lastActiveAt: new Date(), // Track the logout as an activity
         // Note: We could add a lastLogoutAt field in the future if needed
       },
     });
+
+    // Audit successful logout
+    auditAuthEvent("LOGOUT", session.user.id, session.user.email || "", {
+      authMethod: user.authMethod,
+      hasSsoAccounts: ssoAccounts.length > 0,
+    }).catch(console.error);
 
     // If we have SSO logout URLs, include them in the response
     if (logoutUrls.length > 0) {

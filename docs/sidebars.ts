@@ -89,6 +89,7 @@ const sidebars: SidebarsConfig = {
             'user-guide/integrations', // Issue integrations administration page
             'user-guide/llm-integrations', // LLM/AI integrations administration page
             'user-guide/sso', // Authentication configuration and management
+            'user-guide/audit-logs', // Audit logs for compliance and security
             // Add other admin pages here as they are created
           ],
         },

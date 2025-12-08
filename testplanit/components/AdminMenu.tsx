@@ -19,6 +19,7 @@ import {
   Bell,
   Plug,
   ShieldUser,
+  ShieldCheck,
   Sparkles,
   Search,
   ImportIcon,
@@ -143,6 +144,12 @@ const menuOptions: MenuOption[] = [
     icon: Activity,
     translationKey: "queues",
     path: "queues",
+    section: "system",
+  },
+  {
+    icon: ShieldCheck,
+    translationKey: "auditLogs",
+    path: "audit-logs",
     section: "system",
   },
   {

@@ -2637,7 +2637,8 @@
       "reports": "Informes",
       "notifications": "Notificaciones",
       "elasticsearch": "Motor de búsqueda",
-      "queues": "Colas de trabajos"
+      "queues": "Colas de trabajos",
+      "auditLogs": "Registros de auditoría"
     },
     "imports": {
       "title": "Importaciones de datos",
@@ -4703,6 +4704,35 @@
           "confirm": "Forzar eliminación"
         }
       }
+    },
+    "auditLogs": {
+      "title": "Registros de auditoría",
+      "description": "Visualizar el registro de auditoría de todo el sistema para el seguimiento de la seguridad y el cumplimiento",
+      "filterPlaceholder": "Buscar por entidad, usuario o acción...",
+      "filterAction": "Acción",
+      "filterEntityType": "Tipo de entidad",
+      "allActions": "Todas las acciones",
+      "allEntityTypes": "Todos los tipos de entidades",
+      "showing": "Mostrando {start} a {end} de {total} entradas",
+      "viewDetails": "Ver detalles",
+      "detailTitle": "Detalles del registro de auditoría",
+      "userInfo": "Información del usuario",
+      "changes": "Cambios",
+      "metadata": "Metadatos",
+      "oldValue": "Viejo",
+      "newValue": "Nuevo",
+      "columns": {
+        "timestamp": "Marca de tiempo",
+        "action": "Acción",
+        "entityType": "Tipo de entidad",
+        "entityId": "ID de entidad",
+        "entityName": "Nombre de la entidad",
+        "user": "Usuario",
+        "project": "Proyecto",
+        "email": "Correo electrónico",
+        "userId": "ID de usuario"
+      },
+      "system": "Sistema"
     }
   },
   "components": {

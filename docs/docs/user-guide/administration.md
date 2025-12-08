@@ -77,6 +77,19 @@ For detailed search configuration, see the [Search Configuration Documentation](
 - Define field types and validation rules
 - Configure result fields for test execution
 
+### Audit & Compliance
+
+**Audit Logs** (`/admin/audit-logs`)
+
+- View a complete history of all system actions
+- Track who did what, when, and from where
+- Filter by action type, user, entity, or date range
+- Export audit logs for compliance reporting
+- Monitor authentication events (logins, logouts, failed attempts)
+- Review permission changes and data modifications
+
+For detailed audit log information, see the [Audit Logs Documentation](./audit-logs.md).
+
 ### Monitoring & Maintenance
 
 **System Health**

@@ -205,6 +205,29 @@ enum TestmoImportPhase {
   FINALIZING
 }
 
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  BULK_CREATE
+  BULK_UPDATE
+  BULK_DELETE
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  SESSION_INVALIDATED
+  PASSWORD_CHANGED
+  PASSWORD_RESET
+  PERMISSION_GRANT
+  PERMISSION_REVOKE
+  ROLE_CHANGED
+  API_KEY_CREATED
+  API_KEY_REGENERATED
+  DATA_EXPORTED
+  SSO_CONFIG_CHANGED
+  SYSTEM_CONFIG_CHANGED
+}
+
 model AppConfig {
   key   String @id()
   value Json
@@ -385,6 +408,7 @@ model Projects {
   llmFeatureConfigs      LlmFeatureConfig[]
   llmResponseCaches      LlmResponseCache[]
   comments               Comment[]
+  auditLogs              AuditLog[]
 
   @@index([isDeleted, isCompleted])
   @@index([createdBy])
@@ -1874,4 +1898,26 @@ model CommentMention {
   @@unique([commentId, userId])
   @@index([userId, createdAt])
   @@index([commentId])
+}
+
+model AuditLog {
+  id         String      @id() @default(cuid())
+  userId     String?     @db.Text()
+  userEmail  String?     @db.Text()
+  userName   String?     @db.Text()
+  action     AuditAction
+  entityType String      @db.VarChar(100)
+  entityId   String      @db.Text()
+  entityName String?     @db.Text()
+  changes    Json?
+  metadata   Json?
+  timestamp  DateTime    @default(now()) @db.Timestamptz(6)
+  projectId  Int?
+  project    Projects?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([userId, timestamp])
+  @@index([projectId, timestamp])
+  @@index([timestamp])
+  @@index([action])
 }

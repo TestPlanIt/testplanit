@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { db } from "~/server/db";
 import { getServerAuthSession } from "~/server/auth";
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { captureAuditEvent } from "~/lib/services/auditLog";
 
 // S3 Client Initialization (ensure environment variables are set)
 const s3Client = new S3Client({
@@ -170,6 +171,19 @@ export async function PATCH(
       data: { isDeleted: false },
     });
 
+    // Audit the restore operation
+    captureAuditEvent({
+      action: "UPDATE",
+      entityType: modelMapEntry.modelName,
+      entityId: String(idForQuery),
+      entityName: (restoredItem as any).name || (restoredItem as any).title || (restoredItem as any).email,
+      metadata: {
+        operation: "restore_from_trash",
+      },
+    }).catch((error) =>
+      console.error("[AuditLog] Failed to audit trash restore:", error)
+    );
+
     return NextResponse.json(restoredItem);
   } catch (error: any) {
     console.error(`Failed to restore ${itemType} with ID ${itemId}:`, error);
@@ -293,6 +307,20 @@ export async function DELETE(
     }
 
     await modelMapEntry.model.delete({ where: { id: idForQuery as any } }); // Use modelMapEntry.model
+
+    // Audit the permanent delete (purge) operation
+    captureAuditEvent({
+      action: "DELETE",
+      entityType: modelMapEntry.modelName,
+      entityId: String(idForQuery),
+      entityName: (itemToPurge as any).name || (itemToPurge as any).title || (itemToPurge as any).email,
+      metadata: {
+        operation: "permanent_delete",
+        purgedFromTrash: true,
+      },
+    }).catch((error) =>
+      console.error("[AuditLog] Failed to audit trash purge:", error)
+    );
 
     // If itemType is Attachments, delete from S3
     if (modelMapEntry.modelName === "Attachments" && (itemToPurge as any).url) {

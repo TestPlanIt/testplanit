@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { db } from "~/server/db";
 import { getServerAuthSession } from "~/server/auth";
 import bcrypt from "bcrypt";
+import { auditPasswordChange } from "~/lib/services/auditLog";
 
 export async function POST(
   request: NextRequest,
@@ -63,6 +64,11 @@ export async function POST(
       where: { id: userId },
       data: { password: hashedNewPassword },
     });
+
+    // Audit the password change
+    auditPasswordChange(userId, user.email || session.user.email || "", false).catch(
+      (error) => console.error("[AuditLog] Failed to audit password change:", error)
+    );
 
     return NextResponse.json(
       { message: "Password updated successfully" },

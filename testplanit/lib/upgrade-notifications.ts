@@ -33,6 +33,19 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>Requires an LLM integration configured in your project settings.</p>
     `,
   },
+  "0.5.0": {
+    title: "New Feature: Audit Logs",
+    message: `
+      <p>TestPlanIt now includes comprehensive <strong>audit logging</strong> for enhanced security and compliance.</p>
+      <ul>
+        <li>Track all user actions including logins, data changes, and permission modifications</li>
+        <li>View detailed change history with before/after values</li>
+        <li>Filter logs by user, action type, entity, or date range</li>
+        <li>Export audit logs for compliance reporting</li>
+      </ul>
+      <p>Administrators can access audit logs from <strong>Admin → Audit Logs</strong>.</p>
+    `,
+  },
 };
 
 /**
