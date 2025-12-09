@@ -1,3 +1,10 @@
+## [0.7.1](https://github.com/TestPlanIt/testplanit/compare/v0.7.0...v0.7.1) (2025-12-09)
+
+
+### Bug Fixes
+
+* **docs:** update data-domain in Docusaurus config and improve form handling in TestResultsImportDialog ([97f2823](https://github.com/TestPlanIt/testplanit/commit/97f2823923ae00c13033e83d6c1911722a53b7c3))
+
 # [0.7.0](https://github.com/TestPlanIt/testplanit/compare/v0.6.1...v0.7.0) (2025-12-09)
 
 
