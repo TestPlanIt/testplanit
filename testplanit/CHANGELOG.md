@@ -1,3 +1,10 @@
+# [0.6.0](https://github.com/TestPlanIt/testplanit/compare/v0.5.3...v0.6.0) (2025-12-09)
+
+
+### Features
+
+* **auth:** add two-factor authentication ([#19](https://github.com/TestPlanIt/testplanit/issues/19)) ([662ce57](https://github.com/TestPlanIt/testplanit/commit/662ce5742f659bbeb84f6eab1e8e3768db31b193))
+
 ## [0.5.3](https://github.com/TestPlanIt/testplanit/compare/v0.5.2...v0.5.3) (2025-12-08)
 
 
