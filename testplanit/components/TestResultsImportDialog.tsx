@@ -219,7 +219,7 @@ export default function TestResultsImportDialog({
       formData.append("name", data.name);
       formData.append("projectId", projectId.toString());
       formData.append("stateId", data.stateId.toString());
-      formData.append("templateId", data.templateId);
+      formData.append("templateId", data.templateId.toString());
       formData.append("format", format);
       if (data.configurationId)
         formData.append("configId", data.configurationId);
@@ -600,7 +600,10 @@ export default function TestResultsImportDialog({
                 <Label>{tCommon("fields.tags")}</Label>
                 <ManageTags
                   selectedTags={selectedTags}
-                  setSelectedTags={setSelectedTags}
+                  setSelectedTags={(tags) => {
+                    setSelectedTags(tags);
+                    form.setValue("selectedTags", tags);
+                  }}
                   canCreateTags={true}
                 />
               </div>
@@ -618,7 +621,7 @@ export default function TestResultsImportDialog({
                           <Asterisk className="w-3 h-3 text-destructive" />
                         </sup>
                         <span className="ml-2 text-xs text-muted-foreground">
-                          {"({acceptedExtensions})"}
+                          {`(${acceptedExtensions})`}
                         </span>
                       </FormLabel>
                       <FormControl>

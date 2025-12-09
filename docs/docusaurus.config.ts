@@ -40,7 +40,7 @@ const config: Config = {
       tagName: 'script',
       attributes: {
         defer: 'defer',
-        'data-domain': 'testplanit.com',
+        'data-domain': 'docs.testplanit.com',
         src: 'https://plausible.dermanouelian.com/js/script.file-downloads.hash.outbound-links.js',
       },
     },

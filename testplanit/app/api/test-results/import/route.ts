@@ -510,7 +510,7 @@ export async function POST(request: NextRequest) {
                 create: {
                   testRunId: testRunId,
                   repositoryCaseId: repositoryCase.id,
-                  order: caseIndex + 1,
+                  order: caseOrder,
                 },
               });
 
