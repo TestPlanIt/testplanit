@@ -18,6 +18,11 @@ import { Link } from "~/lib/navigation";
 import svgIcon from "~/public/tpi_logo.svg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -86,6 +91,12 @@ const Signin: NextPage = () => {
   const [magicLinkEmail, setMagicLinkEmail] = useState("");
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
   const [sessionCleared, setSessionCleared] = useState(false);
+  // 2FA state
+  const [show2FAInput, setShow2FAInput] = useState(false);
+  const [pendingAuthToken, setPendingAuthToken] = useState<string | null>(null);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [is2FALoading, setIs2FALoading] = useState(false);
+  const [useBackupCode, setUseBackupCode] = useState(false);
   const t = useTranslations();
   const tCommon = useTranslations("common");
 
@@ -196,7 +207,10 @@ const Signin: NextPage = () => {
   }, [isStillLoading]);
 
   const FormSchema = z.object({
-    email: z.string().email({ message: t("common.errors.emailInvalid") }).min(1, { message: t("common.errors.emailRequired") }),
+    email: z
+      .string()
+      .email({ message: t("common.errors.emailInvalid") })
+      .min(1, { message: t("common.errors.emailRequired") }),
     password: z.string().min(4, t("common.errors.passwordRequired")),
   });
 
@@ -221,6 +235,7 @@ const Signin: NextPage = () => {
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsLoading(true);
+    setSubmissionError("");
     // Clear any existing session cookies first to ensure clean state
     clearSessionCookies();
 
@@ -242,10 +257,59 @@ const Signin: NextPage = () => {
       }
 
       router.push("/");
+    } else if (result?.error?.startsWith("2FA_REQUIRED:")) {
+      // Extract pending auth token and show 2FA input
+      const token = result.error.replace("2FA_REQUIRED:", "");
+      setPendingAuthToken(token);
+      setShow2FAInput(true);
+      setIsLoading(false);
+    } else if (result?.error?.startsWith("2FA_SETUP_REQUIRED:")) {
+      // 2FA is required by system but user hasn't set it up - redirect to setup page
+      const token = result.error.replace("2FA_SETUP_REQUIRED:", "");
+      router.push(`/auth/two-factor-setup?token=${encodeURIComponent(token)}`);
     } else {
       setSubmissionError(t("common.errors.invalidCredentials"));
       setIsLoading(false);
     }
+  }
+
+  async function handle2FASubmit() {
+    if (!pendingAuthToken || !twoFactorCode) return;
+
+    setIs2FALoading(true);
+    setSubmissionError("");
+
+    const result = await signIn("credentials", {
+      redirect: false,
+      pendingAuthToken,
+      twoFactorToken: twoFactorCode,
+    });
+
+    if (result?.ok) {
+      // Get user preferences from session
+      const response = await fetch("/api/auth/session");
+      const session = await response.json();
+
+      // Set language cookie if user has a locale preference
+      if (session?.user?.preferences?.locale) {
+        const urlLocale = session.user.preferences.locale.replace("_", "-");
+        document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+      }
+
+      router.push("/");
+    } else {
+      setSubmissionError(
+        t("auth.errors.invalid2FACode") || "Invalid verification code"
+      );
+      setIs2FALoading(false);
+    }
+  }
+
+  function cancel2FA() {
+    setShow2FAInput(false);
+    setPendingAuthToken(null);
+    setTwoFactorCode("");
+    setSubmissionError("");
   }
 
   async function handleSsoSignIn(provider: any) {
@@ -349,7 +413,7 @@ const Signin: NextPage = () => {
                 {t("common.status.loading")}
               </p>
             </div>
-          ) : (!sessionCleared || isLoadingSsoProviders) ? (
+          ) : !sessionCleared || isLoadingSsoProviders ? (
             // Show nothing during the 500ms delay
             <div className="w-1/2 space-y-6 flex flex-col items-center justify-center py-8">
               {/* Invisible placeholder to prevent layout shift */}
@@ -427,13 +491,13 @@ const Signin: NextPage = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-fit">
                       {configuredProviders.map((provider) => (
                         <Button
                           key={provider.id}
                           type="button"
                           variant="outline"
-                          className="w-full"
+                          className="w-full shrink-0"
                           onClick={() => handleSsoSignIn(provider)}
                           disabled={isSsoLoading === provider.id}
                         >
@@ -636,6 +700,115 @@ const Signin: NextPage = () => {
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 2FA Verification Dialog */}
+      <Dialog open={show2FAInput} onOpenChange={(open) => !open && cancel2FA()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              {t("auth.signin.twoFactor.title")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("auth.signin.twoFactor.description")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {submissionError && (
+              <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
+                <p className="text-sm text-destructive text-center">
+                  {submissionError}
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                {useBackupCode
+                  ? t("auth.signin.twoFactor.backupCodeLabel")
+                  : t("auth.signin.twoFactor.codeLabel")}
+              </label>
+              {useBackupCode ? (
+                <Input
+                  type="text"
+                  placeholder="XXXXXXXX"
+                  value={twoFactorCode}
+                  onChange={(e) =>
+                    setTwoFactorCode(e.target.value.toUpperCase().slice(0, 8))
+                  }
+                  className="text-center text-lg tracking-widest font-mono"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && twoFactorCode.length === 8) {
+                      handle2FASubmit();
+                    }
+                  }}
+                />
+              ) : (
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={6}
+                    value={twoFactorCode}
+                    onChange={(value) => setTwoFactorCode(value)}
+                    onComplete={() => handle2FASubmit()}
+                    autoFocus
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setUseBackupCode(!useBackupCode);
+                  setTwoFactorCode("");
+                }}
+                className="text-xs text-primary hover:underline w-full text-center"
+              >
+                {useBackupCode
+                  ? t("auth.signin.twoFactor.useAuthenticator")
+                  : t("auth.signin.twoFactor.useBackupCode")}
+              </button>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={cancel2FA}
+              disabled={is2FALoading}
+            >
+              {t("common.actions.cancel")}
+            </Button>
+            <Button
+              type="button"
+              onClick={handle2FASubmit}
+              disabled={
+                is2FALoading || twoFactorCode.length < (useBackupCode ? 8 : 6)
+              }
+            >
+              {is2FALoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("common.status.loading")}
+                </>
+              ) : (
+                t("auth.signin.twoFactor.verify")
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

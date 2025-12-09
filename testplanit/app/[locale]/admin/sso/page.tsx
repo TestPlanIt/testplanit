@@ -532,6 +532,50 @@ export default function SSOAdminPage() {
     }
   };
 
+  const handleToggleForce2FANonSSO = async (enabled: boolean) => {
+    try {
+      await upsertSettings({
+        where: { id: registrationSettings?.id ?? "default-registration-settings" },
+        create: { id: "default-registration-settings", force2FANonSSO: enabled },
+        update: { force2FANonSSO: enabled },
+      });
+      toast.success(
+        enabled
+          ? t("admin.sso.messages.force2FANonSSOEnabled")
+          : t("admin.sso.messages.force2FANonSSODisabled")
+      );
+      refetchSettings();
+    } catch (error) {
+      toast.error(t("admin.sso.messages.force2FAUpdateFailed"));
+    }
+  };
+
+  const handleToggleForce2FAAllLogins = async (enabled: boolean) => {
+    try {
+      // If enabling force 2FA for all logins, also enable for non-SSO
+      const updates: { force2FAAllLogins: boolean; force2FANonSSO?: boolean } = {
+        force2FAAllLogins: enabled,
+      };
+      if (enabled) {
+        updates.force2FANonSSO = true;
+      }
+
+      await upsertSettings({
+        where: { id: registrationSettings?.id ?? "default-registration-settings" },
+        create: { id: "default-registration-settings", ...updates },
+        update: updates,
+      });
+      toast.success(
+        enabled
+          ? t("admin.sso.messages.force2FAAllLoginsEnabled")
+          : t("admin.sso.messages.force2FAAllLoginsDisabled")
+      );
+      refetchSettings();
+    } catch (error) {
+      toast.error(t("admin.sso.messages.force2FAUpdateFailed"));
+    }
+  };
+
   const handleToggleDomainRestriction = async (enabled: boolean) => {
     try {
       await upsertSettings({
@@ -708,6 +752,45 @@ export default function SSOAdminPage() {
               onCheckedChange={handleToggleForceSso}
             />
           </div>
+
+          {/* Two-Factor Authentication Settings */}
+          <div className="pt-4 border-t">
+            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+              {t("admin.sso.globalSettings.twoFactor.sectionTitle")}
+            </h4>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">
+                    {t("admin.sso.globalSettings.twoFactor.forceNonSSO.title")}
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {t("admin.sso.globalSettings.twoFactor.forceNonSSO.description")}
+                  </p>
+                </div>
+                <Switch
+                  checked={registrationSettings?.force2FANonSSO || registrationSettings?.force2FAAllLogins || false}
+                  onCheckedChange={handleToggleForce2FANonSSO}
+                  disabled={registrationSettings?.force2FAAllLogins || false}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-medium">
+                    {t("admin.sso.globalSettings.twoFactor.forceAllLogins.title")}
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {t("admin.sso.globalSettings.twoFactor.forceAllLogins.description")}
+                  </p>
+                </div>
+                <Switch
+                  checked={registrationSettings?.force2FAAllLogins || false}
+                  onCheckedChange={handleToggleForce2FAAllLogins}
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <Label className="text-base font-medium">

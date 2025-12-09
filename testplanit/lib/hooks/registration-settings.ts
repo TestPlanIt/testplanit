@@ -328,7 +328,7 @@ export function useSuspenseCountRegistrationSettings<TArgs extends Prisma.Regist
 }
 import type { Access } from '@prisma/client';
 
-export function useCheckRegistrationSettings<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; restrictEmailDomains?: boolean; allowOpenRegistration?: boolean; defaultAccess?: Access }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckRegistrationSettings<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; restrictEmailDomains?: boolean; allowOpenRegistration?: boolean; defaultAccess?: Access; force2FANonSSO?: boolean; force2FAAllLogins?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('RegistrationSettings', `${endpoint}/registrationSettings/check`, args, options, fetch);
 }

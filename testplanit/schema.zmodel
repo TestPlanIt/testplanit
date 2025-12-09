@@ -127,6 +127,11 @@ model User {
     createdComments         Comment[]               @relation("CommentCreator")
     commentMentions         CommentMention[]        @relation("CommentMentions")
 
+    // Two-factor authentication
+    twoFactorEnabled        Boolean                 @default(false)
+    twoFactorSecret         String?                 @omit // Encrypted TOTP secret
+    twoFactorBackupCodes    String?                 @omit // JSON array of hashed backup codes
+
     @@index([isActive, isDeleted])
     @@index([access])
     @@deny('delete, update, read', !auth())
@@ -3161,6 +3166,9 @@ model RegistrationSettings {
     restrictEmailDomains  Boolean  @default(false) // Enable/disable domain restrictions
     allowOpenRegistration Boolean  @default(true)  // Allow any user to register
     defaultAccess         Access   @default(NONE)  // Default system access for new users
+    // Two-factor authentication settings
+    force2FANonSSO        Boolean  @default(false) // Force 2FA for email/password logins
+    force2FAAllLogins     Boolean  @default(false) // Force 2FA for all logins including SSO
     createdAt             DateTime @default(now())
     updatedAt             DateTime @updatedAt
 

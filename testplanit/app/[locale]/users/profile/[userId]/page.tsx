@@ -51,6 +51,7 @@ import { Switch } from "@/components/ui/switch";
 import { EditAvatarModal } from "./EditAvatar";
 import { RemoveAvatar } from "./RemoveAvatar";
 import { ChangePasswordModal } from "./ChangePasswordModal";
+import { TwoFactorSettings } from "./TwoFactorSettings";
 import { Avatar } from "@/components/Avatar";
 import { AccessLevelDisplay } from "@/components/tables/AccessLevelDisplay";
 import { EmailCell } from "@/components/EmailDisplay";
@@ -102,7 +103,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
     where: { key: "notificationSettings" },
   });
 
-  const { data: user } = useFindFirstUser({
+  const { data: user, refetch: refetchUser } = useFindFirstUser({
     where: {
       AND: [{ isDeleted: false }, { id: userId }],
     },
@@ -634,6 +635,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                             </span>
                             <Switch disabled checked={user.isApi} />
                           </div>
+
+                          <Separator className="opacity-50" />
+
+                          {/* Two-Factor Authentication Settings */}
+                          <TwoFactorSettings
+                            userId={user.id}
+                            twoFactorEnabled={user.twoFactorEnabled || false}
+                            isOwnProfile={user?.id === session?.user?.id}
+                            onUpdate={() => refetchUser()}
+                          />
                         </div>
                       </div>
                     </AccordionContent>
