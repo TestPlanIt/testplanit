@@ -1,6 +1,7 @@
 ---
 slug: public
 title: TestPlanIt is Now Open Source
+description: "After 2 years of development, TestPlanIt is now available on GitHub. Self-host, customize, and contribute to a modern open-source test management platform."
 authors: [testplanit]
 tags: [opensource, announcement, release]
 ---

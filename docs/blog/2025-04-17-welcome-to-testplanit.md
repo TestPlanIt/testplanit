@@ -1,6 +1,7 @@
 ---
 slug: welcome
 title: Welcome to TestPlanIt
+description: "Introducing the TestPlanIt blog—your source for announcements, tutorials, development insights, and community spotlights for modern test management."
 authors: [testplanit]
 tags: [welcome, introduction]
 ---
