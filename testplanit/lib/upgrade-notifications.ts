@@ -46,6 +46,23 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>Administrators can access audit logs from <strong>Admin → Audit Logs</strong>.</p>
     `,
   },
+  "0.6.0": {
+    title: "New Feature: Two-Factor Authentication",
+    message: `
+      <p>TestPlanIt now supports <strong>Two-Factor Authentication (2FA)</strong> for enhanced account security.</p>
+      <ul>
+        <li>Enable TOTP-based 2FA from your <strong>User Profile</strong></li>
+        <li>Works with any authenticator app (Google Authenticator, Authy, etc.)</li>
+        <li>Backup codes provided for account recovery</li>
+        <li>Regenerate backup codes at any time from your profile</li>
+      </ul>
+      <p><strong>For Administrators:</strong></p>
+      <ul>
+        <li>Enforce 2FA for password-based logins via <strong>Admin → SSO → Registration Settings</strong></li>
+        <li>Optionally require 2FA for all logins, including SSO users</li>
+      </ul>
+    `,
+  },
 };
 
 /**
