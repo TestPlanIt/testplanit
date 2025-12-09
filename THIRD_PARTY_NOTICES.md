@@ -64,6 +64,18 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **Repository**: https://github.com/TanStack/table
 - **Copyright**: Copyright (c) TanStack
 
+### TanStack Form
+- **Version**: 1.x
+- **License**: MIT
+- **Repository**: https://github.com/TanStack/form
+- **Copyright**: Copyright (c) TanStack
+
+### TanStack Virtual
+- **Version**: 3.x
+- **License**: MIT
+- **Repository**: https://github.com/TanStack/virtual
+- **Copyright**: Copyright (c) TanStack
+
 ### Redux Toolkit
 - **Version**: 2.x
 - **License**: MIT
@@ -182,6 +194,48 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **Repository**: https://github.com/atomiks/tippyjs
 - **Copyright**: Copyright (c) 2017-present atomiks
 
+### React Day Picker
+- **Version**: 9.x
+- **License**: MIT
+- **Repository**: https://github.com/gpbl/react-day-picker
+- **Copyright**: Copyright (c) 2014-present Giampaolo Bellavite
+
+### React Hot Toast
+- **Version**: 2.x
+- **License**: MIT
+- **Repository**: https://github.com/timolins/react-hot-toast
+- **Copyright**: Copyright (c) 2020 Timo Lins
+
+### React Markdown
+- **Version**: 10.x
+- **License**: MIT
+- **Repository**: https://github.com/remarkjs/react-markdown
+- **Copyright**: Copyright (c) 2015 Espen Hovlandsdal
+
+### React Window
+- **Version**: 2.x
+- **License**: MIT
+- **Repository**: https://github.com/bvaughn/react-window
+- **Copyright**: Copyright (c) 2018 Brian Vaughn
+
+### Input OTP
+- **Version**: 1.x
+- **License**: MIT
+- **Repository**: https://github.com/guilhermerodz/input-otp
+- **Copyright**: Copyright (c) 2024 Guilherme Rodz
+
+### Swagger UI React
+- **Version**: 5.x
+- **License**: Apache-2.0
+- **Repository**: https://github.com/swagger-api/swagger-ui
+- **Copyright**: Copyright (c) 2020 SmartBear Software
+
+### NextStepJS
+- **Version**: 2.x
+- **License**: MIT
+- **Repository**: https://github.com/enszrlu/NextStep
+- **Copyright**: Copyright (c) 2024 Enes Zorlu
+
 ## Data Visualization
 
 ### D3
@@ -203,12 +257,6 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **License**: MIT
 - **Repository**: https://github.com/nodejs/node
 - **Copyright**: Copyright Node.js contributors. All rights reserved.
-
-### PostgreSQL Client (pg)
-- **Version**: 8.x
-- **License**: MIT
-- **Repository**: https://github.com/brianc/node-postgres
-- **Copyright**: Copyright (c) 2010-2023 Brian Carlson
 
 ### Prisma
 - **Version**: 6.x
@@ -246,6 +294,18 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **Repository**: https://github.com/node-saml/node-saml
 - **Copyright**: Copyright (c) node-saml contributors
 
+### otplib
+- **Version**: 12.x
+- **License**: MIT
+- **Repository**: https://github.com/yeojz/otplib
+- **Copyright**: Copyright (c) 2016 Gerald Yeo
+
+### QRCode
+- **Version**: 1.x
+- **License**: MIT
+- **Repository**: https://github.com/soldair/node-qrcode
+- **Copyright**: Copyright (c) 2012 Ryan Day
+
 ### Nodemailer
 - **Version**: 7.x
 - **License**: MIT
@@ -275,6 +335,34 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **Copyright**: Copyright (c) Elasticsearch B.V.
 - **Note**: The Elasticsearch server itself is licensed under Elastic License 2.0 (ELv2) or Server Side Public License (SSPL). The JavaScript client library used in this project is Apache-2.0.
 
+## XML & Security
+
+### xml-crypto
+- **Version**: 6.x
+- **License**: MIT
+- **Repository**: https://github.com/node-saml/xml-crypto
+- **Copyright**: Copyright (c) xml-crypto contributors
+
+### xml-encryption
+- **Version**: 3.x
+- **License**: MIT
+- **Repository**: https://github.com/node-saml/xml-encryption
+- **Copyright**: Copyright (c) xml-encryption contributors
+
+## AI & Machine Learning
+
+### Vercel AI SDK
+- **Version**: 5.x
+- **License**: Apache-2.0
+- **Repository**: https://github.com/vercel/ai
+- **Copyright**: Copyright (c) 2023 Vercel, Inc.
+
+### OpenAI Node.js SDK
+- **Version**: 6.x
+- **License**: Apache-2.0
+- **Repository**: https://github.com/openai/openai-node
+- **Copyright**: Copyright (c) 2023 OpenAI
+
 ## File Storage
 
 ### AWS SDK for JavaScript (v3)
@@ -294,6 +382,20 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **License**: Apache-2.0
 - **Repository**: https://github.com/lovell/sharp
 - **Copyright**: Copyright (c) 2013-2023 Lovell Fuller
+
+## External Integrations
+
+### Atlaskit Editor Jira Transformer
+- **Version**: 14.x
+- **License**: Apache-2.0
+- **Repository**: https://bitbucket.org/atlassian/atlassian-frontend-mirror
+- **Copyright**: Copyright (c) Atlassian Pty Ltd
+
+### html-to-adf-converter
+- **Version**: 1.x
+- **License**: MIT
+- **Repository**: https://github.com/julianlam/html-to-adf
+- **Copyright**: Copyright (c) Julian Lam
 
 ## Utilities
 
@@ -356,6 +458,60 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **License**: BSD-3-Clause
 - **Repository**: https://github.com/avoidwork/filesize.js
 - **Copyright**: Copyright (c) 2024 Jason Mulligan
+
+### csv-parse
+- **Version**: 6.x
+- **License**: MIT
+- **Repository**: https://github.com/adaltas/node-csv
+- **Copyright**: Copyright (c) 2010-2024 Adaltas
+
+### clsx
+- **Version**: 2.x
+- **License**: MIT
+- **Repository**: https://github.com/lukeed/clsx
+- **Copyright**: Copyright (c) Luke Edwards
+
+### class-variance-authority
+- **Version**: 0.7.x
+- **License**: Apache-2.0
+- **Repository**: https://github.com/joe-bell/cva
+- **Copyright**: Copyright (c) 2022 Joe Bell
+
+### tailwind-merge
+- **Version**: 3.x
+- **License**: MIT
+- **Repository**: https://github.com/dcastil/tailwind-merge
+- **Copyright**: Copyright (c) 2021 Dany Castillo
+
+### use-debounce
+- **Version**: 10.x
+- **License**: MIT
+- **Repository**: https://github.com/xnimorz/use-debounce
+- **Copyright**: Copyright (c) 2019 Nikita Mostovoy
+
+### date-fns-tz
+- **Version**: 3.x
+- **License**: MIT
+- **Repository**: https://github.com/marnusw/date-fns-tz
+- **Copyright**: Copyright (c) 2019 Marnus Weststrate
+
+### Formidable
+- **Version**: 3.x
+- **License**: MIT
+- **Repository**: https://github.com/node-formidable/formidable
+- **Copyright**: Copyright (c) 2011-present Felix Geisendörfer, node-formidable contributors
+
+### Busboy
+- **Version**: 1.x
+- **License**: MIT
+- **Repository**: https://github.com/mscdex/busboy
+- **Copyright**: Copyright (c) Brian White
+
+### Test Results Parser
+- **Version**: 0.4.x
+- **License**: MIT
+- **Repository**: https://github.com/test-results-reporter/parser
+- **Copyright**: Copyright (c) test-results-reporter
 
 ## Testing Dependencies
 
@@ -422,14 +578,14 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **Repository**: https://github.com/privatenumber/tsx
 - **Copyright**: Copyright (c) Hiroshi Osaki
 
-### Standard Version
-- **Version**: 9.x
-- **License**: ISC
-- **Repository**: https://github.com/conventional-changelog/standard-version
-- **Copyright**: Copyright (c) 2015-2016 conventional-changelog team
+### Semantic Release
+- **Version**: 25.x
+- **License**: MIT
+- **Repository**: https://github.com/semantic-release/semantic-release
+- **Copyright**: Copyright (c) 2017 Contributors
 
 ### esbuild
-- **Version**: 0.25.x
+- **Version**: 0.27.x
 - **License**: MIT
 - **Repository**: https://github.com/evanw/esbuild
 - **Copyright**: Copyright (c) 2020 Evan Wallace
@@ -626,5 +782,5 @@ For our commercial license, we ensure all dependencies allow commercial use and 
 
 ---
 
-*Last updated: January 2025*
+*Last updated: December 2025*
 *This document is automatically generated and manually reviewed quarterly.*

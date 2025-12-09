@@ -440,48 +440,72 @@ describe("testResultsParser", () => {
   });
 
   describe("countTotalTestCases", () => {
+    // Helper to create minimal valid ITestSuite
+    const createMockSuite = (
+      name: string,
+      cases: ITestCase[]
+    ): ITestSuite =>
+      ({
+        name,
+        total: cases.length,
+        passed: 0,
+        failed: 0,
+        errors: 0,
+        skipped: 0,
+        duration: 0,
+        status: "passed",
+        tags: [],
+        metadata: {},
+        cases,
+      }) as ITestSuite;
+
+    // Helper to create minimal valid ITestResult
+    const createMockResult = (
+      name: string,
+      suites: ITestSuite[]
+    ): ITestResult =>
+      ({
+        name,
+        total: 0,
+        passed: 0,
+        failed: 0,
+        errors: 0,
+        skipped: 0,
+        retried: 0,
+        duration: 0,
+        status: "passed",
+        tags: [],
+        metadata: {},
+        suites,
+      }) as ITestResult;
+
     it("should count test cases across all suites", () => {
-      const result: ITestResult = {
-        name: "Test Results",
-        suites: [
-          {
-            name: "Suite1",
-            cases: [
-              { name: "test1", status: "passed" },
-              { name: "test2", status: "failed" },
-            ],
-          } as ITestSuite,
-          {
-            name: "Suite2",
-            cases: [
-              { name: "test3", status: "passed" },
-              { name: "test4", status: "passed" },
-              { name: "test5", status: "skipped" },
-            ],
-          } as ITestSuite,
-        ],
-      };
+      const result = createMockResult("Test Results", [
+        createMockSuite("Suite1", [
+          { name: "test1", status: "passed" } as ITestCase,
+          { name: "test2", status: "failed" } as ITestCase,
+        ]),
+        createMockSuite("Suite2", [
+          { name: "test3", status: "passed" } as ITestCase,
+          { name: "test4", status: "passed" } as ITestCase,
+          { name: "test5", status: "skipped" } as ITestCase,
+        ]),
+      ]);
 
       expect(countTotalTestCases(result)).toBe(5);
     });
 
     it("should return 0 for empty suites", () => {
-      const result: ITestResult = {
-        name: "Empty Results",
-        suites: [],
-      };
+      const result = createMockResult("Empty Results", []);
 
       expect(countTotalTestCases(result)).toBe(0);
     });
 
     it("should handle suites without cases", () => {
-      const result: ITestResult = {
-        name: "Test Results",
-        suites: [
-          { name: "Suite1" } as ITestSuite,
-          { name: "Suite2", cases: [] } as ITestSuite,
-        ],
-      };
+      const result = createMockResult("Test Results", [
+        createMockSuite("Suite1", []),
+        createMockSuite("Suite2", []),
+      ]);
 
       expect(countTotalTestCases(result)).toBe(0);
     });
@@ -489,7 +513,18 @@ describe("testResultsParser", () => {
     it("should handle undefined suites", () => {
       const result = {
         name: "Test Results",
-      } as ITestResult;
+        total: 0,
+        passed: 0,
+        failed: 0,
+        errors: 0,
+        skipped: 0,
+        retried: 0,
+        duration: 0,
+        status: "passed",
+        tags: [],
+        metadata: {},
+        suites: undefined,
+      } as unknown as ITestResult;
 
       expect(countTotalTestCases(result)).toBe(0);
     });
