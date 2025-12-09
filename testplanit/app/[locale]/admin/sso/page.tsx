@@ -21,7 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShieldUser, Settings, Edit, Plus, X, Mail, Apple, MailCheck } from "lucide-react";
+import { ShieldUser, Settings, Edit, Plus, X, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { SsoProviderType, Access } from "@prisma/client";
 import {
@@ -535,8 +535,13 @@ export default function SSOAdminPage() {
   const handleToggleForce2FANonSSO = async (enabled: boolean) => {
     try {
       await upsertSettings({
-        where: { id: registrationSettings?.id ?? "default-registration-settings" },
-        create: { id: "default-registration-settings", force2FANonSSO: enabled },
+        where: {
+          id: registrationSettings?.id ?? "default-registration-settings",
+        },
+        create: {
+          id: "default-registration-settings",
+          force2FANonSSO: enabled,
+        },
         update: { force2FANonSSO: enabled },
       });
       toast.success(
@@ -553,15 +558,18 @@ export default function SSOAdminPage() {
   const handleToggleForce2FAAllLogins = async (enabled: boolean) => {
     try {
       // If enabling force 2FA for all logins, also enable for non-SSO
-      const updates: { force2FAAllLogins: boolean; force2FANonSSO?: boolean } = {
-        force2FAAllLogins: enabled,
-      };
+      const updates: { force2FAAllLogins: boolean; force2FANonSSO?: boolean } =
+        {
+          force2FAAllLogins: enabled,
+        };
       if (enabled) {
         updates.force2FANonSSO = true;
       }
 
       await upsertSettings({
-        where: { id: registrationSettings?.id ?? "default-registration-settings" },
+        where: {
+          id: registrationSettings?.id ?? "default-registration-settings",
+        },
         create: { id: "default-registration-settings", ...updates },
         update: updates,
       });
@@ -579,8 +587,13 @@ export default function SSOAdminPage() {
   const handleToggleDomainRestriction = async (enabled: boolean) => {
     try {
       await upsertSettings({
-        where: { id: registrationSettings?.id ?? "default-registration-settings" },
-        create: { id: "default-registration-settings", restrictEmailDomains: enabled },
+        where: {
+          id: registrationSettings?.id ?? "default-registration-settings",
+        },
+        create: {
+          id: "default-registration-settings",
+          restrictEmailDomains: enabled,
+        },
         update: { restrictEmailDomains: enabled },
       });
       toast.success(
@@ -663,7 +676,9 @@ export default function SSOAdminPage() {
   const handleDefaultAccessChange = async (value: Access) => {
     try {
       await upsertSettings({
-        where: { id: registrationSettings?.id ?? "default-registration-settings" },
+        where: {
+          id: registrationSettings?.id ?? "default-registration-settings",
+        },
         create: { id: "default-registration-settings", defaultAccess: value },
         update: { defaultAccess: value },
       });
@@ -765,11 +780,13 @@ export default function SSOAdminPage() {
                     {t("admin.sso.globalSettings.twoFactor.forceNonSSO.title")}
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    {t("admin.sso.globalSettings.twoFactor.forceNonSSO.description")}
+                    {t(
+                      "admin.sso.globalSettings.twoFactor.forceNonSSO.description"
+                    )}
                   </p>
                 </div>
                 <Switch
-                  checked={registrationSettings?.force2FANonSSO || registrationSettings?.force2FAAllLogins || false}
+                  checked={registrationSettings?.force2FANonSSO || false}
                   onCheckedChange={handleToggleForce2FANonSSO}
                   disabled={registrationSettings?.force2FAAllLogins || false}
                 />
@@ -777,10 +794,14 @@ export default function SSOAdminPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-base font-medium">
-                    {t("admin.sso.globalSettings.twoFactor.forceAllLogins.title")}
+                    {t(
+                      "admin.sso.globalSettings.twoFactor.forceAllLogins.title"
+                    )}
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    {t("admin.sso.globalSettings.twoFactor.forceAllLogins.description")}
+                    {t(
+                      "admin.sso.globalSettings.twoFactor.forceAllLogins.description"
+                    )}
                   </p>
                 </div>
                 <Switch
@@ -957,7 +978,9 @@ export default function SSOAdminPage() {
             </div>
             <Select
               value={registrationSettings?.defaultAccess || "NONE"}
-              onValueChange={(value) => handleDefaultAccessChange(value as Access)}
+              onValueChange={(value) =>
+                handleDefaultAccessChange(value as Access)
+              }
             >
               <SelectTrigger className="w-[200px]">
                 <SelectValue />

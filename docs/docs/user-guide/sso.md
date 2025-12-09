@@ -515,12 +515,41 @@ SSO implementation supports various compliance requirements:
 - **ISO 27001**: Enhanced access control and security
 - **HIPAA**: Support for enterprise authentication standards
 
+## Two-Factor Authentication (2FA) Integration
+
+TestPlanIt supports TOTP-based two-factor authentication that can work alongside SSO. Administrators can enforce 2FA policies from the Registration Settings section.
+
+### 2FA Enforcement Options
+
+#### Force 2FA for Non-SSO Logins
+- Requires 2FA for users signing in with email/password
+- SSO logins (Google, Apple, SAML, Magic Link) are not affected
+- Useful when SSO providers handle their own MFA
+
+#### Force 2FA for All Logins
+- Requires 2FA for all users, including SSO users
+- SSO users must set up and verify 2FA after identity provider authentication
+- Provides consistent security across all authentication methods
+
+### SSO and Personal 2FA
+
+When **Force 2FA for All Logins** is disabled:
+- Users can optionally enable personal 2FA on their accounts
+- Personal 2FA only applies to password-based logins
+- SSO logins bypass personal 2FA settings
+- A notice is displayed on user profiles to inform users of this behavior
+
+When **Force 2FA for All Logins** is enabled:
+- All users must complete 2FA regardless of login method
+- Personal 2FA settings are enforced for SSO logins
+
+For detailed 2FA configuration, see [Two-Factor Authentication](./two-factor-authentication.md).
+
 ## Future Enhancements
 
 Planned SSO improvements include:
 
 - OpenID Connect (OIDC) support
-- Multi-factor authentication (MFA) integration
 - Just-in-Time (JIT) provisioning enhancements
 - SCIM support for user lifecycle management
 - Additional SAML features (encrypted assertions, metadata import)

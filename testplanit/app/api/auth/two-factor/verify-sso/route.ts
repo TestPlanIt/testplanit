@@ -28,7 +28,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Rate limit by user ID
-    if (!checkRateLimit(`2fa-verify-sso:${session.user.id}`, { windowMs: 60000, maxAttempts: 5 })) {
+    if (
+      !checkRateLimit(`2fa-verify-sso:${session.user.id}`, {
+        windowMs: 60000,
+        maxAttempts: 5,
+      })
+    ) {
       return NextResponse.json(
         { error: "Too many attempts. Please try again later." },
         { status: 429 }
@@ -58,6 +63,7 @@ export async function POST(request: NextRequest) {
 
     let verified = false;
     let usedBackupCode = false;
+    let hashedCodes: string[] = [];
 
     // Try TOTP verification first
     const secret = decryptSecret(user.twoFactorSecret);
@@ -65,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Try backup code if TOTP failed
     if (!verified && user.twoFactorBackupCodes) {
-      const hashedCodes = JSON.parse(user.twoFactorBackupCodes) as string[];
+      hashedCodes = JSON.parse(user.twoFactorBackupCodes) as string[];
       const codeIndex = verifyBackupCode(token, hashedCodes);
 
       if (codeIndex !== -1) {
@@ -91,9 +97,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       usedBackupCode,
-      remainingBackupCodes: usedBackupCode
-        ? JSON.parse(user.twoFactorBackupCodes || "[]").length - 1
-        : undefined,
+      remainingBackupCodes: usedBackupCode ? hashedCodes.length : undefined,
     });
   } catch (error) {
     console.error("2FA verify-sso error:", error);

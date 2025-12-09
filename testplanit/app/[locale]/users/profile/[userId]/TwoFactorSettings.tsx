@@ -92,7 +92,10 @@ export function TwoFactorSettings({
         const response = await fetch("/api/auth/two-factor/settings");
         if (response.ok) {
           const data = await response.json();
-          setTwoFactorRequired(data.force2FAAllLogins || data.force2FANonSSO);
+          // Only force2FAAllLogins prevents users from disabling 2FA
+          // force2FANonSSO only applies to password logins, so SSO users can still
+          // toggle their personal 2FA (which only affects password logins anyway)
+          setTwoFactorRequired(data.force2FAAllLogins);
           // SSO bypasses personal 2FA when force2FAAllLogins is NOT enabled
           // (force2FANonSSO only applies to password logins)
           setSsoBypassesPersonal2FA(!data.force2FAAllLogins);

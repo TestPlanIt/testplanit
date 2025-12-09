@@ -1466,8 +1466,8 @@ export function TestmoImportPanel() {
     const alreadyFetched = analysisFetchedRef.current.has(jobId);
     const hasSuggestions = Boolean(
       mappingAnalysis?.ambiguousEntities?.workflows?.length ||
-        mappingAnalysis?.ambiguousEntities?.statuses?.length ||
-        mappingAnalysis?.ambiguousEntities?.configurations?.length
+      mappingAnalysis?.ambiguousEntities?.statuses?.length ||
+      mappingAnalysis?.ambiguousEntities?.configurations?.length
     );
 
     if (alreadyFetched) {
@@ -2781,6 +2781,7 @@ export function TestmoImportPanel() {
       )}
 
       <input
+        title={t("testmo.mappingImportConfiguration")}
         ref={importConfigInputRef}
         type="file"
         accept="application/json"
