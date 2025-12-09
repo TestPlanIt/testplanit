@@ -1,3 +1,10 @@
+# [0.7.0](https://github.com/TestPlanIt/testplanit/compare/v0.6.1...v0.7.0) (2025-12-09)
+
+
+### Features
+
+* **import:** expand automated test results import for JUnit, TestNG, NUnit, xUnit, MSTest, Mocha, and Cucumber ([#20](https://github.com/TestPlanIt/testplanit/issues/20)) ([a7856cd](https://github.com/TestPlanIt/testplanit/commit/a7856cde96c0d3482f78469dfb720beb86e7196d))
+
 ## [0.6.1](https://github.com/TestPlanIt/testplanit/compare/v0.6.0...v0.6.1) (2025-12-09)
 
 # [0.6.0](https://github.com/TestPlanIt/testplanit/compare/v0.5.3...v0.6.0) (2025-12-09)
