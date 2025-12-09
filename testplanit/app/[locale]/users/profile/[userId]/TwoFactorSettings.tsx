@@ -8,6 +8,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -80,6 +81,7 @@ export function TwoFactorSettings({
 
   // Disable state
   const [disableCode, setDisableCode] = useState("");
+  const [disableUseBackupCode, setDisableUseBackupCode] = useState(false);
 
   // Regenerate state
   const [regenerateCode, setRegenerateCode] = useState("");
@@ -221,6 +223,7 @@ export function TwoFactorSettings({
   function closeDisable() {
     setIsDisableOpen(false);
     setDisableCode("");
+    setDisableUseBackupCode(false);
     setError("");
   }
 
@@ -458,24 +461,55 @@ export function TwoFactorSettings({
           )}
 
           <div className="space-y-2 py-4">
-            <div className="flex justify-center">
-              <InputOTP
-                maxLength={6}
+            {disableUseBackupCode ? (
+              <Input
+                type="text"
+                placeholder="XXXXXXXX"
                 value={disableCode}
-                onChange={(value) => setDisableCode(value)}
-                onComplete={() => disable2FA()}
+                onChange={(e) =>
+                  setDisableCode(e.target.value.toUpperCase().slice(0, 8))
+                }
+                className="text-center text-lg tracking-widest font-mono"
+                autoComplete="one-time-code"
                 autoFocus
-              >
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && disableCode.length === 8) {
+                    disable2FA();
+                  }
+                }}
+              />
+            ) : (
+              <div className="flex justify-center">
+                <InputOTP
+                  maxLength={6}
+                  value={disableCode}
+                  onChange={(value) => setDisableCode(value)}
+                  onComplete={() => disable2FA()}
+                  autoFocus
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setDisableUseBackupCode(!disableUseBackupCode);
+                setDisableCode("");
+              }}
+              className="text-xs text-primary hover:underline w-full text-center"
+            >
+              {disableUseBackupCode
+                ? t("auth.twoFactorVerify.useAuthenticator")
+                : t("auth.twoFactorVerify.useBackupCode")}
+            </button>
           </div>
 
           <AlertDialogFooter>
@@ -485,7 +519,7 @@ export function TwoFactorSettings({
                 e.preventDefault();
                 disable2FA();
               }}
-              disabled={isLoading || disableCode.length < 6}
+              disabled={isLoading || disableCode.length < (disableUseBackupCode ? 8 : 6)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
