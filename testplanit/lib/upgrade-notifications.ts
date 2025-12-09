@@ -63,6 +63,22 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       </ul>
     `,
   },
+  "0.7.0": {
+    title: "New Feature: Import Automated Test Results from more frameworks",
+    message: `
+      <p>Import automated test results from <strong>7 popular testing frameworks</strong> directly into TestPlanIt.</p>
+      <ul>
+        <li><strong>JUnit XML</strong> - Java, Python (pytest), and many CI systems</li>
+        <li><strong>TestNG XML</strong> - Java projects using TestNG</li>
+        <li><strong>NUnit XML</strong> - .NET projects using NUnit v2/v3</li>
+        <li><strong>xUnit XML</strong> - .NET projects using xUnit.net</li>
+        <li><strong>MSTest TRX</strong> - Visual Studio Test Results</li>
+        <li><strong>Mocha JSON</strong> - JavaScript/Node.js projects</li>
+        <li><strong>Cucumber JSON</strong> - BDD frameworks (Cucumber, SpecFlow)</li>
+      </ul>
+      <p>Navigate to <strong>Test Runs → Import Results</strong> to get started. Auto-detection identifies your file format automatically.</p>
+    `,
+  },
 };
 
 /**
