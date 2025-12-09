@@ -47,7 +47,8 @@ import RecentResultsDonut from "@/components/dataVisualizations/RecentResultsDon
 import { DateFormatter } from "@/components/DateFormatter";
 import CompletedRunsLineChart from "@/components/dataVisualizations/CompletedRunsLineChart";
 import LoadingSpinner from "~/components/LoadingSpinner";
-import JUnitImportDialog from "@/components/JUnitImportDialog";
+import TestResultsImportDialog from "@/components/TestResultsImportDialog";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import DuplicateTestRunDialog, {
   AddTestRunModalInitProps,
 } from "./DuplicateTestRunDialog";
@@ -426,10 +427,16 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     if (!allIncompleteTestRuns) return [];
     if (runTypeFilter === "both") return allIncompleteTestRuns;
 
-    const targetType = runTypeFilter === "manual" ? "REGULAR" : "JUNIT";
-    return allIncompleteTestRuns.filter(
-      (run) => run.testRunType === targetType
-    );
+    if (runTypeFilter === "manual") {
+      return allIncompleteTestRuns.filter(
+        (run) => !isAutomatedTestRunType(run.testRunType)
+      );
+    } else {
+      // automated filter
+      return allIncompleteTestRuns.filter((run) =>
+        isAutomatedTestRunType(run.testRunType)
+      );
+    }
   }, [allIncompleteTestRuns, runTypeFilter]);
 
   // Prepare data for Sunburst Chart
@@ -788,10 +795,10 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
         monthCounts[monthKey].total++;
 
-        if (run.testRunType === "REGULAR") {
-          monthCounts[monthKey].manual++;
-        } else if (run.testRunType === "JUNIT") {
+        if (isAutomatedTestRunType(run.testRunType)) {
           monthCounts[monthKey].automated++;
+        } else {
+          monthCounts[monthKey].manual++;
         }
       }
     });
@@ -922,82 +929,10 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                   <div>
                     {canAddEdit && (
                       <div className="flex flex-row gap-2">
-                        <JUnitImportDialog
+                        <TestResultsImportDialog
                           projectId={parseInt(projectId)}
-                          onImport={async (data) => {
-                            try {
-                              // Create a new test run
-                              const testRun = await createTestRun.mutateAsync({
-                                data: {
-                                  name: data.name,
-                                  projectId: parseInt(projectId),
-                                  configId: data.configurationId,
-                                  milestoneId: data.milestoneId,
-                                  stateId: data.stateId,
-                                  createdById: session?.user?.id,
-                                  testRunType: "JUNIT",
-                                  tags: {
-                                    connect: data.tagIds.map((id) => ({ id })),
-                                  },
-                                },
-                              });
-
-                              if (!testRun) {
-                                throw new Error("Failed to create test run");
-                              }
-
-                              // Upload JUnit XML file
-                              const formData = new FormData();
-                              formData.append("file", data.file);
-                              formData.append(
-                                "testRunId",
-                                testRun.id.toString()
-                              );
-                              formData.append(
-                                "stateId",
-                                data.stateId.toString()
-                              );
-                              formData.append("projectId", projectId);
-                              formData.append("name", data.name);
-
-                              const response = await fetch(
-                                "/api/junit/import",
-                                {
-                                  method: "POST",
-                                  body: formData,
-                                }
-                              );
-
-                              if (!response.ok) {
-                                const errorData = await response
-                                  .json()
-                                  .catch(() => null);
-                                console.error(
-                                  "Error importing JUnit results:",
-                                  {
-                                    status: response.status,
-                                    statusText: response.statusText,
-                                    error: errorData,
-                                  }
-                                );
-                                throw new Error(
-                                  `Failed to import JUnit results: ${errorData?.error || response.statusText}`
-                                );
-                              }
-
-                              // Refresh the page to show the new test run
-                              router.refresh();
-                              // Return the testRunId as expected
-                              return { testRunId: testRun.id };
-                            } catch (error) {
-                              console.error(
-                                "Error importing JUnit results:",
-                                error
-                              );
-                              throw error;
-                            }
-                          }}
                           onSuccess={() => {
+                            router.refresh();
                             refetchIncompleteTestRuns();
                           }}
                         />

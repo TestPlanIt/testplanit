@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="0" name="NUnit Sample Tests" fullname="MyApp.Tests" runstate="Runnable" testcasecount="5" result="Failed" total="5" passed="3" failed="1" inconclusive="0" skipped="1" asserts="8" start-time="2024-12-09T10:00:00.0000000Z" end-time="2024-12-09T10:00:02.5000000Z" duration="2.500">
+  <environment framework-version="3.14.0" clr-version="8.0.0" os-version="Microsoft Windows 10.0.22621" platform="Win32NT" cwd="C:\Projects\MyApp" machine-name="DEV-MACHINE" user="developer" user-domain="WORKGROUP"/>
+  <test-suite type="Assembly" id="1" name="MyApp.Tests.dll" fullname="MyApp.Tests.dll" runstate="Runnable" testcasecount="5" result="Failed" total="5" passed="3" failed="1" inconclusive="0" skipped="1" asserts="8" start-time="2024-12-09T10:00:00.0000000Z" end-time="2024-12-09T10:00:02.5000000Z" duration="2.500">
+    <test-suite type="TestSuite" id="2" name="MyApp" fullname="MyApp" runstate="Runnable" testcasecount="5" result="Failed" total="5" passed="3" failed="1" inconclusive="0" skipped="1" asserts="8">
+      <test-suite type="TestSuite" id="3" name="Tests" fullname="MyApp.Tests" runstate="Runnable" testcasecount="5" result="Failed" total="5" passed="3" failed="1" inconclusive="0" skipped="1" asserts="8">
+        <test-suite type="TestFixture" id="4" name="CalculatorTests" fullname="MyApp.Tests.CalculatorTests" classname="MyApp.Tests.CalculatorTests" runstate="Runnable" testcasecount="3" result="Passed" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="6">
+          <test-case id="5" name="Add_TwoPositiveNumbers_ReturnsSum" fullname="MyApp.Tests.CalculatorTests.Add_TwoPositiveNumbers_ReturnsSum" methodname="Add_TwoPositiveNumbers_ReturnsSum" classname="MyApp.Tests.CalculatorTests" runstate="Runnable" result="Passed" asserts="2" start-time="2024-12-09T10:00:00.1000000Z" end-time="2024-12-09T10:00:00.3000000Z" duration="0.200"/>
+          <test-case id="6" name="Subtract_TwoNumbers_ReturnsDifference" fullname="MyApp.Tests.CalculatorTests.Subtract_TwoNumbers_ReturnsDifference" methodname="Subtract_TwoNumbers_ReturnsDifference" classname="MyApp.Tests.CalculatorTests" runstate="Runnable" result="Passed" asserts="2" start-time="2024-12-09T10:00:00.3000000Z" end-time="2024-12-09T10:00:00.5000000Z" duration="0.200"/>
+          <test-case id="7" name="Multiply_TwoNumbers_ReturnsProduct" fullname="MyApp.Tests.CalculatorTests.Multiply_TwoNumbers_ReturnsProduct" methodname="Multiply_TwoNumbers_ReturnsProduct" classname="MyApp.Tests.CalculatorTests" runstate="Runnable" result="Passed" asserts="2" start-time="2024-12-09T10:00:00.5000000Z" end-time="2024-12-09T10:00:00.7000000Z" duration="0.200"/>
+        </test-suite>
+        <test-suite type="TestFixture" id="8" name="DivisionTests" fullname="MyApp.Tests.DivisionTests" classname="MyApp.Tests.DivisionTests" runstate="Runnable" testcasecount="2" result="Failed" total="2" passed="0" failed="1" inconclusive="0" skipped="1" asserts="2">
+          <test-case id="9" name="Divide_ByZero_ThrowsException" fullname="MyApp.Tests.DivisionTests.Divide_ByZero_ThrowsException" methodname="Divide_ByZero_ThrowsException" classname="MyApp.Tests.DivisionTests" runstate="Runnable" result="Failed" asserts="1" start-time="2024-12-09T10:00:01.0000000Z" end-time="2024-12-09T10:00:01.5000000Z" duration="0.500">
+            <failure>
+              <message><![CDATA[Expected: <System.DivideByZeroException>
+  But was:  no exception thrown]]></message>
+              <stack-trace><![CDATA[   at MyApp.Tests.DivisionTests.Divide_ByZero_ThrowsException() in C:\Projects\MyApp\Tests\DivisionTests.cs:line 25]]></stack-trace>
+            </failure>
+          </test-case>
+          <test-case id="10" name="Divide_LargeNumbers_ReturnsCorrectResult" fullname="MyApp.Tests.DivisionTests.Divide_LargeNumbers_ReturnsCorrectResult" methodname="Divide_LargeNumbers_ReturnsCorrectResult" classname="MyApp.Tests.DivisionTests" runstate="Ignored" result="Skipped" asserts="0">
+            <reason><![CDATA[Large number support not yet implemented]]></reason>
+          </test-case>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

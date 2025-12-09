@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="JUnit Sample Test Suite" tests="5" failures="1" errors="1" skipped="1" time="2.345">
+  <testsuite name="com.example.UserServiceTest" tests="3" failures="1" errors="0" skipped="0" time="1.234" timestamp="2024-12-09T10:00:00">
+    <testcase name="testCreateUser" classname="com.example.UserServiceTest" time="0.456">
+    </testcase>
+    <testcase name="testGetUserById" classname="com.example.UserServiceTest" time="0.234">
+    </testcase>
+    <testcase name="testUpdateUser" classname="com.example.UserServiceTest" time="0.544">
+      <failure message="Expected status 200 but got 404" type="AssertionError">
+java.lang.AssertionError: Expected status 200 but got 404
+	at com.example.UserServiceTest.testUpdateUser(UserServiceTest.java:45)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+      </failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="com.example.ProductServiceTest" tests="2" failures="0" errors="1" skipped="1" time="1.111" timestamp="2024-12-09T10:01:00">
+    <testcase name="testGetProductList" classname="com.example.ProductServiceTest" time="0.789">
+      <error message="NullPointerException" type="java.lang.NullPointerException">
+java.lang.NullPointerException: Cannot invoke method on null object
+	at com.example.ProductServiceTest.testGetProductList(ProductServiceTest.java:23)
+      </error>
+    </testcase>
+    <testcase name="testDeleteProduct" classname="com.example.ProductServiceTest" time="0.0">
+      <skipped message="Feature not implemented yet"/>
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -1075,6 +1075,12 @@ model RepositoryFolders {
 enum RepositoryCaseSource {
     MANUAL
     JUNIT
+    TESTNG
+    XUNIT
+    NUNIT
+    MSTEST
+    MOCHA
+    CUCUMBER
     API
 }
 
@@ -1917,6 +1923,12 @@ model TestRuns {
 enum TestRunType {
     REGULAR
     JUNIT
+    TESTNG
+    XUNIT
+    NUNIT
+    MSTEST
+    MOCHA
+    CUCUMBER
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')

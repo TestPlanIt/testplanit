@@ -54,6 +54,7 @@ import {
 import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
 import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsDonut";
 import { useFindManyJUnitTestResult } from "~/lib/hooks";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import JUnitStatusTimeline from "@/components/dataVisualizations/JUnitStatusTimeline";
 import {
   Dialog,
@@ -191,10 +192,10 @@ function JunitTableSection({
     }
   }, [selectedTestCaseId, sortedJunitTestCases, junitPageSize, setJunitPage]);
 
-  // Fetch all JUnit results for this run (only if JUNIT)
+  // Fetch all JUnit results for this run (only if automated test run type)
   const { data: junitResults = [], isLoading: isJunitResultsLoading } =
     useFindManyJUnitTestResult(
-      testRunData?.testRunType === "JUNIT"
+      isAutomatedTestRunType(testRunData?.testRunType)
         ? {
             where: { testSuiteId: Number(runId) },
             orderBy: { executedAt: "desc" },
@@ -543,7 +544,7 @@ function JunitTableSection({
                 className={`$${isCollapsedRight ? " transition-all duration-300 ease-in-out" : ""} w-[${panelRightWidth}%]`}
               >
                 <div className="p-4 space-y-4">
-                  {testRunData?.testRunType === "JUNIT" && (
+                  {isAutomatedTestRunType(testRunData?.testRunType) && (
                     <div className="flex">
                       <Badge variant="default" className="flex gap-1">
                         <DynamicIcon

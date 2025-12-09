@@ -1527,7 +1527,7 @@ export default function TestResultHistory({
                                 result.content && (
                                   <div className="px-4 py-2">
                                     <div className="text-xs text-muted-foreground">
-                                      {tCommon("fields.notes")} {"(JUnit)"}
+                                      {tCommon("fields.notes")}
                                     </div>
                                     <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 max-h-[100px] overflow-auto hover:max-h-fit text-sm">
                                       {result.content}
@@ -1537,12 +1537,12 @@ export default function TestResultHistory({
                               {result.sourceType === "junit" && (
                                 <div className="px-4 py-2 mt-2 bg-muted/50 rounded-md border text-xs space-y-1">
                                   <div className="font-semibold text-primary">
-                                    {tCommon("actions.junit.details")}
+                                    {tCommon("actions.automated.details")}
                                   </div>
                                   {result.testSuiteName && (
                                     <div>
                                       <span className="font-medium">
-                                        {tCommon("actions.junit.testSuite")}
+                                        {tCommon("actions.automated.testSuite")}
                                       </span>{" "}
                                       {result.testSuiteName}
                                     </div>
@@ -1550,7 +1550,7 @@ export default function TestResultHistory({
                                   {result.type && (
                                     <div>
                                       <span className="font-medium">
-                                        {tCommon("actions.junit.type") + ":"}
+                                        {tCommon("actions.automated.type") + ":"}
                                       </span>{" "}
                                       {result.type}
                                     </div>
@@ -1558,7 +1558,7 @@ export default function TestResultHistory({
                                   {result.message && (
                                     <div>
                                       <span className="font-medium">
-                                        {tCommon("actions.junit.message") + ":"}
+                                        {tCommon("actions.automated.message") + ":"}
                                       </span>{" "}
                                       {result.message}
                                     </div>
@@ -1566,7 +1566,7 @@ export default function TestResultHistory({
                                   {result.file && (
                                     <div>
                                       <span className="font-medium">
-                                        {tCommon("actions.junit.file") + ":"}
+                                        {tCommon("actions.automated.file") + ":"}
                                       </span>{" "}
                                       {result.file}
                                     </div>
@@ -1574,7 +1574,7 @@ export default function TestResultHistory({
                                   {typeof result.line === "number" && (
                                     <div>
                                       <span className="font-medium">
-                                        {tCommon("actions.junit.line") + ":"}
+                                        {tCommon("actions.automated.line") + ":"}
                                       </span>{" "}
                                       {result.line}
                                     </div>
@@ -1582,7 +1582,7 @@ export default function TestResultHistory({
                                   {typeof result.assertions === "number" && (
                                     <div>
                                       <span className="font-medium">
-                                        {tCommon("actions.junit.assertions") +
+                                        {tCommon("actions.automated.assertions") +
                                           ":"}
                                       </span>{" "}
                                       {result.assertions}

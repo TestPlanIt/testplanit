@@ -93,7 +93,7 @@ const nextConfig = {
   output: 'standalone',
   turbopack: {},
   transpilePackages: ['lucide-react'],
-  serverExternalPackages: ["@zenstackhq/runtime", "@zenstackhq/server"],
+  serverExternalPackages: ["@zenstackhq/runtime", "@zenstackhq/server", "test-results-parser"],
   outputFileTracingRoot: path.join(path.dirname(fileURLToPath(import.meta.url)), "../"),
   experimental: {
     // Limit number of workers to reduce memory usage during build

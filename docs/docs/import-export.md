@@ -12,7 +12,7 @@ TestPlanIt provides comprehensive import and export capabilities to help you mig
 The import/export system supports:
 
 - **CSV Import/Export** for test cases and bulk data operations
-- **JUnit XML Import** for automated test results
+- **Automated Test Results Import** for multiple formats (JUnit, TestNG, NUnit, xUnit, MSTest, Mocha, Cucumber)
 - **Field Mapping** for flexible data transformation
 - **Bulk Operations** for efficient data management
 - **Attachment Support** during import/export processes
@@ -146,19 +146,55 @@ Export test cases and related data to CSV format.
 4. Click **Generate Export**
 5. Download generated CSV file
 
-## JUnit XML Import
+## Automated Test Results Import
 
-Import automated test results from JUnit XML files.
+Import automated test results from multiple testing frameworks and formats.
 
-### Accessing JUnit Import
+### Supported Formats
+
+TestPlanIt supports importing test results from the following formats:
+
+| Format | File Types | Description |
+|--------|-----------|-------------|
+| **JUnit XML** | `.xml` | Standard JUnit XML format (Java, Python pytest, etc.) |
+| **TestNG XML** | `.xml` | TestNG XML reports from Java projects |
+| **NUnit XML** | `.xml` | NUnit v2/v3 XML reports from .NET projects |
+| **xUnit XML** | `.xml` | xUnit.net XML reports from .NET projects |
+| **MSTest TRX** | `.trx`, `.xml` | Visual Studio Test Results (TRX) files |
+| **Mocha JSON** | `.json` | Mocha JSON reporter output (JavaScript/Node.js) |
+| **Cucumber JSON** | `.json` | Cucumber JSON reporter output (BDD frameworks) |
+
+### Accessing Test Results Import
 
 1. Navigate to **Test Runs** in your project
 2. Click **Import Results** button
-3. Select **JUnit XML Import**
+3. The import dialog opens with format options
 
-### JUnit XML Format
+### Import Process
 
-TestPlanIt supports standard JUnit XML format:
+1. **Select Format**
+   - Choose **Auto-detect** (recommended) to automatically identify the file format
+   - Or manually select a specific format from the dropdown
+
+2. **Configure Test Run**
+   - Enter a **Test Run Name** (required)
+   - Select a **Parent Folder** for organizing imported test cases
+   - Choose a **Template** to apply to imported test cases
+   - Select **State** for the test run
+   - Optionally set **Configuration**, **Milestone**, and **Tags**
+
+3. **Upload Files**
+   - Select one or more test result files
+   - Multiple files of the same format can be imported together
+
+4. **Import Execution**
+   - Progress is displayed in real-time
+   - Test cases are automatically created or updated
+   - Results are mapped to appropriate statuses
+
+### Format-Specific Examples
+
+#### JUnit XML Format
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -181,51 +217,150 @@ TestPlanIt supports standard JUnit XML format:
 </testsuites>
 ```
 
-### Import Process
+#### NUnit XML Format
 
-1. **Upload JUnit File**
-   - Select JUnit XML file
-   - Validate XML format
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="0" name="MyApp.Tests" testcasecount="2" result="Passed"
+          engine-version="3.12.0" clr-version="4.0.30319.42000">
+  <test-suite type="Assembly" name="MyApp.Tests.dll">
+    <test-case id="1001" name="AdditionTest" fullname="MyApp.Tests.CalculatorTests.AdditionTest"
+               result="Passed" duration="0.0234">
+    </test-case>
+    <test-case id="1002" name="DivisionTest" fullname="MyApp.Tests.CalculatorTests.DivisionTest"
+               result="Failed" duration="0.0156">
+      <failure>
+        <message>Expected: 5, But was: 4</message>
+        <stack-trace>at MyApp.Tests.CalculatorTests.DivisionTest()</stack-trace>
+      </failure>
+    </test-case>
+  </test-suite>
+</test-run>
+```
 
-2. **Test Run Configuration**
-   - Create new test run or add to existing
-   - Set test run name and description
-   - Choose configuration (environment)
+#### MSTest TRX Format
 
-3. **Test Case Mapping**
-   - Map JUnit test names to existing test cases
-   - Auto-create missing test cases option
-   - Set folder for new test cases
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Results>
+    <UnitTestResult testId="abc-123" testName="TestMethod1" outcome="Passed"
+                    duration="00:00:01.234" />
+    <UnitTestResult testId="abc-124" testName="TestMethod2" outcome="Failed"
+                    duration="00:00:00.567">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.AreEqual failed</Message>
+          <StackTrace>at TestClass.TestMethod2()</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+</TestRun>
+```
 
-4. **Result Processing**
-   - Import test results with status mapping:
-     - **Success** → Passed
-     - **Failure** → Failed
-     - **Error** → Blocked
-     - **Skipped** → Skipped
+#### Cucumber JSON Format
 
-5. **Review and Confirm**
-   - Review mapping summary
-   - Start import process
-   - View import results
+```json
+[
+  {
+    "uri": "features/login.feature",
+    "keyword": "Feature",
+    "name": "User Login",
+    "elements": [
+      {
+        "keyword": "Scenario",
+        "name": "Valid login",
+        "steps": [
+          {
+            "keyword": "Given",
+            "name": "a registered user",
+            "result": { "status": "passed", "duration": 1234567 }
+          },
+          {
+            "keyword": "When",
+            "name": "they enter valid credentials",
+            "result": { "status": "passed", "duration": 2345678 }
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+
+#### Mocha JSON Format
+
+```json
+{
+  "stats": {
+    "suites": 2,
+    "tests": 5,
+    "passes": 4,
+    "failures": 1,
+    "duration": 1234
+  },
+  "results": [
+    {
+      "title": "Authentication",
+      "suites": [],
+      "tests": [
+        {
+          "title": "should login successfully",
+          "fullTitle": "Authentication should login successfully",
+          "duration": 45,
+          "state": "passed"
+        }
+      ]
+    }
+  ]
+}
+```
 
 ### Status Mapping
 
-| JUnit Status | TestPlanIt Status | Description |
-|-------------|-------------------|-------------|
-| Success | Passed | Test executed successfully |
-| Failure | Failed | Test assertion failed |
-| Error | Blocked | Test execution error |
-| Skipped | Skipped | Test was not executed |
+Test result statuses are automatically mapped to TestPlanIt statuses:
+
+| Source Status | TestPlanIt Status | Description |
+|--------------|-------------------|-------------|
+| pass, passed, success, ok | Passed | Test executed successfully |
+| fail, failed, failure | Failed | Test assertion failed |
+| error, errored, broken | Error | Test execution error |
+| skip, skipped, pending, ignored, disabled | Skipped | Test was not executed |
+
+### Folder Structure
+
+When importing test results, TestPlanIt automatically creates a folder hierarchy based on the test suite structure:
+
+- **For .NET formats** (NUnit, xUnit, MSTest): Namespace-based folders are created
+  - `MyApp.Tests.CalculatorTests` → `MyApp` > `Tests` > `CalculatorTests`
+- **For Cucumber**: Feature file paths are used
+  - `features/login/authentication.feature` → `features` > `login` > `authentication`
+- **For Java formats** (JUnit, TestNG): Class name hierarchy is used
+  - `com.example.auth.LoginTest` → `com` > `example` > `auth` > `LoginTest`
 
 ### Test Case Auto-Creation
 
-When importing JUnit results, TestPlanIt can automatically create missing test cases:
+When importing test results, TestPlanIt automatically creates or updates test cases:
 
-- **Test Name**: Uses JUnit test name
-- **Class Name**: Added as tag or custom field
-- **Folder**: Organized by class name or custom structure
-- **Template**: Applied based on configuration
+- **Test Name**: Uses the test method/scenario name
+- **Class Name**: Stores the fully qualified name for uniqueness
+- **Source**: Records the format type (JUNIT, NUNIT, CUCUMBER, etc.)
+- **Template**: Uses the selected template from the import dialog
+- **Folder**: Organized based on suite/namespace structure
+
+### Auto-Detection
+
+The Auto-detect feature examines file content and extension to determine the format:
+
+- **`.trx` files**: Always identified as MSTest
+- **JSON files**: Analyzed for Cucumber or Mocha structure
+- **XML files**: Parsed for format-specific root elements:
+  - `<testsuites>` or `<testsuite>` → JUnit
+  - `<testng-results>` → TestNG
+  - `<test-run>` with NUnit attributes → NUnit
+  - `<assemblies>` → xUnit
+  - `<TestRun>` with Microsoft namespace → MSTest
 
 ## Advanced Import Features
 
@@ -325,6 +460,8 @@ Export complete project data including:
 
 ### CI/CD Pipeline Integration
 
+#### Java/Maven with JUnit
+
 ```bash
 # Example Jenkins pipeline step
 pipeline {
@@ -339,16 +476,64 @@ pipeline {
             steps {
                 script {
                     // Upload JUnit results to TestPlanIt
-                    uploadToTestPlanIt(
-                        file: 'target/surefire-reports/TEST-*.xml',
-                        project: 'my-project',
-                        testRun: env.BUILD_NUMBER
-                    )
+                    sh '''
+                        curl -X POST "${TESTPLANIT_URL}/api/test-results/import" \
+                            -H "Authorization: Bearer ${TESTPLANIT_TOKEN}" \
+                            -F "files=@target/surefire-reports/TEST-*.xml" \
+                            -F "name=Build ${BUILD_NUMBER}" \
+                            -F "projectId=${PROJECT_ID}" \
+                            -F "format=auto"
+                    '''
                 }
             }
         }
     }
 }
+```
+
+#### .NET with NUnit/xUnit
+
+```yaml
+# GitHub Actions example
+- name: Run Tests
+  run: dotnet test --logger "trx;LogFileName=results.trx"
+
+- name: Upload Results
+  run: |
+    curl -X POST "${{ secrets.TESTPLANIT_URL }}/api/test-results/import" \
+        -H "Authorization: Bearer ${{ secrets.TESTPLANIT_TOKEN }}" \
+        -F "files=@TestResults/results.trx" \
+        -F "name=PR #${{ github.event.number }}" \
+        -F "projectId=${{ vars.PROJECT_ID }}" \
+        -F "format=auto"
+```
+
+#### Node.js with Mocha
+
+```bash
+# Generate JSON report
+mocha --reporter json > test-results.json
+
+# Upload to TestPlanIt
+curl -X POST "${TESTPLANIT_URL}/api/test-results/import" \
+    -F "files=@test-results.json" \
+    -F "name=Mocha Tests $(date +%Y-%m-%d)" \
+    -F "projectId=${PROJECT_ID}" \
+    -F "format=mocha"
+```
+
+#### Cucumber/BDD
+
+```bash
+# Generate Cucumber JSON report
+cucumber-js --format json:results.json
+
+# Upload to TestPlanIt
+curl -X POST "${TESTPLANIT_URL}/api/test-results/import" \
+    -F "files=@results.json" \
+    -F "name=BDD Tests $(date +%Y-%m-%d)" \
+    -F "projectId=${PROJECT_ID}" \
+    -F "format=cucumber"
 ```
 
 ### Test Management Migration
@@ -381,16 +566,30 @@ options: {
 }
 ```
 
-### JUnit Import API
+### Automated Test Results Import API
 
 ```http
-POST /api/junit/import
+POST /api/test-results/import
 Content-Type: multipart/form-data
 
-file: [JUnit XML file]
-testRunId: "123e4567-e89b-12d3-a456-426614174000"
-createTestCases: true
-folder: "/Automated Tests"
+files: [Test result file(s)]
+name: "Test Run Name"
+projectId: 123
+format: "auto" | "junit" | "testng" | "nunit" | "xunit" | "mstest" | "mocha" | "cucumber"
+templateId: 456
+stateId: 789
+parentFolderId: 101
+configId: 102 (optional)
+milestoneId: 103 (optional)
+tagIds: [1, 2, 3] (optional)
+```
+
+Response is Server-Sent Events (SSE) with progress updates:
+
+```json
+{"progress": 25, "status": "Processing test case 5 of 20..."}
+{"progress": 100, "status": "Import completed successfully!"}
+{"complete": true, "testRunId": 12345}
 ```
 
 ### Export API

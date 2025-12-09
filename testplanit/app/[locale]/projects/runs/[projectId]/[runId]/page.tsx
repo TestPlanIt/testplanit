@@ -100,6 +100,7 @@ import {
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { updateTestRunForecast } from "~/services/testRunService";
 import { getJunitColumns } from "./junitColumns";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import TestRunFormControls from "./TestRunFormControls";
@@ -476,7 +477,7 @@ export default function TestRunPage() {
   // Fetch JUnit test suites if this is a JUNIT run
   const { data: jUnitSuites, isLoading: isJUnitLoading } =
     useFindManyJUnitTestSuite(
-      testRunData?.testRunType === "JUNIT"
+      isAutomatedTestRunType(testRunData?.testRunType)
         ? {
             where: { testRunId: Number(runId) },
             include: {
@@ -1343,7 +1344,7 @@ export default function TestRunPage() {
     );
   }
 
-  if (testRunData && testRunData.testRunType === "JUNIT") {
+  if (testRunData && isAutomatedTestRunType(testRunData.testRunType)) {
     // --- JUNIT TABLE STATE ---
     return (
       <PaginationProvider>
@@ -1451,7 +1452,7 @@ export default function TestRunPage() {
                       </div>
                     </Badge>
                     {/* Duplicate button for COMPLETED runs */}
-                    {canAddEditRun && testRunData?.testRunType !== "JUNIT" && (
+                    {canAddEditRun && !isAutomatedTestRunType(testRunData?.testRunType) && (
                       <Button
                         type="button"
                         variant="secondary"
@@ -1956,7 +1957,7 @@ export default function TestRunPage() {
         </SheetContent>
       </Sheet>
       {/* Dialog: Show if canAddEditRun and not JUNIT (regardless of completion status) */}
-      {canAddEditRun && testRunData?.testRunType !== "JUNIT" && (
+      {canAddEditRun && !isAutomatedTestRunType(testRunData?.testRunType) && (
         <DuplicateTestRunDialog
           open={isDuplicateDialogOpen}
           onOpenChange={setIsDuplicateDialogOpen}

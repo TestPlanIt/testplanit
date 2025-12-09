@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assemblies timestamp="2024-12-09T10:00:00">
+  <assembly name="MyApp.Tests" environment="64-bit .NET 8.0.0" test-framework="xUnit.net 2.6.0" run-date="2024-12-09" run-time="10:00:00" total="4" passed="2" failed="1" skipped="1" time="1.876" errors="0">
+    <collection name="Test collection for MyApp.Tests.Controllers.UserControllerTests" total="2" passed="1" failed="1" skipped="0" time="0.987">
+      <test name="MyApp.Tests.Controllers.UserControllerTests.GetUser_ReturnsUser_WhenUserExists" type="MyApp.Tests.Controllers.UserControllerTests" method="GetUser_ReturnsUser_WhenUserExists" time="0.456" result="Pass">
+      </test>
+      <test name="MyApp.Tests.Controllers.UserControllerTests.GetUser_ReturnsNotFound_WhenUserDoesNotExist" type="MyApp.Tests.Controllers.UserControllerTests" method="GetUser_ReturnsNotFound_WhenUserDoesNotExist" time="0.531" result="Fail">
+        <failure exception-type="Xunit.Sdk.EqualException">
+          <message><![CDATA[Assert.Equal() Failure
+Expected: NotFound
+Actual:   BadRequest]]></message>
+          <stack-trace><![CDATA[   at MyApp.Tests.Controllers.UserControllerTests.GetUser_ReturnsNotFound_WhenUserDoesNotExist() in /src/tests/UserControllerTests.cs:line 42]]></stack-trace>
+        </failure>
+      </test>
+    </collection>
+    <collection name="Test collection for MyApp.Tests.Services.EmailServiceTests" total="2" passed="1" failed="0" skipped="1" time="0.889">
+      <test name="MyApp.Tests.Services.EmailServiceTests.SendEmail_ReturnsTrue_WhenEmailIsValid" type="MyApp.Tests.Services.EmailServiceTests" method="SendEmail_ReturnsTrue_WhenEmailIsValid" time="0.889" result="Pass">
+      </test>
+      <test name="MyApp.Tests.Services.EmailServiceTests.SendEmail_ReturnsFalse_WhenSmtpUnavailable" type="MyApp.Tests.Services.EmailServiceTests" method="SendEmail_ReturnsFalse_WhenSmtpUnavailable" time="0" result="Skip">
+        <reason><![CDATA[SMTP server not available in test environment]]></reason>
+      </test>
+    </collection>
+  </assembly>
+</assemblies>

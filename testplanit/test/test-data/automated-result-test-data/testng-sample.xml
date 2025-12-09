@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testng-results skipped="1" failed="1" ignored="0" total="5" passed="3">
+  <reporter-output></reporter-output>
+  <suite name="TestNG Sample Suite" duration-ms="3456" started-at="2024-12-09T10:00:00Z" finished-at="2024-12-09T10:00:03Z">
+    <groups></groups>
+    <test name="Authentication Tests" duration-ms="2000" started-at="2024-12-09T10:00:00Z" finished-at="2024-12-09T10:00:02Z">
+      <class name="com.example.tests.AuthenticationTest">
+        <test-method status="PASS" signature="testLogin()" name="testLogin" duration-ms="500" started-at="2024-12-09T10:00:00Z" finished-at="2024-12-09T10:00:00Z">
+          <reporter-output></reporter-output>
+        </test-method>
+        <test-method status="PASS" signature="testLogout()" name="testLogout" duration-ms="300" started-at="2024-12-09T10:00:01Z" finished-at="2024-12-09T10:00:01Z">
+          <reporter-output></reporter-output>
+        </test-method>
+        <test-method status="FAIL" signature="testPasswordReset()" name="testPasswordReset" duration-ms="1200" started-at="2024-12-09T10:00:01Z" finished-at="2024-12-09T10:00:02Z">
+          <exception class="java.lang.AssertionError">
+            <message><![CDATA[Password reset email was not sent within timeout]]></message>
+            <full-stacktrace><![CDATA[java.lang.AssertionError: Password reset email was not sent within timeout
+	at org.testng.Assert.fail(Assert.java:96)
+	at com.example.tests.AuthenticationTest.testPasswordReset(AuthenticationTest.java:67)]]></full-stacktrace>
+          </exception>
+          <reporter-output></reporter-output>
+        </test-method>
+      </class>
+    </test>
+    <test name="User Management Tests" duration-ms="1456" started-at="2024-12-09T10:00:02Z" finished-at="2024-12-09T10:00:03Z">
+      <class name="com.example.tests.UserManagementTest">
+        <test-method status="PASS" signature="testCreateUser()" name="testCreateUser" duration-ms="800" started-at="2024-12-09T10:00:02Z" finished-at="2024-12-09T10:00:03Z">
+          <reporter-output></reporter-output>
+        </test-method>
+        <test-method status="SKIP" signature="testDeleteUser()" name="testDeleteUser" duration-ms="0" started-at="2024-12-09T10:00:03Z" finished-at="2024-12-09T10:00:03Z">
+          <reporter-output></reporter-output>
+        </test-method>
+      </class>
+    </test>
+  </suite>
+</testng-results>
