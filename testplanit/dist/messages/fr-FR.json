@@ -48,6 +48,7 @@
       "pause": "Pause",
       "reset": "Réinitialiser",
       "copyLink": "Copier le lien",
+      "copied": "Copié !",
       "complete": "Complet",
       "back": "Dos",
       "clear": "Clair",
@@ -930,13 +931,24 @@
         "error": "Impossible d'envoyer le lien magique. Veuillez réessayer.",
         "backToSignIn": "Retour à la page de connexion"
       },
+      "twoFactor": {
+        "title": "Authentification à deux facteurs",
+        "description": "Saisissez le code à 6 chiffres de votre application d'authentification ou utilisez un code de secours.",
+        "codeLabel": "Le code de vérification",
+        "backupCodeLabel": "Code de sauvegarde",
+        "backupCodeHint": "Vous pouvez également saisir un code de secours à 8 caractères.",
+        "useAuthenticator": "Utilisez plutôt le code d'authentification",
+        "useBackupCode": "Utilisez plutôt un code de secours",
+        "verify": "Vérifier"
+      },
       "troubleSigningIn": "Problèmes de connexion ?",
       "contactAdmin": "Contactez l'administrateur système"
     },
     "errors": {
       "accessDenied": "Accès refusé. Votre compte est peut-être inactif ou vous n'avez pas l'autorisation de vous connecter.",
       "configuration": "Il y a un problème avec la configuration du serveur.",
-      "verification": "Le jeton de vérification a expiré ou a déjà été utilisé."
+      "verification": "Le jeton de vérification a expiré ou a déjà été utilisé.",
+      "invalid2FACode": "Code de vérification invalide. Veuillez réessayer."
     },
     "signup": {
       "title": "S'inscrire",
@@ -986,6 +998,30 @@
           "description": "Une erreur s'est produite lors de l'envoi du lien de vérification par e-mail."
         }
       }
+    },
+    "twoFactorSetup": {
+      "title": "Configurer l'authentification à deux facteurs",
+      "description": "Votre organisation exige une authentification à deux facteurs. Configurez-la pour continuer.",
+      "backupDescription": "Enregistrez vos codes de sauvegarde avant de continuer",
+      "required": "L'authentification à deux facteurs est exigée par la politique de sécurité de votre organisation.",
+      "loading": "Préparation de la configuration...",
+      "manualEntry": "Ou saisissez ce code manuellement :",
+      "verifyLabel": "Le code de vérification",
+      "verify": "Vérifier et activer",
+      "backupCodesInfo": "Conservez ces codes en lieu sûr. Ils vous permettront d'accéder à votre compte si vous perdez votre appareil d'authentification.",
+      "copyCodes": "Copier tous les codes",
+      "continue": "Continuer la connexion"
+    },
+    "twoFactorVerify": {
+      "title": "Vérifiez votre identité",
+      "description": "Saisissez le code à 6 chiffres de votre application d'authentification pour continuer.",
+      "codeLabel": "Le code de vérification",
+      "backupCodeLabel": "Code de sauvegarde",
+      "backupCodeHint": "Vous pouvez également saisir un code de secours à 8 caractères",
+      "useAuthenticator": "Utilisez plutôt le code d'authentification",
+      "useBackupCode": "Utilisez plutôt un code de secours",
+      "verify": "Vérifier",
+      "signOut": "Déconnectez-vous et utilisez un autre compte"
     }
   },
   "account": {
@@ -1688,6 +1724,39 @@
         "loading": "Chargement...",
         "inProject": "dans le projet",
         "showingResults": "Affichage de {start} - {end} de {total}"
+      },
+      "twoFactor": {
+        "label": "Authentification à deux facteurs",
+        "enabled": "Activé",
+        "disabled": "Désactivé",
+        "enable": "Activer l'authentification à deux facteurs",
+        "disable": "Désactiver",
+        "disableNotAllowed": "L'authentification à deux facteurs est requise par votre organisation.",
+        "ssoBypassNotice": "Les connexions SSO contournent ce paramètre d'authentification à deux facteurs. Contactez votre administrateur pour imposer l'authentification à deux facteurs à toutes les connexions.",
+        "regenerateCodes": "Nouveaux codes",
+        "setup": {
+          "title": "Configurer l'authentification à deux facteurs",
+          "description": "Scannez le code QR avec votre application d'authentification (comme Google Authenticator ou Authy) et saisissez le code de vérification.",
+          "manualEntry": "Ou saisissez ce code manuellement :",
+          "verifyLabel": "Le code de vérification",
+          "verify": "Vérifier et activer",
+          "backupCodesTitle": "Sauvegardez vos codes de sauvegarde",
+          "backupCodesDescription": "Conservez ces codes en lieu sûr. Ils vous permettront d'accéder à votre compte si vous perdez votre appareil d'authentification.",
+          "copyCodes": "Copier tous les codes",
+          "done": "J'ai sauvegardé mes codes"
+        },
+        "disableConfirm": {
+          "title": "Désactiver l'authentification à deux facteurs ?",
+          "description": "Cela rendra votre compte moins sécurisé. Veuillez saisir votre code d'authentification à deux facteurs actuel ou un code de secours pour confirmer.",
+          "placeholder": "Saisissez le code"
+        },
+        "regenerate": {
+          "title": "Régénérer les codes de sauvegarde",
+          "description": "Cela invalidera vos codes de secours actuels. Veuillez saisir votre code d'authentification à deux facteurs actuel pour continuer.",
+          "confirm": "Régénérer les codes",
+          "newCodesTitle": "Vos nouveaux codes de sauvegarde",
+          "newCodesDescription": "Vos anciens codes n'ont plus été valides. Veuillez conserver ces nouveaux codes en lieu sûr."
+        }
       }
     },
     "filterPlaceholder": "Filtrer les utilisateurs...",
@@ -3050,6 +3119,17 @@
         "forceSso": {
           "title": "Connexion SSO forcée",
           "description": "Désactivez la connexion par e-mail et exigez l'utilisation de l'authentification unique (SSO)."
+        },
+        "twoFactor": {
+          "sectionTitle": "Authentification à deux facteurs",
+          "forceNonSSO": {
+            "title": "Exiger l'authentification à deux facteurs pour les connexions par mot de passe",
+            "description": "Les utilisateurs se connectant avec un e-mail et un mot de passe doivent configurer et utiliser l'authentification à deux facteurs."
+          },
+          "forceAllLogins": {
+            "title": "Exiger l'authentification à deux facteurs pour toutes les connexions",
+            "description": "Tous les utilisateurs doivent s'authentifier à l'aide de l'authentification à deux facteurs (2FA) après s'être connectés, y compris les utilisateurs SSO."
+          }
         }
       },
       "providers": {
@@ -3154,6 +3234,11 @@
         "forceSsoEnabled": "Forcer l'authentification unique (SSO) activée globalement",
         "forceSsoDisabled": "L'authentification unique forcée est désactivée globalement.",
         "forceSsoUpdateFailed": "Échec de la mise à jour du paramètre SSO forcé",
+        "force2FANonSSOEnabled": "L'authentification à deux facteurs est requise pour les connexions par mot de passe.",
+        "force2FANonSSODisabled": "L'authentification à deux facteurs n'est plus requise pour les connexions par mot de passe.",
+        "force2FAAllLoginsEnabled": "L'authentification à deux facteurs est requise pour toutes les connexions.",
+        "force2FAAllLoginsDisabled": "L'authentification à deux facteurs n'est plus requise pour toutes les connexions.",
+        "force2FAUpdateFailed": "Échec de la mise à jour des paramètres d'authentification à deux facteurs",
         "configUpdated": "Configuration SAML mise à jour",
         "configCreated": "Configuration SAML créée",
         "configSaveFailed": "Échec de l'enregistrement de la configuration SAML",

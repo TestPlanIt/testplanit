@@ -48,6 +48,7 @@
       "pause": "Pause",
       "reset": "Reset",
       "copyLink": "Copy link",
+      "copied": "Copied!",
       "complete": "Complete",
       "back": "Back",
       "clear": "Clear",
@@ -930,13 +931,24 @@
         "error": "Failed to send magic link. Please try again.",
         "backToSignIn": "Back to sign in"
       },
+      "twoFactor": {
+        "title": "Two-Factor Authentication",
+        "description": "Enter the 6-digit code from your authenticator app or use a backup code.",
+        "codeLabel": "Verification Code",
+        "backupCodeLabel": "Backup Code",
+        "backupCodeHint": "You can also enter an 8-character backup code",
+        "useAuthenticator": "Use authenticator code instead",
+        "useBackupCode": "Use a backup code instead",
+        "verify": "Verify"
+      },
       "troubleSigningIn": "Trouble signing in?",
       "contactAdmin": "Contact the System Administrator"
     },
     "errors": {
       "accessDenied": "Access denied. Your account may be inactive or you don't have permission to sign in.",
       "configuration": "There is a problem with the server configuration.",
-      "verification": "The verification token has expired or has already been used."
+      "verification": "The verification token has expired or has already been used.",
+      "invalid2FACode": "Invalid verification code. Please try again."
     },
     "signup": {
       "title": "Sign up",
@@ -986,6 +998,30 @@
           "description": "An error occurred while sending the email verification link."
         }
       }
+    },
+    "twoFactorSetup": {
+      "title": "Set Up Two-Factor Authentication",
+      "description": "Your organization requires two-factor authentication. Set it up to continue.",
+      "backupDescription": "Save your backup codes before continuing",
+      "required": "Two-factor authentication is required by your organization's security policy.",
+      "loading": "Preparing setup...",
+      "manualEntry": "Or enter this code manually:",
+      "verifyLabel": "Verification Code",
+      "verify": "Verify & Enable",
+      "backupCodesInfo": "Save these codes in a safe place. You can use them to access your account if you lose your authenticator device.",
+      "copyCodes": "Copy All Codes",
+      "continue": "Continue to Sign In"
+    },
+    "twoFactorVerify": {
+      "title": "Verify Your Identity",
+      "description": "Enter the 6-digit code from your authenticator app to continue.",
+      "codeLabel": "Verification Code",
+      "backupCodeLabel": "Backup Code",
+      "backupCodeHint": "You can also enter an 8-character backup code",
+      "useAuthenticator": "Use authenticator code instead",
+      "useBackupCode": "Use a backup code instead",
+      "verify": "Verify",
+      "signOut": "Sign out and use a different account"
     }
   },
   "account": {
@@ -1688,6 +1724,39 @@
         "loading": "Loading...",
         "inProject": "in project",
         "showingResults": "Showing {start} - {end} of {total}"
+      },
+      "twoFactor": {
+        "label": "Two-Factor Authentication",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "enable": "Enable 2FA",
+        "disable": "Disable",
+        "disableNotAllowed": "Two-factor authentication is required by your organization",
+        "ssoBypassNotice": "SSO logins will bypass this 2FA setting. Contact your administrator to enforce 2FA for all logins.",
+        "regenerateCodes": "New Codes",
+        "setup": {
+          "title": "Set Up Two-Factor Authentication",
+          "description": "Scan the QR code with your authenticator app (like Google Authenticator or Authy) and enter the verification code.",
+          "manualEntry": "Or enter this code manually:",
+          "verifyLabel": "Verification Code",
+          "verify": "Verify & Enable",
+          "backupCodesTitle": "Save Your Backup Codes",
+          "backupCodesDescription": "Save these codes in a safe place. You can use them to access your account if you lose your authenticator device.",
+          "copyCodes": "Copy All Codes",
+          "done": "I've Saved My Codes"
+        },
+        "disableConfirm": {
+          "title": "Disable Two-Factor Authentication?",
+          "description": "This will make your account less secure. Enter your current 2FA code or a backup code to confirm.",
+          "placeholder": "Enter code"
+        },
+        "regenerate": {
+          "title": "Regenerate Backup Codes",
+          "description": "This will invalidate your existing backup codes. Enter your current 2FA code to continue.",
+          "confirm": "Regenerate Codes",
+          "newCodesTitle": "Your New Backup Codes",
+          "newCodesDescription": "Your old codes have been invalidated. Save these new codes in a safe place."
+        }
       }
     },
     "filterPlaceholder": "Filter users...",
@@ -3050,6 +3119,17 @@
         "forceSso": {
           "title": "Force SSO Login",
           "description": "Disable email login and require users to use SSO"
+        },
+        "twoFactor": {
+          "sectionTitle": "Two-Factor Authentication",
+          "forceNonSSO": {
+            "title": "Require 2FA for Password Logins",
+            "description": "Users signing in with email/password must set up and use two-factor authentication"
+          },
+          "forceAllLogins": {
+            "title": "Require 2FA for All Logins",
+            "description": "All users must verify with 2FA after signing in, including SSO users"
+          }
         }
       },
       "providers": {
@@ -3154,6 +3234,11 @@
         "forceSsoEnabled": "Force SSO enabled globally",
         "forceSsoDisabled": "Force SSO disabled globally",
         "forceSsoUpdateFailed": "Failed to update force SSO setting",
+        "force2FANonSSOEnabled": "Two-factor authentication required for password logins",
+        "force2FANonSSODisabled": "Two-factor authentication no longer required for password logins",
+        "force2FAAllLoginsEnabled": "Two-factor authentication required for all logins",
+        "force2FAAllLoginsDisabled": "Two-factor authentication no longer required for all logins",
+        "force2FAUpdateFailed": "Failed to update two-factor authentication setting",
         "configUpdated": "SAML configuration updated",
         "configCreated": "SAML configuration created",
         "configSaveFailed": "Failed to save SAML configuration",

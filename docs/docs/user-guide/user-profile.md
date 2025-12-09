@@ -39,6 +39,20 @@ Displays core account details:
 - **Default Role**: The default role assigned to the user
 - **API User**: Indicates if this is an API account (shown as a disabled switch)
 
+### Security Settings
+
+#### Two-Factor Authentication (2FA)
+- **Toggle Switch**: Enable or disable 2FA for your account
+- **Setup Process**: When enabling, scan the QR code with your authenticator app
+- **Backup Codes**: View and copy backup codes for account recovery
+- **Regenerate Codes**: Generate new backup codes (requires 2FA verification)
+
+:::note
+If your organization has enforced 2FA, you will not be able to disable it. A notice will appear if SSO logins bypass your personal 2FA settings.
+:::
+
+For detailed 2FA setup instructions, see [Two-Factor Authentication](./two-factor-authentication.md).
+
 ### Groups
 Lists all groups the user belongs to
 

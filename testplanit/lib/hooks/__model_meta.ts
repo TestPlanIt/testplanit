@@ -413,6 +413,18 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'user',
+                }, twoFactorEnabled: {
+                    name: "twoFactorEnabled",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, twoFactorSecret: {
+                    name: "twoFactorSecret",
+                    type: "String",
+                    isOptional: true,
+                }, twoFactorBackupCodes: {
+                    name: "twoFactorBackupCodes",
+                    type: "String",
+                    isOptional: true,
                 },
             }, uniqueConstraints: {
                 id: {
@@ -6485,6 +6497,14 @@ const metadata: ModelMeta = {
                     name: "defaultAccess",
                     type: "Access",
                     attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, force2FANonSSO: {
+                    name: "force2FANonSSO",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, force2FAAllLogins: {
+                    name: "force2FAAllLogins",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 }, createdAt: {
                     name: "createdAt",
                     type: "DateTime",

@@ -114,6 +114,9 @@ declare module "next-auth/jwt" {
     access?: "USER" | "PROJECTADMIN" | "ADMIN" | "NONE" | null;
     provider?: string;
     isApi?: boolean;
+    twoFactorRequired?: boolean;
+    twoFactorVerified?: boolean;
+    twoFactorSetupRequired?: boolean;
   }
 }
 
@@ -432,10 +435,25 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
         // For credentials provider, always allow (already checked and audited in authorize function)
         return true;
       },
-      async jwt({ token, account, trigger }) {
+      async jwt({ token, account, trigger, session }) {
         // Persist the OAuth account info in the token right after sign in
         if (account) {
           token.provider = account.provider;
+        }
+
+        // Handle session update for 2FA verification
+        if (trigger === "update" && session?.twoFactorVerified) {
+          token.twoFactorVerified = true;
+          token.twoFactorRequired = false;
+          return token;
+        }
+
+        // Handle session update for 2FA setup completion
+        if (trigger === "update" && session?.twoFactorSetupComplete) {
+          token.twoFactorSetupRequired = false;
+          token.twoFactorRequired = false;
+          token.twoFactorVerified = true;
+          return token;
         }
 
         // Fetch and store user access level and isApi flag in JWT for middleware access control
@@ -443,11 +461,27 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
         if (account || trigger === "update" || !token.access) {
           const user = await db.user.findUnique({
             where: { id: token.sub },
-            select: { access: true, isApi: true },
+            select: { access: true, isApi: true, twoFactorEnabled: true },
           });
           if (user) {
             token.access = user.access;
             token.isApi = user.isApi;
+          }
+
+          // Check if 2FA verification is required for SSO logins
+          if (account && account.provider !== "credentials") {
+            const registrationSettings = await db.registrationSettings.findFirst();
+            if (registrationSettings?.force2FAAllLogins) {
+              // Check if user has 2FA enabled
+              if (user?.twoFactorEnabled) {
+                // User has 2FA, mark as needing verification
+                token.twoFactorRequired = true;
+                token.twoFactorVerified = false;
+              } else {
+                // User doesn't have 2FA set up, mark as needing setup
+                token.twoFactorSetupRequired = true;
+              }
+            }
           }
         }
 
@@ -460,6 +494,8 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
         credentials: {
           email: { type: "email" },
           password: { type: "password" },
+          twoFactorToken: { type: "text" },
+          pendingAuthToken: { type: "text" },
         },
         authorize: authorize(db),
       }),
@@ -586,6 +622,7 @@ export const authOptions: NextAuthOptions = {
                 authMethod: true,
                 isActive: true,
                 email: true,
+                twoFactorEnabled: true,
               },
             })
           : null;
@@ -626,6 +663,13 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
+        // Check if 2FA is required for all logins (including SSO)
+        const registrationSettings = await db.registrationSettings.findFirst();
+        if (registrationSettings?.force2FAAllLogins && dbUser) {
+          // Store 2FA requirement in a cookie that the callback will check
+          // This will be handled by the callback route
+        }
+
         return true;
       }
 
@@ -647,10 +691,25 @@ export const authOptions: NextAuthOptions = {
       // For credentials provider, always allow (already checked in authorize function)
       return true;
     },
-    async jwt({ token, account, trigger }) {
+    async jwt({ token, account, trigger, session }) {
       // Persist the OAuth account info in the token right after sign in
       if (account) {
         token.provider = account.provider;
+      }
+
+      // Handle session update for 2FA verification
+      if (trigger === "update" && session?.twoFactorVerified) {
+        token.twoFactorVerified = true;
+        token.twoFactorRequired = false;
+        return token;
+      }
+
+      // Handle session update for 2FA setup completion
+      if (trigger === "update" && session?.twoFactorSetupComplete) {
+        token.twoFactorSetupRequired = false;
+        token.twoFactorRequired = false;
+        token.twoFactorVerified = true;
+        return token;
       }
 
       // Fetch and store user access level and isApi flag in JWT for middleware access control
@@ -658,11 +717,27 @@ export const authOptions: NextAuthOptions = {
       if (account || trigger === "update" || !token.access) {
         const user = await db.user.findUnique({
           where: { id: token.sub },
-          select: { access: true, isApi: true },
+          select: { access: true, isApi: true, twoFactorEnabled: true },
         });
         if (user) {
           token.access = user.access;
           token.isApi = user.isApi;
+        }
+
+        // Check if 2FA verification is required for SSO logins
+        if (account && account.provider !== "credentials") {
+          const registrationSettings = await db.registrationSettings.findFirst();
+          if (registrationSettings?.force2FAAllLogins) {
+            // Check if user has 2FA enabled
+            if (user?.twoFactorEnabled) {
+              // User has 2FA, mark as needing verification
+              token.twoFactorRequired = true;
+              token.twoFactorVerified = false;
+            } else {
+              // User doesn't have 2FA set up, mark as needing setup
+              token.twoFactorSetupRequired = true;
+            }
+          }
         }
       }
 
@@ -675,6 +750,8 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { type: "email" },
         password: { type: "password" },
+        twoFactorToken: { type: "text" },
+        pendingAuthToken: { type: "text" },
       },
       authorize: authorize(db),
     }),
@@ -719,9 +796,85 @@ export const authOptions: NextAuthOptions = {
 
 function authorize(prisma: PrismaClient) {
   return async (
-    credentials: Record<"email" | "password", string> | undefined
+    credentials: Record<"email" | "password" | "twoFactorToken" | "pendingAuthToken", string> | undefined
   ) => {
     if (!credentials) throw new Error("Missing credentials");
+
+    // Handle 2FA completion flow
+    if (credentials.pendingAuthToken && credentials.twoFactorToken) {
+      try {
+        const pendingAuth = jwt.verify(
+          credentials.pendingAuthToken,
+          process.env.NEXTAUTH_SECRET || ""
+        ) as { userId: string; email: string; twoFactorPending: boolean };
+
+        if (!pendingAuth.twoFactorPending) {
+          throw new Error("Invalid pending auth token");
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { id: pendingAuth.userId },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            twoFactorEnabled: true,
+            twoFactorSecret: true,
+            twoFactorBackupCodes: true,
+          },
+        });
+
+        if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
+          throw new Error("Invalid 2FA state");
+        }
+
+        // Verify TOTP token - dynamic import to avoid circular deps
+        const { verifyTOTP, decryptSecret, verifyBackupCode } = await import("~/lib/two-factor");
+        const secret = decryptSecret(user.twoFactorSecret);
+        let verified = verifyTOTP(credentials.twoFactorToken, secret);
+
+        // Try backup code if TOTP failed
+        if (!verified && user.twoFactorBackupCodes) {
+          const hashedCodes = JSON.parse(user.twoFactorBackupCodes) as string[];
+          const codeIndex = verifyBackupCode(credentials.twoFactorToken, hashedCodes);
+          if (codeIndex !== -1) {
+            verified = true;
+            // Remove used backup code
+            hashedCodes.splice(codeIndex, 1);
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { twoFactorBackupCodes: JSON.stringify(hashedCodes) },
+            });
+          }
+        }
+
+        if (!verified) {
+          auditAuthEvent("LOGIN_FAILED", user.id, user.email, {
+            reason: "invalid_2fa_token",
+            provider: "credentials",
+          }).catch(console.error);
+          throw new Error("Invalid 2FA code");
+        }
+
+        // Audit successful login with 2FA
+        auditAuthEvent("LOGIN", user.id, user.email, {
+          provider: "credentials",
+          twoFactor: true,
+        }).catch(console.error);
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        };
+      } catch (error) {
+        if (error instanceof Error && error.message === "Invalid 2FA code") {
+          throw error;
+        }
+        throw new Error("2FA verification failed");
+      }
+    }
+
     if (!credentials.email)
       throw new Error('"email" is required in credentials');
     if (!credentials.password)
@@ -734,6 +887,7 @@ function authorize(prisma: PrismaClient) {
         name: true,
         password: true,
         isActive: true,
+        twoFactorEnabled: true,
       },
     });
     if (!maybeUser?.password) {
@@ -760,6 +914,42 @@ function authorize(prisma: PrismaClient) {
       }).catch(console.error);
       return null;
     }
+
+    // Check system 2FA settings
+    const registrationSettings = await prisma.registrationSettings.findFirst();
+    const force2FANonSSO = registrationSettings?.force2FANonSSO || registrationSettings?.force2FAAllLogins || false;
+
+    // Check if 2FA is enabled for this user
+    if (maybeUser.twoFactorEnabled) {
+      // Generate a pending auth token for 2FA verification
+      const pendingAuthToken = jwt.sign(
+        {
+          userId: maybeUser.id,
+          email: maybeUser.email,
+          twoFactorPending: true,
+        },
+        process.env.NEXTAUTH_SECRET || "",
+        { expiresIn: "5m" }
+      );
+      // Throw error with pending token - frontend will catch this
+      throw new Error(`2FA_REQUIRED:${pendingAuthToken}`);
+    }
+
+    // If 2FA is required by system settings but user hasn't set it up
+    if (force2FANonSSO && !maybeUser.twoFactorEnabled) {
+      // Generate a setup required token - frontend will redirect to setup
+      const setupRequiredToken = jwt.sign(
+        {
+          userId: maybeUser.id,
+          email: maybeUser.email,
+          twoFactorSetupRequired: true,
+        },
+        process.env.NEXTAUTH_SECRET || "",
+        { expiresIn: "10m" }
+      );
+      throw new Error(`2FA_SETUP_REQUIRED:${setupRequiredToken}`);
+    }
+
     // Audit successful login
     auditAuthEvent("LOGIN", maybeUser.id, maybeUser.email, {
       provider: "credentials",

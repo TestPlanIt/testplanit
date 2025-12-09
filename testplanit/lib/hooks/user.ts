@@ -328,7 +328,7 @@ export function useSuspenseCountUser<TArgs extends Prisma.UserCountArgs, TQueryF
 }
 import type { AuthMethod, Access } from '@prisma/client';
 
-export function useCheckUser<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; name?: string; email?: string; emailVerifToken?: string; password?: string; image?: string; authMethod?: AuthMethod; externalId?: string; access?: Access; roleId?: number; isActive?: boolean; isDeleted?: boolean; isApi?: boolean; createdById?: string; lastSeenVersion?: string }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckUser<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; name?: string; email?: string; emailVerifToken?: string; password?: string; image?: string; authMethod?: AuthMethod; externalId?: string; access?: Access; roleId?: number; isActive?: boolean; isDeleted?: boolean; isApi?: boolean; createdById?: string; lastSeenVersion?: string; twoFactorEnabled?: boolean; twoFactorSecret?: string; twoFactorBackupCodes?: string }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('User', `${endpoint}/user/check`, args, options, fetch);
 }

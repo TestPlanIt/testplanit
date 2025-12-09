@@ -48,6 +48,7 @@
       "pause": "Pausa",
       "reset": "Reset",
       "copyLink": "Copiar enlace",
+      "copied": "Copiado!",
       "complete": "Complete",
       "back": "Atrás",
       "clear": "Claro",
@@ -930,13 +931,24 @@
         "error": "No se pudo enviar el enlace mágico. Inténtelo de nuevo.",
         "backToSignIn": "Volver a iniciar sesión"
       },
+      "twoFactor": {
+        "title": "Autenticación de dos factores",
+        "description": "Ingrese el código de 6 dígitos de su aplicación de autenticación o use un código de respaldo.",
+        "codeLabel": "Código de verificación",
+        "backupCodeLabel": "Código de respaldo",
+        "backupCodeHint": "También puede ingresar un código de respaldo de 8 caracteres",
+        "useAuthenticator": "Utilice el código de autenticador en su lugar",
+        "useBackupCode": "Utilice un código de respaldo en su lugar",
+        "verify": "Verificar"
+      },
       "troubleSigningIn": "¿Problemas para iniciar sesión?",
       "contactAdmin": "Contacte al administrador del sistema"
     },
     "errors": {
       "accessDenied": "Acceso denegado. Es posible que tu cuenta esté inactiva o que no tengas permiso para iniciar sesión.",
       "configuration": "Hay un problema con la configuración del servidor.",
-      "verification": "El token de verificación ha expirado o ya ha sido utilizado."
+      "verification": "El token de verificación ha expirado o ya ha sido utilizado.",
+      "invalid2FACode": "Código de verificación no válido. Inténtalo de nuevo."
     },
     "signup": {
       "title": "Regístrate",
@@ -986,6 +998,30 @@
           "description": "Se ha producido un error al enviar el enlace de verificación de correo electrónico."
         }
       }
+    },
+    "twoFactorSetup": {
+      "title": "Configurar la autenticación de dos factores",
+      "description": "Su organización requiere autenticación de dos factores. Configúrela para continuar.",
+      "backupDescription": "Guarde sus códigos de respaldo antes de continuar",
+      "required": "La política de seguridad de su organización requiere la autenticación de dos factores.",
+      "loading": "Preparando la instalación...",
+      "manualEntry": "O ingrese este código manualmente:",
+      "verifyLabel": "Código de verificación",
+      "verify": "Verificar y habilitar",
+      "backupCodesInfo": "Guarda estos códigos en un lugar seguro. Puedes usarlos para acceder a tu cuenta si pierdes tu dispositivo de autenticación.",
+      "copyCodes": "Copiar todos los códigos",
+      "continue": "Continuar para iniciar sesión"
+    },
+    "twoFactorVerify": {
+      "title": "Verifique su identidad",
+      "description": "Ingrese el código de 6 dígitos de su aplicación de autenticación para continuar.",
+      "codeLabel": "Código de verificación",
+      "backupCodeLabel": "Código de respaldo",
+      "backupCodeHint": "También puede ingresar un código de respaldo de 8 caracteres",
+      "useAuthenticator": "Utilice el código de autenticador en su lugar",
+      "useBackupCode": "Utilice un código de respaldo en su lugar",
+      "verify": "Verificar",
+      "signOut": "Cerrar sesión y usar una cuenta diferente"
     }
   },
   "account": {
@@ -1688,6 +1724,39 @@
         "loading": "Cargando...",
         "inProject": "en el proyecto",
         "showingResults": "Mostrando {start} - {end} de {total}"
+      },
+      "twoFactor": {
+        "label": "Autenticación de dos factores",
+        "enabled": "Activado",
+        "disabled": "Desactivado",
+        "enable": "Habilitar 2FA",
+        "disable": "Desactivar",
+        "disableNotAllowed": "Su organización requiere autenticación de dos factores",
+        "ssoBypassNotice": "Los inicios de sesión SSO omitirán esta configuración de 2FA. Contacte a su administrador para implementar la 2FA en todos los inicios de sesión.",
+        "regenerateCodes": "Nuevos códigos",
+        "setup": {
+          "title": "Configurar la autenticación de dos factores",
+          "description": "Escanee el código QR con su aplicación de autenticación (como Google Authenticator o Authy) e ingrese el código de verificación.",
+          "manualEntry": "O ingrese este código manualmente:",
+          "verifyLabel": "Código de verificación",
+          "verify": "Verificar y habilitar",
+          "backupCodesTitle": "Guarde sus códigos de respaldo",
+          "backupCodesDescription": "Guarda estos códigos en un lugar seguro. Puedes usarlos para acceder a tu cuenta si pierdes tu dispositivo de autenticación.",
+          "copyCodes": "Copiar todos los códigos",
+          "done": "He guardado mis códigos"
+        },
+        "disableConfirm": {
+          "title": "¿Desactivar la autenticación de dos factores?",
+          "description": "Esto hará que tu cuenta sea menos segura. Introduce tu código de autenticación de dos factores (A2F) actual o un código de respaldo para confirmar.",
+          "placeholder": "Introducir código"
+        },
+        "regenerate": {
+          "title": "Regenerar códigos de respaldo",
+          "description": "Esto invalidará tus códigos de seguridad. Introduce tu código de autenticación de dos factores (A2F) actual para continuar.",
+          "confirm": "Regenerar códigos",
+          "newCodesTitle": "Sus nuevos códigos de respaldo",
+          "newCodesDescription": "Tus códigos antiguos han sido invalidados. Guarda estos nuevos códigos en un lugar seguro."
+        }
       }
     },
     "filterPlaceholder": "Filtrar usuarios...",
@@ -3050,6 +3119,17 @@
         "forceSso": {
           "title": "Forzar inicio de sesión SSO",
           "description": "Desactivar el inicio de sesión de correo electrónico y requiere que los usuarios usen SSO"
+        },
+        "twoFactor": {
+          "sectionTitle": "Autenticación de dos factores",
+          "forceNonSSO": {
+            "title": "Requerir 2FA para inicios de sesión con contraseña",
+            "description": "Los usuarios que inicien sesión con correo electrónico/contraseña deben configurar y utilizar la autenticación de dos factores"
+          },
+          "forceAllLogins": {
+            "title": "Requerir 2FA para todos los inicios de sesión",
+            "description": "Todos los usuarios deben verificar con 2FA después de iniciar sesión, incluidos los usuarios SSO"
+          }
         }
       },
       "providers": {
@@ -3154,6 +3234,11 @@
         "forceSsoEnabled": "Forzar SSO activado globalmente",
         "forceSsoDisabled": "Forzar SSO desactivado globalmente",
         "forceSsoUpdateFailed": "Error al actualizar la configuración forzada SSO",
+        "force2FANonSSOEnabled": "Se requiere autenticación de dos factores para iniciar sesión con contraseña",
+        "force2FANonSSODisabled": "Ya no se requiere la autenticación de dos factores para iniciar sesión con contraseña",
+        "force2FAAllLoginsEnabled": "Se requiere autenticación de dos factores para todos los inicios de sesión",
+        "force2FAAllLoginsDisabled": "La autenticación de dos factores ya no es necesaria para todos los inicios de sesión",
+        "force2FAUpdateFailed": "No se pudo actualizar la configuración de autenticación de dos factores",
         "configUpdated": "Configuración SAML actualizada",
         "configCreated": "Configuración SAML creada",
         "configSaveFailed": "Error al guardar la configuración SAML",

@@ -129,7 +129,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   }
 
   // Define public routes that don't require authentication
-  const publicRoutes = ["/signin", "/signup", "/verify-email", "/trial-expired"];
+  const publicRoutes = ["/signin", "/signup", "/verify-email", "/trial-expired", "/auth/two-factor-setup", "/auth/two-factor-verify"];
 
   // Extract the route path without locale (e.g., /en-US/signin -> /signin)
   const pathWithoutLocale = pathname.replace(/^\/[^/]+/, "");
@@ -169,6 +169,25 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       redirectUrl.pathname = `/${locale}/signin`;
       redirectUrl.search = ""; // Clear any query params
       redirectUrl.hash = ""; // Clear any hash
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // Check if 2FA verification is required for SSO users
+    if (token.twoFactorRequired && !token.twoFactorVerified) {
+      const pathSegments = pathname.split("/").filter(Boolean);
+      const locale = pathSegments[0] || defaultLocale;
+      const redirectUrl = new URL(request.url);
+      redirectUrl.pathname = `/${locale}/auth/two-factor-verify`;
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // Check if 2FA setup is required for SSO users who haven't set it up
+    if (token.twoFactorSetupRequired) {
+      const pathSegments = pathname.split("/").filter(Boolean);
+      const locale = pathSegments[0] || defaultLocale;
+      const redirectUrl = new URL(request.url);
+      redirectUrl.pathname = `/${locale}/auth/two-factor-setup`;
+      redirectUrl.searchParams.set("sso", "true");
       return NextResponse.redirect(redirectUrl);
     }
   }

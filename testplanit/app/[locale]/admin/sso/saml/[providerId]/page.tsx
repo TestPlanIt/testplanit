@@ -196,7 +196,9 @@ export default function SAMLConfigurationPage() {
           <ArrowLeft className="h-4 w-4" />
           {t("admin.sso.providers.saml.backToProviders")}
         </Button>
-        <h1 className="text-3xl font-bold">{t("admin.sso.providers.saml.pageTitle")}</h1>
+        <h1 className="text-3xl font-bold">
+          {t("admin.sso.providers.saml.pageTitle")}
+        </h1>
         <p className="text-muted-foreground mt-2">
           {`Configure SAML settings for ${provider.name}`}
         </p>
@@ -205,14 +207,18 @@ export default function SAMLConfigurationPage() {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>{t("admin.sso.providers.saml.settings.title")}</CardTitle>
+            <CardTitle>
+              {t("admin.sso.providers.saml.settings.title")}
+            </CardTitle>
             <CardDescription>
               {t("admin.sso.providers.saml.settings.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="entryPoint">{t("admin.sso.providers.saml.settings.ssoUrl")}</Label>
+              <Label htmlFor="entryPoint">
+                {t("admin.sso.providers.saml.settings.ssoUrl")}
+              </Label>
               <Input
                 id="entryPoint"
                 value={formData.entryPoint}
@@ -224,7 +230,9 @@ export default function SAMLConfigurationPage() {
             </div>
 
             <div>
-              <Label htmlFor="issuer">{t("admin.sso.providers.saml.settings.entityId")}</Label>
+              <Label htmlFor="issuer">
+                {t("admin.sso.providers.saml.settings.entityId")}
+              </Label>
               <Input
                 id="issuer"
                 value={formData.issuer}
@@ -236,7 +244,9 @@ export default function SAMLConfigurationPage() {
             </div>
 
             <div>
-              <Label htmlFor="cert">{t("admin.sso.providers.saml.settings.certificate")}</Label>
+              <Label htmlFor="cert">
+                {t("admin.sso.providers.saml.settings.certificate")}
+              </Label>
               <Textarea
                 id="cert"
                 value={formData.cert}
@@ -249,7 +259,9 @@ export default function SAMLConfigurationPage() {
             </div>
 
             <div>
-              <Label htmlFor="callbackUrl">{t("admin.sso.providers.saml.settings.callbackUrl")}</Label>
+              <Label htmlFor="callbackUrl">
+                {t("admin.sso.providers.saml.settings.callbackUrl")}
+              </Label>
               <Input
                 id="callbackUrl"
                 value={formData.callbackUrl}
@@ -262,7 +274,9 @@ export default function SAMLConfigurationPage() {
             </div>
 
             <div>
-              <Label htmlFor="logoutUrl">{t("admin.sso.providers.saml.settings.logoutUrl")}</Label>
+              <Label htmlFor="logoutUrl">
+                {t("admin.sso.providers.saml.settings.logoutUrl")}
+              </Label>
               <Input
                 id="logoutUrl"
                 value={formData.logoutUrl}
@@ -277,7 +291,9 @@ export default function SAMLConfigurationPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{t("admin.sso.providers.saml.userProvisioning.title")}</CardTitle>
+            <CardTitle>
+              {t("admin.sso.providers.saml.userProvisioning.title")}
+            </CardTitle>
             <CardDescription>
               {t("admin.sso.providers.saml.userProvisioning.description")}
             </CardDescription>
@@ -300,6 +316,9 @@ export default function SAMLConfigurationPage() {
               <Label htmlFor="defaultAccess">
                 {t("admin.sso.providers.saml.userProvisioning.defaultAccess")}
                 <select
+                  title={t(
+                    "admin.sso.providers.saml.userProvisioning.defaultAccess"
+                  )}
                   id="defaultAccess"
                   value={formData.defaultAccess}
                   onChange={(e) =>
@@ -318,7 +337,9 @@ export default function SAMLConfigurationPage() {
                 </select>
               </Label>
               <p className="text-sm text-muted-foreground mt-1">
-                {t("admin.sso.providers.saml.userProvisioning.defaultAccessHint")}
+                {t(
+                  "admin.sso.providers.saml.userProvisioning.defaultAccessHint"
+                )}
               </p>
             </div>
           </CardContent>
@@ -326,14 +347,18 @@ export default function SAMLConfigurationPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{t("admin.sso.providers.saml.attributeMapping.title")}</CardTitle>
+            <CardTitle>
+              {t("admin.sso.providers.saml.attributeMapping.title")}
+            </CardTitle>
             <CardDescription>
               {t("admin.sso.providers.saml.attributeMapping.description")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="attrEmail">{t("admin.sso.providers.saml.attributeMapping.emailAttribute")}</Label>
+              <Label htmlFor="attrEmail">
+                {t("admin.sso.providers.saml.attributeMapping.emailAttribute")}
+              </Label>
               <Input
                 id="attrEmail"
                 value={formData.attributeMapping.email}
@@ -351,7 +376,11 @@ export default function SAMLConfigurationPage() {
             </div>
 
             <div>
-              <Label htmlFor="attrName">{t("admin.sso.providers.saml.attributeMapping.displayNameAttribute")}</Label>
+              <Label htmlFor="attrName">
+                {t(
+                  "admin.sso.providers.saml.attributeMapping.displayNameAttribute"
+                )}
+              </Label>
               <Input
                 id="attrName"
                 value={formData.attributeMapping.name}
@@ -369,7 +398,9 @@ export default function SAMLConfigurationPage() {
             </div>
 
             <div>
-              <Label htmlFor="attrId">{t("admin.sso.providers.saml.attributeMapping.userIdAttribute")}</Label>
+              <Label htmlFor="attrId">
+                {t("admin.sso.providers.saml.attributeMapping.userIdAttribute")}
+              </Label>
               <Input
                 id="attrId"
                 value={formData.attributeMapping.id}
@@ -388,7 +419,9 @@ export default function SAMLConfigurationPage() {
 
             <div>
               <Label htmlFor="attrFirstName">
-                {t("admin.sso.providers.saml.attributeMapping.firstNameAttribute")}
+                {t(
+                  "admin.sso.providers.saml.attributeMapping.firstNameAttribute"
+                )}
               </Label>
               <Input
                 id="attrFirstName"
@@ -408,7 +441,9 @@ export default function SAMLConfigurationPage() {
 
             <div>
               <Label htmlFor="attrLastName">
-                {t("admin.sso.providers.saml.attributeMapping.lastNameAttribute")}
+                {t(
+                  "admin.sso.providers.saml.attributeMapping.lastNameAttribute"
+                )}
               </Label>
               <Input
                 id="attrLastName"
@@ -451,7 +486,9 @@ export default function SAMLConfigurationPage() {
         <div className="flex justify-end">
           <Button onClick={handleSave} disabled={isSaving}>
             <Save className="h-4 w-4" />
-            {isSaving ? t("admin.sso.providers.saml.saving") : t("admin.sso.providers.saml.saveConfiguration")}
+            {isSaving
+              ? t("admin.sso.providers.saml.saving")
+              : t("admin.sso.providers.saml.saveConfiguration")}
           </Button>
         </div>
       </div>

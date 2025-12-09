@@ -121,7 +121,13 @@ export const Header = () => {
     };
   }, []);
 
-  if (!session || path.startsWith("/verify-email")) {
+  // Hide header on auth-related pages and when no session
+  if (
+    !session ||
+    path.startsWith("/verify-email") ||
+    path.startsWith("/auth/two-factor-setup") ||
+    path.startsWith("/auth/two-factor-verify")
+  ) {
     return null;
   }
 
