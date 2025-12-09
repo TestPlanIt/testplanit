@@ -1,0 +1,109 @@
+{
+  "stats": {
+    "suites": 2,
+    "tests": 5,
+    "passes": 3,
+    "pending": 1,
+    "failures": 1,
+    "start": "2024-12-09T10:00:00.000Z",
+    "end": "2024-12-09T10:00:02.345Z",
+    "duration": 2345
+  },
+  "tests": [
+    {
+      "title": "should create a new user successfully",
+      "fullTitle": "User API should create a new user successfully",
+      "file": "/tests/api/user.test.js",
+      "duration": 456,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should return user by ID",
+      "fullTitle": "User API should return user by ID",
+      "file": "/tests/api/user.test.js",
+      "duration": 234,
+      "currentRetry": 0,
+      "speed": "fast",
+      "err": {}
+    },
+    {
+      "title": "should update user profile",
+      "fullTitle": "User API should update user profile",
+      "file": "/tests/api/user.test.js",
+      "duration": 567,
+      "currentRetry": 0,
+      "speed": "medium",
+      "err": {
+        "message": "AssertionError: expected 404 to equal 200",
+        "stack": "AssertionError: expected 404 to equal 200\n    at Context.<anonymous> (tests/api/user.test.js:45:14)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)"
+      }
+    },
+    {
+      "title": "should authenticate with valid credentials",
+      "fullTitle": "Authentication should authenticate with valid credentials",
+      "file": "/tests/api/auth.test.js",
+      "duration": 789,
+      "currentRetry": 0,
+      "speed": "slow",
+      "err": {}
+    },
+    {
+      "title": "should handle OAuth flow",
+      "fullTitle": "Authentication should handle OAuth flow",
+      "file": "/tests/api/auth.test.js",
+      "duration": 0,
+      "currentRetry": 0,
+      "pending": true,
+      "err": {}
+    }
+  ],
+  "pending": [
+    {
+      "title": "should handle OAuth flow",
+      "fullTitle": "Authentication should handle OAuth flow",
+      "file": "/tests/api/auth.test.js"
+    }
+  ],
+  "failures": [
+    {
+      "title": "should update user profile",
+      "fullTitle": "User API should update user profile",
+      "file": "/tests/api/user.test.js",
+      "duration": 567,
+      "currentRetry": 0,
+      "speed": "medium",
+      "err": {
+        "message": "AssertionError: expected 404 to equal 200",
+        "stack": "AssertionError: expected 404 to equal 200\n    at Context.<anonymous> (tests/api/user.test.js:45:14)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)"
+      }
+    }
+  ],
+  "passes": [
+    {
+      "title": "should create a new user successfully",
+      "fullTitle": "User API should create a new user successfully",
+      "file": "/tests/api/user.test.js",
+      "duration": 456,
+      "currentRetry": 0,
+      "speed": "fast"
+    },
+    {
+      "title": "should return user by ID",
+      "fullTitle": "User API should return user by ID",
+      "file": "/tests/api/user.test.js",
+      "duration": 234,
+      "currentRetry": 0,
+      "speed": "fast"
+    },
+    {
+      "title": "should authenticate with valid credentials",
+      "fullTitle": "Authentication should authenticate with valid credentials",
+      "file": "/tests/api/auth.test.js",
+      "duration": 789,
+      "currentRetry": 0,
+      "speed": "slow"
+    }
+  ]
+}

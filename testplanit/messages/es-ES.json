@@ -105,6 +105,15 @@
       "duplicate": "Duplicate",
       "change": "Cambiar",
       "viewAll": "Ver todo",
+      "automated": {
+        "details": "Detalles de la prueba automatizada",
+        "type": "Tipo",
+        "message": "Mensaje",
+        "file": "Archivo",
+        "line": "Línea",
+        "assertions": "Afirmaciones",
+        "testSuite": "Conjunto de pruebas:"
+      },
       "junit": {
         "details": "Detalles JUnit",
         "type": "Tipo",
@@ -152,6 +161,50 @@
             "description": "Los resultados de JUnit se han importado correctamente."
           },
           "fileRequired": "Por favor, sube al menos un archivo XML JUnit."
+        }
+      },
+      "testResults": {
+        "import": {
+          "trigger": "Importar resultados de pruebas",
+          "title": "Importar resultados de pruebas",
+          "description": "Suba los archivos de resultados de las pruebas para importarlos en una nueva ejecución de pruebas. Compatible con los formatos JUnit, TestNG, xUnit, NUnit, MSTest, Mocha y Cucumber.",
+          "format": {
+            "label": "Formato de resultados",
+            "placeholder": "Seleccionar formato"
+          },
+          "file": {
+            "label": "Archivos de resultados de pruebas"
+          },
+          "import": "Importar",
+          "importing": "Importador...",
+          "cancel": "Cancelar",
+          "selectFolder": "Seleccione una carpeta",
+          "progress": {
+            "initializing": "Inicializando importación...",
+            "validating": "Validando datos de entrada...",
+            "creatingRun": "Creando ejecución de prueba...",
+            "fetchingTemplate": "Obteniendo datos de plantilla...",
+            "parsing": "Analizando {format} resultados...",
+            "parseWarnings": "Analizado con {count} advertencia(s)",
+            "countingTests": "Procesando {count} casos de prueba de {files} archivo(s)...",
+            "parsingFile": "Analizando archivo {current} de {total}...",
+            "processingSuite": "Suite de procesamiento: {name}",
+            "processingCase": "Procesando caso de prueba {current} de {total}...",
+            "finalizing": "Finalizando importación...",
+            "completed": "¡Importación completada exitosamente!",
+            "errorParsing": "Error al analizar archivos: {error}",
+            "skippingFile": "Omitiendo archivo no válido {index}"
+          },
+          "error": {
+            "title": "Error de importación",
+            "missingFields": "Complete todos los campos obligatorios y cargue los archivos de resultados de la prueba.",
+            "importFailed": "No se pudieron importar los resultados de la prueba. Verifique el formato del archivo y vuelva a intentarlo."
+          },
+          "success": {
+            "title": "Importación exitosa",
+            "description": "Los resultados de la prueba se han importado correctamente."
+          },
+          "fileRequired": "Cargue al menos un archivo con resultados de prueba."
         }
       },
       "confirmRestoreTitle": "Confirmar restauración",
@@ -501,6 +554,7 @@
       "mission": "Describe tu misión...",
       "selectMilestone": "Seleccionar hito",
       "selectStatus": "Seleccione un estado",
+      "selectTemplate": "Seleccionar plantilla",
       "duration": "ej. 1h 30m o 90m",
       "docs": "Añadir documentación...",
       "select": "Seleccionar",

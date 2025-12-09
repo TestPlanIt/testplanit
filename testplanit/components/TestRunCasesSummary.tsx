@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useFindFirstStatus } from "~/lib/hooks";
 import { DateFormatter } from "@/components/DateFormatter";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import { toHumanReadable } from "~/utils/duration";
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import { useQuery } from "@tanstack/react-query";
@@ -209,7 +210,7 @@ export function TestRunCasesSummary({
     );
   }
 
-  const isJUnitRun = summaryData.testRunType === "JUNIT";
+  const isJUnitRun = isAutomatedTestRunType(summaryData.testRunType);
 
   // If there are no cases, show a default message
   if (summaryData.totalCases === 0) {

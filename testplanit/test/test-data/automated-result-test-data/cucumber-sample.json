@@ -1,0 +1,237 @@
+[
+  {
+    "id": "user-authentication",
+    "uri": "features/authentication.feature",
+    "keyword": "Feature",
+    "name": "User Authentication",
+    "description": "As a user, I want to authenticate to access the application",
+    "line": 1,
+    "elements": [
+      {
+        "id": "user-authentication;successful-login-with-valid-credentials",
+        "keyword": "Scenario",
+        "name": "Successful login with valid credentials",
+        "description": "",
+        "line": 4,
+        "type": "scenario",
+        "tags": [
+          {
+            "name": "@smoke",
+            "line": 3
+          }
+        ],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "name": "I am on the login page",
+            "line": 5,
+            "match": {
+              "location": "features/step_definitions/auth_steps.rb:4"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 1234567890
+            }
+          },
+          {
+            "keyword": "When ",
+            "name": "I enter valid username and password",
+            "line": 6,
+            "match": {
+              "location": "features/step_definitions/auth_steps.rb:12"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 567890123
+            }
+          },
+          {
+            "keyword": "And ",
+            "name": "I click the login button",
+            "line": 7,
+            "match": {
+              "location": "features/step_definitions/auth_steps.rb:20"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 234567890
+            }
+          },
+          {
+            "keyword": "Then ",
+            "name": "I should be redirected to the dashboard",
+            "line": 8,
+            "match": {
+              "location": "features/step_definitions/auth_steps.rb:28"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 345678901
+            }
+          }
+        ]
+      },
+      {
+        "id": "user-authentication;failed-login-with-invalid-credentials",
+        "keyword": "Scenario",
+        "name": "Failed login with invalid credentials",
+        "description": "",
+        "line": 11,
+        "type": "scenario",
+        "tags": [
+          {
+            "name": "@regression",
+            "line": 10
+          }
+        ],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "name": "I am on the login page",
+            "line": 12,
+            "match": {
+              "location": "features/step_definitions/auth_steps.rb:4"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 123456789
+            }
+          },
+          {
+            "keyword": "When ",
+            "name": "I enter invalid username and password",
+            "line": 13,
+            "match": {
+              "location": "features/step_definitions/auth_steps.rb:36"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 456789012
+            }
+          },
+          {
+            "keyword": "And ",
+            "name": "I click the login button",
+            "line": 14,
+            "match": {
+              "location": "features/step_definitions/auth_steps.rb:20"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 234567890
+            }
+          },
+          {
+            "keyword": "Then ",
+            "name": "I should see an error message",
+            "line": 15,
+            "match": {
+              "location": "features/step_definitions/auth_steps.rb:44"
+            },
+            "result": {
+              "status": "failed",
+              "duration": 567890123,
+              "error_message": "Expected error message 'Invalid credentials' but got 'Unknown error'\n    at features/step_definitions/auth_steps.rb:48"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "shopping-cart",
+    "uri": "features/shopping_cart.feature",
+    "keyword": "Feature",
+    "name": "Shopping Cart",
+    "description": "As a customer, I want to manage items in my shopping cart",
+    "line": 1,
+    "elements": [
+      {
+        "id": "shopping-cart;add-item-to-cart",
+        "keyword": "Scenario",
+        "name": "Add item to cart",
+        "description": "",
+        "line": 4,
+        "type": "scenario",
+        "steps": [
+          {
+            "keyword": "Given ",
+            "name": "I am viewing a product",
+            "line": 5,
+            "match": {
+              "location": "features/step_definitions/cart_steps.rb:4"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 890123456
+            }
+          },
+          {
+            "keyword": "When ",
+            "name": "I click add to cart",
+            "line": 6,
+            "match": {
+              "location": "features/step_definitions/cart_steps.rb:12"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 456789012
+            }
+          },
+          {
+            "keyword": "Then ",
+            "name": "the cart count should increase by 1",
+            "line": 7,
+            "match": {
+              "location": "features/step_definitions/cart_steps.rb:20"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 234567890
+            }
+          }
+        ]
+      },
+      {
+        "id": "shopping-cart;remove-item-from-cart",
+        "keyword": "Scenario",
+        "name": "Remove item from cart",
+        "description": "",
+        "line": 10,
+        "type": "scenario",
+        "tags": [
+          {
+            "name": "@wip",
+            "line": 9
+          }
+        ],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "name": "I have an item in my cart",
+            "line": 11,
+            "result": {
+              "status": "skipped"
+            }
+          },
+          {
+            "keyword": "When ",
+            "name": "I remove the item",
+            "line": 12,
+            "result": {
+              "status": "skipped"
+            }
+          },
+          {
+            "keyword": "Then ",
+            "name": "the cart should be empty",
+            "line": 13,
+            "result": {
+              "status": "skipped"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

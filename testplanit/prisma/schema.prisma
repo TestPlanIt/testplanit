@@ -91,6 +91,12 @@ enum WorkflowScope {
 enum RepositoryCaseSource {
   MANUAL
   JUNIT
+  TESTNG
+  XUNIT
+  NUNIT
+  MSTEST
+  MOCHA
+  CUCUMBER
   API
 }
 
@@ -102,6 +108,12 @@ enum LinkType {
 enum TestRunType {
   REGULAR
   JUNIT
+  TESTNG
+  XUNIT
+  NUNIT
+  MSTEST
+  MOCHA
+  CUCUMBER
 }
 
 enum IntegrationProvider {

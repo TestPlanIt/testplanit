@@ -34,6 +34,7 @@ import { useFindManyTestRunCases } from "~/lib/hooks";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { ApplicationArea, Configurations } from "@prisma/client";
 import CompleteTestRunDialog from "./[runId]/CompleteTestRunDialog";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import {
   Tooltip,
   TooltipContent,
@@ -111,12 +112,12 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   const canAddEditRun = testRunPermissions?.canAddEdit ?? false;
 
   // Determine if menu items should be shown
-  const showEditItem =
-    canAddEditRun && !testRun.isCompleted && testRun.testRunType !== "JUNIT";
+  const isAutomatedRun = isAutomatedTestRunType(testRun.testRunType);
+  const showEditItem = canAddEditRun && !testRun.isCompleted && !isAutomatedRun;
   const showCompleteItem =
     !testRun.isCompleted && canCloseRun && !isLoadingPermissions;
   const showDuplicateItem =
-    testRun.testRunType !== "JUNIT" &&
+    !isAutomatedRun &&
     !testRun.isCompleted &&
     canAddEditRun &&
     !isLoadingPermissions &&
@@ -243,7 +244,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                 className="group inline-flex items-center gap-1 max-w-full"
               >
                 <h3 className="text-md font-semibold flex items-center gap-1 hover:text-primary min-w-0">
-                  {testRun.testRunType === "JUNIT" ? (
+                  {isAutomatedRun ? (
                     <Bot className="w-6 h-6 inline mr-1 shrink-0 border-2 text-primary border-primary rounded-full p-0.5" />
                   ) : (
                     <DynamicIcon
@@ -356,7 +357,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
 
             {/* MemberList */}
             {!testRun.isCompleted && (
-              <div className="w-full flex justify-end">
+              <div className="w-full flex justify-end pr-1">
                 <MemberList users={users} />
               </div>
             )}
