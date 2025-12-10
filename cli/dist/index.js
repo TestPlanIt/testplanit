@@ -288,7 +288,7 @@ async function importTestResults(files, options, onProgress) {
           if (onProgress) {
             onProgress(data);
           }
-          if (data.complete && data.testRunId) {
+          if (data.complete && data.testRunId !== void 0) {
             testRunId = data.testRunId;
           }
         } catch (e) {
@@ -305,6 +305,104 @@ async function importTestResults(files, options, onProgress) {
   }
   return { testRunId };
 }
+async function lookup(projectId, type, name, createIfMissing = false) {
+  const url = getUrl();
+  const token = getToken();
+  if (!url) {
+    throw new Error("TestPlanIt URL is not configured");
+  }
+  if (!token) {
+    throw new Error("API token is not configured");
+  }
+  const apiUrl = new URL("/api/cli/lookup", url).toString();
+  const requestBody = {
+    type,
+    name,
+    createIfMissing
+  };
+  if (projectId !== void 0) {
+    requestBody.projectId = projectId;
+  }
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(requestBody)
+  });
+  if (!response.ok) {
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    try {
+      const errorBody = await response.json();
+      if (errorBody.error) {
+        errorMessage = errorBody.error;
+      }
+    } catch {
+    }
+    throw new Error(errorMessage);
+  }
+  return await response.json();
+}
+function isNumericId(value) {
+  return /^\d+$/.test(value.trim());
+}
+function parseIdOrName(value) {
+  const trimmed = value.trim();
+  if (isNumericId(trimmed)) {
+    return parseInt(trimmed, 10);
+  }
+  return null;
+}
+async function resolveToId(projectId, type, value, createIfMissing = false) {
+  const numericId = parseIdOrName(value);
+  if (numericId !== null) {
+    return numericId;
+  }
+  const result = await lookup(projectId, type, value, createIfMissing);
+  return result.id;
+}
+async function resolveProjectId(value) {
+  return resolveToId(void 0, "project", value);
+}
+async function resolveTags(projectId, tagsStr) {
+  const tags = parseTagsString(tagsStr);
+  const tagIds = [];
+  for (const tag of tags) {
+    const id = await resolveToId(projectId, "tag", tag, true);
+    tagIds.push(id);
+  }
+  return tagIds;
+}
+function parseTagsString(input) {
+  const result = [];
+  let current = "";
+  let inQuotes = false;
+  let quoteChar = "";
+  for (let i = 0; i < input.length; i++) {
+    const char = input[i];
+    if (!inQuotes && (char === '"' || char === "'")) {
+      inQuotes = true;
+      quoteChar = char;
+    } else if (inQuotes && char === quoteChar) {
+      inQuotes = false;
+      quoteChar = "";
+    } else if (!inQuotes && char === ",") {
+      const trimmed2 = current.trim();
+      if (trimmed2.length > 0) {
+        result.push(trimmed2);
+      }
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  const trimmed = current.trim();
+  if (trimmed.length > 0) {
+    result.push(trimmed);
+  }
+  return result;
+}
 
 // src/types.ts
 var TEST_RESULT_FORMATS = {
@@ -320,11 +418,11 @@ var TEST_RESULT_FORMATS = {
 // src/commands/import.ts
 var VALID_FORMATS = ["auto", ...Object.keys(TEST_RESULT_FORMATS)];
 function createImportCommand() {
-  const cmd = new Command2("import").description("Import test results into TestPlanIt").argument("<files...>", "Test result files or glob patterns (e.g., ./results/*.xml)").requiredOption("-p, --project-id <id>", "Project ID", parseInt).requiredOption("-n, --name <name>", "Test run name").option(
+  const cmd = new Command2("import").description("Import test results into TestPlanIt").argument("<files...>", "Test result files or glob patterns (e.g., ./results/*.xml)").requiredOption("-p, --project <value>", "Project (ID or exact name)").requiredOption("-n, --name <name>", "Test run name").option(
     "-F, --format <format>",
     `File format: ${VALID_FORMATS.join(", ")} (default: auto-detect)`,
     "auto"
-  ).option("-s, --state-id <id>", "Workflow state ID for the test run", parseInt).option("-c, --config-id <id>", "Configuration ID", parseInt).option("-m, --milestone-id <id>", "Milestone ID", parseInt).option("-f, --parent-folder-id <id>", "Parent folder ID for test cases", parseInt).option("-t, --tag-ids <ids>", "Tag IDs (comma-separated)", parseTagIds).option("-r, --test-run-id <id>", "Existing test run ID to append results to", parseInt).action(async (filePatterns, options) => {
+  ).option("-s, --state <value>", "Workflow state (ID or exact name)").option("-c, --config <value>", "Configuration (ID or exact name)").option("-m, --milestone <value>", "Milestone (ID or exact name)").option("-f, --folder <value>", "Parent folder for test cases (ID or exact name)").option("-t, --tags <values>", "Tags (comma-separated IDs or names, use quotes for names with commas)").option("-r, --test-run <value>", "Existing test run to append results (ID or exact name)").action(async (filePatterns, options) => {
     const validationError = validateConfig();
     if (validationError) {
       error(validationError);
@@ -375,21 +473,43 @@ function createImportCommand() {
     }
     const formatLabel = format === "auto" ? "auto-detect" : TEST_RESULT_FORMATS[format].label;
     info(`Found ${formatNumber(filteredFiles.length)} file(s) to import (format: ${formatLabel})`);
-    const spinner = startSpinner("Starting import...");
+    const spinner = startSpinner("Resolving options...");
     try {
+      updateSpinner("Resolving project...");
+      const projectId = await resolveProjectId(options.project);
+      const importOptions = {
+        projectId,
+        name: options.name,
+        format
+      };
+      if (options.state) {
+        updateSpinner("Resolving workflow state...");
+        importOptions.stateId = await resolveToId(projectId, "state", options.state);
+      }
+      if (options.config) {
+        updateSpinner("Resolving configuration...");
+        importOptions.configId = await resolveToId(projectId, "config", options.config);
+      }
+      if (options.milestone) {
+        updateSpinner("Resolving milestone...");
+        importOptions.milestoneId = await resolveToId(projectId, "milestone", options.milestone);
+      }
+      if (options.folder) {
+        updateSpinner("Resolving folder...");
+        importOptions.parentFolderId = await resolveToId(projectId, "folder", options.folder);
+      }
+      if (options.tags) {
+        updateSpinner("Resolving tags...");
+        importOptions.tagIds = await resolveTags(projectId, options.tags);
+      }
+      if (options.testRun) {
+        updateSpinner("Resolving test run...");
+        importOptions.testRunId = await resolveToId(projectId, "testRun", options.testRun);
+      }
+      updateSpinner("Starting import...");
       const result = await importTestResults(
         filteredFiles,
-        {
-          projectId: options.projectId,
-          name: options.name,
-          format,
-          stateId: options.stateId,
-          configId: options.configId,
-          milestoneId: options.milestoneId,
-          parentFolderId: options.parentFolderId,
-          tagIds: options.tagIds,
-          testRunId: options.testRunId
-        },
+        importOptions,
         (event) => {
           if (event.status) {
             updateSpinner(`[${event.progress || 0}%] ${event.status}`);
@@ -415,9 +535,6 @@ function createImportCommand() {
     }
   });
   return cmd;
-}
-function parseTagIds(value) {
-  return value.split(",").map((s) => s.trim()).filter((s) => s.length > 0).map((s) => parseInt(s, 10)).filter((n) => !isNaN(n));
 }
 
 // src/index.ts

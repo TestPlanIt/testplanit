@@ -147,7 +147,7 @@ export async function importTestResults(
             onProgress(data);
           }
 
-          if (data.complete && data.testRunId) {
+          if (data.complete && data.testRunId !== undefined) {
             testRunId = data.testRunId;
           }
         } catch (e) {

@@ -1811,6 +1811,34 @@
           "newCodesTitle": "Vos nouveaux codes de sauvegarde",
           "newCodesDescription": "Vos anciens codes n'ont plus été valides. Veuillez conserver ces nouveaux codes en lieu sûr."
         }
+      },
+      "apiTokens": {
+        "title": "Jetons API",
+        "description": "Les jetons d'API permettent aux applications et scripts externes d'accéder à TestPlanIt en votre nom. Ces jetons disposent des mêmes autorisations que votre compte.",
+        "create": "Créer un jeton",
+        "createTitle": "Créer un jeton API",
+        "createDescription": "Créez un nouveau jeton d'API pour authentifier les outils et scripts externes.",
+        "name": "Nom",
+        "nameLabel": "Nom du jeton",
+        "namePlaceholder": "par exemple, pipeline CI/CD, outil CLI",
+        "token": "Jeton",
+        "created": "Créé",
+        "lastUsed": "Dernière utilisation",
+        "expires": "Expire",
+        "noExpiry": "Jamais",
+        "never": "Jamais",
+        "noTokens": "Aucun jeton API n'a encore été créé.",
+        "expiryLabel": "Date d'expiration (facultatif)",
+        "expiryHint": "Laisser vide pour éviter toute expiration.",
+        "tokenCreated": "Jeton créé",
+        "tokenCreatedDescription": "Votre jeton API a été créé avec succès.",
+        "copyWarning": "Copiez ce jeton maintenant. Vous ne pourrez plus le voir !",
+        "yourToken": "Votre jeton",
+        "deleteTitle": "Supprimer le jeton API ?",
+        "deleteDescription": "Cette action est irréversible. Les applications utilisant ce jeton ne pourront plus s'authentifier.",
+        "errors": {
+          "nameRequired": "Le nom du jeton est obligatoire."
+        }
       }
     },
     "filterPlaceholder": "Filtrer les utilisateurs...",
@@ -2763,7 +2791,8 @@
       "notifications": "Notifications",
       "elasticsearch": "Moteur de recherche",
       "queues": "Files d'attente pour les tâches",
-      "auditLogs": "Journaux d'audit"
+      "auditLogs": "Journaux d'audit",
+      "apiTokens": "Jetons API"
     },
     "imports": {
       "title": "Importation de données",
@@ -3751,6 +3780,42 @@
         "user": "Utilisateur",
         "none": "Aucun"
       }
+    },
+    "apiTokens": {
+      "title": "Jetons API",
+      "description": "Consultez et gérez les jetons d'API pour tous les utilisateurs. Révoquez les jetons en cas de problème de sécurité.",
+      "filterPlaceholder": "Filtrer par nom de jeton ou utilisateur...",
+      "showInactive": "Afficher révoqué",
+      "noTokens": "Aucun jeton API n'a encore été créé.",
+      "columns": {
+        "name": "Nom",
+        "user": "Utilisateur",
+        "token": "Jeton",
+        "created": "Créé",
+        "lastUsed": "Dernière utilisation",
+        "expires": "Expire",
+        "status": "Statut"
+      },
+      "status": {
+        "active": "Actif",
+        "revoked": "Révoqué",
+        "expired": "Expiré"
+      },
+      "lastUsedNever": "Jamais",
+      "noExpiry": "Aucune date d'expiration",
+      "revokeToken": "Révoquer le jeton",
+      "revokeConfirmTitle": "Révoquer le jeton API",
+      "revokeConfirmMessage": "Êtes-vous sûr de vouloir révoquer ce jeton d'API ? Cette action est irréversible.",
+      "revokeConfirmDescription": "Le jeton «{name}» appartenant à {user} sera immédiatement révoqué et ne pourra plus être utilisé pour l'accès à l'API.",
+      "revokeSuccess": "Jeton API révoqué avec succès",
+      "revokeError": "Échec de la révocation du jeton API",
+      "revokeAllTokens": "Révoquer tous les jetons",
+      "revokeAllTitle": "Révoquer tous les jetons API",
+      "revokeAllDescription": "Cette action révoquera immédiatement tous les jetons API actifs pour tous les utilisateurs. Elle est irréversible et peut perturber les flux de travail automatisés.",
+      "revokeAllConfirm": "Tapez « REVOKE ALL » pour confirmer",
+      "revokeAllPlaceholder": "RÉVOQUER TOUT",
+      "revokeAllSuccess": "Tous les jetons API ont été révoqués.",
+      "revokeAllError": "Impossible de révoquer tous les jetons."
     },
     "tags": {
       "title": "Étiquettes",
