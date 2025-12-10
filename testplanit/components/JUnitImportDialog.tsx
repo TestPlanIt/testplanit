@@ -86,13 +86,13 @@ export default function JUnitImportDialog({
     orderBy: { name: "asc" },
   });
   const { data: milestones } = useFindManyMilestones({
-    where: { projectId, isDeleted: false },
+    where: { projectId, isDeleted: false, isCompleted: false },
     orderBy: { startedAt: "asc" },
     include: {
       milestoneType: { include: { icon: true } },
     },
   });
-  const { } = useFindManyTags({
+  const {} = useFindManyTags({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
     select: { id: true, name: true },
@@ -172,10 +172,7 @@ export default function JUnitImportDialog({
     },
   });
 
-  const {
-    handleSubmit,
-    control,
-  } = form;
+  const { handleSubmit, control } = form;
 
   const handleImport = handleSubmit(async (data) => {
     try {
@@ -211,18 +208,18 @@ export default function JUnitImportDialog({
       // Read the streamed response
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      
+
       if (reader) {
         let buffer = "";
-        
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          
+
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split("\n");
           buffer = lines.pop() || "";
-          
+
           for (const line of lines) {
             if (line.trim() && line.startsWith("data: ")) {
               try {
@@ -251,8 +248,8 @@ export default function JUnitImportDialog({
       });
 
       // Wait a moment to show completion
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       setOpen(false);
       form.reset();
       setStateId("");
@@ -366,7 +363,9 @@ export default function JUnitImportDialog({
                           onChange={(val) =>
                             field.onChange(val ? val.toString() : "")
                           }
-                          configurations={transformConfigurations(configurations || [])}
+                          configurations={transformConfigurations(
+                            configurations || []
+                          )}
                           isLoading={!configurations}
                           disabled={isImporting}
                         />
@@ -441,7 +440,9 @@ export default function JUnitImportDialog({
                       <FormControl>
                         <MilestoneSelect
                           value={field.value ? field.value : null}
-                          onChange={(val) => field.onChange(val ? val.toString() : "")}
+                          onChange={(val) =>
+                            field.onChange(val ? val.toString() : "")
+                          }
                           milestones={transformMilestones(milestones || [])}
                           isLoading={!milestones}
                           disabled={isImporting}
@@ -493,7 +494,10 @@ export default function JUnitImportDialog({
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">{importStatus}</span>
-                  <span className="text-muted-foreground">{Math.round(importProgress)}{'%'}</span>
+                  <span className="text-muted-foreground">
+                    {Math.round(importProgress)}
+                    {"%"}
+                  </span>
                 </div>
                 <Progress value={importProgress} className="w-full" />
               </div>

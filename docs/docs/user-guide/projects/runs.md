@@ -21,6 +21,18 @@ The page is structured within a card layout and features:
     - **Active**: Shows test runs that are currently in progress (not marked as completed).
     - **Completed**: Shows test runs that have been marked as completed.
 
+## Filtering
+
+The Test Runs page includes a **Type Filter** dropdown that allows you to filter test runs by their type:
+
+- **All**: Shows both manual and automated test runs (default)
+- **Manual**: Shows only manual test runs
+- **Automated**: Shows only automated test runs
+
+:::tip Shareable Filter URLs
+The selected filter is saved in the URL, so you can share a filtered view with teammates or bookmark it for quick access. When someone opens the shared link, they'll see the same filter applied.
+:::
+
 ## Active Tab
 
 This is the default view. Active test runs are grouped by their associated milestone:
@@ -37,6 +49,20 @@ This is the default view. Active test runs are grouped by their associated miles
   _Test runs within milestone groups are sorted by creation date. Milestones themselves are sorted logically (often chronologically based on start/end dates or a defined order)._
 
 - **Empty State**: If there are no active test runs, a message is displayed, along with a prominent **Create Test Run** button (if the user has permission).
+
+### Drag and Drop to Milestones
+
+Active test runs can be reassigned to different milestones using drag and drop:
+
+1. **Hover** over a test run to reveal the grip handle (⋮⋮) on the left side
+2. **Drag** the test run by the grip handle
+3. **Drop** it onto a different milestone group or the "Unscheduled" section
+
+The milestone assignment is updated immediately. Visual feedback shows valid drop targets as you drag.
+
+:::info Permissions Required
+Drag and drop is only available to users with edit permissions for test runs. Completed test runs cannot be dragged.
+:::
 
 ## Completed Tab
 
