@@ -15,6 +15,15 @@ const middleware = createMiddleware({
 });
 
 /**
+ * Check if the request has an API token (Bearer token with tpi_ prefix)
+ * These requests will be authenticated by the API routes themselves
+ */
+function hasApiToken(request: NextRequest): boolean {
+  const authHeader = request.headers.get("authorization");
+  return authHeader?.startsWith("Bearer tpi_") ?? false;
+}
+
+/**
  * Determines if a request is coming from an external API client (not a browser on the same origin).
  *
  * This checks for browser-specific headers that indicate the request originated from a
@@ -75,7 +84,13 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   }
 
   if (isApiRoute) {
-    // Get the JWT token for API routes
+    // If request has an API token (Bearer tpi_*), let the API route handle authentication
+    // API routes will use authenticateApiToken() to validate the token
+    if (hasApiToken(request)) {
+      return NextResponse.next();
+    }
+
+    // Get the JWT token for API routes (session-based auth)
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,

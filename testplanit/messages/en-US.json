@@ -1811,6 +1811,34 @@
           "newCodesTitle": "Your New Backup Codes",
           "newCodesDescription": "Your old codes have been invalidated. Save these new codes in a safe place."
         }
+      },
+      "apiTokens": {
+        "title": "API Tokens",
+        "description": "API tokens allow external applications and scripts to access TestPlanIt on your behalf. Tokens have the same permissions as your account.",
+        "create": "Create Token",
+        "createTitle": "Create API Token",
+        "createDescription": "Create a new API token to authenticate external tools and scripts.",
+        "name": "Name",
+        "nameLabel": "Token Name",
+        "namePlaceholder": "e.g., CI/CD Pipeline, CLI Tool",
+        "token": "Token",
+        "created": "Created",
+        "lastUsed": "Last Used",
+        "expires": "Expires",
+        "noExpiry": "Never",
+        "never": "Never",
+        "noTokens": "No API tokens created yet.",
+        "expiryLabel": "Expiration Date (Optional)",
+        "expiryHint": "Leave empty for no expiration.",
+        "tokenCreated": "Token Created",
+        "tokenCreatedDescription": "Your API token has been created successfully.",
+        "copyWarning": "Copy this token now. You won't be able to see it again!",
+        "yourToken": "Your Token",
+        "deleteTitle": "Delete API Token?",
+        "deleteDescription": "This action cannot be undone. Any applications using this token will no longer be able to authenticate.",
+        "errors": {
+          "nameRequired": "Token name is required."
+        }
       }
     },
     "filterPlaceholder": "Filter users...",
@@ -2763,7 +2791,8 @@
       "notifications": "Notifications",
       "elasticsearch": "Search Engine",
       "queues": "Job Queues",
-      "auditLogs": "Audit Logs"
+      "auditLogs": "Audit Logs",
+      "apiTokens": "API Tokens"
     },
     "imports": {
       "title": "Data Imports",
@@ -3751,6 +3780,42 @@
         "user": "User",
         "none": "None"
       }
+    },
+    "apiTokens": {
+      "title": "API Tokens",
+      "description": "View and manage API tokens across all users. Revoke tokens if there are security concerns.",
+      "filterPlaceholder": "Filter by token name or user...",
+      "showInactive": "Show Revoked",
+      "noTokens": "No API tokens have been created yet.",
+      "columns": {
+        "name": "Name",
+        "user": "User",
+        "token": "Token",
+        "created": "Created",
+        "lastUsed": "Last Used",
+        "expires": "Expires",
+        "status": "Status"
+      },
+      "status": {
+        "active": "Active",
+        "revoked": "Revoked",
+        "expired": "Expired"
+      },
+      "lastUsedNever": "Never",
+      "noExpiry": "No Expiry",
+      "revokeToken": "Revoke Token",
+      "revokeConfirmTitle": "Revoke API Token",
+      "revokeConfirmMessage": "Are you sure you want to revoke this API token? This action cannot be undone.",
+      "revokeConfirmDescription": "The token \"{name}\" belonging to {user} will be immediately revoked and can no longer be used for API access.",
+      "revokeSuccess": "API token revoked successfully",
+      "revokeError": "Failed to revoke API token",
+      "revokeAllTokens": "Revoke All Tokens",
+      "revokeAllTitle": "Revoke All API Tokens",
+      "revokeAllDescription": "This will immediately revoke ALL active API tokens across all users. This action cannot be undone and may disrupt automated workflows.",
+      "revokeAllConfirm": "Type \"REVOKE ALL\" to confirm",
+      "revokeAllPlaceholder": "REVOKE ALL",
+      "revokeAllSuccess": "All API tokens have been revoked",
+      "revokeAllError": "Failed to revoke all tokens"
     },
     "tags": {
       "title": "Tags",

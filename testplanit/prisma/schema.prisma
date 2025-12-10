@@ -328,6 +328,7 @@ model User {
   testmoImportJobs        TestmoImportJob[]
   createdComments         Comment[]               @relation("CommentCreator")
   commentMentions         CommentMention[]        @relation("CommentMentions")
+  apiTokens               ApiToken[]
   twoFactorEnabled        Boolean                 @default(false)
   twoFactorSecret         String?
   twoFactorBackupCodes    String?
@@ -351,6 +352,25 @@ model UserPreferences {
   inAppNotifications                  Boolean          @default(true)
   hasCompletedWelcomeTour             Boolean          @default(false)
   hasCompletedInitialPreferencesSetup Boolean          @default(false)
+}
+
+model ApiToken {
+  id          String    @id() @default(cuid())
+  name        String
+  token       String    @unique()
+  tokenPrefix String
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scopes      String[]  @default([])
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  lastUsedIp  String?
+  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  isActive    Boolean   @default(true)
+
+  @@index([userId])
+  @@index([token])
+  @@index([isActive, expiresAt])
 }
 
 model Groups {

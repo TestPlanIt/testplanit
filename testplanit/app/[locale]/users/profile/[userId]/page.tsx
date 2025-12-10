@@ -52,6 +52,7 @@ import { EditAvatarModal } from "./EditAvatar";
 import { RemoveAvatar } from "./RemoveAvatar";
 import { ChangePasswordModal } from "./ChangePasswordModal";
 import { TwoFactorSettings } from "./TwoFactorSettings";
+import { ApiTokenSettings } from "./ApiTokenSettings";
 import { Avatar } from "@/components/Avatar";
 import { AccessLevelDisplay } from "@/components/tables/AccessLevelDisplay";
 import { EmailCell } from "@/components/EmailDisplay";
@@ -572,6 +573,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                   type="multiple"
                   defaultValue={[
                     "account",
+                    "api-tokens",
                     "groups",
                     "activity",
                     "preferences",
@@ -649,6 +651,24 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                       </div>
                     </AccordionContent>
                   </AccordionItem>
+
+                  {/* API Tokens - Only for own profile and if user has API access */}
+                  {user?.id === session?.user?.id && user.isApi && (
+                    <AccordionItem value="api-tokens">
+                      <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                        {t("apiTokens.title")}
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="bg-muted/30 p-4 rounded-lg border mt-2">
+                          <ApiTokenSettings
+                            userId={user.id}
+                            isOwnProfile={user?.id === session?.user?.id}
+                            isAdmin={session.user.access === "ADMIN"}
+                          />
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
 
                   {/* Groups and Relationships */}
                   <AccordionItem value="groups">

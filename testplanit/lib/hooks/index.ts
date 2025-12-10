@@ -9,6 +9,7 @@ export * from './account';
 export * from './verification-token';
 export * from './user';
 export * from './user-preferences';
+export * from './api-token';
 export * from './groups';
 export * from './group-assignment';
 export * from './roles';

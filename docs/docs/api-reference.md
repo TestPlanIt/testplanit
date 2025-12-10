@@ -64,39 +64,48 @@ You can use these specifications to:
 
 ## Authentication
 
+TestPlanIt supports two authentication methods:
+
+1. **API Tokens** - For programmatic access (CLI, CI/CD, scripts)
+2. **Session-Based** - For browser-based requests
+
+### API Token Authentication (Recommended for Integrations)
+
+API tokens provide persistent authentication for server-to-server integrations, CLI tools, and automated workflows.
+
+```bash
+curl -X POST "https://your-domain.com/api/model/project/findMany" \
+  -H "Authorization: Bearer tpi_your_token_here" \
+  -H "Content-Type: application/json" \
+  -d '{"where": {"isDeleted": false}}'
+```
+
+```javascript
+const response = await fetch('/api/model/project/findMany', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer tpi_your_token_here',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({ where: { isDeleted: false } })
+});
+```
+
+To create and manage API tokens, see the [API Tokens documentation](./api-tokens.md).
+
 ### Session-Based Authentication
 
-TestPlanIt uses NextAuth.js for session management. All API requests require a valid session cookie.
-
-#### Browser-Based Requests
-
-For requests from the browser, authentication is handled automatically:
+For browser-based requests, TestPlanIt uses NextAuth.js session cookies. Authentication is handled automatically:
 
 ```javascript
 // Fetch with automatic session handling
 const response = await fetch('/api/model/project/findMany', {
-  method: 'GET',
-  credentials: 'include' // Include session cookies
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  credentials: 'include', // Include session cookies
+  body: JSON.stringify({ where: { isDeleted: false } })
 });
 ```
-
-#### Server-Side Requests
-
-For server-side integrations, authentication is handled through session cookies. External integrations should use the standard session-based authentication flow.
-
-```javascript
-// Server-side requests use session cookies
-const response = await fetch('/api/model/project/findMany', {
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  credentials: 'include'
-});
-```
-
-### Authentication Limitations
-
-Currently, TestPlanIt uses session-based authentication only. API key authentication for server-to-server integration is not implemented but may be added in future releases.
 
 ## Base URL and Endpoints
 
@@ -212,8 +221,8 @@ const response = await fetch('/api/model/repositoryCase/delete', {
 Import JUnit XML test results to create test runs with test cases:
 
 ```bash
-curl -X POST "https://your-domain/api/junit/import" \
-  -H "Cookie: your-auth-cookie" \
+curl -X POST "https://your-domain.com/api/junit/import" \
+  -H "Authorization: Bearer tpi_your_token_here" \
   -F "name=My Test Run" \
   -F "projectId=1" \
   -F "files=@/path/to/junit-results.xml" \
