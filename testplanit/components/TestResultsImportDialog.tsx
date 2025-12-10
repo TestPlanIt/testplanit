@@ -97,7 +97,7 @@ export default function TestResultsImportDialog({
     orderBy: { name: "asc" },
   });
   const { data: milestones } = useFindManyMilestones({
-    where: { projectId, isDeleted: false },
+    where: { projectId, isDeleted: false, isCompleted: false },
     orderBy: { startedAt: "asc" },
     include: {
       milestoneType: { include: { icon: true } },

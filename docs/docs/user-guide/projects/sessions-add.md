@@ -23,7 +23,7 @@ The dialog uses a two-column layout:
 - **Name** (Required): A unique name for the session.
 - **Description**: A rich-text editor for adding details or context about the session's purpose or observations.
 - **Configuration**: Dropdown to select a relevant project [Configuration](../configurations.md) (or "None").
-- **Milestone**: Dropdown to link the session to a project [Milestone](./milestones.md) (or "None"). If opened from a milestone group, this defaults to that milestone.
+- **Milestone**: Dropdown to link the session to a project [Milestone](./milestones.md) (or "None"). If opened from a milestone group, this defaults to that milestone. Only active (non-completed) milestones are shown in the dropdown.
 - **Mission**: A rich-text editor to define the goals, charter, or specific areas to explore during the session.
 
 **Right Column:**

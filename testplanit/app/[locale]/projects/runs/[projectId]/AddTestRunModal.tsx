@@ -855,7 +855,11 @@ export default function AddTestRunModal({
     orderBy: { order: "asc" },
   });
   const { data: milestones } = useFindManyMilestones({
-    where: { projectId: Number(projectId), isDeleted: false },
+    where: {
+      projectId: Number(projectId),
+      isDeleted: false,
+      isCompleted: false,
+    },
     include: {
       milestoneType: { include: { icon: true } },
       children: { include: { milestoneType: { include: { icon: true } } } },

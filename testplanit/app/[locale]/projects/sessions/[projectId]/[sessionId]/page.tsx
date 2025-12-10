@@ -1092,6 +1092,7 @@ export default function SessionPage() {
       where: {
         projectId: numericProjectId ?? undefined,
         isDeleted: false,
+        isCompleted: false,
       },
       include: {
         milestoneType: {
