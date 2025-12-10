@@ -1,31 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
+import { authenticateApiToken } from "~/lib/api-token-auth";
 import { prisma } from "@/lib/prisma";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { getElasticsearchReindexQueue } from "@/lib/queues";
 import { ReindexJobData } from "~/workers/elasticsearchReindexWorker";
 import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
 
-export async function POST(request: NextRequest) {
-  try {
-    // Check authentication
-    const session = await getServerAuthSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+// Helper to check admin authentication (session or API token)
+async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextResponse; userId?: string }> {
+  const session = await getServerAuthSession();
+  let userId = session?.user?.id;
+  let userAccess: string | undefined;
 
-    // Check if user is admin
+  if (!userId) {
+    const apiAuth = await authenticateApiToken(request);
+    if (!apiAuth.authenticated) {
+      return {
+        error: NextResponse.json(
+          { error: apiAuth.error, code: apiAuth.errorCode },
+          { status: 401 }
+        ),
+      };
+    }
+    userId = apiAuth.userId;
+    userAccess = apiAuth.access;
+  }
+
+  if (!userId) {
+    return {
+      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
+
+  if (!userAccess) {
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId },
       select: { access: true },
     });
+    userAccess = user?.access;
+  }
 
-    if (user?.access !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
-    }
+  if (userAccess !== "ADMIN") {
+    return {
+      error: NextResponse.json({ error: "Admin access required" }, { status: 403 }),
+    };
+  }
+
+  return { userId };
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const auth = await checkAdminAuth(request);
+    if (auth.error) return auth.error;
 
     // Parse request body
     const body = await request.json();
@@ -57,7 +85,7 @@ export async function POST(request: NextRequest) {
     const jobData: ReindexJobData = {
       entityType,
       projectId,
-      userId: session.user.id,
+      userId: auth.userId!,
       tenantId: getCurrentTenantId(),
     };
 
@@ -80,22 +108,8 @@ export async function POST(request: NextRequest) {
 // GET endpoint to check Elasticsearch status
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerAuthSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { access: true },
-    });
-
-    if (user?.access !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
-    }
+    const auth = await checkAdminAuth(request);
+    if (auth.error) return auth.error;
 
     const esClient = getElasticsearchClient();
     if (!esClient) {

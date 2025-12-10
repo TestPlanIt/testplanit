@@ -13,6 +13,7 @@
 
 import { NextRequest } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
+import { authenticateApiToken } from "~/lib/api-token-auth";
 import { prisma } from "@/lib/prisma";
 import { JUnitResultType, RepositoryCaseSource, TestRunType } from "@prisma/client";
 import { progressMessages } from "./progress-messages";
@@ -107,8 +108,22 @@ function parseDuration(duration: unknown): number {
 }
 
 export async function POST(request: NextRequest) {
+  // Try session-based auth first, then fall back to API token auth
   const session = await getServerAuthSession();
-  if (!session?.user) {
+  let userId: string | undefined = session?.user?.id;
+
+  if (!userId) {
+    const apiAuth = await authenticateApiToken(request);
+    if (!apiAuth.authenticated) {
+      return new Response(
+        JSON.stringify({ error: apiAuth.error, code: apiAuth.errorCode }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    userId = apiAuth.userId;
+  }
+
+  if (!userId) {
     return new Response(
       JSON.stringify({ error: "Unauthorized" }),
       { status: 401, headers: { "Content-Type": "application/json" } }
@@ -259,7 +274,7 @@ export async function POST(request: NextRequest) {
               configId: configId || null,
               milestoneId: milestoneId || null,
               testRunType: testRunType,
-              createdById: session.user.id,
+              createdById: userId,
               tags:
                 tagIds.length > 0
                   ? { connect: tagIds.map((id) => ({ id })) }
@@ -350,7 +365,7 @@ export async function POST(request: NextRequest) {
                 skipped: suite.skipped || 0,
                 timestamp: new Date(),
                 testRunId: testRunId,
-                createdById: session.user.id,
+                createdById: userId,
               },
             });
 
@@ -406,7 +421,7 @@ export async function POST(request: NextRequest) {
                     repositoryId: repository.id,
                     parentId: currentParentId,
                     name: folderName,
-                    creatorId: session.user.id,
+                    creatorId: userId,
                   },
                 });
 
@@ -432,7 +447,7 @@ export async function POST(request: NextRequest) {
                   projectId: projectId,
                   repositoryId: repository.id,
                   name: `${validFormat.toUpperCase()} Imports`,
-                  creatorId: session.user.id,
+                  creatorId: userId,
                 },
               });
             }
@@ -476,7 +491,7 @@ export async function POST(request: NextRequest) {
                   templateId: template.id,
                   folderId: finalFolder.id,
                   repositoryId: repository.id,
-                  creatorId: session.user.id,
+                  creatorId: userId,
                   order: caseOrder,
                   estimate: Math.max(1, Math.round(testCaseTime)),
                   forecastManual: Math.max(1, Math.round(testCaseTime)),
@@ -491,7 +506,7 @@ export async function POST(request: NextRequest) {
                   source: caseSource,
                   stateId: defaultCaseStateId,
                   automated: true,
-                  creatorId: session.user.id,
+                  creatorId: userId,
                   order: caseOrder,
                   estimate: Math.max(1, Math.round(testCaseTime)),
                   forecastManual: Math.max(1, Math.round(testCaseTime)),
@@ -548,7 +563,7 @@ export async function POST(request: NextRequest) {
                     message: testCase.failure || undefined,
                     content: testCase.stack_trace || undefined,
                     repositoryCase: { connect: { id: repositoryCase.id } },
-                    createdBy: { connect: { id: session.user.id } },
+                    createdBy: { connect: { id: userId } },
                     status: matchingStatus
                       ? { connect: { id: matchingStatus.id } }
                       : undefined,
@@ -597,7 +612,7 @@ export async function POST(request: NextRequest) {
                       name: step.name,
                       content: step.failure || null,
                       repositoryCase: { connect: { id: repositoryCase.id } },
-                      createdBy: { connect: { id: session.user.id } },
+                      createdBy: { connect: { id: userId } },
                     };
                     if (typeof stepStatusId === "number") {
                       stepData.statusId = stepStatusId;
@@ -617,7 +632,7 @@ export async function POST(request: NextRequest) {
                         value: attachment.path,
                         type: "FILE",
                         repositoryCase: { connect: { id: repositoryCase.id } },
-                        createdBy: { connect: { id: session.user.id } },
+                        createdBy: { connect: { id: userId } },
                       },
                     });
                   }

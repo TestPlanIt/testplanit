@@ -1,0 +1,383 @@
+---
+sidebar_position: 13
+title: CLI Tool
+---
+
+# CLI Tool
+
+TestPlanIt provides a command-line interface (CLI) for importing test results and managing test data from the terminal or CI/CD pipelines. The CLI is available as standalone binaries that require no Node.js or npm installation.
+
+## Supported Formats
+
+The CLI supports importing test results from 7 different formats:
+
+| Format | Description | File Extensions |
+|--------|-------------|-----------------|
+| `junit` | JUnit XML | `.xml` |
+| `testng` | TestNG XML | `.xml` |
+| `xunit` | xUnit XML | `.xml` |
+| `nunit` | NUnit XML | `.xml` |
+| `mstest` | MSTest TRX | `.trx`, `.xml` |
+| `mocha` | Mocha JSON | `.json` |
+| `cucumber` | Cucumber JSON | `.json` |
+
+The CLI can auto-detect the format based on file content, or you can specify it explicitly with the `-F/--format` option.
+
+## Installation
+
+### Standalone Binaries (Recommended)
+
+Download the appropriate binary for your platform from the [latest release](https://github.com/testplanit/testplanit/releases):
+
+| Platform | Binary |
+|----------|--------|
+| Linux (x64) | `testplanit-linux-x64` |
+| macOS (Apple Silicon) | `testplanit-macos-arm64` |
+| macOS (Intel) | `testplanit-macos-x64` |
+| Windows (x64) | `testplanit-windows-x64.exe` |
+
+**Linux / macOS:**
+
+```bash
+# Download (replace URL with actual release URL)
+curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
+
+# Make executable
+chmod +x testplanit
+
+# Move to PATH (optional)
+sudo mv testplanit /usr/local/bin/
+```
+
+**Windows (PowerShell):**
+
+```powershell
+# Download
+Invoke-WebRequest -Uri "https://github.com/testplanit/testplanit/releases/latest/download/testplanit-windows-x64.exe" -OutFile "testplanit.exe"
+
+# Add to PATH or run directly
+.\testplanit.exe --help
+```
+
+## Configuration
+
+### Setting Up
+
+Before using the CLI, configure your TestPlanIt instance URL and API token:
+
+```bash
+# Set URL and token
+testplanit config set --url https://your-testplanit-instance.com --token tpi_your_token
+
+# View current configuration
+testplanit config show
+
+# Clear stored configuration
+testplanit config clear
+
+# Show config file location
+testplanit config path
+```
+
+### Environment Variables
+
+Environment variables take precedence over stored configuration, making them ideal for CI/CD:
+
+| Variable | Description |
+|----------|-------------|
+| `TESTPLANIT_URL` | TestPlanIt instance URL |
+| `TESTPLANIT_TOKEN` | API token |
+
+```bash
+TESTPLANIT_URL=https://demo.testplanit.com \
+TESTPLANIT_TOKEN=tpi_xxx \
+testplanit import results.xml -p 1 -n "Build"
+```
+
+### Creating an API Token
+
+1. Navigate to your user profile in TestPlanIt
+2. Go to the **API Tokens** section
+3. Click **Create Token**
+4. Give it a descriptive name and optional expiration date
+5. Copy the token immediately (it won't be shown again)
+
+See the [API Tokens documentation](./api-tokens.md) for more details.
+
+## Commands
+
+### Import Test Results
+
+Import test results from various formats to create or update a test run:
+
+```bash
+testplanit import <files...> --project <id|name> --name <name> [options]
+```
+
+#### Required Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `<files...>` | Test result files or glob patterns (e.g., `./results/*.xml`) |
+| `-p, --project <value>` | Target project (ID or exact name) |
+| `-n, --name <name>` | Name for the test run |
+
+#### Optional Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `-F, --format <format>` | File format: `auto`, `junit`, `testng`, `xunit`, `nunit`, `mstest`, `mocha`, `cucumber` (default: auto-detect) |
+| `-s, --state <value>` | Workflow state (ID or exact name) |
+| `-c, --config <value>` | Configuration (ID or exact name) |
+| `-m, --milestone <value>` | Milestone (ID or exact name) |
+| `-f, --folder <value>` | Parent folder for test cases (ID or exact name) |
+| `-t, --tags <values>` | Tags (comma-separated IDs or names; use quotes for names with commas) |
+| `-r, --test-run <value>` | Existing test run to append results (ID or exact name) |
+
+:::note
+For project, state, config, milestone, folder, and test run options, the CLI looks up entities by exact name match. If no match is found, an error is returned. For tags, if a tag name doesn't exist, it will be created automatically.
+:::
+
+#### Examples
+
+```bash
+# Import a single JUnit file (auto-detected)
+testplanit import results.xml -p 1 -n "Build 123"
+
+# Import with explicit format
+testplanit import results.xml -p 1 -n "Build 123" -F junit
+
+# Import TestNG results
+testplanit import testng-results.xml -p 1 -n "TestNG Suite" -F testng
+
+# Import Mocha JSON results
+testplanit import mocha-report.json -p 1 -n "Mocha Tests" -F mocha
+
+# Import Cucumber JSON results
+testplanit import cucumber-report.json -p 1 -n "BDD Tests" -F cucumber
+
+# Import multiple files with glob pattern
+testplanit import "./test-results/*.xml" -p 1 -n "CI Build"
+
+# Import with IDs
+testplanit import results.xml \
+  --project 1 \
+  --name "Nightly Build" \
+  --format junit \
+  --state 5 \
+  --config 2 \
+  --milestone 3 \
+  --folder 10 \
+  --tags 1,2,3
+
+# Import with names (exact match required)
+testplanit import results.xml \
+  --project "My Project" \
+  --name "Nightly Build" \
+  --state "In Progress" \
+  --config "Chrome on Windows" \
+  --milestone "Sprint 5" \
+  --folder "API Tests" \
+  --tags "regression,smoke,critical"
+
+# Mix IDs and names
+testplanit import results.xml -p 1 -n "Build 123" \
+  --state "Completed" \
+  --tags '1,"new tag",smoke'
+
+# Append results to an existing test run by name
+testplanit import more-results.xml \
+  -p 1 \
+  -n "Continued Tests" \
+  --test-run "Build 123"
+```
+
+## CI/CD Integration
+
+### GitHub Actions
+
+Using the standalone binary (no Node.js required):
+
+```yaml
+name: Test and Import Results
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Tests
+        run: npm test
+
+      - name: Download TestPlanIt CLI
+        run: |
+          curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
+          chmod +x testplanit
+
+      - name: Import Test Results to TestPlanIt
+        if: always()
+        env:
+          TESTPLANIT_URL: ${{ secrets.TESTPLANIT_URL }}
+          TESTPLANIT_TOKEN: ${{ secrets.TESTPLANIT_TOKEN }}
+        run: |
+          ./testplanit import ./test-results/*.xml \
+            --project-id 1 \
+            --name "Build ${{ github.run_number }} - ${{ github.sha }}"
+```
+
+### GitLab CI
+
+```yaml
+stages:
+  - test
+  - report
+
+test:
+  stage: test
+  script:
+    - npm test
+  artifacts:
+    reports:
+      junit: test-results/*.xml
+    paths:
+      - test-results/
+
+import-results:
+  stage: report
+  needs: [test]
+  when: always
+  script:
+    - curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
+    - chmod +x testplanit
+    - ./testplanit import ./test-results/*.xml -p 1 -n "Pipeline $CI_PIPELINE_ID"
+  variables:
+    TESTPLANIT_URL: $TESTPLANIT_URL
+    TESTPLANIT_TOKEN: $TESTPLANIT_TOKEN
+```
+
+### Jenkins Pipeline
+
+```groovy
+pipeline {
+    agent any
+
+    stages {
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Import to TestPlanIt') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'testplanit-url', variable: 'TESTPLANIT_URL'),
+                    string(credentialsId: 'testplanit-token', variable: 'TESTPLANIT_TOKEN')
+                ]) {
+                    sh '''
+                        curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
+                        chmod +x testplanit
+                        ./testplanit import ./target/surefire-reports/*.xml \
+                            -p 1 \
+                            -n "Build ${BUILD_NUMBER}"
+                    '''
+                }
+            }
+        }
+    }
+}
+```
+
+### Azure DevOps
+
+```yaml
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  - script: npm test
+    displayName: 'Run Tests'
+
+  - script: |
+      curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
+      chmod +x testplanit
+      ./testplanit import ./test-results/*.xml \
+        -p 1 \
+        -n "Build $(Build.BuildNumber)"
+    displayName: 'Import Results to TestPlanIt'
+    env:
+      TESTPLANIT_URL: $(TESTPLANIT_URL)
+      TESTPLANIT_TOKEN: $(TESTPLANIT_TOKEN)
+    condition: always()
+```
+
+### CircleCI
+
+```yaml
+version: 2.1
+
+jobs:
+  test-and-import:
+    docker:
+      - image: cimg/node:18.0
+    steps:
+      - checkout
+      - run:
+          name: Run Tests
+          command: npm test
+      - run:
+          name: Import Results
+          command: |
+            curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
+            chmod +x testplanit
+            ./testplanit import ./test-results/*.xml \
+              -p 1 \
+              -n "Build ${CIRCLE_BUILD_NUM}"
+          when: always
+
+workflows:
+  test:
+    jobs:
+      - test-and-import
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**"TestPlanIt URL is not configured"**
+
+Run `testplanit config set --url <your-url>` or set the `TESTPLANIT_URL` environment variable.
+
+**"API token is not configured"**
+
+Run `testplanit config set --token <your-token>` or set the `TESTPLANIT_TOKEN` environment variable.
+
+**"Invalid API token" or "API token has been revoked"**
+
+Your token may be expired or revoked. Create a new token in your TestPlanIt user profile.
+
+**"No matching files found to import"**
+
+Check that your file patterns match existing files. Use quotes around glob patterns to prevent shell expansion: `"./results/*.xml"`
+
+If you specify a format explicitly, files with unexpected extensions will be skipped. For example, `-F mocha` expects `.json` files.
+
+### Debug Mode
+
+Enable debug output by setting the `DEBUG` environment variable:
+
+```bash
+DEBUG=1 testplanit import results.xml -p 1 -n "Test"
+```

@@ -1,6 +1,51 @@
 import { NextResponse, NextRequest } from "next/server";
 import { db } from "~/server/db";
 import { getServerAuthSession } from "~/server/auth";
+import { authenticateApiToken } from "~/lib/api-token-auth";
+import { prisma } from "@/lib/prisma";
+
+// Helper to check admin authentication (session or API token)
+async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextResponse; userId?: string }> {
+  const session = await getServerAuthSession();
+  let userId = session?.user?.id;
+  let userAccess: string | undefined = session?.user?.access ?? undefined;
+
+  if (!userId) {
+    const apiAuth = await authenticateApiToken(request);
+    if (!apiAuth.authenticated) {
+      return {
+        error: NextResponse.json(
+          { error: apiAuth.error, code: apiAuth.errorCode },
+          { status: 401 }
+        ),
+      };
+    }
+    userId = apiAuth.userId;
+    userAccess = apiAuth.access;
+  }
+
+  if (!userId) {
+    return {
+      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
+
+  if (!userAccess) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { access: true },
+    });
+    userAccess = user?.access;
+  }
+
+  if (userAccess !== "ADMIN") {
+    return {
+      error: NextResponse.json({ error: "Admin access required" }, { status: 403 }),
+    };
+  }
+
+  return { userId };
+}
 
 const itemTypeToModelMap: Record<string, any> = {
   User: db.user,
@@ -39,10 +84,8 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ itemType: string }> }
 ) {
-  const session = await getServerAuthSession();
-  if (!session || session.user?.access !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+  const auth = await checkAdminAuth(request);
+  if (auth.error) return auth.error;
 
   const routeParams = await context.params;
 
