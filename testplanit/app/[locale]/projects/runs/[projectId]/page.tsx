@@ -125,9 +125,12 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     500
   );
 
-  // Test Run Type Filter State (for both Active and Completed tabs)
+  // Test Run Type Filter State (for both Active and Completed tabs) - persisted in URL
   type RunTypeFilter = "both" | "manual" | "automated";
-  const [runTypeFilter, setRunTypeFilter] = useState<RunTypeFilter>("both");
+  const [runTypeFilter, setRunTypeFilter] = useTabState("runType", "both") as [
+    RunTypeFilter,
+    (value: RunTypeFilter) => void
+  ];
 
   // Calculate pagination for completed runs
   const effectiveCompletedPageSize =
