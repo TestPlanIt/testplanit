@@ -284,8 +284,10 @@ describe("Logger Module", () => {
 
       it("shows first 8 and last 4 characters for longer tokens", () => {
         const result = formatToken("tpi_abcdef123456789xyz");
-
-        expect(result).toBe("[dim]tpi_abcd..._xyz[/dim]");
+        // Token: tpi_abcdef123456789xyz (22 chars)
+        // First 8: tpi_abcd
+        // Last 4: 9xyz
+        expect(result).toBe("[dim]tpi_abcd...9xyz[/dim]");
       });
 
       it("handles typical API token format", () => {

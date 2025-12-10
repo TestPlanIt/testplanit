@@ -11,6 +11,7 @@
             "@prisma/engines",
             "@scarf/scarf",
             "@swc/core",
+            "@tree-sitter-grammars/tree-sitter-yaml",
             "aws-sdk",
             "bcrypt",
             "canvas",
@@ -23,6 +24,8 @@
             "msw",
             "prisma",
             "sharp",
+            "tree-sitter",
+            "tree-sitter-json",
             "unrs-resolver",
             "zenstack"
         ],
