@@ -41,7 +41,7 @@ jobs:
       - name: Install CLI dependencies
         run: |
           cd cli
-          pnpm install
+          pnpm install --ignore-scripts
 
       - name: Install semantic-release
         run: |
