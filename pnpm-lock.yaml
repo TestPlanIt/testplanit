@@ -40,7 +40,7 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(semantic-release@24.2.9(typescript@5.9.3))
       '@semantic-release/github':
-        specifier: ^11.0.1
+        specifier: ^11.0.6
         version: 11.0.6(semantic-release@24.2.9(typescript@5.9.3))
       '@types/bun':
         specifier: ^1.1.14
@@ -52,7 +52,7 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(vitest@2.1.9(@types/node@22.19.2)(happy-dom@20.0.11)(jsdom@27.3.0)(lightningcss@1.30.2)(msw@2.12.4(@types/node@22.19.2)(typescript@5.9.3))(terser@5.44.1))
       semantic-release:
-        specifier: ^24.2.0
+        specifier: ^24.2.9
         version: 24.2.9(typescript@5.9.3)
       tsup:
         specifier: ^8.3.5
