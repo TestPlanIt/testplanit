@@ -1,3 +1,10 @@
+## [0.8.1](https://github.com/TestPlanIt/testplanit/compare/v0.8.0...v0.8.1) (2025-12-11)
+
+
+### Bug Fixes
+
+* **docs:** update CLI installation instructions and enhance notification content ([374bd2e](https://github.com/TestPlanIt/testplanit/commit/374bd2ee7908bfdd64e609f9532a07202c2ccc1d))
+
 # [0.8.0](https://github.com/TestPlanIt/testplanit/compare/v0.7.2...v0.8.0) (2025-12-11)
 
 
