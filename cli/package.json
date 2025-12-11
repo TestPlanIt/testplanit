@@ -1,6 +1,6 @@
 {
   "name": "@testplanit/cli",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "CLI tool for TestPlanIt - import test results and manage test data",
   "type": "module",
   "bin": {
@@ -36,11 +36,11 @@
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
-    "@semantic-release/github": "^11.0.1",
+    "@semantic-release/github": "^11.0.6",
     "@types/bun": "^1.1.14",
     "@types/node": "^22.10.1",
     "@vitest/coverage-v8": "^2.1.8",
-    "semantic-release": "^24.2.0",
+    "semantic-release": "^24.2.9",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
