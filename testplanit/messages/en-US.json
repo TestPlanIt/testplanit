@@ -4622,7 +4622,11 @@
         "failedToConnect": "Failed to connect to the AI model provider",
         "success": "Success",
         "integrationCreated": "AI model integration created successfully",
-        "failedToCreate": "Failed to create AI model integration"
+        "failedToCreate": "Failed to create AI model integration",
+        "validation": {
+          "nameRequired": "Name is required",
+          "defaultModelRequired": "Default model is required"
+        }
       },
       "edit": {
         "title": "Edit AI Model Integration",
