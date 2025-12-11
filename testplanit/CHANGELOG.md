@@ -1,3 +1,10 @@
+## [0.8.2](https://github.com/TestPlanIt/testplanit/compare/v0.8.1...v0.8.2) (2025-12-11)
+
+
+### Bug Fixes
+
+* **comments:** add milestone support to UserMentionedComments component ([88cf140](https://github.com/TestPlanIt/testplanit/commit/88cf140afd15d25f8a868a5426a3a64a93f4a6e3))
+
 ## [0.8.1](https://github.com/TestPlanIt/testplanit/compare/v0.8.0...v0.8.1) (2025-12-11)
 
 
