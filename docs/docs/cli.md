@@ -36,26 +36,34 @@ Download the appropriate binary for your platform from the [latest release](http
 | macOS (Intel) | `testplanit-macos-x64` |
 | Windows (x64) | `testplanit-windows-x64.exe` |
 
-**Linux / macOS:**
+**Linux (x64):**
 
 ```bash
-# Download (replace URL with actual release URL)
 curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
-
-# Make executable
 chmod +x testplanit
+sudo mv testplanit /usr/local/bin/
+```
 
-# Move to PATH (optional)
+**macOS (Apple Silicon):**
+
+```bash
+curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-macos-arm64
+chmod +x testplanit
+sudo mv testplanit /usr/local/bin/
+```
+
+**macOS (Intel):**
+
+```bash
+curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-macos-x64
+chmod +x testplanit
 sudo mv testplanit /usr/local/bin/
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-# Download
 Invoke-WebRequest -Uri "https://github.com/testplanit/testplanit/releases/latest/download/testplanit-windows-x64.exe" -OutFile "testplanit.exe"
-
-# Add to PATH or run directly
 .\testplanit.exe --help
 ```
 

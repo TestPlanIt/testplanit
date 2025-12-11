@@ -97,7 +97,7 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
         <li>Administrators can manage all tokens from <strong>Admin → API Tokens</strong></li>
         <li>Set expiration dates and track token usage</li>
       </ul>
-      <p>See the <a href="/docs/cli" target="_blank">CLI documentation</a> and <a href="/docs/api-tokens" target="_blank">API Tokens documentation</a> for details.</p>
+      <p>See the <a href="https://docs.testplanit.com/docs/cli" target="_blank">CLI documentation</a> and <a href="https://docs.testplanit.com/docs/api-tokens" target="_blank">API Tokens documentation</a> for details.</p>
     `,
   },
 };
