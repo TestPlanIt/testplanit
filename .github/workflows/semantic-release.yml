@@ -71,7 +71,7 @@ jobs:
       - name: Trigger Docker build
         if: steps.release.outputs.released == 'true' && steps.release.outputs.version != '' && steps.release.outputs.version != 'v'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
         run: |
           VERSION="${{ steps.release.outputs.version }}"
           if [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
