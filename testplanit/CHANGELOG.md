@@ -1,3 +1,10 @@
+## [0.8.4](https://github.com/TestPlanIt/testplanit/compare/v0.8.3...v0.8.4) (2025-12-11)
+
+
+### Bug Fixes
+
+* **audit-logs:** add new audit actions for API key management ([62bed46](https://github.com/TestPlanIt/testplanit/commit/62bed466997c1e0e5260af70df31257aece605a2))
+
 ## [0.8.2](https://github.com/TestPlanIt/testplanit/compare/v0.8.1...v0.8.2) (2025-12-11)
 
 
