@@ -1,0 +1,88 @@
+name: CLI Semantic Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cli/**'
+      - '.github/workflows/cli-semantic-release.yml'
+      - '.github/workflows/cli-release.yml'
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  release:
+    name: CLI Release
+    runs-on: ubuntu-latest
+    # Skip release commits
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install CLI dependencies
+        run: |
+          cd cli
+          pnpm install
+
+      - name: Install semantic-release
+        run: |
+          cd cli
+          pnpm add -D semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/github
+
+      - name: Release
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
+        run: |
+          cd cli
+          npx semantic-release 2>&1 | tee release-output.txt
+          # Extract the version if a release was made
+          if grep -q "Published release" release-output.txt; then
+            VERSION=$(grep -oP "Published release \K[0-9]+\.[0-9]+\.[0-9]+" release-output.txt || echo "")
+            if [ -n "$VERSION" ]; then
+              echo "version=cli-v${VERSION}" >> $GITHUB_OUTPUT
+              echo "released=true" >> $GITHUB_OUTPUT
+            else
+              echo "Warning: Found 'Published release' but could not extract version number"
+              echo "released=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "released=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Trigger CLI binary build
+        if: steps.release.outputs.released == 'true' && steps.release.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.release.outputs.version }}"
+          if [[ "$VERSION" =~ ^cli-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Triggering CLI binary build for version: $VERSION"
+            gh workflow run cli-release.yml -f tag=$VERSION
+          else
+            echo "Error: Invalid version format: $VERSION"
+            exit 1
+          fi

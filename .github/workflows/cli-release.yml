@@ -4,7 +4,7 @@
 # Binaries are attached to GitHub releases.
 #
 # Triggers:
-# 1. Tag Push (automatic): When a tag starting with 'v' is pushed
+# 1. Tag Push (automatic): When a tag starting with 'cli-v' is pushed
 # 2. Manual Dispatch: Manually trigger via GitHub Actions UI
 #
 name: CLI Release
@@ -12,11 +12,11 @@ name: CLI Release
 on:
   push:
     tags:
-      - 'v*'
+      - 'cli-v*'
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to build (e.g., v1.0.0)'
+        description: 'Tag to build (e.g., cli-v1.0.0)'
         required: true
         type: string
 
