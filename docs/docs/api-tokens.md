@@ -39,7 +39,7 @@ The full token is only displayed once upon creation. Copy it immediately and sto
 
 API tokens follow the format:
 
-```
+```text
 tpi_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
@@ -147,12 +147,14 @@ Administrators can view and manage all API tokens across the system from **Admin
 Revoked tokens are immediately invalidated. Unlike deleted tokens, revoked tokens remain in the system for audit purposes but cannot be used for authentication.
 
 To revoke a single token:
+
 1. Go to **Admin > API Tokens**
 2. Find the token to revoke
 3. Click the revoke button
 4. Confirm the action
 
 To revoke all active tokens (emergency use):
+
 1. Go to **Admin > API Tokens**
 2. Click **Revoke All Tokens**
 3. Type "REVOKE ALL" to confirm
@@ -202,6 +204,7 @@ const token = process.env.TESTPLANIT_API_TOKEN;
 Configure tokens as secrets in your CI/CD platform:
 
 **GitHub Actions:**
+
 ```yaml
 steps:
   - name: Import Test Results
@@ -216,6 +219,7 @@ steps:
 ```
 
 **GitLab CI:**
+
 ```yaml
 import_results:
   script:
@@ -285,6 +289,7 @@ API tokens inherit the permissions of the user who created them:
 - **System access level** - Token respects the user's system access level (Admin, User, etc.)
 
 This means:
+
 - A token created by an Admin user has admin-level API access
 - A token created by a regular User can only access their assigned projects
 - If a user's permissions change, their token's effective permissions change too
