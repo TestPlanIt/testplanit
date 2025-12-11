@@ -15,7 +15,11 @@ import { NextRequest } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { prisma } from "@/lib/prisma";
-import { JUnitResultType, RepositoryCaseSource, TestRunType } from "@prisma/client";
+import {
+  JUnitResultType,
+  RepositoryCaseSource,
+  TestRunType,
+} from "@prisma/client";
 import { progressMessages } from "./progress-messages";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import {
@@ -124,10 +128,10 @@ export async function POST(request: NextRequest) {
   }
 
   if (!userId) {
-    return new Response(
-      JSON.stringify({ error: "Unauthorized" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   const encoder = new TextEncoder();
@@ -194,7 +198,12 @@ export async function POST(request: NextRequest) {
           }
 
           format = detectedFormat;
-          sendProgress(8, progressMessages.formatDetected(TEST_RESULT_FORMATS[detectedFormat].label));
+          sendProgress(
+            8,
+            progressMessages.formatDetected(
+              TEST_RESULT_FORMATS[detectedFormat].label
+            )
+          );
         }
 
         // Validate format
@@ -225,7 +234,30 @@ export async function POST(request: NextRequest) {
         });
         const defaultCaseStateId = caseWorkflow?.id;
 
-        if (!files.length || !name || !projectId || !defaultCaseStateId) {
+        // Get the default test run workflow state (first RUNS workflow) for the test run
+        const runWorkflow = await prisma.workflows.findFirst({
+          where: {
+            isEnabled: true,
+            isDeleted: false,
+            workflowType: "DONE",
+            scope: "RUNS",
+            projects: {
+              some: { projectId: projectId },
+            },
+          },
+          orderBy: { order: "asc" },
+        });
+        const defaultRunStateId = runWorkflow?.id;
+
+        // Name is required when creating a new test run, but optional when appending to existing
+        const nameRequired = !testRunId;
+        if (
+          !files.length ||
+          (nameRequired && !name) ||
+          !projectId ||
+          !defaultCaseStateId ||
+          !defaultRunStateId
+        ) {
           controller.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({ error: "Missing required fields" })}\n\n`
@@ -242,7 +274,10 @@ export async function POST(request: NextRequest) {
         try {
           parsedResults = await parseTestResults(files, validFormat);
         } catch (parseError: unknown) {
-          const message = parseError instanceof Error ? parseError.message : "Unknown parse error";
+          const message =
+            parseError instanceof Error
+              ? parseError.message
+              : "Unknown parse error";
           controller.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({ error: progressMessages.errorParsing(message) })}\n\n`
@@ -262,7 +297,9 @@ export async function POST(request: NextRequest) {
 
         // Map format to run type and source
         const testRunType = FORMAT_TO_RUN_TYPE[validFormat] as TestRunType;
-        const caseSource = FORMAT_TO_SOURCE[validFormat] as RepositoryCaseSource;
+        const caseSource = FORMAT_TO_SOURCE[
+          validFormat
+        ] as RepositoryCaseSource;
 
         // Create or verify test run
         if (!testRunId) {
@@ -270,7 +307,7 @@ export async function POST(request: NextRequest) {
             data: {
               name,
               projectId,
-              stateId: stateIdFromForm || defaultCaseStateId,
+              stateId: stateIdFromForm || defaultRunStateId,
               configId: configId || null,
               milestoneId: milestoneId || null,
               testRunType: testRunType,
@@ -339,14 +376,25 @@ export async function POST(request: NextRequest) {
         let processedTestCases = 0;
         let caseOrder = 1;
 
-        sendProgress(25, progressMessages.countingTests(totalTestCases, files.length));
+        sendProgress(
+          25,
+          progressMessages.countingTests(totalTestCases, files.length)
+        );
 
         // Process each suite
-        for (let suiteIndex = 0; suiteIndex < (result.suites?.length || 0); suiteIndex++) {
+        for (
+          let suiteIndex = 0;
+          suiteIndex < (result.suites?.length || 0);
+          suiteIndex++
+        ) {
           const suite = result.suites[suiteIndex];
-          const suiteProgress = 25 + (suiteIndex / (result.suites?.length || 1)) * 60;
+          const suiteProgress =
+            25 + (suiteIndex / (result.suites?.length || 1)) * 60;
 
-          sendProgress(suiteProgress, progressMessages.processingSuite(suite.name || "Test Suite"));
+          sendProgress(
+            suiteProgress,
+            progressMessages.processingSuite(suite.name || "Test Suite")
+          );
 
           // Skip empty suites
           if (!suite.cases || suite.cases.length === 0) {
@@ -398,7 +446,9 @@ export async function POST(request: NextRequest) {
             let suiteFolder: { id: number } | undefined = undefined;
             if (parentFolderId) {
               const suiteName = suite.name || "Test Suite";
-              const pathParts = suiteName.split(/[./]/).filter((part: string) => part.length > 0);
+              const pathParts = suiteName
+                .split(/[./]/)
+                .filter((part: string) => part.length > 0);
 
               let currentParentId = parentFolderId;
 
@@ -455,15 +505,26 @@ export async function POST(request: NextRequest) {
             const finalFolder = suiteFolder || folder;
 
             // Process each test case
-            for (let caseIndex = 0; caseIndex < suite.cases.length; caseIndex++) {
+            for (
+              let caseIndex = 0;
+              caseIndex < suite.cases.length;
+              caseIndex++
+            ) {
               const testCase = suite.cases[caseIndex];
               processedTestCases++;
 
-              if (processedTestCases % 10 === 0 || processedTestCases === totalTestCases) {
-                const overallProgress = 25 + (processedTestCases / totalTestCases) * 60;
+              if (
+                processedTestCases % 10 === 0 ||
+                processedTestCases === totalTestCases
+              ) {
+                const overallProgress =
+                  25 + (processedTestCases / totalTestCases) * 60;
                 sendProgress(
                   overallProgress,
-                  progressMessages.processingCase(processedTestCases, totalTestCases)
+                  progressMessages.processingCase(
+                    processedTestCases,
+                    totalTestCases
+                  )
                 );
               }
 
@@ -537,15 +598,24 @@ export async function POST(request: NextRequest) {
                 switch (normalizedStatus) {
                   case "failed":
                     resultType = JUnitResultType.FAILURE;
-                    matchingStatus = await findMatchingStatus("failure", projectId);
+                    matchingStatus = await findMatchingStatus(
+                      "failure",
+                      projectId
+                    );
                     break;
                   case "error":
                     resultType = JUnitResultType.ERROR;
-                    matchingStatus = await findMatchingStatus("error", projectId);
+                    matchingStatus = await findMatchingStatus(
+                      "error",
+                      projectId
+                    );
                     break;
                   case "skipped":
                     resultType = JUnitResultType.SKIPPED;
-                    matchingStatus = await findMatchingStatus("skipped", projectId);
+                    matchingStatus = await findMatchingStatus(
+                      "skipped",
+                      projectId
+                    );
                     break;
                   default:
                     resultType = JUnitResultType.PASSED;
@@ -638,7 +708,11 @@ export async function POST(request: NextRequest) {
                   }
                 }
               } catch (error) {
-                console.error("Error processing test case:", error, testCase.name);
+                console.error(
+                  "Error processing test case:",
+                  error,
+                  testCase.name
+                );
                 // Continue with next test case
               }
 
@@ -660,7 +734,10 @@ export async function POST(request: NextRequest) {
             testRunId,
             fileCount: files.length,
           }).catch((error) =>
-            console.error("[AuditLog] Failed to audit test results import:", error)
+            console.error(
+              "[AuditLog] Failed to audit test results import:",
+              error
+            )
           );
         }
 
@@ -673,7 +750,10 @@ export async function POST(request: NextRequest) {
         controller.close();
       } catch (error: unknown) {
         console.error("Error importing test results:", error);
-        const message = error instanceof Error ? error.message : "Failed to import test results";
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to import test results";
         controller.enqueue(
           encoder.encode(`data: ${JSON.stringify({ error: message })}\n\n`)
         );

@@ -45,9 +45,13 @@ export async function importTestResults(
 
   // Build the form data
   const form = new FormData();
-  form.append("name", options.name);
   form.append("projectId", options.projectId.toString());
   form.append("format", options.format || "auto");
+
+  // Name is optional when appending to an existing test run
+  if (options.name) {
+    form.append("name", options.name);
+  }
 
   if (options.stateId !== undefined) {
     form.append("stateId", options.stateId.toString());
@@ -75,12 +79,12 @@ export async function importTestResults(
     }
   }
 
-  // Add files
+  // Add files (read as buffers for compatibility with form.getBuffer())
   for (const filePath of files) {
     const absolutePath = path.resolve(filePath);
     const fileName = path.basename(absolutePath);
-    const fileStream = fs.createReadStream(absolutePath);
-    form.append("files", fileStream, { filename: fileName });
+    const fileBuffer = fs.readFileSync(absolutePath);
+    form.append("files", fileBuffer, { filename: fileName });
   }
 
   // Use the multi-format import endpoint
@@ -92,7 +96,7 @@ export async function importTestResults(
       Authorization: `Bearer ${token}`,
       ...form.getHeaders(),
     },
-    body: form.getBuffer(),
+    body: new Uint8Array(form.getBuffer()),
   });
 
   if (!response.ok) {

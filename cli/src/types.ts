@@ -35,7 +35,7 @@ export const TEST_RESULT_FORMATS: Record<Exclude<TestResultFormat, "auto">, { la
  */
 export interface ImportOptions {
   projectId: number;
-  name: string;
+  name?: string;  // Optional when appending to existing test run
   format?: TestResultFormat;
   stateId?: number;
   configId?: number;
@@ -50,7 +50,7 @@ export interface ImportOptions {
  */
 export interface RawImportOptions {
   projectId: number;
-  name: string;
+  name?: string;  // Optional when appending to existing test run
   format?: TestResultFormat;
   state?: string;      // ID or name
   config?: string;     // ID or name

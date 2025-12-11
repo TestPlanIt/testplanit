@@ -14,7 +14,22 @@ const program = new Command();
 program
   .name("testplanit")
   .description("CLI tool for TestPlanIt - import test results and manage test data")
-  .version("0.1.0");
+  .version("0.1.0")
+  .addHelpText("after", `
+Examples:
+
+  Configure the CLI:
+    $ testplanit config set --url https://testplanit.example.com --token tpi_xxx
+
+  Import test results (minimal):
+    $ testplanit import ./results.xml -p "My Project" -n "Build #123"
+
+  Import with all options:
+    $ testplanit import ./results/*.xml -p "My Project" -n "Release Test" \\
+        -s "In Progress" -c "Chrome" -m "Sprint 1" -t "regression,ci"
+
+Run 'testplanit <command> --help' for more information on a command.
+`);
 
 // Add config command
 program.addCommand(createConfigCommand());

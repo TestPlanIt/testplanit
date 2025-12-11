@@ -20,7 +20,7 @@ export function createImportCommand(): Command {
     .description("Import test results into TestPlanIt")
     .argument("<files...>", "Test result files or glob patterns (e.g., ./results/*.xml)")
     .requiredOption("-p, --project <value>", "Project (ID or exact name)")
-    .requiredOption("-n, --name <name>", "Test run name")
+    .option("-n, --name <name>", "Test run name (required unless appending to existing run with -r)")
     .option(
       "-F, --format <format>",
       `File format: ${VALID_FORMATS.join(", ")} (default: auto-detect)`,
@@ -32,11 +32,52 @@ export function createImportCommand(): Command {
     .option("-f, --folder <value>", "Parent folder for test cases (ID or exact name)")
     .option("-t, --tags <values>", "Tags (comma-separated IDs or names, use quotes for names with commas)")
     .option("-r, --test-run <value>", "Existing test run to append results (ID or exact name)")
+    .addHelpText("after", `
+Examples:
+
+  Minimal example (required options only):
+    $ testplanit import ./results.xml -p "My Project" -n "Nightly Build #123"
+
+  Using IDs instead of names:
+    $ testplanit import ./results.xml -p 1 -n "Build #123"
+
+  Import multiple files with glob pattern:
+    $ testplanit import "./test-results/**/*.xml" -p "My Project" -n "Full Test Suite"
+
+  Append results to an existing test run (no -n needed):
+    $ testplanit import ./results.xml -p "My Project" -r "Existing Test Run"
+
+  All options with names:
+    $ testplanit import ./results/*.xml \\
+        --project "My Project" \\
+        --name "Release 2.0 - Regression" \\
+        --format junit \\
+        --state "In Progress" \\
+        --config "Chrome - Production" \\
+        --milestone "Sprint 15" \\
+        --folder "Automated Tests" \\
+        --tags "regression,automated,ci"
+
+  All options with IDs:
+    $ testplanit import ./results.xml -p 1 -n "Build" -F junit -s 5 -c 10 -m 3 -f 42 -t 1,2,3
+
+  CI/CD with environment variables:
+    $ TESTPLANIT_URL=https://testplanit.example.com \\
+      TESTPLANIT_TOKEN=tpi_xxx \\
+      testplanit import ./junit.xml -p 1 -n "CI Build $BUILD_NUMBER"
+`)
     .action(async (filePatterns: string[], options) => {
       // Validate configuration
       const validationError = config.validateConfig();
       if (validationError) {
         logger.error(validationError);
+        process.exit(1);
+      }
+
+      // Validate that name is provided when not appending to existing test run
+      if (!options.name && !options.testRun) {
+        logger.error("Option -n, --name is required when not appending to an existing test run");
+        logger.info("Either provide --name for a new test run, or --test-run to append to an existing one");
         process.exit(1);
       }
 
@@ -168,7 +209,7 @@ export function createImportCommand(): Command {
         logger.success(`Test run created with ID: ${logger.formatNumber(result.testRunId)}`);
 
         if (url) {
-          const testRunUrl = `${url}/test-runs/${result.testRunId}`;
+          const testRunUrl = `${url}/projects/runs/${projectId}/${result.testRunId}`;
           logger.info(`View at: ${logger.formatUrl(testRunUrl)}`);
         }
       } catch (error) {

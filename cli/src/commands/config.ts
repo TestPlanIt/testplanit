@@ -9,7 +9,32 @@ import * as config from "../lib/config.js";
 import * as logger from "../lib/logger.js";
 
 export function createConfigCommand(): Command {
-  const cmd = new Command("config").description("Manage CLI configuration");
+  const cmd = new Command("config")
+    .description("Manage CLI configuration")
+    .addHelpText("after", `
+Examples:
+
+  Set URL and token:
+    $ testplanit config set --url https://testplanit.example.com --token tpi_xxx
+
+  Set URL only:
+    $ testplanit config set -u https://testplanit.example.com
+
+  Set token only:
+    $ testplanit config set -t tpi_your_api_token_here
+
+  Show current configuration:
+    $ testplanit config show
+
+  Clear stored configuration:
+    $ testplanit config clear
+
+  Show config file path:
+    $ testplanit config path
+
+Note: Environment variables TESTPLANIT_URL and TESTPLANIT_TOKEN take precedence
+over stored configuration.
+`);
 
   // config set
   cmd

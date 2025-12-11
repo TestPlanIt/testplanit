@@ -116,7 +116,30 @@ function formatToken(token) {
 
 // src/commands/config.ts
 function createConfigCommand() {
-  const cmd = new Command("config").description("Manage CLI configuration");
+  const cmd = new Command("config").description("Manage CLI configuration").addHelpText("after", `
+Examples:
+
+  Set URL and token:
+    $ testplanit config set --url https://testplanit.example.com --token tpi_xxx
+
+  Set URL only:
+    $ testplanit config set -u https://testplanit.example.com
+
+  Set token only:
+    $ testplanit config set -t tpi_your_api_token_here
+
+  Show current configuration:
+    $ testplanit config show
+
+  Clear stored configuration:
+    $ testplanit config clear
+
+  Show config file path:
+    $ testplanit config path
+
+Note: Environment variables TESTPLANIT_URL and TESTPLANIT_TOKEN take precedence
+over stored configuration.
+`);
   cmd.command("set").description("Set configuration values").option("-u, --url <url>", "TestPlanIt instance URL").option("-t, --token <token>", "API token").action((options) => {
     let updated = false;
     if (options.url) {
@@ -422,7 +445,38 @@ function createImportCommand() {
     "-F, --format <format>",
     `File format: ${VALID_FORMATS.join(", ")} (default: auto-detect)`,
     "auto"
-  ).option("-s, --state <value>", "Workflow state (ID or exact name)").option("-c, --config <value>", "Configuration (ID or exact name)").option("-m, --milestone <value>", "Milestone (ID or exact name)").option("-f, --folder <value>", "Parent folder for test cases (ID or exact name)").option("-t, --tags <values>", "Tags (comma-separated IDs or names, use quotes for names with commas)").option("-r, --test-run <value>", "Existing test run to append results (ID or exact name)").action(async (filePatterns, options) => {
+  ).option("-s, --state <value>", "Workflow state (ID or exact name)").option("-c, --config <value>", "Configuration (ID or exact name)").option("-m, --milestone <value>", "Milestone (ID or exact name)").option("-f, --folder <value>", "Parent folder for test cases (ID or exact name)").option("-t, --tags <values>", "Tags (comma-separated IDs or names, use quotes for names with commas)").option("-r, --test-run <value>", "Existing test run to append results (ID or exact name)").addHelpText("after", `
+Examples:
+
+  Minimal example (required options only):
+    $ testplanit import ./results.xml -p "My Project" -n "Nightly Build #123"
+
+  Using IDs instead of names:
+    $ testplanit import ./results.xml -p 1 -n "Build #123"
+
+  Import multiple files with glob pattern:
+    $ testplanit import "./test-results/**/*.xml" -p "My Project" -n "Full Test Suite"
+
+  All options with names:
+    $ testplanit import ./results/*.xml \\
+        --project "My Project" \\
+        --name "Release 2.0 - Regression" \\
+        --format junit \\
+        --state "In Progress" \\
+        --config "Chrome - Production" \\
+        --milestone "Sprint 15" \\
+        --folder "Automated Tests" \\
+        --tags "regression,automated,ci" \\
+        --test-run "Existing Test Run"
+
+  All options with IDs:
+    $ testplanit import ./results.xml -p 1 -n "Build" -F junit -s 5 -c 10 -m 3 -f 42 -t 1,2,3 -r 100
+
+  CI/CD with environment variables:
+    $ TESTPLANIT_URL=https://testplanit.example.com \\
+      TESTPLANIT_TOKEN=tpi_xxx \\
+      testplanit import ./junit.xml -p 1 -n "CI Build $BUILD_NUMBER"
+`).action(async (filePatterns, options) => {
     const validationError = validateConfig();
     if (validationError) {
       error(validationError);
@@ -539,7 +593,21 @@ function createImportCommand() {
 
 // src/index.ts
 var program = new Command3();
-program.name("testplanit").description("CLI tool for TestPlanIt - import test results and manage test data").version("0.1.0");
+program.name("testplanit").description("CLI tool for TestPlanIt - import test results and manage test data").version("0.1.0").addHelpText("after", `
+Examples:
+
+  Configure the CLI:
+    $ testplanit config set --url https://testplanit.example.com --token tpi_xxx
+
+  Import test results (minimal):
+    $ testplanit import ./results.xml -p "My Project" -n "Build #123"
+
+  Import with all options:
+    $ testplanit import ./results/*.xml -p "My Project" -n "Release Test" \\
+        -s "In Progress" -c "Chrome" -m "Sprint 1" -t "regression,ci"
+
+Run 'testplanit <command> --help' for more information on a command.
+`);
 program.addCommand(createConfigCommand());
 program.addCommand(createImportCommand());
 program.parse();
