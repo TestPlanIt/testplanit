@@ -120,7 +120,7 @@ testplanit import <files...> --project <id|name> --name <name> [options]
 |-----------|-------------|
 | `<files...>` | Test result files or glob patterns (e.g., `./results/*.xml`) |
 | `-p, --project <value>` | Target project (ID or exact name) |
-| `-n, --name <name>` | Name for the test run |
+| `-n, --name <name>` | Name for the test run (required unless appending to existing run with `-r`) |
 
 #### Optional Parameters
 
@@ -185,10 +185,9 @@ testplanit import results.xml -p 1 -n "Build 123" \
   --state "Completed" \
   --tags '1,"new tag",smoke'
 
-# Append results to an existing test run by name
+# Append results to an existing test run (no -n needed)
 testplanit import more-results.xml \
-  -p 1 \
-  -n "Continued Tests" \
+  -p "My Project" \
   --test-run "Build 123"
 ```
 
@@ -224,8 +223,8 @@ jobs:
           TESTPLANIT_TOKEN: ${{ secrets.TESTPLANIT_TOKEN }}
         run: |
           ./testplanit import ./test-results/*.xml \
-            --project-id 1 \
-            --name "Build ${{ github.run_number }} - ${{ github.sha }}"
+            -p 1 \
+            -n "Build ${{ github.run_number }} - ${{ github.sha }}"
 ```
 
 ### GitLab CI

@@ -291,4 +291,6 @@ API requests may be subject to rate limiting. When rate limited, you'll receive 
 
 - **Interactive Documentation:** Access `/docs/api` in your TestPlanIt instance
 - **OpenAPI Spec:** Available at `/api/docs?category={category}`
+- **CLI Tool:** See the [CLI documentation](./cli.md) for importing test results from CI/CD pipelines
+- **API Tokens:** See the [API Tokens documentation](./api-tokens.md) for managing programmatic access
 - **ZenStack Documentation:** [zenstack.dev](https://zenstack.dev/docs)
