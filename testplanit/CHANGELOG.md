@@ -1,3 +1,10 @@
+# [0.8.0](https://github.com/TestPlanIt/testplanit/compare/v0.7.2...v0.8.0) (2025-12-11)
+
+
+### Features
+
+* add CLI tool for test result imports and API token authentication ([#22](https://github.com/TestPlanIt/testplanit/issues/22)) ([4c889c3](https://github.com/TestPlanIt/testplanit/commit/4c889c385b964a82b936022eb045a40bd2cf78dc))
+
 ## [0.7.1](https://github.com/TestPlanIt/testplanit/compare/v0.7.0...v0.7.1) (2025-12-09)
 
 
