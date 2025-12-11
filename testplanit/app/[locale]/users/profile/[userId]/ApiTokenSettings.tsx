@@ -214,7 +214,7 @@ export function ApiTokenSettings({
                   <TableCell className="text-sm text-muted-foreground">
                     <DateFormatter
                       date={token.createdAt}
-                      formatString={session?.user?.preferences?.dateFormat}
+                      formatString={`${session?.user?.preferences?.dateFormat ?? "MM_DD_YYYY_DASH"} ${session?.user?.preferences?.timeFormat ?? "HH_MM_A"}`}
                       timezone={session?.user?.preferences?.timezone}
                     />
                   </TableCell>
@@ -222,7 +222,7 @@ export function ApiTokenSettings({
                     {token.lastUsedAt ? (
                       <DateFormatter
                         date={token.lastUsedAt}
-                        formatString={session?.user?.preferences?.dateFormat}
+                        formatString={`${session?.user?.preferences?.dateFormat ?? "MM_DD_YYYY_DASH"} ${session?.user?.preferences?.timeFormat ?? "HH_MM_A"}`}
                         timezone={session?.user?.preferences?.timezone}
                       />
                     ) : (

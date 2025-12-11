@@ -35,6 +35,7 @@ const AUDITED_ENTITIES = new Set([
   "testRunResult",
   "comment",
   "attachment",
+  "apiToken",
 ]);
 
 // Map ZenStack operations to audit actions
@@ -78,6 +79,7 @@ function extractEntityName(
     ssoProvider: "type",
     allowedEmailDomain: "domain",
     appConfig: "key",
+    apiToken: "name",
   };
 
   const field = nameFields[entityType];
@@ -271,10 +273,25 @@ async function handler(
               testRunResult: "TestRunResult",
               comment: "Comment",
               attachment: "Attachment",
+              apiToken: "ApiToken",
             };
 
+            // Special handling for API token operations - use specific audit actions
+            let finalAuditAction = auditAction;
+            if (parsedPath.model === "apiToken") {
+              if (parsedPath.operation === "delete") {
+                finalAuditAction = "API_KEY_DELETED";
+              } else if (parsedPath.operation === "update") {
+                // Check if this is a revocation (isActive changed to false)
+                const updateData = requestBody?.data;
+                if (updateData?.isActive === false) {
+                  finalAuditAction = "API_KEY_REVOKED";
+                }
+              }
+            }
+
             const event: AuditEvent = {
-              action: auditAction,
+              action: finalAuditAction,
               entityType: entityTypeMap[parsedPath.model] || parsedPath.model,
               entityId: String(entityId),
               entityName,
@@ -283,6 +300,13 @@ async function handler(
                 operation: parsedPath.operation,
                 ...(auditAction.startsWith("BULK_") && data.count
                   ? { count: data.count }
+                  : {}),
+                // Add API token specific metadata
+                ...(parsedPath.model === "apiToken"
+                  ? {
+                      tokenPrefix: data.tokenPrefix,
+                      tokenOwnerId: data.userId,
+                    }
                   : {}),
               },
             };

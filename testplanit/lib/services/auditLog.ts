@@ -54,6 +54,7 @@ export const ENTITY_NAME_FIELDS: Record<string, string | string[]> = {
   SsoProvider: "type",
   AllowedEmailDomain: "domain",
   AppConfig: "key",
+  ApiToken: "name",
   UserProjectPermission: ["userId", "projectId"],
   GroupProjectPermission: ["groupId", "projectId"],
   Account: ["provider", "providerAccountId"],

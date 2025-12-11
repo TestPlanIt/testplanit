@@ -58,6 +58,15 @@ Only users with administrative privileges can access the audit log viewer.
 | `PERMISSION_REVOKE` | User/group access revoked from a project |
 | `ROLE_CHANGED` | User's system-wide role was changed |
 
+### API Token Management
+
+| Action | Description |
+|--------|-------------|
+| `API_KEY_CREATED` | A new API token was created |
+| `API_KEY_DELETED` | An API token was deleted |
+| `API_KEY_REVOKED` | An API token was revoked by an administrator |
+| `API_KEY_REGENERATED` | An API token was regenerated |
+
 ### System Configuration
 
 | Action | Description |
@@ -78,6 +87,7 @@ The following entity types are tracked in the audit log:
 - **Test Management**: Test Cases, Test Runs, Test Results, Sessions, Shared Steps
 - **Project Management**: Projects, Milestones, Issues, Tags
 - **User Management**: Users, Groups, Permissions
+- **Security**: API Tokens
 - **Configuration**: SSO Providers, Email Domains, App Config
 - **Content**: Comments, Attachments
 

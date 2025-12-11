@@ -23,6 +23,7 @@ const AUDITED_ENTITIES = new Set([
   "testRunResult",
   "comment",
   "attachment",
+  "apiToken",
 ]);
 
 // Replicate getAuditAction
@@ -63,6 +64,7 @@ function extractEntityName(entityType: string, result: any): string | undefined 
     ssoProvider: "type",
     allowedEmailDomain: "domain",
     appConfig: "key",
+    apiToken: "name",
   };
 
   const field = nameFields[entityType];
@@ -102,6 +104,7 @@ const entityTypeMap: Record<string, string> = {
   testRunResult: "TestRunResult",
   comment: "Comment",
   attachment: "Attachment",
+  apiToken: "ApiToken",
 };
 
 describe("ZenStack API Route Audit Interception", () => {
@@ -124,6 +127,10 @@ describe("ZenStack API Route Audit Interception", () => {
       expect(AUDITED_ENTITIES.has("ssoProvider")).toBe(true);
       expect(AUDITED_ENTITIES.has("allowedEmailDomain")).toBe(true);
       expect(AUDITED_ENTITIES.has("appConfig")).toBe(true);
+    });
+
+    it("should include apiToken entity", () => {
+      expect(AUDITED_ENTITIES.has("apiToken")).toBe(true);
     });
 
     it("should not include non-audited entities", () => {
@@ -247,6 +254,10 @@ describe("ZenStack API Route Audit Interception", () => {
 
     it("should extract key for appConfig", () => {
       expect(extractEntityName("appConfig", { key: "FEATURE_FLAG" })).toBe("FEATURE_FLAG");
+    });
+
+    it("should extract name for apiToken", () => {
+      expect(extractEntityName("apiToken", { id: "token-1", name: "CI Token" })).toBe("CI Token");
     });
 
     it("should return undefined for entities without name mapping", () => {

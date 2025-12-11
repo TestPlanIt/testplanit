@@ -20,6 +20,7 @@ import {
   auditBulkCreate,
   auditBulkUpdate,
   auditBulkDelete,
+  captureAuditEvent,
 } from "./services/auditLog";
 
 // Declare global types
@@ -795,6 +796,60 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           if (oldEntity) {
             auditDelete("Attachment", oldEntity).catch((error: any) => {
               console.error(`Failed to audit attachment delete:`, error);
+            });
+          }
+          return result;
+        },
+      },
+      // =============================================================================
+      // API Tokens - Security audit logging
+      // =============================================================================
+      apiToken: {
+        async delete({ args, query }: any) {
+          // Fetch entity before deletion for audit (including user info)
+          const oldEntity = args.where ? await baseClient.apiToken.findUnique({
+            where: args.where,
+            include: { user: { select: { id: true, email: true, name: true } } }
+          }) : null;
+          const result = await query(args);
+          if (oldEntity) {
+            captureAuditEvent({
+              action: "API_KEY_DELETED",
+              entityType: "ApiToken",
+              entityId: oldEntity.id,
+              entityName: oldEntity.name,
+              metadata: {
+                tokenPrefix: oldEntity.tokenPrefix,
+                tokenOwnerId: oldEntity.userId,
+                tokenOwnerEmail: oldEntity.user?.email,
+              },
+            }).catch((error: any) => {
+              console.error(`Failed to audit API token delete:`, error);
+            });
+          }
+          return result;
+        },
+        async update({ args, query }: any) {
+          // Fetch old state to detect revocation (isActive: false)
+          const oldEntity = args.where ? await baseClient.apiToken.findUnique({
+            where: args.where,
+            include: { user: { select: { id: true, email: true, name: true } } }
+          }) : null;
+          const result = await query(args);
+          // Check if token was revoked (isActive changed from true to false)
+          if (oldEntity && result && oldEntity.isActive === true && result.isActive === false) {
+            captureAuditEvent({
+              action: "API_KEY_REVOKED",
+              entityType: "ApiToken",
+              entityId: result.id,
+              entityName: result.name,
+              metadata: {
+                tokenPrefix: result.tokenPrefix,
+                tokenOwnerId: result.userId,
+                tokenOwnerEmail: oldEntity.user?.email,
+              },
+            }).catch((error: any) => {
+              console.error(`Failed to audit API token revocation:`, error);
             });
           }
           return result;

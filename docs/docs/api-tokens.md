@@ -280,6 +280,25 @@ if (response.status === 401) {
 }
 ```
 
+## Audit Logging
+
+All API token operations are recorded in the [audit log](/docs/user-guide/audit-logs) for security and compliance:
+
+| Action | Description |
+|--------|-------------|
+| `API_KEY_CREATED` | Logged when a user creates a new API token |
+| `API_KEY_DELETED` | Logged when a user deletes their own token |
+| `API_KEY_REVOKED` | Logged when an administrator revokes a token |
+
+Each audit entry includes:
+
+- The token name and prefix (for identification)
+- The user who created the token
+- The user who performed the action (if different)
+- Timestamp and IP address
+
+This provides a complete audit trail for investigating security incidents or reviewing token usage patterns.
+
 ## Permissions
 
 API tokens inherit the permissions of the user who created them:

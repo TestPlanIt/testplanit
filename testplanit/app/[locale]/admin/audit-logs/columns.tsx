@@ -27,12 +27,16 @@ function getActionBadgeVariant(
   switch (action) {
     case "CREATE":
     case "BULK_CREATE":
+    case "API_KEY_CREATED":
       return "default";
     case "UPDATE":
     case "BULK_UPDATE":
+    case "API_KEY_REGENERATED":
       return "secondary";
     case "DELETE":
     case "BULK_DELETE":
+    case "API_KEY_DELETED":
+    case "API_KEY_REVOKED":
       return "destructive";
     case "LOGIN":
     case "LOGOUT":

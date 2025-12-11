@@ -178,6 +178,11 @@ describe("AuditLog Service", () => {
       expect(extractEntityName("Projects", entity)).toBe("My Project");
     });
 
+    it("should extract name for ApiToken entity", () => {
+      const entity = { id: "token-1", name: "CI Token", tokenPrefix: "tpi_abc" };
+      expect(extractEntityName("ApiToken", entity)).toBe("CI Token");
+    });
+
     it("should return undefined for unknown entity types", () => {
       const entity = { id: 1, name: "Test" };
       expect(extractEntityName("UnknownEntity", entity)).toBeUndefined();

@@ -12,6 +12,7 @@ import { getServerAuthSession } from "~/server/auth";
 import { prisma } from "~/lib/prisma";
 import { generateApiToken } from "~/lib/api-tokens";
 import { z } from "zod/v4";
+import { captureAuditEvent } from "~/lib/services/auditLog";
 
 // Accept either ISO datetime (2025-12-31T00:00:00Z) or date-only (2025-12-31)
 const dateOrDatetimeSchema = z.string().refine(
@@ -66,6 +67,23 @@ export async function POST(request: NextRequest) {
         isActive: true,
       },
     });
+
+    // Audit log the token creation
+    captureAuditEvent({
+      action: "API_KEY_CREATED",
+      entityType: "ApiToken",
+      entityId: apiToken.id,
+      entityName: apiToken.name,
+      userId: session.user.id,
+      userEmail: session.user.email || undefined,
+      userName: session.user.name || undefined,
+      metadata: {
+        tokenPrefix: prefix,
+        expiresAt: apiToken.expiresAt?.toISOString() || null,
+      },
+    }).catch((error) =>
+      console.error("[AuditLog] Failed to audit API token creation:", error)
+    );
 
     // Return the token with the plaintext (only time it's ever shown)
     return NextResponse.json({
