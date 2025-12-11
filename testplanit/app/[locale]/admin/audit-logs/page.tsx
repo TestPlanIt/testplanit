@@ -382,6 +382,8 @@ function AuditLogsContent({ session }: { session: Session }) {
     "ROLE_CHANGED",
     "API_KEY_CREATED",
     "API_KEY_REGENERATED",
+    "API_KEY_DELETED",
+    "API_KEY_REVOKED",
     "DATA_EXPORTED",
     "SSO_CONFIG_CHANGED",
     "SYSTEM_CONFIG_CHANGED",
@@ -418,9 +420,7 @@ function AuditLogsContent({ session }: { session: Session }) {
                 </div>
 
                 <div className="w-[180px]">
-                  <Label className="sr-only">
-                    {t("filterAction")}
-                  </Label>
+                  <Label className="sr-only">{t("filterAction")}</Label>
                   <Select
                     value={actionFilter}
                     onValueChange={(value) =>
@@ -442,9 +442,7 @@ function AuditLogsContent({ session }: { session: Session }) {
                 </div>
 
                 <div className="w-[180px]">
-                  <Label className="sr-only">
-                    {t("filterEntityType")}
-                  </Label>
+                  <Label className="sr-only">{t("filterEntityType")}</Label>
                   <Select
                     value={entityTypeFilter}
                     onValueChange={setEntityTypeFilter}
@@ -484,27 +482,25 @@ function AuditLogsContent({ session }: { session: Session }) {
                 />
               </div>
 
-              <div className="items-center justify-end">
-                {totalItems > 0 && (
-                  <>
-                    <PaginationInfo
-                      key="audit-logs-pagination-info"
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalItems}
-                      searchString={searchString}
-                      pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={(size) => setPageSize(size)}
-                    />
-                    <PaginationComponent
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={setCurrentPage}
-                    />
-                  </>
-                )}
-              </div>
+              {totalItems > 0 && (
+                <div className="flex flex-col items-end">
+                  <PaginationInfo
+                    key="audit-logs-pagination-info"
+                    startIndex={startIndex}
+                    endIndex={endIndex}
+                    totalRows={totalItems}
+                    searchString={searchString}
+                    pageSize={typeof pageSize === "number" ? pageSize : "All"}
+                    pageSizeOptions={pageSizeOptions}
+                    handlePageSizeChange={(size) => setPageSize(size)}
+                  />
+                  <PaginationComponent
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
