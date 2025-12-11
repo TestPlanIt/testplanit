@@ -126,6 +126,7 @@ model User {
     testmoImportJobs        TestmoImportJob[]
     createdComments         Comment[]               @relation("CommentCreator")
     commentMentions         CommentMention[]        @relation("CommentMentions")
+    apiTokens               ApiToken[]
 
     // Two-factor authentication
     twoFactorEnabled        Boolean                 @default(false)
@@ -161,6 +162,29 @@ model UserPreferences {
     @@allow('create', true)
     @@allow('create,update,delete', auth().id == userId || auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
+}
+
+// API Tokens for external API access (CLI, CI/CD, integrations, etc.)
+model ApiToken {
+    id          String    @id @default(cuid())
+    name        String    @length(1, 100)       // User-friendly token name
+    token       String    @unique               // SHA-256 hashed token
+    tokenPrefix String                          // First 8 chars for identification (e.g., "tpi_xxxx")
+    userId      String
+    user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    scopes      String[]  @default([])          // API scopes - empty means full access based on user permissions
+    expiresAt   DateTime?                       // Optional expiration date
+    lastUsedAt  DateTime?                       // Track last usage
+    lastUsedIp  String?                         // Last IP address used
+    createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+    isActive    Boolean   @default(true)
+
+    @@index([userId])
+    @@index([token])
+    @@index([isActive, expiresAt])
+    @@deny('all', !auth())
+    @@allow('create', auth().access != null)
+    @@allow('read, update, delete', auth().id == userId || auth().access == 'ADMIN')
 }
 
 enum Theme {

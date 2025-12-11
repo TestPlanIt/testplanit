@@ -79,6 +79,27 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>Navigate to <strong>Test Runs → Import Results</strong> to get started. Auto-detection identifies your file format automatically.</p>
     `,
   },
+  "0.8.0": {
+    title: "New Feature: CLI Tool & API Tokens",
+    message: `
+      <p>TestPlanIt now includes a <strong>CLI tool</strong> and <strong>API token authentication</strong> for seamless CI/CD integration.</p>
+      <h4>CLI Tool</h4>
+      <ul>
+        <li>Import test results directly from your terminal or CI/CD pipelines</li>
+        <li>Standalone binaries for Linux, macOS, and Windows - no Node.js required</li>
+        <li>Reference projects, milestones, and configurations by name or ID</li>
+        <li>Environment variable support for secure CI/CD configuration</li>
+      </ul>
+      <h4>API Tokens</h4>
+      <ul>
+        <li>Create tokens from your <strong>User Profile → API Tokens</strong></li>
+        <li>Use tokens for programmatic API access in scripts and integrations</li>
+        <li>Administrators can manage all tokens from <strong>Admin → API Tokens</strong></li>
+        <li>Set expiration dates and track token usage</li>
+      </ul>
+      <p>See the <a href="/docs/cli" target="_blank">CLI documentation</a> and <a href="/docs/api-tokens" target="_blank">API Tokens documentation</a> for details.</p>
+    `,
+  },
 };
 
 /**

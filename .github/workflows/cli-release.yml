@@ -1,0 +1,105 @@
+# CLI Release Workflow
+#
+# Builds standalone CLI binaries for Linux, macOS, and Windows using Bun.
+# Binaries are attached to GitHub releases.
+#
+# Triggers:
+# 1. Tag Push (automatic): When a tag starting with 'cli-v' is pushed
+# 2. Manual Dispatch: Manually trigger via GitHub Actions UI
+#
+name: CLI Release
+
+on:
+  push:
+    tags:
+      - 'cli-v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build (e.g., cli-v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  build-cli:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: bun-linux-x64
+            artifact: testplanit-linux-x64
+          - os: macos-latest
+            target: bun-darwin-arm64
+            artifact: testplanit-macos-arm64
+          - os: macos-13
+            target: bun-darwin-x64
+            artifact: testplanit-macos-x64
+          - os: windows-latest
+            target: bun-windows-x64
+            artifact: testplanit-windows-x64.exe
+
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: ./cli
+        run: bun install
+
+      - name: Build binary
+        working-directory: ./cli
+        run: |
+          mkdir -p releases
+          bun build src/index.ts --compile --target=${{ matrix.target }} --outfile=releases/${{ matrix.artifact }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: cli/releases/${{ matrix.artifact }}
+
+  release:
+    needs: build-cli
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: binaries
+
+      - name: Display structure of downloaded files
+        run: ls -la binaries/*/
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload CLI binaries to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          files: |
+            binaries/testplanit-linux-x64/testplanit-linux-x64
+            binaries/testplanit-macos-arm64/testplanit-macos-arm64
+            binaries/testplanit-macos-x64/testplanit-macos-x64
+            binaries/testplanit-windows-x64.exe/testplanit-windows-x64.exe
+          fail_on_unmatched_files: false

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
+import { authenticateApiToken } from "~/lib/api-token-auth";
 import { prisma } from "@/lib/prisma";
 import { getAllQueues } from "@/lib/queues";
 import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
@@ -7,17 +8,37 @@ import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
 // GET: Get all queues with their stats
 export async function GET(request: NextRequest) {
   try {
+    // Check authentication - try session first, then API token
     const session = await getServerAuthSession();
-    if (!session?.user) {
+    let userId = session?.user?.id;
+    let userAccess: string | undefined;
+
+    if (!userId) {
+      const apiAuth = await authenticateApiToken(request);
+      if (!apiAuth.authenticated) {
+        return NextResponse.json(
+          { error: apiAuth.error, code: apiAuth.errorCode },
+          { status: 401 }
+        );
+      }
+      userId = apiAuth.userId;
+      userAccess = apiAuth.access;
+    }
+
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { access: true }
-    });
+    // Get user access level if not already known from API token
+    if (!userAccess) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { access: true }
+      });
+      userAccess = user?.access;
+    }
 
-    if (user?.access !== 'ADMIN') {
+    if (userAccess !== 'ADMIN') {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 

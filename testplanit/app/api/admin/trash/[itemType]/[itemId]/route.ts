@@ -1,8 +1,53 @@
 import { NextResponse, NextRequest } from "next/server";
 import { db } from "~/server/db";
 import { getServerAuthSession } from "~/server/auth";
+import { authenticateApiToken } from "~/lib/api-token-auth";
+import { prisma } from "@/lib/prisma";
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { captureAuditEvent } from "~/lib/services/auditLog";
+
+// Helper to check admin authentication (session or API token)
+async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextResponse; userId?: string }> {
+  const session = await getServerAuthSession();
+  let userId = session?.user?.id;
+  let userAccess: string | undefined = session?.user?.access ?? undefined;
+
+  if (!userId) {
+    const apiAuth = await authenticateApiToken(request);
+    if (!apiAuth.authenticated) {
+      return {
+        error: NextResponse.json(
+          { error: apiAuth.error, code: apiAuth.errorCode },
+          { status: 401 }
+        ),
+      };
+    }
+    userId = apiAuth.userId;
+    userAccess = apiAuth.access;
+  }
+
+  if (!userId) {
+    return {
+      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
+
+  if (!userAccess) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { access: true },
+    });
+    userAccess = user?.access;
+  }
+
+  if (userAccess !== "ADMIN") {
+    return {
+      error: NextResponse.json({ error: "Admin access required" }, { status: 403 }),
+    };
+  }
+
+  return { userId };
+}
 
 // S3 Client Initialization (ensure environment variables are set)
 const s3Client = new S3Client({
@@ -95,10 +140,8 @@ export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ itemType: string; itemId: string }> }
 ) {
-  const session = await getServerAuthSession();
-  if (!session || session.user?.access !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+  const auth = await checkAdminAuth(request);
+  if (auth.error) return auth.error;
 
   const params = await context.params;
   const { itemType, itemId } = params;
@@ -209,10 +252,8 @@ export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ itemType: string; itemId: string }> }
 ) {
-  const session = await getServerAuthSession();
-  if (!session || session.user?.access !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
+  const auth = await checkAdminAuth(request);
+  if (auth.error) return auth.error;
 
   const params = await context.params;
   const { itemType, itemId } = params;

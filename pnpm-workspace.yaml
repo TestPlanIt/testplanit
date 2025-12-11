@@ -2,3 +2,4 @@ packages:
   - 'testplanit'
   - 'docs'
   - 'forge-app'
+  - 'cli'

@@ -1811,6 +1811,34 @@
           "newCodesTitle": "Sus nuevos códigos de respaldo",
           "newCodesDescription": "Tus códigos antiguos han sido invalidados. Guarda estos nuevos códigos en un lugar seguro."
         }
+      },
+      "apiTokens": {
+        "title": "Tokens API",
+        "description": "Los tokens de API permiten que aplicaciones y scripts externos accedan a TestPlanIt en su nombre. Tienen los mismos permisos que su cuenta.",
+        "create": "Crear token",
+        "createTitle": "Crear token de API",
+        "createDescription": "Cree un nuevo token de API para autenticar herramientas y scripts externos.",
+        "name": "Nombre",
+        "nameLabel": "Nombre del token",
+        "namePlaceholder": "p. ej., canalización CI/CD, herramienta CLI",
+        "token": "Simbólico",
+        "created": "Creado",
+        "lastUsed": "Último uso",
+        "expires": "Caduca",
+        "noExpiry": "Nunca",
+        "never": "Nunca",
+        "noTokens": "Aún no se han creado tokens API.",
+        "expiryLabel": "Fecha de vencimiento (opcional)",
+        "expiryHint": "Déjelo vacío para que no caduque.",
+        "tokenCreated": "Token creado",
+        "tokenCreatedDescription": "Su token API se ha creado exitosamente.",
+        "copyWarning": "Copia este token ahora. ¡No podrás volver a verlo!",
+        "yourToken": "Tu token",
+        "deleteTitle": "¿Eliminar token API?",
+        "deleteDescription": "Esta acción no se puede deshacer. Las aplicaciones que usen este token ya no podrán autenticarse.",
+        "errors": {
+          "nameRequired": "Se requiere el nombre del token."
+        }
       }
     },
     "filterPlaceholder": "Filtrar usuarios...",
@@ -2763,7 +2791,8 @@
       "notifications": "Notificaciones",
       "elasticsearch": "Motor de búsqueda",
       "queues": "Colas de trabajos",
-      "auditLogs": "Registros de auditoría"
+      "auditLogs": "Registros de auditoría",
+      "apiTokens": "Tokens API"
     },
     "imports": {
       "title": "Importaciones de datos",
@@ -3751,6 +3780,42 @@
         "user": "Usuario",
         "none": "Ninguna"
       }
+    },
+    "apiTokens": {
+      "title": "Tokens API",
+      "description": "Visualiza y administra los tokens de API de todos los usuarios. Revoca los tokens si existen problemas de seguridad.",
+      "filterPlaceholder": "Filtrar por nombre de token o usuario...",
+      "showInactive": "Mostrar revocado",
+      "noTokens": "Aún no se han creado tokens API.",
+      "columns": {
+        "name": "Nombre",
+        "user": "Usuario",
+        "token": "Simbólico",
+        "created": "Creado",
+        "lastUsed": "Último uso",
+        "expires": "Caduca",
+        "status": "Estado"
+      },
+      "status": {
+        "active": "Activo",
+        "revoked": "Revocado",
+        "expired": "Venció"
+      },
+      "lastUsedNever": "Nunca",
+      "noExpiry": "Sin vencimiento",
+      "revokeToken": "Revocar token",
+      "revokeConfirmTitle": "Revocar token de API",
+      "revokeConfirmMessage": "¿Seguro que desea revocar este token de API? Esta acción no se puede deshacer.",
+      "revokeConfirmDescription": "El token \"{name}\" perteneciente a {user} será revocado inmediatamente y ya no podrá utilizarse para acceder a la API.",
+      "revokeSuccess": "Token de API revocado exitosamente",
+      "revokeError": "No se pudo revocar el token de API",
+      "revokeAllTokens": "Revocar todos los tokens",
+      "revokeAllTitle": "Revocar todos los tokens de API",
+      "revokeAllDescription": "Esto revocará inmediatamente todos los tokens de API activos de todos los usuarios. Esta acción es irreversible y puede interrumpir los flujos de trabajo automatizados.",
+      "revokeAllConfirm": "Escriba \"REVOCAR TODO\" para confirmar",
+      "revokeAllPlaceholder": "REVOCAR TODO",
+      "revokeAllSuccess": "Se han revocado todos los tokens API",
+      "revokeAllError": "No se pudieron revocar todos los tokens"
     },
     "tags": {
       "title": "Etiquetas",

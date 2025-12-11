@@ -37,6 +37,8 @@ const sidebars: SidebarsConfig = {
     },
     'getting-started', // Corresponds to getting-started.md
     'api-reference', // Add api-reference.md
+    'cli', // CLI tool documentation
+    'api-tokens', // API tokens documentation
 
     // Define the User Guide category manually
     {

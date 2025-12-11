@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
+import { authenticateApiToken } from "~/lib/api-token-auth";
 import {
   searchRepositoryCases,
   countRepositoryCases,
@@ -65,9 +66,22 @@ const searchSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
+    // Check authentication - try session first, then API token
     const session = await getServerAuthSession();
-    if (!session?.user) {
+    let authenticated = !!session?.user;
+
+    if (!authenticated) {
+      const apiAuth = await authenticateApiToken(request);
+      if (!apiAuth.authenticated) {
+        return NextResponse.json(
+          { error: apiAuth.error, code: apiAuth.errorCode },
+          { status: 401 }
+        );
+      }
+      authenticated = true;
+    }
+
+    if (!authenticated) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -107,9 +121,22 @@ export async function POST(request: NextRequest) {
 // GET endpoint for search suggestions
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication
+    // Check authentication - try session first, then API token
     const session = await getServerAuthSession();
-    if (!session?.user) {
+    let authenticated = !!session?.user;
+
+    if (!authenticated) {
+      const apiAuth = await authenticateApiToken(request);
+      if (!apiAuth.authenticated) {
+        return NextResponse.json(
+          { error: apiAuth.error, code: apiAuth.errorCode },
+          { status: 401 }
+        );
+      }
+      authenticated = true;
+    }
+
+    if (!authenticated) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

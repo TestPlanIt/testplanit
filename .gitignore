@@ -62,5 +62,3 @@ testplanit/docker-data/**
 testplanit/test/test-data/Testmo Exports/*
 testplanit/test-data/tpi*test*
 
-# Private operations documentation and scripts (not for public repository)
-/private-ops/

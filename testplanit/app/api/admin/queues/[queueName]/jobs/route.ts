@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
+import { authenticateApiToken } from "~/lib/api-token-auth";
 import { prisma } from "@/lib/prisma";
 import { getAllQueues } from "@/lib/queues";
 import { Queue, Job } from "bullmq";
@@ -24,17 +25,36 @@ export async function GET(
   { params }: { params: Promise<{ queueName: string }> }
 ) {
   try {
+    // Check authentication - try session first, then API token
     const session = await getServerAuthSession();
-    if (!session?.user) {
+    let userId = session?.user?.id;
+    let userAccess: string | undefined;
+
+    if (!userId) {
+      const apiAuth = await authenticateApiToken(request);
+      if (!apiAuth.authenticated) {
+        return NextResponse.json(
+          { error: apiAuth.error, code: apiAuth.errorCode },
+          { status: 401 }
+        );
+      }
+      userId = apiAuth.userId;
+      userAccess = apiAuth.access;
+    }
+
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { access: true },
-    });
+    if (!userAccess) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { access: true },
+      });
+      userAccess = user?.access;
+    }
 
-    if (user?.access !== "ADMIN") {
+    if (userAccess !== "ADMIN") {
       return NextResponse.json(
         { error: "Admin access required" },
         { status: 403 }

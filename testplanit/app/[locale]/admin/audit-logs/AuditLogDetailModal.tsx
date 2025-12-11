@@ -7,7 +7,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useTranslations } from "next-intl";
 import { DateFormatter } from "@/components/DateFormatter";
@@ -38,7 +37,7 @@ export function AuditLogDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh]">
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {t("detailTitle")}
@@ -46,11 +45,11 @@ export function AuditLogDetailModal({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[60vh] pr-4">
+        <div className="max-h-[60vh] overflow-y-auto pr-4">
           <div className="space-y-4">
             {/* Basic Info */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="overflow-hidden">
                 <label className="text-sm font-medium text-muted-foreground">
                   {t("columns.timestamp")}
                 </label>
@@ -62,23 +61,23 @@ export function AuditLogDetailModal({
                   />
                 </p>
               </div>
-              <div>
+              <div className="overflow-hidden">
                 <label className="text-sm font-medium text-muted-foreground">
                   {t("columns.entityType")}
                 </label>
-                <p className="text-sm font-mono">{log.entityType}</p>
+                <p className="text-sm font-mono truncate">{log.entityType}</p>
               </div>
-              <div>
+              <div className="overflow-hidden">
                 <label className="text-sm font-medium text-muted-foreground">
                   {t("columns.entityId")}
                 </label>
                 <p className="text-sm font-mono break-all">{log.entityId}</p>
               </div>
-              <div>
+              <div className="overflow-hidden">
                 <label className="text-sm font-medium text-muted-foreground">
                   {t("columns.entityName")}
                 </label>
-                <p className="text-sm">{log.entityName || "-"}</p>
+                <p className="text-sm truncate">{log.entityName || "-"}</p>
               </div>
             </div>
 
@@ -87,31 +86,31 @@ export function AuditLogDetailModal({
             {/* User Info */}
             <div>
               <h4 className="text-sm font-medium mb-2">{t("userInfo")}</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="overflow-hidden">
                   <label className="text-sm font-medium text-muted-foreground">
                     {t("columns.user")}
                   </label>
-                  <p className="text-sm">{log.userName || "-"}</p>
+                  <p className="text-sm truncate">{log.userName || "-"}</p>
                 </div>
-                <div>
+                <div className="overflow-hidden">
                   <label className="text-sm font-medium text-muted-foreground">
                     {t("columns.email")}
                   </label>
-                  <p className="text-sm">{log.userEmail || "-"}</p>
+                  <p className="text-sm truncate">{log.userEmail || "-"}</p>
                 </div>
-                <div>
+                <div className="overflow-hidden">
                   <label className="text-sm font-medium text-muted-foreground">
                     {t("columns.userId")}
                   </label>
-                  <p className="text-sm font-mono">{log.userId || "-"}</p>
+                  <p className="text-sm font-mono break-all">{log.userId || "-"}</p>
                 </div>
                 {log.project && (
-                  <div>
+                  <div className="overflow-hidden">
                     <label className="text-sm font-medium text-muted-foreground">
                       {t("columns.project")}
                     </label>
-                    <p className="text-sm">{log.project.name}</p>
+                    <p className="text-sm truncate">{log.project.name}</p>
                   </div>
                 )}
               </div>
@@ -130,8 +129,8 @@ export function AuditLogDetailModal({
                         className="bg-muted rounded-md p-3 text-sm"
                       >
                         <div className="font-medium mb-1">{field}</div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="overflow-hidden">
                             <span className="text-muted-foreground text-xs">
                               {t("oldValue")}:
                             </span>
@@ -139,7 +138,7 @@ export function AuditLogDetailModal({
                               {formatValue(change.old)}
                             </pre>
                           </div>
-                          <div>
+                          <div className="overflow-hidden">
                             <span className="text-muted-foreground text-xs">
                               {t("newValue")}:
                             </span>
@@ -159,16 +158,18 @@ export function AuditLogDetailModal({
             {metadata && Object.keys(metadata).length > 0 && (
               <>
                 <Separator />
-                <div>
+                <div className="min-w-0">
                   <h4 className="text-sm font-medium mb-2">{t("metadata")}</h4>
-                  <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto">
-                    {JSON.stringify(metadata, null, 2)}
-                  </pre>
+                  <div className="overflow-x-auto">
+                    <pre className="text-xs bg-muted p-3 rounded-md whitespace-pre">
+                      {JSON.stringify(metadata, null, 2)}
+                    </pre>
+                  </div>
                 </div>
               </>
             )}
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );

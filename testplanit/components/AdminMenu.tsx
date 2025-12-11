@@ -25,6 +25,7 @@ import {
   ImportIcon,
   Bug,
   Activity,
+  KeyRound,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
@@ -119,6 +120,12 @@ const menuOptions: MenuOption[] = [
     icon: ShieldUser,
     translationKey: "sso",
     path: "sso",
+    section: "main",
+  },
+  {
+    icon: KeyRound,
+    translationKey: "apiTokens",
+    path: "api-tokens",
     section: "main",
   },
   { translationKey: "systemHeader", section: "system" },

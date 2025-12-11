@@ -413,6 +413,12 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'user',
+                }, apiTokens: {
+                    name: "apiTokens",
+                    type: "ApiToken",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'user',
                 }, twoFactorEnabled: {
                     name: "twoFactorEnabled",
                     type: "Boolean",
@@ -508,6 +514,71 @@ const metadata: ModelMeta = {
                 }, userId: {
                     name: "userId",
                     fields: ["userId"]
+                },
+            },
+        },
+        apiToken: {
+            name: 'ApiToken', fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, name: {
+                    name: "name",
+                    type: "String",
+                }, token: {
+                    name: "token",
+                    type: "String",
+                }, tokenPrefix: {
+                    name: "tokenPrefix",
+                    type: "String",
+                }, userId: {
+                    name: "userId",
+                    type: "String",
+                    isForeignKey: true,
+                    relationField: 'user',
+                }, user: {
+                    name: "user",
+                    type: "User",
+                    isDataModel: true,
+                    backLink: 'apiTokens',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "userId" },
+                }, scopes: {
+                    name: "scopes",
+                    type: "String",
+                    isArray: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": [] }] }],
+                }, expiresAt: {
+                    name: "expiresAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, lastUsedAt: {
+                    name: "lastUsedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, lastUsedIp: {
+                    name: "lastUsedIp",
+                    type: "String",
+                    isOptional: true,
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, isActive: {
+                    name: "isActive",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": true }] }],
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, token: {
+                    name: "token",
+                    fields: ["token"]
                 },
             },
         },
@@ -7159,7 +7230,7 @@ const metadata: ModelMeta = {
 
     },
     deleteCascade: {
-        user: ['Account', 'UserPreferences', 'GroupAssignment', 'UserIntegrationAuth', 'UserProjectPermission', 'Notification', 'CommentMention'],
+        user: ['Account', 'UserPreferences', 'ApiToken', 'GroupAssignment', 'UserIntegrationAuth', 'UserProjectPermission', 'Notification', 'CommentMention'],
         groups: ['GroupAssignment', 'GroupProjectPermission'],
         roles: ['RolePermission'],
         projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'ProjectIntegration', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
