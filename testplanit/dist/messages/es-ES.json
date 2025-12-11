@@ -4622,7 +4622,11 @@
         "failedToConnect": "Error al conectar con el proveedor de modelos AI",
         "success": "Éxito",
         "integrationCreated": "Integración del modelo de IA creada con éxito",
-        "failedToCreate": "Error al crear integración de modelo de IA"
+        "failedToCreate": "Error al crear integración de modelo de IA",
+        "validation": {
+          "nameRequired": "El nombre es obligatorio",
+          "defaultModelRequired": "Se requiere el modelo predeterminado"
+        }
       },
       "edit": {
         "title": "Editar integración del modelo AI",
