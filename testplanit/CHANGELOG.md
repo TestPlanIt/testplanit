@@ -1,3 +1,10 @@
+## [0.8.5](https://github.com/TestPlanIt/testplanit/compare/v0.8.4...v0.8.5) (2025-12-11)
+
+
+### Bug Fixes
+
+* **ci:** use PAT token to trigger Docker build workflow ([5f34752](https://github.com/TestPlanIt/testplanit/commit/5f347528f945818ddde652b4873847fa23ac049d))
+
 ## [0.8.4](https://github.com/TestPlanIt/testplanit/compare/v0.8.3...v0.8.4) (2025-12-11)
 
 
