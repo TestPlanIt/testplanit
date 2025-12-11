@@ -181,7 +181,7 @@ TestPlanIt supports importing test results from the following formats:
    - Select a **Parent Folder** for organizing imported test cases
    - Choose a **Template** to apply to imported test cases
    - Select **State** for the test run
-   - Optionally set **Configuration**, **Milestone**, and **Tags**
+   - Optionally set **Configuration**, **Milestone** (only active milestones are shown), and **Tags**
 
 3. **Upload Files**
    - Select one or more test result files

@@ -78,7 +78,7 @@ This feature is useful for:
 - **Default View / Edit Mode**: Displays metadata and controls:
   - **State**: Shows the current workflow state. In Edit mode, it becomes a dropdown to change the state.
   - **Configuration**: Shows the linked configuration. In Edit mode, it becomes a dropdown.
-  - **Milestone**: Shows the linked milestone. In Edit mode, it becomes a dropdown.
+  - **Milestone**: Shows the linked milestone. In Edit mode, it becomes a dropdown (only active milestones are shown; completed milestones are excluded).
   - **Tags**: Displays assigned tags. In Edit mode, allows managing tags.
   - **Attachments**: Displays attachments. In Edit mode, allows uploading and managing attachments.
   - **Created By**: Shows the user who created the run (View mode only).

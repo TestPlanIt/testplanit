@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Prisma } from "@prisma/client";
-import { useFindManyColor } from "~/lib/hooks";
+import { useFindManyColor, useUpdateTestRuns } from "~/lib/hooks";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { Button } from "@/components/ui/button";
-import { CirclePlus } from "lucide-react";
+import { CirclePlus, GripVertical } from "lucide-react";
 import TestRunItem from "./TestRunItem";
 import DynamicIcon from "@/components/DynamicIcon";
 import { sortMilestones } from "~/utils/milestoneUtils";
@@ -24,6 +24,11 @@ import { DateTextDisplay } from "@/components/DateTextDisplay";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useFindManyTestRunCases } from "~/lib/hooks/test-run-cases";
+import { useDrag, useDrop, DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { ItemTypes } from "~/types/dndTypes";
+import { cn } from "~/utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 const testRunPropSelect = {
   id: true,
@@ -124,6 +129,119 @@ type GroupedTestRuns = {
       testRuns: TestRunsWithDetails[];
     };
   };
+};
+
+// Drag-and-drop item type for test runs
+interface DraggedTestRun {
+  type: typeof ItemTypes.TEST_RUN;
+  id: number;
+  name: string;
+  currentMilestoneId: number | null;
+}
+
+// Draggable wrapper for test run items
+interface DraggableTestRunWrapperProps {
+  testRunId: number;
+  testRunName: string;
+  currentMilestoneId: number | null;
+  canDrag: boolean;
+  children: React.ReactNode;
+}
+
+const DraggableTestRunWrapper: React.FC<DraggableTestRunWrapperProps> = ({
+  testRunId,
+  testRunName,
+  currentMilestoneId,
+  canDrag,
+  children,
+}) => {
+  const [{ isDragging }, drag, preview] = useDrag(
+    () => ({
+      type: ItemTypes.TEST_RUN,
+      item: {
+        type: ItemTypes.TEST_RUN,
+        id: testRunId,
+        name: testRunName,
+        currentMilestoneId,
+      } as DraggedTestRun,
+      canDrag: () => canDrag,
+      collect: (monitor) => ({
+        isDragging: monitor.isDragging(),
+      }),
+    }),
+    [testRunId, testRunName, currentMilestoneId, canDrag]
+  );
+
+  return (
+    <div
+      ref={(node) => {
+        preview(node);
+      }}
+      className={cn("relative group", isDragging && "opacity-50")}
+    >
+      {canDrag && (
+        <div
+          ref={(node) => {
+            drag(node);
+          }}
+          className="absolute -left-4 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10"
+        >
+          <GripVertical className="h-5 w-5 text-muted-foreground" />
+        </div>
+      )}
+      {children}
+    </div>
+  );
+};
+
+// Droppable wrapper for milestone groups
+interface DroppableMilestoneGroupProps {
+  milestoneId: number | null; // null for unscheduled
+  milestoneName: string;
+  onDropTestRun: (testRunId: number, targetMilestoneId: number | null) => void;
+  children: React.ReactNode;
+  className?: string;
+}
+
+const DroppableMilestoneGroup: React.FC<DroppableMilestoneGroupProps> = ({
+  milestoneId,
+  milestoneName,
+  onDropTestRun,
+  children,
+  className,
+}) => {
+  const [{ isOver, canDrop }, drop] = useDrop(
+    () => ({
+      accept: ItemTypes.TEST_RUN,
+      canDrop: (item: DraggedTestRun) => {
+        // Can drop if moving to a different milestone
+        return item.currentMilestoneId !== milestoneId;
+      },
+      drop: (item: DraggedTestRun) => {
+        onDropTestRun(item.id, milestoneId);
+      },
+      collect: (monitor) => ({
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      }),
+    }),
+    [milestoneId, onDropTestRun]
+  );
+
+  return (
+    <div
+      ref={(node) => {
+        drop(node);
+      }}
+      className={cn(
+        className,
+        isOver && canDrop && "ring-2 ring-primary ring-inset bg-primary/5",
+        isOver && !canDrop && "ring-2 ring-muted-foreground/30 ring-inset"
+      )}
+    >
+      {children}
+    </div>
+  );
 };
 
 const buildMilestoneTree = (
@@ -248,6 +366,26 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   const { permissions: testRunPermissions, isLoading: isLoadingPermissions } =
     useProjectPermissions(numericProjectId, "TestRuns");
   const canAddEditRun = testRunPermissions?.canAddEdit ?? false;
+
+  // Mutation for updating test run milestone
+  const queryClient = useQueryClient();
+  const updateTestRunMutation = useUpdateTestRuns();
+
+  const handleDropTestRun = useCallback(
+    async (testRunId: number, targetMilestoneId: number | null) => {
+      try {
+        await updateTestRunMutation.mutateAsync({
+          where: { id: testRunId },
+          data: { milestoneId: targetMilestoneId },
+        });
+        // Invalidate test runs query to refresh the data
+        queryClient.invalidateQueries({ queryKey: ["testRuns"] });
+      } catch (error) {
+        console.error("Failed to update test run milestone:", error);
+      }
+    },
+    [updateTestRunMutation, queryClient]
+  );
 
   const [selectedMilestoneId, setSelectedMilestoneId] = useState<number | null>(
     null
@@ -468,8 +606,11 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
         currentGroupedRuns.milestones[milestone.id]?.testRuns.length > 0;
 
       return (
-        <div
+        <DroppableMilestoneGroup
           key={milestone.id}
+          milestoneId={milestone.id}
+          milestoneName={milestone.name}
+          onDropTestRun={handleDropTestRun}
           className={
             depth > 0
               ? "w-full pl-4 bg-muted rounded-lg mb-4"
@@ -559,51 +700,57 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
             <div className="test-runs-container bg-muted pr-4 pb-2 mb-2">
               {currentGroupedRuns.milestones[milestone.id]?.testRuns.map(
                 (testRun) => (
-                  <div key={testRun.id} style={{ paddingLeft: "1.5rem" }}>
-                    <TestRunItem
-                      key={testRun.id}
-                      testRun={{
-                        id: testRun.id,
-                        name: testRun.name,
-                        isCompleted: testRun.isCompleted,
-                        testRunType: testRun.testRunType,
-                        configuration: testRun.configuration,
-                        configurationGroupId: testRun.configurationGroupId,
-                        state: testRun.state,
-                        note:
-                          typeof testRun.note === "string"
-                            ? testRun.note
-                            : testRun.note
-                              ? JSON.stringify(testRun.note)
-                              : undefined,
-                        completedAt: testRun.completedAt
-                          ? new Date(testRun.completedAt)
-                          : undefined,
-                        milestone: testRun.milestone
-                          ? {
-                              id: testRun.milestone.id,
-                              name: testRun.milestone.name,
-                              startedAt: testRun.milestone.startedAt
-                                ? new Date(testRun.milestone.startedAt)
+                  <div key={testRun.id} style={{ paddingLeft: "2.5rem" }}>
+                    <DraggableTestRunWrapper
+                      testRunId={testRun.id}
+                      testRunName={testRun.name}
+                      currentMilestoneId={testRun.milestoneId}
+                      canDrag={canAddEditRun && !testRun.isCompleted}
+                    >
+                      <TestRunItem
+                        testRun={{
+                          id: testRun.id,
+                          name: testRun.name,
+                          isCompleted: testRun.isCompleted,
+                          testRunType: testRun.testRunType,
+                          configuration: testRun.configuration,
+                          configurationGroupId: testRun.configurationGroupId,
+                          state: testRun.state,
+                          note:
+                            typeof testRun.note === "string"
+                              ? testRun.note
+                              : testRun.note
+                                ? JSON.stringify(testRun.note)
                                 : undefined,
-                              completedAt: testRun.milestone.completedAt
-                                ? new Date(testRun.milestone.completedAt)
-                                : undefined,
-                              isCompleted: testRun.milestone.isCompleted,
-                              milestoneType: testRun.milestone.milestoneType,
-                            }
-                          : undefined,
-                        projectId: testRun.projectId,
-                        testCases: testCasesByTestRunId[testRun.id] || [],
-                        createdBy: testRun.createdBy,
-                        forecastManual: testRun.forecastManual,
-                        forecastAutomated: testRun.forecastAutomated,
-                      }}
-                      onComplete={handleOpenDialogParam}
-                      isAdmin={isAdminParam}
-                      isNew={false}
-                      onDuplicate={onDuplicateTestRunParam}
-                    />
+                          completedAt: testRun.completedAt
+                            ? new Date(testRun.completedAt)
+                            : undefined,
+                          milestone: testRun.milestone
+                            ? {
+                                id: testRun.milestone.id,
+                                name: testRun.milestone.name,
+                                startedAt: testRun.milestone.startedAt
+                                  ? new Date(testRun.milestone.startedAt)
+                                  : undefined,
+                                completedAt: testRun.milestone.completedAt
+                                  ? new Date(testRun.milestone.completedAt)
+                                  : undefined,
+                                isCompleted: testRun.milestone.isCompleted,
+                                milestoneType: testRun.milestone.milestoneType,
+                              }
+                            : undefined,
+                          projectId: testRun.projectId,
+                          testCases: testCasesByTestRunId[testRun.id] || [],
+                          createdBy: testRun.createdBy,
+                          forecastManual: testRun.forecastManual,
+                          forecastAutomated: testRun.forecastAutomated,
+                        }}
+                        onComplete={handleOpenDialogParam}
+                        isAdmin={isAdminParam}
+                        isNew={false}
+                        onDuplicate={onDuplicateTestRunParam}
+                      />
+                    </DraggableTestRunWrapper>
                   </div>
                 )
               )}
@@ -614,16 +761,18 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
           {milestone.children?.map((childMilestone) =>
             renderMilestoneWithTestRuns(childMilestone, depth + 1)
           )}
-        </div>
+        </DroppableMilestoneGroup>
       );
     };
 
     return (
       <>
         {currentGroupedRuns.unscheduled.length > 0 && (
-          <div
+          <DroppableMilestoneGroup
+            milestoneId={null}
+            milestoneName={tSessions("noMilestone")}
+            onDropTestRun={handleDropTestRun}
             className="w-full bg-muted rounded-lg p-0 pb-2"
-            key={JSON.stringify(currentGroupedRuns)}
           >
             {currentGroupedRuns.unscheduled.some(
               (testRun) => !testRun.isCompleted
@@ -664,52 +813,59 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
             )}
             {currentGroupedRuns.unscheduled.map((testRun) => (
               <div key={testRun.id} className="pl-4 pr-4">
-                <TestRunItem
-                  testRun={{
-                    id: testRun.id,
-                    name: testRun.name,
-                    isCompleted: testRun.isCompleted,
-                    testRunType: testRun.testRunType,
-                    configuration: testRun.configuration,
-                    configurationGroupId: testRun.configurationGroupId,
-                    state: testRun.state,
-                    note:
-                      typeof testRun.note === "string"
-                        ? testRun.note
-                        : testRun.note
-                          ? JSON.stringify(testRun.note)
-                          : undefined,
-                    completedAt: testRun.completedAt
-                      ? new Date(testRun.completedAt)
-                      : undefined,
-                    milestone: testRun.milestone
-                      ? {
-                          id: testRun.milestone.id,
-                          name: testRun.milestone.name,
-                          startedAt: testRun.milestone.startedAt
-                            ? new Date(testRun.milestone.startedAt)
+                <DraggableTestRunWrapper
+                  testRunId={testRun.id}
+                  testRunName={testRun.name}
+                  currentMilestoneId={testRun.milestoneId}
+                  canDrag={canAddEditRun && !testRun.isCompleted}
+                >
+                  <TestRunItem
+                    testRun={{
+                      id: testRun.id,
+                      name: testRun.name,
+                      isCompleted: testRun.isCompleted,
+                      testRunType: testRun.testRunType,
+                      configuration: testRun.configuration,
+                      configurationGroupId: testRun.configurationGroupId,
+                      state: testRun.state,
+                      note:
+                        typeof testRun.note === "string"
+                          ? testRun.note
+                          : testRun.note
+                            ? JSON.stringify(testRun.note)
                             : undefined,
-                          completedAt: testRun.milestone.completedAt
-                            ? new Date(testRun.milestone.completedAt)
-                            : undefined,
-                          isCompleted: testRun.milestone.isCompleted,
-                          milestoneType: testRun.milestone.milestoneType,
-                        }
-                      : undefined,
-                    projectId: testRun.projectId,
-                    testCases: testCasesByTestRunId[testRun.id] || [],
-                    createdBy: testRun.createdBy,
-                    forecastManual: testRun.forecastManual,
-                    forecastAutomated: testRun.forecastAutomated,
-                  }}
-                  onComplete={handleOpenDialogParam}
-                  isAdmin={isAdminParam}
-                  isNew={false}
-                  onDuplicate={onDuplicateTestRunParam}
-                />
+                      completedAt: testRun.completedAt
+                        ? new Date(testRun.completedAt)
+                        : undefined,
+                      milestone: testRun.milestone
+                        ? {
+                            id: testRun.milestone.id,
+                            name: testRun.milestone.name,
+                            startedAt: testRun.milestone.startedAt
+                              ? new Date(testRun.milestone.startedAt)
+                              : undefined,
+                            completedAt: testRun.milestone.completedAt
+                              ? new Date(testRun.milestone.completedAt)
+                              : undefined,
+                            isCompleted: testRun.milestone.isCompleted,
+                            milestoneType: testRun.milestone.milestoneType,
+                          }
+                        : undefined,
+                      projectId: testRun.projectId,
+                      testCases: testCasesByTestRunId[testRun.id] || [],
+                      createdBy: testRun.createdBy,
+                      forecastManual: testRun.forecastManual,
+                      forecastAutomated: testRun.forecastAutomated,
+                    }}
+                    onComplete={handleOpenDialogParam}
+                    isAdmin={isAdminParam}
+                    isNew={false}
+                    onDuplicate={onDuplicateTestRunParam}
+                  />
+                </DraggableTestRunWrapper>
               </div>
             ))}
-          </div>
+          </DroppableMilestoneGroup>
         )}
         <div className="rounded-b-lg mb-4"></div>
 
@@ -721,33 +877,35 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center w-full">
-      <div className="w-full relative">
-        <div className="flex flex-col w-full">
-          {renderGroupedTestRuns(
-            groupedTestRunData,
-            sortedMilestoneTree,
-            handleOpenDialog,
-            isAdmin,
-            onDuplicateTestRun
-          )}
+    <DndProvider backend={HTML5Backend}>
+      <div className="flex flex-col items-center w-full">
+        <div className="w-full relative">
+          <div className="flex flex-col w-full">
+            {renderGroupedTestRuns(
+              groupedTestRunData,
+              sortedMilestoneTree,
+              handleOpenDialog,
+              isAdmin,
+              onDuplicateTestRun
+            )}
+          </div>
         </div>
-      </div>
 
-      {selectedTestRun && (
-        <CompleteTestRunDialog
-          trigger={
-            <Button variant="outline" size="sm">
-              {tCommon("actions.complete")}
-            </Button>
-          }
-          testRunId={selectedTestRun.id}
-          projectId={selectedTestRun.projectId}
-          stateId={selectedTestRun.state.id}
-          stateName={selectedTestRun.state.name}
-        />
-      )}
-    </div>
+        {selectedTestRun && (
+          <CompleteTestRunDialog
+            trigger={
+              <Button variant="outline" size="sm">
+                {tCommon("actions.complete")}
+              </Button>
+            }
+            testRunId={selectedTestRun.id}
+            projectId={selectedTestRun.projectId}
+            stateId={selectedTestRun.state.id}
+            stateName={selectedTestRun.state.name}
+          />
+        )}
+      </div>
+    </DndProvider>
   );
 };
 

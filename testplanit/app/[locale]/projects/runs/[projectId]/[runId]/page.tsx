@@ -78,7 +78,10 @@ import CompleteTestRunDialog from "./CompleteTestRunDialog";
 import DuplicateTestRunDialog, {
   AddTestRunModalInitProps,
 } from "../DuplicateTestRunDialog";
-import { TestCasesSection, SelectedConfigurationInfo } from "./TestCasesSection";
+import {
+  TestCasesSection,
+  SelectedConfigurationInfo,
+} from "./TestCasesSection";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
 import TestRunCasesSummary from "~/components/TestRunCasesSummary";
 import {
@@ -269,7 +272,9 @@ export default function TestRunPage() {
     searchParams.get("edit") === "true"
   );
   const [isMultiConfigSelected, setIsMultiConfigSelected] = useState(false);
-  const [selectedConfigurations, setSelectedConfigurations] = useState<SelectedConfigurationInfo[]>([]);
+  const [selectedConfigurations, setSelectedConfigurations] = useState<
+    SelectedConfigurationInfo[]
+  >([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [selectedTestCaseIds, setSelectedTestCaseIds] = useState<number[]>([]);
@@ -572,6 +577,7 @@ export default function TestRunPage() {
     where: {
       projectId: Number(projectId),
       isDeleted: false,
+      isCompleted: false,
     },
     include: {
       milestoneType: {
@@ -1260,7 +1266,7 @@ export default function TestRunPage() {
   // Fetch status distribution from view-options API for accurate counts across selected configurations
   const effectiveRunIdsForResults = useMemo(() => {
     if (selectedConfigurations.length > 1) {
-      return selectedConfigurations.map(c => c.id);
+      return selectedConfigurations.map((c) => c.id);
     }
     if (selectedConfigurations.length === 1) {
       return [selectedConfigurations[0].id];
@@ -1270,7 +1276,12 @@ export default function TestRunPage() {
 
   // Fetch view options to get accurate status counts for the donut chart
   const { data: viewOptionsData } = useQuery({
-    queryKey: ["viewOptions", "donutChart", numericProjectId, ...effectiveRunIdsForResults],
+    queryKey: [
+      "viewOptions",
+      "donutChart",
+      numericProjectId,
+      ...effectiveRunIdsForResults,
+    ],
     queryFn: async () => {
       const response = await fetch("/api/repository-cases/view-options", {
         method: "POST",
@@ -1452,16 +1463,17 @@ export default function TestRunPage() {
                       </div>
                     </Badge>
                     {/* Duplicate button for COMPLETED runs */}
-                    {canAddEditRun && !isAutomatedTestRunType(testRunData?.testRunType) && (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => setIsDuplicateDialogOpen(true)}
-                      >
-                        <Copy className="h-4 w-4 " />
-                        {t("common.actions.duplicate")}
-                      </Button>
-                    )}
+                    {canAddEditRun &&
+                      !isAutomatedTestRunType(testRunData?.testRunType) && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={() => setIsDuplicateDialogOpen(true)}
+                        >
+                          <Copy className="h-4 w-4 " />
+                          {t("common.actions.duplicate")}
+                        </Button>
+                      )}
                     {effectiveCanDelete && (
                       <Button
                         variant="secondary"
@@ -1565,7 +1577,11 @@ export default function TestRunPage() {
             <CardDescription>
               <TestRunCasesSummary
                 testRunId={Number(runId)}
-                testRunIds={selectedConfigurations.length > 1 ? selectedConfigurations.map(c => c.id) : undefined}
+                testRunIds={
+                  selectedConfigurations.length > 1
+                    ? selectedConfigurations.map((c) => c.id)
+                    : undefined
+                }
                 className="text-2xl"
                 testRunType={testRunData?.testRunType}
               />
@@ -1714,7 +1730,9 @@ export default function TestRunPage() {
                           canAddEdit={canAddEditRun}
                           refetchTestRun={refetchTestRun}
                           onMultiConfigSelected={setIsMultiConfigSelected}
-                          onSelectedConfigurationsChange={setSelectedConfigurations}
+                          onSelectedConfigurationsChange={
+                            setSelectedConfigurations
+                          }
                         />
                       </>
                     )}
@@ -1785,7 +1803,9 @@ export default function TestRunPage() {
                           onClick={() => setZoomedChart("donut")}
                         >
                           <Maximize2 className="h-4 w-4" />
-                          <span className="sr-only">{tCommon("ui.charts.zoomDonutChart")}</span>
+                          <span className="sr-only">
+                            {tCommon("ui.charts.zoomDonutChart")}
+                          </span>
                         </Button>
                       </CardHeader>
                       <CardContent>
@@ -1805,7 +1825,9 @@ export default function TestRunPage() {
                   >
                     <DialogContent className="max-w-[80vw] h-[80vh] flex flex-col p-0 sm:p-6">
                       <DialogHeader className="px-4 pt-4 sm:px-0 sm:pt-0">
-                        <DialogTitle>{tCommon("ui.charts.resultsDistribution")}</DialogTitle>
+                        <DialogTitle>
+                          {tCommon("ui.charts.resultsDistribution")}
+                        </DialogTitle>
                       </DialogHeader>
                       <div className="flex-1 overflow-auto p-4 sm:p-0">
                         <div
