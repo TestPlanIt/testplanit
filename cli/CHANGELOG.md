@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/testplanit/testplanit/compare/cli-v1.0.0...cli-v1.0.1) (2025-12-11)
+
+
+### Bug Fixes
+
+* **docs:** update CLI installation instructions and enhance notification content ([374bd2e](https://github.com/testplanit/testplanit/commit/374bd2ee7908bfdd64e609f9532a07202c2ccc1d))
+
 # 1.0.0 (2025-12-11)
 
 
