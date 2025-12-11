@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
 import { NextRequest } from "next/server";
 import {
   extractBearerToken,
@@ -20,6 +20,21 @@ vi.mock("./prisma", () => ({
 import { prisma } from "./prisma";
 
 describe("API Token Authentication", () => {
+  // Set up test secret for HMAC hashing
+  const originalSecret = process.env.NEXTAUTH_SECRET;
+
+  beforeAll(() => {
+    process.env.NEXTAUTH_SECRET = "test-secret-for-api-token-hashing";
+  });
+
+  afterAll(() => {
+    if (originalSecret) {
+      process.env.NEXTAUTH_SECRET = originalSecret;
+    } else {
+      delete process.env.NEXTAUTH_SECRET;
+    }
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     // Default mock: update succeeds

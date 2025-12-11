@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import {
   generateApiToken,
   hashToken,
@@ -8,6 +8,20 @@ import {
 } from "./api-tokens";
 
 describe("API Token Utilities", () => {
+  // Set up test secret for HMAC hashing
+  const originalSecret = process.env.NEXTAUTH_SECRET;
+
+  beforeAll(() => {
+    process.env.NEXTAUTH_SECRET = "test-secret-for-api-token-hashing";
+  });
+
+  afterAll(() => {
+    if (originalSecret) {
+      process.env.NEXTAUTH_SECRET = originalSecret;
+    } else {
+      delete process.env.NEXTAUTH_SECRET;
+    }
+  });
   describe("generateApiToken", () => {
     it("generates a token with the correct prefix", () => {
       const { plaintext } = generateApiToken();

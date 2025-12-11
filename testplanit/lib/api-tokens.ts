@@ -2,7 +2,13 @@
  * API Token Utilities
  *
  * Provides secure token generation and verification for API access.
- * Tokens are one-way hashed using SHA-256 for secure storage.
+ * Tokens are hashed using HMAC-SHA256 with a server-side secret for secure storage.
+ *
+ * Security design:
+ * - Tokens are generated with 256 bits of cryptographic randomness
+ * - HMAC-SHA256 is used with a server-side secret, providing defense-in-depth
+ * - Even if the database is compromised, tokens cannot be verified without the HMAC secret
+ * - Timing-safe comparison prevents timing attacks
  */
 
 import crypto from "crypto";
@@ -12,10 +18,24 @@ const TOKEN_PREFIX = "tpi_";
 // Number of random bytes for token (32 bytes = 256 bits of entropy)
 const TOKEN_BYTES = 32;
 
+/**
+ * Get the HMAC secret key for token hashing.
+ * Falls back to NEXTAUTH_SECRET for backward compatibility.
+ */
+function getHmacSecret(): string {
+  const secret = process.env.API_TOKEN_SECRET || process.env.NEXTAUTH_SECRET;
+  if (!secret) {
+    throw new Error(
+      "API_TOKEN_SECRET or NEXTAUTH_SECRET environment variable must be set for API token hashing"
+    );
+  }
+  return secret;
+}
+
 export interface GeneratedToken {
   /** The plaintext token to show to the user (only shown once) */
   plaintext: string;
-  /** SHA-256 hash of the token for database storage */
+  /** HMAC-SHA256 hash of the token for database storage */
   hash: string;
   /** First 8 characters of the token for display/identification */
   prefix: string;
@@ -46,13 +66,19 @@ export function generateApiToken(): GeneratedToken {
 }
 
 /**
- * Hash a token using SHA-256
+ * Hash a token using HMAC-SHA256 with a server-side secret
+ *
+ * Using HMAC with a secret provides defense-in-depth:
+ * - Even if the database is compromised, attackers cannot verify tokens
+ *   without also having access to the HMAC secret
+ * - The secret acts as an additional authentication factor
  *
  * @param token - The plaintext token to hash
- * @returns The SHA-256 hash of the token
+ * @returns The HMAC-SHA256 hash of the token
  */
 export function hashToken(token: string): string {
-  return crypto.createHash("sha256").update(token).digest("hex");
+  const secret = getHmacSecret();
+  return crypto.createHmac("sha256", secret).update(token).digest("hex");
 }
 
 /**
