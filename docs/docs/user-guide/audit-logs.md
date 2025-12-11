@@ -128,12 +128,25 @@ Sensitive fields (passwords, tokens, API keys) are automatically masked in the a
 
 ## Exporting Audit Logs
 
-Administrators can export audit logs for compliance reporting or external analysis:
+Administrators can export audit logs to CSV for compliance reporting or external analysis:
 
-1. Apply your desired filters
-2. Click the **Export** button
-3. Choose your export format (CSV, JSON)
-4. The export will be downloaded to your device
+1. Apply your desired filters (search, action type, entity type)
+2. Click the **Export CSV** button
+3. The CSV file will be downloaded to your device
+
+The exported CSV includes all filtered audit log entries with the following columns:
+
+- Timestamp
+- Action
+- Entity Type
+- Entity ID
+- Entity Name
+- User
+- Email
+- Project
+- IP Address
+- User Agent
+- Metadata (JSON)
 
 :::info
 Audit log exports are themselves logged as `DATA_EXPORTED` events for accountability.

@@ -26,10 +26,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
 import { AuditAction } from "@prisma/client";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Download } from "lucide-react";
 import type { Session } from "next-auth";
+import { logDataExport } from "~/lib/services/auditClient";
+import { format } from "date-fns";
 
 type PageSizeOption = number | "All";
 
@@ -99,6 +102,7 @@ function AuditLogsContent({ session }: { session: Session }) {
   const [actionFilter, setActionFilter] = useState<AuditAction | "all">("all");
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
   const [selectedLog, setSelectedLog] = useState<ExtendedAuditLog | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Calculate skip and take based on pageSize
   const effectivePageSize =
@@ -210,6 +214,135 @@ function AuditLogsContent({ session }: { session: Session }) {
     setSelectedLog(log);
   }, []);
 
+  // Fetch all logs for export (no pagination)
+  const { data: allLogsForExport, refetch: refetchAllLogs } =
+    useFindManyAuditLog(
+      {
+        orderBy: sortConfig
+          ? { [sortConfig.column]: sortConfig.direction }
+          : { timestamp: "desc" },
+        include: {
+          project: {
+            select: { name: true },
+          },
+        },
+        where: whereClause,
+      },
+      {
+        enabled: false, // Don't fetch automatically, only when exporting
+      }
+    );
+
+  const handleExportCsv = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      // Fetch all filtered logs
+      const { data: logs } = await refetchAllLogs();
+
+      if (!logs || logs.length === 0) {
+        setIsExporting(false);
+        return;
+      }
+
+      // Define CSV headers
+      const headers = [
+        t("columns.timestamp"),
+        t("columns.action"),
+        t("columns.entityType"),
+        t("columns.entityId"),
+        t("columns.entityName"),
+        t("columns.user"),
+        t("columns.email"),
+        t("columns.project"),
+        "IP Address",
+        "User Agent",
+        "Metadata",
+      ];
+
+      // Convert logs to CSV rows
+      const rows = logs.map((log: ExtendedAuditLog) => {
+        const timestamp = log.timestamp
+          ? format(new Date(log.timestamp), "yyyy-MM-dd HH:mm:ss")
+          : "";
+
+        // Extract ipAddress and userAgent from metadata if available
+        const metadata = log.metadata as Record<string, unknown> | null;
+        const ipAddress = (metadata?.ipAddress as string) || "";
+        const userAgent = (metadata?.userAgent as string) || "";
+
+        return [
+          timestamp,
+          log.action,
+          log.entityType,
+          log.entityId || "",
+          log.entityName || "",
+          log.userName || t("system"),
+          log.userEmail || "",
+          log.project?.name || "",
+          ipAddress,
+          userAgent,
+          log.metadata ? JSON.stringify(log.metadata) : "",
+        ];
+      });
+
+      // Create CSV content
+      const escapeCsvValue = (value: string) => {
+        if (
+          value.includes(",") ||
+          value.includes('"') ||
+          value.includes("\n")
+        ) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      };
+
+      const csvContent = [
+        headers.map(escapeCsvValue).join(","),
+        ...rows.map((row) =>
+          row.map((cell) => escapeCsvValue(String(cell))).join(",")
+        ),
+      ].join("\n");
+
+      // Create and download file
+      const blob = new Blob(["\uFEFF" + csvContent], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      link.setAttribute("download", `audit-logs-export-${timestamp}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      // Log the export for audit trail
+      await logDataExport({
+        exportType: "CSV",
+        entityType: "AuditLog",
+        recordCount: logs.length,
+        filters: {
+          search: debouncedSearchString || undefined,
+          action: actionFilter !== "all" ? actionFilter : undefined,
+          entityType: entityTypeFilter !== "all" ? entityTypeFilter : undefined,
+        },
+      });
+    } catch (error) {
+      console.error("Failed to export audit logs:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [
+    refetchAllLogs,
+    t,
+    debouncedSearchString,
+    actionFilter,
+    entityTypeFilter,
+  ]);
+
   const columns = useMemo(
     () => getColumns(session, handleViewDetails, t),
     [session, handleViewDetails, t]
@@ -273,62 +406,76 @@ function AuditLogsContent({ session }: { session: Session }) {
         <CardContent>
           <div className="flex flex-col gap-4">
             {/* Filters Row */}
-            <div className="flex flex-wrap items-end gap-4">
-              <div className="flex-1 min-w-[250px]">
-                <Filter
-                  key="audit-logs-filter"
-                  placeholder={t("filterPlaceholder")}
-                  initialSearchString={searchString}
-                  onSearchChange={setSearchString}
-                />
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="min-w-[350px]">
+                  <Filter
+                    key="audit-logs-filter"
+                    placeholder={t("filterPlaceholder")}
+                    initialSearchString={searchString}
+                    onSearchChange={setSearchString}
+                  />
+                </div>
+
+                <div className="w-[180px]">
+                  <Label className="sr-only">
+                    {t("filterAction")}
+                  </Label>
+                  <Select
+                    value={actionFilter}
+                    onValueChange={(value) =>
+                      setActionFilter(value as AuditAction | "all")
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("allActions")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("allActions")}</SelectItem>
+                      {auditActions.map((action) => (
+                        <SelectItem key={action} value={action}>
+                          {action.replace(/_/g, " ")}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="w-[180px]">
+                  <Label className="sr-only">
+                    {t("filterEntityType")}
+                  </Label>
+                  <Select
+                    value={entityTypeFilter}
+                    onValueChange={setEntityTypeFilter}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={t("allEntityTypes")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("allEntityTypes")}</SelectItem>
+                      {entityTypes?.map((et) => (
+                        <SelectItem key={et.entityType} value={et.entityType}>
+                          {et.entityType}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className="w-[180px]">
-                <Label className="text-sm mb-1 block">
-                  {t("filterAction")}
-                </Label>
-                <Select
-                  value={actionFilter}
-                  onValueChange={(value) =>
-                    setActionFilter(value as AuditAction | "all")
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("allActions")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("allActions")}</SelectItem>
-                    {auditActions.map((action) => (
-                      <SelectItem key={action} value={action}>
-                        {action.replace(/_/g, " ")}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Button
+                variant="outline"
+                onClick={handleExportCsv}
+                disabled={isExporting || totalItems === 0}
+              >
+                <Download className="h-4 w-4" />
+                {isExporting ? t("exporting") : t("exportCsv")}
+              </Button>
+            </div>
 
-              <div className="w-[180px]">
-                <Label className="text-sm mb-1 block">
-                  {t("filterEntityType")}
-                </Label>
-                <Select
-                  value={entityTypeFilter}
-                  onValueChange={setEntityTypeFilter}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("allEntityTypes")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("allEntityTypes")}</SelectItem>
-                    {entityTypes?.map((et) => (
-                      <SelectItem key={et.entityType} value={et.entityType}>
-                        {et.entityType}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
+            {/* Pagination Row */}
+            <div className="flex justify-between items-center">
               <div>
                 <ColumnSelection
                   key="audit-logs-column-selection"
@@ -336,19 +483,8 @@ function AuditLogsContent({ session }: { session: Session }) {
                   onVisibilityChange={setColumnVisibility}
                 />
               </div>
-            </div>
 
-            {/* Pagination Row */}
-            <div className="flex justify-between items-center">
-              <div className="text-sm text-muted-foreground">
-                {totalItems > 0 &&
-                  t("showing", {
-                    start: startIndex + 1,
-                    end: Math.min(endIndex, totalItems),
-                    total: totalItems,
-                  })}
-              </div>
-              <div className="flex items-center gap-4">
+              <div className="items-center justify-end">
                 {totalItems > 0 && (
                   <>
                     <PaginationInfo

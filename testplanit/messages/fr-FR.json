@@ -4942,7 +4942,9 @@
         "email": "E-mail",
         "userId": "ID de l'utilisateur"
       },
-      "system": "Système"
+      "system": "Système",
+      "exportCsv": "Exporter au format CSV",
+      "exporting": "Exportation..."
     }
   },
   "components": {

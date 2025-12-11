@@ -326,8 +326,19 @@ describe("ZenStack API Route Audit Interception", () => {
       const entityName = extractEntityName(parsedPath.model, data);
       const projectId = typeof data.projectId === "number" ? data.projectId : undefined;
 
+      // Special handling for API token operations - use specific audit actions
+      let finalAuditAction = auditAction;
+      if (parsedPath.model === "apiToken") {
+        if (parsedPath.operation === "create") {
+          finalAuditAction = "API_KEY_CREATED";
+        } else if (parsedPath.operation === "delete") {
+          finalAuditAction = "API_KEY_DELETED";
+        }
+        // Note: revocation check requires requestBody which isn't passed to this helper
+      }
+
       return {
-        action: auditAction,
+        action: finalAuditAction,
         entityType: entityTypeMap[parsedPath.model] || parsedPath.model,
         entityId: String(entityId),
         entityName,
@@ -495,6 +506,36 @@ describe("ZenStack API Route Audit Interception", () => {
         entityName: undefined,
         projectId: undefined,
         metadata: { operation: "deleteMany", count: 5 },
+      });
+    });
+
+    it("should use API_KEY_CREATED for apiToken create operations", () => {
+      const event = constructAuditEvent("POST", ["apiToken", "create"], 200, {
+        data: { id: "token-123", name: "CI Token", tokenPrefix: "tpi_abc" },
+      });
+
+      expect(event).toEqual({
+        action: "API_KEY_CREATED",
+        entityType: "ApiToken",
+        entityId: "token-123",
+        entityName: "CI Token",
+        projectId: undefined,
+        metadata: { operation: "create" },
+      });
+    });
+
+    it("should use API_KEY_DELETED for apiToken delete operations", () => {
+      const event = constructAuditEvent("DELETE", ["apiToken", "delete"], 200, {
+        data: { id: "token-123", name: "CI Token", tokenPrefix: "tpi_abc" },
+      });
+
+      expect(event).toEqual({
+        action: "API_KEY_DELETED",
+        entityType: "ApiToken",
+        entityId: "token-123",
+        entityName: "CI Token",
+        projectId: undefined,
+        metadata: { operation: "delete" },
       });
     });
   });

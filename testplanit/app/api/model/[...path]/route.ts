@@ -279,7 +279,9 @@ async function handler(
             // Special handling for API token operations - use specific audit actions
             let finalAuditAction = auditAction;
             if (parsedPath.model === "apiToken") {
-              if (parsedPath.operation === "delete") {
+              if (parsedPath.operation === "create") {
+                finalAuditAction = "API_KEY_CREATED";
+              } else if (parsedPath.operation === "delete") {
                 finalAuditAction = "API_KEY_DELETED";
               } else if (parsedPath.operation === "update") {
                 // Check if this is a revocation (isActive changed to false)
