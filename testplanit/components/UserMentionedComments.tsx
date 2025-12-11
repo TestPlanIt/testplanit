@@ -12,6 +12,7 @@ import { UserNameCell } from "@/components/tables/UserNameCell";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import { SessionNameDisplay } from "@/components/SessionNameDisplay";
+import { MilestoneNameDisplay } from "@/components/MilestoneNameDisplay";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
@@ -47,6 +48,11 @@ interface CommentDisplayProps {
     } | null;
     sessionId: number | null;
     session?: {
+      id: number;
+      name: string;
+    } | null;
+    milestoneId: number | null;
+    milestone?: {
       id: number;
       name: string;
     } | null;
@@ -117,6 +123,17 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
         session={{
           id: comment.sessionId,
           name: comment.session.name,
+        }}
+        showIcon={true}
+      />
+    );
+  } else if (comment.milestoneId && comment.milestone) {
+    entityLink = `/projects/milestones/${comment.projectId}/${comment.milestoneId}`;
+    entityNameDisplay = (
+      <MilestoneNameDisplay
+        milestone={{
+          id: comment.milestoneId,
+          name: comment.milestone.name,
         }}
         showIcon={true}
       />
@@ -222,6 +239,7 @@ export function UserMentionedComments({ userId }: UserMentionedCommentsProps) {
             repositoryCase: true,
             testRun: true,
             session: true,
+            milestone: true,
           },
         },
       },
