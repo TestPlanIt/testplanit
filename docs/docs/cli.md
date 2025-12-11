@@ -27,7 +27,7 @@ The CLI can auto-detect the format based on file content, or you can specify it 
 
 ### Standalone Binaries (Recommended)
 
-Download the appropriate binary for your platform from the [latest release](https://github.com/testplanit/testplanit/releases):
+Download the appropriate binary for your platform from the [CLI releases](https://github.com/testplanit/testplanit/releases?q=cli-v&expanded=true):
 
 | Platform | Binary |
 |----------|--------|
@@ -39,7 +39,7 @@ Download the appropriate binary for your platform from the [latest release](http
 **Linux (x64):**
 
 ```bash
-curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-linux-x64
+curl -L -o testplanit https://github.com/testplanit/testplanit/releases/download/cli-v1.0.0/testplanit-linux-x64
 chmod +x testplanit
 sudo mv testplanit /usr/local/bin/
 ```
@@ -47,7 +47,7 @@ sudo mv testplanit /usr/local/bin/
 **macOS (Apple Silicon):**
 
 ```bash
-curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-macos-arm64
+curl -L -o testplanit https://github.com/testplanit/testplanit/releases/download/cli-v1.0.0/testplanit-macos-arm64
 chmod +x testplanit
 sudo mv testplanit /usr/local/bin/
 ```
@@ -55,7 +55,7 @@ sudo mv testplanit /usr/local/bin/
 **macOS (Intel):**
 
 ```bash
-curl -L -o testplanit https://github.com/testplanit/testplanit/releases/latest/download/testplanit-macos-x64
+curl -L -o testplanit https://github.com/testplanit/testplanit/releases/download/cli-v1.0.0/testplanit-macos-x64
 chmod +x testplanit
 sudo mv testplanit /usr/local/bin/
 ```
@@ -63,7 +63,7 @@ sudo mv testplanit /usr/local/bin/
 **Windows (PowerShell):**
 
 ```powershell
-Invoke-WebRequest -Uri "https://github.com/testplanit/testplanit/releases/latest/download/testplanit-windows-x64.exe" -OutFile "testplanit.exe"
+Invoke-WebRequest -Uri "https://github.com/testplanit/testplanit/releases/download/cli-v1.0.0/testplanit-windows-x64.exe" -OutFile "testplanit.exe"
 .\testplanit.exe --help
 ```
 
