@@ -11,6 +11,7 @@ import {
   useFindManyWorkflows,
   useUpdateCaseFieldValues,
   useCreateAttachments,
+  useUpdateAttachments,
   useCreateSteps,
   useUpdateManySteps,
   useCreateCaseFieldVersionValues,
@@ -27,6 +28,7 @@ import {
   useFindManyJUnitProperty,
   useFindManySharedStepGroup,
 } from "~/lib/hooks";
+import { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller, FormProvider } from "react-hook-form";
@@ -756,6 +758,8 @@ export default function TestCaseDetails() {
     []
   );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [pendingAttachmentChanges, setPendingAttachmentChanges] =
+    useState<AttachmentChanges>({ edits: [], deletes: [] });
 
   const handleSelect = (attachments: Attachments[], index: number) => {
     setSelectedAttachments(attachments);
@@ -911,6 +915,7 @@ export default function TestCaseDetails() {
   const { mutateAsync: createCaseFieldVersionValues } =
     useCreateCaseFieldVersionValues();
   const { mutateAsync: createAttachments } = useCreateAttachments();
+  const { mutateAsync: updateAttachments } = useUpdateAttachments();
   const { mutateAsync: createSteps } = useCreateSteps();
   const { mutateAsync: updateManySteps } = useUpdateManySteps();
   const { mutateAsync: createCaseFieldValues } = useCreateCaseFieldValues();
@@ -928,6 +933,8 @@ export default function TestCaseDetails() {
   const handleCancel = () => {
     setIsEditMode(false);
     setSelectedTemplateId(testcase.template.id ?? null);
+    setPendingAttachmentChanges({ edits: [], deletes: [] });
+    setSelectedFiles([]);
     // Form will be reset through the template change effect
   };
 
@@ -1114,6 +1121,31 @@ export default function TestCaseDetails() {
 
       const prependString = session?.user?.id;
       const sanitizedFolder = `${projectId}`;
+
+      // Apply pending attachment edits
+      const editPromises = pendingAttachmentChanges.edits.map(async (edit) => {
+        await updateAttachments({
+          where: { id: edit.id },
+          data: {
+            name: edit.name,
+            note: edit.note,
+          },
+        });
+      });
+
+      // Apply pending attachment deletes (soft delete)
+      const deletePromises = pendingAttachmentChanges.deletes.map(
+        async (attachmentId) => {
+          await updateAttachments({
+            where: { id: attachmentId },
+            data: { isDeleted: true },
+          });
+        }
+      );
+
+      // Wait for all pending changes to be applied
+      await Promise.all([...editPromises, ...deletePromises]);
+
       const createAttachmentsPromises = selectedFiles.map(async (file) => {
         const fileUrl = await fetchSignedUrl(
           file,
@@ -1145,24 +1177,58 @@ export default function TestCaseDetails() {
         };
       });
       const newAttachments = await Promise.all(createAttachmentsPromises);
-      const existingAttachmentsForVersion = (testcase.attachments || []).map(
-        (att) => ({ ...att, size: BigInt(att.size) })
-      );
+
+      // Get existing attachments, applying pending edits and filtering out deleted ones
+      // Explicitly pick only primitive fields to avoid relation objects
+      const existingAttachmentsForVersion = (testcase.attachments || [])
+        .filter((att) => !pendingAttachmentChanges.deletes.includes(att.id))
+        .map((att) => {
+          const edit = pendingAttachmentChanges.edits.find(
+            (e) => e.id === att.id
+          );
+          return {
+            id: att.id,
+            testCaseId: att.testCaseId,
+            url: att.url,
+            name: edit?.name ?? att.name,
+            note: edit?.note ?? att.note,
+            isDeleted: att.isDeleted,
+            mimeType: att.mimeType,
+            size: BigInt(att.size),
+            createdAt: att.createdAt,
+            createdById: att.createdById,
+          };
+        });
+
       const allAttachmentsForVersion = [
         ...existingAttachmentsForVersion,
         ...newAttachments,
       ];
+      // Explicitly pick only the fields needed for version JSON storage
+      // Avoid spreading to prevent relation objects from being included
       const attachmentsJson = allAttachmentsForVersion.map((attachment) => ({
-        ...attachment,
+        id: attachment.id,
+        testCaseId: attachment.testCaseId,
+        url: attachment.url,
+        name: attachment.name,
+        note: attachment.note,
+        isDeleted: attachment.isDeleted,
+        mimeType: attachment.mimeType,
         size: attachment.size.toString(),
-        createdAt: attachment.createdAt.toISOString(),
+        createdAt:
+          attachment.createdAt instanceof Date
+            ? attachment.createdAt.toISOString()
+            : attachment.createdAt,
+        createdById: attachment.createdById,
       }));
 
-      const tagNames = tagsArray.map(
-        (tagId: number) =>
-          tags?.find((tag: { id: number; name: string }) => tag.id === tagId)
-            ?.name || ""
-      );
+      const tagNames = tagsArray
+        .map(
+          (tagId: number) =>
+            tags?.find((tag: { id: number; name: string }) => tag.id === tagId)
+              ?.name
+        )
+        .filter((name): name is string => !!name);
       const issuesDataForVersion = issuesArray
         .filter((id: any) => id != null)
         .map((issueId: number) => {
@@ -1237,13 +1303,21 @@ export default function TestCaseDetails() {
         staticProjectId: Number(projectId),
         repositoryId: testcase.repositoryId || 0,
         folderId: data.folderId as number,
-        folderName: folders?.find((f) => f.id === data.folderId)?.name || "",
+        folderName:
+          folders?.find((f) => f.id === data.folderId)?.name ||
+          testcase.folder?.name ||
+          "Unknown",
         templateId: (data.templateId || 0) as number,
         templateName:
-          templates?.find((t) => t.id === data.templateId)?.templateName || "",
+          templates?.find((t) => t.id === data.templateId)?.templateName ||
+          testcase.template?.templateName ||
+          "Unknown",
         name: data.name as string,
         stateId: data.workflowId as number,
-        stateName: workflows?.find((w) => w.id === data.workflowId)?.name || "",
+        stateName:
+          workflows?.find((w) => w.id === data.workflowId)?.name ||
+          testcase.state?.name ||
+          "Unknown",
         estimate: estimateInSeconds,
         createdAt: new Date(),
         creatorId: testcase.creatorId,
@@ -1337,6 +1411,8 @@ export default function TestCaseDetails() {
 
       setIsSubmitting(false);
       setIsEditMode(false);
+      setPendingAttachmentChanges({ edits: [], deletes: [] });
+      setSelectedFiles([]);
       refetch();
     } catch (error) {
       console.error("Error in handleSave:", error);
@@ -1971,6 +2047,7 @@ export default function TestCaseDetails() {
                     canAddEdit={canAddEdit}
                     canCreateTags={canAddEditTagsPerm}
                     session={session}
+                    onAttachmentPendingChanges={setPendingAttachmentChanges}
                   />
                 </div>
               </ResizablePanel>

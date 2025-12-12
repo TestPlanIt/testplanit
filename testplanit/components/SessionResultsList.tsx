@@ -7,6 +7,7 @@ import {
   useUpdateSessionResults,
   useFindManyStatus,
   useCreateAttachments,
+  useUpdateAttachments,
   useFindManyTemplateResultAssignment,
   useCreateResultFieldValues,
   useUpdateResultFieldValues,
@@ -30,7 +31,7 @@ import {
 } from "lucide-react";
 import { UserNameCell } from "./tables/UserNameCell";
 import LoadingSpinner from "./LoadingSpinner";
-import { AttachmentsDisplay } from "./AttachmentsDisplay";
+import { AttachmentsDisplay, AttachmentChanges } from "./AttachmentsDisplay";
 import { AttachmentsCarousel } from "./AttachmentsCarousel";
 import {
   Collapsible,
@@ -262,6 +263,8 @@ export function SessionResultsList({
     useState<ExtendedSessionResults | null>(null);
   const [editSelectedIssues, setEditSelectedIssues] = useState<number[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [pendingAttachmentChanges, setPendingAttachmentChanges] =
+    useState<AttachmentChanges>({ edits: [], deletes: [] });
   const [uploadAttachmentsKey, setUploadAttachmentsKey] = useState(0);
   const [editorKey, setEditorKey] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -330,6 +333,7 @@ export function SessionResultsList({
 
   // Add this line to get the createAttachments hook
   const { mutateAsync: createAttachments } = useCreateAttachments();
+  const { mutateAsync: updateAttachments } = useUpdateAttachments();
 
   // Initialize the form with dynamic schema
   const form = useForm<FieldFormValues>({
@@ -513,9 +517,30 @@ export function SessionResultsList({
     []
   );
 
+  // Track if user has actively selected files to prevent remount from resetting
+  const userHasSelectedFilesRef = React.useRef(false);
+
   const handleFileSelect = useCallback((files: File[]) => {
+    // If we receive files, mark that user has selected files
+    if (files.length > 0) {
+      userHasSelectedFilesRef.current = true;
+    }
+
+    // Prevent empty array from resetting files if user previously selected files
+    // This handles the case where UploadAttachments remounts and tries to reset state
+    if (files.length === 0 && userHasSelectedFilesRef.current) {
+      return;
+    }
+
     setSelectedFiles(files);
   }, []);
+
+  // Reset the ref when dialog closes to allow empty array on next open
+  useEffect(() => {
+    if (!editDialogOpen) {
+      userHasSelectedFilesRef.current = false;
+    }
+  }, [editDialogOpen]);
 
   const handleCarouselClose = useCallback(() => {
     setSelectedAttachmentIndex(null);
@@ -663,10 +688,15 @@ export function SessionResultsList({
     setEditDialogOpen(false);
     setResultToEdit(null);
     setSelectedFiles([]);
+    setPendingAttachmentChanges({ edits: [], deletes: [] });
+    userHasSelectedFilesRef.current = false; // Reset ref when dialog closes
   }, []);
 
   const handleSaveEdit = useCallback(
     async (values: FieldFormValues) => {
+      console.log('=== handleSaveEdit CALLED ===');
+      console.log('selectedFiles:', selectedFiles);
+      console.log('selectedFiles.length:', selectedFiles.length);
       if (!resultToEdit || !session?.user?.id) return;
 
       setIsSubmitting(true);
@@ -786,12 +816,19 @@ export function SessionResultsList({
         }
 
         // Then handle file uploads if any
+        console.log('[DEBUG] selectedFiles at upload time:', selectedFiles.length, selectedFiles.map(f => f.name));
         if (selectedFiles.length > 0) {
           const prependString = session.user.id;
           const sanitizedFolder =
             typeof projectId === "string" ? projectId : projectId.toString();
 
-          const uploadAttachmentsPromises = selectedFiles.map(async (file) => {
+          // Deduplicate files by name+size+lastModified before uploading
+          const uniqueFiles = selectedFiles.filter((file, index, self) =>
+            index === self.findIndex(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified)
+          );
+          console.log('[DEBUG] uniqueFiles after deduplication:', uniqueFiles.length, uniqueFiles.map(f => f.name));
+
+          const uploadAttachmentsPromises = uniqueFiles.map(async (file) => {
             try {
               const fileUrl = await fetchSignedUrl(
                 file,
@@ -826,6 +863,33 @@ export function SessionResultsList({
           await Promise.all(uploadAttachmentsPromises);
         }
 
+        // Apply pending attachment changes (edits and deletes)
+        if (pendingAttachmentChanges.edits.length > 0 || pendingAttachmentChanges.deletes.length > 0) {
+          // Apply edits
+          const editPromises = pendingAttachmentChanges.edits.map((edit) =>
+            updateAttachments({
+              where: { id: edit.id },
+              data: {
+                ...(edit.name !== undefined && { name: edit.name }),
+                ...(edit.note !== undefined && { note: edit.note }),
+              },
+            })
+          );
+
+          // Apply deletes (soft delete)
+          const deletePromises = pendingAttachmentChanges.deletes.map((id) =>
+            updateAttachments({
+              where: { id },
+              data: { isDeleted: true },
+            })
+          );
+
+          await Promise.all([...editPromises, ...deletePromises]);
+
+          // Reset pending changes
+          setPendingAttachmentChanges({ edits: [], deletes: [] });
+        }
+
         // Refetch to update the list with the latest data
         await refetch();
 
@@ -841,6 +905,7 @@ export function SessionResultsList({
         setEditDialogOpen(false);
         setResultToEdit(null);
         setSelectedFiles([]);
+        userHasSelectedFilesRef.current = false; // Reset ref after successful save
       } catch (error) {
         // Error updating session result
         toast.error(t("updateError"));
@@ -860,9 +925,11 @@ export function SessionResultsList({
       createResultFieldValue,
       projectId,
       createAttachments,
+      updateAttachments,
       dynamicFieldValues,
       editSelectedIssues,
       canEditRestrictedFields,
+      pendingAttachmentChanges,
     ]
   );
 
@@ -874,33 +941,6 @@ export function SessionResultsList({
       refetch();
     }
   }, [refreshResults, refetch]);
-
-  // Add this just after the other handler functions
-  const handleAttachmentDeleted = useCallback(
-    async (attachmentId: number) => {
-      if (!resultToEdit) return;
-
-      // Update the resultToEdit state by filtering out the deleted attachment
-      setResultToEdit((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          attachments:
-            prev.attachments?.filter((att) => att.id !== attachmentId) || [],
-        };
-      });
-
-      // Force refresh the upload attachments component
-      setUploadAttachmentsKey((prev) => prev + 1);
-
-      // Force refresh the UI to update the attachments list
-      setRefreshResults((prev) => prev + 1);
-
-      // Refetch the session results to ensure we have the latest data
-      await refetch();
-    },
-    [resultToEdit, refetch]
-  );
 
   // Use an effect to handle hash scrolling that works with Next.js
   useEffect(() => {
@@ -1583,6 +1623,7 @@ export function SessionResultsList({
           <Form {...form}>
             <form
               onSubmit={(e) => {
+                console.log('=== FORM onSubmit CALLED ===');
                 e.preventDefault();
                 const formData = form.getValues() as FieldFormValues;
 
@@ -1794,7 +1835,8 @@ export function SessionResultsList({
                               }
                               onSelect={handleAttachmentSelect}
                               preventEditing={false}
-                              onAttachmentDeleted={handleAttachmentDeleted}
+                              deferredMode={true}
+                              onPendingChanges={setPendingAttachmentChanges}
                             />
                           </div>
                         </div>

@@ -9,7 +9,10 @@ import { ManageTags } from "@/components/ManageTags";
 import UploadAttachments from "@/components/UploadAttachments";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
-import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
+import {
+  AttachmentsDisplay,
+  AttachmentChanges,
+} from "@/components/AttachmentsDisplay";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { DurationDisplay } from "@/components/DurationDisplay";
 import { useTranslations } from "next-intl";
@@ -34,6 +37,7 @@ interface TestCaseFormControlsProps {
   canAddEdit: boolean;
   canCreateTags?: boolean;
   session?: any;
+  onAttachmentPendingChanges?: (changes: AttachmentChanges) => void;
 }
 
 const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
@@ -51,6 +55,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
   canAddEdit,
   canCreateTags = false,
   session,
+  onAttachmentPendingChanges,
 }) => {
   const { control } = useFormContext();
   const t = useTranslations();
@@ -187,17 +192,14 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                 />
               </div>
               {testcase.attachments.length > 0 && (
-                <div className="relative mt-4">
-                  <div className="blur-xs">
-                    <AttachmentsDisplay
-                      attachments={testcase.attachments}
-                      onSelect={handleSelect}
-                      preventEditing={!canAddEdit}
-                    />
-                  </div>
-                  <div className="absolute inset-0 bg-muted opacity-70 pointer-events-auto text-center pt-10 text-xl font-bold min-w-[260px]">
-                    {t("repository.testCase.editAttachmentsIndividually")}
-                  </div>
+                <div className="mt-4">
+                  <AttachmentsDisplay
+                    attachments={testcase.attachments}
+                    onSelect={handleSelect}
+                    preventEditing={!canAddEdit}
+                    deferredMode={true}
+                    onPendingChanges={onAttachmentPendingChanges}
+                  />
                 </div>
               )}
             </li>

@@ -11,6 +11,7 @@ import {
   useUpdateSessions,
   useFindManyWorkflows,
   useCreateAttachments,
+  useUpdateAttachments,
   useCreateSessionVersions,
   useFindManyConfigurations,
   useFindManyMilestones,
@@ -19,6 +20,9 @@ import {
   useFindManyTags,
   useFindFirstProjects,
 } from "~/lib/hooks";
+import {
+  AttachmentChanges,
+} from "@/components/AttachmentsDisplay";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { notifySessionAssignment } from "~/app/actions/session-notifications";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -267,6 +271,7 @@ interface SessionFormControlsProps {
     | undefined;
   projectIntegration?: any;
   canAddEditTags: boolean;
+  onAttachmentPendingChanges?: (changes: AttachmentChanges) => void;
 }
 
 function SessionFormControls({
@@ -288,6 +293,7 @@ function SessionFormControls({
   issues,
   projectIntegration,
   canAddEditTags,
+  onAttachmentPendingChanges,
 }: SessionFormControlsProps) {
   const t = useTranslations("sessions");
   const tCommon = useTranslations("common");
@@ -772,6 +778,8 @@ function SessionFormControls({
                     onSelect={(attachments, index) => {
                       handleSelect(attachments, index);
                     }}
+                    deferredMode={isEditMode}
+                    onPendingChanges={onAttachmentPendingChanges}
                   />
                 </div>
               </FormControl>
@@ -828,7 +836,10 @@ export default function SessionPage() {
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null
   >(null);
+  const [pendingAttachmentChanges, setPendingAttachmentChanges] =
+    useState<AttachmentChanges>({ edits: [], deletes: [] });
   const { mutateAsync: createAttachments } = useCreateAttachments();
+  const { mutateAsync: updateAttachments } = useUpdateAttachments();
   const version = searchParams.get("version");
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -1432,11 +1443,33 @@ export default function SessionPage() {
 
       if (!newVersion) throw new Error("Failed to create version");
 
-      // Handle attachments
-      if (selectedFiles.length > 0) {
-        const attachmentUrls = await uploadFiles(Number(sessionId));
-        await refetchSession();
-      }
+      // Apply pending attachment edits
+      const editPromises = pendingAttachmentChanges.edits.map(async (edit) => {
+        await updateAttachments({
+          where: { id: edit.id },
+          data: {
+            name: edit.name,
+            note: edit.note,
+          },
+        });
+      });
+
+      // Apply pending attachment deletes (soft delete)
+      const deletePromises = pendingAttachmentChanges.deletes.map(
+        async (attachmentId) => {
+          await updateAttachments({
+            where: { id: attachmentId },
+            data: { isDeleted: true },
+          });
+        }
+      );
+
+      // Wait for all pending changes to be applied
+      await Promise.all([...editPromises, ...deletePromises]);
+
+      // Reset pending changes
+      setPendingAttachmentChanges({ edits: [], deletes: [] });
+      setSelectedFiles([]);
 
       await refetchSession();
       const params = new URLSearchParams(searchParams);
@@ -1487,6 +1520,9 @@ export default function SessionPage() {
       }
       setSelectedTags(initialValues.tags || []);
     }
+    // Reset pending attachment changes
+    setPendingAttachmentChanges({ edits: [], deletes: [] });
+    setSelectedFiles([]);
     const params = new URLSearchParams(searchParams);
     params.delete("edit");
     router.replace(`?${params.toString()}`);
@@ -2026,6 +2062,7 @@ export default function SessionPage() {
                           projectData?.projectIntegrations?.[0]
                         }
                         canAddEditTags={showAddEditTagsPerm}
+                        onAttachmentPendingChanges={setPendingAttachmentChanges}
                       />
                       {selectedAttachmentIndex !== null && (
                         <AttachmentsCarousel

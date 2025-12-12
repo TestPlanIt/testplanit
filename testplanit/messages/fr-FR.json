@@ -105,6 +105,8 @@
       "duplicate": "Double",
       "change": "Changement",
       "viewAll": "Afficher tout",
+      "undo": "Défaire",
+      "undoDelete": "Annuler la suppression",
       "automated": {
         "details": "Détails du test automatisé",
         "type": "Taper",
@@ -236,7 +238,9 @@
       "pending": "En attente",
       "uploading": "Chargement en cours...",
       "notApplicable": "N / A",
-      "redirecting": "Redirection en cours..."
+      "redirecting": "Redirection en cours...",
+      "pendingDelete": "Sera supprimé",
+      "pendingChanges": "Modifications en attente"
     },
     "priority": {
       "low": "Faible",
@@ -2565,7 +2569,8 @@
       "title": "Visionneuse de pièces jointes"
     },
     "delete": {
-      "confirmMessage": "Êtes-vous sûr de vouloir supprimer cette pièce jointe ?"
+      "confirmMessage": "Êtes-vous sûr de vouloir supprimer cette pièce jointe ?",
+      "deferredMessage": "Cette pièce jointe sera supprimée lors de l'enregistrement."
     }
   },
   "runs": {
