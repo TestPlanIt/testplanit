@@ -1,3 +1,10 @@
+## [0.8.7](https://github.com/TestPlanIt/testplanit/compare/v0.8.6...v0.8.7) (2025-12-12)
+
+
+### Bug Fixes
+
+* **dependencies:** update package versions and add new translations ([0d2ce7c](https://github.com/TestPlanIt/testplanit/commit/0d2ce7cda1e2399fe2dc5b742654a032c7c322c5))
+
 ## [0.8.6](https://github.com/TestPlanIt/testplanit/compare/v0.8.5...v0.8.6) (2025-12-12)
 
 ## [0.8.5](https://github.com/TestPlanIt/testplanit/compare/v0.8.4...v0.8.5) (2025-12-11)
