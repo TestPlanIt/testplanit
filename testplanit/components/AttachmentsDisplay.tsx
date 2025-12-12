@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Attachments } from "@prisma/client";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
@@ -13,9 +13,8 @@ import {
   Download,
   Minus,
   Plus,
-  Save,
-  SquarePen,
   Trash2,
+  Undo2,
 } from "lucide-react";
 import { filesize } from "filesize";
 import {
@@ -24,54 +23,80 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useUpdateAttachments } from "~/lib/hooks";
 import { Textarea } from "@/components/ui/textarea";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { z } from "zod/v4";
 import { useTranslations } from "next-intl";
-import { at } from "lodash";
+import { Badge } from "@/components/ui/badge";
+
+export interface AttachmentEdit {
+  id: number;
+  name?: string;
+  note?: string;
+}
+
+export interface AttachmentChanges {
+  edits: AttachmentEdit[];
+  deletes: number[];
+}
 
 interface AttachmentsProps {
   attachments: Attachments[];
   onSelect: (attachments: Attachments[], index: number) => void;
   preventEditing?: boolean;
   previousAttachments?: Attachments[];
-  onAttachmentDeleted?: (attachmentId: number) => void;
+  deferredMode?: boolean;
+  onPendingChanges?: (changes: AttachmentChanges) => void;
 }
-
-const AttachmentSchema = z.object({
-  name: z.string().min(1, {
-    error: "Name is required.",
-  }),
-  description: z.string().optional(),
-});
 
 export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
   attachments,
   onSelect,
   preventEditing = false,
   previousAttachments,
-  onAttachmentDeleted,
+  deferredMode = false,
+  onPendingChanges,
 }) => {
-  const [editingIndices, setEditingIndices] = useState<number[]>([]);
-  const [editedData, setEditedData] = useState<{
-    [key: number]: { name: string; description: string };
-  }>({});
-  const [validationErrors, setValidationErrors] = useState<{
-    [key: number]: { name?: string; description?: string };
-  }>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [openPopovers, setOpenPopovers] = useState<boolean[]>(
     attachments.map(() => false)
   );
   const { data: session } = useSession();
-  const { mutateAsync: updateAttachments } = useUpdateAttachments();
   const t = useTranslations();
+
+  // Deferred mode state - tracks pending changes that will be applied on form submit
+  const [pendingEdits, setPendingEdits] = useState<{
+    [attachmentId: number]: { name: string; note: string };
+  }>({});
+  const [pendingDeletes, setPendingDeletes] = useState<number[]>([]);
+
+  // Notify parent of pending changes when in deferred mode
+  const notifyPendingChanges = useCallback(() => {
+    if (deferredMode && onPendingChanges) {
+      const edits: AttachmentEdit[] = Object.entries(pendingEdits).map(
+        ([id, data]) => ({
+          id: Number(id),
+          name: data.name,
+          note: data.note,
+        })
+      );
+      onPendingChanges({ edits, deletes: pendingDeletes });
+    }
+  }, [deferredMode, onPendingChanges, pendingEdits, pendingDeletes]);
+
+  useEffect(() => {
+    notifyPendingChanges();
+  }, [notifyPendingChanges]);
+
+  // Reset deferred state when attachments change (e.g., after form submit)
+  useEffect(() => {
+    if (deferredMode) {
+      setPendingEdits({});
+      setPendingDeletes([]);
+    }
+  }, [attachments, deferredMode]);
 
   if (!attachments || attachments.length === 0) {
     return null;
@@ -83,84 +108,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
   );
 
   const handleSelect = (attachments: Attachments[], index: number) => {
-    // Always call onSelect to allow viewing attachments in the carousel
-    // Reset editing mode if applicable
-    setEditingIndices([]);
     onSelect(attachments, index);
-  };
-
-  const handleEdit = (index: number, name: string, description: string) => {
-    if (!preventEditing) {
-      setEditingIndices((prev) => [...prev, index]);
-      setEditedData((prev) => ({ ...prev, [index]: { name, description } }));
-    }
-  };
-
-  const handleCancel = (
-    index: number,
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    event.stopPropagation();
-    setEditingIndices((prev) => prev.filter((i) => i !== index));
-    setEditedData((prev) => {
-      const newData = { ...prev };
-      delete newData[index];
-      return newData;
-    });
-    setValidationErrors((prev) => {
-      const newErrors = { ...prev };
-      delete newErrors[index];
-      return newErrors;
-    });
-  };
-
-  const handleSubmit = async (
-    index: number,
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    event.stopPropagation();
-    const attachment = sortedAttachments[index];
-    const result = AttachmentSchema.safeParse(editedData[index]);
-
-    if (!result.success) {
-      const errors = result.error.issues.reduce(
-        (acc, issue) => ({
-          ...acc,
-          [issue.path[0]]: issue.message,
-        }),
-        {}
-      );
-      setValidationErrors((prev) => ({ ...prev, [index]: errors }));
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await updateAttachments({
-        data: {
-          name: editedData[index].name,
-          note: editedData[index].description,
-        },
-        where: {
-          id: attachment.id,
-        },
-      });
-      setEditingIndices((prev) => prev.filter((i) => i !== index));
-      setEditedData((prev) => {
-        const newData = { ...prev };
-        delete newData[index];
-        return newData;
-      });
-      setValidationErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[index];
-        return newErrors;
-      });
-    } catch (error) {
-      console.error("Failed to update attachment:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const handlePopoverOpenChange = (index: number, isOpen: boolean) => {
@@ -177,32 +125,50 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
   ) => {
     event.stopPropagation();
     const attachment = sortedAttachments[index];
-    setIsSubmitting(true);
-    try {
-      await updateAttachments({
-        data: {
-          isDeleted: true,
-        },
-        where: {
-          id: attachment.id,
-        },
-      });
-      setEditingIndices((prev) => prev.filter((i) => i !== index));
-      setEditedData((prev) => {
-        const newData = { ...prev };
-        delete newData[index];
-        return newData;
-      });
 
-      if (onAttachmentDeleted) {
-        onAttachmentDeleted(attachment.id);
-      }
-    } catch (error) {
-      console.error("Failed to update attachment:", error);
-    } finally {
-      setIsSubmitting(false);
+    // In deferred mode, mark as pending delete instead of deleting immediately
+    if (deferredMode) {
+      setPendingDeletes((prev) => [...prev, attachment.id]);
+      handlePopoverOpenChange(index, false);
+      return;
     }
+
+    // Direct delete is no longer supported - attachments can only be deleted
+    // through the parent entity's edit mode (deferred mode)
     handlePopoverOpenChange(index, false);
+  };
+
+  // Undo a pending delete in deferred mode
+  const handleUndoDelete = (
+    attachmentId: number,
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    event.stopPropagation();
+    setPendingDeletes((prev) => prev.filter((id) => id !== attachmentId));
+  };
+
+  // Check if an attachment has pending edits
+  const hasPendingEdit = (attachmentId: number) => {
+    return attachmentId in pendingEdits;
+  };
+
+  // Check if an attachment is marked for deletion
+  const isPendingDelete = (attachmentId: number) => {
+    return pendingDeletes.includes(attachmentId);
+  };
+
+  // Get display values for an attachment (pending edits override original values)
+  const getDisplayValues = (attachment: Attachments) => {
+    if (pendingEdits[attachment.id]) {
+      return {
+        name: pendingEdits[attachment.id].name,
+        note: pendingEdits[attachment.id].note,
+      };
+    }
+    return {
+      name: attachment.name,
+      note: attachment.note,
+    };
   };
 
   const findPreviousAttachment = (current: Attachments) =>
@@ -250,86 +216,71 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
     <div className="h-fit w-full mr-12">
       {sortedAttachments.map((attachment, index) => {
         const previousAttachment = findPreviousAttachment(attachment);
+        const isMarkedForDelete = isPendingDelete(attachment.id);
+        const hasEdit = hasPendingEdit(attachment.id);
+        const displayValues = getDisplayValues(attachment);
+
+        // Skip rendering if marked for delete in deferred mode (show separate section below)
+        if (isMarkedForDelete && deferredMode) {
+          return (
+            <div
+              className="w-full min-w-sm border-2 mb-4 bg-destructive/10 rounded-sm border-destructive items-start opacity-60"
+              key={attachment.id}
+            >
+              <div className="p-2 w-full overflow-hidden">
+                <div className="flex items-center gap-2 p-2">
+                  <Trash2 className="h-5 w-5 text-destructive shrink-0" />
+                  <span className="line-through text-muted-foreground truncate min-w-0 flex-1">
+                    {attachment.name}
+                  </span>
+                  <Badge
+                    variant="destructive"
+                    className="text-xs text-nowrap shrink-0"
+                  >
+                    {t("common.status.pendingDelete")}
+                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-nowrap shrink-0"
+                          onClick={(e) => handleUndoDelete(attachment.id, e)}
+                        >
+                          <Undo2 className="h-4 w-4" />
+                          {t("common.actions.undo")}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {t("common.actions.undoDelete")}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
         return (
           <div
-            className="w-full border-2 mb-4 bg-accent rounded-sm border-primary items-start"
+            className="w-full border-2 mb-4 bg-accent rounded-sm items-start border-primary"
             key={attachment.id}
           >
             <div className="p-2 w-full">
               <div className="flex flex-col items-center p-2 w-full h-full mb-2">
-                {editingIndices.includes(index) && !preventEditing ? (
-                  <div className="flex flex-col gap-4 w-full">
-                    <Textarea
-                      value={editedData[index]?.name || ""}
-                      onChange={(e) =>
-                        setEditedData((prev) => ({
-                          ...prev,
-                          [index]: {
-                            ...prev[index],
-                            name: e.target.value,
-                          },
-                        }))
-                      }
-                      className="text-lg font-bold text-center w-full line-clamp-2 hover:line-clamp-none"
-                    />
-                    <Popover
-                      open={openPopovers[index]}
-                      onOpenChange={(isOpen) =>
-                        handlePopoverOpenChange(index, isOpen)
-                      }
-                    >
-                      <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          className="ml-auto w-fit"
-                          disabled={preventEditing}
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-fit" side="bottom">
-                        {t("attachments.delete.confirmMessage")}
-                        <div className="flex items-start justify-between gap-4 mt-2">
-                          <div className="flex items-center mb-2">
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              className="ml-auto"
-                              onClick={() =>
-                                handlePopoverOpenChange(index, false)
-                              }
-                            >
-                              <CircleSlash2 className="h-4 w-4 mr-1" />{" "}
-                              {t("common.actions.cancel")}
-                            </Button>
-                          </div>
-                          <div className="flex items-center">
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              onClick={(e) => handleDelete(index, e)}
-                              className="ml-auto"
-                            >
-                              <Trash2 className="h-4 w-4 mr-1" />{" "}
-                              {t("common.actions.delete")}
-                            </Button>
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => handleSelect(sortedAttachments, index)}
-                    className="text-lg font-bold text-center mb-2 cursor-pointer line-clamp-2 hover:line-clamp-none"
-                  >
-                    {renderFieldWithDifferences(
-                      attachment.name,
-                      previousAttachment?.name
-                    )}
-                  </div>
-                )}
+                {/* Clickable title - always shows display value (which may include pending edits) */}
+                <div
+                  onClick={() => handleSelect(sortedAttachments, index)}
+                  className="text-lg font-bold text-center mb-2 cursor-pointer line-clamp-2 hover:line-clamp-none"
+                >
+                  {renderFieldWithDifferences(
+                    displayValues.name,
+                    previousAttachment?.name
+                  )}
+                </div>
                 <div className="flex flex-col md:flex-row w-full max-h-96 overflow-hidden">
                   <div
                     onClick={() => handleSelect(sortedAttachments, index)}
@@ -343,15 +294,57 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                   />
                   <div className="md:w-1/3 w-full flex flex-col justify-start items-start p-4 overflow-hidden">
                     <div className="text-left space-y-2 min-w-[50px] w-full">
-                      <div className="text-sm truncate">
+                      {/* Name field - editable in deferred mode */}
+                      <div className="text-sm">
                         <strong>{t("common.fields.name")}</strong>
-                        <div className="truncate">{attachment.name}</div>
+                        {deferredMode && !preventEditing ? (
+                          <input
+                            type="text"
+                            value={displayValues.name}
+                            onChange={(e) => {
+                              setPendingEdits((prev) => ({
+                                ...prev,
+                                [attachment.id]: {
+                                  name: e.target.value,
+                                  note:
+                                    prev[attachment.id]?.note ??
+                                    attachment.note ??
+                                    "",
+                                },
+                              }));
+                            }}
+                            className="w-full mt-1 px-2 py-1 text-sm border rounded-md bg-background"
+                            aria-label={t("common.fields.name")}
+                          />
+                        ) : (
+                          <div className="truncate">{displayValues.name}</div>
+                        )}
                       </div>
+                      {/* Description field - editable in deferred mode */}
                       <div className="text-sm">
                         <strong>{t("common.fields.description")}</strong>
-                        <div className="w-full min-h-10 max-h-10 overflow-y-auto hover:max-h-24">
-                          {attachment.note || t("common.labels.none")}
-                        </div>
+                        {deferredMode && !preventEditing ? (
+                          <Textarea
+                            value={displayValues.note ?? ""}
+                            onChange={(e) => {
+                              setPendingEdits((prev) => ({
+                                ...prev,
+                                [attachment.id]: {
+                                  name:
+                                    prev[attachment.id]?.name ??
+                                    attachment.name,
+                                  note: e.target.value,
+                                },
+                              }));
+                            }}
+                            className="w-full mt-1 text-sm min-h-[60px]"
+                            placeholder={t("common.placeholders.description")}
+                          />
+                        ) : (
+                          <div className="w-full min-h-10 max-h-10 overflow-y-auto hover:max-h-24">
+                            {displayValues.note || t("common.labels.none")}
+                          </div>
+                        )}
                       </div>
                       <Separator className="w-full" />
                       <div className="text-sm truncate">
@@ -383,7 +376,10 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                               <TooltipTrigger asChild>
                                 <Link
                                   className="inline-flex h-9 items-center justify-center rounded-md px-3 bg-primary text-primary-foreground hover:bg-primary/90"
-                                  href={getStorageUrlClient(attachment.url) || attachment.url}
+                                  href={
+                                    getStorageUrlClient(attachment.url) ||
+                                    attachment.url
+                                  }
                                   target="_blank"
                                 >
                                   <Download className="h-5 w-5 shrink-0" />
@@ -395,78 +391,51 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                             </Tooltip>
                           </TooltipProvider>
                         ) : null}
-                        {editingIndices.includes(index) && !preventEditing ? (
-                          <>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <Button
-                                    type="button"
-                                    onClick={(e) => handleCancel(index, e)}
-                                    disabled={isSubmitting}
-                                  >
-                                    <CircleSlash2 className="h-5 w-5 shrink-0" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
+                        {/* In deferred mode, show delete button */}
+                        {deferredMode && !preventEditing && (
+                          <Popover
+                            open={openPopovers[index]}
+                            onOpenChange={(isOpen) =>
+                              handlePopoverOpenChange(index, isOpen)
+                            }
+                          >
+                            <PopoverTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-fit" side="bottom">
+                              {t("attachments.delete.deferredMessage")}
+                              <div className="flex items-start justify-between gap-4 mt-2">
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() =>
+                                    handlePopoverOpenChange(index, false)
+                                  }
+                                >
+                                  <CircleSlash2 className="h-4 w-4 mr-1" />
                                   {t("common.actions.cancel")}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <Button
-                                    type="button"
-                                    className="mt-4"
-                                    onClick={(e) => handleSubmit(index, e)}
-                                    disabled={isSubmitting}
-                                  >
-                                    {isSubmitting ? (
-                                      <LoadingSpinner className="w-5 h-5" />
-                                    ) : (
-                                      <Save className="inline w-5 h-5" />
-                                    )}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {t("common.actions.save")}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </>
-                        ) : (
-                          !preventEditing && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    type="button"
-                                    className="mt-4"
-                                    onClick={() =>
-                                      handleEdit(
-                                        index,
-                                        attachment.name,
-                                        attachment.note ?? ""
-                                      )
-                                    }
-                                  >
-                                    <SquarePen className="inline w-5 h-5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {t("common.actions.edit")}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={(e) => handleDelete(index, e)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  {t("common.actions.delete")}
+                                </Button>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         )}
                       </div>
-                      {validationErrors[index]?.name && (
-                        <div className="text-destructive font-bold text-sm text-right">
-                          {validationErrors[index].name}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -549,7 +518,11 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                 <TooltipTrigger>
                                   <Button type="button" className="mt-4">
                                     <Link
-                                      href={getStorageUrlClient(prevAttachment.url) || prevAttachment.url}
+                                      href={
+                                        getStorageUrlClient(
+                                          prevAttachment.url
+                                        ) || prevAttachment.url
+                                      }
                                       download={prevAttachment.name}
                                       target="_blank"
                                     >

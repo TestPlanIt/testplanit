@@ -105,6 +105,8 @@
       "duplicate": "Duplicate",
       "change": "Change",
       "viewAll": "View All",
+      "undo": "Undo",
+      "undoDelete": "Undo delete",
       "automated": {
         "details": "Automated Test Details",
         "type": "Type",
@@ -236,7 +238,9 @@
       "pending": "Pending",
       "uploading": "Uploading...",
       "notApplicable": "N/A",
-      "redirecting": "Redirecting..."
+      "redirecting": "Redirecting...",
+      "pendingDelete": "Will be deleted",
+      "pendingChanges": "Pending changes"
     },
     "priority": {
       "low": "Low",
@@ -2565,7 +2569,8 @@
       "title": "Attachment Viewer"
     },
     "delete": {
-      "confirmMessage": "Are you sure you want to delete this attachment?"
+      "confirmMessage": "Are you sure you want to delete this attachment?",
+      "deferredMessage": "This attachment will be deleted when you save."
     }
   },
   "runs": {

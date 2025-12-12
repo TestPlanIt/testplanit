@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useId, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,6 +66,10 @@ export default function UploadAttachments({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Generate unique IDs for file inputs to prevent conflicts when multiple instances exist
+  const uniqueId = useId();
+  const fileInputId = compact ? `compact-file-upload-${uniqueId}` : `file-upload-${uniqueId}`;
+
   const validateFileType = (file: File): boolean => {
     if (!allowedTypes || allowedTypes.length === 0) {
       return true;
@@ -90,15 +94,45 @@ export default function UploadAttachments({
     setErrorMessage(null);
     setUploading(true);
     setSelectedFiles((prevFiles) => {
+      // Check if file with same name and size already exists to prevent duplicates
+      const isDuplicate = prevFiles.some(
+        (f) => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified
+      );
+      if (isDuplicate) {
+        setUploading(false);
+        setIsDragging(false);
+        return prevFiles;
+      }
       const updatedFiles = [...prevFiles, file];
-      setTimeout(() => {
-        onFileSelect(updatedFiles);
-      }, 0);
       return updatedFiles;
     });
     setUploading(false);
     setIsDragging(false);
   };
+
+  // Notify parent when selectedFiles changes
+  // Using a ref to track the previous value to avoid unnecessary calls
+  // Track if we've ever had files to avoid notifying with empty array on mount/remount
+  const prevSelectedFilesRef = React.useRef<File[]>([]);
+  const hasEverHadFilesRef = React.useRef(false);
+  useEffect(() => {
+    // Track if we've ever had files
+    if (selectedFiles.length > 0) {
+      hasEverHadFilesRef.current = true;
+    }
+
+    // Skip notifying parent with empty files unless we previously had files
+    // This prevents resetting parent state on mount/remount
+    if (selectedFiles.length === 0 && !hasEverHadFilesRef.current) {
+      return;
+    }
+
+    // Only call onFileSelect if the files array actually changed
+    if (prevSelectedFilesRef.current !== selectedFiles) {
+      prevSelectedFilesRef.current = selectedFiles;
+      onFileSelect(selectedFiles);
+    }
+  }, [selectedFiles, onFileSelect]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -106,6 +140,8 @@ export default function UploadAttachments({
       return;
     }
     Array.from(files).forEach(handleFileRead);
+    // Reset input value to allow selecting the same file again if needed
+    event.target.value = "";
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -221,10 +257,10 @@ export default function UploadAttachments({
           onChange={handleFileChange}
           disabled={uploading || disabled}
           style={{ display: "none" }}
-          id="compact-file-upload"
+          id={fileInputId}
         />
         <label
-          htmlFor="compact-file-upload"
+          htmlFor={fileInputId}
           className={`flex items-center w-full ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
         >
           <CloudUpload className="w-5 h-5 text-primary mr-1" />
@@ -269,22 +305,24 @@ export default function UploadAttachments({
           onChange={handleFileChange}
           disabled={uploading || disabled}
           style={{ display: "none" }}
-          id="file-upload"
+          id={fileInputId}
         />
         <label
-          htmlFor="file-upload"
-          className={`${disabled ? "pointer-events-none" : ""}`}
+          htmlFor={fileInputId}
+          className={`${disabled ? "pointer-events-none cursor-not-allowed" : "cursor-pointer"}`}
         >
           <Button
             type="button"
             variant="outline"
             disabled={uploading || disabled}
-            onClick={() => document.getElementById("file-upload")?.click()}
+            asChild
           >
-            <CloudUpload className="w-5 h-5 text-primary" />
-            {uploading
-              ? t("uploading")
-              : t("selectFiles", { count: selectedFiles.length })}
+            <span>
+              <CloudUpload className="w-5 h-5 text-primary" />
+              {uploading
+                ? t("uploading")
+                : t("selectFiles", { count: selectedFiles.length })}
+            </span>
           </Button>
         </label>
         {previews !== false ? (

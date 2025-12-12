@@ -8,6 +8,7 @@ import {
   useUpdateTestRuns,
   useFindManyWorkflows,
   useCreateAttachments,
+  useUpdateAttachments,
   useFindManyConfigurations,
   useFindManyMilestones,
   useFindFirstRepositoryCases,
@@ -20,6 +21,7 @@ import {
   useFindUniqueTestRuns,
   useFindManyTestRuns,
 } from "~/lib/hooks";
+import { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, FormProvider } from "react-hook-form";
 import { z } from "zod/v4";
@@ -300,7 +302,10 @@ export default function TestRunPage() {
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null
   >(null);
+  const [pendingAttachmentChanges, setPendingAttachmentChanges] =
+    useState<AttachmentChanges>({ edits: [], deletes: [] });
   const { mutateAsync: createAttachments } = useCreateAttachments();
+  const { mutateAsync: updateAttachments } = useUpdateAttachments();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const t = useTranslations();
   const tCommon = useTranslations("common");
@@ -915,10 +920,38 @@ export default function TestRunPage() {
         });
       }
 
-      // Handle attachments
+      // Apply pending attachment edits
+      const editPromises = pendingAttachmentChanges.edits.map(async (edit) => {
+        await updateAttachments({
+          where: { id: edit.id },
+          data: {
+            name: edit.name,
+            note: edit.note,
+          },
+        });
+      });
+
+      // Apply pending attachment deletes (soft delete)
+      const deletePromises = pendingAttachmentChanges.deletes.map(
+        async (attachmentId) => {
+          await updateAttachments({
+            where: { id: attachmentId },
+            data: { isDeleted: true },
+          });
+        }
+      );
+
+      // Wait for all pending changes to be applied
+      await Promise.all([...editPromises, ...deletePromises]);
+
+      // Handle new attachments
       if (selectedFiles.length > 0) {
         const attachmentUrls = await uploadFiles(Number(runId));
       }
+
+      // Reset pending changes
+      setPendingAttachmentChanges({ edits: [], deletes: [] });
+      setSelectedFiles([]);
 
       await refetchTestRun();
       const params = new URLSearchParams(searchParams);
@@ -1006,6 +1039,9 @@ export default function TestRunPage() {
 
   // Handle cancel
   const handleCancel = () => {
+    // Reset pending attachment changes
+    setPendingAttachmentChanges({ edits: [], deletes: [] });
+    setSelectedFiles([]);
     // Exit edit mode
     const params = new URLSearchParams(searchParams.toString());
     params.delete("selectedCase"); // Also close sheet on cancel
@@ -1865,6 +1901,7 @@ export default function TestRunPage() {
                     canAddEdit={canAddEditRun}
                     canCreateTags={showAddEditTagsPerm}
                     selectedConfigurationsForDisplay={selectedConfigurations}
+                    onAttachmentPendingChanges={setPendingAttachmentChanges}
                   />
                   {selectedAttachmentIndex !== null && (
                     <AttachmentsCarousel

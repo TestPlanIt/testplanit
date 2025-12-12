@@ -20,7 +20,10 @@ import { IconName } from "~/types/globals";
 import DynamicIcon from "@/components/DynamicIcon";
 import { ManageTags } from "@/components/ManageTags";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
-import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
+import {
+  AttachmentsDisplay,
+  AttachmentChanges,
+} from "@/components/AttachmentsDisplay";
 import UploadAttachments from "@/components/UploadAttachments";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
@@ -156,6 +159,7 @@ interface TestRunFormControlsProps {
   canAddEdit: boolean;
   canCreateTags?: boolean;
   selectedConfigurationsForDisplay?: SelectedConfigurationInfo[];
+  onAttachmentPendingChanges?: (changes: AttachmentChanges) => void;
 }
 
 function TestRunFormControls({
@@ -178,6 +182,7 @@ function TestRunFormControls({
   canAddEdit,
   canCreateTags = false,
   selectedConfigurationsForDisplay = [],
+  onAttachmentPendingChanges,
 }: TestRunFormControlsProps) {
   const t = useTranslations();
 
@@ -465,6 +470,8 @@ function TestRunFormControls({
                     onSelect={(attachments, index) => {
                       handleSelect(attachments, index);
                     }}
+                    deferredMode={isEditMode}
+                    onPendingChanges={onAttachmentPendingChanges}
                   />
                 </div>
               </FormControl>
