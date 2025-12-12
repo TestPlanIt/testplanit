@@ -143,8 +143,11 @@ const processor = async (job: Job) => {
             }
           }
         } else if (notification.type === "SYSTEM_ANNOUNCEMENT") {
-          // For system announcements, check if we have rich content
-          if (data.richContent && isTipTapContent(data.richContent)) {
+          // For system announcements, check if we have rich content or raw HTML
+          if (data.htmlContent) {
+            // Use raw HTML content (e.g., from upgrade notifications)
+            htmlMessage = data.htmlContent;
+          } else if (data.richContent && isTipTapContent(data.richContent)) {
             htmlMessage = tiptapToHtml(data.richContent);
           }
           // Add sender info to the message if not using HTML
