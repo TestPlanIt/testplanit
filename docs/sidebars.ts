@@ -39,6 +39,19 @@ const sidebars: SidebarsConfig = {
     'api-reference', // Add api-reference.md
     'cli', // CLI tool documentation
     'api-tokens', // API tokens documentation
+    // SDK & Integrations category
+    {
+      type: 'category',
+      label: 'SDK & Integrations',
+      link: {
+        type: 'doc',
+        id: 'sdk/sdk-overview', // Link to the overview page
+      },
+      items: [
+        'sdk/api-client', // @testplanit/api package
+        'sdk/webdriverio-reporter', // @testplanit/wdio-reporter package
+      ],
+    },
 
     // Define the User Guide category manually
     {

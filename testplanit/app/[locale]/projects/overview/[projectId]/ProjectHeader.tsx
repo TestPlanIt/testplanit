@@ -32,6 +32,9 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
         </span>
         <span className="block">
           <span className="block">
+            {t("projects.status.id", { id: project.id })}
+          </span>
+          <span className="block">
             {project.isCompleted
               ? t("projects.status.completed")
               : t("projects.status.active")}

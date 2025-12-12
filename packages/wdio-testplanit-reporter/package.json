@@ -1,0 +1,64 @@
+{
+  "name": "@testplanit/wdio-reporter",
+  "version": "0.1.0",
+  "description": "WebdriverIO reporter for TestPlanIt - report test results directly to your TestPlanIt instance",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:cov": "vitest --coverage",
+    "prepublishOnly": "pnpm build",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "webdriverio",
+    "wdio",
+    "reporter",
+    "testplanit",
+    "test-management",
+    "test-reporting",
+    "automation"
+  ],
+  "author": "TestPlanIt",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/testplanit/testplanit.git",
+    "directory": "packages/wdio-testplanit-reporter"
+  },
+  "bugs": {
+    "url": "https://github.com/testplanit/testplanit/issues"
+  },
+  "homepage": "https://github.com/testplanit/testplanit/tree/main/packages/wdio-testplanit-reporter#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "@wdio/reporter": "^8.0.0 || ^9.0.0",
+    "@wdio/types": "^8.0.0 || ^9.0.0"
+  },
+  "dependencies": {
+    "@testplanit/api": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@wdio/reporter": "^9.0.0",
+    "@wdio/types": "^9.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^2.0.0"
+  }
+}

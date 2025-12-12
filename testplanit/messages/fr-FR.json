@@ -1149,6 +1149,7 @@
   },
   "projects": {
     "status": {
+      "id": "ID du projet : {id}",
       "active": "Le projet est actif.",
       "completed": "Le projet est terminé."
     },

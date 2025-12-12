@@ -3,3 +3,4 @@ packages:
   - 'docs'
   - 'forge-app'
   - 'cli'
+  - 'packages/*'
