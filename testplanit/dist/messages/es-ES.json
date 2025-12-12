@@ -105,6 +105,8 @@
       "duplicate": "Duplicate",
       "change": "Cambiar",
       "viewAll": "Ver todo",
+      "undo": "Deshacer",
+      "undoDelete": "Deshacer eliminación",
       "automated": {
         "details": "Detalles de la prueba automatizada",
         "type": "Tipo",
@@ -236,7 +238,9 @@
       "pending": "Pendiente",
       "uploading": "Subiendo...",
       "notApplicable": "No disponible",
-      "redirecting": "Redirigiendo..."
+      "redirecting": "Redirigiendo...",
+      "pendingDelete": "Se eliminará",
+      "pendingChanges": "Cambios pendientes"
     },
     "priority": {
       "low": "Bajo",
@@ -2565,7 +2569,8 @@
       "title": "Visor adjunto"
     },
     "delete": {
-      "confirmMessage": "¿Está seguro que desea eliminar este archivo adjunto?"
+      "confirmMessage": "¿Está seguro que desea eliminar este archivo adjunto?",
+      "deferredMessage": "Este archivo adjunto se eliminará cuando lo guardes."
     }
   },
   "runs": {
