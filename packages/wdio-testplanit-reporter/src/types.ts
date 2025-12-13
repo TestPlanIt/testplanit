@@ -229,6 +229,10 @@ export interface TrackedTestResult {
   retryAttempt: number;
   /** Unique identifier for this test (cid + fullTitle) */
   uid: string;
+  /** Spec file path */
+  specFile?: string;
+  /** WebdriverIO command output logs */
+  commandOutput?: string;
 }
 
 /**

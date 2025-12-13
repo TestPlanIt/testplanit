@@ -1313,18 +1313,23 @@ export default function TestResultHistory({
                         {result.sourceType === "junit" ? (
                           result.associatedTestRun ? (
                             <div className="font-medium truncate flex items-center">
-                              <Bot className="w-4 h-4 inline mr-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
                               {result.associatedTestRun.isDeleted ? (
-                                <span className="truncate text-muted-foreground">
-                                  {result.associatedTestRun.name}
-                                </span>
+                                <>
+                                  <Trash2 className="w-4 h-4 inline mr-1 shrink-0 text-muted-foreground/50" />
+                                  <span className="truncate text-muted-foreground/50 line-through">
+                                    {result.associatedTestRun.name}
+                                  </span>
+                                </>
                               ) : (
-                                <Link
-                                  href={`/projects/runs/${activeProjectId}/${result.associatedTestRun.id}?selectedCase=${fetchedTestCase.id}&view=status`}
-                                  className="hover:underline truncate"
-                                >
-                                  {result.associatedTestRun.name}
-                                </Link>
+                                <>
+                                  <Bot className="w-4 h-4 inline mr-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
+                                  <Link
+                                    href={`/projects/runs/${activeProjectId}/${result.associatedTestRun.id}?selectedCase=${fetchedTestCase.id}&view=status`}
+                                    className="hover:underline truncate"
+                                  >
+                                    {result.associatedTestRun.name}
+                                  </Link>
+                                </>
                               )}
                             </div>
                           ) : (

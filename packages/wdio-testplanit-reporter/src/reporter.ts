@@ -570,6 +570,24 @@ export default class TestPlanItReporter extends WDIOReporter {
     const endTime = test.end ? new Date(test.end).getTime() : Date.now();
     const durationMs = endTime - startTime;
 
+    // Format WebdriverIO command output if available
+    let commandOutput: string | undefined;
+    if (test.output && test.output.length > 0) {
+      commandOutput = test.output
+        .map((o) => {
+          const parts: string[] = [];
+          if (o.method) parts.push(`[${o.method}]`);
+          if (o.endpoint) parts.push(o.endpoint);
+          if (o.result !== undefined) {
+            const resultStr = typeof o.result === 'string' ? o.result : JSON.stringify(o.result);
+            // Truncate long results
+            parts.push(resultStr.length > 200 ? resultStr.substring(0, 200) + '...' : resultStr);
+          }
+          return parts.join(' ');
+        })
+        .join('\n');
+    }
+
     const result: TrackedTestResult = {
       caseId: caseIds[0], // Primary case ID
       suiteName,
@@ -589,6 +607,8 @@ export default class TestPlanItReporter extends WDIOReporter {
       consoleLogs: [],
       retryAttempt: test.retries || 0,
       uid,
+      specFile: this.currentSpec,
+      commandOutput,
     };
 
     this.state.results.set(uid, result);
@@ -757,6 +777,9 @@ export default class TestPlanItReporter extends WDIOReporter {
         content,
         statusId,
         time: durationInSeconds,
+        executedAt: result.finishedAt,
+        file: result.specFile,
+        systemOut: result.commandOutput,
       });
 
       this.log('Created JUnit test result:', junitResult.id, '(type:', junitType + ')');
