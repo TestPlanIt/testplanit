@@ -700,6 +700,40 @@ const TreeView: React.FC<{
     }
   }, [folders, onHierarchyChange]);
 
+  // Recursively expand a node and all its descendants
+  const expandAllDescendants = useCallback(
+    async (node: NodeApi<ArboristNode>) => {
+      const folderId = node.data?.data?.folderId;
+      if (folderId) {
+        await ensureFolderChildrenLoaded(folderId);
+      }
+      node.open();
+
+      // Expand all children recursively
+      if (node.children) {
+        for (const child of node.children) {
+          if (child.data?.data?.hasChildren) {
+            await expandAllDescendants(child);
+          }
+        }
+      }
+    },
+    [ensureFolderChildrenLoaded]
+  );
+
+  // Recursively collapse a node and all its descendants
+  const collapseAllDescendants = useCallback((node: NodeApi<ArboristNode>) => {
+    // Collapse children first (bottom-up)
+    if (node.children) {
+      for (const child of node.children) {
+        if (child.isOpen) {
+          collapseAllDescendants(child);
+        }
+      }
+    }
+    node.close();
+  }, []);
+
   // Custom node renderer with inline editing and context menu
   const Node = ({
     node,
@@ -838,13 +872,23 @@ const TreeView: React.FC<{
             e.stopPropagation();
             if (hasChildren) {
               const wasOpen = node.isOpen;
-              if (!childrenLoaded) {
-                await ensureFolderChildrenLoaded(data?.folderId);
-              }
-              node.toggle();
-              // Select the folder when expanding
-              if (!wasOpen) {
-                node.select();
+              // Option key (Mac) / Alt key (Windows) expands/collapses all descendants
+              if (e.altKey) {
+                if (wasOpen) {
+                  collapseAllDescendants(node);
+                } else {
+                  await expandAllDescendants(node);
+                  node.select();
+                }
+              } else {
+                if (!childrenLoaded) {
+                  await ensureFolderChildrenLoaded(data?.folderId);
+                }
+                node.toggle();
+                // Select the folder when expanding
+                if (!wasOpen) {
+                  node.select();
+                }
               }
             }
           }}
