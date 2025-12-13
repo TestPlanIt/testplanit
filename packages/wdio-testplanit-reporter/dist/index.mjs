@@ -184,9 +184,18 @@ ${error.stack}` : "";
       this.state.resolvedIds.stateId = this.reporterOptions.stateId;
     }
     if (typeof this.reporterOptions.parentFolderId === "string") {
-      const folder = await this.client.findFolderByName(projectId, this.reporterOptions.parentFolderId);
+      let folder = await this.client.findFolderByName(projectId, this.reporterOptions.parentFolderId);
       if (!folder) {
-        throw new Error(`Folder not found: "${this.reporterOptions.parentFolderId}"`);
+        if (this.reporterOptions.createFolderHierarchy) {
+          this.log(`Parent folder "${this.reporterOptions.parentFolderId}" not found, creating it...`);
+          folder = await this.client.createFolder({
+            projectId,
+            name: this.reporterOptions.parentFolderId
+          });
+          this.log(`Created parent folder "${this.reporterOptions.parentFolderId}" -> ${folder.id}`);
+        } else {
+          throw new Error(`Folder not found: "${this.reporterOptions.parentFolderId}"`);
+        }
       }
       this.state.resolvedIds.parentFolderId = folder.id;
       this.log(`Resolved folder "${this.reporterOptions.parentFolderId}" -> ${folder.id}`);
