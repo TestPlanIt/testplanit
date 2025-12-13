@@ -3,7 +3,7 @@
 import React, { useCallback, useMemo } from "react";
 import type { Prisma } from "@prisma/client";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { PlayCircle, Combine } from "lucide-react";
+import { PlayCircle, Combine, Trash2 } from "lucide-react";
 import { Link } from "~/lib/navigation";
 import { badgeVariants } from "@/components/ui/badge";
 import { cn } from "~/utils";
@@ -30,6 +30,7 @@ type TestRunOption = {
   name: string;
   projectId: number;
   isCompleted: boolean;
+  isDeleted?: boolean;
   configurationGroupId?: string | null;
   configuration?: { id: number; name: string } | null;
 };
@@ -58,6 +59,7 @@ interface TestRunLinkDisplayProps {
   name: string;
   projectId: number;
   isCompleted: boolean;
+  isDeleted?: boolean;
   maxLines?: number;
   className?: string;
   configurationGroupId?: string | null;
@@ -69,6 +71,7 @@ const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
   name,
   projectId,
   isCompleted,
+  isDeleted,
   maxLines,
   className,
   configurationGroupId,
@@ -78,7 +81,12 @@ const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
   if (!id) return null;
 
   const clampClass = clampClassForLines(maxLines);
-  const textClass = cn(clampClass ?? "truncate", className, "flex-1 text-left");
+  const textClass = cn(
+    clampClass ?? "truncate",
+    className,
+    "flex-1 text-left",
+    isDeleted && "line-through"
+  );
 
   const hasClampedClass =
     clampClass === "truncate" ||
@@ -87,6 +95,48 @@ const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
     className?.includes("truncate");
 
   const shouldShowTooltip = hasClampedClass;
+
+  // For deleted runs, show without link
+  if (isDeleted) {
+    const deletedContent = (
+      <div
+        className={cn(
+          "flex items-start gap-1 max-w-full",
+          "text-muted-foreground/50 cursor-default"
+        )}
+      >
+        <Trash2 className="w-4 h-4 shrink-0 mt-0.5" />
+        <span className={textClass}>{name}</span>
+        {configurationGroupId && (
+          <Combine className="w-3 h-3 shrink-0 mt-0.5" />
+        )}
+      </div>
+    );
+
+    if (!shouldShowTooltip) {
+      return deletedContent;
+    }
+
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>{deletedContent}</TooltipTrigger>
+          <TooltipContent>
+            <span className="line-through">{name}</span>
+            <p className="text-xs text-primary-foreground/40 mt-1">
+              {t("status.deleted")}
+            </p>
+            {configurationGroupId && configuration && (
+              <p className="flex text-xs mt-1">
+                <Combine className="w-3 h-3 shrink-0 mr-1" />
+                {configuration.name}
+              </p>
+            )}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
 
   const content = (
     <Link
@@ -149,7 +199,8 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
         : undefined);
 
   const baseConditions = useMemo(() => {
-    const conditions: Prisma.TestRunsWhereInput[] = [{ isDeleted: false }];
+    // Don't filter out deleted runs - we want to show them with special styling
+    const conditions: Prisma.TestRunsWhereInput[] = [];
 
     if (filter) {
       conditions.push(filter);
@@ -209,6 +260,7 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
       const params = {
         where,
         orderBy: [
+          { isDeleted: "asc" } as const, // Show active runs first, then deleted
           { isCompleted: "asc" } as const,
           { createdAt: "desc" } as const,
         ],
@@ -219,6 +271,7 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
           name: true,
           projectId: true,
           isCompleted: true,
+          isDeleted: true,
         },
       };
 
@@ -236,26 +289,23 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
         ? (payload.data as TestRunOption[])
         : [];
 
-      let total = computedCount ?? results.length;
-      const needsCount = query.trim().length > 0 || computedCount === undefined;
+      // Always fetch total count since we include deleted runs but computedCount only has active runs
+      const countResponse = await fetch(
+        `/api/model/TestRuns/count?q=${encodeURIComponent(JSON.stringify({ where }))}`
+      );
 
-      if (needsCount) {
-        const countResponse = await fetch(
-          `/api/model/TestRuns/count?q=${encodeURIComponent(JSON.stringify({ where }))}`
-        );
+      let total = results.length;
+      if (countResponse.ok) {
+        const countPayload = await countResponse.json();
 
-        if (countResponse.ok) {
-          const countPayload = await countResponse.json();
-
-          if (typeof countPayload?.data === "number") {
-            total = countPayload.data;
-          }
+        if (typeof countPayload?.data === "number") {
+          total = countPayload.data;
         }
       }
 
       return { results, total };
     },
-    [buildWhere, computedCount, prefetchedRuns]
+    [buildWhere, prefetchedRuns]
   );
 
   const handleValueChange = useCallback((_option: TestRunOption | null) => {
@@ -295,6 +345,7 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
           name={option.name}
           projectId={option.projectId}
           isCompleted={option.isCompleted}
+          isDeleted={option.isDeleted}
           maxLines={2}
         />
       )}

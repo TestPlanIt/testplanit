@@ -1624,6 +1624,7 @@ export const getColumns = (
                       name: trLink.testRun.name,
                       projectId: trLink.testRun.projectId,
                       isCompleted: trLink.testRun.isCompleted,
+                      isDeleted: trLink.testRun.isDeleted,
                     };
                   }
                   return null;
@@ -1636,14 +1637,18 @@ export const getColumns = (
                     name: string;
                     projectId: number;
                     isCompleted: boolean;
+                    isDeleted: boolean;
                   } => run !== null
                 );
+
+              // Count only non-deleted test runs for the badge
+              const activeRunsCount = mappedTestRuns?.filter(run => !run.isDeleted).length || 0;
 
               return (
                 <div className="flex justify-center">
                   <TestRunsListDisplay
                     testRuns={mappedTestRuns}
-                    count={mappedTestRuns?.length || 0}
+                    count={activeRunsCount}
                     filter={{
                       projectId: row.original.projectId,
                       testCases: {
