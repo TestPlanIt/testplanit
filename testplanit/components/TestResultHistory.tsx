@@ -828,7 +828,18 @@ export default function TestResultHistory({
             },
           },
           junitResults: {
-            include: {
+            select: {
+              id: true,
+              type: true,
+              message: true,
+              content: true,
+              executedAt: true,
+              time: true,
+              assertions: true,
+              file: true,
+              line: true,
+              systemOut: true,
+              systemErr: true,
               status: {
                 select: { name: true, color: { select: { value: true } } },
               },
@@ -851,9 +862,27 @@ export default function TestResultHistory({
                   },
                 },
               },
-              // attachments: true, // Removed to resolve lint error, will use optional chaining
-              // issues: true,      // Removed to resolve lint error, will use optional chaining
-              // Other fields like content, systemOut etc. are implicitly selected by default by Prisma Client
+              attachments: {
+                where: { isDeleted: false },
+                select: {
+                  id: true,
+                  name: true,
+                  url: true,
+                  note: true,
+                  mimeType: true,
+                  size: true,
+                  createdAt: true,
+                  createdById: true,
+                  isDeleted: true,
+                  testCaseId: true,
+                  sessionId: true,
+                  sessionResultsId: true,
+                  testRunsId: true,
+                  testRunResultsId: true,
+                  testRunStepResultId: true,
+                  junitTestResultId: true,
+                },
+              },
             },
             orderBy: { executedAt: "desc" },
           },
@@ -1023,7 +1052,7 @@ export default function TestResultHistory({
       status: jr.status,
       elapsed: jr.time,
       attachments: jr.attachments || [], // Fallback to empty array
-      issues: jr.issues || [], // Fallback to empty array
+      issues: [], // JUnitTestResult doesn't have issues relation
       isPending: false,
       associatedTestRun,
       executedBy: jr.createdBy,
