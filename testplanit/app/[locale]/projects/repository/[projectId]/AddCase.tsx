@@ -281,6 +281,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
     {
       where: {
         id: folderId,
+        isDeleted: false,
       },
       include: {
         repository: true,

@@ -32,7 +32,7 @@ import type {
   CreateJUnitTestSuiteOptions,
   CreateJUnitTestResultOptions,
   UpdateJUnitTestSuiteOptions,
-} from './types.js';
+} from "./types.js";
 
 /**
  * Custom error class for TestPlanIt API errors
@@ -44,7 +44,7 @@ export class TestPlanItError extends Error {
 
   constructor(message: string, options?: Partial<ApiError>) {
     super(message);
-    this.name = 'TestPlanItError';
+    this.name = "TestPlanItError";
     this.statusCode = options?.statusCode;
     this.code = options?.code;
     this.details = options?.details;
@@ -67,7 +67,14 @@ interface ZenStackResponse<T> {
  */
 interface LookupRequest {
   projectId?: number;
-  type: 'project' | 'state' | 'config' | 'milestone' | 'tag' | 'folder' | 'testRun';
+  type:
+    | "project"
+    | "state"
+    | "config"
+    | "milestone"
+    | "tag"
+    | "folder"
+    | "testRun";
   name: string;
   createIfMissing?: boolean;
 }
@@ -116,14 +123,14 @@ export class TestPlanItClient {
 
   constructor(config: TestPlanItClientConfig) {
     if (!config.baseUrl) {
-      throw new TestPlanItError('baseUrl is required');
+      throw new TestPlanItError("baseUrl is required");
     }
     if (!config.apiToken) {
-      throw new TestPlanItError('apiToken is required');
+      throw new TestPlanItError("apiToken is required");
     }
 
     // Normalize base URL (remove trailing slash)
-    this.baseUrl = config.baseUrl.replace(/\/$/, '');
+    this.baseUrl = config.baseUrl.replace(/\/$/, "");
     this.apiToken = config.apiToken;
     this.timeout = config.timeout ?? 30000;
     this.maxRetries = config.maxRetries ?? 3;
@@ -160,7 +167,7 @@ export class TestPlanItClient {
 
     const headers: Record<string, string> = {
       Authorization: `Bearer ${this.apiToken}`,
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...this.headers,
       ...options?.headers,
     };
@@ -171,7 +178,7 @@ export class TestPlanItClient {
       signal: AbortSignal.timeout(this.timeout),
     };
 
-    if (options?.body && method !== 'GET') {
+    if (options?.body && method !== "GET") {
       fetchOptions.body = JSON.stringify(options.body);
     }
 
@@ -189,23 +196,37 @@ export class TestPlanItClient {
           try {
             const parsed = JSON.parse(errorBody);
             // Extract message from various error response formats
-            if (typeof parsed.message === 'string') {
+            if (typeof parsed.message === "string") {
               errorMessage = parsed.message;
-            } else if (typeof parsed.error === 'string') {
+            } else if (typeof parsed.error === "string") {
               errorMessage = parsed.error;
-            } else if (typeof parsed.error === 'object' && parsed.error !== null) {
+            } else if (
+              typeof parsed.error === "object" &&
+              parsed.error !== null
+            ) {
               // ZenStack returns { error: { message: 'string', ... } }
-              errorMessage = parsed.error.message || parsed.error.reason || JSON.stringify(parsed.error);
-            } else if (parsed.error === undefined && parsed.message === undefined) {
+              errorMessage =
+                parsed.error.message ||
+                parsed.error.reason ||
+                JSON.stringify(parsed.error);
+            } else if (
+              parsed.error === undefined &&
+              parsed.message === undefined
+            ) {
               // Unknown format, include full body
-              errorMessage = `HTTP ${response.status}: ${JSON.stringify(parsed)}`;
+              errorMessage = `HTTP ${response.status}: ${JSON.stringify(
+                parsed
+              )}`;
             }
             errorDetails = parsed;
           } catch {
             // Body is not JSON
             if (errorBody) {
               // Truncate very long error bodies (like HTML 404 pages)
-              errorMessage = errorBody.length > 500 ? errorBody.slice(0, 500) + '...' : errorBody;
+              errorMessage =
+                errorBody.length > 500
+                  ? errorBody.slice(0, 500) + "..."
+                  : errorBody;
             }
           }
 
@@ -227,7 +248,12 @@ export class TestPlanItClient {
 
         // Don't retry on client errors (4xx) except 429 (rate limit)
         if (error instanceof TestPlanItError) {
-          if (error.statusCode && error.statusCode >= 400 && error.statusCode < 500 && error.statusCode !== 429) {
+          if (
+            error.statusCode &&
+            error.statusCode >= 400 &&
+            error.statusCode < 500 &&
+            error.statusCode !== 429
+          ) {
             throw error;
           }
         }
@@ -251,11 +277,22 @@ export class TestPlanItClient {
    * - update, updateMany use PATCH with body
    * - delete, deleteMany use DELETE with body
    */
-  private async zenstack<T>(model: string, operation: string, body?: unknown): Promise<T> {
-    const readOperations = ['findMany', 'findFirst', 'findUnique', 'count', 'aggregate', 'groupBy'];
-    const postOperations = ['create', 'createMany', 'upsert'];
-    const patchOperations = ['update', 'updateMany'];
-    const deleteOperations = ['delete', 'deleteMany'];
+  private async zenstack<T>(
+    model: string,
+    operation: string,
+    body?: unknown
+  ): Promise<T> {
+    const readOperations = [
+      "findMany",
+      "findFirst",
+      "findUnique",
+      "count",
+      "aggregate",
+      "groupBy",
+    ];
+    const postOperations = ["create", "createMany", "upsert"];
+    const patchOperations = ["update", "updateMany"];
+    const deleteOperations = ["delete", "deleteMany"];
 
     let response: ZenStackResponse<T>;
 
@@ -263,36 +300,61 @@ export class TestPlanItClient {
       // Read operations use GET with ?q= parameter
       if (body) {
         const queryParam = encodeURIComponent(JSON.stringify(body));
-        response = await this.request<ZenStackResponse<T>>('GET', `/api/model/${model}/${operation}?q=${queryParam}`);
+        response = await this.request<ZenStackResponse<T>>(
+          "GET",
+          `/api/model/${model}/${operation}?q=${queryParam}`
+        );
       } else {
-        response = await this.request<ZenStackResponse<T>>('GET', `/api/model/${model}/${operation}`);
+        response = await this.request<ZenStackResponse<T>>(
+          "GET",
+          `/api/model/${model}/${operation}`
+        );
       }
     } else if (postOperations.includes(operation)) {
-      response = await this.request<ZenStackResponse<T>>('POST', `/api/model/${model}/${operation}`, { body });
+      response = await this.request<ZenStackResponse<T>>(
+        "POST",
+        `/api/model/${model}/${operation}`,
+        { body }
+      );
     } else if (patchOperations.includes(operation)) {
-      response = await this.request<ZenStackResponse<T>>('PATCH', `/api/model/${model}/${operation}`, { body });
+      response = await this.request<ZenStackResponse<T>>(
+        "PATCH",
+        `/api/model/${model}/${operation}`,
+        { body }
+      );
     } else if (deleteOperations.includes(operation)) {
-      response = await this.request<ZenStackResponse<T>>('DELETE', `/api/model/${model}/${operation}`, { body });
+      response = await this.request<ZenStackResponse<T>>(
+        "DELETE",
+        `/api/model/${model}/${operation}`,
+        { body }
+      );
     } else {
       // Default to POST for any other operation
-      response = await this.request<ZenStackResponse<T>>('POST', `/api/model/${model}/${operation}`, { body });
+      response = await this.request<ZenStackResponse<T>>(
+        "POST",
+        `/api/model/${model}/${operation}`,
+        { body }
+      );
     }
 
     // Handle ZenStack error responses
-    if (response && typeof response === 'object' && 'error' in response) {
+    if (response && typeof response === "object" && "error" in response) {
       const error = (response as ZenStackResponse<T>).error;
       if (error) {
         // Handle various error formats
         let message: string;
-        if (typeof error === 'string') {
+        if (typeof error === "string") {
           message = error;
-        } else if (typeof error === 'object' && error !== null) {
+        } else if (typeof error === "object" && error !== null) {
           message = error.message || JSON.stringify(error);
         } else {
           message = String(error);
         }
         throw new TestPlanItError(message, {
-          code: typeof error === 'object' && error !== null ? error.code : undefined,
+          code:
+            typeof error === "object" && error !== null
+              ? error.code
+              : undefined,
           details: error,
         });
       }
@@ -304,7 +366,7 @@ export class TestPlanItClient {
     }
 
     // Extract data from response
-    if (typeof response === 'object' && 'data' in response) {
+    if (typeof response === "object" && "data" in response) {
       return (response as ZenStackResponse<T>).data as T;
     }
 
@@ -385,7 +447,9 @@ export class TestPlanItClient {
    * Uses the /api/cli/lookup endpoint
    */
   async lookup(options: LookupRequest): Promise<LookupResponse> {
-    return this.request<LookupResponse>('POST', '/api/cli/lookup', { body: options });
+    return this.request<LookupResponse>("POST", "/api/cli/lookup", {
+      body: options,
+    });
   }
 
   // ============================================================================
@@ -396,7 +460,7 @@ export class TestPlanItClient {
    * Get project by ID
    */
   async getProject(projectId: number): Promise<Project> {
-    return this.zenstack<Project>('projects', 'findUnique', {
+    return this.zenstack<Project>("projects", "findUnique", {
       where: { id: projectId },
     });
   }
@@ -405,7 +469,7 @@ export class TestPlanItClient {
    * List all projects accessible to the authenticated user
    */
   async listProjects(): Promise<Project[]> {
-    return this.zenstack<Project[]>('projects', 'findMany', {
+    return this.zenstack<Project[]>("projects", "findMany", {
       where: { isDeleted: false },
     });
   }
@@ -423,7 +487,7 @@ export class TestPlanItClient {
       return this.statusCache.get(projectId)!;
     }
 
-    const statuses = await this.zenstack<Status[]>('status', 'findMany', {
+    const statuses = await this.zenstack<Status[]>("status", "findMany", {
       where: {
         isEnabled: true,
         isDeleted: false,
@@ -435,7 +499,7 @@ export class TestPlanItClient {
         scope: {
           some: {
             scope: {
-              name: 'Automation',
+              name: "Automation",
             },
           },
         },
@@ -452,16 +516,19 @@ export class TestPlanItClient {
   /**
    * Get status ID for a normalized status name
    */
-  async getStatusId(projectId: number, status: NormalizedStatus): Promise<number | undefined> {
+  async getStatusId(
+    projectId: number,
+    status: NormalizedStatus
+  ): Promise<number | undefined> {
     const statuses = await this.getStatuses(projectId);
 
     // Map normalized status to system names
     const systemNameMap: Record<NormalizedStatus, string[]> = {
-      passed: ['passed', 'pass', 'success'],
-      failed: ['failed', 'fail', 'failure', 'error'],
-      skipped: ['skipped', 'skip', 'ignored'],
-      blocked: ['blocked', 'block'],
-      pending: ['pending', 'untested', 'not_run'],
+      passed: ["passed", "pass", "success"],
+      failed: ["failed", "fail", "failure", "error"],
+      skipped: ["skipped", "skip", "ignored"],
+      blocked: ["blocked", "block"],
+      pending: ["pending", "untested", "not_run"],
     };
 
     const systemNames = systemNameMap[status];
@@ -497,46 +564,56 @@ export class TestPlanItClient {
    */
   async createTestRun(options: CreateTestRunOptions): Promise<TestRun> {
     // Get the IN_PROGRESS workflow state for RUNS (or first available if none)
-    const workflows = await this.zenstack<WorkflowState[]>('workflows', 'findMany', {
-      where: {
-        isEnabled: true,
-        isDeleted: false,
-        scope: 'RUNS',
-        workflowType: 'IN_PROGRESS',
-        projects: {
-          some: { projectId: options.projectId },
-        },
-      },
-      orderBy: { order: 'asc' },
-      take: 1,
-    });
-
-    // Fall back to any RUNS workflow if no IN_PROGRESS one exists
-    let defaultStateId = options.stateId || workflows[0]?.id;
-    if (!defaultStateId) {
-      const fallbackWorkflows = await this.zenstack<WorkflowState[]>('workflows', 'findMany', {
+    const workflows = await this.zenstack<WorkflowState[]>(
+      "workflows",
+      "findMany",
+      {
         where: {
           isEnabled: true,
           isDeleted: false,
-          scope: 'RUNS',
+          scope: "RUNS",
+          workflowType: "IN_PROGRESS",
           projects: {
             some: { projectId: options.projectId },
           },
         },
-        orderBy: { order: 'asc' },
+        orderBy: { order: "asc" },
         take: 1,
-      });
+      }
+    );
+
+    // Fall back to any RUNS workflow if no IN_PROGRESS one exists
+    let defaultStateId = options.stateId || workflows[0]?.id;
+    if (!defaultStateId) {
+      const fallbackWorkflows = await this.zenstack<WorkflowState[]>(
+        "workflows",
+        "findMany",
+        {
+          where: {
+            isEnabled: true,
+            isDeleted: false,
+            scope: "RUNS",
+            projects: {
+              some: { projectId: options.projectId },
+            },
+          },
+          orderBy: { order: "asc" },
+          take: 1,
+        }
+      );
       defaultStateId = fallbackWorkflows[0]?.id;
     }
 
     if (!defaultStateId) {
-      throw new TestPlanItError('No workflow state found for test runs in this project');
+      throw new TestPlanItError(
+        "No workflow state found for test runs in this project"
+      );
     }
 
     // ZenStack REST API requires relation syntax (connect) instead of scalar FK fields
     const data: Record<string, unknown> = {
       name: options.name,
-      testRunType: options.testRunType ?? 'REGULAR',
+      testRunType: options.testRunType ?? "REGULAR",
       project: { connect: { id: options.projectId } },
       state: { connect: { id: defaultStateId } },
     };
@@ -552,14 +629,14 @@ export class TestPlanItClient {
       data.tags = { connect: options.tagIds.map((id) => ({ id })) };
     }
 
-    return this.zenstack<TestRun>('testRuns', 'create', { data });
+    return this.zenstack<TestRun>("testRuns", "create", { data });
   }
 
   /**
    * Get a test run by ID
    */
   async getTestRun(testRunId: number): Promise<TestRun> {
-    return this.zenstack<TestRun>('testRuns', 'findUnique', {
+    return this.zenstack<TestRun>("testRuns", "findUnique", {
       where: { id: testRunId },
     });
   }
@@ -567,8 +644,11 @@ export class TestPlanItClient {
   /**
    * Update a test run
    */
-  async updateTestRun(testRunId: number, options: UpdateTestRunOptions): Promise<TestRun> {
-    return this.zenstack<TestRun>('testRuns', 'update', {
+  async updateTestRun(
+    testRunId: number,
+    options: UpdateTestRunOptions
+  ): Promise<TestRun> {
+    return this.zenstack<TestRun>("testRuns", "update", {
       where: { id: testRunId },
       data: options,
     });
@@ -580,21 +660,28 @@ export class TestPlanItClient {
    * @param testRunId - The test run ID
    * @param projectId - The project ID (required to look up the DONE workflow state)
    */
-  async completeTestRun(testRunId: number, projectId: number): Promise<TestRun> {
+  async completeTestRun(
+    testRunId: number,
+    projectId: number
+  ): Promise<TestRun> {
     // Get the DONE workflow state for RUNS
-    const workflows = await this.zenstack<WorkflowState[]>('workflows', 'findMany', {
-      where: {
-        isEnabled: true,
-        isDeleted: false,
-        scope: 'RUNS',
-        workflowType: 'DONE',
-        projects: {
-          some: { projectId },
+    const workflows = await this.zenstack<WorkflowState[]>(
+      "workflows",
+      "findMany",
+      {
+        where: {
+          isEnabled: true,
+          isDeleted: false,
+          scope: "RUNS",
+          workflowType: "DONE",
+          projects: {
+            some: { projectId },
+          },
         },
-      },
-      orderBy: { order: 'asc' },
-      take: 1,
-    });
+        orderBy: { order: "asc" },
+        take: 1,
+      }
+    );
 
     const doneStateId = workflows[0]?.id;
 
@@ -611,12 +698,14 @@ export class TestPlanItClient {
    * List test runs for a project
    * Uses the dedicated /api/test-runs/completed endpoint
    */
-  async listTestRuns(options: ListTestRunsOptions): Promise<PaginatedResponse<TestRun>> {
+  async listTestRuns(
+    options: ListTestRunsOptions
+  ): Promise<PaginatedResponse<TestRun>> {
     const response = await this.request<{
       runs: TestRun[];
       totalCount: number;
       pageCount: number;
-    }>('GET', '/api/test-runs/completed', {
+    }>("GET", "/api/test-runs/completed", {
       query: {
         projectId: options.projectId,
         page: options.page ?? 1,
@@ -638,9 +727,12 @@ export class TestPlanItClient {
   /**
    * Find a test run by name using CLI lookup
    */
-  async findTestRunByName(projectId: number, name: string): Promise<TestRun | undefined> {
+  async findTestRunByName(
+    projectId: number,
+    name: string
+  ): Promise<TestRun | undefined> {
     try {
-      const result = await this.lookup({ projectId, type: 'testRun', name });
+      const result = await this.lookup({ projectId, type: "testRun", name });
       return this.getTestRun(result.id);
     } catch (error) {
       if (error instanceof TestPlanItError && error.statusCode === 404) {
@@ -658,7 +750,7 @@ export class TestPlanItClient {
    * List all configurations
    */
   async listConfigurations(projectId: number): Promise<Configuration[]> {
-    return this.zenstack<Configuration[]>('configurations', 'findMany', {
+    return this.zenstack<Configuration[]>("configurations", "findMany", {
       where: {
         isDeleted: false,
         isEnabled: true,
@@ -669,10 +761,13 @@ export class TestPlanItClient {
   /**
    * Find a configuration by name using CLI lookup
    */
-  async findConfigurationByName(projectId: number, name: string): Promise<Configuration | undefined> {
+  async findConfigurationByName(
+    projectId: number,
+    name: string
+  ): Promise<Configuration | undefined> {
     try {
-      const result = await this.lookup({ type: 'config', name });
-      return this.zenstack<Configuration>('configurations', 'findUnique', {
+      const result = await this.lookup({ type: "config", name });
+      return this.zenstack<Configuration>("configurations", "findUnique", {
         where: { id: result.id },
       });
     } catch (error) {
@@ -691,7 +786,7 @@ export class TestPlanItClient {
    * List all milestones for a project
    */
   async listMilestones(projectId: number): Promise<Milestone[]> {
-    return this.zenstack<Milestone[]>('milestones', 'findMany', {
+    return this.zenstack<Milestone[]>("milestones", "findMany", {
       where: {
         projectId: projectId,
         isDeleted: false,
@@ -702,10 +797,13 @@ export class TestPlanItClient {
   /**
    * Find a milestone by name using CLI lookup
    */
-  async findMilestoneByName(projectId: number, name: string): Promise<Milestone | undefined> {
+  async findMilestoneByName(
+    projectId: number,
+    name: string
+  ): Promise<Milestone | undefined> {
     try {
-      const result = await this.lookup({ projectId, type: 'milestone', name });
-      return this.zenstack<Milestone>('milestones', 'findUnique', {
+      const result = await this.lookup({ projectId, type: "milestone", name });
+      return this.zenstack<Milestone>("milestones", "findUnique", {
         where: { id: result.id },
       });
     } catch (error) {
@@ -724,26 +822,29 @@ export class TestPlanItClient {
    * List all workflow states for a project (RUNS scope)
    */
   async listWorkflowStates(projectId: number): Promise<WorkflowState[]> {
-    return this.zenstack<WorkflowState[]>('workflows', 'findMany', {
+    return this.zenstack<WorkflowState[]>("workflows", "findMany", {
       where: {
         isEnabled: true,
         isDeleted: false,
-        scope: 'RUNS',
+        scope: "RUNS",
         projects: {
           some: { projectId: projectId },
         },
       },
-      orderBy: { order: 'asc' },
+      orderBy: { order: "asc" },
     });
   }
 
   /**
    * Find a workflow state by name using CLI lookup
    */
-  async findWorkflowStateByName(projectId: number, name: string): Promise<WorkflowState | undefined> {
+  async findWorkflowStateByName(
+    projectId: number,
+    name: string
+  ): Promise<WorkflowState | undefined> {
     try {
-      const result = await this.lookup({ projectId, type: 'state', name });
-      return this.zenstack<WorkflowState>('workflows', 'findUnique', {
+      const result = await this.lookup({ projectId, type: "state", name });
+      return this.zenstack<WorkflowState>("workflows", "findUnique", {
         where: { id: result.id },
       });
     } catch (error) {
@@ -762,7 +863,7 @@ export class TestPlanItClient {
    * List all folders for a project
    */
   async listFolders(projectId: number): Promise<RepositoryFolder[]> {
-    return this.zenstack<RepositoryFolder[]>('repositoryFolders', 'findMany', {
+    return this.zenstack<RepositoryFolder[]>("repositoryFolders", "findMany", {
       where: {
         projectId: projectId,
         isDeleted: false,
@@ -773,12 +874,19 @@ export class TestPlanItClient {
   /**
    * Find a folder by name using CLI lookup
    */
-  async findFolderByName(projectId: number, name: string): Promise<RepositoryFolder | undefined> {
+  async findFolderByName(
+    projectId: number,
+    name: string
+  ): Promise<RepositoryFolder | undefined> {
     try {
-      const result = await this.lookup({ projectId, type: 'folder', name });
-      return this.zenstack<RepositoryFolder>('repositoryFolders', 'findUnique', {
-        where: { id: result.id },
-      });
+      const result = await this.lookup({ projectId, type: "folder", name });
+      return this.zenstack<RepositoryFolder>(
+        "repositoryFolders",
+        "findUnique",
+        {
+          where: { id: result.id },
+        }
+      );
     } catch (error) {
       if (error instanceof TestPlanItError && error.statusCode === 404) {
         return undefined;
@@ -792,24 +900,32 @@ export class TestPlanItClient {
    */
   async createFolder(options: CreateFolderOptions): Promise<RepositoryFolder> {
     // Get or create repository for the project
-    let repositories = await this.zenstack<{ id: number }[]>('repositories', 'findMany', {
-      where: {
-        projectId: options.projectId,
-        isActive: true,
-        isDeleted: false,
-        isArchived: false,
-      },
-      take: 1,
-    });
+    let repositories = await this.zenstack<{ id: number }[]>(
+      "repositories",
+      "findMany",
+      {
+        where: {
+          projectId: options.projectId,
+          isActive: true,
+          isDeleted: false,
+          isArchived: false,
+        },
+        take: 1,
+      }
+    );
 
     let repositoryId: number;
     if (repositories.length === 0) {
-      const newRepo = await this.zenstack<{ id: number }>('repositories', 'create', {
-        data: {
-          project: { connect: { id: options.projectId } },
-          isActive: true,
-        },
-      });
+      const newRepo = await this.zenstack<{ id: number }>(
+        "repositories",
+        "create",
+        {
+          data: {
+            project: { connect: { id: options.projectId } },
+            isActive: true,
+          },
+        }
+      );
       repositoryId = newRepo.id;
     } else {
       repositoryId = repositories[0].id;
@@ -825,7 +941,9 @@ export class TestPlanItClient {
       data.parent = { connect: { id: options.parentId } };
     }
 
-    return this.zenstack<RepositoryFolder>('repositoryFolders', 'create', { data });
+    return this.zenstack<RepositoryFolder>("repositoryFolders", "create", {
+      data,
+    });
   }
 
   /**
@@ -845,7 +963,7 @@ export class TestPlanItClient {
     rootFolderId?: number
   ): Promise<RepositoryFolder> {
     if (folderPath.length === 0) {
-      throw new TestPlanItError('Folder path cannot be empty');
+      throw new TestPlanItError("Folder path cannot be empty");
     }
 
     // Get all folders for this project to enable efficient lookups
@@ -890,7 +1008,7 @@ export class TestPlanItClient {
    * ZenStack access control handles permission filtering automatically
    */
   async listTemplates(projectId: number): Promise<Template[]> {
-    return this.zenstack<Template[]>('templates', 'findMany', {
+    return this.zenstack<Template[]>("templates", "findMany", {
       where: {
         isDeleted: false,
         isEnabled: true,
@@ -902,19 +1020,30 @@ export class TestPlanItClient {
    * Find a template by name (case-insensitive)
    * Logs available templates if template not found for debugging
    */
-  async findTemplateByName(projectId: number, name: string): Promise<Template | undefined> {
+  async findTemplateByName(
+    projectId: number,
+    name: string
+  ): Promise<Template | undefined> {
     const templates = await this.listTemplates(projectId);
 
     const normalizedName = name.toLowerCase().trim();
-    const found = templates.find((t) => t.templateName.toLowerCase().trim() === normalizedName);
+    const found = templates.find(
+      (t) => t.templateName.toLowerCase().trim() === normalizedName
+    );
 
     // Log error only when template not found
     if (!found) {
       if (templates.length === 0) {
-        console.error(`[TestPlanIt API] Template "${name}" not found. No templates available. This may be a permissions issue - ensure the API token user has access to templates.`);
+        console.error(
+          `[TestPlanIt API] Template "${name}" not found. No templates available. This may be a permissions issue - ensure the API token user has access to templates.`
+        );
       } else {
         const availableNames = templates.map((t) => t.templateName);
-        console.error(`[TestPlanIt API] Template "${name}" not found. Available templates: ${availableNames.join(', ')}`);
+        console.error(
+          `[TestPlanIt API] Template "${name}" not found. Available templates: ${availableNames.join(
+            ", "
+          )}`
+        );
       }
     }
 
@@ -929,7 +1058,7 @@ export class TestPlanItClient {
    * List all tags
    */
   async listTags(projectId: number): Promise<Tag[]> {
-    return this.zenstack<Tag[]>('tags', 'findMany', {
+    return this.zenstack<Tag[]>("tags", "findMany", {
       where: {
         isDeleted: false,
       },
@@ -940,7 +1069,7 @@ export class TestPlanItClient {
    * Create a new tag
    */
   async createTag(options: CreateTagOptions): Promise<Tag> {
-    return this.zenstack<Tag>('tags', 'create', {
+    return this.zenstack<Tag>("tags", "create", {
       data: {
         name: options.name,
       },
@@ -950,10 +1079,13 @@ export class TestPlanItClient {
   /**
    * Find a tag by name using CLI lookup
    */
-  async findTagByName(projectId: number, name: string): Promise<Tag | undefined> {
+  async findTagByName(
+    projectId: number,
+    name: string
+  ): Promise<Tag | undefined> {
     try {
-      const result = await this.lookup({ type: 'tag', name });
-      return this.zenstack<Tag>('tags', 'findUnique', {
+      const result = await this.lookup({ type: "tag", name });
+      return this.zenstack<Tag>("tags", "findUnique", {
         where: { id: result.id },
       });
     } catch (error) {
@@ -968,8 +1100,12 @@ export class TestPlanItClient {
    * Find or create a tag by name using CLI lookup with createIfMissing
    */
   async findOrCreateTag(projectId: number, name: string): Promise<Tag> {
-    const result = await this.lookup({ type: 'tag', name, createIfMissing: true });
-    return this.zenstack<Tag>('tags', 'findUnique', {
+    const result = await this.lookup({
+      type: "tag",
+      name,
+      createIfMissing: true,
+    });
+    return this.zenstack<Tag>("tags", "findUnique", {
       where: { id: result.id },
     });
   }
@@ -978,14 +1114,21 @@ export class TestPlanItClient {
    * Resolve multiple tag IDs or names to numeric IDs
    * If a tag name doesn't exist, it will be created automatically
    */
-  async resolveTagIds(projectId: number, tagIdsOrNames: (number | string)[]): Promise<number[]> {
+  async resolveTagIds(
+    projectId: number,
+    tagIdsOrNames: (number | string)[]
+  ): Promise<number[]> {
     const resolvedIds: number[] = [];
 
     for (const idOrName of tagIdsOrNames) {
-      if (typeof idOrName === 'number') {
+      if (typeof idOrName === "number") {
         resolvedIds.push(idOrName);
       } else {
-        const result = await this.lookup({ type: 'tag', name: idOrName, createIfMissing: true });
+        const result = await this.lookup({
+          type: "tag",
+          name: idOrName,
+          createIfMissing: true,
+        });
         resolvedIds.push(result.id);
       }
     }
@@ -1000,26 +1143,36 @@ export class TestPlanItClient {
   /**
    * Create a new test case in the repository
    */
-  async createTestCase(options: CreateTestCaseOptions): Promise<RepositoryCase> {
+  async createTestCase(
+    options: CreateTestCaseOptions
+  ): Promise<RepositoryCase> {
     // Get or create repository for the project
-    let repositories = await this.zenstack<{ id: number }[]>('repositories', 'findMany', {
-      where: {
-        projectId: options.projectId,
-        isActive: true,
-        isDeleted: false,
-        isArchived: false,
-      },
-      take: 1,
-    });
+    let repositories = await this.zenstack<{ id: number }[]>(
+      "repositories",
+      "findMany",
+      {
+        where: {
+          projectId: options.projectId,
+          isActive: true,
+          isDeleted: false,
+          isArchived: false,
+        },
+        take: 1,
+      }
+    );
 
     let repositoryId: number;
     if (repositories.length === 0) {
-      const newRepo = await this.zenstack<{ id: number }>('repositories', 'create', {
-        data: {
-          project: { connect: { id: options.projectId } },
-          isActive: true,
-        },
-      });
+      const newRepo = await this.zenstack<{ id: number }>(
+        "repositories",
+        "create",
+        {
+          data: {
+            project: { connect: { id: options.projectId } },
+            isActive: true,
+          },
+        }
+      );
       repositoryId = newRepo.id;
     } else {
       repositoryId = repositories[0].id;
@@ -1028,21 +1181,27 @@ export class TestPlanItClient {
     // Get the workflow state - either provided or default for CASES scope
     let stateId = options.stateId;
     if (!stateId) {
-      const workflows = await this.zenstack<{ id: number }[]>('workflows', 'findMany', {
-        where: {
-          isEnabled: true,
-          isDeleted: false,
-          scope: 'CASES',
-          projects: {
-            some: { projectId: options.projectId },
+      const workflows = await this.zenstack<{ id: number }[]>(
+        "workflows",
+        "findMany",
+        {
+          where: {
+            isEnabled: true,
+            isDeleted: false,
+            scope: "CASES",
+            projects: {
+              some: { projectId: options.projectId },
+            },
           },
-        },
-        orderBy: { order: 'asc' },
-        take: 1,
-      });
+          orderBy: { order: "asc" },
+          take: 1,
+        }
+      );
 
       if (workflows.length === 0) {
-        throw new TestPlanItError('No workflow state found for test cases in this project');
+        throw new TestPlanItError(
+          "No workflow state found for test cases in this project"
+        );
       }
       stateId = workflows[0].id;
     }
@@ -1050,7 +1209,7 @@ export class TestPlanItClient {
     // ZenStack REST API requires relation syntax (connect) instead of scalar FK fields
     const data: Record<string, unknown> = {
       name: options.name,
-      source: options.source ?? 'API',
+      source: options.source ?? "API",
       automated: options.automated ?? true,
       project: { connect: { id: options.projectId } },
       repository: { connect: { id: repositoryId } },
@@ -1065,14 +1224,14 @@ export class TestPlanItClient {
       data.estimate = options.estimate;
     }
 
-    return this.zenstack<RepositoryCase>('repositoryCases', 'create', { data });
+    return this.zenstack<RepositoryCase>("repositoryCases", "create", { data });
   }
 
   /**
    * Get a test case by ID
    */
   async getTestCase(caseId: number): Promise<RepositoryCase> {
-    return this.zenstack<RepositoryCase>('repositoryCases', 'findUnique', {
+    return this.zenstack<RepositoryCase>("repositoryCases", "findUnique", {
       where: { id: caseId },
     });
   }
@@ -1081,7 +1240,7 @@ export class TestPlanItClient {
    * Find test cases matching criteria
    */
   async findTestCases(options: FindTestCaseOptions): Promise<RepositoryCase[]> {
-    return this.zenstack<RepositoryCase[]>('repositoryCases', 'findMany', {
+    return this.zenstack<RepositoryCase[]>("repositoryCases", "findMany", {
       where: {
         projectId: options.projectId,
         name: options.name,
@@ -1098,19 +1257,25 @@ export class TestPlanItClient {
    * Note: Lookup is by name/className/source (not folder) - if a matching case exists
    * anywhere in the project, it will be reused. The folderId is only used when creating new cases.
    */
-  async findOrCreateTestCase(options: CreateTestCaseOptions): Promise<RepositoryCase> {
+  async findOrCreateTestCase(
+    options: CreateTestCaseOptions
+  ): Promise<RepositoryCase> {
     // First, check for an existing ACTIVE test case (not deleted)
     // Note: We don't filter by folder - if the test case exists anywhere, reuse it
-    const existingCases = await this.zenstack<RepositoryCase[]>('repositoryCases', 'findMany', {
-      where: {
-        projectId: options.projectId,
-        name: options.name,
-        className: options.className || '',
-        source: options.source ?? 'API',
-        isDeleted: false,
-      },
-      take: 1,
-    });
+    const existingCases = await this.zenstack<RepositoryCase[]>(
+      "repositoryCases",
+      "findMany",
+      {
+        where: {
+          projectId: options.projectId,
+          name: options.name,
+          className: options.className || "",
+          source: options.source ?? "API",
+          isDeleted: false,
+        },
+        take: 1,
+      }
+    );
 
     if (existingCases.length > 0) {
       // Found an active test case, return it (even if in different folder)
@@ -1119,24 +1284,32 @@ export class TestPlanItClient {
 
     // No active test case found, create a new one
     // Get or create repository for the project
-    let repositories = await this.zenstack<{ id: number }[]>('repositories', 'findMany', {
-      where: {
-        projectId: options.projectId,
-        isActive: true,
-        isDeleted: false,
-        isArchived: false,
-      },
-      take: 1,
-    });
+    let repositories = await this.zenstack<{ id: number }[]>(
+      "repositories",
+      "findMany",
+      {
+        where: {
+          projectId: options.projectId,
+          isActive: true,
+          isDeleted: false,
+          isArchived: false,
+        },
+        take: 1,
+      }
+    );
 
     let repositoryId: number;
     if (repositories.length === 0) {
-      const newRepo = await this.zenstack<{ id: number }>('repositories', 'create', {
-        data: {
-          project: { connect: { id: options.projectId } },
-          isActive: true,
-        },
-      });
+      const newRepo = await this.zenstack<{ id: number }>(
+        "repositories",
+        "create",
+        {
+          data: {
+            project: { connect: { id: options.projectId } },
+            isActive: true,
+          },
+        }
+      );
       repositoryId = newRepo.id;
     } else {
       repositoryId = repositories[0].id;
@@ -1145,21 +1318,27 @@ export class TestPlanItClient {
     // Get the workflow state - either provided or default for CASES scope
     let stateId = options.stateId;
     if (!stateId) {
-      const workflows = await this.zenstack<{ id: number }[]>('workflows', 'findMany', {
-        where: {
-          isEnabled: true,
-          isDeleted: false,
-          scope: 'CASES',
-          projects: {
-            some: { projectId: options.projectId },
+      const workflows = await this.zenstack<{ id: number }[]>(
+        "workflows",
+        "findMany",
+        {
+          where: {
+            isEnabled: true,
+            isDeleted: false,
+            scope: "CASES",
+            projects: {
+              some: { projectId: options.projectId },
+            },
           },
-        },
-        orderBy: { order: 'asc' },
-        take: 1,
-      });
+          orderBy: { order: "asc" },
+          take: 1,
+        }
+      );
 
       if (workflows.length === 0) {
-        throw new TestPlanItError('No workflow state found for test cases in this project');
+        throw new TestPlanItError(
+          "No workflow state found for test cases in this project"
+        );
       }
       stateId = workflows[0].id;
     }
@@ -1167,7 +1346,7 @@ export class TestPlanItClient {
     // ZenStack REST API requires relation syntax (connect) instead of scalar FK fields
     const createData: Record<string, unknown> = {
       name: options.name,
-      source: options.source ?? 'API',
+      source: options.source ?? "API",
       automated: options.automated ?? true,
       project: { connect: { id: options.projectId } },
       repository: { connect: { id: repositoryId } },
@@ -1184,13 +1363,13 @@ export class TestPlanItClient {
 
     // Use upsert to handle race conditions - if a deleted record exists with the same
     // composite key, restore it; otherwise create new
-    return this.zenstack<RepositoryCase>('repositoryCases', 'upsert', {
+    return this.zenstack<RepositoryCase>("repositoryCases", "upsert", {
       where: {
         projectId_name_className_source: {
           projectId: options.projectId,
           name: options.name,
-          className: options.className || '',
-          source: options.source ?? 'API',
+          className: options.className || "",
+          source: options.source ?? "API",
         },
       },
       update: {
@@ -1209,7 +1388,9 @@ export class TestPlanItClient {
   /**
    * Add a test case to a test run
    */
-  async addTestCaseToRun(options: AddTestCaseToRunOptions): Promise<TestRunCase> {
+  async addTestCaseToRun(
+    options: AddTestCaseToRunOptions
+  ): Promise<TestRunCase> {
     // ZenStack REST API requires relation syntax (connect) instead of scalar FK fields
     const data: Record<string, unknown> = {
       testRun: { connect: { id: options.testRunId } },
@@ -1218,14 +1399,14 @@ export class TestPlanItClient {
     if (options.assignedToId) {
       data.assignedTo = { connect: { id: options.assignedToId } };
     }
-    return this.zenstack<TestRunCase>('testRunCases', 'create', { data });
+    return this.zenstack<TestRunCase>("testRunCases", "create", { data });
   }
 
   /**
    * Get test run cases for a test run
    */
   async getTestRunCases(testRunId: number): Promise<TestRunCase[]> {
-    return this.zenstack<TestRunCase[]>('testRunCases', 'findMany', {
+    return this.zenstack<TestRunCase[]>("testRunCases", "findMany", {
       where: { testRunId: testRunId },
     });
   }
@@ -1233,21 +1414,30 @@ export class TestPlanItClient {
   /**
    * Find a test run case by repository case ID
    */
-  async findTestRunCase(testRunId: number, repositoryCaseId: number): Promise<TestRunCase | undefined> {
-    const cases = await this.zenstack<TestRunCase[]>('testRunCases', 'findMany', {
-      where: {
-        testRunId: testRunId,
-        repositoryCaseId: repositoryCaseId,
-      },
-      take: 1,
-    });
+  async findTestRunCase(
+    testRunId: number,
+    repositoryCaseId: number
+  ): Promise<TestRunCase | undefined> {
+    const cases = await this.zenstack<TestRunCase[]>(
+      "testRunCases",
+      "findMany",
+      {
+        where: {
+          testRunId: testRunId,
+          repositoryCaseId: repositoryCaseId,
+        },
+        take: 1,
+      }
+    );
     return cases[0];
   }
 
   /**
    * Find or add a test case to a run
    */
-  async findOrAddTestCaseToRun(options: AddTestCaseToRunOptions): Promise<TestRunCase> {
+  async findOrAddTestCaseToRun(
+    options: AddTestCaseToRunOptions
+  ): Promise<TestRunCase> {
     // ZenStack REST API requires relation syntax (connect) instead of scalar FK fields
     const createData: Record<string, unknown> = {
       testRun: { connect: { id: options.testRunId } },
@@ -1256,7 +1446,7 @@ export class TestPlanItClient {
     if (options.assignedToId) {
       createData.assignedTo = { connect: { id: options.assignedToId } };
     }
-    return this.zenstack<TestRunCase>('testRunCases', 'upsert', {
+    return this.zenstack<TestRunCase>("testRunCases", "upsert", {
       where: {
         testRunId_repositoryCaseId: {
           testRunId: options.testRunId,
@@ -1275,7 +1465,9 @@ export class TestPlanItClient {
   /**
    * Create a test result
    */
-  async createTestResult(options: CreateTestResultOptions): Promise<TestRunResult> {
+  async createTestResult(
+    options: CreateTestResultOptions
+  ): Promise<TestRunResult> {
     // ZenStack REST API requires relation syntax (connect) instead of scalar FK fields
     const data: Record<string, unknown> = {
       testRun: { connect: { id: options.testRunId } },
@@ -1292,14 +1484,14 @@ export class TestPlanItClient {
     if (options.evidence) {
       data.evidence = options.evidence;
     }
-    return this.zenstack<TestRunResult>('testRunResults', 'create', { data });
+    return this.zenstack<TestRunResult>("testRunResults", "create", { data });
   }
 
   /**
    * Get test results for a test run
    */
   async getTestResults(testRunId: number): Promise<TestRunResult[]> {
-    return this.zenstack<TestRunResult[]>('testRunResults', 'findMany', {
+    return this.zenstack<TestRunResult[]>("testRunResults", "findMany", {
       where: { testRunId: testRunId },
     });
   }
@@ -1320,29 +1512,33 @@ export class TestPlanItClient {
 
     // Add files
     for (const file of options.files) {
-      formData.append('files', file);
+      formData.append("files", file);
     }
 
     // Add options
-    formData.append('projectId', String(options.projectId));
-    if (options.format) formData.append('format', options.format);
-    if (options.testRunId) formData.append('testRunId', String(options.testRunId));
-    if (options.name) formData.append('name', options.name);
-    if (options.configId) formData.append('configId', String(options.configId));
-    if (options.milestoneId) formData.append('milestoneId', String(options.milestoneId));
-    if (options.stateId) formData.append('stateId', String(options.stateId));
-    if (options.parentFolderId) formData.append('parentFolderId', String(options.parentFolderId));
-    if (options.templateId) formData.append('templateId', String(options.templateId));
+    formData.append("projectId", String(options.projectId));
+    if (options.format) formData.append("format", options.format);
+    if (options.testRunId)
+      formData.append("testRunId", String(options.testRunId));
+    if (options.name) formData.append("name", options.name);
+    if (options.configId) formData.append("configId", String(options.configId));
+    if (options.milestoneId)
+      formData.append("milestoneId", String(options.milestoneId));
+    if (options.stateId) formData.append("stateId", String(options.stateId));
+    if (options.parentFolderId)
+      formData.append("parentFolderId", String(options.parentFolderId));
+    if (options.templateId)
+      formData.append("templateId", String(options.templateId));
     if (options.tagIds) {
       for (const tagId of options.tagIds) {
-        formData.append('tagIds', String(tagId));
+        formData.append("tagIds", String(tagId));
       }
     }
 
-    const url = new URL('/api/test-results/import', this.baseUrl);
+    const url = new URL("/api/test-results/import", this.baseUrl);
 
     const response = await fetch(url.toString(), {
-      method: 'POST',
+      method: "POST",
       headers: {
         Authorization: `Bearer ${this.apiToken}`,
         ...this.headers,
@@ -1360,7 +1556,7 @@ export class TestPlanItClient {
     // Handle SSE response
     const reader = response.body?.getReader();
     if (!reader) {
-      throw new TestPlanItError('No response body');
+      throw new TestPlanItError("No response body");
     }
 
     const decoder = new TextDecoder();
@@ -1371,7 +1567,9 @@ export class TestPlanItClient {
       if (done) break;
 
       const text = decoder.decode(value);
-      const lines = text.split('\n').filter((line) => line.startsWith('data: '));
+      const lines = text
+        .split("\n")
+        .filter((line) => line.startsWith("data: "));
 
       for (const line of lines) {
         const data = line.slice(6); // Remove 'data: '
@@ -1394,7 +1592,7 @@ export class TestPlanItClient {
     }
 
     if (!testRunId) {
-      throw new TestPlanItError('Import completed but no test run ID returned');
+      throw new TestPlanItError("Import completed but no test run ID returned");
     }
 
     return { testRunId };
@@ -1417,19 +1615,24 @@ export class TestPlanItClient {
     const formData = new FormData();
 
     if (file instanceof Buffer) {
-      formData.append('file', new Blob([file], { type: mimeType }), fileName);
+      formData.append("file", new Blob([file], { type: mimeType }), fileName);
     } else {
-      formData.append('file', file, fileName);
+      formData.append("file", file, fileName);
     }
     if (prependString) {
-      formData.append('prependString', prependString);
+      formData.append("prependString", prependString);
     }
 
-    const response = await this.requestFormData<{ success: { url: string; key: string } }>(
-      'POST',
-      '/api/upload-attachment',
-      formData
-    );
+    const response = await this.requestFormData<{
+      success: { url: string; key: string };
+    }>("POST", "/api/upload-attachment", formData);
+
+    if (!response || !response.success || !response.success.url) {
+      throw new TestPlanItError(
+        "Upload failed: API returned an empty or invalid response"
+      );
+    }
+
     return response.success;
   }
 
@@ -1444,19 +1647,24 @@ export class TestPlanItClient {
     mimeType?: string
   ): Promise<Attachment> {
     // Step 1: Upload file to storage
-    const { url } = await this.uploadFile(file, fileName, mimeType, `result_${testRunResultId}`);
+    const { url } = await this.uploadFile(
+      file,
+      fileName,
+      mimeType,
+      `result_${testRunResultId}`
+    );
 
     // Step 2: Create attachment record
     const size = Buffer.isBuffer(file) ? file.length : file.size;
     const data: Record<string, unknown> = {
       url,
       name: fileName,
-      mimeType: mimeType || 'application/octet-stream',
+      mimeType: mimeType || "application/octet-stream",
       size,
       testRunResults: { connect: { id: testRunResultId } },
     };
 
-    return this.zenstack<Attachment>('attachments', 'create', { data });
+    return this.zenstack<Attachment>("attachments", "create", { data });
   }
 
   /**
@@ -1470,19 +1678,24 @@ export class TestPlanItClient {
     mimeType?: string
   ): Promise<Attachment> {
     // Step 1: Upload file to storage
-    const { url } = await this.uploadFile(file, fileName, mimeType, `junit_${junitTestResultId}`);
+    const { url } = await this.uploadFile(
+      file,
+      fileName,
+      mimeType,
+      `junit_${junitTestResultId}`
+    );
 
     // Step 2: Create attachment record linked to JUnit result
     const size = Buffer.isBuffer(file) ? file.length : file.size;
     const data: Record<string, unknown> = {
       url,
       name: fileName,
-      mimeType: mimeType || 'application/octet-stream',
+      mimeType: mimeType || "application/octet-stream",
       size,
       junitTestResult: { connect: { id: junitTestResultId } },
     };
 
-    return this.zenstack<Attachment>('attachments', 'create', { data });
+    return this.zenstack<Attachment>("attachments", "create", { data });
   }
 
   // ============================================================================
@@ -1493,7 +1706,9 @@ export class TestPlanItClient {
    * Create a JUnit test suite
    * Used for storing test results from automated test frameworks (Mocha, JUnit, etc.)
    */
-  async createJUnitTestSuite(options: CreateJUnitTestSuiteOptions): Promise<JUnitTestSuite> {
+  async createJUnitTestSuite(
+    options: CreateJUnitTestSuiteOptions
+  ): Promise<JUnitTestSuite> {
     const data: Record<string, unknown> = {
       name: options.name,
       testRun: { connect: { id: options.testRunId } },
@@ -1511,14 +1726,16 @@ export class TestPlanItClient {
     if (options.systemErr) data.systemErr = options.systemErr;
     if (options.parentId) data.parent = { connect: { id: options.parentId } };
 
-    return this.zenstack<JUnitTestSuite>('jUnitTestSuite', 'create', { data });
+    return this.zenstack<JUnitTestSuite>("jUnitTestSuite", "create", { data });
   }
 
   /**
    * Create a JUnit test result
    * Used for storing individual test case results within a test suite
    */
-  async createJUnitTestResult(options: CreateJUnitTestResultOptions): Promise<JUnitTestResult> {
+  async createJUnitTestResult(
+    options: CreateJUnitTestResultOptions
+  ): Promise<JUnitTestResult> {
     const data: Record<string, unknown> = {
       type: options.type,
       testSuite: { connect: { id: options.testSuiteId } },
@@ -1536,14 +1753,19 @@ export class TestPlanItClient {
     if (options.systemOut) data.systemOut = options.systemOut;
     if (options.systemErr) data.systemErr = options.systemErr;
 
-    return this.zenstack<JUnitTestResult>('jUnitTestResult', 'create', { data });
+    return this.zenstack<JUnitTestResult>("jUnitTestResult", "create", {
+      data,
+    });
   }
 
   /**
    * Update a JUnit test suite
    * Used to update statistics (tests, failures, errors, skipped, time) after all results are reported
    */
-  async updateJUnitTestSuite(testSuiteId: number, options: UpdateJUnitTestSuiteOptions): Promise<JUnitTestSuite> {
+  async updateJUnitTestSuite(
+    testSuiteId: number,
+    options: UpdateJUnitTestSuiteOptions
+  ): Promise<JUnitTestSuite> {
     const data: Record<string, unknown> = {};
 
     if (options.time !== undefined) data.time = options.time;
@@ -1555,7 +1777,7 @@ export class TestPlanItClient {
     if (options.systemOut) data.systemOut = options.systemOut;
     if (options.systemErr) data.systemErr = options.systemErr;
 
-    return this.zenstack<JUnitTestSuite>('jUnitTestSuite', 'update', {
+    return this.zenstack<JUnitTestSuite>("jUnitTestSuite", "update", {
       where: { id: testSuiteId },
       data,
     });
@@ -1565,9 +1787,9 @@ export class TestPlanItClient {
    * Get JUnit test suites for a test run
    */
   async getJUnitTestSuites(testRunId: number): Promise<JUnitTestSuite[]> {
-    return this.zenstack<JUnitTestSuite[]>('jUnitTestSuite', 'findMany', {
+    return this.zenstack<JUnitTestSuite[]>("jUnitTestSuite", "findMany", {
       where: { testRunId },
-      orderBy: { id: 'asc' },
+      orderBy: { id: "asc" },
     });
   }
 
@@ -1575,9 +1797,9 @@ export class TestPlanItClient {
    * Get JUnit test results for a test suite
    */
   async getJUnitTestResults(testSuiteId: number): Promise<JUnitTestResult[]> {
-    return this.zenstack<JUnitTestResult[]>('jUnitTestResult', 'findMany', {
+    return this.zenstack<JUnitTestResult[]>("jUnitTestResult", "findMany", {
       where: { testSuiteId },
-      orderBy: { id: 'asc' },
+      orderBy: { id: "asc" },
     });
   }
 
