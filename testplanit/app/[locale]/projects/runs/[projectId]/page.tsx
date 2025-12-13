@@ -12,7 +12,7 @@ import {
   useFindManyTestRunResults,
   useCreateTestRuns,
 } from "~/lib/hooks";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CompletedTestRunsResponse } from "~/app/api/test-runs/completed/route";
 import TestRunDisplay from "./TestRunDisplay";
 import {
@@ -105,6 +105,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   // Tab State - persisted in URL
   const [activeTab, setActiveTab] = useTabState("tab", "active");
+  const queryClient = useQueryClient();
 
   // Pagination from context (URL-persisted and respects user preferences)
   const {
@@ -442,6 +443,23 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
       );
     }
   }, [allIncompleteTestRuns, runTypeFilter]);
+
+  // Handle tab change with query invalidation
+  const handleTabChange = useCallback(
+    (newTab: string) => {
+      setActiveTab(newTab);
+      if (newTab === "completed" && numericProjectId) {
+        // Invalidate completed runs query to fetch fresh data
+        queryClient.invalidateQueries({
+          queryKey: ["completedTestRuns", numericProjectId],
+        });
+      } else if (newTab === "active") {
+        // Refetch active runs when switching to active tab
+        refetchIncompleteTestRuns();
+      }
+    },
+    [setActiveTab, numericProjectId, queryClient, refetchIncompleteTestRuns]
+  );
 
   // Prepare data for Sunburst Chart
   const sunburstChartData: SunburstHierarchyNode = useMemo(() => {
@@ -1165,7 +1183,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                 )}
               </div>
 
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full">
                   <TabsTrigger value="active" className="w-1/2">
                     {tCommon("status.active")}

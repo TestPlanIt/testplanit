@@ -396,12 +396,25 @@ ${error.stack}` : "";
     if (!this.reporterOptions.uploadScreenshots) {
       return;
     }
-    const isScreenshotCommand = commandArgs.command === "takeScreenshot" || commandArgs.endpoint?.includes("/screenshot");
-    if (!isScreenshotCommand || !commandArgs.result) {
+    const isScreenshotCommand = commandArgs.command === "takeScreenshot" || commandArgs.command === "saveScreenshot" || commandArgs.endpoint?.includes("/screenshot");
+    if (!isScreenshotCommand) {
       return;
     }
-    const screenshotData = commandArgs.result;
+    this.log(`Screenshot command detected: ${commandArgs.command}, endpoint: ${commandArgs.endpoint}`);
+    const result = commandArgs.result;
+    const resultValue = (typeof result === "object" && result !== null ? result.value : result) ?? result;
+    if (!resultValue) {
+      this.log("No result value in screenshot command");
+      return;
+    }
+    const screenshotData = resultValue;
     if (typeof screenshotData !== "string") {
+      this.log(`Screenshot result is not a string: ${typeof screenshotData}`);
+      return;
+    }
+    const looksLikeFilePath = screenshotData.startsWith("/") || /^[A-Za-z]:[\\\/]/.test(screenshotData) || screenshotData.startsWith("./") || screenshotData.startsWith("../");
+    if (looksLikeFilePath) {
+      this.log(`Screenshot result appears to be a file path: ${screenshotData.substring(0, 100)}`);
       return;
     }
     if (this.currentTestUid) {
@@ -410,6 +423,8 @@ ${error.stack}` : "";
       existing.push(buffer);
       this.pendingScreenshots.set(this.currentTestUid, existing);
       this.log("Captured screenshot for test:", this.currentTestUid, `(${buffer.length} bytes)`);
+    } else {
+      this.log("No current test UID to associate screenshot with");
     }
   }
   onTestPass(test) {
@@ -652,6 +667,7 @@ ${error.stack}` : "";
         for (let i = 0; i < screenshots.length; i++) {
           try {
             const fileName = `screenshot_${i + 1}_${Date.now()}.png`;
+            this.log(`Starting upload of ${fileName} (${screenshots[i].length} bytes) to JUnit result ${result.junitResultId}...`);
             await this.client.uploadJUnitAttachment(
               result.junitResultId,
               screenshots[i],
@@ -660,7 +676,12 @@ ${error.stack}` : "";
             );
             this.log(`Uploaded screenshot ${i + 1}/${screenshots.length}`);
           } catch (uploadError) {
-            this.logError(`Failed to upload screenshot ${i + 1}:`, uploadError);
+            const errorMessage = uploadError instanceof Error ? uploadError.message : String(uploadError);
+            const errorStack = uploadError instanceof Error ? uploadError.stack : void 0;
+            this.logError(`Failed to upload screenshot ${i + 1}:`, errorMessage);
+            if (errorStack) {
+              this.logError("Stack trace:", errorStack);
+            }
           }
         }
       }
