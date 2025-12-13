@@ -10,6 +10,7 @@ import {
   useFindManyMilestones,
   useFindManySessionResults,
 } from "~/lib/hooks";
+import { useQueryClient } from "@tanstack/react-query";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useTabState } from "~/hooks/useTabState";
 import SessionDisplay from "./SessionDisplay";
@@ -93,6 +94,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
 
   // Tab State - persisted in URL
   const [activeTab, setActiveTab] = useTabState("tab", "active");
+  const queryClient = useQueryClient();
 
   // Dialog State
   const [isChartDialogOpen, setIsChartDialogOpen] = useState(false);
@@ -199,8 +201,12 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     project: true,
   };
 
-  const { data: incompleteSessions, isLoading: isLoadingIncomplete } =
-    useFindManySessions({
+  const {
+    data: incompleteSessions,
+    isLoading: isLoadingIncomplete,
+    refetch: refetchIncompleteSessions,
+  } = useFindManySessions(
+    {
       where: {
         AND: [
           { projectId: numericProjectId ?? undefined },
@@ -210,12 +216,20 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
       },
       orderBy: [{ createdAt: "asc" }, { completedAt: "asc" }],
       include: queryInclude,
-    }) ?? { data: [], isLoading: false };
+    },
+    {
+      refetchInterval: activeTab === "active" ? 30000 : false, // Refetch every 30s when on active tab
+    }
+  ) ?? { data: [], isLoading: false, refetch: () => {} };
 
   // Query for ALL completed sessions (used ONLY for summary cards and initial data)
   // This query runs once and is never affected by filtering
-  const { data: allCompletedSessions, isLoading: isLoadingAllCompleted } =
-    useFindManySessions({
+  const {
+    data: allCompletedSessions,
+    isLoading: isLoadingAllCompleted,
+    refetch: refetchCompletedSessions,
+  } = useFindManySessions(
+    {
       where: {
         AND: [
           { projectId: numericProjectId ?? undefined },
@@ -225,7 +239,11 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
       },
       orderBy: [{ completedAt: "desc" }],
       include: queryInclude,
-    }) ?? { data: [], isLoading: false };
+    },
+    {
+      refetchInterval: activeTab === "completed" ? 30000 : false, // Refetch every 30s when on completed tab
+    }
+  ) ?? { data: [], isLoading: false, refetch: () => {} };
 
   // Optimized query ONLY for completion trend chart (last 6 months)
   // Only fetches completedAt field to minimize data transfer
@@ -281,6 +299,21 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
 
   // Use the all completed sessions loading state for summary cards
   const isLoadingCompleted = isLoadingAllCompleted;
+
+  // Handle tab change with query invalidation
+  const handleTabChange = useCallback(
+    (newTab: string) => {
+      setActiveTab(newTab);
+      if (newTab === "completed") {
+        // Refetch completed sessions when switching to completed tab
+        refetchCompletedSessions();
+      } else if (newTab === "active") {
+        // Refetch active sessions when switching to active tab
+        refetchIncompleteSessions();
+      }
+    },
+    [setActiveTab, refetchCompletedSessions, refetchIncompleteSessions]
+  );
 
   const { data: milestones, isLoading: isLoadingMilestones } =
     useFindManyMilestones({
@@ -882,7 +915,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
               {/* --- End Summary Metrics Display --- */}
 
               {/* --- Start Restored Tabs Component --- */}
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full">
                   <TabsTrigger value="active" className="w-1/2">
                     {t("common.status.active")}

@@ -415,17 +415,22 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     data: allIncompleteTestRuns,
     isLoading: isLoadingIncompleteRuns,
     refetch: refetchIncompleteTestRuns,
-  } = useFindManyTestRuns({
-    where: {
-      AND: [
-        { projectId: numericProjectId ?? undefined },
-        { isCompleted: false },
-        { isDeleted: false },
-      ],
+  } = useFindManyTestRuns(
+    {
+      where: {
+        AND: [
+          { projectId: numericProjectId ?? undefined },
+          { isCompleted: false },
+          { isDeleted: false },
+        ],
+      },
+      orderBy: [{ createdAt: "asc" }, { completedAt: "asc" }],
+      select: querySelect,
     },
-    orderBy: [{ createdAt: "asc" }, { completedAt: "asc" }],
-    select: querySelect,
-  }) ?? { data: [], isLoading: false, refetch: () => {} };
+    {
+      refetchInterval: activeTab === "active" ? 30000 : false, // Refetch every 30s when on active tab
+    }
+  ) ?? { data: [], isLoading: false, refetch: () => {} };
 
   // Apply type filter to incomplete (active) runs
   const incompleteTestRuns = useMemo(() => {
@@ -620,6 +625,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     },
     enabled: !!numericProjectId && activeTab === "completed",
     staleTime: 30000, // Cache for 30 seconds
+    refetchInterval: activeTab === "completed" ? 30000 : false, // Refetch every 30s when on completed tab
   });
 
   const completedTestRuns = completedRunsData?.runs || [];

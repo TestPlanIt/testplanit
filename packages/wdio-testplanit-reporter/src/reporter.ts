@@ -883,6 +883,11 @@ export default class TestPlanItReporter extends WDIOReporter {
     // so screenshots taken in afterTest wouldn't be available during reportResult
     if (this.reporterOptions.uploadScreenshots && this.pendingScreenshots.size > 0) {
       this.log(`Uploading screenshots for ${this.pendingScreenshots.size} test(s)...`);
+
+      // Create upload promises for all screenshots and track them
+      // This ensures WebdriverIO waits for uploads to complete (via isSynchronised)
+      const uploadPromises: Promise<void>[] = [];
+
       for (const [uid, screenshots] of this.pendingScreenshots.entries()) {
         const result = this.state.results.get(uid);
         if (!result?.junitResultId) {
@@ -892,26 +897,36 @@ export default class TestPlanItReporter extends WDIOReporter {
 
         this.log(`Uploading ${screenshots.length} screenshot(s) for test:`, result.testName);
         for (let i = 0; i < screenshots.length; i++) {
-          try {
-            const fileName = `screenshot_${i + 1}_${Date.now()}.png`;
-            this.log(`Starting upload of ${fileName} (${screenshots[i].length} bytes) to JUnit result ${result.junitResultId}...`);
-            await this.client.uploadJUnitAttachment(
-              result.junitResultId,
-              screenshots[i],
-              fileName,
-              'image/png'
-            );
-            this.log(`Uploaded screenshot ${i + 1}/${screenshots.length}`);
-          } catch (uploadError) {
-            const errorMessage = uploadError instanceof Error ? uploadError.message : String(uploadError);
-            const errorStack = uploadError instanceof Error ? uploadError.stack : undefined;
-            this.logError(`Failed to upload screenshot ${i + 1}:`, errorMessage);
-            if (errorStack) {
-              this.logError('Stack trace:', errorStack);
+          const uploadPromise = (async () => {
+            try {
+              const fileName = `screenshot_${i + 1}_${Date.now()}.png`;
+              this.log(`Starting upload of ${fileName} (${screenshots[i].length} bytes) to JUnit result ${result.junitResultId}...`);
+              await this.client.uploadJUnitAttachment(
+                result.junitResultId!,
+                screenshots[i],
+                fileName,
+                'image/png'
+              );
+              this.log(`Uploaded screenshot ${i + 1}/${screenshots.length} for ${result.testName}`);
+            } catch (uploadError) {
+              const errorMessage = uploadError instanceof Error ? uploadError.message : String(uploadError);
+              const errorStack = uploadError instanceof Error ? uploadError.stack : undefined;
+              this.logError(`Failed to upload screenshot ${i + 1}:`, errorMessage);
+              if (errorStack) {
+                this.logError('Stack trace:', errorStack);
+              }
             }
-          }
+          })();
+
+          // Track this operation so WebdriverIO waits for it
+          this.trackOperation(uploadPromise);
+          uploadPromises.push(uploadPromise);
         }
       }
+
+      // Wait for all uploads to complete before proceeding
+      await Promise.allSettled(uploadPromises);
+
       // Clear all pending screenshots
       this.pendingScreenshots.clear();
     }
