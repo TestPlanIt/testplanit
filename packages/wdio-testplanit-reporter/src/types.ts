@@ -136,16 +136,13 @@ export interface TestPlanItReporterOptions extends Reporters.Options {
   createFolderHierarchy?: boolean;
 
   /**
-   * Whether to upload screenshots on test failure
+   * Whether to upload screenshots to TestPlanIt.
+   * Note: The reporter intercepts screenshots taken via browser.takeScreenshot() or
+   * browser.saveScreenshot(). You must configure an afterTest hook to capture screenshots
+   * on failure - the reporter does not automatically take screenshots.
    * @default true
    */
   uploadScreenshots?: boolean;
-
-  /**
-   * Whether to include console logs in test results
-   * @default false
-   */
-  includeConsoleLogs?: boolean;
 
   /**
    * Whether to include test error stack traces in results
@@ -223,8 +220,6 @@ export interface TrackedTestResult {
   platform?: string;
   /** Screenshot paths for failed tests */
   screenshots: string[];
-  /** Console logs captured during test */
-  consoleLogs: string[];
   /** Retry attempt number (0-based) */
   retryAttempt: number;
   /** Unique identifier for this test (cid + fullTitle) */

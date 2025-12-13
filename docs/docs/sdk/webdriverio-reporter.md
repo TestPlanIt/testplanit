@@ -77,8 +77,7 @@ After your tests complete, you'll see a summary:
 | `parentFolderId` | `number \| string` | - | Folder for auto-created test cases (ID or name) |
 | `templateId` | `number \| string` | - | Template for auto-created test cases (ID or name) |
 | `tagIds` | `(number \| string)[]` | - | Tags to apply to the test run (IDs or names). Tags that don't exist are created automatically |
-| `uploadScreenshots` | `boolean` | `true` | Upload screenshots on test failure |
-| `includeConsoleLogs` | `boolean` | `false` | Include console logs in results |
+| `uploadScreenshots` | `boolean` | `true` | Upload intercepted screenshots to TestPlanIt (requires `afterTest` hook to capture them) |
 | `includeStackTrace` | `boolean` | `true` | Include stack traces for failures |
 | `completeRunOnFinish` | `boolean` | `true` | Mark run as complete when tests finish |
 | `oneReport` | `boolean` | `true` | Use single test run for all specs |
@@ -301,16 +300,17 @@ This is useful for:
 
 ## Screenshot Uploads
 
-Screenshots are automatically uploaded for failed tests when `uploadScreenshots` is enabled (the default).
+The reporter can upload screenshots to TestPlanIt when `uploadScreenshots` is enabled (the default). However, **the reporter does not automatically capture screenshots** - it intercepts screenshots taken by your WebdriverIO configuration and uploads them.
 
-Configure WebdriverIO to capture screenshots on failure:
+You must configure WebdriverIO to capture screenshots on failure using the `afterTest` hook:
 
 ```javascript
 // wdio.conf.js
 export const config = {
   afterTest: async function(test, context, { error, result, duration, passed }) {
     if (!passed) {
-      await browser.saveScreenshot(`./screenshots/${test.title}.png`);
+      // Take a screenshot - the reporter will intercept and upload it
+      await browser.takeScreenshot();
     }
   },
   reporters: [
@@ -318,11 +318,19 @@ export const config = {
       domain: 'https://testplanit.example.com',
       apiToken: process.env.TESTPLANIT_API_TOKEN,
       projectId: 1,
-      uploadScreenshots: true,
+      uploadScreenshots: true, // Upload intercepted screenshots to TestPlanIt
     }]
   ],
 };
 ```
+
+**How it works:**
+
+1. Your `afterTest` hook calls `browser.takeScreenshot()` when a test fails
+2. The reporter intercepts the screenshot data from the WebdriverIO command
+3. When the test result is reported, the screenshot is uploaded as an attachment
+
+**Note:** Using `browser.saveScreenshot('./path/to/file.png')` also works - the reporter intercepts the screenshot data before it's saved to disk.
 
 ## Associating with Configurations and Milestones
 
@@ -532,7 +540,6 @@ export const config = {
       // Result options
       uploadScreenshots: true,
       includeStackTrace: true,
-      includeConsoleLogs: false,
 
       // Behavior
       completeRunOnFinish: true,

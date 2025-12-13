@@ -79,9 +79,8 @@ describe('Authentication', () => {
 | `repositoryId` | number | No* | - | Repository ID for auto-created cases (*required if autoCreateTestCases is true) |
 | `parentFolderId` | number | No* | - | Folder ID for auto-created cases (*required if autoCreateTestCases is true) |
 | `templateId` | number | No* | - | Template ID for auto-created cases (*required if autoCreateTestCases is true) |
-| `uploadScreenshots` | boolean | No | `true` | Upload screenshots on test failure |
+| `uploadScreenshots` | boolean | No | `true` | Upload intercepted screenshots (requires `afterTest` hook) |
 | `includeStackTrace` | boolean | No | `true` | Include stack traces in results |
-| `includeConsoleLogs` | boolean | No | `false` | Include console logs in results |
 | `completeRunOnFinish` | boolean | No | `true` | Mark test run as completed when done |
 | `oneReport` | boolean | No | `true` | Consolidate all results into one run |
 | `timeout` | number | No | `30000` | API request timeout in ms |
