@@ -931,7 +931,7 @@
       "loadingIssueTracker": "Loading issue tracker info...",
       "enterDocumentation": "Enter documentation...",
       "step": "Step",
-      "noJunitTestSuites": "No JUnit test suites found for this run."
+      "noAutomatedTestResults": "No automated test results found for this run."
     },
     "time": {
       "minutes": "{count, plural, =1 {minute} other {minutes}}",

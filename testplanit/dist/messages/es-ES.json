@@ -931,7 +931,7 @@
       "loadingIssueTracker": "Cargando información del rastreador de problemas...",
       "enterDocumentation": "Ingresar documentación...",
       "step": "Paso",
-      "noJunitTestSuites": "No se encontraron conjuntos de pruebas JUnit para esta ejecución."
+      "noAutomatedTestResults": "No se encontraron resultados de pruebas automatizadas para esta ejecución."
     },
     "time": {
       "minutes": "{count, plural, =1 {minuto} other {minutos}}",
