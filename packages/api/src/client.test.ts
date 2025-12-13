@@ -524,6 +524,8 @@ describe('importTestResults', () => {
     };
   };
 
+  const mockFile = new File(['<testsuites></testsuites>'], 'results.xml');
+
   it('should process SSE events and return testRunId', async () => {
     const sseEvents = [
       'data: {"progress":50}\n',
@@ -537,9 +539,8 @@ describe('importTestResults', () => {
 
     const onProgress = vi.fn();
     const result = await client.importTestResults(
-      new File(['<testsuites></testsuites>'], 'results.xml'),
-      1,
-      { onProgress }
+      { files: [mockFile], projectId: 1 },
+      onProgress
     );
 
     expect(result.testRunId).toBe(123);
@@ -562,9 +563,8 @@ describe('importTestResults', () => {
 
     const onProgress = vi.fn();
     const result = await client.importTestResults(
-      new File(['<testsuites></testsuites>'], 'results.xml'),
-      1,
-      { onProgress }
+      { files: [mockFile], projectId: 1 },
+      onProgress
     );
 
     expect(result.testRunId).toBe(456);
@@ -583,10 +583,7 @@ describe('importTestResults', () => {
     });
 
     await expect(
-      client.importTestResults(
-        new File(['<testsuites></testsuites>'], 'results.xml'),
-        1
-      )
+      client.importTestResults({ files: [mockFile], projectId: 1 })
     ).rejects.toThrow(SyntaxError);
   });
 
@@ -601,10 +598,7 @@ describe('importTestResults', () => {
     });
 
     await expect(
-      client.importTestResults(
-        new File(['<testsuites></testsuites>'], 'results.xml'),
-        1
-      )
+      client.importTestResults({ files: [mockFile], projectId: 1 })
     ).rejects.toThrow(TestPlanItError);
   });
 
@@ -620,10 +614,7 @@ describe('importTestResults', () => {
     });
 
     await expect(
-      client.importTestResults(
-        new File(['<testsuites></testsuites>'], 'results.xml'),
-        1
-      )
+      client.importTestResults({ files: [mockFile], projectId: 1 })
     ).rejects.toThrow('Import completed but no test run ID returned');
   });
 
@@ -640,9 +631,8 @@ describe('importTestResults', () => {
 
     const onProgress = vi.fn();
     const result = await client.importTestResults(
-      new File(['<testsuites></testsuites>'], 'results.xml'),
-      1,
-      { onProgress }
+      { files: [mockFile], projectId: 1 },
+      onProgress
     );
 
     expect(result.testRunId).toBe(789);
@@ -657,10 +647,7 @@ describe('importTestResults', () => {
     });
 
     await expect(
-      client.importTestResults(
-        new File(['<testsuites></testsuites>'], 'results.xml'),
-        1
-      )
+      client.importTestResults({ files: [mockFile], projectId: 1 })
     ).rejects.toThrow(TestPlanItError);
   });
 
@@ -671,10 +658,7 @@ describe('importTestResults', () => {
     });
 
     await expect(
-      client.importTestResults(
-        new File(['<testsuites></testsuites>'], 'results.xml'),
-        1
-      )
+      client.importTestResults({ files: [mockFile], projectId: 1 })
     ).rejects.toThrow('No response body');
   });
 });
