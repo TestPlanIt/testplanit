@@ -40,6 +40,8 @@ interface CommentDisplayProps {
     repositoryCase?: {
       id: number;
       name: string;
+      isDeleted?: boolean;
+      source?: string;
     } | null;
     testRunId: number | null;
     testRun?: {
@@ -95,13 +97,19 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
   let entityNameDisplay = null;
 
   if (comment.repositoryCaseId && comment.repositoryCase) {
-    entityLink = `/projects/repository/${comment.projectId}/${comment.repositoryCaseId}`;
+    const isDeleted = comment.repositoryCase.isDeleted;
+    entityLink = isDeleted
+      ? ""
+      : `/projects/repository/${comment.projectId}/${comment.repositoryCaseId}`;
     entityNameDisplay = (
       <TestCaseNameDisplay
         testCase={{
           id: comment.repositoryCaseId,
           name: comment.repositoryCase.name,
+          isDeleted,
+          source: comment.repositoryCase.source,
         }}
+        projectId={isDeleted ? undefined : comment.projectId}
         showIcon={true}
       />
     );

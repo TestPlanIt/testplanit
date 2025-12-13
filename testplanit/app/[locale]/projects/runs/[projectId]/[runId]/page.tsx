@@ -502,6 +502,7 @@ export default function TestRunPage() {
                       name: true,
                       className: true,
                       source: true,
+                      isDeleted: true,
                       linksFrom: {
                         select: {
                           caseBId: true,
@@ -1248,6 +1249,7 @@ export default function TestRunPage() {
         createdById: testRunData?.createdBy?.id,
         linksFrom: result.repositoryCase?.linksFrom || [],
         linksTo: result.repositoryCase?.linksTo || [],
+        isDeleted: result.repositoryCase?.isDeleted || false,
       }))
     );
     return mapped;

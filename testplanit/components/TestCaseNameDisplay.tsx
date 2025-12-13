@@ -1,4 +1,3 @@
-import React from "react";
 import { Trash2, Bot, ListChecks } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn, type ClassValue } from "~/utils";
@@ -51,7 +50,9 @@ export function TestCaseNameDisplay({
   let icon = null;
   if (showIcon) {
     if (isDeleted) {
-      icon = <Trash2 className="shrink-0 mt-0.5 h-4 w-4" />;
+      icon = (
+        <Trash2 className="shrink-0 mt-0.5 h-4 w-4 text-muted-foreground" />
+      );
     } else if (isAutomatedCaseSource(source)) {
       icon = <Bot className="shrink-0 mt-0.5 h-4 w-4" />;
     } else {
@@ -65,7 +66,15 @@ export function TestCaseNameDisplay({
   const content = (
     <>
       {icon}
-      <span className={cn("min-w-0", className)}>{displayName}</span>
+      <span
+        className={cn(
+          "min-w-0",
+          isDeleted && "text-muted-foreground line-through",
+          className
+        )}
+      >
+        {displayName}
+      </span>
     </>
   );
 

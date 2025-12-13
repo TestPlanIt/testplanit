@@ -5,10 +5,9 @@ import { toHumanReadable } from "~/utils/duration";
 import { DateFormatter } from "@/components/DateFormatter";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import type { Session } from "next-auth";
-import { ListChecks, Bot, LinkIcon } from "lucide-react";
-import { Link } from "~/lib/navigation";
+import { LinkIcon } from "lucide-react";
+import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
-import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 export function getJunitColumns({
   t,
@@ -27,23 +26,25 @@ export function getJunitColumns({
       enableSorting: true,
       enableHiding: false,
       enableResizing: true,
-      cell: ({ row }: { row: { original: any } }) => (
-        <span className="flex items-center group">
-          {isAutomatedCaseSource(row.original.source) ? (
-            <Bot className="w-4 h-4 mr-1 text-primary shrink-0" />
-          ) : (
-            <ListChecks className="w-4 h-4 mr-1 text-primary shrink-0" />
-          )}
-
-          <Link
-            className="truncate"
-            href={`/projects/repository/${projectId}/${row.original.id}`}
-          >
-            {row.original.name}
-          </Link>
-          <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-        </span>
-      ),
+      cell: ({ row }: { row: { original: any } }) => {
+        const isDeleted = row.original.isDeleted;
+        return (
+          <span className="flex items-center group">
+            <TestCaseNameDisplay
+              testCase={{
+                id: row.original.id,
+                name: row.original.name,
+                isDeleted,
+                source: row.original.source,
+              }}
+              projectId={isDeleted ? undefined : projectId}
+            />
+            {!isDeleted && (
+              <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            )}
+          </span>
+        );
+      },
       maxSize: 500,
       meta: { isPinned: "left" },
     },
