@@ -685,9 +685,8 @@ declare class TestPlanItClient {
     findTestCases(options: FindTestCaseOptions): Promise<RepositoryCase[]>;
     /**
      * Find or create a test case
-     * First searches for an active (non-deleted) test case, then creates if not found
-     * Note: Lookup is by name/className/source (not folder) - if a matching case exists
-     * anywhere in the project, it will be reused. The folderId is only used when creating new cases.
+     * First searches for an active (non-deleted) test case in an active folder, then creates if not found.
+     * If a matching case exists in a deleted folder, it will be moved to the specified folder.
      */
     findOrCreateTestCase(options: CreateTestCaseOptions): Promise<RepositoryCase>;
     /**

@@ -497,6 +497,188 @@ describe('TestPlanItClient', () => {
   });
 });
 
+describe('importTestResults', () => {
+  let client: TestPlanItClient;
+
+  beforeEach(() => {
+    mockFetch.mockReset();
+    client = new TestPlanItClient({
+      baseUrl: 'https://testplanit.example.com',
+      apiToken: 'tpi_test_token',
+    });
+  });
+
+  // Helper to create a mock SSE ReadableStream
+  const createSSEStream = (events: string[]) => {
+    let index = 0;
+    return {
+      getReader: () => ({
+        read: async () => {
+          if (index >= events.length) {
+            return { done: true, value: undefined };
+          }
+          const encoder = new TextEncoder();
+          return { done: false, value: encoder.encode(events[index++]) };
+        },
+      }),
+    };
+  };
+
+  it('should process SSE events and return testRunId', async () => {
+    const sseEvents = [
+      'data: {"progress":50}\n',
+      'data: {"complete":true,"testRunId":123}\n',
+    ];
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      body: createSSEStream(sseEvents),
+    });
+
+    const onProgress = vi.fn();
+    const result = await client.importTestResults(
+      new File(['<testsuites></testsuites>'], 'results.xml'),
+      1,
+      { onProgress }
+    );
+
+    expect(result.testRunId).toBe(123);
+    expect(onProgress).toHaveBeenCalledTimes(2);
+    expect(onProgress).toHaveBeenNthCalledWith(1, { progress: 50 });
+    expect(onProgress).toHaveBeenNthCalledWith(2, { complete: true, testRunId: 123 });
+  });
+
+  it('should handle data split across multiple chunks', async () => {
+    // Simulate data being split mid-line across chunks
+    const sseEvents = [
+      'data: {"prog',  // First chunk - incomplete line
+      'ress":25}\ndata: {"complete":true,"testRunId":456}\n',  // Second chunk completes first line and adds another
+    ];
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      body: createSSEStream(sseEvents),
+    });
+
+    const onProgress = vi.fn();
+    const result = await client.importTestResults(
+      new File(['<testsuites></testsuites>'], 'results.xml'),
+      1,
+      { onProgress }
+    );
+
+    expect(result.testRunId).toBe(456);
+    expect(onProgress).toHaveBeenCalledTimes(2);
+    expect(onProgress).toHaveBeenNthCalledWith(1, { progress: 25 });
+  });
+
+  it('should throw error for malformed JSON data', async () => {
+    const sseEvents = [
+      'data: {invalid json}\n',
+    ];
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      body: createSSEStream(sseEvents),
+    });
+
+    await expect(
+      client.importTestResults(
+        new File(['<testsuites></testsuites>'], 'results.xml'),
+        1
+      )
+    ).rejects.toThrow(SyntaxError);
+  });
+
+  it('should throw TestPlanItError when event contains error', async () => {
+    const sseEvents = [
+      'data: {"error":"Import failed: invalid format"}\n',
+    ];
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      body: createSSEStream(sseEvents),
+    });
+
+    await expect(
+      client.importTestResults(
+        new File(['<testsuites></testsuites>'], 'results.xml'),
+        1
+      )
+    ).rejects.toThrow(TestPlanItError);
+  });
+
+  it('should throw error if no testRunId is returned', async () => {
+    const sseEvents = [
+      'data: {"progress":100}\n',
+      'data: {"complete":true}\n',  // Missing testRunId
+    ];
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      body: createSSEStream(sseEvents),
+    });
+
+    await expect(
+      client.importTestResults(
+        new File(['<testsuites></testsuites>'], 'results.xml'),
+        1
+      )
+    ).rejects.toThrow('Import completed but no test run ID returned');
+  });
+
+  it('should handle remaining buffer data after stream ends', async () => {
+    // Stream ends with data that doesn't have a trailing newline
+    const sseEvents = [
+      'data: {"complete":true,"testRunId":789}',  // No trailing newline
+    ];
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      body: createSSEStream(sseEvents),
+    });
+
+    const onProgress = vi.fn();
+    const result = await client.importTestResults(
+      new File(['<testsuites></testsuites>'], 'results.xml'),
+      1,
+      { onProgress }
+    );
+
+    expect(result.testRunId).toBe(789);
+    expect(onProgress).toHaveBeenCalledWith({ complete: true, testRunId: 789 });
+  });
+
+  it('should throw error for HTTP errors', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      text: async () => 'Bad request',
+    });
+
+    await expect(
+      client.importTestResults(
+        new File(['<testsuites></testsuites>'], 'results.xml'),
+        1
+      )
+    ).rejects.toThrow(TestPlanItError);
+  });
+
+  it('should throw error if response has no body', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      body: null,
+    });
+
+    await expect(
+      client.importTestResults(
+        new File(['<testsuites></testsuites>'], 'results.xml'),
+        1
+      )
+    ).rejects.toThrow('No response body');
+  });
+});
+
 describe('TestPlanItError', () => {
   it('should create error with message', () => {
     const error = new TestPlanItError('Test error');

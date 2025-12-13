@@ -1281,33 +1281,54 @@ export class TestPlanItClient {
 
   /**
    * Find or create a test case
-   * First searches for an active (non-deleted) test case, then creates if not found
-   * Note: Lookup is by name/className/source (not folder) - if a matching case exists
-   * anywhere in the project, it will be reused. The folderId is only used when creating new cases.
+   * First searches for an active (non-deleted) test case in an active folder, then creates if not found.
+   * If a matching case exists in a deleted folder, it will be moved to the specified folder.
    */
   async findOrCreateTestCase(
     options: CreateTestCaseOptions
   ): Promise<RepositoryCase> {
-    // First, check for an existing ACTIVE test case (not deleted)
-    // Note: We don't filter by folder - if the test case exists anywhere, reuse it
-    const existingCases = await this.zenstack<RepositoryCase[]>(
-      "repositoryCases",
-      "findMany",
-      {
-        where: {
-          projectId: options.projectId,
-          name: options.name,
-          className: options.className || "",
-          source: options.source ?? "API",
-          isDeleted: false,
+    // First, check for an existing ACTIVE test case (not deleted) in an ACTIVE folder
+    const existingCases = await this.zenstack<
+      (RepositoryCase & { folder?: { isDeleted: boolean } })[]
+    >("repositoryCases", "findMany", {
+      where: {
+        projectId: options.projectId,
+        name: options.name,
+        className: options.className || "",
+        source: options.source ?? "API",
+        isDeleted: false,
+      },
+      include: {
+        folder: {
+          select: { isDeleted: true },
         },
-        take: 1,
-      }
+      },
+      take: 10, // Get a few to check folder status
+    });
+
+    // Find a test case in an active (non-deleted) folder
+    const caseInActiveFolder = existingCases.find(
+      (c) => c.folder && !c.folder.isDeleted
     );
 
-    if (existingCases.length > 0) {
-      // Found an active test case, return it (even if in different folder)
-      return existingCases[0];
+    if (caseInActiveFolder) {
+      // Found an active test case in an active folder
+      return caseInActiveFolder;
+    }
+
+    // Check if there's a test case in a deleted folder that we should move
+    const caseInDeletedFolder = existingCases.find(
+      (c) => c.folder && c.folder.isDeleted
+    );
+
+    if (caseInDeletedFolder) {
+      // Move the test case to the new folder
+      return this.zenstack<RepositoryCase>("repositoryCases", "update", {
+        where: { id: caseInDeletedFolder.id },
+        data: {
+          folder: { connect: { id: options.folderId } },
+        },
+      });
     }
 
     // No active test case found, create a new one
@@ -1390,7 +1411,7 @@ export class TestPlanItClient {
     }
 
     // Use upsert to handle race conditions - if a deleted record exists with the same
-    // composite key, restore it; otherwise create new
+    // composite key, restore it and move to the new folder; otherwise create new
     return this.zenstack<RepositoryCase>("repositoryCases", "upsert", {
       where: {
         projectId_name_className_source: {
@@ -1404,6 +1425,8 @@ export class TestPlanItClient {
         automated: options.automated ?? true,
         isDeleted: false,
         isArchived: false,
+        // Also move to the new folder when restoring (in case old folder was deleted)
+        folder: { connect: { id: options.folderId } },
       },
       create: createData,
     });
@@ -1589,32 +1612,48 @@ export class TestPlanItClient {
 
     const decoder = new TextDecoder();
     let testRunId: number | undefined;
+    let buffer = "";
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const text = decoder.decode(value);
-      const lines = text
-        .split("\n")
-        .filter((line) => line.startsWith("data: "));
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      // Keep the last potentially incomplete line in the buffer
+      buffer = lines.pop() || "";
 
       for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
         const data = line.slice(6); // Remove 'data: '
-        try {
-          const event = JSON.parse(data) as ImportProgressEvent;
-          onProgress?.(event);
+        if (!data) continue;
 
-          if (event.complete && event.testRunId) {
-            testRunId = event.testRunId;
-          }
+        const event = JSON.parse(data) as ImportProgressEvent;
+        onProgress?.(event);
 
-          if (event.error) {
-            throw new TestPlanItError(event.error);
-          }
-        } catch (e) {
-          if (e instanceof TestPlanItError) throw e;
-          // Ignore JSON parse errors for partial data
+        if (event.complete && event.testRunId) {
+          testRunId = event.testRunId;
+        }
+
+        if (event.error) {
+          throw new TestPlanItError(event.error);
+        }
+      }
+    }
+
+    // Process any remaining data in the buffer
+    if (buffer.startsWith("data: ")) {
+      const data = buffer.slice(6);
+      if (data) {
+        const event = JSON.parse(data) as ImportProgressEvent;
+        onProgress?.(event);
+
+        if (event.complete && event.testRunId) {
+          testRunId = event.testRunId;
+        }
+
+        if (event.error) {
+          throw new TestPlanItError(event.error);
         }
       }
     }

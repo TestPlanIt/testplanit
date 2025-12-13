@@ -937,27 +937,42 @@ var TestPlanItClient = class {
   }
   /**
    * Find or create a test case
-   * First searches for an active (non-deleted) test case, then creates if not found
-   * Note: Lookup is by name/className/source (not folder) - if a matching case exists
-   * anywhere in the project, it will be reused. The folderId is only used when creating new cases.
+   * First searches for an active (non-deleted) test case in an active folder, then creates if not found.
+   * If a matching case exists in a deleted folder, it will be moved to the specified folder.
    */
   async findOrCreateTestCase(options) {
-    const existingCases = await this.zenstack(
-      "repositoryCases",
-      "findMany",
-      {
-        where: {
-          projectId: options.projectId,
-          name: options.name,
-          className: options.className || "",
-          source: options.source ?? "API",
-          isDeleted: false
-        },
-        take: 1
-      }
+    const existingCases = await this.zenstack("repositoryCases", "findMany", {
+      where: {
+        projectId: options.projectId,
+        name: options.name,
+        className: options.className || "",
+        source: options.source ?? "API",
+        isDeleted: false
+      },
+      include: {
+        folder: {
+          select: { isDeleted: true }
+        }
+      },
+      take: 10
+      // Get a few to check folder status
+    });
+    const caseInActiveFolder = existingCases.find(
+      (c) => c.folder && !c.folder.isDeleted
     );
-    if (existingCases.length > 0) {
-      return existingCases[0];
+    if (caseInActiveFolder) {
+      return caseInActiveFolder;
+    }
+    const caseInDeletedFolder = existingCases.find(
+      (c) => c.folder && c.folder.isDeleted
+    );
+    if (caseInDeletedFolder) {
+      return this.zenstack("repositoryCases", "update", {
+        where: { id: caseInDeletedFolder.id },
+        data: {
+          folder: { connect: { id: options.folderId } }
+        }
+      });
     }
     let repositories = await this.zenstack(
       "repositories",
@@ -1041,7 +1056,9 @@ var TestPlanItClient = class {
       update: {
         automated: options.automated ?? true,
         isDeleted: false,
-        isArchived: false
+        isArchived: false,
+        // Also move to the new folder when restoring (in case old folder was deleted)
+        folder: { connect: { id: options.folderId } }
       },
       create: createData
     });
@@ -1192,24 +1209,37 @@ var TestPlanItClient = class {
     }
     const decoder = new TextDecoder();
     let testRunId;
+    let buffer = "";
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const text = decoder.decode(value);
-      const lines = text.split("\n").filter((line) => line.startsWith("data: "));
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
       for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
         const data = line.slice(6);
-        try {
-          const event = JSON.parse(data);
-          onProgress?.(event);
-          if (event.complete && event.testRunId) {
-            testRunId = event.testRunId;
-          }
-          if (event.error) {
-            throw new TestPlanItError(event.error);
-          }
-        } catch (e) {
-          if (e instanceof TestPlanItError) throw e;
+        if (!data) continue;
+        const event = JSON.parse(data);
+        onProgress?.(event);
+        if (event.complete && event.testRunId) {
+          testRunId = event.testRunId;
+        }
+        if (event.error) {
+          throw new TestPlanItError(event.error);
+        }
+      }
+    }
+    if (buffer.startsWith("data: ")) {
+      const data = buffer.slice(6);
+      if (data) {
+        const event = JSON.parse(data);
+        onProgress?.(event);
+        if (event.complete && event.testRunId) {
+          testRunId = event.testRunId;
+        }
+        if (event.error) {
+          throw new TestPlanItError(event.error);
         }
       }
     }
