@@ -1990,6 +1990,10 @@
     "emptyFolders": "Haga clic en el botón Añadir carpeta para añadir la primera carpeta.",
     "selectedAllCases": "{count, plural, =0 {Se seleccionaron todos los casos} one {Se seleccionó el número de casos en todas las páginas} other {Se seleccionó el número de casos en todas las páginas}}",
     "deselectedAllCases": "Se deseleccionaron todos los casos en todas las páginas.",
+    "selectAllTooltip": "Seleccionar/Deseleccionar todos los casos en esta página",
+    "selectAllShiftTooltip": "{count, plural, =0 {Seleccionar/Deseleccionar todos los casos en todas las páginas} one {Seleccionar/Deseleccionar # caso en todas las páginas} other {Seleccionar/Deseleccionar # casos en todas las páginas}}",
+    "deselectAllShiftTooltip": "Deseleccionar/Seleccionar todos los casos en todas las páginas",
+    "shiftClickHint": "Mantenga presionada la tecla Mayús para seleccionar o deseleccionar todas las páginas",
     "treeView": {
       "expandAll": "Expandir todo",
       "collapseAll": "Colapsar todos",

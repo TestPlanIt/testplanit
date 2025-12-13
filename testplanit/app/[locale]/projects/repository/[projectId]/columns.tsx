@@ -1,7 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useRouter, usePathname } from "~/lib/navigation";
 import { useSearchParams } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
@@ -999,6 +999,105 @@ const AssigneeCell = React.memo(function AssigneeCell({
   );
 });
 
+// Component for select all checkbox with shift-key detection and tooltip
+const SelectAllCheckbox = React.memo(function SelectAllCheckbox({
+  table,
+  handleSelectAllClick,
+  selectCaseLabel,
+  totalItems,
+  isAllSelected,
+}: {
+  table: any;
+  handleSelectAllClick?: (event: React.MouseEvent) => void;
+  selectCaseLabel: string;
+  totalItems: number;
+  isAllSelected: boolean;
+}) {
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
+  const t = useTranslations();
+
+  // Track shift key state
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Shift") {
+        setIsShiftPressed(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Shift") {
+        setIsShiftPressed(false);
+      }
+    };
+
+    // Also handle blur to reset state when window loses focus
+    const handleBlur = () => {
+      setIsShiftPressed(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, []);
+
+  const tooltipContent = isShiftPressed
+    ? isAllSelected
+      ? t("repository.deselectAllShiftTooltip")
+      : t("repository.selectAllShiftTooltip", { count: totalItems })
+    : t("repository.selectAllTooltip");
+
+  return (
+    <TooltipProvider delayDuration={1000}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="cursor-pointer">
+            <Checkbox
+              checked={
+                table.getIsSomeRowsSelected()
+                  ? "indeterminate"
+                  : table.getIsAllRowsSelected()
+              }
+              onCheckedChange={(value) => {
+                if (!handleSelectAllClick) {
+                  table.toggleAllRowsSelected(!!value);
+                }
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (handleSelectAllClick) {
+                  e.preventDefault();
+                  handleSelectAllClick(e);
+                }
+              }}
+              aria-label={selectCaseLabel}
+            />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          align="start"
+          sideOffset={12}
+          className="max-w-xs"
+          style={{ zIndex: 9999 }}
+        >
+          <p className="text-xs">{tooltipContent}</p>
+          {!isShiftPressed && (
+            <p className="text-xs text-primary-foreground/65 mt-1">
+              {t("repository.shiftClickHint")}
+            </p>
+          )}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+});
+
 export const getColumns = (
   session: any,
   uniqueCaseFieldList: CaseFields[],
@@ -1052,7 +1151,9 @@ export const getColumns = (
     selectedCases?: ExtendedCases[];
     steps?: any[];
   }) => void,
-  isMultiConfigRun?: boolean
+  isMultiConfigRun?: boolean,
+  totalItems?: number,
+  selectedCount?: number
 ): ColumnDef<ExtendedCases>[] => {
   const isStepsFieldPresent = uniqueCaseFieldList.some(
     (field) => field.displayName === "Steps"
@@ -1101,31 +1202,22 @@ export const getColumns = (
       const showHandle =
         !isSelectionMode && (isRunMode || (isMode1 && isSortedByOrder));
 
+      // Determine if all items are selected (for tooltip message)
+      const isAllSelected =
+        (selectedCount ?? 0) >= (totalItems ?? 0) && (totalItems ?? 0) > 0;
+
       return (
         <div
           // Use the calculated showHandle to set padding
           className={`flex items-center justify-center w-full ${showHandle ? "pl-6" : "pl-3"}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <Checkbox
-            checked={
-              table.getIsSomeRowsSelected()
-                ? "indeterminate"
-                : table.getIsAllRowsSelected()
-            }
-            onCheckedChange={(value) => {
-              if (!handleSelectAllClick) {
-                table.toggleAllRowsSelected(!!value);
-              }
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (handleSelectAllClick) {
-                e.preventDefault();
-                handleSelectAllClick(e);
-              }
-            }}
-            aria-label={columnTranslations.selectCase}
+          <SelectAllCheckbox
+            table={table}
+            handleSelectAllClick={handleSelectAllClick}
+            selectCaseLabel={columnTranslations.selectCase}
+            totalItems={totalItems ?? 0}
+            isAllSelected={isAllSelected}
           />
         </div>
       );

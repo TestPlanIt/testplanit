@@ -1004,7 +1004,9 @@ export class TestPlanItClient {
             const refreshedFolders = await this.listFolders(projectId);
             const justCreatedFolder = refreshedFolders.find((f) => {
               const folderParentId = f.parentId ?? undefined;
-              return f.name === folderName && folderParentId === currentParentId;
+              return (
+                f.name === folderName && folderParentId === currentParentId
+              );
             });
             if (justCreatedFolder) {
               currentFolder = justCreatedFolder;

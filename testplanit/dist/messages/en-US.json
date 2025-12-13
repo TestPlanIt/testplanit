@@ -1990,6 +1990,10 @@
     "emptyFolders": "Click the Add Folder button above to add the first folder.",
     "selectedAllCases": "{count, plural, =0 {Selected all cases} one {Selected # case across all pages} other {Selected # cases across all pages}}",
     "deselectedAllCases": "Deselected all cases across all pages",
+    "selectAllTooltip": "Select/Deselect all cases on this page",
+    "selectAllShiftTooltip": "{count, plural, =0 {Select/Deselect all cases across all pages} one {Select/Deselect # case across all pages} other {Select/Deselect # cases across all pages}}",
+    "deselectAllShiftTooltip": "Deselect/Select all cases across all pages",
+    "shiftClickHint": "Hold Shift to select/deselect all pages",
     "treeView": {
       "expandAll": "Expand all",
       "collapseAll": "Collapse all",

@@ -1990,6 +1990,10 @@
     "emptyFolders": "Cliquez sur le bouton « Ajouter un dossier » ci-dessus pour ajouter le premier dossier.",
     "selectedAllCases": "{count, plural, =0 {Tous les cas sélectionnés} one {Nombre de cas sélectionnés sur toutes les pages} other {Nombre de cas sélectionnés sur toutes les pages}}",
     "deselectedAllCases": "Tous les cas désélectionnés sur toutes les pages",
+    "selectAllTooltip": "Sélectionnez/Désélectionnez tous les cas sur cette page",
+    "selectAllShiftTooltip": "{count, plural, =0 {Sélectionner/Désélectionner tous les cas sur toutes les pages} one {Sélectionner/Désélectionner # cas sur toutes les pages} other {Sélectionner/Désélectionner # cas sur toutes les pages}}",
+    "deselectAllShiftTooltip": "Désélectionner/Sélectionner tous les cas sur toutes les pages",
+    "shiftClickHint": "Maintenez la touche Maj enfoncée pour sélectionner/désélectionner toutes les pages.",
     "treeView": {
       "expandAll": "Développer tout",
       "collapseAll": "Réduire tout",
