@@ -597,33 +597,13 @@ ${error.stack}` : "";
       });
       this.log("Created JUnit test result:", junitResult.id, "(type:", junitType + ")");
       this.reportedResultCount++;
+      result.junitResultId = junitResult.id;
       this.state.testSuiteStats.tests++;
       this.state.testSuiteStats.time += durationInSeconds;
       if (result.status === "failed") {
         this.state.testSuiteStats.failures++;
       } else if (result.status === "skipped") {
         this.state.testSuiteStats.skipped++;
-      }
-      if (this.reporterOptions.uploadScreenshots) {
-        const screenshots = this.pendingScreenshots.get(result.uid);
-        if (screenshots && screenshots.length > 0) {
-          this.log(`Uploading ${screenshots.length} screenshot(s) for test:`, result.testName);
-          for (let i = 0; i < screenshots.length; i++) {
-            try {
-              const fileName = `screenshot_${i + 1}_${Date.now()}.png`;
-              await this.client.uploadJUnitAttachment(
-                junitResult.id,
-                screenshots[i],
-                fileName,
-                "image/png"
-              );
-              this.log(`Uploaded screenshot ${i + 1}/${screenshots.length}`);
-            } catch (uploadError) {
-              this.logError(`Failed to upload screenshot ${i + 1}:`, uploadError);
-            }
-          }
-          this.pendingScreenshots.delete(result.uid);
-        }
       }
     } catch (error) {
       this.logError(`Failed to report result for ${result.testName}:`, error);
@@ -659,6 +639,32 @@ ${error.stack}` : "";
     if (this.reportedResultCount === 0) {
       this.log("No results were reported to TestPlanIt, skipping summary");
       return;
+    }
+    if (this.reporterOptions.uploadScreenshots && this.pendingScreenshots.size > 0) {
+      this.log(`Uploading screenshots for ${this.pendingScreenshots.size} test(s)...`);
+      for (const [uid, screenshots] of this.pendingScreenshots.entries()) {
+        const result = this.state.results.get(uid);
+        if (!result?.junitResultId) {
+          this.log(`Skipping screenshots for ${uid} - no JUnit result ID`);
+          continue;
+        }
+        this.log(`Uploading ${screenshots.length} screenshot(s) for test:`, result.testName);
+        for (let i = 0; i < screenshots.length; i++) {
+          try {
+            const fileName = `screenshot_${i + 1}_${Date.now()}.png`;
+            await this.client.uploadJUnitAttachment(
+              result.junitResultId,
+              screenshots[i],
+              fileName,
+              "image/png"
+            );
+            this.log(`Uploaded screenshot ${i + 1}/${screenshots.length}`);
+          } catch (uploadError) {
+            this.logError(`Failed to upload screenshot ${i + 1}:`, uploadError);
+          }
+        }
+      }
+      this.pendingScreenshots.clear();
     }
     if (this.state.testSuiteId) {
       try {

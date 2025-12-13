@@ -208,6 +208,8 @@ interface TrackedTestResult {
     specFile?: string;
     /** WebdriverIO command output logs */
     commandOutput?: string;
+    /** JUnit test result ID (set after result is created, used for deferred screenshot upload) */
+    junitResultId?: number;
 }
 /**
  * Resolved IDs after looking up names
