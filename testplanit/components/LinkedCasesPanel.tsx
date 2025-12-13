@@ -20,6 +20,7 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import {
   Select,
   SelectTrigger,
@@ -505,7 +506,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                           href={`/projects/repository/${projectId || (otherCase as any).projectId}/${otherCase.name ? otherCase.id : ""}`}
                           className="font-medium hover:underline flex items-center gap-1"
                         >
-                          {otherCaseSource === "JUNIT" ? (
+                          {isAutomatedCaseSource(otherCaseSource) ? (
                             <Bot className="w-4 h-4 text-primary" />
                           ) : (
                             <ListChecks className="w-4 h-4 text-primary" />

@@ -8,6 +8,7 @@ import type { Session } from "next-auth";
 import { ListChecks, Bot, LinkIcon } from "lucide-react";
 import { Link } from "~/lib/navigation";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 export function getJunitColumns({
   t,
@@ -28,7 +29,7 @@ export function getJunitColumns({
       enableResizing: true,
       cell: ({ row }: { row: { original: any } }) => (
         <span className="flex items-center group">
-          {row.original.source === "JUNIT" ? (
+          {isAutomatedCaseSource(row.original.source) ? (
             <Bot className="w-4 h-4 mr-1 text-primary shrink-0" />
           ) : (
             <ListChecks className="w-4 h-4 mr-1 text-primary shrink-0" />

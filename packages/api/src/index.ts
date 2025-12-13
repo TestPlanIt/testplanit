@@ -40,6 +40,7 @@ export type {
   TestRunType,
   RepositoryCaseSource,
   NormalizedStatus,
+  JUnitResultType,
 
   // Models
   Status,
@@ -56,6 +57,8 @@ export type {
   TestRunResult,
   TestRunStepResult,
   Attachment,
+  JUnitTestSuite,
+  JUnitTestResult,
 
   // Request/Response types
   CreateTestRunOptions,
@@ -64,6 +67,9 @@ export type {
   CreateTagOptions,
   AddTestCaseToRunOptions,
   CreateTestResultOptions,
+  CreateJUnitTestSuiteOptions,
+  CreateJUnitTestResultOptions,
+  UpdateJUnitTestSuiteOptions,
   ListTestRunsOptions,
   PaginatedResponse,
   FindTestCaseOptions,

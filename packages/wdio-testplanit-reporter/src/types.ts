@@ -31,10 +31,26 @@ export interface TestPlanItReporterOptions extends Reporters.Options {
 
   /**
    * Name for the new test run (required if testRunId is not provided)
-   * Supports placeholders: {date}, {time}, {browser}, {platform}
-   * @default 'WebdriverIO Test Run - {date} {time}'
+   * Supports placeholders:
+   * - {date} - Current date (YYYY-MM-DD)
+   * - {time} - Current time (HH:MM:SS)
+   * - {browser} - Browser name from capabilities
+   * - {platform} - Platform/OS name
+   * - {spec} - Spec file name (without .spec.ts extension)
+   * - {suite} - Root suite name (first describe block)
+   * @default '{suite} - {date} {time}'
    */
   runName?: string;
+
+  /**
+   * Test run type to indicate the test framework being used.
+   * Auto-detected from WebdriverIO config:
+   * - 'mocha' framework → 'MOCHA'
+   * - 'cucumber' framework → 'CUCUMBER'
+   * - others → 'REGULAR'
+   * Override this if you need a specific type.
+   */
+  testRunType?: 'REGULAR' | 'JUNIT' | 'TESTNG' | 'XUNIT' | 'NUNIT' | 'MSTEST' | 'MOCHA' | 'CUCUMBER';
 
   /**
    * Configuration to associate with the test run (ID or name).
@@ -109,6 +125,17 @@ export interface TestPlanItReporterOptions extends Reporters.Options {
   autoCreateTestCases?: boolean;
 
   /**
+   * Whether to create folder hierarchy based on Mocha suite structure
+   * When enabled, nested describe blocks create nested folders:
+   * describe('Suite A') > describe('Suite B') > it('test')
+   * Creates folders: parentFolderId > Suite A > Suite B
+   * The test case is placed in the innermost folder
+   * Requires autoCreateTestCases and parentFolderId to be set
+   * @default false
+   */
+  createFolderHierarchy?: boolean;
+
+  /**
    * Whether to upload screenshots on test failure
    * @default true
    */
@@ -168,8 +195,10 @@ export interface TrackedTestResult {
   repositoryCaseId?: number;
   /** Test run case ID */
   testRunCaseId?: number;
-  /** Suite/class name */
+  /** Suite/class name (joined path) */
   suiteName: string;
+  /** Suite path as array (for folder hierarchy) */
+  suitePath: string[];
   /** Test title/name (without case ID prefix) */
   testName: string;
   /** Full test title including parent suites */
@@ -216,11 +245,31 @@ export interface ResolvedIds {
 }
 
 /**
+ * JUnit test suite statistics tracked during test execution
+ */
+export interface JUnitSuiteStats {
+  /** Total tests in suite */
+  tests: number;
+  /** Failed tests */
+  failures: number;
+  /** Errored tests */
+  errors: number;
+  /** Skipped tests */
+  skipped: number;
+  /** Total execution time in milliseconds */
+  time: number;
+}
+
+/**
  * Reporter state
  */
 export interface ReporterState {
   /** Created test run ID */
   testRunId?: number;
+  /** Created JUnit test suite ID (for automated test types) */
+  testSuiteId?: number;
+  /** JUnit test suite statistics */
+  testSuiteStats: JUnitSuiteStats;
   /** Resolved numeric IDs from name lookups */
   resolvedIds: ResolvedIds;
   /** Map of test UID to tracked result */
@@ -229,6 +278,8 @@ export interface ReporterState {
   caseIdMap: Map<string, number>;
   /** Map of test run case keys to IDs */
   testRunCaseMap: Map<string, number>;
+  /** Map of folder paths (joined by >) to folder IDs for caching */
+  folderPathMap: Map<string, number>;
   /** Status ID mappings */
   statusIds: {
     passed?: number;

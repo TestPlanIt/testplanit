@@ -77,6 +77,8 @@ const TreeView: React.FC<{
   }>;
   onRefetchFolders?: (refetch: () => void) => void;
   onRefetchStats?: () => void;
+  /** Ref to an element to scope DnD events to (prevents "Cannot have two HTML5 backends" error in portals) */
+  dndRootElement?: HTMLElement | null;
 }> = ({
   onSelectFolder,
   onHierarchyChange,
@@ -87,6 +89,7 @@ const TreeView: React.FC<{
   folderStatsData,
   onRefetchFolders,
   onRefetchStats,
+  dndRootElement,
 }) => {
   const { projectId } = useParams<{ projectId: string }>();
   const t = useTranslations();
@@ -942,6 +945,7 @@ const TreeView: React.FC<{
         onMove={canAddEdit && !filteredFolders ? handleMove : undefined}
         disableDrag={!canAddEdit || !!filteredFolders}
         disableDrop={!canAddEdit || !!filteredFolders}
+        dndRootElement={dndRootElement || undefined}
       >
         {Node}
       </Tree>

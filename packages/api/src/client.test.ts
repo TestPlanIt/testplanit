@@ -5,6 +5,18 @@ import { TestPlanItClient, TestPlanItError } from './client.js';
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+// Helper to create ZenStack response
+const zenStackResponse = (data: unknown) => ({
+  ok: true,
+  text: async () => JSON.stringify({ data }),
+});
+
+// Helper to create regular response
+const jsonResponse = (data: unknown) => ({
+  ok: true,
+  text: async () => JSON.stringify(data),
+});
+
 describe('TestPlanItClient', () => {
   let client: TestPlanItClient;
 
@@ -58,7 +70,8 @@ describe('TestPlanItClient', () => {
 
   describe('createTestRun', () => {
     it('should create a test run successfully', async () => {
-      const mockResponse = {
+      const mockWorkflows = [{ id: 5, name: 'New', scope: 'RUNS' }];
+      const mockTestRun = {
         id: 123,
         projectId: 1,
         name: 'Test Run',
@@ -67,32 +80,37 @@ describe('TestPlanItClient', () => {
         createdAt: '2024-01-01T00:00:00Z',
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify(mockResponse),
-      });
+      // First call: get workflows
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockWorkflows));
+      // Second call: create test run
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockTestRun));
 
       const result = await client.createTestRun({
         projectId: 1,
         name: 'Test Run',
       });
 
-      expect(result).toEqual(mockResponse);
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://testplanit.example.com/api/test-runs',
+      expect(result).toEqual(mockTestRun);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      // First call is to get workflows (GET with query param)
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        1,
+        expect.stringContaining('https://testplanit.example.com/api/model/workflows/findMany?q='),
+        expect.objectContaining({
+          method: 'GET',
+        })
+      );
+
+      // Second call is to create test run (POST)
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        'https://testplanit.example.com/api/model/testRuns/create',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
             Authorization: 'Bearer tpi_test_token',
             'Content-Type': 'application/json',
-          }),
-          body: JSON.stringify({
-            projectId: 1,
-            name: 'Test Run',
-            testRunType: 'REGULAR',
-            configId: undefined,
-            milestoneId: undefined,
-            stateId: undefined,
           }),
         })
       );
@@ -122,16 +140,15 @@ describe('TestPlanItClient', () => {
         isCompleted: false,
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify(mockResponse),
-      });
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockResponse));
 
       const result = await client.getTestRun(123);
 
       expect(result).toEqual(mockResponse);
+      // Read operations use GET with query param
+      const query = encodeURIComponent(JSON.stringify({ where: { id: 123 } }));
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://testplanit.example.com/api/test-runs/123',
+        `https://testplanit.example.com/api/model/testRuns/findUnique?q=${query}`,
         expect.objectContaining({
           method: 'GET',
         })
@@ -146,19 +163,17 @@ describe('TestPlanItClient', () => {
         isCompleted: true,
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify(mockResponse),
-      });
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockResponse));
 
       const result = await client.completeTestRun(123);
 
       expect(result.isCompleted).toBe(true);
+      // Update uses PATCH
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://testplanit.example.com/api/test-runs/123',
+        'https://testplanit.example.com/api/model/testRuns/update',
         expect.objectContaining({
           method: 'PATCH',
-          body: JSON.stringify({ isCompleted: true }),
+          body: JSON.stringify({ where: { id: 123 }, data: { isCompleted: true } }),
         })
       );
     });
@@ -171,10 +186,7 @@ describe('TestPlanItClient', () => {
         { id: 2, name: 'Failed', systemName: 'failed', isSuccess: false, isFailure: true, isCompleted: true },
       ];
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify(mockStatuses),
-      });
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockStatuses));
 
       // First call should fetch from API
       const result1 = await client.getStatuses(1);
@@ -192,10 +204,7 @@ describe('TestPlanItClient', () => {
         { id: 1, name: 'Passed', systemName: 'passed', isSuccess: true, isFailure: false, isCompleted: true },
       ];
 
-      mockFetch.mockResolvedValue({
-        ok: true,
-        text: async () => JSON.stringify(mockStatuses),
-      });
+      mockFetch.mockResolvedValue(zenStackResponse(mockStatuses));
 
       await client.getStatuses(1);
       expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -215,10 +224,7 @@ describe('TestPlanItClient', () => {
         { id: 3, name: 'Skipped', systemName: 'skipped', isSuccess: false, isFailure: false, isCompleted: true },
       ];
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify(mockStatuses),
-      });
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockStatuses));
 
       const passedId = await client.getStatusId(1, 'passed');
       expect(passedId).toBe(1);
@@ -235,10 +241,7 @@ describe('TestPlanItClient', () => {
         { id: 1, name: 'Pass', systemName: 'pass', aliases: 'passed,success', isSuccess: true, isFailure: false, isCompleted: true },
       ];
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify(mockStatuses),
-      });
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockStatuses));
 
       const statusId = await client.getStatusId(1, 'passed');
       expect(statusId).toBe(1);
@@ -249,10 +252,7 @@ describe('TestPlanItClient', () => {
         { id: 1, name: 'Passed', systemName: 'passed', isSuccess: true, isFailure: false, isCompleted: true },
       ];
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify(mockStatuses),
-      });
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockStatuses));
 
       const statusId = await client.getStatusId(1, 'blocked');
       expect(statusId).toBeUndefined();
@@ -269,10 +269,7 @@ describe('TestPlanItClient', () => {
         elapsed: 1500,
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify(mockResponse),
-      });
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockResponse));
 
       const result = await client.createTestResult({
         testRunId: 123,
@@ -283,7 +280,7 @@ describe('TestPlanItClient', () => {
 
       expect(result).toEqual(mockResponse);
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://testplanit.example.com/api/test-run-results',
+        'https://testplanit.example.com/api/model/testRunResults/create',
         expect.objectContaining({
           method: 'POST',
         })
@@ -298,10 +295,7 @@ describe('TestPlanItClient', () => {
         { id: 2, name: 'Test Case 2', className: 'TestSuite' },
       ];
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify(mockCases),
-      });
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockCases));
 
       const result = await client.findTestCases({
         projectId: 1,
@@ -309,13 +303,12 @@ describe('TestPlanItClient', () => {
       });
 
       expect(result).toEqual(mockCases);
+      // findMany uses GET with query parameter per ZenStack REST API spec
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('projectId=1'),
-        expect.anything()
-      );
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining('className=TestSuite'),
-        expect.anything()
+        expect.stringMatching(/api\/model\/repositoryCases\/findMany\?q=/),
+        expect.objectContaining({
+          method: 'GET',
+        })
       );
     });
   });
@@ -328,10 +321,7 @@ describe('TestPlanItClient', () => {
         repositoryCaseId: 456,
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify(mockResponse),
-      });
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockResponse));
 
       const result = await client.addTestCaseToRun({
         testRunId: 123,
@@ -339,15 +329,60 @@ describe('TestPlanItClient', () => {
       });
 
       expect(result).toEqual(mockResponse);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://testplanit.example.com/api/model/testRunCases/create',
+        expect.objectContaining({
+          method: 'POST',
+        })
+      );
+    });
+  });
+
+  describe('lookup', () => {
+    it('should look up entities by name', async () => {
+      const mockResponse = { id: 10, name: 'Sprint 1' };
+
+      mockFetch.mockResolvedValueOnce(jsonResponse(mockResponse));
+
+      const result = await client.lookup({
+        projectId: 1,
+        type: 'milestone',
+        name: 'Sprint 1',
+      });
+
+      expect(result).toEqual(mockResponse);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://testplanit.example.com/api/cli/lookup',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            projectId: 1,
+            type: 'milestone',
+            name: 'Sprint 1',
+          }),
+        })
+      );
+    });
+
+    it('should support createIfMissing for tags', async () => {
+      const mockResponse = { id: 5, name: 'automation', created: true };
+
+      mockFetch.mockResolvedValueOnce(jsonResponse(mockResponse));
+
+      const result = await client.lookup({
+        type: 'tag',
+        name: 'automation',
+        createIfMissing: true,
+      });
+
+      expect(result).toEqual(mockResponse);
+      expect(result.created).toBe(true);
     });
   });
 
   describe('testConnection', () => {
     it('should return true for successful connection', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        text: async () => JSON.stringify({ status: 'ok' }),
-      });
+      mockFetch.mockResolvedValueOnce(zenStackResponse([]));
 
       const result = await client.testConnection();
       expect(result).toBe(true);
@@ -391,10 +426,7 @@ describe('TestPlanItClient', () => {
           statusText: 'Internal Server Error',
           text: async () => 'Server Error',
         })
-        .mockResolvedValueOnce({
-          ok: true,
-          text: async () => JSON.stringify({ id: 1 }),
-        });
+        .mockResolvedValueOnce(zenStackResponse({ id: 1 }));
 
       const result = await client.getTestRun(1);
       expect(result).toEqual({ id: 1 });
@@ -411,6 +443,56 @@ describe('TestPlanItClient', () => {
 
       await expect(client.getTestRun(999)).rejects.toThrow(TestPlanItError);
       expect(mockFetch).toHaveBeenCalledTimes(1); // No retries
+    });
+  });
+
+  describe('findOrAddTestCaseToRun', () => {
+    it('should upsert a test case in a run', async () => {
+      const mockResponse = {
+        id: 100,
+        testRunId: 123,
+        repositoryCaseId: 456,
+      };
+
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockResponse));
+
+      const result = await client.findOrAddTestCaseToRun({
+        testRunId: 123,
+        repositoryCaseId: 456,
+      });
+
+      expect(result).toEqual(mockResponse);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://testplanit.example.com/api/model/testRunCases/upsert',
+        expect.objectContaining({
+          method: 'POST',
+        })
+      );
+    });
+  });
+
+  describe('resolveTagIds', () => {
+    it('should resolve numeric IDs directly', async () => {
+      const result = await client.resolveTagIds(1, [1, 2, 3]);
+      expect(result).toEqual([1, 2, 3]);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('should look up string names', async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse({ id: 10, name: 'tag1' }));
+      mockFetch.mockResolvedValueOnce(jsonResponse({ id: 20, name: 'tag2' }));
+
+      const result = await client.resolveTagIds(1, ['tag1', 'tag2']);
+      expect(result).toEqual([10, 20]);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle mixed numeric and string IDs', async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse({ id: 10, name: 'tag1' }));
+
+      const result = await client.resolveTagIds(1, [1, 'tag1', 2]);
+      expect(result).toEqual([1, 10, 2]);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
   });
 });

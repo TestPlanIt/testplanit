@@ -70,14 +70,22 @@ interface RepositoryFolder {
     name: string;
 }
 /**
+ * Options for creating a folder
+ */
+interface CreateFolderOptions {
+    projectId: number;
+    name: string;
+    parentId?: number;
+}
+/**
  * Test case template
  */
 interface Template {
     id: number;
-    projectId: number;
-    name: string;
-    description?: string;
+    templateName: string;
     isDefault: boolean;
+    isEnabled: boolean;
+    isDeleted: boolean;
 }
 /**
  * Tag (global, not project-scoped)
@@ -186,10 +194,14 @@ interface TestRunStepResult {
 interface Attachment {
     id: number;
     name: string;
-    path: string;
+    url: string;
     size: number;
     mimeType: string;
+    note?: string;
     createdAt: string;
+    createdById?: string;
+    testRunResultsId?: number;
+    junitTestResultId?: number;
 }
 /**
  * Options for creating a test run
@@ -201,6 +213,7 @@ interface CreateTestRunOptions {
     configId?: number;
     milestoneId?: number;
     stateId?: number;
+    tagIds?: number[];
 }
 /**
  * Options for updating a test run
@@ -211,6 +224,12 @@ interface UpdateTestRunOptions {
     configId?: number;
     milestoneId?: number;
     stateId?: number;
+    /** ZenStack relation syntax for updating the workflow state */
+    state?: {
+        connect: {
+            id: number;
+        };
+    };
 }
 /**
  * Options for creating a test case
@@ -348,6 +367,101 @@ interface ApiError {
  * Normalized test status for mapping
  */
 type NormalizedStatus = 'passed' | 'failed' | 'skipped' | 'blocked' | 'pending';
+/**
+ * JUnit result type enum
+ */
+type JUnitResultType = 'PASSED' | 'FAILURE' | 'ERROR' | 'SKIPPED';
+/**
+ * JUnit test suite (for automated test results)
+ */
+interface JUnitTestSuite {
+    id: number;
+    name: string;
+    time?: number;
+    tests?: number;
+    failures?: number;
+    errors?: number;
+    skipped?: number;
+    assertions?: number;
+    timestamp?: string;
+    file?: string;
+    systemOut?: string;
+    systemErr?: string;
+    testRunId: number;
+    parentId?: number;
+    createdAt: string;
+    createdById: string;
+}
+/**
+ * JUnit test result (for automated test results)
+ */
+interface JUnitTestResult {
+    id: number;
+    type: JUnitResultType;
+    message?: string;
+    content?: string;
+    repositoryCaseId: number;
+    testSuiteId: number;
+    statusId?: number;
+    executedAt?: string;
+    time?: number;
+    assertions?: number;
+    file?: string;
+    line?: number;
+    systemOut?: string;
+    systemErr?: string;
+    createdAt: string;
+    createdById: string;
+}
+/**
+ * Options for creating a JUnit test suite
+ */
+interface CreateJUnitTestSuiteOptions {
+    testRunId: number;
+    name: string;
+    time?: number;
+    tests?: number;
+    failures?: number;
+    errors?: number;
+    skipped?: number;
+    assertions?: number;
+    timestamp?: Date;
+    file?: string;
+    systemOut?: string;
+    systemErr?: string;
+    parentId?: number;
+}
+/**
+ * Options for creating a JUnit test result
+ */
+interface CreateJUnitTestResultOptions {
+    testSuiteId: number;
+    repositoryCaseId: number;
+    type: JUnitResultType;
+    message?: string;
+    content?: string;
+    statusId?: number;
+    executedAt?: Date;
+    time?: number;
+    assertions?: number;
+    file?: string;
+    line?: number;
+    systemOut?: string;
+    systemErr?: string;
+}
+/**
+ * Options for updating a JUnit test suite
+ */
+interface UpdateJUnitTestSuiteOptions {
+    time?: number;
+    tests?: number;
+    failures?: number;
+    errors?: number;
+    skipped?: number;
+    assertions?: number;
+    systemOut?: string;
+    systemErr?: string;
+}
 
 /**
  * Custom error class for TestPlanIt API errors
@@ -359,9 +473,27 @@ declare class TestPlanItError extends Error {
     constructor(message: string, options?: Partial<ApiError>);
 }
 /**
+ * CLI Lookup request
+ */
+interface LookupRequest {
+    projectId?: number;
+    type: 'project' | 'state' | 'config' | 'milestone' | 'tag' | 'folder' | 'testRun';
+    name: string;
+    createIfMissing?: boolean;
+}
+/**
+ * CLI Lookup response
+ */
+interface LookupResponse {
+    id: number;
+    name: string;
+    created?: boolean;
+}
+/**
  * TestPlanIt API Client
  *
  * Official JavaScript/TypeScript client for interacting with the TestPlanIt API.
+ * Uses the ZenStack /api/model endpoints for CRUD operations and /api/cli/lookup for name lookups.
  *
  * @example
  * ```typescript
@@ -393,10 +525,25 @@ declare class TestPlanItClient {
      */
     private request;
     /**
+     * Make a ZenStack model API request
+     * ZenStack endpoints are: /api/model/{model}/{operation}
+     * Based on the OpenAPI spec:
+     * - Read operations (findMany, findFirst, findUnique, count, aggregate, groupBy) use GET with ?q= parameter
+     * - create, createMany, upsert use POST with body
+     * - update, updateMany use PATCH with body
+     * - delete, deleteMany use DELETE with body
+     */
+    private zenstack;
+    /**
      * Make a multipart form data request
      */
     private requestFormData;
     private sleep;
+    /**
+     * Look up an entity by name and get its ID
+     * Uses the /api/cli/lookup endpoint
+     */
+    lookup(options: LookupRequest): Promise<LookupResponse>;
     /**
      * Get project by ID
      */
@@ -406,7 +553,7 @@ declare class TestPlanItClient {
      */
     listProjects(): Promise<Project[]>;
     /**
-     * Get all statuses for a project
+     * Get all statuses for a project (with Automation scope)
      */
     getStatuses(projectId: number): Promise<Status[]>;
     /**
@@ -431,22 +578,26 @@ declare class TestPlanItClient {
     updateTestRun(testRunId: number, options: UpdateTestRunOptions): Promise<TestRun>;
     /**
      * Complete a test run
+     * Sets isCompleted to true and updates the workflow state to the first DONE state
+     * @param testRunId - The test run ID
+     * @param projectId - The project ID (required to look up the DONE workflow state)
      */
-    completeTestRun(testRunId: number): Promise<TestRun>;
+    completeTestRun(testRunId: number, projectId: number): Promise<TestRun>;
     /**
      * List test runs for a project
+     * Uses the dedicated /api/test-runs/completed endpoint
      */
     listTestRuns(options: ListTestRunsOptions): Promise<PaginatedResponse<TestRun>>;
     /**
-     * Find a test run by name (exact match)
+     * Find a test run by name using CLI lookup
      */
     findTestRunByName(projectId: number, name: string): Promise<TestRun | undefined>;
     /**
-     * List all configurations for a project
+     * List all configurations
      */
     listConfigurations(projectId: number): Promise<Configuration[]>;
     /**
-     * Find a configuration by name (exact match)
+     * Find a configuration by name using CLI lookup
      */
     findConfigurationByName(projectId: number, name: string): Promise<Configuration | undefined>;
     /**
@@ -454,15 +605,15 @@ declare class TestPlanItClient {
      */
     listMilestones(projectId: number): Promise<Milestone[]>;
     /**
-     * Find a milestone by name (exact match)
+     * Find a milestone by name using CLI lookup
      */
     findMilestoneByName(projectId: number, name: string): Promise<Milestone | undefined>;
     /**
-     * List all workflow states for a project
+     * List all workflow states for a project (RUNS scope)
      */
     listWorkflowStates(projectId: number): Promise<WorkflowState[]>;
     /**
-     * Find a workflow state by name (exact match)
+     * Find a workflow state by name using CLI lookup
      */
     findWorkflowStateByName(projectId: number, name: string): Promise<WorkflowState | undefined>;
     /**
@@ -470,33 +621,49 @@ declare class TestPlanItClient {
      */
     listFolders(projectId: number): Promise<RepositoryFolder[]>;
     /**
-     * Find a folder by name (exact match)
+     * Find a folder by name using CLI lookup
      */
     findFolderByName(projectId: number, name: string): Promise<RepositoryFolder | undefined>;
     /**
-     * List all templates for a project
+     * Create a new folder
+     */
+    createFolder(options: CreateFolderOptions): Promise<RepositoryFolder>;
+    /**
+     * Find or create a folder hierarchy from a path
+     * @param projectId - The project ID
+     * @param folderPath - Array of folder names representing the path (e.g., ['Suite A', 'Suite B', 'Suite C'])
+     * @param rootFolderId - Optional root folder ID to start from
+     * @returns The final folder in the path
+     *
+     * @example
+     * // Create nested folders: "Custom Text" > "ADM-649" > "@smoke"
+     * const folder = await client.findOrCreateFolderPath(projectId, ['Custom Text', 'ADM-649', '@smoke']);
+     */
+    findOrCreateFolderPath(projectId: number, folderPath: string[], rootFolderId?: number): Promise<RepositoryFolder>;
+    /**
+     * List all templates accessible to the user
+     * ZenStack access control handles permission filtering automatically
      */
     listTemplates(projectId: number): Promise<Template[]>;
     /**
-     * Find a template by name (exact match)
+     * Find a template by name (case-insensitive)
+     * Logs available templates if template not found for debugging
      */
     findTemplateByName(projectId: number, name: string): Promise<Template | undefined>;
     /**
-     * List all tags for a project
+     * List all tags
      */
     listTags(projectId: number): Promise<Tag[]>;
     /**
      * Create a new tag
-     * Tags are global (not project-scoped) and can be used across all projects
      */
     createTag(options: CreateTagOptions): Promise<Tag>;
     /**
-     * Find a tag by name (exact match)
+     * Find a tag by name using CLI lookup
      */
     findTagByName(projectId: number, name: string): Promise<Tag | undefined>;
     /**
-     * Find or create a tag by name
-     * Tags are global (not project-scoped)
+     * Find or create a tag by name using CLI lookup with createIfMissing
      */
     findOrCreateTag(projectId: number, name: string): Promise<Tag>;
     /**
@@ -518,7 +685,9 @@ declare class TestPlanItClient {
     findTestCases(options: FindTestCaseOptions): Promise<RepositoryCase[]>;
     /**
      * Find or create a test case
-     * Searches for an existing case by name/className, creates if not found
+     * First searches for an active (non-deleted) test case, then creates if not found
+     * Note: Lookup is by name/className/source (not folder) - if a matching case exists
+     * anywhere in the project, it will be reused. The folderId is only used when creating new cases.
      */
     findOrCreateTestCase(options: CreateTestCaseOptions): Promise<RepositoryCase>;
     /**
@@ -553,14 +722,45 @@ declare class TestPlanItClient {
         testRunId: number;
     }>;
     /**
-     * Upload an attachment to a test result
+     * Upload file to storage
+     * Uses the /api/upload-attachment endpoint to upload to S3/MinIO
      */
-    uploadAttachment(testRunResultId: number, file: Blob | Buffer, fileName: string, mimeType?: string): Promise<{
-        id: number;
-        path: string;
-    }>;
+    private uploadFile;
     /**
-     * Test the API connection
+     * Upload an attachment to a test run result (for regular test runs)
+     * Uploads the file to storage and creates an Attachment record
+     */
+    uploadAttachment(testRunResultId: number, file: Blob | Buffer, fileName: string, mimeType?: string): Promise<Attachment>;
+    /**
+     * Upload an attachment to a JUnit test result (for automated test runs)
+     * Uploads the file to storage and creates an Attachment record linked to the JUnit result
+     */
+    uploadJUnitAttachment(junitTestResultId: number, file: Blob | Buffer, fileName: string, mimeType?: string): Promise<Attachment>;
+    /**
+     * Create a JUnit test suite
+     * Used for storing test results from automated test frameworks (Mocha, JUnit, etc.)
+     */
+    createJUnitTestSuite(options: CreateJUnitTestSuiteOptions): Promise<JUnitTestSuite>;
+    /**
+     * Create a JUnit test result
+     * Used for storing individual test case results within a test suite
+     */
+    createJUnitTestResult(options: CreateJUnitTestResultOptions): Promise<JUnitTestResult>;
+    /**
+     * Update a JUnit test suite
+     * Used to update statistics (tests, failures, errors, skipped, time) after all results are reported
+     */
+    updateJUnitTestSuite(testSuiteId: number, options: UpdateJUnitTestSuiteOptions): Promise<JUnitTestSuite>;
+    /**
+     * Get JUnit test suites for a test run
+     */
+    getJUnitTestSuites(testRunId: number): Promise<JUnitTestSuite[]>;
+    /**
+     * Get JUnit test results for a test suite
+     */
+    getJUnitTestResults(testSuiteId: number): Promise<JUnitTestResult[]>;
+    /**
+     * Test the API connection by listing projects
      */
     testConnection(): Promise<boolean>;
     /**
@@ -569,4 +769,4 @@ declare class TestPlanItClient {
     getBaseUrl(): string;
 }
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type Configuration, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type Status, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateTestRunOptions, type WorkflowState };
+export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type Configuration, type CreateJUnitTestResultOptions, type CreateJUnitTestSuiteOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type JUnitResultType, type JUnitTestResult, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type Status, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type WorkflowState };

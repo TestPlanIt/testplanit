@@ -24,8 +24,7 @@ import { DateTextDisplay } from "@/components/DateTextDisplay";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useFindManyTestRunCases } from "~/lib/hooks/test-run-cases";
-import { useDrag, useDrop, DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import { useDrag, useDrop } from "react-dnd";
 import { ItemTypes } from "~/types/dndTypes";
 import { cn } from "~/utils";
 import { useQueryClient } from "@tanstack/react-query";
@@ -877,35 +876,33 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   };
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className="flex flex-col items-center w-full">
-        <div className="w-full relative">
-          <div className="flex flex-col w-full">
-            {renderGroupedTestRuns(
-              groupedTestRunData,
-              sortedMilestoneTree,
-              handleOpenDialog,
-              isAdmin,
-              onDuplicateTestRun
-            )}
-          </div>
+    <div className="flex flex-col items-center w-full">
+      <div className="w-full relative">
+        <div className="flex flex-col w-full">
+          {renderGroupedTestRuns(
+            groupedTestRunData,
+            sortedMilestoneTree,
+            handleOpenDialog,
+            isAdmin,
+            onDuplicateTestRun
+          )}
         </div>
-
-        {selectedTestRun && (
-          <CompleteTestRunDialog
-            trigger={
-              <Button variant="outline" size="sm">
-                {tCommon("actions.complete")}
-              </Button>
-            }
-            testRunId={selectedTestRun.id}
-            projectId={selectedTestRun.projectId}
-            stateId={selectedTestRun.state.id}
-            stateName={selectedTestRun.state.name}
-          />
-        )}
       </div>
-    </DndProvider>
+
+      {selectedTestRun && (
+        <CompleteTestRunDialog
+          trigger={
+            <Button variant="outline" size="sm">
+              {tCommon("actions.complete")}
+            </Button>
+          }
+          testRunId={selectedTestRun.id}
+          projectId={selectedTestRun.projectId}
+          stateId={selectedTestRun.state.id}
+          stateName={selectedTestRun.state.name}
+        />
+      )}
+    </div>
   );
 };
 

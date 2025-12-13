@@ -249,6 +249,7 @@ export function TestRunCaseDetails({
         testRunsId: true,
         testRunResultsId: true,
         testRunStepResultId: true,
+        junitTestResultId: true,
       },
     },
     steps: {

@@ -115,7 +115,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   const isAutomatedRun = isAutomatedTestRunType(testRun.testRunType);
   const showEditItem = canAddEditRun && !testRun.isCompleted && !isAutomatedRun;
   const showCompleteItem =
-    !testRun.isCompleted && canCloseRun && !isLoadingPermissions;
+    !testRun.isCompleted && !isAutomatedRun && canCloseRun && !isLoadingPermissions;
   const showDuplicateItem =
     !isAutomatedRun &&
     !testRun.isCompleted &&

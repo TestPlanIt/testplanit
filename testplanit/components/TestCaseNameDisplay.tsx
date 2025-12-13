@@ -3,6 +3,7 @@ import { Trash2, Bot, ListChecks } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn, type ClassValue } from "~/utils";
 import { Link } from "~/lib/navigation";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 interface TestCaseNameDisplayProps {
   testCase:
@@ -51,7 +52,7 @@ export function TestCaseNameDisplay({
   if (showIcon) {
     if (isDeleted) {
       icon = <Trash2 className="shrink-0 mt-0.5 h-4 w-4" />;
-    } else if (source === "JUNIT") {
+    } else if (isAutomatedCaseSource(source)) {
       icon = <Bot className="shrink-0 mt-0.5 h-4 w-4" />;
     } else {
       icon = <ListChecks className="shrink-0 mt-0.5 h-4 w-4" />;

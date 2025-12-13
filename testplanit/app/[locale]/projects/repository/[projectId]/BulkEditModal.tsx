@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import {
   Loader2,
   AlertCircle,
@@ -394,7 +395,7 @@ export function BulkEditModal({
 
   const isAnyCaseJUnit = useMemo(() => {
     if (!casesData) return false;
-    return casesData.some((testcase) => testcase.source === "JUNIT");
+    return casesData.some((testcase) => isAutomatedCaseSource(testcase.source));
   }, [casesData]);
 
   // Define all possible fields (standard + custom if applicable)

@@ -16,6 +16,20 @@ import type { AuditAction } from "@prisma/client";
 // Store API token auth result in async local storage for getPrisma
 let currentApiAuth: { userId: string; email?: string; name?: string } | null = null;
 
+// Models that require automatic user injection for create operations
+// Maps model name to the field that needs the authenticated user
+const AUTO_INJECT_USER_FIELDS: Record<string, string[]> = {
+  testRuns: ["createdBy"],
+  testRunResults: ["executedBy"],
+  repositoryCases: ["creator"],
+  repositoryFolders: ["creator"],
+  sessions: ["createdBy"],
+  attachments: ["createdBy"],
+  caseSteps: ["createdBy"],
+  jUnitTestSuite: ["createdBy"],
+  jUnitTestResult: ["createdBy"],
+};
+
 // Entity types we want to audit
 const AUDITED_ENTITIES = new Set([
   "repositoryCases",
@@ -163,6 +177,49 @@ function parseZenStackPath(
   return null;
 }
 
+// Inject user fields into create/upsert request bodies
+function injectUserFields(
+  model: string,
+  operation: string,
+  body: any,
+  userId: string
+): any {
+  const fieldsToInject = AUTO_INJECT_USER_FIELDS[model];
+  if (!fieldsToInject || fieldsToInject.length === 0) {
+    return body;
+  }
+
+  // Only inject for create and upsert operations
+  if (!["create", "upsert"].includes(operation)) {
+    return body;
+  }
+
+  // Clone the body to avoid mutating the original
+  const newBody = JSON.parse(JSON.stringify(body));
+
+  // For create operations, the data is in body.data
+  // For upsert operations, the create data is in body.create
+  const dataToModify =
+    operation === "create"
+      ? newBody.data
+      : operation === "upsert"
+        ? newBody.create
+        : null;
+
+  if (dataToModify) {
+    for (const field of fieldsToInject) {
+      // Check for both relation syntax (e.g., "creator") and scalar ID field (e.g., "creatorId")
+      const scalarIdField = `${field}Id`;
+      // Only inject if neither the relation nor scalar ID field is already set
+      if (!dataToModify[field] && !dataToModify[scalarIdField]) {
+        dataToModify[field] = { connect: { id: userId } };
+      }
+    }
+  }
+
+  return newBody;
+}
+
 // Wrapper to add cache-control headers, API token auth, and audit logging
 async function handler(
   req: NextRequest,
@@ -202,21 +259,51 @@ async function handler(
     const parsedPath = parseZenStackPath(params.path);
     const isMutation = ["POST", "PUT", "PATCH", "DELETE"].includes(req.method);
 
-    // Clone the request body for audit logging (only for mutations)
+    // Get the authenticated user ID (from session or API token)
+    const authenticatedUserId = session?.user?.id ?? currentApiAuth?.userId;
+
+    // Clone the request body for audit logging and potential modification
     let requestBody: any = null;
-    if (isMutation && parsedPath && AUDITED_ENTITIES.has(parsedPath.model)) {
+    let modifiedReq = req;
+
+    if (isMutation && parsedPath) {
       try {
         const clonedReq = req.clone();
         const text = await clonedReq.text();
         if (text) {
           requestBody = JSON.parse(text);
+
+          // Check if we need to inject user fields for this model/operation
+          const needsUserInjection =
+            authenticatedUserId &&
+            AUTO_INJECT_USER_FIELDS[parsedPath.model] &&
+            ["create", "upsert"].includes(parsedPath.operation);
+
+          if (needsUserInjection) {
+            const modifiedBody = injectUserFields(
+              parsedPath.model,
+              parsedPath.operation,
+              requestBody,
+              authenticatedUserId
+            );
+
+            // Create a new request with the modified body
+            modifiedReq = new NextRequest(req.url, {
+              method: req.method,
+              headers: req.headers,
+              body: JSON.stringify(modifiedBody),
+            });
+
+            // Update requestBody for audit logging
+            requestBody = modifiedBody;
+          }
         }
       } catch (e) {
         // Ignore body parsing errors
       }
     }
 
-    const response = await baseHandler(req, { params: Promise.resolve(params) });
+    const response = await baseHandler(modifiedReq, { params: Promise.resolve(params) });
 
     // Clone the response to add headers (NextResponse is immutable)
     const responseBody = await response.clone().text();

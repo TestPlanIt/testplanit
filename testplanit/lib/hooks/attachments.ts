@@ -327,7 +327,7 @@ export function useSuspenseCountAttachments<TArgs extends Prisma.AttachmentsCoun
     return useSuspenseModelQuery<TQueryFnData, TData, TError>('Attachments', `${endpoint}/attachments/count`, args, options, fetch);
 }
 
-export function useCheckAttachments<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; testCaseId?: number; url?: string; name?: string; note?: string; isDeleted?: boolean; mimeType?: string; size?: number; createdById?: string; sessionId?: number; sessionResultsId?: number; testRunsId?: number; testRunResultsId?: number; testRunStepResultId?: number }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckAttachments<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; testCaseId?: number; url?: string; name?: string; note?: string; isDeleted?: boolean; mimeType?: string; size?: number; createdById?: string; sessionId?: number; sessionResultsId?: number; testRunsId?: number; testRunResultsId?: number; testRunStepResultId?: number; junitTestResultId?: number }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('Attachments', `${endpoint}/attachments/check`, args, options, fetch);
 }

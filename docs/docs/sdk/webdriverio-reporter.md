@@ -48,7 +48,7 @@ After your tests complete, you'll see a summary:
   Passed: 15
   Failed: 2
   Skipped: 1
-  URL: https://testplanit.example.com/projects/1/test-runs/123
+  URL: https://testplanit.example.com/projects/runs/1/123
 ```
 
 ## Configuration Options
@@ -66,12 +66,14 @@ After your tests complete, you'll see a summary:
 | Option | Type                     | Default | Description |
 |--------|--------------------------|---------|-------------|
 | `testRunId` | `number \| string` | - | Existing test run to add results to (ID or name). If set, `runName` is ignored |
-| `runName` | `string` | `'WebdriverIO Test Run - {date} {time}'` | Name for new test runs (ignored if `testRunId` is set). Supports placeholders |
+| `runName` | `string` | `'{suite} - {date} {time}'` | Name for new test runs (ignored if `testRunId` is set). Supports placeholders |
+| `testRunType` | `string` | Auto-detected | Test framework type. Auto-detected from WebdriverIO config (`mocha` → `'MOCHA'`, `cucumber` → `'CUCUMBER'`, others → `'REGULAR'`). Override manually if needed. |
 | `configId` | `number \| string` | - | Configuration for the test run (ID or name) |
 | `milestoneId` | `number \| string` | - | Milestone for the test run (ID or name) |
 | `stateId` | `number \| string` | - | Workflow state for the test run (ID or name) |
 | `caseIdPattern` | `RegExp \| string` | `/\[(\d+)\]/g` | Regex pattern for extracting case IDs from test titles |
 | `autoCreateTestCases` | `boolean` | `false` | Auto-create test cases if they don't exist |
+| `createFolderHierarchy` | `boolean` | `false` | Create folder hierarchy based on Mocha suite structure (requires `autoCreateTestCases` and `parentFolderId`) |
 | `parentFolderId` | `number \| string` | - | Folder for auto-created test cases (ID or name) |
 | `templateId` | `number \| string` | - | Template for auto-created test cases (ID or name) |
 | `tagIds` | `(number \| string)[]` | - | Tags to apply to the test run (IDs or names). Tags that don't exist are created automatically |
@@ -165,10 +167,14 @@ Customize your test run names with these placeholders:
 
 | Placeholder | Description | Example |
 |-------------|-------------|---------|
+| `{suite}` | Root suite name (first describe block) | `Login Tests` |
+| `{spec}` | Spec file name (without extension) | `login` |
 | `{date}` | Current date in ISO format | `2024-01-15` |
 | `{time}` | Current time | `14:30:00` |
 | `{browser}` | Browser name from capabilities | `chrome` |
 | `{platform}` | Platform/OS name | `darwin`, `linux`, `win32` |
+
+The default run name is `'{suite} - {date} {time}'`, which uses the root describe block name to identify your test runs.
 
 ```javascript
 // wdio.conf.js
@@ -178,6 +184,8 @@ export const config = {
       domain: 'https://testplanit.example.com',
       apiToken: process.env.TESTPLANIT_API_TOKEN,
       projectId: 1,
+      // Default: '{suite} - {date} {time}'
+      // Custom example:
       runName: 'E2E Tests - {browser} - {date} {time}',
     }]
   ],
@@ -213,6 +221,60 @@ When `autoCreateTestCases` is enabled:
 - The suite name becomes the case's `className` for grouping
 
 This means on first run, test cases are created automatically. On subsequent runs, the same test cases are reused based on matching name and suite.
+
+### Creating Folder Hierarchies
+
+When you have nested Mocha suites (describe blocks), you can automatically create a matching folder structure in TestPlanIt:
+
+```javascript
+// wdio.conf.js
+export const config = {
+  reporters: [
+    ['@testplanit/wdio-reporter', {
+      domain: 'https://testplanit.example.com',
+      apiToken: process.env.TESTPLANIT_API_TOKEN,
+      projectId: 1,
+      autoCreateTestCases: true,
+      parentFolderId: 10,          // Root folder for created hierarchy
+      templateId: 1,
+      createFolderHierarchy: true, // Enable folder hierarchy creation
+    }]
+  ],
+};
+```
+
+With `createFolderHierarchy` enabled, nested describe blocks create nested folders:
+
+```javascript
+// test/specs/login.spec.js
+describe('Authentication', () => {           // Creates folder: "Authentication"
+  describe('Login', () => {                  // Creates folder: "Authentication > Login"
+    describe('@smoke', () => {               // Creates folder: "Authentication > Login > @smoke"
+      it('should login with valid credentials', async () => {
+        // Test case placed in "Authentication > Login > @smoke" folder
+      });
+    });
+  });
+});
+```
+
+This creates:
+
+```text
+parentFolderId (e.g., "Automated Tests")
+└── Authentication
+    └── Login
+        └── @smoke
+            └── "should login with valid credentials" (test case)
+```
+
+**Requirements:**
+
+- `autoCreateTestCases` must be `true`
+- `parentFolderId` must be set (this becomes the root of the hierarchy)
+- `templateId` must be set for new test cases
+
+Folder paths are cached during the test run to avoid redundant API calls, making large test suites efficient.
 
 ## Appending to Existing Test Runs
 

@@ -92,6 +92,7 @@ import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
 import StatusDotDisplay from "@/components/StatusDotDisplay";
 import { ScrollArea } from "~/components/ui/scroll-area";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 export interface ExtendedCases extends RepositoryCases {
   className: string | null;
@@ -298,7 +299,7 @@ const NameCell = React.memo(function NameCell({
       <div className="flex items-center">
         {isSoftDeletedInRun ? (
           <Trash2 className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
-        ) : source === "JUNIT" ? (
+        ) : isAutomatedCaseSource(source) ? (
           <Bot className="w-4 h-4 mr-1 text-primary shrink-0" />
         ) : (
           <ListChecks className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
@@ -356,7 +357,7 @@ const NameCell = React.memo(function NameCell({
     <div className="flex items-center">
       {isSoftDeletedInRun ? (
         <Trash2 className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
-      ) : source === "JUNIT" ? (
+      ) : isAutomatedCaseSource(source) ? (
         <Bot className="w-4 h-4 mr-1 text-primary shrink-0" />
       ) : (
         <ListChecks className="w-4 h-4 mr-1 text-primary shrink-0" />

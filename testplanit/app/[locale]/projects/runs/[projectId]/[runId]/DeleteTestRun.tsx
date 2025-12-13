@@ -57,15 +57,10 @@ export function DeleteTestRunModal({
           isDeleted: true,
         },
       });
+      // Navigate first to prevent the page from refetching a deleted test run
+      router.push(`/projects/runs/${projectId}`);
+      toast.success(t("toast.success"));
       if (onDelete) onDelete();
-      toast.promise(new Promise((resolve) => setTimeout(resolve, 100)), {
-        loading: t("toast.loading"),
-        success: () => {
-          router.push(`/projects/runs/${projectId}`);
-          return t("toast.success");
-        },
-        error: () => t("toast.error.title"),
-      });
     } catch (err: any) {
       form.setError("root", {
         type: "custom",

@@ -74,6 +74,28 @@ import { ProjectIcon } from "~/components/ProjectIcon";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { UnifiedDragPreview } from "@/components/dnd/UnifiedDragPreview";
 
+// Conditional wrapper to avoid nested DndProviders.
+// When skipDndProvider is true, we skip both the DndProvider and UnifiedDragPreview
+// since UnifiedDragPreview requires a DnD context to work.
+const ConditionalDndWrapper = ({
+  skipDndProvider,
+  children,
+}: {
+  skipDndProvider: boolean;
+  children: React.ReactNode;
+}) => {
+  if (skipDndProvider) {
+    // Skip DnD entirely - just render children without drag preview
+    return <>{children}</>;
+  }
+  return (
+    <SimpleDndProvider>
+      <UnifiedDragPreview />
+      {children}
+    </SimpleDndProvider>
+  );
+};
+
 const parseTipTapContent = (content: any) => {
   if (
     !content ||
@@ -143,6 +165,8 @@ export interface ProjectRepositoryProps {
     totalItems: number;
     setTotalItems: (total: number) => void;
   };
+  /** Skip wrapping with DndProvider when already inside one (e.g., in modals opened from DnD-enabled pages) */
+  skipDndProvider?: boolean;
 }
 
 interface TestRunCase {
@@ -325,6 +349,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   ApplicationArea,
   selectedTestCaseId,
   overridePagination,
+  skipDndProvider = false,
 }) => {
   const params = useParams();
   const projectIdParam = params.projectId as string;
@@ -361,6 +386,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const panelRef = useRef<ImperativePanelHandle>(null);
   const refetchFoldersRef = useRef<(() => void) | null>(null);
+  // Ref for scoping DnD events when used in portaled contexts (modals)
+  const dndContainerRef = useRef<HTMLDivElement>(null);
 
   const t = useTranslations();
   const tCommon = useTranslations("common");
@@ -1057,9 +1084,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
             ) : (
               <div className="my-4" />
             )}
-            <CardContent>
-              <SimpleDndProvider>
-                <UnifiedDragPreview />
+            <CardContent ref={dndContainerRef}>
+              <ConditionalDndWrapper skipDndProvider={skipDndProvider}>
                 <ResizablePanelGroup
                   direction="horizontal"
                   autoSaveId="project-repository-panels"
@@ -1130,6 +1156,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 : undefined
                             }
                             folderStatsData={folderStatsData}
+                            dndRootElement={
+                              skipDndProvider
+                                ? dndContainerRef.current
+                                : undefined
+                            }
                           />
                         ) : null}
                       </div>
@@ -1243,7 +1274,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                     </>
                   </ResizablePanel>
                 </ResizablePanelGroup>
-              </SimpleDndProvider>
+              </ConditionalDndWrapper>
             </CardContent>
           </div>
         </Card>

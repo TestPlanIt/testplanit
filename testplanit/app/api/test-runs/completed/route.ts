@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "~/server/auth";
+import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
 
 const prisma = new PrismaClient();
 
@@ -126,7 +127,7 @@ export async function GET(req: NextRequest) {
     if (runType === "manual") {
       where.testRunType = "REGULAR";
     } else if (runType === "automated") {
-      where.testRunType = "JUNIT";
+      where.testRunType = { in: AUTOMATED_TEST_RUN_TYPES };
     }
 
     // Get total count for pagination

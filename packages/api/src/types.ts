@@ -104,14 +104,23 @@ export interface RepositoryFolder {
 }
 
 /**
+ * Options for creating a folder
+ */
+export interface CreateFolderOptions {
+  projectId: number;
+  name: string;
+  parentId?: number;
+}
+
+/**
  * Test case template
  */
 export interface Template {
   id: number;
-  projectId: number;
-  name: string;
-  description?: string;
+  templateName: string;
   isDefault: boolean;
+  isEnabled: boolean;
+  isDeleted: boolean;
 }
 
 /**
@@ -228,10 +237,14 @@ export interface TestRunStepResult {
 export interface Attachment {
   id: number;
   name: string;
-  path: string;
+  url: string;
   size: number;
   mimeType: string;
+  note?: string;
   createdAt: string;
+  createdById?: string;
+  testRunResultsId?: number;
+  junitTestResultId?: number;
 }
 
 // ============================================================================
@@ -248,6 +261,7 @@ export interface CreateTestRunOptions {
   configId?: number;
   milestoneId?: number;
   stateId?: number;
+  tagIds?: number[];
 }
 
 /**
@@ -259,6 +273,8 @@ export interface UpdateTestRunOptions {
   configId?: number;
   milestoneId?: number;
   stateId?: number;
+  /** ZenStack relation syntax for updating the workflow state */
+  state?: { connect: { id: number } };
 }
 
 /**
@@ -422,3 +438,104 @@ export interface ApiError {
  * Normalized test status for mapping
  */
 export type NormalizedStatus = 'passed' | 'failed' | 'skipped' | 'blocked' | 'pending';
+
+/**
+ * JUnit result type enum
+ */
+export type JUnitResultType = 'PASSED' | 'FAILURE' | 'ERROR' | 'SKIPPED';
+
+/**
+ * JUnit test suite (for automated test results)
+ */
+export interface JUnitTestSuite {
+  id: number;
+  name: string;
+  time?: number;
+  tests?: number;
+  failures?: number;
+  errors?: number;
+  skipped?: number;
+  assertions?: number;
+  timestamp?: string;
+  file?: string;
+  systemOut?: string;
+  systemErr?: string;
+  testRunId: number;
+  parentId?: number;
+  createdAt: string;
+  createdById: string;
+}
+
+/**
+ * JUnit test result (for automated test results)
+ */
+export interface JUnitTestResult {
+  id: number;
+  type: JUnitResultType;
+  message?: string;
+  content?: string;
+  repositoryCaseId: number;
+  testSuiteId: number;
+  statusId?: number;
+  executedAt?: string;
+  time?: number;
+  assertions?: number;
+  file?: string;
+  line?: number;
+  systemOut?: string;
+  systemErr?: string;
+  createdAt: string;
+  createdById: string;
+}
+
+/**
+ * Options for creating a JUnit test suite
+ */
+export interface CreateJUnitTestSuiteOptions {
+  testRunId: number;
+  name: string;
+  time?: number;
+  tests?: number;
+  failures?: number;
+  errors?: number;
+  skipped?: number;
+  assertions?: number;
+  timestamp?: Date;
+  file?: string;
+  systemOut?: string;
+  systemErr?: string;
+  parentId?: number;
+}
+
+/**
+ * Options for creating a JUnit test result
+ */
+export interface CreateJUnitTestResultOptions {
+  testSuiteId: number;
+  repositoryCaseId: number;
+  type: JUnitResultType;
+  message?: string;
+  content?: string;
+  statusId?: number;
+  executedAt?: Date;
+  time?: number;
+  assertions?: number;
+  file?: string;
+  line?: number;
+  systemOut?: string;
+  systemErr?: string;
+}
+
+/**
+ * Options for updating a JUnit test suite
+ */
+export interface UpdateJUnitTestSuiteOptions {
+  time?: number;
+  tests?: number;
+  failures?: number;
+  errors?: number;
+  skipped?: number;
+  assertions?: number;
+  systemOut?: string;
+  systemErr?: string;
+}

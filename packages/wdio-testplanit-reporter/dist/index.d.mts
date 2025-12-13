@@ -1,4 +1,4 @@
-import WDIOReporter, { RunnerStats, SuiteStats, TestStats } from '@wdio/reporter';
+import WDIOReporter, { RunnerStats, SuiteStats, TestStats, AfterCommandArgs } from '@wdio/reporter';
 import { Reporters } from '@wdio/types';
 export { RepositoryCase, Status, TestPlanItClient, TestPlanItError, TestRun, TestRunResult } from '@testplanit/api';
 
@@ -29,10 +29,25 @@ interface TestPlanItReporterOptions extends Reporters.Options {
     testRunId?: number | string;
     /**
      * Name for the new test run (required if testRunId is not provided)
-     * Supports placeholders: {date}, {time}, {browser}, {platform}
-     * @default 'WebdriverIO Test Run - {date} {time}'
+     * Supports placeholders:
+     * - {date} - Current date (YYYY-MM-DD)
+     * - {time} - Current time (HH:MM:SS)
+     * - {browser} - Browser name from capabilities
+     * - {platform} - Platform/OS name
+     * - {spec} - Spec file name (without .spec.ts extension)
+     * - {suite} - Root suite name (first describe block)
+     * @default '{suite} - {date} {time}'
      */
     runName?: string;
+    /**
+     * Test run type to indicate the test framework being used.
+     * Auto-detected from WebdriverIO config:
+     * - 'mocha' framework → 'MOCHA'
+     * - 'cucumber' framework → 'CUCUMBER'
+     * - others → 'REGULAR'
+     * Override this if you need a specific type.
+     */
+    testRunType?: 'REGULAR' | 'JUNIT' | 'TESTNG' | 'XUNIT' | 'NUNIT' | 'MSTEST' | 'MOCHA' | 'CUCUMBER';
     /**
      * Configuration to associate with the test run (ID or name).
      * If a string is provided, the system will look up the configuration by exact name match.
@@ -98,6 +113,16 @@ interface TestPlanItReporterOptions extends Reporters.Options {
      */
     autoCreateTestCases?: boolean;
     /**
+     * Whether to create folder hierarchy based on Mocha suite structure
+     * When enabled, nested describe blocks create nested folders:
+     * describe('Suite A') > describe('Suite B') > it('test')
+     * Creates folders: parentFolderId > Suite A > Suite B
+     * The test case is placed in the innermost folder
+     * Requires autoCreateTestCases and parentFolderId to be set
+     * @default false
+     */
+    createFolderHierarchy?: boolean;
+    /**
      * Whether to upload screenshots on test failure
      * @default true
      */
@@ -149,8 +174,10 @@ interface TrackedTestResult {
     repositoryCaseId?: number;
     /** Test run case ID */
     testRunCaseId?: number;
-    /** Suite/class name */
+    /** Suite/class name (joined path) */
     suiteName: string;
+    /** Suite path as array (for folder hierarchy) */
+    suitePath: string[];
     /** Test title/name (without case ID prefix) */
     testName: string;
     /** Full test title including parent suites */
@@ -195,11 +222,30 @@ interface ResolvedIds {
     tagIds?: number[];
 }
 /**
+ * JUnit test suite statistics tracked during test execution
+ */
+interface JUnitSuiteStats {
+    /** Total tests in suite */
+    tests: number;
+    /** Failed tests */
+    failures: number;
+    /** Errored tests */
+    errors: number;
+    /** Skipped tests */
+    skipped: number;
+    /** Total execution time in milliseconds */
+    time: number;
+}
+/**
  * Reporter state
  */
 interface ReporterState {
     /** Created test run ID */
     testRunId?: number;
+    /** Created JUnit test suite ID (for automated test types) */
+    testSuiteId?: number;
+    /** JUnit test suite statistics */
+    testSuiteStats: JUnitSuiteStats;
     /** Resolved numeric IDs from name lookups */
     resolvedIds: ResolvedIds;
     /** Map of test UID to tracked result */
@@ -208,6 +254,8 @@ interface ReporterState {
     caseIdMap: Map<string, number>;
     /** Map of test run case keys to IDs */
     testRunCaseMap: Map<string, number>;
+    /** Map of folder paths (joined by >) to folder IDs for caching */
+    folderPathMap: Map<string, number>;
     /** Status ID mappings */
     statusIds: {
         passed?: number;
@@ -250,16 +298,32 @@ declare class TestPlanItReporter extends WDIOReporter {
     private state;
     private currentSuite;
     private initPromise;
-    private pendingResults;
+    private pendingOperations;
+    private reportedResultCount;
+    private detectedFramework;
+    private currentTestUid;
+    private currentCid;
+    private pendingScreenshots;
+    /**
+     * WebdriverIO uses this getter to determine if the reporter has finished async operations.
+     * The test runner will wait for this to return true before terminating.
+     */
+    get isSynchronised(): boolean;
     constructor(options: TestPlanItReporterOptions);
     /**
      * Log a message if verbose mode is enabled
      */
     private log;
     /**
-     * Log an error
+     * Log an error (always logs, not just in verbose mode)
      */
     private logError;
+    /**
+     * Track an async operation to prevent the runner from terminating early.
+     * The operation is added to pendingOperations and removed when complete.
+     * WebdriverIO checks isSynchronised and waits until all operations finish.
+     */
+    private trackOperation;
     /**
      * Initialize the reporter (create test run, fetch statuses)
      */
@@ -273,6 +337,18 @@ declare class TestPlanItReporter extends WDIOReporter {
      * Fetch status ID mappings from TestPlanIt
      */
     private fetchStatusMappings;
+    /**
+     * Map test status to JUnit result type
+     */
+    private mapStatusToJUnitType;
+    /**
+     * Create the JUnit test suite for this test run
+     */
+    private createJUnitTestSuite;
+    /**
+     * Map WebdriverIO framework name to TestPlanIt test run type
+     */
+    private getTestRunType;
     /**
      * Create a new test run
      */
@@ -299,6 +375,10 @@ declare class TestPlanItReporter extends WDIOReporter {
     onSuiteStart(suite: SuiteStats): void;
     onSuiteEnd(suite: SuiteStats): void;
     onTestStart(test: TestStats): void;
+    /**
+     * Capture screenshots from WebdriverIO commands
+     */
+    onAfterCommand(commandArgs: AfterCommandArgs): void;
     onTestPass(test: TestStats): void;
     onTestFail(test: TestStats): void;
     onTestSkip(test: TestStats): void;
@@ -310,10 +390,6 @@ declare class TestPlanItReporter extends WDIOReporter {
      * Report a single test result to TestPlanIt
      */
     private reportResult;
-    /**
-     * Upload a screenshot attachment
-     */
-    private uploadScreenshot;
     /**
      * Called when the entire test session ends
      */

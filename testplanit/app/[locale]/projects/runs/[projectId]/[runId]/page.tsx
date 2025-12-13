@@ -1543,7 +1543,7 @@ export default function TestRunPage() {
                         {/* Duplicate and Complete buttons on the next row */}
                         <div className="flex items-center gap-2">
                           {canAddEditRun &&
-                            testRunData?.testRunType !== "JUNIT" && (
+                            !isAutomatedTestRunType(testRunData?.testRunType) && (
                               <Button
                                 type="button"
                                 variant="secondary"
@@ -1641,7 +1641,7 @@ export default function TestRunPage() {
               >
                 <div className="flex flex-col h-full p-4">
                   <div className="space-y-4">
-                    {testRunData?.testRunType === "JUNIT" ? (
+                    {isAutomatedTestRunType(testRunData?.testRunType) ? (
                       isJUnitLoading ? (
                         <Loading />
                       ) : (
@@ -1650,7 +1650,7 @@ export default function TestRunPage() {
                             <></>
                           ) : (
                             <div className="text-muted-foreground">
-                              {tCommon("ui.noJunitTestSuites")}
+                              {tCommon("ui.noAutomatedTestResults")}
                             </div>
                           )}
                         </div>

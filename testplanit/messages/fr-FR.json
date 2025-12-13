@@ -931,7 +931,7 @@
       "loadingIssueTracker": "Chargement des informations du système de suivi des problèmes...",
       "enterDocumentation": "Saisissez les documents...",
       "step": "Étape",
-      "noJunitTestSuites": "Aucune suite de tests JUnit n'a été trouvée pour cette exécution."
+      "noAutomatedTestResults": "Aucun résultat de test automatisé n'a été trouvé pour cette exécution."
     },
     "time": {
       "minutes": "{count, plural, =1 {minute} other {minutes}}",

@@ -70,6 +70,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Loading } from "~/components/Loading";
+import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 
 interface ProjectTestRunsProps {
   params: Promise<{ projectId: string }>;
@@ -920,7 +921,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     const canAddEdit = permissions?.canAddEdit ?? false;
 
     return (
-      <>
+      <SimpleDndProvider>
         <Card className="flex w-full min-w-[400px]">
           <div className="flex-1 w-full">
             <CardHeader id="test-runs-page-header">
@@ -1446,7 +1447,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
             onSelectedCasesChange={setModalSelectedTestCases}
           />
         )}
-      </>
+      </SimpleDndProvider>
     );
   }
 

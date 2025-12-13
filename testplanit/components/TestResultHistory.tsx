@@ -18,6 +18,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { formatSeconds } from "@/components/DurationDisplay";
 import { Link } from "~/lib/navigation";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { getDateFnsLocale } from "~/utils/locales";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import {
@@ -931,7 +932,7 @@ export default function TestResultHistory({
     });
   };
 
-  const showAddToTestRun = fetchedTestCase?.source !== "JUNIT";
+  const showAddToTestRun = !isAutomatedCaseSource(fetchedTestCase?.source);
 
   if (!fetchedTestCase) {
     return (

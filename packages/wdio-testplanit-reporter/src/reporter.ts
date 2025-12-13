@@ -1,9 +1,7 @@
-import WDIOReporter, { type RunnerStats, type SuiteStats, type TestStats } from '@wdio/reporter';
-import { TestPlanItClient, TestPlanItError } from '@testplanit/api';
-import type { NormalizedStatus } from '@testplanit/api';
-import type { TestPlanItReporterOptions, TrackedTestResult, ReporterState, ResolvedIds } from './types.js';
-import * as fs from 'fs';
-import * as path from 'path';
+import WDIOReporter, { type RunnerStats, type SuiteStats, type TestStats, type AfterCommandArgs } from '@wdio/reporter';
+import { TestPlanItClient } from '@testplanit/api';
+import type { NormalizedStatus, JUnitResultType } from '@testplanit/api';
+import type { TestPlanItReporterOptions, TrackedTestResult, ReporterState } from './types.js';
 
 /**
  * WebdriverIO Reporter for TestPlanIt
@@ -31,7 +29,20 @@ export default class TestPlanItReporter extends WDIOReporter {
   private state: ReporterState;
   private currentSuite: string[] = [];
   private initPromise: Promise<void> | null = null;
-  private pendingResults: Promise<void>[] = [];
+  private pendingOperations: Set<Promise<void>> = new Set();
+  private reportedResultCount = 0;
+  private detectedFramework: string | null = null;
+  private currentTestUid: string | null = null;
+  private currentCid: string | null = null;
+  private pendingScreenshots: Map<string, Buffer[]> = new Map();
+
+  /**
+   * WebdriverIO uses this getter to determine if the reporter has finished async operations.
+   * The test runner will wait for this to return true before terminating.
+   */
+  get isSynchronised(): boolean {
+    return this.pendingOperations.size === 0;
+  }
 
   constructor(options: TestPlanItReporterOptions) {
     super(options);
@@ -39,6 +50,7 @@ export default class TestPlanItReporter extends WDIOReporter {
     this.reporterOptions = {
       caseIdPattern: /\[(\d+)\]/g,
       autoCreateTestCases: false,
+      createFolderHierarchy: false,
       uploadScreenshots: true,
       includeConsoleLogs: false,
       includeStackTrace: true,
@@ -76,8 +88,16 @@ export default class TestPlanItReporter extends WDIOReporter {
       results: new Map(),
       caseIdMap: new Map(),
       testRunCaseMap: new Map(),
+      folderPathMap: new Map(),
       statusIds: {},
       initialized: false,
+      testSuiteStats: {
+        tests: 0,
+        failures: 0,
+        errors: 0,
+        skipped: 0,
+        time: 0,
+      },
     };
   }
 
@@ -91,17 +111,39 @@ export default class TestPlanItReporter extends WDIOReporter {
   }
 
   /**
-   * Log an error
+   * Log an error (always logs, not just in verbose mode)
    */
   private logError(message: string, error?: unknown): void {
-    console.error(`[TestPlanIt] ${message}`, error instanceof Error ? error.message : error);
+    const errorMsg = error instanceof Error ? error.message : String(error ?? '');
+    const stack = error instanceof Error && error.stack ? `\n${error.stack}` : '';
+    console.error(`[TestPlanIt] ERROR: ${message}`, errorMsg, stack);
+  }
+
+  /**
+   * Track an async operation to prevent the runner from terminating early.
+   * The operation is added to pendingOperations and removed when complete.
+   * WebdriverIO checks isSynchronised and waits until all operations finish.
+   */
+  private trackOperation(operation: Promise<void>): void {
+    this.pendingOperations.add(operation);
+    operation.finally(() => {
+      this.pendingOperations.delete(operation);
+    });
   }
 
   /**
    * Initialize the reporter (create test run, fetch statuses)
    */
   private async initialize(): Promise<void> {
+    // If already initialized successfully, return immediately
     if (this.state.initialized) return;
+
+    // If we have a previous error, throw it again to prevent retrying
+    if (this.state.initError) {
+      throw this.state.initError;
+    }
+
+    // If initialization is in progress, wait for it
     if (this.initPromise) return this.initPromise;
 
     this.initPromise = this.doInitialize();
@@ -110,29 +152,35 @@ export default class TestPlanItReporter extends WDIOReporter {
 
   private async doInitialize(): Promise<void> {
     try {
+      // Log initialization start (only happens when we have results to report)
       this.log('Initializing reporter...');
+      this.log(`  Domain: ${this.reporterOptions.domain}`);
+      this.log(`  Project ID: ${this.reporterOptions.projectId}`);
 
       // Resolve any string IDs to numeric IDs
+      this.log('Resolving option IDs...');
       await this.resolveOptionIds();
 
       // Fetch status mappings
+      this.log('Fetching status mappings...');
       await this.fetchStatusMappings();
 
       // Create or validate test run
       if (!this.state.testRunId) {
         await this.createTestRun();
+        this.log(`Created test run with ID: ${this.state.testRunId}`);
       } else {
         // Validate existing test run
         try {
           const testRun = await this.client.getTestRun(this.state.testRunId);
-          this.log('Using existing test run:', testRun.name);
+          this.log(`Using existing test run: ${testRun.name} (ID: ${testRun.id})`);
         } catch (error) {
           throw new Error(`Test run ${this.state.testRunId} not found or not accessible`);
         }
       }
 
       this.state.initialized = true;
-      this.log('Reporter initialized successfully. Test Run ID:', this.state.testRunId);
+      this.log('Reporter initialized successfully');
     } catch (error) {
       this.state.initError = error instanceof Error ? error : new Error(String(error));
       this.logError('Failed to initialize reporter:', error);
@@ -244,17 +292,87 @@ export default class TestPlanItReporter extends WDIOReporter {
   }
 
   /**
+   * Map test status to JUnit result type
+   */
+  private mapStatusToJUnitType(status: 'passed' | 'failed' | 'skipped' | 'pending'): JUnitResultType {
+    switch (status) {
+      case 'passed':
+        return 'PASSED';
+      case 'failed':
+        return 'FAILURE';
+      case 'skipped':
+      case 'pending':
+        return 'SKIPPED';
+      default:
+        return 'FAILURE';
+    }
+  }
+
+  /**
+   * Create the JUnit test suite for this test run
+   */
+  private async createJUnitTestSuite(): Promise<void> {
+    if (this.state.testSuiteId) {
+      return; // Already created
+    }
+
+    if (!this.state.testRunId) {
+      throw new Error('Cannot create JUnit test suite without a test run ID');
+    }
+
+    const runName = this.formatRunName(this.reporterOptions.runName || '{suite} - {date} {time}');
+
+    this.log('Creating JUnit test suite...');
+
+    const testSuite = await this.client.createJUnitTestSuite({
+      testRunId: this.state.testRunId,
+      name: runName,
+      time: 0, // Will be updated incrementally
+      tests: 0,
+      failures: 0,
+      errors: 0,
+      skipped: 0,
+    });
+
+    this.state.testSuiteId = testSuite.id;
+    this.log('Created JUnit test suite with ID:', testSuite.id);
+  }
+
+  /**
+   * Map WebdriverIO framework name to TestPlanIt test run type
+   */
+  private getTestRunType(): TestPlanItReporterOptions['testRunType'] {
+    // If explicitly set by user, use that
+    if (this.reporterOptions.testRunType) {
+      return this.reporterOptions.testRunType;
+    }
+
+    // Auto-detect from WebdriverIO framework config
+    if (this.detectedFramework) {
+      const framework = this.detectedFramework.toLowerCase();
+      if (framework === 'mocha') return 'MOCHA';
+      if (framework === 'cucumber') return 'CUCUMBER';
+      // jasmine and others map to REGULAR
+      return 'REGULAR';
+    }
+
+    // Default fallback
+    return 'MOCHA';
+  }
+
+  /**
    * Create a new test run
    */
   private async createTestRun(): Promise<void> {
-    const runName = this.formatRunName(this.reporterOptions.runName || 'WebdriverIO Test Run - {date} {time}');
+    const runName = this.formatRunName(this.reporterOptions.runName || '{suite} - {date} {time}');
+    const testRunType = this.getTestRunType();
 
-    this.log('Creating test run:', runName);
+    this.log('Creating test run:', runName, '(type:', testRunType + ')');
 
     const testRun = await this.client.createTestRun({
       projectId: this.reporterOptions.projectId,
       name: runName,
-      testRunType: 'REGULAR',
+      testRunType,
       configId: this.state.resolvedIds.configId,
       milestoneId: this.state.resolvedIds.milestoneId,
       stateId: this.state.resolvedIds.stateId,
@@ -274,11 +392,25 @@ export default class TestPlanItReporter extends WDIOReporter {
     const browser = this.state.capabilities?.browserName || 'unknown';
     const platform = this.state.capabilities?.platformName || process.platform;
 
+    // Get spec file name from currentSpec (e.g., "/path/to/test.spec.ts" -> "test.spec.ts")
+    let spec = 'unknown';
+    if (this.currentSpec) {
+      const parts = this.currentSpec.split('/');
+      spec = parts[parts.length - 1] || 'unknown';
+      // Remove common extensions for cleaner names
+      spec = spec.replace(/\.(spec|test)\.(ts|js|mjs|cjs)$/, '');
+    }
+
+    // Get the root suite name (first describe block)
+    const suite = this.currentSuite[0] || 'Tests';
+
     return template
       .replace('{date}', date)
       .replace('{time}', time)
       .replace('{browser}', browser)
-      .replace('{platform}', platform);
+      .replace('{platform}', platform)
+      .replace('{spec}', spec)
+      .replace('{suite}', suite);
   }
 
   /**
@@ -330,10 +462,16 @@ export default class TestPlanItReporter extends WDIOReporter {
     this.log('Runner started:', runner.cid);
     this.state.capabilities = runner.capabilities as WebdriverIO.Capabilities;
 
-    // Start initialization
-    this.initialize().catch((error) => {
-      this.logError('Failed to initialize during runner start:', error);
-    });
+    // Auto-detect the test framework from WebdriverIO config
+    // This is accessed via runner.config.framework (e.g., 'mocha', 'cucumber', 'jasmine')
+    const config = runner.config as { framework?: string } | undefined;
+    if (config?.framework) {
+      this.detectedFramework = config.framework;
+      this.log('Detected framework:', this.detectedFramework);
+    }
+
+    // Don't initialize here - wait until we have actual test results to report
+    // This avoids creating empty test runs for specs with no matching tests
   }
 
   onSuiteStart(suite: SuiteStats): void {
@@ -352,6 +490,46 @@ export default class TestPlanItReporter extends WDIOReporter {
 
   onTestStart(test: TestStats): void {
     this.log('Test started:', test.title);
+    // Track the current test for screenshot association
+    const { cleanTitle } = this.parseCaseIds(test.title);
+    const suiteName = this.getFullSuiteName();
+    const fullTitle = suiteName ? `${suiteName} > ${cleanTitle}` : cleanTitle;
+    this.currentTestUid = `${test.cid}_${fullTitle}`;
+    this.currentCid = test.cid;
+  }
+
+  /**
+   * Capture screenshots from WebdriverIO commands
+   */
+  onAfterCommand(commandArgs: AfterCommandArgs): void {
+    // Check if this is a screenshot command
+    if (!this.reporterOptions.uploadScreenshots) {
+      return;
+    }
+
+    // WebdriverIO uses 'takeScreenshot' as the command name or '/screenshot' endpoint
+    const isScreenshotCommand =
+      commandArgs.command === 'takeScreenshot' ||
+      commandArgs.endpoint?.includes('/screenshot');
+
+    if (!isScreenshotCommand || !commandArgs.result) {
+      return;
+    }
+
+    // The result should be base64-encoded screenshot data
+    const screenshotData = commandArgs.result as string;
+    if (typeof screenshotData !== 'string') {
+      return;
+    }
+
+    // Store the screenshot associated with the current test
+    if (this.currentTestUid) {
+      const buffer = Buffer.from(screenshotData, 'base64');
+      const existing = this.pendingScreenshots.get(this.currentTestUid) || [];
+      existing.push(buffer);
+      this.pendingScreenshots.set(this.currentTestUid, existing);
+      this.log('Captured screenshot for test:', this.currentTestUid, `(${buffer.length} bytes)`);
+    }
   }
 
   onTestPass(test: TestStats): void {
@@ -372,21 +550,29 @@ export default class TestPlanItReporter extends WDIOReporter {
   private handleTestEnd(test: TestStats, status: 'passed' | 'failed' | 'skipped'): void {
     const { caseIds, cleanTitle } = this.parseCaseIds(test.title);
     const suiteName = this.getFullSuiteName();
+    const suitePath = [...this.currentSuite]; // Copy the current suite hierarchy
     const fullTitle = suiteName ? `${suiteName} > ${cleanTitle}` : cleanTitle;
     const uid = `${test.cid}_${fullTitle}`;
+
+    // Calculate duration from timestamps for reliability
+    // WebdriverIO's test.duration can be inconsistent in some versions
+    const startTime = new Date(test.start).getTime();
+    const endTime = test.end ? new Date(test.end).getTime() : Date.now();
+    const durationMs = endTime - startTime;
 
     const result: TrackedTestResult = {
       caseId: caseIds[0], // Primary case ID
       suiteName,
+      suitePath,
       testName: cleanTitle,
       fullTitle,
       originalTitle: test.title,
       status,
-      duration: test.duration || 0,
+      duration: durationMs,
       errorMessage: test.error?.message,
       stackTrace: this.reporterOptions.includeStackTrace ? test.error?.stack : undefined,
       startedAt: new Date(test.start),
-      finishedAt: new Date(test.end || Date.now()),
+      finishedAt: new Date(endTime),
       browser: this.state.capabilities?.browserName,
       platform: this.state.capabilities?.platformName || process.platform,
       screenshots: [],
@@ -398,9 +584,9 @@ export default class TestPlanItReporter extends WDIOReporter {
     this.state.results.set(uid, result);
     this.log(`Test ${status}:`, cleanTitle, caseIds.length > 0 ? `(Case IDs: ${caseIds.join(', ')})` : '');
 
-    // Report result asynchronously
+    // Report result asynchronously - track operation so WebdriverIO waits for completion
     const reportPromise = this.reportResult(result, caseIds);
-    this.pendingResults.push(reportPromise);
+    this.trackOperation(reportPromise);
   }
 
   /**
@@ -408,7 +594,14 @@ export default class TestPlanItReporter extends WDIOReporter {
    */
   private async reportResult(result: TrackedTestResult, caseIds: number[]): Promise<void> {
     try {
-      // Wait for initialization
+      // Check if this result can be reported BEFORE initializing
+      // This prevents creating empty test runs for tests without case IDs
+      if (caseIds.length === 0 && !this.reporterOptions.autoCreateTestCases) {
+        console.warn(`[TestPlanIt] WARNING: Skipping "${result.testName}" - no case ID found and autoCreateTestCases is disabled. Set autoCreateTestCases: true to automatically find or create test cases by name.`);
+        return;
+      }
+
+      // Now we know this result can be reported, so initialize if needed
       await this.initialize();
 
       if (!this.state.testRunId) {
@@ -416,9 +609,11 @@ export default class TestPlanItReporter extends WDIOReporter {
         return;
       }
 
-      // If no case IDs and auto-create is disabled, skip
-      if (caseIds.length === 0 && !this.reporterOptions.autoCreateTestCases) {
-        console.warn(`[TestPlanIt] WARNING: Skipping "${result.testName}" - no case ID found and autoCreateTestCases is disabled. Set autoCreateTestCases: true to automatically find or create test cases by name.`);
+      // Create JUnit test suite if not already created
+      await this.createJUnitTestSuite();
+
+      if (!this.state.testSuiteId) {
+        this.logError('No test suite ID available, skipping result');
         return;
       }
 
@@ -426,22 +621,64 @@ export default class TestPlanItReporter extends WDIOReporter {
       let repositoryCaseId: number | undefined;
       const caseKey = this.createCaseKey(result.suiteName, result.testName);
 
+      // DEBUG: Always log key info about this test
+      this.log('DEBUG: Processing test:', result.testName);
+      this.log('DEBUG: suiteName:', result.suiteName);
+      this.log('DEBUG: suitePath:', JSON.stringify(result.suitePath));
+      this.log('DEBUG: caseIds from title:', JSON.stringify(caseIds));
+      this.log('DEBUG: autoCreateTestCases:', this.reporterOptions.autoCreateTestCases);
+      this.log('DEBUG: createFolderHierarchy:', this.reporterOptions.createFolderHierarchy);
+
       if (caseIds.length > 0) {
         // Use the provided case ID directly as repository case ID
         repositoryCaseId = caseIds[0];
+        this.log('DEBUG: Using case ID from title:', repositoryCaseId);
       } else if (this.reporterOptions.autoCreateTestCases) {
         // Check cache first
         if (this.state.caseIdMap.has(caseKey)) {
           repositoryCaseId = this.state.caseIdMap.get(caseKey);
+          this.log('DEBUG: Found in cache:', caseKey, '->', repositoryCaseId);
         } else {
-          // Find or create the test case
-          const folderId = this.state.resolvedIds.parentFolderId;
+          // Determine the target folder ID
+          let folderId = this.state.resolvedIds.parentFolderId;
           const templateId = this.state.resolvedIds.templateId;
+
+          this.log('DEBUG: Initial folderId (parentFolderId):', folderId);
+          this.log('DEBUG: templateId:', templateId);
 
           if (!folderId || !templateId) {
             this.logError('autoCreateTestCases requires parentFolderId and templateId');
             return;
           }
+
+          // Create folder hierarchy based on suite structure if enabled
+          this.log('DEBUG: Checking folder hierarchy - createFolderHierarchy:', this.reporterOptions.createFolderHierarchy, 'suitePath.length:', result.suitePath.length);
+          if (this.reporterOptions.createFolderHierarchy && result.suitePath.length > 0) {
+            const folderPathKey = result.suitePath.join(' > ');
+            this.log('DEBUG: Will create folder hierarchy for path:', folderPathKey);
+
+            // Check folder cache first
+            if (this.state.folderPathMap.has(folderPathKey)) {
+              folderId = this.state.folderPathMap.get(folderPathKey)!;
+              this.log('Using cached folder ID for path:', folderPathKey, '->', folderId);
+            } else {
+              // Create the folder hierarchy
+              this.log('Creating folder hierarchy:', result.suitePath.join(' > '));
+              this.log('DEBUG: Calling findOrCreateFolderPath with projectId:', this.reporterOptions.projectId, 'suitePath:', JSON.stringify(result.suitePath), 'parentFolderId:', this.state.resolvedIds.parentFolderId);
+              const folder = await this.client.findOrCreateFolderPath(
+                this.reporterOptions.projectId,
+                result.suitePath,
+                this.state.resolvedIds.parentFolderId
+              );
+              folderId = folder.id;
+              this.state.folderPathMap.set(folderPathKey, folderId);
+              this.log('Created/found folder:', folder.name, '(ID:', folder.id + ')');
+            }
+          } else {
+            this.log('DEBUG: Skipping folder hierarchy - createFolderHierarchy:', this.reporterOptions.createFolderHierarchy, 'suitePath.length:', result.suitePath.length);
+          }
+
+          this.log('DEBUG: Final folderId for test case:', folderId);
 
           const testCase = await this.client.findOrCreateTestCase({
             projectId: this.reporterOptions.projectId,
@@ -455,8 +692,10 @@ export default class TestPlanItReporter extends WDIOReporter {
 
           repositoryCaseId = testCase.id;
           this.state.caseIdMap.set(caseKey, repositoryCaseId);
-          this.log('Created/found test case:', testCase.id, testCase.name);
+          this.log('Created/found test case:', testCase.id, testCase.name, 'in folder:', folderId);
         }
+      } else {
+        this.log('DEBUG: autoCreateTestCases is false, not creating test case');
       }
 
       if (!repositoryCaseId) {
@@ -480,40 +719,69 @@ export default class TestPlanItReporter extends WDIOReporter {
         this.log('Added case to run:', testRunCaseId);
       }
 
-      // Get status ID
+      // Get status ID for the JUnit result
       const statusId = this.state.statusIds[result.status] || this.state.statusIds.failed!;
 
-      // Build evidence/notes
-      const evidence: Record<string, unknown> = {};
-      const notes: Record<string, unknown> = {};
+      // Map status to JUnit result type
+      const junitType = this.mapStatusToJUnitType(result.status);
+
+      // Build error message/content for failed tests
+      let message: string | undefined;
+      let content: string | undefined;
 
       if (result.errorMessage) {
-        notes['error'] = result.errorMessage;
+        message = result.errorMessage;
       }
       if (result.stackTrace) {
-        evidence['stackTrace'] = result.stackTrace;
-      }
-      if (result.consoleLogs.length > 0) {
-        evidence['consoleLogs'] = result.consoleLogs;
+        content = result.stackTrace;
       }
 
-      // Create the test result
-      const testResult = await this.client.createTestResult({
-        testRunId: this.state.testRunId,
-        testRunCaseId: testRunCaseId!,
+      // Create the JUnit test result
+      // WebdriverIO provides duration in milliseconds, JUnit expects seconds
+      const durationInSeconds = result.duration / 1000;
+      const junitResult = await this.client.createJUnitTestResult({
+        testSuiteId: this.state.testSuiteId,
+        repositoryCaseId,
+        type: junitType,
+        message,
+        content,
         statusId,
-        elapsed: result.duration,
-        notes: Object.keys(notes).length > 0 ? notes : undefined,
-        evidence: Object.keys(evidence).length > 0 ? evidence : undefined,
-        attempt: result.retryAttempt + 1,
+        time: durationInSeconds,
       });
 
-      this.log('Created test result:', testResult.id);
+      this.log('Created JUnit test result:', junitResult.id, '(type:', junitType + ')');
+      this.reportedResultCount++;
 
-      // Upload screenshots if enabled and test failed
-      if (this.reporterOptions.uploadScreenshots && result.status === 'failed' && result.screenshots.length > 0) {
-        for (const screenshotPath of result.screenshots) {
-          await this.uploadScreenshot(testResult.id, screenshotPath);
+      // Update suite statistics
+      this.state.testSuiteStats.tests++;
+      this.state.testSuiteStats.time += durationInSeconds;
+      if (result.status === 'failed') {
+        this.state.testSuiteStats.failures++;
+      } else if (result.status === 'skipped') {
+        this.state.testSuiteStats.skipped++;
+      }
+
+      // Upload any screenshots captured for this test
+      if (this.reporterOptions.uploadScreenshots) {
+        const screenshots = this.pendingScreenshots.get(result.uid);
+        if (screenshots && screenshots.length > 0) {
+          this.log(`Uploading ${screenshots.length} screenshot(s) for test:`, result.testName);
+          for (let i = 0; i < screenshots.length; i++) {
+            try {
+              const fileName = `screenshot_${i + 1}_${Date.now()}.png`;
+              await this.client.uploadJUnitAttachment(
+                junitResult.id,
+                screenshots[i],
+                fileName,
+                'image/png'
+              );
+              this.log(`Uploaded screenshot ${i + 1}/${screenshots.length}`);
+            } catch (uploadError) {
+              this.logError(`Failed to upload screenshot ${i + 1}:`, uploadError);
+            }
+          }
+          // Clean up uploaded screenshots
+          this.pendingScreenshots.delete(result.uid);
         }
       }
     } catch (error) {
@@ -522,39 +790,73 @@ export default class TestPlanItReporter extends WDIOReporter {
   }
 
   /**
-   * Upload a screenshot attachment
-   */
-  private async uploadScreenshot(testRunResultId: number, screenshotPath: string): Promise<void> {
-    try {
-      if (!fs.existsSync(screenshotPath)) {
-        this.log('Screenshot file not found:', screenshotPath);
-        return;
-      }
-
-      const fileBuffer = fs.readFileSync(screenshotPath);
-      const fileName = path.basename(screenshotPath);
-
-      await this.client.uploadAttachment(testRunResultId, fileBuffer, fileName, 'image/png');
-
-      this.log('Uploaded screenshot:', fileName);
-    } catch (error) {
-      this.logError('Failed to upload screenshot:', error);
-    }
-  }
-
-  /**
    * Called when the entire test session ends
    */
   async onRunnerEnd(runner: RunnerStats): Promise<void> {
-    this.log('Runner ended, waiting for pending results...');
+    // If no tests were tracked and no initialization was started, silently skip
+    // This handles specs with no matching tests (all filtered out by grep, etc.)
+    if (this.state.results.size === 0 && !this.initPromise) {
+      this.log('No test results to report, skipping');
+      return;
+    }
 
-    // Wait for all pending results to be reported
-    await Promise.allSettled(this.pendingResults);
+    this.log('Runner ended, waiting for initialization and pending results...');
+
+    // Wait for initialization to complete (might still be in progress)
+    if (this.initPromise) {
+      try {
+        await this.initPromise;
+      } catch {
+        // Error already captured in state.initError
+      }
+    }
+
+    // Wait for any remaining pending operations
+    // (WebdriverIO waits via isSynchronised, but we also wait here for safety)
+    await Promise.allSettled([...this.pendingOperations]);
+
+    // Check if initialization failed
+    if (this.state.initError) {
+      console.error('\n[TestPlanIt] FAILED: Reporter initialization failed');
+      console.error(`  Error: ${this.state.initError.message}`);
+      console.error('  No results were reported to TestPlanIt.');
+      console.error('  Please check your configuration and API connectivity.');
+      return;
+    }
+
+    // If no test run was created (no reportable results), silently skip
+    if (!this.state.testRunId) {
+      this.log('No test run created, skipping summary');
+      return;
+    }
+
+    // If no results were actually reported to TestPlanIt, silently skip
+    // This handles the case where tests ran but none had valid case IDs
+    if (this.reportedResultCount === 0) {
+      this.log('No results were reported to TestPlanIt, skipping summary');
+      return;
+    }
+
+    // Update the JUnit test suite with final statistics
+    if (this.state.testSuiteId) {
+      try {
+        await this.client.updateJUnitTestSuite(this.state.testSuiteId, {
+          tests: this.state.testSuiteStats.tests,
+          failures: this.state.testSuiteStats.failures,
+          errors: this.state.testSuiteStats.errors,
+          skipped: this.state.testSuiteStats.skipped,
+          time: this.state.testSuiteStats.time,
+        });
+        this.log('Updated test suite statistics:', this.state.testSuiteStats);
+      } catch (error) {
+        this.logError('Failed to update test suite statistics:', error);
+      }
+    }
 
     // Complete the test run if configured
-    if (this.reporterOptions.completeRunOnFinish && this.state.testRunId) {
+    if (this.reporterOptions.completeRunOnFinish) {
       try {
-        await this.client.completeTestRun(this.state.testRunId);
+        await this.client.completeTestRun(this.state.testRunId, this.reporterOptions.projectId);
         this.log('Test run completed:', this.state.testRunId);
       } catch (error) {
         this.logError('Failed to complete test run:', error);
@@ -562,16 +864,10 @@ export default class TestPlanItReporter extends WDIOReporter {
     }
 
     // Print summary
-    const passed = Array.from(this.state.results.values()).filter((r) => r.status === 'passed').length;
-    const failed = Array.from(this.state.results.values()).filter((r) => r.status === 'failed').length;
-    const skipped = Array.from(this.state.results.values()).filter((r) => r.status === 'skipped').length;
-
     console.log('\n[TestPlanIt] Results Summary:');
     console.log(`  Test Run ID: ${this.state.testRunId}`);
-    console.log(`  Passed: ${passed}`);
-    console.log(`  Failed: ${failed}`);
-    console.log(`  Skipped: ${skipped}`);
-    console.log(`  URL: ${this.reporterOptions.domain}/projects/${this.reporterOptions.projectId}/test-runs/${this.state.testRunId}`);
+    console.log(`  Test Results Reported: ${this.reportedResultCount}`);
+    console.log(`  URL: ${this.reporterOptions.domain}/projects/runs/${this.reporterOptions.projectId}/${this.state.testRunId}`);
   }
 
   /**

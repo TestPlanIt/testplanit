@@ -498,7 +498,7 @@ function JunitTableSection({
                       {!isJUnitLoading &&
                         (!jUnitSuites || jUnitSuites.length === 0) && (
                           <div className="text-muted-foreground">
-                            {t("common.ui.noJunitTestSuites")}
+                            {t("common.ui.noAutomatedTestResults")}
                           </div>
                         )}
                     </div>

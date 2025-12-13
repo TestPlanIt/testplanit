@@ -1000,6 +1000,8 @@ model Attachments {
   testRunResults      TestRunResults?     @relation(fields: [testRunResultsId], references: [id], onDelete: Cascade)
   testRunStepResultId Int?
   testRunStepResult   TestRunStepResults? @relation(fields: [testRunStepResultId], references: [id], onDelete: Cascade)
+  junitTestResultId   Int?
+  junitTestResult     JUnitTestResult?    @relation(fields: [junitTestResultId], references: [id], onDelete: Cascade)
 }
 
 model Steps {
@@ -1454,6 +1456,7 @@ model JUnitTestResult {
   createdBy        User            @relation(fields: [createdById], references: [id])
   statusId         Int?
   status           Status?         @relation(fields: [statusId], references: [id])
+  attachments      Attachments[]
 
   @@index([testSuiteId])
   @@index([repositoryCaseId])
