@@ -95,6 +95,7 @@ const TreeView: React.FC<{
   const t = useTranslations();
   const treeRef = useRef<TreeApi<ArboristNode>>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const prevSelectedFolderIdRef = useRef<number | null>(null);
   const [hierarchyData, setHierarchyData] = useState<FolderNode[]>([]);
   const [initialOpenState, setInitialOpenState] = useState<
     Record<string, boolean> | undefined
@@ -559,8 +560,15 @@ const TreeView: React.FC<{
   ]);
 
   // Set initial selection after tree is rendered
+  // Only run when selectedFolderId actually changes from the parent, not on treeData changes
   useEffect(() => {
-    if (selectedFolderId && treeRef.current && treeData.length > 0) {
+    if (
+      selectedFolderId &&
+      treeRef.current &&
+      treeData.length > 0 &&
+      prevSelectedFolderIdRef.current !== selectedFolderId
+    ) {
+      prevSelectedFolderIdRef.current = selectedFolderId;
       ensureFolderPathLoaded(selectedFolderId);
       // Small delay to ensure tree is fully rendered
       setTimeout(() => {
@@ -829,10 +837,15 @@ const TreeView: React.FC<{
           onClick={async (e) => {
             e.stopPropagation();
             if (hasChildren) {
+              const wasOpen = node.isOpen;
               if (!childrenLoaded) {
                 await ensureFolderChildrenLoaded(data?.folderId);
               }
               node.toggle();
+              // Select the folder when expanding
+              if (!wasOpen) {
+                node.select();
+              }
             }
           }}
         >

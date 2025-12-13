@@ -12,9 +12,16 @@ import { captureAuditEvent, type AuditEvent } from "~/lib/services/auditLog";
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import type { AuditAction } from "@prisma/client";
+import { AsyncLocalStorage } from "async_hooks";
 
-// Store API token auth result in async local storage for getPrisma
-let currentApiAuth: { userId: string; email?: string; name?: string } | null = null;
+// Use AsyncLocalStorage for request-scoped API token auth (thread-safe)
+type ApiAuthContext = { userId: string; email?: string; name?: string } | null;
+const apiAuthStorage = new AsyncLocalStorage<ApiAuthContext>();
+
+// Helper to get current API auth from AsyncLocalStorage
+function getCurrentApiAuth(): ApiAuthContext {
+  return apiAuthStorage.getStore() ?? null;
+}
 
 // Models that require automatic user injection for create operations
 // Maps model name to the field that needs the authenticated user
@@ -115,7 +122,8 @@ async function getPrisma() {
   let userEmail = session?.user?.email ?? undefined;
   let userName = session?.user?.name ?? undefined;
 
-  // If no session, check for API token auth result stored from handler
+  // If no session, check for API token auth result stored in AsyncLocalStorage
+  const currentApiAuth = getCurrentApiAuth();
   if (!userId && currentApiAuth) {
     userId = currentApiAuth.userId;
     userEmail = currentApiAuth.email;
@@ -227,6 +235,8 @@ async function handler(
 ) {
   // Check for API token authentication if no session
   const session = await getServerAuthSession();
+  let apiAuthContext: ApiAuthContext = null;
+
   if (!session?.user) {
     // Check if there's a Bearer token
     const token = extractBearerToken(req);
@@ -238,8 +248,8 @@ async function handler(
           { status: 401 }
         );
       }
-      // Store auth info for getPrisma to use
-      currentApiAuth = {
+      // Build auth context for AsyncLocalStorage
+      apiAuthContext = {
         userId: apiAuth.userId!,
       };
       // Look up user info for audit context
@@ -248,19 +258,20 @@ async function handler(
         select: { email: true, name: true },
       });
       if (user) {
-        currentApiAuth.email = user.email ?? undefined;
-        currentApiAuth.name = user.name ?? undefined;
+        apiAuthContext.email = user.email ?? undefined;
+        apiAuthContext.name = user.name ?? undefined;
       }
     }
   }
 
-  try {
+  // Run the handler logic within AsyncLocalStorage context for thread-safe API auth
+  return apiAuthStorage.run(apiAuthContext, async () => {
     const params = await context.params;
     const parsedPath = parseZenStackPath(params.path);
     const isMutation = ["POST", "PUT", "PATCH", "DELETE"].includes(req.method);
 
     // Get the authenticated user ID (from session or API token)
-    const authenticatedUserId = session?.user?.id ?? currentApiAuth?.userId;
+    const authenticatedUserId = session?.user?.id ?? apiAuthContext?.userId;
 
     // Clone the request body for audit logging and potential modification
     let requestBody: any = null;
@@ -413,10 +424,7 @@ async function handler(
     }
 
     return newResponse;
-  } finally {
-    // Clear the API auth context
-    currentApiAuth = null;
-  }
+  });
 }
 
 export {
