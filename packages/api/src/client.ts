@@ -1753,18 +1753,23 @@ export class TestPlanItClient {
     );
 
     // Step 2: Create attachment record linked to JUnit result
-    // Size is sent as a string because JSON.stringify can't serialize BigInt,
-    // but the server (ZenStack/Prisma) will convert it to BigInt for storage
-    const size = (Buffer.isBuffer(file) ? file.length : file.size).toString();
-    const data: Record<string, unknown> = {
-      url,
-      name: fileName,
-      mimeType: mimeType || "application/octet-stream",
-      size,
-      junitTestResult: { connect: { id: junitTestResultId } },
-    };
+    // Uses dedicated endpoint that handles BigInt conversion for size field
+    const size = Buffer.isBuffer(file) ? file.length : file.size;
+    const response = await this.request<{ data: Attachment }>(
+      "POST",
+      "/api/junit/attachment",
+      {
+        body: {
+          junitTestResultId,
+          url,
+          name: fileName,
+          mimeType: mimeType || "application/octet-stream",
+          size,
+        },
+      }
+    );
 
-    return this.zenstack<Attachment>("attachments", "create", { data });
+    return response.data;
   }
 
   // ============================================================================

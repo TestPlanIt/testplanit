@@ -1305,15 +1305,21 @@ var TestPlanItClient = class {
       mimeType,
       `junit_${junitTestResultId}`
     );
-    const size = (Buffer.isBuffer(file) ? file.length : file.size).toString();
-    const data = {
-      url,
-      name: fileName,
-      mimeType: mimeType || "application/octet-stream",
-      size,
-      junitTestResult: { connect: { id: junitTestResultId } }
-    };
-    return this.zenstack("attachments", "create", { data });
+    const size = Buffer.isBuffer(file) ? file.length : file.size;
+    const response = await this.request(
+      "POST",
+      "/api/junit/attachment",
+      {
+        body: {
+          junitTestResultId,
+          url,
+          name: fileName,
+          mimeType: mimeType || "application/octet-stream",
+          size
+        }
+      }
+    );
+    return response.data;
   }
   // ============================================================================
   // JUnit Test Results (for automated test runs)
