@@ -477,7 +477,7 @@ declare class TestPlanItError extends Error {
  */
 interface LookupRequest {
     projectId?: number;
-    type: 'project' | 'state' | 'config' | 'milestone' | 'tag' | 'folder' | 'testRun';
+    type: "project" | "state" | "config" | "milestone" | "tag" | "folder" | "testRun";
     name: string;
     createIfMissing?: boolean;
 }
