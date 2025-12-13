@@ -1303,7 +1303,7 @@ var TestPlanItClient = class {
       mimeType,
       `junit_${junitTestResultId}`
     );
-    const size = BigInt(Buffer.isBuffer(file) ? file.length : file.size);
+    const size = (Buffer.isBuffer(file) ? file.length : file.size).toString();
     const data = {
       url,
       name: fileName,

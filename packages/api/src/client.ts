@@ -1753,8 +1753,9 @@ export class TestPlanItClient {
     );
 
     // Step 2: Create attachment record linked to JUnit result
-    // Size must be BigInt to match the database schema
-    const size = BigInt(Buffer.isBuffer(file) ? file.length : file.size);
+    // Size is sent as a string because JSON.stringify can't serialize BigInt,
+    // but the server (ZenStack/Prisma) will convert it to BigInt for storage
+    const size = (Buffer.isBuffer(file) ? file.length : file.size).toString();
     const data: Record<string, unknown> = {
       url,
       name: fileName,
