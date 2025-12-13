@@ -13,7 +13,8 @@ import { z } from "zod";
 
 const attachmentSchema = z.object({
   junitTestResultId: z.number().int().positive(),
-  url: z.string().url(),
+  // URL can be a full URL or a relative path (e.g., /api/storage/...)
+  url: z.string().min(1),
   name: z.string().min(1),
   mimeType: z.string().default("application/octet-stream"),
   size: z.union([z.number(), z.string()]).transform((val) => BigInt(val)),
