@@ -21,6 +21,7 @@ export function NotificationContent({
 }: NotificationContentProps) {
   const locale = useLocale();
   const t = useTranslations("components.notifications.content");
+  const tMilestones = useTranslations("milestones.notifications");
 
   // Get notification data (Prisma automatically deserializes JSON fields)
   const data = notification.data || {};
@@ -61,6 +62,7 @@ export function NotificationContent({
               <ProjectNameCell
                 projectId={data.projectId}
                 value={data.projectName}
+                size="sm"
               />
             </div>
           </div>
@@ -116,6 +118,7 @@ export function NotificationContent({
                   <ProjectNameCell
                     projectId={group.projectId}
                     value={group.projectName}
+                    size="sm"
                   />
                 </div>
               </div>
@@ -159,6 +162,7 @@ export function NotificationContent({
               <ProjectNameCell
                 projectId={data.projectId}
                 value={data.projectName}
+                size="sm"
               />
             </div>
           </div>
@@ -254,6 +258,7 @@ export function NotificationContent({
               <ProjectNameCell
                 projectId={data.projectId}
                 value={data.projectName}
+                size="sm"
               />
             </div>
           </div>
@@ -270,6 +275,63 @@ export function NotificationContent({
     );
   }
 
+  // Handle milestone due reminders
+  if (notification.type === "MILESTONE_DUE_REMINDER") {
+    // Check if we have the data structure with all IDs
+    if (data.projectId && data.milestoneId) {
+      const milestoneLink = `/projects/milestones/${data.projectId}/${data.milestoneId}`;
+      const isOverdue = data.isOverdue;
+      const dueDate = data.dueDate
+        ? new Date(data.dueDate).toLocaleDateString(locale)
+        : "";
+
+      return (
+        <div className="space-y-2">
+          <h4 className="font-medium text-sm">
+            {isOverdue ? t("milestoneOverdueTitle") : t("milestoneDueSoonTitle")}
+          </h4>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <div className="flex items-center gap-1 flex-wrap">
+              <Link
+                href={milestoneLink}
+                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                <MilestoneNameDisplay
+                  milestone={{
+                    id: data.milestoneId,
+                    name: data.milestoneName,
+                    milestoneTypeIconName: data.milestoneTypeIconName,
+                  }}
+                  showIcon={true}
+                />
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+              <span>{t("inProject")}</span>
+              <ProjectNameCell
+                projectId={data.projectId}
+                value={data.projectName}
+                size="sm"
+              />
+            </div>
+            <div className="text-xs">
+              {isOverdue
+                ? tMilestones("overdue", { name: data.milestoneName, dueDate })
+                : tMilestones("dueSoon", { name: data.milestoneName, dueDate })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback for old notifications without full data
+    return (
+      <div className="space-y-1">
+        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <p className="text-sm text-muted-foreground">{notification.message}</p>
+      </div>
+    );
+  }
+
   // Handle system announcements
   if (notification.type === "SYSTEM_ANNOUNCEMENT") {
     const hasRichContent = notification.data?.richContent;
@@ -278,7 +340,7 @@ export function NotificationContent({
     return (
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <Megaphone className="h-4 w-4 text-blue-500" />
+          <Megaphone className="h-4 w-4 text-primary" />
           <h4 className="font-medium text-sm">{notification.title}</h4>
         </div>
         <div className="space-y-1">

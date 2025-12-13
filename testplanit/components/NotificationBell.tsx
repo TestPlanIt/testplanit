@@ -80,7 +80,7 @@ function NotificationItem({
       className={cn(
         "p-3 border-b last:border-0 hover:bg-muted/50 transition-colors",
         !notification.isRead && "bg-primary/20",
-        notification.type === "SYSTEM_ANNOUNCEMENT" && "bg-blue-50 dark:bg-blue-950/20"
+        !notification.isRead && notification.type === "SYSTEM_ANNOUNCEMENT" && "bg-accent"
       )}
       data-notification-item
       data-state={notification.isRead ? "read" : "unread"}

@@ -60,7 +60,7 @@ representative at an online or offline event.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement at
-conduct@testplanit.com. All complaints will be reviewed and investigated promptly
+<conduct@testplanit.com>. All complaints will be reviewed and investigated promptly
 and fairly.
 
 All community leaders are obligated to respect the privacy and security of the
@@ -150,25 +150,27 @@ In addition to the Contributor Covenant, the TestPlanIt community upholds these 
 ### Reporting Guidelines
 
 When reporting violations, please include:
-- Date and time of the incident
-- Location (GitHub issue, Discord channel, etc.)
-- Description of the incident
-- Screenshots or links if applicable
-- Any additional context
+
+* Date and time of the incident
+* Location (GitHub issue, Discord channel, etc.)
+* Description of the incident
+* Screenshots or links if applicable
+* Any additional context
 
 Reports will be handled with discretion and confidentiality.
 
 ### Response Time
 
 The TestPlanIt team commits to:
-- Acknowledging receipt of reports within 24 hours
-- Providing an initial assessment within 72 hours
-- Resolving issues within 7 days when possible
+
+* Acknowledging receipt of reports within 24 hours
+* Providing an initial assessment within 72 hours
+* Resolving issues within 7 days when possible
 
 ### Appeals Process
 
-If you disagree with an enforcement decision, you may appeal by emailing appeals@testplanit.com within 14 days of the decision. Appeals will be reviewed by a different team member when possible.
+If you disagree with an enforcement decision, you may appeal by emailing <appeals@testplanit.com> within 14 days of the decision. Appeals will be reviewed by a different team member when possible.
 
 ---
 
-*Last updated: November 2024*
+#### *Last updated: November 2024*
