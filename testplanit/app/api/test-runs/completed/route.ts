@@ -10,6 +10,7 @@ export type CompletedTestRunsResponse = {
   runs: Array<{
     id: number;
     name: string;
+    isCompleted: boolean;
     testRunType: string;
     completedAt: Date | null;
     createdAt: Date;
@@ -146,6 +147,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         name: true,
+        isCompleted: true,
         testRunType: true,
         completedAt: true,
         createdAt: true,

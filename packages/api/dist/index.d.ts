@@ -1,6 +1,6 @@
 /**
  * TestPlanIt API Types
- * Based on the TestPlanIt schema.zmodel
+ * Based on the TestPlanIt OpenAPI schema and Prisma models
  */
 type TestRunType = 'REGULAR' | 'JUNIT' | 'TESTNG' | 'XUNIT' | 'NUNIT' | 'MSTEST' | 'MOCHA' | 'CUCUMBER';
 type RepositoryCaseSource = 'MANUAL' | 'JUNIT' | 'TESTNG' | 'XUNIT' | 'NUNIT' | 'MSTEST' | 'MOCHA' | 'CUCUMBER' | 'API';
@@ -11,12 +11,14 @@ interface Status {
     id: number;
     name: string;
     systemName: string;
-    aliases?: string;
+    aliases?: string | null;
     isSuccess: boolean;
     isFailure: boolean;
     isCompleted: boolean;
     isEnabled: boolean;
+    isDeleted: boolean;
     colorId: number;
+    position: number;
 }
 /**
  * Project information
@@ -25,8 +27,11 @@ interface Project {
     id: number;
     name: string;
     key: string;
-    description?: string;
+    description?: string | null;
     isArchived: boolean;
+    isDeleted: boolean;
+    createdAt: string;
+    createdById: string;
 }
 /**
  * Configuration (browser/environment combination)
@@ -35,7 +40,8 @@ interface Configuration {
     id: number;
     projectId: number;
     name: string;
-    description?: string;
+    description?: string | null;
+    isDeleted: boolean;
 }
 /**
  * Milestone (release/sprint)
@@ -44,10 +50,14 @@ interface Milestone {
     id: number;
     projectId: number;
     name: string;
-    description?: string;
-    startDate?: string;
-    endDate?: string;
+    description?: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
     isCompleted: boolean;
+    isDeleted: boolean;
+    stateId?: number | null;
+    createdAt: string;
+    createdById: string;
 }
 /**
  * Workflow state
@@ -58,6 +68,8 @@ interface WorkflowState {
     name: string;
     colorId: number;
     position: number;
+    isDeleted: boolean;
+    isDefault: boolean;
 }
 /**
  * Repository folder
@@ -66,8 +78,10 @@ interface RepositoryFolder {
     id: number;
     projectId: number;
     repositoryId: number;
-    parentId?: number;
+    parentId?: number | null;
     name: string;
+    order: number;
+    isDeleted: boolean;
 }
 /**
  * Options for creating a folder
@@ -93,7 +107,7 @@ interface Template {
 interface Tag {
     id: number;
     name: string;
-    isDeleted?: boolean;
+    isDeleted: boolean;
 }
 /**
  * Options for creating a tag
@@ -108,18 +122,30 @@ interface TestRun {
     id: number;
     projectId: number;
     name: string;
-    testRunType: TestRunType;
-    isCompleted: boolean;
-    completedAt?: string;
-    createdById: string;
-    createdAt: string;
-    configId?: number;
-    milestoneId?: number;
+    note?: Record<string, unknown> | null;
+    docs?: Record<string, unknown> | null;
+    configId?: number | null;
+    milestoneId?: number | null;
     stateId: number;
-    elapsed?: number;
+    forecastManual?: number | null;
+    forecastAutomated?: number | null;
+    elapsed?: number | null;
+    isCompleted: boolean;
+    isDeleted: boolean;
+    completedAt?: string | null;
+    createdAt: string;
+    createdById: string;
+    testRunType: TestRunType;
+    configurationGroupId?: string | null;
+    /** Prisma virtual count field */
     _count?: {
-        testCases: number;
-        results: number;
+        testCases?: number;
+        results?: number;
+        attachments?: number;
+        tags?: number;
+        issues?: number;
+        junitTestSuites?: number;
+        comments?: number;
     };
 }
 /**
@@ -132,14 +158,34 @@ interface RepositoryCase {
     folderId: number;
     templateId: number;
     name: string;
-    className?: string;
+    className?: string | null;
     source: RepositoryCaseSource;
-    automated: boolean;
     stateId: number;
-    estimate?: number;
-    currentVersion: number;
+    estimate?: number | null;
+    forecastManual?: number | null;
+    forecastAutomated?: number | null;
+    order: number;
     createdAt: string;
-    updatedAt: string;
+    creatorId: string;
+    automated: boolean;
+    isArchived: boolean;
+    isDeleted: boolean;
+    currentVersion: number;
+    /** @deprecated Use createdAt instead */
+    updatedAt?: string;
+    /** Prisma virtual count field */
+    _count?: {
+        repositoryCaseVersions?: number;
+        caseFieldValues?: number;
+        resultFieldValues?: number;
+        attachments?: number;
+        steps?: number;
+        testRuns?: number;
+        tags?: number;
+        issues?: number;
+        junitResults?: number;
+        junitProperties?: number;
+    };
 }
 /**
  * Test case linked to a test run
@@ -148,13 +194,19 @@ interface TestRunCase {
     id: number;
     testRunId: number;
     repositoryCaseId: number;
-    statusId?: number;
+    order: number;
+    statusId?: number | null;
+    assignedToId?: string | null;
     isCompleted: boolean;
-    completedAt?: string;
-    startedAt?: string;
-    elapsed?: number;
-    assignedToId?: string;
-    notes?: Record<string, unknown>;
+    notes?: Record<string, unknown> | null;
+    startedAt?: string | null;
+    completedAt?: string | null;
+    elapsed?: number | null;
+    createdAt: string;
+    /** Prisma virtual count field */
+    _count?: {
+        results?: number;
+    };
 }
 /**
  * Individual test result
@@ -167,12 +219,20 @@ interface TestRunResult {
     statusId: number;
     executedById: string;
     executedAt: string;
-    editedById?: string;
-    editedAt?: string;
-    elapsed?: number;
-    notes?: Record<string, unknown>;
-    evidence?: Record<string, unknown>;
+    editedById?: string | null;
+    editedAt?: string | null;
+    elapsed?: number | null;
+    notes?: Record<string, unknown> | null;
+    evidence?: Record<string, unknown> | null;
     attempt: number;
+    isDeleted: boolean;
+    /** Prisma virtual count field */
+    _count?: {
+        attachments?: number;
+        resultFieldValues?: number;
+        stepResults?: number;
+        issues?: number;
+    };
 }
 /**
  * Step-level result within a test
@@ -181,12 +241,18 @@ interface TestRunStepResult {
     id: number;
     testRunResultId: number;
     stepId: number;
-    sharedStepItemId?: number;
+    sharedStepItemId?: number | null;
     statusId: number;
-    notes?: Record<string, unknown>;
-    evidence?: Record<string, unknown>;
+    notes?: Record<string, unknown> | null;
+    evidence?: Record<string, unknown> | null;
     executedAt: string;
-    elapsed?: number;
+    elapsed?: number | null;
+    isDeleted: boolean;
+    /** Prisma virtual count field */
+    _count?: {
+        attachments?: number;
+        issues?: number;
+    };
 }
 /**
  * File attachment
@@ -197,11 +263,143 @@ interface Attachment {
     url: string;
     size: number;
     mimeType: string;
-    note?: string;
+    note?: string | null;
     createdAt: string;
-    createdById?: string;
-    testRunResultsId?: number;
-    junitTestResultId?: number;
+    createdById: string;
+    isDeleted: boolean;
+    testRunResultsId?: number | null;
+    junitTestResultId?: number | null;
+    repositoryCaseId?: number | null;
+    repositoryCaseVersionId?: number | null;
+    testRunId?: number | null;
+    stepResultId?: number | null;
+    sessionResultId?: number | null;
+}
+/**
+ * User information
+ */
+interface User {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    isDeleted: boolean;
+}
+/**
+ * Comment on a test run or other entity
+ */
+interface Comment {
+    id: number;
+    content: Record<string, unknown>;
+    createdAt: string;
+    createdById: string;
+    updatedAt?: string | null;
+    isDeleted: boolean;
+    testRunId?: number | null;
+    repositoryCaseId?: number | null;
+    sessionId?: number | null;
+}
+/**
+ * Issue/defect linked to test results
+ */
+interface Issue {
+    id: number;
+    name: string;
+    title: string;
+    description?: string | null;
+    status?: string | null;
+    priority?: string | null;
+    externalId?: string | null;
+    externalKey?: string | null;
+    externalUrl?: string | null;
+    createdAt: string;
+    createdById: string;
+    isDeleted: boolean;
+}
+/**
+ * JUnit result type enum
+ */
+type JUnitResultType = 'PASSED' | 'FAILURE' | 'ERROR' | 'SKIPPED';
+/**
+ * JUnit test suite (for automated test results)
+ */
+interface JUnitTestSuite {
+    id: number;
+    testRunId: number;
+    parentId?: number | null;
+    name: string;
+    time?: number | null;
+    tests?: number | null;
+    failures?: number | null;
+    errors?: number | null;
+    skipped?: number | null;
+    assertions?: number | null;
+    timestamp?: string | null;
+    file?: string | null;
+    hostname?: string | null;
+    systemOut?: string | null;
+    systemErr?: string | null;
+    createdAt: string;
+    createdById: string;
+    /** Prisma virtual count field */
+    _count?: {
+        children?: number;
+        testResults?: number;
+        properties?: number;
+    };
+}
+/**
+ * JUnit test result (for automated test results)
+ */
+interface JUnitTestResult {
+    id: number;
+    testSuiteId: number;
+    repositoryCaseId: number;
+    type: JUnitResultType;
+    message?: string | null;
+    content?: string | null;
+    statusId?: number | null;
+    executedAt?: string | null;
+    time?: number | null;
+    assertions?: number | null;
+    file?: string | null;
+    line?: number | null;
+    systemOut?: string | null;
+    systemErr?: string | null;
+    createdAt: string;
+    createdById: string;
+    /** Prisma virtual count field */
+    _count?: {
+        attachments?: number;
+        steps?: number;
+        properties?: number;
+    };
+}
+/**
+ * JUnit property (key-value metadata)
+ */
+interface JUnitProperty {
+    id: number;
+    name: string;
+    value?: string | null;
+    testSuiteId?: number | null;
+    testResultId?: number | null;
+    repositoryCaseId?: number | null;
+}
+/**
+ * JUnit test step (for detailed test execution)
+ */
+interface JUnitTestStep {
+    id: number;
+    testResultId: number;
+    order: number;
+    name?: string | null;
+    status: JUnitResultType;
+    duration?: number | null;
+    message?: string | null;
+    stackTrace?: string | null;
+    screenshot?: string | null;
+    createdAt: string;
 }
 /**
  * Options for creating a test run
@@ -214,6 +412,8 @@ interface CreateTestRunOptions {
     milestoneId?: number;
     stateId?: number;
     tagIds?: number[];
+    note?: Record<string, unknown>;
+    docs?: Record<string, unknown>;
 }
 /**
  * Options for updating a test run
@@ -221,9 +421,11 @@ interface CreateTestRunOptions {
 interface UpdateTestRunOptions {
     name?: string;
     isCompleted?: boolean;
-    configId?: number;
-    milestoneId?: number;
+    configId?: number | null;
+    milestoneId?: number | null;
     stateId?: number;
+    note?: Record<string, unknown> | null;
+    docs?: Record<string, unknown> | null;
     /** ZenStack relation syntax for updating the workflow state */
     state?: {
         connect: {
@@ -274,6 +476,15 @@ interface CreateTestResultOptions {
     attempt?: number;
 }
 /**
+ * Options for uploading attachments
+ */
+interface UploadAttachmentOptions {
+    testRunResultId: number;
+    file: Blob | Buffer;
+    fileName: string;
+    mimeType?: string;
+}
+/**
  * Test results import options
  */
 interface ImportTestResultsOptions {
@@ -309,6 +520,7 @@ interface ListTestRunsOptions {
     search?: string;
     runType?: 'both' | 'manual' | 'automated';
     isCompleted?: boolean;
+    isDeleted?: boolean;
 }
 /**
  * Paginated response
@@ -328,6 +540,8 @@ interface FindTestCaseOptions {
     name?: string;
     className?: string;
     source?: RepositoryCaseSource;
+    folderId?: number;
+    isDeleted?: boolean;
 }
 /**
  * API client configuration
@@ -376,52 +590,6 @@ interface ApiError {
  */
 type NormalizedStatus = 'passed' | 'failed' | 'skipped' | 'blocked' | 'pending';
 /**
- * JUnit result type enum
- */
-type JUnitResultType = 'PASSED' | 'FAILURE' | 'ERROR' | 'SKIPPED';
-/**
- * JUnit test suite (for automated test results)
- */
-interface JUnitTestSuite {
-    id: number;
-    name: string;
-    time?: number;
-    tests?: number;
-    failures?: number;
-    errors?: number;
-    skipped?: number;
-    assertions?: number;
-    timestamp?: string;
-    file?: string;
-    systemOut?: string;
-    systemErr?: string;
-    testRunId: number;
-    parentId?: number;
-    createdAt: string;
-    createdById: string;
-}
-/**
- * JUnit test result (for automated test results)
- */
-interface JUnitTestResult {
-    id: number;
-    type: JUnitResultType;
-    message?: string;
-    content?: string;
-    repositoryCaseId: number;
-    testSuiteId: number;
-    statusId?: number;
-    executedAt?: string;
-    time?: number;
-    assertions?: number;
-    file?: string;
-    line?: number;
-    systemOut?: string;
-    systemErr?: string;
-    createdAt: string;
-    createdById: string;
-}
-/**
  * Options for creating a JUnit test suite
  */
 interface CreateJUnitTestSuiteOptions {
@@ -435,6 +603,7 @@ interface CreateJUnitTestSuiteOptions {
     assertions?: number;
     timestamp?: Date;
     file?: string;
+    hostname?: string;
     systemOut?: string;
     systemErr?: string;
     parentId?: number;
@@ -461,6 +630,7 @@ interface CreateJUnitTestResultOptions {
  * Options for updating a JUnit test suite
  */
 interface UpdateJUnitTestSuiteOptions {
+    name?: string;
     time?: number;
     tests?: number;
     failures?: number;
@@ -469,6 +639,29 @@ interface UpdateJUnitTestSuiteOptions {
     assertions?: number;
     systemOut?: string;
     systemErr?: string;
+}
+/**
+ * Options for creating a JUnit property
+ */
+interface CreateJUnitPropertyOptions {
+    name: string;
+    value?: string;
+    testSuiteId?: number;
+    testResultId?: number;
+    repositoryCaseId?: number;
+}
+/**
+ * Options for creating a JUnit test step
+ */
+interface CreateJUnitTestStepOptions {
+    testResultId: number;
+    order: number;
+    name?: string;
+    status: JUnitResultType;
+    duration?: number;
+    message?: string;
+    stackTrace?: string;
+    screenshot?: string;
 }
 
 /**
@@ -781,4 +974,4 @@ declare class TestPlanItClient {
     getBaseUrl(): string;
 }
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type Configuration, type CreateJUnitTestResultOptions, type CreateJUnitTestSuiteOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type JUnitResultType, type JUnitTestResult, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type Status, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type WorkflowState };
+export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type Comment, type Configuration, type CreateFolderOptions, type CreateJUnitPropertyOptions, type CreateJUnitTestResultOptions, type CreateJUnitTestStepOptions, type CreateJUnitTestSuiteOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type Issue, type JUnitProperty, type JUnitResultType, type JUnitTestResult, type JUnitTestStep, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type Status, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type UploadAttachmentOptions, type User, type WorkflowState };

@@ -42,7 +42,7 @@ export type {
   NormalizedStatus,
   JUnitResultType,
 
-  // Models
+  // Core Models
   Status,
   Project,
   Configuration,
@@ -57,19 +57,30 @@ export type {
   TestRunResult,
   TestRunStepResult,
   Attachment,
+  User,
+  Comment,
+  Issue,
+
+  // JUnit Models
   JUnitTestSuite,
   JUnitTestResult,
+  JUnitProperty,
+  JUnitTestStep,
 
   // Request/Response types
   CreateTestRunOptions,
   UpdateTestRunOptions,
   CreateTestCaseOptions,
   CreateTagOptions,
+  CreateFolderOptions,
   AddTestCaseToRunOptions,
   CreateTestResultOptions,
   CreateJUnitTestSuiteOptions,
   CreateJUnitTestResultOptions,
   UpdateJUnitTestSuiteOptions,
+  CreateJUnitPropertyOptions,
+  CreateJUnitTestStepOptions,
+  UploadAttachmentOptions,
   ListTestRunsOptions,
   PaginatedResponse,
   FindTestCaseOptions,

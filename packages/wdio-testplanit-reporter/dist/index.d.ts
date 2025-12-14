@@ -364,19 +364,33 @@ declare class TestPlanItReporter extends WDIOReporter {
     private getSharedStateFilePath;
     /**
      * Read shared state from file (for oneReport mode).
-     * Returns null if file doesn't exist or is stale (older than 4 hours).
+     * Returns null if:
+     * - File doesn't exist
+     * - File is stale (older than 4 hours)
+     * - Previous run completed (activeWorkers === 0)
      */
     private readSharedState;
     /**
      * Write shared state to file (for oneReport mode).
      * Uses a lock file to prevent race conditions.
-     * Only writes if the file doesn't exist yet (first writer wins).
+     * Only writes the testRunId if the file doesn't exist yet (first writer wins).
+     * Updates testSuiteId if not already set.
      */
     private writeSharedState;
     /**
      * Delete shared state file (cleanup after run completes).
      */
     private deleteSharedState;
+    /**
+     * Increment the active worker count in shared state.
+     * Called when a worker starts using the shared test run.
+     */
+    private incrementWorkerCount;
+    /**
+     * Decrement the active worker count in shared state.
+     * Returns true if this was the last worker (count reached 0).
+     */
+    private decrementWorkerCount;
     /**
      * Track an async operation to prevent the runner from terminating early.
      * The operation is added to pendingOperations and removed when complete.

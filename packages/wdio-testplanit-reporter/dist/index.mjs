@@ -114,7 +114,10 @@ ${error.stack}` : "";
   }
   /**
    * Read shared state from file (for oneReport mode).
-   * Returns null if file doesn't exist or is stale (older than 4 hours).
+   * Returns null if:
+   * - File doesn't exist
+   * - File is stale (older than 4 hours)
+   * - Previous run completed (activeWorkers === 0)
    */
   readSharedState() {
     const filePath = this.getSharedStateFilePath();
@@ -127,7 +130,12 @@ ${error.stack}` : "";
       const createdAt = new Date(state.createdAt);
       const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1e3);
       if (createdAt < fourHoursAgo) {
-        this.log("Shared state file is stale, ignoring");
+        this.log("Shared state file is stale (older than 4 hours), starting fresh");
+        this.deleteSharedState();
+        return null;
+      }
+      if (state.activeWorkers === 0) {
+        this.log("Previous test run completed (activeWorkers=0), starting fresh");
         this.deleteSharedState();
         return null;
       }
@@ -140,7 +148,8 @@ ${error.stack}` : "";
   /**
    * Write shared state to file (for oneReport mode).
    * Uses a lock file to prevent race conditions.
-   * Only writes if the file doesn't exist yet (first writer wins).
+   * Only writes the testRunId if the file doesn't exist yet (first writer wins).
+   * Updates testSuiteId if not already set.
    */
   writeSharedState(state) {
     const filePath = this.getSharedStateFilePath();
@@ -165,7 +174,15 @@ ${error.stack}` : "";
       }
       try {
         if (fs.existsSync(filePath)) {
-          this.log("Shared state file already exists, not overwriting");
+          const existingContent = fs.readFileSync(filePath, "utf-8");
+          const existingState = JSON.parse(existingContent);
+          if (!existingState.testSuiteId && state.testSuiteId) {
+            existingState.testSuiteId = state.testSuiteId;
+            fs.writeFileSync(filePath, JSON.stringify(existingState, null, 2));
+            this.log("Updated shared state file with testSuiteId:", state.testSuiteId);
+          } else {
+            this.log("Shared state file already exists with testSuiteId, not overwriting");
+          }
           return;
         }
         fs.writeFileSync(filePath, JSON.stringify(state, null, 2));
@@ -193,6 +210,97 @@ ${error.stack}` : "";
     } catch (error) {
       this.log("Failed to delete shared state file:", error);
     }
+  }
+  /**
+   * Increment the active worker count in shared state.
+   * Called when a worker starts using the shared test run.
+   */
+  incrementWorkerCount() {
+    const filePath = this.getSharedStateFilePath();
+    const lockPath = `${filePath}.lock`;
+    try {
+      let lockAcquired = false;
+      for (let i = 0; i < 10; i++) {
+        try {
+          fs.writeFileSync(lockPath, process.pid.toString(), { flag: "wx" });
+          lockAcquired = true;
+          break;
+        } catch {
+          const sleepMs = 50 * Math.pow(2, i) + Math.random() * 50;
+          const start = Date.now();
+          while (Date.now() - start < sleepMs) {
+          }
+        }
+      }
+      if (!lockAcquired) {
+        this.log("Could not acquire lock to increment worker count");
+        return;
+      }
+      try {
+        if (fs.existsSync(filePath)) {
+          const content = fs.readFileSync(filePath, "utf-8");
+          const state = JSON.parse(content);
+          state.activeWorkers = (state.activeWorkers || 0) + 1;
+          fs.writeFileSync(filePath, JSON.stringify(state, null, 2));
+          this.log("Incremented worker count to:", state.activeWorkers);
+        }
+      } finally {
+        try {
+          fs.unlinkSync(lockPath);
+        } catch {
+        }
+      }
+    } catch (error) {
+      this.log("Failed to increment worker count:", error);
+    }
+  }
+  /**
+   * Decrement the active worker count in shared state.
+   * Returns true if this was the last worker (count reached 0).
+   */
+  decrementWorkerCount() {
+    const filePath = this.getSharedStateFilePath();
+    const lockPath = `${filePath}.lock`;
+    try {
+      let lockAcquired = false;
+      for (let i = 0; i < 10; i++) {
+        try {
+          fs.writeFileSync(lockPath, process.pid.toString(), { flag: "wx" });
+          lockAcquired = true;
+          break;
+        } catch {
+          const sleepMs = 50 * Math.pow(2, i) + Math.random() * 50;
+          const start = Date.now();
+          while (Date.now() - start < sleepMs) {
+          }
+        }
+      }
+      if (!lockAcquired) {
+        this.log("Could not acquire lock to decrement worker count");
+        return false;
+      }
+      try {
+        if (fs.existsSync(filePath)) {
+          const content = fs.readFileSync(filePath, "utf-8");
+          const state = JSON.parse(content);
+          state.activeWorkers = Math.max(0, (state.activeWorkers || 1) - 1);
+          fs.writeFileSync(filePath, JSON.stringify(state, null, 2));
+          this.log("Decremented worker count to:", state.activeWorkers);
+          if (state.activeWorkers === 0) {
+            this.log("This is the last worker");
+            return true;
+          }
+        }
+      } finally {
+        try {
+          fs.unlinkSync(lockPath);
+        } catch {
+        }
+      }
+    } catch (error) {
+      this.log("Failed to decrement worker count:", error);
+    }
+    return false;
   }
   /**
    * Track an async operation to prevent the runner from terminating early.
@@ -235,7 +343,20 @@ ${error.stack}` : "";
           this.log(`Using shared test run from file: ${sharedState.testRunId}`);
           try {
             const testRun = await this.client.getTestRun(this.state.testRunId);
-            this.log(`Validated shared test run: ${testRun.name} (ID: ${testRun.id})`);
+            if (testRun.isDeleted) {
+              this.log(`Shared test run ${testRun.id} is deleted, starting fresh`);
+              this.state.testRunId = void 0;
+              this.state.testSuiteId = void 0;
+              this.deleteSharedState();
+            } else if (testRun.isCompleted) {
+              this.log(`Shared test run ${testRun.id} is already completed, starting fresh`);
+              this.state.testRunId = void 0;
+              this.state.testSuiteId = void 0;
+              this.deleteSharedState();
+            } else {
+              this.log(`Validated shared test run: ${testRun.name} (ID: ${testRun.id})`);
+              this.incrementWorkerCount();
+            }
           } catch {
             this.log("Shared test run no longer exists, will create new one");
             this.state.testRunId = void 0;
@@ -251,7 +372,9 @@ ${error.stack}` : "";
           this.writeSharedState({
             testRunId: this.state.testRunId,
             testSuiteId: this.state.testSuiteId,
-            createdAt: (/* @__PURE__ */ new Date()).toISOString()
+            createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+            activeWorkers: 1
+            // First worker
           });
           const finalState = this.readSharedState();
           if (finalState && finalState.testRunId !== this.state.testRunId) {
@@ -399,6 +522,14 @@ ${error.stack}` : "";
     if (!this.state.testRunId) {
       throw new Error("Cannot create JUnit test suite without a test run ID");
     }
+    if (this.reporterOptions.oneReport) {
+      const sharedState = this.readSharedState();
+      if (sharedState?.testSuiteId) {
+        this.state.testSuiteId = sharedState.testSuiteId;
+        this.log("Using shared JUnit test suite from file:", sharedState.testSuiteId);
+        return;
+      }
+    }
     const runName = this.formatRunName(this.reporterOptions.runName || "{suite} - {date} {time}");
     this.log("Creating JUnit test suite...");
     const testSuite = await this.client.createJUnitTestSuite({
@@ -417,8 +548,15 @@ ${error.stack}` : "";
       this.writeSharedState({
         testRunId: this.state.testRunId,
         testSuiteId: this.state.testSuiteId,
-        createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+        activeWorkers: 1
+        // Will be merged/updated by writeSharedState
       });
+      const finalState = this.readSharedState();
+      if (finalState && finalState.testSuiteId !== this.state.testSuiteId) {
+        this.log(`Another worker created test suite first, switching from ${this.state.testSuiteId} to ${finalState.testSuiteId}`);
+        this.state.testSuiteId = finalState.testSuiteId;
+      }
     }
   }
   /**
@@ -890,19 +1028,38 @@ ${error.stack}` : "";
       this.trackOperation(updateSuiteOp);
       await updateSuiteOp;
     }
-    if (this.reporterOptions.completeRunOnFinish && !this.reporterOptions.oneReport) {
-      const completeRunOp = (async () => {
-        try {
-          await this.client.completeTestRun(this.state.testRunId, this.reporterOptions.projectId);
-          this.log("Test run completed:", this.state.testRunId);
-        } catch (error) {
-          this.logError("Failed to complete test run:", error);
+    if (this.reporterOptions.completeRunOnFinish) {
+      if (this.reporterOptions.oneReport) {
+        const isLastWorker = this.decrementWorkerCount();
+        if (isLastWorker) {
+          const completeRunOp = (async () => {
+            try {
+              await this.client.completeTestRun(this.state.testRunId, this.reporterOptions.projectId);
+              this.log("Test run completed (last worker):", this.state.testRunId);
+              this.deleteSharedState();
+            } catch (error) {
+              this.logError("Failed to complete test run:", error);
+            }
+          })();
+          this.trackOperation(completeRunOp);
+          await completeRunOp;
+        } else {
+          this.log("Skipping test run completion (waiting for other workers to finish)");
         }
-      })();
-      this.trackOperation(completeRunOp);
-      await completeRunOp;
+      } else {
+        const completeRunOp = (async () => {
+          try {
+            await this.client.completeTestRun(this.state.testRunId, this.reporterOptions.projectId);
+            this.log("Test run completed:", this.state.testRunId);
+          } catch (error) {
+            this.logError("Failed to complete test run:", error);
+          }
+        })();
+        this.trackOperation(completeRunOp);
+        await completeRunOp;
+      }
     } else if (this.reporterOptions.oneReport) {
-      this.log("Skipping test run completion (oneReport mode - run will remain in progress)");
+      this.decrementWorkerCount();
     }
     const stats = this.state.stats;
     const duration = ((Date.now() - stats.startTime.getTime()) / 1e3).toFixed(1);
