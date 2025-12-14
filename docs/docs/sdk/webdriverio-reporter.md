@@ -130,6 +130,17 @@ export const config = {
 };
 ```
 
+#### When No Case ID Is Found
+
+If the pattern doesn't match any case ID in a test title, the behavior depends on the `autoCreateTestCases` setting:
+
+| `autoCreateTestCases` | Behavior |
+|-----------------------|----------|
+| `false` (default) | The test result is **skipped** and not reported to TestPlanIt. A warning is logged if `verbose` is enabled. |
+| `true` | The reporter looks up or creates a test case by matching on the test name and suite (className). See [Auto-Creating Test Cases](#auto-creating-test-cases). |
+
+This means if you're using case IDs exclusively (without auto-creation), tests without valid case IDs in their titles won't appear in your TestPlanIt results.
+
 #### Common Pattern Examples
 
 | Pattern | Matches | Example Test Title |
