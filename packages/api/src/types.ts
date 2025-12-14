@@ -293,6 +293,15 @@ export interface CreateTestCaseOptions {
 }
 
 /**
+ * Result of findOrCreateTestCase with metadata
+ */
+export interface FindOrCreateTestCaseResult {
+  testCase: RepositoryCase;
+  /** How the test case was resolved */
+  action: 'found' | 'created' | 'moved';
+}
+
+/**
  * Options for adding a test case to a run
  */
 export interface AddTestCaseToRunOptions {

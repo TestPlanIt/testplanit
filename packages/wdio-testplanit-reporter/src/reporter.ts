@@ -97,6 +97,20 @@ export default class TestPlanItReporter extends WDIOReporter {
         skipped: 0,
         time: 0,
       },
+      stats: {
+        testCasesFound: 0,
+        testCasesCreated: 0,
+        testCasesMoved: 0,
+        foldersCreated: 0,
+        resultsPassed: 0,
+        resultsFailed: 0,
+        resultsSkipped: 0,
+        screenshotsUploaded: 0,
+        screenshotsFailed: 0,
+        apiErrors: 0,
+        apiRequests: 0,
+        startTime: new Date(),
+      },
     };
   }
 
@@ -738,7 +752,7 @@ export default class TestPlanItReporter extends WDIOReporter {
 
           this.log('DEBUG: Final folderId for test case:', folderId);
 
-          const testCase = await this.client.findOrCreateTestCase({
+          const { testCase, action } = await this.client.findOrCreateTestCase({
             projectId: this.reporterOptions.projectId,
             folderId,
             templateId,
@@ -748,9 +762,18 @@ export default class TestPlanItReporter extends WDIOReporter {
             automated: true,
           });
 
+          // Track statistics based on action
+          if (action === 'found') {
+            this.state.stats.testCasesFound++;
+          } else if (action === 'created') {
+            this.state.stats.testCasesCreated++;
+          } else if (action === 'moved') {
+            this.state.stats.testCasesMoved++;
+          }
+
           repositoryCaseId = testCase.id;
           this.state.caseIdMap.set(caseKey, repositoryCaseId);
-          this.log('Created/found test case:', testCase.id, testCase.name, 'in folder:', folderId);
+          this.log(`${action === 'found' ? 'Found' : action === 'created' ? 'Created' : 'Moved'} test case:`, testCase.id, testCase.name, 'in folder:', folderId);
         }
       } else {
         this.log('DEBUG: autoCreateTestCases is false, not creating test case');
@@ -817,15 +840,20 @@ export default class TestPlanItReporter extends WDIOReporter {
       // Screenshots taken in afterTest hook won't be available yet, so we upload them in onRunnerEnd
       result.junitResultId = junitResult.id;
 
-      // Update suite statistics
+      // Update suite statistics and reporter stats
       this.state.testSuiteStats.tests++;
       this.state.testSuiteStats.time += durationInSeconds;
       if (result.status === 'failed') {
         this.state.testSuiteStats.failures++;
+        this.state.stats.resultsFailed++;
       } else if (result.status === 'skipped') {
         this.state.testSuiteStats.skipped++;
+        this.state.stats.resultsSkipped++;
+      } else {
+        this.state.stats.resultsPassed++;
       }
     } catch (error) {
+      this.state.stats.apiErrors++;
       this.logError(`Failed to report result for ${result.testName}:`, error);
     }
   }
@@ -907,8 +935,10 @@ export default class TestPlanItReporter extends WDIOReporter {
                 fileName,
                 'image/png'
               );
+              this.state.stats.screenshotsUploaded++;
               this.log(`Uploaded screenshot ${i + 1}/${screenshots.length} for ${result.testName}`);
             } catch (uploadError) {
+              this.state.stats.screenshotsFailed++;
               const errorMessage = uploadError instanceof Error ? uploadError.message : String(uploadError);
               const errorStack = uploadError instanceof Error ? uploadError.stack : undefined;
               this.logError(`Failed to upload screenshot ${i + 1}:`, errorMessage);
@@ -932,36 +962,86 @@ export default class TestPlanItReporter extends WDIOReporter {
     }
 
     // Update the JUnit test suite with final statistics
+    // Track this operation to prevent WebdriverIO from terminating early
     if (this.state.testSuiteId) {
-      try {
-        await this.client.updateJUnitTestSuite(this.state.testSuiteId, {
-          tests: this.state.testSuiteStats.tests,
-          failures: this.state.testSuiteStats.failures,
-          errors: this.state.testSuiteStats.errors,
-          skipped: this.state.testSuiteStats.skipped,
-          time: this.state.testSuiteStats.time,
-        });
-        this.log('Updated test suite statistics:', this.state.testSuiteStats);
-      } catch (error) {
-        this.logError('Failed to update test suite statistics:', error);
-      }
+      const updateSuiteOp = (async () => {
+        try {
+          await this.client.updateJUnitTestSuite(this.state.testSuiteId!, {
+            tests: this.state.testSuiteStats.tests,
+            failures: this.state.testSuiteStats.failures,
+            errors: this.state.testSuiteStats.errors,
+            skipped: this.state.testSuiteStats.skipped,
+            time: this.state.testSuiteStats.time,
+          });
+          this.log('Updated test suite statistics:', this.state.testSuiteStats);
+        } catch (error) {
+          this.logError('Failed to update test suite statistics:', error);
+        }
+      })();
+      this.trackOperation(updateSuiteOp);
+      await updateSuiteOp;
     }
 
     // Complete the test run if configured
+    // Track this operation to prevent WebdriverIO from terminating early
     if (this.reporterOptions.completeRunOnFinish) {
-      try {
-        await this.client.completeTestRun(this.state.testRunId, this.reporterOptions.projectId);
-        this.log('Test run completed:', this.state.testRunId);
-      } catch (error) {
-        this.logError('Failed to complete test run:', error);
-      }
+      const completeRunOp = (async () => {
+        try {
+          await this.client.completeTestRun(this.state.testRunId!, this.reporterOptions.projectId);
+          this.log('Test run completed:', this.state.testRunId);
+        } catch (error) {
+          this.logError('Failed to complete test run:', error);
+        }
+      })();
+      this.trackOperation(completeRunOp);
+      await completeRunOp;
     }
 
     // Print summary
-    console.log('\n[TestPlanIt] Results Summary:');
-    console.log(`  Test Run ID: ${this.state.testRunId}`);
-    console.log(`  Test Results Reported: ${this.reportedResultCount}`);
-    console.log(`  URL: ${this.reporterOptions.domain}/projects/runs/${this.reporterOptions.projectId}/${this.state.testRunId}`);
+    const stats = this.state.stats;
+    const duration = ((Date.now() - stats.startTime.getTime()) / 1000).toFixed(1);
+    const totalResults = stats.resultsPassed + stats.resultsFailed + stats.resultsSkipped;
+    const totalCases = stats.testCasesFound + stats.testCasesCreated + stats.testCasesMoved;
+
+    console.log('\n[TestPlanIt] ═══════════════════════════════════════════════════════');
+    console.log('[TestPlanIt] Results Summary');
+    console.log('[TestPlanIt] ═══════════════════════════════════════════════════════');
+    console.log(`[TestPlanIt]   Test Run ID: ${this.state.testRunId}`);
+    console.log(`[TestPlanIt]   Duration: ${duration}s`);
+    console.log('[TestPlanIt]');
+    console.log('[TestPlanIt]   Test Results:');
+    console.log(`[TestPlanIt]     ✓ Passed:  ${stats.resultsPassed}`);
+    console.log(`[TestPlanIt]     ✗ Failed:  ${stats.resultsFailed}`);
+    console.log(`[TestPlanIt]     ○ Skipped: ${stats.resultsSkipped}`);
+    console.log(`[TestPlanIt]     Total:     ${totalResults}`);
+
+    if (this.reporterOptions.autoCreateTestCases && totalCases > 0) {
+      console.log('[TestPlanIt]');
+      console.log('[TestPlanIt]   Test Cases:');
+      console.log(`[TestPlanIt]     Found (existing): ${stats.testCasesFound}`);
+      console.log(`[TestPlanIt]     Created (new):    ${stats.testCasesCreated}`);
+      if (stats.testCasesMoved > 0) {
+        console.log(`[TestPlanIt]     Moved (restored): ${stats.testCasesMoved}`);
+      }
+    }
+
+    if (this.reporterOptions.uploadScreenshots && (stats.screenshotsUploaded > 0 || stats.screenshotsFailed > 0)) {
+      console.log('[TestPlanIt]');
+      console.log('[TestPlanIt]   Screenshots:');
+      console.log(`[TestPlanIt]     Uploaded: ${stats.screenshotsUploaded}`);
+      if (stats.screenshotsFailed > 0) {
+        console.log(`[TestPlanIt]     Failed:   ${stats.screenshotsFailed}`);
+      }
+    }
+
+    if (stats.apiErrors > 0) {
+      console.log('[TestPlanIt]');
+      console.log(`[TestPlanIt]   ⚠ API Errors: ${stats.apiErrors}`);
+    }
+
+    console.log('[TestPlanIt]');
+    console.log(`[TestPlanIt]   View results: ${this.reporterOptions.domain}/projects/runs/${this.reporterOptions.projectId}/${this.state.testRunId}`);
+    console.log('[TestPlanIt] ═══════════════════════════════════════════════════════\n');
   }
 
   /**

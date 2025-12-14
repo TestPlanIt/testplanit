@@ -24,6 +24,7 @@ import type {
   ListTestRunsOptions,
   PaginatedResponse,
   FindTestCaseOptions,
+  FindOrCreateTestCaseResult,
   ImportTestResultsOptions,
   ImportProgressEvent,
   NormalizedStatus,
@@ -1283,10 +1284,15 @@ export class TestPlanItClient {
    * Find or create a test case
    * First searches for an active (non-deleted) test case in an active folder, then creates if not found.
    * If a matching case exists in a deleted folder, it will be moved to the specified folder.
+   *
+   * @returns Object containing the test case and an action indicating what happened:
+   *   - 'found': An existing test case was found in an active folder
+   *   - 'moved': A test case was found in a deleted folder and moved to the specified folder
+   *   - 'created': A new test case was created
    */
   async findOrCreateTestCase(
     options: CreateTestCaseOptions
-  ): Promise<RepositoryCase> {
+  ): Promise<FindOrCreateTestCaseResult> {
     // First, check for an existing ACTIVE test case (not deleted) in an ACTIVE folder
     const existingCases = await this.zenstack<
       (RepositoryCase & { folder?: { isDeleted: boolean } })[]
@@ -1313,7 +1319,7 @@ export class TestPlanItClient {
 
     if (caseInActiveFolder) {
       // Found an active test case in an active folder
-      return caseInActiveFolder;
+      return { testCase: caseInActiveFolder, action: 'found' };
     }
 
     // Check if there's a test case in a deleted folder that we should move
@@ -1323,12 +1329,13 @@ export class TestPlanItClient {
 
     if (caseInDeletedFolder) {
       // Move the test case to the new folder
-      return this.zenstack<RepositoryCase>("repositoryCases", "update", {
+      const movedCase = await this.zenstack<RepositoryCase>("repositoryCases", "update", {
         where: { id: caseInDeletedFolder.id },
         data: {
           folder: { connect: { id: options.folderId } },
         },
       });
+      return { testCase: movedCase, action: 'moved' };
     }
 
     // No active test case found, create a new one
@@ -1412,7 +1419,7 @@ export class TestPlanItClient {
 
     // Use upsert to handle race conditions - if a deleted record exists with the same
     // composite key, restore it and move to the new folder; otherwise create new
-    return this.zenstack<RepositoryCase>("repositoryCases", "upsert", {
+    const createdCase = await this.zenstack<RepositoryCase>("repositoryCases", "upsert", {
       where: {
         projectId_name_className_source: {
           projectId: options.projectId,
@@ -1430,6 +1437,7 @@ export class TestPlanItClient {
       },
       create: createData,
     });
+    return { testCase: createdCase, action: 'created' };
   }
 
   // ============================================================================

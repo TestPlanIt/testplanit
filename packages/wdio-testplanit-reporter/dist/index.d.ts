@@ -239,6 +239,35 @@ interface JUnitSuiteStats {
     time: number;
 }
 /**
+ * Statistics tracked during the test run for the final summary
+ */
+interface ReporterStats {
+    /** Number of test cases that matched existing cases in TestPlanIt */
+    testCasesFound: number;
+    /** Number of test cases that were newly created in TestPlanIt */
+    testCasesCreated: number;
+    /** Number of test cases that were moved from deleted folders */
+    testCasesMoved: number;
+    /** Number of folders that were created for hierarchy */
+    foldersCreated: number;
+    /** Number of test results reported (passed) */
+    resultsPassed: number;
+    /** Number of test results reported (failed) */
+    resultsFailed: number;
+    /** Number of test results reported (skipped) */
+    resultsSkipped: number;
+    /** Number of screenshots uploaded */
+    screenshotsUploaded: number;
+    /** Number of screenshot upload failures */
+    screenshotsFailed: number;
+    /** Number of API errors encountered */
+    apiErrors: number;
+    /** Total API requests made */
+    apiRequests: number;
+    /** Start time of the test run */
+    startTime: Date;
+}
+/**
  * Reporter state
  */
 interface ReporterState {
@@ -272,6 +301,8 @@ interface ReporterState {
     initError?: Error;
     /** Current browser capabilities */
     capabilities?: WebdriverIO.Capabilities;
+    /** Statistics for the final summary */
+    stats: ReporterStats;
 }
 
 /**

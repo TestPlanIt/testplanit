@@ -939,6 +939,11 @@ var TestPlanItClient = class {
    * Find or create a test case
    * First searches for an active (non-deleted) test case in an active folder, then creates if not found.
    * If a matching case exists in a deleted folder, it will be moved to the specified folder.
+   *
+   * @returns Object containing the test case and an action indicating what happened:
+   *   - 'found': An existing test case was found in an active folder
+   *   - 'moved': A test case was found in a deleted folder and moved to the specified folder
+   *   - 'created': A new test case was created
    */
   async findOrCreateTestCase(options) {
     const existingCases = await this.zenstack("repositoryCases", "findMany", {
@@ -961,18 +966,19 @@ var TestPlanItClient = class {
       (c) => c.folder && !c.folder.isDeleted
     );
     if (caseInActiveFolder) {
-      return caseInActiveFolder;
+      return { testCase: caseInActiveFolder, action: "found" };
     }
     const caseInDeletedFolder = existingCases.find(
       (c) => c.folder && c.folder.isDeleted
     );
     if (caseInDeletedFolder) {
-      return this.zenstack("repositoryCases", "update", {
+      const movedCase = await this.zenstack("repositoryCases", "update", {
         where: { id: caseInDeletedFolder.id },
         data: {
           folder: { connect: { id: options.folderId } }
         }
       });
+      return { testCase: movedCase, action: "moved" };
     }
     let repositories = await this.zenstack(
       "repositories",
@@ -1044,7 +1050,7 @@ var TestPlanItClient = class {
     if (options.estimate !== void 0) {
       createData.estimate = options.estimate;
     }
-    return this.zenstack("repositoryCases", "upsert", {
+    const createdCase = await this.zenstack("repositoryCases", "upsert", {
       where: {
         projectId_name_className_source: {
           projectId: options.projectId,
@@ -1062,6 +1068,7 @@ var TestPlanItClient = class {
       },
       create: createData
     });
+    return { testCase: createdCase, action: "created" };
   }
   // ============================================================================
   // Test Run Cases (linking cases to runs)

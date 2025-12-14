@@ -246,6 +246,14 @@ interface CreateTestCaseOptions {
     estimate?: number;
 }
 /**
+ * Result of findOrCreateTestCase with metadata
+ */
+interface FindOrCreateTestCaseResult {
+    testCase: RepositoryCase;
+    /** How the test case was resolved */
+    action: 'found' | 'created' | 'moved';
+}
+/**
  * Options for adding a test case to a run
  */
 interface AddTestCaseToRunOptions {
@@ -687,8 +695,13 @@ declare class TestPlanItClient {
      * Find or create a test case
      * First searches for an active (non-deleted) test case in an active folder, then creates if not found.
      * If a matching case exists in a deleted folder, it will be moved to the specified folder.
+     *
+     * @returns Object containing the test case and an action indicating what happened:
+     *   - 'found': An existing test case was found in an active folder
+     *   - 'moved': A test case was found in a deleted folder and moved to the specified folder
+     *   - 'created': A new test case was created
      */
-    findOrCreateTestCase(options: CreateTestCaseOptions): Promise<RepositoryCase>;
+    findOrCreateTestCase(options: CreateTestCaseOptions): Promise<FindOrCreateTestCaseResult>;
     /**
      * Add a test case to a test run
      */
@@ -768,4 +781,4 @@ declare class TestPlanItClient {
     getBaseUrl(): string;
 }
 
-export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type Configuration, type CreateJUnitTestResultOptions, type CreateJUnitTestSuiteOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type JUnitResultType, type JUnitTestResult, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type Status, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type WorkflowState };
+export { type AddTestCaseToRunOptions, type ApiError, type Attachment, type Configuration, type CreateJUnitTestResultOptions, type CreateJUnitTestSuiteOptions, type CreateTagOptions, type CreateTestCaseOptions, type CreateTestResultOptions, type CreateTestRunOptions, type FindOrCreateTestCaseResult, type FindTestCaseOptions, type ImportProgressEvent, type ImportTestResultsOptions, type JUnitResultType, type JUnitTestResult, type JUnitTestSuite, type ListTestRunsOptions, type Milestone, type NormalizedStatus, type PaginatedResponse, type Project, type RepositoryCase, type RepositoryCaseSource, type RepositoryFolder, type Status, type Tag, type Template, TestPlanItClient, type TestPlanItClientConfig, TestPlanItError, type TestRun, type TestRunCase, type TestRunResult, type TestRunStepResult, type TestRunType, type UpdateJUnitTestSuiteOptions, type UpdateTestRunOptions, type WorkflowState };

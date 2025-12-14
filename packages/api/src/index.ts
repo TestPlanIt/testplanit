@@ -73,6 +73,7 @@ export type {
   ListTestRunsOptions,
   PaginatedResponse,
   FindTestCaseOptions,
+  FindOrCreateTestCaseResult,
   ImportTestResultsOptions,
   ImportProgressEvent,
 } from './types.js';

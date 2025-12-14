@@ -10,6 +10,9 @@ import {
   useFindManyTestRuns,
   useFindManyMilestones,
   useFindManyTestRunResults,
+  useFindFirstTestRunResults,
+  useFindManyJUnitTestResult,
+  useFindFirstJUnitTestResult,
   useCreateTestRuns,
 } from "~/lib/hooks";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -151,13 +154,24 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     setTotalRemainingEstimateForDisplay,
   ] = useState<number>(0);
 
-  // State for new recent results chart
+  // State for new recent results chart (manual)
   const [recentResultsChartData, setRecentResultsChartData] = useState<any[]>(
     []
   ); // Data for donut
   const [recentResultsSuccessRate, setRecentResultsSuccessRate] =
     useState<number>(0);
   const [recentResultsDateRange, setRecentResultsDateRange] = useState<{
+    first?: Date;
+    last?: Date;
+  }>({});
+
+  // State for automated results chart
+  const [automatedResultsChartData, setAutomatedResultsChartData] = useState<
+    any[]
+  >([]);
+  const [automatedResultsSuccessRate, setAutomatedResultsSuccessRate] =
+    useState<number>(0);
+  const [automatedResultsDateRange, setAutomatedResultsDateRange] = useState<{
     first?: Date;
     last?: Date;
   }>({});
@@ -695,51 +709,63 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     orderBy: { completedAt: "asc" }, // Order for easier processing
   }) ?? { data: [], isLoading: false };
 
-  // --- Fetch Recent Test Run Results ---
-  const { data: rawRecentResults, isLoading: isLoadingRecentResults } =
-    useFindManyTestRunResults({
+  // --- Fetch Recent Manual Test Run Results (two-query approach) ---
+  // Query 1: Get the most recent result to determine the date range
+  const { data: latestManualResult, isLoading: isLoadingLatestManualResult } =
+    useFindFirstTestRunResults({
       where: {
         testRun: { projectId: numericProjectId ?? undefined },
         status: {
-          systemName: { not: "untested" }, // Exclude untested results
+          systemName: { not: "untested" },
         },
       },
       orderBy: { executedAt: "desc" },
       select: {
-        id: true,
         executedAt: true,
-        status: {
-          select: {
-            id: true,
-            name: true,
-            isSuccess: true,
-            color: { select: { value: true } },
+      },
+    });
+
+  // Calculate 7 days before the latest result
+  const sevenDaysBeforeLatestManual = useMemo(() => {
+    if (!latestManualResult?.executedAt) return undefined;
+    const latestDate = new Date(latestManualResult.executedAt);
+    const sevenDaysInMillis = 7 * 24 * 60 * 60 * 1000;
+    return new Date(latestDate.getTime() - sevenDaysInMillis);
+  }, [latestManualResult?.executedAt]);
+
+  // Query 2: Get all results within 7 days of the latest result
+  const { data: rawRecentResults, isLoading: isLoadingRecentResults } =
+    useFindManyTestRunResults(
+      {
+        where: {
+          testRun: { projectId: numericProjectId ?? undefined },
+          status: {
+            systemName: { not: "untested" },
+          },
+          executedAt: { gte: sevenDaysBeforeLatestManual },
+        },
+        orderBy: { executedAt: "desc" },
+        select: {
+          id: true,
+          executedAt: true,
+          status: {
+            select: {
+              id: true,
+              name: true,
+              isSuccess: true,
+              color: { select: { value: true } },
+            },
           },
         },
       },
-    }) ?? { data: [], isLoading: false };
+      {
+        enabled: !!sevenDaysBeforeLatestManual,
+      }
+    );
 
-  // --- Process Recent Results ---
+  // --- Process Recent Manual Results ---
   useMemo(() => {
     if (!rawRecentResults || rawRecentResults.length === 0) {
-      setRecentResultsChartData([]);
-      setRecentResultsSuccessRate(0);
-      setRecentResultsDateRange({});
-      return;
-    }
-
-    // Find the latest date from the fetched set
-    const latestDate = new Date(rawRecentResults[0].executedAt);
-    const sevenDaysInMillis = 7 * 24 * 60 * 60 * 1000;
-    const startDate = new Date(latestDate.getTime() - sevenDaysInMillis);
-
-    // Filter results within the date range
-    const filteredResults = rawRecentResults.filter((result) => {
-      const executedDate = new Date(result.executedAt);
-      return executedDate >= startDate && executedDate <= latestDate;
-    });
-
-    if (filteredResults.length === 0) {
       setRecentResultsChartData([]);
       setRecentResultsSuccessRate(0);
       setRecentResultsDateRange({});
@@ -761,7 +787,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     let firstResultDate: Date | undefined = undefined;
     let lastResultDate: Date | undefined = undefined;
 
-    filteredResults.forEach((result) => {
+    rawRecentResults.forEach((result) => {
       const status = result.status;
       if (!status) return; // Skip results without status
 
@@ -778,21 +804,21 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
         statusSummary[statusId] = {
           id: statusId,
           name: status.name,
-          color: status.color?.value || "#888888", // Default color if none
+          color: status.color?.value || "#888888",
           isSuccess: status.isSuccess || false,
           count: 0,
-          value: 0, // value for chart is count
+          value: 0,
         };
       }
       statusSummary[statusId].count++;
-      statusSummary[statusId].value++; // Use count as the value for the donut chart
+      statusSummary[statusId].value++;
       if (status.isSuccess) {
         successfulCount++;
       }
     });
 
     const chartData = Object.values(statusSummary);
-    const totalDisplayed = filteredResults.length;
+    const totalDisplayed = rawRecentResults.length;
     const successRate =
       totalDisplayed > 0 ? (successfulCount / totalDisplayed) * 100 : 0;
 
@@ -800,6 +826,134 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     setRecentResultsSuccessRate(successRate);
     setRecentResultsDateRange({ first: firstResultDate, last: lastResultDate });
   }, [rawRecentResults]);
+
+  // --- Fetch Recent Automated (JUnit) Test Results (two-query approach) ---
+  // Query 1: Get the most recent automated result to determine the date range
+  const {
+    data: latestAutomatedResult,
+    isLoading: isLoadingLatestAutomatedResult,
+  } = useFindFirstJUnitTestResult({
+    where: {
+      testSuite: {
+        testRun: { projectId: numericProjectId ?? undefined },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+    select: {
+      executedAt: true,
+      createdAt: true,
+    },
+  });
+
+  // Calculate 7 days before the latest automated result
+  const sevenDaysBeforeLatestAutomated = useMemo(() => {
+    if (!latestAutomatedResult) return undefined;
+    const latestDate = latestAutomatedResult.executedAt
+      ? new Date(latestAutomatedResult.executedAt)
+      : new Date(latestAutomatedResult.createdAt);
+    const sevenDaysInMillis = 7 * 24 * 60 * 60 * 1000;
+    return new Date(latestDate.getTime() - sevenDaysInMillis);
+  }, [latestAutomatedResult]);
+
+  // Query 2: Get all automated results within 7 days of the latest result
+  const {
+    data: rawAutomatedResults,
+    isLoading: isLoadingAutomatedResults,
+  } = useFindManyJUnitTestResult(
+    {
+      where: {
+        testSuite: {
+          testRun: { projectId: numericProjectId ?? undefined },
+        },
+        createdAt: { gte: sevenDaysBeforeLatestAutomated },
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        executedAt: true,
+        createdAt: true,
+        status: {
+          select: {
+            id: true,
+            name: true,
+            isSuccess: true,
+            color: { select: { value: true } },
+          },
+        },
+      },
+    },
+    {
+      enabled: !!sevenDaysBeforeLatestAutomated,
+    }
+  );
+
+  // --- Process Automated Results ---
+  useMemo(() => {
+    if (!rawAutomatedResults || rawAutomatedResults.length === 0) {
+      setAutomatedResultsChartData([]);
+      setAutomatedResultsSuccessRate(0);
+      setAutomatedResultsDateRange({});
+      return;
+    }
+
+    // Helper to get the effective date (use executedAt or createdAt)
+    const getResultDate = (result: (typeof rawAutomatedResults)[0]) =>
+      result.executedAt ? new Date(result.executedAt) : new Date(result.createdAt);
+
+    // Group by status and calculate metrics
+    const statusSummary: {
+      [key: string]: {
+        id: number;
+        name: string;
+        color: string;
+        isSuccess: boolean;
+        count: number;
+        value: number;
+      };
+    } = {};
+    let successfulCount = 0;
+    let firstResultDate: Date | undefined = undefined;
+    let lastResultDate: Date | undefined = undefined;
+
+    rawAutomatedResults.forEach((result) => {
+      const status = result.status;
+      if (!status) return; // Skip results without status
+
+      const executedAtDate = getResultDate(result);
+      if (!firstResultDate || executedAtDate < firstResultDate) {
+        firstResultDate = executedAtDate;
+      }
+      if (!lastResultDate || executedAtDate > lastResultDate) {
+        lastResultDate = executedAtDate;
+      }
+
+      const statusId = status.id;
+      if (!statusSummary[statusId]) {
+        statusSummary[statusId] = {
+          id: statusId,
+          name: status.name,
+          color: status.color?.value || "#888888",
+          isSuccess: status.isSuccess || false,
+          count: 0,
+          value: 0,
+        };
+      }
+      statusSummary[statusId].count++;
+      statusSummary[statusId].value++;
+      if (status.isSuccess) {
+        successfulCount++;
+      }
+    });
+
+    const chartData = Object.values(statusSummary);
+    const totalDisplayed = rawAutomatedResults.length;
+    const successRate =
+      totalDisplayed > 0 ? (successfulCount / totalDisplayed) * 100 : 0;
+
+    setAutomatedResultsChartData(chartData);
+    setAutomatedResultsSuccessRate(successRate);
+    setAutomatedResultsDateRange({ first: firstResultDate, last: lastResultDate });
+  }, [rawAutomatedResults]);
 
   // --- Process Completed Runs for Line Chart ---
   useMemo(() => {
@@ -931,7 +1085,10 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   const isSummaryLoading =
     isLoading ||
     isLoadingIncompleteRuns ||
+    isLoadingLatestManualResult ||
     isLoadingRecentResults ||
+    isLoadingLatestAutomatedResult ||
+    isLoadingAutomatedResults ||
     isLoadingPermissions ||
     isProjectLoading ||
     isLoadingCompletedRunsData;
@@ -1140,7 +1297,82 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                   </Card>
                 )}
 
-                {/* Card 3: Completion Trend - Conditional Render Updated Check */}
+                {/* Card 3: Automated Results - Conditional Render */}
+                {(isLoadingAutomatedResults ||
+                  automatedResultsChartData.length > 0) && (
+                  <Card>
+                    <CardHeader className="pb-2 flex flex-row items-start justify-between">
+                      <div className="w-full">
+                        <CardTitle className="font-medium">
+                          {t("summary.recentAutomatedResultsTitle")}
+                        </CardTitle>
+                        <CardDescription>
+                          {!isLoadingAutomatedResults &&
+                            automatedResultsDateRange.first &&
+                            automatedResultsDateRange.last && (
+                              <span>
+                                <DateFormatter
+                                  date={automatedResultsDateRange.first}
+                                  formatString={
+                                    session?.user.preferences?.dateFormat +
+                                    " " +
+                                    session?.user.preferences?.timeFormat
+                                  }
+                                  timezone={session?.user.preferences?.timezone}
+                                />
+                                {" – "}
+                                <DateFormatter
+                                  date={automatedResultsDateRange.last}
+                                  formatString={
+                                    session?.user.preferences?.dateFormat +
+                                    " " +
+                                    session?.user.preferences?.timeFormat
+                                  }
+                                  timezone={session?.user.preferences?.timezone}
+                                />
+                              </span>
+                            )}
+                        </CardDescription>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() =>
+                          handleOpenChartOverlay({
+                            type: "donut",
+                            title: t("summary.recentAutomatedResultsTitle"),
+                            data: automatedResultsChartData,
+                          })
+                        }
+                      >
+                        <Maximize2 className="h-4 w-4" />
+                        <span className="sr-only">
+                          {tCommon("actions.expand")}
+                        </span>
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="flex justify-center items-center p-2">
+                      {isLoadingAutomatedResults ? (
+                        <LoadingSpinner />
+                      ) : automatedResultsChartData.length > 0 ? (
+                        <RecentResultsDonut data={automatedResultsChartData} />
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
+                          {t("summary.noRecentAutomatedResults")}
+                        </p>
+                      )}
+                    </CardContent>
+                    <CardFooter className="flex flex-row items-center justify-center">
+                      {!isLoadingAutomatedResults &&
+                        automatedResultsChartData.length > 0 && (
+                          <span className="font-semibold">{`${automatedResultsSuccessRate.toFixed(1)}% ${tCommon("labels.successRate")}`}</span>
+                        )}
+                    </CardFooter>
+                  </Card>
+                )}
+
+                {/* Card 4: Completion Trend - Conditional Render Updated Check */}
                 {(isLoadingCompletedRunsData ||
                   completedRunsMonthlyData.some(
                     (monthData) => monthData.count > 0
