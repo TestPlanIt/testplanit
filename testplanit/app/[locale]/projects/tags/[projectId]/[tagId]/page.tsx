@@ -26,6 +26,7 @@ import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { useTranslations } from "next-intl";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type TabType = "cases" | "sessions" | "testRuns";
@@ -327,7 +328,6 @@ function TagDetail() {
     return null;
   }
 
-  const pageSizeOptions = [10, 25, 50, 100];
 
   return (
     <Card className="flex w-full min-w-[400px]">
@@ -383,7 +383,7 @@ function TagDetail() {
                     totalRows={casesCount ?? 0}
                     searchString={searchString}
                     pageSize={casesPageSize}
-                    pageSizeOptions={pageSizeOptions}
+                    pageSizeOptions={defaultPageSizeOptions}
                     handlePageSizeChange={setCasesPageSize}
                   />
                   <PaginationComponent
@@ -419,7 +419,7 @@ function TagDetail() {
                     totalRows={sessionsCount ?? 0}
                     searchString={searchString}
                     pageSize={sessionsPageSize}
-                    pageSizeOptions={pageSizeOptions}
+                    pageSizeOptions={defaultPageSizeOptions}
                     handlePageSizeChange={setSessionsPageSize}
                   />
                   <PaginationComponent
@@ -455,7 +455,7 @@ function TagDetail() {
                     totalRows={testRunsCount ?? 0}
                     searchString={searchString}
                     pageSize={testRunsPageSize}
-                    pageSizeOptions={pageSizeOptions}
+                    pageSizeOptions={defaultPageSizeOptions}
                     handlePageSizeChange={setTestRunsPageSize}
                   />
                   <PaginationComponent

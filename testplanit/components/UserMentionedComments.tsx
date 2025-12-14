@@ -15,6 +15,7 @@ import { SessionNameDisplay } from "@/components/SessionNameDisplay";
 import { MilestoneNameDisplay } from "@/components/MilestoneNameDisplay";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
 import { useFindManyCommentMention, useCountCommentMention } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
@@ -216,7 +217,6 @@ export function UserMentionedComments({ userId }: UserMentionedCommentsProps) {
 
   const [currentPage, setCurrentPage] = useState(1); // 1-indexed for PaginationComponent
   const [pageSize, setPageSize] = useState<number | "All">(10);
-  const pageSizeOptions: (number | "All")[] = [10, 25, 50, 100];
 
   const { data: totalCount, isLoading: isCountLoading } =
     useCountCommentMention({
@@ -310,7 +310,7 @@ export function UserMentionedComments({ userId }: UserMentionedCommentsProps) {
             totalRows={totalCount ?? 0}
             searchString=""
             pageSize={pageSize}
-            pageSizeOptions={pageSizeOptions}
+            pageSizeOptions={defaultPageSizeOptions}
             handlePageSizeChange={handlePageSizeChange}
           />
         </div>

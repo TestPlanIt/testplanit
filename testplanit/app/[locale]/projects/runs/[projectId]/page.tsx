@@ -62,6 +62,7 @@ import { useDebounce } from "@/components/Debounce";
 import {
   PaginationProvider,
   usePagination,
+  defaultPageSizeOptions,
 } from "~/lib/contexts/PaginationContext";
 import { useTabState } from "~/hooks/useTabState";
 import {
@@ -1569,7 +1570,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                                     ? completedRunsPageSize
                                     : "All"
                                 }
-                                pageSizeOptions={[10, 25, 50, 100, "All"]}
+                                pageSizeOptions={defaultPageSizeOptions}
                                 handlePageSizeChange={(size) =>
                                   setCompletedRunsPageSize(size)
                                 }

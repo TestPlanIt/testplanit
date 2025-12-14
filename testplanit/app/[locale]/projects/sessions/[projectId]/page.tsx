@@ -37,6 +37,7 @@ import { useDebounce } from "@/components/Debounce";
 import {
   PaginationProvider,
   usePagination,
+  defaultPageSizeOptions,
 } from "~/lib/contexts/PaginationContext";
 
 import RecentResultsDonut, {
@@ -1006,7 +1007,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                                     ? completedSessionsPageSize
                                     : "All"
                                 }
-                                pageSizeOptions={[10, 25, 50, 100, "All"]}
+                                pageSizeOptions={defaultPageSizeOptions}
                                 handlePageSizeChange={(size) =>
                                   setCompletedSessionsPageSize(size)
                                 }

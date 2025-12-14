@@ -21,6 +21,7 @@ import { RepositoryCaseSource } from "@prisma/client";
 import { Label } from "@/components/ui/label";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -67,8 +68,6 @@ export function SelectedTestCasesDrawer({
     getUserPreferredPageSize()
   );
 
-  // Page size options
-  const pageSizeOptions: (number | "All")[] = [25, 50, 100, 250];
 
   // When using checkboxes with allAvailableCases, display those instead of just selected
   const casesToDisplay =
@@ -358,7 +357,7 @@ export function SelectedTestCasesDrawer({
                 totalRows={totalItems}
                 searchString=""
                 pageSize={pageSize}
-                pageSizeOptions={pageSizeOptions}
+                pageSizeOptions={defaultPageSizeOptions}
                 handlePageSizeChange={handlePageSizeChange}
               />
             </div>
