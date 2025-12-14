@@ -240,7 +240,9 @@
       "notApplicable": "No disponible",
       "redirecting": "Redirigiendo...",
       "pendingDelete": "Se eliminará",
-      "pendingChanges": "Cambios pendientes"
+      "pendingChanges": "Cambios pendientes",
+      "importing": "Importador...",
+      "addingTestCases": "Añadiendo casos de prueba..."
     },
     "priority": {
       "low": "Bajo",

@@ -8,6 +8,7 @@ const prisma = new PrismaClient();
 
 export type TestRunSummaryData = {
   testRunType: string;
+  workflowType?: "NOT_STARTED" | "IN_PROGRESS" | "DONE" | null;
   totalCases: number;
   statusCounts: Array<{
     statusId: number | null;
@@ -92,13 +93,18 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get test run type
+    // Get test run type and workflow
     const testRun = await prisma.testRuns.findUnique({
       where: { id: testRunId },
       select: {
         testRunType: true,
         forecastManual: true,
         projectId: true,
+        state: {
+          select: {
+            workflowType: true,
+          },
+        },
         issues: {
           select: {
             id: true,
@@ -151,6 +157,7 @@ export async function GET(
       return NextResponse.json({
         ...summary,
         testRunType: testRun.testRunType,
+        workflowType: testRun.state?.workflowType,
         commentsCount,
         issues: testRun.issues.map((issue) => ({
           ...issue,
@@ -166,6 +173,7 @@ export async function GET(
       return NextResponse.json({
         ...summary,
         testRunType: testRun.testRunType,
+        workflowType: testRun.state?.workflowType,
         commentsCount,
         issues: testRun.issues.map((issue) => ({
           ...issue,

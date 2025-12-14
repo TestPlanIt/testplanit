@@ -240,7 +240,9 @@
       "notApplicable": "N / A",
       "redirecting": "Redirection en cours...",
       "pendingDelete": "Sera supprimé",
-      "pendingChanges": "Modifications en attente"
+      "pendingChanges": "Modifications en attente",
+      "importing": "Importation en cours...",
+      "addingTestCases": "Ajout de cas de test..."
     },
     "priority": {
       "low": "Faible",

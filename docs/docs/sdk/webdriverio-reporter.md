@@ -42,13 +42,35 @@ npx wdio run wdio.conf.js
 
 After your tests complete, you'll see a summary:
 
+```text
+[TestPlanIt] Results Summary
+[TestPlanIt] ═══════════════════════════════════════════════════════
+[TestPlanIt]   Test Run ID: 123
+[TestPlanIt]   Duration: 45.2s
+[TestPlanIt]
+[TestPlanIt]   Test Results:
+[TestPlanIt]     ✓ Passed:  15
+[TestPlanIt]     ✗ Failed:  2
+[TestPlanIt]     ○ Skipped: 1
+[TestPlanIt]     Total:     18
+[TestPlanIt]
+[TestPlanIt]   View results: https://testplanit.example.com/projects/runs/1/123
+[TestPlanIt] ═══════════════════════════════════════════════════════
 ```
-[TestPlanIt] Results Summary:
-  Test Run ID: 123
-  Passed: 15
-  Failed: 2
-  Skipped: 1
-  URL: https://testplanit.example.com/projects/runs/1/123
+
+When `autoCreateTestCases` is enabled, additional stats are shown:
+
+```text
+[TestPlanIt]   Test Cases:
+[TestPlanIt]     Found (existing): 12
+[TestPlanIt]     Created (new):    6
+```
+
+Screenshot upload stats appear when screenshots are captured:
+
+```text
+[TestPlanIt]   Screenshots:
+[TestPlanIt]     Uploaded: 2
 ```
 
 ## Configuration Options
