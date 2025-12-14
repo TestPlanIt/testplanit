@@ -2580,6 +2580,7 @@
   },
   "runs": {
     "title": "Essais",
+    "notFound": "Exécution de test introuvable.",
     "add": {
       "title": "Ajouter un test d'exécution",
       "description": "Ajouter un nouveau test au projet",

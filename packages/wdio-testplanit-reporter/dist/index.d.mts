@@ -230,21 +230,6 @@ interface ResolvedIds {
     tagIds?: number[];
 }
 /**
- * JUnit test suite statistics tracked during test execution
- */
-interface JUnitSuiteStats {
-    /** Total tests in suite */
-    tests: number;
-    /** Failed tests */
-    failures: number;
-    /** Errored tests */
-    errors: number;
-    /** Skipped tests */
-    skipped: number;
-    /** Total execution time in milliseconds */
-    time: number;
-}
-/**
  * Statistics tracked during the test run for the final summary
  */
 interface ReporterStats {
@@ -281,8 +266,6 @@ interface ReporterState {
     testRunId?: number;
     /** Created JUnit test suite ID (for automated test types) */
     testSuiteId?: number;
-    /** JUnit test suite statistics */
-    testSuiteStats: JUnitSuiteStats;
     /** Resolved numeric IDs from name lookups */
     resolvedIds: ResolvedIds;
     /** Map of test UID to tracked result */

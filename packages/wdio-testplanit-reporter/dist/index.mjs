@@ -64,13 +64,6 @@ var TestPlanItReporter = class extends WDIOReporter {
       folderPathMap: /* @__PURE__ */ new Map(),
       statusIds: {},
       initialized: false,
-      testSuiteStats: {
-        tests: 0,
-        failures: 0,
-        errors: 0,
-        skipped: 0,
-        time: 0
-      },
       stats: {
         testCasesFound: 0,
         testCasesCreated: 0,
@@ -907,13 +900,9 @@ ${error.stack}` : "";
       this.log("Created JUnit test result:", junitResult.id, "(type:", junitType + ")");
       this.reportedResultCount++;
       result.junitResultId = junitResult.id;
-      this.state.testSuiteStats.tests++;
-      this.state.testSuiteStats.time += durationInSeconds;
       if (result.status === "failed") {
-        this.state.testSuiteStats.failures++;
         this.state.stats.resultsFailed++;
       } else if (result.status === "skipped") {
-        this.state.testSuiteStats.skipped++;
         this.state.stats.resultsSkipped++;
       } else {
         this.state.stats.resultsPassed++;
@@ -1009,24 +998,6 @@ ${error.stack}` : "";
       }
       await Promise.allSettled(uploadPromises);
       this.pendingScreenshots.clear();
-    }
-    if (this.state.testSuiteId) {
-      const updateSuiteOp = (async () => {
-        try {
-          await this.client.updateJUnitTestSuite(this.state.testSuiteId, {
-            tests: this.state.testSuiteStats.tests,
-            failures: this.state.testSuiteStats.failures,
-            errors: this.state.testSuiteStats.errors,
-            skipped: this.state.testSuiteStats.skipped,
-            time: this.state.testSuiteStats.time
-          });
-          this.log("Updated test suite statistics:", this.state.testSuiteStats);
-        } catch (error) {
-          this.logError("Failed to update test suite statistics:", error);
-        }
-      })();
-      this.trackOperation(updateSuiteOp);
-      await updateSuiteOp;
     }
     if (this.reporterOptions.completeRunOnFinish) {
       if (this.reporterOptions.oneReport) {

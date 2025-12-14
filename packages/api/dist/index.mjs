@@ -446,7 +446,9 @@ var TestPlanItClient = class {
       }
     );
     const doneStateId = workflows[0]?.id;
-    const updateData = { isCompleted: true };
+    const updateData = {
+      isCompleted: true
+    };
     if (doneStateId) {
       updateData.state = { connect: { id: doneStateId } };
     }

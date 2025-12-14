@@ -105,13 +105,6 @@ export default class TestPlanItReporter extends WDIOReporter {
       folderPathMap: new Map(),
       statusIds: {},
       initialized: false,
-      testSuiteStats: {
-        tests: 0,
-        failures: 0,
-        errors: 0,
-        skipped: 0,
-        time: 0,
-      },
       stats: {
         testCasesFound: 0,
         testCasesCreated: 0,
@@ -1182,14 +1175,10 @@ export default class TestPlanItReporter extends WDIOReporter {
       // Screenshots taken in afterTest hook won't be available yet, so we upload them in onRunnerEnd
       result.junitResultId = junitResult.id;
 
-      // Update suite statistics and reporter stats
-      this.state.testSuiteStats.tests++;
-      this.state.testSuiteStats.time += durationInSeconds;
+      // Update reporter stats (suite stats are calculated by backend from JUnitTestResult rows)
       if (result.status === 'failed') {
-        this.state.testSuiteStats.failures++;
         this.state.stats.resultsFailed++;
       } else if (result.status === 'skipped') {
-        this.state.testSuiteStats.skipped++;
         this.state.stats.resultsSkipped++;
       } else {
         this.state.stats.resultsPassed++;
@@ -1329,26 +1318,9 @@ export default class TestPlanItReporter extends WDIOReporter {
       this.pendingScreenshots.clear();
     }
 
-    // Update the JUnit test suite with final statistics
-    // Track this operation to prevent WebdriverIO from terminating early
-    if (this.state.testSuiteId) {
-      const updateSuiteOp = (async () => {
-        try {
-          await this.client.updateJUnitTestSuite(this.state.testSuiteId!, {
-            tests: this.state.testSuiteStats.tests,
-            failures: this.state.testSuiteStats.failures,
-            errors: this.state.testSuiteStats.errors,
-            skipped: this.state.testSuiteStats.skipped,
-            time: this.state.testSuiteStats.time,
-          });
-          this.log('Updated test suite statistics:', this.state.testSuiteStats);
-        } catch (error) {
-          this.logError('Failed to update test suite statistics:', error);
-        }
-      })();
-      this.trackOperation(updateSuiteOp);
-      await updateSuiteOp;
-    }
+    // Note: JUnit test suite statistics (tests, failures, errors, skipped, time) are NOT updated here.
+    // The backend calculates these dynamically from JUnitTestResult rows in the summary API.
+    // This ensures correct totals when multiple workers/spec files report to the same test run.
 
     // Complete the test run if configured
     // In oneReport mode, decrement worker count and only complete when last worker finishes

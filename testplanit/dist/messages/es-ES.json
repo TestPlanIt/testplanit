@@ -2580,6 +2580,7 @@
   },
   "runs": {
     "title": "Prueba de ejecuciones",
+    "notFound": "No se encontró ejecución de prueba.",
     "add": {
       "title": "Añadir prueba",
       "description": "Añadir una nueva prueba al proyecto",

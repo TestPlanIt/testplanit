@@ -158,6 +158,12 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         async update({ args, query }: any) {
           // Fetch old state for audit diff
           const oldEntity = args.where ? await baseClient.testRuns.findUnique({ where: args.where }) : null;
+
+          // Auto-set completedAt when isCompleted changes to true
+          if (args.data?.isCompleted === true && !args.data?.completedAt && oldEntity?.isCompleted !== true) {
+            args.data.completedAt = new Date();
+          }
+
           const result = await query(args);
           if (result?.id) {
             syncTestRunToElasticsearch(result.id).catch((error: any) => {

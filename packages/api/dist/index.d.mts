@@ -421,6 +421,7 @@ interface CreateTestRunOptions {
 interface UpdateTestRunOptions {
     name?: string;
     isCompleted?: boolean;
+    completedAt?: Date | string | null;
     configId?: number | null;
     milestoneId?: number | null;
     stateId?: number;

@@ -686,8 +686,10 @@ export class TestPlanItClient {
 
     const doneStateId = workflows[0]?.id;
 
-    // Build update data
-    const updateData: UpdateTestRunOptions = { isCompleted: true };
+    // Build update data - completedAt is auto-set by the backend when isCompleted becomes true
+    const updateData: UpdateTestRunOptions = {
+      isCompleted: true,
+    };
     if (doneStateId) {
       updateData.state = { connect: { id: doneStateId } };
     }
