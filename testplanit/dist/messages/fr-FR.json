@@ -2658,7 +2658,7 @@
     },
     "delete": {
       "title": "Supprimer l'essai",
-      "description": "Êtes-vous sûr de vouloir supprimer cet essai ?",
+      "description": "Êtes-vous sûr de vouloir supprimer cet essai ? Les résultats seront conservés à des fins d’analyse historique.",
       "warning": "Cette action est irréversible.",
       "toast": {
         "loading": "Suppression de l'exécution de test...",

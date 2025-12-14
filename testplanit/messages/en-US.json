@@ -2580,6 +2580,7 @@
   },
   "runs": {
     "title": "Test Runs",
+    "notFound": "Test run not found.",
     "add": {
       "title": "Add Test Run",
       "description": "Add a new test run to the project",
@@ -2658,7 +2659,7 @@
     },
     "delete": {
       "title": "Delete Test Run",
-      "description": "Are you sure you want to delete this test run?",
+      "description": "Are you sure you want to delete this test run? Results will be retained for historical analysis.",
       "warning": "This action cannot be undone.",
       "toast": {
         "loading": "Deleting test run...",

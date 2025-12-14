@@ -307,6 +307,7 @@ export default function TestRunPage() {
   const { mutateAsync: createAttachments } = useCreateAttachments();
   const { mutateAsync: updateAttachments } = useUpdateAttachments();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeletingTestRun, setIsDeletingTestRun] = useState(false);
   const t = useTranslations();
   const tCommon = useTranslations("common");
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -1374,23 +1375,33 @@ export default function TestRunPage() {
     !isFormInitialized
   )
     return <Loading />;
-  if (!isValidProjectId || testRunData?.isDeleted) {
-    router.push(`/404`);
-    return (
-      <div className="text-muted-foreground text-center p-4">
-        {t("repository.cases.notFound")}
-      </div>
-    );
+
+  // Skip redirect checks if we're in the process of deleting this test run
+  // The delete flow will handle navigation
+  if (!isDeletingTestRun) {
+    if (!isValidProjectId || testRunData?.isDeleted) {
+      router.push(`/projects/runs/${projectId}`);
+      return (
+        <div className="text-muted-foreground text-center p-4">
+          {t("runs.notFound")}
+        </div>
+      );
+    }
+
+    // Re-add the check for testRunData before proceeding to render JUNIT or regular run view
+    if (!testRunData) {
+      router.push(`/projects/runs/${projectId}`);
+      return (
+        <div className="text-muted-foreground text-center p-4">
+          {t("runs.notFound")}
+        </div>
+      );
+    }
   }
 
-  // Re-add the check for testRunData before proceeding to render JUNIT or regular run view
-  if (!testRunData) {
-    router.push(`/projects/repository/${projectId}`); // Or a more appropriate redirect/error
-    return (
-      <div className="text-muted-foreground text-center p-4">
-        {t("repository.cases.notFound")}
-      </div>
-    );
+  // If we're deleting and testRunData is gone, just show loading while navigation happens
+  if (isDeletingTestRun && !testRunData) {
+    return <Loading />;
   }
 
   if (testRunData && isAutomatedTestRunType(testRunData.testRunType)) {
@@ -1935,7 +1946,7 @@ export default function TestRunPage() {
         onOpenChange={setIsDeleteDialogOpen}
         testRunId={Number(runId)}
         projectId={Number(projectId)}
-        onDelete={refetchTestRun}
+        onBeforeDelete={() => setIsDeletingTestRun(true)}
       />
       <AlertDialog
         open={isRemoveCasesDialogOpen}

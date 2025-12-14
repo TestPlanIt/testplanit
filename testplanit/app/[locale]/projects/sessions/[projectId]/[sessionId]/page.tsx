@@ -843,6 +843,7 @@ export default function SessionPage() {
   const version = searchParams.get("version");
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeletingSession, setIsDeletingSession] = useState(false);
   const t = useTranslations("sessions");
   const tProjects = useTranslations("projects");
   const tCommon = useTranslations("common");
@@ -1596,6 +1597,11 @@ export default function SessionPage() {
 
   if (isLoading || !isFormInitialized || !initialValues) return <Loading />;
 
+  // If we're deleting and sessionData is gone, just show loading while navigation happens
+  if (isDeletingSession && !sessionData) {
+    return <Loading />;
+  }
+
   if (!sessionData) {
     return (
       <div className="text-muted-foreground text-center p-4">
@@ -2106,6 +2112,7 @@ export default function SessionPage() {
         sessionId={Number(sessionId)}
         projectId={numericProjectId!}
         testSession={sessionData}
+        onBeforeDelete={() => setIsDeletingSession(true)}
       />
     </Card>
   );

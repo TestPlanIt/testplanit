@@ -2658,7 +2658,7 @@
     },
     "delete": {
       "title": "Eliminar Test Run",
-      "description": "¿Está seguro que desea eliminar esta ejecución de prueba?",
+      "description": "¿Seguro que desea eliminar esta prueba? Los resultados se conservarán para el análisis histórico.",
       "warning": "Esta acción no se puede deshacer.",
       "toast": {
         "loading": "Eliminando ejecución de prueba...",
