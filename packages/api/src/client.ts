@@ -1750,7 +1750,8 @@ export class TestPlanItClient {
     junitTestResultId: number,
     file: Blob | Buffer,
     fileName: string,
-    mimeType?: string
+    mimeType?: string,
+    note?: string
   ): Promise<Attachment> {
     // Step 1: Upload file to storage
     const { url } = await this.uploadFile(
@@ -1773,6 +1774,7 @@ export class TestPlanItClient {
           name: fileName,
           mimeType: mimeType || "application/octet-stream",
           size,
+          note,
         },
       }
     );

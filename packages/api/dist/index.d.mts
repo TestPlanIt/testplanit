@@ -747,7 +747,7 @@ declare class TestPlanItClient {
      * Upload an attachment to a JUnit test result (for automated test runs)
      * Uploads the file to storage and creates an Attachment record linked to the JUnit result
      */
-    uploadJUnitAttachment(junitTestResultId: number, file: Blob | Buffer, fileName: string, mimeType?: string): Promise<Attachment>;
+    uploadJUnitAttachment(junitTestResultId: number, file: Blob | Buffer, fileName: string, mimeType?: string, note?: string): Promise<Attachment>;
     /**
      * Create a JUnit test suite
      * Used for storing test results from automated test frameworks (Mocha, JUnit, etc.)

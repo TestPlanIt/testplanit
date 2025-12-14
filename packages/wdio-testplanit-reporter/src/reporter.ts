@@ -2,6 +2,19 @@ import WDIOReporter, { type RunnerStats, type SuiteStats, type TestStats, type A
 import { TestPlanItClient } from '@testplanit/api';
 import type { NormalizedStatus, JUnitResultType } from '@testplanit/api';
 import type { TestPlanItReporterOptions, TrackedTestResult, ReporterState } from './types.js';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+
+/**
+ * Shared state file for oneReport mode.
+ * Contains the test run ID shared across all worker instances.
+ */
+interface SharedState {
+  testRunId: number;
+  testSuiteId?: number;
+  createdAt: string;
+}
 
 /**
  * WebdriverIO Reporter for TestPlanIt
@@ -133,6 +146,113 @@ export default class TestPlanItReporter extends WDIOReporter {
   }
 
   /**
+   * Get the path to the shared state file for oneReport mode.
+   * Uses a file in the temp directory with a name based on the project ID.
+   */
+  private getSharedStateFilePath(): string {
+    const fileName = `.testplanit-reporter-${this.reporterOptions.projectId}.json`;
+    return path.join(os.tmpdir(), fileName);
+  }
+
+  /**
+   * Read shared state from file (for oneReport mode).
+   * Returns null if file doesn't exist or is stale (older than 4 hours).
+   */
+  private readSharedState(): SharedState | null {
+    const filePath = this.getSharedStateFilePath();
+    try {
+      if (!fs.existsSync(filePath)) {
+        return null;
+      }
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const state: SharedState = JSON.parse(content);
+
+      // Check if state is stale (older than 4 hours)
+      const createdAt = new Date(state.createdAt);
+      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+      if (createdAt < fourHoursAgo) {
+        this.log('Shared state file is stale, ignoring');
+        this.deleteSharedState();
+        return null;
+      }
+
+      return state;
+    } catch (error) {
+      this.log('Failed to read shared state file:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Write shared state to file (for oneReport mode).
+   * Uses a lock file to prevent race conditions.
+   * Only writes if the file doesn't exist yet (first writer wins).
+   */
+  private writeSharedState(state: SharedState): void {
+    const filePath = this.getSharedStateFilePath();
+    const lockPath = `${filePath}.lock`;
+
+    try {
+      // Simple lock mechanism - try to create lock file exclusively
+      let lockAcquired = false;
+      for (let i = 0; i < 10; i++) {
+        try {
+          fs.writeFileSync(lockPath, process.pid.toString(), { flag: 'wx' });
+          lockAcquired = true;
+          break;
+        } catch {
+          // Lock exists, wait and retry with exponential backoff
+          const sleepMs = 50 * Math.pow(2, i) + Math.random() * 50;
+          // Use setTimeout-based sleep since Atomics.wait requires SharedArrayBuffer
+          const start = Date.now();
+          while (Date.now() - start < sleepMs) {
+            // Busy wait (not ideal but works synchronously)
+          }
+        }
+      }
+
+      if (!lockAcquired) {
+        this.log('Could not acquire lock for shared state file');
+        return;
+      }
+
+      try {
+        // Double-check if file was created by another process while waiting for lock
+        if (fs.existsSync(filePath)) {
+          this.log('Shared state file already exists, not overwriting');
+          return;
+        }
+        fs.writeFileSync(filePath, JSON.stringify(state, null, 2));
+        this.log('Wrote shared state file:', filePath);
+      } finally {
+        // Release lock
+        try {
+          fs.unlinkSync(lockPath);
+        } catch {
+          // Ignore lock removal errors
+        }
+      }
+    } catch (error) {
+      this.log('Failed to write shared state file:', error);
+    }
+  }
+
+  /**
+   * Delete shared state file (cleanup after run completes).
+   */
+  private deleteSharedState(): void {
+    const filePath = this.getSharedStateFilePath();
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        this.log('Deleted shared state file');
+      }
+    } catch (error) {
+      this.log('Failed to delete shared state file:', error);
+    }
+  }
+
+  /**
    * Track an async operation to prevent the runner from terminating early.
    * The operation is added to pendingOperations and removed when complete.
    * WebdriverIO checks isSynchronised and waits until all operations finish.
@@ -169,6 +289,7 @@ export default class TestPlanItReporter extends WDIOReporter {
       this.log('Initializing reporter...');
       this.log(`  Domain: ${this.reporterOptions.domain}`);
       this.log(`  Project ID: ${this.reporterOptions.projectId}`);
+      this.log(`  oneReport: ${this.reporterOptions.oneReport}`);
 
       // Resolve any string IDs to numeric IDs
       this.log('Resolving option IDs...');
@@ -178,11 +299,56 @@ export default class TestPlanItReporter extends WDIOReporter {
       this.log('Fetching status mappings...');
       await this.fetchStatusMappings();
 
+      // Handle oneReport mode - check for existing shared state
+      if (this.reporterOptions.oneReport && !this.state.testRunId) {
+        const sharedState = this.readSharedState();
+        if (sharedState) {
+          this.state.testRunId = sharedState.testRunId;
+          this.state.testSuiteId = sharedState.testSuiteId;
+          this.log(`Using shared test run from file: ${sharedState.testRunId}`);
+          // Validate the shared test run still exists
+          try {
+            const testRun = await this.client.getTestRun(this.state.testRunId);
+            this.log(`Validated shared test run: ${testRun.name} (ID: ${testRun.id})`);
+          } catch {
+            // Shared test run no longer exists, clear state and create new one
+            this.log('Shared test run no longer exists, will create new one');
+            this.state.testRunId = undefined;
+            this.state.testSuiteId = undefined;
+            this.deleteSharedState();
+          }
+        }
+      }
+
       // Create or validate test run
       if (!this.state.testRunId) {
-        await this.createTestRun();
-        this.log(`Created test run with ID: ${this.state.testRunId}`);
-      } else {
+        // In oneReport mode, use atomic write to prevent race conditions
+        if (this.reporterOptions.oneReport) {
+          // Create the test run first
+          await this.createTestRun();
+          this.log(`Created test run with ID: ${this.state.testRunId}`);
+
+          // Try to write shared state - this will fail if another worker already wrote
+          this.writeSharedState({
+            testRunId: this.state.testRunId!,
+            testSuiteId: this.state.testSuiteId,
+            createdAt: new Date().toISOString(),
+          });
+
+          // Re-check shared state to see if we won the race
+          const finalState = this.readSharedState();
+          if (finalState && finalState.testRunId !== this.state.testRunId) {
+            // Another worker created a test run first - use theirs instead
+            this.log(`Another worker created test run first, switching from ${this.state.testRunId} to ${finalState.testRunId}`);
+            this.state.testRunId = finalState.testRunId;
+            this.state.testSuiteId = finalState.testSuiteId;
+          }
+        } else {
+          await this.createTestRun();
+          this.log(`Created test run with ID: ${this.state.testRunId}`);
+        }
+      } else if (!this.reporterOptions.oneReport) {
+        // Only validate if not using oneReport (already validated above)
         // Validate existing test run
         try {
           const testRun = await this.client.getTestRun(this.state.testRunId);
@@ -336,7 +502,7 @@ export default class TestPlanItReporter extends WDIOReporter {
    */
   private async createJUnitTestSuite(): Promise<void> {
     if (this.state.testSuiteId) {
-      return; // Already created
+      return; // Already created (either from shared state or previous call)
     }
 
     if (!this.state.testRunId) {
@@ -359,6 +525,15 @@ export default class TestPlanItReporter extends WDIOReporter {
 
     this.state.testSuiteId = testSuite.id;
     this.log('Created JUnit test suite with ID:', testSuite.id);
+
+    // Update shared state with suite ID if in oneReport mode
+    if (this.reporterOptions.oneReport) {
+      this.writeSharedState({
+        testRunId: this.state.testRunId,
+        testSuiteId: this.state.testSuiteId,
+        createdAt: new Date().toISOString(),
+      });
+    }
   }
 
   /**
@@ -399,6 +574,7 @@ export default class TestPlanItReporter extends WDIOReporter {
       configId: this.state.resolvedIds.configId,
       milestoneId: this.state.resolvedIds.milestoneId,
       stateId: this.state.resolvedIds.stateId,
+      tagIds: this.state.resolvedIds.tagIds,
     });
 
     this.state.testRunId = testRun.id;
@@ -927,13 +1103,39 @@ export default class TestPlanItReporter extends WDIOReporter {
         for (let i = 0; i < screenshots.length; i++) {
           const uploadPromise = (async () => {
             try {
-              const fileName = `screenshot_${i + 1}_${Date.now()}.png`;
+              // Create a meaningful file name: testName_status_screenshot#.png
+              // Sanitize test name for filename (remove special chars, limit length)
+              const sanitizedTestName = result.testName
+                .replace(/[^a-zA-Z0-9_-]/g, '_')
+                .substring(0, 50);
+              const fileName = `${sanitizedTestName}_${result.status}_${i + 1}.png`;
+
+              // Build a descriptive note with test context
+              const noteParts: string[] = [];
+              noteParts.push(`Test: ${result.testName}`);
+              if (result.suiteName) {
+                noteParts.push(`Suite: ${result.suiteName}`);
+              }
+              noteParts.push(`Status: ${result.status}`);
+              if (result.browser) {
+                noteParts.push(`Browser: ${result.browser}`);
+              }
+              if (result.errorMessage) {
+                // Truncate error message if too long
+                const errorPreview = result.errorMessage.length > 200
+                  ? result.errorMessage.substring(0, 200) + '...'
+                  : result.errorMessage;
+                noteParts.push(`Error: ${errorPreview}`);
+              }
+              const note = noteParts.join('\n');
+
               this.log(`Starting upload of ${fileName} (${screenshots[i].length} bytes) to JUnit result ${result.junitResultId}...`);
               await this.client.uploadJUnitAttachment(
                 result.junitResultId!,
                 screenshots[i],
                 fileName,
-                'image/png'
+                'image/png',
+                note
               );
               this.state.stats.screenshotsUploaded++;
               this.log(`Uploaded screenshot ${i + 1}/${screenshots.length} for ${result.testName}`);
@@ -983,8 +1185,11 @@ export default class TestPlanItReporter extends WDIOReporter {
     }
 
     // Complete the test run if configured
+    // In oneReport mode, we skip completion since multiple workers share the same run
+    // and we don't know which worker finishes last. The run stays "In Progress" until
+    // manually completed or the user sets oneReport: false.
     // Track this operation to prevent WebdriverIO from terminating early
-    if (this.reporterOptions.completeRunOnFinish) {
+    if (this.reporterOptions.completeRunOnFinish && !this.reporterOptions.oneReport) {
       const completeRunOp = (async () => {
         try {
           await this.client.completeTestRun(this.state.testRunId!, this.reporterOptions.projectId);
@@ -995,6 +1200,8 @@ export default class TestPlanItReporter extends WDIOReporter {
       })();
       this.trackOperation(completeRunOp);
       await completeRunOp;
+    } else if (this.reporterOptions.oneReport) {
+      this.log('Skipping test run completion (oneReport mode - run will remain in progress)');
     }
 
     // Print summary

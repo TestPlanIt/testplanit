@@ -104,7 +104,6 @@ import {
 } from "@/components/ui/sheet";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { updateTestRunForecast } from "~/services/testRunService";
-import { getJunitColumns } from "./junitColumns";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";
 import { CommentsSection } from "~/components/comments/CommentsSection";
@@ -497,6 +496,9 @@ export default function TestRunPage() {
                 include: {
                   status: {
                     select: { name: true, color: { select: { value: true } } },
+                  },
+                  attachments: {
+                    where: { isDeleted: false },
                   },
                   repositoryCase: {
                     select: {
@@ -1251,6 +1253,7 @@ export default function TestRunPage() {
         linksFrom: result.repositoryCase?.linksFrom || [],
         linksTo: result.repositoryCase?.linksTo || [],
         isDeleted: result.repositoryCase?.isDeleted || false,
+        attachments: result.attachments || [],
       }))
     );
     return mapped;
@@ -1289,17 +1292,6 @@ export default function TestRunPage() {
       }
     });
   };
-
-  // Define columns for DataTable
-  const junitColumns = useMemo(
-    () =>
-      getJunitColumns({
-        t: t as (key: string) => string,
-        session,
-        projectId: projectId ? String(projectId) : "",
-      }),
-    [t, session, projectId]
-  );
 
   // --- REGULAR TEST RUN TABLE STATE ---
   // Fetch status distribution from view-options API for accurate counts across selected configurations
@@ -1425,7 +1417,6 @@ export default function TestRunPage() {
           refetchTestRun={refetchTestRun}
           t={t}
           jUnitSuites={jUnitSuites}
-          junitColumns={junitColumns}
           sortedJunitTestCases={sortedJunitTestCases}
           junitSortConfig={junitSortConfig}
           handleJunitSortChange={handleJunitSortChange}

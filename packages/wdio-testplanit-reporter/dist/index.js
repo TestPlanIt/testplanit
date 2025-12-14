@@ -4,10 +4,34 @@ Object.defineProperty(exports, '__esModule', { value: true });
 
 var WDIOReporter = require('@wdio/reporter');
 var api = require('@testplanit/api');
+var fs = require('fs');
+var path = require('path');
+var os = require('os');
 
 function _interopDefault (e) { return e && e.__esModule ? e : { default: e }; }
 
+function _interopNamespace(e) {
+  if (e && e.__esModule) return e;
+  var n = Object.create(null);
+  if (e) {
+    Object.keys(e).forEach(function (k) {
+      if (k !== 'default') {
+        var d = Object.getOwnPropertyDescriptor(e, k);
+        Object.defineProperty(n, k, d.get ? d : {
+          enumerable: true,
+          get: function () { return e[k]; }
+        });
+      }
+    });
+  }
+  n.default = e;
+  return Object.freeze(n);
+}
+
 var WDIOReporter__default = /*#__PURE__*/_interopDefault(WDIOReporter);
+var fs__namespace = /*#__PURE__*/_interopNamespace(fs);
+var path__namespace = /*#__PURE__*/_interopNamespace(path);
+var os__namespace = /*#__PURE__*/_interopNamespace(os);
 
 // src/reporter.ts
 var TestPlanItReporter = class extends WDIOReporter__default.default {
@@ -109,6 +133,96 @@ ${error.stack}` : "";
     console.error(`[TestPlanIt] ERROR: ${message}`, errorMsg, stack);
   }
   /**
+   * Get the path to the shared state file for oneReport mode.
+   * Uses a file in the temp directory with a name based on the project ID.
+   */
+  getSharedStateFilePath() {
+    const fileName = `.testplanit-reporter-${this.reporterOptions.projectId}.json`;
+    return path__namespace.join(os__namespace.tmpdir(), fileName);
+  }
+  /**
+   * Read shared state from file (for oneReport mode).
+   * Returns null if file doesn't exist or is stale (older than 4 hours).
+   */
+  readSharedState() {
+    const filePath = this.getSharedStateFilePath();
+    try {
+      if (!fs__namespace.existsSync(filePath)) {
+        return null;
+      }
+      const content = fs__namespace.readFileSync(filePath, "utf-8");
+      const state = JSON.parse(content);
+      const createdAt = new Date(state.createdAt);
+      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1e3);
+      if (createdAt < fourHoursAgo) {
+        this.log("Shared state file is stale, ignoring");
+        this.deleteSharedState();
+        return null;
+      }
+      return state;
+    } catch (error) {
+      this.log("Failed to read shared state file:", error);
+      return null;
+    }
+  }
+  /**
+   * Write shared state to file (for oneReport mode).
+   * Uses a lock file to prevent race conditions.
+   * Only writes if the file doesn't exist yet (first writer wins).
+   */
+  writeSharedState(state) {
+    const filePath = this.getSharedStateFilePath();
+    const lockPath = `${filePath}.lock`;
+    try {
+      let lockAcquired = false;
+      for (let i = 0; i < 10; i++) {
+        try {
+          fs__namespace.writeFileSync(lockPath, process.pid.toString(), { flag: "wx" });
+          lockAcquired = true;
+          break;
+        } catch {
+          const sleepMs = 50 * Math.pow(2, i) + Math.random() * 50;
+          const start = Date.now();
+          while (Date.now() - start < sleepMs) {
+          }
+        }
+      }
+      if (!lockAcquired) {
+        this.log("Could not acquire lock for shared state file");
+        return;
+      }
+      try {
+        if (fs__namespace.existsSync(filePath)) {
+          this.log("Shared state file already exists, not overwriting");
+          return;
+        }
+        fs__namespace.writeFileSync(filePath, JSON.stringify(state, null, 2));
+        this.log("Wrote shared state file:", filePath);
+      } finally {
+        try {
+          fs__namespace.unlinkSync(lockPath);
+        } catch {
+        }
+      }
+    } catch (error) {
+      this.log("Failed to write shared state file:", error);
+    }
+  }
+  /**
+   * Delete shared state file (cleanup after run completes).
+   */
+  deleteSharedState() {
+    const filePath = this.getSharedStateFilePath();
+    try {
+      if (fs__namespace.existsSync(filePath)) {
+        fs__namespace.unlinkSync(filePath);
+        this.log("Deleted shared state file");
+      }
+    } catch (error) {
+      this.log("Failed to delete shared state file:", error);
+    }
+  }
+  /**
    * Track an async operation to prevent the runner from terminating early.
    * The operation is added to pendingOperations and removed when complete.
    * WebdriverIO checks isSynchronised and waits until all operations finish.
@@ -136,14 +250,48 @@ ${error.stack}` : "";
       this.log("Initializing reporter...");
       this.log(`  Domain: ${this.reporterOptions.domain}`);
       this.log(`  Project ID: ${this.reporterOptions.projectId}`);
+      this.log(`  oneReport: ${this.reporterOptions.oneReport}`);
       this.log("Resolving option IDs...");
       await this.resolveOptionIds();
       this.log("Fetching status mappings...");
       await this.fetchStatusMappings();
+      if (this.reporterOptions.oneReport && !this.state.testRunId) {
+        const sharedState = this.readSharedState();
+        if (sharedState) {
+          this.state.testRunId = sharedState.testRunId;
+          this.state.testSuiteId = sharedState.testSuiteId;
+          this.log(`Using shared test run from file: ${sharedState.testRunId}`);
+          try {
+            const testRun = await this.client.getTestRun(this.state.testRunId);
+            this.log(`Validated shared test run: ${testRun.name} (ID: ${testRun.id})`);
+          } catch {
+            this.log("Shared test run no longer exists, will create new one");
+            this.state.testRunId = void 0;
+            this.state.testSuiteId = void 0;
+            this.deleteSharedState();
+          }
+        }
+      }
       if (!this.state.testRunId) {
-        await this.createTestRun();
-        this.log(`Created test run with ID: ${this.state.testRunId}`);
-      } else {
+        if (this.reporterOptions.oneReport) {
+          await this.createTestRun();
+          this.log(`Created test run with ID: ${this.state.testRunId}`);
+          this.writeSharedState({
+            testRunId: this.state.testRunId,
+            testSuiteId: this.state.testSuiteId,
+            createdAt: (/* @__PURE__ */ new Date()).toISOString()
+          });
+          const finalState = this.readSharedState();
+          if (finalState && finalState.testRunId !== this.state.testRunId) {
+            this.log(`Another worker created test run first, switching from ${this.state.testRunId} to ${finalState.testRunId}`);
+            this.state.testRunId = finalState.testRunId;
+            this.state.testSuiteId = finalState.testSuiteId;
+          }
+        } else {
+          await this.createTestRun();
+          this.log(`Created test run with ID: ${this.state.testRunId}`);
+        }
+      } else if (!this.reporterOptions.oneReport) {
         try {
           const testRun = await this.client.getTestRun(this.state.testRunId);
           this.log(`Using existing test run: ${testRun.name} (ID: ${testRun.id})`);
@@ -293,6 +441,13 @@ ${error.stack}` : "";
     });
     this.state.testSuiteId = testSuite.id;
     this.log("Created JUnit test suite with ID:", testSuite.id);
+    if (this.reporterOptions.oneReport) {
+      this.writeSharedState({
+        testRunId: this.state.testRunId,
+        testSuiteId: this.state.testSuiteId,
+        createdAt: (/* @__PURE__ */ new Date()).toISOString()
+      });
+    }
   }
   /**
    * Map WebdriverIO framework name to TestPlanIt test run type
@@ -322,7 +477,8 @@ ${error.stack}` : "";
       testRunType,
       configId: this.state.resolvedIds.configId,
       milestoneId: this.state.resolvedIds.milestoneId,
-      stateId: this.state.resolvedIds.stateId
+      stateId: this.state.resolvedIds.stateId,
+      tagIds: this.state.resolvedIds.tagIds
     });
     this.state.testRunId = testRun.id;
     this.log("Created test run with ID:", testRun.id);
@@ -701,13 +857,29 @@ ${error.stack}` : "";
         for (let i = 0; i < screenshots.length; i++) {
           const uploadPromise = (async () => {
             try {
-              const fileName = `screenshot_${i + 1}_${Date.now()}.png`;
+              const sanitizedTestName = result.testName.replace(/[^a-zA-Z0-9_-]/g, "_").substring(0, 50);
+              const fileName = `${sanitizedTestName}_${result.status}_${i + 1}.png`;
+              const noteParts = [];
+              noteParts.push(`Test: ${result.testName}`);
+              if (result.suiteName) {
+                noteParts.push(`Suite: ${result.suiteName}`);
+              }
+              noteParts.push(`Status: ${result.status}`);
+              if (result.browser) {
+                noteParts.push(`Browser: ${result.browser}`);
+              }
+              if (result.errorMessage) {
+                const errorPreview = result.errorMessage.length > 200 ? result.errorMessage.substring(0, 200) + "..." : result.errorMessage;
+                noteParts.push(`Error: ${errorPreview}`);
+              }
+              const note = noteParts.join("\n");
               this.log(`Starting upload of ${fileName} (${screenshots[i].length} bytes) to JUnit result ${result.junitResultId}...`);
               await this.client.uploadJUnitAttachment(
                 result.junitResultId,
                 screenshots[i],
                 fileName,
-                "image/png"
+                "image/png",
+                note
               );
               this.state.stats.screenshotsUploaded++;
               this.log(`Uploaded screenshot ${i + 1}/${screenshots.length} for ${result.testName}`);
@@ -746,7 +918,7 @@ ${error.stack}` : "";
       this.trackOperation(updateSuiteOp);
       await updateSuiteOp;
     }
-    if (this.reporterOptions.completeRunOnFinish) {
+    if (this.reporterOptions.completeRunOnFinish && !this.reporterOptions.oneReport) {
       const completeRunOp = (async () => {
         try {
           await this.client.completeTestRun(this.state.testRunId, this.reporterOptions.projectId);
@@ -757,6 +929,8 @@ ${error.stack}` : "";
       })();
       this.trackOperation(completeRunOp);
       await completeRunOp;
+    } else if (this.reporterOptions.oneReport) {
+      this.log("Skipping test run completion (oneReport mode - run will remain in progress)");
     }
     const stats = this.state.stats;
     const duration = ((Date.now() - stats.startTime.getTime()) / 1e3).toFixed(1);

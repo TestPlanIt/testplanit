@@ -175,8 +175,14 @@ export interface TestPlanItReporterOptions extends Reporters.Options {
   verbose?: boolean;
 
   /**
-   * Consolidate all results into a single test run
-   * When true, uses or creates one test run for the entire session
+   * Consolidate all results into a single test run across all workers/spec files.
+   * When true, uses a shared state file to coordinate between WebdriverIO workers,
+   * ensuring all results are reported to the same test run.
+   *
+   * Note: When oneReport is true, the test run will NOT be automatically completed
+   * (even if completeRunOnFinish is true) since we can't determine which worker
+   * finishes last. The shared state file expires after 4 hours.
+   *
    * @default true
    */
   oneReport?: boolean;

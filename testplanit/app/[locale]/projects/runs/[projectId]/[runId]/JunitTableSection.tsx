@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { getJunitColumns } from "./junitColumns";
 import { FormProvider } from "react-hook-form";
 import {
   Card,
@@ -84,7 +86,6 @@ function JunitTableSection({
   refetchTestRun,
   t,
   jUnitSuites,
-  junitColumns,
   sortedJunitTestCases,
   junitSortConfig,
   handleJunitSortChange,
@@ -103,6 +104,7 @@ function JunitTableSection({
   statusScope,
   selectedTestCaseId,
 }: any) {
+  const { data: session } = useSession();
   const [junitFilter, setJunitFilter] = useState("");
   const [junitColumnVisibility, setJunitColumnVisibility] = useState<
     Record<string, boolean>
@@ -175,6 +177,37 @@ function JunitTableSection({
     setSelectedAttachmentIndex(null);
     setSelectedAttachments([]);
   };
+
+  // State for JUnit result attachments (separate from test run attachments)
+  const [junitResultAttachments, setJunitResultAttachments] = useState<any[]>(
+    []
+  );
+  const [junitResultAttachmentIndex, setJunitResultAttachmentIndex] = useState<
+    number | null
+  >(null);
+  const handleJunitResultAttachmentSelect = useCallback(
+    (attachments: any[], index: number) => {
+      setJunitResultAttachments(attachments);
+      setJunitResultAttachmentIndex(index);
+    },
+    []
+  );
+  const handleJunitResultAttachmentClose = useCallback(() => {
+    setJunitResultAttachmentIndex(null);
+    setJunitResultAttachments([]);
+  }, []);
+
+  // Create junitColumns locally with the correct attachment handler
+  const junitColumns = useMemo(
+    () =>
+      getJunitColumns({
+        t: t as (key: string) => string,
+        session,
+        projectId: projectId ? String(projectId) : "",
+        handleAttachmentSelect: handleJunitResultAttachmentSelect,
+      }),
+    [t, session, projectId, handleJunitResultAttachmentSelect]
+  );
 
   useEffect(() => {
     if (
@@ -700,6 +733,14 @@ function JunitTableSection({
                       initialIndex={selectedAttachmentIndex}
                       onClose={handleClose}
                       canEdit={canAddEditRun}
+                    />
+                  )}
+                  {junitResultAttachmentIndex !== null && (
+                    <AttachmentsCarousel
+                      attachments={junitResultAttachments}
+                      initialIndex={junitResultAttachmentIndex}
+                      onClose={handleJunitResultAttachmentClose}
+                      canEdit={false}
                     />
                   )}
                 </div>

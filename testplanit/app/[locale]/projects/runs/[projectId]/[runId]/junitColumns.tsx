@@ -8,15 +8,19 @@ import type { Session } from "next-auth";
 import { LinkIcon } from "lucide-react";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
+import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
+import type { Attachments } from "@prisma/client";
 
 export function getJunitColumns({
   t,
   session,
   projectId,
+  handleAttachmentSelect,
 }: {
   t: (key: string) => string;
   session: Session | null;
   projectId: string;
+  handleAttachmentSelect: (attachments: Attachments[], index: number) => void;
 }) {
   return [
     {
@@ -220,6 +224,22 @@ export function getJunitColumns({
         <SystemErrorPopover text={row.original.systemError} />
       ),
       size: 200,
+    },
+    {
+      id: "attachments",
+      header: t("common.fields.attachments"),
+      accessorKey: "attachments",
+      enableSorting: false,
+      enableHiding: true,
+      cell: ({ row }: { row: { original: any } }) => (
+        <div className="w-full text-center">
+          <AttachmentsListDisplay
+            attachments={row.original.attachments || []}
+            onSelect={handleAttachmentSelect}
+          />
+        </div>
+      ),
+      size: 100,
     },
     {
       id: "resultStatus",

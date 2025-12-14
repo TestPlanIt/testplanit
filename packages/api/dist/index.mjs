@@ -1303,7 +1303,7 @@ var TestPlanItClient = class {
    * Upload an attachment to a JUnit test result (for automated test runs)
    * Uploads the file to storage and creates an Attachment record linked to the JUnit result
    */
-  async uploadJUnitAttachment(junitTestResultId, file, fileName, mimeType) {
+  async uploadJUnitAttachment(junitTestResultId, file, fileName, mimeType, note) {
     const { url } = await this.uploadFile(
       file,
       fileName,
@@ -1320,7 +1320,8 @@ var TestPlanItClient = class {
           url,
           name: fileName,
           mimeType: mimeType || "application/octet-stream",
-          size
+          size,
+          note
         }
       }
     );

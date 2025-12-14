@@ -156,8 +156,14 @@ interface TestPlanItReporterOptions extends Reporters.Options {
      */
     verbose?: boolean;
     /**
-     * Consolidate all results into a single test run
-     * When true, uses or creates one test run for the entire session
+     * Consolidate all results into a single test run across all workers/spec files.
+     * When true, uses a shared state file to coordinate between WebdriverIO workers,
+     * ensuring all results are reported to the same test run.
+     *
+     * Note: When oneReport is true, the test run will NOT be automatically completed
+     * (even if completeRunOnFinish is true) since we can't determine which worker
+     * finishes last. The shared state file expires after 4 hours.
+     *
      * @default true
      */
     oneReport?: boolean;
@@ -351,6 +357,26 @@ declare class TestPlanItReporter extends WDIOReporter {
      * Log an error (always logs, not just in verbose mode)
      */
     private logError;
+    /**
+     * Get the path to the shared state file for oneReport mode.
+     * Uses a file in the temp directory with a name based on the project ID.
+     */
+    private getSharedStateFilePath;
+    /**
+     * Read shared state from file (for oneReport mode).
+     * Returns null if file doesn't exist or is stale (older than 4 hours).
+     */
+    private readSharedState;
+    /**
+     * Write shared state to file (for oneReport mode).
+     * Uses a lock file to prevent race conditions.
+     * Only writes if the file doesn't exist yet (first writer wins).
+     */
+    private writeSharedState;
+    /**
+     * Delete shared state file (cleanup after run completes).
+     */
+    private deleteSharedState;
     /**
      * Track an async operation to prevent the runner from terminating early.
      * The operation is added to pendingOperations and removed when complete.
