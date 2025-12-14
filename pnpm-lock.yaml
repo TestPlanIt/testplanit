@@ -244,7 +244,7 @@ importers:
   packages/wdio-testplanit-reporter:
     dependencies:
       '@testplanit/api':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../api
     devDependencies:
       '@types/node':

@@ -51,7 +51,7 @@
     "@wdio/types": "^8.0.0 || ^9.0.0"
   },
   "dependencies": {
-    "@testplanit/api": "^0.1.0"
+    "@testplanit/api": "workspace:^"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
