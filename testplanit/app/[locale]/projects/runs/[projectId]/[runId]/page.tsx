@@ -1404,7 +1404,13 @@ export default function TestRunPage() {
     return <Loading />;
   }
 
-  if (testRunData && isAutomatedTestRunType(testRunData.testRunType)) {
+  // At this point, testRunData must exist (either we're not deleting, or we're deleting but data still exists)
+  // This check satisfies TypeScript's null analysis
+  if (!testRunData) {
+    return <Loading />;
+  }
+
+  if (isAutomatedTestRunType(testRunData.testRunType)) {
     // --- JUNIT TABLE STATE ---
     return (
       <PaginationProvider>
