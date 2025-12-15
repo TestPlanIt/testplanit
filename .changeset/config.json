@@ -10,7 +10,7 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["testplanit", "docs", "forge-app", "cli"],
+  "ignore": ["testplanit", "docs", "@testplanit/forge-app", "@testplanit/cli"],
   "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
     "onlyUpdatePeerDependentsWhenOutOfRange": true
   }
