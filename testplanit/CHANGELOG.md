@@ -1,3 +1,10 @@
+## [0.8.10](https://github.com/TestPlanIt/testplanit/compare/v0.8.9...v0.8.10) (2025-12-15)
+
+
+### Bug Fixes
+
+* **changesets:** use correct package names in ignore list ([e0a61cb](https://github.com/TestPlanIt/testplanit/commit/e0a61cb4650a2d824071b54bdc8a6114a74cd0ce))
+
 ## [0.8.9](https://github.com/TestPlanIt/testplanit/compare/v0.8.8...v0.8.9) (2025-12-15)
 
 
