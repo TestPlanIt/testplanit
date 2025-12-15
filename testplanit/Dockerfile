@@ -275,8 +275,20 @@ RUN --mount=from=base,source=/app/node_modules/.pnpm,target=/base-pnpm \
 
 # Copy generated Prisma client from build stage (deps stage doesn't run prisma generate)
 # The .prisma directory contains the generated client code
-COPY --from=build /app/node_modules/.pnpm/@prisma+client@6.19.0_prisma@6.19.0_typescript@5.9.3__typescript@5.9.3/node_modules/.prisma \
-     ./node_modules/.pnpm/@prisma+client@6.19.0_prisma@6.19.0_typescript@5.9.3__typescript@5.9.3/node_modules/.prisma
+# Use dynamic path discovery since version numbers change with dependency updates
+RUN --mount=from=build,source=/app/node_modules/.pnpm,target=/build-pnpm \
+    prisma_src=$(find /build-pnpm -type d -name ".prisma" -path "*@prisma+client*" | head -1) && \
+    if [ -n "$prisma_src" ]; then \
+        # Extract the relative path from the pnpm directory
+        rel_path=${prisma_src#/build-pnpm/} && \
+        dest_dir="./node_modules/.pnpm/${rel_path}" && \
+        mkdir -p "$dest_dir" && \
+        echo "Copying Prisma client from $prisma_src to $dest_dir" && \
+        cp -r "$prisma_src"/* "$dest_dir"/ && \
+        echo "Done copying Prisma client to workers"; \
+    else \
+        echo "ERROR: Could not find .prisma directory in build stage" && exit 1; \
+    fi
 
 # Copy lib directory (needed for workers runtime)
 COPY --from=build /app/lib ./lib
