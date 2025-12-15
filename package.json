@@ -49,7 +49,12 @@
             "brace-expansion": "^2.0.2",
             "tmp": "^0.2.4",
             "vite": "^5.4.21",
-            "mdast-util-to-hast": "^13.2.1"
+            "mdast-util-to-hast": "^13.2.1",
+            "content-security-policy-parser": "^0.6.0",
+            "webpack-dev-server": "^5.2.1",
+            "@sentry/browser": "^7.119.1",
+            "pdfjs-dist": "^4.2.67",
+            "nth-check": "^2.0.1"
         }
     }
 }
