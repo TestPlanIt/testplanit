@@ -22,3 +22,8 @@ release:
   label: Release
   description: Release notes and version updates
   permalink: /release
+
+integration:
+  label: Integration
+  description: Posts about integrations with testing tools and frameworks
+  permalink: /integration
