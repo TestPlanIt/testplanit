@@ -1,3 +1,10 @@
+## [0.8.13](https://github.com/TestPlanIt/testplanit/compare/v0.8.12...v0.8.13) (2025-12-15)
+
+
+### Bug Fixes
+
+* **docker:** resolve lockfile not found error in Docker builds ([f9e48f6](https://github.com/TestPlanIt/testplanit/commit/f9e48f6e74784f53bf4f3fff80360b47f2403804))
+
 ## [0.8.12](https://github.com/TestPlanIt/testplanit/compare/v0.8.11...v0.8.12) (2025-12-15)
 
 
