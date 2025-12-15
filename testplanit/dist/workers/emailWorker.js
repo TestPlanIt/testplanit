@@ -738,7 +738,9 @@ var processor = async (job) => {
             }
           }
         } else if (notification.type === "SYSTEM_ANNOUNCEMENT") {
-          if (data.richContent && isTipTapContent(data.richContent)) {
+          if (data.htmlContent) {
+            htmlMessage = data.htmlContent;
+          } else if (data.richContent && isTipTapContent(data.richContent)) {
             htmlMessage = tiptapToHtml(data.richContent);
           }
           if (!htmlMessage && data.sentByName) {
