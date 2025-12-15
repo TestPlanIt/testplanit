@@ -66,6 +66,7 @@ export function AddFolderModal({
     {
       where: {
         id: parentId === null ? undefined : parentId,
+        isDeleted: false,
       },
     },
     {

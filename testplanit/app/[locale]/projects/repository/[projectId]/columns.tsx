@@ -1,7 +1,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { useRouter, usePathname } from "~/lib/navigation";
 import { useSearchParams } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
@@ -92,6 +92,7 @@ import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
 import StatusDotDisplay from "@/components/StatusDotDisplay";
 import { ScrollArea } from "~/components/ui/scroll-area";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 export interface ExtendedCases extends RepositoryCases {
   className: string | null;
@@ -298,7 +299,7 @@ const NameCell = React.memo(function NameCell({
       <div className="flex items-center">
         {isSoftDeletedInRun ? (
           <Trash2 className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
-        ) : source === "JUNIT" ? (
+        ) : isAutomatedCaseSource(source) ? (
           <Bot className="w-4 h-4 mr-1 text-primary shrink-0" />
         ) : (
           <ListChecks className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
@@ -356,7 +357,7 @@ const NameCell = React.memo(function NameCell({
     <div className="flex items-center">
       {isSoftDeletedInRun ? (
         <Trash2 className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
-      ) : source === "JUNIT" ? (
+      ) : isAutomatedCaseSource(source) ? (
         <Bot className="w-4 h-4 mr-1 text-primary shrink-0" />
       ) : (
         <ListChecks className="w-4 h-4 mr-1 text-primary shrink-0" />
@@ -998,6 +999,105 @@ const AssigneeCell = React.memo(function AssigneeCell({
   );
 });
 
+// Component for select all checkbox with shift-key detection and tooltip
+const SelectAllCheckbox = React.memo(function SelectAllCheckbox({
+  table,
+  handleSelectAllClick,
+  selectCaseLabel,
+  totalItems,
+  isAllSelected,
+}: {
+  table: any;
+  handleSelectAllClick?: (event: React.MouseEvent) => void;
+  selectCaseLabel: string;
+  totalItems: number;
+  isAllSelected: boolean;
+}) {
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
+  const t = useTranslations();
+
+  // Track shift key state
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Shift") {
+        setIsShiftPressed(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Shift") {
+        setIsShiftPressed(false);
+      }
+    };
+
+    // Also handle blur to reset state when window loses focus
+    const handleBlur = () => {
+      setIsShiftPressed(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, []);
+
+  const tooltipContent = isShiftPressed
+    ? isAllSelected
+      ? t("repository.deselectAllShiftTooltip")
+      : t("repository.selectAllShiftTooltip", { count: totalItems })
+    : t("repository.selectAllTooltip");
+
+  return (
+    <TooltipProvider delayDuration={1000}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="cursor-pointer">
+            <Checkbox
+              checked={
+                table.getIsSomeRowsSelected()
+                  ? "indeterminate"
+                  : table.getIsAllRowsSelected()
+              }
+              onCheckedChange={(value) => {
+                if (!handleSelectAllClick) {
+                  table.toggleAllRowsSelected(!!value);
+                }
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (handleSelectAllClick) {
+                  e.preventDefault();
+                  handleSelectAllClick(e);
+                }
+              }}
+              aria-label={selectCaseLabel}
+            />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          align="start"
+          sideOffset={12}
+          className="max-w-xs"
+          style={{ zIndex: 9999 }}
+        >
+          <p className="text-xs">{tooltipContent}</p>
+          {!isShiftPressed && (
+            <p className="text-xs text-primary-foreground/65 mt-1">
+              {t("repository.shiftClickHint")}
+            </p>
+          )}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+});
+
 export const getColumns = (
   session: any,
   uniqueCaseFieldList: CaseFields[],
@@ -1051,7 +1151,9 @@ export const getColumns = (
     selectedCases?: ExtendedCases[];
     steps?: any[];
   }) => void,
-  isMultiConfigRun?: boolean
+  isMultiConfigRun?: boolean,
+  totalItems?: number,
+  selectedCount?: number
 ): ColumnDef<ExtendedCases>[] => {
   const isStepsFieldPresent = uniqueCaseFieldList.some(
     (field) => field.displayName === "Steps"
@@ -1100,31 +1202,22 @@ export const getColumns = (
       const showHandle =
         !isSelectionMode && (isRunMode || (isMode1 && isSortedByOrder));
 
+      // Determine if all items are selected (for tooltip message)
+      const isAllSelected =
+        (selectedCount ?? 0) >= (totalItems ?? 0) && (totalItems ?? 0) > 0;
+
       return (
         <div
           // Use the calculated showHandle to set padding
           className={`flex items-center justify-center w-full ${showHandle ? "pl-6" : "pl-3"}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <Checkbox
-            checked={
-              table.getIsSomeRowsSelected()
-                ? "indeterminate"
-                : table.getIsAllRowsSelected()
-            }
-            onCheckedChange={(value) => {
-              if (!handleSelectAllClick) {
-                table.toggleAllRowsSelected(!!value);
-              }
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (handleSelectAllClick) {
-                e.preventDefault();
-                handleSelectAllClick(e);
-              }
-            }}
-            aria-label={columnTranslations.selectCase}
+          <SelectAllCheckbox
+            table={table}
+            handleSelectAllClick={handleSelectAllClick}
+            selectCaseLabel={columnTranslations.selectCase}
+            totalItems={totalItems ?? 0}
+            isAllSelected={isAllSelected}
           />
         </div>
       );
@@ -1531,6 +1624,7 @@ export const getColumns = (
                       name: trLink.testRun.name,
                       projectId: trLink.testRun.projectId,
                       isCompleted: trLink.testRun.isCompleted,
+                      isDeleted: trLink.testRun.isDeleted,
                     };
                   }
                   return null;
@@ -1543,14 +1637,18 @@ export const getColumns = (
                     name: string;
                     projectId: number;
                     isCompleted: boolean;
+                    isDeleted: boolean;
                   } => run !== null
                 );
+
+              // Count only non-deleted test runs for the badge
+              const activeRunsCount = mappedTestRuns?.filter(run => !run.isDeleted).length || 0;
 
               return (
                 <div className="flex justify-center">
                   <TestRunsListDisplay
                     testRuns={mappedTestRuns}
-                    count={mappedTestRuns?.length || 0}
+                    count={activeRunsCount}
                     filter={{
                       projectId: row.original.projectId,
                       testCases: {

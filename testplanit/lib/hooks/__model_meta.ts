@@ -3386,6 +3386,21 @@ const metadata: ModelMeta = {
                     isRelationOwner: true,
                     onDeleteAction: 'Cascade',
                     foreignKeyMapping: { "id": "testRunStepResultId" },
+                }, junitTestResultId: {
+                    name: "junitTestResultId",
+                    type: "Int",
+                    isOptional: true,
+                    isForeignKey: true,
+                    relationField: 'junitTestResult',
+                }, junitTestResult: {
+                    name: "junitTestResult",
+                    type: "JUnitTestResult",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'attachments',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "junitTestResultId" },
                 },
             }, uniqueConstraints: {
                 id: {
@@ -5322,6 +5337,12 @@ const metadata: ModelMeta = {
                     backLink: 'junitTestResults',
                     isRelationOwner: true,
                     foreignKeyMapping: { "id": "statusId" },
+                }, attachments: {
+                    name: "attachments",
+                    type: "Attachments",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'junitTestResult',
                 },
             }, uniqueConstraints: {
                 id: {
@@ -7256,6 +7277,7 @@ const metadata: ModelMeta = {
         integration: ['UserIntegrationAuth', 'ProjectIntegration'],
         llmIntegration: ['ProjectLlmIntegration', 'LlmProviderConfig'],
         jUnitTestSuite: ['JUnitTestResult', 'JUnitProperty'],
+        jUnitTestResult: ['Attachments'],
         sharedStepGroup: ['SharedStepItem'],
         ssoProvider: ['SamlConfiguration'],
         testmoImportJob: ['TestmoImportDataset'],

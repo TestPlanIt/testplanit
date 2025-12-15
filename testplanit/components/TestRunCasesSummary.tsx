@@ -19,6 +19,7 @@ import {
   CalendarClock,
   MessageSquare,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { useFindFirstStatus } from "~/lib/hooks";
 import { DateFormatter } from "@/components/DateFormatter";
@@ -52,7 +53,8 @@ export function TestRunCasesSummary({
   const projectId = propProjectId || params.projectId;
 
   // Determine which test run IDs to fetch (use testRunIds if provided, otherwise just testRunId)
-  const effectiveTestRunIds = testRunIds && testRunIds.length > 0 ? testRunIds : [testRunId];
+  const effectiveTestRunIds =
+    testRunIds && testRunIds.length > 0 ? testRunIds : [testRunId];
   const isMultiConfig = effectiveTestRunIds.length > 1;
 
   // Fetch summary data from API - for multi-config, fetch all and aggregate
@@ -84,10 +86,20 @@ export function TestRunCasesSummary({
     },
     enabled: effectiveTestRunIds.length > 0 && effectiveTestRunIds[0] > 0,
     staleTime: 30000, // Cache for 30 seconds
+    // Refetch every 30 seconds when workflow is IN_PROGRESS (for automated test runs still adding cases)
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data?.workflowType === "IN_PROGRESS") {
+        return 30000; // 30 seconds
+      }
+      return false; // No automatic refetching
+    },
   });
 
   // Helper function to aggregate multiple summaries
-  function aggregateSummaries(summaries: TestRunSummaryData[]): TestRunSummaryData {
+  function aggregateSummaries(
+    summaries: TestRunSummaryData[]
+  ): TestRunSummaryData {
     if (summaries.length === 0) {
       return {
         testRunType: "REGULAR",
@@ -107,13 +119,16 @@ export function TestRunCasesSummary({
     }
 
     // Aggregate status counts
-    const statusCountMap = new Map<string, {
-      statusId: number | null;
-      statusName: string;
-      colorValue: string;
-      count: number;
-      isCompleted?: boolean;
-    }>();
+    const statusCountMap = new Map<
+      string,
+      {
+        statusId: number | null;
+        statusName: string;
+        colorValue: string;
+        count: number;
+        isCompleted?: boolean;
+      }
+    >();
 
     let totalCases = 0;
     let totalElapsed = 0;
@@ -157,7 +172,8 @@ export function TestRunCasesSummary({
     const completedCases = statusCounts
       .filter((item) => item.isCompleted === true)
       .reduce((sum, item) => sum + item.count, 0);
-    const completionRate = totalCases > 0 ? Math.min((completedCases / totalCases) * 100, 100) : 0;
+    const completionRate =
+      totalCases > 0 ? Math.min((completedCases / totalCases) * 100, 100) : 0;
 
     return {
       testRunType: summaries[0].testRunType,
@@ -372,25 +388,43 @@ export function TestRunCasesSummary({
             ) : null}
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {/* Display completion percentage */}
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                    <CheckCircle2 className="h-3 w-3" />
-                    <span className="font-medium">
-                      {summaryData.completionRate.toFixed(0)}
-                      {"%"}
+            {/* Display loading spinner when automated test run is still adding cases, otherwise show completion percentage */}
+            {summaryData.workflowType === "IN_PROGRESS" ? (
+              <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <span className="font-medium">
+                        {tCommon("status.importing")}
+                      </span>
                     </span>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {tCommon("fields.completionRate")}:{" "}
-                  {summaryData.completionRate.toFixed(1)}
-                  {"%"}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {tCommon("status.addingTestCases")}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ) : (
+              <TooltipProvider delayDuration={300}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <CheckCircle2 className="h-3 w-3" />
+                      <span className="font-medium">
+                        {summaryData.completionRate.toFixed(0)}
+                        {"%"}
+                      </span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {tCommon("fields.completionRate")}:{" "}
+                    {summaryData.completionRate.toFixed(1)}
+                    {"%"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
 
             {/* Display comments count if any exist */}
             {summaryData.commentsCount > 0 && (

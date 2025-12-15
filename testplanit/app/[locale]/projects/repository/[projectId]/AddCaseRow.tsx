@@ -68,6 +68,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
     {
       where: {
         id: folderId,
+        isDeleted: false,
       },
       include: {
         repository: true,

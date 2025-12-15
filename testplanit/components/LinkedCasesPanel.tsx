@@ -20,6 +20,7 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import {
   Select,
   SelectTrigger,
@@ -57,6 +58,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 
 interface LinkedCasesPanelProps {
@@ -114,6 +116,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
           id: true,
           name: true,
           source: true,
+          isDeleted: true,
           testRuns: {
             select: {
               results: {
@@ -147,6 +150,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
           id: true,
           name: true,
           source: true,
+          isDeleted: true,
           testRuns: {
             select: {
               results: {
@@ -501,17 +505,20 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                   return (
                     <TableRow key={link.id}>
                       <TableCell className="w-[300px]">
-                        <Link
-                          href={`/projects/repository/${projectId || (otherCase as any).projectId}/${otherCase.name ? otherCase.id : ""}`}
-                          className="font-medium hover:underline flex items-center gap-1"
-                        >
-                          {otherCaseSource === "JUNIT" ? (
-                            <Bot className="w-4 h-4 text-primary" />
-                          ) : (
-                            <ListChecks className="w-4 h-4 text-primary" />
-                          )}
-                          {otherCase.name}
-                        </Link>
+                        <TestCaseNameDisplay
+                          testCase={{
+                            id: otherCase.id,
+                            name: otherCase.name,
+                            source: otherCaseSource,
+                            isDeleted: otherCase.isDeleted,
+                          }}
+                          projectId={
+                            otherCase.isDeleted
+                              ? undefined
+                              : projectId || (otherCase as any).projectId
+                          }
+                          className="font-medium"
+                        />
                       </TableCell>
                       <TableCell className="w-[180px]">
                         <span className="px-2 py-0.5 rounded-lg bg-muted text-xs text-muted-foreground font-semibold">

@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "~/server/auth";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 
 const prisma = new PrismaClient();
 
 export type TestRunSummaryData = {
   testRunType: string;
+  workflowType?: "NOT_STARTED" | "IN_PROGRESS" | "DONE" | null;
   totalCases: number;
   statusCounts: Array<{
     statusId: number | null;
@@ -91,13 +93,18 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get test run type
+    // Get test run type and workflow
     const testRun = await prisma.testRuns.findUnique({
       where: { id: testRunId },
       select: {
         testRunType: true,
         forecastManual: true,
         projectId: true,
+        state: {
+          select: {
+            workflowType: true,
+          },
+        },
         issues: {
           select: {
             id: true,
@@ -131,7 +138,7 @@ export async function GET(
       );
     }
 
-    const isJUnitRun = testRun.testRunType === "JUNIT";
+    const isJUnitRun = isAutomatedTestRunType(testRun.testRunType);
 
     // Get comments count for this test run
     const commentsCountResult = await prisma.$queryRaw<
@@ -150,6 +157,7 @@ export async function GET(
       return NextResponse.json({
         ...summary,
         testRunType: testRun.testRunType,
+        workflowType: testRun.state?.workflowType,
         commentsCount,
         issues: testRun.issues.map((issue) => ({
           ...issue,
@@ -165,6 +173,7 @@ export async function GET(
       return NextResponse.json({
         ...summary,
         testRunType: testRun.testRunType,
+        workflowType: testRun.state?.workflowType,
         commentsCount,
         issues: testRun.issues.map((issue) => ({
           ...issue,
@@ -349,27 +358,8 @@ async function getJUnitRunSummary(
 ): Promise<
   Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
 > {
-  // Get JUnit test suites summary
-  const suiteSummary = await prisma.$queryRaw<
-    Array<{
-      totalTests: bigint;
-      totalFailures: bigint;
-      totalErrors: bigint;
-      totalSkipped: bigint;
-      totalTime: number;
-    }>
-  >`
-    SELECT
-      COALESCE(SUM(tests), 0) as "totalTests",
-      COALESCE(SUM(failures), 0) as "totalFailures",
-      COALESCE(SUM(errors), 0) as "totalErrors",
-      COALESCE(SUM(skipped), 0) as "totalSkipped",
-      COALESCE(SUM(time), 0) as "totalTime"
-    FROM "JUnitTestSuite"
-    WHERE "testRunId" = ${testRunId}
-  `;
-
   // Get aggregated result counts by status and type
+  // Calculate all stats from actual results to ensure consistency during incremental imports
   const resultAggregates = await prisma.$queryRaw<
     Array<{
       statusId: number | null;
@@ -393,11 +383,32 @@ async function getJUnitRunSummary(
     GROUP BY jtr."statusId", s.name, c.value, jtr.type
   `;
 
-  const totalTests = Number(suiteSummary[0]?.totalTests || 0);
-  const totalFailures = Number(suiteSummary[0]?.totalFailures || 0);
-  const totalErrors = Number(suiteSummary[0]?.totalErrors || 0);
-  const totalSkipped = Number(suiteSummary[0]?.totalSkipped || 0);
-  const totalTime = Number(suiteSummary[0]?.totalTime || 0);
+  // Get total time from actual results (not suite stats) for consistency
+  const timeResult = await prisma.$queryRaw<
+    Array<{ totalTime: number | null }>
+  >`
+    SELECT COALESCE(SUM(jtr.time), 0) as "totalTime"
+    FROM "JUnitTestResult" jtr
+    JOIN "JUnitTestSuite" jts ON jtr."testSuiteId" = jts.id
+    WHERE jts."testRunId" = ${testRunId}
+  `;
+
+  // Calculate totals from actual results instead of suite stats
+  // This ensures consistency during incremental imports
+  const totalTests = resultAggregates.reduce(
+    (sum, agg) => sum + Number(agg.count),
+    0
+  );
+  const totalFailures = resultAggregates
+    .filter((agg) => agg.type === "FAILURE")
+    .reduce((sum, agg) => sum + Number(agg.count), 0);
+  const totalErrors = resultAggregates
+    .filter((agg) => agg.type === "ERROR")
+    .reduce((sum, agg) => sum + Number(agg.count), 0);
+  const totalSkipped = resultAggregates
+    .filter((agg) => agg.type === "SKIPPED")
+    .reduce((sum, agg) => sum + Number(agg.count), 0);
+  const totalTime = Number(timeResult[0]?.totalTime || 0);
 
   // Build result segments
   const resultSegments = resultAggregates.map((agg, index) => {

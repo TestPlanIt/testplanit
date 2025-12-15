@@ -9,7 +9,9 @@ import {
   useFindManySessions,
   useFindManyMilestones,
   useFindManySessionResults,
+  useFindFirstSessionResults,
 } from "~/lib/hooks";
+import { useQueryClient } from "@tanstack/react-query";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useTabState } from "~/hooks/useTabState";
 import SessionDisplay from "./SessionDisplay";
@@ -35,6 +37,7 @@ import { useDebounce } from "@/components/Debounce";
 import {
   PaginationProvider,
   usePagination,
+  defaultPageSizeOptions,
 } from "~/lib/contexts/PaginationContext";
 
 import RecentResultsDonut, {
@@ -93,6 +96,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
 
   // Tab State - persisted in URL
   const [activeTab, setActiveTab] = useTabState("tab", "active");
+  const queryClient = useQueryClient();
 
   // Dialog State
   const [isChartDialogOpen, setIsChartDialogOpen] = useState(false);
@@ -199,8 +203,12 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     project: true,
   };
 
-  const { data: incompleteSessions, isLoading: isLoadingIncomplete } =
-    useFindManySessions({
+  const {
+    data: incompleteSessions,
+    isLoading: isLoadingIncomplete,
+    refetch: refetchIncompleteSessions,
+  } = useFindManySessions(
+    {
       where: {
         AND: [
           { projectId: numericProjectId ?? undefined },
@@ -210,12 +218,20 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
       },
       orderBy: [{ createdAt: "asc" }, { completedAt: "asc" }],
       include: queryInclude,
-    }) ?? { data: [], isLoading: false };
+    },
+    {
+      refetchInterval: activeTab === "active" ? 30000 : false, // Refetch every 30s when on active tab
+    }
+  ) ?? { data: [], isLoading: false, refetch: () => {} };
 
   // Query for ALL completed sessions (used ONLY for summary cards and initial data)
   // This query runs once and is never affected by filtering
-  const { data: allCompletedSessions, isLoading: isLoadingAllCompleted } =
-    useFindManySessions({
+  const {
+    data: allCompletedSessions,
+    isLoading: isLoadingAllCompleted,
+    refetch: refetchCompletedSessions,
+  } = useFindManySessions(
+    {
       where: {
         AND: [
           { projectId: numericProjectId ?? undefined },
@@ -225,7 +241,11 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
       },
       orderBy: [{ completedAt: "desc" }],
       include: queryInclude,
-    }) ?? { data: [], isLoading: false };
+    },
+    {
+      refetchInterval: activeTab === "completed" ? 30000 : false, // Refetch every 30s when on completed tab
+    }
+  ) ?? { data: [], isLoading: false, refetch: () => {} };
 
   // Optimized query ONLY for completion trend chart (last 6 months)
   // Only fetches completedAt field to minimize data transfer
@@ -281,6 +301,21 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
 
   // Use the all completed sessions loading state for summary cards
   const isLoadingCompleted = isLoadingAllCompleted;
+
+  // Handle tab change with query invalidation
+  const handleTabChange = useCallback(
+    (newTab: string) => {
+      setActiveTab(newTab);
+      if (newTab === "completed") {
+        // Refetch completed sessions when switching to completed tab
+        refetchCompletedSessions();
+      } else if (newTab === "active") {
+        // Refetch active sessions when switching to active tab
+        refetchIncompleteSessions();
+      }
+    },
+    [setActiveTab, refetchCompletedSessions, refetchIncompleteSessions]
+  );
 
   const { data: milestones, isLoading: isLoadingMilestones } =
     useFindManyMilestones({
@@ -485,42 +520,64 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   const [recentSessionResultsDateRange, setRecentSessionResultsDateRange] =
     useState<{ first?: Date; last?: Date }>({});
 
-  const thirtyDaysAgo = useMemo(() => {
-    const date = new Date();
-    date.setDate(date.getDate() - 90);
-    return date;
-  }, []);
+  // Query 1: Get the most recent session result to determine the date range
+  const { data: latestSessionResult, isLoading: isLoadingLatestSessionResult } =
+    useFindFirstSessionResults({
+      where: {
+        session: { projectId: numericProjectId ?? undefined },
+        isDeleted: false,
+        status: {
+          systemName: { not: "untested" },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        createdAt: true,
+      },
+    });
 
+  // Calculate 90 days before the latest result
+  const ninetyDaysBeforeLatest = useMemo(() => {
+    if (!latestSessionResult?.createdAt) return undefined;
+    const latestDate = new Date(latestSessionResult.createdAt);
+    const ninetyDaysInMillis = 90 * 24 * 60 * 60 * 1000;
+    return new Date(latestDate.getTime() - ninetyDaysInMillis);
+  }, [latestSessionResult?.createdAt]);
+
+  // Query 2: Get all results within 90 days of the latest result
   const {
     data: recentRawSessionResults,
     isLoading: isLoadingRecentSessionResults,
-  } = useFindManySessionResults({
-    // Fetches SessionResult, not TestRunResult
-    where: {
-      session: { projectId: numericProjectId ?? undefined },
-      createdAt: { gte: thirtyDaysAgo },
-      isDeleted: false,
-      status: {
-        systemName: { not: "untested" }, // Exclude untested results
+  } = useFindManySessionResults(
+    {
+      where: {
+        session: { projectId: numericProjectId ?? undefined },
+        isDeleted: false,
+        status: {
+          systemName: { not: "untested" },
+        },
+        createdAt: { gte: ninetyDaysBeforeLatest },
       },
-    },
-    include: {
-      status: {
-        // Use select to ensure isSuccess is included
-        select: {
-          id: true,
-          name: true,
-          isSuccess: true, // <-- Ensure this is included
-          color: { select: { value: true } },
+      include: {
+        status: {
+          select: {
+            id: true,
+            name: true,
+            isSuccess: true,
+            color: { select: { value: true } },
+          },
         },
       },
+      orderBy: { createdAt: "desc" },
     },
-    orderBy: { createdAt: "desc" },
-  });
+    {
+      enabled: !!ninetyDaysBeforeLatest, // Only run when we have the date
+    }
+  );
 
-  // Renamed useMemo hook for clarity and added calculations
+  // Process session results for the chart
   const processedRecentSessionResults = useMemo(() => {
-    if (!recentRawSessionResults) {
+    if (!recentRawSessionResults || recentRawSessionResults.length === 0) {
       setRecentSessionResultsChartData([]);
       setRecentSessionResultsSuccessRate(0);
       setRecentSessionResultsDateRange({});
@@ -609,6 +666,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   const isOverallLoading =
     isAuthLoading ||
     isLoading ||
+    isLoadingLatestSessionResult ||
     isLoadingRecentSessionResults ||
     isLoadingIncomplete ||
     isLoadingCompleted;
@@ -882,7 +940,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
               {/* --- End Summary Metrics Display --- */}
 
               {/* --- Start Restored Tabs Component --- */}
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full">
                   <TabsTrigger value="active" className="w-1/2">
                     {t("common.status.active")}
@@ -949,7 +1007,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                                     ? completedSessionsPageSize
                                     : "All"
                                 }
-                                pageSizeOptions={[10, 25, 50, 100, "All"]}
+                                pageSizeOptions={defaultPageSizeOptions}
                                 handlePageSizeChange={(size) =>
                                   setCompletedSessionsPageSize(size)
                                 }

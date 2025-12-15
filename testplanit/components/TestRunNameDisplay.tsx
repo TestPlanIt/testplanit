@@ -91,10 +91,10 @@ export function TestRunNameDisplay({
     </>
   );
 
-  // If deleted, don't make it a link
+  // If deleted, don't make it a link - show with line-through and dimmed styling
   if (isDeleted) {
     return (
-      <span className="flex items-center gap-1 min-w-0 text-muted-foreground">
+      <span className="flex items-center gap-1 min-w-0 text-muted-foreground/50 line-through">
         {content}
       </span>
     );

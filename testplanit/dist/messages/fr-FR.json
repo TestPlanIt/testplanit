@@ -240,7 +240,9 @@
       "notApplicable": "N / A",
       "redirecting": "Redirection en cours...",
       "pendingDelete": "Sera supprimé",
-      "pendingChanges": "Modifications en attente"
+      "pendingChanges": "Modifications en attente",
+      "importing": "Importation en cours...",
+      "addingTestCases": "Ajout de cas de test..."
     },
     "priority": {
       "low": "Faible",
@@ -931,7 +933,7 @@
       "loadingIssueTracker": "Chargement des informations du système de suivi des problèmes...",
       "enterDocumentation": "Saisissez les documents...",
       "step": "Étape",
-      "noJunitTestSuites": "Aucune suite de tests JUnit n'a été trouvée pour cette exécution."
+      "noAutomatedTestResults": "Aucun résultat de test automatisé n'a été trouvé pour cette exécution."
     },
     "time": {
       "minutes": "{count, plural, =1 {minute} other {minutes}}",
@@ -1149,6 +1151,7 @@
   },
   "projects": {
     "status": {
+      "id": "ID du projet : {id}",
       "active": "Le projet est actif.",
       "completed": "Le projet est terminé."
     },
@@ -1989,6 +1992,10 @@
     "emptyFolders": "Cliquez sur le bouton « Ajouter un dossier » ci-dessus pour ajouter le premier dossier.",
     "selectedAllCases": "{count, plural, =0 {Tous les cas sélectionnés} one {Nombre de cas sélectionnés sur toutes les pages} other {Nombre de cas sélectionnés sur toutes les pages}}",
     "deselectedAllCases": "Tous les cas désélectionnés sur toutes les pages",
+    "selectAllTooltip": "Sélectionnez/Désélectionnez tous les cas sur cette page",
+    "selectAllShiftTooltip": "{count, plural, =0 {Sélectionner/Désélectionner tous les cas sur toutes les pages} one {Sélectionner/Désélectionner # cas sur toutes les pages} other {Sélectionner/Désélectionner # cas sur toutes les pages}}",
+    "deselectAllShiftTooltip": "Désélectionner/Sélectionner tous les cas sur toutes les pages",
+    "shiftClickHint": "Maintenez la touche Maj enfoncée pour sélectionner/désélectionner toutes les pages.",
     "treeView": {
       "expandAll": "Développer tout",
       "collapseAll": "Réduire tout",
@@ -2575,6 +2582,7 @@
   },
   "runs": {
     "title": "Essais",
+    "notFound": "Exécution de test introuvable.",
     "add": {
       "title": "Ajouter un test d'exécution",
       "description": "Ajouter un nouveau test au projet",
@@ -2653,7 +2661,7 @@
     },
     "delete": {
       "title": "Supprimer l'essai",
-      "description": "Êtes-vous sûr de vouloir supprimer cet essai ?",
+      "description": "Êtes-vous sûr de vouloir supprimer cet essai ? Les résultats seront conservés à des fins d’analyse historique.",
       "warning": "Cette action est irréversible.",
       "toast": {
         "loading": "Suppression de l'exécution de test...",
@@ -2691,8 +2699,10 @@
       "noForecastData": "Aucune donnée prévisionnelle disponible",
       "allActiveRuns": "Toutes les courses actives",
       "totalEstTimeRemainingSunburst": "Temps restant estimé total :",
-      "recentResultsTitle": "Résumé des résultats récents",
+      "recentResultsTitle": "Résultats manuels récents",
       "recentResultsDescription": "Consultez les résultats récents de l'essai.",
+      "recentAutomatedResultsTitle": "Résultats automatisés récents",
+      "noRecentAutomatedResults": "Aucun résultat automatisé récent trouvé.",
       "recentResultsSuccessRate": "Taux de réussite",
       "recentResultsDateRange": "Période couverte",
       "recentResultsExecutedBy": "Exécuté par",

@@ -108,6 +108,7 @@ import {
   transformFolders,
 } from "@/components/forms/FolderSelect";
 import LinkedCasesPanel from "@/components/LinkedCasesPanel";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 // Type Definitions (ensure these are present and correct)
 interface SharedStepItemDetail {
@@ -1473,8 +1474,8 @@ export default function TestCaseDetails() {
     }
   }, [isLoading]);
 
-  // Fetch JUnit-specific data if this is a JUNIT case
-  const isJUnitCase = testcase?.source === "JUNIT";
+  // Fetch JUnit-specific data if this is an automated case
+  const isJUnitCase = isAutomatedCaseSource(testcase?.source);
   const { data: junitSuites } = useFindManyJUnitTestSuite(
     isJUnitCase
       ? { where: { results: { some: { repositoryCaseId: testcase.id } } } }
@@ -1655,8 +1656,8 @@ export default function TestCaseDetails() {
                           {errors.root.message}
                         </div>
                       )}
-                      {/* Do not allow deletion of JIRA/JUNIT test cases */}
-                      {testcase.source !== "JUNIT" && (
+                      {/* Do not allow deletion of automated test cases */}
+                      {!isAutomatedCaseSource(testcase.source) && (
                         <div className="w-full">
                           <DeleteCaseModal
                             testcase={testcase}

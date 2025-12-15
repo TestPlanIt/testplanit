@@ -18,6 +18,7 @@ import { DurationDisplay } from "@/components/DurationDisplay";
 import { useTranslations } from "next-intl";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import { UserDisplay } from "@/components/search/UserDisplay";
 import { DateFormatter } from "@/components/DateFormatter";
@@ -80,7 +81,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                       {...field}
                       disabled={
                         isSubmitting ||
-                        (isEditMode && testcase?.source === "JUNIT")
+                        (isEditMode && isAutomatedCaseSource(testcase?.source))
                       }
                     />
                   </FormControl>
@@ -110,7 +111,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                         aria-label={t("repository.testCase.toggleAutomated")}
                         disabled={
                           isSubmitting ||
-                          (isEditMode && testcase?.source === "JUNIT")
+                          (isEditMode && isAutomatedCaseSource(testcase?.source))
                         }
                       />
                     </FormControl>

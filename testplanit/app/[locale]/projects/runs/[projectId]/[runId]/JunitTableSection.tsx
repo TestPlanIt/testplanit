@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { getJunitColumns } from "./junitColumns";
 import { FormProvider } from "react-hook-form";
 import {
   Card,
@@ -38,7 +40,7 @@ import { Filter } from "@/components/tables/Filter";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { usePagination } from "~/lib/contexts/PaginationContext";
+import { usePagination, defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
 import { DataTable } from "@/components/tables/DataTable";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { DeleteTestRunModal } from "./DeleteTestRun";
@@ -84,7 +86,6 @@ function JunitTableSection({
   refetchTestRun,
   t,
   jUnitSuites,
-  junitColumns,
   sortedJunitTestCases,
   junitSortConfig,
   handleJunitSortChange,
@@ -103,11 +104,11 @@ function JunitTableSection({
   statusScope,
   selectedTestCaseId,
 }: any) {
+  const { data: session } = useSession();
   const [junitFilter, setJunitFilter] = useState("");
   const [junitColumnVisibility, setJunitColumnVisibility] = useState<
     Record<string, boolean>
   >({});
-  const pageSizeOptions: (number | "All")[] = [10, 25, 50, 100, "All"];
   const {
     currentPage: junitPage,
     setCurrentPage: setJunitPage,
@@ -175,6 +176,37 @@ function JunitTableSection({
     setSelectedAttachmentIndex(null);
     setSelectedAttachments([]);
   };
+
+  // State for JUnit result attachments (separate from test run attachments)
+  const [junitResultAttachments, setJunitResultAttachments] = useState<any[]>(
+    []
+  );
+  const [junitResultAttachmentIndex, setJunitResultAttachmentIndex] = useState<
+    number | null
+  >(null);
+  const handleJunitResultAttachmentSelect = useCallback(
+    (attachments: any[], index: number) => {
+      setJunitResultAttachments(attachments);
+      setJunitResultAttachmentIndex(index);
+    },
+    []
+  );
+  const handleJunitResultAttachmentClose = useCallback(() => {
+    setJunitResultAttachmentIndex(null);
+    setJunitResultAttachments([]);
+  }, []);
+
+  // Create junitColumns locally with the correct attachment handler
+  const junitColumns = useMemo(
+    () =>
+      getJunitColumns({
+        t: t as (key: string) => string,
+        session,
+        projectId: projectId ? String(projectId) : "",
+        handleAttachmentSelect: handleJunitResultAttachmentSelect,
+      }),
+    [t, session, projectId, handleJunitResultAttachmentSelect]
+  );
 
   useEffect(() => {
     if (
@@ -471,7 +503,7 @@ function JunitTableSection({
                             totalRows={totalItems}
                             searchString={junitFilter}
                             pageSize={junitPageSize}
-                            pageSizeOptions={pageSizeOptions}
+                            pageSizeOptions={defaultPageSizeOptions}
                             handlePageSizeChange={setJunitPageSize}
                           />
                         </div>
@@ -498,7 +530,7 @@ function JunitTableSection({
                       {!isJUnitLoading &&
                         (!jUnitSuites || jUnitSuites.length === 0) && (
                           <div className="text-muted-foreground">
-                            {t("common.ui.noJunitTestSuites")}
+                            {t("common.ui.noAutomatedTestResults")}
                           </div>
                         )}
                     </div>
@@ -700,6 +732,14 @@ function JunitTableSection({
                       initialIndex={selectedAttachmentIndex}
                       onClose={handleClose}
                       canEdit={canAddEditRun}
+                    />
+                  )}
+                  {junitResultAttachmentIndex !== null && (
+                    <AttachmentsCarousel
+                      attachments={junitResultAttachments}
+                      initialIndex={junitResultAttachmentIndex}
+                      onClose={handleJunitResultAttachmentClose}
+                      canEdit={false}
                     />
                   )}
                 </div>

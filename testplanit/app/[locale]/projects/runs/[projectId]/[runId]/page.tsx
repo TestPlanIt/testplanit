@@ -104,7 +104,6 @@ import {
 } from "@/components/ui/sheet";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { updateTestRunForecast } from "~/services/testRunService";
-import { getJunitColumns } from "./junitColumns";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";
 import { CommentsSection } from "~/components/comments/CommentsSection";
@@ -307,6 +306,7 @@ export default function TestRunPage() {
   const { mutateAsync: createAttachments } = useCreateAttachments();
   const { mutateAsync: updateAttachments } = useUpdateAttachments();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeletingTestRun, setIsDeletingTestRun] = useState(false);
   const t = useTranslations();
   const tCommon = useTranslations("common");
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -497,11 +497,15 @@ export default function TestRunPage() {
                   status: {
                     select: { name: true, color: { select: { value: true } } },
                   },
+                  attachments: {
+                    where: { isDeleted: false },
+                  },
                   repositoryCase: {
                     select: {
                       name: true,
                       className: true,
                       source: true,
+                      isDeleted: true,
                       linksFrom: {
                         select: {
                           caseBId: true,
@@ -1248,6 +1252,8 @@ export default function TestRunPage() {
         createdById: testRunData?.createdBy?.id,
         linksFrom: result.repositoryCase?.linksFrom || [],
         linksTo: result.repositoryCase?.linksTo || [],
+        isDeleted: result.repositoryCase?.isDeleted || false,
+        attachments: result.attachments || [],
       }))
     );
     return mapped;
@@ -1286,17 +1292,6 @@ export default function TestRunPage() {
       }
     });
   };
-
-  // Define columns for DataTable
-  const junitColumns = useMemo(
-    () =>
-      getJunitColumns({
-        t: t as (key: string) => string,
-        session,
-        projectId: projectId ? String(projectId) : "",
-      }),
-    [t, session, projectId]
-  );
 
   // --- REGULAR TEST RUN TABLE STATE ---
   // Fetch status distribution from view-options API for accurate counts across selected configurations
@@ -1372,26 +1367,42 @@ export default function TestRunPage() {
     !isFormInitialized
   )
     return <Loading />;
-  if (!isValidProjectId || testRunData?.isDeleted) {
-    router.push(`/404`);
-    return (
-      <div className="text-muted-foreground text-center p-4">
-        {t("repository.cases.notFound")}
-      </div>
-    );
+
+  // Skip redirect checks if we're in the process of deleting this test run
+  // The delete flow will handle navigation
+  if (!isDeletingTestRun) {
+    if (!isValidProjectId || testRunData?.isDeleted) {
+      router.push(`/projects/runs/${projectId}`);
+      return (
+        <div className="text-muted-foreground text-center p-4">
+          {t("runs.notFound")}
+        </div>
+      );
+    }
+
+    // Re-add the check for testRunData before proceeding to render JUNIT or regular run view
+    if (!testRunData) {
+      router.push(`/projects/runs/${projectId}`);
+      return (
+        <div className="text-muted-foreground text-center p-4">
+          {t("runs.notFound")}
+        </div>
+      );
+    }
   }
 
-  // Re-add the check for testRunData before proceeding to render JUNIT or regular run view
+  // If we're deleting and testRunData is gone, just show loading while navigation happens
+  if (isDeletingTestRun && !testRunData) {
+    return <Loading />;
+  }
+
+  // At this point, testRunData must exist (either we're not deleting, or we're deleting but data still exists)
+  // This check satisfies TypeScript's null analysis
   if (!testRunData) {
-    router.push(`/projects/repository/${projectId}`); // Or a more appropriate redirect/error
-    return (
-      <div className="text-muted-foreground text-center p-4">
-        {t("repository.cases.notFound")}
-      </div>
-    );
+    return <Loading />;
   }
 
-  if (testRunData && isAutomatedTestRunType(testRunData.testRunType)) {
+  if (isAutomatedTestRunType(testRunData.testRunType)) {
     // --- JUNIT TABLE STATE ---
     return (
       <PaginationProvider>
@@ -1406,7 +1417,6 @@ export default function TestRunPage() {
           refetchTestRun={refetchTestRun}
           t={t}
           jUnitSuites={jUnitSuites}
-          junitColumns={junitColumns}
           sortedJunitTestCases={sortedJunitTestCases}
           junitSortConfig={junitSortConfig}
           handleJunitSortChange={handleJunitSortChange}
@@ -1543,7 +1553,7 @@ export default function TestRunPage() {
                         {/* Duplicate and Complete buttons on the next row */}
                         <div className="flex items-center gap-2">
                           {canAddEditRun &&
-                            testRunData?.testRunType !== "JUNIT" && (
+                            !isAutomatedTestRunType(testRunData?.testRunType) && (
                               <Button
                                 type="button"
                                 variant="secondary"
@@ -1641,7 +1651,7 @@ export default function TestRunPage() {
               >
                 <div className="flex flex-col h-full p-4">
                   <div className="space-y-4">
-                    {testRunData?.testRunType === "JUNIT" ? (
+                    {isAutomatedTestRunType(testRunData?.testRunType) ? (
                       isJUnitLoading ? (
                         <Loading />
                       ) : (
@@ -1650,7 +1660,7 @@ export default function TestRunPage() {
                             <></>
                           ) : (
                             <div className="text-muted-foreground">
-                              {tCommon("ui.noJunitTestSuites")}
+                              {tCommon("ui.noAutomatedTestResults")}
                             </div>
                           )}
                         </div>
@@ -1933,7 +1943,7 @@ export default function TestRunPage() {
         onOpenChange={setIsDeleteDialogOpen}
         testRunId={Number(runId)}
         projectId={Number(projectId)}
-        onDelete={refetchTestRun}
+        onBeforeDelete={() => setIsDeletingTestRun(true)}
       />
       <AlertDialog
         open={isRemoveCasesDialogOpen}

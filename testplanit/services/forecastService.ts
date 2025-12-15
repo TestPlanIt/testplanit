@@ -2,6 +2,7 @@
 
 import type { PrismaClient } from "@prisma/client";
 import { prisma as defaultPrisma } from "../lib/prismaBase";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 type UpdateRepositoryCaseForecastOptions = {
   skipTestRunUpdate?: boolean;
@@ -107,9 +108,9 @@ export async function updateRepositoryCaseForecast(
       .filter((v) => v != null);
     if (process.env.DEBUG_FORECAST) console.log("[Forecast] manualDurations:", manualDurations);
 
-    // JUNIT: JUnitTestResult (statusId not null, time > 0)
+    // Automated sources (JUNIT, TESTNG, etc.): JUnitTestResult (statusId not null, time > 0)
     const junitCaseIds = allCases
-      .filter((c) => c.source === "JUNIT")
+      .filter((c) => isAutomatedCaseSource(c.source))
       .map((c) => c.id);
     if (process.env.DEBUG_FORECAST) console.log("[Forecast] junitCaseIds:", junitCaseIds);
     const junitResults = junitCaseIds.length

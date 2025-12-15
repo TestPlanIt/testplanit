@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import {
   usePagination,
   PaginationProvider,
+  defaultPageSizeOptions,
 } from "~/lib/contexts/PaginationContext";
 
 import { useFindManyProjects, useFindManyUser, useUpdateProjects } from "~/lib/hooks";
@@ -409,7 +410,7 @@ function ProjectAdmin() {
                       totalRows={totalItems}
                       searchString={searchString}
                       pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={[10, 25, 50, 100, "All"]}
+                      pageSizeOptions={defaultPageSizeOptions}
                       handlePageSizeChange={(size) => setPageSize(size)}
                     />
                   </div>

@@ -15,6 +15,7 @@ import { SessionNameDisplay } from "@/components/SessionNameDisplay";
 import { MilestoneNameDisplay } from "@/components/MilestoneNameDisplay";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
 import { useFindManyCommentMention, useCountCommentMention } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
@@ -40,6 +41,8 @@ interface CommentDisplayProps {
     repositoryCase?: {
       id: number;
       name: string;
+      isDeleted?: boolean;
+      source?: string;
     } | null;
     testRunId: number | null;
     testRun?: {
@@ -95,13 +98,19 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
   let entityNameDisplay = null;
 
   if (comment.repositoryCaseId && comment.repositoryCase) {
-    entityLink = `/projects/repository/${comment.projectId}/${comment.repositoryCaseId}`;
+    const isDeleted = comment.repositoryCase.isDeleted;
+    entityLink = isDeleted
+      ? ""
+      : `/projects/repository/${comment.projectId}/${comment.repositoryCaseId}`;
     entityNameDisplay = (
       <TestCaseNameDisplay
         testCase={{
           id: comment.repositoryCaseId,
           name: comment.repositoryCase.name,
+          isDeleted,
+          source: comment.repositoryCase.source,
         }}
+        projectId={isDeleted ? undefined : comment.projectId}
         showIcon={true}
       />
     );
@@ -208,7 +217,6 @@ export function UserMentionedComments({ userId }: UserMentionedCommentsProps) {
 
   const [currentPage, setCurrentPage] = useState(1); // 1-indexed for PaginationComponent
   const [pageSize, setPageSize] = useState<number | "All">(10);
-  const pageSizeOptions: (number | "All")[] = [10, 25, 50, 100];
 
   const { data: totalCount, isLoading: isCountLoading } =
     useCountCommentMention({
@@ -302,7 +310,7 @@ export function UserMentionedComments({ userId }: UserMentionedCommentsProps) {
             totalRows={totalCount ?? 0}
             searchString=""
             pageSize={pageSize}
-            pageSizeOptions={pageSizeOptions}
+            pageSizeOptions={defaultPageSizeOptions}
             handlePageSizeChange={handlePageSizeChange}
           />
         </div>

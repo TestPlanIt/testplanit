@@ -184,6 +184,23 @@ var EMAIL_QUEUE_NAME = "emails";
 
 // services/forecastService.ts
 init_prismaBase();
+
+// utils/testResultTypes.ts
+var AUTOMATED_CASE_SOURCES = [
+  "JUNIT",
+  "TESTNG",
+  "XUNIT",
+  "NUNIT",
+  "MSTEST",
+  "MOCHA",
+  "CUCUMBER"
+];
+function isAutomatedCaseSource(source) {
+  if (!source) return false;
+  return AUTOMATED_CASE_SOURCES.includes(source);
+}
+
+// services/forecastService.ts
 async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
   const prisma2 = options.prismaClient || prisma;
   if (process.env.DEBUG_FORECAST) {
@@ -241,7 +258,7 @@ async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
     if (process.env.DEBUG_FORECAST) console.log("[Forecast] manualResults:", manualResults);
     const manualDurations = manualResults.map((r) => r.elapsed).filter((v) => v != null);
     if (process.env.DEBUG_FORECAST) console.log("[Forecast] manualDurations:", manualDurations);
-    const junitCaseIds = allCases.filter((c) => c.source === "JUNIT").map((c) => c.id);
+    const junitCaseIds = allCases.filter((c) => isAutomatedCaseSource(c.source)).map((c) => c.id);
     if (process.env.DEBUG_FORECAST) console.log("[Forecast] junitCaseIds:", junitCaseIds);
     const junitResults = junitCaseIds.length ? await prisma2.jUnitTestResult.findMany({
       where: {

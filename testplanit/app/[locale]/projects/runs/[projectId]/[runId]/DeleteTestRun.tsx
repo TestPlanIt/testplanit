@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface DeleteTestRunProps {
   testRun?: TestRuns;
@@ -23,6 +24,7 @@ interface DeleteTestRunProps {
   testRunId: number;
   projectId: number;
   onDelete?: () => void;
+  onBeforeDelete?: () => void;
 }
 
 export function DeleteTestRunModal({
@@ -32,8 +34,10 @@ export function DeleteTestRunModal({
   testRunId,
   projectId,
   onDelete,
+  onBeforeDelete,
 }: DeleteTestRunProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { mutateAsync: updateTestRuns } = useUpdateTestRuns();
   const t = useTranslations("runs.delete");
   const tCommon = useTranslations("common");
@@ -49,6 +53,32 @@ export function DeleteTestRunModal({
 
   async function onSubmit() {
     try {
+      // Signal that we're about to delete - prevents 404 redirect race condition
+      if (onBeforeDelete) onBeforeDelete();
+
+      // Close the dialog immediately to prevent UI flicker
+      if (onOpenChange) onOpenChange(false);
+
+      // Remove all queries related to this test run from the cache BEFORE the mutation
+      // This prevents the automatic refetch from updating the component with isDeleted: true
+      // which would trigger the 404 redirect before navigation completes
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          // Remove queries that include this specific test run ID
+          return JSON.stringify(queryKey).includes(`"id":${testRunId}`) ||
+                 JSON.stringify(queryKey).includes(`"id": ${testRunId}`);
+        },
+      });
+
+      // Navigate BEFORE the mutation to avoid any race condition
+      // Use replace to prevent going back to the deleted test run page
+      router.replace(`/projects/runs/${projectId}`);
+
+      // Show toast
+      toast.success(t("toast.success"));
+
+      // Now perform the actual delete mutation
       await updateTestRuns({
         where: {
           id: testRunId,
@@ -57,14 +87,14 @@ export function DeleteTestRunModal({
           isDeleted: true,
         },
       });
-      if (onDelete) onDelete();
-      toast.promise(new Promise((resolve) => setTimeout(resolve, 100)), {
-        loading: t("toast.loading"),
-        success: () => {
-          router.push(`/projects/runs/${projectId}`);
-          return t("toast.success");
+
+      // Invalidate the test runs list to refresh the summary page
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return JSON.stringify(queryKey).includes("testRuns") ||
+                 JSON.stringify(queryKey).includes("TestRuns");
         },
-        error: () => t("toast.error.title"),
       });
     } catch (err: any) {
       form.setError("root", {
@@ -75,7 +105,8 @@ export function DeleteTestRunModal({
         description: t("toast.error.description"),
         position: "bottom-right",
       });
-      if (onOpenChange) onOpenChange(true);
+      // Navigate back to the test run page on error since delete failed
+      router.replace(`/projects/runs/${projectId}/${testRunId}`);
       return;
     }
   }

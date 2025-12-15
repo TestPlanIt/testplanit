@@ -240,7 +240,9 @@
       "notApplicable": "N/A",
       "redirecting": "Redirecting...",
       "pendingDelete": "Will be deleted",
-      "pendingChanges": "Pending changes"
+      "pendingChanges": "Pending changes",
+      "importing": "Importing...",
+      "addingTestCases": "Adding test cases..."
     },
     "priority": {
       "low": "Low",
@@ -931,7 +933,7 @@
       "loadingIssueTracker": "Loading issue tracker info...",
       "enterDocumentation": "Enter documentation...",
       "step": "Step",
-      "noJunitTestSuites": "No JUnit test suites found for this run."
+      "noAutomatedTestResults": "No automated test results found for this run."
     },
     "time": {
       "minutes": "{count, plural, =1 {minute} other {minutes}}",
@@ -1149,6 +1151,7 @@
   },
   "projects": {
     "status": {
+      "id": "Project ID: {id}",
       "active": "Project is Active",
       "completed": "Project is Completed"
     },
@@ -1989,6 +1992,10 @@
     "emptyFolders": "Click the Add Folder button above to add the first folder.",
     "selectedAllCases": "{count, plural, =0 {Selected all cases} one {Selected # case across all pages} other {Selected # cases across all pages}}",
     "deselectedAllCases": "Deselected all cases across all pages",
+    "selectAllTooltip": "Select/Deselect all cases on this page",
+    "selectAllShiftTooltip": "{count, plural, =0 {Select/Deselect all cases across all pages} one {Select/Deselect # case across all pages} other {Select/Deselect # cases across all pages}}",
+    "deselectAllShiftTooltip": "Deselect/Select all cases across all pages",
+    "shiftClickHint": "Hold Shift to select/deselect all pages",
     "treeView": {
       "expandAll": "Expand all",
       "collapseAll": "Collapse all",
@@ -2575,6 +2582,7 @@
   },
   "runs": {
     "title": "Test Runs",
+    "notFound": "Test run not found.",
     "add": {
       "title": "Add Test Run",
       "description": "Add a new test run to the project",
@@ -2653,7 +2661,7 @@
     },
     "delete": {
       "title": "Delete Test Run",
-      "description": "Are you sure you want to delete this test run?",
+      "description": "Are you sure you want to delete this test run? Results will be retained for historical analysis.",
       "warning": "This action cannot be undone.",
       "toast": {
         "loading": "Deleting test run...",
@@ -2691,8 +2699,10 @@
       "noForecastData": "No forecast data available",
       "allActiveRuns": "All Active Runs",
       "totalEstTimeRemainingSunburst": "Total Estimated Time Remaining:",
-      "recentResultsTitle": "Recent Results Summary",
+      "recentResultsTitle": "Recent Manual Results",
       "recentResultsDescription": "View the recent results of the test run",
+      "recentAutomatedResultsTitle": "Recent Automated Results",
+      "noRecentAutomatedResults": "No recent automated results found.",
       "recentResultsSuccessRate": "Success Rate",
       "recentResultsDateRange": "Date Range",
       "recentResultsExecutedBy": "Executed By",

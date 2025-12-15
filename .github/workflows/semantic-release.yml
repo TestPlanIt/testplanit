@@ -54,10 +54,11 @@ jobs:
         run: |
           cd testplanit
           npx semantic-release 2>&1 | tee release-output.txt
-          # Extract the version if a release was made
+          # Extract the version if a release was made (macOS-compatible)
           if grep -q "Published release" release-output.txt; then
-            VERSION=$(grep -oP "Published release \K[0-9]+\.[0-9]+\.[0-9]+" release-output.txt || echo "")
-            if [ -n "$VERSION" ]; then
+            # Use sed instead of grep -oP for macOS compatibility
+            VERSION=$(grep "Published release" release-output.txt | sed -E 's/.*Published release ([0-9]+\.[0-9]+\.[0-9]+).*/\1/' | head -1)
+            if [ -n "$VERSION" ] && [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               echo "version=v${VERSION}" >> $GITHUB_OUTPUT
               echo "released=true" >> $GITHUB_OUTPUT
             else

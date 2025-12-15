@@ -240,7 +240,9 @@
       "notApplicable": "No disponible",
       "redirecting": "Redirigiendo...",
       "pendingDelete": "Se eliminará",
-      "pendingChanges": "Cambios pendientes"
+      "pendingChanges": "Cambios pendientes",
+      "importing": "Importador...",
+      "addingTestCases": "Añadiendo casos de prueba..."
     },
     "priority": {
       "low": "Bajo",
@@ -931,7 +933,7 @@
       "loadingIssueTracker": "Cargando información del rastreador de problemas...",
       "enterDocumentation": "Ingresar documentación...",
       "step": "Paso",
-      "noJunitTestSuites": "No se encontraron conjuntos de pruebas JUnit para esta ejecución."
+      "noAutomatedTestResults": "No se encontraron resultados de pruebas automatizadas para esta ejecución."
     },
     "time": {
       "minutes": "{count, plural, =1 {minuto} other {minutos}}",
@@ -1149,6 +1151,7 @@
   },
   "projects": {
     "status": {
+      "id": "ID del proyecto: {id}",
       "active": "El proyecto está activo",
       "completed": "Proyecto completado"
     },
@@ -1989,6 +1992,10 @@
     "emptyFolders": "Haga clic en el botón Añadir carpeta para añadir la primera carpeta.",
     "selectedAllCases": "{count, plural, =0 {Se seleccionaron todos los casos} one {Se seleccionó el número de casos en todas las páginas} other {Se seleccionó el número de casos en todas las páginas}}",
     "deselectedAllCases": "Se deseleccionaron todos los casos en todas las páginas.",
+    "selectAllTooltip": "Seleccionar/Deseleccionar todos los casos en esta página",
+    "selectAllShiftTooltip": "{count, plural, =0 {Seleccionar/Deseleccionar todos los casos en todas las páginas} one {Seleccionar/Deseleccionar # caso en todas las páginas} other {Seleccionar/Deseleccionar # casos en todas las páginas}}",
+    "deselectAllShiftTooltip": "Deseleccionar/Seleccionar todos los casos en todas las páginas",
+    "shiftClickHint": "Mantenga presionada la tecla Mayús para seleccionar o deseleccionar todas las páginas",
     "treeView": {
       "expandAll": "Expandir todo",
       "collapseAll": "Colapsar todos",
@@ -2575,6 +2582,7 @@
   },
   "runs": {
     "title": "Prueba de ejecuciones",
+    "notFound": "No se encontró ejecución de prueba.",
     "add": {
       "title": "Añadir prueba",
       "description": "Añadir una nueva prueba al proyecto",
@@ -2653,7 +2661,7 @@
     },
     "delete": {
       "title": "Eliminar Test Run",
-      "description": "¿Está seguro que desea eliminar esta ejecución de prueba?",
+      "description": "¿Seguro que desea eliminar esta prueba? Los resultados se conservarán para el análisis histórico.",
       "warning": "Esta acción no se puede deshacer.",
       "toast": {
         "loading": "Eliminando ejecución de prueba...",
@@ -2691,8 +2699,10 @@
       "noForecastData": "No hay datos de previsión disponibles",
       "allActiveRuns": "Todas las ejecuciones activas",
       "totalEstTimeRemainingSunburst": "Tiempo total estimado restante:",
-      "recentResultsTitle": "Resumen de resultados recientes",
+      "recentResultsTitle": "Resultados manuales recientes",
       "recentResultsDescription": "Ver los resultados recientes de la prueba",
+      "recentAutomatedResultsTitle": "Resultados automatizados recientes",
+      "noRecentAutomatedResults": "No se encontraron resultados automatizados recientes.",
       "recentResultsSuccessRate": "Tasa de éxito",
       "recentResultsDateRange": "Rango de fechas",
       "recentResultsExecutedBy": "Ejecutado por",

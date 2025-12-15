@@ -18,6 +18,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { formatSeconds } from "@/components/DurationDisplay";
 import { Link } from "~/lib/navigation";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 import { getDateFnsLocale } from "~/utils/locales";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import {
@@ -827,7 +828,18 @@ export default function TestResultHistory({
             },
           },
           junitResults: {
-            include: {
+            select: {
+              id: true,
+              type: true,
+              message: true,
+              content: true,
+              executedAt: true,
+              time: true,
+              assertions: true,
+              file: true,
+              line: true,
+              systemOut: true,
+              systemErr: true,
               status: {
                 select: { name: true, color: { select: { value: true } } },
               },
@@ -850,9 +862,27 @@ export default function TestResultHistory({
                   },
                 },
               },
-              // attachments: true, // Removed to resolve lint error, will use optional chaining
-              // issues: true,      // Removed to resolve lint error, will use optional chaining
-              // Other fields like content, systemOut etc. are implicitly selected by default by Prisma Client
+              attachments: {
+                where: { isDeleted: false },
+                select: {
+                  id: true,
+                  name: true,
+                  url: true,
+                  note: true,
+                  mimeType: true,
+                  size: true,
+                  createdAt: true,
+                  createdById: true,
+                  isDeleted: true,
+                  testCaseId: true,
+                  sessionId: true,
+                  sessionResultsId: true,
+                  testRunsId: true,
+                  testRunResultsId: true,
+                  testRunStepResultId: true,
+                  junitTestResultId: true,
+                },
+              },
             },
             orderBy: { executedAt: "desc" },
           },
@@ -931,7 +961,7 @@ export default function TestResultHistory({
     });
   };
 
-  const showAddToTestRun = fetchedTestCase?.source !== "JUNIT";
+  const showAddToTestRun = !isAutomatedCaseSource(fetchedTestCase?.source);
 
   if (!fetchedTestCase) {
     return (
@@ -1022,7 +1052,7 @@ export default function TestResultHistory({
       status: jr.status,
       elapsed: jr.time,
       attachments: jr.attachments || [], // Fallback to empty array
-      issues: jr.issues || [], // Fallback to empty array
+      issues: [], // JUnitTestResult doesn't have issues relation
       isPending: false,
       associatedTestRun,
       executedBy: jr.createdBy,
@@ -1312,18 +1342,23 @@ export default function TestResultHistory({
                         {result.sourceType === "junit" ? (
                           result.associatedTestRun ? (
                             <div className="font-medium truncate flex items-center">
-                              <Bot className="w-4 h-4 inline mr-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
                               {result.associatedTestRun.isDeleted ? (
-                                <span className="truncate text-muted-foreground">
-                                  {result.associatedTestRun.name}
-                                </span>
+                                <>
+                                  <Trash2 className="w-4 h-4 inline mr-1 shrink-0 text-muted-foreground/50" />
+                                  <span className="truncate text-muted-foreground/50 line-through">
+                                    {result.associatedTestRun.name}
+                                  </span>
+                                </>
                               ) : (
-                                <Link
-                                  href={`/projects/runs/${activeProjectId}/${result.associatedTestRun.id}?selectedCase=${fetchedTestCase.id}&view=status`}
-                                  className="hover:underline truncate"
-                                >
-                                  {result.associatedTestRun.name}
-                                </Link>
+                                <>
+                                  <Bot className="w-4 h-4 inline mr-1 shrink-0 text-primary border border-primary rounded-full p-0.5" />
+                                  <Link
+                                    href={`/projects/runs/${activeProjectId}/${result.associatedTestRun.id}?selectedCase=${fetchedTestCase.id}&view=status`}
+                                    className="hover:underline truncate"
+                                  >
+                                    {result.associatedTestRun.name}
+                                  </Link>
+                                </>
                               )}
                             </div>
                           ) : (

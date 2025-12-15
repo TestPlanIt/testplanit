@@ -1,5 +1,6 @@
 import React from "react";
 import { Trash2, Bot, ListChecks } from "lucide-react";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 interface TestCaseSearchResultProps {
   testCase: {
@@ -22,7 +23,7 @@ export function TestCaseSearchResult({
   if (showIcon) {
     if (testCase.isDeleted) {
       icon = <Trash2 className="h-4 w-4" />;
-    } else if (testCase.source === "JUNIT") {
+    } else if (isAutomatedCaseSource(testCase.source)) {
       icon = <Bot className="h-4 w-4" />;
     } else {
       icon = <ListChecks className="h-4 w-4" />;

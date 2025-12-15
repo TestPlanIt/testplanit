@@ -77,6 +77,7 @@ export function EditFolderModal({
     useFindFirstRepositoryFolders({
       where: {
         id: folderId,
+        isDeleted: false,
       },
     });
 

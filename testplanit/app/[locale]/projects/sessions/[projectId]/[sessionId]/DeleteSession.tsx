@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface DeleteSessionProps {
   testSession?: Sessions;
@@ -23,6 +24,7 @@ interface DeleteSessionProps {
   onOpenChange?: (open: boolean) => void;
   sessionId: number;
   projectId: number;
+  onBeforeDelete?: () => void;
 }
 
 export function DeleteSessionModal({
@@ -31,8 +33,10 @@ export function DeleteSessionModal({
   onOpenChange,
   sessionId,
   projectId,
+  onBeforeDelete,
 }: DeleteSessionProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { mutateAsync: updateSessions } = useUpdateSessions();
   const t = useTranslations();
 
@@ -47,6 +51,31 @@ export function DeleteSessionModal({
 
   async function onSubmit() {
     try {
+      // Signal that we're about to delete - prevents race condition
+      if (onBeforeDelete) onBeforeDelete();
+
+      // Close the dialog immediately to prevent UI flicker
+      if (onOpenChange) onOpenChange(false);
+
+      // Remove all queries related to this session from the cache BEFORE the mutation
+      // This prevents the automatic refetch from updating the component with isDeleted: true
+      queryClient.removeQueries({
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          // Remove queries that include this specific session ID
+          return JSON.stringify(queryKey).includes(`"id":${sessionId}`) ||
+                 JSON.stringify(queryKey).includes(`"id": ${sessionId}`);
+        },
+      });
+
+      // Navigate BEFORE the mutation to avoid any race condition
+      // Use replace to prevent going back to the deleted session page
+      router.replace(`/projects/sessions/${projectId}`);
+
+      // Show toast
+      toast.success(t("sessions.delete.toast.success"));
+
+      // Now perform the actual delete mutation
       await updateSessions({
         where: {
           id: sessionId,
@@ -55,17 +84,15 @@ export function DeleteSessionModal({
           isDeleted: true,
         },
       });
-      toast.promise(
-        new Promise((resolve) => setTimeout(resolve, 2000)), // 2 second delay
-        {
-          loading: t("sessions.delete.toast.loading"),
-          success: () => {
-            router.push(`/projects/sessions/${projectId}`);
-            return t("sessions.delete.toast.success");
-          },
-          error: t("sessions.delete.toast.error.title"),
-        }
-      );
+
+      // Invalidate the sessions list to refresh the summary page
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return JSON.stringify(queryKey).includes("sessions") ||
+                 JSON.stringify(queryKey).includes("Sessions");
+        },
+      });
     } catch (err: any) {
       form.setError("root", {
         type: "custom",
@@ -75,7 +102,8 @@ export function DeleteSessionModal({
         description: t("sessions.delete.toast.error.description"),
         position: "bottom-right",
       });
-      if (onOpenChange) onOpenChange(true);
+      // Navigate back to the session page on error since delete failed
+      router.replace(`/projects/sessions/${projectId}/${sessionId}`);
       return;
     }
   }

@@ -1851,7 +1851,11 @@ export default function Cases({
         });
       },
       // Pass isMultiConfigRun flag
-      selectedRunIds && selectedRunIds.length > 1
+      selectedRunIds && selectedRunIds.length > 1,
+      // Pass totalItems for shift+click tooltip
+      totalItems,
+      // Pass selectedCount for determining if all are selected
+      isSelectionMode ? selectedTestCases.length : selectedCaseIdsForBulkEdit.length
     );
   }, [
     session,
@@ -1872,6 +1876,9 @@ export default function Cases({
     handleSelectAllClick,
     testRunData?.configuration,
     selectedRunIds,
+    totalItems,
+    selectedTestCases.length,
+    selectedCaseIdsForBulkEdit.length,
   ]);
 
   // Create lightweight column metadata for ColumnSelection component

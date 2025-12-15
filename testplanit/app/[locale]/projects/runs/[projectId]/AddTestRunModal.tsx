@@ -763,6 +763,8 @@ const TestCasesDialog = React.memo(
               totalItems: modalTotalItems,
               setTotalItems: setModalTotalItems,
             }}
+            // Skip DnD provider since this modal may be opened from a page that already has one
+            skipDndProvider={true}
           />
         </div>
         <div className="p-6 bg-background border-t flex justify-end gap-2">

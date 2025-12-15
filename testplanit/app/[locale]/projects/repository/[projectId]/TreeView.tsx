@@ -77,6 +77,8 @@ const TreeView: React.FC<{
   }>;
   onRefetchFolders?: (refetch: () => void) => void;
   onRefetchStats?: () => void;
+  /** Ref to an element to scope DnD events to (prevents "Cannot have two HTML5 backends" error in portals) */
+  dndRootElement?: HTMLElement | null;
 }> = ({
   onSelectFolder,
   onHierarchyChange,
@@ -87,11 +89,13 @@ const TreeView: React.FC<{
   folderStatsData,
   onRefetchFolders,
   onRefetchStats,
+  dndRootElement,
 }) => {
   const { projectId } = useParams<{ projectId: string }>();
   const t = useTranslations();
   const treeRef = useRef<TreeApi<ArboristNode>>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const prevSelectedFolderIdRef = useRef<number | null>(null);
   const [hierarchyData, setHierarchyData] = useState<FolderNode[]>([]);
   const [initialOpenState, setInitialOpenState] = useState<
     Record<string, boolean> | undefined
@@ -556,8 +560,15 @@ const TreeView: React.FC<{
   ]);
 
   // Set initial selection after tree is rendered
+  // Only run when selectedFolderId actually changes from the parent, not on treeData changes
   useEffect(() => {
-    if (selectedFolderId && treeRef.current && treeData.length > 0) {
+    if (
+      selectedFolderId &&
+      treeRef.current &&
+      treeData.length > 0 &&
+      prevSelectedFolderIdRef.current !== selectedFolderId
+    ) {
+      prevSelectedFolderIdRef.current = selectedFolderId;
       ensureFolderPathLoaded(selectedFolderId);
       // Small delay to ensure tree is fully rendered
       setTimeout(() => {
@@ -688,6 +699,40 @@ const TreeView: React.FC<{
       onHierarchyChange(hierarchyData);
     }
   }, [folders, onHierarchyChange]);
+
+  // Recursively expand a node and all its descendants
+  const expandAllDescendants = useCallback(
+    async (node: NodeApi<ArboristNode>) => {
+      const folderId = node.data?.data?.folderId;
+      if (folderId) {
+        await ensureFolderChildrenLoaded(folderId);
+      }
+      node.open();
+
+      // Expand all children recursively
+      if (node.children) {
+        for (const child of node.children) {
+          if (child.data?.data?.hasChildren) {
+            await expandAllDescendants(child);
+          }
+        }
+      }
+    },
+    [ensureFolderChildrenLoaded]
+  );
+
+  // Recursively collapse a node and all its descendants
+  const collapseAllDescendants = useCallback((node: NodeApi<ArboristNode>) => {
+    // Collapse children first (bottom-up)
+    if (node.children) {
+      for (const child of node.children) {
+        if (child.isOpen) {
+          collapseAllDescendants(child);
+        }
+      }
+    }
+    node.close();
+  }, []);
 
   // Custom node renderer with inline editing and context menu
   const Node = ({
@@ -826,10 +871,25 @@ const TreeView: React.FC<{
           onClick={async (e) => {
             e.stopPropagation();
             if (hasChildren) {
-              if (!childrenLoaded) {
-                await ensureFolderChildrenLoaded(data?.folderId);
+              const wasOpen = node.isOpen;
+              // Option key (Mac) / Alt key (Windows) expands/collapses all descendants
+              if (e.altKey) {
+                if (wasOpen) {
+                  collapseAllDescendants(node);
+                } else {
+                  await expandAllDescendants(node);
+                  node.select();
+                }
+              } else {
+                if (!childrenLoaded) {
+                  await ensureFolderChildrenLoaded(data?.folderId);
+                }
+                node.toggle();
+                // Select the folder when expanding
+                if (!wasOpen) {
+                  node.select();
+                }
               }
-              node.toggle();
             }
           }}
         >
@@ -942,6 +1002,7 @@ const TreeView: React.FC<{
         onMove={canAddEdit && !filteredFolders ? handleMove : undefined}
         disableDrag={!canAddEdit || !!filteredFolders}
         disableDrop={!canAddEdit || !!filteredFolders}
+        dndRootElement={dndRootElement || undefined}
       >
         {Node}
       </Tree>

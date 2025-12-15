@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "~/server/auth";
+import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
 
 const prisma = new PrismaClient();
 
@@ -9,6 +10,7 @@ export type CompletedTestRunsResponse = {
   runs: Array<{
     id: number;
     name: string;
+    isCompleted: boolean;
     testRunType: string;
     completedAt: Date | null;
     createdAt: Date;
@@ -126,7 +128,7 @@ export async function GET(req: NextRequest) {
     if (runType === "manual") {
       where.testRunType = "REGULAR";
     } else if (runType === "automated") {
-      where.testRunType = "JUNIT";
+      where.testRunType = { in: AUTOMATED_TEST_RUN_TYPES };
     }
 
     // Get total count for pagination
@@ -145,6 +147,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         name: true,
+        isCompleted: true,
         testRunType: true,
         completedAt: true,
         createdAt: true,

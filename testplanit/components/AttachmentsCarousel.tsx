@@ -25,8 +25,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Link } from "~/lib/navigation";
 import { UserNameCell } from "./tables/UserNameCell";
+import { getStorageUrlClient } from "~/utils/storageUrl";
 import { DateFormatter } from "./DateFormatter";
 import { filesize } from "filesize";
 import { Separator } from "./ui/separator";
@@ -219,7 +219,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                                       handlePopoverOpenChange(index, false)
                                     }
                                   >
-                                    <CircleSlash2 className="h-4 w-4 mr-1" />{" "}
+                                    <CircleSlash2 className="h-4 w-4" />
                                     {t("common.actions.cancel")}
                                   </Button>
                                 </div>
@@ -230,7 +230,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                                     onClick={() => handleDelete(index)}
                                     className="ml-auto"
                                   >
-                                    <Trash2 className="h-4 w-4 mr-1" />{" "}
+                                    <Trash2 className="h-4 w-4" />
                                     {t("common.actions.delete")}
                                   </Button>
                                 </div>
@@ -323,16 +323,20 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
         </div>
         <DialogFooter>
           <div className="flex items-center gap-4">
-            <Link
-              href={attachments[current].url}
+            <a
+              href={
+                getStorageUrlClient(attachments[current].url) ||
+                attachments[current].url
+              }
               download={attachments[current].name}
               target="_blank"
+              rel="noopener noreferrer"
             >
               <Button variant="default" disabled={isEditing}>
-                <Download className="inline w-5 h-5 mr-2" />
+                <Download className="inline w-5 h-5" />
                 {t("common.actions.download")}
               </Button>
-            </Link>
+            </a>
             {canEdit && (
               <>
                 {isEditing ? (
@@ -356,7 +360,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                     onClick={handleEditToggle}
                     disabled={isSubmitting}
                   >
-                    <SquarePen className="w-4 h-4 mr-2" />{" "}
+                    <SquarePen className="w-4 h-4" />
                     {t("common.actions.edit")}
                   </Button>
                 )}
