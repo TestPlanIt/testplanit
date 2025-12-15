@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import { useRouter } from "~/lib/navigation";
@@ -25,28 +25,46 @@ import { Loading } from "@/components/Loading";
 import { Input } from "@/components/ui/input";
 import { Bell, Megaphone, Send } from "lucide-react";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import TextFromJson from "@/components/TextFromJson";
 import { emptyEditorContent } from "~/app/constants";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
   createSystemNotification,
   getSystemNotificationHistory,
 } from "~/app/actions/admin-system-notifications";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { DateFormatter } from "@/components/DateFormatter";
+import { DataTable } from "@/components/tables/DataTable";
+import { getColumns, NotificationHistoryItem } from "./columns";
 import { Separator } from "@/components/ui/separator";
+import {
+  usePagination,
+  PaginationProvider,
+} from "~/lib/contexts/PaginationContext";
+import { PaginationComponent } from "@/components/tables/Pagination";
+import { PaginationInfo } from "@/components/tables/PaginationControls";
 
 export default function NotificationSettingsPage() {
+  return (
+    <PaginationProvider>
+      <NotificationSettingsContent />
+    </PaginationProvider>
+  );
+}
+
+function NotificationSettingsContent() {
   const t = useTranslations("admin.notifications");
   const { data: session, status } = useSession();
   const router = useRouter();
+  const {
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    totalItems,
+    setTotalItems,
+    startIndex,
+    endIndex,
+    totalPages,
+  } = usePagination();
+
   const [defaultMode, setDefaultMode] = useState<NotificationMode>("IN_APP");
   const [systemNotificationTitle, setSystemNotificationTitle] = useState("");
   const [systemNotificationMessage, setSystemNotificationMessage] =
@@ -55,6 +73,29 @@ export default function NotificationSettingsPage() {
     useState(false);
   const [notificationHistory, setNotificationHistory] = useState<any[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >({});
+
+  const columns = useMemo(() => getColumns(session, t), [session, t]);
+
+  const tableData: NotificationHistoryItem[] = useMemo(
+    () =>
+      notificationHistory.map((notification) => ({
+        id: notification.id,
+        name: notification.title,
+        title: notification.title,
+        message: notification.message,
+        createdAt: notification.createdAt,
+        data: {
+          richContent: notification.data?.richContent,
+          htmlContent: notification.data?.htmlContent,
+          sentById: notification.data?.sentById,
+          sentByName: notification.data?.sentByName,
+        },
+      })),
+    [notificationHistory]
+  );
 
   const { data: settings, isLoading } = useFindUniqueAppConfig({
     where: { key: "notificationSettings" },
@@ -80,23 +121,32 @@ export default function NotificationSettingsPage() {
     }
   }, [settings]);
 
-  useEffect(() => {
-    loadNotificationHistory();
-  }, []);
-
-  const loadNotificationHistory = async () => {
-    setIsLoadingHistory(true);
-    try {
-      const result = await getSystemNotificationHistory({ pageSize: 10 });
-      if (result.success) {
-        setNotificationHistory(result.notifications);
+  const loadNotificationHistory = useCallback(
+    async (page: number, size: number) => {
+      setIsLoadingHistory(true);
+      try {
+        const result = await getSystemNotificationHistory({
+          page,
+          pageSize: size,
+        });
+        if (result.success) {
+          setNotificationHistory(result.notifications);
+          setTotalItems(result.totalCount || 0);
+        }
+      } catch (error) {
+        console.error("Failed to load notification history:", error);
+      } finally {
+        setIsLoadingHistory(false);
       }
-    } catch (error) {
-      console.error("Failed to load notification history:", error);
-    } finally {
-      setIsLoadingHistory(false);
-    }
-  };
+    },
+    [setTotalItems]
+  );
+
+  // Load notification history when page or pageSize changes
+  useEffect(() => {
+    const effectivePageSize = typeof pageSize === "number" ? pageSize : 10;
+    loadNotificationHistory(currentPage, effectivePageSize);
+  }, [currentPage, pageSize, loadNotificationHistory]);
 
   const handleSendSystemNotification = async () => {
     const messageText = extractTextFromNode(systemNotificationMessage);
@@ -120,7 +170,10 @@ export default function NotificationSettingsPage() {
         });
         setSystemNotificationTitle("");
         setSystemNotificationMessage(emptyEditorContent);
-        loadNotificationHistory();
+        // Reload the first page after sending
+        setCurrentPage(1);
+        const effectivePageSize = typeof pageSize === "number" ? pageSize : 10;
+        loadNotificationHistory(1, effectivePageSize);
       } else {
         toast.error(t("systemNotification.error.title"), {
           description:
@@ -341,66 +394,43 @@ export default function NotificationSettingsPage() {
           <Separator />
 
           <div>
-            <h3
-              className="text-lg font-semibold mb-4"
-              data-testid="notification-history-title"
-            >
-              {t("systemNotification.history.title")}
-            </h3>
-            {isLoadingHistory ? (
-              <Loading />
-            ) : notificationHistory.length > 0 ? (
-              <Table data-testid="notification-history-table">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>
-                      {t("systemNotification.history.title")}
-                    </TableHead>
-                    <TableHead>
-                      {t("systemNotification.history.message")}
-                    </TableHead>
-                    <TableHead>
-                      {t("systemNotification.history.sentBy")}
-                    </TableHead>
-                    <TableHead>
-                      {t("systemNotification.history.sentAt")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {notificationHistory.map((notification) => (
-                    <TableRow key={notification.id}>
-                      <TableCell className="font-medium">
-                        {notification.title}
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        {notification.data?.richContent ? (
-                          <div className="max-h-20 overflow-hidden">
-                            <TextFromJson
-                              jsonString={JSON.stringify(
-                                notification.data.richContent
-                              )}
-                              format="html"
-                              room="notification-history"
-                              expand={false}
-                            />
-                          </div>
-                        ) : (
-                          <span className="truncate">
-                            {notification.message}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {notification.data?.sentByName || "Administrator"}
-                      </TableCell>
-                      <TableCell>
-                        <DateFormatter date={notification.createdAt} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+            <div className="flex items-center justify-between mb-4">
+              <h3
+                className="text-lg font-semibold"
+                data-testid="notification-history-title"
+              >
+                {t("systemNotification.history.title")}
+              </h3>
+              {totalItems > 0 && (
+                <div className="flex flex-col items-end">
+                  <PaginationInfo
+                    startIndex={startIndex}
+                    endIndex={endIndex}
+                    totalRows={totalItems}
+                    searchString=""
+                    pageSize={typeof pageSize === "number" ? pageSize : "All"}
+                    pageSizeOptions={[10, 25, 50]}
+                    handlePageSizeChange={(size) => setPageSize(size)}
+                  />
+                  <PaginationComponent
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
+              )}
+            </div>
+            {notificationHistory.length > 0 || isLoadingHistory ? (
+              <div data-testid="notification-history-table">
+                <DataTable
+                  columns={columns as any}
+                  data={tableData}
+                  columnVisibility={columnVisibility}
+                  onColumnVisibilityChange={setColumnVisibility}
+                  isLoading={isLoadingHistory}
+                  pageSize={typeof pageSize === "number" ? pageSize : totalItems}
+                />
+              </div>
             ) : (
               <p className="text-muted-foreground">
                 {t("systemNotification.history.empty")}
