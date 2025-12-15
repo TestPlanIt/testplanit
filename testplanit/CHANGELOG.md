@@ -1,3 +1,10 @@
+## [0.8.14](https://github.com/TestPlanIt/testplanit/compare/v0.8.13...v0.8.14) (2025-12-15)
+
+
+### Bug Fixes
+
+* **docker:** add lockfile to testplanit for local Docker builds ([3d1dd94](https://github.com/TestPlanIt/testplanit/commit/3d1dd9475e38184fffbd922f622e0a2ff65f0ded))
+
 ## [0.8.13](https://github.com/TestPlanIt/testplanit/compare/v0.8.12...v0.8.13) (2025-12-15)
 
 
