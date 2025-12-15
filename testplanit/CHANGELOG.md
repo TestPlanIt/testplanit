@@ -1,3 +1,10 @@
+## [0.8.12](https://github.com/TestPlanIt/testplanit/compare/v0.8.11...v0.8.12) (2025-12-15)
+
+
+### Bug Fixes
+
+* **emailWorker:** update notification handling for SYSTEM_ANNOUNCEMENT ([978c773](https://github.com/TestPlanIt/testplanit/commit/978c7735696b4bd1f95ebf0e5e33ca8cca2a7974))
+
 ## [0.8.10](https://github.com/TestPlanIt/testplanit/compare/v0.8.9...v0.8.10) (2025-12-15)
 
 
