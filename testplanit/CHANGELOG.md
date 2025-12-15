@@ -1,3 +1,10 @@
+## [0.8.9](https://github.com/TestPlanIt/testplanit/compare/v0.8.8...v0.8.9) (2025-12-15)
+
+
+### Bug Fixes
+
+* **ci:** skip postinstall scripts in package release workflow ([4624c92](https://github.com/TestPlanIt/testplanit/commit/4624c92ebdd6de67097ad7f371ac39a236d31735))
+
 ## [0.8.8](https://github.com/TestPlanIt/testplanit/compare/v0.8.7...v0.8.8) (2025-12-13)
 
 ## [0.8.7](https://github.com/TestPlanIt/testplanit/compare/v0.8.6...v0.8.7) (2025-12-12)
