@@ -1,5 +1,5 @@
 # Stage 1: Build the Docusaurus site
-FROM node:18-alpine AS builder
+FROM node:24-alpine AS builder
 
 # Set base working directory
 WORKDIR /app
