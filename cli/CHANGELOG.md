@@ -1,3 +1,13 @@
+## [1.0.2](https://github.com/testplanit/testplanit/compare/cli-v1.0.1...cli-v1.0.2) (2025-12-15)
+
+
+### Bug Fixes
+
+* **audit-logs:** add new audit actions for API key management ([62bed46](https://github.com/testplanit/testplanit/commit/62bed466997c1e0e5260af70df31257aece605a2))
+* **ci:** use PAT token to trigger Docker build workflow ([5f34752](https://github.com/testplanit/testplanit/commit/5f347528f945818ddde652b4873847fa23ac049d))
+* **comments:** add milestone support to UserMentionedComments component ([88cf140](https://github.com/testplanit/testplanit/commit/88cf140afd15d25f8a868a5426a3a64a93f4a6e3))
+* **dependencies:** update package versions and add new translations ([0d2ce7c](https://github.com/testplanit/testplanit/commit/0d2ce7cda1e2399fe2dc5b742654a032c7c322c5))
+
 ## [1.0.1](https://github.com/testplanit/testplanit/compare/cli-v1.0.0...cli-v1.0.1) (2025-12-11)
 
 

@@ -1,6 +1,6 @@
 {
   "name": "@testplanit/cli",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "CLI tool for TestPlanIt - import test results and manage test data",
   "type": "module",
   "bin": {
