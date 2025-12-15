@@ -1,6 +1,6 @@
 {
   "name": "@testplanit/api",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Official JavaScript/TypeScript API client for TestPlanIt - test management platform",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
