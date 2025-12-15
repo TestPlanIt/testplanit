@@ -54,25 +54,33 @@ The Docker Compose setup starts these containerized services:
     cp .env.example .env.development
     ```
 
-    For **Production** (optional customization):
-    The `.env.production` file is pre-configured for Docker deployment. You may customize:
+    For **Production**:
 
     ```bash
+    cp .env.example .env.production
+    ```
+
+    Then open `.env.production` and update these values for your deployment:
+
+    ```bash
+    # REQUIRED CHANGES for production:
+
     # Application URL (change to your domain)
-    NEXTAUTH_URL="https://demo.testplanit.com"
+    NEXTAUTH_URL="https://yourdomain.com"
 
-    # Generate secure secret
-    NEXTAUTH_SECRET="$(openssl rand -base64 32)"
+    # Generate a secure secret (run this command and paste the result)
+    # openssl rand -base64 32
+    NEXTAUTH_SECRET="your-generated-secret-here"
 
-    # External file access domain
-    AWS_PUBLIC_ENDPOINT_URL="https://demo.testplanit.com"
+    # External file access domain (must match your public URL)
+    AWS_PUBLIC_ENDPOINT_URL="https://yourdomain.com"
 
-    # Default admin account
+    # Change the default admin email and password!
     ADMIN_EMAIL=admin@example.com
     ADMIN_NAME="Administrator Account"
-    ADMIN_PASSWORD=admin
+    ADMIN_PASSWORD=your-secure-password
 
-    # Email settings (required for Magic Link authentication and notifications)
+    # OPTIONAL: Email settings (required for Magic Link authentication and notifications)
     EMAIL_SERVER_HOST=smtp.your-provider.com
     EMAIL_SERVER_PORT=587
     EMAIL_SERVER_USER=your-email@domain.com
@@ -80,7 +88,7 @@ The Docker Compose setup starts these containerized services:
     EMAIL_FROM=noreply@yourdomain.com
     ```
 
-    **Note:** All internal service connections (database, Valkey, Elasticsearch, MinIO) are pre-configured and don't need modification.
+    **Important:** The `.env.production` file contains many other variables (database, Valkey, Elasticsearch, MinIO connections) that are already configured correctly for Docker. Only modify the variables shown above unless you're using external services.
 
 4. **Choose Your Services:**
 
