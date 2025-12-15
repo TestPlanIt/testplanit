@@ -69,6 +69,9 @@ jobs:
         mkdir -p public
         cp public/version.json .docker-version.json || echo "Version file not generated"
 
+    - name: Copy lockfile for Docker build
+      run: cp pnpm-lock.yaml testplanit/pnpm-lock.yaml
+
     - name: Build and push AMD64 images
       working-directory: ./testplanit
       run: |
@@ -123,6 +126,9 @@ jobs:
         node scripts/generate-version.js
         mkdir -p public
         cp public/version.json .docker-version.json || echo "Version file not generated"
+
+    - name: Copy lockfile for Docker build
+      run: cp pnpm-lock.yaml testplanit/pnpm-lock.yaml
 
     - name: Build and push ARM64 images
       working-directory: ./testplanit
@@ -237,6 +243,9 @@ jobs:
         mkdir -p public
         cp public/version.json .docker-version.json || echo "Version file not generated"
 
+    - name: Copy lockfile for Docker build
+      run: cp pnpm-lock.yaml testplanit/pnpm-lock.yaml
+
     - name: Build and push AMD64 images
       working-directory: ./testplanit
       run: |
@@ -288,6 +297,9 @@ jobs:
         node scripts/generate-version.js
         mkdir -p public
         cp public/version.json .docker-version.json || echo "Version file not generated"
+
+    - name: Copy lockfile for Docker build
+      run: cp pnpm-lock.yaml testplanit/pnpm-lock.yaml
 
     - name: Build and push ARM64 images
       working-directory: ./testplanit
