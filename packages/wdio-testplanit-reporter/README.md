@@ -2,7 +2,7 @@
 
 WebdriverIO reporter for [TestPlanIt](https://github.com/testplanit/testplanit) - report test results directly to your TestPlanIt instance.
 
-Similar to the [TestRail Reporter](https://webdriver.io/docs/wdio-testrail-reporter), this reporter pushes your WebdriverIO test results to TestPlanIt in real-time.
+This reporter pushes your WebdriverIO test results to TestPlanIt in real-time.
 
 ## Installation
 
@@ -166,7 +166,7 @@ reporters: [
 
 When tests complete, the reporter outputs a summary:
 
-```
+```console
 [TestPlanIt] Results Summary:
   Test Run ID: 456
   Passed: 15
@@ -189,6 +189,7 @@ reporters: [
 ```
 
 This will log:
+
 - Reporter initialization
 - Test run creation
 - Status mappings
@@ -199,6 +200,7 @@ This will log:
 ## Error Handling
 
 The reporter handles errors gracefully:
+
 - Failed API requests are retried (configurable)
 - Individual test result failures don't stop other results
 - Errors are logged but don't fail the test suite
@@ -219,7 +221,7 @@ const reporterOptions: TestPlanItReporterOptions = {
 
 ## Related Packages
 
-- [@testplanit/api](../api) - The underlying API client used by this reporter
+- [@testplanit/api](https://github.com/TestPlanIt/testplanit/tree/main/packages/api) - The underlying API client used by this reporter
 
 ## License
 
