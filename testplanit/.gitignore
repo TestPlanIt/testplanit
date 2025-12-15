@@ -54,7 +54,3 @@ messages/*.d.json.ts
 # version file (generated at build time)
 .env.production.local
 public/version.json
-
-# lockfile is at monorepo root, not here
-# (copied here at Docker build time by CI workflow)
-pnpm-lock.yaml
