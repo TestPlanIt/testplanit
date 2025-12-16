@@ -98,7 +98,7 @@ const nextConfig = {
   experimental: {
     // Limit number of workers to reduce memory usage during build
     workerThreads: false,
-    cpus: 4,
+    cpus: 2,
     // Increase body size limit for server actions (file uploads)
     serverActions: {
       bodySizeLimit: '10mb',
