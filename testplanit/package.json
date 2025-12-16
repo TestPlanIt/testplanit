@@ -346,7 +346,8 @@
       "pdfjs-dist": "^4.2.67",
       "nth-check": "^2.0.1",
       "dompurify": "^3.2.4",
-      "path-to-regexp": "^3.3.0"
+      "path-to-regexp": "^3.3.0",
+      "prismjs": "^1.30.0"
     }
   }
 }
