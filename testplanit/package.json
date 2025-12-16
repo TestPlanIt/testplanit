@@ -344,7 +344,9 @@
       "webpack-dev-server": "^5.2.1",
       "@sentry/browser": "^7.119.1",
       "pdfjs-dist": "^4.2.67",
-      "nth-check": "^2.0.1"
+      "nth-check": "^2.0.1",
+      "dompurify": "^3.2.4",
+      "path-to-regexp": "^3.3.0"
     }
   }
 }
