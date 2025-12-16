@@ -1,3 +1,10 @@
+## [0.8.16](https://github.com/TestPlanIt/testplanit/compare/v0.8.15...v0.8.16) (2025-12-16)
+
+
+### Bug Fixes
+
+* **docker:** use testplanit-specific lockfile instead of monorepo lockfile ([da46c98](https://github.com/TestPlanIt/testplanit/commit/da46c984918b13a01c0711ec6a6b1fabb5ea0898))
+
 ## [0.8.15](https://github.com/TestPlanIt/testplanit/compare/v0.8.14...v0.8.15) (2025-12-16)
 
 
