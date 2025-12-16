@@ -347,7 +347,8 @@
       "nth-check": "^2.0.1",
       "dompurify": "^3.2.4",
       "path-to-regexp": "^3.3.0",
-      "prismjs": "^1.30.0"
+      "prismjs": "^1.30.0",
+      "systeminformation": "^5.27.14"
     }
   }
 }
