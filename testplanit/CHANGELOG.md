@@ -1,3 +1,10 @@
+## [0.8.15](https://github.com/TestPlanIt/testplanit/compare/v0.8.14...v0.8.15) (2025-12-16)
+
+
+### Bug Fixes
+
+* **env:** update DATABASE_URL port in .env.example for consistency with Docker setup ([93d6bd9](https://github.com/TestPlanIt/testplanit/commit/93d6bd932f89e0ee238c9ff72f59ef1f771c69c0))
+
 ## [0.8.14](https://github.com/TestPlanIt/testplanit/compare/v0.8.13...v0.8.14) (2025-12-15)
 
 
