@@ -2085,7 +2085,8 @@
         "attachmentFormat": {
           "label": "Formato de adjunto",
           "names": "Nombres",
-          "json": "JSON"
+          "json": "JSON",
+          "embedded": "Incrustar imágenes"
         },
         "stepsFormat": {
           "label": "Formato de pasos",
@@ -2096,11 +2097,6 @@
           "label": "Probar Armas de Caso",
           "single": "Fila única por caso",
           "multi": "Fila individual por paso"
-        },
-        "pdfLayout": {
-          "label": "Diseño de PDF",
-          "table": "Formato de tabla",
-          "document": "Formato del documento"
         },
         "comingSoon": "Próximamente",
         "cancel": "Cancelar",
@@ -2398,7 +2394,8 @@
       "attachmentFormat": {
         "label": "Formato de adjunto",
         "names": "Nombres",
-        "json": "JSON"
+        "json": "JSON",
+        "embedded": "Incrustar imágenes"
       },
       "stepsFormat": {
         "label": "Formato de pasos",
@@ -5504,8 +5501,7 @@
       "textLongFormat": "## Formato de Campos de Texto Largo (Solo CSV)\\nDetermina cómo se exportan los campos de texto enriquecido (como 'Descripción' o campos personalizados 'Texto Largo'):\\n\\n- **JSON:** Exporta el contenido como una cadena JSON, conservando todo el formato (negritas, listas, etc.). Es ideal para reimportación o procesamiento programático.\\n\\n- **Texto Plano:** Exporta el contenido como texto simple, eliminando el formato. Es más legible en visores de texto básicos.",
       "stepsFormat": "## Formato de Pasos (Solo CSV)\\nDetermina cómo se exportan los pasos de prueba (incluyendo los resultados esperados):\\n\\n- **JSON**: Exporta los pasos como un arreglo JSON de objetos, preservando la estructura y el texto enriquecido. Adecuado para reimportación o análisis detallado.\\n\\n- **Texto Plano:** Exporta los pasos en un formato simplificado y legible en texto plano, con cada paso y resultado esperado en una nueva línea.",
       "rowMode": "## Modo de Fila (Solo CSV)\nDetermina cómo se representan los campos multivalor (como Etiquetas o campos personalizados de selección múltiple) y los Pasos:\n\n- **Una fila por Caso**: Cada caso de prueba es una sola fila. Los campos multivalor y los pasos se condensarán en sus respectivas celdas (a menudo como JSON o texto concatenado).\n- **Múltiples filas por Caso**: Un caso de prueba puede abarcar varias filas si tiene múltiples etiquetas, valores de selección múltiple o pasos. Cada valor/paso único para dichos campos creará una nueva fila, repitiendo los demás datos del caso. Esto es útil para análisis detallados o tablas dinámicas.",
-      "attachmentFormat": "## El Formato de información adjunta de sólo V)\nDetermina cómo se exporta la información acerca de los archivos adjuntos:\n- **JSON:** Detalles del archivo adjunto (como el nombre del archivo, URL, tamaño) como una matriz JSON. Esto es comprensible, pero menos legible directamente en un CSV.\n- **Sólo nombres:** Exporta una lista separada por comas de nombres de archivo adjuntos. Simplemente para una referencia rápida.",
-      "pdfLayout": "## Diseño de PDF\nElija cómo se presentan los casos de prueba en la exportación a PDF:\n- **Formato de tabla:** Muestra los casos de prueba en un formato tabular similar al de una hoja de cálculo, con una fila por caso. Ideal para una referencia rápida y para comparar varios casos de prueba.\n- **Formato de documento:** Presenta cada caso de prueba como una sección detallada con todos los campos en un formato legible. Ideal para una revisión detallada, impresión y compartición con las partes interesadas."
+      "attachmentFormat": "## El Formato de información adjunta de sólo V)\nDetermina cómo se exporta la información acerca de los archivos adjuntos:\n- **JSON:** Detalles del archivo adjunto (como el nombre del archivo, URL, tamaño) como una matriz JSON. Esto es comprensible, pero menos legible directamente en un CSV.\n- **Sólo nombres:** Exporta una lista separada por comas de nombres de archivo adjuntos. Simplemente para una referencia rápida."
     },
     "reportMetrics": {
       "count": "## Cuenta de resultados de la prueba\nNúmero de resultados de la prueba en este grupo.",

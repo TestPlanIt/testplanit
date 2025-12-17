@@ -2085,7 +2085,8 @@
         "attachmentFormat": {
           "label": "Format de pièce jointe",
           "names": "Noms",
-          "json": "JSON"
+          "json": "JSON",
+          "embedded": "Intégrer des images"
         },
         "stepsFormat": {
           "label": "Format des étapes",
@@ -2096,11 +2097,6 @@
           "label": "Lignes du cas de test",
           "single": "Une seule rangée par étui",
           "multi": "Une seule rangée par étape"
-        },
-        "pdfLayout": {
-          "label": "Mise en page PDF",
-          "table": "Format de tableau",
-          "document": "Format du document"
         },
         "comingSoon": "À venir",
         "cancel": "Annuler",
@@ -2398,7 +2394,8 @@
       "attachmentFormat": {
         "label": "Format de pièce jointe",
         "names": "Noms",
-        "json": "JSON"
+        "json": "JSON",
+        "embedded": "Intégrer des images"
       },
       "stepsFormat": {
         "label": "Format des étapes",
@@ -5504,8 +5501,7 @@
       "textLongFormat": "## Format des champs de texte long (CSV uniquement)\nDétermine le format d'exportation des champs de texte enrichi (comme « Description » ou les champs personnalisés « Texte long ») :\n- **JSON :** Exporte le contenu sous forme de chaîne JSON, en conservant toute la mise en forme (gras, listes, etc.). Ce format est idéal pour la réimportation ou le traitement par programme.\n- **Texte brut :** Exporte le contenu en texte brut, sans mise en forme. Ce format est plus lisible dans les visionneuses de texte simples.",
       "stepsFormat": "## Format des étapes (CSV uniquement)\nDétermine le mode d'exportation des étapes de test (y compris les résultats attendus) :\n- **JSON :** Exporte les étapes sous forme de tableau JSON d'objets, préservant la structure et le texte enrichi. Convient pour la réimportation ou une analyse détaillée.\n- **Texte brut :** Exporte les étapes dans un format texte brut simplifié et lisible, chaque étape et résultat attendu figurant sur une nouvelle ligne.",
       "rowMode": "## Mode Ligne (CSV uniquement)\nDétermine la représentation des champs à valeurs multiples (comme les étiquettes ou les champs personnalisés à sélection multiple) et des étapes :\n- **Une seule ligne par cas :** Chaque cas de test correspond à une seule ligne. Les champs à valeurs multiples et les étapes sont condensés dans leurs cellules respectives (souvent au format JSON ou sous forme de texte concaténé).\n- **Plusieurs lignes par cas :** Un cas de test peut s’étendre sur plusieurs lignes s’il comporte plusieurs étiquettes, valeurs à sélection multiple ou étapes. Chaque valeur/étape unique pour ces champs crée une nouvelle ligne, les autres données du cas étant répétées. Ce mode est utile pour une analyse détaillée ou la création de tableaux croisés dynamiques.",
-      "attachmentFormat": "## Format des informations sur les pièces jointes (CSV uniquement)\nDétermine le mode d'exportation des informations relatives aux pièces jointes :\n- **JSON :** Exporte les détails des pièces jointes (nom du fichier, URL, taille, etc.) sous forme de tableau JSON. Ce format est complet, mais moins lisible directement dans un fichier CSV.\n- **Noms uniquement :** Exporte une liste de noms de fichiers séparés par des virgules. Plus simple pour une consultation rapide.",
-      "pdfLayout": "## Mise en page PDF\nChoisissez le mode de présentation des cas de test dans l'export PDF :\n- **Format Tableau :** Affiche les cas de test sous forme de tableau, comme une feuille de calcul, avec une ligne par cas de test. Idéal pour une consultation rapide et la comparaison de plusieurs cas de test.\n- **Format Document :** Présente chaque cas de test comme une section détaillée avec tous les champs affichés dans un format de document lisible. Idéal pour une analyse approfondie, l'impression et le partage avec les parties prenantes."
+      "attachmentFormat": "## Format des informations sur les pièces jointes (CSV uniquement)\nDétermine le mode d'exportation des informations relatives aux pièces jointes :\n- **JSON :** Exporte les détails des pièces jointes (nom du fichier, URL, taille, etc.) sous forme de tableau JSON. Ce format est complet, mais moins lisible directement dans un fichier CSV.\n- **Noms uniquement :** Exporte une liste de noms de fichiers séparés par des virgules. Plus simple pour une consultation rapide."
     },
     "reportMetrics": {
       "count": "## Nombre de résultats de test\nNombre de résultats d'exécution de test dans ce groupe.",

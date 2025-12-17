@@ -2394,7 +2394,8 @@
       "attachmentFormat": {
         "label": "Format de pièce jointe",
         "names": "Noms",
-        "json": "JSON"
+        "json": "JSON",
+        "embedded": "Intégrer des images"
       },
       "stepsFormat": {
         "label": "Format des étapes",
