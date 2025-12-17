@@ -38,7 +38,7 @@ export interface ExportOptions {
   columns: "visible" | "all";
   delimiter: "," | ";" | ":" | "|";
   textLongFormat: "json" | "plainText";
-  attachmentFormat: "json" | "names";
+  attachmentFormat: "json" | "names" | "embedded";
   stepsFormat: "json" | "plainText";
   rowMode: "single" | "multi";
 }
@@ -64,9 +64,9 @@ export function ExportModal({
   const [textLongFormat, setTextLongFormat] = useState<"json" | "plainText">(
     "json"
   );
-  const [attachmentFormat, setAttachmentFormat] = useState<"json" | "names">(
-    "json"
-  );
+  const [attachmentFormat, setAttachmentFormat] = useState<
+    "json" | "names" | "embedded"
+  >("json");
   const [stepsFormat, setStepsFormat] = useState<"json" | "plainText">("json");
   const [rowMode, setRowMode] = useState<"single" | "multi">("single");
   const [isExporting, setIsExporting] = useState(false);
@@ -92,6 +92,15 @@ export function ExportModal({
       setIsExporting(false);
     }
   }, [isOpen, canExportSelected]);
+
+  // Set default attachment format based on export format
+  useEffect(() => {
+    if (format === "pdf") {
+      setAttachmentFormat("names");
+    } else {
+      setAttachmentFormat("json");
+    }
+  }, [format]);
 
   const handleExportClick = async () => {
     setIsExporting(true);
@@ -213,16 +222,10 @@ export function ExportModal({
                 <RadioGroupItem
                   value="pdf"
                   id="format-pdf"
-                  disabled
                   data-testid="export-format-pdf"
                 />
-                <Label
-                  htmlFor="format-pdf"
-                  className="text-muted-foreground cursor-not-allowed"
-                >
-                  {t("format.pdf")} {"("}
-                  {t("comingSoon")}
-                  {")"}
+                <Label htmlFor="format-pdf" className="cursor-pointer">
+                  {t("format.pdf")}
                 </Label>
               </div>
             </RadioGroup>
@@ -492,6 +495,99 @@ export function ExportModal({
               </div>
             </>
           )}
+          {/* PDF Specific Options */}
+          {format === "pdf" && (
+            <>
+              {/* Export Columns for PDF */}
+              <div className="flex justify-between items-center gap-4 flex-wrap">
+                <Label
+                  htmlFor="columns-pdf"
+                  className="text-right whitespace-nowrap shrink-0 flex items-center"
+                >
+                  {t("columns.label")}
+                  <HelpPopover helpKey="exportModal.columns" />
+                </Label>
+                <RadioGroup
+                  id="columns-pdf"
+                  value={columns}
+                  onValueChange={(value: "visible" | "all") => setColumns(value)}
+                  className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
+                  data-testid="export-columns-pdf-radio-group"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value="all"
+                      id="columns-pdf-all"
+                      data-testid="export-columns-pdf-all"
+                    />
+                    <Label htmlFor="columns-pdf-all" className="cursor-pointer">
+                      {t("columns.all")}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value="visible"
+                      id="columns-pdf-visible"
+                      data-testid="export-columns-pdf-visible"
+                    />
+                    <Label
+                      htmlFor="columns-pdf-visible"
+                      className="cursor-pointer"
+                    >
+                      {t("columns.visible")}
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {/* Attachment Format for PDF */}
+              <div className="flex justify-between items-center gap-4 flex-wrap">
+                <Label
+                  htmlFor="attachmentFormat-pdf"
+                  className="text-right whitespace-nowrap shrink-0 flex items-center"
+                >
+                  {t("attachmentFormat.label")}
+                  <HelpPopover helpKey="exportModal.attachmentFormat" />
+                </Label>
+                <RadioGroup
+                  id="attachmentFormat-pdf"
+                  value={attachmentFormat}
+                  onValueChange={(value: "json" | "names" | "embedded") =>
+                    setAttachmentFormat(value)
+                  }
+                  className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
+                  data-testid="export-attachment-format-pdf-radio-group"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value="names"
+                      id="attachmentFormat-pdf-names"
+                      data-testid="export-attachment-pdf-names"
+                    />
+                    <Label
+                      htmlFor="attachmentFormat-pdf-names"
+                      className="cursor-pointer"
+                    >
+                      {t("attachmentFormat.names")}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value="embedded"
+                      id="attachmentFormat-pdf-embedded"
+                      data-testid="export-attachment-pdf-embedded"
+                    />
+                    <Label
+                      htmlFor="attachmentFormat-pdf-embedded"
+                      className="cursor-pointer"
+                    >
+                      {t("attachmentFormat.embedded")}
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            </>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isExporting}>
@@ -501,8 +597,7 @@ export function ExportModal({
             onClick={handleExportClick}
             disabled={
               isExporting ||
-              (scope === "selected" && !canExportSelected) ||
-              format === "pdf"
+              (scope === "selected" && !canExportSelected)
             }
             data-testid="export-modal-export-button"
           >
