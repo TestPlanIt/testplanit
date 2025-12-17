@@ -2085,7 +2085,8 @@
         "attachmentFormat": {
           "label": "Attachment Format",
           "names": "Names",
-          "json": "JSON"
+          "json": "JSON",
+          "embedded": "Embed Images"
         },
         "stepsFormat": {
           "label": "Steps Format",
@@ -2393,7 +2394,8 @@
       "attachmentFormat": {
         "label": "Attachment Format",
         "names": "Names",
-        "json": "JSON"
+        "json": "JSON",
+        "embedded": "Embed Images"
       },
       "stepsFormat": {
         "label": "Steps Format",

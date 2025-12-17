@@ -445,6 +445,28 @@ Export complete project data including:
 - Standard comma-separated values
 - Configurable field selection
 - Custom formatting options
+- Configurable delimiter (comma, semicolon, colon, pipe)
+
+#### PDF Export
+
+- Professional document format for sharing and printing
+- Formatted test case details with sections
+- Page numbers and export metadata
+
+**PDF Export Options:**
+
+| Option | Values | Description |
+|--------|--------|-------------|
+| **Scope** | Selected / All Filtered / All Project | Which test cases to include |
+| **Columns** | Visible / All | Which fields to export |
+| **Text Fields** | JSON / Plain Text | How to format rich text content |
+| **Attachment Format** | Names / Embed Images | How to display attachments |
+| **Steps Format** | JSON / Plain Text | How to format test steps |
+
+**Attachment Format Options:**
+
+- **Names**: Display attachment file names as text (default for PDF)
+- **Embed Images**: Embed image attachments directly in the PDF document. Non-image files are listed by name. Supported image formats: JPEG, PNG, GIF, WebP, BMP.
 
 #### Excel Export (Future)
 - Multi-sheet workbooks

@@ -91,7 +91,13 @@ const buildDynamicRemotePatterns = () => {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  turbopack: {},
+  turbopack: {
+    resolveAlias: {
+      // Fix Turbopack resolution for zod subpath exports (used by @hookform/resolvers)
+      'zod/v3': 'zod/v3',
+      'zod/v4/core': 'zod/v4/core',
+    },
+  },
   transpilePackages: ['lucide-react'],
   serverExternalPackages: ["@zenstackhq/runtime", "@zenstackhq/server", "test-results-parser"],
   outputFileTracingRoot: path.join(path.dirname(fileURLToPath(import.meta.url)), "../"),

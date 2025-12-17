@@ -182,6 +182,7 @@
     "input-otp": "^1.4.2",
     "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.3",
+    "jspdf": "^3.0.4",
     "lodash": "^4.17.21",
     "lowlight": "3.3.0",
     "motion": "^12.23.26",

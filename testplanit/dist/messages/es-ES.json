@@ -2085,7 +2085,8 @@
         "attachmentFormat": {
           "label": "Formato de adjunto",
           "names": "Nombres",
-          "json": "JSON"
+          "json": "JSON",
+          "embedded": "Incrustar imágenes"
         },
         "stepsFormat": {
           "label": "Formato de pasos",
@@ -2393,7 +2394,8 @@
       "attachmentFormat": {
         "label": "Formato de adjunto",
         "names": "Nombres",
-        "json": "JSON"
+        "json": "JSON",
+        "embedded": "Incrustar imágenes"
       },
       "stepsFormat": {
         "label": "Formato de pasos",
