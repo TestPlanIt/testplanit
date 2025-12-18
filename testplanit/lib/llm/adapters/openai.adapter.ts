@@ -91,7 +91,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
     try {
       // Use request timeout if provided, otherwise fall back to config timeout
       const timeout = request.timeout ?? this.getTimeout();
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+      const response = await fetch(this.getChatCompletionsUrl(), {
         method: "POST",
         headers: this.getOpenAIHeaders(),
         body: JSON.stringify(openAIRequest),
@@ -135,7 +135,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
 
     // Use request timeout if provided, otherwise fall back to config timeout
     const timeout = request.timeout ?? this.getTimeout();
-    const response = await fetch(`${this.baseUrl}/chat/completions`, {
+    const response = await fetch(this.getChatCompletionsUrl(), {
       method: "POST",
       headers: this.getOpenAIHeaders(),
       body: JSON.stringify(openAIRequest),
@@ -263,11 +263,15 @@ export class OpenAIAdapter extends BaseLlmAdapter {
     return "Unknown OpenAI error";
   }
 
-  private getOpenAIHeaders(): Record<string, string> {
+  protected getOpenAIHeaders(): Record<string, string> {
     const headers = this.getHeaders();
     headers["Authorization"] = `Bearer ${this.apiKey}`;
 
     return headers;
+  }
+
+  protected getChatCompletionsUrl(): string {
+    return `${this.baseUrl}/chat/completions`;
   }
 
   private async handleErrorResponse(response: Response): Promise<never> {
