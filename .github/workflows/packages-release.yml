@@ -59,6 +59,11 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
+      - name: Run package tests
+        run: |
+          pnpm --filter "@testplanit/api" test --run
+          pnpm --filter "@testplanit/wdio-reporter" test --run
+
       - name: Build packages
         run: |
           pnpm --filter "@testplanit/api" build

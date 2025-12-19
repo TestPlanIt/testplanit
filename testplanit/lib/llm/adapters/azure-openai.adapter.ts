@@ -39,12 +39,15 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
     return "Azure OpenAI";
   }
 
-  protected getHeaders(): Record<string, string> {
-    const headers = super.getHeaders();
+  protected getOpenAIHeaders(): Record<string, string> {
+    const headers = this.getHeaders();
     headers["api-key"] = this.config.apiKey || "";
-    delete headers["Authorization"];
-
+    // Azure uses api-key header instead of Authorization
     return headers;
+  }
+
+  protected getChatCompletionsUrl(): string {
+    return `${this.config.baseUrl}/chat/completions?api-version=${this.apiVersion}`;
   }
 
   async getAvailableModels(): Promise<LlmModelInfo[]> {
@@ -128,18 +131,15 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
 
   async testConnection(): Promise<boolean> {
     try {
-      const response = await fetch(
-        `${this.config.baseUrl}/chat/completions?api-version=${this.apiVersion}`,
-        {
-          method: "POST",
-          headers: this.getHeaders(),
-          body: JSON.stringify({
-            messages: [{ role: "user", content: "test" }],
-            max_tokens: 1,
-          }),
-          signal: AbortSignal.timeout(5000),
-        }
-      );
+      const response = await fetch(this.getChatCompletionsUrl(), {
+        method: "POST",
+        headers: this.getOpenAIHeaders(),
+        body: JSON.stringify({
+          messages: [{ role: "user", content: "test" }],
+          max_tokens: 1,
+        }),
+        signal: AbortSignal.timeout(5000),
+      });
 
       return response.status === 200 || response.status === 400;
     } catch {

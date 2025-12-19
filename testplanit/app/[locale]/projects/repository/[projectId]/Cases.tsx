@@ -415,6 +415,7 @@ export default function Cases({
             // Filter component should have its own internal state for typing,
             // and call this onSearchChange prop with its debounced value.
             onSearchChange={handleFilterChange}
+            dataTestId="search-input"
           />
         </div>
       );

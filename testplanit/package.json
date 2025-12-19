@@ -35,9 +35,6 @@
     "pm2:status": "pm2 status",
     "pm2:logs": "pm2 logs",
     "pm2:delete": "pm2 delete ecosystem.config.js",
-    "test:e2e": "pnpm test:e2e:setup && pnpm test:e2e:run",
-    "test:e2e:run": "playwright test",
-    "test:e2e:setup": "RESTORE_NO_OWN_PRIV=1 bash scripts/resetdb.sh test-data/tpi_test_obfuscated.dump .env.test",
     "crowdin:upload:sources": "crowdin upload sources",
     "crowdin:upload:translations": "crowdin upload translations",
     "crowdin:download": "crowdin download",
@@ -46,7 +43,6 @@
     "elasticsearch:reindex": "tsx scripts/reindexAllEntities.ts",
     "elasticsearch:reindex:fresh": "tsx scripts/reindexAllEntities.ts --fresh",
     "elasticsearch:reindex:cases": "tsx scripts/reindexElasticsearch.ts",
-    "resetdb": "bash ./scripts/resetdb.sh",
     "release:info": "echo 'Releases are now managed by release-please. Push to main and a Release PR will be created automatically.'"
   },
   "dependencies": {
@@ -247,7 +243,6 @@
     "@eslint/js": "^9.39.2",
     "@nanostores/react": "^1.0.0",
     "@next/eslint-plugin-next": "^16.0.10",
-    "@playwright/test": "^1.57.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^12.0.2",

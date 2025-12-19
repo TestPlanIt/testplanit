@@ -55,4 +55,20 @@ jobs:
       - name: Run unit tests
         run: |
           cd testplanit
-          pnpm test
+          pnpm test run
+
+      - name: Install packages dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: packages/api
+
+      - name: Run packages unit tests
+        run: pnpm test run
+        working-directory: packages/api
+
+      - name: Install CLI dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: cli
+
+      - name: Run CLI unit tests
+        run: pnpm test
+        working-directory: cli

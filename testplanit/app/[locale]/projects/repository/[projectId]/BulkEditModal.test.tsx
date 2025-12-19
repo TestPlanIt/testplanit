@@ -220,8 +220,13 @@ beforeAll(() => {
   }
 });
 
+// Track bulk-edit API calls for test assertions
+let bulkEditCalls: { url: string; payload: any }[] = [];
+
 // Setup fetch mock before each test
 beforeEach(() => {
+  bulkEditCalls = [];
+
   // Mock fetch for API calls
   global.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     const url =
@@ -249,6 +254,24 @@ beforeEach(() => {
       return Promise.resolve({
         ok: true,
         json: async () => ({ cases: mockCasesWithTextFields }),
+        status: 200,
+        statusText: "OK",
+        headers: new Headers(),
+      } as Response);
+    }
+
+    // Handle bulk-edit POST endpoint
+    if (
+      url.includes("/api/projects/") &&
+      url.includes("/cases/bulk-edit") &&
+      !url.includes("bulk-edit-fetch") &&
+      init?.method === "POST"
+    ) {
+      const payload = init.body ? JSON.parse(init.body as string) : {};
+      bulkEditCalls.push({ url, payload });
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ success: true, updatedCount: payload.caseIds?.length || 0 }),
         status: 200,
         statusText: "OK",
         headers: new Headers(),
@@ -1430,10 +1453,7 @@ describe("BulkEditModal", () => {
   });
 
   describe("Bulk Edit Operations", () => {
-    // TODO: Re-enable after investigating checkbox interaction issue with refactored POST-based data fetching
-    // The checkbox clicks aren't properly updating editedFields state in test environment
-    it.skip("should update standard fields correctly", async () => {
-      const user = userEvent.setup();
+    it("should update standard fields correctly", async () => {
       const onSaveSuccess = vi.fn();
 
       render(
@@ -1514,28 +1534,22 @@ describe("BulkEditModal", () => {
         fireEvent.click(saveButton);
       });
 
-      // Verify mutations were called
+      // Verify bulk-edit API was called with correct payload
       await waitFor(
         () => {
-          // Versioning calls should be made first
-          expect(mockCreateRepositoryCaseVersions).toHaveBeenCalledTimes(2);
+          expect(bulkEditCalls.length).toBe(1);
+          const { payload } = bulkEditCalls[0];
 
-          // Then case updates with currentVersion increment
-          expect(mockUpdateCasesMutation).toHaveBeenCalledTimes(2);
-          expect(mockUpdateCasesMutation).toHaveBeenCalledWith({
-            where: { id: 1 },
-            data: {
-              currentVersion: 2, // Incremented from 1 to 2
-              state: { connect: { id: 3 } },
-            },
-          });
-          expect(mockUpdateCasesMutation).toHaveBeenCalledWith({
-            where: { id: 2 },
-            data: {
-              currentVersion: 2, // Incremented from 1 to 2
-              state: { connect: { id: 3 } },
-            },
-          });
+          // Should include both case IDs
+          expect(payload.caseIds).toEqual([1, 2]);
+
+          // Should have state update (Done has id: 3)
+          expect(payload.updates.state).toBe(3);
+
+          // Should request version creation
+          expect(payload.createVersions).toBe(true);
+
+          // Toast and callback should be called
           expect(toast.success).toHaveBeenCalledWith(
             '[t]repository.bulkEdit.success.casesUpdated {"count":2}'
           );
@@ -1545,9 +1559,7 @@ describe("BulkEditModal", () => {
       );
     });
 
-    // TODO: Re-enable after investigating checkbox interaction issue with refactored POST-based data fetching
-    it.skip("should update custom fields correctly", async () => {
-      const user = userEvent.setup();
+    it("should update custom fields correctly", async () => {
       const onSaveSuccess = vi.fn();
 
       render(
@@ -1610,42 +1622,39 @@ describe("BulkEditModal", () => {
         fireEvent.click(saveButton);
       });
 
-      // Verify mutations were called
+      // Verify bulk-edit API was called with custom field updates
       await waitFor(
         () => {
-          // Versioning calls should be made first
-          expect(mockCreateRepositoryCaseVersions).toHaveBeenCalledTimes(2);
+          expect(bulkEditCalls.length).toBe(1);
+          const { payload } = bulkEditCalls[0];
 
-          // Case updates should include currentVersion increment
-          expect(mockUpdateCasesMutation).toHaveBeenCalledTimes(2);
-          expect(mockUpdateCasesMutation).toHaveBeenCalledWith(
-            expect.objectContaining({
-              where: { id: 1 },
-              data: expect.objectContaining({
-                currentVersion: 2,
-              }),
-            })
+          // Should include both case IDs
+          expect(payload.caseIds).toEqual([1, 2]);
+
+          // Should have custom field updates
+          expect(payload.customFieldUpdates).toBeDefined();
+          expect(payload.customFieldUpdates.length).toBeGreaterThan(0);
+
+          // Find the Description field update (fieldId: 1)
+          const descFieldUpdate = payload.customFieldUpdates.find(
+            (u: any) => u.fieldId === 1
           );
+          expect(descFieldUpdate).toBeDefined();
+          expect(descFieldUpdate.value).toBe("Updated description for all cases");
 
-          // Field value mutations
-          expect(mockUpdateCaseFieldValue).toHaveBeenCalledTimes(2);
-          expect(mockUpdateCaseFieldValue).toHaveBeenCalledWith({
-            where: { id: 1 },
-            data: { value: "Updated description for all cases" },
-          });
-          expect(mockUpdateCaseFieldValue).toHaveBeenCalledWith({
-            where: { id: 4 },
-            data: { value: "Updated description for all cases" },
-          });
+          // Should request version creation
+          expect(payload.createVersions).toBe(true);
+
+          // Toast should be called
+          expect(toast.success).toHaveBeenCalledWith(
+            '[t]repository.bulkEdit.success.casesUpdated {"count":2}'
+          );
         },
         { timeout: 10000 }
       );
     });
 
-    // TODO: Re-enable after investigating checkbox interaction issue with refactored POST-based data fetching
-    it.skip("should handle tags update correctly", async () => {
-      const user = userEvent.setup();
-
+    it("should handle tags update correctly", async () => {
       render(
         <BulkEditModal
           isOpen={true}
@@ -1704,14 +1713,21 @@ describe("BulkEditModal", () => {
         fireEvent.click(saveButton);
       });
 
-      // The component should still save successfully
+      // Verify bulk-edit API was called with case IDs
+      // Note: tags field won't have updates unless new tags are selected
+      // (the component only adds tags.connect when newTagIds.length > 0)
       await waitFor(
         () => {
-          // Versioning calls should be made first
-          expect(mockCreateRepositoryCaseVersions).toHaveBeenCalledTimes(2);
+          expect(bulkEditCalls.length).toBe(1);
+          const { payload } = bulkEditCalls[0];
 
-          // Case updates should include currentVersion increment
-          expect(mockUpdateCasesMutation).toHaveBeenCalled();
+          // Should include both case IDs
+          expect(payload.caseIds).toEqual([1, 2]);
+
+          // Should request version creation
+          expect(payload.createVersions).toBe(true);
+
+          // Toast should be called
           expect(toast.success).toHaveBeenCalled();
         },
         { timeout: 10000 }
@@ -1908,61 +1924,7 @@ describe("BulkEditModal", () => {
       expect(saveButton).toBeDisabled();
     });
 
-    // TODO: Re-enable after investigating checkbox interaction issue with refactored POST-based data fetching
-    it.skip("should validate required fields", async () => {
-      const user = userEvent.setup();
-
-      // Mock a required field (make Description required)
-      const casesWithRequiredField = mockCasesWithTextFields.map((c) => ({
-        ...c,
-        template: {
-          ...c.template,
-          caseFields: c.template.caseFields.map((cf, idx) => {
-            if (idx === 1) {
-              // Description field is at index 1
-              return {
-                ...cf,
-                caseField: {
-                  ...cf.caseField,
-                  isRequired: true,
-                },
-              };
-            }
-            return cf;
-          }),
-        },
-      }));
-
-      // Override fetch mock
-      global.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
-        const url =
-          typeof input === "string"
-            ? input
-            : input instanceof URL
-              ? input.toString()
-              : input.url;
-        if (
-          url.includes("/api/projects/") &&
-          (url.includes("/cases/bulk-edit-fetch") ||
-            url.includes("/cases/fetch-many"))
-        ) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({ cases: casesWithRequiredField }),
-            status: 200,
-            statusText: "OK",
-            headers: new Headers(),
-          } as Response);
-        }
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({}),
-          status: 200,
-          statusText: "OK",
-          headers: new Headers(),
-        } as Response);
-      }) as any;
-
+    it("should validate name field is not empty", async () => {
       render(
         <BulkEditModal
           isOpen={true}
@@ -1981,38 +1943,35 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(screen.getByText("Description")).toBeInTheDocument();
+        expect(
+          screen.queryByText("[t]repository.fields.name")
+        ).toBeInTheDocument();
       });
 
-      // Enable editing for Description field (required field)
-      const descCheckbox = screen.getByLabelText("Description");
+      // Enable editing for name field (which has validation for non-empty)
+      const nameCheckbox = document.getElementById(
+        "edit-name"
+      ) as HTMLInputElement;
+      expect(nameCheckbox).toBeInTheDocument();
+
       await act(async () => {
-        fireEvent.click(descCheckbox);
+        fireEvent.click(nameCheckbox);
       });
 
-      // Wait for checkbox to be checked and input to appear
+      // Wait for checkbox to be checked
       await waitFor(() => {
-        const inputs = screen.getAllByRole("textbox");
-        expect(inputs.length).toBeGreaterThan(0);
+        expect(nameCheckbox).toHaveAttribute("data-state", "checked");
       });
 
-      // Find the enabled input field
-      const allInputs = screen.getAllByRole("textbox");
-      const enabledInput = allInputs.find(
-        (input) =>
-          !input.hasAttribute("disabled") && !input.hasAttribute("readonly")
-      );
-
-      expect(enabledInput).toBeDefined();
-
-      // Clear the field to make it empty (required field validation should trigger)
+      // Find the name input and clear it (should trigger validation error on save)
+      const nameInput = screen.getByRole("textbox");
       await act(async () => {
-        fireEvent.change(enabledInput!, { target: { value: "" } });
+        fireEvent.change(nameInput, { target: { value: "" } });
       });
 
       // Wait for the field to be cleared
       await waitFor(() => {
-        expect(enabledInput).toHaveValue("");
+        expect(nameInput).toHaveValue("");
       });
 
       // Try to save
@@ -2020,7 +1979,7 @@ describe("BulkEditModal", () => {
         name: "[t]common.actions.save",
       });
 
-      // Wait for save button to be enabled (even though field is invalid, button enables first)
+      // Wait for save button to be enabled
       await waitFor(() => {
         expect(saveButton).not.toBeDisabled();
       });
@@ -2029,12 +1988,15 @@ describe("BulkEditModal", () => {
         fireEvent.click(saveButton);
       });
 
-      // Should show validation error
+      // Should show validation error and NOT call bulk-edit API
+      // Name validation requires non-empty string
       await waitFor(
         () => {
           expect(toast.error).toHaveBeenCalledWith(
             "[t]repository.bulkEdit.validationError"
           );
+          // Bulk edit API should not have been called due to validation failure
+          expect(bulkEditCalls.length).toBe(0);
         },
         { timeout: 10000 }
       );

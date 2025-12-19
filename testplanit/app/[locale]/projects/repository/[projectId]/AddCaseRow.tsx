@@ -344,6 +344,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
                       placeholder={t("repository.addCase.namePlaceholder")}
                       {...field}
                       autoComplete="off"
+                      data-testid="case-name-input"
                       ref={(e) => {
                         field.ref(e);
                         nameInputRef.current = e;
@@ -365,6 +366,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
             variant="secondary"
             disabled={isSubmitting}
             className="mr-2"
+            data-testid="inline-add-case-button"
           >
             <TooltipProvider>
               <Tooltip>

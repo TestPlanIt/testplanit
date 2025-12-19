@@ -57,6 +57,10 @@ jobs:
         working-directory: ./cli
         run: bun install
 
+      - name: Run tests
+        working-directory: ./cli
+        run: bun run test
+
       - name: Build binary
         working-directory: ./cli
         run: |

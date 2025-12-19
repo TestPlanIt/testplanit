@@ -18,6 +18,7 @@
     "pnpm": {
         "onlyBuiltDependencies": [
             "@forge/cli",
+            "@parcel/watcher",
             "@prisma/client",
             "@prisma/engines",
             "@scarf/scarf",

@@ -5,7 +5,7 @@ import UserWorkGanttChart from "./UserWorkGanttChart";
 
 // Mock Plot.plot to avoid actual SVG rendering
 vi.mock("@observablehq/plot", () => ({
-  plot: () => document.createElement("svg"),
+  plot: () => document.createElementNS("http://www.w3.org/2000/svg", "svg"),
 }));
 
 describe("UserWorkGanttChart", () => {

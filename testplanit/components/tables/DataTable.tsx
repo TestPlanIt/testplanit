@@ -576,7 +576,7 @@ export function DataTable<TData extends DataRow, TValue>({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      <Table className="caption-bottom text-sm w-full border-separate border-spacing-y-0">
+      <Table className="caption-bottom text-sm w-full border-separate border-spacing-y-0" data-testid="case-table">
         <TableHeader className="[&_tr]:border-b">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow

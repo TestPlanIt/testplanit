@@ -158,22 +158,37 @@ describe('TestPlanItClient', () => {
 
   describe('completeTestRun', () => {
     it('should mark a test run as completed', async () => {
+      const mockWorkflows = [{ id: 10, name: 'Done', scope: 'RUNS', workflowType: 'DONE' }];
       const mockResponse = {
         id: 123,
         isCompleted: true,
       };
 
+      // First call: get workflows to find DONE state
+      mockFetch.mockResolvedValueOnce(zenStackResponse(mockWorkflows));
+      // Second call: update test run
       mockFetch.mockResolvedValueOnce(zenStackResponse(mockResponse));
 
-      const result = await client.completeTestRun(123);
+      const result = await client.completeTestRun(123, 1);
 
       expect(result.isCompleted).toBe(true);
-      // Update uses PATCH
-      expect(mockFetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      // First call is to get workflows
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        1,
+        expect.stringContaining('https://testplanit.example.com/api/model/workflows/findMany?q='),
+        expect.objectContaining({
+          method: 'GET',
+        })
+      );
+
+      // Second call is to update test run (PATCH)
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
         'https://testplanit.example.com/api/model/testRuns/update',
         expect.objectContaining({
           method: 'PATCH',
-          body: JSON.stringify({ where: { id: 123 }, data: { isCompleted: true } }),
         })
       );
     });
