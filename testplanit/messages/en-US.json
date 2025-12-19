@@ -4605,7 +4605,7 @@
         "apiKeyDescription": "Your API key for authentication with the provider",
         "endpoint": "Endpoint URL",
         "endpointPlaceholder": "https://api.provider.com/v1",
-        "endpointDescription": "The base URL for API requests (leave empty for default)",
+        "endpointDescription": "The base URL for API requests. For standard providers (OpenAI, Anthropic, Gemini), only official URLs are accepted. For self-hosted providers, private/internal addresses (localhost, 127.0.0.1, private IPs) are blocked for security.",
         "deploymentName": "Deployment Name",
         "deploymentNamePlaceholder": "Enter deployment name...",
         "deploymentNameDescription": "Azure OpenAI deployment name",
