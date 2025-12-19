@@ -70,8 +70,10 @@ describe("getAssignmentsForRunCases", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Invalid input");
-      expect(result.issues).toBeDefined();
+      if (!result.success) {
+        expect(result.error).toBe("Invalid input");
+        expect(result.issues).toBeDefined();
+      }
       expect(result.data).toEqual([]);
     });
 
@@ -82,8 +84,10 @@ describe("getAssignmentsForRunCases", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Invalid input");
-      expect(result.issues).toBeDefined();
+      if (!result.success) {
+        expect(result.error).toBe("Invalid input");
+        expect(result.issues).toBeDefined();
+      }
     });
 
     it("should return error for non-numeric array elements", async () => {
@@ -93,7 +97,9 @@ describe("getAssignmentsForRunCases", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Invalid input");
+      if (!result.success) {
+        expect(result.error).toBe("Invalid input");
+      }
     });
   });
 

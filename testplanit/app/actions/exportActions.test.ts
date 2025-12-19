@@ -167,7 +167,7 @@ describe("exportActions", () => {
         const result = await fetchAllCasesForExport(baseArgs);
 
         expect(result.success).toBe(true);
-        expect(result.data[0].linkedCases).toBe("Linked Case A, Linked Case B");
+        expect((result.data[0] as any).linkedCases).toBe("Linked Case A, Linked Case B");
       });
 
       it("should filter out deleted links", async () => {
@@ -192,7 +192,7 @@ describe("exportActions", () => {
 
         const result = await fetchAllCasesForExport(baseArgs);
 
-        expect(result.data[0].linkedCases).toBe("Active Link");
+        expect((result.data[0] as any).linkedCases).toBe("Active Link");
       });
 
       it("should filter out links to deleted cases", async () => {
@@ -218,7 +218,7 @@ describe("exportActions", () => {
 
         const result = await fetchAllCasesForExport(baseArgs);
 
-        expect(result.data[0].linkedCases).toBe("Active Case");
+        expect((result.data[0] as any).linkedCases).toBe("Active Case");
       });
 
       it("should deduplicate linked case names", async () => {
@@ -244,7 +244,7 @@ describe("exportActions", () => {
 
         const result = await fetchAllCasesForExport(baseArgs);
 
-        expect(result.data[0].linkedCases).toBe("Same Name");
+        expect((result.data[0] as any).linkedCases).toBe("Same Name");
       });
 
       it("should return empty linkedCases for cases with no links", async () => {
@@ -260,7 +260,7 @@ describe("exportActions", () => {
 
         const result = await fetchAllCasesForExport(baseArgs);
 
-        expect(result.data[0].linkedCases).toBe("");
+        expect((result.data[0] as any).linkedCases).toBe("");
       });
 
       it("should handle null linksFrom/linksTo", async () => {
@@ -276,7 +276,7 @@ describe("exportActions", () => {
 
         const result = await fetchAllCasesForExport(baseArgs);
 
-        expect(result.data[0].linkedCases).toBe("");
+        expect((result.data[0] as any).linkedCases).toBe("");
       });
 
       it("should use provided orderBy", async () => {
