@@ -1,3 +1,23 @@
+# [1.1.0](https://github.com/testplanit/testplanit/compare/cli-v1.0.2...cli-v1.1.0) (2025-12-19)
+
+
+### Bug Fixes
+
+* **changesets:** use correct package names in ignore list ([e0a61cb](https://github.com/testplanit/testplanit/commit/e0a61cb4650a2d824071b54bdc8a6114a74cd0ce))
+* **ci:** skip postinstall scripts in package release workflow ([4624c92](https://github.com/testplanit/testplanit/commit/4624c92ebdd6de67097ad7f371ac39a236d31735))
+* **docker:** add lockfile to testplanit for local Docker builds ([3d1dd94](https://github.com/testplanit/testplanit/commit/3d1dd9475e38184fffbd922f622e0a2ff65f0ded))
+* **docker:** resolve lockfile not found error in Docker builds ([f9e48f6](https://github.com/testplanit/testplanit/commit/f9e48f6e74784f53bf4f3fff80360b47f2403804))
+* **docker:** use testplanit-specific lockfile instead of monorepo lockfile ([da46c98](https://github.com/testplanit/testplanit/commit/da46c984918b13a01c0711ec6a6b1fabb5ea0898))
+* **emailWorker:** update notification handling for SYSTEM_ANNOUNCEMENT ([978c773](https://github.com/testplanit/testplanit/commit/978c7735696b4bd1f95ebf0e5e33ca8cca2a7974))
+* **env:** update DATABASE_URL in .env.example for consistency with Docker setup ([28ac66e](https://github.com/testplanit/testplanit/commit/28ac66ee1d757557ee35b36e3b98d22859f73146))
+* **env:** update DATABASE_URL in .env.example for Docker compatibility ([398838c](https://github.com/testplanit/testplanit/commit/398838c053ca8be445dcc7fac730b3034637754d))
+* **env:** update DATABASE_URL port in .env.example for consistency with Docker setup ([93d6bd9](https://github.com/testplanit/testplanit/commit/93d6bd932f89e0ee238c9ff72f59ef1f771c69c0))
+
+
+### Features
+
+* **export:** add PDF export functionality ([5a84252](https://github.com/testplanit/testplanit/commit/5a842525927641d04b1327e8812223c7a500e4c2))
+
 ## [1.0.2](https://github.com/testplanit/testplanit/compare/cli-v1.0.1...cli-v1.0.2) (2025-12-15)
 
 
