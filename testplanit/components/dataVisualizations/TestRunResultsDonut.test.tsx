@@ -52,13 +52,13 @@ vi.mock("d3", () => ({
       startAngle: 0,
       endAngle: Math.PI * 2,
       padAngle: 0,
-    })));
+    }))) as any;
     fn.value = vi.fn().mockReturnThis();
     fn.sort = vi.fn().mockReturnThis();
     return fn;
   }),
   arc: vi.fn(() => {
-    const fn = vi.fn(() => "M0,0");
+    const fn = vi.fn(() => "M0,0") as any;
     fn.innerRadius = vi.fn().mockReturnThis();
     fn.outerRadius = vi.fn().mockReturnThis();
     fn.centroid = vi.fn(() => [0, 0]);

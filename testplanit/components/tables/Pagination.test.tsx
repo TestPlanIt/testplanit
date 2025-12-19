@@ -68,7 +68,7 @@ vi.mock("@/components/ui/pagination", () => ({
     href?: string;
     onClick?: (e: React.MouseEvent) => void;
     className?: string;
-    "aria-disabled"?: string;
+    "aria-disabled"?: boolean | "true" | "false";
     "aria-label"?: string;
     tabIndex?: number;
   }) => (
@@ -95,7 +95,7 @@ vi.mock("@/components/ui/pagination", () => ({
     href?: string;
     onClick?: (e: React.MouseEvent) => void;
     className?: string;
-    "aria-disabled"?: string;
+    "aria-disabled"?: boolean | "true" | "false";
     "aria-label"?: string;
     tabIndex?: number;
   }) => (

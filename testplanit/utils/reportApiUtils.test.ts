@@ -34,7 +34,7 @@ describe("reportApiUtils", () => {
     });
 
     it("should compute cartesian product of two arrays", () => {
-      const result = cartesianProduct([
+      const result = cartesianProduct<string | number>([
         ["a", "b"],
         [1, 2],
       ]);
@@ -47,7 +47,7 @@ describe("reportApiUtils", () => {
     });
 
     it("should compute cartesian product of three arrays", () => {
-      const result = cartesianProduct([
+      const result = cartesianProduct<string | number>([
         ["a", "b"],
         [1, 2],
         ["x", "y"],
@@ -64,7 +64,7 @@ describe("reportApiUtils", () => {
     });
 
     it("should handle arrays of different lengths", () => {
-      const result = cartesianProduct([
+      const result = cartesianProduct<string | number>([
         ["a"],
         [1, 2, 3],
         ["x", "y"],
@@ -86,7 +86,7 @@ describe("reportApiUtils", () => {
     });
 
     it("should handle mixed types", () => {
-      const result = cartesianProduct([
+      const result = cartesianProduct<string | number | boolean | null>([
         ["string", 123, null],
         [true, false],
       ]);
@@ -104,7 +104,7 @@ describe("reportApiUtils", () => {
     it("should handle large arrays", () => {
       const arr1 = Array.from({ length: 10 }, (_, i) => i);
       const arr2 = Array.from({ length: 5 }, (_, i) => `item${i}`);
-      const result = cartesianProduct([arr1, arr2]);
+      const result = cartesianProduct<number | string>([arr1, arr2]);
       expect(result).toHaveLength(50); // 10 * 5
     });
   });

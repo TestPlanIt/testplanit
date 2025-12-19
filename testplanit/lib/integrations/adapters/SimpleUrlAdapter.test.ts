@@ -53,6 +53,7 @@ describe("SimpleUrlAdapter", () => {
         adapter.createIssue({
           title: "Test Issue",
           description: "Test",
+          projectId: "test-project",
         })
       ).rejects.toThrow(
         "Creating issues is not supported by Simple URL integration"
