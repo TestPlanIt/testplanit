@@ -81,7 +81,7 @@ vi.mock("@/components/ui/pagination", () => ({
       tabIndex={tabIndex}
       className={className}
     >
-      Previous
+      {"Previous"}
     </a>
   ),
   PaginationNext: ({
@@ -108,11 +108,11 @@ vi.mock("@/components/ui/pagination", () => ({
       tabIndex={tabIndex}
       className={className}
     >
-      Next
+      {"Next"}
     </a>
   ),
   PaginationEllipsis: () => (
-    <span data-testid="pagination-ellipsis">...</span>
+    <span data-testid="pagination-ellipsis">{"..."}</span>
   ),
 }));
 

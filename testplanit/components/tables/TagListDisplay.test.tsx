@@ -63,12 +63,12 @@ vi.mock("@/components/ui/popover", () => ({
 vi.mock("lucide-react", () => ({
   Tag: ({ className }: { className?: string }) => (
     <span data-testid="tag-icon" className={className}>
-      Tag
+      {"Tag"}
     </span>
   ),
   TagIcon: ({ className }: { className?: string }) => (
     <span data-testid="tag-list-icon" className={className}>
-      TagIcon
+      {"TagIcon"}
     </span>
   ),
 }));

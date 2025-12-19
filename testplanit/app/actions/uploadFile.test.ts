@@ -24,8 +24,8 @@ describe("uploadFile validation", () => {
 
   // Import dynamically to get fresh module with mocks
   async function getUploadFile() {
-    const module = await import("./uploadFile");
-    return module.uploadFile;
+    const uploadFileModule = await import("./uploadFile");
+    return uploadFileModule.uploadFile;
   }
 
   describe("input validation", () => {
