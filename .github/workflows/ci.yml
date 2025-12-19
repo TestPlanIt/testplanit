@@ -62,7 +62,7 @@ jobs:
         working-directory: packages/api
 
       - name: Run packages unit tests
-        run: pnpm test --run
+        run: pnpm test -- --run
         working-directory: packages/api
 
       - name: Install CLI dependencies
