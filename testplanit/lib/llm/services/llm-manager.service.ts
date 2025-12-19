@@ -14,6 +14,128 @@ interface LlmCredentials {
   endpoint?: string;
   baseUrl?: string;
 }
+
+// Allowlist of known safe base URLs per provider to prevent SSRF attacks
+const ALLOWED_BASE_URLS: Record<string, string[]> = {
+  OPENAI: ["https://api.openai.com"],
+  ANTHROPIC: ["https://api.anthropic.com"],
+  GEMINI: ["https://generativelanguage.googleapis.com"],
+  AZURE_OPENAI: [], // Azure uses organization-specific endpoints, validated separately
+  OLLAMA: [], // Self-hosted, validated separately
+  CUSTOM_LLM: [], // Custom endpoints, validated separately
+};
+
+// Providers that allow custom endpoints (must pass additional validation)
+const CUSTOM_ENDPOINT_PROVIDERS = ["AZURE_OPENAI", "OLLAMA", "CUSTOM_LLM"];
+
+/**
+ * Checks if a hostname is a private/internal address that should be blocked
+ */
+function isPrivateOrInternalHost(hostname: string): boolean {
+  const lowerHost = hostname.toLowerCase();
+
+  // Block localhost variants
+  if (
+    lowerHost === "localhost" ||
+    lowerHost === "127.0.0.1" ||
+    lowerHost === "0.0.0.0" ||
+    lowerHost === "::1" ||
+    lowerHost === "[::1]"
+  ) {
+    return true;
+  }
+
+  // Block cloud metadata endpoints
+  if (
+    lowerHost === "169.254.169.254" ||
+    lowerHost === "metadata.google.internal" ||
+    lowerHost.endsWith(".internal")
+  ) {
+    return true;
+  }
+
+  // Block private IP ranges (10.x.x.x, 172.16-31.x.x, 192.168.x.x)
+  const privateIpPatterns = [
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,
+    /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/,
+    /^192\.168\.\d{1,3}\.\d{1,3}$/,
+    /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/,
+    /^169\.254\.\d{1,3}\.\d{1,3}$/,
+  ];
+
+  for (const pattern of privateIpPatterns) {
+    if (pattern.test(lowerHost)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Validates a base URL against the allowlist for a given provider.
+ * Returns the validated URL if it matches the allowlist, otherwise returns undefined
+ * to fall back to the provider's default URL.
+ */
+function getValidatedBaseUrl(
+  provider: string,
+  userProvidedUrl: string | undefined
+): string | undefined {
+  if (!userProvidedUrl) {
+    return undefined; // Will use provider's default
+  }
+
+  // Parse and validate URL format
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(userProvidedUrl);
+  } catch {
+    console.warn(`Invalid URL format: "${userProvidedUrl}". Using default.`);
+    return undefined;
+  }
+
+  // Only allow http/https
+  if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+    console.warn(
+      `Invalid protocol in URL: "${userProvidedUrl}". Using default.`
+    );
+    return undefined;
+  }
+
+  // For providers with allowlists, check against the allowlist
+  const allowedUrls = ALLOWED_BASE_URLS[provider];
+  if (allowedUrls && allowedUrls.length > 0) {
+    const normalizedUserUrl = userProvidedUrl.toLowerCase().replace(/\/$/, "");
+    for (const allowedUrl of allowedUrls) {
+      const normalizedAllowedUrl = allowedUrl.toLowerCase().replace(/\/$/, "");
+      if (
+        normalizedUserUrl === normalizedAllowedUrl ||
+        normalizedUserUrl.startsWith(normalizedAllowedUrl + "/")
+      ) {
+        return userProvidedUrl;
+      }
+    }
+    console.warn(
+      `LLM base URL "${userProvidedUrl}" not in allowlist for provider ${provider}. Using default.`
+    );
+    return undefined;
+  }
+
+  // For providers that allow custom endpoints, block private/internal addresses
+  if (CUSTOM_ENDPOINT_PROVIDERS.includes(provider)) {
+    if (isPrivateOrInternalHost(parsedUrl.hostname)) {
+      console.warn(
+        `Blocked private/internal URL "${userProvidedUrl}" for provider ${provider}. Using default.`
+      );
+      return undefined;
+    }
+    return userProvidedUrl;
+  }
+
+  // Unknown provider - use default
+  return undefined;
+}
+
 import type {
   LlmRequest,
   LlmResponse,
@@ -71,11 +193,17 @@ export class LlmManager {
     }
 
     const credentials = llmIntegration.credentials as LlmCredentials | null;
+    const userProvidedBaseUrl = credentials?.endpoint || credentials?.baseUrl;
+    const validatedBaseUrl = getValidatedBaseUrl(
+      llmIntegration.provider,
+      userProvidedBaseUrl
+    );
+
     const config: LlmAdapterConfig = {
       integration: llmIntegration,
       config: llmIntegration.llmProviderConfig as LlmProviderConfig,
       apiKey: credentials?.apiKey,
-      baseUrl: credentials?.endpoint || credentials?.baseUrl,
+      baseUrl: validatedBaseUrl,
     };
 
     switch (llmIntegration.provider) {

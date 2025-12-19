@@ -101,7 +101,7 @@ Temperature: 0.7
 #### Ollama Configuration
 
 ```text
-Base URL: http://localhost:11434
+Base URL: https://your-ollama-server.example.com:11434
 Model: llama2:13b
 Max Tokens: 4096
 Temperature: 0.7
@@ -129,6 +129,28 @@ Temperature: 0.7
 ```
 
 **Note**: Custom LLM endpoints must be compatible with the OpenAI API format.
+
+### Endpoint URL Requirements
+
+For security reasons, custom endpoint URLs are validated to prevent Server-Side Request Forgery (SSRF) attacks:
+
+**Standard Providers (OpenAI, Anthropic, Gemini):**
+
+- Only official provider URLs are accepted
+- OpenAI: `https://api.openai.com`
+- Anthropic: `https://api.anthropic.com`
+- Gemini: `https://generativelanguage.googleapis.com`
+
+**Self-Hosted Providers (Ollama, Azure OpenAI, Custom LLM):**
+
+- Custom endpoint URLs are allowed but must use publicly accessible addresses
+- The following are **blocked** for security:
+  - `localhost`, `127.0.0.1`, `0.0.0.0`
+  - Private IP ranges: `10.x.x.x`, `172.16-31.x.x`, `192.168.x.x`
+  - Cloud metadata endpoints: `169.254.169.254`, `*.internal`
+  - IPv6 loopback addresses
+
+If you need to connect to a self-hosted LLM running on a local network, you must expose it through a publicly accessible URL or use a reverse proxy with proper authentication.
 
 ### Project Assignment
 

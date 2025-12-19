@@ -119,7 +119,7 @@ const providerDefaults: Record<string, Partial<FormData>> = {
   },
   OLLAMA: {
     defaultModel: "llama3.2",
-    endpoint: "http://localhost:11434",
+    endpoint: "", // User must provide a publicly accessible URL
     maxTokensPerRequest: 4096,
     maxRequestsPerMinute: 100,
     costPerInputToken: 0,
