@@ -101,6 +101,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
   session,
 }) => {
   const tLinkedCases = useTranslations("linkedCases");
+  const tGlobal = useTranslations();
 
   // Fetch all links where this case is caseA or caseB
   const { data: links, refetch } = useFindManyRepositoryCaseLink({
@@ -694,7 +695,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                                   onClick={() => setOpenPopoverLinkId(null)}
                                 >
                                   <CircleSlash2 className="w-4 h-4" />
-                                  {tLinkedCases("cancel")}
+                                  {tGlobal("common.cancel")}
                                 </Button>
                                 <Button
                                   type="button"

@@ -40,6 +40,7 @@ export function DeleteIssueModal({ issue }: DeleteIssueModalProps) {
   } = form;
 
   const t = useTranslations("admin.issues.delete");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   async function onSubmit() {
@@ -83,7 +84,7 @@ export function DeleteIssueModal({ issue }: DeleteIssueModalProps) {
               })}
             </div>
             <div className="bg-destructive text-destructive-foreground p-2">
-              {t("warning")}
+              {tGlobal("runs.delete.warning")}
             </div>
             <AlertDialogFooter>
               {errors.root && (

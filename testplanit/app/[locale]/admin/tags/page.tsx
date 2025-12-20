@@ -60,6 +60,7 @@ function TagList() {
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
   const t = useTranslations("admin.tags");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   // Calculate skip and take based on pageSize
@@ -283,13 +284,13 @@ function TagList() {
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
-              <CardTitle data-testid="tags-page-title">{t("title")}</CardTitle>
+              <CardTitle data-testid="tags-page-title">{tGlobal("tags.title")}</CardTitle>
             </div>
             <div>
               <AddTagModal />
             </div>
           </div>
-          <CardDescription>{t("description")}</CardDescription>
+          <CardDescription>{tGlobal("tags.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-row items-start">
@@ -297,7 +298,7 @@ function TagList() {
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
                   key="tag-filter"
-                  placeholder={t("filterPlaceholder")}
+                  placeholder={tGlobal("tags.filterPlaceholder")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
                 />

@@ -67,6 +67,7 @@ export function ApiTokenSettings({
   isAdmin = false,
 }: ApiTokenSettingsProps) {
   const t = useTranslations("users.profile.apiTokens");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session } = useSession();
   const queryClient = useQueryClient();
@@ -173,7 +174,7 @@ export function ApiTokenSettings({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <KeyRound className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{t("title")}</span>
+            <span className="text-sm font-medium">{tGlobal("admin.menu.apiTokens")}</span>
           </div>
           {isOwnProfile && (
             <Button
@@ -193,9 +194,9 @@ export function ApiTokenSettings({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("name")}</TableHead>
-                <TableHead>{t("token")}</TableHead>
-                <TableHead>{t("created")}</TableHead>
+                <TableHead>{tGlobal("common.name")}</TableHead>
+                <TableHead>{tGlobal("common.fields.token")}</TableHead>
+                <TableHead>{tGlobal("common.fields.created")}</TableHead>
                 <TableHead>{t("lastUsed")}</TableHead>
                 <TableHead>{t("expires")}</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
@@ -227,7 +228,7 @@ export function ApiTokenSettings({
                       />
                     ) : (
                       <span className="text-muted-foreground/50">
-                        {t("never")}
+                        {tGlobal("admin.apiTokens.lastUsedNever")}
                       </span>
                     )}
                   </TableCell>
@@ -247,7 +248,7 @@ export function ApiTokenSettings({
                         />
                       </Badge>
                     ) : (
-                      <Badge variant="outline">{t("noExpiry")}</Badge>
+                      <Badge variant="outline">{tGlobal("admin.apiTokens.lastUsedNever")}</Badge>
                     )}
                   </TableCell>
                   <TableCell>

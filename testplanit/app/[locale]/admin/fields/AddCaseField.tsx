@@ -140,6 +140,7 @@ export function AddCaseFieldModal({
   submitLabel,
 }: AddCaseFieldModalProps = {}) {
   const t = useTranslations("admin.templates.caseFields.add");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
@@ -658,7 +659,7 @@ export function AddCaseFieldModal({
       } else {
         form.setError("root", {
           type: "custom",
-          message: t("errors.unknown"),
+          message: tGlobal("milestones.errors.unknown"),
         });
       }
       return;

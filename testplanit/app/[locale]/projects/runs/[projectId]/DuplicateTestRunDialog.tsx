@@ -72,6 +72,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
   onPrepareCloneDataAndProceed,
 }) => {
   const t = useTranslations("runs.duplicateDialog");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session } = useSession();
   const [isSubmittingThisDialog, setIsSubmittingThisDialog] = useState(false);
@@ -241,7 +242,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
         if (!alreadyPresentAsRealStatus) {
           distinctStatuses.push({
             id: UNTESTED_STATUS_ID,
-            name: t("untestedStatusName"),
+            name: tGlobal("common.labels.untested"),
             order: -1,
             colorValue: DEFAULT_UNTESTED_COLOR,
             count: untestedCaseCount,

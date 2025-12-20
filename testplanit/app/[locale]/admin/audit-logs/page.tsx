@@ -78,6 +78,7 @@ function AuditLogsGuard() {
  */
 function AuditLogsContent({ session }: { session: Session }) {
   const t = useTranslations("admin.auditLogs");
+  const tGlobal = useTranslations();
   const {
     currentPage,
     setCurrentPage,
@@ -252,7 +253,7 @@ function AuditLogsContent({ session }: { session: Session }) {
         t("columns.entityId"),
         t("columns.entityName"),
         t("columns.user"),
-        t("columns.email"),
+        tGlobal("common.fields.email"),
         t("columns.project"),
         "IP Address",
         "User Agent",
@@ -397,7 +398,7 @@ function AuditLogsContent({ session }: { session: Session }) {
             <div className="flex items-center gap-3">
               <ShieldCheck className="h-8 w-8" />
               <CardTitle data-testid="audit-logs-page-title">
-                {t("title")}
+                {tGlobal("admin.menu.auditLogs")}
               </CardTitle>
             </div>
           </div>
@@ -468,7 +469,7 @@ function AuditLogsContent({ session }: { session: Session }) {
                 disabled={isExporting || totalItems === 0}
               >
                 <Download className="h-4 w-4" />
-                {isExporting ? t("exporting") : t("exportCsv")}
+                {isExporting ? tGlobal("repository.exportModal.exporting") : t("exportCsv")}
               </Button>
             </div>
 

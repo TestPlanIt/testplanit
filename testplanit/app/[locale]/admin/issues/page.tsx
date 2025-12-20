@@ -59,6 +59,7 @@ function IssueList() {
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
   const t = useTranslations("admin.issues");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   // Calculate skip and take based on pageSize
@@ -355,7 +356,7 @@ function IssueList() {
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
               <CardTitle data-testid="issues-page-title">
-                {t("title")}
+                {tGlobal("common.fields.issues")}
               </CardTitle>
             </div>
           </div>

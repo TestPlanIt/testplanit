@@ -39,6 +39,7 @@ export default function LlmAdminPage() {
 
 function LlmIntegrationList() {
   const t = useTranslations("admin.llm");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -252,7 +253,7 @@ function LlmIntegrationList() {
       refetch();
     } catch (error) {
       console.error("Error testing connections:", error);
-      toast.error(t("error"), {
+      toast.error(tGlobal("common.errors.error"), {
         description: t("failedToTestConnections"),
       });
     } finally {
@@ -285,7 +286,7 @@ function LlmIntegrationList() {
             <div>
               <CardTitle data-testid="llm-admin-page-title">
                 <Sparkles className="inline mr-2 h-8 w-8" />
-                {t("title")}
+                {tGlobal("admin.menu.llm")}
               </CardTitle>
             </div>
             <div>

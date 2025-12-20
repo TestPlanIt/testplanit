@@ -116,6 +116,7 @@ export function MagicSelectDialog({
   onAccept,
 }: MagicSelectDialogProps) {
   const tCommon = useTranslations("common");
+  const tGlobal = useTranslations();
   const t = useTranslations("runs.magicSelect");
 
   const [state, setState] = useState<MagicSelectState>({
@@ -671,7 +672,7 @@ export function MagicSelectDialog({
           {state.status === "error" && (
             <Button onClick={fetchCaseCount}>
               <RefreshCw className="h-4 w-4" />
-              {t("actions.retry")}
+              {tGlobal("search.errors.tryAgain")}
             </Button>
           )}
         </DialogFooter>

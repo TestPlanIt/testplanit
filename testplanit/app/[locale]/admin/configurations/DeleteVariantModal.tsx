@@ -42,6 +42,7 @@ export function DeleteVariantModal({
   const { mutateAsync: updateManyConfigurations } =
     useUpdateManyConfigurations();
   const t = useTranslations("admin.configurations.variants.delete");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const handleCancel = () => {
     setOpen(false);
@@ -81,7 +82,7 @@ export function DeleteVariantModal({
       );
       form.setError("root", {
         type: "custom",
-        message: t("errors.unknown"),
+        message: tGlobal("milestones.errors.unknown"),
       });
       setIsSubmitting(false);
       return;
@@ -113,7 +114,7 @@ export function DeleteVariantModal({
               </div>
             </AlertDialogDescription>
             <div className="bg-destructive text-destructive-foreground p-2">
-              {t("warning")}
+              {tGlobal("runs.delete.warning")}
             </div>
             <div>{t("suggestion")}</div>
             <AlertDialogFooter>
@@ -122,7 +123,7 @@ export function DeleteVariantModal({
                   className="bg-destructive text-destructive-foreground text-sm p-2"
                   role="alert"
                 >
-                  {t("errors.unknown")}
+                  {tGlobal("milestones.errors.unknown")}
                 </div>
               )}
               <AlertDialogCancel type="button" onClick={handleCancel}>

@@ -21,6 +21,7 @@ import { Asterisk, UserLock } from "lucide-react";
 
 export function ChangePasswordModal() {
   const t = useTranslations("users.profile.changePasswordModal");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session } = useSession();
   const [currentPassword, setCurrentPassword] = useState("");
@@ -101,7 +102,7 @@ export function ChangePasswordModal() {
       <DialogContent className="sm:max-w-[600px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-destructive">{t("title")}</DialogTitle>
+            <DialogTitle className="text-destructive">{tGlobal("users.profile.changePasswordModal.buttonText")}</DialogTitle>
             <DialogDescription>{t("description")}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -161,7 +162,7 @@ export function ChangePasswordModal() {
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? tCommon("status.submitting") : t("submitButtonText")}
+              {isLoading ? tCommon("status.submitting") : tGlobal("users.profile.changePasswordModal.buttonText")}
             </Button>
           </DialogFooter>
         </form>

@@ -68,6 +68,7 @@ export function ProjectUserPermissions({
   defaultProjectRoleId,
 }: ProjectUserPermissionsProps) {
   const t = useTranslations("admin.projects.edit");
+  const tGlobal = useTranslations();
 
   const userPermissionsState = watch("userPermissions");
   const [effectiveAccess, setEffectiveAccess] = useState<
@@ -225,7 +226,7 @@ export function ProjectUserPermissions({
       // For DEFAULT or any other case
       return (
         <span className="italic text-muted-foreground">
-          {t("labels.access.projectDefault")}
+          {tGlobal("common.labels.access.projectDefault")}
         </span>
       );
     }
@@ -239,7 +240,7 @@ export function ProjectUserPermissions({
           <thead className="[&_tr]:border-b">
             <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
               <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                {t("tableHeaders.user")}
+                {tGlobal("common.access.user")}
               </th>
               <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
                 {t("tableHeaders.globalRole")}
@@ -248,7 +249,7 @@ export function ProjectUserPermissions({
                 {t("tableHeaders.projectAccess")}
               </th>
               <th className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
-                {t("actions.remove")}
+                {tGlobal("linkedCases.removeLink")}
               </th>
             </tr>
           </thead>
@@ -282,26 +283,26 @@ export function ProjectUserPermissions({
                 currentAccessType === "DEFAULT" ||
                 currentAccessType === ProjectAccessType.DEFAULT
               ) {
-                effectiveAccessDisplay = t("labels.access.projectDefault");
+                effectiveAccessDisplay = tGlobal("common.labels.access.projectDefault");
               } else if (
                 currentAccessType === "NO_ACCESS" ||
                 currentAccessType === ProjectAccessType.NO_ACCESS
               ) {
-                effectiveAccessDisplay = t("labels.access.noAccess");
+                effectiveAccessDisplay = tGlobal("common.labels.access.noAccess");
               } else if (
                 currentAccessType === "GLOBAL_ROLE" ||
                 currentAccessType === ProjectAccessType.GLOBAL_ROLE
               ) {
-                effectiveAccessDisplay = t("labels.access.usersGlobalRole");
+                effectiveAccessDisplay = tGlobal("common.labels.access.usersGlobalRole");
               } else if (
                 currentAccessType === "SPECIFIC_ROLE" ||
                 currentAccessType === ProjectAccessType.SPECIFIC_ROLE
               ) {
-                effectiveAccessDisplay = t("labels.access.specificRole");
+                effectiveAccessDisplay = tGlobal("common.labels.access.specificRole");
               } else {
                 // Fallback for any unexpected values
                 console.warn(`Unexpected access type: ${currentAccessType}`);
-                effectiveAccessDisplay = t("labels.access.projectDefault");
+                effectiveAccessDisplay = tGlobal("common.labels.access.projectDefault");
               }
 
               let combinedValue = "PROJECT_DEFAULT";
@@ -383,7 +384,7 @@ export function ProjectUserPermissions({
                                 </span>
                               ) : (
                                 <span className="italic text-muted-foreground">
-                                  {t("labels.none")}
+                                  {tGlobal("common.actions.none")}
                                 </span>
                               )}
                             </span>
@@ -392,14 +393,14 @@ export function ProjectUserPermissions({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="PROJECT_DEFAULT">
-                          {t("labels.access.projectDefault")}
+                          {tGlobal("common.labels.access.projectDefault")}
                         </SelectItem>
                         <SelectSeparator />
                         <SelectItem value="NO_ACCESS">
-                          {t("labels.access.noAccess")}
+                          {tGlobal("common.labels.access.noAccess")}
                         </SelectItem>
                         <SelectItem value="GLOBAL_ROLE">
-                          {t("labels.access.usersGlobalRole")}
+                          {tGlobal("common.labels.access.usersGlobalRole")}
                         </SelectItem>
                         <SelectSeparator />
                         {roles?.map((role) => (
@@ -439,7 +440,7 @@ export function ProjectUserPermissions({
           fetchOptions={fetchUsers}
           renderOption={renderUserOption}
           getOptionValue={getUserValue}
-          placeholder={t("labels.addUser")}
+          placeholder={tGlobal("admin.users.add.button")}
           className="w-full md:w-[300px]"
           pageSize={10}
           showTotal={true}

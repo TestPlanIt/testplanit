@@ -24,6 +24,7 @@ interface TestLlmIntegrationProps {
 
 export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
   const t = useTranslations("admin.llm.test");
+  const tGlobal = useTranslations();
   const [open, setOpen] = useState(false);
   const [testMessage, setTestMessage] = useState(
     t("defaultTestMessage")
@@ -45,18 +46,18 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
 
       if (data.success) {
         setConnectionStatus("connected");
-        toast.success(t("connectionSuccessful"), {
+        toast.success(tGlobal("admin.integrations.testSuccess"), {
           description: t("connectionSuccessfulDescription"),
         });
       } else {
         setConnectionStatus("failed");
-        toast.error(t("connectionFailed"), {
+        toast.error(tGlobal("admin.integrations.testFailed"), {
           description: data.error || t("failedToConnect"),
         });
       }
     } catch (error) {
       setConnectionStatus("failed");
-      toast.error(t("connectionFailed"), {
+      toast.error(tGlobal("admin.integrations.testFailed"), {
         description: t("errorTestingConnection"),
       });
     }
@@ -139,7 +140,7 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
                   {connectionStatus === "testing" && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  {connectionStatus === "connected" ? t("retest") : t("testConnection")}
+                  {connectionStatus === "connected" ? t("retest") : tGlobal("admin.integrations.testConnection")}
                 </Button>
               </div>
             </div>
@@ -163,7 +164,7 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("sending")}
+                  {tGlobal("auth.signin.magicLink.sending")}
                 </>
               ) : (
                 <>
@@ -184,18 +185,18 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
 
             <Alert>
               <AlertDescription>
-                <strong>{t("provider")}:</strong> {integration?.provider?.replace("_", " ")}
+                <strong>{tGlobal("common.fields.provider")}:</strong> {integration?.provider?.replace("_", " ")}
                 <br />
-                <strong>{t("defaultModel")}:</strong> {integration?.llmProviderConfig?.defaultModel || t("notConfigured")}
+                <strong>{tGlobal("admin.llm.defaultModel")}:</strong> {integration?.llmProviderConfig?.defaultModel || tGlobal("admin.llm.notConfigured")}
                 <br />
-                <strong>{t("status")}:</strong> {integration?.status}
+                <strong>{tGlobal("common.actions.status")}:</strong> {integration?.status}
               </AlertDescription>
             </Alert>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
-              {t("close")}
+              {tGlobal("common.actions.close")}
             </Button>
           </DialogFooter>
         </DialogContent>

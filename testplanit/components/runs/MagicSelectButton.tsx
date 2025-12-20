@@ -33,6 +33,7 @@ export function MagicSelectButton({
   onSuggestionsAccepted,
 }: MagicSelectButtonProps) {
   const t = useTranslations("runs.magicSelect");
+  const tGlobal = useTranslations();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Check if project has an active LLM integration
@@ -68,7 +69,7 @@ export function MagicSelectButton({
             <span>
               <Button size="lg" variant="outline" disabled>
                 <Wand2 className="h-4 w-4" />
-                {t("button")}
+                {tGlobal("runs.magicSelect.title")}
               </Button>
             </span>
           </TooltipTrigger>
@@ -88,7 +89,7 @@ export function MagicSelectButton({
         disabled={isLoading || !testRunMetadata.name}
       >
         <Wand2 className="h-4 w-4" />
-        {t("button")}
+        {tGlobal("runs.magicSelect.title")}
       </Button>
 
       <MagicSelectDialog

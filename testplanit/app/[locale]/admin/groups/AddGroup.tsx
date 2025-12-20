@@ -52,6 +52,7 @@ type AddGroupFormData = z.infer<typeof AddGroupFormSchema>;
 
 export function AddGroupModal() {
   const t = useTranslations("admin.groups");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -131,7 +132,7 @@ export function AddGroupModal() {
       // Invalidate queries to show the new group in the list
       await invalidateModelQueries(queryClient, "Groups");
 
-      toast.success(tCommon("messages.created", { item: t("title") }));
+      toast.success(tCommon("messages.created", { item: tGlobal("common.fields.groups") }));
       setOpen(false);
       reset({ name: "" });
       setAssignedUsers([]);
@@ -181,7 +182,7 @@ export function AddGroupModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {t("add.name")}
+                    {tGlobal("sharedSteps.manualEntry.groupNameLabel")}
                     <HelpPopover helpKey="group.name" />
                   </FormLabel>
                   <FormControl>

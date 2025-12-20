@@ -60,6 +60,7 @@ export function ProjectGroupPermissions({
   defaultProjectRoleId,
 }: ProjectGroupPermissionsProps) {
   const t = useTranslations("admin.projects.edit");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common"); // Assuming Shared translations exist
 
   const groupPermissionsState = watch("groupPermissions");
@@ -125,7 +126,7 @@ export function ProjectGroupPermissions({
           <thead className="[&_tr]:border-b">
             <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
               <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                {t("tableHeaders.group")}
+                {tGlobal("reports.dimensions.group")}
               </th>
               {/* Add Members Header */}
               <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
@@ -158,27 +159,27 @@ export function ProjectGroupPermissions({
               // Determine the current combined value for the select dropdown
               if (currentAccessType === "PROJECT_DEFAULT") {
                 combinedValue = "PROJECT_DEFAULT";
-                effectiveAccessDisplay = t("labels.access.projectDefault");
+                effectiveAccessDisplay = tGlobal("common.labels.access.projectDefault");
               } else if (currentAccessType === ProjectAccessType.NO_ACCESS) {
                 combinedValue = "NO_ACCESS";
-                effectiveAccessDisplay = t("labels.access.noAccess");
+                effectiveAccessDisplay = tGlobal("common.labels.access.noAccess");
               } else if (currentAccessType === ProjectAccessType.GLOBAL_ROLE) {
                 combinedValue = "GLOBAL_ROLE";
-                effectiveAccessDisplay = t("labels.access.usersGlobalRole");
+                effectiveAccessDisplay = tGlobal("common.labels.access.usersGlobalRole");
               } else if (
                 currentAccessType === ProjectAccessType.SPECIFIC_ROLE &&
                 currentRoleId &&
                 currentRoleId !== "NONE"
               ) {
                 combinedValue = `ROLE_${currentRoleId}`;
-                effectiveAccessDisplay = t("labels.access.specificRole");
+                effectiveAccessDisplay = tGlobal("common.labels.access.specificRole");
               } else {
                 // Fallback or inconsistent state - default to Project Default display
                 console.warn(
                   `Inconsistent permission state for group ${groupIdStr}: accessType=${currentAccessType}, roleId=${currentRoleId}`
                 );
                 combinedValue = "PROJECT_DEFAULT";
-                effectiveAccessDisplay = t("labels.access.projectDefault");
+                effectiveAccessDisplay = tGlobal("common.labels.access.projectDefault");
               }
 
               return (
@@ -213,14 +214,14 @@ export function ProjectGroupPermissions({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="PROJECT_DEFAULT">
-                            {t("labels.access.projectDefault")}
+                            {tGlobal("common.labels.access.projectDefault")}
                           </SelectItem>
                           <SelectSeparator />
                           <SelectItem value="NO_ACCESS">
-                            {t("labels.access.noAccess")}
+                            {tGlobal("common.labels.access.noAccess")}
                           </SelectItem>
                           <SelectItem value="GLOBAL_ROLE">
-                            {t("labels.access.usersGlobalRole")}
+                            {tGlobal("common.labels.access.usersGlobalRole")}
                           </SelectItem>
                           <SelectSeparator />
                           {roles?.map((role) => (
@@ -248,7 +249,7 @@ export function ProjectGroupPermissions({
                           )}
                         {currentAccessType === ProjectAccessType.GLOBAL_ROLE && (
                           <span className="italic text-muted-foreground ml-1">
-                            {t("labels.access.usersGlobalRole")}
+                            {tGlobal("common.labels.access.usersGlobalRole")}
                           </span>
                         )}
                         {currentAccessType === "PROJECT_DEFAULT" &&
@@ -262,7 +263,7 @@ export function ProjectGroupPermissions({
                           defaultProjectAccessType ===
                             ProjectAccessType.GLOBAL_ROLE && (
                             <span className="italic text-muted-foreground ml-1">
-                              {t("labels.access.usersGlobalRole")}
+                              {tGlobal("common.labels.access.usersGlobalRole")}
                             </span>
                           )}
                         {/* Handle text-based displays for other cases */}

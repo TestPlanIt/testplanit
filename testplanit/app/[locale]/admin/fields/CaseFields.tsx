@@ -16,6 +16,7 @@ export default function CaseFields() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const t = useTranslations("admin.templates.caseFields");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [sortConfig, setSortConfig] = useState<
     | {
@@ -113,7 +114,7 @@ export default function CaseFields() {
               <CardTitle>
                 <div className="flex items-center">
                   <LayoutList className="mr-1" />
-                  {t("title")}
+                  {tGlobal("common.fields.caseFields")}
                 </div>
               </CardTitle>
             </div>

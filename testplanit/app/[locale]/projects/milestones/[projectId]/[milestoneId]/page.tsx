@@ -93,6 +93,7 @@ export default function MilestoneDetailsPage() {
   const searchParams = useSearchParams();
   const shouldStartInEditMode = searchParams.get("edit") === "true";
   const t = useTranslations("milestones");
+  const tGlobal = useTranslations();
   const tSessions = useTranslations("sessions");
   const tCommon = useTranslations("common");
   const tRuns = useTranslations("runs");
@@ -641,7 +642,7 @@ export default function MilestoneDetailsPage() {
                     name="docs"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("labels.documentation")}</FormLabel>
+                        <FormLabel>{tGlobal("common.fields.documentation")}</FormLabel>
                         {isEditMode ||
                         (milestone?.docs &&
                           milestone?.docs !==
@@ -678,7 +679,7 @@ export default function MilestoneDetailsPage() {
                   {!isEditMode && (
                     <div className="mt-6">
                       <Label className="flex items-center gap-1 mb-2">
-                        {t("labels.forecast")}
+                        {tGlobal("common.fields.forecast")}
                       </Label>
                       {isLoadingForecast ? (
                         <LoadingSpinner />
@@ -757,7 +758,7 @@ export default function MilestoneDetailsPage() {
                             if (childMilestones.length === 0) {
                               return (
                                 <div className="text-muted-foreground text-sm">
-                                  {t("empty.childMilestones")}
+                                  {tGlobal("common.empty.childMilestones")}
                                 </div>
                               );
                             }
@@ -874,7 +875,7 @@ export default function MilestoneDetailsPage() {
                           </div>
                         ) : (
                           <div className="text-muted-foreground text-sm">
-                            {t("empty.sessions")}
+                            {tGlobal("common.empty.sessions")}
                           </div>
                         )}
                       </div>

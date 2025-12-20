@@ -49,6 +49,7 @@ export default function ApiTokensPage() {
 
 function ApiTokensList() {
   const t = useTranslations("admin.apiTokens");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -335,7 +336,7 @@ function ApiTokensList() {
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
-              <CardTitle data-testid="api-tokens-page-title">{t("title")}</CardTitle>
+              <CardTitle data-testid="api-tokens-page-title">{tGlobal("admin.menu.apiTokens")}</CardTitle>
               <CardDescription className="mt-2">{t("description")}</CardDescription>
             </div>
             <div>

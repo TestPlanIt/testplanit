@@ -1042,11 +1042,9 @@
       "alreadyVerified": "Email already verified",
       "toast": {
         "verifySuccess": {
-          "title": "Email verified successfully",
           "description": "You can now sign in to your account."
         },
         "verifyError": {
-          "title": "Failed to verify email",
           "description": "An error occurred while verifying the email"
         },
         "resendSuccess": {
@@ -1105,7 +1103,6 @@
   "navigation": {
     "menu": {
       "dashboard": "Dashboard",
-      "projects": "Projects",
       "admin": "Administration",
       "profile": "Profile",
       "issueTracker": "Issues"
@@ -1355,11 +1352,7 @@
       "dueDateNotifications": "Due date notifications"
     },
     "labels": {
-      "description": "Description",
-      "documentation": "Documentation",
-      "dueDate": "Due Date",
-      "childMilestones": "Child Milestones",
-      "forecast": "Forecast"
+      "childMilestones": "Child Milestones"
     },
     "placeholders": {
       "description": "Enter milestone description...",
@@ -1372,16 +1365,13 @@
       "completed": "No completed milestones",
       "description": "No description provided",
       "documentation": "No documentation provided",
-      "childMilestones": "No child milestones",
       "testRuns": "No test runs",
-      "sessions": "No Sessions",
       "forecasts": "No forecast data available"
     },
     "statusLabels": {
       "NOT_STARTED": "Not Started",
       "IN_PROGRESS": "In Progress",
       "COMPLETED": "Completed",
-      "completed": "Completed",
       "STOPPED": "Stopped",
       "BLOCKED": "Blocked",
       "CANCELLED": "Cancelled",
@@ -1392,8 +1382,6 @@
       "pastDue": "Past Due"
     },
     "status": {
-      "start": "Start",
-      "complete": "Complete",
       "stop": "Stop",
       "reopen": "Reopen"
     },
@@ -1455,19 +1443,10 @@
     "title": "{count, plural, =1 {Session} other {Sessions}}",
     "labels": {
       "name": "Name",
-      "description": "Description",
-      "mission": "Mission",
-      "configuration": "Configuration",
-      "milestone": "Milestone",
-      "state": "State",
-      "assignedTo": "Assigned To",
-      "estimate": "Estimate",
       "elapsed": "Elapsed Time",
       "totalElapsed": "Time Spent",
       "remaining": "Remaining: {time}",
-      "overtime": "Over the Estimate by: {time}",
-      "tags": "Tags",
-      "attachments": "Attachments"
+      "overtime": "Over the Estimate by: {time}"
     },
     "empty": {
       "active": "No active Sessions",
@@ -1505,7 +1484,6 @@
     "validation": {
       "nameMinLength": "Name must be at least 2 characters.",
       "templateRequired": "Please select a Template",
-      "invalidDuration": "Invalid duration format. Try something like 30m, 1 week or 1h 25m",
       "maxDuration": "Duration must be less than or equal to {max}."
     },
     "placeholders": {
@@ -1518,7 +1496,6 @@
       "selectState": "Select State",
       "selectUser": "Select User",
       "estimateHint": "e.g., 2h 30m",
-      "none": "None",
       "unassigned": "Unassigned",
       "noEstimate": "No estimate set",
       "noElapsedTime": "No time recorded"
@@ -1662,7 +1639,6 @@
       "timezonePlaceholder": "Search timezone...",
       "skip": "Keep defaults",
       "save": "Save preferences",
-      "saving": "Saving...",
       "success": "Preferences updated",
       "error": "Something went wrong while saving your preferences"
     },
@@ -1695,12 +1671,6 @@
       "title": "User Profile",
       "edit": {
         "title": "Edit Profile",
-        "name": "Name",
-        "email": "Email",
-        "itemsPerPage": "Items Per Page",
-        "dateFormat": "Date Format",
-        "timeFormat": "Time Format",
-        "timezone": "Timezone",
         "timezonePlaceholder": "Select or search timezone...",
         "timezoneRequired": "Timezone is required.",
         "avatarUpdated": "Avatar updated successfully.",
@@ -1756,12 +1726,10 @@
       },
       "changePasswordModal": {
         "buttonText": "Change Password",
-        "title": "Change Password",
         "description": "Enter your current password and a new password to change your account password. This will only change your internally managed password. If you login through SSO, that password will not change.",
         "currentPasswordLabel": "Current Password",
         "newPasswordLabel": "New Password",
         "confirmPasswordLabel": "Confirm New Password",
-        "submitButtonText": "Change Password",
         "validation": {
           "passwordsDoNotMatch": "New passwords do not match.",
           "newPasswordTooShort": "New password must be at least 4 characters long."
@@ -1820,20 +1788,14 @@
         }
       },
       "apiTokens": {
-        "title": "API Tokens",
         "description": "API tokens allow external applications and scripts to access TestPlanIt on your behalf. Tokens have the same permissions as your account.",
         "create": "Create Token",
         "createTitle": "Create API Token",
         "createDescription": "Create a new API token to authenticate external tools and scripts.",
-        "name": "Name",
         "nameLabel": "Token Name",
         "namePlaceholder": "e.g., CI/CD Pipeline, CLI Tool",
-        "token": "Token",
-        "created": "Created",
         "lastUsed": "Last Used",
         "expires": "Expires",
-        "noExpiry": "Never",
-        "never": "Never",
         "noTokens": "No API tokens created yet.",
         "expiryLabel": "Expiration Date (Optional)",
         "expiryHint": "Leave empty for no expiration.",
@@ -1859,12 +1821,7 @@
       "remove": "Remove avatar",
       "changeProfilePicture": "Change Profile Picture",
       "notAuthenticated": "You must be logged in to upload an avatar.",
-      "delete": {
-        "confirmMessage": "Are you sure you want to delete your avatar?"
-      },
       "upload": {
-        "title": "Upload New Profile Picture",
-        "description": "Drag and drop your image or click the button below to select a file.",
         "errors": {
           "unknown": "An unknown error occurred"
         }
@@ -2610,7 +2567,6 @@
     "magicSelect": {
       "title": "Magic Select",
       "description": "AI-powered test case selection based on your test run context",
-      "button": "Magic Select",
       "counting": "Looking for relevant test cases...",
       "reasoning": "AI Reasoning",
       "reviewSelection": "Review suggested test cases",
@@ -2652,8 +2608,7 @@
       "actions": {
         "start": "Analyze Test Cases",
         "startBatched": "Analyze Test Cases ({count} batches)",
-        "accept": "Add to Selection",
-        "retry": "Try Again"
+        "accept": "Add to Selection"
       },
       "errors": {
         "title": "Selection Failed",
@@ -2697,10 +2652,7 @@
       "activeRunsLabel": "Runs",
       "totalEstTime": "Total Est. Time",
       "responsibleUsers": "Responsible Users",
-      "workDistribution": "Work Distribution",
-      "noForecastData": "No forecast data available",
       "allActiveRuns": "All Active Runs",
-      "totalEstTimeRemainingSunburst": "Total Estimated Time Remaining:",
       "recentResultsTitle": "Recent Manual Results",
       "recentResultsDescription": "View the recent results of the test run",
       "recentAutomatedResultsTitle": "Recent Automated Results",
@@ -2714,7 +2666,6 @@
       "recentResultsNotes": "Notes",
       "noRecentResults": "No recent results found.",
       "completionTrendTitle": "Completion Trend (Previous 6 Months)",
-      "noCompletedRuns": "No completed runs found in the last 6 months.",
       "workDistributionTitle": "Work Distribution",
       "workDistributionDescription": "Estimated work distribution by assignee.",
       "noWorkDistributionData": "No active Sessions with assignees or estimates to display.",
@@ -2734,7 +2685,6 @@
     "details": {
       "title": "Test Run Details",
       "description": "View the details of the test run",
-      "selectUser": "Select User",
       "fields": {
         "executedBy": "Executed By",
         "executedAt": "Executed At",
@@ -2767,8 +2717,7 @@
         }
       },
       "successMessage": "Successfully duplicated test run '{name}'.",
-      "errorMessage": "Failed to duplicate test run. Error: {error}",
-      "untestedStatusName": "Untested"
+      "errorMessage": "Failed to duplicate test run. Error: {error}"
     },
     "filter": {
       "placeholder": "Filter test runs..."
@@ -2785,7 +2734,6 @@
   },
   "admin": {
     "menu": {
-      "header": "Administration",
       "systemHeader": "System",
       "appConfig": "Application Configuration",
       "imports": "Data Imports",
@@ -3498,14 +3446,12 @@
       }
     },
     "projects": {
-      "title": "Projects",
       "filter": {
         "placeholder": "Filter projects..."
       },
       "complete": {
         "title": "Complete Project",
-        "description": "This action will complete the project and prevent any further test runs from being added.",
-        "selectDate": "Select a date"
+        "description": "This action will complete the project and prevent any further test runs from being added."
       },
       "add": {
         "button": "Add Project",
@@ -3584,26 +3530,13 @@
       },
       "edit": {
         "title": "Edit Project",
-        "tabs": {
-          "details": "Details",
-          "users": "Users",
-          "groups": "Groups"
-        },
         "labels": {
-          "defaultProjectAccess": "Default Project Access",
           "groupProjectAccess": "Group Project Access",
           "groupPermissions": "Group Permissions",
           "userPermissions": "User Permissions",
-          "addUser": "Add User",
-          "none": "None",
           "noEffect": "No Effect",
           "unknownRole": "Unknown Role",
           "access": {
-            "noAccess": "No Access",
-            "globalRole": "Use Global Role",
-            "specificRole": "Specific Role",
-            "projectDefault": "Project Default",
-            "usersGlobalRole": "User's Global Role",
             "groupsGlobalRole": "Group's Global Role",
             "groupDefault": "Group Default",
             "groupSpecificRole": "Group Specific Role",
@@ -3631,19 +3564,16 @@
           "searchUsersToAdd": "Search users to add..."
         },
         "tableHeaders": {
-          "user": "User",
           "globalRole": "Global Role",
           "projectAccess": "Project Access",
-          "specificRole": "Specific Role",
-          "group": "Group"
+          "specificRole": "Specific Role"
         },
         "messages": {
           "noUsersAssigned": "No users assigned specific permissions.",
           "noGroupsFound": "No groups found."
         },
         "actions": {
-          "removeUser": "Remove user",
-          "remove": "Remove"
+          "removeUser": "Remove user"
         },
         "loadingUserPermissions": "Loading User Permissions...",
         "errors": {
@@ -3656,14 +3586,12 @@
       "delete": {
         "title": "Delete Project",
         "confirmMessage": "Are you sure you want to delete this project?",
-        "warning": "This action cannot be undone.",
         "errors": {
           "unknown": "An unknown error occurred"
         }
       }
     },
     "templates": {
-      "title": "Templates & Fields",
       "description": "Manage test case templates and fields",
       "help": {
         "caseFields": "Case fields define the properties and data that can be captured for each test case in the repository. They allow you to customize test case information beyond the standard fields.",
@@ -3671,7 +3599,6 @@
       },
       "confirmSetAsDefault": "Set as default template",
       "confirmSetAsDefaultDescription": "Are you sure you want to set this template as the default?",
-      "confirmSetAsDefaultWarning": "This action cannot be undone.",
       "confirmSetAsDefaultProjects": "This template will be added to all projects.",
       "add": {
         "button": "Add Template",
@@ -3685,30 +3612,24 @@
         "defaultTemplateHint": "This template will be assigned to all projects."
       },
       "edit": {
-        "title": "Edit Template",
-        "defaultTemplateHint": "This template will be assigned to all projects."
+        "title": "Edit Template"
       },
       "delete": {
         "title": "Delete Template",
         "confirmMessage": "Are you sure you want to delete the <strong>{name}</strong> template?",
         "warning": "All test cases and exploratory sessions currently using this template will be automatically reassigned to the default template.",
-        "info": "This action cannot be undone.",
         "errors": {
           "defaultTemplateNotFound": "Default template not found. Deletion cannot proceed.",
           "unknown": "An unknown error occurred while deleting the template."
         }
       },
       "caseFields": {
-        "title": "Case Fields",
         "description": "Manage case fields",
         "add": {
           "button": "Add Case Field",
           "title": "Add New Case Field",
           "fields": {
             "name_error": "Name is required"
-          },
-          "errors": {
-            "unknown": "An unknown error occurred"
           }
         },
         "edit": {
@@ -3721,7 +3642,6 @@
         }
       },
       "resultFields": {
-        "title": "Result Fields",
         "description": "Manage result fields",
         "add": {
           "button": "Add Result Field",
@@ -3738,37 +3658,21 @@
       }
     },
     "users": {
-      "title": "Users",
-      "filterPlaceholder": "Filter users...",
       "showInactive": "Show Inactive",
       "selectAll": "Select All",
       "add": {
         "button": "Add User",
         "title": "Add New User",
         "fields": {
-          "name_error": "Name is required",
-          "email_error": "Email is required",
           "email_invalid": "Invalid email address",
           "password": "Password",
           "confirmPassword": "Confirm Password",
-          "passwordsDoNotMatch": "Passwords do not match",
           "password_error": "Password is required",
           "confirmPassword_error": "Confirm Password is required"
-        },
-        "errors": {
-          "userExists": "A user with this email already exists"
         }
       },
       "edit": {
-        "title": "Edit User",
-        "fields": {
-          "name_error": "Name is required",
-          "email_error": "Email is required"
-        },
-        "errors": {
-          "nameExists": "A user with this name already exists",
-          "unknown": "An unknown error occurred"
-        }
+        "title": "Edit User"
       },
       "delete": {
         "title": "Delete User",
@@ -3799,7 +3703,6 @@
       }
     },
     "apiTokens": {
-      "title": "API Tokens",
       "description": "View and manage API tokens across all users. Revoke tokens if there are security concerns.",
       "filterPlaceholder": "Filter by token name or user...",
       "showInactive": "Show Revoked",
@@ -3835,12 +3738,7 @@
       "revokeAllError": "Failed to revoke all tokens"
     },
     "tags": {
-      "title": "Tags",
-      "description": "Manage and organize your test cases and Sessions with tags",
-      "filterPlaceholder": "Filter tags...",
       "add": {
-        "button": "Add Tag",
-        "title": "Add New Tag",
         "fields": {
           "name_error": "Tag name is required"
         },
@@ -3914,7 +3812,6 @@
       }
     },
     "roles": {
-      "title": "Roles",
       "description": "Manage user roles",
       "filterPlaceholder": "Filter roles...",
       "add": {
@@ -4011,7 +3908,6 @@
       "selectAll": "Select All"
     },
     "appConfig": {
-      "title": "Application Configuration",
       "description": "Manage global application configurations",
       "configurations": "Configurations",
       "addConfig": "Add Application Configuration",
@@ -4022,7 +3918,6 @@
       "filterPlaceholder": "Filter by key...",
       "errors": {
         "keyRequired": "Key is required",
-        "valueRequired": "Value is required",
         "invalidJson": "Invalid JSON format"
       },
       "columns": {
@@ -4035,7 +3930,6 @@
       }
     },
     "configurations": {
-      "title": "Configurations",
       "description": "Configurations are a combination of categories and variants used to define a test environment. For example, OS/Browser, Test Server, Language, etc.",
       "addConfiguration": "Add Configuration",
       "editConfiguration": "Edit Configuration",
@@ -4043,7 +3937,6 @@
       "categories": {
         "title": "Categories",
         "description": "Manage global categories",
-        "addCategory": "Add Category",
         "editCategory": "Edit Category",
         "selectCategory": "Select Category",
         "filterPlaceholder": "Filter categories...",
@@ -4074,7 +3967,6 @@
         "addCombination": "Add Combination",
         "editCombination": "Edit Combination",
         "selectCombination": "Select Combination",
-        "step": "Step",
         "selectCombinationDescription": "Select a combination of variants to add to the configuration.",
         "allExist": "All combinations already exist.",
         "selectAtLeast": "Please select at least one combination."
@@ -4083,7 +3975,6 @@
         "title": "Delete Configuration",
         "message": "Are you sure you want to delete the configuration <strong>{name}</strong>?",
         "confirmMessage": "Are you sure you want to delete this configuration?",
-        "warning": "This action cannot be undone.",
         "errors": {
           "unknown": "An unknown error occurred"
         }
@@ -4096,11 +3987,7 @@
           "title": "Delete Variant",
           "message": "Are you sure you want to delete the variant <strong>{name}</strong>?",
           "confirmMessage": "Are you sure you want to delete this variant?",
-          "warning": "This action cannot be undone.",
-          "suggestion": "Consider disabling the variant instead.",
-          "errors": {
-            "unknown": "An unknown error occurred"
-          }
+          "suggestion": "Consider disabling the variant instead."
         },
         "selection": {
           "title": "Select Variants",
@@ -4111,7 +3998,6 @@
       }
     },
     "groups": {
-      "title": "Groups",
       "description": {
         "groupInfo": "Organize users into Groups to make managing permissions easier."
       },
@@ -4119,7 +4005,6 @@
       "add": {
         "button": "Add Group",
         "title": "Add New Group",
-        "name": "Group Name",
         "errors": {
           "nameExists": "A group with this name already exists",
           "unknown": "An unknown error occurred"
@@ -4132,11 +4017,7 @@
         "deleteGroup": "Delete Group",
         "deleteGroupDescription": "This action will delete the group and all associated users.",
         "title": "Delete Group",
-        "confirmMessage": "Are you sure you want to delete this group?",
-        "warning": "This action cannot be undone.",
-        "errors": {
-          "unknown": "An unknown error occurred"
-        }
+        "confirmMessage": "Are you sure you want to delete this group?"
       },
       "fields": {
         "name": "Group Name",
@@ -4147,7 +4028,6 @@
       "noUsersAssigned": "No users assigned to this group."
     },
     "milestones": {
-      "title": "Milestone Types",
       "description": "Manage Milestone Types",
       "filterPlaceholder": "Filter Milestone Types...",
       "addMilestones": "Bulk Add Milestones",
@@ -4164,25 +4044,16 @@
       "add": {
         "button": "Add Milestone Type",
         "title": "Add New Milestone Type",
-        "fields": {
-          "name_error": "Name is required"
-        },
         "errors": {
-          "nameExists": "A Milestone Type with this name already exists",
-          "unknown": "An unknown error occurred"
+          "nameExists": "A Milestone Type with this name already exists"
         }
       },
       "edit": {
-        "title": "Edit Milestone Type",
-        "setDefault": {
-          "title": "Are you sure you want to set this Milestone Type as the Default?",
-          "description": "This Milestone Type will be added to all Projects."
-        }
+        "title": "Edit Milestone Type"
       },
       "delete": {
         "title": "Delete Milestone Type",
         "confirmMessage": "Are you sure you want to delete this Milestone Type?",
-        "warning": "This action cannot be undone.",
         "errors": {
           "unknown": "An unknown error occurred"
         }
@@ -4245,7 +4116,6 @@
       }
     },
     "issues": {
-      "title": "Issues",
       "description": "Manage issues for this issue tracker",
       "filterPlaceholder": "Filter issues...",
       "add": {
@@ -4257,8 +4127,7 @@
       },
       "delete": {
         "title": "Delete Issue",
-        "confirmMessage": "Are you sure you want to delete the issue \"{name}\"?",
-        "warning": "This action cannot be undone."
+        "confirmMessage": "Are you sure you want to delete the issue \"{name}\"?"
       },
       "syncIssue": "Sync issue from external system",
       "syncSuccess": "Issue synced successfully",
@@ -4267,7 +4136,6 @@
       "syncErrorDescription": "Could not sync the issue. Please try again later."
     },
     "trash": {
-      "title": "Trash",
       "itemTypes": {
         "users": "Users",
         "groups": "Groups",
@@ -4318,7 +4186,6 @@
       "description": "Set the default notification preferences (users can override) and send out System Notifications.",
       "defaultMode": {
         "label": "Default Notification Mode",
-        "none": "No Notifications",
         "inApp": "In-App Only",
         "inAppEmailImmediate": "In-App + Email (Immediate)",
         "inAppEmailDaily": "In-App + Email (Daily Digest)"
@@ -4339,13 +4206,11 @@
         }
       },
       "save": "Save Settings",
-      "saving": "Saving...",
       "success": {
         "title": "Settings Saved",
         "description": "Notification settings have been updated successfully"
       },
       "error": {
-        "title": "Error",
         "description": "Failed to save notification settings"
       },
       "systemNotification": {
@@ -4353,16 +4218,13 @@
         "description": "Send important announcements to all users",
         "titleLabel": "Title",
         "titlePlaceholder": "Enter notification title...",
-        "messageLabel": "Message",
         "messagePlaceholder": "Enter notification message...",
         "send": "Send Notification",
-        "sending": "Sending...",
         "success": {
           "title": "Notification Sent",
           "description": "System notification sent to {count} users"
         },
         "error": {
-          "title": "Error",
           "description": "Failed to send system notification",
           "emptyFields": "Please provide both title and message"
         },
@@ -4376,7 +4238,6 @@
       }
     },
     "integrations": {
-      "title": "Issue Integrations",
       "description": "Manage third-party integrations for issue tracking and more",
       "list": {
         "title": "Configured Integrations",
@@ -4412,9 +4273,6 @@
       "syncError": "Sync Failed",
       "syncErrorDescription": "Could not queue sync job for this integration. Please try again later.",
       "delete": {
-        "successMessage": "Integration Deleted",
-        "successDescription": "The issue integration has been removed successfully",
-        "confirmTitle": "Delete Integration",
         "confirmMessage": "Are you sure you want to delete the issue integration \"{name}\"?",
         "warning": "This will remove the issue integration and disconnect it from all projects. This action cannot be undone.",
         "warningTitle": "This action will:",
@@ -4427,7 +4285,6 @@
       "deleteSuccessDescription": "The issue integration has been removed successfully",
       "deleteError": "Delete Error",
       "add": {
-        "title": "Add Integration",
         "description": "Configure a new issue integration with an external service",
         "selectType": "Select Integration Type",
         "typeDescription": "Choose the type of service you want to integrate",
@@ -4472,7 +4329,6 @@
         "inactive": "Inactive"
       },
       "edit": {
-        "title": "Edit Integration",
         "description": "Update integration settings and configuration",
         "successMessage": "Integration updated successfully",
         "successDescription": "The integration settings have been saved"
@@ -4572,13 +4428,11 @@
       }
     },
     "llm": {
-      "title": "AI Models",
       "addIntegration": "Add AI Model",
       "filterPlaceholder": "Filter AI models...",
       "testAll": "Test All Connections",
       "connectionTestComplete": "Connection Test Complete",
       "allIntegrationsTested": "All AI model connections have been tested",
-      "error": "Error",
       "failedToTestConnections": "Failed to test some connections",
       "default": "Default",
       "notConfigured": "Not Configured",
@@ -4687,13 +4541,8 @@
       "delete": {
         "title": "Delete AI Model Integration",
         "description": "Are you sure you want to delete this AI model integration? This will remove it from all projects and cannot be undone.",
-        "cancel": "Cancel",
-        "delete": "Delete",
-        "success": "Success",
         "integrationDeletedSuccess": "AI model integration deleted successfully",
-        "error": "Error",
-        "failedToDeleteIntegration": "Failed to delete AI model integration",
-        "confirmMessage": "Are you sure you want to delete this AI model integration? This will remove it from all projects and cannot be undone."
+        "failedToDeleteIntegration": "Failed to delete AI model integration"
       },
       "validation": {
         "nameRequired": "Name is required",
@@ -4704,28 +4553,19 @@
         "description": "Test the connection and functionality of {name}",
         "connectionStatus": "Connection Status",
         "connectionStatusDescription": "Check if the AI model is accessible",
-        "testConnection": "Test Connection",
         "retest": "Retest Connection",
-        "connectionSuccessful": "Connection Successful",
         "connectionSuccessfulDescription": "AI model is accessible and responding correctly",
-        "connectionFailed": "Connection Failed",
         "failedToConnect": "Failed to connect to AI model",
         "errorTestingConnection": "Error occurred while testing connection",
         "testMessage": "Test Message",
         "testMessagePlaceholder": "Enter a message to send to the AI model...",
         "sendTestMessage": "Send Test Message",
-        "sending": "Sending...",
         "response": "Response",
         "testSuccessful": "Test Successful",
         "responseReceived": "Response received successfully (Cost: ${cost})",
         "testFailed": "Test Failed",
         "failedToGetResponse": "Failed to get response from AI model",
         "failedToSendMessage": "Failed to send test message",
-        "provider": "Provider",
-        "defaultModel": "Default Model",
-        "status": "Status",
-        "notConfigured": "Not Configured",
-        "close": "Close",
         "defaultTestMessage": "Hello! Please respond with a brief confirmation that you're working correctly."
       }
     },
@@ -4735,9 +4575,7 @@
       "status": {
         "title": "Elasticsearch Status",
         "description": "Current connection and health status of the search engine",
-        "refresh": "Refresh",
         "checking": "Checking status...",
-        "connected": "Connected",
         "disconnected": "Disconnected",
         "nodes": "Nodes",
         "indices": "Indices",
@@ -4748,20 +4586,15 @@
         }
       },
       "settings": {
-        "title": "Configuration",
         "description": "Configure Elasticsearch settings for your deployment",
         "numberOfReplicas": "Number of Replicas",
         "replicasHelp": "Set to 0 for single-node clusters, 1+ for multi-node clusters with redundancy",
-        "save": "Save Settings",
-        "saving": "Saving...",
-        "saved": "Settings Saved",
         "savedDescription": "Configuration has been saved to the database",
         "updated": "Indices Updated",
         "updatedDescription": "All existing indices have been updated with the new replica settings",
         "error": "Error Saving Settings",
         "errorDescription": "Failed to save configuration. Please try again.",
         "note": {
-          "title": "Note",
           "description": "Changes apply to new indices immediately. Existing indices are updated when you save. Set replicas to 0 to resolve YELLOW status on single-node clusters."
         }
       },
@@ -4769,14 +4602,7 @@
         "title": "Reindex Data",
         "description": "Rebuild search indices for improved search performance",
         "entities": {
-          "all": "All Entities",
-          "repositoryCases": "Repository Cases",
-          "testRuns": "Test Runs",
-          "sessions": "Sessions",
-          "sharedSteps": "Shared Steps",
-          "issues": "Issues",
-          "milestones": "Milestones",
-          "projects": "Projects"
+          "all": "All Entities"
         },
         "button": {
           "start": "Start Reindex",
@@ -4803,31 +4629,22 @@
     "queues": {
       "title": "Background Job Queues",
       "description": "Monitor and manage background job processing queues",
-      "refresh": "Refresh",
       "queueNames": {
         "forecast-updates": "Forecast Updates",
-        "notifications": "Notifications",
         "emails": "Email Queue",
         "issue-sync": "Issue Synchronization",
         "testmo-imports": "Testmo Imports",
         "elasticsearch-reindex": "Elasticsearch Reindex"
       },
       "status": {
-        "error": "Error",
         "paused": "Paused",
-        "active": "Active",
         "idle": "Idle"
       },
       "table": {
         "queue": "Queue",
-        "status": "Status",
         "concurrency": "Concurrency",
         "waiting": "Waiting",
-        "active": "Active",
-        "completed": "Completed",
-        "failed": "Failed",
-        "delayed": "Delayed",
-        "actions": "Actions"
+        "failed": "Failed"
       },
       "concurrency": {
         "title": "Worker Concurrency",
@@ -4864,9 +4681,7 @@
           "confirmDescription": "This will completely wipe the queue, removing all jobs regardless of state. This action cannot be undone and should only be used in emergency situations."
         },
         "warning": "Warning",
-        "irreversible": "This action cannot be undone. Please confirm you want to proceed.",
-        "cancel": "Cancel",
-        "confirm": "Confirm"
+        "irreversible": "This action cannot be undone. Please confirm you want to proceed."
       },
       "success": {
         "actionCompleted": "Action Completed",
@@ -4884,35 +4699,20 @@
         "title": "Queue Jobs",
         "description": "View and manage individual jobs in the queue",
         "noJobs": "No jobs found in this queue",
-        "filters": {
-          "all": "All States",
-          "waiting": "Waiting",
-          "active": "Active",
-          "completed": "Completed",
-          "failed": "Failed",
-          "delayed": "Delayed"
-        },
         "table": {
           "id": "Job ID",
           "name": "Job Name",
-          "state": "State",
-          "attempts": "Attempts",
-          "timestamp": "Created",
-          "duration": "Duration",
-          "actions": "Actions"
+          "attempts": "Attempts"
         },
         "details": {
           "title": "Job Details",
-          "state": "State",
           "failedReason": "Failure Reason",
           "stacktrace": "Stack Trace",
           "data": "Job Data",
           "returnValue": "Return Value",
           "options": "Job Options",
-          "created": "Created",
           "processed": "Processed",
-          "finished": "Finished",
-          "duration": "Duration"
+          "finished": "Finished"
         },
         "success": {
           "actionCompleted": "Job action completed",
@@ -4933,7 +4733,6 @@
       }
     },
     "auditLogs": {
-      "title": "Audit Logs",
       "description": "View system-wide audit trail for security and compliance tracking",
       "filterPlaceholder": "Search by entity, user, or action...",
       "filterAction": "Action",
@@ -4956,12 +4755,10 @@
         "entityName": "Entity Name",
         "user": "User",
         "project": "Project",
-        "email": "Email",
         "userId": "User ID"
       },
       "system": "System",
-      "exportCsv": "Export CSV",
-      "exporting": "Exporting..."
+      "exportCsv": "Export CSV"
     }
   },
   "components": {
@@ -5232,7 +5029,6 @@
     "failedToCreate": "Failed to create link.",
     "removeLink": "Remove",
     "confirmRemoveLink": "Are you sure you want to remove this link?",
-    "cancel": "Cancel",
     "DEPENDS_ON": "Dependency",
     "SAME_TEST_DIFFERENT_SOURCE": "Same Test (Different Source)",
     "status": "Latest Status",
@@ -5969,8 +5765,6 @@
     },
     "drillDown": {
       "title": "Detailed Records",
-      "exportCsv": "Export CSV",
-      "exporting": "Exporting...",
       "loading": "Loading records...",
       "loadingMore": "Loading more...",
       "noRecords": "No records found",
@@ -6262,7 +6056,6 @@
     "description": "Thank you for trying TestPlanIt! Your trial period has ended and this instance is no longer accessible.",
     "nextSteps": "To continue using TestPlanIt and access your test data, contact our sales team.",
     "pricingPlans": "Pricing Plans",
-    "contactButton": "Contact Sales",
     "dataRetention": "Your test data is safely stored and will be available when you upgrade your account."
   }
 }

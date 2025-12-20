@@ -67,6 +67,7 @@ interface ElasticsearchAdminProps {
 
 export function ElasticsearchAdmin({ isMultiTenantMode = false }: ElasticsearchAdminProps) {
   const t = useTranslations("admin.elasticsearch");
+  const tGlobal = useTranslations();
   const { toast } = useToast();
 
   const [status, setStatus] = useState<ElasticsearchStatus | null>(null);
@@ -129,7 +130,7 @@ export function ElasticsearchAdmin({ isMultiTenantMode = false }: ElasticsearchA
 
       if (response.ok) {
         toast({
-          title: t("settings.saved"),
+          title: tGlobal("admin.notifications.success.title"),
           description: t("settings.savedDescription"),
         });
 
@@ -327,7 +328,7 @@ export function ElasticsearchAdmin({ isMultiTenantMode = false }: ElasticsearchA
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
-              {t("status.refresh")}
+              {tGlobal("common.actions.refresh")}
             </Button>
           </div>
           <CardDescription>{t("status.description")}</CardDescription>
@@ -345,7 +346,7 @@ export function ElasticsearchAdmin({ isMultiTenantMode = false }: ElasticsearchA
                 <div>
                   <div className="font-medium">
                     {status.available
-                      ? t("status.connected")
+                      ? tGlobal("admin.integrations.oauth.connected")
                       : t("status.disconnected")}
                   </div>
                   {status.message && (
@@ -413,7 +414,7 @@ export function ElasticsearchAdmin({ isMultiTenantMode = false }: ElasticsearchA
       {!isMultiTenantMode && (
         <Card>
           <CardHeader>
-            <CardTitle>{t("settings.title")}</CardTitle>
+            <CardTitle>{tGlobal("common.fields.configuration")}</CardTitle>
             <CardDescription>{t("settings.description")}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -441,10 +442,10 @@ export function ElasticsearchAdmin({ isMultiTenantMode = false }: ElasticsearchA
                     {savingReplicas ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        {t("settings.saving")}
+                        {tGlobal("common.actions.saving")}
                       </>
                     ) : (
-                      t("settings.save")
+                      tGlobal("admin.notifications.save")
                     )}
                   </Button>
                 </div>
@@ -455,7 +456,7 @@ export function ElasticsearchAdmin({ isMultiTenantMode = false }: ElasticsearchA
 
               <Alert>
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{t("settings.note.title")}</AlertTitle>
+                <AlertTitle>{tGlobal("common.fields.note")}</AlertTitle>
                 <AlertDescription>
                   {t("settings.note.description")}
                 </AlertDescription>
@@ -484,25 +485,25 @@ export function ElasticsearchAdmin({ isMultiTenantMode = false }: ElasticsearchA
               <SelectContent>
                 <SelectItem value="all">{t("reindex.entities.all")}</SelectItem>
                 <SelectItem value="repositoryCases">
-                  {t("reindex.entities.repositoryCases")}
+                  {tGlobal("search.entityTypes.repositoryCase")}
                 </SelectItem>
                 <SelectItem value="testRuns">
-                  {t("reindex.entities.testRuns")}
+                  {tGlobal("runs.title")}
                 </SelectItem>
                 <SelectItem value="sessions">
-                  {t("reindex.entities.sessions")}
+                  {tGlobal("common.fields.sessions")}
                 </SelectItem>
                 <SelectItem value="sharedSteps">
-                  {t("reindex.entities.sharedSteps")}
+                  {tGlobal("enums.ApplicationArea.SharedSteps")}
                 </SelectItem>
                 <SelectItem value="issues">
-                  {t("reindex.entities.issues")}
+                  {tGlobal("common.fields.issues")}
                 </SelectItem>
                 <SelectItem value="milestones">
-                  {t("reindex.entities.milestones")}
+                  {tGlobal("common.fields.milestones")}
                 </SelectItem>
                 <SelectItem value="projects">
-                  {t("reindex.entities.projects")}
+                  {tGlobal("common.fields.projects")}
                 </SelectItem>
               </SelectContent>
             </Select>

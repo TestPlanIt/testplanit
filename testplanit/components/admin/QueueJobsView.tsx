@@ -73,6 +73,7 @@ interface QueueJobsViewProps {
 
 export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewProps) {
   const t = useTranslations("admin.queues.jobs");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common.actions");
   const { toast } = useToast();
 
@@ -245,12 +246,12 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t("filters.all")}</SelectItem>
-                  <SelectItem value="waiting">{t("filters.waiting")}</SelectItem>
-                  <SelectItem value="active">{t("filters.active")}</SelectItem>
-                  <SelectItem value="completed">{t("filters.completed")}</SelectItem>
-                  <SelectItem value="failed">{t("filters.failed")}</SelectItem>
-                  <SelectItem value="delayed">{t("filters.delayed")}</SelectItem>
+                  <SelectItem value="all">{tGlobal("repository.views.allStates")}</SelectItem>
+                  <SelectItem value="waiting">{tGlobal("admin.queues.table.waiting")}</SelectItem>
+                  <SelectItem value="active">{tGlobal("common.status.active")}</SelectItem>
+                  <SelectItem value="completed">{tGlobal("dates.completed")}</SelectItem>
+                  <SelectItem value="failed">{tGlobal("admin.queues.table.failed")}</SelectItem>
+                  <SelectItem value="delayed">{tGlobal("milestones.statusLabels.delayed")}</SelectItem>
                 </SelectContent>
               </Select>
               <Button variant="outline" size="sm" onClick={loadJobs} disabled={loading}>
@@ -277,11 +278,11 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
                 <TableRow>
                   <TableHead>{t("table.id")}</TableHead>
                   <TableHead>{t("table.name")}</TableHead>
-                  <TableHead>{t("table.state")}</TableHead>
+                  <TableHead>{tGlobal("common.fields.state")}</TableHead>
                   <TableHead>{t("table.attempts")}</TableHead>
-                  <TableHead>{t("table.timestamp")}</TableHead>
-                  <TableHead>{t("table.duration")}</TableHead>
-                  <TableHead className="text-right">{t("table.actions")}</TableHead>
+                  <TableHead>{tGlobal("common.fields.created")}</TableHead>
+                  <TableHead>{tGlobal("charts.duration")}</TableHead>
+                  <TableHead className="text-right">{tGlobal("common.actions.actionsLabel")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -364,7 +365,7 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
             <ScrollArea className="max-h-[60vh]">
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">{t("details.state")}</h4>
+                  <h4 className="text-sm font-semibold mb-2">{tGlobal("common.fields.state")}</h4>
                   {getStateBadge(selectedJob.state)}
                 </div>
 
@@ -415,7 +416,7 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-semibold">{t("details.created")}:</span>{" "}
+                    <span className="font-semibold">{tGlobal("common.fields.created")}:</span>{" "}
                     {formatTimestamp(selectedJob.timestamp)}
                   </div>
                   <div>
@@ -427,7 +428,7 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
                     {formatTimestamp(selectedJob.finishedOn)}
                   </div>
                   <div>
-                    <span className="font-semibold">{t("details.duration")}:</span>{" "}
+                    <span className="font-semibold">{tGlobal("charts.duration")}:</span>{" "}
                     {formatDuration(selectedJob.processedOn, selectedJob.finishedOn)}
                   </div>
                 </div>

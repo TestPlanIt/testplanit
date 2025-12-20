@@ -38,6 +38,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 
 export function AddMilestoneTypeModal() {
   const t = useTranslations("admin.milestones.add");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [selectedIconId, setSelectedIconId] = useState<number | null>(null);
@@ -45,7 +46,7 @@ export function AddMilestoneTypeModal() {
 
   const FormSchema = z.object({
     name: z.string().min(2, {
-      message: t("fields.name_error"),
+      message: tGlobal("common.fields.validation.nameRequired"),
     }),
     isDefault: z.boolean(),
   });
@@ -101,7 +102,7 @@ export function AddMilestoneTypeModal() {
       } else {
         form.setError("root", {
           type: "custom",
-          message: t("errors.unknown"),
+          message: tGlobal("milestones.errors.unknown"),
         });
       }
       setIsSubmitting(false);

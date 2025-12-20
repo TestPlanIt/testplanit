@@ -67,6 +67,7 @@ interface EditUserModalProps {
 
 export function EditUserModal({ user }: EditUserModalProps) {
   const t = useTranslations("admin.users.edit");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,11 +75,11 @@ export function EditUserModal({ user }: EditUserModalProps) {
   // Define a Zod schema specifically for form validation
   const EditUserFormValidationSchema = z.object({
     name: z.string().min(1, {
-      message: t("fields.name_error"),
+      message: tGlobal("common.fields.validation.nameRequired"),
     }),
     email: z.email()
       .min(1, {
-        message: t("fields.email_error"),
+        message: tGlobal("auth.signup.errors.emailRequired"),
       }),
     isActive: z.boolean(),
     access: z.enum(["ADMIN", "USER", "PROJECTADMIN", "NONE"]),
@@ -276,12 +277,12 @@ export function EditUserModal({ user }: EditUserModalProps) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
           type: "custom",
-          message: t("errors.nameExists"),
+          message: tGlobal("common.errors.nameExists"),
         });
       } else {
         form.setError("root", {
           type: "custom",
-          message: t("errors.unknown"),
+          message: tGlobal("milestones.errors.unknown"),
         });
       }
       setIsSubmitting(false);

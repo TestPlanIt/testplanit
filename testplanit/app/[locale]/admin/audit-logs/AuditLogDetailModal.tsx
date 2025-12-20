@@ -25,6 +25,7 @@ export function AuditLogDetailModal({
   onClose,
 }: AuditLogDetailModalProps) {
   const t = useTranslations("admin.auditLogs");
+  const tGlobal = useTranslations();
   const { data: session } = useSession();
 
   if (!log) return null;
@@ -95,7 +96,7 @@ export function AuditLogDetailModal({
                 </div>
                 <div className="overflow-hidden">
                   <label className="text-sm font-medium text-muted-foreground">
-                    {t("columns.email")}
+                    {tGlobal("common.fields.email")}
                   </label>
                   <p className="text-sm truncate">{log.userEmail || "-"}</p>
                 </div>

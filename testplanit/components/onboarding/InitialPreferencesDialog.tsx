@@ -66,6 +66,7 @@ const FormSchema = z.object({
 export function InitialPreferencesDialog() {
   const { data: session, update } = useSession();
   const t = useTranslations("home.initialPreferences");
+  const tGlobal = useTranslations();
   const tNotifications = useTranslations("users.profile.notifications.mode");
   const tUserMenu = useTranslations("userMenu");
   const tProfileEdit = useTranslations("users.profile.edit");
@@ -469,7 +470,7 @@ export function InitialPreferencesDialog() {
                 name="itemsPerPage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tProfileEdit("itemsPerPage")}</FormLabel>
+                    <FormLabel>{tGlobal("common.fields.itemsPerPage")}</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
@@ -477,7 +478,7 @@ export function InitialPreferencesDialog() {
                       >
                         <SelectTrigger>
                           <SelectValue
-                            placeholder={tProfileEdit("itemsPerPage")}
+                            placeholder={tGlobal("common.fields.itemsPerPage")}
                           />
                         </SelectTrigger>
                         <SelectContent>
@@ -593,7 +594,7 @@ export function InitialPreferencesDialog() {
                 name="timezone"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>{tProfileEdit("timezone")}</FormLabel>
+                    <FormLabel>{tGlobal("common.fields.timezone")}</FormLabel>
                     <FormControl>
                       <AsyncCombobox<TimezoneOption>
                         value={
@@ -630,7 +631,7 @@ export function InitialPreferencesDialog() {
                 {t("skip")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? t("saving") : t("save")}
+                {isSubmitting ? tGlobal("common.actions.saving") : t("save")}
               </Button>
             </DialogFooter>
           </form>

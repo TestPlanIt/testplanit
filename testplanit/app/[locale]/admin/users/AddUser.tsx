@@ -54,6 +54,7 @@ import { Roles } from "@prisma/client";
 
 export function AddUserModal() {
   const t = useTranslations("admin.users.add");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,10 +72,10 @@ export function AddUserModal() {
   const AddUserFormValidationSchema = z
     .object({
       name: z.string().min(2, {
-        message: t("fields.name_error"),
+        message: tGlobal("common.fields.validation.nameRequired"),
       }),
       email: z.email()
-              .min(1, { message: t("fields.email_error") }),
+              .min(1, { message: tGlobal("auth.signup.errors.emailRequired") }),
       password: z.string().min(4, t("fields.password_error")),
       confirmPassword: z.string().min(4, t("fields.confirmPassword_error")),
       isActive: z.boolean(),
@@ -90,7 +91,7 @@ export function AddUserModal() {
       if (confirmPassword !== password) {
         ctx.issues.push({
                     code: "custom",
-                    message: t("fields.passwordsDoNotMatch"),
+                    message: tGlobal("auth.signup.errors.passwordsDoNotMatch"),
                     path: ["confirmPassword"],
                       input: ''
                   });
@@ -250,7 +251,7 @@ export function AddUserModal() {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("root", {
           type: "custom",
-          message: t("errors.userExists"),
+          message: tGlobal("common.errors.emailExists"),
         });
       } else {
         form.setError("root", {

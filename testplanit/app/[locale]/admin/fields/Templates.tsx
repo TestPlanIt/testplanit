@@ -33,6 +33,7 @@ export default function TemplateComponent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const t = useTranslations("admin.templates");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const [sortConfig, setSortConfig] = useState<
@@ -174,7 +175,7 @@ export default function TemplateComponent() {
                 <CardTitle>
                   <div className="flex items-center">
                     <LayoutTemplate className="mr-1" />
-                    {t("title")}
+                    {tGlobal("common.labels.templates")}
                   </div>
                 </CardTitle>
               </div>
@@ -209,7 +210,7 @@ export default function TemplateComponent() {
             </AlertDialogHeader>
             {t("confirmSetAsDefaultDescription")}
             <AlertDialogDescription>
-              {t("confirmSetAsDefaultWarning")}
+              {tGlobal("runs.delete.warning")}
               <br />
               {t("confirmSetAsDefaultProjects")}
             </AlertDialogDescription>

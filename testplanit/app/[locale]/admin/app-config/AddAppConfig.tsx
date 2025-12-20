@@ -24,6 +24,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 
 export function AddAppConfigModal() {
   const t = useTranslations("admin.appConfig");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,7 +34,7 @@ export function AddAppConfigModal() {
       message: t("errors.keyRequired"),
     }),
     value: z.string().min(1, {
-      message: t("errors.valueRequired"),
+      message: tGlobal("common.errors.valueRequired"),
     }),
   });
 

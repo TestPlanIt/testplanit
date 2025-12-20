@@ -35,6 +35,7 @@ export function DeleteMilestoneTypeModal({
   milestoneType,
 }: DeleteMilestoneTypeModalProps) {
   const t = useTranslations("admin.milestones.delete");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const [open, setOpen] = useState(false);
@@ -120,7 +121,7 @@ export function DeleteMilestoneTypeModal({
               })}
             </div>
             <div className="bg-destructive text-destructive-foreground p-2">
-              {t("warning")}
+              {tGlobal("runs.delete.warning")}
             </div>
             <AlertDialogFooter>
               {errors.root && (

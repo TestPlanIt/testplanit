@@ -84,6 +84,7 @@ export default function MilestoneFormControls({
   }, [completedAt, setValue]);
   const { theme } = useTheme();
   const t = useTranslations("milestones");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
     include: { colorFamily: true },
@@ -231,7 +232,7 @@ export default function MilestoneFormControls({
                       disabled={!isEditMode}
                     />
                   </FormControl>
-                  <FormLabel>{t("statusLabels.completed")}</FormLabel>
+                  <FormLabel>{tGlobal("dates.completed")}</FormLabel>
                   <FormMessage />
                 </FormItem>
               )}
@@ -239,8 +240,8 @@ export default function MilestoneFormControls({
             <DatePickerField
               control={control}
               name="completedAt"
-              label={t("labels.dueDate")}
-              placeholder={t("labels.dueDate")}
+              label={tGlobal("milestones.fields.dueDate")}
+              placeholder={tGlobal("milestones.fields.dueDate")}
               disabled={!isEditMode}
             />
             <FormField
@@ -366,7 +367,7 @@ export default function MilestoneFormControls({
         name="note"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t("labels.description")}</FormLabel>
+            <FormLabel>{tGlobal("issues.description")}</FormLabel>
             {isEditMode ||
             (milestone?.note &&
               milestone?.note !== JSON.stringify(emptyEditorContent)) ? (

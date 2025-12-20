@@ -41,6 +41,7 @@ function GroupList() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const t = useTranslations("admin.groups");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const {
     currentPage,
@@ -205,7 +206,7 @@ function GroupList() {
           <CardHeader className="w-full">
             <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
               <div>
-                <CardTitle>{t("title")}</CardTitle>
+                <CardTitle>{tGlobal("common.fields.groups")}</CardTitle>
               </div>
               <div>
                 <AddGroupModal />

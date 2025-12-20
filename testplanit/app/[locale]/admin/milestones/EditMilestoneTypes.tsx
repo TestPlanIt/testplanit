@@ -57,6 +57,7 @@ export function EditMilestoneTypeModal({
   milestoneType,
 }: EditMilestoneTypeModalProps) {
   const t = useTranslations("admin.milestones.edit");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const [open, setOpen] = useState(false);
@@ -260,9 +261,9 @@ export function EditMilestoneTypeModal({
                     <div>
                       <Alert>
                         <TriangleAlert className="w-8 h-8 -mx-2" />
-                        <AlertTitle>{t("setDefault.title")}</AlertTitle>
+                        <AlertTitle>{tGlobal("admin.milestones.confirmDefaultDescription")}</AlertTitle>
                         <AlertDescription>
-                          {t("setDefault.description")}
+                          {tGlobal("admin.milestones.warning")}
                         </AlertDescription>
                       </Alert>
                     </div>

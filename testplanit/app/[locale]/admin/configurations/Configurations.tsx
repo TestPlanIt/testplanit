@@ -31,6 +31,7 @@ function Configurations(): React.ReactElement | null {
   } = useRequireAuth();
   const router = useRouter();
   const t = useTranslations("admin.configurations");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const {
     currentPage,
@@ -176,7 +177,7 @@ function Configurations(): React.ReactElement | null {
           <CardHeader className="w-full">
             <div className="flex items-center justify-between text-primary">
               <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
-                <CardTitle>{t("title")}</CardTitle>
+                <CardTitle>{tGlobal("common.fields.configurations")}</CardTitle>
               </div>
               <div>
                 <AddConfigurationWizard />

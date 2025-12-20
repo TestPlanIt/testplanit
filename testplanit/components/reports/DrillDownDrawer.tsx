@@ -115,6 +115,7 @@ export function DrillDownDrawer({
 }: DrillDownDrawerProps) {
   const t = useTranslations();
   const tReports = useTranslations("reports.drillDown");
+  const tGlobal = useTranslations();
   const tReportsColumns = useTranslations("reports.drillDown.columns");
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -214,7 +215,7 @@ export function DrillDownDrawer({
                 disabled={isExporting || isLoading || records.length === 0}
               >
                 <Download className="h-4 w-4 mr-2" />
-                {isExporting ? tReports("exporting") : tReports("exportCsv")}
+                {isExporting ? tGlobal("repository.exportModal.exporting") : tGlobal("admin.auditLogs.exportCsv")}
               </Button>
               <DrawerClose asChild>
                 <Button variant="ghost" size="icon">

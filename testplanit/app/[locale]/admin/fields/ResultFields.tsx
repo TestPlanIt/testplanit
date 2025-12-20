@@ -16,6 +16,7 @@ export default function ResultFields() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const t = useTranslations("admin.templates.resultFields");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [sortConfig, setSortConfig] = useState<
     | {
@@ -113,7 +114,7 @@ export default function ResultFields() {
               <CardTitle>
                 <div className="flex items-center">
                   <SquareCheck className="mr-1" />
-                  {t("title")}
+                  {tGlobal("common.fields.resultFields")}
                 </div>
               </CardTitle>{" "}
             </div>

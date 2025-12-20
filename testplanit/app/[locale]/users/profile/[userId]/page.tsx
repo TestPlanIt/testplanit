@@ -95,6 +95,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: session } = useSession();
   const t = useTranslations("users.profile");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const tEdit = useTranslations("users.profile.edit");
   const tNotifications = useTranslations("users.profile.notifications");
@@ -450,7 +451,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="flex items-center">
-                                  {tEdit("name")}
+                                  {tGlobal("common.name")}
                                   <HelpPopover helpKey="user.name" />
                                 </FormLabel>
                                 <FormControl>
@@ -469,7 +470,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="flex items-center">
-                                  {tEdit("email")}
+                                  {tGlobal("common.fields.email")}
                                   <HelpPopover helpKey="user.email" />
                                 </FormLabel>
                                 <FormControl>
@@ -656,7 +657,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                   {user?.id === session?.user?.id && user.isApi && (
                     <AccordionItem value="api-tokens">
                       <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                        {t("apiTokens.title")}
+                        {tGlobal("admin.menu.apiTokens")}
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="bg-muted/30 p-4 rounded-lg border mt-2">
@@ -957,7 +958,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel className="flex items-center">
-                                      {tEdit("itemsPerPage")}
+                                      {tGlobal("common.fields.itemsPerPage")}
                                       <HelpPopover helpKey="user.itemsPerPage" />
                                     </FormLabel>
                                     <FormControl>
@@ -973,7 +974,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                       >
                                         <SelectTrigger>
                                           <SelectValue
-                                            placeholder={tEdit("itemsPerPage")}
+                                            placeholder={tGlobal("common.fields.itemsPerPage")}
                                           />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -1001,7 +1002,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel className="flex items-center">
-                                      {tEdit("dateFormat")}
+                                      {tGlobal("home.initialPreferences.dateFormat")}
                                       <HelpPopover helpKey="user.dateFormat" />
                                     </FormLabel>
                                     <FormControl>
@@ -1017,7 +1018,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                       >
                                         <SelectTrigger>
                                           <SelectValue
-                                            placeholder={tEdit("dateFormat")}
+                                            placeholder={tGlobal("home.initialPreferences.dateFormat")}
                                           />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -1052,7 +1053,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel className="flex items-center">
-                                      {tEdit("timeFormat")}
+                                      {tGlobal("home.initialPreferences.timeFormat")}
                                       <HelpPopover helpKey="user.timeFormat" />
                                     </FormLabel>
                                     <FormControl>
@@ -1068,7 +1069,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                       >
                                         <SelectTrigger>
                                           <SelectValue
-                                            placeholder={tEdit("timeFormat")}
+                                            placeholder={tGlobal("home.initialPreferences.timeFormat")}
                                           />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -1103,7 +1104,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel className="flex items-center">
-                                      {tEdit("timezone")}
+                                      {tGlobal("common.fields.timezone")}
                                       <HelpPopover helpKey="user.timezone" />
                                     </FormLabel>
                                     <FormControl>

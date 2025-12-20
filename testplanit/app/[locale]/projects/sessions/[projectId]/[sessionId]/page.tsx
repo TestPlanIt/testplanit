@@ -296,6 +296,7 @@ function SessionFormControls({
   onAttachmentPendingChanges,
 }: SessionFormControlsProps) {
   const t = useTranslations("sessions");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const locale = useLocale();
@@ -381,7 +382,7 @@ function SessionFormControls({
 
           return (
             <FormItem>
-              <FormLabel>{t("labels.state")}</FormLabel>
+              <FormLabel>{tGlobal("common.fields.state")}</FormLabel>
               <FormControl>
                 {isEditMode ? (
                   <Select
@@ -447,7 +448,7 @@ function SessionFormControls({
 
           return (
             <FormItem>
-              <FormLabel>{t("labels.configuration")}</FormLabel>
+              <FormLabel>{tGlobal("common.fields.configuration")}</FormLabel>
               <FormControl>
                 {isEditMode ? (
                   <Select
@@ -511,7 +512,7 @@ function SessionFormControls({
         render={({ field }) => {
           return (
             <FormItem>
-              <FormLabel>{t("labels.milestone")}</FormLabel>
+              <FormLabel>{tGlobal("common.fields.milestone")}</FormLabel>
               <FormControl>
                 {isEditMode ? (
                   <MilestoneSelect
@@ -530,7 +531,7 @@ function SessionFormControls({
                       }
                       className="h-4 w-4 shrink-0 mt-1"
                     />
-                    {testSession?.milestone?.name || t("placeholders.none")}
+                    {testSession?.milestone?.name || tGlobal("common.actions.none")}
                   </div>
                 )}
               </FormControl>
@@ -546,7 +547,7 @@ function SessionFormControls({
         name="assignedToId"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t("labels.assignedTo")}</FormLabel>
+            <FormLabel>{tGlobal("common.fields.assignedTo")}</FormLabel>
             <FormControl>
               {isEditMode ? (
                 <Select
@@ -565,7 +566,7 @@ function SessionFormControls({
                             name="user-round-x"
                             className="h-4 w-4"
                           />
-                          {t("placeholders.none")}
+                          {tGlobal("common.actions.none")}
                         </div>
                       </SelectItem>
                       {projectAssignments?.map((assignment) => (
@@ -611,7 +612,7 @@ function SessionFormControls({
         name="estimate"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t("labels.estimate")}</FormLabel>
+            <FormLabel>{tGlobal("common.fields.estimate")}</FormLabel>
             <FormControl>
               {isEditMode ? (
                 <Input
@@ -644,7 +645,7 @@ function SessionFormControls({
 
       {/* Tags */}
       <div className="space-y-2">
-        <FormLabel>{t("labels.tags")}</FormLabel>
+        <FormLabel>{tGlobal("tags.title")}</FormLabel>
         {isEditMode ? (
           // Wrap ManageTags in FormControl for consistent width in edit mode
           <FormControl>
@@ -762,7 +763,7 @@ function SessionFormControls({
         render={({ field }) => {
           return (
             <FormItem>
-              <FormLabel>{t("labels.attachments")}</FormLabel>
+              <FormLabel>{tGlobal("common.fields.attachments")}</FormLabel>
               <FormControl>
                 <div className="space-y-4">
                   {isEditMode && (
@@ -925,7 +926,7 @@ export default function SessionPage() {
       if (estimateDuration === null) {
         ctx.issues.push({
           code: z.ZodIssueCode.custom,
-          message: t("validation.invalidDuration"),
+          message: tGlobal("common.validation.invalidDurationFormat"),
           path: ["estimate"],
           input: "",
         });
@@ -1812,7 +1813,7 @@ export default function SessionPage() {
                         name="note"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("labels.description")}</FormLabel>
+                            <FormLabel>{tGlobal("issues.description")}</FormLabel>
                             <FormControl>
                               {contentLoaded ? (
                                 <div className="min-h-[50px] max-h-[125px] overflow-y-auto">
@@ -1859,7 +1860,7 @@ export default function SessionPage() {
                         name="mission"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("labels.mission")}</FormLabel>
+                            <FormLabel>{tGlobal("common.fields.mission")}</FormLabel>
                             <FormControl>
                               {contentLoaded ? (
                                 <div className="min-h-[50px] max-h-[250px] overflow-y-auto">

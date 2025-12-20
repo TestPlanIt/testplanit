@@ -54,6 +54,7 @@ export default function IntegrationsPage() {
 
 function IntegrationList() {
   const t = useTranslations("admin.integrations");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -218,8 +219,8 @@ function IntegrationList() {
       { where: { id: integrationToDelete.id } },
       {
         onSuccess: () => {
-          toast.success(t("delete.successMessage"), {
-            description: t("delete.successDescription"),
+          toast.success(tGlobal("admin.integrations.deleteSuccess"), {
+            description: tGlobal("admin.integrations.deleteSuccessDescription"),
           });
           refetch();
         },
@@ -323,7 +324,7 @@ function IntegrationList() {
                 className="items-center flex"
               >
                 <Plug className="inline mr-2 h-8 w-8" />
-                {t("title")}
+                {tGlobal("admin.menu.integrations")}
               </CardTitle>
               <CardDescription data-testid="integrations-admin-page-description">
                 {t("description")}
@@ -420,7 +421,7 @@ function IntegrationList() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Trash2 className="h-5 w-5 text-destructive" />
-              {t("delete.confirmTitle")}
+              {tGlobal("admin.integrations.deleteIntegration")}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <p>

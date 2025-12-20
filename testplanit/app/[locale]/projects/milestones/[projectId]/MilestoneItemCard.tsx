@@ -75,6 +75,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
   level = 0,
 }) => {
   const t = useTranslations("milestones");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const [milestoneForecast, setMilestoneForecast] =
@@ -201,7 +202,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                     onSelect={() => onStartMilestone(milestone)}
                   >
                     <SquarePlay className="w-5 h-5 mr-2" />
-                    {t("status.start")}
+                    {tGlobal("common.actions.start")}
                   </DropdownMenuItem>
                 )}
                 {milestone.isStarted && !milestone.isCompleted && (
@@ -210,7 +211,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                       onSelect={() => onOpenCompleteDialog(milestone)}
                     >
                       <CheckCircle className="w-5 h-5 mr-2" />
-                      {t("status.complete")}
+                      {tGlobal("common.actions.complete")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onSelect={() => onStopMilestone(milestone)}

@@ -91,6 +91,7 @@ interface EditTemplateModalProps {
 
 export function EditTemplateModal({ template }: EditTemplateModalProps) {
   const t = useTranslations("admin.templates.edit");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const [open, setOpen] = useState(false);
@@ -420,7 +421,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                       <HelpPopover helpKey="template.isDefault" />
                     </FormLabel>
                     {isDefault && (
-                      <FormMessage>{t("defaultTemplateHint")}</FormMessage>
+                      <FormMessage>{tGlobal("admin.templates.add.defaultTemplateHint")}</FormMessage>
                     )}
                     <FormMessage />
                   </FormItem>

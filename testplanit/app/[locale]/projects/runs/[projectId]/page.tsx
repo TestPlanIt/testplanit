@@ -94,6 +94,7 @@ interface ZoomedChartDetails {
 
 const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   const t = useTranslations("runs");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { projectId } = use(params);
   const router = useRouter();
@@ -1163,11 +1164,11 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                     <CardHeader className="pb-2 flex flex-row items-start justify-between">
                       <div>
                         <CardTitle className="font-medium">
-                          {t("summary.workDistribution")}
+                          {tGlobal("sessions.summary.workDistributionTitle")}
                         </CardTitle>
                         <CardDescription>
                           <div className="flex flex-row gap-1">
-                            <p>{t("summary.totalEstTimeRemainingSunburst")}</p>
+                            <p>{tGlobal("sessions.summary.workDistributionDescription")}</p>
                             <p>
                               {toHumanReadable(
                                 totalRemainingEstimateForDisplay,
@@ -1187,7 +1188,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                         onClick={() =>
                           handleOpenChartOverlay({
                             type: "sunburst",
-                            title: t("summary.workDistribution"),
+                            title: tGlobal("sessions.summary.workDistributionTitle"),
                             data: sunburstChartData,
                             projectId: projectId,
                             onLegendDataGenerated: handleLegendDataGenerated,
@@ -1216,7 +1217,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                         />
                       ) : (
                         <p className="text-sm text-muted-foreground text-center w-full h-[210px] flex items-center justify-center">
-                          {t("summary.noForecastData")}
+                          {tGlobal("milestones.empty.forecasts")}
                         </p>
                       )}
                     </CardContent>
@@ -1414,7 +1415,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                         />
                       ) : (
                         <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
-                          {t("summary.noCompletedRuns")}
+                          {tGlobal("sessions.summary.noCompletedRuns")}
                         </p>
                       )}
                     </CardContent>

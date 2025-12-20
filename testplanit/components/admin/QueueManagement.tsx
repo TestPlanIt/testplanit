@@ -69,6 +69,7 @@ interface QueueInfo {
 
 export function QueueManagement() {
   const t = useTranslations("admin.queues");
+  const tGlobal = useTranslations();
   const { toast } = useToast();
 
   const [queues, setQueues] = useState<QueueInfo[]>([]);
@@ -176,7 +177,7 @@ export function QueueManagement() {
   const getQueueDisplayName = (name: string) => {
     const queueNames: Record<string, string> = {
       "forecast-updates": t("queueNames.forecast-updates"),
-      "notifications": t("queueNames.notifications"),
+      "notifications": tGlobal("common.fields.notificationMode"),
       "emails": t("queueNames.emails"),
       "issue-sync": t("queueNames.issue-sync"),
       "testmo-imports": t("queueNames.testmo-imports"),
@@ -195,7 +196,7 @@ export function QueueManagement() {
       return (
         <Badge variant="destructive" className="flex items-center gap-1">
           <XCircle className="h-3 w-3" />
-          {t("status.error")}
+          {tGlobal("common.errors.error")}
         </Badge>
       );
     }
@@ -213,7 +214,7 @@ export function QueueManagement() {
       return (
         <Badge variant="default" className="flex items-center gap-1">
           <Activity className="h-3 w-3 animate-pulse" />
-          {t("status.active")}
+          {tGlobal("common.status.active")}
         </Badge>
       );
     }
@@ -258,7 +259,7 @@ export function QueueManagement() {
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
-              <span className="ml-2">{t("refresh")}</span>
+              <span className="ml-2">{tGlobal("common.actions.refresh")}</span>
             </Button>
           </div>
         </CardHeader>
@@ -267,14 +268,14 @@ export function QueueManagement() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("table.queue")}</TableHead>
-                <TableHead>{t("table.status")}</TableHead>
+                <TableHead>{tGlobal("common.actions.status")}</TableHead>
                 <TableHead className="text-right">{t("table.concurrency")}</TableHead>
                 <TableHead className="text-right">{t("table.waiting")}</TableHead>
-                <TableHead className="text-right">{t("table.active")}</TableHead>
-                <TableHead className="text-right">{t("table.completed")}</TableHead>
+                <TableHead className="text-right">{tGlobal("common.status.active")}</TableHead>
+                <TableHead className="text-right">{tGlobal("dates.completed")}</TableHead>
                 <TableHead className="text-right">{t("table.failed")}</TableHead>
-                <TableHead className="text-right">{t("table.delayed")}</TableHead>
-                <TableHead className="text-right">{t("table.actions")}</TableHead>
+                <TableHead className="text-right">{tGlobal("milestones.statusLabels.delayed")}</TableHead>
+                <TableHead className="text-right">{tGlobal("common.actions.actionsLabel")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -383,7 +384,7 @@ export function QueueManagement() {
                 variant="outline"
                 onClick={() => setConfirmDialog(null)}
               >
-                {t("actions.cancel")}
+                {tGlobal("common.cancel")}
               </Button>
               <Button
                 variant="destructive"
@@ -391,7 +392,7 @@ export function QueueManagement() {
                   performQueueAction(confirmDialog.queueName, confirmDialog.action)
                 }
               >
-                {t("actions.confirm")}
+                {tGlobal("common.actions.confirm")}
               </Button>
             </DialogFooter>
           </DialogContent>

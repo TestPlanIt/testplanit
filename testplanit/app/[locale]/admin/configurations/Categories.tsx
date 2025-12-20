@@ -61,6 +61,7 @@ export default function CategoryList() {
 
 function ConfigCategoriesList() {
   const t = useTranslations("admin.configurations.categories");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -492,7 +493,7 @@ function ConfigCategoriesList() {
             <CardTitle className="text-xl md:text-2xl">{t("title")}</CardTitle>
             <Button onClick={() => setIsAdding(true)}>
               <PlusCircle className="w-4" />
-              <span className="hidden md:inline">{t("addCategory")}</span>
+              <span className="hidden md:inline">{tGlobal("common.fields.placeholders.addCategory")}</span>
             </Button>
           </div>
         </CardHeader>
@@ -509,7 +510,7 @@ function ConfigCategoriesList() {
                   value={newRecordName}
                   onChange={handleNameChange}
                   onKeyDown={handleKeyDown}
-                  placeholder={t("addCategory")}
+                  placeholder={tGlobal("common.fields.placeholders.addCategory")}
                   className="max-w-xs"
                 />
                 <Button onClick={onSubmit} disabled={isSubmitting}>
