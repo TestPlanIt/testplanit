@@ -1042,11 +1042,9 @@
       "alreadyVerified": "Correo electrónico ya verificado",
       "toast": {
         "verifySuccess": {
-          "title": "Email verificado correctamente",
           "description": "Ahora puedes iniciar sesión en tu cuenta."
         },
         "verifyError": {
-          "title": "Error al verificar el email",
           "description": "Se ha producido un error al verificar el correo electrónico"
         },
         "resendSuccess": {
@@ -1105,7 +1103,6 @@
   "navigation": {
     "menu": {
       "dashboard": "Tablero",
-      "projects": "Proyectos",
       "admin": "Administración",
       "profile": "Perfil",
       "issueTracker": "Problemas"
@@ -1355,11 +1352,7 @@
       "dueDateNotifications": "Notificaciones de fecha de vencimiento"
     },
     "labels": {
-      "description": "Descripción",
-      "documentation": "Documentación",
-      "dueDate": "Fecha de fin",
-      "childMilestones": "Hitos secundarios",
-      "forecast": "Pronóstico"
+      "childMilestones": "Hitos secundarios"
     },
     "placeholders": {
       "description": "Introduce la descripción del hito...",
@@ -1372,16 +1365,13 @@
       "completed": "No hay hitos completados",
       "description": "No se proporcionó descripción",
       "documentation": "No hay documentación proporcionada",
-      "childMilestones": "No hay hitos hijo",
       "testRuns": "No hay pruebas",
-      "sessions": "No hay sesiones",
       "forecasts": "No hay datos de previsión disponibles"
     },
     "statusLabels": {
       "NOT_STARTED": "No iniciado",
       "IN_PROGRESS": "En curso",
       "COMPLETED": "Completado",
-      "completed": "Completado",
       "STOPPED": "Detenido",
       "BLOCKED": "Bloqueado",
       "CANCELLED": "Cancelado",
@@ -1392,8 +1382,6 @@
       "pastDue": "Últimas fechas"
     },
     "status": {
-      "start": "Comenzar",
-      "complete": "Complete",
       "stop": "Parar",
       "reopen": "Reabrir"
     },
@@ -1455,19 +1443,10 @@
     "title": "{count, plural, =1 {Sesión} other {Sesiones}}",
     "labels": {
       "name": "Nombre",
-      "description": "Descripción",
-      "mission": "Misión",
-      "configuration": "Configuración",
-      "milestone": "Hito",
-      "state": "Estado",
-      "assignedTo": "Asignado a",
-      "estimate": "Estimar",
       "elapsed": "Tiempo transcurrido",
       "totalElapsed": "Tiempo gastado",
       "remaining": "Restante: {time}",
-      "overtime": "Sobre la estimación por: {time}",
-      "tags": "Etiquetas",
-      "attachments": "Adjuntos"
+      "overtime": "Sobre la estimación por: {time}"
     },
     "empty": {
       "active": "No hay sesiones activas",
@@ -1505,7 +1484,6 @@
     "validation": {
       "nameMinLength": "El nombre debe tener al menos 2 caracteres.",
       "templateRequired": "Por favor, seleccione una plantilla",
-      "invalidDuration": "Formato de duración inválido. Prueba algo como 30m, 1 semana o 1h 25m",
       "maxDuration": "La duración debe ser menor o igual a {max}."
     },
     "placeholders": {
@@ -1518,7 +1496,6 @@
       "selectState": "Seleccionar Estado",
       "selectUser": "Seleccionar usuario",
       "estimateHint": "ej. 2h 30m",
-      "none": "Ninguna",
       "unassigned": "Sin asignar",
       "noEstimate": "Ningún conjunto de estimaciones",
       "noElapsedTime": "No hay tiempo registrado"
@@ -1662,7 +1639,6 @@
       "timezonePlaceholder": "Buscar zona horaria...",
       "skip": "Mantener valores predeterminados",
       "save": "Guardar preferencias",
-      "saving": "Ahorro...",
       "success": "Preferencias actualizadas",
       "error": "Se produjo un error al guardar tus preferencias."
     },
@@ -1695,12 +1671,6 @@
       "title": "Perfil de usuario",
       "edit": {
         "title": "Editar perfil",
-        "name": "Nombre",
-        "email": "E-mail",
-        "itemsPerPage": "Elementos por página",
-        "dateFormat": "Formato de fecha",
-        "timeFormat": "Formato de hora",
-        "timezone": "Zona horaria",
         "timezonePlaceholder": "Seleccionar o buscar zona horaria...",
         "timezoneRequired": "Zona horaria requerida.",
         "avatarUpdated": "Avatar actualizado correctamente.",
@@ -1756,12 +1726,10 @@
       },
       "changePasswordModal": {
         "buttonText": "Cambiar contraseña",
-        "title": "Cambiar contraseña",
         "description": "Introduzca su contraseña actual y una nueva contraseña para cambiar la contraseña de su cuenta. Esto sólo cambiará su contraseña administrada internamente. Si inicia sesión a través del SSO, esa contraseña no cambiará.",
         "currentPasswordLabel": "Contraseña actual",
         "newPasswordLabel": "Nueva contraseña",
         "confirmPasswordLabel": "Confirmar nueva contraseña",
-        "submitButtonText": "Cambiar contraseña",
         "validation": {
           "passwordsDoNotMatch": "Las nuevas contraseñas no coinciden.",
           "newPasswordTooShort": "La nueva contraseña debe tener al menos 4 caracteres."
@@ -1820,20 +1788,14 @@
         }
       },
       "apiTokens": {
-        "title": "Tokens API",
         "description": "Los tokens de API permiten que aplicaciones y scripts externos accedan a TestPlanIt en su nombre. Tienen los mismos permisos que su cuenta.",
         "create": "Crear token",
         "createTitle": "Crear token de API",
         "createDescription": "Cree un nuevo token de API para autenticar herramientas y scripts externos.",
-        "name": "Nombre",
         "nameLabel": "Nombre del token",
         "namePlaceholder": "p. ej., canalización CI/CD, herramienta CLI",
-        "token": "Simbólico",
-        "created": "Creado",
         "lastUsed": "Último uso",
         "expires": "Caduca",
-        "noExpiry": "Nunca",
-        "never": "Nunca",
         "noTokens": "Aún no se han creado tokens API.",
         "expiryLabel": "Fecha de vencimiento (opcional)",
         "expiryHint": "Déjelo vacío para que no caduque.",
@@ -1859,12 +1821,7 @@
       "remove": "Eliminar avatar",
       "changeProfilePicture": "Cambiar foto de perfil",
       "notAuthenticated": "Debes estar conectado para subir un avatar.",
-      "delete": {
-        "confirmMessage": "¿Está seguro que desea eliminar su avatar?"
-      },
       "upload": {
-        "title": "Subir nueva foto de perfil",
-        "description": "Arrastre y suelte su imagen o haga clic en el botón de abajo para seleccionar un archivo.",
         "errors": {
           "unknown": "Se ha producido un error desconocido"
         }
@@ -2610,7 +2567,6 @@
     "magicSelect": {
       "title": "Selección mágica",
       "description": "Selección de casos de prueba impulsada por IA en función del contexto de ejecución de la prueba",
-      "button": "Selección mágica",
       "counting": "Buscando casos de prueba relevantes...",
       "reasoning": "Razonamiento de IA",
       "reviewSelection": "Revisar los casos de prueba sugeridos",
@@ -2652,8 +2608,7 @@
       "actions": {
         "start": "Analizar casos de prueba",
         "startBatched": "Analizar casos de prueba (lotes{count} )",
-        "accept": "Añadir a la selección",
-        "retry": "Intentar otra vez"
+        "accept": "Añadir a la selección"
       },
       "errors": {
         "title": "Selección fallida",
@@ -2697,10 +2652,7 @@
       "activeRunsLabel": "Ejecutar",
       "totalEstTime": "Tiempo total",
       "responsibleUsers": "Usuarios responsables",
-      "workDistribution": "Distribución del trabajo",
-      "noForecastData": "No hay datos de previsión disponibles",
       "allActiveRuns": "Todas las ejecuciones activas",
-      "totalEstTimeRemainingSunburst": "Tiempo total estimado restante:",
       "recentResultsTitle": "Resultados manuales recientes",
       "recentResultsDescription": "Ver los resultados recientes de la prueba",
       "recentAutomatedResultsTitle": "Resultados automatizados recientes",
@@ -2714,7 +2666,6 @@
       "recentResultsNotes": "Notas",
       "noRecentResults": "No se encontraron resultados recientes.",
       "completionTrendTitle": "Tendencia de finalización (6 meses anteriores)",
-      "noCompletedRuns": "No se han encontrado ejecuciones completadas en los últimos 6 meses.",
       "workDistributionTitle": "Distribución del trabajo",
       "workDistributionDescription": "Distribución de trabajo estimada por asignado.",
       "noWorkDistributionData": "No hay sesiones activas con asignados o estimaciones para mostrar.",
@@ -2734,7 +2685,6 @@
     "details": {
       "title": "Detalles de prueba",
       "description": "Ver los detalles de la prueba",
-      "selectUser": "Seleccionar usuario",
       "fields": {
         "executedBy": "Ejecutado por",
         "executedAt": "Ejecutado en",
@@ -2767,8 +2717,7 @@
         }
       },
       "successMessage": "Ejecución de prueba duplicada con éxito '{name}'.",
-      "errorMessage": "Error al duplicar la ejecución de la prueba. Error: {error}",
-      "untestedStatusName": "Sin probar"
+      "errorMessage": "Error al duplicar la ejecución de la prueba. Error: {error}"
     },
     "filter": {
       "placeholder": "La prueba del filtro se ejecuta..."
@@ -2785,7 +2734,6 @@
   },
   "admin": {
     "menu": {
-      "header": "Administración",
       "systemHeader": "Sistema",
       "appConfig": "Configuración de la aplicación",
       "imports": "Importaciones de datos",
@@ -3498,14 +3446,12 @@
       }
     },
     "projects": {
-      "title": "Proyectos",
       "filter": {
         "placeholder": "Filtrar proyectos..."
       },
       "complete": {
         "title": "Completar proyecto",
-        "description": "Esta acción completará el proyecto y evitará que se añadan nuevas ejecuciones de pruebas.",
-        "selectDate": "Seleccione una fecha"
+        "description": "Esta acción completará el proyecto y evitará que se añadan nuevas ejecuciones de pruebas."
       },
       "add": {
         "button": "Añadir proyecto",
@@ -3584,26 +3530,13 @@
       },
       "edit": {
         "title": "Editar proyecto",
-        "tabs": {
-          "details": "Detalles",
-          "users": "Usuarios",
-          "groups": "Grupos"
-        },
         "labels": {
-          "defaultProjectAccess": "Acceso al proyecto por defecto",
           "groupProjectAccess": "Acceso al proyecto de grupo",
           "groupPermissions": "Permisos de grupo",
           "userPermissions": "Permisos de usuario",
-          "addUser": "Añadir usuario",
-          "none": "Ninguna",
           "noEffect": "Sin efecto",
           "unknownRole": "Rol desconocido",
           "access": {
-            "noAccess": "Sin acceso",
-            "globalRole": "Usar rol global",
-            "specificRole": "Rol específico",
-            "projectDefault": "Proyecto por defecto",
-            "usersGlobalRole": "Rol global del usuario",
             "groupsGlobalRole": "Rol global del grupo",
             "groupDefault": "Grupo por defecto",
             "groupSpecificRole": "Rol específico del grupo",
@@ -3631,19 +3564,16 @@
           "searchUsersToAdd": "Buscar usuarios para añadir..."
         },
         "tableHeaders": {
-          "user": "Usuario",
           "globalRole": "Rol global",
           "projectAccess": "Acceso al proyecto",
-          "specificRole": "Rol específico",
-          "group": "Grupo"
+          "specificRole": "Rol específico"
         },
         "messages": {
           "noUsersAssigned": "No hay usuarios asignados permisos específicos.",
           "noGroupsFound": "No se encontraron grupos."
         },
         "actions": {
-          "removeUser": "Eliminar usuario",
-          "remove": "Eliminar"
+          "removeUser": "Eliminar usuario"
         },
         "loadingUserPermissions": "Cargando permisos de usuario...",
         "errors": {
@@ -3656,14 +3586,12 @@
       "delete": {
         "title": "Eliminar proyecto",
         "confirmMessage": "¿Está seguro que desea eliminar este proyecto?",
-        "warning": "Esta acción no se puede deshacer.",
         "errors": {
           "unknown": "Se ha producido un error desconocido"
         }
       }
     },
     "templates": {
-      "title": "Plantillas y campos",
       "description": "Administrar plantillas de caso de prueba y campos",
       "help": {
         "caseFields": "Los campos de caso definen las propiedades y los datos que se pueden capturar para cada caso de prueba en el repositorio. Permiten personalizar la información de los casos de prueba más allá de los campos estándar.",
@@ -3671,7 +3599,6 @@
       },
       "confirmSetAsDefault": "Establecer como plantilla predeterminada",
       "confirmSetAsDefaultDescription": "¿Está seguro de que desea establecer esta plantilla como predeterminado?",
-      "confirmSetAsDefaultWarning": "Esta acción no se puede deshacer.",
       "confirmSetAsDefaultProjects": "Esta plantilla se añadirá a todos los proyectos.",
       "add": {
         "button": "Añadir Plantilla",
@@ -3685,30 +3612,24 @@
         "defaultTemplateHint": "Esta plantilla será asignada a todos los proyectos."
       },
       "edit": {
-        "title": "Editar plantilla",
-        "defaultTemplateHint": "Esta plantilla será asignada a todos los proyectos."
+        "title": "Editar plantilla"
       },
       "delete": {
         "title": "Eliminar Plantilla",
         "confirmMessage": "¿Estás seguro de que quieres eliminar la plantilla <strong>{name}</strong> ?",
         "warning": "Todos los casos de prueba y sesiones exploratorias que actualmente utilizan esta plantilla se reasignarán automáticamente a la plantilla predeterminada.",
-        "info": "Esta acción es irreversible.",
         "errors": {
           "defaultTemplateNotFound": "Plantilla predeterminada no encontrada. La eliminación no puede continuar.",
           "unknown": "Se ha producido un error desconocido al eliminar la plantilla."
         }
       },
       "caseFields": {
-        "title": "Campos de Caso",
         "description": "Administrar campos de caso",
         "add": {
           "button": "Añadir Campo de Caso",
           "title": "Añadir Nuevo Campo de Caso",
           "fields": {
             "name_error": "Se requiere nombre"
-          },
-          "errors": {
-            "unknown": "Se ha producido un error desconocido"
           }
         },
         "edit": {
@@ -3721,7 +3642,6 @@
         }
       },
       "resultFields": {
-        "title": "Campos Resultados",
         "description": "Administrar campos de resultados",
         "add": {
           "button": "Añadir campo resultado",
@@ -3738,37 +3658,21 @@
       }
     },
     "users": {
-      "title": "Usuarios",
-      "filterPlaceholder": "Filtrar usuarios...",
       "showInactive": "Mostrar inactivo",
       "selectAll": "Seleccionar todo",
       "add": {
         "button": "Añadir usuario",
         "title": "Añadir nuevo usuario",
         "fields": {
-          "name_error": "Se requiere nombre",
-          "email_error": "Se requiere correo electrónico",
           "email_invalid": "Dirección de correo inválida",
           "password": "Contraseña",
           "confirmPassword": "Confirmar contraseña",
-          "passwordsDoNotMatch": "Las contraseñas no coinciden",
           "password_error": "Se requiere contraseña",
           "confirmPassword_error": "Confirmar contraseña es necesario"
-        },
-        "errors": {
-          "userExists": "Ya existe un usuario con este correo electrónico"
         }
       },
       "edit": {
-        "title": "Editar usuario",
-        "fields": {
-          "name_error": "Se requiere nombre",
-          "email_error": "Se requiere correo electrónico"
-        },
-        "errors": {
-          "nameExists": "Ya existe un usuario con este nombre",
-          "unknown": "Se ha producido un error desconocido"
-        }
+        "title": "Editar usuario"
       },
       "delete": {
         "title": "Eliminar usuario",
@@ -3799,7 +3703,6 @@
       }
     },
     "apiTokens": {
-      "title": "Tokens API",
       "description": "Visualiza y administra los tokens de API de todos los usuarios. Revoca los tokens si existen problemas de seguridad.",
       "filterPlaceholder": "Filtrar por nombre de token o usuario...",
       "showInactive": "Mostrar revocado",
@@ -3835,12 +3738,7 @@
       "revokeAllError": "No se pudieron revocar todos los tokens"
     },
     "tags": {
-      "title": "Etiquetas",
-      "description": "Gestione y organice sus casos de prueba y sesiones con etiquetas",
-      "filterPlaceholder": "Filtrar etiquetas...",
       "add": {
-        "button": "Añadir etiqueta",
-        "title": "Añadir nueva etiqueta",
         "fields": {
           "name_error": "El nombre de la etiqueta es obligatorio"
         },
@@ -3914,7 +3812,6 @@
       }
     },
     "roles": {
-      "title": "Roles",
       "description": "Administrar roles de usuario",
       "filterPlaceholder": "Filtrar roles...",
       "add": {
@@ -4011,7 +3908,6 @@
       "selectAll": "Seleccionar todo"
     },
     "appConfig": {
-      "title": "Configuración de la aplicación",
       "description": "Administrar configuraciones globales de la aplicación",
       "configurations": "Configuraciones",
       "addConfig": "Añadir configuración de aplicación",
@@ -4022,7 +3918,6 @@
       "filterPlaceholder": "Filtrar por clave...",
       "errors": {
         "keyRequired": "Clave es requerida",
-        "valueRequired": "Se requiere un valor",
         "invalidJson": "Formato JSON inválido"
       },
       "columns": {
@@ -4035,7 +3930,6 @@
       }
     },
     "configurations": {
-      "title": "Configuraciones",
       "description": "Las configuraciones son una combinación de categorías y variantes utilizadas para definir un entorno de prueba. Por ejemplo, OS/Browser, Servidor de pruebas, Idioma, etc.",
       "addConfiguration": "Añadir configuración",
       "editConfiguration": "Editar configuración",
@@ -4043,7 +3937,6 @@
       "categories": {
         "title": "Categorías",
         "description": "Administrar categorías globales",
-        "addCategory": "Añadir categoría",
         "editCategory": "Editar Categoría",
         "selectCategory": "Seleccionar categoría",
         "filterPlaceholder": "Filtrar categorías...",
@@ -4074,7 +3967,6 @@
         "addCombination": "Añadir combinación",
         "editCombination": "Editar combinación",
         "selectCombination": "Seleccionar combinación",
-        "step": "Paso",
         "selectCombinationDescription": "Seleccione una combinación de variantes para añadir a la configuración.",
         "allExist": "Todas las combinaciones ya existen.",
         "selectAtLeast": "Por favor, seleccione al menos una combinación."
@@ -4083,7 +3975,6 @@
         "title": "Eliminar configuración",
         "message": "¿Está seguro que desea eliminar la configuración <strong>{name}</strong>?",
         "confirmMessage": "¿Está seguro que desea eliminar esta configuración?",
-        "warning": "Esta acción no se puede deshacer.",
         "errors": {
           "unknown": "Se ha producido un error desconocido"
         }
@@ -4096,11 +3987,7 @@
           "title": "Eliminar variante",
           "message": "¿Está seguro que desea eliminar la variante <strong>{name}</strong>?",
           "confirmMessage": "¿Está seguro que desea eliminar esta variante?",
-          "warning": "Esta acción no se puede deshacer.",
-          "suggestion": "Considere desactivar la variante en su lugar.",
-          "errors": {
-            "unknown": "Se ha producido un error desconocido"
-          }
+          "suggestion": "Considere desactivar la variante en su lugar."
         },
         "selection": {
           "title": "Seleccionar variantes",
@@ -4111,7 +3998,6 @@
       }
     },
     "groups": {
-      "title": "Grupos",
       "description": {
         "groupInfo": "Organizar usuarios en Grupos para facilitar la administración de permisos."
       },
@@ -4119,7 +4005,6 @@
       "add": {
         "button": "Añadir grupo",
         "title": "Añadir nuevo grupo",
-        "name": "Nombre del grupo",
         "errors": {
           "nameExists": "Ya existe un grupo con este nombre",
           "unknown": "Se ha producido un error desconocido"
@@ -4132,11 +4017,7 @@
         "deleteGroup": "Eliminar grupo",
         "deleteGroupDescription": "Esta acción eliminará el grupo y todos los usuarios asociados.",
         "title": "Eliminar grupo",
-        "confirmMessage": "¿Está seguro que desea eliminar este grupo?",
-        "warning": "Esta acción no se puede deshacer.",
-        "errors": {
-          "unknown": "Se ha producido un error desconocido"
-        }
+        "confirmMessage": "¿Está seguro que desea eliminar este grupo?"
       },
       "fields": {
         "name": "Nombre del grupo",
@@ -4147,7 +4028,6 @@
       "noUsersAssigned": "No hay usuarios asignados a este grupo."
     },
     "milestones": {
-      "title": "Tipos de hito",
       "description": "Gestionar tipos de hito",
       "filterPlaceholder": "Filtrar Tipos...",
       "addMilestones": "Agregar hitos en masa",
@@ -4164,25 +4044,16 @@
       "add": {
         "button": "Añadir tipo de hito",
         "title": "Añadir nuevo tipo de hito",
-        "fields": {
-          "name_error": "Se requiere nombre"
-        },
         "errors": {
-          "nameExists": "Ya existe un tipo de hito con este nombre",
-          "unknown": "Se ha producido un error desconocido"
+          "nameExists": "Ya existe un tipo de hito con este nombre"
         }
       },
       "edit": {
-        "title": "Editar tipo de hito",
-        "setDefault": {
-          "title": "¿Está seguro de que desea establecer este tipo de hito como predeterminado?",
-          "description": "Este tipo de hito se añadirá a todos los proyectos."
-        }
+        "title": "Editar tipo de hito"
       },
       "delete": {
         "title": "Eliminar tipo de hito",
         "confirmMessage": "¿Está seguro que desea eliminar este tipo de hito?",
-        "warning": "Esta acción no se puede deshacer.",
         "errors": {
           "unknown": "Se ha producido un error desconocido"
         }
@@ -4245,7 +4116,6 @@
       }
     },
     "issues": {
-      "title": "Problemas",
       "description": "Administrar problemas para este gestor de incidencias",
       "filterPlaceholder": "Filtrar problemas...",
       "add": {
@@ -4257,8 +4127,7 @@
       },
       "delete": {
         "title": "Eliminar Problema",
-        "confirmMessage": "¿Estás seguro de que deseas eliminar el problema \"{name}\"?",
-        "warning": "Esta acción no se puede deshacer."
+        "confirmMessage": "¿Estás seguro de que deseas eliminar el problema \"{name}\"?"
       },
       "syncIssue": "Problema de sincronización del sistema externo",
       "syncSuccess": "El problema se sincronizó correctamente",
@@ -4267,7 +4136,6 @@
       "syncErrorDescription": "No se pudo sincronizar el problema. Inténtalo de nuevo más tarde."
     },
     "trash": {
-      "title": "Basura",
       "itemTypes": {
         "users": "Usuarios",
         "groups": "Grupos",
@@ -4318,7 +4186,6 @@
       "description": "Establece las preferencias de notificación por defecto (los usuarios pueden anular) y enviar notificaciones del sistema.",
       "defaultMode": {
         "label": "Modo de notificación por defecto",
-        "none": "No hay notificaciones",
         "inApp": "Sólo en la aplicación",
         "inAppEmailImmediate": "In-App + Email (Inmediato)",
         "inAppEmailDaily": "In-App + Email (Resumen de diario)"
@@ -4339,13 +4206,11 @@
         }
       },
       "save": "Guardar ajustes",
-      "saving": "Guardando...",
       "success": {
         "title": "Ajustes guardados",
         "description": "Los ajustes de notificación se han actualizado correctamente"
       },
       "error": {
-        "title": "Error",
         "description": "Error al guardar la configuración de notificación"
       },
       "systemNotification": {
@@ -4353,16 +4218,13 @@
         "description": "Enviar anuncios importantes a todos los usuarios",
         "titleLabel": "Título",
         "titlePlaceholder": "Introduzca el título de la notificación...",
-        "messageLabel": "Mensaje",
         "messagePlaceholder": "Introduzca mensaje de notificación...",
         "send": "Enviar notificación",
-        "sending": "Enviando...",
         "success": {
           "title": "Notificación enviada",
           "description": "Notificación de sistema enviada a usuarios de {count}"
         },
         "error": {
-          "title": "Error",
           "description": "Error al enviar la notificación del sistema",
           "emptyFields": "Por favor, introduce tanto el título como el mensaje"
         },
@@ -4376,7 +4238,6 @@
       }
     },
     "integrations": {
-      "title": "Integraciones del problema",
       "description": "Administrar integraciones de terceros para seguimiento de incidencias y más",
       "list": {
         "title": "Integraciones configuradas",
@@ -4412,9 +4273,6 @@
       "syncError": "Sincronización fallida",
       "syncErrorDescription": "No se pudo poner en cola la tarea de sincronización para esta integración. Inténtelo de nuevo más tarde.",
       "delete": {
-        "successMessage": "Integración eliminada",
-        "successDescription": "La integración de la incidencia se ha eliminado correctamente",
-        "confirmTitle": "Borrar integración",
         "confirmMessage": "¿Está seguro de que desea eliminar la integración de la incidencia \"{name}\"?",
         "warning": "Esto eliminará la integración del problema y lo desconectará de todos los proyectos. Esta acción no se puede deshacer.",
         "warningTitle": "Esta acción será:",
@@ -4427,7 +4285,6 @@
       "deleteSuccessDescription": "La integración de la incidencia se ha eliminado correctamente",
       "deleteError": "Error al eliminar",
       "add": {
-        "title": "Añadir Integración",
         "description": "Configurar una nueva integración de problemas con un servicio externo",
         "selectType": "Seleccionar tipo de integración",
         "typeDescription": "Elija el tipo de servicio que desea integrar",
@@ -4472,7 +4329,6 @@
         "inactive": "Inactivo"
       },
       "edit": {
-        "title": "Editar integración",
         "description": "Actualizar configuración y configuración de integración",
         "successMessage": "Integración actualizada correctamente",
         "successDescription": "Se han guardado los ajustes de integración"
@@ -4572,13 +4428,11 @@
       }
     },
     "llm": {
-      "title": "AI Models",
       "addIntegration": "Añadir modelo AI",
       "filterPlaceholder": "Filtrar modelos IA...",
       "testAll": "Probar Todas las Conexiones",
       "connectionTestComplete": "Prueba de conexión completada",
       "allIntegrationsTested": "Todas las conexiones de modelos de IA han sido probadas",
-      "error": "Error",
       "failedToTestConnections": "Error al probar algunas conexiones",
       "default": "Por defecto",
       "notConfigured": "No configurada",
@@ -4605,7 +4459,7 @@
         "apiKeyDescription": "Su clave API para la autenticación con el proveedor",
         "endpoint": "Endpoint URL",
         "endpointPlaceholder": "https://api.provider.com/v1",
-        "endpointDescription": "La URL base para las solicitudes API (dejar vacío para el valor predeterminado)",
+        "endpointDescription": "La URL base para las solicitudes de API. Para proveedores estándar (OpenAI, Anthropic, Gemini), solo se aceptan URL oficiales. Para proveedores alojados en servidores propios, las direcciones privadas/internas (localhost, 127.0.0.1, IP privadas) están bloqueadas por seguridad.",
         "deploymentName": "Nombre de despliegue",
         "deploymentNamePlaceholder": "Introduce el nombre de implementación...",
         "deploymentNameDescription": "Nombre del despliegue Azure OpenAI",
@@ -4687,13 +4541,8 @@
       "delete": {
         "title": "Eliminar Integración del Modelo AI",
         "description": "¿Está seguro de que desea eliminar esta integración de modelo de IA? Esto lo eliminará de todos los proyectos y no se puede deshacer.",
-        "cancel": "Cancelar",
-        "delete": "Eliminar",
-        "success": "Éxito",
         "integrationDeletedSuccess": "Integración del modelo IA eliminada con éxito",
-        "error": "Error",
-        "failedToDeleteIntegration": "Error al eliminar integración de modelo IA",
-        "confirmMessage": "¿Está seguro de que desea eliminar esta integración de modelo de IA? Esto lo eliminará de todos los proyectos y no se puede deshacer."
+        "failedToDeleteIntegration": "Error al eliminar integración de modelo IA"
       },
       "validation": {
         "nameRequired": "Se requiere nombre",
@@ -4704,28 +4553,19 @@
         "description": "Probar la conexión y funcionalidad de {name}",
         "connectionStatus": "Estado de la conexión",
         "connectionStatusDescription": "Comprobar si el modelo de IA es accesible",
-        "testConnection": "Probar conexión",
         "retest": "Retroceder conexión",
-        "connectionSuccessful": "Conexión exitosa",
         "connectionSuccessfulDescription": "El modelo de IA es accesible y responde correctamente",
-        "connectionFailed": "Error de conexión",
         "failedToConnect": "No se pudo conectar al modelo AI",
         "errorTestingConnection": "Error al probar la conexión",
         "testMessage": "Mensaje de prueba",
         "testMessagePlaceholder": "Introduzca un mensaje para enviar al modelo IA...",
         "sendTestMessage": "Enviar mensaje de prueba",
-        "sending": "Enviando...",
         "response": "Respuesta",
         "testSuccessful": "Prueba exitosa",
         "responseReceived": "Respuesta recibida con éxito (Coste: ${cost})",
         "testFailed": "Prueba fallida",
         "failedToGetResponse": "Error al obtener respuesta del modelo de IA",
         "failedToSendMessage": "Error al enviar el mensaje de prueba",
-        "provider": "Proveedor",
-        "defaultModel": "Modelo por defecto",
-        "status": "Estado",
-        "notConfigured": "No configurada",
-        "close": "Cerrar",
         "defaultTestMessage": "¡Hola! Por favor, responde con una breve confirmación de que estás trabajando correctamente."
       }
     },
@@ -4735,9 +4575,7 @@
       "status": {
         "title": "Estado de Elasticsearch",
         "description": "Conexión actual y estado de salud del motor de búsqueda",
-        "refresh": "Refrescar",
         "checking": "Comprobando estado...",
-        "connected": "Conectado",
         "disconnected": "Desconectado",
         "nodes": "Nodos",
         "indices": "Índices",
@@ -4748,20 +4586,15 @@
         }
       },
       "settings": {
-        "title": "Configuración",
         "description": "Configurar los ajustes de Elasticsearch para su implementación",
         "numberOfReplicas": "Número de réplicas",
         "replicasHelp": "Establezca en 0 para clústeres de un solo nodo, 1+ para clústeres de varios nodos con redundancia",
-        "save": "Guardar configuración",
-        "saving": "Ahorro...",
-        "saved": "Configuraciones guardadas",
         "savedDescription": "La configuración se ha guardado en la base de datos.",
         "updated": "Índices actualizados",
         "updatedDescription": "Todos los índices existentes se han actualizado con la nueva configuración de réplica.",
         "error": "Error al guardar la configuración",
         "errorDescription": "No se pudo guardar la configuración. Inténtalo de nuevo.",
         "note": {
-          "title": "Nota",
           "description": "Los cambios se aplican inmediatamente a los nuevos índices. Los índices existentes se actualizan al guardar. Configure las réplicas a 0 para resolver el estado AMARILLO en clústeres de un solo nodo."
         }
       },
@@ -4769,14 +4602,7 @@
         "title": "Reindexar datos",
         "description": "Reconstruir índices de búsqueda para mejorar el rendimiento de búsqueda",
         "entities": {
-          "all": "Todas las entidades",
-          "repositoryCases": "Casos de repositorio",
-          "testRuns": "Ejecuciones de prueba",
-          "sessions": "Sesiones",
-          "sharedSteps": "Pasos compartidos",
-          "issues": "Asuntos",
-          "milestones": "Hitos",
-          "projects": "Proyectos"
+          "all": "Todas las entidades"
         },
         "button": {
           "start": "Iniciar reindexación",
@@ -4803,31 +4629,22 @@
     "queues": {
       "title": "Colas de trabajos en segundo plano",
       "description": "Supervisar y gestionar colas de procesamiento de trabajos en segundo plano",
-      "refresh": "Refrescar",
       "queueNames": {
         "forecast-updates": "Actualizaciones de pronósticos",
-        "notifications": "Notificaciones",
         "emails": "Cola de correo electrónico",
         "issue-sync": "Sincronización de problemas",
         "testmo-imports": "Importaciones de Testmo",
         "elasticsearch-reindex": "Reindexación de Elasticsearch"
       },
       "status": {
-        "error": "Error",
         "paused": "En pausa",
-        "active": "Activo",
         "idle": "Inactivo"
       },
       "table": {
         "queue": "Cola",
-        "status": "Estado",
         "concurrency": "Concurrencia",
         "waiting": "Espera",
-        "active": "Activo",
-        "completed": "Terminado",
-        "failed": "Fallido",
-        "delayed": "Demorado",
-        "actions": "Comportamiento"
+        "failed": "Fallido"
       },
       "concurrency": {
         "title": "Concurrencia de trabajadores",
@@ -4864,9 +4681,7 @@
           "confirmDescription": "Esto borrará por completo la cola, eliminando todos los trabajos, independientemente de su estado. Esta acción no se puede deshacer y solo debe utilizarse en situaciones de emergencia."
         },
         "warning": "Advertencia",
-        "irreversible": "Esta acción no se puede deshacer. Confirme que desea continuar.",
-        "cancel": "Cancelar",
-        "confirm": "Confirmar"
+        "irreversible": "Esta acción no se puede deshacer. Confirme que desea continuar."
       },
       "success": {
         "actionCompleted": "Acción completada",
@@ -4884,35 +4699,20 @@
         "title": "Trabajos en cola",
         "description": "Ver y administrar trabajos individuales en la cola",
         "noJobs": "No se encontraron trabajos en esta cola",
-        "filters": {
-          "all": "Todos los estados",
-          "waiting": "Espera",
-          "active": "Activo",
-          "completed": "Terminado",
-          "failed": "Fallido",
-          "delayed": "Demorado"
-        },
         "table": {
           "id": "Identificación del trabajo",
           "name": "Nombre del trabajo",
-          "state": "Estado",
-          "attempts": "Intentos",
-          "timestamp": "Creado",
-          "duration": "Duración",
-          "actions": "Comportamiento"
+          "attempts": "Intentos"
         },
         "details": {
           "title": "Detalles del trabajo",
-          "state": "Estado",
           "failedReason": "Motivo del fallo",
           "stacktrace": "Seguimiento de la pila",
           "data": "Datos del trabajo",
           "returnValue": "Valor de retorno",
           "options": "Opciones de trabajo",
-          "created": "Creado",
           "processed": "Procesado",
-          "finished": "Finalizado",
-          "duration": "Duración"
+          "finished": "Finalizado"
         },
         "success": {
           "actionCompleted": "Acción laboral completada",
@@ -4933,7 +4733,6 @@
       }
     },
     "auditLogs": {
-      "title": "Registros de auditoría",
       "description": "Visualizar el registro de auditoría de todo el sistema para el seguimiento de la seguridad y el cumplimiento",
       "filterPlaceholder": "Buscar por entidad, usuario o acción...",
       "filterAction": "Acción",
@@ -4956,12 +4755,10 @@
         "entityName": "Nombre de la entidad",
         "user": "Usuario",
         "project": "Proyecto",
-        "email": "Correo electrónico",
         "userId": "ID de usuario"
       },
       "system": "Sistema",
-      "exportCsv": "Exportar CSV",
-      "exporting": "Exportador..."
+      "exportCsv": "Exportar CSV"
     }
   },
   "components": {
@@ -5232,7 +5029,6 @@
     "failedToCreate": "No se pudo crear el enlace.",
     "removeLink": "Eliminar",
     "confirmRemoveLink": "¿Está seguro que desea eliminar este enlace?",
-    "cancel": "Cancelar",
     "DEPENDS_ON": "Dependencia",
     "SAME_TEST_DIFFERENT_SOURCE": "Misma prueba (Fuente diferente)",
     "status": "Último estado",
@@ -5969,8 +5765,6 @@
     },
     "drillDown": {
       "title": "Registros detallados",
-      "exportCsv": "Exportar CSV",
-      "exporting": "Exportador...",
       "loading": "Cargando registros...",
       "loadingMore": "Cargando más...",
       "noRecords": "No se encontraron registros.",
@@ -6262,7 +6056,6 @@
     "description": "¡Gracias por probar TestPlanIt! Su período de prueba ha finalizado y esta instancia ya no está accesible.",
     "nextSteps": "Para continuar utilizando TestPlanIt y acceder a sus datos de prueba, póngase en contacto con nuestro equipo de ventas.",
     "pricingPlans": "Planes de precios",
-    "contactButton": "Contacte con el departamento de ventas",
     "dataRetention": "Tus datos de prueba se almacenan de forma segura y estarán disponibles cuando actualices tu cuenta."
   }
 }

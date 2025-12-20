@@ -1042,11 +1042,9 @@
       "alreadyVerified": "Adresse e-mail déjà vérifiée",
       "toast": {
         "verifySuccess": {
-          "title": "Adresse e-mail vérifiée avec succès",
           "description": "Vous pouvez maintenant vous connecter à votre compte."
         },
         "verifyError": {
-          "title": "Échec de la vérification de l'adresse e-mail",
           "description": "Une erreur s'est produite lors de la vérification de l'e-mail"
         },
         "resendSuccess": {
@@ -1105,7 +1103,6 @@
   "navigation": {
     "menu": {
       "dashboard": "Tableau de bord",
-      "projects": "Projets",
       "admin": "Administration",
       "profile": "Profil",
       "issueTracker": "Problèmes"
@@ -1355,11 +1352,7 @@
       "dueDateNotifications": "notifications de date d'échéance"
     },
     "labels": {
-      "description": "Description",
-      "documentation": "Documentation",
-      "dueDate": "Date d'échéance",
-      "childMilestones": "Étapes importantes de l'enfance",
-      "forecast": "Prévision"
+      "childMilestones": "Étapes importantes de l'enfance"
     },
     "placeholders": {
       "description": "Saisissez la description de l'étape clé...",
@@ -1372,16 +1365,13 @@
       "completed": "Aucune étape franchie",
       "description": "Aucune description fournie",
       "documentation": "Aucune documentation fournie",
-      "childMilestones": "Pas d'étapes importantes pour l'enfant",
       "testRuns": "Aucun essai.",
-      "sessions": "Aucune séance",
       "forecasts": "Aucune donnée prévisionnelle disponible"
     },
     "statusLabels": {
       "NOT_STARTED": "Non démarré",
       "IN_PROGRESS": "En cours",
       "COMPLETED": "Complété",
-      "completed": "Complété",
       "STOPPED": "Arrêté",
       "BLOCKED": "Bloqué",
       "CANCELLED": "Annulé",
@@ -1392,8 +1382,6 @@
       "pastDue": "En retard de paiement"
     },
     "status": {
-      "start": "Commencer",
-      "complete": "Complet",
       "stop": "Arrêt",
       "reopen": "Rouvrir"
     },
@@ -1455,19 +1443,10 @@
     "title": "{count, plural, =1 {Session} other {Sessions}}",
     "labels": {
       "name": "Nom",
-      "description": "Description",
-      "mission": "Mission",
-      "configuration": "Configuration",
-      "milestone": "Jalon",
-      "state": "État",
-      "assignedTo": "Attribué à",
-      "estimate": "Estimation",
       "elapsed": "Temps écoulé",
       "totalElapsed": "Temps passé",
       "remaining": "Restant : {time}",
-      "overtime": "Au-dessus de l'estimation de : {time}",
-      "tags": "Étiquettes",
-      "attachments": "Pièces jointes"
+      "overtime": "Au-dessus de l'estimation de : {time}"
     },
     "empty": {
       "active": "Aucune session active",
@@ -1505,7 +1484,6 @@
     "validation": {
       "nameMinLength": "Le nom doit comporter au moins 2 caractères.",
       "templateRequired": "Veuillez sélectionner un modèle",
-      "invalidDuration": "Format de durée invalide. Essayez plutôt 30 min, 1 semaine ou 1 h 25 min.",
       "maxDuration": "La durée doit être inférieure ou égale à {max}."
     },
     "placeholders": {
@@ -1518,7 +1496,6 @@
       "selectState": "Sélectionner l'État",
       "selectUser": "Sélectionner l'utilisateur",
       "estimateHint": "par exemple, 2 h 30 min",
-      "none": "Aucun",
       "unassigned": "Non attribué",
       "noEstimate": "Aucune estimation n'a été établie.",
       "noElapsedTime": "Aucune heure enregistrée"
@@ -1662,7 +1639,6 @@
       "timezonePlaceholder": "Rechercher le fuseau horaire...",
       "skip": "Conserver les paramètres par défaut",
       "save": "Enregistrer les préférences",
-      "saving": "Économie...",
       "success": "Préférences mises à jour",
       "error": "Une erreur s'est produite lors de l'enregistrement de vos préférences."
     },
@@ -1695,12 +1671,6 @@
       "title": "Profil utilisateur",
       "edit": {
         "title": "Modifier le profil",
-        "name": "Nom",
-        "email": "E-mail",
-        "itemsPerPage": "Articles par page",
-        "dateFormat": "Format de date",
-        "timeFormat": "Format de l'heure",
-        "timezone": "Fuseau horaire",
         "timezonePlaceholder": "Sélectionnez ou recherchez le fuseau horaire...",
         "timezoneRequired": "Le fuseau horaire est requis.",
         "avatarUpdated": "Avatar mis à jour avec succès.",
@@ -1756,12 +1726,10 @@
       },
       "changePasswordModal": {
         "buttonText": "Changer le mot de passe",
-        "title": "Changer le mot de passe",
         "description": "Saisissez votre mot de passe actuel et un nouveau mot de passe pour modifier le mot de passe de votre compte. Seul votre mot de passe interne sera modifié. Si vous vous connectez via l'authentification unique (SSO), ce mot de passe restera inchangé.",
         "currentPasswordLabel": "Mot de passe actuel",
         "newPasswordLabel": "Nouveau mot de passe",
         "confirmPasswordLabel": "Confirmer le nouveau mot de passe",
-        "submitButtonText": "Changer le mot de passe",
         "validation": {
           "passwordsDoNotMatch": "Les nouveaux mots de passe ne correspondent pas.",
           "newPasswordTooShort": "Le nouveau mot de passe doit comporter au moins 4 caractères."
@@ -1820,20 +1788,14 @@
         }
       },
       "apiTokens": {
-        "title": "Jetons API",
         "description": "Les jetons d'API permettent aux applications et scripts externes d'accéder à TestPlanIt en votre nom. Ces jetons disposent des mêmes autorisations que votre compte.",
         "create": "Créer un jeton",
         "createTitle": "Créer un jeton API",
         "createDescription": "Créez un nouveau jeton d'API pour authentifier les outils et scripts externes.",
-        "name": "Nom",
         "nameLabel": "Nom du jeton",
         "namePlaceholder": "par exemple, pipeline CI/CD, outil CLI",
-        "token": "Jeton",
-        "created": "Créé",
         "lastUsed": "Dernière utilisation",
         "expires": "Expire",
-        "noExpiry": "Jamais",
-        "never": "Jamais",
         "noTokens": "Aucun jeton API n'a encore été créé.",
         "expiryLabel": "Date d'expiration (facultatif)",
         "expiryHint": "Laisser vide pour éviter toute expiration.",
@@ -1859,12 +1821,7 @@
       "remove": "Supprimer l'avatar",
       "changeProfilePicture": "Changer ma photo de profil",
       "notAuthenticated": "Vous devez être connecté pour télécharger un avatar.",
-      "delete": {
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer votre avatar ?"
-      },
       "upload": {
-        "title": "Ajouter une nouvelle photo de profil",
-        "description": "Glissez-déposez votre image ou cliquez sur le bouton ci-dessous pour sélectionner un fichier.",
         "errors": {
           "unknown": "Une erreur inconnue s'est produite."
         }
@@ -2610,7 +2567,6 @@
     "magicSelect": {
       "title": "Magic Select",
       "description": "Sélection de cas de test automatisée par l'IA en fonction du contexte d'exécution de vos tests",
-      "button": "Magic Select",
       "counting": "Recherche de cas de test pertinents...",
       "reasoning": "Raisonnement IA",
       "reviewSelection": "Examiner les cas de test suggérés",
@@ -2652,8 +2608,7 @@
       "actions": {
         "start": "Analyser les cas de test",
         "startBatched": "Analyser les cas de test ({count} lots)",
-        "accept": "Ajouter à la sélection",
-        "retry": "Essayer à nouveau"
+        "accept": "Ajouter à la sélection"
       },
       "errors": {
         "title": "La sélection a échoué",
@@ -2697,10 +2652,7 @@
       "activeRunsLabel": "Courses",
       "totalEstTime": "Durée totale estimée",
       "responsibleUsers": "Utilisateurs responsables",
-      "workDistribution": "Répartition du travail",
-      "noForecastData": "Aucune donnée prévisionnelle disponible",
       "allActiveRuns": "Toutes les courses actives",
-      "totalEstTimeRemainingSunburst": "Temps restant estimé total :",
       "recentResultsTitle": "Résultats manuels récents",
       "recentResultsDescription": "Consultez les résultats récents de l'essai.",
       "recentAutomatedResultsTitle": "Résultats automatisés récents",
@@ -2714,7 +2666,6 @@
       "recentResultsNotes": "Notes",
       "noRecentResults": "Aucun résultat récent trouvé.",
       "completionTrendTitle": "Évolution des taux d'achèvement (6 derniers mois)",
-      "noCompletedRuns": "Aucune course terminée n'a été trouvée au cours des 6 derniers mois.",
       "workDistributionTitle": "Répartition du travail",
       "workDistributionDescription": "Répartition estimée du travail par responsable.",
       "noWorkDistributionData": "Aucune session active avec des personnes assignées ou des estimations à afficher.",
@@ -2734,7 +2685,6 @@
     "details": {
       "title": "Détails de l'essai",
       "description": "Consultez les détails de l'exécution de l'essai.",
-      "selectUser": "Sélectionner l'utilisateur",
       "fields": {
         "executedBy": "Exécuté par",
         "executedAt": "Exécuté à",
@@ -2767,8 +2717,7 @@
         }
       },
       "successMessage": "Exécution du test dupliquée avec succès '{name}'.",
-      "errorMessage": "Échec de la duplication de l'exécution du test. Erreur : {error}",
-      "untestedStatusName": "Non testé"
+      "errorMessage": "Échec de la duplication de l'exécution du test. Erreur : {error}"
     },
     "filter": {
       "placeholder": "Exécution des tests de filtrage..."
@@ -2785,7 +2734,6 @@
   },
   "admin": {
     "menu": {
-      "header": "Administration",
       "systemHeader": "Système",
       "appConfig": "Configuration de l'application",
       "imports": "Importation de données",
@@ -3498,14 +3446,12 @@
       }
     },
     "projects": {
-      "title": "Projets",
       "filter": {
         "placeholder": "Filtrer les projets..."
       },
       "complete": {
         "title": "Projet complet",
-        "description": "Cette action permettra de finaliser le projet et d'empêcher l'ajout de nouveaux tests.",
-        "selectDate": "Sélectionnez une date"
+        "description": "Cette action permettra de finaliser le projet et d'empêcher l'ajout de nouveaux tests."
       },
       "add": {
         "button": "Ajouter un projet",
@@ -3584,26 +3530,13 @@
       },
       "edit": {
         "title": "Modifier le projet",
-        "tabs": {
-          "details": "Détails",
-          "users": "Utilisateurs",
-          "groups": "Groupes"
-        },
         "labels": {
-          "defaultProjectAccess": "Accès au projet par défaut",
           "groupProjectAccess": "Accès au projet de groupe",
           "groupPermissions": "Autorisations de groupe",
           "userPermissions": "Autorisations de l'utilisateur",
-          "addUser": "Ajouter un utilisateur",
-          "none": "Aucun",
           "noEffect": "Aucun effet",
           "unknownRole": "Rôle inconnu",
           "access": {
-            "noAccess": "Aucun accès",
-            "globalRole": "Utiliser le rôle global",
-            "specificRole": "Rôle spécifique",
-            "projectDefault": "Projet par défaut",
-            "usersGlobalRole": "Rôle global de l'utilisateur",
             "groupsGlobalRole": "Rôle mondial du groupe",
             "groupDefault": "Par défaut du groupe",
             "groupSpecificRole": "Rôle spécifique au groupe",
@@ -3631,19 +3564,16 @@
           "searchUsersToAdd": "Rechercher des utilisateurs à ajouter..."
         },
         "tableHeaders": {
-          "user": "Utilisateur",
           "globalRole": "Rôle mondial",
           "projectAccess": "Accès au projet",
-          "specificRole": "Rôle spécifique",
-          "group": "Groupe"
+          "specificRole": "Rôle spécifique"
         },
         "messages": {
           "noUsersAssigned": "Aucun utilisateur ne s'est vu attribuer d'autorisations spécifiques.",
           "noGroupsFound": "Aucun groupe trouvé."
         },
         "actions": {
-          "removeUser": "Supprimer l'utilisateur",
-          "remove": "Retirer"
+          "removeUser": "Supprimer l'utilisateur"
         },
         "loadingUserPermissions": "Chargement des autorisations utilisateur...",
         "errors": {
@@ -3656,14 +3586,12 @@
       "delete": {
         "title": "Supprimer le projet",
         "confirmMessage": "Êtes-vous sûr de vouloir supprimer ce projet ?",
-        "warning": "Cette action est irréversible.",
         "errors": {
           "unknown": "Une erreur inconnue s'est produite."
         }
       }
     },
     "templates": {
-      "title": "Modèles et champs",
       "description": "Gérer les modèles et les champs des cas de test",
       "help": {
         "caseFields": "Les champs de cas définissent les propriétés et les données pouvant être enregistrées pour chaque cas de test dans le référentiel. Ils permettent de personnaliser les informations des cas de test au-delà des champs standard.",
@@ -3671,7 +3599,6 @@
       },
       "confirmSetAsDefault": "Définir comme modèle par défaut",
       "confirmSetAsDefaultDescription": "Êtes-vous sûr de vouloir définir ce modèle comme modèle par défaut ?",
-      "confirmSetAsDefaultWarning": "Cette action est irréversible.",
       "confirmSetAsDefaultProjects": "Ce modèle sera ajouté à tous les projets.",
       "add": {
         "button": "Ajouter un modèle",
@@ -3685,30 +3612,24 @@
         "defaultTemplateHint": "Ce modèle sera attribué à tous les projets."
       },
       "edit": {
-        "title": "Modifier le modèle",
-        "defaultTemplateHint": "Ce modèle sera attribué à tous les projets."
+        "title": "Modifier le modèle"
       },
       "delete": {
         "title": "Supprimer le modèle",
         "confirmMessage": "Êtes-vous sûr de vouloir supprimer le modèle <strong>{name}</strong>?",
         "warning": "Tous les cas de test et les sessions exploratoires utilisant actuellement ce modèle seront automatiquement réaffectés au modèle par défaut.",
-        "info": "Cette action est irréversible.",
         "errors": {
           "defaultTemplateNotFound": "Modèle par défaut introuvable. La suppression ne peut pas se poursuivre.",
           "unknown": "Une erreur inconnue s'est produite lors de la suppression du modèle."
         }
       },
       "caseFields": {
-        "title": "Champs de cas",
         "description": "Gérer les champs de cas",
         "add": {
           "button": "Ajouter un champ de cas",
           "title": "Ajouter un nouveau champ de cas",
           "fields": {
             "name_error": "Le nom est requis."
-          },
-          "errors": {
-            "unknown": "Une erreur inconnue s'est produite."
           }
         },
         "edit": {
@@ -3721,7 +3642,6 @@
         }
       },
       "resultFields": {
-        "title": "Champs de résultats",
         "description": "Gérer les champs de résultats",
         "add": {
           "button": "Ajouter un champ de résultat",
@@ -3738,37 +3658,21 @@
       }
     },
     "users": {
-      "title": "Utilisateurs",
-      "filterPlaceholder": "Filtrer les utilisateurs...",
       "showInactive": "Afficher les inactifs",
       "selectAll": "Tout sélectionner",
       "add": {
         "button": "Ajouter un utilisateur",
         "title": "Ajouter un nouvel utilisateur",
         "fields": {
-          "name_error": "Le nom est requis.",
-          "email_error": "L'adresse électronique est requise.",
           "email_invalid": "Adresse e-mail invalide",
           "password": "Mot de passe",
           "confirmPassword": "Confirmez le mot de passe",
-          "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
           "password_error": "Un mot de passe est requis.",
           "confirmPassword_error": "Confirmer le mot de passe est requis"
-        },
-        "errors": {
-          "userExists": "Un utilisateur avec cette adresse e-mail existe déjà."
         }
       },
       "edit": {
-        "title": "Modifier l'utilisateur",
-        "fields": {
-          "name_error": "Le nom est requis.",
-          "email_error": "L'adresse électronique est requise."
-        },
-        "errors": {
-          "nameExists": "Un utilisateur portant ce nom existe déjà.",
-          "unknown": "Une erreur inconnue s'est produite."
-        }
+        "title": "Modifier l'utilisateur"
       },
       "delete": {
         "title": "Supprimer l'utilisateur",
@@ -3799,7 +3703,6 @@
       }
     },
     "apiTokens": {
-      "title": "Jetons API",
       "description": "Consultez et gérez les jetons d'API pour tous les utilisateurs. Révoquez les jetons en cas de problème de sécurité.",
       "filterPlaceholder": "Filtrer par nom de jeton ou utilisateur...",
       "showInactive": "Afficher révoqué",
@@ -3835,12 +3738,7 @@
       "revokeAllError": "Impossible de révoquer tous les jetons."
     },
     "tags": {
-      "title": "Étiquettes",
-      "description": "Gérez et organisez vos cas de test et vos sessions à l'aide d'étiquettes.",
-      "filterPlaceholder": "Filtrer les balises...",
       "add": {
-        "button": "Ajouter une étiquette",
-        "title": "Ajouter une nouvelle balise",
         "fields": {
           "name_error": "Le nom de l'étiquette est requis."
         },
@@ -3914,7 +3812,6 @@
       }
     },
     "roles": {
-      "title": "Rôles",
       "description": "Gérer les rôles des utilisateurs",
       "filterPlaceholder": "Rôles de filtrage...",
       "add": {
@@ -4011,7 +3908,6 @@
       "selectAll": "Tout sélectionner"
     },
     "appConfig": {
-      "title": "Configuration de l'application",
       "description": "Gérer les configurations globales des applications",
       "configurations": "Configurations",
       "addConfig": "Ajouter la configuration de l'application",
@@ -4022,7 +3918,6 @@
       "filterPlaceholder": "Filtrer par clé...",
       "errors": {
         "keyRequired": "Une clé est requise.",
-        "valueRequired": "Une valeur est requise",
         "invalidJson": "Format JSON invalide"
       },
       "columns": {
@@ -4035,7 +3930,6 @@
       }
     },
     "configurations": {
-      "title": "Configurations",
       "description": "Les configurations sont une combinaison de catégories et de variantes utilisées pour définir un environnement de test. Par exemple : système d’exploitation/navigateur, serveur de test, langage, etc.",
       "addConfiguration": "Ajouter une configuration",
       "editConfiguration": "Modifier la configuration",
@@ -4043,7 +3937,6 @@
       "categories": {
         "title": "Catégories",
         "description": "Gérer les catégories globales",
-        "addCategory": "Ajouter une catégorie",
         "editCategory": "Modifier la catégorie",
         "selectCategory": "Sélectionner une catégorie",
         "filterPlaceholder": "Filtrer les catégories...",
@@ -4074,7 +3967,6 @@
         "addCombination": "Ajouter une combinaison",
         "editCombination": "Combinaison de modification",
         "selectCombination": "Sélectionner une combinaison",
-        "step": "Étape",
         "selectCombinationDescription": "Sélectionnez une combinaison de variantes à ajouter à la configuration.",
         "allExist": "Toutes les combinaisons existent déjà.",
         "selectAtLeast": "Veuillez sélectionner au moins une combinaison."
@@ -4083,7 +3975,6 @@
         "title": "Supprimer la configuration",
         "message": "Êtes-vous sûr de vouloir supprimer la configuration <strong>{name}</strong>?",
         "confirmMessage": "Êtes-vous sûr de vouloir supprimer cette configuration ?",
-        "warning": "Cette action est irréversible.",
         "errors": {
           "unknown": "Une erreur inconnue s'est produite."
         }
@@ -4096,11 +3987,7 @@
           "title": "Supprimer la variante",
           "message": "Êtes-vous sûr de vouloir supprimer la variante <strong>{name}</strong>?",
           "confirmMessage": "Êtes-vous sûr de vouloir supprimer cette variante ?",
-          "warning": "Cette action est irréversible.",
-          "suggestion": "Envisagez plutôt de désactiver cette variante.",
-          "errors": {
-            "unknown": "Une erreur inconnue s'est produite."
-          }
+          "suggestion": "Envisagez plutôt de désactiver cette variante."
         },
         "selection": {
           "title": "Sélectionner les variantes",
@@ -4111,7 +3998,6 @@
       }
     },
     "groups": {
-      "title": "Groupes",
       "description": {
         "groupInfo": "Organisez les utilisateurs en groupes pour faciliter la gestion des autorisations."
       },
@@ -4119,7 +4005,6 @@
       "add": {
         "button": "Ajouter un groupe",
         "title": "Ajouter un nouveau groupe",
-        "name": "Nom du groupe",
         "errors": {
           "nameExists": "Un groupe portant ce nom existe déjà.",
           "unknown": "Une erreur inconnue s'est produite."
@@ -4132,11 +4017,7 @@
         "deleteGroup": "Supprimer le groupe",
         "deleteGroupDescription": "Cette action supprimera le groupe et tous les utilisateurs associés.",
         "title": "Supprimer le groupe",
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer ce groupe ?",
-        "warning": "Cette action est irréversible.",
-        "errors": {
-          "unknown": "Une erreur inconnue s'est produite."
-        }
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer ce groupe ?"
       },
       "fields": {
         "name": "Nom du groupe",
@@ -4147,7 +4028,6 @@
       "noUsersAssigned": "Aucun utilisateur n'est affecté à ce groupe."
     },
     "milestones": {
-      "title": "Types d'étapes clés",
       "description": "Gérer les types d'étapes clés",
       "filterPlaceholder": "Filtrer les types d'étapes clés...",
       "addMilestones": "Ajout en masse d'étapes clés",
@@ -4164,25 +4044,16 @@
       "add": {
         "button": "Ajouter un type d'étape",
         "title": "Ajouter un nouveau type d'étape",
-        "fields": {
-          "name_error": "Le nom est requis."
-        },
         "errors": {
-          "nameExists": "Un type d'étape portant ce nom existe déjà.",
-          "unknown": "Une erreur inconnue s'est produite."
+          "nameExists": "Un type d'étape portant ce nom existe déjà."
         }
       },
       "edit": {
-        "title": "Modifier le type d'étape",
-        "setDefault": {
-          "title": "Êtes-vous sûr de vouloir définir ce type d'étape comme type par défaut ?",
-          "description": "Ce type d'étape sera ajouté à tous les projets."
-        }
+        "title": "Modifier le type d'étape"
       },
       "delete": {
         "title": "Supprimer le type d'étape",
         "confirmMessage": "Êtes-vous sûr de vouloir supprimer ce type d'étape ?",
-        "warning": "Cette action est irréversible.",
         "errors": {
           "unknown": "Une erreur inconnue s'est produite."
         }
@@ -4245,7 +4116,6 @@
       }
     },
     "issues": {
-      "title": "Problèmes",
       "description": "Gérer les problèmes liés à ce système de suivi des problèmes",
       "filterPlaceholder": "Problèmes de filtrage...",
       "add": {
@@ -4257,8 +4127,7 @@
       },
       "delete": {
         "title": "Supprimer le problème",
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer le problème \"{name}\" ?",
-        "warning": "Cette action est irréversible."
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer le problème \"{name}\" ?"
       },
       "syncIssue": "Problème de synchronisation provenant d'un système externe",
       "syncSuccess": "Problème synchronisé avec succès",
@@ -4267,7 +4136,6 @@
       "syncErrorDescription": "Impossible de synchroniser le problème. Veuillez réessayer plus tard."
     },
     "trash": {
-      "title": "Poubelle",
       "itemTypes": {
         "users": "Utilisateurs",
         "groups": "Groupes",
@@ -4318,7 +4186,6 @@
       "description": "Définissez les préférences de notification par défaut (les utilisateurs peuvent les modifier) et envoyez les notifications système.",
       "defaultMode": {
         "label": "Mode de notification par défaut",
-        "none": "Aucune notification",
         "inApp": "Disponible uniquement dans l'application",
         "inAppEmailImmediate": "Paiement via l'application + e-mail (immédiat)",
         "inAppEmailDaily": "Dans l'application + Courriel (Résumé quotidien)"
@@ -4339,13 +4206,11 @@
         }
       },
       "save": "Enregistrer les paramètres",
-      "saving": "Économie...",
       "success": {
         "title": "Paramètres enregistrés",
         "description": "Les paramètres de notification ont été mis à jour avec succès."
       },
       "error": {
-        "title": "Erreur",
         "description": "Impossible d'enregistrer les paramètres de notification"
       },
       "systemNotification": {
@@ -4353,16 +4218,13 @@
         "description": "Envoyer des annonces importantes à tous les utilisateurs",
         "titleLabel": "Titre",
         "titlePlaceholder": "Saisissez le titre de la notification...",
-        "messageLabel": "Message",
         "messagePlaceholder": "Saisissez le message de notification...",
         "send": "Envoyer une notification",
-        "sending": "Envoi...",
         "success": {
           "title": "Notification envoyée",
           "description": "Notification système envoyée aux utilisateurs {count}"
         },
         "error": {
-          "title": "Erreur",
           "description": "Échec de l'envoi de la notification système",
           "emptyFields": "Veuillez indiquer le titre et le message."
         },
@@ -4376,7 +4238,6 @@
       }
     },
     "integrations": {
-      "title": "Intégrations de problèmes",
       "description": "Gérez les intégrations tierces pour le suivi des problèmes et plus encore.",
       "list": {
         "title": "Intégrations configurées",
@@ -4412,9 +4273,6 @@
       "syncError": "Échec de la synchronisation",
       "syncErrorDescription": "Impossible de mettre en file d'attente la tâche de synchronisation pour cette intégration. Veuillez réessayer plus tard.",
       "delete": {
-        "successMessage": "Intégration supprimée",
-        "successDescription": "Le problème d'intégration a été résolu avec succès.",
-        "confirmTitle": "Supprimer l'intégration",
         "confirmMessage": "Êtes-vous sûr de vouloir supprimer l'intégration du problème \"{name}\" ?",
         "warning": "Cette opération supprimera l'intégration du problème et la déconnectera de tous les projets. Cette action est irréversible.",
         "warningTitle": "Cette action aura pour effet de :",
@@ -4427,7 +4285,6 @@
       "deleteSuccessDescription": "Le problème d'intégration a été résolu avec succès.",
       "deleteError": "Erreur de suppression",
       "add": {
-        "title": "Ajouter une intégration",
         "description": "Configurer une nouvelle intégration de problèmes avec un service externe",
         "selectType": "Sélectionnez le type d'intégration",
         "typeDescription": "Choisissez le type de service que vous souhaitez intégrer",
@@ -4472,7 +4329,6 @@
         "inactive": "Inactif"
       },
       "edit": {
-        "title": "Intégration de la modification",
         "description": "Mettre à jour les paramètres et la configuration d'intégration",
         "successMessage": "L'intégration a été mise à jour avec succès.",
         "successDescription": "Les paramètres d'intégration ont été enregistrés."
@@ -4572,13 +4428,11 @@
       }
     },
     "llm": {
-      "title": "Modèles d'IA",
       "addIntegration": "Ajouter un modèle d'IA",
       "filterPlaceholder": "Filtrer les modèles d'IA...",
       "testAll": "Tester toutes les connexions",
       "connectionTestComplete": "Test de connexion terminé",
       "allIntegrationsTested": "Toutes les connexions des modèles d'IA ont été testées.",
-      "error": "Erreur",
       "failedToTestConnections": "Échec du test de certaines connexions",
       "default": "Défaut",
       "notConfigured": "Non configuré",
@@ -4605,7 +4459,7 @@
         "apiKeyDescription": "Votre clé API pour l'authentification auprès du fournisseur",
         "endpoint": "URL du point de terminaison",
         "endpointPlaceholder": "https://api.provider.com/v1",
-        "endpointDescription": "URL de base pour les requêtes API (laisser vide pour la valeur par défaut)",
+        "endpointDescription": "L'URL de base pour les requêtes API. Pour les fournisseurs standards (OpenAI, Anthropic, Gemini), seules les URL officielles sont acceptées. Pour les fournisseurs auto-hébergés, les adresses privées/internes (localhost, 127.0.0.1, adresses IP privées) sont bloquées pour des raisons de sécurité.",
         "deploymentName": "Nom du déploiement",
         "deploymentNamePlaceholder": "Saisissez le nom du déploiement...",
         "deploymentNameDescription": "Nom du déploiement Azure OpenAI",
@@ -4687,13 +4541,8 @@
       "delete": {
         "title": "Supprimer l'intégration du modèle d'IA",
         "description": "Êtes-vous sûr de vouloir supprimer cette intégration de modèle d'IA ? Cette action la supprimera de tous les projets et ne pourra pas être annulée.",
-        "cancel": "Annuler",
-        "delete": "Supprimer",
-        "success": "Succès",
         "integrationDeletedSuccess": "Intégration du modèle d'IA supprimée avec succès",
-        "error": "Erreur",
-        "failedToDeleteIntegration": "Échec de la suppression de l'intégration du modèle d'IA",
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer cette intégration de modèle d'IA ? Cette action la supprimera de tous les projets et ne pourra pas être annulée."
+        "failedToDeleteIntegration": "Échec de la suppression de l'intégration du modèle d'IA"
       },
       "validation": {
         "nameRequired": "Le nom est requis.",
@@ -4704,28 +4553,19 @@
         "description": "Tester la connexion et la fonctionnalité de {name}",
         "connectionStatus": "État de la connexion",
         "connectionStatusDescription": "Vérifiez si le modèle d'IA est accessible",
-        "testConnection": "Test de connexion",
         "retest": "Retester la connexion",
-        "connectionSuccessful": "Connexion réussie",
         "connectionSuccessfulDescription": "Le modèle d'IA est accessible et répond correctement.",
-        "connectionFailed": "Échec de la connexion",
         "failedToConnect": "Échec de la connexion au modèle d'IA",
         "errorTestingConnection": "Une erreur s'est produite lors du test de connexion.",
         "testMessage": "Message de test",
         "testMessagePlaceholder": "Saisissez un message à envoyer au modèle d'IA...",
         "sendTestMessage": "Envoyer un message de test",
-        "sending": "Envoi...",
         "response": "Réponse",
         "testSuccessful": "Test réussi",
         "responseReceived": "Réponse reçue avec succès (Coût : ${cost})",
         "testFailed": "Test échoué",
         "failedToGetResponse": "Aucune réponse du modèle d'IA",
         "failedToSendMessage": "Échec de l'envoi du message de test",
-        "provider": "Fournisseur",
-        "defaultModel": "Modèle par défaut",
-        "status": "Statut",
-        "notConfigured": "Non configuré",
-        "close": "Fermer",
         "defaultTestMessage": "Bonjour ! Veuillez confirmer brièvement que tout fonctionne correctement."
       }
     },
@@ -4735,9 +4575,7 @@
       "status": {
         "title": "État d'Elasticsearch",
         "description": "État actuel de la connexion et du fonctionnement du moteur de recherche",
-        "refresh": "Rafraîchir",
         "checking": "Vérification de l'état...",
-        "connected": "Connecté",
         "disconnected": "Déconnecté",
         "nodes": "Nœuds",
         "indices": "Indices",
@@ -4748,20 +4586,15 @@
         }
       },
       "settings": {
-        "title": "Configuration",
         "description": "Configurez les paramètres Elasticsearch pour votre déploiement",
         "numberOfReplicas": "Nombre de répliques",
         "replicasHelp": "Définir sur 0 pour les clusters à nœud unique, sur 1 ou plus pour les clusters à nœuds multiples avec redondance.",
-        "save": "Enregistrer les paramètres",
-        "saving": "Économie...",
-        "saved": "Paramètres enregistrés",
         "savedDescription": "La configuration a été enregistrée dans la base de données.",
         "updated": "Indices mis à jour",
         "updatedDescription": "Tous les index existants ont été mis à jour avec les nouveaux paramètres de réplication.",
         "error": "Erreur lors de l'enregistrement des paramètres",
         "errorDescription": "Impossible d'enregistrer la configuration. Veuillez réessayer.",
         "note": {
-          "title": "Note",
           "description": "Les modifications sont appliquées immédiatement aux nouveaux index. Les index existants sont mis à jour lors de l'enregistrement. Définissez le nombre de réplicas sur 0 pour résoudre le statut JAUNE sur les clusters à nœud unique."
         }
       },
@@ -4769,14 +4602,7 @@
         "title": "Réindexer les données",
         "description": "Reconstruire les index de recherche pour améliorer les performances de recherche",
         "entities": {
-          "all": "Toutes les entités",
-          "repositoryCases": "Dossiers de dépôt",
-          "testRuns": "Essais",
-          "sessions": "Séances",
-          "sharedSteps": "Étapes partagées",
-          "issues": "Problèmes",
-          "milestones": "Étapes clés",
-          "projects": "Projets"
+          "all": "Toutes les entités"
         },
         "button": {
           "start": "Lancer la réindexation",
@@ -4803,31 +4629,22 @@
     "queues": {
       "title": "Files d'attente des tâches en arrière-plan",
       "description": "Surveiller et gérer les files d'attente de traitement des tâches en arrière-plan",
-      "refresh": "Rafraîchir",
       "queueNames": {
         "forecast-updates": "Mises à jour des prévisions",
-        "notifications": "Notifications",
         "emails": "File d'attente des e-mails",
         "issue-sync": "Synchronisation des problèmes",
         "testmo-imports": "Importations Testmo",
         "elasticsearch-reindex": "Réindexation Elasticsearch"
       },
       "status": {
-        "error": "Erreur",
         "paused": "En pause",
-        "active": "Actif",
         "idle": "Inactif"
       },
       "table": {
         "queue": "File d'attente",
-        "status": "Statut",
         "concurrency": "Concurrence",
         "waiting": "En attendant",
-        "active": "Actif",
-        "completed": "Complété",
-        "failed": "Échoué",
-        "delayed": "Retardé",
-        "actions": "Actes"
+        "failed": "Échoué"
       },
       "concurrency": {
         "title": "Concurrence des travailleurs",
@@ -4864,9 +4681,7 @@
           "confirmDescription": "Cette opération effacera complètement la file d'attente, supprimant toutes les tâches quel que soit leur état. Cette action est irréversible et ne doit être utilisée qu'en cas d'urgence."
         },
         "warning": "Avertissement",
-        "irreversible": "Cette action est irréversible. Veuillez confirmer que vous souhaitez continuer.",
-        "cancel": "Annuler",
-        "confirm": "Confirmer"
+        "irreversible": "Cette action est irréversible. Veuillez confirmer que vous souhaitez continuer."
       },
       "success": {
         "actionCompleted": "Action terminée",
@@ -4884,35 +4699,20 @@
         "title": "File d'attente des tâches",
         "description": "Consultez et gérez les tâches individuelles en attente.",
         "noJobs": "Aucun emploi trouvé dans cette file d'attente",
-        "filters": {
-          "all": "Tous les États",
-          "waiting": "En attendant",
-          "active": "Actif",
-          "completed": "Complété",
-          "failed": "Échoué",
-          "delayed": "Retardé"
-        },
         "table": {
           "id": "ID de l'offre d'emploi",
           "name": "Nom du poste",
-          "state": "État",
-          "attempts": "Tentatives",
-          "timestamp": "Créé",
-          "duration": "Durée",
-          "actions": "Actes"
+          "attempts": "Tentatives"
         },
         "details": {
           "title": "Détails de l'emploi",
-          "state": "État",
           "failedReason": "Raison de l'échec",
           "stacktrace": "Trace de la pile",
           "data": "Données sur l'emploi",
           "returnValue": "Valeur de retour",
           "options": "Options d'emploi",
-          "created": "Créé",
           "processed": "Traité",
-          "finished": "Fini",
-          "duration": "Durée"
+          "finished": "Fini"
         },
         "success": {
           "actionCompleted": "Action terminée",
@@ -4933,7 +4733,6 @@
       }
     },
     "auditLogs": {
-      "title": "Journaux d'audit",
       "description": "Consultez l'historique d'audit à l'échelle du système pour le suivi de la sécurité et de la conformité.",
       "filterPlaceholder": "Recherche par entité, utilisateur ou action...",
       "filterAction": "Action",
@@ -4956,12 +4755,10 @@
         "entityName": "Nom de l'entité",
         "user": "Utilisateur",
         "project": "Projet",
-        "email": "E-mail",
         "userId": "ID de l'utilisateur"
       },
       "system": "Système",
-      "exportCsv": "Exporter au format CSV",
-      "exporting": "Exportation..."
+      "exportCsv": "Exporter au format CSV"
     }
   },
   "components": {
@@ -5232,7 +5029,6 @@
     "failedToCreate": "Impossible de créer le lien.",
     "removeLink": "Retirer",
     "confirmRemoveLink": "Êtes-vous sûr de vouloir supprimer ce lien ?",
-    "cancel": "Annuler",
     "DEPENDS_ON": "Dépendance",
     "SAME_TEST_DIFFERENT_SOURCE": "Même test (source différente)",
     "status": "Dernière mise à jour",
@@ -5969,8 +5765,6 @@
     },
     "drillDown": {
       "title": "Archives détaillées",
-      "exportCsv": "Exporter au format CSV",
-      "exporting": "Exportation...",
       "loading": "Chargement des enregistrements...",
       "loadingMore": "Chargement en cours...",
       "noRecords": "Aucun enregistrement trouvé",
@@ -6262,7 +6056,6 @@
     "description": "Merci d'avoir essayé TestPlanIt ! Votre période d'essai est terminée et cette instance n'est plus accessible.",
     "nextSteps": "Pour continuer à utiliser TestPlanIt et accéder à vos données de test, contactez notre équipe commerciale.",
     "pricingPlans": "Formules tarifaires",
-    "contactButton": "Contactez le service commercial",
     "dataRetention": "Vos données de test sont stockées en toute sécurité et seront disponibles lorsque vous mettrez à niveau votre compte."
   }
 }
