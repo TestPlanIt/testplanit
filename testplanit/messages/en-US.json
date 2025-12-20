@@ -663,7 +663,6 @@
       "total": "Total",
       "noCases": "No test cases",
       "unknown": "Unknown",
-      "results": "Results",
       "selectedTestCases": "Selected Test Cases",
       "editToModifyCasesTitle": "This list can not be modified.",
       "editToModifyCases": "Edit the Test Run and click Selected Test Cases to modify the list.",
@@ -728,7 +727,6 @@
         "sessions": "Sessions"
       },
       "filter": "Filter list...",
-      "selectAll": "Select All",
       "selectNone": "Select None",
       "pagination": {
         "showing": "Showing",
@@ -855,7 +853,6 @@
         "nextSlide": "Next slide"
       },
       "dialog": {
-        "close": "Close",
         "toggleFullScreen": "Toggle full screen"
       },
       "command": {
@@ -946,7 +943,6 @@
       "case": "{count, plural, =1 {case} other {cases}}",
       "result": "{count, plural, =1 {result} other {results}}",
       "run": "{count, plural, =1 {run} other {runs}}",
-      "session": "{count, plural, =1 {session} other {sessions}}",
       "comment": "{count, plural, =1 {{count} comment} other {{count} comments}}"
     },
     "success": {
@@ -1849,7 +1845,6 @@
   },
   "repository": {
     "version": {
-      "prefix": "v",
       "notFound": "Test case version not found.",
       "detailsRegion": "Test case details",
       "metadataRegion": "Test case metadata",
@@ -2008,58 +2003,17 @@
       "export": "Export",
       "cannotReorderAcrossPages": "Cannot reorder test cases across multiple pages. To reorder, view all cases on one page by selecting 'All' from the page size menu, or deselect cases from other pages. You can still drag selected cases to folders.",
       "exportModal": {
-        "title": "Export Test Cases",
-        "description": "Choose your export options below.",
         "scope": {
-          "label": "Export",
-          "selected": "Selected ({count})",
-          "allFiltered": "All in View ({count})",
-          "allProject": "All in Project ({count})"
-        },
-        "format": {
-          "label": "Format",
-          "csv": "CSV",
-          "pdf": "PDF"
-        },
-        "columns": {
-          "label": "Columns",
-          "all": "All",
-          "visible": "Visible"
-        },
-        "delimiter": {
-          "label": "Delimiter",
-          "placeholder": "Select delimiter...",
-          "comma": "Comma (,)",
-          "semicolon": "Semicolon (;)",
-          "colon": "Colon (:)",
-          "pipe": "Pipe (|)"
+          "allFiltered": "All in View ({count})"
         },
         "textLongFormat": {
-          "label": "Rich Text Format",
-          "json": "JSON",
-          "plainText": "Plain Text"
-        },
-        "attachmentFormat": {
-          "label": "Attachment Format",
-          "names": "Names",
-          "json": "JSON",
-          "embedded": "Embed Images"
-        },
-        "stepsFormat": {
-          "label": "Steps Format",
-          "json": "JSON",
-          "plainText": "Plain Text"
+          "label": "Rich Text Format"
         },
         "rowMode": {
           "label": "Test Case Rows",
-          "single": "Single Row per Case",
           "multi": "Single Row per Step"
         },
-        "comingSoon": "Coming Soon",
-        "cancel": "Cancel",
-        "export": "Export",
-        "exporting": "Exporting...",
-        "exportError": "Export failed. Please try again."
+        "comingSoon": "Coming Soon"
       },
       "importWizard": {
         "title": "Import Test Cases",
@@ -2760,7 +2714,6 @@
       "apiTokens": "API Tokens"
     },
     "imports": {
-      "title": "Data Imports",
       "description": "Bring data from external test management tools into Testplanit.",
       "tabs": {
         "testmoJson": "Testmo JSON"
@@ -3134,7 +3087,6 @@
         "nextStepsDescription": "Background imports run asynchronously. You can monitor the status above or refresh the page to view updates."
       },
       "comingSoon": {
-        "title": "Coming soon",
         "description": "Imports for TestRail, Zephyr, and other tools are on the roadmap."
       },
       "errors": {
@@ -5526,7 +5478,6 @@
   "reports": {
     "ui": {
       "crossProjectReports": {
-        "title": "Cross-Project Reports",
         "description": "Create and manage cross-project reports"
       },
       "tabs": {
@@ -5561,7 +5512,6 @@
       "filtersTitle": "Filters",
       "filtersDescription": "Filter the report data by specific criteria",
       "activeFilters": "Active filters:",
-      "clearAllFilters": "Clear all",
       "priorityFilter": "Priority",
       "priorityFilterPlaceholder": "Select priority values (or leave empty for all)",
       "dateRange": {

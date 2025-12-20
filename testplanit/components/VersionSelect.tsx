@@ -32,6 +32,7 @@ export function VersionSelect({
   userTimeFormat,
 }: VersionSelectProps) {
   const t = useTranslations("repository.version");
+  const tGlobal = useTranslations();
 
   if (!versions || versions.length <= 1) return null;
 
@@ -48,7 +49,7 @@ export function VersionSelect({
           <SelectItem key={v.version} value={v.version.toString()}>
             <div className="flex items-center space-x-1 whitespace-nowrap">
               <Badge className="text-primary-foreground text-xs">
-                {t("prefix")}
+                {tGlobal("common.version.prefix")}
                 {v.version.toString()}
               </Badge>
               <div className="text-xs flex">

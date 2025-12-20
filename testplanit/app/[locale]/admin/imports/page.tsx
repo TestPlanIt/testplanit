@@ -14,11 +14,12 @@ import { TestmoImportPanel } from "./TestmoImportPanel";
 
 export default function AdminImportsPage() {
   const t = useTranslations("admin.imports");
+  const tGlobal = useTranslations();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
+        <CardTitle>{tGlobal("admin.menu.imports")}</CardTitle>
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -33,7 +34,7 @@ export default function AdminImportsPage() {
           </TabsContent>
           <TabsContent value="testrail">
             <Alert>
-              <AlertTitle>{t("comingSoon.title")}</AlertTitle>
+              <AlertTitle>{tGlobal("repository.exportModal.comingSoon")}</AlertTitle>
               <AlertDescription>{t("comingSoon.description")}</AlertDescription>
             </Alert>
           </TabsContent>

@@ -39,6 +39,7 @@ export function MilestoneSummary({
   className,
 }: MilestoneSummaryProps) {
   const tCommon = useTranslations("common");
+  const tGlobal = useTranslations();
   const locale = useLocale();
   const { data: session } = useSession();
 
@@ -269,9 +270,9 @@ export function MilestoneSummary({
         {/* Summary text below the bar */}
         <div
           className="text-muted-foreground text-xs truncate grow mr-2"
-          title={`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tCommon("plural.session", { count: sessionCount })}${totalElapsedText ? ` • ${tCommon("fields.totalElapsed")}: ${totalElapsedText}` : ""}${totalEstimateText ? ` • ${tCommon("fields.totalEstimate")}: ${totalEstimateText}` : ""}`}
+          title={`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}${totalElapsedText ? ` • ${tCommon("fields.totalElapsed")}: ${totalElapsedText}` : ""}${totalEstimateText ? ` • ${tCommon("fields.totalEstimate")}: ${totalEstimateText}` : ""}`}
         >
-          {`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tCommon("plural.session", { count: sessionCount })}`}
+          {`${testRunCount} ${tCommon("plural.run", { count: testRunCount })}, ${sessionCount} ${tGlobal("sessions.title", { count: sessionCount })}`}
           {totalElapsedText ? (
             <TooltipProvider delayDuration={300}>
               <Tooltip>

@@ -57,6 +57,7 @@ const SheetContent = React.forwardRef<
   SheetContentProps
 >(({ side = "right", className, children, ...props }, ref) => {
   const t = useTranslations("common.ui.dialog");
+  const tGlobal = useTranslations();
 
   return (
     <SheetPortal>
@@ -69,7 +70,7 @@ const SheetContent = React.forwardRef<
         {children}
         <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
           <Cross2Icon className="h-4 w-4" />
-          <span className="sr-only">{t("close")}</span>
+          <span className="sr-only">{tGlobal("common.actions.close")}</span>
         </SheetPrimitive.Close>
       </SheetPrimitive.Content>
     </SheetPortal>
