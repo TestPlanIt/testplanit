@@ -233,7 +233,7 @@ function IntegrationList() {
     );
     setDeleteDialogOpen(false);
     setIntegrationToDelete(null);
-  }, [integrationToDelete, deleteIntegration, t, refetch]);
+  }, [integrationToDelete, deleteIntegration, t, tGlobal, refetch]);
 
   const handleTestConnection = useCallback(
     async (integration: Integration) => {

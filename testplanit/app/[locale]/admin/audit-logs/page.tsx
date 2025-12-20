@@ -339,6 +339,7 @@ function AuditLogsContent({ session }: { session: Session }) {
   }, [
     refetchAllLogs,
     t,
+    tGlobal,
     debouncedSearchString,
     actionFilter,
     entityTypeFilter,

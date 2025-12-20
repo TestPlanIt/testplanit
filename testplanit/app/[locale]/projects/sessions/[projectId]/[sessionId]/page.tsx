@@ -846,6 +846,7 @@ export default function SessionPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeletingSession, setIsDeletingSession] = useState(false);
   const t = useTranslations("sessions");
+  const tGlobal = useTranslations();
   const tProjects = useTranslations("projects");
   const tCommon = useTranslations("common");
   const locale = useLocale();

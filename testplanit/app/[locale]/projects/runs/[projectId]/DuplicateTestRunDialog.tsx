@@ -261,7 +261,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
     });
   }, [
     testRunCasesDataForStatusList,
-    t,
+    tGlobal,
     UNTESTED_STATUS_ID,
     DEFAULT_UNTESTED_COLOR,
   ]);
