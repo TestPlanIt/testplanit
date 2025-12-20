@@ -627,7 +627,7 @@ export function FacetedSearchFilters({
           onClick={clearAllFilters}
           disabled={activeFilterCount === 0}
         >
-          {t("search.filters.clearAll")}
+          {t("common.actions.clearAll")}
         </Button>
       </div>
 
@@ -688,7 +688,7 @@ export function FacetedSearchFilters({
                 <div className="space-y-2">
                   <Label className="text-sm font-medium flex items-center gap-2">
                     <Boxes className="h-4 w-4" />
-                    {t("search.filters.projects")}
+                    {t("common.fields.projects")}
                   </Label>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
                     {filterItems(projects).map((project) => (
@@ -834,7 +834,7 @@ export function FacetedSearchFilters({
                           ).length > 0 && (
                             <>
                               <div className="text-xs font-semibold text-muted-foreground mt-2">
-                                {t("search.entityTypes.testRun")}
+                                {t("runs.title")}
                               </div>
                               {filterItems(
                                 workflowStates.filter((s) => s.scope === "RUNS")
@@ -903,7 +903,7 @@ export function FacetedSearchFilters({
                           ).length > 0 && (
                             <>
                               <div className="text-xs font-semibold text-muted-foreground mt-2">
-                                {t("search.entityTypes.session")}
+                                {t("common.fields.sessions")}
                               </div>
                               {filterItems(
                                 workflowStates.filter(
@@ -1028,7 +1028,7 @@ export function FacetedSearchFilters({
                 <div className="space-y-2">
                   <Label className="text-sm font-medium flex items-center gap-2">
                     <Tags className="h-4 w-4" />
-                    {t("search.filters.tags")}
+                    {t("tags.title")}
                   </Label>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
                     {filterItems(tags).map((tag) => (
@@ -1074,7 +1074,7 @@ export function FacetedSearchFilters({
                 <div className="space-y-2">
                   <Label className="text-sm font-medium flex items-center gap-2">
                     <User className="h-4 w-4" />
-                    {t("search.filters.createdBy")}
+                    {t("common.fields.createdBy")}
                   </Label>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
                     {filterItems(users).map((user) => (
@@ -1122,7 +1122,7 @@ export function FacetedSearchFilters({
               <div className="space-y-2">
                 <Label className="text-sm font-medium flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4" />
-                  {t("search.filters.dateRange")}
+                  {t("runs.summary.recentResultsDateRange")}
                 </Label>
                 <div className="space-y-2">
                   <Select
@@ -1279,7 +1279,7 @@ export function FacetedSearchFilters({
                     <div className="space-y-2">
                       <Label className="text-sm font-medium flex items-center gap-2">
                         <FolderTree className="h-4 w-4" />
-                        {t("search.filters.folders")}
+                        {t("repository.folders")}
                       </Label>
                       <div className="space-y-1 max-h-40 overflow-y-auto">
                         {filterItems(folders).map((folder) => (
@@ -1338,7 +1338,7 @@ export function FacetedSearchFilters({
                     <div className="space-y-2">
                       <Label className="text-sm font-medium flex items-center gap-2">
                         <LayoutTemplate className="h-4 w-4" />
-                        {t("search.filters.templates")}
+                        {t("common.fields.templates")}
                       </Label>
                       <div className="space-y-1 max-h-40 overflow-y-auto">
                         {filterItems(templates, "templateName").map(
@@ -1401,7 +1401,7 @@ export function FacetedSearchFilters({
                   <div className="space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-2">
                       <Bot className="h-4 w-4" />
-                      {t("search.filters.automationStatus")}
+                      {t("reports.dimensions.automationStatus")}
                     </Label>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
@@ -1540,7 +1540,7 @@ export function FacetedSearchFilters({
               {entityTypes.includes(SearchableEntityType.TEST_RUN) && (
                 <div className="space-y-4 p-4 bg-muted rounded-lg border border-border/50 max-w-full overflow-x-hidden">
                   <h4 className="font-medium text-sm uppercase tracking-wider text-muted-foreground">
-                    {t("search.entityTypes.testRun")}
+                    {t("runs.title")}
                   </h4>
 
                   {/* Test Run Type */}
@@ -1562,12 +1562,12 @@ export function FacetedSearchFilters({
                     >
                       <SelectTrigger>
                         <SelectValue
-                          placeholder={t("search.filters.allTypes")}
+                          placeholder={t("search.allTypes")}
                         />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ALL">
-                          {t("search.filters.allTypes")}
+                          {t("search.allTypes")}
                         </SelectItem>
                         <SelectItem value="REGULAR">
                           {t("search.filters.regular")}
@@ -1584,7 +1584,7 @@ export function FacetedSearchFilters({
                     <div className="space-y-2">
                       <Label className="text-sm font-medium flex items-center gap-2">
                         <Combine className="h-4 w-4" />
-                        {t("search.filters.configurations")}
+                        {t("common.fields.configurations")}
                       </Label>
                       <div className="space-y-1 max-h-40 overflow-y-auto">
                         {filterItems(configurations).map((config) => (
@@ -1643,7 +1643,7 @@ export function FacetedSearchFilters({
                     <div className="space-y-2">
                       <Label className="text-sm font-medium flex items-center gap-2">
                         <Milestone className="h-4 w-4" />
-                        {t("search.filters.milestones")}
+                        {t("common.fields.milestones")}
                       </Label>
                       <div className="space-y-1 max-h-40 overflow-y-auto">
                         {filterItems(milestones).map((milestone) => (
@@ -1780,7 +1780,7 @@ export function FacetedSearchFilters({
               {entityTypes.includes(SearchableEntityType.SESSION) && (
                 <div className="space-y-4 p-4 bg-muted rounded-lg border border-border/50 max-w-full overflow-x-hidden">
                   <h4 className="font-medium text-sm uppercase tracking-wider text-muted-foreground">
-                    {t("search.entityTypes.session")}
+                    {t("common.fields.sessions")}
                   </h4>
 
                   {/* Session Templates */}
@@ -1788,7 +1788,7 @@ export function FacetedSearchFilters({
                     <div className="space-y-2">
                       <Label className="text-sm font-medium flex items-center gap-2">
                         <LayoutTemplate className="h-4 w-4" />
-                        {t("search.filters.templates")}
+                        {t("common.fields.templates")}
                       </Label>
                       <div className="space-y-1 max-h-40 overflow-y-auto">
                         {filterItems(templates, "templateName").map(
@@ -1851,7 +1851,7 @@ export function FacetedSearchFilters({
                     <div className="space-y-2">
                       <Label className="text-sm font-medium flex items-center gap-2">
                         <UserCheck className="h-4 w-4" />
-                        {t("search.filters.assignedTo")}
+                        {t("common.fields.assignedTo")}
                       </Label>
                       <div className="space-y-1 max-h-40 overflow-y-auto">
                         {filterItems(users).map((user) => (
@@ -2045,7 +2045,7 @@ export function FacetedSearchFilters({
               {entityTypes.includes(SearchableEntityType.ISSUE) && (
                 <div className="space-y-4 p-4 bg-muted rounded-lg border border-border/50 max-w-full overflow-x-hidden">
                   <h4 className="font-medium text-sm uppercase tracking-wider text-muted-foreground">
-                    {t("search.entityTypes.issue")}
+                    {t("common.fields.issues")}
                   </h4>
 
                   {/* Has External ID */}
@@ -2074,7 +2074,7 @@ export function FacetedSearchFilters({
               {entityTypes.includes(SearchableEntityType.MILESTONE) && (
                 <div className="space-y-4 p-4 bg-muted rounded-lg border border-border/50 max-w-full overflow-x-hidden">
                   <h4 className="font-medium text-sm uppercase tracking-wider text-muted-foreground">
-                    {t("search.entityTypes.milestone")}
+                    {t("common.fields.milestones")}
                   </h4>
 
                   {/* Has Parent */}
@@ -2224,7 +2224,7 @@ export function FacetedSearchFilters({
             className="w-full"
             onClick={clearAllFilters}
           >
-            {t("search.filters.clearAll")}
+            {t("common.actions.clearAll")}
           </Button>
         </div>
       )}

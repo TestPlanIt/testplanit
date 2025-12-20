@@ -531,7 +531,7 @@ export function CreateProjectWizard({
           setValidationErrors({
             name:
               nameValidationMessage ||
-              t("admin.projects.wizard.errors.nameNotUnique"),
+              t("common.errors.projectNameExists"),
           });
           return false;
         }
@@ -1099,7 +1099,7 @@ export function CreateProjectWizard({
             <div className="space-y-4">
               <div className="space-y-2">
                 <FormLabel className="flex items-center">
-                  {t("admin.projects.wizard.labels.defaultProjectAccess")}
+                  {t("common.labels.defaultProjectAccess")}
                   <HelpPopover helpKey="project.defaultAccess" />
                 </FormLabel>
                 <FormField
@@ -1181,12 +1181,12 @@ export function CreateProjectWizard({
                           <SelectContent>
                             <SelectItem value="NO_ACCESS">
                               {t(
-                                "admin.projects.wizard.labels.access.noAccess"
+                                "common.labels.access.noAccess"
                               )}
                             </SelectItem>
                             <SelectItem value="GLOBAL_ROLE">
                               {t(
-                                "admin.projects.wizard.labels.access.globalRole"
+                                "common.labels.access.globalRole"
                               )}
                             </SelectItem>
                             <SelectSeparator />
@@ -1314,7 +1314,7 @@ export function CreateProjectWizard({
                           )}
                           <Badge variant="outline">
                             {template.caseFields.length}{" "}
-                            {t("admin.projects.wizard.labels.fields")}
+                            {t("admin.imports.testmo.mapping.templateColumnFields")}
                           </Badge>
                         </div>
                       </div>
@@ -1327,7 +1327,7 @@ export function CreateProjectWizard({
                         {template.caseFields.length > 5 && (
                           <Badge variant="outline">
                             {`+${template.caseFields.length - 5}`}{" "}
-                            {t("admin.projects.wizard.labels.more")}
+                            {t("common.ui.breadcrumb.more")}
                           </Badge>
                         )}
                       </div>
@@ -1385,7 +1385,7 @@ export function CreateProjectWizard({
               <div className="space-y-4">
                 <Label className="text-base flex items-center gap-2">
                   <Workflow className="h-4 w-4" />
-                  {t("admin.projects.wizard.labels.workflows")}
+                  {t("common.labels.workflows")}
                   <sup>
                     <Asterisk className="w-3 h-3 text-destructive" />
                   </sup>
@@ -1397,7 +1397,7 @@ export function CreateProjectWizard({
                     <CardHeader>
                       <CardTitle className="text-sm flex items-center gap-2">
                         <ListChecks className="h-4 w-4" />
-                        {t("admin.projects.wizard.labels.testCases")}
+                        {t("repository.testCases")}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -1447,7 +1447,7 @@ export function CreateProjectWizard({
                     <CardHeader>
                       <CardTitle className="text-sm flex items-center gap-2">
                         <PlayCircle className="h-4 w-4" />
-                        {t("admin.projects.wizard.labels.testRuns")}
+                        {t("runs.title")}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -1497,7 +1497,7 @@ export function CreateProjectWizard({
                     <CardHeader>
                       <CardTitle className="text-sm flex items-center gap-2">
                         <Compass className="h-4 w-4" />
-                        {t("admin.projects.wizard.labels.sessions")}
+                        {t("common.fields.sessions")}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -1578,7 +1578,7 @@ export function CreateProjectWizard({
               <div className="space-y-2">
                 <Label className="text-base flex items-center gap-2">
                   <Milestone className="h-4 w-4" />
-                  {t("admin.projects.wizard.labels.milestoneTypes")}
+                  {t("common.fields.milestoneTypes")}
                 </Label>
                 <p className="text-sm text-muted-foreground">
                   {t("admin.projects.wizard.descriptions.milestoneTypes")}
@@ -1693,7 +1693,7 @@ export function CreateProjectWizard({
                     <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">
                         <Bot className="h-4 w-4" />
-                        {t("admin.projects.wizard.labels.aiModels")}
+                        {t("admin.menu.llm")}
                       </CardTitle>
                       <CardDescription>
                         {t("admin.projects.wizard.descriptions.aiModels")}

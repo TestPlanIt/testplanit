@@ -653,7 +653,7 @@ export function CreateIssueDialog({
             {authError && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{t("issues.authRequired")}</AlertTitle>
+                <AlertTitle>{t("issues.authenticationRequired")}</AlertTitle>
                 <AlertDescription className="flex items-center justify-between">
                   <span>{t("issues.authRequiredDescription")}</span>
                   {authError.startsWith("http") && (

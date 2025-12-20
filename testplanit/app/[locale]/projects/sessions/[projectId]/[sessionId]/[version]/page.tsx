@@ -363,7 +363,7 @@ export default function SessionVersionPage() {
                 }
                 previousValue={previousVersion?.note}
                 fieldType="editor"
-                field={t("sessions.version.fields.description")}
+                field={t("issues.description")}
                 testSession={currentVersion}
                 projectId={Number(projectId)}
               />
@@ -377,7 +377,7 @@ export default function SessionVersionPage() {
                 }
                 previousValue={previousVersion?.mission}
                 fieldType="editor"
-                field={t("sessions.version.fields.mission")}
+                field={t("common.fields.mission")}
                 testSession={currentVersion}
                 projectId={Number(projectId)}
               />
@@ -404,8 +404,8 @@ export default function SessionVersionPage() {
                 </TooltipTrigger>
                 <TooltipContent>
                   {isCollapsedLeft
-                    ? t("sessions.version.panels.expandLeft")
-                    : t("sessions.version.panels.collapseLeft")}
+                    ? t("common.actions.expandLeftPanel")
+                    : t("common.actions.collapseLeftPanel")}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -433,8 +433,8 @@ export default function SessionVersionPage() {
                 </TooltipTrigger>
                 <TooltipContent>
                   {isCollapsedRight
-                    ? t("sessions.version.panels.expandRight")
-                    : t("sessions.version.panels.collapseRight")}
+                    ? t("common.actions.expandRightPanel")
+                    : t("common.actions.collapseRightPanel")}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -456,7 +456,7 @@ export default function SessionVersionPage() {
                 currentValue={currentVersion.isCompleted}
                 previousValue={null}
                 fieldType="completed"
-                field={t("sessions.version.fields.status")}
+                field={t("common.actions.status")}
                 testSession={currentVersion}
                 projectId={Number(projectId)}
               />
@@ -465,7 +465,7 @@ export default function SessionVersionPage() {
                 currentValue={currentVersion.stateName}
                 previousValue={previousVersion?.stateName}
                 fieldType="state"
-                field={t("sessions.version.fields.state")}
+                field={t("common.fields.state")}
                 testSession={currentVersion}
                 workflows={workflows}
               />
@@ -475,7 +475,7 @@ export default function SessionVersionPage() {
                 currentValue={currentVersion.templateName}
                 previousValue={previousVersion?.templateName}
                 fieldType="text"
-                field={t("sessions.version.fields.template")}
+                field={t("common.fields.template")}
                 testSession={currentVersion}
                 projectId={Number(projectId)}
               />
@@ -485,7 +485,7 @@ export default function SessionVersionPage() {
                 currentValue={currentVersion.configurationName}
                 previousValue={previousVersion?.configurationName}
                 fieldType="text"
-                field={t("sessions.version.fields.configuration")}
+                field={t("common.fields.configuration")}
                 testSession={currentVersion}
                 projectId={Number(projectId)}
               />
@@ -495,7 +495,7 @@ export default function SessionVersionPage() {
                 currentValue={currentVersion.milestoneName}
                 previousValue={previousVersion?.milestoneName}
                 fieldType="text"
-                field={t("sessions.version.fields.milestone")}
+                field={t("common.fields.milestone")}
                 testSession={currentVersion}
                 milestones={milestones}
               />
@@ -505,7 +505,7 @@ export default function SessionVersionPage() {
                 currentValue={currentVersion.assignedToId}
                 previousValue={previousVersion?.assignedToId}
                 fieldType="user"
-                field={t("sessions.version.fields.assignedTo")}
+                field={t("common.fields.assignedTo")}
                 testSession={currentVersion}
                 projectId={Number(projectId)}
               />
@@ -515,7 +515,7 @@ export default function SessionVersionPage() {
                 currentValue={currentVersion.estimate}
                 previousValue={previousVersion?.estimate}
                 fieldType="duration"
-                field={t("sessions.version.fields.estimate")}
+                field={t("common.fields.estimate")}
                 testSession={currentVersion}
                 projectId={Number(projectId)}
               />
@@ -524,7 +524,7 @@ export default function SessionVersionPage() {
                 currentValue={currentVersion.elapsed}
                 previousValue={previousVersion?.elapsed}
                 fieldType="duration"
-                field={t("sessions.version.fields.elapsed")}
+                field={t("runs.summary.recentResultsElapsed")}
                 testSession={currentVersion}
                 projectId={Number(projectId)}
               />
@@ -534,7 +534,7 @@ export default function SessionVersionPage() {
                 currentValue={sortedCurrentTags}
                 previousValue={sortedPreviousTags}
                 fieldType="tags"
-                field={t("sessions.version.fields.tags")}
+                field={t("tags.title")}
                 testSession={currentVersion}
                 projectId={Number(projectId)}
               />
@@ -544,7 +544,7 @@ export default function SessionVersionPage() {
                 currentValue={sortedCurrentAttachments}
                 previousValue={sortedPreviousAttachments}
                 fieldType="attachments"
-                field={t("sessions.version.fields.attachments")}
+                field={t("common.fields.attachments")}
                 testSession={currentVersion}
                 projectId={Number(projectId)}
               />
@@ -568,7 +568,7 @@ export default function SessionVersionPage() {
                       timezone={session?.user.preferences?.timezone}
                     />
                   </div>
-                  <div>{t("sessions.version.versionInfo.by")}</div>
+                  <div>{t("common.by")}</div>
                   <UserNameCell userId={currentVersion.createdById} />
                 </div>
               </div>

@@ -134,7 +134,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
 
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              {t("common.dialogs.complete.fields.state")}
+              {t("common.fields.state")}
             </label>
             <Select
               value={selectedStateId.toString()}
@@ -143,7 +143,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
               <SelectTrigger>
                 <SelectValue
                   placeholder={t(
-                    "common.dialogs.complete.placeholders.selectState"
+                    "common.placeholders.selectState"
                   )}
                 />
               </SelectTrigger>
@@ -166,7 +166,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
 
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              {t("common.dialogs.complete.fields.completionDate")}
+              {t("sessions.complete.fields.completionDate")}
             </label>
             <Popover>
               <PopoverTrigger asChild>
@@ -182,7 +182,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
                     format(selectedDate, "PPP")
                   ) : (
                     <span>
-                      {t("common.dialogs.complete.placeholders.pickDate")}
+                      {t("sessions.complete.placeholders.pickDate")}
                     </span>
                   )}
                 </Button>
@@ -209,14 +209,14 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
             onClick={() => setOpen(false)}
             disabled={isSubmitting}
           >
-            {t("common.dialogs.complete.actions.cancel")}
+            {t("common.cancel")}
           </Button>
           <Button
             variant="destructive"
             onClick={handleComplete}
             disabled={isSubmitting}
           >
-            {t("common.dialogs.complete.actions.complete")}
+            {t("common.dialogs.complete.title")}
           </Button>
         </DialogFooter>
       </DialogContent>

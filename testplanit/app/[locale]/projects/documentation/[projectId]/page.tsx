@@ -206,7 +206,7 @@ export default function ProjectDocumentation({
                       </div>
                       <div>
                         {t("common.actions.edit")}{" "}
-                        {t("navigation.projects.menu.documentation")}
+                        {t("common.fields.documentation")}
                       </div>
                     </div>
                   </Button>

@@ -203,7 +203,7 @@ export function CommentItem({
           <DialogHeader>
             <DialogTitle>{t("comments.deleteDialog.title")}</DialogTitle>
             <DialogDescription>
-              {t("comments.deleteDialog.description")}
+              {t("comments.confirmDelete")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

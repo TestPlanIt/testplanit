@@ -1711,7 +1711,7 @@ export default function TestCaseDetails() {
                                   <SelectTrigger>
                                     <SelectValue
                                       placeholder={t(
-                                        "repository.cases.selectState"
+                                        "common.placeholders.selectState"
                                       )}
                                     />
                                   </SelectTrigger>
@@ -1767,7 +1767,7 @@ export default function TestCaseDetails() {
                                 <SelectTrigger>
                                   <SelectValue
                                     placeholder={t(
-                                      "repository.cases.selectTemplate"
+                                      "common.placeholders.selectTemplate"
                                     )}
                                   />
                                 </SelectTrigger>
@@ -1972,8 +1972,8 @@ export default function TestCaseDetails() {
                     <TooltipContent>
                       <div>
                         {isCollapsedLeft
-                          ? t("repository.cases.panels.expandLeft")
-                          : t("repository.cases.panels.collapseLeft")}
+                          ? t("common.actions.expandLeftPanel")
+                          : t("common.actions.collapseLeftPanel")}
                       </div>
                     </TooltipContent>
                   </Tooltip>
@@ -2003,8 +2003,8 @@ export default function TestCaseDetails() {
                     <TooltipContent>
                       <div>
                         {isCollapsedRight
-                          ? t("repository.cases.panels.expandRight")
-                          : t("repository.cases.panels.collapseRight")}
+                          ? t("common.actions.expandRightPanel")
+                          : t("common.actions.collapseRightPanel")}
                       </div>
                     </TooltipContent>
                   </Tooltip>

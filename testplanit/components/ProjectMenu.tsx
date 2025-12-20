@@ -82,20 +82,20 @@ export default function ProjectsMenu({
     (settingsPerms && settingsPerms.canAddEdit); // Has Settings permissions
 
   const menuOptions: MenuOption[] = [
-    { label: t("navigation.projects.sections.project") },
+    { label: t("common.fields.project") },
     {
       icon: Home,
-      label: t("navigation.projects.menu.overview"),
+      label: t("projects.overview.title"),
       path: "overview",
     },
     {
       icon: DocumentationIcon,
-      label: t("navigation.projects.menu.documentation"),
+      label: t("common.fields.documentation"),
       path: "documentation",
     },
     {
       icon: Milestone,
-      label: t("navigation.projects.menu.milestones"),
+      label: t("common.fields.milestones"),
       path: "milestones",
     },
     { label: t("navigation.projects.sections.management") },
@@ -108,7 +108,7 @@ export default function ProjectsMenu({
       ? [
           {
             icon: Layers,
-            label: t("navigation.projects.menu.sharedSteps"),
+            label: t("enums.ApplicationArea.SharedSteps"),
             path: "shared-steps",
           },
         ]
@@ -120,24 +120,24 @@ export default function ProjectsMenu({
     },
     {
       icon: SessionsIcon,
-      label: t("navigation.projects.menu.sessions"),
+      label: t("common.fields.sessions"),
       path: "sessions",
     },
     {
       icon: TagsIcon,
-      label: t("navigation.projects.menu.tags"),
+      label: t("tags.title"),
       path: "tags",
     },
     {
       icon: IssuesIcon,
-      label: t("navigation.projects.menu.issues"),
+      label: t("common.fields.issues"),
       path: "issues",
     },
     ...(canSeeReports
       ? [
           {
             icon: ChartNoAxesCombined,
-            label: t("navigation.projects.menu.reports"),
+            label: t("navigation.admin.reports"),
             path: "reports",
           },
         ]
@@ -146,7 +146,7 @@ export default function ProjectsMenu({
       ? [
           {
             icon: Settings,
-            label: t("navigation.projects.menu.settings"),
+            label: t("common.tabs.settings"),
             path: "settings",
           },
         ]
@@ -195,7 +195,7 @@ export default function ProjectsMenu({
               return sections.map((section, sectionIndex) => {
                 const sectionId =
                   section.header?.label ===
-                  t("navigation.projects.sections.project")
+                  t("common.fields.project")
                     ? "project-section"
                     : section.header?.label ===
                         t("navigation.projects.sections.management")

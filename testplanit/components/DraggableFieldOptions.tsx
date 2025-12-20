@@ -336,7 +336,7 @@ const DraggableList: React.FC<DraggableListProps> = ({
             className={`${columns} shadow-xs text-muted-foreground sticky top-0 z-10 bg-white`}
           >
             <span />
-            <span className="ml-2">{t("common.fields.options.icon")}</span>
+            <span className="ml-2">{t("common.fields.icon")}</span>
             <span>{t("common.fields.options.label")}</span>
             {showDefault ? (
               <span className="ml-2">{t("common.fields.options.default")}</span>
@@ -344,7 +344,7 @@ const DraggableList: React.FC<DraggableListProps> = ({
               <span className="ml-2" />
             )}
             <span className="ml-2">{t("common.fields.options.enabled")}</span>
-            <span>{t("common.fields.options.remove")}</span>
+            <span>{t("linkedCases.removeLink")}</span>
           </div>
         )}
 

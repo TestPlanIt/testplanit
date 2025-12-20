@@ -62,7 +62,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
   const t = useTranslations();
 
   return (
-    <div role="region" aria-label={t("repository.testCase.detailsRegion")}>
+    <div role="region" aria-label={t("repository.version.detailsRegion")}>
       <ul className="ml-1 list-none" role="list">
         {isEditMode && !isSubmitting ? (
           <>

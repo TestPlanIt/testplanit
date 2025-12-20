@@ -87,7 +87,7 @@ const SessionsSection: React.FC<SessionsSectionProps> = ({ projectId }) => {
                   {/* Second row - Created date */}
                   <div className="text-sm text-muted-foreground ml-7 flex items-center min-w-0">
                     <span className="shrink-0 whitespace-nowrap mr-1">
-                      {t("projects.overview.created")}
+                      {t("common.fields.created")}
                       {": "}
                     </span>
                     <span className="truncate">

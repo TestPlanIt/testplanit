@@ -835,8 +835,8 @@ export default function TestCaseVersions() {
                   <TooltipContent>
                     <div>
                       {isCollapsedLeft
-                        ? t("repository.version.expandLeftPanel")
-                        : t("repository.version.collapseLeftPanel")}
+                        ? t("common.actions.expandLeftPanel")
+                        : t("common.actions.collapseLeftPanel")}
                     </div>
                   </TooltipContent>
                 </Tooltip>
@@ -863,8 +863,8 @@ export default function TestCaseVersions() {
                   <TooltipContent>
                     <div>
                       {isCollapsedRight
-                        ? t("repository.version.expandRightPanel")
-                        : t("repository.version.collapseRightPanel")}
+                        ? t("common.actions.expandRightPanel")
+                        : t("common.actions.collapseRightPanel")}
                     </div>
                   </TooltipContent>
                 </Tooltip>
@@ -1012,7 +1012,7 @@ export default function TestCaseVersions() {
                         <Link
                           href={`/projects/repository/${projectId}/${caseId}`}
                           className="group"
-                          title={t("repository.version.backToLatest")}
+                          title={t("sessions.version.backToLatest")}
                         >
                           {t("repository.version.latestVersionUpdated", {
                             version: versions[0].version,

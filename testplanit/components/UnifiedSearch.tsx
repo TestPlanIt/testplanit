@@ -830,9 +830,9 @@ export function UnifiedSearch({
             {totalPagesForTab > 1 && (
               <div className="mt-6 flex items-center justify-between">
                 <div className="text-sm text-muted-foreground">
-                  {t("search.results.showing")} {showingFromForTab}-
-                  {showingToForTab} {t("search.results.of")} {totalForTab}{" "}
-                  {t("search.results.results")}
+                  {t("common.pagination.showing")} {showingFromForTab}-
+                  {showingToForTab} {t("common.of")} {totalForTab}{" "}
+                  {t("common.results")}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -869,7 +869,7 @@ export function UnifiedSearch({
                       className="w-16 h-9 text-center"
                     />
                     <span className="text-sm">
-                      {t("search.results.of")} {totalPagesForTab}
+                      {t("common.of")} {totalPagesForTab}
                     </span>
                   </div>
 

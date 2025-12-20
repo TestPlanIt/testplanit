@@ -114,7 +114,7 @@ export function DeleteCaseModal({
         onClick={handleOpen}
       >
         <Trash2 className="h-5 w-5" />
-        {showLabel && <div>{t("repository.actions.delete")}</div>}
+        {showLabel && <div>{t("sharedSteps.confirmDelete")}</div>}
       </Button>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[600px] border-destructive">
         <div className="space-y-4">
@@ -130,7 +130,7 @@ export function DeleteCaseModal({
               role="alert"
             >
               <p className="font-bold">
-                {t("repository.deleteCase.activeRunWarningTitle")}
+                {t("projects.overview.activeTestRuns")}
               </p>
               <p>
                 {t("repository.deleteCase.activeRunWarningMessage", {
@@ -161,7 +161,7 @@ export function DeleteCaseModal({
             >
               {isSubmitting
                 ? t("common.status.deleting")
-                : t("repository.deleteCase.confirm")}
+                : t("common.actions.confirmDelete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </div>

@@ -116,7 +116,7 @@ export function DeleteSessionModal({
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center">
                 <TriangleAlert className="w-6 h-6 mr-2" />
-                {t("sessions.delete.title")}
+                {t("sessions.actions.delete")}
               </AlertDialogTitle>
             </AlertDialogHeader>
             <div className="overflow-hidden">

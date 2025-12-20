@@ -182,13 +182,13 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         setError("name", {
           type: "custom",
-          message: t("admin.roles.edit.errors.nameExists"),
+          message: t("admin.roles.add.errors.nameExists"),
         });
       } else {
         console.error("Error updating role or permissions:", err); // Log other errors
         setError("root", {
           type: "custom",
-          message: t("admin.roles.edit.errors.unknown"),
+          message: t("milestones.errors.unknown"),
         });
       }
       setIsSubmitting(false);
@@ -282,7 +282,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {t("admin.roles.fields.name")}
+                    {t("common.name")}
                     <HelpPopover helpKey="role.name" />
                   </FormLabel>
                   <FormControl>
@@ -298,7 +298,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                   <FormLabel className="flex items-center">
-                    {t("admin.roles.fields.default")}
+                    {t("common.fields.default")}
                     <HelpPopover helpKey="role.isDefault" />
                   </FormLabel>
                   <FormControl>
@@ -385,7 +385,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
                                   : "unchecked"
                             }
                           />
-                          {t("common.permissions.delete")}
+                          {t("sharedSteps.confirmDelete")}
                           <HelpPopover helpKey="role.permissions.canDelete" />
                         </Label>
                       </th>
@@ -406,7 +406,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
                                   : "unchecked"
                             }
                           />
-                          {t("common.permissions.close")}
+                          {t("common.actions.complete")}
                           <HelpPopover helpKey="role.permissions.canClose" />
                         </Label>
                       </th>
@@ -480,7 +480,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
                                       <Switch
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
-                                        aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("common.permissions.delete")}`}
+                                        aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("sharedSteps.confirmDelete")}`}
                                       />
                                     </FormControl>
                                   </FormItem>
@@ -502,7 +502,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
                                       <Switch
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
-                                        aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("common.permissions.close")}`}
+                                        aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("common.actions.complete")}`}
                                       />
                                     </FormControl>
                                   </FormItem>

@@ -421,7 +421,7 @@ export function AddMilestoneModal() {
                         />
                       </FormControl>
                       <FormLabel className="flex items-center">
-                        {t("milestones.fields.started")}
+                        {t("common.fields.started")}
                         <HelpPopover helpKey="milestone.started" />
                       </FormLabel>
                       <FormMessage />
@@ -438,8 +438,8 @@ export function AddMilestoneModal() {
                       <DatePickerField
                         control={control}
                         name="startedAt"
-                        label={t("milestones.fields.startDate")}
-                        placeholder={t("milestones.fields.startDate")}
+                        label={t("common.fields.startDate")}
+                        placeholder={t("common.fields.startDate")}
                         helpKey="milestone.startDate"
                       />
                       <FormMessage />

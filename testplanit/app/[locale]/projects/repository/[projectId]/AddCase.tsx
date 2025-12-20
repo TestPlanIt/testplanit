@@ -972,7 +972,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
                     render={({ field }) => (
                       <FormItem className="flex items-baseline space-x-2">
                         <FormLabel className="flex items-center">
-                          {t("repository.addCase.template")}
+                          {t("common.fields.template")}
                           <sup>
                             <Asterisk className="w-3 h-3 text-destructive" />
                           </sup>
@@ -1078,7 +1078,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center">
-                            {t("repository.addCase.state")}
+                            {t("common.fields.state")}
                             <sup>
                               <Asterisk className="w-3 h-3 text-destructive" />
                             </sup>
@@ -1162,7 +1162,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
                       <div className="min-w-[50px] mx-1">
                         <FormItem>
                           <FormLabel className="flex items-center">
-                            {t("repository.addCase.estimate")}
+                            {t("common.fields.estimate")}
                             <HelpPopover helpKey="case.estimate" />
                           </FormLabel>
                           <FormControl>
@@ -1187,7 +1187,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
                         <FormItem>
                           <div className="mt-4 flex items-center space-x-2 ">
                             <FormLabel className="flex items-center">
-                              {t("repository.addCase.automated")}
+                              {t("common.fields.automated")}
                               <HelpPopover helpKey="case.automated" />
                             </FormLabel>
                             <FormControl>

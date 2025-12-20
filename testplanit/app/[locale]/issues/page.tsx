@@ -513,7 +513,7 @@ function Issues() {
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
-              <CardTitle>{t("Pages.Issues.title")}</CardTitle>
+              <CardTitle>{t("common.fields.issues")}</CardTitle>
             </div>
           </div>
           <CardDescription>{t("Pages.Issues.description")}</CardDescription>

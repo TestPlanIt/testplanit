@@ -180,21 +180,21 @@ export const Header = () => {
                       className={`${buttonVariants({ variant: "link" })}`}
                       href="/tags"
                     >
-                      {t("common.labels.tags")}
+                      {t("tags.title")}
                     </Link>
                     <Link
                       id="issues-link"
                       className={`${buttonVariants({ variant: "link" })}`}
                       href="/issues"
                     >
-                      {t("common.labels.issues")}
+                      {t("common.fields.issues")}
                     </Link>
                     <Link
                       id="users-link"
                       className={`${buttonVariants({ variant: "link" })}`}
                       href="/users"
                     >
-                      {t("common.labels.users")}
+                      {t("users.title")}
                     </Link>
                   </span>
                 </div>
@@ -206,7 +206,7 @@ export const Header = () => {
                     className={`${buttonVariants({ variant: "link" })}`}
                     href="/admin"
                   >
-                    {t("common.labels.admin")}
+                    {t("common.access.admin")}
                   </Link>
                 </span>
               )}
@@ -311,7 +311,7 @@ export const Header = () => {
                     className="cursor-pointer"
                   >
                     <BookOpen className="mr-2 h-4 w-4" />
-                    {t("help.menu.documentation") || "Documentation"}
+                    {t("common.fields.documentation") || "Documentation"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

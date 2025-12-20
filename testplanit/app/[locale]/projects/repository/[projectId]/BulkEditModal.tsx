@@ -1755,7 +1755,7 @@ export function BulkEditModal({
                           className="pl-2 border-l-2 border-muted"
                         >
                           <div className="font-medium text-xs text-muted-foreground">
-                            {t("common.ui.step") + " "}
+                            {t("common.fields.step") + " "}
                             {stepPreview.stepNumber}
                           </div>
                           {stepPreview.stepMatches > 0 && (

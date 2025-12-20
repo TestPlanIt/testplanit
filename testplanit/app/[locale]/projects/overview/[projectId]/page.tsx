@@ -172,8 +172,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                 <TooltipContent>
                   <div>
                     {isLeftCollapsed
-                      ? t("projects.overview.panels.expandLeft")
-                      : t("projects.overview.panels.collapseLeft")}
+                      ? t("common.actions.expandLeftPanel")
+                      : t("common.actions.collapseLeftPanel")}
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -203,8 +203,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                 <TooltipContent>
                   <div>
                     {isRightCollapsed
-                      ? t("projects.overview.panels.expandRight")
-                      : t("projects.overview.panels.collapseRight")}
+                      ? t("common.actions.expandRightPanel")
+                      : t("common.actions.collapseRightPanel")}
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -243,7 +243,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                   <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
                     <div className="flex items-center text-2xl font-semibold text-primary">
                       <ListTree className="mr-2 h-6 w-6" />
-                      {t("projects.overview.testCaseRepository")}
+                      {t("repository.title")}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-6">
@@ -288,7 +288,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                   <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
                     <div className="flex items-center text-2xl font-semibold text-primary">
                       <TagsIcon className="mr-2 h-6 w-6" />
-                      {t("projects.overview.tags")}
+                      {t("tags.title")}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-6 h-[400px]">

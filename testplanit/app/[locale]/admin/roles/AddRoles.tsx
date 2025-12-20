@@ -237,7 +237,7 @@ export function AddRoleModal() {
         console.error("Error creating role or permissions:", err);
         setError("root", {
           type: "custom",
-          message: t("admin.roles.add.errors.unknown"),
+          message: t("milestones.errors.unknown"),
         });
       }
       // Optional: Rollback? If role was created but permissions failed?
@@ -272,12 +272,12 @@ export function AddRoleModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {t("admin.roles.fields.name")}
+                    {t("common.name")}
                     <HelpPopover helpKey="role.name" />
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder={t("admin.roles.fields.name")}
+                      placeholder={t("common.name")}
                       {...field}
                     />
                   </FormControl>
@@ -291,7 +291,7 @@ export function AddRoleModal() {
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                   <FormLabel className="flex items-center">
-                    {t("admin.roles.fields.default")}
+                    {t("common.fields.default")}
                     <HelpPopover helpKey="role.isDefault" />
                   </FormLabel>
                   <FormControl>
@@ -353,7 +353,7 @@ export function AddRoleModal() {
                                 : "unchecked"
                           }
                         />
-                        {t("common.permissions.delete")}
+                        {t("sharedSteps.confirmDelete")}
                         <HelpPopover helpKey="role.permissions.canDelete" />
                       </Label>
                     </th>
@@ -374,7 +374,7 @@ export function AddRoleModal() {
                                 : "unchecked"
                           }
                         />
-                        {t("common.permissions.close")}
+                        {t("common.actions.complete")}
                         <HelpPopover helpKey="role.permissions.canClose" />
                       </Label>
                     </th>
@@ -447,7 +447,7 @@ export function AddRoleModal() {
                                     <Switch
                                       checked={field.value}
                                       onCheckedChange={field.onChange}
-                                      aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("common.permissions.delete")}`}
+                                      aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("sharedSteps.confirmDelete")}`}
                                     />
                                   </FormControl>
                                 </FormItem>
@@ -469,7 +469,7 @@ export function AddRoleModal() {
                                     <Switch
                                       checked={field.value}
                                       onCheckedChange={field.onChange}
-                                      aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("common.permissions.close")}`}
+                                      aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("common.actions.complete")}`}
                                     />
                                   </FormControl>
                                 </FormItem>

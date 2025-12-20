@@ -216,10 +216,10 @@ export function useReportColumns(
                   // Check if the name is "None" from the API and translate it
                   const displayName =
                     userName === "None"
-                      ? t("common.placeholders.none")
+                      ? t("common.actions.none")
                       : userName;
                   return (
-                    <span>{displayName || t("common.placeholders.none")}</span>
+                    <span>{displayName || t("common.actions.none")}</span>
                   );
                 }
 
@@ -303,7 +303,7 @@ export function useReportColumns(
                 // Translate source values
                 const sourceValue = value?.name || value;
                 if (sourceValue === "MANUAL") {
-                  return <span>{t("common.fields.MANUAL")}</span>;
+                  return <span>{t("common.fields.manual")}</span>;
                 } else if (sourceValue === "JUNIT") {
                   return <span>{t("common.fields.JUNIT")}</span>;
                 } else if (sourceValue === "API") {
@@ -526,7 +526,7 @@ export function useReportColumns(
                 (source) => {
                   const sourceValue = source?.name || source;
                   if (sourceValue === "MANUAL") {
-                    return <span>{t("common.fields.MANUAL")}</span>;
+                    return <span>{t("common.fields.manual")}</span>;
                   } else if (sourceValue === "JUNIT") {
                     return <span>{t("common.fields.JUNIT")}</span>;
                   } else if (sourceValue === "API") {

@@ -259,7 +259,7 @@ function TagDetail() {
   const caseColumns = useMemo(
     () =>
       getCaseColumns({
-        testCases: t("common.table.columns.testCases"),
+        testCases: t("repository.testCases"),
       }),
     [t]
   );
@@ -267,7 +267,7 @@ function TagDetail() {
   const sessionColumns = useMemo(
     () =>
       getSessionColumns({
-        sessions: t("common.table.columns.sessions"),
+        sessions: t("common.fields.sessions"),
       }),
     [t]
   );
@@ -337,7 +337,7 @@ function TagDetail() {
             <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
               <div className="flex items-center gap-2">
                 <span>
-                  {t("common.table.columns.testCases")},{" "}
+                  {t("repository.testCases")},{" "}
                   {t("common.fields.testRuns")} {t("common.and")}{" "}
                   {t("sessions.title", { count: 2 })} {t("common.for")}
                 </span>
@@ -364,10 +364,10 @@ function TagDetail() {
           >
             <TabsList className="mb-4">
               <TabsTrigger value="cases">
-                {t("common.table.columns.testCases")} {`(${casesCount ?? 0})`}
+                {t("repository.testCases")} {`(${casesCount ?? 0})`}
               </TabsTrigger>
               <TabsTrigger value="sessions">
-                {t("common.table.columns.sessions")} {`(${sessionsCount ?? 0})`}
+                {t("common.fields.sessions")} {`(${sessionsCount ?? 0})`}
               </TabsTrigger>
               <TabsTrigger value="testRuns">
                 {t("common.fields.testRuns")} {`(${testRunsCount ?? 0})`}

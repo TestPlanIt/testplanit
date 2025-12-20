@@ -224,7 +224,7 @@ export function CompleteMilestoneDialog({
                     ? t("milestones.completeDialog.processing")
                     : showConfirmation
                       ? t("milestones.completeDialog.confirmAndCompleteAll")
-                      : t("milestones.completeDialog.completeButton")}
+                      : t("common.actions.complete")}
                 </Button>
               </DialogFooter>
             </form>

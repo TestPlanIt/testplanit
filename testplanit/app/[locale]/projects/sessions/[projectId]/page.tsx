@@ -955,7 +955,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                     {incompleteSessions?.length === 0 ? (
                       <div className="mt-4 flex flex-col items-center justify-center gap-4">
                         <p className="text-center text-muted-foreground">
-                          {t("sessions.empty.active")}
+                          {t("common.empty.activeSessions")}
                         </p>
                         {canAddEditSession && (
                           <AddSessionModal
@@ -1029,7 +1029,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                       <div className="mt-4 text-center text-muted-foreground">
                         {completedSessionsSearchString
                           ? t("sessions.empty.noMatchingCompleted")
-                          : t("sessions.empty.completed")}
+                          : t("common.empty.completedSessions")}
                       </div>
                     ) : (
                       <SessionDisplay

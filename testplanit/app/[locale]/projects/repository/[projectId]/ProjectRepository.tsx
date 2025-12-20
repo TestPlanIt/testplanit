@@ -626,17 +626,17 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     const baseItems = [
       {
         id: "folders",
-        name: t("repository.views.byFolder"),
+        name: t("repository.folders"),
         icon: FolderTree,
       },
       {
         id: "templates",
-        name: t("repository.views.byTemplate"),
+        name: t("common.fields.template"),
         icon: LayoutTemplate,
       },
       {
         id: "states",
-        name: t("repository.views.byState"),
+        name: t("common.fields.state"),
         icon: Workflow,
       },
       {
@@ -661,7 +661,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     const runModeItems = [
       {
         id: "assignedTo",
-        name: t("repository.views.byAssignedTo"),
+        name: t("common.fields.assignedTo"),
         icon: UserCog,
         options: [
           {
@@ -676,7 +676,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       },
       {
         id: "status",
-        name: t("repository.views.byStatus"),
+        name: t("common.actions.status"),
         icon: CircleCheckBig,
         options: [
           {

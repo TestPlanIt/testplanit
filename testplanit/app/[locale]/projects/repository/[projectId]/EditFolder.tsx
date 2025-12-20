@@ -172,9 +172,9 @@ export function EditFolderModal({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
-              <DialogTitle>{t("repository.editFolder.title")}</DialogTitle>
+              <DialogTitle>{t("repository.folderActions.edit")}</DialogTitle>
               <DialogDescription className="sr-only">
-                {t("repository.editFolder.title")}
+                {t("repository.folderActions.edit")}
               </DialogDescription>
             </DialogHeader>
             <FormField

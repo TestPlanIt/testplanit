@@ -1805,8 +1805,8 @@ export default function TestRunPage() {
                     <TooltipContent>
                       <div>
                         {isCollapsedRight
-                          ? t("repository.cases.panels.expandRight")
-                          : t("repository.cases.panels.collapseRight")}
+                          ? t("common.actions.expandRightPanel")
+                          : t("common.actions.collapseRightPanel")}
                       </div>
                     </TooltipContent>
                   </Tooltip>
@@ -1984,10 +1984,10 @@ export default function TestRunPage() {
         <SheetContent className="sm:max-w-4xl w-full p-0 test-run-details-sheet">
           <SheetHeader>
             <SheetTitle className="sr-only">
-              {t("repository.testCase.detailsRegion")}
+              {t("repository.version.detailsRegion")}
             </SheetTitle>
             <SheetDescription className="sr-only">
-              {t("repository.testCase.detailsRegion")}
+              {t("repository.version.detailsRegion")}
             </SheetDescription>
           </SheetHeader>
           {/* Using key to force remount on case change */}

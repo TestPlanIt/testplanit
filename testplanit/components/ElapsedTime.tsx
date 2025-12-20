@@ -78,7 +78,7 @@ export function ElapsedTime({
         )}
       >
         <Clock className="w-4 h-4 shrink-0" />
-        {t("sessions.placeholders.noElapsedTime")}
+        {t("common.labels.noElapsedTime")}
       </div>
     );
   }

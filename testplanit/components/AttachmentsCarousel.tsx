@@ -171,7 +171,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
         <DialogHeader>
           <DialogTitle>{t("attachments.viewer.title")}</DialogTitle>
           <DialogDescription>
-            {current + 1} {t("common.table.pagination.of")} {attachments.length}
+            {current + 1} {t("common.of")} {attachments.length}
           </DialogDescription>
         </DialogHeader>
         <div className="relative w-full max-h-[80vh] overflow-hidden">

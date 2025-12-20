@@ -394,7 +394,7 @@ const Signin: NextPage = () => {
             </div>
           </div>
           <CardTitle className="flex py-5 scroll-m-20 tracking-tight lg:text-3xl text-primary">
-            {t("auth.signin.title")}
+            {t("common.actions.signIn")}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center">
@@ -613,7 +613,7 @@ const Signin: NextPage = () => {
       >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>{t("auth.signin.magicLink.title")}</DialogTitle>
+            <DialogTitle>{t("auth.signin.sso.magicLink")}</DialogTitle>
             <DialogDescription>
               {t("auth.signin.magicLink.description")}
             </DialogDescription>
@@ -728,8 +728,8 @@ const Signin: NextPage = () => {
             <div className="space-y-2">
               <label className="text-sm font-medium">
                 {useBackupCode
-                  ? t("auth.signin.twoFactor.backupCodeLabel")
-                  : t("auth.signin.twoFactor.codeLabel")}
+                  ? t("auth.twoFactorVerify.backupCodeLabel")
+                  : t("auth.twoFactorSetup.verifyLabel")}
               </label>
               {useBackupCode ? (
                 <Input
@@ -777,8 +777,8 @@ const Signin: NextPage = () => {
                 className="text-xs text-primary hover:underline w-full text-center"
               >
                 {useBackupCode
-                  ? t("auth.signin.twoFactor.useAuthenticator")
-                  : t("auth.signin.twoFactor.useBackupCode")}
+                  ? t("auth.twoFactorVerify.useAuthenticator")
+                  : t("auth.twoFactorVerify.useBackupCode")}
               </button>
             </div>
           </div>
@@ -805,7 +805,7 @@ const Signin: NextPage = () => {
                   {t("common.status.loading")}
                 </>
               ) : (
-                t("auth.signin.twoFactor.verify")
+                t("common.actions.verify")
               )}
             </Button>
           </DialogFooter>

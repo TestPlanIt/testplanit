@@ -667,9 +667,9 @@ export function AddSessionModal({
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
-              <DialogTitle>{t("sessions.addSession.title")}</DialogTitle>
+              <DialogTitle>{t("sessions.actions.add")}</DialogTitle>
               <DialogDescription className="sr-only">
-                {t("sessions.addSession.title")}
+                {t("sessions.actions.add")}
               </DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-[60%_5%_35%] gap-x-4">
@@ -688,7 +688,7 @@ export function AddSessionModal({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder={t("sessions.placeholders.name")}
+                          placeholder={t("common.name")}
                           {...field}
                         />
                       </FormControl>
@@ -817,7 +817,7 @@ export function AddSessionModal({
                           }}
                           readOnly={false}
                           className="h-auto"
-                          placeholder={t("sessions.placeholders.mission")}
+                          placeholder={t("common.placeholders.mission")}
                           projectId={projectId?.toString() || ""}
                         />
                       </FormControl>
@@ -879,7 +879,7 @@ export function AddSessionModal({
                               <SelectTrigger>
                                 <SelectValue
                                   placeholder={t(
-                                    "repository.cases.selectTemplate"
+                                    "common.placeholders.selectTemplate"
                                   )}
                                 />
                               </SelectTrigger>
@@ -930,7 +930,7 @@ export function AddSessionModal({
                               <SelectTrigger>
                                 <SelectValue
                                   placeholder={t(
-                                    "sessions.placeholders.selectState"
+                                    "common.placeholders.selectState"
                                   )}
                                 />
                               </SelectTrigger>

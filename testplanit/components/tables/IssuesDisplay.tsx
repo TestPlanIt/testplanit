@@ -365,7 +365,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                   {jiraDetails.priority && (
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-xs">
-                        {t("common.ui.issues.priority")}:
+                        {t("issues.priority")}:
                       </span>
                       <Badge
                         variant="outline"

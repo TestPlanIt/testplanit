@@ -131,7 +131,7 @@ const Signup: NextPage = () => {
   const FormSchema = z
     .object({
       name: z.string().min(2, {
-        message: t("auth.signup.errors.nameRequired"),
+        message: t("common.fields.validation.nameRequired"),
       }),
       email: z
         .email()
@@ -195,9 +195,9 @@ const Signup: NextPage = () => {
       await resendVerificationEmail(data.email);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
-        setSubmissionError(t("auth.signup.errors.userExists"));
+        setSubmissionError(t("common.errors.emailExists"));
       } else {
-        setSubmissionError(t("auth.signup.errors.unknown"));
+        setSubmissionError(t("milestones.errors.unknown"));
       }
       return;
     }
@@ -251,7 +251,7 @@ const Signup: NextPage = () => {
             </div>
           </div>
           <CardTitle className="flex py-5 scroll-m-20 tracking-tight lg:text-3xl text-primary">
-            {t("auth.signup.title")}
+            {t("common.actions.signUp")}
           </CardTitle>
           <CardDescription>{t("auth.signup.description")}</CardDescription>
         </CardHeader>
@@ -280,7 +280,7 @@ const Signup: NextPage = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                      {t("auth.signup.name")}
+                      {t("common.name")}
                       <HelpPopover helpKey="user.name" />
                     </FormLabel>
                     <FormControl>
@@ -296,7 +296,7 @@ const Signup: NextPage = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                      {t("auth.signup.email")}
+                      {t("common.fields.email")}
                       <HelpPopover helpKey="user.email" />
                     </FormLabel>
                     <FormControl>
@@ -312,7 +312,7 @@ const Signup: NextPage = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                      {t("auth.signup.password")}
+                      {t("common.fields.password")}
                       <HelpPopover helpKey="user.password" />
                     </FormLabel>
                     <FormControl>
@@ -328,7 +328,7 @@ const Signup: NextPage = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                      {t("auth.signup.confirmPassword")}
+                      {t("common.fields.confirmPassword")}
                       <HelpPopover helpKey="user.confirmPassword" />
                     </FormLabel>
                     <FormControl>
@@ -338,12 +338,12 @@ const Signup: NextPage = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit">{t("auth.signup.button")}</Button>
+              <Button type="submit">{t("common.actions.signUp")}</Button>
               {submissionError && (
                 <div className="text-destructive">{submissionError}</div>
               )}
               <div>
-                {t("auth.signup.or")}{" "}
+                {t("common.or")}{" "}
                 <Link href="/signin" className="group">
                   {t("auth.signup.signIn")}
                   <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
