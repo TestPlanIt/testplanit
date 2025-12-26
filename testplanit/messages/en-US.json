@@ -3632,7 +3632,9 @@
         "timestamp": "Timestamp",
         "entityId": "Entity ID",
         "entityName": "Entity Name",
-        "userId": "User ID"
+        "userId": "User ID",
+        "ipAddress": "IP Address",
+        "userAgent": "User Agent"
       },
       "system": "System",
       "exportCsv": "Export CSV"

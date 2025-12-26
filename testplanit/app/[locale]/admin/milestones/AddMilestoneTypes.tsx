@@ -165,7 +165,7 @@ export function AddMilestoneTypeModal() {
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <FormLabel className="flex items-center !mt-0">
+                  <FormLabel className="flex items-center mt-0!">
                     {tCommon("fields.default")}
                     <HelpPopover helpKey="milestoneType.isDefault" />
                   </FormLabel>

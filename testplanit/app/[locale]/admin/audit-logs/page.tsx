@@ -248,16 +248,16 @@ function AuditLogsContent({ session }: { session: Session }) {
       // Define CSV headers
       const headers = [
         t("columns.timestamp"),
-        t("columns.action"),
-        t("columns.entityType"),
+        t("filterAction"),
+        t("filterEntityType"),
         t("columns.entityId"),
         t("columns.entityName"),
-        t("columns.user"),
+        tGlobal("common.access.user"),
         tGlobal("common.fields.email"),
-        t("columns.project"),
-        "IP Address",
-        "User Agent",
-        "Metadata",
+        tGlobal("common.fields.project"),
+        t("columns.ipAddress"),
+        t("columns.userAgent"),
+        t("metadata"),
       ];
 
       // Convert logs to CSV rows
@@ -470,7 +470,9 @@ function AuditLogsContent({ session }: { session: Session }) {
                 disabled={isExporting || totalItems === 0}
               >
                 <Download className="h-4 w-4" />
-                {isExporting ? tGlobal("repository.exportModal.exporting") : t("exportCsv")}
+                {isExporting
+                  ? tGlobal("repository.exportModal.exporting")
+                  : t("exportCsv")}
               </Button>
             </div>
 

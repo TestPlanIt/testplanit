@@ -786,7 +786,8 @@
         "testDurationHistogram": "Histograma de duración de la prueba",
         "zoomDonutChart": "Gráfico de anillos de Zoom",
         "zoomStatusTimeline": "Cronología del estado de Zoom",
-        "zoomHistogramChart": "Gráfico de histograma de zoom"
+        "zoomHistogramChart": "Gráfico de histograma de zoom",
+        "duration": "Duración: {seconds} segundos"
       },
       "import": {
         "encoding": {
@@ -3631,7 +3632,9 @@
         "timestamp": "Marca de tiempo",
         "entityId": "ID de entidad",
         "entityName": "Nombre de la entidad",
-        "userId": "ID de usuario"
+        "userId": "ID de usuario",
+        "ipAddress": "Dirección IP",
+        "userAgent": "Agente de usuario"
       },
       "system": "Sistema",
       "exportCsv": "Exportar CSV"

@@ -786,7 +786,8 @@
         "testDurationHistogram": "Test Duration Histogram",
         "zoomDonutChart": "Zoom Donut Chart",
         "zoomStatusTimeline": "Zoom Status Timeline",
-        "zoomHistogramChart": "Zoom Histogram Chart"
+        "zoomHistogramChart": "Zoom Histogram Chart",
+        "duration": "Duration: {seconds} seconds"
       },
       "import": {
         "encoding": {
@@ -3631,7 +3632,9 @@
         "timestamp": "Timestamp",
         "entityId": "Entity ID",
         "entityName": "Entity Name",
-        "userId": "User ID"
+        "userId": "User ID",
+        "ipAddress": "IP Address",
+        "userAgent": "User Agent"
       },
       "system": "System",
       "exportCsv": "Export CSV"

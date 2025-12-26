@@ -416,7 +416,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                         disabled={template.isDefault}
                       />
                     </FormControl>
-                    <FormLabel className="flex items-center !mt-0">
+                    <FormLabel className="flex items-center mt-0!">
                       {tCommon("fields.default")}
                       <HelpPopover helpKey="template.isDefault" />
                     </FormLabel>
