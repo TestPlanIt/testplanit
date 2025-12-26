@@ -68,11 +68,11 @@ interface ParsedCase {
 }
 
 // Zod validation schema for page 1
-const createPage1Schema = (t: any) =>
+const createPage1Schema = (t: any, tGlobal: any) =>
   z
     .object({
       selectedFile: z.any().refine((file) => file !== null, {
-        message: t("importWizard.errors.csvFileRequired"),
+        message: tGlobal("sharedSteps.importWizard.errors.csvFileRequired"),
       }),
       selectedTemplateId: z.string().min(1, {
         message: t("importWizard.errors.templateRequired"),
@@ -103,6 +103,7 @@ export function ImportCasesWizard({
   onImportComplete,
 }: ImportCasesWizardProps) {
   const t = useTranslations("repository.cases");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { toast } = useToast();
   const params = useParams();
@@ -184,10 +185,10 @@ export function ImportCasesWizard({
     }));
 
     // Add system fields - Name is always required
-    if (!fields.some(f => f.id === "name")) {
+    if (!fields.some((f) => f.id === "name")) {
       fields.unshift({
         id: "name",
-        displayName: t("importWizard.fields.name"),
+        displayName: tGlobal("common.name"),
         isRequired: true,
         type: "Text String",
       });
@@ -197,93 +198,95 @@ export function ImportCasesWizard({
     const systemFields = [
       {
         id: "estimate",
-        displayName: t("importWizard.fields.estimate"),
+        displayName: tCommon("fields.estimate"),
         isRequired: false,
         type: "Integer",
       },
       {
         id: "forecast",
-        displayName: t("importWizard.fields.forecast"),
+        displayName: tCommon("fields.forecast"),
         isRequired: false,
         type: "Integer",
       },
       {
         id: "automated",
-        displayName: t("importWizard.fields.automated"),
+        displayName: tCommon("fields.automated"),
         isRequired: false,
         type: "Checkbox",
       },
       {
         id: "tags",
-        displayName: t("importWizard.fields.tags"),
+        displayName: tCommon("fields.tags"),
         isRequired: false,
         type: "Tags",
       },
       {
         id: "steps",
-        displayName: t("importWizard.fields.steps"),
+        displayName: tCommon("fields.steps"),
         isRequired: false,
         type: "Steps",
       },
       {
         id: "attachments",
-        displayName: t("importWizard.fields.attachments"),
+        displayName: tCommon("fields.attachments"),
         isRequired: false,
         type: "Attachments",
       },
       {
         id: "issues",
-        displayName: t("importWizard.fields.issues"),
+        displayName: tCommon("fields.issues"),
         isRequired: false,
         type: "Issues",
       },
       {
         id: "linkedCases",
-        displayName: t("importWizard.fields.linkedCases"),
+        displayName: tGlobal("repository.fields.linkedCases"),
         isRequired: false,
         type: "LinkedCases",
       },
       {
         id: "workflowState",
-        displayName: t("importWizard.fields.workflowState"),
+        displayName: tGlobal(
+          "repository.cases.importWizard.fields.workflowState"
+        ),
         isRequired: false,
         type: "WorkflowState",
       },
       {
         id: "createdAt",
-        displayName: t("importWizard.fields.createdAt"),
+        displayName: tCommon("fields.createdAt"),
         isRequired: false,
         type: "DateTime",
       },
       {
         id: "createdBy",
-        displayName: t("importWizard.fields.createdBy"),
+        displayName: tCommon("fields.createdBy"),
         isRequired: false,
         type: "User",
       },
       {
         id: "version",
-        displayName: t("importWizard.fields.version"),
+        displayName: tCommon("fields.version"),
         isRequired: false,
         type: "Integer",
       },
       {
         id: "testRuns",
-        displayName: t("importWizard.fields.testRuns"),
+        displayName: tCommon("fields.testRuns"),
         isRequired: false,
         type: "TestRuns",
       },
       {
         id: "id",
-        displayName: t("importWizard.fields.id"),
+        displayName: tCommon("fields.id"),
         isRequired: false,
         type: "ID",
-      }
+      },
     ];
 
     // Only add system fields that don't already exist in template fields
-    systemFields.forEach(systemField => {
-      if (!fields.some(f => f.id === systemField.id)) {
+    systemFields.forEach((systemField) => {
+      if (!fields.some((f) => f.id === systemField.id)) {
         fields.push(systemField);
       }
     });
@@ -292,194 +295,183 @@ export function ImportCasesWizard({
     if (importLocation !== "single_folder") {
       fields.unshift({
         id: "folder",
-        displayName: t("importWizard.fields.folder"),
+        displayName: tCommon("fields.folder"),
         isRequired: true,
         type: "Text String",
       });
     }
 
     return fields;
-  }, [selectedTemplate, importLocation, t]);
+  }, [selectedTemplate, importLocation, tGlobal, tCommon]);
 
   // Parse CSV file
-  useEffect(() => {
-    if (selectedFile && currentPage === 2) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const text = e.target?.result as string;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const text = e.target?.result as string;
 
-        Papa.parse(text, {
-          delimiter,
-          header: hasHeaders,
-          encoding,
-          skipEmptyLines: true,
-          complete: (results) => {
-            let columnHeaders: string[] = [];
+    Papa.parse(text, {
+      delimiter,
+      header: hasHeaders,
+      encoding,
+      skipEmptyLines: true,
+      complete: (results) => {
+        let columnHeaders: string[] = [];
 
-            if (hasHeaders) {
-              columnHeaders = results.meta.fields || [];
-              setParsedData(results.data as ParsedCase[]);
-            } else {
-              const firstRow = results.data[0] as string[];
-              columnHeaders = firstRow.map((_, i) => `Column ${i + 1}`);
-              setParsedData(
-                results.data.map((row: any) => {
-                  const obj: ParsedCase = {};
-                  columnHeaders.forEach((h, i) => {
-                    obj[h] = row[i];
-                  });
-                  return obj;
-                })
-              );
+        if (hasHeaders) {
+          columnHeaders = results.meta.fields || [];
+          setParsedData(results.data as ParsedCase[]);
+        } else {
+          const firstRow = results.data[0] as string[];
+          columnHeaders = firstRow.map((_, i) => `Column ${i + 1}`);
+          setParsedData(
+            results.data.map((row: any) => {
+              const obj: ParsedCase = {};
+              columnHeaders.forEach((h, i) => {
+                obj[h] = row[i];
+              });
+              return obj;
+            })
+          );
+        }
+
+        // Initialize field mappings with automatic matching
+        const usedFields = new Set<string>();
+        const mappings = columnHeaders.map((col: string) => {
+          // Try to auto-map columns based on name matching
+          let matchedField: string | null = null;
+
+          if (hasHeaders) {
+            const normalizedColName = col.toLowerCase().trim();
+
+            // Skip template column - template is already selected on page 1
+            if (
+              normalizedColName === "template" ||
+              normalizedColName === "templatename" ||
+              normalizedColName === "template name"
+            ) {
+              return {
+                csvColumn: col,
+                templateField: null,
+              };
             }
 
-            // Initialize field mappings with automatic matching
-            const usedFields = new Set<string>();
-            const mappings = columnHeaders.map((col: string) => {
-              // Try to auto-map columns based on name matching
-              let matchedField: string | null = null;
+            // Try to find exact match first
+            const exactMatch = templateFields.find(
+              (field) =>
+                !usedFields.has(field.id) &&
+                (field.displayName.toLowerCase() === normalizedColName ||
+                  field.id.toLowerCase() === normalizedColName)
+            );
 
-              if (hasHeaders) {
-                const normalizedColName = col.toLowerCase().trim();
+            if (exactMatch) {
+              matchedField = exactMatch.id;
+              usedFields.add(exactMatch.id);
+            } else {
+              // Try common variations
+              const commonMappings: Record<string, string> = {
+                "case name": "name",
+                "test case name": "name",
+                title: "name",
+                description: "name",
+                tag: "tags",
+                step: "steps",
+                "test steps": "steps",
+                estimated: "estimate",
+                estimation: "estimate",
+                "is automated": "automated",
+                automation: "automated",
+                "folder path": "folder",
+                path: "folder",
+                attachment: "attachments",
+                issue: "issues",
+                "linked case": "linkedCases",
+                "linked test case": "linkedCases",
+                "workflow state": "workflowState",
+                state: "workflowState",
+                status: "workflowState",
+                "created at": "createdAt",
+                "created date": "createdAt",
+                "creation date": "createdAt",
+                "date created": "createdAt",
+                "created by": "createdBy",
+                creator: "createdBy",
+                author: "createdBy",
+                "created user": "createdBy",
+                version: "version",
+                "version number": "version",
+                "case version": "version",
+                revision: "version",
+                "test runs": "testRuns",
+                "test run": "testRuns",
+                runs: "testRuns",
+                executions: "testRuns",
+                id: "id",
+                "test case id": "id",
+                "case id": "id",
+                identifier: "id",
+              };
 
-                // Skip template column - template is already selected on page 1
+              // Check if column name matches any common mapping
+              for (const [commonName, fieldId] of Object.entries(
+                commonMappings
+              )) {
                 if (
-                  normalizedColName === "template" ||
-                  normalizedColName === "templatename" ||
-                  normalizedColName === "template name"
+                  normalizedColName === commonName ||
+                  normalizedColName.includes(commonName)
                 ) {
-                  return {
-                    csvColumn: col,
-                    templateField: null,
-                  };
-                }
-
-                // Try to find exact match first
-                const exactMatch = templateFields.find(
-                  (field) =>
-                    !usedFields.has(field.id) &&
-                    (field.displayName.toLowerCase() === normalizedColName ||
-                      field.id.toLowerCase() === normalizedColName)
-                );
-
-                if (exactMatch) {
-                  matchedField = exactMatch.id;
-                  usedFields.add(exactMatch.id);
-                } else {
-                  // Try common variations
-                  const commonMappings: Record<string, string> = {
-                    "case name": "name",
-                    "test case name": "name",
-                    title: "name",
-                    description: "name",
-                    tag: "tags",
-                    step: "steps",
-                    "test steps": "steps",
-                    estimated: "estimate",
-                    estimation: "estimate",
-                    "is automated": "automated",
-                    automation: "automated",
-                    "folder path": "folder",
-                    path: "folder",
-                    attachment: "attachments",
-                    issue: "issues",
-                    "linked case": "linkedCases",
-                    "linked test case": "linkedCases",
-                    "workflow state": "workflowState",
-                    state: "workflowState",
-                    status: "workflowState",
-                    "created at": "createdAt",
-                    "created date": "createdAt",
-                    "creation date": "createdAt",
-                    "date created": "createdAt",
-                    "created by": "createdBy",
-                    creator: "createdBy",
-                    author: "createdBy",
-                    "created user": "createdBy",
-                    version: "version",
-                    "version number": "version",
-                    "case version": "version",
-                    revision: "version",
-                    "test runs": "testRuns",
-                    "test run": "testRuns",
-                    runs: "testRuns",
-                    executions: "testRuns",
-                    id: "id",
-                    "test case id": "id",
-                    "case id": "id",
-                    identifier: "id",
-                  };
-
-                  // Check if column name matches any common mapping
-                  for (const [commonName, fieldId] of Object.entries(
-                    commonMappings
-                  )) {
-                    if (
-                      normalizedColName === commonName ||
-                      normalizedColName.includes(commonName)
-                    ) {
-                      const field = templateFields.find(
-                        (f) => f.id === fieldId && !usedFields.has(f.id)
-                      );
-                      if (field) {
-                        matchedField = fieldId;
-                        usedFields.add(fieldId);
-                        break;
-                      }
-                    }
-                  }
-
-                  // If still no match, try partial matching
-                  if (!matchedField) {
-                    const partialMatch = templateFields.find(
-                      (field) =>
-                        !usedFields.has(field.id) &&
-                        (normalizedColName.includes(
-                          field.displayName.toLowerCase()
-                        ) ||
-                          normalizedColName.includes(field.id.toLowerCase()) ||
-                          field.displayName
-                            .toLowerCase()
-                            .includes(normalizedColName) ||
-                          field.id.toLowerCase().includes(normalizedColName))
-                    );
-
-                    if (partialMatch) {
-                      matchedField = partialMatch.id;
-                      usedFields.add(partialMatch.id);
-                    }
+                  const field = templateFields.find(
+                    (f) => f.id === fieldId && !usedFields.has(f.id)
+                  );
+                  if (field) {
+                    matchedField = fieldId;
+                    usedFields.add(fieldId);
+                    break;
                   }
                 }
               }
 
-              return {
-                csvColumn: col,
-                templateField: matchedField,
-              };
-            });
-            setFieldMappings(mappings);
-          },
-          error: (error: any) => {
-            toast({
-              title: t("importWizard.errors.parseFailed"),
-              description: error.message,
-              variant: "destructive",
-            });
-          },
+              // If still no match, try partial matching
+              if (!matchedField) {
+                const partialMatch = templateFields.find(
+                  (field) =>
+                    !usedFields.has(field.id) &&
+                    (normalizedColName.includes(
+                      field.displayName.toLowerCase()
+                    ) ||
+                      normalizedColName.includes(field.id.toLowerCase()) ||
+                      field.displayName
+                        .toLowerCase()
+                        .includes(normalizedColName) ||
+                      field.id.toLowerCase().includes(normalizedColName))
+                );
+
+                if (partialMatch) {
+                  matchedField = partialMatch.id;
+                  usedFields.add(partialMatch.id);
+                }
+              }
+            }
+          }
+
+          return {
+            csvColumn: col,
+            templateField: matchedField,
+          };
         });
-      };
-      reader.readAsText(selectedFile, encoding);
-    }
-  }, [
-    selectedFile,
-    currentPage,
-    delimiter,
-    hasHeaders,
-    encoding,
-    t,
-    toast,
-    templateFields,
-  ]);
+        setFieldMappings(mappings);
+      },
+      error: (error: any) => {
+        toast({
+          title: tGlobal("sharedSteps.importWizard.errors.parseFailed"),
+          description: error.message,
+          variant: "destructive",
+        });
+      },
+    });
+  };
+  if (selectedFile) {
+    reader.readAsText(selectedFile, encoding);
+  }
 
   const handleFileSelect = (files: File[]) => {
     if (files.length > 0) {
@@ -545,7 +537,7 @@ export function ImportCasesWizard({
   };
 
   const validatePage1 = () => {
-    const page1Schema = createPage1Schema(t);
+    const page1Schema = createPage1Schema(t, tGlobal);
     const result = page1Schema.safeParse({
       selectedFile,
       selectedTemplateId,
@@ -596,8 +588,8 @@ export function ImportCasesWizard({
 
       if (response.ok) {
         toast({
-          title: t("importWizard.success.title"),
-          description: t("importWizard.success.description", {
+          title: tCommon("fields.title"),
+          description: tCommon("fields.description", {
             count: result.importedCount,
           }),
         });
@@ -607,25 +599,27 @@ export function ImportCasesWizard({
       } else {
         if (result.errors && result.errors.length > 0) {
           toast({
-            title: t("importWizard.errors.validationFailed"),
-            description: t("importWizard.errors.validationDescription", {
-              count: result.errors.length,
-            }),
+            title: tGlobal("sharedSteps.importWizard.errors.validationFailed"),
+            description: tGlobal(
+              "sharedSteps.importWizard.errors.validationDescription",
+              {
+                count: result.errors.length,
+              }
+            ),
             variant: "destructive",
           });
         } else {
           throw new Error(
-            result.error || t("importWizard.errors.importFailed")
+            result.error ||
+              tGlobal("sharedSteps.importWizard.errors.importFailed")
           );
         }
       }
     } catch (error) {
       toast({
-        title: t("importWizard.errors.importFailed"),
+        title: tGlobal("sharedSteps.importWizard.errors.importFailed"),
         description:
-          error instanceof Error
-            ? error.message
-            : t("importWizard.errors.unknown"),
+          error instanceof Error ? error.message : tCommon("errors.unknown"),
         variant: "destructive",
       });
     } finally {
@@ -655,7 +649,7 @@ export function ImportCasesWizard({
     <div className="space-y-6">
       <div>
         <RequiredLabel required error={validationErrors.selectedFile}>
-          {t("importWizard.page1.uploadFile")}
+          {tGlobal("sharedSteps.importWizard.page1.uploadFile")}
         </RequiredLabel>
         <div className="mt-2">
           <div
@@ -678,7 +672,8 @@ export function ImportCasesWizard({
               className="mt-2 text-sm text-muted-foreground"
               data-testid="selected-file-info"
             >
-              {t("importWizard.page1.selectedFile")}: {selectedFile.name}
+              {tGlobal("sharedSteps.importWizard.page1.selectedFile")}:{" "}
+              {selectedFile.name}
             </p>
           )}
         </div>
@@ -751,7 +746,7 @@ export function ImportCasesWizard({
       )}
 
       <div>
-        <Label>{t("importWizard.page1.delimiter")}</Label>
+        <Label>{tGlobal("sharedSteps.importWizard.page1.delimiter")}</Label>
         <Select
           value={delimiter}
           onValueChange={(v) => setDelimiter(v as Delimiter)}
@@ -761,16 +756,16 @@ export function ImportCasesWizard({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value=",">
-              {t("importWizard.page1.delimiters.comma")}
+              {tGlobal("repository.exportModal.delimiter.comma")}
             </SelectItem>
             <SelectItem value=";">
-              {t("importWizard.page1.delimiters.semicolon")}
+              {tGlobal("repository.exportModal.delimiter.semicolon")}
             </SelectItem>
             <SelectItem value=":">
-              {t("importWizard.page1.delimiters.colon")}
+              {tGlobal("repository.exportModal.delimiter.colon")}
             </SelectItem>
             <SelectItem value="|">
-              {t("importWizard.page1.delimiters.pipe")}
+              {tGlobal("repository.exportModal.delimiter.pipe")}
             </SelectItem>
             <SelectItem value="\t">
               {t("importWizard.page1.delimiters.tab")}
@@ -791,7 +786,7 @@ export function ImportCasesWizard({
       </div>
 
       <div>
-        <Label>{t("importWizard.page1.encoding")}</Label>
+        <Label>{tGlobal("sharedSteps.importWizard.page1.encoding")}</Label>
         <Select
           value={encoding}
           onValueChange={(v) => setEncoding(v as Encoding)}
@@ -842,7 +837,7 @@ export function ImportCasesWizard({
       </div>
 
       <div>
-        <Label>{t("importWizard.page1.rowMode.label")}</Label>
+        <Label>{tGlobal("sharedSteps.importWizard.page1.rowMode.label")}</Label>
         <RadioGroup
           value={rowMode}
           onValueChange={(v) => setRowMode(v as RowMode)}
@@ -912,7 +907,7 @@ export function ImportCasesWizard({
                       {field.displayName}
                       {field.isRequired && (
                         <Badge variant="secondary">
-                          {t("importWizard.page2.required")}
+                          {tCommon("fields.required")}
                         </Badge>
                       )}
                     </SelectItem>
@@ -1094,7 +1089,8 @@ export function ImportCasesWizard({
                             {field?.displayName}:
                           </span>
                           <span className="truncate">
-                            {value || t("importWizard.page4.noValue")}
+                            {value ||
+                              tGlobal("sharedSteps.importWizard.page3.noValue")}
                           </span>
                         </div>
                       );
@@ -1137,10 +1133,11 @@ export function ImportCasesWizard({
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+        <DialogHeader className="shrink-0">
           <DialogTitle>{t("importWizard.title")}</DialogTitle>
           <DialogDescription>
-            {currentPage === 1 && t("importWizard.page1.title")}
+            {currentPage === 1 &&
+              tGlobal("sharedSteps.importWizard.page1.title")}
             {currentPage === 2 && t("importWizard.page2.title")}
             {currentPage === 3 && t("importWizard.page3.title")}
             {currentPage === 4 && t("importWizard.page4.title")}
@@ -1148,7 +1145,7 @@ export function ImportCasesWizard({
         </DialogHeader>
 
         {/* Progress indicator */}
-        <div className="flex items-center gap-2 mb-4 flex-shrink-0">
+        <div className="flex items-center gap-2 mb-4 shrink-0">
           {[1, 2, 3, 4].map((step) => (
             <div key={step} className="flex items-center">
               <div
@@ -1184,7 +1181,7 @@ export function ImportCasesWizard({
           {currentPage === 4 && renderPage4()}
         </div>
 
-        <DialogFooter className="flex-shrink-0">
+        <DialogFooter className="shrink-0">
           {currentPage > 1 && (
             <Button
               variant="outline"
@@ -1208,8 +1205,12 @@ export function ImportCasesWizard({
               data-testid="import-button"
             >
               {isImporting
-                ? t("importWizard.importing")
-                : t("importWizard.import")}
+                ? tGlobal("repository.generateTestCases.importing", {
+                    count: parsedData.length,
+                  })
+                : tGlobal("repository.generateTestCases.import", {
+                    count: parsedData.length,
+                  })}
             </Button>
           )}
         </DialogFooter>

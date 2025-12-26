@@ -73,6 +73,7 @@ export function ImportSharedStepsWizard({
   onImportComplete,
 }: ImportSharedStepsWizardProps) {
   const t = useTranslations("sharedSteps");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { toast } = useToast();
   const params = useParams();
@@ -105,19 +106,19 @@ export function ImportSharedStepsWizard({
     const fields = [
       {
         id: "groupName",
-        displayName: t("importWizard.fields.groupName"),
+        displayName: tCommon("name"),
         isRequired: true,
         type: "Text String",
       },
       {
         id: "step",
-        displayName: t("importWizard.fields.step"),
+        displayName: tCommon("fields.step"),
         isRequired: rowMode === "single" ? false : true,
         type: "Text Long",
       },
       {
         id: "expectedResult",
-        displayName: t("importWizard.fields.expectedResult"),
+        displayName: tCommon("fields.expectedResult"),
         isRequired: false,
         type: "Text Long",
       },
@@ -160,7 +161,7 @@ export function ImportSharedStepsWizard({
     ];
 
     return fields;
-  }, [t, rowMode]);
+  }, [tCommon, t, rowMode]);
 
   // Parse CSV file
   useEffect(() => {
@@ -421,7 +422,7 @@ export function ImportSharedStepsWizard({
 
       if (response.ok) {
         toast({
-          title: t("importWizard.success.title"),
+          title: tCommon("fields.success"),
           description: t("importWizard.success.description", {
             count: result.importedCount,
           }),
@@ -448,9 +449,7 @@ export function ImportSharedStepsWizard({
       toast({
         title: t("importWizard.errors.importFailed"),
         description:
-          error instanceof Error
-            ? error.message
-            : t("importWizard.errors.unknown"),
+          error instanceof Error ? error.message : tCommon("errors.unknown"),
         variant: "destructive",
       });
     } finally {
@@ -520,16 +519,16 @@ export function ImportSharedStepsWizard({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value=",">
-              {t("importWizard.page1.delimiters.comma")}
+              {tGlobal("repository.exportModal.delimiter.comma")}
             </SelectItem>
             <SelectItem value=";">
-              {t("importWizard.page1.delimiters.semicolon")}
+              {tGlobal("repository.exportModal.delimiter.semicolon")}
             </SelectItem>
             <SelectItem value=":">
-              {t("importWizard.page1.delimiters.colon")}
+              {tGlobal("repository.exportModal.delimiter.colon")}
             </SelectItem>
             <SelectItem value="|">
-              {t("importWizard.page1.delimiters.pipe")}
+              {tGlobal("repository.exportModal.delimiter.pipe")}
             </SelectItem>
             <SelectItem value="\t">
               {t("importWizard.page1.delimiters.tab")}
@@ -638,7 +637,7 @@ export function ImportSharedStepsWizard({
                       {field.displayName}
                       {field.isRequired && (
                         <Badge variant="secondary" className="ml-2">
-                          {t("importWizard.page2.required")}
+                          {tCommon("fields.required")}
                         </Badge>
                       )}
                     </SelectItem>
@@ -757,7 +756,7 @@ export function ImportSharedStepsWizard({
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+        <DialogHeader className="shrink-0">
           <DialogTitle>{t("importWizard.title")}</DialogTitle>
           <DialogDescription>
             {currentPage === 1 && t("importWizard.page1.title")}
@@ -767,7 +766,7 @@ export function ImportSharedStepsWizard({
         </DialogHeader>
 
         {/* Progress indicator */}
-        <div className="flex items-center gap-2 mb-4 flex-shrink-0">
+        <div className="flex items-center gap-2 mb-4 shrink-0">
           {[1, 2, 3].map((step) => (
             <div key={step} className="flex items-center">
               <div
@@ -802,7 +801,7 @@ export function ImportSharedStepsWizard({
           {currentPage === 3 && renderPage3()}
         </div>
 
-        <DialogFooter className="flex-shrink-0">
+        <DialogFooter className="shrink-0">
           {currentPage > 1 && (
             <Button
               variant="outline"
@@ -826,8 +825,8 @@ export function ImportSharedStepsWizard({
               data-testid="import-button"
             >
               {isImporting
-                ? t("importWizard.importing")
-                : t("importWizard.import")}
+                ? tCommon("status.importing")
+                : tCommon("actions.junit.import.import")}
             </Button>
           )}
         </DialogFooter>
