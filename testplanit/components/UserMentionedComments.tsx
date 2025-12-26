@@ -68,6 +68,7 @@ interface CommentDisplayProps {
 
 function CommentDisplay({ comment }: CommentDisplayProps) {
   const t = useTranslations("users.profile.mentionedComments");
+  const tGlobal = useTranslations();
 
   const displayEditor = useEditor({
     immediatelyRender: false,
@@ -169,7 +170,9 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
                 )}
               </div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1 flex-wrap">
-                <span>{t("inProject")}</span>
+                <span>
+                  {tGlobal("components.notifications.content.inProject")}
+                </span>
                 <span className="font-medium">{comment.project.name}</span>
               </div>
             </div>
@@ -181,7 +184,9 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
         {/* Comment metadata */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <span className="text-sm text-muted-foreground">{t("by")}</span>
+            <span className="text-sm text-muted-foreground">
+              {tGlobal("common.by")}
+            </span>
             <UserNameCell userId={comment.creator.id} />
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -193,7 +198,7 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
             {comment.isEdited && (
               <span className="text-xs text-muted-foreground italic">
                 {"("}
-                {t("edited")}
+                {tGlobal("comments.edited")}
                 {")"}
               </span>
             )}
@@ -214,7 +219,7 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
 
 export function UserMentionedComments({ userId }: UserMentionedCommentsProps) {
   const t = useTranslations("users.profile.mentionedComments");
-
+  const tGlobal = useTranslations();
   const [currentPage, setCurrentPage] = useState(1); // 1-indexed for PaginationComponent
   const [pageSize, setPageSize] = useState<number | "All">(10);
 
@@ -278,7 +283,9 @@ export function UserMentionedComments({ userId }: UserMentionedCommentsProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <div className="text-sm text-muted-foreground">{t("loading")}</div>
+        <div className="text-sm text-muted-foreground">
+          {tGlobal("common.loading")}
+        </div>
       </div>
     );
   }

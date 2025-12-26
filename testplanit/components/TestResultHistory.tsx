@@ -168,6 +168,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
   projectId: number;
 }) {
   const tCommon = useTranslations("common");
+  const tComments = useTranslations("comments");
   const queryClient = useQueryClient();
   const { data: testRuns } = useFindManyTestRuns({
     where: {
@@ -416,7 +417,7 @@ const StepResultsDisplay = ({
                       />
                       {tCommon("fields.step")} {stepCounter} -{" "}
                       {stepResult.step.sharedStepGroup?.name ||
-                        tRepository("fields.steps")}
+                        tCommon("fields.steps")}
                       <span className="text-xs text-muted-foreground ml-1">
                         {tRepository("steps.sharedGroupSuffix")}
                       </span>
@@ -695,6 +696,7 @@ export default function TestResultHistory({
 }: TestResultHistoryProps) {
   const tCommon = useTranslations("common");
   const tCases = useTranslations("repository.cases");
+  const tComments = useTranslations("comments");
   const locale = useLocale();
   const dateFnsLocale = getDateFnsLocale(locale);
   const [expandedResults, setExpandedResults] = useState<Set<string>>( // Changed to Set<string>
@@ -1092,7 +1094,10 @@ export default function TestResultHistory({
         displayId: `pending-${trc.id}`, // Use TestRunCases.id for pending displayId
         sourceType: "pending",
         executedAt: new Date(),
-        status: { name: tCases("pending"), color: { value: "#B1B2B3" } },
+        status: {
+          name: tCommon("status.pending"),
+          color: { value: "#B1B2B3" },
+        },
         isPending: true,
         associatedTestRun: trc.testRun
           ? {
@@ -1142,7 +1147,7 @@ export default function TestResultHistory({
                     disabled={isLoadingTestRunPermissions}
                   >
                     <PlusSquare className="h-4 w-4" />
-                    {tCases("addToTestRun")}
+                    {tCommon("actions.addToTestRun")}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -1187,7 +1192,7 @@ export default function TestResultHistory({
                 disabled={isLoadingTestRunPermissions}
               >
                 <PlusSquare className="h-4 w-4" />
-                {tCases("addToTestRun")}
+                {tCommon("actions.addToTestRun")}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -1235,20 +1240,26 @@ export default function TestResultHistory({
                   </Tooltip>
                 </TooltipProvider>
               </TableHead>
-              <TableHead className="w-[300px]">{tCases("testRun")}</TableHead>
-              <TableHead className="w-[120px]">{tCases("status")}</TableHead>
-              <TableHead className="w-[150px]">
-                {tCases("executedBy")}
+              <TableHead className="w-[300px]">
+                {tCommon("actions.junit.import.testRun.label")}
+              </TableHead>
+              <TableHead className="w-[120px]">
+                {tCommon("actions.status")}
               </TableHead>
               <TableHead className="w-[150px]">
-                {tCases("executedAt")}
+                {tCommon("fields.executedBy")}
+              </TableHead>
+              <TableHead className="w-[150px]">
+                {tCommon("fields.executedAt")}
               </TableHead>
               <TableHead className="w-[50px] text-center">
-                {tCases("edited")}
+                {tComments("edited")}
               </TableHead>
-              <TableHead className="w-[100px]">{tCases("duration")}</TableHead>
               <TableHead className="w-[100px]">
-                {tCases("common.fields.attachments")}
+                {tCommon("fields.duration")}
+              </TableHead>
+              <TableHead className="w-[100px]">
+                {tCommon("fields.attachments")}
               </TableHead>
               <TableHead className="w-[75px]">
                 {tCommon("fields.issues")}
@@ -1542,7 +1553,7 @@ export default function TestResultHistory({
                                   JSON.stringify(emptyEditorContent) && (
                                   <div>
                                     <div className="px-4 text-xs text-muted-foreground">
-                                      {tCases("testResultHistoryResultDetails")}
+                                      {tCommon("actions.resultDetails")}
                                     </div>
                                     <div className="px-4">
                                       <TipTapEditor
@@ -1585,7 +1596,7 @@ export default function TestResultHistory({
                                   {result.type && (
                                     <div>
                                       <span className="font-medium">
-                                        {tCommon("actions.automated.type") + ":"}
+                                        {tCommon("fields.type") + ":"}
                                       </span>{" "}
                                       {result.type}
                                     </div>
@@ -1593,7 +1604,8 @@ export default function TestResultHistory({
                                   {result.message && (
                                     <div>
                                       <span className="font-medium">
-                                        {tCommon("actions.automated.message") + ":"}
+                                        {tCommon("actions.automated.message") +
+                                          ":"}
                                       </span>{" "}
                                       {result.message}
                                     </div>
@@ -1601,7 +1613,7 @@ export default function TestResultHistory({
                                   {result.file && (
                                     <div>
                                       <span className="font-medium">
-                                        {tCommon("actions.automated.file") + ":"}
+                                        {tCommon("file") + ":"}
                                       </span>{" "}
                                       {result.file}
                                     </div>
@@ -1609,7 +1621,8 @@ export default function TestResultHistory({
                                   {typeof result.line === "number" && (
                                     <div>
                                       <span className="font-medium">
-                                        {tCommon("actions.automated.line") + ":"}
+                                        {tCommon("actions.automated.line") +
+                                          ":"}
                                       </span>{" "}
                                       {result.line}
                                     </div>
@@ -1617,8 +1630,7 @@ export default function TestResultHistory({
                                   {typeof result.assertions === "number" && (
                                     <div>
                                       <span className="font-medium">
-                                        {tCommon("actions.automated.assertions") +
-                                          ":"}
+                                        {tCommon("fields.assertions") + ":"}
                                       </span>{" "}
                                       {result.assertions}
                                     </div>

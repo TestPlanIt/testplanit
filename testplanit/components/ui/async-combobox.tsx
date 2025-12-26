@@ -69,7 +69,7 @@ export function AsyncCombobox<T>({
   unassignedLabel,
   renderTrigger,
 }: AsyncComboboxProps<T>) {
-  const t = useTranslations("common.ui.asyncCombobox");
+  const tCommon = useTranslations("common");
   const tRepository = useTranslations("repository.columns");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -163,39 +163,39 @@ export function AsyncCombobox<T>({
   const resolvedTriggerLabel =
     typeof triggerLabel === "undefined" ? fallbackPlaceholder : triggerLabel;
 
-  const defaultContent = value
-    ? renderOption(value)
-    : showUnassigned
-      ? (
-          <div className="flex items-center text-start">
-            <UserX className="mr-2 h-4 w-4" />
-            <span>{unassignedLabel || tRepository("unassigned")}</span>
-          </div>
-        )
-      : (() => {
-          if (
-            resolvedTriggerLabel === undefined ||
-            resolvedTriggerLabel === null ||
-            resolvedTriggerLabel === "" ||
-            resolvedTriggerLabel === false
-          ) {
-            return (
-              <span className="text-muted-foreground text-start">
-                {fallbackPlaceholder}
-              </span>
-            );
-          }
+  const defaultContent = value ? (
+    renderOption(value)
+  ) : showUnassigned ? (
+    <div className="flex items-center text-start">
+      <UserX className="mr-2 h-4 w-4" />
+      <span>{unassignedLabel || tCommon("labels.unassigned")}</span>
+    </div>
+  ) : (
+    (() => {
+      if (
+        resolvedTriggerLabel === undefined ||
+        resolvedTriggerLabel === null ||
+        resolvedTriggerLabel === "" ||
+        resolvedTriggerLabel === false
+      ) {
+        return (
+          <span className="text-muted-foreground text-start">
+            {fallbackPlaceholder}
+          </span>
+        );
+      }
 
-          if (React.isValidElement(resolvedTriggerLabel)) {
-            return resolvedTriggerLabel;
-          }
+      if (React.isValidElement(resolvedTriggerLabel)) {
+        return resolvedTriggerLabel;
+      }
 
-          return (
-            <span className="text-muted-foreground text-start">
-              {resolvedTriggerLabel as React.ReactNode}
-            </span>
-          );
-        })();
+      return (
+        <span className="text-muted-foreground text-start">
+          {resolvedTriggerLabel as React.ReactNode}
+        </span>
+      );
+    })()
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -272,7 +272,7 @@ export function AsyncCombobox<T>({
               </div>
             )}
             <CommandList className="max-h-[300px]">
-              <CommandEmpty>{t("noResults")}</CommandEmpty>
+              <CommandEmpty>{tCommon("labels.noResults")}</CommandEmpty>
               <CommandGroup
                 className={cn(loading ? "opacity-50 pointer-events-none" : "")}
               >
@@ -287,7 +287,9 @@ export function AsyncCombobox<T>({
                   >
                     <div className="flex items-center w-full">
                       <UserX className="mr-2 h-4 w-4" />
-                      <span>{unassignedLabel || tRepository("unassigned")}</span>
+                      <span>
+                        {unassignedLabel || tCommon("labels.unassigned")}
+                      </span>
                       {!value && (
                         <Check className="ml-auto h-4 w-4 text-muted-foreground" />
                       )}
@@ -305,9 +307,10 @@ export function AsyncCombobox<T>({
                   >
                     <div className="flex items-center w-full">
                       {renderOption(option)}
-                      {value && getOptionValue(option) === getOptionValue(value) && (
-                        <Check className="ml-auto h-4 w-4 text-muted-foreground" />
-                      )}
+                      {value &&
+                        getOptionValue(option) === getOptionValue(value) && (
+                          <Check className="ml-auto h-4 w-4 text-muted-foreground" />
+                        )}
                     </div>
                   </CommandItem>
                 ))}
@@ -325,7 +328,7 @@ export function AsyncCombobox<T>({
                 }}
                 disabled={page === 0 || loading}
               >
-                {t("previous")}
+                {tCommon("actions.previous")}
               </Button>
               <span className="text-xs text-muted-foreground">
                 {showTotal && total != null
@@ -348,7 +351,7 @@ export function AsyncCombobox<T>({
                     : options.length < pageSize)
                 }
               >
-                {t("next")}
+                {tCommon("actions.next")}
               </Button>
             </div>
           </div>

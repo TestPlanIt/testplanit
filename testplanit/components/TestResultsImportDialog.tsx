@@ -80,7 +80,8 @@ export default function TestResultsImportDialog({
   onSuccess,
   defaultFormat = "auto",
 }: TestResultsImportDialogProps) {
-  const t = useTranslations("common.actions.testResults.import");
+  const t = useTranslations("common.actions.junit.import");
+  const tFormat = useTranslations("common.actions.testResults.import.format");
   const tCommon = useTranslations("common");
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -229,7 +230,9 @@ export default function TestResultsImportDialog({
       (data.selectedTags ?? []).forEach((id: number) =>
         formData.append("tagIds", id.toString())
       );
-      data.selectedFiles.forEach((file: File) => formData.append("files", file));
+      data.selectedFiles.forEach((file: File) =>
+        formData.append("files", file)
+      );
 
       const response = await fetch("/api/test-results/import", {
         method: "POST",
@@ -376,7 +379,7 @@ export default function TestResultsImportDialog({
               {/* Format selector */}
               <div className="grid gap-2">
                 <Label htmlFor="format" className="flex items-center">
-                  {t("format.label")}
+                  {tCommon("fields.options.label")}
                   <sup>
                     <Asterisk className="w-3 h-3 text-destructive" />
                   </sup>
@@ -387,7 +390,7 @@ export default function TestResultsImportDialog({
                   disabled={isImporting}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t("format.placeholder")} />
+                    <SelectValue placeholder={tFormat("placeholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
@@ -660,10 +663,12 @@ export default function TestResultsImportDialog({
                 disabled={isImporting}
                 type="button"
               >
-                {t("cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isImporting}>
-                {isImporting ? t("importing") : t("import")}
+                {isImporting
+                  ? tCommon("status.importing")
+                  : tCommon("actions.junit.import.import")}
               </Button>
             </DialogFooter>
           </form>

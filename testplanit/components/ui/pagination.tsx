@@ -70,16 +70,16 @@ const PaginationPrevious = ({
   className,
   ...props
 }: React.ComponentProps<typeof PaginationLink>) => {
-  const t = useTranslations("common.pagination");
+  const t = useTranslations("common");
   return (
     <PaginationLink
-      aria-label={t("goToPrevious")}
+      aria-label={t("pagination.goToPrevious")}
       size="default"
       className={cn("gap-1 pl-2.5", className)}
       {...props}
     >
       <ChevronLeftIcon className="h-4 w-4" />
-      <span>{t("previous")}</span>
+      <span>{t("actions.previous")}</span>
     </PaginationLink>
   );
 };
@@ -89,15 +89,15 @@ const PaginationNext = ({
   className,
   ...props
 }: React.ComponentProps<typeof PaginationLink>) => {
-  const t = useTranslations("common.pagination");
+  const t = useTranslations("common");
   return (
     <PaginationLink
-      aria-label={t("goToNext")}
+      aria-label={t("pagination.goToNext")}
       size="default"
       className={cn("gap-1 pr-2.5", className)}
       {...props}
     >
-      <span>{t("next")}</span>
+      <span>{t("actions.next")}</span>
       <ChevronRightIcon className="h-4 w-4" />
     </PaginationLink>
   );

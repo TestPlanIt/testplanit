@@ -142,9 +142,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
             onCollapse={() => setIsLeftCollapsed(true)}
             onExpand={() => setIsLeftCollapsed(false)}
             className={`${
-              isTransitioning
-                ? "transition-all duration-300 ease-in-out"
-                : ""
+              isTransitioning ? "transition-all duration-300 ease-in-out" : ""
             }`}
           >
             <MilestonesSection projectId={project.id} />
@@ -220,9 +218,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
             onCollapse={() => setIsRightCollapsed(true)}
             onExpand={() => setIsRightCollapsed(false)}
             className={`${
-              isTransitioning
-                ? "transition-all duration-300 ease-in-out"
-                : ""
+              isTransitioning ? "transition-all duration-300 ease-in-out" : ""
             }`}
           >
             <div className="h-full overflow-auto pr-4">
@@ -273,7 +269,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                   <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
                     <div className="flex items-center text-2xl font-semibold text-primary">
                       <Compass className="mr-2 h-6 w-6" />
-                      {t("projects.overview.activeSessions")}
+                      {t("home.dashboard.activeSessions")}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-6">
@@ -288,7 +284,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
                   <AccordionTrigger className="px-6 py-4 hover:no-underline cursor-pointer">
                     <div className="flex items-center text-2xl font-semibold text-primary">
                       <TagsIcon className="mr-2 h-6 w-6" />
-                      {t("tags.title")}
+                      {t("common.fields.tags")}
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-6 h-[400px]">
