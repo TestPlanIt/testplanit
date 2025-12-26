@@ -68,7 +68,6 @@ export function SelectedTestCasesDrawer({
     getUserPreferredPageSize()
   );
 
-
   // When using checkboxes with allAvailableCases, display those instead of just selected
   const casesToDisplay =
     useCheckboxes && allAvailableCases ? allAvailableCases : selectedTestCases;
@@ -243,7 +242,7 @@ export function SelectedTestCasesDrawer({
                 elements.push(
                   <span key="estimate" className="py-1">
                     <Label className="mr-1 text-xs">
-                      {t("repository.fields.estimate")}:
+                      {t("common.fields.estimate")}:
                     </Label>
                     <span>
                       {toHumanReadable(testCase.estimate, {

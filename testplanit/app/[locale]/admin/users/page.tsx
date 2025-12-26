@@ -216,7 +216,9 @@ function UserList() {
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
-              <CardTitle data-testid="users-page-title">{tGlobal("users.title")}</CardTitle>
+              <CardTitle data-testid="users-page-title">
+                {tGlobal("common.fields.users")}
+              </CardTitle>
             </div>
             <div>
               <AddUserModal />

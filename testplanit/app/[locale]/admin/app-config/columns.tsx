@@ -73,7 +73,7 @@ export function getColumns(
     },
     {
       id: "actions",
-      header: t("fields.actions"),
+      header: t("actions.actionsLabel"),
       enableResizing: true,
       enableSorting: false,
       enableHiding: false,

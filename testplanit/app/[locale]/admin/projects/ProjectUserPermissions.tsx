@@ -249,7 +249,7 @@ export function ProjectUserPermissions({
                 {t("tableHeaders.projectAccess")}
               </th>
               <th className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">
-                {tGlobal("linkedCases.removeLink")}
+                {tGlobal("common.actions.remove")}
               </th>
             </tr>
           </thead>

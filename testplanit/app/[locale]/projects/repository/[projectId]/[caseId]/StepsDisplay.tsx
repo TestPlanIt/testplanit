@@ -301,10 +301,9 @@ export const StepsDisplay: React.FC<StepsProps> = ({
   previousSteps,
 }) => {
   const [expandAll, setExpandAll] = useState(false);
-  const t_repo = useTranslations("repository"); // For general repository keys
-  const t_repo_steps = useTranslations("repository.steps"); // For specific step keys like sharedStepGroupTitle
-
-  // console.log("StepsDisplay props:", { steps, previousSteps });
+  const t_repo = useTranslations("repository");
+  const t_repo_steps = useTranslations("repository.steps");
+  const tGlobal = useTranslations();
 
   if (!steps || steps.length === 0) {
     return null;
@@ -315,7 +314,7 @@ export const StepsDisplay: React.FC<StepsProps> = ({
   return (
     <div>
       <div className="flex items-center">
-        <div className="font-bold">{t_repo("fields.steps")}</div>
+        <div className="font-bold">{tGlobal("common.fields.steps")}</div>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

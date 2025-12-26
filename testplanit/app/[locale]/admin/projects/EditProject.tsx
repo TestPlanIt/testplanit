@@ -790,7 +790,7 @@ export function EditProjectModal({
                   {tGlobal("admin.imports.testmo.mapping.columnSourceDetails")}
                 </TabsTrigger>
                 <TabsTrigger value="users">
-                  {tGlobal("users.title")}
+                  {tGlobal("common.fields.users")}
                 </TabsTrigger>
                 <TabsTrigger value="groups">
                   {tGlobal("common.fields.groups")}

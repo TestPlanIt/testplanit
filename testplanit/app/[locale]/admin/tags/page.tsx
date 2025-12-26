@@ -122,9 +122,7 @@ function TagList() {
         }
       : undefined,
     {
-      enabled:
-        !!tagsWhere &&
-        status === "authenticated",
+      enabled: !!tagsWhere && status === "authenticated",
     }
   );
 
@@ -135,24 +133,32 @@ function TagList() {
         }
       : undefined,
     {
-      enabled:
-        !!tagsWhere &&
-        status === "authenticated",
+      enabled: !!tagsWhere && status === "authenticated",
     }
   );
 
   // Fetch counts and projects separately to avoid bind variable explosion
-  const [tagCounts, setTagCounts] = useState<Record<number, {
-    repositoryCases: number;
-    sessions: number;
-    testRuns: number;
-  }>>({});
+  const [tagCounts, setTagCounts] = useState<
+    Record<
+      number,
+      {
+        repositoryCases: number;
+        sessions: number;
+        testRuns: number;
+      }
+    >
+  >({});
 
-  const [tagProjects, setTagProjects] = useState<Record<number, Array<{
-    id: number;
-    name: string;
-    iconUrl: string | null;
-  }>>>({});
+  const [tagProjects, setTagProjects] = useState<
+    Record<
+      number,
+      Array<{
+        id: number;
+        name: string;
+        iconUrl: string | null;
+      }>
+    >
+  >({});
 
   const [isLoadingCounts, setIsLoadingCounts] = useState(false);
 
@@ -164,7 +170,7 @@ function TagList() {
       return;
     }
 
-    const tagIds = tags.map(t => t.id);
+    const tagIds = tags.map((t) => t.id);
 
     const fetchCountsAndProjects = async () => {
       setIsLoadingCounts(true);
@@ -256,7 +262,10 @@ function TagList() {
     }
   }, [status, session, router]);
 
-  const columns = useMemo(() => getColumns(tCommon, isLoadingCounts), [tCommon, isLoadingCounts]);
+  const columns = useMemo(
+    () => getColumns(tCommon, isLoadingCounts),
+    [tCommon, isLoadingCounts]
+  );
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
@@ -284,7 +293,9 @@ function TagList() {
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
-              <CardTitle data-testid="tags-page-title">{tGlobal("tags.title")}</CardTitle>
+              <CardTitle data-testid="tags-page-title">
+                {tGlobal("common.fields.tags")}
+              </CardTitle>
             </div>
             <div>
               <AddTagModal />

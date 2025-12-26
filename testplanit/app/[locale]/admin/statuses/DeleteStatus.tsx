@@ -47,6 +47,7 @@ export function DeleteStatusModal({ status }: DeleteStatusModalProps) {
   } = form;
 
   const t = useTranslations("admin.statuses.delete");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   async function onSubmit() {
@@ -98,7 +99,7 @@ export function DeleteStatusModal({ status }: DeleteStatusModalProps) {
                 })}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div>{t("warning")}</div>
+            <div>{tGlobal("runs.delete.warning")}</div>
             <AlertDialogFooter>
               {errors.root && (
                 <div

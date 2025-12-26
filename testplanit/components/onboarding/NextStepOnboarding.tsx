@@ -48,7 +48,9 @@ function TourCard({
                 className="h-8 w-8 p-0 hover:bg-muted"
               >
                 <X className="h-4 w-4" />
-                <span className="sr-only">{t("common.ui.search.skipTour")}</span>
+                <span className="sr-only">
+                  {t("common.ui.onboarding.skipTour")}
+                </span>
               </Button>
             )}
           </div>
@@ -804,11 +806,12 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
     // Check if user has completed the welcome tour
     const hasSeenTourInStorage = hasSeenTour;
-    
+
     // Only proceed if we have user preferences loaded or user is not logged in
     // This prevents showing the tour while preferences are still loading
-    const hasCompletedTourInPreferences = userPreferences?.hasCompletedWelcomeTour;
-    
+    const hasCompletedTourInPreferences =
+      userPreferences?.hasCompletedWelcomeTour;
+
     // If user is logged in but preferences haven't loaded yet, don't show the tour
     if (session?.user?.id && userPreferences === undefined) {
       return; // Wait for preferences to load
