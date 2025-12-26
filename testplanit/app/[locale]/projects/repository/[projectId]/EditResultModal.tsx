@@ -1625,7 +1625,7 @@ export function EditResultModal({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>
-                        {tCommon("actions.cancel")}
+                        {tCommon("cancel")}
                       </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDelete}
@@ -1644,7 +1644,7 @@ export function EditResultModal({
               {!(!isLoadingPermissions && canDeleteResults) && <div></div>}
               <div className="flex space-x-2">
                 <Button variant="outline" type="button" onClick={onClose}>
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (

@@ -96,7 +96,7 @@ export function DeleteIssueModal({ issue }: DeleteIssueModalProps) {
                 </div>
               )}
               <AlertDialogCancel type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={form.handleSubmit(onSubmit)}

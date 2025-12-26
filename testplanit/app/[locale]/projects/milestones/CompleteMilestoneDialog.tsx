@@ -217,7 +217,7 @@ export function CompleteMilestoneDialog({
                   onClick={() => onOpenChange(false)}
                   disabled={isSubmitting}
                 >
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting

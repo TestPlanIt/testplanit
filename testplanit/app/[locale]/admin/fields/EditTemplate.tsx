@@ -540,7 +540,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                 onClick={() => setOpen(false)}
                 variant="outline"
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting

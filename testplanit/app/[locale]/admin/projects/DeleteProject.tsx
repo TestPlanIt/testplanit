@@ -95,7 +95,7 @@ export function DeleteProjectModal({ project }: DeleteProjectModalProps) {
                 </div>
               )}
               <AlertDialogCancel disabled={isSubmitting}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 disabled={isSubmitting}

@@ -112,7 +112,7 @@ export function DeleteMilestoneModal({
                 </div>
               )}
               <AlertDialogCancel type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"

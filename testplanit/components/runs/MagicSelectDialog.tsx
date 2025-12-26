@@ -653,7 +653,7 @@ export function MagicSelectDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {tCommon("actions.cancel")}
+            {tCommon("cancel")}
           </Button>
           {state.status === "configuring" && (
             <Button onClick={runMagicSelect}>

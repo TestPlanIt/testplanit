@@ -341,7 +341,7 @@ function WorkflowComponent() {
               </AlertDialogDescription>
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setIsAlertDialogOpen(false)}>
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => handleConfirmToggleDefault()}

@@ -252,7 +252,7 @@ export function AddGroupModal() {
                 onClick={handleCancel}
                 disabled={isSubmitting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting || usersLoading}>
                 {isSubmitting || usersLoading

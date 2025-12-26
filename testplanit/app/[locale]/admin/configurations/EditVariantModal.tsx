@@ -164,7 +164,7 @@ export function EditVariantModal({
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting

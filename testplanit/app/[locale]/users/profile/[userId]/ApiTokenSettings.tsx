@@ -347,7 +347,7 @@ export function ApiTokenSettings({
             {!newToken ? (
               <>
                 <Button variant="outline" onClick={closeCreateDialog}>
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </Button>
                 <Button
                   onClick={handleCreateToken}
@@ -384,7 +384,7 @@ export function ApiTokenSettings({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{tCommon("actions.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteToken}
               disabled={isLoading}

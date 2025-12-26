@@ -86,7 +86,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             </ScrollArea>
             <DialogFooter>
               <Button variant="outline" onClick={onClose} type="button">
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button variant="outline" onClick={onPrevious} type="button">
                 {tCommon("actions.previous")}

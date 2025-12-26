@@ -428,7 +428,7 @@ function ConfigCategoriesList() {
               disabled={isSubmitting}
               size="sm"
             >
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </Button>
             {variantError && (
               <div className="text-sm text-destructive mt-1">
@@ -523,7 +523,7 @@ function ConfigCategoriesList() {
                   onClick={handleCancel}
                   disabled={isSubmitting}
                 >
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </Button>
               </div>
               {error && <div className="text-sm text-destructive">{error}</div>}
@@ -543,7 +543,7 @@ function ConfigCategoriesList() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{tCommon("actions.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDisableVariant}>
               {tCommon("actions.confirm")}
             </AlertDialogAction>

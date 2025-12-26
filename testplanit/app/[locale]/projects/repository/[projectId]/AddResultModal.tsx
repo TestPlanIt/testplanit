@@ -2088,7 +2088,7 @@ export function AddResultModal({
 
             <div className="flex justify-end space-x-2">
               <Button variant="outline" type="button" onClick={onClose}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (

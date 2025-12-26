@@ -117,7 +117,7 @@ export function DeleteConfigurationModal({
                 onClick={handleCancel}
                 disabled={isSubmitting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 type="button"

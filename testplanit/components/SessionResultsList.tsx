@@ -1591,7 +1591,7 @@ export function SessionResultsList({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelDelete}>
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
@@ -1851,7 +1851,7 @@ export function SessionResultsList({
                   variant="outline"
                   onClick={handleCancelEdit}
                 >
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting

@@ -533,7 +533,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                             disabled={isSubmitting}
                           >
                             <X className="w-4 h-4" />
-                            {tCommon("actions.cancel")}
+                            {tCommon("cancel")}
                           </Button>
                           <Button
                             onClick={form.handleSubmit(onSubmit)}

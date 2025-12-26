@@ -1910,7 +1910,7 @@ export function CreateProjectWizard({
                   onClick={onClose}
                   disabled={isSubmitting}
                 >
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </Button>
 
                 {isLastStep ? (

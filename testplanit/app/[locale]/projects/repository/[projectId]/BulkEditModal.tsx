@@ -2030,7 +2030,7 @@ export function BulkEditModal({
                     disabled={isDeleting}
                   >
                     <CircleSlash2 className="h-4 w-4" />
-                    {tCommon("actions.cancel")}
+                    {tCommon("cancel")}
                   </Button>
                   <Button
                     type="button"
@@ -2052,7 +2052,7 @@ export function BulkEditModal({
           <div className="flex gap-2">
             <DialogClose asChild>
               <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
             </DialogClose>
             <Button

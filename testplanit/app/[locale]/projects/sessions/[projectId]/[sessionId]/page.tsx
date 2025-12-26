@@ -1762,7 +1762,7 @@ export default function SessionPage() {
                             disabled={isSubmitting}
                           >
                             <CircleSlash2 className="h-4 w-4" />
-                            {tCommon("actions.cancel")}
+                            {tCommon("cancel")}
                           </Button>
                         </div>
                         {(sessionData?.isCompleted

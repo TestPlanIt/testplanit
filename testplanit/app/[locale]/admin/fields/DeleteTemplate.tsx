@@ -153,7 +153,7 @@ export function DeleteTemplateModal({ template }: DeleteTemplateModalProps) {
                 onClick={handleCancel}
                 disabled={isSubmitting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 type="button"

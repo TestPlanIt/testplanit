@@ -366,7 +366,7 @@ function MilestoneTypes() {
             <AlertDialogCancel
               onClick={() => setSelectedMilestoneTypeId(undefined)}
             >
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmToggleDefault}>
               {tCommon("actions.confirm")}

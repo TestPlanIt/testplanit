@@ -130,7 +130,7 @@ export function AddAppConfigModal() {
               disabled={isSubmitting}
               data-testid="app-config-cancel-button"
             >
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </Button>
             <Button
               type="submit"

@@ -66,7 +66,7 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
               disabled={isLoading}
             >
               <CircleSlash2 className="h-4 w-4 mr-1" />{" "}
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </Button>
           </div>
           <div className="flex items-center">

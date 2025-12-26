@@ -319,7 +319,7 @@ export function IntegrationModal({
                       onClick={handleClose}
                       disabled={isLoading}
                     >
-                      {tCommon("actions.cancel")}
+                      {tCommon("cancel")}
                     </Button>
                     <Button type="submit" disabled={isLoading || !selectedType}>
                       {isLoading && (

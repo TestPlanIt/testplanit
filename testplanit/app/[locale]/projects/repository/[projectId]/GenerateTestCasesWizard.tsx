@@ -2369,7 +2369,7 @@ export function GenerateTestCasesWizard({
 
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={handleCancel}>
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </Button>
                 <Button type="submit">{tCommon("actions.save")}</Button>
               </div>
@@ -3250,7 +3250,7 @@ export function GenerateTestCasesWizard({
                 onClick={() => setOpen(false)}
                 disabled={isImporting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
 
               {isLastStep ? (
@@ -3360,7 +3360,7 @@ export function GenerateTestCasesWizard({
               variant="outline"
               onClick={() => setShowUnsavedEditsDialog(false)}
             >
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </Button>
             <Button variant="outline" onClick={handleDiscardAndImport}>
               {t("generateTestCases.unsavedEdits.discardAndImport")}

@@ -85,7 +85,7 @@ export function DeleteGroupModal({ group }: DeleteGroupModalProps) {
                 </div>
               )}
               <AlertDialogCancel disabled={isSubmitting}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 disabled={isSubmitting}

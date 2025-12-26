@@ -485,7 +485,7 @@ function ProjectAdmin() {
             </div>
             <AlertDialogFooter className="mt-4">
               <AlertDialogCancel onClick={() => setIsAlertDialogOpen(false)}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"

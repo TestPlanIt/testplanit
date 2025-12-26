@@ -506,7 +506,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmittingThisDialog}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button
                 type="submit"

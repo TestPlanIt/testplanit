@@ -307,7 +307,7 @@ export function EditGroupModal({ group }: EditGroupModalProps) {
                 onClick={() => setOpen(false)}
                 disabled={isSubmitting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting || isLoading}>
                 {isSubmitting || isLoading

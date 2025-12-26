@@ -574,7 +574,7 @@ export default function MilestoneDetailsPage() {
                         disabled={isSubmitting}
                       >
                         <CircleSlash2 className="h-4 w-4 mr-1" />
-                        {tCommon("actions.cancel")}
+                        {tCommon("cancel")}
                       </Button>
                     </div>
                     {showDeleteButtonPerm && (

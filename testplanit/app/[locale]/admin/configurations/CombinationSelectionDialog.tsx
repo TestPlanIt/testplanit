@@ -196,7 +196,7 @@ const CombinationSelectionDialog: React.FC<CombinationSelectionDialogProps> = ({
             )}
             <DialogFooter>
               <Button variant="outline" onClick={onClose} type="button">
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button variant="outline" onClick={onPrevious} type="button">
                 {tCommon("actions.previous")}

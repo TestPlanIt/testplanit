@@ -166,7 +166,7 @@ export const ProjectSelectionDialog: React.FC<ProjectSelectionDialogProps> = ({
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={handleClose}>
-            {tCommon("actions.cancel")}
+            {tCommon("cancel")}
           </Button>
           <Button
             type="button"

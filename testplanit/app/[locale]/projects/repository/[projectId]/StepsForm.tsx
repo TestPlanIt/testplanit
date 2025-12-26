@@ -249,7 +249,7 @@ const StepItem: React.FC<StepItemProps> = ({
                         onClick={() => handlePopoverOpenChange(index, false)}
                       >
                         <CircleSlash2 className="h-4 w-4" />
-                        {tCommon("actions.cancel")}
+                        {tCommon("cancel")}
                       </Button>
                       <Button
                         type="button"
@@ -426,7 +426,7 @@ const StepItem: React.FC<StepItemProps> = ({
                         onClick={() => handlePopoverOpenChange(index, false)}
                       >
                         <CircleSlash2 className="h-4 w-4" />
-                        {tCommon("actions.cancel")}
+                        {tCommon("cancel")}
                       </Button>
                     </div>
                     <div className="flex items-center">

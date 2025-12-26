@@ -512,7 +512,7 @@ export function AddTemplateModal() {
                 onClick={() => setOpen(false)}
                 disabled={isSubmitting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
