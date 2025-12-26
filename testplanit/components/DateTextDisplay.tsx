@@ -14,7 +14,7 @@ export function DateTextDisplay({
   isCompleted = false,
 }: DateTextDisplayProps) {
   const { data: session } = useSession();
-  const t = useTranslations("dates");
+  const tGlobal = useTranslations();
 
   return (
     <div className="text-sm text-muted-foreground">
@@ -28,7 +28,9 @@ export function DateTextDisplay({
         </span>
       )}
       {startDate && endDate && !isCompleted && <span> - </span>}
-      {isCompleted && endDate && <span>{t("completed")}: </span>}
+      {isCompleted && endDate && (
+        <span>{tGlobal("common.fields.completed")}: </span>
+      )}
       {endDate && (
         <span className="whitespace-nowrap">
           <DateFormatter

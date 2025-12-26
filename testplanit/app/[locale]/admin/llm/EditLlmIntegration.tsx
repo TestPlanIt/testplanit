@@ -72,6 +72,10 @@ interface EditLlmIntegrationProps {
 
 export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
   const t = useTranslations("admin.llm.edit");
+  const tAdd = useTranslations("admin.llm.add");
+  const tCommon = useTranslations("common");
+  const tLlm = useTranslations("admin.llm");
+  const tIntegrations = useTranslations("admin.integrations");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
@@ -180,10 +184,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
     }
 
     // For Gemini, we need an API key
-    if (
-      ["OPENAI", "GEMINI"].includes(integration.provider) &&
-      !apiKey
-    ) {
+    if (["OPENAI", "GEMINI"].includes(integration.provider) && !apiKey) {
       return;
     }
 
@@ -291,7 +292,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
         });
       }
 
-      toast.success(t("success"), {
+      toast.success(tCommon("fields.success"), {
         description: t("integrationUpdated"),
       });
 
@@ -299,7 +300,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
       // ZenStack will automatically invalidate hooks - no manual refresh needed
     } catch (error: any) {
       console.error("Error updating integration:", error);
-      toast.error(t("error"), {
+      toast.error(tCommon("errors.error"), {
         description: error.message || t("failedToUpdate"),
       });
     } finally {
@@ -329,7 +330,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("integrationName")}</FormLabel>
+                    <FormLabel>{tIntegrations("config.name")}</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -344,7 +345,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                     <div className="space-y-0.5">
-                      <FormLabel>{t("status")}</FormLabel>
+                      <FormLabel>{tCommon("fields.state")}</FormLabel>
                       <FormDescription>
                         {t("statusDescription")}
                       </FormDescription>
@@ -367,7 +368,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="apiKey"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("apiKey")}</FormLabel>
+                      <FormLabel>{tIntegrations("authType.api_key")}</FormLabel>
                       <FormControl>
                         <Input
                           type="password"
@@ -376,7 +377,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                         />
                       </FormControl>
                       <FormDescription>
-                        {t("apiKeyDescription")}
+                        {tAdd("apiKeyDescription")}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -393,7 +394,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="endpoint"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("endpoint")}</FormLabel>
+                      <FormLabel>{tAdd("endpoint")}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -409,7 +410,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="deploymentName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("deploymentName")}</FormLabel>
+                      <FormLabel>{tAdd("deploymentName")}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -425,14 +426,14 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center justify-between">
-                      {t("defaultModel")}
+                      {tLlm("defaultModel")}
                       {PROVIDERS_WITH_DYNAMIC_MODELS.includes(
                         integration?.provider
                       ) &&
                         fetchingModels && (
                           <div className="flex items-center text-sm text-muted-foreground">
                             <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                            {t("fetchingModels")}
+                            {tAdd("fetchingModels")}
                           </div>
                         )}
                     </FormLabel>
@@ -477,8 +478,8 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                           {integration?.provider === "GEMINI"
                             ? "Enter your API key and endpoint above. Models will be fetched automatically."
                             : integration?.provider === "OPENAI"
-                            ? "Enter your API key above. We'll fetch the available models automatically."
-                            : "Models will be fetched automatically from your Ollama instance."}
+                              ? "Enter your API key above. We'll fetch the available models automatically."
+                              : "Models will be fetched automatically from your Ollama instance."}
                         </FormDescription>
                       )}
                     <FormMessage />
@@ -492,7 +493,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="maxTokensPerRequest"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("maxTokensPerRequest")}</FormLabel>
+                      <FormLabel>{tAdd("maxTokensPerRequest")}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -512,7 +513,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="maxRequestsPerMinute"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("maxRequestsPerMinute")}</FormLabel>
+                      <FormLabel>{tAdd("maxRequestsPerMinute")}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -534,7 +535,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="costPerInputToken"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("costPerInputToken")}</FormLabel>
+                      <FormLabel>{tAdd("costPerInputToken")}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -555,7 +556,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="costPerOutputToken"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("costPerOutputToken")}</FormLabel>
+                      <FormLabel>{tAdd("costPerOutputToken")}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -577,12 +578,12 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 name="monthlyBudget"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("monthlyBudget")}</FormLabel>
+                    <FormLabel>{tAdd("monthlyBudget")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
-                        placeholder={t("monthlyBudgetPlaceholder")}
+                        placeholder={tAdd("monthlyBudgetPlaceholder")}
                         {...field}
                         onChange={(e) =>
                           field.onChange(parseFloat(e.target.value))
@@ -590,7 +591,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                       />
                     </FormControl>
                     <FormDescription>
-                      {t("monthlyBudgetDescription")}
+                      {tAdd("monthlyBudgetDescription")}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -603,7 +604,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="defaultTemperature"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("defaultTemperature")}</FormLabel>
+                      <FormLabel>{tAdd("defaultTemperature")}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -626,7 +627,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="defaultMaxTokens"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("defaultMaxTokens")}</FormLabel>
+                      <FormLabel>{tAdd("defaultMaxTokens")}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -647,7 +648,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 name="timeout"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("timeout")}</FormLabel>
+                    <FormLabel>{tAdd("timeout")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -660,7 +661,9 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                         }
                       />
                     </FormControl>
-                    <FormDescription>{t("timeoutDescription")}</FormDescription>
+                    <FormDescription>
+                      {tAdd("timeoutDescription")}
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -672,9 +675,9 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                     <div className="space-y-0.5">
-                      <FormLabel>{t("streamingEnabled")}</FormLabel>
+                      <FormLabel>{tAdd("streamingEnabled")}</FormLabel>
                       <FormDescription>
-                        {t("streamingEnabledDescription")}
+                        {tAdd("streamingEnabledDescription")}
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -693,9 +696,9 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                     <div className="space-y-0.5">
-                      <FormLabel>{t("setAsDefault")}</FormLabel>
+                      <FormLabel>{tAdd("setAsDefault")}</FormLabel>
                       <FormDescription>
-                        {t("setAsDefaultDescription")}
+                        {tAdd("setAsDefaultDescription")}
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -714,7 +717,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   variant="outline"
                   onClick={() => setOpen(false)}
                 >
-                  {t("cancel")}
+                  {tCommon("cancel")}
                 </Button>
                 <Button type="submit" disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
