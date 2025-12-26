@@ -2092,7 +2092,7 @@ export function AddResultModal({
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
-                  <>{tCommon("status.submitting")}</>
+                  <>{tCommon("actions.submitting")}</>
                 ) : (
                   <>{tCommon("actions.save")}</>
                 )}

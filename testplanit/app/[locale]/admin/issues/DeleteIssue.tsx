@@ -104,7 +104,7 @@ export function DeleteIssueModal({ issue }: DeleteIssueModalProps) {
                 className="bg-destructive"
               >
                 {isSubmitting
-                  ? tCommon("status.deleting")
+                  ? tCommon("actions.deleting")
                   : tCommon("actions.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>

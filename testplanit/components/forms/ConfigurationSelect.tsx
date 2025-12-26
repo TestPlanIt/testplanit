@@ -62,7 +62,7 @@ export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
       </SelectTrigger>
       <SelectContent>
         {isLoading ? (
-          <SelectItem value="loading">{tCommon("status.loading")}</SelectItem>
+          <SelectItem value="loading">{tCommon("loading")}</SelectItem>
         ) : (
           <SelectGroup>
             <SelectItem value="0">{tCommon("labels.none")}</SelectItem>

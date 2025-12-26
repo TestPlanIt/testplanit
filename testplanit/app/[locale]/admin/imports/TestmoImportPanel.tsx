@@ -746,7 +746,7 @@ export function TestmoImportPanel() {
     () => ({
       pending: tCommon("status.pending"),
       active: tCommon("status.active"),
-      completed: tCommon("status.completed"),
+      completed: tCommon("fields.completed"),
     }),
     [tCommon]
   );

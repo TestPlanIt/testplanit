@@ -162,7 +162,7 @@ export function ChangePasswordModal() {
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? tCommon("status.submitting") : tGlobal("users.profile.changePasswordModal.buttonText")}
+              {isLoading ? tCommon("actions.submitting") : tGlobal("users.profile.changePasswordModal.buttonText")}
             </Button>
           </DialogFooter>
         </form>

@@ -107,7 +107,7 @@ export const FolderSelect: React.FC<FolderSelectProps> = ({
       <SelectContent>
         {isLoading ? (
           <SelectItem value="loading" disabled>
-            {tCommon("status.loading")}
+            {tCommon("loading")}
           </SelectItem>
         ) : folders && folders.length > 0 ? (
           <SelectGroup>{renderFolderOptions(folders)}</SelectGroup>

@@ -138,7 +138,7 @@ export function AddAppConfigModal() {
               data-testid="app-config-submit-button"
             >
               {isSubmitting
-                ? tCommon("status.submitting")
+                ? tCommon("actions.submitting")
                 : tCommon("actions.submit")}
             </Button>
           </DialogFooter>

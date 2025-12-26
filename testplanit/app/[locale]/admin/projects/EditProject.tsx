@@ -1051,7 +1051,7 @@ export function EditProjectModal({
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? tCommon("status.saving")
+                  ? tCommon("actions.saving")
                   : tCommon("actions.save")}
               </Button>
             </DialogFooter>

@@ -564,7 +564,7 @@ export default function MilestoneDetailsPage() {
                       >
                         <Save className="h-4 w-4 mr-1" />
                         {isSubmitting
-                          ? tCommon("status.saving")
+                          ? tCommon("actions.saving")
                           : tCommon("actions.save")}
                       </Button>
                       <Button

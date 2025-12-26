@@ -208,7 +208,7 @@ export function ManualSharedStepsDialog({
             disabled={isSaving || !groupName.trim()}
             data-testid="save-manual-shared-steps-btn"
           >
-            {isSaving ? tCommon("status.saving") : tCommon("actions.save")}
+            {isSaving ? tCommon("actions.saving") : tCommon("actions.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

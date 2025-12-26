@@ -256,7 +256,7 @@ export function EditGroupModal({ group }: EditGroupModalProps) {
               <div className="space-y-2 max-h-48 overflow-y-auto rounded-md border p-2">
                 {isLoading && (
                   <p className="text-sm text-muted-foreground text-center py-2">
-                    {tCommon("status.loading")}
+                    {tCommon("loading")}
                   </p>
                 )}
                 {!isLoading && assignedUsers.length === 0 && (
@@ -311,7 +311,7 @@ export function EditGroupModal({ group }: EditGroupModalProps) {
               </Button>
               <Button type="submit" disabled={isSubmitting || isLoading}>
                 {isSubmitting || isLoading
-                  ? tCommon("status.saving")
+                  ? tCommon("actions.saving")
                   : tCommon("actions.save")}
               </Button>
             </DialogFooter>

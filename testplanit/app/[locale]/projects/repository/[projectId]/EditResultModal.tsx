@@ -1632,7 +1632,7 @@ export function EditResultModal({
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
                         {isDeleting ? (
-                          <>{tCommon("status.deleting")}</>
+                          <>{tCommon("actions.deleting")}</>
                         ) : (
                           <>{tCommon("actions.delete")}</>
                         )}
@@ -1648,7 +1648,7 @@ export function EditResultModal({
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
-                    <>{tCommon("status.submitting")}</>
+                    <>{tCommon("actions.submitting")}</>
                   ) : (
                     <>{t("actions.save")}</>
                   )}

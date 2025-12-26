@@ -82,7 +82,7 @@ export const getColumns = (
     {
       id: "isEnabled",
       accessorKey: "isEnabled",
-      header: tCommon("status.enabled"),
+      header: tCommon("fields.enabled"),
       enableSorting: true,
       enableResizing: true,
       size: 100,

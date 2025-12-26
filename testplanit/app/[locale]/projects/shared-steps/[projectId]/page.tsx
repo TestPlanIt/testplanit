@@ -440,7 +440,7 @@ export default function SharedStepsPage() {
                           className="ml-2"
                         >
                           <Save className="w-4 h-4" />
-                          {saving ? tCommon("status.saving") : t("save")}
+                          {saving ? tCommon("actions.saving") : t("save")}
                         </Button>
                       </>
                     )}

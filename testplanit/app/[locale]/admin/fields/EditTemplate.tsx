@@ -397,7 +397,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                       />
                     </FormControl>
                     <FormLabel className="flex items-center">
-                      {tCommon("status.enabled")}
+                      {tCommon("fields.enabled")}
                       <HelpPopover helpKey="template.isEnabled" />
                     </FormLabel>
                     <FormMessage />
@@ -544,7 +544,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
               </Button>
             </DialogFooter>

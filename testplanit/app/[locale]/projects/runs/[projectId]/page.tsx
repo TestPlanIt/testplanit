@@ -1429,7 +1429,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                     {tCommon("status.active")}
                   </TabsTrigger>
                   <TabsTrigger value="completed" className="w-1/2">
-                    {tCommon("status.completed")}
+                    {tCommon("fields.completed")}
                   </TabsTrigger>
                 </TabsList>
 

@@ -541,7 +541,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                           >
                             <Check className="w-4 h-4" />
                             {isSubmitting
-                              ? tCommon("status.submitting")
+                              ? tCommon("actions.submitting")
                               : tCommon("actions.submit")}
                           </Button>
                         </div>

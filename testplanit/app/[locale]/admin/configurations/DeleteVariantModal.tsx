@@ -136,7 +136,7 @@ export function DeleteVariantModal({
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isSubmitting
-                  ? tCommon("status.deleting")
+                  ? tCommon("actions.deleting")
                   : tCommon("actions.delete")}
               </Button>
             </AlertDialogFooter>

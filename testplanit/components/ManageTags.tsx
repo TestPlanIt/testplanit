@@ -124,7 +124,7 @@ export function ManageTags({
           styles={customStyles}
           placeholder={
             combinedLoading
-              ? tCommon("status.loading")
+              ? tCommon("loading")
               : tTags("manageTags.searchOrAddPlaceholder")
           }
           className="mx-1"
@@ -147,7 +147,7 @@ export function ManageTags({
           styles={customStyles}
           placeholder={
             combinedLoading
-              ? tCommon("status.loading")
+              ? tCommon("loading")
               : tTags("manageTags.searchPlaceholder")
           }
           className="mx-1"

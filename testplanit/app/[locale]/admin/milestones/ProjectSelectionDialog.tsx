@@ -131,7 +131,7 @@ export const ProjectSelectionDialog: React.FC<ProjectSelectionDialogProps> = ({
           <ScrollArea className="h-[400px] border rounded-md p-4">
             {isLoading ? (
               <div className="text-center text-muted-foreground py-8">
-                {tCommon("status.loading")}
+                {tCommon("loading")}
               </div>
             ) : !projects || projects.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">

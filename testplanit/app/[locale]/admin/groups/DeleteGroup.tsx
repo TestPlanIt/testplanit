@@ -93,7 +93,7 @@ export function DeleteGroupModal({ group }: DeleteGroupModalProps) {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isSubmitting
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>

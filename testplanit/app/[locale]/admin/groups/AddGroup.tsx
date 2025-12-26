@@ -256,7 +256,7 @@ export function AddGroupModal() {
               </Button>
               <Button type="submit" disabled={isSubmitting || usersLoading}>
                 {isSubmitting || usersLoading
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
               </Button>
             </DialogFooter>

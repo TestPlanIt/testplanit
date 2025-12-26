@@ -122,7 +122,7 @@ export function DeleteStatusModal({ status }: DeleteStatusModalProps) {
                 className="bg-destructive hover:bg-destructive/90"
               >
                 {isSubmitting
-                  ? tCommon("status.deleting")
+                  ? tCommon("actions.deleting")
                   : tCommon("actions.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>

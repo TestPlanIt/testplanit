@@ -181,7 +181,7 @@ export function DeleteConfigCategoriesModal({
                 className="bg-destructive hover:bg-destructive/90"
               >
                 {isSubmitting
-                  ? tCommon("status.deleting")
+                  ? tCommon("actions.deleting")
                   : tCommon("actions.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>

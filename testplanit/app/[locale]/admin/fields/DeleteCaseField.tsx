@@ -151,7 +151,7 @@ export function DeleteCaseFieldModal({ casefield }: DeleteCaseFieldModalProps) {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isSubmitting
-                  ? tCommon("status.deleting")
+                  ? tCommon("actions.deleting")
                   : tCommon("actions.confirm")}
               </AlertDialogAction>
             </AlertDialogFooter>
