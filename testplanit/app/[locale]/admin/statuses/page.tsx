@@ -154,7 +154,7 @@ function Status() {
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
-              <CardTitle>{t("title")}</CardTitle>
+              <CardTitle>{tCommon("labels.statuses")}</CardTitle>
             </div>
             <div>
               <AddStatusModal />

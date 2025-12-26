@@ -284,7 +284,9 @@ function NotificationSettingsContent() {
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="NONE" id="none" />
-                  <Label htmlFor="none">{tGlobal("components.notifications.empty")}</Label>
+                  <Label htmlFor="none">
+                    {tGlobal("components.notifications.empty")}
+                  </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="IN_APP" id="in-app" />
@@ -314,7 +316,9 @@ function NotificationSettingsContent() {
 
           <div className="flex justify-end">
             <Button onClick={handleSave} disabled={isCreating || isUpdating}>
-              {isCreating || isUpdating ? tGlobal("common.actions.saving") : t("save")}
+              {isCreating || isUpdating
+                ? tGlobal("common.actions.saving")
+                : t("save")}
             </Button>
           </div>
         </CardContent>
@@ -341,7 +345,7 @@ function NotificationSettingsContent() {
           <div className="space-y-4">
             <div>
               <Label htmlFor="system-notification-title">
-                {t("systemNotification.titleLabel")}
+                {t("systemNotification.title")}
               </Label>
               <Input
                 id="system-notification-title"
@@ -429,7 +433,9 @@ function NotificationSettingsContent() {
                   columnVisibility={columnVisibility}
                   onColumnVisibilityChange={setColumnVisibility}
                   isLoading={isLoadingHistory}
-                  pageSize={typeof pageSize === "number" ? pageSize : totalItems}
+                  pageSize={
+                    typeof pageSize === "number" ? pageSize : totalItems
+                  }
                 />
               </div>
             ) : (

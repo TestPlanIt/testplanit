@@ -48,7 +48,7 @@ export function DeleteGroupModal({ group }: DeleteGroupModalProps) {
     } catch (err: any) {
       form.setError("root", {
         type: "custom",
-        message: tGlobal("milestones.errors.unknown"),
+        message: tGlobal("common.errors.unknown"),
       });
       setIsSubmitting(false);
       return;

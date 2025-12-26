@@ -44,8 +44,8 @@ import { toast } from "sonner";
 
 const AddGroupFormSchema = z.object({
   name: z.string().min(1, {
-      error: "Group Name is required"
-}),
+    error: "Group Name is required",
+  }),
 });
 
 type AddGroupFormData = z.infer<typeof AddGroupFormSchema>;
@@ -132,7 +132,9 @@ export function AddGroupModal() {
       // Invalidate queries to show the new group in the list
       await invalidateModelQueries(queryClient, "Groups");
 
-      toast.success(tCommon("messages.created", { item: tGlobal("common.fields.groups") }));
+      toast.success(
+        tCommon("messages.created", { item: tGlobal("common.fields.groups") })
+      );
       setOpen(false);
       reset({ name: "" });
       setAssignedUsers([]);
@@ -164,7 +166,7 @@ export function AddGroupModal() {
         <Button>
           <CirclePlus className="w-4 mr-1" />
           <span className="hidden md:inline">{t("add.button")}</span>
-          <span className="md:hidden">{tCommon("actions.add")}</span>
+          <span className="md:hidden">{tCommon("add")}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[700px]">

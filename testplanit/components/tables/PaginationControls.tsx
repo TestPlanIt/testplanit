@@ -58,7 +58,7 @@ const PaginationInfo: React.FC<PaginationInfoProps> = ({
         </DropdownMenu>
         {/* <Separator orientation="vertical" className="px-2" /> */}
         <div className=" whitespace-nowrap gap-1" data-testid="pagination-info">
-          {t("showing")} {startIndex}-{endIndex} {t("of")} {totalRows}{" "}
+          {t("showing")} {startIndex}-{endIndex} {tCommon("of")} {totalRows}{" "}
           {t("entries", { count: totalRows })}
           {searchString
             ? ` ${t("filtered")} ${totalRows} ${t("total", { count: totalRows })}`

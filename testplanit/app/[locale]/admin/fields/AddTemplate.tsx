@@ -323,7 +323,7 @@ export function AddTemplateModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="template.name" />
                   </FormLabel>
                   <FormControl>

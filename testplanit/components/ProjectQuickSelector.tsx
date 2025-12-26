@@ -64,7 +64,11 @@ export const ProjectQuickSelector = () => {
       </PopoverTrigger>
       <PopoverContent className="w-[400px] px-0 py-2" align="start">
         <Command>
-          <CommandInput placeholder={t("projects").toLowerCase() + "..."} />
+          <CommandInput
+            placeholder={
+              tGlobal("common.fields.projects").toLowerCase() + "..."
+            }
+          />
           <CommandEmpty>
             {isLoading ? t("loadingProjects") : t("noProjectsFound")}
           </CommandEmpty>

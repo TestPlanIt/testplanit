@@ -368,7 +368,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                       <Button variant="link" className="p-0">
                         <CirclePlus className="h-4 w-4" />
                         <span className="hidden md:inline">
-                          {tCommon("actions.add")}
+                          {tCommon("add")}
                         </span>
                       </Button>
                     }

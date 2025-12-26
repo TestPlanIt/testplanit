@@ -115,7 +115,7 @@ export const MilestoneSelect: React.FC<MilestoneSelectProps> = ({
           <SelectItem value="loading">{tCommon("loading")}</SelectItem>
         ) : (
           <SelectGroup>
-            <SelectItem value="none">{tCommon("labels.none")}</SelectItem>
+            <SelectItem value="none">{tCommon("access.none")}</SelectItem>
             {renderMilestoneOptions(milestones)}
           </SelectGroup>
         )}

@@ -128,7 +128,7 @@ export function EditCategoryModal({ category }: EditCategoryModalProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="configCategory.name" />
                   </FormLabel>
                   <FormControl>

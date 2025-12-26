@@ -5,7 +5,7 @@ import svgIcon from "~/public/tpi_logo.svg";
 import { useTranslations } from "next-intl";
 
 export function Loading() {
-  const t = useTranslations();
+  const tGlobal = useTranslations();
 
   return (
     <div
@@ -25,7 +25,7 @@ export function Loading() {
           }}
         >
           <Image
-            alt={t("common.branding.logoAlt")}
+            alt={tGlobal("common.branding.logoAlt")}
             src={svgIcon}
             width={25}
             priority={true}
@@ -44,7 +44,7 @@ export function Loading() {
             repeat: Infinity,
           }}
         >
-          {t("common.status.loading")}
+          {tGlobal("common.loading")}
         </motion.div>
       </div>
     </div>

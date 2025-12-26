@@ -48,8 +48,8 @@ interface EditGroupModalProps {
 
 const EditGroupFormSchema = z.object({
   name: z.string().min(1, {
-      error: "Group Name is required"
-}),
+    error: "Group Name is required",
+  }),
 });
 
 type EditGroupFormData = z.infer<typeof EditGroupFormSchema>;
@@ -231,7 +231,7 @@ export function EditGroupModal({ group }: EditGroupModalProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="group.name" />
                   </FormLabel>
                   <FormControl>

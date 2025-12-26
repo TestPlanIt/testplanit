@@ -786,7 +786,8 @@
         "testDurationHistogram": "Test Duration Histogram",
         "zoomDonutChart": "Zoom Donut Chart",
         "zoomStatusTimeline": "Zoom Status Timeline",
-        "zoomHistogramChart": "Zoom Histogram Chart"
+        "zoomHistogramChart": "Zoom Histogram Chart",
+        "duration": "Duration: {seconds} seconds"
       },
       "import": {
         "encoding": {

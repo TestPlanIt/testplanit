@@ -63,8 +63,10 @@ export function DeleteSessionModal({
         predicate: (query) => {
           const queryKey = query.queryKey;
           // Remove queries that include this specific session ID
-          return JSON.stringify(queryKey).includes(`"id":${sessionId}`) ||
-                 JSON.stringify(queryKey).includes(`"id": ${sessionId}`);
+          return (
+            JSON.stringify(queryKey).includes(`"id":${sessionId}`) ||
+            JSON.stringify(queryKey).includes(`"id": ${sessionId}`)
+          );
         },
       });
 
@@ -89,8 +91,10 @@ export function DeleteSessionModal({
       queryClient.invalidateQueries({
         predicate: (query) => {
           const queryKey = query.queryKey;
-          return JSON.stringify(queryKey).includes("sessions") ||
-                 JSON.stringify(queryKey).includes("Sessions");
+          return (
+            JSON.stringify(queryKey).includes("sessions") ||
+            JSON.stringify(queryKey).includes("Sessions")
+          );
         },
       });
     } catch (err: any) {
@@ -137,7 +141,7 @@ export function DeleteSessionModal({
                 </div>
               )}
               <AlertDialogCancel type="button" onClick={handleCancel}>
-                {t("common.actions.cancel")}
+                {t("common.cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 type="button"

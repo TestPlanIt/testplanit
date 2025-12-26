@@ -186,7 +186,7 @@ export function EditIssueModal({ issue }: EditIssueModalProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="issue.name" />
                   </FormLabel>
                   <FormControl>

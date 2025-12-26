@@ -65,7 +65,9 @@ interface ElasticsearchAdminProps {
   isMultiTenantMode?: boolean;
 }
 
-export function ElasticsearchAdmin({ isMultiTenantMode = false }: ElasticsearchAdminProps) {
+export function ElasticsearchAdmin({
+  isMultiTenantMode = false,
+}: ElasticsearchAdminProps) {
   const t = useTranslations("admin.elasticsearch");
   const tGlobal = useTranslations();
   const { toast } = useToast();
@@ -420,7 +422,9 @@ export function ElasticsearchAdmin({ isMultiTenantMode = false }: ElasticsearchA
           <CardContent>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="replicas">{t("settings.numberOfReplicas")}</Label>
+                <Label htmlFor="replicas">
+                  {t("settings.numberOfReplicas")}
+                </Label>
                 <div className="flex items-center space-x-4">
                   <Input
                     id="replicas"
@@ -488,7 +492,7 @@ export function ElasticsearchAdmin({ isMultiTenantMode = false }: ElasticsearchA
                   {tGlobal("search.entityTypes.repositoryCase")}
                 </SelectItem>
                 <SelectItem value="testRuns">
-                  {tGlobal("runs.title")}
+                  {tGlobal("common.fields.testRuns")}
                 </SelectItem>
                 <SelectItem value="sessions">
                   {tGlobal("common.fields.sessions")}

@@ -131,7 +131,7 @@ export function EditTagModal({ tag }: EditTagModalProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="tag.name" />
                   </FormLabel>
                   <FormControl>

@@ -446,7 +446,7 @@ function ConfigCategoriesList() {
             className="flex items-center p-0 h-auto text-sm"
           >
             <PlusCircle className="w-4 h-4 mr-1" />
-            {`${tCommon("actions.add")} Variant`}
+            {`${tCommon("add")} Variant`}
           </Button>
         )}
       </div>
@@ -493,7 +493,9 @@ function ConfigCategoriesList() {
             <CardTitle className="text-xl md:text-2xl">{t("title")}</CardTitle>
             <Button onClick={() => setIsAdding(true)}>
               <PlusCircle className="w-4" />
-              <span className="hidden md:inline">{tGlobal("common.fields.placeholders.addCategory")}</span>
+              <span className="hidden md:inline">
+                {tGlobal("common.fields.placeholders.addCategory")}
+              </span>
             </Button>
           </div>
         </CardHeader>
@@ -510,7 +512,9 @@ function ConfigCategoriesList() {
                   value={newRecordName}
                   onChange={handleNameChange}
                   onKeyDown={handleKeyDown}
-                  placeholder={tGlobal("common.fields.placeholders.addCategory")}
+                  placeholder={tGlobal(
+                    "common.fields.placeholders.addCategory"
+                  )}
                   className="max-w-xs"
                 />
                 <Button onClick={onSubmit} disabled={isSubmitting}>
