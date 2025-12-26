@@ -114,7 +114,7 @@ export function DeleteCaseModal({
         onClick={handleOpen}
       >
         <Trash2 className="h-5 w-5" />
-        {showLabel && <div>{t("sharedSteps.confirmDelete")}</div>}
+        {showLabel && <div>{t("common.actions.confirmDelete")}</div>}
       </Button>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[600px] border-destructive">
         <div className="space-y-4">
@@ -151,7 +151,7 @@ export function DeleteCaseModal({
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel type="button" onClick={handleCancel}>
-              {t("common.actions.cancel")}
+              {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               type="button"
@@ -160,7 +160,7 @@ export function DeleteCaseModal({
               className="bg-destructive text-destructive-foreground"
             >
               {isSubmitting
-                ? t("common.status.deleting")
+                ? t("common.actions.deleting")
                 : t("common.actions.confirmDelete")}
             </AlertDialogAction>
           </AlertDialogFooter>

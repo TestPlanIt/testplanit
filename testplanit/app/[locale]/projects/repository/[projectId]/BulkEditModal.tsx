@@ -401,19 +401,19 @@ export function BulkEditModal({
   // Define all possible fields (standard + custom if applicable)
   const allFieldDefinitions = useMemo((): FieldDefinition[] => {
     const standardFields: FieldDefinition[] = [
-      { key: "name", label: tRepository("fields.name"), isCustom: false },
-      { key: "state", label: tRepository("fields.state"), isCustom: false },
+      { key: "name", label: tCommon("name"), isCustom: false },
+      { key: "state", label: tCommon("fields.state"), isCustom: false },
       {
         key: "automated",
-        label: tRepository("fields.automated"),
+        label: tCommon("fields.automated"),
         isCustom: false,
       },
       {
         key: "estimate",
-        label: tRepository("fields.estimate"),
+        label: tCommon("fields.estimate"),
         isCustom: false,
       },
-      { key: "tags", label: tRepository("fields.tags"), isCustom: false },
+      { key: "tags", label: tCommon("fields.tags"), isCustom: false },
       { key: "issues", label: tCommon("fields.issues"), isCustom: false },
     ];
 
@@ -1351,7 +1351,10 @@ export function BulkEditModal({
         if (!fieldDef) continue;
 
         // Skip custom fields and steps - handle them separately
-        if (fieldKey.startsWith("dynamic_") || fieldDef.field?.type.type === "Steps") {
+        if (
+          fieldKey.startsWith("dynamic_") ||
+          fieldDef.field?.type.type === "Steps"
+        ) {
           continue;
         }
 
@@ -1387,7 +1390,9 @@ export function BulkEditModal({
 
           // For bulk operations, we connect new tags and don't disconnect
           // This is because different cases may have different current tags
-          const tagsToConnect = newTagIds.filter(id => !allCurrentTagIds.has(id)).map(id => ({ id }));
+          const tagsToConnect = newTagIds
+            .filter((id) => !allCurrentTagIds.has(id))
+            .map((id) => ({ id }));
 
           if (newTagIds.length > 0) {
             payload.updates.tags = {
@@ -1401,9 +1406,13 @@ export function BulkEditModal({
             (c.issues || []).forEach((i) => allCurrentIssueIds.add(i.id));
           });
 
-          const newIssueIds = Array.isArray(newValue) ? newValue.map(Number) : [];
+          const newIssueIds = Array.isArray(newValue)
+            ? newValue.map(Number)
+            : [];
 
-          const issuesToConnect = newIssueIds.filter(id => !allCurrentIssueIds.has(id)).map(id => ({ id }));
+          const issuesToConnect = newIssueIds
+            .filter((id) => !allCurrentIssueIds.has(id))
+            .map((id) => ({ id }));
 
           if (newIssueIds.length > 0) {
             payload.updates.issues = {
@@ -2011,7 +2020,11 @@ export function BulkEditModal({
                   type="button"
                   variant="destructive"
                   disabled={
-                    isLoading || isUpdating || isDeleting || hasFetchError || isSaving
+                    isLoading ||
+                    isUpdating ||
+                    isDeleting ||
+                    hasFetchError ||
+                    isSaving
                   }
                 >
                   <Trash2 className="h-5 w-5" />
@@ -2051,7 +2064,12 @@ export function BulkEditModal({
           {/* Right: Cancel and Save */}
           <div className="flex gap-2">
             <DialogClose asChild>
-              <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isSaving}
+              >
                 {tCommon("cancel")}
               </Button>
             </DialogClose>
@@ -2059,10 +2077,16 @@ export function BulkEditModal({
               type="button"
               onClick={handleSave}
               disabled={
-                isUpdating || isLoading || hasFetchError || !isAnyFieldEditing || isSaving
+                isUpdating ||
+                isLoading ||
+                hasFetchError ||
+                !isAnyFieldEditing ||
+                isSaving
               }
             >
-              {(isUpdating || isSaving) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {(isUpdating || isSaving) && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               {tCommon("actions.save")}
             </Button>
           </div>

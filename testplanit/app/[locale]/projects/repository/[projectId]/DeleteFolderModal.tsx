@@ -156,7 +156,7 @@ export function DeleteFolderModal({
           </AlertDialogHeader>
           <div className="overflow-hidden">
             {isCasesLoading
-              ? t("common.status.loading")
+              ? t("common.loading")
               : t("repository.deleteFolder.confirmMessage", {
                   count: caseCount ?? 0,
                 })}
@@ -166,7 +166,7 @@ export function DeleteFolderModal({
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel type="button" onClick={handleCancel}>
-              {t("common.actions.cancel")}
+              {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               type="button"
@@ -175,7 +175,7 @@ export function DeleteFolderModal({
               className="bg-destructive text-destructive-foreground"
             >
               {isSubmitting
-                ? t("common.status.deleting")
+                ? t("common.actions.deleting")
                 : t("repository.deleteFolder.confirm")}
             </AlertDialogAction>
           </AlertDialogFooter>

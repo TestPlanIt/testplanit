@@ -641,7 +641,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       },
       {
         id: "creators",
-        name: t("repository.views.byCreator"),
+        name: t("reports.dimensions.creator"),
         icon: User,
       },
       {
@@ -666,7 +666,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         options: [
           {
             id: "unassigned",
-            name: t("repository.views.unassigned"),
+            name: t("common.labels.unassigned"),
             count: viewOptionsData?.testRunOptions?.unassignedCount || 0,
           },
           ...(viewOptionsData?.testRunOptions?.assignedTo || []).sort(
@@ -681,19 +681,12 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         options: [
           {
             id: "untested",
-            name: t("repository.views.untested"),
+            name: t("common.labels.untested"),
             count: viewOptionsData?.testRunOptions?.untestedCount || 0,
           },
           ...(viewOptionsData?.testRunOptions?.statuses || []),
         ],
       },
-      // Tags view moved to baseItems now
-      // {
-      //   id: "tags",
-      //   name: t("repository.views.byTag"),
-      //   icon: Tags,
-      //   options: viewOptions.tags.map((tag) => ({ ...tag })),
-      // },
     ];
 
     const dynamicFields = Object.entries(viewOptions.dynamicFields)
@@ -1189,7 +1182,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           <div className="text-primary text-lg md:text-xl font-extrabold">
                             <div className="flex items-center space-x-1">
                               <ListChecks className="w-5 h-5 min-w-5 min-h-5" />
-                              <div>{t("repository.testCases")}</div>
+                              <div>{t("common.fields.testCases")}</div>
                             </div>
                           </div>
                           {!isSelectionMode && !isRunMode && canAddEdit && (

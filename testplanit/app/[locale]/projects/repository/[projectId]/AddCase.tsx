@@ -949,7 +949,11 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default" disabled={!folderId} data-testid="add-case-button">
+        <Button
+          variant="default"
+          disabled={!folderId}
+          data-testid="add-case-button"
+        >
           <CirclePlus className="w-4" />
           <span className="select-none hidden md:inline">
             {t("repository.cases.addCase")}
@@ -1246,8 +1250,13 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel} data-testid="case-cancel-button">
-                {t("common.actions.cancel")}
+              <Button
+                variant="outline"
+                type="button"
+                onClick={handleCancel}
+                data-testid="case-cancel-button"
+              >
+                {t("common.cancel")}
               </Button>
               <Button
                 type="submit"
@@ -1255,9 +1264,9 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
                 data-testid="case-submit-button"
               >
                 {isSubmitting
-                  ? t("common.status.submitting")
+                  ? t("common.actions.submitting")
                   : isLoadingSharedStepGroups
-                    ? t("common.status.loading")
+                    ? t("common.loading")
                     : t("repository.addCase.create")}
               </Button>
             </DialogFooter>
