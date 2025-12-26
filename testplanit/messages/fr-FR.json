@@ -937,7 +937,6 @@
         "apple": "Continuez avec Apple",
         "samlProvider": "Connectez-vous avec {name}",
         "magicLink": "Se connecter avec Magic Link",
-        "divider": "ou",
         "emailLogin": "Poursuivre par courriel"
       },
       "magicLink": {
@@ -1046,21 +1045,9 @@
     "menu": {
       "dashboard": "Tableau de bord",
       "admin": "Administration",
-      "profile": "Profil",
-      "issueTracker": "Problèmes"
+      "profile": "Profil"
     },
     "admin": {
-      "projects": "Projets",
-      "templates": "Modèles et champs",
-      "workflows": "Flux de travail",
-      "statuses": "Statuts",
-      "milestoneTypes": "Types d'étapes clés",
-      "configurations": "Configurations",
-      "users": "Utilisateurs",
-      "groups": "Groupes",
-      "roles": "Rôles",
-      "tags": "Étiquettes",
-      "issueTracker": "Problèmes",
       "reports": "Rapports",
       "crossProjectReports": "Rapports inter-projets"
     },
@@ -1156,8 +1143,6 @@
           "authError": "L'authentification a échoué",
           "selectProject": "Sélectionnez {provider} Projet",
           "selectProjectPlaceholder": "Choisissez un projet à lier",
-          "loadingProjects": "Chargement des projets...",
-          "noProjects": "Aucun projet trouvé",
           "linkedProject": "Projet lié",
           "notConfigured": "Non configuré",
           "externalProject": "Projet externe",
@@ -1182,8 +1167,6 @@
           "defaultComponent": "Composant par défaut",
           "componentPlaceholder": "par exemple, Frontend, Backend",
           "automaticSync": "Synchronisation automatique",
-          "enabled": "Activé",
-          "disabled": "Désactivé",
           "automaticSyncDescription": "Synchronisation automatique des problèmes entre TestPlanIt et le système externe",
           "simpleUrlDescription": "Cette intégration utilise un modèle d'URL simple pour créer des liens vers des tickets externes. Ces tickets s'ouvriront dans un nouvel onglet à l'aide de l'URL configurée.",
           "externalProjectHelp": "Cela définit le projet par défaut pour la création de nouveaux tickets depuis TestPlanIt. Vous pouvez toujours lier et synchroniser des tickets provenant d'autres projets externes ; chaque ticket est associé à son propre projet source.",
@@ -1292,13 +1275,11 @@
     "statusLabels": {
       "NOT_STARTED": "Non démarré",
       "IN_PROGRESS": "En cours",
-      "COMPLETED": "Complété",
       "STOPPED": "Arrêté",
       "BLOCKED": "Bloqué",
       "CANCELLED": "Annulé",
       "unscheduled": "Non programmé",
       "upcoming": "Prochain",
-      "started": "Commencé",
       "delayed": "Retardé",
       "pastDue": "En retard de paiement"
     },
@@ -1310,12 +1291,7 @@
       "pickStartDate": "Choisir une date de début",
       "pickCompletionDate": "Choisir la date d'achèvement",
       "selectDate": "Sélectionnez une date...",
-      "completionWarning": "Avertissement : Ceci marquera l'étape comme étant terminée.",
-      "confirm": "Confirmer"
-    },
-    "buttons": {
-      "edit": "Modifier",
-      "delete": "Supprimer"
+      "completionWarning": "Avertissement : Ceci marquera l'étape comme étant terminée."
     },
     "toast": {
       "deleted": "Étape {name} supprimée",
@@ -1335,7 +1311,6 @@
       "title": "Supprimer l'étape importante",
       "confirmMessage": "Êtes-vous sûr de vouloir supprimer l'étape {name}?",
       "warning": "Cette étape sera supprimée du projet. Les données historiques relatives à cette étape resteront toutefois disponibles dans le projet.",
-      "confirm": "Confirmer la suppression",
       "toast": {
         "loading": "Suppression de l'étape importante...",
         "success": "Étape supprimée avec succès",
@@ -1362,8 +1337,6 @@
   "sessions": {
     "title": "{count, plural, =1 {Session} other {Sessions}}",
     "labels": {
-      "name": "Nom",
-      "elapsed": "Temps écoulé",
       "totalElapsed": "Temps passé",
       "remaining": "Restant : {time}",
       "overtime": "Au-dessus de l'estimation de : {time}"
@@ -1403,7 +1376,6 @@
     "placeholders": {
       "estimate": "Estimation (ex. : 1 h 30)",
       "elapsed": "Durée écoulée (ex. : 2 jours et 4 h)",
-      "description": "Ajouter une description...",
       "selectConfiguration": "Sélectionner la configuration",
       "selectUser": "Sélectionner l'utilisateur",
       "estimateHint": "par exemple, 2 h 30 min",
@@ -1413,7 +1385,6 @@
     "delete": {
       "confirmMessage": "Êtes-vous sûr de vouloir supprimer la session {name}?",
       "warning": "Cette session sera supprimée du projet. Les données historiques relatives à cette session resteront toutefois disponibles dans le projet.",
-      "confirm": "Confirmer la suppression",
       "toast": {
         "loading": "Suppression de la session...",
         "success": "Session supprimée avec succès",
@@ -1475,7 +1446,6 @@
       "add": "Ajouter le résultat de la session",
       "edit": "Résultat de la session de modification",
       "editDescription": "Apportez les modifications nécessaires au résultat de la session, puis cliquez sur Enregistrer une fois terminé.",
-      "save": "Sauvegarder",
       "details": "Veuillez saisir ici les détails du résultat...",
       "noResults": "Aucun résultat n'a encore été ajouté.",
       "noNotes": "Aucune note ajoutée pour ce résultat.",
@@ -1528,7 +1498,6 @@
       "footer": "L'accès est requis pour consulter et participer aux activités de planification des tests."
     },
     "noProjectAccess": {
-      "title": "Accès refusé",
       "description": "Vous n'avez pas accès à ce projet.",
       "contact": "Contactez votre administrateur de projet pour demander l'accès."
     },
@@ -1621,20 +1590,15 @@
         "description": "Commentaires où vous êtes mentionné",
         "noComments": "Vous n'avez été mentionné dans aucun commentaire pour le moment.",
         "comment": "Commentaire",
-        "on": "sur",
         "testCase": "Cas de test",
-        "testRun": "Essai",
         "session": "Session",
         "by": "par",
-        "viewEntity": "Voir",
         "edited": "édité",
         "loading": "Chargement...",
         "inProject": "dans le projet",
         "showingResults": "Affichage de {start} - {end} de {total}"
       },
       "twoFactor": {
-        "enabled": "Activé",
-        "disabled": "Désactivé",
         "enable": "Activer l'authentification à deux facteurs",
         "disable": "Désactiver",
         "disableNotAllowed": "L'authentification à deux facteurs est requise par votre organisation.",
@@ -1683,8 +1647,6 @@
     },
     "filterPlaceholder": "Filtrer les utilisateurs...",
     "access": {
-      "admin": "Administrateur",
-      "user": "Utilisateur",
       "guest": "Invité"
     },
     "avatar": {
@@ -1813,7 +1775,6 @@
       "rename": "Renommer le dossier"
     },
     "cases": {
-      "title": "Cas de test",
       "filter": "Boîtiers de filtre...",
       "selectFolder": "Sélectionnez un dossier pour ajouter ou afficher des cas de test.",
       "selectCases": "Sélectionner les cas de test",
@@ -1965,9 +1926,7 @@
       "selectTemplate": "Sélectionnez un modèle",
       "selectState": "Sélectionnez un état",
       "estimatePlaceholder": "Saisissez l'estimation",
-      "notAutomated": "Non automatisé",
       "create": "Créer un cas de test",
-      "cancel": "Annuler",
       "successMessage": "Nouveau cas de test ajouté",
       "errorMessage": "Erreur inconnue lors de l'ajout d'un nouveau cas de test"
     },
@@ -1990,8 +1949,6 @@
     },
     "actions": {
       "edit": "Modifier",
-      "view": "Voir",
-      "duplicate": "Double",
       "archive": "Archive"
     },
     "parentFolder": "Dossier parent",
@@ -2014,7 +1971,6 @@
       "activeRunWarningMessage": "Ce cas de test fait partie de {count, plural, =1 {# exécution de test active} other {# exécutions de test actives}}. Le supprimer le marquera comme supprimé dans ces exécutions."
     },
     "editFolder": {
-      "docsPlaceholder": "Saisissez les documents...",
       "errors": {
         "nameExists": "Ce dossier existe déjà. Veuillez choisir un autre nom."
       }
@@ -2152,7 +2108,6 @@
         "multi": "Plusieurs lignes par étape"
       },
       "comingSoon": "À venir",
-      "cancel": "Annuler",
       "export": "Exporter",
       "exporting": "Exportation...",
       "exportError": "L'exportation a échoué. Veuillez réessayer."
@@ -2434,7 +2389,6 @@
     "summary": {
       "title": "Résumé de l'essai",
       "description": "Consultez le résumé de l'exécution du test.",
-      "legendTitle": "Essais",
       "activeRunsAndEstTime": "Courses actives et temps estimé",
       "activeRunsLabel": "Courses",
       "totalEstTime": "Durée totale estimée",
@@ -2444,13 +2398,8 @@
       "recentResultsDescription": "Consultez les résultats récents de l'essai.",
       "recentAutomatedResultsTitle": "Résultats automatisés récents",
       "noRecentAutomatedResults": "Aucun résultat automatisé récent trouvé.",
-      "recentResultsSuccessRate": "Taux de réussite",
       "recentResultsDateRange": "Période couverte",
-      "recentResultsExecutedBy": "Exécuté par",
-      "recentResultsExecutedAt": "Exécuté à",
       "recentResultsElapsed": "Échéance",
-      "recentResultsStatus": "Statut",
-      "recentResultsNotes": "Notes",
       "noRecentResults": "Aucun résultat récent trouvé.",
       "completionTrendTitle": "Évolution des taux d'achèvement (6 derniers mois)",
       "workDistributionTitle": "Répartition du travail",
@@ -2566,7 +2515,6 @@
         "fileHelp": "Sélectionnez le fichier JSON exporté que vous avez téléchargé depuis Testmo.",
         "analyze": "Analyser l'exportation",
         "analyzing": "Analyse en cours...",
-        "uploading": "Chargement en cours...",
         "reset": "Résultats clairs",
         "job": {
           "discoveringDatasets": "Découverte des ensembles de données...",
@@ -2594,8 +2542,7 @@
         "datasetTable": {
           "name": "Ensemble de données",
           "rows": "Rangées",
-          "samples": "Échantillons prélevés",
-          "status": "Statut"
+          "samples": "Échantillons prélevés"
         },
         "status": {
           "complete": "Complet",
@@ -2631,19 +2578,12 @@
         "mappingSummaryConfigurations": "Configurations",
         "mappingDatasetLabels": {
           "states": "États du flux de travail",
-          "statuses": "Statuts",
-          "templates": "Modèles",
           "template_fields": "Champs de modèle",
           "fields": "Champs personnalisés",
           "field_values": "Valeurs du champ",
           "repository_case_values": "Valeurs de cas du référentiel",
           "milestone_types": "Types d'étapes clés",
-          "roles": "Rôles",
-          "users": "Utilisateurs",
-          "groups": "Groupes",
           "configs": "Paramètres de configuration",
-          "tags": "Étiquettes",
-          "sessions": "Séances",
           "session_results": "Résultats de la session",
           "session_issues": "Problèmes de session",
           "session_tags": "Balises de session",
@@ -2710,7 +2650,6 @@
         "workflowCreate": {
           "nameLabel": "Nom du flux de travail",
           "namePlaceholder": "Saisissez le nom du flux de travail",
-          "scopeLabel": "Portée",
           "scopePlaceholder": "Sélectionner la portée",
           "iconColorLabel": "Icône et couleur",
           "typeLabel": "Type de flux de travail"
@@ -2733,12 +2672,10 @@
           "workflowScope": {
             "default": "Étendue du flux de travail",
             "cases": "cas de test",
-            "runs": "essais",
-            "sessions": "Séances"
+            "runs": "essais"
           },
           "datasetTotalLabel": "{count, plural, =1 {# enregistrement} other {# enregistrements}} ",
           "workflowsHeading": "États du flux de travail",
-          "statusesHeading": "Statuts",
           "columnSource": "Entité Testmo",
           "columnSourceDetails": "Détails",
           "columnSuggestedWorkflowType": "Type suggéré",
@@ -2751,24 +2688,20 @@
           "workflowTypePlaceholder": "Sélectionnez le type",
           "workflowTypeOptions": {
             "notStarted": "Pas encore commencé",
-            "inProgress": "En cours",
-            "done": "Fait"
+            "inProgress": "En cours"
           },
           "statusSelectPlaceholder": "Sélectionner le statut",
           "noWorkflowsAvailable": "Aucun flux de travail disponible.",
           "noStatusesAvailable": "Aucun statut disponible.",
-          "groupsHeading": "Groupes",
           "noGroupsAvailable": "Aucun groupe disponible.",
           "groupSelectPlaceholder": "Sélectionner un groupe",
           "groupNamePlaceholder": "Nom du groupe",
           "groupNotePlaceholder": "Notes (facultatives)",
           "groupNoteEmpty": "Aucun détail supplémentaire n'a été fourni.",
-          "usersHeading": "Utilisateurs",
           "noUsersAvailable": "Aucun utilisateur disponible.",
           "userSelectPlaceholder": "Sélectionner l'utilisateur",
           "userNoExistingTargets": "Aucun utilisateur disponible pour la cartographie.",
           "userNamePlaceholder": "Nom et prénom",
-          "userEmailPlaceholder": "Adresse email",
           "userAccessPlaceholder": "Sélectionnez le niveau d'accès",
           "userRolePlaceholder": "Sélectionner un rôle",
           "userRoleUnavailable": "Aucun rôle disponible pour l'attribution.",
@@ -2776,14 +2709,10 @@
           "userPasswordHint": "Fournissez un mot de passe temporaire. Les utilisateurs pourront le modifier après s'être connectés.",
           "userActiveLabel": "Compte actif",
           "userApiLabel": "accès API",
-          "userApiBadge": "API",
           "userDisplayFallback": "Utilisateur {id}",
           "userMissingRequired": "Détails requis manquants",
-          "configurationsHeading": "Configurations",
           "noConfigurationsAvailable": "Aucune configuration disponible.",
-          "columnVariants": "Variantes",
           "configurationNoTokens": "Aucune variante détectée dans cette configuration.",
-          "configurationSelectPlaceholder": "Sélectionnez la configuration",
           "configurationNoExistingTargets": "Aucune configuration disponible pour la cartographie.",
           "configurationNameLabel": "Nom de la configuration",
           "configurationNamePlaceholder": "Saisissez un nom de configuration",
@@ -2806,8 +2735,6 @@
           "templateFieldsHeading": "Champs de modèle",
           "noTemplateFieldsAvailable": "Aucun champ de modèle disponible.",
           "templateFieldDisplayFallback": "Champ {id}",
-          "templateFieldTemplateLabelSingular": "Modèle",
-          "templateFieldTemplateLabelPlural": "Modèles",
           "templateFieldUnknownTemplate": "Modèle inconnu",
           "templateFieldTargetBadge": {
             "case": "Champ de cas",
@@ -2818,14 +2745,12 @@
           "templateFieldTargetGroupCase": "Champs de cas",
           "templateFieldTargetGroupResult": "Champs de résultats",
           "templateFieldTypeBadgeLabel": "Type de champ",
-          "templateFieldRequiredBadge": "Requis",
           "templateFieldSelectPlaceholder": "Sélectionner un champ",
           "templateFieldNoExistingTargets": "Aucun champ disponible pour la cartographie.",
           "templateFieldDisplayNamePlaceholder": "Nom d'affichage",
           "templateFieldSystemNamePlaceholder": "Nom du système",
           "templateFieldTypeLabel": "Type de champ",
           "templateFieldTypePlaceholder": "Sélectionner le type de champ",
-          "templateFieldRequiredLabel": "Requis",
           "templateFieldRestrictedLabel": "Champ restreint",
           "templateFieldOptionsLabel": "Options du menu déroulant",
           "templateFieldOptionsPlaceholder": "Saisissez une option par ligne",
@@ -2853,15 +2778,12 @@
           "templateFieldIssueBadge": "Nécessite une attention particulière",
           "templateFieldIssueMissingTarget": "Sélectionnez un champ cible.",
           "templateFieldIssueMissingDetails": "Veuillez indiquer le nom d'affichage, le nom du système et le type de champ avant de continuer.",
-          "templatesHeading": "Modèles",
           "noTemplatesAvailable": "Aucun modèle disponible.",
-          "templateColumnTemplate": "Modèle",
           "templateColumnFields": "Champs",
           "templateColumnAction": "Action",
           "templateColumnTarget": "Cible",
           "templateCaseFieldsLabel": "Champs de cas",
           "templateResultFieldsLabel": "Champs de résultats",
-          "templateNoFieldsPlaceholder": "Aucun",
           "templateFieldStatusMapped": "Cartographié",
           "templateFieldStatusCreate": "Créer un nouveau champ",
           "templateFieldStatusMissing": "Non cartographié",
@@ -2870,7 +2792,6 @@
           "templateResultFieldCountBadge": "{count, plural, =1 {# champ de résultat} other {# champs de résultat}}",
           "templateMapLabel": "Associer au modèle existant",
           "templateCreateLabel": "Créer un nouveau modèle",
-          "templateSelectPlaceholder": "Sélectionner un modèle",
           "templateNoMatchingTargets": "Aucun modèle correspondant disponible.",
           "templateNewNameLabel": "Nom du modèle",
           "templateMapHintIncomplete": "Associez tous les champs Testmo aux champs de cas et de résultat existants avant de les associer à un modèle existant.",
@@ -2883,7 +2804,6 @@
           "templateTargetAlreadyUsed": "Déjà cartographié",
           "templateTargetFieldsMismatch": "Les champs ne correspondent pas à ce modèle.",
           "templateTargetNoLongerMatching": "Les champs ne correspondent plus à ce modèle.",
-          "rolesHeading": "Rôles",
           "noRolesAvailable": "Aucun rôle disponible.",
           "roleSelectPlaceholder": "Sélectionner un rôle",
           "roleNameLabel": "Nom du rôle",
@@ -2894,8 +2814,6 @@
           "rolePermissionNone": "Aucun accès",
           "roleAreaColumn": "Domaine d'application",
           "rolePermissionAddEdit": "Ajouter / Modifier",
-          "rolePermissionDelete": "Supprimer",
-          "rolePermissionClose": "Fermer",
           "milestoneTypesHeading": "Types d'étapes clés",
           "noMilestoneTypesAvailable": "Aucun type d'étape n'est disponible.",
           "milestoneSelectPlaceholder": "Sélectionner le type d'étape",
@@ -2906,11 +2824,6 @@
           "statusSystemNamePlaceholder": "Nom du système",
           "statusColorPlaceholder": "Code hexadécimal de couleur (facultatif)",
           "labelSystemName": "Système",
-          "flagSuccess": "Succès",
-          "flagFailure": "Échec",
-          "flagCompleted": "Complété",
-          "flagUntested": "Non testé",
-          "flagEnabled": "Activé",
           "issueTargetsHeading": "Intégrations de problèmes",
           "issueTargetSelectPlaceholder": "Sélectionnez l'intégration...",
           "noIssueTargetsAvailable": "Aucune intégration problématique disponible",
@@ -2971,8 +2884,6 @@
         "configure": "Configurer SAML",
         "delete": "Supprimer le fournisseur",
         "notConfigured": "Non configuré",
-        "enabled": "Activé",
-        "disabled": "Désactivé",
         "entryPoint": "Point d'entrée : ",
         "autoProvision": "Provisionnement automatique : ",
         "defaultAccess": "Accès par défaut : ",
@@ -3009,7 +2920,6 @@
           "groups": "Attribut Groupes (facultatif)"
         },
         "actions": {
-          "saving": "Économie...",
           "save": "Enregistrer la configuration"
         }
       },
@@ -3207,9 +3117,6 @@
           "issueTrackers": "Suivi des problèmes",
           "users": "Autorisations de l'utilisateur",
           "groups": "Autorisations de groupe",
-          "access": {
-            "specificRole": "Rôle spécifique"
-          },
           "accessHints": {
             "noAccess": "Les utilisateurs n'auront accès à ce projet que s'ils y sont explicitement autorisés par le biais d'une affectation directe ou d'une appartenance à un groupe.",
             "globalRole": "Tous les utilisateurs ayant accès au site peuvent consulter ce projet. Leurs autorisations sont déterminées par leur rôle global.",
@@ -3254,7 +3161,6 @@
           "groupPermissions": "Autorisations de groupe",
           "userPermissions": "Autorisations de l'utilisateur",
           "noEffect": "Aucun effet",
-          "unknownRole": "Rôle inconnu",
           "access": {
             "groupsGlobalRole": "Rôle mondial du groupe",
             "groupDefault": "Par défaut du groupe",
@@ -3263,7 +3169,6 @@
             "groupProjectDefault": "Projet de groupe par défaut",
             "groupProjectNoAccess": "Projet de groupe - Accès interdit",
             "groupProjectSpecificRole": "Rôle spécifique au projet de groupe",
-            "defaultRole": "Rôle par défaut",
             "effectiveAccess": "Accès effectif"
           },
           "accessHints": {
@@ -3273,9 +3178,7 @@
           }
         },
         "placeholders": {
-          "none": "Aucun",
           "selectDefaultAccess": "Sélectionner l'accès par défaut",
-          "selected": "Sélectionné : {count}",
           "groupPermissionsUI": "Interface de gestion des autorisations de groupe ici...",
           "userPermissionsUI": "Interface de gestion des autorisations utilisateur ici...",
           "selectAccess": "Sélectionnez l'accès...",
@@ -3284,8 +3187,7 @@
         },
         "tableHeaders": {
           "globalRole": "Rôle mondial",
-          "projectAccess": "Accès au projet",
-          "specificRole": "Rôle spécifique"
+          "projectAccess": "Accès au projet"
         },
         "messages": {
           "noUsersAssigned": "Aucun utilisateur ne s'est vu attribuer d'autorisations spécifiques.",
@@ -3378,7 +3280,6 @@
     },
     "users": {
       "showInactive": "Afficher les inactifs",
-      "selectAll": "Tout sélectionner",
       "add": {
         "button": "Ajouter un utilisateur",
         "title": "Ajouter un nouvel utilisateur",
@@ -3408,12 +3309,6 @@
         "apiAccess": "Accès API",
         "createdAt": "Créé à",
         "createdBy": "Créé par"
-      },
-      "access": {
-        "admin": "Administrateur",
-        "projectAdmin": "Administrateur de projet",
-        "user": "Utilisateur",
-        "none": "Aucun"
       }
     },
     "apiTokens": {
@@ -3609,12 +3504,10 @@
         "forTestRun": "Pour essai",
         "forSession": "Pour la session",
         "color": "Couleur"
-      },
-      "selectAll": "Tout sélectionner"
+      }
     },
     "appConfig": {
       "description": "Gérer les configurations globales des applications",
-      "configurations": "Configurations",
       "addConfig": "Ajouter la configuration de l'application",
       "editConfig": "Modifier la configuration de l'application",
       "keyPlaceholder": "Saisissez la clé de configuration...",
@@ -3630,7 +3523,6 @@
         "value": "Valeur"
       },
       "configKeys": {
-        "edit_results_duration": "Durée de modification des résultats",
         "project_docs_default": "Documentation du projet par défaut"
       }
     },
@@ -3696,9 +3588,7 @@
         },
         "selection": {
           "title": "Sélectionner les variantes",
-          "description": "Sélectionnez les variantes que vous souhaitez ajouter à la configuration.",
-          "selectAll": "Tout sélectionner",
-          "deselectAll": "Désélectionnez tout"
+          "description": "Sélectionnez les variantes que vous souhaitez ajouter à la configuration."
         }
       }
     },
@@ -3778,13 +3668,11 @@
         "system_type": "Type de système",
         "configuration": "Configuration"
       },
-      "title": "Problèmes",
       "description": "Configurer les intégrations avec les systèmes externes de suivi des problèmes.",
       "delete": {
         "title": "Supprimer la configuration du problème",
         "confirmMessage": "Êtes-vous sûr de vouloir supprimer la configuration <bold>{name}</bold>?",
         "warning": "Cette action est irréversible. Tous les projets actuellement associés à ce système de suivi seront réattribués au système de suivi par défaut. Il est recommandé de désactiver cette configuration.",
-        "confirm": "Confirmer la suppression",
         "cannotDeleteDefault": "Le système de suivi des problèmes par défaut ne peut pas être supprimé.",
         "noDefaultFound": "Impossible de supprimer : aucun système de suivi des problèmes par défaut n'a été trouvé pour réaffecter les projets."
       },
@@ -3796,8 +3684,6 @@
         "name_placeholder": "par exemple, les liens du projet Jira",
         "system_type": "Type de système",
         "select_system_type": "Sélectionnez le type de système",
-        "project": "Projets",
-        "select_project": "Sélectionner un projet",
         "base_url": "URL de base incluant l'espace réservé au problème",
         "base_url_placeholder": "par exemple, https://your-tracker.com/issues/'{issueId}'",
         "create_success": "Configuration du problème créée avec succès",
@@ -3812,7 +3698,6 @@
         "system_type": "Type de système",
         "base_url": "URL de base",
         "base_url_placeholder": "par exemple, https://your-tracker.com/issues/'{issueId}'",
-        "project": "Projets",
         "select_project": "Sélectionner des projets...",
         "update_success": "La configuration du problème a été mise à jour avec succès.",
         "update_error": "Échec de la mise à jour de la configuration du problème",
@@ -3842,39 +3727,21 @@
     },
     "trash": {
       "itemTypes": {
-        "users": "Utilisateurs",
-        "groups": "Groupes",
-        "roles": "Rôles",
-        "projects": "Projets",
         "projectLinks": "Liens du projet",
-        "milestones": "Étapes clés",
-        "milestoneTypes": "Types d'étapes clés",
         "milestoneLinks": "Liens clés",
         "icons": "Icônes",
-        "caseFields": "Champs de cas",
-        "resultFields": "Champs de résultats",
         "fieldOptions": "Options de terrain",
-        "templates": "Modèles",
-        "statuses": "Statuts",
-        "workflows": "Flux de travail",
         "configCategories": "Catégories de configuration",
         "configVariants": "Variantes de configuration",
-        "configurations": "Configurations",
-        "tags": "Étiquettes",
         "repositories": "Dépôts",
         "repositoryFolders": "Dossiers du dépôt",
         "repositoryCaseLinks": "Liens vers les dossiers du référentiel",
         "repositoryCases": "Dossiers de dépôt",
         "repositoryCaseVersions": "Versions du dossier de dépôt",
-        "attachments": "Pièces jointes",
-        "steps": "Mesures",
         "sessionResults": "Résultats de la session",
-        "testRuns": "Essais",
         "testRunResults": "Résultats des essais",
         "testRunStepResults": "Résultats de l'étape d'exécution du test",
-        "issues": "Problèmes",
-        "issueConfigs": "Configurations des problèmes",
-        "sessions": "Séances"
+        "issueConfigs": "Configurations des problèmes"
       },
       "table": {
         "title": "Supprimé {itemType}",
@@ -3935,10 +3802,10 @@
         },
         "history": {
           "title": "Historique des notifications",
-          "message": "Message",
           "sentBy": "Envoyé par",
           "sentAt": "Envoyé à",
-          "empty": "Aucune notification système n'a encore été envoyée."
+          "empty": "Aucune notification système n'a encore été envoyée.",
+          "message": "Message"
         }
       }
     },
@@ -3956,7 +3823,6 @@
       "allIntegrations": "Toutes les intégrations",
       "manageDescription": "Configurez et gérez vos intégrations de services externes.",
       "name": "Nom",
-      "type": "Taper",
       "status": {
         "active": "Actif",
         "inactive": "Inactif",
@@ -4016,7 +3882,6 @@
           "description": "Connectez-vous à Azure DevOps pour le suivi des éléments de travail"
         }
       },
-      "assignedProjects": "Projets",
       "filterPlaceholder": "Intégrations de filtres...",
       "table": {
         "provider": "Fournisseur",
@@ -4116,8 +3981,6 @@
       },
       "form": {
         "save": "Intégration enregistrée",
-        "saving": "Économie...",
-        "cancel": "Annuler",
         "success": "L'intégration a été enregistrée avec succès.",
         "successDescription": "L'intégration a été configurée et est prête à être utilisée.",
         "testing": "Test de connexion..."
@@ -4130,7 +3993,8 @@
         "authDescription": "Vous devez vous authentifier avec {provider} pour utiliser cette intégration.",
         "authError": "L'authentification a échoué",
         "authErrorDescription": "Impossible de s'authentifier auprès du service externe"
-      }
+      },
+      "assignedProjects": "Projets"
     },
     "llm": {
       "addIntegration": "Ajouter un modèle d'IA",
@@ -4139,13 +4003,11 @@
       "connectionTestComplete": "Test de connexion terminé",
       "allIntegrationsTested": "Toutes les connexions des modèles d'IA ont été testées.",
       "failedToTestConnections": "Échec du test de certaines connexions",
-      "default": "Défaut",
       "notConfigured": "Non configuré",
       "defaultModel": "Modèle par défaut",
       "budgetUsage": "Utilisation du budget",
       "noBudget": "Aucun budget défini",
       "streaming": "Streaming",
-      "assignedProjects": "Projets",
       "add": {
         "title": "Intégration de modèles d'IA",
         "description": "Configurez un nouveau modèle d'IA pour votre organisation",
@@ -4272,7 +4134,9 @@
         "failedToGetResponse": "Aucune réponse du modèle d'IA",
         "failedToSendMessage": "Échec de l'envoi du message de test",
         "defaultTestMessage": "Bonjour ! Veuillez confirmer brièvement que tout fonctionne correctement."
-      }
+      },
+      "default": "Défaut",
+      "assignedProjects": "Projets"
     },
     "elasticsearch": {
       "title": "Gestion d'Elasticsearch",
@@ -4514,7 +4378,6 @@
     },
     "issues": {
       "manage_issues": {
-        "loading": "Chargement...",
         "placeholder": "Problèmes de recherche ou de liens...",
         "create_label": "Problème de lien \"{name}\""
       },
@@ -4615,7 +4478,6 @@
     "searchIssues": "Problèmes de recherche",
     "searchIssuesDescription": "Recherchez les problèmes internes liés à cet élément.",
     "searchExternalDescription": "Recherchez les numéros {provider} à lier à cet élément.",
-    "loading": "Chargement...",
     "error": "Problèmes de chargement d'erreur",
     "errorDescription": "Impossible de charger les problèmes. Veuillez réessayer.",
     "selectIssues": "Sélection de numéros",
@@ -5388,26 +5250,15 @@
     },
     "dimensions": {
       "project": "Projet",
-      "status": "Statut",
-      "user": "Utilisateur",
       "executor": "Exécuteur",
-      "configuration": "Configuration",
-      "date": "Date",
       "executionDate": "Date d'exécution",
       "creationDate": "Date de création",
       "activityDate": "Date d'activité",
-      "testRun": "Essai",
       "testCase": "Cas de test",
-      "milestone": "Jalon",
-      "template": "Modèle",
       "creator": "Créateur",
-      "state": "État",
       "source": "Source",
-      "folder": "Dossier",
-      "role": "Rôle",
       "group": "Groupe",
       "session": "Session",
-      "assignedTo": "Attribué à",
       "issueType": "Type de problème",
       "weekEnding": "Semaine se terminant",
       "period": "Période",
@@ -5478,14 +5329,11 @@
       }
     },
     "defaultValues": {
-      "none": "Aucun",
-      "unknown": "Inconnu",
       "noData": "-"
     }
   },
   "sharedSteps": {
     "filterPlaceholder": "Filtrer les étapes partagées...",
-    "loadingGroups": "Chargement...",
     "noGroups": "Aucune étape partagée trouvée.",
     "noTestCases": "Aucun cas de test n'utilise ce groupe d'étapes partagé.",
     "selectGroupPrompt": "Sélectionnez un groupe d'étapes partagées pour afficher ses étapes.",
@@ -5583,8 +5431,7 @@
     "allTypes": "Tous types",
     "entityTypes": {
       "repositoryCase": "Dossiers de dépôt",
-      "sharedStep": "Étapes partagées",
-      "project": "Projets"
+      "sharedStep": "Étapes partagées"
     },
     "results": {
       "noResults": "Aucun résultat trouvé",
@@ -5593,8 +5440,7 @@
       "in": "dans",
       "within": "dans",
       "currentProject": "projet actuel",
-      "page": "Page",
-      "automated": "Automatisé"
+      "page": "Page"
     },
     "errors": {
       "searchFailed": "La recherche a échoué. Veuillez réessayer.",
@@ -5633,7 +5479,6 @@
       "title": "Filtres avancés",
       "active": "filtres actifs",
       "activeCount": "{count, plural, =0 {Aucun filtre} one {# filtre} other {# filtres}} actif",
-      "reset": "Réinitialiser",
       "apply": "Appliquer les filtres",
       "common": "Filtres courants",
       "entitySpecific": "Filtres spécifiques au type",
@@ -5657,7 +5502,6 @@
       "maxValue": "Max",
       "source": "Source",
       "hasExternalId": "Possède un ID externe",
-      "externalId": "ID externe",
       "dueDateRange": "Plage de dates d'échéance",
       "hasParent": "A une étape importante pour les parents",
       "parentMilestone": "Étape importante pour les parents",

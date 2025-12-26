@@ -937,7 +937,6 @@
         "apple": "Continue with Apple",
         "samlProvider": "Sign in with {name}",
         "magicLink": "Sign in with Magic Link",
-        "divider": "or",
         "emailLogin": "Continue with email"
       },
       "magicLink": {
@@ -1046,21 +1045,9 @@
     "menu": {
       "dashboard": "Dashboard",
       "admin": "Administration",
-      "profile": "Profile",
-      "issueTracker": "Issues"
+      "profile": "Profile"
     },
     "admin": {
-      "projects": "Projects",
-      "templates": "Templates & Fields",
-      "workflows": "Workflows",
-      "statuses": "Statuses",
-      "milestoneTypes": "Milestone Types",
-      "configurations": "Configurations",
-      "users": "Users",
-      "groups": "Groups",
-      "roles": "Roles",
-      "tags": "Tags",
-      "issueTracker": "Issues",
       "reports": "Reports",
       "crossProjectReports": "Cross-Project Reports"
     },
@@ -1156,8 +1143,6 @@
           "authError": "Authentication failed",
           "selectProject": "Select {provider} Project",
           "selectProjectPlaceholder": "Choose a project to link",
-          "loadingProjects": "Loading projects...",
-          "noProjects": "No projects found",
           "linkedProject": "Linked Project",
           "notConfigured": "Not configured",
           "externalProject": "External Project",
@@ -1182,8 +1167,6 @@
           "defaultComponent": "Default Component",
           "componentPlaceholder": "e.g., Frontend, Backend",
           "automaticSync": "Automatic Sync",
-          "enabled": "Enabled",
-          "disabled": "Disabled",
           "automaticSyncDescription": "Automatically sync issues between TestPlanIt and the external system",
           "simpleUrlDescription": "This issue integration uses a simple URL pattern to link to external issues. Issues will be opened in a new tab using the configured URL pattern.",
           "externalProjectHelp": "This sets the default project for creating new issues from TestPlanIt. You can still link and sync issues from other external projects - each issue tracks its own source project.",
@@ -1292,13 +1275,11 @@
     "statusLabels": {
       "NOT_STARTED": "Not Started",
       "IN_PROGRESS": "In Progress",
-      "COMPLETED": "Completed",
       "STOPPED": "Stopped",
       "BLOCKED": "Blocked",
       "CANCELLED": "Cancelled",
       "unscheduled": "Unscheduled",
       "upcoming": "Upcoming",
-      "started": "Started",
       "delayed": "Delayed",
       "pastDue": "Past Due"
     },
@@ -1310,12 +1291,7 @@
       "pickStartDate": "Pick start date",
       "pickCompletionDate": "Pick completion date",
       "selectDate": "Select date...",
-      "completionWarning": "Warning: This will mark the milestone as completed",
-      "confirm": "Confirm"
-    },
-    "buttons": {
-      "edit": "Edit",
-      "delete": "Delete"
+      "completionWarning": "Warning: This will mark the milestone as completed"
     },
     "toast": {
       "deleted": "Milestone {name} deleted",
@@ -1335,7 +1311,6 @@
       "title": "Delete Milestone",
       "confirmMessage": "Are you sure you want to delete the milestone {name}?",
       "warning": "This milestone will be removed from the project. Historical data for this milestone will still remain in the project.",
-      "confirm": "Confirm Delete",
       "toast": {
         "loading": "Deleting milestone...",
         "success": "Milestone deleted successfully",
@@ -1362,8 +1337,6 @@
   "sessions": {
     "title": "{count, plural, =1 {Session} other {Sessions}}",
     "labels": {
-      "name": "Name",
-      "elapsed": "Elapsed Time",
       "totalElapsed": "Time Spent",
       "remaining": "Remaining: {time}",
       "overtime": "Over the Estimate by: {time}"
@@ -1403,7 +1376,6 @@
     "placeholders": {
       "estimate": "Estimate (e.g., 1h 30m)",
       "elapsed": "Elapsed (e.g., 2 days 4h)",
-      "description": "Add a description...",
       "selectConfiguration": "Select Configuration",
       "selectUser": "Select User",
       "estimateHint": "e.g., 2h 30m",
@@ -1413,7 +1385,6 @@
     "delete": {
       "confirmMessage": "Are you sure you want to delete the Session {name}?",
       "warning": "This Session will be removed from the project. Historical data for this Session will still remain in the project.",
-      "confirm": "Confirm Delete",
       "toast": {
         "loading": "Deleting Session...",
         "success": "Session deleted successfully",
@@ -1475,7 +1446,6 @@
       "add": "Add Session Result",
       "edit": "Edit Session Result",
       "editDescription": "Make changes to the Session result and click save when done.",
-      "save": "Save",
       "details": "Enter details about the result here...",
       "noResults": "No results have been added yet.",
       "noNotes": "No notes added for this result.",
@@ -1528,7 +1498,6 @@
       "footer": "Access is required to view and participate in test planning activities."
     },
     "noProjectAccess": {
-      "title": "Access Denied",
       "description": "You do not have access to this project.",
       "contact": "Contact your project administrator to request access."
     },
@@ -1621,20 +1590,15 @@
         "description": "Comments where you are mentioned",
         "noComments": "You haven't been mentioned in any comments yet.",
         "comment": "Comment",
-        "on": "on",
         "testCase": "Test Case",
-        "testRun": "Test Run",
         "session": "Session",
         "by": "by",
-        "viewEntity": "View",
         "edited": "edited",
         "loading": "Loading...",
         "inProject": "in project",
         "showingResults": "Showing {start} - {end} of {total}"
       },
       "twoFactor": {
-        "enabled": "Enabled",
-        "disabled": "Disabled",
         "enable": "Enable 2FA",
         "disable": "Disable",
         "disableNotAllowed": "Two-factor authentication is required by your organization",
@@ -1683,8 +1647,6 @@
     },
     "filterPlaceholder": "Filter users...",
     "access": {
-      "admin": "Admin",
-      "user": "User",
       "guest": "Guest"
     },
     "avatar": {
@@ -1813,7 +1775,6 @@
       "rename": "Rename Folder"
     },
     "cases": {
-      "title": "Test Cases",
       "filter": "Filter cases...",
       "selectFolder": "Select a folder to add or display test cases.",
       "selectCases": "Select Test Cases",
@@ -1965,9 +1926,7 @@
       "selectTemplate": "Select a template",
       "selectState": "Select a state",
       "estimatePlaceholder": "Enter estimate",
-      "notAutomated": "Not Automated",
       "create": "Create Test Case",
-      "cancel": "Cancel",
       "successMessage": "New Test Case Added",
       "errorMessage": "Unknown error adding new test case"
     },
@@ -1990,8 +1949,6 @@
     },
     "actions": {
       "edit": "Edit",
-      "view": "View",
-      "duplicate": "Duplicate",
       "archive": "Archive"
     },
     "parentFolder": "Parent Folder",
@@ -2014,7 +1971,6 @@
       "activeRunWarningMessage": "This test case is part of {count, plural, =1 {# active test run} other {# active test runs}}. Deleting it will mark it as deleted within those runs."
     },
     "editFolder": {
-      "docsPlaceholder": "Enter documentation...",
       "errors": {
         "nameExists": "Folder name already exists. Please choose a different name."
       }
@@ -2152,7 +2108,6 @@
         "multi": "Multiple Rows per Step"
       },
       "comingSoon": "Coming Soon",
-      "cancel": "Cancel",
       "export": "Export",
       "exporting": "Exporting...",
       "exportError": "Export failed. Please try again."
@@ -2434,7 +2389,6 @@
     "summary": {
       "title": "Test Run Summary",
       "description": "View the summary of the test run",
-      "legendTitle": "Test Runs",
       "activeRunsAndEstTime": "Active Runs & Est. Time",
       "activeRunsLabel": "Runs",
       "totalEstTime": "Total Est. Time",
@@ -2444,13 +2398,8 @@
       "recentResultsDescription": "View the recent results of the test run",
       "recentAutomatedResultsTitle": "Recent Automated Results",
       "noRecentAutomatedResults": "No recent automated results found.",
-      "recentResultsSuccessRate": "Success Rate",
       "recentResultsDateRange": "Date Range",
-      "recentResultsExecutedBy": "Executed By",
-      "recentResultsExecutedAt": "Executed At",
       "recentResultsElapsed": "Elapsed",
-      "recentResultsStatus": "Status",
-      "recentResultsNotes": "Notes",
       "noRecentResults": "No recent results found.",
       "completionTrendTitle": "Completion Trend (Previous 6 Months)",
       "workDistributionTitle": "Work Distribution",
@@ -2566,7 +2515,6 @@
         "fileHelp": "Select the JSON export that you downloaded from Testmo.",
         "analyze": "Analyze export",
         "analyzing": "Analyzing...",
-        "uploading": "Uploading...",
         "reset": "Clear results",
         "job": {
           "discoveringDatasets": "Discovering datasets...",
@@ -2594,8 +2542,7 @@
         "datasetTable": {
           "name": "Dataset",
           "rows": "Rows",
-          "samples": "Samples captured",
-          "status": "Status"
+          "samples": "Samples captured"
         },
         "status": {
           "complete": "Complete",
@@ -2631,19 +2578,12 @@
         "mappingSummaryConfigurations": "Configurations",
         "mappingDatasetLabels": {
           "states": "Workflow states",
-          "statuses": "Statuses",
-          "templates": "Templates",
           "template_fields": "Template fields",
           "fields": "Custom fields",
           "field_values": "Field values",
           "repository_case_values": "Repository case values",
           "milestone_types": "Milestone types",
-          "roles": "Roles",
-          "users": "Users",
-          "groups": "Groups",
           "configs": "Configuration settings",
-          "tags": "Tags",
-          "sessions": "Sessions",
           "session_results": "Session results",
           "session_issues": "Session issues",
           "session_tags": "Session tags",
@@ -2710,7 +2650,6 @@
         "workflowCreate": {
           "nameLabel": "Workflow name",
           "namePlaceholder": "Enter a workflow name",
-          "scopeLabel": "Scope",
           "scopePlaceholder": "Select scope",
           "iconColorLabel": "Icon & color",
           "typeLabel": "Workflow type"
@@ -2733,12 +2672,10 @@
           "workflowScope": {
             "default": "Workflow scope",
             "cases": "Test cases",
-            "runs": "Test runs",
-            "sessions": "Sessions"
+            "runs": "Test runs"
           },
           "datasetTotalLabel": "{count, plural, =1 {# record} other {# records}} ",
           "workflowsHeading": "Workflow states",
-          "statusesHeading": "Statuses",
           "columnSource": "Testmo entity",
           "columnSourceDetails": "Details",
           "columnSuggestedWorkflowType": "Suggested type",
@@ -2751,24 +2688,20 @@
           "workflowTypePlaceholder": "Select type",
           "workflowTypeOptions": {
             "notStarted": "Not started",
-            "inProgress": "In progress",
-            "done": "Done"
+            "inProgress": "In progress"
           },
           "statusSelectPlaceholder": "Select status",
           "noWorkflowsAvailable": "No workflows available.",
           "noStatusesAvailable": "No statuses available.",
-          "groupsHeading": "Groups",
           "noGroupsAvailable": "No groups available.",
           "groupSelectPlaceholder": "Select group",
           "groupNamePlaceholder": "Group name",
           "groupNotePlaceholder": "Notes (optional)",
           "groupNoteEmpty": "No additional details provided.",
-          "usersHeading": "Users",
           "noUsersAvailable": "No users available.",
           "userSelectPlaceholder": "Select user",
           "userNoExistingTargets": "No users available to map.",
           "userNamePlaceholder": "Full name",
-          "userEmailPlaceholder": "Email address",
           "userAccessPlaceholder": "Select access level",
           "userRolePlaceholder": "Select role",
           "userRoleUnavailable": "No roles available to assign.",
@@ -2776,14 +2709,10 @@
           "userPasswordHint": "Provide a temporary password. Users can change it after signing in.",
           "userActiveLabel": "Active account",
           "userApiLabel": "API access",
-          "userApiBadge": "API",
           "userDisplayFallback": "User {id}",
           "userMissingRequired": "Missing required details",
-          "configurationsHeading": "Configurations",
           "noConfigurationsAvailable": "No configurations available.",
-          "columnVariants": "Variants",
           "configurationNoTokens": "No variants detected in this configuration.",
-          "configurationSelectPlaceholder": "Select configuration",
           "configurationNoExistingTargets": "No configurations available to map.",
           "configurationNameLabel": "Configuration name",
           "configurationNamePlaceholder": "Enter a configuration name",
@@ -2806,8 +2735,6 @@
           "templateFieldsHeading": "Template fields",
           "noTemplateFieldsAvailable": "No template fields available.",
           "templateFieldDisplayFallback": "Field {id}",
-          "templateFieldTemplateLabelSingular": "Template",
-          "templateFieldTemplateLabelPlural": "Templates",
           "templateFieldUnknownTemplate": "Unknown template",
           "templateFieldTargetBadge": {
             "case": "Case field",
@@ -2818,14 +2745,12 @@
           "templateFieldTargetGroupCase": "Case fields",
           "templateFieldTargetGroupResult": "Result fields",
           "templateFieldTypeBadgeLabel": "Field type",
-          "templateFieldRequiredBadge": "Required",
           "templateFieldSelectPlaceholder": "Select field",
           "templateFieldNoExistingTargets": "No fields available to map.",
           "templateFieldDisplayNamePlaceholder": "Display name",
           "templateFieldSystemNamePlaceholder": "System name",
           "templateFieldTypeLabel": "Field type",
           "templateFieldTypePlaceholder": "Select field type",
-          "templateFieldRequiredLabel": "Required",
           "templateFieldRestrictedLabel": "Restricted field",
           "templateFieldOptionsLabel": "Dropdown options",
           "templateFieldOptionsPlaceholder": "Enter one option per line",
@@ -2853,15 +2778,12 @@
           "templateFieldIssueBadge": "Needs attention",
           "templateFieldIssueMissingTarget": "Select a target field.",
           "templateFieldIssueMissingDetails": "Provide the display name, system name, and field type before continuing.",
-          "templatesHeading": "Templates",
           "noTemplatesAvailable": "No templates available.",
-          "templateColumnTemplate": "Template",
           "templateColumnFields": "Fields",
           "templateColumnAction": "Action",
           "templateColumnTarget": "Target",
           "templateCaseFieldsLabel": "Case fields",
           "templateResultFieldsLabel": "Result fields",
-          "templateNoFieldsPlaceholder": "None",
           "templateFieldStatusMapped": "Mapped",
           "templateFieldStatusCreate": "Create new field",
           "templateFieldStatusMissing": "Not mapped",
@@ -2870,7 +2792,6 @@
           "templateResultFieldCountBadge": "{count, plural, =1 {# result field} other {# result fields}}",
           "templateMapLabel": "Map to existing template",
           "templateCreateLabel": "Create new template",
-          "templateSelectPlaceholder": "Select template",
           "templateNoMatchingTargets": "No matching templates available.",
           "templateNewNameLabel": "Template name",
           "templateMapHintIncomplete": "Map all Testmo fields to existing case and result fields before mapping to an existing template.",
@@ -2883,7 +2804,6 @@
           "templateTargetAlreadyUsed": "Already mapped",
           "templateTargetFieldsMismatch": "Fields do not match this template.",
           "templateTargetNoLongerMatching": "Fields no longer match this template.",
-          "rolesHeading": "Roles",
           "noRolesAvailable": "No roles available.",
           "roleSelectPlaceholder": "Select role",
           "roleNameLabel": "Role name",
@@ -2894,8 +2814,6 @@
           "rolePermissionNone": "No access",
           "roleAreaColumn": "Application area",
           "rolePermissionAddEdit": "Add / Edit",
-          "rolePermissionDelete": "Delete",
-          "rolePermissionClose": "Close",
           "milestoneTypesHeading": "Milestone types",
           "noMilestoneTypesAvailable": "No milestone types available.",
           "milestoneSelectPlaceholder": "Select milestone type",
@@ -2906,11 +2824,6 @@
           "statusSystemNamePlaceholder": "System name",
           "statusColorPlaceholder": "Color hex (optional)",
           "labelSystemName": "System",
-          "flagSuccess": "Success",
-          "flagFailure": "Failure",
-          "flagCompleted": "Completed",
-          "flagUntested": "Untested",
-          "flagEnabled": "Enabled",
           "issueTargetsHeading": "Issue integrations",
           "issueTargetSelectPlaceholder": "Select integration...",
           "noIssueTargetsAvailable": "No issue integrations available",
@@ -2971,8 +2884,6 @@
         "configure": "Configure SAML",
         "delete": "Delete provider",
         "notConfigured": "Not Configured",
-        "enabled": "Enabled",
-        "disabled": "Disabled",
         "entryPoint": "Entry Point: ",
         "autoProvision": "Auto-provision: ",
         "defaultAccess": "Default Access: ",
@@ -3009,7 +2920,6 @@
           "groups": "Groups Attribute (Optional)"
         },
         "actions": {
-          "saving": "Saving...",
           "save": "Save Configuration"
         }
       },
@@ -3207,9 +3117,6 @@
           "issueTrackers": "Issue Trackers",
           "users": "User Permissions",
           "groups": "Group Permissions",
-          "access": {
-            "specificRole": "Specific Role"
-          },
           "accessHints": {
             "noAccess": "Users will not have access to this project unless explicitly granted through direct assignment or group membership.",
             "globalRole": "All users with site access can view this project. Their permissions are determined by their globally assigned role.",
@@ -3254,7 +3161,6 @@
           "groupPermissions": "Group Permissions",
           "userPermissions": "User Permissions",
           "noEffect": "No Effect",
-          "unknownRole": "Unknown Role",
           "access": {
             "groupsGlobalRole": "Group's Global Role",
             "groupDefault": "Group Default",
@@ -3263,7 +3169,6 @@
             "groupProjectDefault": "Group Project Default",
             "groupProjectNoAccess": "Group Project No Access",
             "groupProjectSpecificRole": "Group Project Specific Role",
-            "defaultRole": "Default Role",
             "effectiveAccess": "Effective Access"
           },
           "accessHints": {
@@ -3273,9 +3178,7 @@
           }
         },
         "placeholders": {
-          "none": "None",
           "selectDefaultAccess": "Select Default Access",
-          "selected": "Selected: {count}",
           "groupPermissionsUI": "Group Permissions Management UI Goes Here...",
           "userPermissionsUI": "User Permissions Management UI Goes Here...",
           "selectAccess": "Select access...",
@@ -3284,8 +3187,7 @@
         },
         "tableHeaders": {
           "globalRole": "Global Role",
-          "projectAccess": "Project Access",
-          "specificRole": "Specific Role"
+          "projectAccess": "Project Access"
         },
         "messages": {
           "noUsersAssigned": "No users assigned specific permissions.",
@@ -3378,7 +3280,6 @@
     },
     "users": {
       "showInactive": "Show Inactive",
-      "selectAll": "Select All",
       "add": {
         "button": "Add User",
         "title": "Add New User",
@@ -3408,12 +3309,6 @@
         "apiAccess": "API Access",
         "createdAt": "Created At",
         "createdBy": "Created By"
-      },
-      "access": {
-        "admin": "Admin",
-        "projectAdmin": "Project Admin",
-        "user": "User",
-        "none": "None"
       }
     },
     "apiTokens": {
@@ -3609,12 +3504,10 @@
         "forTestRun": "For Test Run",
         "forSession": "For Session",
         "color": "Color"
-      },
-      "selectAll": "Select All"
+      }
     },
     "appConfig": {
       "description": "Manage global application configurations",
-      "configurations": "Configurations",
       "addConfig": "Add Application Configuration",
       "editConfig": "Edit Application Configuration",
       "keyPlaceholder": "Enter configuration key...",
@@ -3630,7 +3523,6 @@
         "value": "Value"
       },
       "configKeys": {
-        "edit_results_duration": "Edit Results Duration",
         "project_docs_default": "Project Documentation Default"
       }
     },
@@ -3696,9 +3588,7 @@
         },
         "selection": {
           "title": "Select Variants",
-          "description": "Select the variants you want to add to the configuration.",
-          "selectAll": "Select All",
-          "deselectAll": "Deselect All"
+          "description": "Select the variants you want to add to the configuration."
         }
       }
     },
@@ -3778,13 +3668,11 @@
         "system_type": "System Type",
         "configuration": "Configuration"
       },
-      "title": "Issues",
       "description": "Configure integrations with external issue tracking systems.",
       "delete": {
         "title": "Delete Issue Configuration",
         "confirmMessage": "Are you sure you want to delete configuration <bold>{name}</bold>?",
         "warning": "This action cannot be undone. Any projects currently assigned to this tracker will be reassigned to the default tracker. Consider deactivating the configuration instead.",
-        "confirm": "Confirm Delete",
         "cannotDeleteDefault": "The default issue tracker cannot be deleted.",
         "noDefaultFound": "Cannot delete: No default issue tracker found to reassign projects to."
       },
@@ -3796,8 +3684,6 @@
         "name_placeholder": "e.g., Project Jira Links",
         "system_type": "System Type",
         "select_system_type": "Select System Type",
-        "project": "Projects",
-        "select_project": "Select Project",
         "base_url": "Base URL including the issue placeholder",
         "base_url_placeholder": "e.g., https://your-tracker.com/issues/'{issueId}'",
         "create_success": "Issue configuration created successfully",
@@ -3812,7 +3698,6 @@
         "system_type": "System Type",
         "base_url": "Base URL",
         "base_url_placeholder": "e.g., https://your-tracker.com/issues/'{issueId}'",
-        "project": "Projects",
         "select_project": "Select projects...",
         "update_success": "Issue configuration updated successfully",
         "update_error": "Failed to update issue configuration",
@@ -3842,39 +3727,21 @@
     },
     "trash": {
       "itemTypes": {
-        "users": "Users",
-        "groups": "Groups",
-        "roles": "Roles",
-        "projects": "Projects",
         "projectLinks": "Project Links",
-        "milestones": "Milestones",
-        "milestoneTypes": "Milestone Types",
         "milestoneLinks": "Milestone Links",
         "icons": "Icons",
-        "caseFields": "Case Fields",
-        "resultFields": "Result Fields",
         "fieldOptions": "Field Options",
-        "templates": "Templates",
-        "statuses": "Statuses",
-        "workflows": "Workflows",
         "configCategories": "Config Categories",
         "configVariants": "Config Variants",
-        "configurations": "Configurations",
-        "tags": "Tags",
         "repositories": "Repositories",
         "repositoryFolders": "Repository Folders",
         "repositoryCaseLinks": "Repository Case Links",
         "repositoryCases": "Repository Cases",
         "repositoryCaseVersions": "Repository Case Versions",
-        "attachments": "Attachments",
-        "steps": "Steps",
         "sessionResults": "Session Results",
-        "testRuns": "Test Runs",
         "testRunResults": "Test Run Results",
         "testRunStepResults": "Test Run Step Results",
-        "issues": "Issues",
-        "issueConfigs": "Issue Configs",
-        "sessions": "Sessions"
+        "issueConfigs": "Issue Configs"
       },
       "table": {
         "title": "Deleted {itemType}",
@@ -3935,10 +3802,10 @@
         },
         "history": {
           "title": "Notification History",
-          "message": "Message",
           "sentBy": "Sent By",
           "sentAt": "Sent At",
-          "empty": "No system notifications have been sent yet"
+          "empty": "No system notifications have been sent yet",
+          "message": "Message"
         }
       }
     },
@@ -3956,7 +3823,6 @@
       "allIntegrations": "All Integrations",
       "manageDescription": "Configure and manage your external service issue integrations",
       "name": "Name",
-      "type": "Type",
       "status": {
         "active": "Active",
         "inactive": "Inactive",
@@ -4016,7 +3882,6 @@
           "description": "Connect to Azure DevOps for work item tracking"
         }
       },
-      "assignedProjects": "Projects",
       "filterPlaceholder": "Filter integrations...",
       "table": {
         "provider": "Provider",
@@ -4116,8 +3981,6 @@
       },
       "form": {
         "save": "Save Integration",
-        "saving": "Saving...",
-        "cancel": "Cancel",
         "success": "Integration saved successfully",
         "successDescription": "The integration has been configured and is ready to use",
         "testing": "Testing connection..."
@@ -4130,7 +3993,8 @@
         "authDescription": "You need to authenticate with {provider} to use this integration",
         "authError": "Authentication failed",
         "authErrorDescription": "Unable to authenticate with the external service"
-      }
+      },
+      "assignedProjects": "Projects"
     },
     "llm": {
       "addIntegration": "Add AI Model",
@@ -4139,13 +4003,11 @@
       "connectionTestComplete": "Connection Test Complete",
       "allIntegrationsTested": "All AI model connections have been tested",
       "failedToTestConnections": "Failed to test some connections",
-      "default": "Default",
       "notConfigured": "Not Configured",
       "defaultModel": "Default Model",
       "budgetUsage": "Budget Usage",
       "noBudget": "No Budget Set",
       "streaming": "Streaming",
-      "assignedProjects": "Projects",
       "add": {
         "title": "Add AI Model Integration",
         "description": "Configure a new AI model for your organization",
@@ -4272,7 +4134,9 @@
         "failedToGetResponse": "Failed to get response from AI model",
         "failedToSendMessage": "Failed to send test message",
         "defaultTestMessage": "Hello! Please respond with a brief confirmation that you're working correctly."
-      }
+      },
+      "default": "Default",
+      "assignedProjects": "Projects"
     },
     "elasticsearch": {
       "title": "Elasticsearch Management",
@@ -4514,7 +4378,6 @@
     },
     "issues": {
       "manage_issues": {
-        "loading": "Loading...",
         "placeholder": "Search or link issues...",
         "create_label": "Link Issue \"{name}\""
       },
@@ -4615,7 +4478,6 @@
     "searchIssues": "Search Issues",
     "searchIssuesDescription": "Search for internal issues to link to this item.",
     "searchExternalDescription": "Search for {provider} issues to link to this item.",
-    "loading": "Loading...",
     "error": "Error loading issues",
     "errorDescription": "Failed to load issues. Please try again.",
     "selectIssues": "Select Issues",
@@ -5388,26 +5250,15 @@
     },
     "dimensions": {
       "project": "Project",
-      "status": "Status",
-      "user": "User",
       "executor": "Executor",
-      "configuration": "Configuration",
-      "date": "Date",
       "executionDate": "Execution Date",
       "creationDate": "Creation Date",
       "activityDate": "Activity Date",
-      "testRun": "Test Run",
       "testCase": "Test Case",
-      "milestone": "Milestone",
-      "template": "Template",
       "creator": "Creator",
-      "state": "State",
       "source": "Source",
-      "folder": "Folder",
-      "role": "Role",
       "group": "Group",
       "session": "Session",
-      "assignedTo": "Assigned To",
       "issueType": "Issue Type",
       "weekEnding": "Week Ending",
       "period": "Period",
@@ -5478,14 +5329,11 @@
       }
     },
     "defaultValues": {
-      "none": "None",
-      "unknown": "Unknown",
       "noData": "-"
     }
   },
   "sharedSteps": {
     "filterPlaceholder": "Filter shared steps...",
-    "loadingGroups": "Loading...",
     "noGroups": "No shared steps found.",
     "noTestCases": "No test cases use this shared step group.",
     "selectGroupPrompt": "Select a shared step group to view its steps.",
@@ -5583,8 +5431,7 @@
     "allTypes": "All types",
     "entityTypes": {
       "repositoryCase": "Repository Cases",
-      "sharedStep": "Shared Steps",
-      "project": "Projects"
+      "sharedStep": "Shared Steps"
     },
     "results": {
       "noResults": "No results found",
@@ -5593,8 +5440,7 @@
       "in": "in",
       "within": "within",
       "currentProject": "current project",
-      "page": "Page",
-      "automated": "Automated"
+      "page": "Page"
     },
     "errors": {
       "searchFailed": "Search failed. Please try again.",
@@ -5633,7 +5479,6 @@
       "title": "Advanced Filters",
       "active": "filters active",
       "activeCount": "{count, plural, =0 {No filters} one {# filter} other {# filters}} active",
-      "reset": "Reset",
       "apply": "Apply Filters",
       "common": "Common Filters",
       "entitySpecific": "Type-Specific Filters",
@@ -5657,7 +5502,6 @@
       "maxValue": "Max",
       "source": "Source",
       "hasExternalId": "Has External ID",
-      "externalId": "External ID",
       "dueDateRange": "Due Date Range",
       "hasParent": "Has Parent Milestone",
       "parentMilestone": "Parent Milestone",
