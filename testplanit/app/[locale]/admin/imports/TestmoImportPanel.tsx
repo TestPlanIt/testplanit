@@ -745,7 +745,7 @@ export function TestmoImportPanel() {
   const stepStatusLabels = useMemo(
     () => ({
       pending: tCommon("status.pending"),
-      active: tCommon("status.active"),
+      active: tCommon("fields.isActive"),
       completed: tCommon("fields.completed"),
     }),
     [tCommon]

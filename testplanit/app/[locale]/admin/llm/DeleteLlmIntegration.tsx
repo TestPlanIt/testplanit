@@ -23,12 +23,14 @@ interface DeleteLlmIntegrationProps {
   integration: any;
 }
 
-export function DeleteLlmIntegration({ integration }: DeleteLlmIntegrationProps) {
+export function DeleteLlmIntegration({
+  integration,
+}: DeleteLlmIntegrationProps) {
   const t = useTranslations("admin.llm.delete");
   const tGlobal = useTranslations();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const { mutateAsync: deleteLlmIntegration } = useDeleteLlmIntegration();
   const { mutateAsync: deleteLlmProviderConfig } = useDeleteLlmProviderConfig();
 
@@ -66,27 +68,27 @@ export function DeleteLlmIntegration({ integration }: DeleteLlmIntegrationProps)
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setOpen(true)}
-      >
+      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
         <Trash2 className="h-4 w-4" />
       </Button>
-      
+
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {tGlobal("admin.llm.delete.description", { name: integration?.name })}
+              {tGlobal("admin.llm.delete.description", {
+                name: integration?.name,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setOpen(false)}>{tGlobal("common.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setOpen(false)}>
+              {tGlobal("common.cancel")}
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {tGlobal("sharedSteps.confirmDelete")}
+              {tGlobal("common.dialogs.confirmDelete.description")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

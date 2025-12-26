@@ -176,7 +176,10 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
   } = form;
 
   const completedAt = useWatch({ control, name: "completedAt" });
-  const enableNotifications = useWatch({ control, name: "enableNotifications" });
+  const enableNotifications = useWatch({
+    control,
+    name: "enableNotifications",
+  });
   const hasDueDate = !!completedAt;
 
   useEffect(() => {
@@ -300,14 +303,11 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center">
-                        {t("common.fields.name")}
+                        {t("common.name")}
                         <HelpPopover helpKey="milestone.name" />
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder={t("common.fields.name")}
-                          {...field}
-                        />
+                        <Input placeholder={t("common.name")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -346,7 +346,7 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center">
-                        {t("milestones.fields.type")}
+                        {t("common.fields.type")}
                         <HelpPopover helpKey="milestone.type" />
                       </FormLabel>
                       <FormControl>
@@ -587,11 +587,11 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
                 onClick={onClose}
                 disabled={isSubmitting}
               >
-                {t("common.actions.cancel")}
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting || hasNoCommonTypes}>
                 {isSubmitting
-                  ? t("common.status.saving")
+                  ? t("common.actions.saving")
                   : t("common.actions.save")}
               </Button>
             </DialogFooter>

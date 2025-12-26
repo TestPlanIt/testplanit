@@ -82,7 +82,7 @@ export function DeleteVariantModal({
       );
       form.setError("root", {
         type: "custom",
-        message: tGlobal("milestones.errors.unknown"),
+        message: tGlobal("common.errors.unknown"),
       });
       setIsSubmitting(false);
       return;
@@ -123,7 +123,7 @@ export function DeleteVariantModal({
                   className="bg-destructive text-destructive-foreground text-sm p-2"
                   role="alert"
                 >
-                  {tGlobal("milestones.errors.unknown")}
+                  {tGlobal("common.errors.unknown")}
                 </div>
               )}
               <AlertDialogCancel type="button" onClick={handleCancel}>

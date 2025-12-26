@@ -188,7 +188,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
         console.error("Error updating role or permissions:", err); // Log other errors
         setError("root", {
           type: "custom",
-          message: t("milestones.errors.unknown"),
+          message: t("common.errors.unknown"),
         });
       }
       setIsSubmitting(false);

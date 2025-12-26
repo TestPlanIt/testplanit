@@ -332,7 +332,7 @@ function IntegrationList() {
             </div>
             <Button onClick={handleAddIntegration}>
               <CirclePlus className="h-4 w-4" />
-              <span className="hidden md:inline">{tCommon("actions.add")}</span>
+              <span className="hidden md:inline">{tCommon("add")}</span>
             </Button>
           </div>
         </CardHeader>

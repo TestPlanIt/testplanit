@@ -786,9 +786,15 @@ export function EditProjectModal({
               className="w-full"
             >
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="details">{tGlobal("admin.imports.testmo.mapping.columnSourceDetails")}</TabsTrigger>
-                <TabsTrigger value="users">{tGlobal("users.title")}</TabsTrigger>
-                <TabsTrigger value="groups">{tGlobal("common.fields.groups")}</TabsTrigger>
+                <TabsTrigger value="details">
+                  {tGlobal("admin.imports.testmo.mapping.columnSourceDetails")}
+                </TabsTrigger>
+                <TabsTrigger value="users">
+                  {tGlobal("users.title")}
+                </TabsTrigger>
+                <TabsTrigger value="groups">
+                  {tGlobal("common.fields.groups")}
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="details" className="space-y-4 pt-4">
@@ -818,7 +824,7 @@ export function EditProjectModal({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center">
-                        {tCommon("fields.name")}
+                        {tCommon("name")}
                         <HelpPopover helpKey="project.name" />
                       </FormLabel>
                       <FormControl>

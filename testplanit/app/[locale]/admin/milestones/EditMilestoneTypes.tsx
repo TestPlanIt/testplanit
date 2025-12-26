@@ -68,7 +68,7 @@ export function EditMilestoneTypeModal({
 
   const FormSchema = z.object({
     name: z.string().min(2, {
-        error: "Milestone Type name must be at least 2 characters."
+      error: "Milestone Type name must be at least 2 characters.",
     }),
     isDefault: z.boolean(),
     projects: z.array(z.number()).optional(),
@@ -232,11 +232,11 @@ export function EditMilestoneTypeModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="milestoneType.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder={tCommon("fields.name")} {...field} />
+                    <Input placeholder={tCommon("name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -261,7 +261,11 @@ export function EditMilestoneTypeModal({
                     <div>
                       <Alert>
                         <TriangleAlert className="w-8 h-8 -mx-2" />
-                        <AlertTitle>{tGlobal("admin.milestones.confirmDefaultDescription")}</AlertTitle>
+                        <AlertTitle>
+                          {tGlobal(
+                            "admin.milestones.confirmDefaultDescription"
+                          )}
+                        </AlertTitle>
                         <AlertDescription>
                           {tGlobal("admin.milestones.warning")}
                         </AlertDescription>

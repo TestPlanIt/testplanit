@@ -102,7 +102,7 @@ export function AddMilestoneTypeModal() {
       } else {
         form.setError("root", {
           type: "custom",
-          message: tGlobal("milestones.errors.unknown"),
+          message: tGlobal("common.errors.unknown"),
         });
       }
       setIsSubmitting(false);
@@ -144,11 +144,11 @@ export function AddMilestoneTypeModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="milestoneType.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder={tCommon("fields.name")} {...field} />
+                    <Input placeholder={tCommon("name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

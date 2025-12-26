@@ -659,7 +659,7 @@ export function AddCaseFieldModal({
       } else {
         form.setError("root", {
           type: "custom",
-          message: tGlobal("milestones.errors.unknown"),
+          message: tGlobal("common.errors.unknown"),
         });
       }
       return;
@@ -762,7 +762,7 @@ export function AddCaseFieldModal({
                         />
                       </FormControl>
                       <FormLabel className="flex items-center">
-                        {tCommon("fields.options.enabled")}
+                        {tCommon("fields.enabled")}
                         <HelpPopover helpKey="caseField.enabled" />
                       </FormLabel>
                       <FormMessage />

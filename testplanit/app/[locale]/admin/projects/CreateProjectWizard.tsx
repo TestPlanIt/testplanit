@@ -529,9 +529,7 @@ export function CreateProjectWizard({
         const isNameUnique = await validateProjectName(projectName);
         if (!isNameUnique) {
           setValidationErrors({
-            name:
-              nameValidationMessage ||
-              t("common.errors.projectNameExists"),
+            name: nameValidationMessage || t("common.errors.projectNameExists"),
           });
           return false;
         }
@@ -1022,7 +1020,7 @@ export function CreateProjectWizard({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                      {tCommon("fields.name")}
+                      {tCommon("name")}
                       <sup>
                         <Asterisk className="w-3 h-3 text-destructive" />
                       </sup>
@@ -1180,14 +1178,10 @@ export function CreateProjectWizard({
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="NO_ACCESS">
-                              {t(
-                                "common.labels.access.noAccess"
-                              )}
+                              {t("common.labels.access.noAccess")}
                             </SelectItem>
                             <SelectItem value="GLOBAL_ROLE">
-                              {t(
-                                "common.labels.access.globalRole"
-                              )}
+                              {t("common.labels.access.globalRole")}
                             </SelectItem>
                             <SelectSeparator />
                             {roles?.map((role) => (
@@ -1314,7 +1308,9 @@ export function CreateProjectWizard({
                           )}
                           <Badge variant="outline">
                             {template.caseFields.length}{" "}
-                            {t("admin.imports.testmo.mapping.templateColumnFields")}
+                            {t(
+                              "admin.imports.testmo.mapping.templateColumnFields"
+                            )}
                           </Badge>
                         </div>
                       </div>

@@ -140,7 +140,7 @@ export function EditVariantModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="configVariant.name" />
                   </FormLabel>
                   <FormControl>

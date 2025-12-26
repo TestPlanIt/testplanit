@@ -283,26 +283,36 @@ export function ProjectUserPermissions({
                 currentAccessType === "DEFAULT" ||
                 currentAccessType === ProjectAccessType.DEFAULT
               ) {
-                effectiveAccessDisplay = tGlobal("common.labels.access.projectDefault");
+                effectiveAccessDisplay = tGlobal(
+                  "common.labels.access.projectDefault"
+                );
               } else if (
                 currentAccessType === "NO_ACCESS" ||
                 currentAccessType === ProjectAccessType.NO_ACCESS
               ) {
-                effectiveAccessDisplay = tGlobal("common.labels.access.noAccess");
+                effectiveAccessDisplay = tGlobal(
+                  "common.labels.access.noAccess"
+                );
               } else if (
                 currentAccessType === "GLOBAL_ROLE" ||
                 currentAccessType === ProjectAccessType.GLOBAL_ROLE
               ) {
-                effectiveAccessDisplay = tGlobal("common.labels.access.usersGlobalRole");
+                effectiveAccessDisplay = tGlobal(
+                  "common.labels.access.usersGlobalRole"
+                );
               } else if (
                 currentAccessType === "SPECIFIC_ROLE" ||
                 currentAccessType === ProjectAccessType.SPECIFIC_ROLE
               ) {
-                effectiveAccessDisplay = tGlobal("common.labels.access.specificRole");
+                effectiveAccessDisplay = tGlobal(
+                  "common.labels.access.specificRole"
+                );
               } else {
                 // Fallback for any unexpected values
                 console.warn(`Unexpected access type: ${currentAccessType}`);
-                effectiveAccessDisplay = tGlobal("common.labels.access.projectDefault");
+                effectiveAccessDisplay = tGlobal(
+                  "common.labels.access.projectDefault"
+                );
               }
 
               let combinedValue = "PROJECT_DEFAULT";
@@ -384,7 +394,7 @@ export function ProjectUserPermissions({
                                 </span>
                               ) : (
                                 <span className="italic text-muted-foreground">
-                                  {tGlobal("common.actions.none")}
+                                  {tGlobal("common.access.none")}
                                 </span>
                               )}
                             </span>
