@@ -968,7 +968,6 @@
       "signIn": "Inicia sesión en tu cuenta existente.",
       "errors": {
         "emailRequired": "Se requiere correo electrónico",
-        "emailInvalid": "Invalid email format",
         "passwordRequired": "La contraseña debe tener al menos 4 caracteres",
         "confirmPasswordRequired": "Confirmar contraseña debe tener al menos 4 caracteres",
         "passwordsDoNotMatch": "Las contraseñas no coinciden",
@@ -1653,12 +1652,7 @@
       "update": "Actualizar avatar",
       "remove": "Eliminar avatar",
       "changeProfilePicture": "Cambiar foto de perfil",
-      "notAuthenticated": "Debes estar conectado para subir un avatar.",
-      "upload": {
-        "errors": {
-          "unknown": "Se ha producido un error desconocido"
-        }
-      }
+      "notAuthenticated": "Debes estar conectado para subir un avatar."
     },
     "deletedUser": "Usuario eliminado"
   },
@@ -2238,9 +2232,6 @@
       "title": "Añadir nueva etiqueta",
       "fields": {
         "name_error": "El nombre de la etiqueta es obligatorio"
-      },
-      "errors": {
-        "unknown": "Se ha producido un error desconocido"
       }
     },
     "edit": {
@@ -2248,13 +2239,7 @@
         "name_error": "Se requiere nombre"
       },
       "errors": {
-        "nameExists": "Ya existe una etiqueta con este nombre",
-        "unknown": "Se ha producido un error desconocido"
-      }
-    },
-    "delete": {
-      "errors": {
-        "unknown": "Se ha producido un error desconocido"
+        "nameExists": "Ya existe una etiqueta con este nombre"
       }
     },
     "filterPlaceholder": "Filtrar etiquetas...",
@@ -3017,7 +3002,6 @@
             "allRequired": "Se requiere punto de entrada, emisor, certificado y URL de devolución de llamada"
           },
           "errors": {
-            "permissionDenied": "No tienes permiso para acceder a esta página.",
             "invalidProvider": "Proveedor no válido o no es un proveedor SAML.",
             "saveFailed": "No se pudo guardar la configuración de SAML"
           },
@@ -3198,7 +3182,6 @@
         },
         "loadingUserPermissions": "Cargando permisos de usuario...",
         "errors": {
-          "nameExists": "Ya existe un proyecto con este nombre",
           "unknown": "Se ha producido un error desconocido"
         },
         "selectIssueTracker": "Seleccionar Rastreador de Problemas",
@@ -3460,7 +3443,6 @@
         "systemNameHelp": "El nombre del sistema identifica este estado. No se puede cambiar después de la creación.",
         "aliasesHelp": "Lista de alias separados por comas",
         "errors": {
-          "nameEmpty": "Se requiere nombre",
           "nameExists": "Ya existe un estado con este nombre",
           "systemNameEmpty": "El nombre del sistema es obligatorio",
           "systemNameInvalid": "El nombre del sistema debe ser alfanumérico",
@@ -3571,10 +3553,7 @@
       "delete": {
         "title": "Eliminar configuración",
         "message": "¿Está seguro que desea eliminar la configuración <strong>{name}</strong>?",
-        "confirmMessage": "¿Está seguro que desea eliminar esta configuración?",
-        "errors": {
-          "unknown": "Se ha producido un error desconocido"
-        }
+        "confirmMessage": "¿Está seguro que desea eliminar esta configuración?"
       },
       "variants": {
         "edit": {
@@ -3601,8 +3580,7 @@
         "button": "Añadir grupo",
         "title": "Añadir nuevo grupo",
         "errors": {
-          "nameExists": "Ya existe un grupo con este nombre",
-          "unknown": "Se ha producido un error desconocido"
+          "nameExists": "Ya existe un grupo con este nombre"
         }
       },
       "edit": {
@@ -4112,7 +4090,6 @@
         "failedToDeleteIntegration": "Error al eliminar integración de modelo IA"
       },
       "validation": {
-        "nameRequired": "Se requiere nombre",
         "defaultModelRequired": "Modelo por defecto es requerido"
       },
       "test": {

@@ -968,7 +968,6 @@
       "signIn": "Sign into your existing account.",
       "errors": {
         "emailRequired": "Email is required",
-        "emailInvalid": "Invalid email format",
         "passwordRequired": "Password must be at least 4 characters",
         "confirmPasswordRequired": "Confirm password must be at least 4 characters",
         "passwordsDoNotMatch": "Passwords do not match",
@@ -1653,12 +1652,7 @@
       "update": "Update avatar",
       "remove": "Remove avatar",
       "changeProfilePicture": "Change Profile Picture",
-      "notAuthenticated": "You must be logged in to upload an avatar.",
-      "upload": {
-        "errors": {
-          "unknown": "An unknown error occurred"
-        }
-      }
+      "notAuthenticated": "You must be logged in to upload an avatar."
     },
     "deletedUser": "Deleted User"
   },
@@ -2238,9 +2232,6 @@
       "title": "Add New Tag",
       "fields": {
         "name_error": "Tag name is required"
-      },
-      "errors": {
-        "unknown": "An unknown error occurred"
       }
     },
     "edit": {
@@ -2248,13 +2239,7 @@
         "name_error": "Name is required"
       },
       "errors": {
-        "nameExists": "A tag with this name already exists",
-        "unknown": "An unknown error occurred"
-      }
-    },
-    "delete": {
-      "errors": {
-        "unknown": "An unknown error occurred"
+        "nameExists": "A tag with this name already exists"
       }
     },
     "filterPlaceholder": "Filter tags...",
@@ -3017,7 +3002,6 @@
             "allRequired": "Entry Point, Issuer, Certificate, and Callback URL are required"
           },
           "errors": {
-            "permissionDenied": "You do not have permission to access this page.",
             "invalidProvider": "Invalid provider or not a SAML provider.",
             "saveFailed": "Failed to save SAML configuration"
           },
@@ -3198,7 +3182,6 @@
         },
         "loadingUserPermissions": "Loading User Permissions...",
         "errors": {
-          "nameExists": "A project with this name already exists",
           "unknown": "An unknown error occurred"
         },
         "selectIssueTracker": "Select Issue Tracker",
@@ -3460,7 +3443,6 @@
         "systemNameHelp": "System name identifies this status. Cannot be changed after creation.",
         "aliasesHelp": "Comma-separated list of aliases",
         "errors": {
-          "nameEmpty": "Name is required",
           "nameExists": "A status with this name already exists",
           "systemNameEmpty": "System name is required",
           "systemNameInvalid": "System name must be alphanumeric",
@@ -3571,10 +3553,7 @@
       "delete": {
         "title": "Delete Configuration",
         "message": "Are you sure you want to delete the configuration <strong>{name}</strong>?",
-        "confirmMessage": "Are you sure you want to delete this configuration?",
-        "errors": {
-          "unknown": "An unknown error occurred"
-        }
+        "confirmMessage": "Are you sure you want to delete this configuration?"
       },
       "variants": {
         "edit": {
@@ -3601,8 +3580,7 @@
         "button": "Add Group",
         "title": "Add New Group",
         "errors": {
-          "nameExists": "A group with this name already exists",
-          "unknown": "An unknown error occurred"
+          "nameExists": "A group with this name already exists"
         }
       },
       "edit": {
@@ -4112,7 +4090,6 @@
         "failedToDeleteIntegration": "Failed to delete AI model integration"
       },
       "validation": {
-        "nameRequired": "Name is required",
         "defaultModelRequired": "Default model is required"
       },
       "test": {

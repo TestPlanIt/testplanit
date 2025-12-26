@@ -968,7 +968,6 @@
       "signIn": "Connectez-vous à votre compte existant.",
       "errors": {
         "emailRequired": "L'adresse électronique est requise.",
-        "emailInvalid": "Format d'e-mail invalide",
         "passwordRequired": "Le mot de passe doit comporter au moins 4 caractères.",
         "confirmPasswordRequired": "Confirmez que le mot de passe doit comporter au moins 4 caractères.",
         "passwordsDoNotMatch": "Les mots de passe ne correspondent pas.",
@@ -1653,12 +1652,7 @@
       "update": "Mettre à jour l'avatar",
       "remove": "Supprimer l'avatar",
       "changeProfilePicture": "Changer ma photo de profil",
-      "notAuthenticated": "Vous devez être connecté pour télécharger un avatar.",
-      "upload": {
-        "errors": {
-          "unknown": "Une erreur inconnue s'est produite."
-        }
-      }
+      "notAuthenticated": "Vous devez être connecté pour télécharger un avatar."
     },
     "deletedUser": "Utilisateur supprimé"
   },
@@ -2238,9 +2232,6 @@
       "title": "Ajouter une nouvelle balise",
       "fields": {
         "name_error": "Le nom de l'étiquette est requis."
-      },
-      "errors": {
-        "unknown": "Une erreur inconnue s'est produite."
       }
     },
     "edit": {
@@ -2248,13 +2239,7 @@
         "name_error": "Le nom est requis."
       },
       "errors": {
-        "nameExists": "Une étiquette portant ce nom existe déjà.",
-        "unknown": "Une erreur inconnue s'est produite."
-      }
-    },
-    "delete": {
-      "errors": {
-        "unknown": "Une erreur inconnue s'est produite."
+        "nameExists": "Une étiquette portant ce nom existe déjà."
       }
     },
     "filterPlaceholder": "Filtrer les balises...",
@@ -3017,7 +3002,6 @@
             "allRequired": "Le point d'entrée, l'émetteur, le certificat et l'URL de rappel sont obligatoires."
           },
           "errors": {
-            "permissionDenied": "Vous n'êtes pas autorisé à accéder à cette page.",
             "invalidProvider": "Fournisseur invalide ou fournisseur non SAML.",
             "saveFailed": "Échec de l'enregistrement de la configuration SAML"
           },
@@ -3198,7 +3182,6 @@
         },
         "loadingUserPermissions": "Chargement des autorisations utilisateur...",
         "errors": {
-          "nameExists": "Un projet portant ce nom existe déjà.",
           "unknown": "Une erreur inconnue s'est produite."
         },
         "selectIssueTracker": "Suivi des problèmes sélectionnés",
@@ -3460,7 +3443,6 @@
         "systemNameHelp": "Le nom du système identifie ce statut. Il ne peut pas être modifié après sa création.",
         "aliasesHelp": "Liste d'alias séparés par des virgules",
         "errors": {
-          "nameEmpty": "Le nom est requis.",
           "nameExists": "Un statut portant ce nom existe déjà.",
           "systemNameEmpty": "Le nom du système est requis.",
           "systemNameInvalid": "Le nom du système doit être alphanumérique.",
@@ -3571,10 +3553,7 @@
       "delete": {
         "title": "Supprimer la configuration",
         "message": "Êtes-vous sûr de vouloir supprimer la configuration <strong>{name}</strong>?",
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer cette configuration ?",
-        "errors": {
-          "unknown": "Une erreur inconnue s'est produite."
-        }
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer cette configuration ?"
       },
       "variants": {
         "edit": {
@@ -3601,8 +3580,7 @@
         "button": "Ajouter un groupe",
         "title": "Ajouter un nouveau groupe",
         "errors": {
-          "nameExists": "Un groupe portant ce nom existe déjà.",
-          "unknown": "Une erreur inconnue s'est produite."
+          "nameExists": "Un groupe portant ce nom existe déjà."
         }
       },
       "edit": {
@@ -4112,7 +4090,6 @@
         "failedToDeleteIntegration": "Échec de la suppression de l'intégration du modèle d'IA"
       },
       "validation": {
-        "nameRequired": "Le nom est requis.",
         "defaultModelRequired": "Le modèle par défaut est requis"
       },
       "test": {
