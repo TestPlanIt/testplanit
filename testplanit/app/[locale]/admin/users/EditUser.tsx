@@ -77,14 +77,14 @@ export function EditUserModal({ user }: EditUserModalProps) {
     name: z.string().min(1, {
       message: tGlobal("common.fields.validation.nameRequired"),
     }),
-    email: z.email()
-      .min(1, {
-        message: tGlobal("auth.signup.errors.emailRequired"),
-      }),
+    email: z.email().min(1, {
+      message: tGlobal("auth.signup.errors.emailRequired"),
+    }),
     isActive: z.boolean(),
     access: z.enum(["ADMIN", "USER", "PROJECTADMIN", "NONE"]),
     roleId: z.number({
-        error: (issue) => issue.input === undefined ? "Role is required" : undefined
+      error: (issue) =>
+        issue.input === undefined ? "Role is required" : undefined,
     }),
     isApi: z.boolean(),
     projects: z.array(z.number()).optional(),
@@ -282,7 +282,7 @@ export function EditUserModal({ user }: EditUserModalProps) {
       } else {
         form.setError("root", {
           type: "custom",
-          message: tGlobal("milestones.errors.unknown"),
+          message: tGlobal("common.errors.unknown"),
         });
       }
       setIsSubmitting(false);
@@ -312,11 +312,11 @@ export function EditUserModal({ user }: EditUserModalProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="user.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder={tCommon("fields.name")} {...field} />
+                    <Input placeholder={tCommon("name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -356,7 +356,7 @@ export function EditUserModal({ user }: EditUserModalProps) {
                     />
                   </FormControl>
                   <FormLabel className="flex items-center">
-                    {tCommon("status.active")}
+                    {tCommon("fields.isActive")}
                     <HelpPopover helpKey="user.active" />
                   </FormLabel>
                   <FormMessage />
@@ -578,7 +578,9 @@ export function EditUserModal({ user }: EditUserModalProps) {
                     {tCommon("fields.apiAccess")}
                     {accessValue === "ADMIN" && (
                       <span className="text-muted-foreground text-xs ml-2">
-                        {"("}{tCommon("fields.requiredForAdmin")}{")"}
+                        {"("}
+                        {tCommon("fields.requiredForAdmin")}
+                        {")"}
                       </span>
                     )}
                     <HelpPopover helpKey="user.api" />

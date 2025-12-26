@@ -3817,17 +3817,30 @@
   },
   "enums": {
     "ApplicationArea": {
+      "Documentation": "Documentación",
+      "Milestones": "Hitos",
+      "TestCaseRepository": "Repositorio de casos de prueba",
       "TestCaseRestrictedFields": "Probar campos restringidos",
+      "TestRuns": "Ejecuciones de prueba",
       "ClosedTestRuns": "Ejecutar pruebas cerradas",
       "TestRunResults": "Resultados de la prueba",
       "TestRunResultRestrictedFields": "Prueba de Resultados Restringidos Campos",
+      "Sessions": "Sesiones",
       "SessionsRestrictedFields": "Campos restringidos de sesiones",
       "ClosedSessions": "Sesiones cerradas",
       "SessionResults": "Resultados de la sesión",
+      "Tags": "Etiquetas",
       "SharedSteps": "Pasos compartidos",
+      "Issues": "Asuntos",
       "IssueIntegration": "Integración de problemas",
       "Forecasting": "Pronóstico",
-      "Reporting": "Informes"
+      "Reporting": "Informes",
+      "Settings": "Ajustes"
+    },
+    "WorkflowType": {
+      "NOT_STARTED": "No iniciado",
+      "IN_PROGRESS": "En curso",
+      "DONE": "Hecho"
     }
   },
   "charts": {

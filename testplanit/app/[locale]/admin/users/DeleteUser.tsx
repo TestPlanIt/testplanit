@@ -45,7 +45,7 @@ export function DeleteUserModal({ user }: DeleteUserModalProps) {
     } catch (err: any) {
       form.setError("root", {
         type: "custom",
-        message: t("milestones.errors.unknown"),
+        message: t("common.errors.unknown"),
       });
       setIsSubmitting(false);
       return;
@@ -84,7 +84,7 @@ export function DeleteUserModal({ user }: DeleteUserModalProps) {
                 </div>
               )}
               <AlertDialogCancel disabled={isSubmitting}>
-                {t("common.actions.cancel")}
+                {t("common.cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 disabled={isSubmitting}

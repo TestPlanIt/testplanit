@@ -63,6 +63,7 @@ type AddRoleFormData = z.infer<typeof AddRoleFormSchema>;
 
 export function AddRoleModal() {
   const t = useTranslations();
+  const tAreas = useTranslations("enums.ApplicationArea");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: createRole } = useCreateRoles();
@@ -237,7 +238,7 @@ export function AddRoleModal() {
         console.error("Error creating role or permissions:", err);
         setError("root", {
           type: "custom",
-          message: t("milestones.errors.unknown"),
+          message: t("common.errors.unknown"),
         });
       }
       // Optional: Rollback? If role was created but permissions failed?
@@ -276,10 +277,7 @@ export function AddRoleModal() {
                     <HelpPopover helpKey="role.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder={t("common.name")}
-                      {...field}
-                    />
+                    <Input placeholder={t("common.name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -353,7 +351,7 @@ export function AddRoleModal() {
                                 : "unchecked"
                           }
                         />
-                        {t("sharedSteps.confirmDelete")}
+                        {t("common.actions.delete")}
                         <HelpPopover helpKey="role.permissions.canDelete" />
                       </Label>
                     </th>
@@ -409,9 +407,7 @@ export function AddRoleModal() {
                       >
                         {/* Area Name */}
                         <td className="p-2 align-middle">
-                          <span className="font-medium">
-                            {t(`enums.ApplicationArea.${area}`)}
-                          </span>
+                          <span className="font-medium">{tAreas(area)}</span>
                         </td>
                         {/* Add/Edit Switch */}
                         <td className="p-2 align-middle text-center">
@@ -425,7 +421,7 @@ export function AddRoleModal() {
                                     <Switch
                                       checked={field.value}
                                       onCheckedChange={field.onChange}
-                                      aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("common.permissions.addEdit")}`}
+                                      aria-label={`${tAreas(area)} ${t("common.permissions.addEdit")}`}
                                     />
                                   </FormControl>
                                 </FormItem>
@@ -447,7 +443,7 @@ export function AddRoleModal() {
                                     <Switch
                                       checked={field.value}
                                       onCheckedChange={field.onChange}
-                                      aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("sharedSteps.confirmDelete")}`}
+                                      aria-label={`${tAreas(area)} ${t("common.actions.delete")}`}
                                     />
                                   </FormControl>
                                 </FormItem>
@@ -469,7 +465,7 @@ export function AddRoleModal() {
                                     <Switch
                                       checked={field.value}
                                       onCheckedChange={field.onChange}
-                                      aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("common.actions.complete")}`}
+                                      aria-label={`${tAreas(area)} ${t("common.actions.complete")}`}
                                     />
                                   </FormControl>
                                 </FormItem>
@@ -495,11 +491,11 @@ export function AddRoleModal() {
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {t("common.actions.cancel")}
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? t("common.status.submitting")
+                  ? t("common.actions.submitting")
                   : t("common.actions.submit")}
               </Button>
             </DialogFooter>

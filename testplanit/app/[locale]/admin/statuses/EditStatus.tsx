@@ -17,7 +17,6 @@ import { IconName } from "~/types/globals";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod/v4";
-import { StatusUpdateSchema } from "@zenstackhq/runtime/zod/models";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,7 +51,8 @@ import { useTranslations } from "next-intl";
 import { HelpPopover } from "@/components/ui/help-popover";
 
 const createEditStatusFormSchema = (
-  t: ReturnType<typeof useTranslations<"admin.statuses.edit">>
+  t: ReturnType<typeof useTranslations<"admin.statuses.edit">>,
+  tAdd: ReturnType<typeof useTranslations<"admin.statuses.add">>
 ) => {
   return z.object({
     name: z.string().min(1),
@@ -60,7 +60,7 @@ const createEditStatusFormSchema = (
     aliases: z
       .string()
       .regex(/^$|^(?:[A-Za-z][A-Za-z0-9_]*)(?:,(?:[A-Za-z][A-Za-z0-9_]*))*$/, {
-        message: t("errors.aliasesInvalid"),
+        message: tAdd("errors.aliasesInvalid"),
       })
       .optional()
       .nullable(),
@@ -85,6 +85,8 @@ interface EditStatusModalProps {
 
 export function EditStatusModal({ status }: EditStatusModalProps) {
   const t = useTranslations("admin.statuses.edit");
+  const tAdd = useTranslations("admin.statuses.add");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -170,7 +172,7 @@ export function EditStatusModal({ status }: EditStatusModalProps) {
     [status]
   );
 
-  const EditStatusFormSchema = createEditStatusFormSchema(t);
+  const EditStatusFormSchema = createEditStatusFormSchema(t, tAdd);
 
   type EditStatusFormData = z.infer<typeof EditStatusFormSchema>;
 
@@ -202,11 +204,11 @@ export function EditStatusModal({ status }: EditStatusModalProps) {
         console.error("Color ID is missing.");
         form.setError("colorId", {
           type: "manual",
-          message: t("errors.missingColor"),
+          message: tAdd("errors.missingColor"),
         });
         form.setError("root", {
           type: "manual",
-          message: t("errors.missingColor"),
+          message: tAdd("errors.missingColor"),
         });
         setIsSubmitting(false);
         return;
@@ -266,12 +268,12 @@ export function EditStatusModal({ status }: EditStatusModalProps) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
           type: "custom",
-          message: t("errors.nameExists"),
+          message: tAdd("errors.nameExists"),
         });
       } else {
         form.setError("root", {
           type: "custom",
-          message: t("errors.unknown"),
+          message: tGlobal("common.errors.unknown"),
         });
       }
       setIsSubmitting(false);
@@ -319,7 +321,7 @@ export function EditStatusModal({ status }: EditStatusModalProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center">
-                        {tCommon("fields.name")}
+                        {tCommon("name")}
                         <HelpPopover helpKey="status.name" />
                       </FormLabel>
                       <FormControl>
@@ -360,7 +362,7 @@ export function EditStatusModal({ status }: EditStatusModalProps) {
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder={t("aliasesHelp")}
+                      placeholder={tAdd("aliasesHelp")}
                       {...field}
                       value={field.value ?? ""}
                     />
@@ -578,8 +580,8 @@ export function EditStatusModal({ status }: EditStatusModalProps) {
                   role="alert"
                 >
                   {errors.root.type === "nameExists"
-                    ? t("errors.nameExists")
-                    : errors.root.message || t("errors.unknown")}
+                    ? tAdd("errors.nameExists")
+                    : errors.root.message || tGlobal("common.errors.unknown")}
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>

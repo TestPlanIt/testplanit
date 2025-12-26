@@ -69,6 +69,7 @@ type EditRoleFormData = z.infer<typeof EditRoleFormSchema>;
 
 export function EditRoleModal({ role }: EditRoleModalProps) {
   const t = useTranslations();
+  const tAreas = useTranslations("enums.ApplicationArea");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateRole } = useUpdateRoles();
@@ -385,7 +386,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
                                   : "unchecked"
                             }
                           />
-                          {t("sharedSteps.confirmDelete")}
+                          {t("common.actions.delete")}
                           <HelpPopover helpKey="role.permissions.canDelete" />
                         </Label>
                       </th>
@@ -442,9 +443,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
                         >
                           {/* Area Name */}
                           <td className="p-2 align-middle">
-                            <span className="font-medium">
-                              {t(`enums.ApplicationArea.${area}`)}
-                            </span>
+                            <span className="font-medium">{tAreas(area)}</span>
                           </td>
                           {/* Add/Edit Switch */}
                           <td className="p-2 align-middle text-center">
@@ -458,7 +457,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
                                       <Switch
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
-                                        aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("common.permissions.addEdit")}`}
+                                        aria-label={`${tAreas(area)} ${t("common.permissions.addEdit")}`}
                                       />
                                     </FormControl>
                                   </FormItem>
@@ -480,7 +479,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
                                       <Switch
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
-                                        aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("sharedSteps.confirmDelete")}`}
+                                        aria-label={`${tAreas(area)} ${t("common.actions.delete")}`}
                                       />
                                     </FormControl>
                                   </FormItem>
@@ -502,7 +501,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
                                       <Switch
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
-                                        aria-label={`${t(`enums.ApplicationArea.${area}`)} ${t("common.actions.complete")}`}
+                                        aria-label={`${tAreas(area)} ${t("common.actions.complete")}`}
                                       />
                                     </FormControl>
                                   </FormItem>
@@ -530,11 +529,11 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {t("common.actions.cancel")}
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? t("common.status.submitting")
+                  ? t("common.actions.submitting")
                   : t("common.actions.submit")}
               </Button>
             </DialogFooter>

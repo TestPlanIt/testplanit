@@ -680,10 +680,10 @@ function ProjectIssues() {
 
   const columns = useIssueColumns({
     translations: {
-      name: t("common.fields.name"),
+      name: t("common.name"),
       title: t("common.fields.title"),
       description: t("common.fields.description"),
-      status: t("common.fields.status"),
+      status: t("common.actions.status"),
       priority: t("common.fields.priority"),
       lastSyncedAt: t("common.fields.lastSyncedAt"),
       testCases: t("common.fields.testCases"),
@@ -749,7 +749,7 @@ function ProjectIssues() {
                   }
                 >
                   <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder={t("common.fields.status")} />
+                    <SelectValue placeholder={t("common.actions.status")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">

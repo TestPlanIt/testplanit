@@ -1080,7 +1080,7 @@ export function CreateProjectWizard({
                     </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder={tCommon("fields.placeholders.description")}
+                        placeholder={tCommon("fields.description_placeholder")}
                         className="resize-none"
                         maxLength={256}
                         {...field}
@@ -1393,7 +1393,7 @@ export function CreateProjectWizard({
                     <CardHeader>
                       <CardTitle className="text-sm flex items-center gap-2">
                         <ListChecks className="h-4 w-4" />
-                        {t("repository.testCases")}
+                        {tCommon("fields.testCases")}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -1443,7 +1443,7 @@ export function CreateProjectWizard({
                     <CardHeader>
                       <CardTitle className="text-sm flex items-center gap-2">
                         <PlayCircle className="h-4 w-4" />
-                        {t("runs.title")}
+                        {tCommon("fields.testRuns")}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -1674,7 +1674,7 @@ export function CreateProjectWizard({
                             </div>
                             {integration.isActive && (
                               <Badge variant="secondary">
-                                {tCommon("status.active")}
+                                {tCommon("fields.isActive")}
                               </Badge>
                             )}
                           </div>
@@ -1747,7 +1747,7 @@ export function CreateProjectWizard({
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Shield className="h-4 w-4" />
-                    {t("admin.projects.wizard.labels.users")}
+                    {tCommon("fields.users")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1773,7 +1773,7 @@ export function CreateProjectWizard({
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Building className="h-4 w-4" />
-                    {t("admin.projects.wizard.labels.groups")}
+                    {tCommon("fields.groups")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

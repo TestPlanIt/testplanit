@@ -232,7 +232,7 @@ export default function MilestoneFormControls({
                       disabled={!isEditMode}
                     />
                   </FormControl>
-                  <FormLabel>{tGlobal("dates.completed")}</FormLabel>
+                  <FormLabel>{tCommon("fields.completed")}</FormLabel>
                   <FormMessage />
                 </FormItem>
               )}
@@ -289,7 +289,9 @@ export default function MilestoneFormControls({
                           type="number"
                           min={1}
                           placeholder="5"
-                          disabled={!isEditMode || !hasDueDate || !enableNotifications}
+                          disabled={
+                            !isEditMode || !hasDueDate || !enableNotifications
+                          }
                           {...daysField}
                           onChange={(e) =>
                             daysField.onChange(parseInt(e.target.value) || 1)
@@ -367,7 +369,7 @@ export default function MilestoneFormControls({
         name="note"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{tGlobal("issues.description")}</FormLabel>
+            <FormLabel>{tCommon("fields.description")}</FormLabel>
             {isEditMode ||
             (milestone?.note &&
               milestone?.note !== JSON.stringify(emptyEditorContent)) ? (
@@ -427,7 +429,7 @@ export default function MilestoneFormControls({
         name="milestoneTypesId"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>{t("fields.type")}</FormLabel>
+            <FormLabel>{tCommon("fields.type")}</FormLabel>
             <Select
               disabled={!isEditMode || isSubmitting}
               onValueChange={(value) => field.onChange(Number(value))}
@@ -470,7 +472,7 @@ export default function MilestoneFormControls({
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="none">{tCommon("labels.none")}</SelectItem>
+                <SelectItem value="none">{tCommon("access.none")}</SelectItem>
                 {renderMilestoneOptions(milestonesOptions)}
               </SelectContent>
             </Select>

@@ -111,11 +111,11 @@ export function AddTagModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="tag.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder={tCommon("fields.name")} {...field} />
+                    <Input placeholder={tCommon("name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -21,9 +21,9 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const t = await getTranslations("reports.ui");
+  const t = await getTranslations("admin.menu");
   return {
-    title: t("projectReports"),
+    title: t("reports"),
   };
 }
 
@@ -122,14 +122,14 @@ export default async function ProjectReportsPage({ params }: PageProps) {
     notFound();
   }
 
-  const t = await getTranslations("reports.ui");
+  const t = await getTranslations("admin.menu");
 
   return (
     <main>
       <Card>
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-            <CardTitle>{t("projectReports")}</CardTitle>
+            <CardTitle>{t("reports")}</CardTitle>
           </div>
           <CardDescription className="uppercase">
             <span className="flex items-center gap-2 shrink-0">

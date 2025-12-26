@@ -36,6 +36,7 @@ export function DeleteWorkflowsModal({
 
   const t = useTranslations("admin.workflows");
   const tCommon = useTranslations("common");
+  const tGlobal = useTranslations();
 
   const handleCancel = () => {
     setOpen(false);
@@ -62,7 +63,7 @@ export function DeleteWorkflowsModal({
     } catch (err: any) {
       setError("root", {
         type: "custom",
-        message: t("delete.errors.unknown"),
+        message: tGlobal("common.errors.unknown"),
       });
     } finally {
       setIsSubmitting(false);
@@ -103,14 +104,14 @@ export function DeleteWorkflowsModal({
                 })}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div>{t("delete.warning")}</div>
+            <div>{tGlobal("runs.delete.warning")}</div>
             <AlertDialogFooter>
               {errors.root && (
                 <div
                   className=" bg-destructive text-destructive-foreground text-sm p-2"
                   role="alert"
                 >
-                  {t("delete.errors.unknown")}
+                  {tGlobal("common.errors.unknown")}
                 </div>
               )}
               <AlertDialogCancel

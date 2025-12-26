@@ -169,7 +169,10 @@ export function AddMilestoneModal() {
   } = form;
 
   const completedAt = useWatch({ control, name: "completedAt" });
-  const enableNotifications = useWatch({ control, name: "enableNotifications" });
+  const enableNotifications = useWatch({
+    control,
+    name: "enableNotifications",
+  });
   const hasDueDate = !!completedAt;
 
   useEffect(() => {
@@ -303,11 +306,11 @@ export function AddMilestoneModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {t("common.fields.name")}
+                    {t("common.name")}
                     <HelpPopover helpKey="milestone.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder={t("common.fields.name")} {...field} />
+                    <Input placeholder={t("common.name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -346,7 +349,7 @@ export function AddMilestoneModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {t("milestones.fields.type")}
+                    {t("common.fields.type")}
                     <HelpPopover helpKey="milestone.type" />
                   </FormLabel>
                   <FormControl>
@@ -537,7 +540,9 @@ export function AddMilestoneModal() {
                               disabled={!hasDueDate || !enableNotifications}
                               {...daysField}
                               onChange={(e) =>
-                                daysField.onChange(parseInt(e.target.value) || 1)
+                                daysField.onChange(
+                                  parseInt(e.target.value) || 1
+                                )
                               }
                               className="max-w-[80px]"
                             />
@@ -592,11 +597,11 @@ export function AddMilestoneModal() {
                 onClick={handleCancel}
                 disabled={isSubmitting}
               >
-                {t("common.actions.cancel")}
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? t("common.status.saving")
+                  ? t("common.actions.saving")
                   : t("common.actions.save")}
               </Button>
             </DialogFooter>
