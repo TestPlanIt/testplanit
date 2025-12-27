@@ -67,6 +67,7 @@ export function ReportFilters({
   totalCount = 0,
 }: ReportFiltersProps) {
   const tFilters = useTranslations("reports.ui.filters");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   // Helper function to check if a value is selected
@@ -209,7 +210,9 @@ export function ReportFilters({
                 onClick={() => toggleFilterValue("templates", null)}
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <span className="truncate">{tFilters("allTemplates")}</span>
+                  <span className="truncate">
+                    {tGlobal("repository.views.allTemplates")}
+                  </span>
                 </div>
                 <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                   {selectedFilterItem.options?.reduce(
@@ -256,7 +259,9 @@ export function ReportFilters({
                 onClick={() => toggleFilterValue("states", null)}
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <span className="truncate">{tFilters("allStates")}</span>
+                  <span className="truncate">
+                    {tGlobal("repository.views.allStates")}
+                  </span>
                 </div>
                 <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                   {selectedFilterItem.options?.reduce(
@@ -307,7 +312,9 @@ export function ReportFilters({
                 onClick={() => toggleFilterValue("automated", null)}
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <span className="truncate">{tFilters("allCases")}</span>
+                  <span className="truncate">
+                    {tGlobal("repository.views.allCases")}
+                  </span>
                 </div>
                 <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                   {totalCount}
@@ -360,7 +367,9 @@ export function ReportFilters({
                   onClick={() => toggleFilterValue(selectedFilter, null)}
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className="truncate">{tFilters("allValues")}</span>
+                    <span className="truncate">
+                      {tGlobal("common.fields.mixed")}
+                    </span>
                   </div>
                   <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                     {totalCount}
@@ -384,7 +393,7 @@ export function ReportFilters({
                       <div className="flex items-center gap-2 min-w-0 flex-1">
                         <CircleDashed className="w-4 h-4 shrink-0 opacity-40" />
                         <span className="truncate">
-                          {tCommon("labels.none")}
+                          {tCommon("access.none")}
                         </span>
                       </div>
                     </div>

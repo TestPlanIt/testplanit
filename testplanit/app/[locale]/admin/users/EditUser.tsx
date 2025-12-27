@@ -67,6 +67,7 @@ interface EditUserModalProps {
 
 export function EditUserModal({ user }: EditUserModalProps) {
   const t = useTranslations("admin.users.edit");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,16 +75,16 @@ export function EditUserModal({ user }: EditUserModalProps) {
   // Define a Zod schema specifically for form validation
   const EditUserFormValidationSchema = z.object({
     name: z.string().min(1, {
-      message: t("fields.name_error"),
+      message: tGlobal("common.fields.validation.nameRequired"),
     }),
-    email: z.email()
-      .min(1, {
-        message: t("fields.email_error"),
-      }),
+    email: z.email().min(1, {
+      message: tGlobal("auth.signup.errors.emailRequired"),
+    }),
     isActive: z.boolean(),
     access: z.enum(["ADMIN", "USER", "PROJECTADMIN", "NONE"]),
     roleId: z.number({
-        error: (issue) => issue.input === undefined ? "Role is required" : undefined
+      error: (issue) =>
+        issue.input === undefined ? "Role is required" : undefined,
     }),
     isApi: z.boolean(),
     projects: z.array(z.number()).optional(),
@@ -276,12 +277,12 @@ export function EditUserModal({ user }: EditUserModalProps) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
           type: "custom",
-          message: t("errors.nameExists"),
+          message: tGlobal("common.errors.nameExists"),
         });
       } else {
         form.setError("root", {
           type: "custom",
-          message: t("errors.unknown"),
+          message: tGlobal("common.errors.unknown"),
         });
       }
       setIsSubmitting(false);
@@ -311,11 +312,11 @@ export function EditUserModal({ user }: EditUserModalProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="user.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder={tCommon("fields.name")} {...field} />
+                    <Input placeholder={tCommon("name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -355,7 +356,7 @@ export function EditUserModal({ user }: EditUserModalProps) {
                     />
                   </FormControl>
                   <FormLabel className="flex items-center">
-                    {tCommon("status.active")}
+                    {tCommon("fields.isActive")}
                     <HelpPopover helpKey="user.active" />
                   </FormLabel>
                   <FormMessage />
@@ -577,7 +578,9 @@ export function EditUserModal({ user }: EditUserModalProps) {
                     {tCommon("fields.apiAccess")}
                     {accessValue === "ADMIN" && (
                       <span className="text-muted-foreground text-xs ml-2">
-                        {"("}{tCommon("fields.requiredForAdmin")}{")"}
+                        {"("}
+                        {tCommon("fields.requiredForAdmin")}
+                        {")"}
                       </span>
                     )}
                     <HelpPopover helpKey="user.api" />
@@ -597,11 +600,11 @@ export function EditUserModal({ user }: EditUserModalProps) {
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
               </Button>
             </DialogFooter>

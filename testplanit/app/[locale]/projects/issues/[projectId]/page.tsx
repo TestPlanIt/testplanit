@@ -680,10 +680,10 @@ function ProjectIssues() {
 
   const columns = useIssueColumns({
     translations: {
-      name: t("common.fields.name"),
+      name: t("common.name"),
       title: t("common.fields.title"),
       description: t("common.fields.description"),
-      status: t("common.fields.status"),
+      status: t("common.actions.status"),
       priority: t("common.fields.priority"),
       lastSyncedAt: t("common.fields.lastSyncedAt"),
       testCases: t("common.fields.testCases"),
@@ -723,7 +723,7 @@ function ProjectIssues() {
       <Card>
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-            <CardTitle>{t("Pages.Issues.title")}</CardTitle>
+            <CardTitle>{t("common.fields.issues")}</CardTitle>
           </div>
           <CardDescription className="uppercase">
             <span className="flex items-center gap-2 shrink-0">
@@ -749,7 +749,7 @@ function ProjectIssues() {
                   }
                 >
                   <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder={t("common.fields.status")} />
+                    <SelectValue placeholder={t("common.actions.status")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">

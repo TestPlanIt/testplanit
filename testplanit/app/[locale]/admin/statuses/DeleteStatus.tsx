@@ -47,6 +47,7 @@ export function DeleteStatusModal({ status }: DeleteStatusModalProps) {
   } = form;
 
   const t = useTranslations("admin.statuses.delete");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   async function onSubmit() {
@@ -98,7 +99,7 @@ export function DeleteStatusModal({ status }: DeleteStatusModalProps) {
                 })}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <div>{t("warning")}</div>
+            <div>{tGlobal("runs.delete.warning")}</div>
             <AlertDialogFooter>
               {errors.root && (
                 <div
@@ -113,7 +114,7 @@ export function DeleteStatusModal({ status }: DeleteStatusModalProps) {
                 onClick={handleCancel}
                 disabled={isSubmitting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 type="button"
@@ -122,7 +123,7 @@ export function DeleteStatusModal({ status }: DeleteStatusModalProps) {
                 className="bg-destructive hover:bg-destructive/90"
               >
                 {isSubmitting
-                  ? tCommon("status.deleting")
+                  ? tCommon("actions.deleting")
                   : tCommon("actions.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>

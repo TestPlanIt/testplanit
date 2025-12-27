@@ -317,7 +317,7 @@ export default function TestCaseVersions() {
       </div>
     );
   }
-  
+
   // If data is still loading or not ready, return null
   if (!data) {
     return null;
@@ -540,7 +540,9 @@ export default function TestCaseVersions() {
     }
 
     // Find current issue data to get all metadata
-    const currentIssueData = allIssues?.find((currentIssue) => currentIssue.id === issue.id);
+    const currentIssueData = allIssues?.find(
+      (currentIssue) => currentIssue.id === issue.id
+    );
 
     return (
       <div
@@ -696,7 +698,10 @@ export default function TestCaseVersions() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ResizablePanelGroup direction="horizontal" autoSaveId="case-version-panels">
+          <ResizablePanelGroup
+            direction="horizontal"
+            autoSaveId="case-version-panels"
+          >
             <ResizablePanel
               order={1}
               ref={panelLeftRef}
@@ -835,8 +840,8 @@ export default function TestCaseVersions() {
                   <TooltipContent>
                     <div>
                       {isCollapsedLeft
-                        ? t("repository.version.expandLeftPanel")
-                        : t("repository.version.collapseLeftPanel")}
+                        ? t("common.actions.expandLeftPanel")
+                        : t("common.actions.collapseLeftPanel")}
                     </div>
                   </TooltipContent>
                 </Tooltip>
@@ -863,8 +868,8 @@ export default function TestCaseVersions() {
                   <TooltipContent>
                     <div>
                       {isCollapsedRight
-                        ? t("repository.version.expandRightPanel")
-                        : t("repository.version.collapseRightPanel")}
+                        ? t("common.actions.expandRightPanel")
+                        : t("common.actions.collapseRightPanel")}
                     </div>
                   </TooltipContent>
                 </Tooltip>
@@ -891,7 +896,7 @@ export default function TestCaseVersions() {
                   {testcase.estimate !== null && (
                     <li className="mb-2 mr-6">
                       <div className="font-bold">
-                        {t("repository.fields.estimate")}
+                        {t("common.fields.estimate")}
                       </div>
                       {testcase && previousTestcase
                         ? renderFieldValue(
@@ -911,7 +916,7 @@ export default function TestCaseVersions() {
                   )}
 
                   <div className="font-bold">
-                    {t("repository.fields.automated")}
+                    {t("common.fields.automated")}
                   </div>
                   <li className="mb-2 mr-6">
                     {testcase && previousTestcase
@@ -1012,7 +1017,7 @@ export default function TestCaseVersions() {
                         <Link
                           href={`/projects/repository/${projectId}/${caseId}`}
                           className="group"
-                          title={t("repository.version.backToLatest")}
+                          title={t("sessions.version.backToLatest")}
                         >
                           {t("repository.version.latestVersionUpdated", {
                             version: versions[0].version,

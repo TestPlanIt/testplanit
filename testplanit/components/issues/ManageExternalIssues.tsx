@@ -469,7 +469,7 @@ export function ManageExternalIssues({
         }
         setIsSearchOpen(false);
       } else {
-        toast.error(t("common.errors.issueManagement.linkedError"));
+        toast.error(t("issues.linkError"));
       }
     } catch (error) {
       toast.error(t("common.errors.issueManagement.linkError"));
@@ -530,7 +530,7 @@ export function ManageExternalIssues({
           setLinkedIssueIds(updatedIssues.map((i) => i.id));
         }
       } else {
-        toast.error(t("common.errors.issueManagement.unlinkedError"));
+        toast.error(t("issues.unlinkError"));
       }
     } catch (error) {
       toast.error(t("common.errors.issueManagement.unlinkError"));

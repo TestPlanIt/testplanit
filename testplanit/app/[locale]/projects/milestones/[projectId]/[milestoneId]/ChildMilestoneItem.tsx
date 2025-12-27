@@ -102,7 +102,7 @@ export default function ChildMilestoneItem({
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <LoadingSpinner />
                 <span>
-                  {tCommon("status.loading")}
+                  {tCommon("loading")}
                   {"..."}
                 </span>
               </div>

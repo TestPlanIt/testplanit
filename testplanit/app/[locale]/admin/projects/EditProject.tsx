@@ -282,6 +282,7 @@ export function EditProjectModal({
   const defaultAccessType = watch("defaultAccessType");
 
   const t = useTranslations("admin.projects.edit");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   // Store initial permissions to compare against on submit
@@ -785,9 +786,15 @@ export function EditProjectModal({
               className="w-full"
             >
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="details">{t("tabs.details")}</TabsTrigger>
-                <TabsTrigger value="users">{t("tabs.users")}</TabsTrigger>
-                <TabsTrigger value="groups">{t("tabs.groups")}</TabsTrigger>
+                <TabsTrigger value="details">
+                  {tGlobal("admin.imports.testmo.mapping.columnSourceDetails")}
+                </TabsTrigger>
+                <TabsTrigger value="users">
+                  {tGlobal("common.fields.users")}
+                </TabsTrigger>
+                <TabsTrigger value="groups">
+                  {tGlobal("common.fields.groups")}
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="details" className="space-y-4 pt-4">
@@ -817,7 +824,7 @@ export function EditProjectModal({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center">
-                        {tCommon("fields.name")}
+                        {tCommon("name")}
                         <HelpPopover helpKey="project.name" />
                       </FormLabel>
                       <FormControl>
@@ -848,7 +855,7 @@ export function EditProjectModal({
                 {/* --- Combined Default Permissions Section --- */}
                 <div className="space-y-4 pt-4 border-t">
                   <FormLabel className="flex items-center">
-                    {t("labels.defaultProjectAccess")}
+                    {tGlobal("common.labels.defaultProjectAccess")}
                     <HelpPopover helpKey="project.defaultAccess" />
                   </FormLabel>{" "}
                   <FormField
@@ -938,10 +945,10 @@ export function EditProjectModal({
                             </FormControl>
                             <SelectContent>
                               <SelectItem value="NO_ACCESS">
-                                {t("labels.access.noAccess")}
+                                {tGlobal("common.labels.access.noAccess")}
                               </SelectItem>
                               <SelectItem value="GLOBAL_ROLE">
-                                {t("labels.access.globalRole")}
+                                {tGlobal("common.labels.access.globalRole")}
                               </SelectItem>
                               <SelectSeparator />
                               {roles?.map((role) => (
@@ -1046,11 +1053,11 @@ export function EditProjectModal({
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? tCommon("status.saving")
+                  ? tCommon("actions.saving")
                   : tCommon("actions.save")}
               </Button>
             </DialogFooter>

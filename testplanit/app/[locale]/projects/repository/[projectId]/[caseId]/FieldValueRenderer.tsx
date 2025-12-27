@@ -294,7 +294,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
               >
                 <SelectTrigger className="mx-1 w-fit">
                   <SelectValue
-                    placeholder={t("repository.fields.selectOption")}
+                    placeholder={t("common.placeholders.selectOption")}
                   />
                 </SelectTrigger>
                 <SelectContent>

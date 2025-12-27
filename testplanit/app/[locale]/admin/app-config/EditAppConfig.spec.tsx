@@ -141,7 +141,7 @@ test("closes modal when cancel button is clicked", async () => {
   ).toBeVisible();
 
   const cancelButton = screen.getByRole("button", {
-    name: "common.actions.cancel",
+    name: "common.cancel",
   });
   await user.click(cancelButton);
 

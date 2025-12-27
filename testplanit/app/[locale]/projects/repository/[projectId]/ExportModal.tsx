@@ -53,6 +53,7 @@ export function ExportModal({
 }: ExportModalProps) {
   // Get translations - requires namespace to be added to messages files
   const t = useTranslations("repository.cases.exportModal");
+  const tGlobal = useTranslations();
 
   // State for the selected options
   const [scope, setScope] = useState<"selected" | "allFiltered" | "allProject">(
@@ -117,7 +118,7 @@ export function ExportModal({
       });
     } catch (error) {
       console.error("Export failed inside modal:", error);
-      toast.error(t("exportError"));
+      toast.error(tGlobal("repository.exportModal.exportError"));
     } finally {
       setIsExporting(false);
     }
@@ -130,8 +131,8 @@ export function ExportModal({
     >
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
+          <DialogTitle>{tGlobal("repository.exportModal.title")}</DialogTitle>
+          <DialogDescription>{tGlobal("repository.exportModal.description")}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
           {/* Export Scope */}
@@ -140,7 +141,7 @@ export function ExportModal({
               htmlFor="scope"
               className="text-right whitespace-nowrap shrink-0 flex items-center"
             >
-              {t("scope.label")}
+              {tGlobal("repository.cases.export")}
               <HelpPopover helpKey="exportModal.scope" />
             </Label>
             <RadioGroup
@@ -167,7 +168,7 @@ export function ExportModal({
                       : "cursor-pointer"
                   }
                 >
-                  {t("scope.selected", { count: selectedCaseIds.length })}
+                  {tGlobal("repository.exportModal.scope.selected", { count: selectedCaseIds.length })}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -187,7 +188,7 @@ export function ExportModal({
                   data-testid="export-scope-allProject"
                 />
                 <Label htmlFor="scope-allProject" className="cursor-pointer">
-                  {t("scope.allProject", { count: totalProjectCases ?? 0 })}
+                  {tGlobal("repository.exportModal.scope.allProject", { count: totalProjectCases ?? 0 })}
                 </Label>
               </div>
             </RadioGroup>
@@ -198,7 +199,7 @@ export function ExportModal({
               htmlFor="format"
               className="text-right whitespace-nowrap shrink-0 flex items-center"
             >
-              {t("format.label")}
+              {tGlobal("repository.exportModal.format.label")}
               <HelpPopover helpKey="exportModal.format" />
             </Label>
             <RadioGroup
@@ -215,7 +216,7 @@ export function ExportModal({
                   data-testid="export-format-csv"
                 />
                 <Label htmlFor="format-csv" className="cursor-pointer">
-                  {t("format.csv")}
+                  {tGlobal("repository.exportModal.format.csv")}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -225,7 +226,7 @@ export function ExportModal({
                   data-testid="export-format-pdf"
                 />
                 <Label htmlFor="format-pdf" className="cursor-pointer">
-                  {t("format.pdf")}
+                  {tGlobal("repository.exportModal.format.pdf")}
                 </Label>
               </div>
             </RadioGroup>
@@ -239,7 +240,7 @@ export function ExportModal({
                   htmlFor="columns"
                   className="text-right whitespace-nowrap shrink-0 flex items-center"
                 >
-                  {t("columns.label")}
+                  {tGlobal("common.table.columns.columns")}
                   <HelpPopover helpKey="exportModal.columns" />
                 </Label>
                 <RadioGroup
@@ -258,7 +259,7 @@ export function ExportModal({
                       data-testid="export-columns-all"
                     />
                     <Label htmlFor="columns-all" className="cursor-pointer">
-                      {t("columns.all")}
+                      {tGlobal("repository.exportModal.columns.all")}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -268,7 +269,7 @@ export function ExportModal({
                       data-testid="export-columns-visible"
                     />
                     <Label htmlFor="columns-visible" className="cursor-pointer">
-                      {t("columns.visible")}
+                      {tGlobal("repository.exportModal.columns.visible")}
                     </Label>
                   </div>
                 </RadioGroup>
@@ -280,7 +281,7 @@ export function ExportModal({
                   htmlFor="delimiter"
                   className="text-right whitespace-nowrap shrink-0 flex items-center"
                 >
-                  {t("delimiter.label")}
+                  {tGlobal("repository.exportModal.delimiter.label")}
                   <HelpPopover helpKey="exportModal.delimiter" />
                 </Label>
                 <div className="w-[180px] shrink-0">
@@ -292,20 +293,20 @@ export function ExportModal({
                     data-testid="export-delimiter-select"
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={t("delimiter.placeholder")} />
+                      <SelectValue placeholder={tGlobal("repository.exportModal.delimiter.placeholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="," data-testid="delimiter-comma">
-                        {t("delimiter.comma")}
+                        {tGlobal("repository.exportModal.delimiter.comma")}
                       </SelectItem>
                       <SelectItem value=";" data-testid="delimiter-semicolon">
-                        {t("delimiter.semicolon")}
+                        {tGlobal("repository.exportModal.delimiter.semicolon")}
                       </SelectItem>
                       <SelectItem value=":" data-testid="delimiter-colon">
-                        {t("delimiter.colon")}
+                        {tGlobal("repository.exportModal.delimiter.colon")}
                       </SelectItem>
                       <SelectItem value="|" data-testid="delimiter-pipe">
-                        {t("delimiter.pipe")}
+                        {tGlobal("repository.exportModal.delimiter.pipe")}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -340,7 +341,7 @@ export function ExportModal({
                       htmlFor="textLongFormat-json"
                       className="cursor-pointer"
                     >
-                      {t("textLongFormat.json")}
+                      {tGlobal("repository.exportModal.attachmentFormat.json")}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -353,7 +354,7 @@ export function ExportModal({
                       htmlFor="textLongFormat-plainText"
                       className="cursor-pointer"
                     >
-                      {t("textLongFormat.plainText")}
+                      {tGlobal("repository.exportModal.stepsFormat.plainText")}
                     </Label>
                   </div>
                 </RadioGroup>
@@ -365,7 +366,7 @@ export function ExportModal({
                   htmlFor="stepsFormat"
                   className="text-right whitespace-nowrap shrink-0 flex items-center"
                 >
-                  {t("stepsFormat.label")}
+                  {tGlobal("repository.exportModal.stepsFormat.label")}
                   <HelpPopover helpKey="exportModal.stepsFormat" />
                 </Label>
                 <RadioGroup
@@ -387,7 +388,7 @@ export function ExportModal({
                       htmlFor="stepsFormat-json"
                       className="cursor-pointer"
                     >
-                      {t("stepsFormat.json")}
+                      {tGlobal("repository.exportModal.attachmentFormat.json")}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -400,7 +401,7 @@ export function ExportModal({
                       htmlFor="stepsFormat-plainText"
                       className="cursor-pointer"
                     >
-                      {t("stepsFormat.plainText")}
+                      {tGlobal("repository.exportModal.stepsFormat.plainText")}
                     </Label>
                   </div>
                 </RadioGroup>
@@ -431,7 +432,7 @@ export function ExportModal({
                       data-testid="export-rowMode-single"
                     />
                     <Label htmlFor="rowMode-single" className="cursor-pointer">
-                      {t("rowMode.single")}
+                      {tGlobal("repository.exportModal.rowMode.single")}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -453,7 +454,7 @@ export function ExportModal({
                   htmlFor="attachmentFormat"
                   className="text-right whitespace-nowrap shrink-0 flex items-center"
                 >
-                  {t("attachmentFormat.label")}
+                  {tGlobal("repository.exportModal.attachmentFormat.label")}
                   <HelpPopover helpKey="exportModal.attachmentFormat" />
                 </Label>
                 <RadioGroup
@@ -475,7 +476,7 @@ export function ExportModal({
                       htmlFor="attachmentFormat-json"
                       className="cursor-pointer"
                     >
-                      {t("attachmentFormat.json")}
+                      {tGlobal("repository.exportModal.attachmentFormat.json")}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -488,7 +489,7 @@ export function ExportModal({
                       htmlFor="attachmentFormat-names"
                       className="cursor-pointer"
                     >
-                      {t("attachmentFormat.names")}
+                      {tGlobal("repository.exportModal.attachmentFormat.names")}
                     </Label>
                   </div>
                 </RadioGroup>
@@ -504,7 +505,7 @@ export function ExportModal({
                   htmlFor="columns-pdf"
                   className="text-right whitespace-nowrap shrink-0 flex items-center"
                 >
-                  {t("columns.label")}
+                  {tGlobal("common.table.columns.columns")}
                   <HelpPopover helpKey="exportModal.columns" />
                 </Label>
                 <RadioGroup
@@ -521,7 +522,7 @@ export function ExportModal({
                       data-testid="export-columns-pdf-all"
                     />
                     <Label htmlFor="columns-pdf-all" className="cursor-pointer">
-                      {t("columns.all")}
+                      {tGlobal("repository.exportModal.columns.all")}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -534,7 +535,7 @@ export function ExportModal({
                       htmlFor="columns-pdf-visible"
                       className="cursor-pointer"
                     >
-                      {t("columns.visible")}
+                      {tGlobal("repository.exportModal.columns.visible")}
                     </Label>
                   </div>
                 </RadioGroup>
@@ -546,7 +547,7 @@ export function ExportModal({
                   htmlFor="attachmentFormat-pdf"
                   className="text-right whitespace-nowrap shrink-0 flex items-center"
                 >
-                  {t("attachmentFormat.label")}
+                  {tGlobal("repository.exportModal.attachmentFormat.label")}
                   <HelpPopover helpKey="exportModal.attachmentFormat" />
                 </Label>
                 <RadioGroup
@@ -568,7 +569,7 @@ export function ExportModal({
                       htmlFor="attachmentFormat-pdf-names"
                       className="cursor-pointer"
                     >
-                      {t("attachmentFormat.names")}
+                      {tGlobal("repository.exportModal.attachmentFormat.names")}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -581,7 +582,7 @@ export function ExportModal({
                       htmlFor="attachmentFormat-pdf-embedded"
                       className="cursor-pointer"
                     >
-                      {t("attachmentFormat.embedded")}
+                      {tGlobal("repository.exportModal.attachmentFormat.embedded")}
                     </Label>
                   </div>
                 </RadioGroup>
@@ -591,7 +592,7 @@ export function ExportModal({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isExporting}>
-            {t("cancel")}
+            {tGlobal("common.cancel")}
           </Button>
           <Button
             onClick={handleExportClick}
@@ -601,7 +602,7 @@ export function ExportModal({
             }
             data-testid="export-modal-export-button"
           >
-            {isExporting ? t("exporting") : t("export")}
+            {isExporting ? tGlobal("repository.exportModal.exporting") : tGlobal("repository.cases.export")}
           </Button>
         </DialogFooter>
       </DialogContent>

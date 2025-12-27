@@ -27,6 +27,7 @@ function Fields() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const t = useTranslations("admin.configurations");
+  const tGlobal = useTranslations();
 
   if (status !== "loading" && !session) {
     router.push("/");
@@ -40,7 +41,7 @@ function Fields() {
         <Card>
           <CardHeader>
             <div className="text-primary text-2xl md:text-4xl">
-              <CardTitle>{t("title")}</CardTitle>
+              <CardTitle>{tGlobal("common.fields.configurations")}</CardTitle>
               <CardDescription>{t("description")}</CardDescription>
             </div>
           </CardHeader>

@@ -91,7 +91,7 @@ const DraggableItem = ({
       } else if (!newName.match(validChars)) {
         return t("common.fields.options.validation.invalidChars");
       } else if (!isUnique) {
-        return t("common.fields.options.validation.unique");
+        return t("common.fields.options.validation.duplicate");
       }
       return "";
     },
@@ -336,15 +336,15 @@ const DraggableList: React.FC<DraggableListProps> = ({
             className={`${columns} shadow-xs text-muted-foreground sticky top-0 z-10 bg-white`}
           >
             <span />
-            <span className="ml-2">{t("common.fields.options.icon")}</span>
+            <span className="ml-2">{t("common.fields.icon")}</span>
             <span>{t("common.fields.options.label")}</span>
             {showDefault ? (
-              <span className="ml-2">{t("common.fields.options.default")}</span>
+              <span className="ml-2">{t("common.fields.default")}</span>
             ) : (
               <span className="ml-2" />
             )}
-            <span className="ml-2">{t("common.fields.options.enabled")}</span>
-            <span>{t("common.fields.options.remove")}</span>
+            <span className="ml-2">{t("common.fields.enabled")}</span>
+            <span>{t("common.actions.remove")}</span>
           </div>
         )}
 

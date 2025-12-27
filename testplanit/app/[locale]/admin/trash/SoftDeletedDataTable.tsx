@@ -404,7 +404,7 @@ export default function SoftDeletedDataTable({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsAlertOpen(false)}>
-              {tActions("cancel")}
+              {tCommon("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={executeConfirmedAction}

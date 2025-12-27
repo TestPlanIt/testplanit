@@ -140,6 +140,7 @@ interface WizardStepDefinition {
 
 export function TestmoImportPanel() {
   const t = useTranslations("admin.imports");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const tDatasetLabels = useTranslations(
     "admin.imports.testmo.mappingDatasetLabels"
@@ -745,8 +746,8 @@ export function TestmoImportPanel() {
   const stepStatusLabels = useMemo(
     () => ({
       pending: tCommon("status.pending"),
-      active: tCommon("status.active"),
-      completed: tCommon("status.completed"),
+      active: tCommon("fields.isActive"),
+      completed: tCommon("fields.completed"),
     }),
     [tCommon]
   );
@@ -816,67 +817,67 @@ export function TestmoImportPanel() {
     return [
       {
         key: "projects",
-        label: t("testmo.mappingSummaryProjects"),
+        label: tGlobal("common.fields.projects"),
         value: (summary.projects ?? 0) as number,
         outstanding: (outstandingCounts.projects ?? 0) as number,
       },
       {
         key: "users",
-        label: t("testmo.mappingSummaryUsers"),
+        label: tGlobal("common.fields.users"),
         value: (summary.users ?? 0) as number,
         outstanding: (outstandingCounts.users ?? 0) as number,
       },
       {
         key: "testCases",
-        label: t("testmo.mappingSummaryTestCases"),
+        label: tGlobal("common.fields.testCases"),
         value: (summary.testCases ?? 0) as number,
         outstanding: (outstandingCounts.testCases ?? 0) as number,
       },
       {
         key: "testRuns",
-        label: t("testmo.mappingSummaryTestRuns"),
+        label: tGlobal("common.fields.testRuns"),
         value: (summary.testRuns ?? 0) as number,
         outstanding: (outstandingCounts.testRuns ?? 0) as number,
       },
       {
         key: "sessions",
-        label: t("testmo.mappingSummarySessions"),
+        label: tGlobal("common.fields.sessions"),
         value: (summary.sessions ?? 0) as number,
         outstanding: (outstandingCounts.sessions ?? 0) as number,
       },
       {
         key: "workflows",
-        label: t("testmo.mappingSummaryWorkflows"),
+        label: tGlobal("common.labels.workflows"),
         value: (summary.workflows ?? 0) as number,
         outstanding: (outstandingCounts.states ?? 0) as number,
       },
       {
         key: "statuses",
-        label: t("testmo.mappingSummaryStatuses"),
+        label: tGlobal("common.labels.statuses"),
         value: (summary.statuses ?? 0) as number,
         outstanding: (outstandingCounts.statuses ?? 0) as number,
       },
       {
         key: "roles",
-        label: t("testmo.mappingSummaryRoles"),
+        label: tGlobal("common.labels.roles"),
         value: (summary.roles ?? 0) as number,
         outstanding: (outstandingCounts.roles ?? 0) as number,
       },
       {
         key: "milestoneTypes",
-        label: t("testmo.mappingSummaryMilestoneTypes"),
+        label: tGlobal("common.fields.milestoneTypes"),
         value: (summary.milestoneTypes ?? 0) as number,
         outstanding: (outstandingCounts.milestone_types ?? 0) as number,
       },
       {
         key: "groups",
-        label: t("testmo.mappingSummaryGroups"),
+        label: tGlobal("common.fields.groups"),
         value: (summary.groups ?? 0) as number,
         outstanding: (outstandingCounts.groups ?? 0) as number,
       },
       {
         key: "templates",
-        label: t("testmo.mappingSummaryTemplates"),
+        label: tGlobal("common.fields.templates"),
         value: (summary.templates ?? 0) as number,
         outstanding: (outstandingCounts.templates ?? 0) as number,
       },
@@ -888,18 +889,18 @@ export function TestmoImportPanel() {
       },
       {
         key: "customFields",
-        label: t("testmo.mappingSummaryCustomFields"),
+        label: tGlobal("search.customFields"),
         value: (summary.customFields ?? 0) as number,
         outstanding: (outstandingCounts.customFields ?? 0) as number,
       },
       {
         key: "configurations",
-        label: t("testmo.mappingSummaryConfigurations"),
+        label: tGlobal("common.fields.configurations"),
         value: (summary.configurations ?? 0) as number,
         outstanding: (outstandingCounts.configs ?? 0) as number,
       },
     ];
-  }, [mappingAnalysis, mappingCompletion.incompleteCounts, t]);
+  }, [mappingAnalysis, mappingCompletion.incompleteCounts, t, tGlobal]);
 
   const canStartImport = useMemo(() => {
     if (!currentJob || currentJob.status !== "READY") {
@@ -2336,7 +2337,7 @@ export function TestmoImportPanel() {
           value={analysis.meta.totalDatasets.toLocaleString()}
         />
         <SummaryTile
-          label={t("testmo.summary.rows")}
+          label={tGlobal("admin.imports.testmo.datasetTable.rows")}
           value={analysis.meta.totalRows.toLocaleString()}
         />
         <SummaryTile
@@ -3469,7 +3470,7 @@ export function TestmoImportPanel() {
               <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
                 <div>
                   <span className="font-medium">
-                    {t("testmo.previousImportsStatusLabel")}
+                    {tCommon("ui.issues.status")}
                   </span>
                   {selectedJobSummary.status}
                 </div>

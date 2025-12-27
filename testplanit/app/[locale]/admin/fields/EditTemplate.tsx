@@ -60,8 +60,8 @@ import { useTranslations } from "next-intl";
 
 const FormSchema = z.object({
   name: z.string().min(2, {
-      error: "Please enter a name for the Template"
-}),
+    error: "Please enter a name for the Template",
+  }),
   isDefault: z.boolean().prefault(false),
   isEnabled: z.boolean().prefault(false),
   projects: z.array(z.number()).optional(),
@@ -91,6 +91,7 @@ interface EditTemplateModalProps {
 
 export function EditTemplateModal({ template }: EditTemplateModalProps) {
   const t = useTranslations("admin.templates.edit");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const [open, setOpen] = useState(false);
@@ -372,7 +373,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="template.name" />
                   </FormLabel>
                   <FormControl>
@@ -396,7 +397,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                       />
                     </FormControl>
                     <FormLabel className="flex items-center">
-                      {tCommon("status.enabled")}
+                      {tCommon("fields.enabled")}
                       <HelpPopover helpKey="template.isEnabled" />
                     </FormLabel>
                     <FormMessage />
@@ -415,12 +416,14 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                         disabled={template.isDefault}
                       />
                     </FormControl>
-                    <FormLabel className="flex items-center !mt-0">
+                    <FormLabel className="flex items-center mt-0!">
                       {tCommon("fields.default")}
                       <HelpPopover helpKey="template.isDefault" />
                     </FormLabel>
                     {isDefault && (
-                      <FormMessage>{t("defaultTemplateHint")}</FormMessage>
+                      <FormMessage>
+                        {tGlobal("admin.templates.add.defaultTemplateHint")}
+                      </FormMessage>
                     )}
                     <FormMessage />
                   </FormItem>
@@ -539,11 +542,11 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                 onClick={() => setOpen(false)}
                 variant="outline"
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
               </Button>
             </DialogFooter>

@@ -174,7 +174,7 @@ const VariantSelectionDialog: React.FC<VariantSelectionDialogProps> = ({
               ))}
             <DialogFooter>
               <Button variant="outline" onClick={onClose} type="button">
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button onClick={handleNext} type="button">
                 {tCommon("actions.next")}

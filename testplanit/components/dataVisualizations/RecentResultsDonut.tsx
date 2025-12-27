@@ -187,43 +187,46 @@ const RecentResultsDonut: React.FC<RecentResultsDonutProps> = ({
       .style("opacity", 0); // Start invisible
 
     // First add the text to measure its size
-    labelGroups.each(function(d) {
+    labelGroups.each(function (d) {
       const group = d3.select(this);
-      
+
       // Add text elements first (invisible)
-      const nameText = group.append("text")
+      const nameText = group
+        .append("text")
         .attr("text-anchor", "middle")
         .attr("dy", "-0.1em")
         .style("font-size", `${segmentLabelFontSize}px`)
         .style("font-weight", "bold")
         .style("opacity", "0")
         .text(d.data.name);
-      
-      const valueText = group.append("text")
+
+      const valueText = group
+        .append("text")
         .attr("text-anchor", "middle")
         .attr("dy", "1.1em")
         .style("font-size", `${segmentLabelFontSize * 0.9}px`)
         .style("font-weight", "normal")
         .style("opacity", "0")
         .text(d.data.formattedValue ?? d.data.value.toString());
-      
+
       // Get bounding boxes
       const nameBBox = (nameText.node() as SVGTextElement).getBBox();
       const valueBBox = (valueText.node() as SVGTextElement).getBBox();
-      
+
       // Calculate combined bounding box
       const combinedBBox = {
         x: Math.min(nameBBox.x, valueBBox.x),
         y: nameBBox.y,
         width: Math.max(nameBBox.width, valueBBox.width),
-        height: valueBBox.y + valueBBox.height - nameBBox.y
+        height: valueBBox.y + valueBBox.height - nameBBox.y,
       };
-      
+
       // Add background rectangle with padding
       const padding = 6;
-      group.insert("rect", "text")
+      group
+        .insert("rect", "text")
         .attr("x", combinedBBox.x - padding)
-        .attr("y", combinedBBox.y - padding/2)
+        .attr("y", combinedBBox.y - padding / 2)
         .attr("width", combinedBBox.width + padding * 2)
         .attr("height", combinedBBox.height + padding)
         .attr("rx", 4)
@@ -231,13 +234,15 @@ const RecentResultsDonut: React.FC<RecentResultsDonutProps> = ({
         .style("fill", "hsl(var(--background) / 0.7)")
         .style("stroke", "hsl(var(--border))")
         .style("stroke-width", "1px");
-      
+
       // Make text visible
-      nameText.style("opacity", "1")
+      nameText
+        .style("opacity", "1")
         .style("fill", "hsl(var(--foreground))")
         .style("pointer-events", "none");
-      
-      valueText.style("opacity", "1")
+
+      valueText
+        .style("opacity", "1")
         .style("fill", "hsl(var(--foreground))")
         .style("pointer-events", "none");
     });
@@ -252,24 +257,26 @@ const RecentResultsDonut: React.FC<RecentResultsDonutProps> = ({
 
     // Center text with background pill
     const centerGroup = g.append("g").style("opacity", 0);
-    
+
     // Add center text first (invisible)
-    const centerLabelText = centerGroup.append("text")
+    const centerLabelText = centerGroup
+      .append("text")
       .attr("text-anchor", "middle")
       .attr("dy", "-0.3em")
       .style("font-size", `${centerTextFontSize * 0.9}px`)
       .style("font-weight", "normal")
       .style("opacity", "0")
-      .text(centerLabel || t("charts.total"));
-    
-    const centerValueText = centerGroup.append("text")
+      .text(centerLabel || t("common.labels.total"));
+
+    const centerValueText = centerGroup
+      .append("text")
       .attr("text-anchor", "middle")
       .attr("dy", "0.8em")
       .style("font-size", `${centerTextFontSize}px`)
       .style("font-weight", "bold")
       .style("opacity", "0")
       .text(formattedTotal ?? totalCount);
-    
+
     // Get combined bounding box
     const labelBBox = (centerLabelText.node() as SVGTextElement).getBBox();
     const valueBBox = (centerValueText.node() as SVGTextElement).getBBox();
@@ -277,14 +284,15 @@ const RecentResultsDonut: React.FC<RecentResultsDonutProps> = ({
       x: Math.min(labelBBox.x, valueBBox.x),
       y: labelBBox.y,
       width: Math.max(labelBBox.width, valueBBox.width),
-      height: valueBBox.y + valueBBox.height - labelBBox.y
+      height: valueBBox.y + valueBBox.height - labelBBox.y,
     };
-    
+
     // Add background pill
     const padding = 10;
-    centerGroup.insert("rect", "text")
+    centerGroup
+      .insert("rect", "text")
       .attr("x", combinedBBox.x - padding)
-      .attr("y", combinedBBox.y - padding/2)
+      .attr("y", combinedBBox.y - padding / 2)
       .attr("width", combinedBBox.width + padding * 2)
       .attr("height", combinedBBox.height + padding)
       .attr("rx", 6)
@@ -292,12 +300,12 @@ const RecentResultsDonut: React.FC<RecentResultsDonutProps> = ({
       .style("fill", "hsl(var(--background) / 0.6)")
       .style("stroke", "hsl(var(--border))")
       .style("stroke-width", "1px");
-    
+
     // Make center text visible
     centerLabelText
       .style("opacity", "1")
       .style("fill", "hsl(var(--muted-foreground))");
-    
+
     centerValueText
       .style("opacity", "1")
       .style("fill", "hsl(var(--foreground))");

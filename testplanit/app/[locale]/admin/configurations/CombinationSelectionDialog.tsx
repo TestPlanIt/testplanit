@@ -46,6 +46,7 @@ const CombinationSelectionDialog: React.FC<CombinationSelectionDialogProps> = ({
   >([]);
   const [showError, setShowError] = useState(false);
   const t = useTranslations("admin.configurations.combinations");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const { data: existingConfigurations } = useFindManyConfigurations({
@@ -168,7 +169,7 @@ const CombinationSelectionDialog: React.FC<CombinationSelectionDialogProps> = ({
           <form onSubmit={form.handleSubmit(handleNext)} className="space-y-2">
             <DialogHeader>
               <DialogTitle>{t("selectCombination")}</DialogTitle>
-              <div className="text-muted-foreground text-sm">{t("step")}</div>
+              <div className="text-muted-foreground text-sm">{tGlobal("common.fields.step")}</div>
             </DialogHeader>
             <DialogDescription>
               {t("selectCombinationDescription")}
@@ -195,7 +196,7 @@ const CombinationSelectionDialog: React.FC<CombinationSelectionDialogProps> = ({
             )}
             <DialogFooter>
               <Button variant="outline" onClick={onClose} type="button">
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button variant="outline" onClick={onPrevious} type="button">
                 {tCommon("actions.previous")}

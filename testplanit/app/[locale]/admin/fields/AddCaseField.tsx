@@ -140,6 +140,7 @@ export function AddCaseFieldModal({
   submitLabel,
 }: AddCaseFieldModalProps = {}) {
   const t = useTranslations("admin.templates.caseFields.add");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
@@ -658,7 +659,7 @@ export function AddCaseFieldModal({
       } else {
         form.setError("root", {
           type: "custom",
-          message: t("errors.unknown"),
+          message: tGlobal("common.errors.unknown"),
         });
       }
       return;
@@ -761,7 +762,7 @@ export function AddCaseFieldModal({
                         />
                       </FormControl>
                       <FormLabel className="flex items-center">
-                        {tCommon("fields.options.enabled")}
+                        {tCommon("fields.enabled")}
                         <HelpPopover helpKey="caseField.enabled" />
                       </FormLabel>
                       <FormMessage />
@@ -869,7 +870,7 @@ export function AddCaseFieldModal({
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting

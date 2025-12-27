@@ -46,6 +46,7 @@ export function Combobox({
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const t = useTranslations("repository.columns");
+  const tGlobal = useTranslations();
   const [search, setSearch] = React.useState("");
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const [width, setWidth] = React.useState<number>(200);
@@ -94,7 +95,7 @@ export function Combobox({
           ) : showUnassigned ? (
             <div className="flex items-center">
               <UserX className="mr-2 h-4 w-4" />
-              <span>{t("unassigned")}</span>
+              <span>{tGlobal("common.labels.unassigned")}</span>
             </div>
           ) : (
             <span className="text-muted-foreground">{placeholder}</span>
@@ -114,7 +115,7 @@ export function Combobox({
             onValueChange={setSearch}
           />
           <CommandList>
-            <CommandEmpty>{t("unassigned")}</CommandEmpty>
+            <CommandEmpty>{tGlobal("common.labels.unassigned")}</CommandEmpty>
             <CommandGroup>
               {showUnassigned && (
                 <CommandItem
@@ -127,7 +128,7 @@ export function Combobox({
                 >
                   <div className="flex items-center">
                     <UserX className="mr-2 h-4 w-4" />
-                    <span>{t("unassigned")}</span>
+                    <span>{tGlobal("common.labels.unassigned")}</span>
                   </div>
                   {!value && (
                     <Check className="ml-auto h-4 w-4 text-muted-foreground" />

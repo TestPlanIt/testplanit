@@ -55,6 +55,8 @@ export default function IntegrationsPage() {
 function IntegrationList() {
   const t = useTranslations("admin.integrations");
   const tCommon = useTranslations("common");
+  const tApiTokens = useTranslations("admin.apiTokens");
+  const tAdminMenu = useTranslations("admin.menu");
   const { data: session, status } = useSession();
   const router = useRouter();
   const {
@@ -218,8 +220,8 @@ function IntegrationList() {
       { where: { id: integrationToDelete.id } },
       {
         onSuccess: () => {
-          toast.success(t("delete.successMessage"), {
-            description: t("delete.successDescription"),
+          toast.success(t("deleteSuccess"), {
+            description: t("deleteSuccessDescription"),
           });
           refetch();
         },
@@ -279,7 +281,8 @@ function IntegrationList() {
         handleDeleteClick,
         handleTestConnection,
         tCommon,
-        t
+        t,
+        tApiTokens
       ),
     [
       session,
@@ -288,6 +291,7 @@ function IntegrationList() {
       handleTestConnection,
       tCommon,
       t,
+      tApiTokens,
     ]
   );
 
@@ -323,7 +327,7 @@ function IntegrationList() {
                 className="items-center flex"
               >
                 <Plug className="inline mr-2 h-8 w-8" />
-                {t("title")}
+                {tAdminMenu("integrations")}
               </CardTitle>
               <CardDescription data-testid="integrations-admin-page-description">
                 {t("description")}
@@ -331,7 +335,7 @@ function IntegrationList() {
             </div>
             <Button onClick={handleAddIntegration}>
               <CirclePlus className="h-4 w-4" />
-              <span className="hidden md:inline">{tCommon("actions.add")}</span>
+              <span className="hidden md:inline">{tCommon("add")}</span>
             </Button>
           </div>
         </CardHeader>
@@ -420,7 +424,7 @@ function IntegrationList() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Trash2 className="h-5 w-5 text-destructive" />
-              {t("delete.confirmTitle")}
+              {t("deleteIntegration")}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <p>
@@ -442,7 +446,7 @@ function IntegrationList() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{tCommon("actions.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

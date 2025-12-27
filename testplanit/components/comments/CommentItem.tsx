@@ -202,9 +202,7 @@ export function CommentItem({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("comments.deleteDialog.title")}</DialogTitle>
-            <DialogDescription>
-              {t("comments.deleteDialog.description")}
-            </DialogDescription>
+            <DialogDescription>{t("comments.confirmDelete")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
@@ -212,7 +210,7 @@ export function CommentItem({
               onClick={() => setShowDeleteDialog(false)}
               disabled={isDeleting}
             >
-              {t("common.actions.cancel")}
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"

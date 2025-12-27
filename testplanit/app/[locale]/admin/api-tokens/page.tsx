@@ -20,7 +20,13 @@ import { Filter } from "@/components/tables/Filter";
 import { Label } from "@/components/ui/label";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +55,7 @@ export default function ApiTokensPage() {
 
 function ApiTokensList() {
   const t = useTranslations("admin.apiTokens");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -77,7 +84,9 @@ function ApiTokensList() {
 
   // Revoke single token dialog state
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
-  const [tokenToRevoke, setTokenToRevoke] = useState<ExtendedApiToken | null>(null);
+  const [tokenToRevoke, setTokenToRevoke] = useState<ExtendedApiToken | null>(
+    null
+  );
   const [isRevoking, setIsRevoking] = useState(false);
 
   // Revoke all tokens dialog state
@@ -153,7 +162,11 @@ function ApiTokensList() {
     }
   }, [totalFilteredTokens, setTotalItems]);
 
-  const { data: tokens, isLoading, refetch: refetchTokens } = useFindManyApiToken(
+  const {
+    data: tokens,
+    isLoading,
+    refetch: refetchTokens,
+  } = useFindManyApiToken(
     {
       orderBy: sortConfig
         ? { [sortConfig.column]: sortConfig.direction }
@@ -271,9 +284,10 @@ function ApiTokensList() {
     setIsRevokingAll(true);
     try {
       // Get all active token IDs
-      const activeTokenIds = totalFilteredTokens
-        ?.filter((token) => token.isActive)
-        .map((token) => token.id) || [];
+      const activeTokenIds =
+        totalFilteredTokens
+          ?.filter((token) => token.isActive)
+          .map((token) => token.id) || [];
 
       // Revoke each token
       await Promise.all(
@@ -299,11 +313,18 @@ function ApiTokensList() {
     } finally {
       setIsRevokingAll(false);
     }
-  }, [revokeAllConfirmText, totalFilteredTokens, updateApiToken, toast, t, refetchTokens]);
+  }, [
+    revokeAllConfirmText,
+    totalFilteredTokens,
+    updateApiToken,
+    toast,
+    t,
+    refetchTokens,
+  ]);
 
   const columns = useMemo(
-    () => getColumns(session, handleRevoke, t),
-    [session, handleRevoke, t]
+    () => getColumns(session, handleRevoke, t, tCommon),
+    [session, handleRevoke, t, tCommon]
   );
 
   const [columnVisibility, setColumnVisibility] = useState<
@@ -327,7 +348,8 @@ function ApiTokensList() {
     setCurrentPage(1);
   };
 
-  const activeTokenCount = totalFilteredTokens?.filter((t) => t.isActive).length || 0;
+  const activeTokenCount =
+    totalFilteredTokens?.filter((t) => t.isActive).length || 0;
 
   return (
     <main>
@@ -335,8 +357,12 @@ function ApiTokensList() {
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
-              <CardTitle data-testid="api-tokens-page-title">{t("title")}</CardTitle>
-              <CardDescription className="mt-2">{t("description")}</CardDescription>
+              <CardTitle data-testid="api-tokens-page-title">
+                {tGlobal("admin.menu.apiTokens")}
+              </CardTitle>
+              <CardDescription className="mt-2">
+                {t("description")}
+              </CardDescription>
             </div>
             <div>
               {activeTokenCount > 0 && (
@@ -443,14 +469,15 @@ function ApiTokensList() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("revokeConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {tokenToRevoke && t("revokeConfirmDescription", {
-                name: tokenToRevoke.name,
-                user: tokenToRevoke.user.name || tokenToRevoke.user.email,
-              })}
+              {tokenToRevoke &&
+                t("revokeConfirmDescription", {
+                  name: tokenToRevoke.name,
+                  user: tokenToRevoke.user.name || tokenToRevoke.user.email,
+                })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{tCommon("actions.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmRevoke}
               disabled={isRevoking}
@@ -464,7 +491,10 @@ function ApiTokensList() {
       </AlertDialog>
 
       {/* Revoke All Tokens Dialog */}
-      <AlertDialog open={revokeAllDialogOpen} onOpenChange={setRevokeAllDialogOpen}>
+      <AlertDialog
+        open={revokeAllDialogOpen}
+        onOpenChange={setRevokeAllDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -474,7 +504,9 @@ function ApiTokensList() {
             <AlertDialogDescription className="space-y-4">
               <p>{t("revokeAllDescription")}</p>
               <div className="space-y-2">
-                <Label htmlFor="revoke-all-confirm">{t("revokeAllConfirm")}</Label>
+                <Label htmlFor="revoke-all-confirm">
+                  {t("revokeAllConfirm")}
+                </Label>
                 <Input
                   id="revoke-all-confirm"
                   value={revokeAllConfirmText}
@@ -486,7 +518,7 @@ function ApiTokensList() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setRevokeAllConfirmText("")}>
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRevokeAll}

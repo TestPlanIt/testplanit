@@ -44,6 +44,7 @@ function NotificationItem({
   userPreferences,
 }: NotificationItemProps) {
   const t = useTranslations("components.notifications");
+  const tCommon = useTranslations("common");
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = () => {
@@ -80,7 +81,9 @@ function NotificationItem({
       className={cn(
         "p-3 border-b last:border-0 hover:bg-muted/50 transition-colors",
         !notification.isRead && "bg-primary/20",
-        !notification.isRead && notification.type === "SYSTEM_ANNOUNCEMENT" && "bg-accent"
+        !notification.isRead &&
+          notification.type === "SYSTEM_ANNOUNCEMENT" &&
+          "bg-accent"
       )}
       data-notification-item
       data-state={notification.isRead ? "read" : "unread"}
@@ -105,9 +108,9 @@ function NotificationItem({
               size="sm"
               className="h-8 w-8 p-0"
               data-testid={`notification-menu-${notification.id}`}
-              aria-label={t("actions.menu")}
+              aria-label={tCommon("actions.actionsLabel")}
             >
-              <span className="sr-only">{t("actions.menu")}</span>
+              <span className="sr-only">{tCommon("actions.actionsLabel")}</span>
               <svg
                 className="h-4 w-4"
                 fill="none"
@@ -142,7 +145,7 @@ function NotificationItem({
               className="text-destructive"
               data-testid={`delete-notification-${notification.id}`}
             >
-              {t("actions.delete")}
+              {tCommon("actions.delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -153,6 +156,7 @@ function NotificationItem({
 
 export function NotificationBell() {
   const t = useTranslations("components.notifications");
+  const tCommon = useTranslations("common");
   const { data: session } = useSession();
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -200,7 +204,7 @@ export function NotificationBell() {
       const newSearchParams = new URLSearchParams(searchParams.toString());
       newSearchParams.delete("openNotifications");
       const queryString = newSearchParams.toString();
-      
+
       // Use the pathname from navigation.ts to preserve locale
       const newPath = queryString ? `${pathname}?${queryString}` : pathname;
       router.replace(newPath);
@@ -209,12 +213,12 @@ export function NotificationBell() {
 
   const handleMarkRead = async (id: string) => {
     // Find the notification to check if it's already read
-    const notification = notifications?.find(n => n.id === id);
+    const notification = notifications?.find((n) => n.id === id);
     if (notification?.isRead) {
       // Already read, no need to make API call
       return;
     }
-    
+
     const result = await markNotificationAsRead(id);
     if (result.success) {
       refetch();
@@ -297,7 +301,7 @@ export function NotificationBell() {
         <div className="flex items-center justify-between p-4 border-b-2">
           <h3 className="font-semibold">
             <Bell className="inline mr-1 w-5" />
-            {t("title")}
+            {tCommon("fields.notificationMode")}
           </h3>
           <Button
             variant="ghost"

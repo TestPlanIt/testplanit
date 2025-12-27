@@ -40,6 +40,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   const form = useForm();
   const { isSubmitting } = form.formState;
   const t = useTranslations("admin.configurations.combinations");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const handleSubmit = async () => {
@@ -62,7 +63,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
           >
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
-              <div className="text-muted-foreground text-sm">{t("step")}</div>
+              <div className="text-muted-foreground text-sm">{tGlobal("common.fields.step")}</div>
             </DialogHeader>
             <DialogDescription>
               {t("description", {
@@ -85,7 +86,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             </ScrollArea>
             <DialogFooter>
               <Button variant="outline" onClick={onClose} type="button">
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button variant="outline" onClick={onPrevious} type="button">
                 {tCommon("actions.previous")}

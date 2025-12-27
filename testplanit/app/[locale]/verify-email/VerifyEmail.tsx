@@ -31,6 +31,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 
 const VerifyEmail = () => {
   const t = useTranslations("auth.verifyEmail");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const router = useRouter();
   const { data: session } = useSession();
@@ -100,19 +101,19 @@ const VerifyEmail = () => {
     try {
       const result = await verifyEmail(data.email, data.token);
       if (typeof result === "object" && "id" in result) {
-        await toast.success(t("toast.verifySuccess.title"), {
+        await toast.success(tGlobal("auth.verifyEmail.success"), {
           description: t("toast.verifySuccess.description"),
           position: "top-center",
         });
         router.push("/");
       } else {
-        await toast.error(t("toast.verifyError.title"), {
+        await toast.error(tGlobal("auth.verifyEmail.error"), {
           description: t("toast.verifyError.description"),
           position: "top-center",
         });
       }
     } catch (error) {
-      await toast.error(t("toast.verifyError.title"), {
+      await toast.error(tGlobal("auth.verifyEmail.error"), {
         description: t("toast.verifyError.description"),
         position: "top-center",
       });

@@ -71,6 +71,7 @@ export function SessionVersionRenderer({
 }: SessionVersionRendererProps) {
   const { data: session } = useSession();
   const t = useTranslations();
+  const tCommon = useTranslations("common");
   const locale = useLocale();
 
   const renderValue = (value: any, type: FieldType) => {
@@ -105,15 +106,15 @@ export function SessionVersionRenderer({
 
         const getIcon = () => {
           switch (field) {
-            case t("sessions.version.fields.template"):
+            case t("common.fields.template"):
               return (
                 <DynamicIcon name="layout-list" className="h-4 w-4 shrink-0" />
               );
-            case t("sessions.version.fields.configuration"):
+            case t("common.fields.configuration"):
               return (
                 <DynamicIcon name="combine" className="h-4 w-4 shrink-0" />
               );
-            case t("sessions.version.fields.milestone"):
+            case t("common.fields.milestone"):
               return showTextDiff ? getPreviousIcon() : getCurrentIcon();
             default:
               return null;
@@ -136,7 +137,7 @@ export function SessionVersionRenderer({
                 field === "Configuration" ||
                 field === "Milestone") &&
                 (field === "Milestone" ? getCurrentIcon() : getIcon())}
-              {value || t("sessions.version.renderer.none")}
+              {value || tCommon("access.none")}
             </div>
             {showTextDiff && (
               <div className="text-sm flex items-start gap-1 text-red-600 bg-red-100 p-2 rounded">
@@ -147,7 +148,7 @@ export function SessionVersionRenderer({
                   field === "Configuration" ||
                   field === "Milestone") &&
                   (field === "Milestone" ? getPreviousIcon() : getIcon())}
-                {previousValue || t("sessions.version.renderer.none")}
+                {previousValue || tCommon("access.none")}
               </div>
             )}
           </div>
@@ -228,7 +229,7 @@ export function SessionVersionRenderer({
               ) : (
                 <div className="flex items-center gap-1">
                   <DynamicIcon name="user-round-x" className="h-4 w-4" />
-                  {t("sessions.version.renderer.unassigned")}
+                  {t("common.labels.unassigned")}
                 </div>
               )}
             </div>
@@ -242,7 +243,7 @@ export function SessionVersionRenderer({
                 ) : (
                   <div className="flex items-center gap-1">
                     <DynamicIcon name="user-round-x" className="h-4 w-4" />
-                    {t("sessions.version.renderer.unassigned")}
+                    {t("common.labels.unassigned")}
                   </div>
                 )}
               </div>
@@ -424,9 +425,7 @@ export function SessionVersionRenderer({
             </span>
             <DynamicIcon name="check-circle" className="h-6 w-6 shrink-0" />
             <div className="flex items-center truncate">
-              <span className="mr-1">
-                {t("sessions.version.renderer.completedOn")}
-              </span>
+              <span className="mr-1">{t("common.fields.completedOn")}</span>
               <span className="truncate">
                 <DateFormatter
                   date={testSession.completedAt}

@@ -45,6 +45,8 @@ export function IntegrationsList({
   currentIntegration,
 }: IntegrationsListProps) {
   const t = useTranslations("projects.settings.integrations");
+  const tAiModels = useTranslations("projects.settings.aiModels");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const router = useRouter();
   const [isAssigning, setIsAssigning] = useState<number | null>(null);
@@ -159,7 +161,7 @@ export function IntegrationsList({
               </CardTitle>
               {isActive && (
                 <Badge variant="default" className="ml-auto">
-                  {t("active")}
+                  {tCommon("fields.isActive")}
                 </Badge>
               )}
             </CardHeader>
@@ -196,7 +198,7 @@ export function IntegrationsList({
                     {isAssigning === -1 ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      t("remove")
+                      tCommon("actions.remove")
                     )}
                   </Button>
                 ) : (
@@ -212,7 +214,7 @@ export function IntegrationsList({
                     ) : (
                       <Check className=" h-4 w-4" />
                     )}
-                    {t("assign")}
+                    {tCommon("actions.assign")}
                   </Button>
                 )}
               </div>
@@ -267,7 +269,7 @@ export function IntegrationsList({
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                {t("integration.confirmSwitch", {
+                {tAiModels("confirmSwitch", {
                   from: currentIntegration?.integration.name || "",
                   to:
                     integrations.find((i) => i.id === integrationToAssign)

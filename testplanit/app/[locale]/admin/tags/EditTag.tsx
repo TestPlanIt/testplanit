@@ -131,7 +131,7 @@ export function EditTagModal({ tag }: EditTagModalProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="tag.name" />
                   </FormLabel>
                   <FormControl>
@@ -151,11 +151,11 @@ export function EditTagModal({ tag }: EditTagModalProps) {
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
               </Button>
             </DialogFooter>

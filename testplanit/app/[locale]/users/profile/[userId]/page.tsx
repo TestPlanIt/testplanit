@@ -95,9 +95,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: session } = useSession();
   const t = useTranslations("users.profile");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const tEdit = useTranslations("users.profile.edit");
   const tNotifications = useTranslations("users.profile.notifications");
+  const tNotificationModes = useTranslations("admin.notifications.defaultMode");
   const tUserMenu = useTranslations("userMenu");
   const { mutateAsync: updateUser } = useUpdateUser();
   const { data: globalSettings } = useFindUniqueAppConfig({
@@ -303,13 +305,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
       case "USE_GLOBAL":
         return tNotifications("mode.useGlobal");
       case "NONE":
-        return tNotifications("mode.none");
+        return tCommon("access.none");
       case "IN_APP":
-        return tNotifications("mode.inApp");
+        return tNotificationModes("inApp");
       case "IN_APP_EMAIL_IMMEDIATE":
-        return tNotifications("mode.inAppEmailImmediate");
+        return tNotificationModes("inAppEmailImmediate");
       case "IN_APP_EMAIL_DAILY":
-        return tNotifications("mode.inAppEmailDaily");
+        return tNotificationModes("inAppEmailDaily");
       default:
         return mode;
     }
@@ -450,7 +452,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="flex items-center">
-                                  {tEdit("name")}
+                                  {tGlobal("common.name")}
                                   <HelpPopover helpKey="user.name" />
                                 </FormLabel>
                                 <FormControl>
@@ -469,7 +471,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="flex items-center">
-                                  {tEdit("email")}
+                                  {tGlobal("common.fields.email")}
                                   <HelpPopover helpKey="user.email" />
                                 </FormLabel>
                                 <FormControl>
@@ -532,7 +534,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                             disabled={isSubmitting}
                           >
                             <X className="w-4 h-4" />
-                            {tCommon("actions.cancel")}
+                            {tCommon("cancel")}
                           </Button>
                           <Button
                             onClick={form.handleSubmit(onSubmit)}
@@ -540,7 +542,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                           >
                             <Check className="w-4 h-4" />
                             {isSubmitting
-                              ? tCommon("status.submitting")
+                              ? tCommon("actions.submitting")
                               : tCommon("actions.submit")}
                           </Button>
                         </div>
@@ -656,7 +658,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                   {user?.id === session?.user?.id && user.isApi && (
                     <AccordionItem value="api-tokens">
                       <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                        {t("apiTokens.title")}
+                        {tGlobal("admin.menu.apiTokens")}
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="bg-muted/30 p-4 rounded-lg border mt-2">
@@ -957,7 +959,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel className="flex items-center">
-                                      {tEdit("itemsPerPage")}
+                                      {tGlobal("common.fields.itemsPerPage")}
                                       <HelpPopover helpKey="user.itemsPerPage" />
                                     </FormLabel>
                                     <FormControl>
@@ -973,7 +975,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                       >
                                         <SelectTrigger>
                                           <SelectValue
-                                            placeholder={tEdit("itemsPerPage")}
+                                            placeholder={tGlobal("common.fields.itemsPerPage")}
                                           />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -1001,7 +1003,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel className="flex items-center">
-                                      {tEdit("dateFormat")}
+                                      {tGlobal("home.initialPreferences.dateFormat")}
                                       <HelpPopover helpKey="user.dateFormat" />
                                     </FormLabel>
                                     <FormControl>
@@ -1017,7 +1019,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                       >
                                         <SelectTrigger>
                                           <SelectValue
-                                            placeholder={tEdit("dateFormat")}
+                                            placeholder={tGlobal("home.initialPreferences.dateFormat")}
                                           />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -1052,7 +1054,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel className="flex items-center">
-                                      {tEdit("timeFormat")}
+                                      {tGlobal("home.initialPreferences.timeFormat")}
                                       <HelpPopover helpKey="user.timeFormat" />
                                     </FormLabel>
                                     <FormControl>
@@ -1068,7 +1070,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                       >
                                         <SelectTrigger>
                                           <SelectValue
-                                            placeholder={tEdit("timeFormat")}
+                                            placeholder={tGlobal("home.initialPreferences.timeFormat")}
                                           />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -1103,7 +1105,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel className="flex items-center">
-                                      {tEdit("timezone")}
+                                      {tGlobal("common.fields.timezone")}
                                       <HelpPopover helpKey="user.timezone" />
                                     </FormLabel>
                                     <FormControl>
@@ -1183,7 +1185,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                             htmlFor="none"
                                             className="font-normal"
                                           >
-                                            {tNotifications("mode.none")}
+                                            {tCommon("access.none")}
                                           </Label>
                                         </div>
                                         <div className="flex items-center space-x-3">
@@ -1195,7 +1197,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                             htmlFor="in-app"
                                             className="font-normal"
                                           >
-                                            {tNotifications("mode.inApp")}
+                                            {tNotificationModes("inApp")}
                                           </Label>
                                         </div>
                                         <div className="flex items-center space-x-3">
@@ -1207,9 +1209,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                             htmlFor="in-app-email-immediate"
                                             className="font-normal"
                                           >
-                                            {tNotifications(
-                                              "mode.inAppEmailImmediate"
-                                            )}
+                                            {tNotificationModes("inAppEmailImmediate")}
                                           </Label>
                                         </div>
                                         <div className="flex items-center space-x-3 md:col-start-1">
@@ -1221,9 +1221,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                             htmlFor="in-app-email-daily"
                                             className="font-normal"
                                           >
-                                            {tNotifications(
-                                              "mode.inAppEmailDaily"
-                                            )}
+                                            {tNotificationModes("inAppEmailDaily")}
                                           </Label>
                                         </div>
                                       </RadioGroup>

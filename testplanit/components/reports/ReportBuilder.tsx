@@ -67,7 +67,11 @@ import {
 } from "~/utils/reportUtils";
 import { useReportColumns } from "~/hooks/useReportColumns";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
-import { ReportType, getProjectReportTypes, getCrossProjectReportTypes } from "~/lib/config/reportTypes";
+import {
+  ReportType,
+  getProjectReportTypes,
+  getCrossProjectReportTypes,
+} from "~/lib/config/reportTypes";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
@@ -113,6 +117,8 @@ function ReportBuilderContent({
   const { data: session } = useSession();
   const t = useTranslations();
   const tReports = useTranslations("reports.ui");
+  const tCommon = useTranslations("common");
+  const tAdminMenu = useTranslations("admin.menu");
   const tDimensions = useTranslations("reports.dimensions");
   const tMetrics = useTranslations("reports.metrics");
   const customStyles = getCustomStyles({ theme });
@@ -279,7 +285,7 @@ function ReportBuilderContent({
     if (filterOptions.projects && filterOptions.projects.length > 0) {
       items.push({
         id: "projects",
-        name: tReports("filterTypes.projects"),
+        name: tCommon("fields.projects"),
         icon: FolderOpen,
         options: filterOptions.projects.map((p: any) => ({
           id: p.id,
@@ -293,7 +299,7 @@ function ReportBuilderContent({
     if (filterOptions.templates && filterOptions.templates.length > 0) {
       items.push({
         id: "templates",
-        name: tReports("filterTypes.templates"),
+        name: tCommon("fields.templates"),
         icon: LayoutTemplate,
         options: filterOptions.templates.map((t: any) => ({
           id: t.id,
@@ -307,7 +313,7 @@ function ReportBuilderContent({
     if (filterOptions.states && filterOptions.states.length > 0) {
       items.push({
         id: "states",
-        name: tReports("filterTypes.states"),
+        name: tCommon("ui.search.states"),
         icon: CircleDashed,
         options: filterOptions.states.map((s: any) => ({
           id: s.id,
@@ -323,13 +329,13 @@ function ReportBuilderContent({
     if (filterOptions.automated && filterOptions.automated.length > 0) {
       items.push({
         id: "automated",
-        name: tReports("filterTypes.automated"),
+        name: tCommon("fields.automated"),
         icon: Bot,
         options: filterOptions.automated.map((a: any) => ({
           id: a.value ? 1 : 0,
           name: a.value
-            ? t("common.fields.automated")
-            : t("common.fields.manual"),
+            ? tCommon("fields.automated")
+            : tCommon("fields.manual"),
           count: a.count,
         })),
       });
@@ -356,7 +362,7 @@ function ReportBuilderContent({
     }
 
     return items;
-  }, [filterOptions, tReports, t]);
+  }, [filterOptions, tCommon]);
 
   // Build active filter chips from selectedFilterValues
   const activeFilterChips = useMemo(() => {
@@ -390,7 +396,7 @@ function ReportBuilderContent({
           }
         } else if (filterItem.field?.options) {
           if (valueId === "none") {
-            valueName = t("common.labels.none");
+            valueName = tCommon("access.none");
           } else {
             const option = filterItem.field.options.find(
               (opt: any) => opt.id === valueId
@@ -417,7 +423,7 @@ function ReportBuilderContent({
     });
 
     return chips;
-  }, [selectedFilterValues, filterItems, t]);
+  }, [selectedFilterValues, filterItems, tCommon]);
 
   // Handler to remove a single filter
   const handleRemoveFilter = useCallback(
@@ -1341,10 +1347,10 @@ function ReportBuilderContent({
               >
                 <TabsList className="grid w-full grid-cols-2 mb-4">
                   <TabsTrigger value="reports">
-                    {tReports("tabs.reports")}
+                    {tAdminMenu("reports")}
                   </TabsTrigger>
                   <TabsTrigger value="builder">
-                    {tReports("tabs.reportBuilder")}
+                    {tReports("title")}
                   </TabsTrigger>
                 </TabsList>
 
@@ -1354,7 +1360,7 @@ function ReportBuilderContent({
                 >
                   <div className="mb-4">
                     <h2 className="text-lg font-semibold">
-                      {tReports("tabs.reports")}
+                      {tAdminMenu("reports")}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       {tReports("reportsTabDescription")}
@@ -1399,7 +1405,7 @@ function ReportBuilderContent({
                         <DateRangePickerField
                           control={form.control}
                           name="dateRange"
-                          label={tReports("dateRange.label")}
+                          label={tReports("dateRange.selectDateRange")}
                           helpKey="reportBuilder.dateRange"
                         />
                       </div>
@@ -1448,7 +1454,7 @@ function ReportBuilderContent({
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
                               <label className="text-sm font-medium">
-                                {tReports("filtersTitle")}
+                                {tCommon("ui.search.filters")}
                               </label>
                             </div>
                             <p className="text-xs text-muted-foreground">
@@ -1486,7 +1492,7 @@ function ReportBuilderContent({
                         data-testid="run-report-button"
                       >
                         {loading ? (
-                          <>{t("common.status.loading")}</>
+                          <>{tCommon("loading")}</>
                         ) : (
                           tReports("runReport")
                         )}
@@ -1554,7 +1560,7 @@ function ReportBuilderContent({
                         <DateRangePickerField
                           control={form.control}
                           name="dateRange"
-                          label={tReports("dateRange.label")}
+                          label={tReports("dateRange.selectDateRange")}
                           helpKey="reportBuilder.dateRange"
                         />
                       </div>
@@ -1614,8 +1620,8 @@ function ReportBuilderContent({
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
                               <label className="text-sm font-medium">
-                                {tReports("filtersTitle")} {" - "}{" "}
-                                {tReports("priorityFilter")}
+                                {tCommon("ui.search.filters")} {" - "}{" "}
+                                {tCommon("fields.priority")}
                               </label>
                             </div>
                             <MultiSelect
@@ -1714,7 +1720,7 @@ function ReportBuilderContent({
                         data-testid="run-report-button"
                       >
                         {loading ? (
-                          <>{t("common.status.loading")}</>
+                          <>{tCommon("loading")}</>
                         ) : (
                           tReports("runReport")
                         )}

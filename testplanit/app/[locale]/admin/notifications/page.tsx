@@ -51,6 +51,8 @@ export default function NotificationSettingsPage() {
 
 function NotificationSettingsContent() {
   const t = useTranslations("admin.notifications");
+  const tCommon = useTranslations("common");
+  const tGlobal = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
   const {
@@ -77,7 +79,7 @@ function NotificationSettingsContent() {
     Record<string, boolean>
   >({});
 
-  const columns = useMemo(() => getColumns(session, t), [session, t]);
+  const columns = useMemo(() => getColumns(session, t, tCommon), [session, t, tCommon]);
 
   const tableData: NotificationHistoryItem[] = useMemo(
     () =>
@@ -175,13 +177,13 @@ function NotificationSettingsContent() {
         const effectivePageSize = typeof pageSize === "number" ? pageSize : 10;
         loadNotificationHistory(1, effectivePageSize);
       } else {
-        toast.error(t("systemNotification.error.title"), {
+        toast.error(tGlobal("common.errors.error"), {
           description:
             result.error || t("systemNotification.error.description"),
         });
       }
     } catch (error) {
-      toast.error(t("systemNotification.error.title"), {
+      toast.error(tGlobal("common.errors.error"), {
         description: t("systemNotification.error.description"),
       });
     } finally {
@@ -214,7 +216,7 @@ function NotificationSettingsContent() {
             });
           },
           onError: () => {
-            toast.error(t("error.title"), {
+            toast.error(tGlobal("common.errors.error"), {
               description: t("error.description"),
             });
           },
@@ -232,7 +234,7 @@ function NotificationSettingsContent() {
             });
           },
           onError: () => {
-            toast.error(t("error.title"), {
+            toast.error(tGlobal("common.errors.error"), {
               description: t("error.description"),
             });
           },
@@ -283,7 +285,9 @@ function NotificationSettingsContent() {
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="NONE" id="none" />
-                  <Label htmlFor="none">{t("defaultMode.none")}</Label>
+                  <Label htmlFor="none">
+                    {tGlobal("components.notifications.empty")}
+                  </Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="IN_APP" id="in-app" />
@@ -313,7 +317,9 @@ function NotificationSettingsContent() {
 
           <div className="flex justify-end">
             <Button onClick={handleSave} disabled={isCreating || isUpdating}>
-              {isCreating || isUpdating ? t("saving") : t("save")}
+              {isCreating || isUpdating
+                ? tGlobal("common.actions.saving")
+                : t("save")}
             </Button>
           </div>
         </CardContent>
@@ -340,7 +346,7 @@ function NotificationSettingsContent() {
           <div className="space-y-4">
             <div>
               <Label htmlFor="system-notification-title">
-                {t("systemNotification.titleLabel")}
+                {t("systemNotification.title")}
               </Label>
               <Input
                 id="system-notification-title"
@@ -356,7 +362,7 @@ function NotificationSettingsContent() {
                 htmlFor="system-notification-message"
                 data-testid="notification-message-label"
               >
-                {t("systemNotification.messageLabel")}
+                {tGlobal("common.actions.automated.message")}
               </Label>
               <div className="border rounded-md">
                 <TipTapEditor
@@ -381,7 +387,7 @@ function NotificationSettingsContent() {
               data-testid="send-notification-button"
             >
               {isSendingSystemNotification ? (
-                <>{t("systemNotification.sending")}</>
+                <>{tGlobal("auth.signin.magicLink.sending")}</>
               ) : (
                 <>
                   <Send className="h-4 w-4" />
@@ -428,7 +434,9 @@ function NotificationSettingsContent() {
                   columnVisibility={columnVisibility}
                   onColumnVisibilityChange={setColumnVisibility}
                   isLoading={isLoadingHistory}
-                  pageSize={typeof pageSize === "number" ? pageSize : totalItems}
+                  pageSize={
+                    typeof pageSize === "number" ? pageSize : totalItems
+                  }
                 />
               </div>
             ) : (

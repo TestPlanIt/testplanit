@@ -313,9 +313,10 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         const projectPrefix = project.name.replace(/\s+/g, "");
 
         // Create series for automated, manual, and total counts
-        const automatedValue = row[`${projectPrefix}_automated`] as number || 0;
-        const manualValue = row[`${projectPrefix}_manual`] as number || 0;
-        const totalValue = row[`${projectPrefix}_total`] as number || 0;
+        const automatedValue =
+          (row[`${projectPrefix}_automated`] as number) || 0;
+        const manualValue = (row[`${projectPrefix}_manual`] as number) || 0;
+        const totalValue = (row[`${projectPrefix}_total`] as number) || 0;
 
         // For single-project reports, omit project name; for multi-project, include it
         const projectLabel = isMultiProject ? `${project.name} - ` : "";
@@ -323,7 +324,11 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         // Automated series
         const automatedSeriesName = `${projectLabel}Automated`;
         if (!seriesMap.has(automatedSeriesName)) {
-          seriesMap.set(automatedSeriesName, { name: automatedSeriesName, values: [], color: stringToColorCode(automatedSeriesName).colorCode });
+          seriesMap.set(automatedSeriesName, {
+            name: automatedSeriesName,
+            values: [],
+            color: stringToColorCode(automatedSeriesName).colorCode,
+          });
         }
         seriesMap.get(automatedSeriesName)!.values.push({
           date,
@@ -334,7 +339,11 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         // Manual series
         const manualSeriesName = `${projectLabel}Manual`;
         if (!seriesMap.has(manualSeriesName)) {
-          seriesMap.set(manualSeriesName, { name: manualSeriesName, values: [], color: stringToColorCode(manualSeriesName).colorCode });
+          seriesMap.set(manualSeriesName, {
+            name: manualSeriesName,
+            values: [],
+            color: stringToColorCode(manualSeriesName).colorCode,
+          });
         }
         seriesMap.get(manualSeriesName)!.values.push({
           date,
@@ -345,7 +354,11 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         // Total series
         const totalSeriesName = `${projectLabel}Total`;
         if (!seriesMap.has(totalSeriesName)) {
-          seriesMap.set(totalSeriesName, { name: totalSeriesName, values: [], color: stringToColorCode(totalSeriesName).colorCode });
+          seriesMap.set(totalSeriesName, {
+            name: totalSeriesName,
+            values: [],
+            color: stringToColorCode(totalSeriesName).colorCode,
+          });
         }
         seriesMap.get(totalSeriesName)!.values.push({
           date,
@@ -547,7 +560,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           (sum, row) => sum + getMetricValue(row, metric),
           0
         );
-        centerLabel = t("charts.total");
+        centerLabel = t("common.labels.total");
       }
 
       return (

@@ -25,6 +25,7 @@ export function AuditLogDetailModal({
   onClose,
 }: AuditLogDetailModalProps) {
   const t = useTranslations("admin.auditLogs");
+  const tGlobal = useTranslations();
   const { data: session } = useSession();
 
   if (!log) return null;
@@ -63,7 +64,7 @@ export function AuditLogDetailModal({
               </div>
               <div className="overflow-hidden">
                 <label className="text-sm font-medium text-muted-foreground">
-                  {t("columns.entityType")}
+                  {t("filterEntityType")}
                 </label>
                 <p className="text-sm font-mono truncate">{log.entityType}</p>
               </div>
@@ -89,13 +90,13 @@ export function AuditLogDetailModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="overflow-hidden">
                   <label className="text-sm font-medium text-muted-foreground">
-                    {t("columns.user")}
+                    {tGlobal("common.access.user")}
                   </label>
                   <p className="text-sm truncate">{log.userName || "-"}</p>
                 </div>
                 <div className="overflow-hidden">
                   <label className="text-sm font-medium text-muted-foreground">
-                    {t("columns.email")}
+                    {tGlobal("common.fields.email")}
                   </label>
                   <p className="text-sm truncate">{log.userEmail || "-"}</p>
                 </div>
@@ -103,12 +104,14 @@ export function AuditLogDetailModal({
                   <label className="text-sm font-medium text-muted-foreground">
                     {t("columns.userId")}
                   </label>
-                  <p className="text-sm font-mono break-all">{log.userId || "-"}</p>
+                  <p className="text-sm font-mono break-all">
+                    {log.userId || "-"}
+                  </p>
                 </div>
                 {log.project && (
                   <div className="overflow-hidden">
                     <label className="text-sm font-medium text-muted-foreground">
-                      {t("columns.project")}
+                      {tGlobal("common.fields.project")}
                     </label>
                     <p className="text-sm truncate">{log.project.name}</p>
                   </div>

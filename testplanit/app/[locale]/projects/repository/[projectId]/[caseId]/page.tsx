@@ -331,7 +331,11 @@ const createFormSchema = (fields: any[]) => {
 };
 
 export default function TestCaseDetails() {
-  const { session, isLoading: isAuthLoading, isAuthenticated } = useRequireAuth();
+  const {
+    session,
+    isLoading: isAuthLoading,
+    isAuthenticated,
+  } = useRequireAuth();
   const router = useRouter();
   const { projectId, caseId } = useParams();
   const t = useTranslations();
@@ -414,197 +418,199 @@ export default function TestCaseDetails() {
   // Use the active project integration instead of issueConfigId
   const activeIntegration = project?.projectIntegrations?.[0];
 
-  const { data, isLoading, refetch, error } = useFindFirstRepositoryCasesFiltered(
-    {
-      where: { id: Number(caseId), isDeleted: false },
-      include: {
-        state: {
-          select: {
-            id: true,
-            name: true,
-            icon: { select: { name: true } },
-            color: { select: { value: true } },
+  const { data, isLoading, refetch, error } =
+    useFindFirstRepositoryCasesFiltered(
+      {
+        where: { id: Number(caseId), isDeleted: false },
+        include: {
+          state: {
+            select: {
+              id: true,
+              name: true,
+              icon: { select: { name: true } },
+              color: { select: { value: true } },
+            },
           },
-        },
-        project: true,
-        folder: true,
-        creator: true,
-        template: {
-          select: {
-            id: true,
-            templateName: true,
-            caseFields: {
-              select: {
-                caseFieldId: true,
-                caseField: {
-                  select: {
-                    id: true,
-                    defaultValue: true,
-                    displayName: true,
-                    isRequired: true,
-                    isRestricted: true,
-                    type: { select: { type: true } },
-                    fieldOptions: {
-                      select: {
-                        fieldOption: {
-                          select: {
-                            id: true,
-                            icon: true,
-                            iconColor: true,
-                            name: true,
-                            order: true,
+          project: true,
+          folder: true,
+          creator: true,
+          template: {
+            select: {
+              id: true,
+              templateName: true,
+              caseFields: {
+                select: {
+                  caseFieldId: true,
+                  caseField: {
+                    select: {
+                      id: true,
+                      defaultValue: true,
+                      displayName: true,
+                      isRequired: true,
+                      isRestricted: true,
+                      type: { select: { type: true } },
+                      fieldOptions: {
+                        select: {
+                          fieldOption: {
+                            select: {
+                              id: true,
+                              icon: true,
+                              iconColor: true,
+                              name: true,
+                              order: true,
+                            },
                           },
                         },
-                      },
-                      orderBy: { fieldOption: { order: "asc" } },
-                    },
-                  },
-                },
-              },
-              orderBy: { order: "asc" },
-            },
-          },
-        },
-        caseFieldValues: {
-          select: {
-            id: true,
-            value: true,
-            fieldId: true,
-            field: {
-              select: {
-                id: true,
-                displayName: true,
-                type: { select: { type: true } },
-              },
-            },
-          },
-          where: { field: { isEnabled: true, isDeleted: false } },
-        },
-        attachments: {
-          orderBy: { createdAt: "desc" },
-          where: { isDeleted: false },
-        },
-        steps: {
-          where: { isDeleted: false },
-          orderBy: { order: "asc" },
-          include: {
-            sharedStepGroup: true,
-          },
-        },
-        tags: {
-          where: { isDeleted: false },
-          orderBy: { name: "asc" },
-        },
-        issues: {
-          where: { isDeleted: false },
-          orderBy: { name: "asc" },
-          select: {
-            id: true,
-            name: true,
-            title: true,
-            externalId: true,
-            externalUrl: true,
-            externalStatus: true,
-            externalKey: true,
-            data: true,
-            integrationId: true,
-            lastSyncedAt: true,
-            issueTypeName: true,
-            issueTypeIconUrl: true,
-            integration: {
-              select: {
-                id: true,
-                provider: true,
-                name: true,
-              },
-            },
-          },
-        },
-        testRuns: {
-          select: {
-            id: true,
-            isCompleted: true,
-            testRun: {
-              select: {
-                isDeleted: true,
-                id: true,
-                name: true,
-                isCompleted: true,
-                milestone: {
-                  select: {
-                    name: true,
-                  },
-                },
-              },
-            },
-            results: {
-              select: {
-                id: true,
-                status: {
-                  select: {
-                    name: true,
-                    color: {
-                      select: {
-                        value: true,
+                        orderBy: { fieldOption: { order: "asc" } },
                       },
                     },
                   },
                 },
-                executedBy: {
-                  select: {
-                    id: true,
-                    name: true,
+                orderBy: { order: "asc" },
+              },
+            },
+          },
+          caseFieldValues: {
+            select: {
+              id: true,
+              value: true,
+              fieldId: true,
+              field: {
+                select: {
+                  id: true,
+                  displayName: true,
+                  type: { select: { type: true } },
+                },
+              },
+            },
+            where: { field: { isEnabled: true, isDeleted: false } },
+          },
+          attachments: {
+            orderBy: { createdAt: "desc" },
+            where: { isDeleted: false },
+          },
+          steps: {
+            where: { isDeleted: false },
+            orderBy: { order: "asc" },
+            include: {
+              sharedStepGroup: true,
+            },
+          },
+          tags: {
+            where: { isDeleted: false },
+            orderBy: { name: "asc" },
+          },
+          issues: {
+            where: { isDeleted: false },
+            orderBy: { name: "asc" },
+            select: {
+              id: true,
+              name: true,
+              title: true,
+              externalId: true,
+              externalUrl: true,
+              externalStatus: true,
+              externalKey: true,
+              data: true,
+              integrationId: true,
+              lastSyncedAt: true,
+              issueTypeName: true,
+              issueTypeIconUrl: true,
+              integration: {
+                select: {
+                  id: true,
+                  provider: true,
+                  name: true,
+                },
+              },
+            },
+          },
+          testRuns: {
+            select: {
+              id: true,
+              isCompleted: true,
+              testRun: {
+                select: {
+                  isDeleted: true,
+                  id: true,
+                  name: true,
+                  isCompleted: true,
+                  milestone: {
+                    select: {
+                      name: true,
+                    },
                   },
                 },
-                executedAt: true,
-                editedBy: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-                editedAt: true,
-                notes: true,
-                elapsed: true,
-                attempt: true,
-                stepResults: {
-                  include: {
-                    stepStatus: {
-                      select: {
-                        name: true,
-                        color: {
-                          select: {
-                            value: true,
-                          },
+              },
+              results: {
+                select: {
+                  id: true,
+                  status: {
+                    select: {
+                      name: true,
+                      color: {
+                        select: {
+                          value: true,
                         },
                       },
                     },
-                    step: true,
                   },
-                  orderBy: {
-                    step: {
-                      order: "asc",
+                  executedBy: {
+                    select: {
+                      id: true,
+                      name: true,
                     },
                   },
-                },
-                attachments: {
-                  where: { isDeleted: false },
-                  select: {
-                    id: true,
-                    name: true,
-                    url: true,
-                    note: true,
-                    mimeType: true,
-                    size: true,
-                    createdAt: true,
-                    createdById: true,
-                    isDeleted: true,
-                    testCaseId: true,
-                    sessionId: true,
-                    sessionResultsId: true,
-                    testRunsId: true,
-                    testRunResultsId: true,
-                    testRunStepResultId: true,
+                  executedAt: true,
+                  editedBy: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                  editedAt: true,
+                  notes: true,
+                  elapsed: true,
+                  attempt: true,
+                  stepResults: {
+                    include: {
+                      stepStatus: {
+                        select: {
+                          name: true,
+                          color: {
+                            select: {
+                              value: true,
+                            },
+                          },
+                        },
+                      },
+                      step: true,
+                    },
+                    orderBy: {
+                      step: {
+                        order: "asc",
+                      },
+                    },
+                  },
+                  attachments: {
+                    where: { isDeleted: false },
+                    select: {
+                      id: true,
+                      name: true,
+                      url: true,
+                      note: true,
+                      mimeType: true,
+                      size: true,
+                      createdAt: true,
+                      createdById: true,
+                      isDeleted: true,
+                      testCaseId: true,
+                      sessionId: true,
+                      sessionResultsId: true,
+                      testRunsId: true,
+                      testRunResultsId: true,
+                      testRunStepResultId: true,
+                    },
                   },
                 },
               },
@@ -612,13 +618,12 @@ export default function TestCaseDetails() {
           },
         },
       },
-    },
-    {
-      enabled: isAuthenticated, // Only query when session is authenticated
-      retry: 3, // Retry a few times in case of race conditions
-      retryDelay: 1000, // Wait 1 second between retries
-    }
-  );
+      {
+        enabled: isAuthenticated, // Only query when session is authenticated
+        retry: 3, // Retry a few times in case of race conditions
+        retryDelay: 1000, // Wait 1 second between retries
+      }
+    );
 
   const { data: versions } = useFindManyRepositoryCaseVersions({
     where: { repositoryCaseId: Number(caseId) },
@@ -1582,7 +1587,7 @@ export default function TestCaseDetails() {
                       render={({ field }: { field: any }) => (
                         <FormItem>
                           <FormLabel className="sr-only">
-                            {t("common.fields.name")}
+                            {t("common.name")}
                           </FormLabel>
                           <FormControl>
                             <Textarea
@@ -1644,7 +1649,7 @@ export default function TestCaseDetails() {
                         >
                           <div className="flex items-center">
                             <CircleSlash2 className="w-5 h-5 mr-2" />
-                            <div>{t("common.actions.cancel")}</div>
+                            <div>{t("common.cancel")}</div>
                           </div>
                         </Button>
                       </div>
@@ -1711,7 +1716,7 @@ export default function TestCaseDetails() {
                                   <SelectTrigger>
                                     <SelectValue
                                       placeholder={t(
-                                        "repository.cases.selectState"
+                                        "common.placeholders.selectState"
                                       )}
                                     />
                                   </SelectTrigger>
@@ -1767,7 +1772,7 @@ export default function TestCaseDetails() {
                                 <SelectTrigger>
                                   <SelectValue
                                     placeholder={t(
-                                      "repository.cases.selectTemplate"
+                                      "common.placeholders.selectTemplate"
                                     )}
                                   />
                                 </SelectTrigger>
@@ -1820,9 +1825,7 @@ export default function TestCaseDetails() {
               >
                 <div className="mb-4">
                   <ul>
-                    {(
-                      testcase?.template?.caseFields || []
-                    ).map((field) => {
+                    {(testcase?.template?.caseFields || []).map((field) => {
                       let fieldValue = testcase.caseFieldValues.find(
                         (value) => value.fieldId === field.caseField.id
                       )?.value;
@@ -1972,8 +1975,8 @@ export default function TestCaseDetails() {
                     <TooltipContent>
                       <div>
                         {isCollapsedLeft
-                          ? t("repository.cases.panels.expandLeft")
-                          : t("repository.cases.panels.collapseLeft")}
+                          ? t("common.actions.expandLeftPanel")
+                          : t("common.actions.collapseLeftPanel")}
                       </div>
                     </TooltipContent>
                   </Tooltip>
@@ -2003,8 +2006,8 @@ export default function TestCaseDetails() {
                     <TooltipContent>
                       <div>
                         {isCollapsedRight
-                          ? t("repository.cases.panels.expandRight")
-                          : t("repository.cases.panels.collapseRight")}
+                          ? t("common.actions.expandRightPanel")
+                          : t("common.actions.collapseRightPanel")}
                       </div>
                     </TooltipContent>
                   </Tooltip>

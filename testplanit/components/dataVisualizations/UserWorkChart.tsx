@@ -17,7 +17,7 @@ const UserWorkChart: React.FC<UserWorkChartProps> = ({
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { width, height } = useResponsiveSVG(containerRef);
-  const t = useTranslations();
+  const tGlobal = useTranslations();
 
   useEffect(() => {
     if (data && data.length > 0 && svgRef.current && width > 0 && height > 0) {
@@ -65,7 +65,7 @@ const UserWorkChart: React.FC<UserWorkChartProps> = ({
         .attr("text-anchor", "end")
         .attr("x", chartWidth / 2 + margin.left)
         .attr("y", chartHeight + margin.top + 40)
-        .text(t("charts.duration"));
+        .text(tGlobal("common.fields.duration"));
 
       g.append("g").call(d3.axisLeft(y));
 
@@ -155,7 +155,7 @@ const UserWorkChart: React.FC<UserWorkChartProps> = ({
         });
       });
     }
-  }, [data, width, height, locale, t]);
+  }, [data, width, height, locale, tGlobal]);
 
   return (
     <div ref={containerRef} style={{ width: "100%", height: "350px" }}>

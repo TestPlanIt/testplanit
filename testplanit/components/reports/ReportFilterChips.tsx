@@ -26,6 +26,7 @@ export function ReportFilterChips({
   onClearAll,
 }: ReportFilterChipsProps) {
   const tReports = useTranslations("reports.ui");
+  const tGlobal = useTranslations();
 
   if (activeFilters.length === 0) return null;
 
@@ -67,7 +68,7 @@ export function ReportFilterChips({
           className="h-6 text-xs"
           onClick={onClearAll}
         >
-          {tReports("clearAllFilters")}
+          {tGlobal("common.actions.clearAll")}
         </Button>
       )}
     </div>

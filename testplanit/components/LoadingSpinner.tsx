@@ -11,7 +11,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   className,
   delay = 500,
 }) => {
-  const t = useTranslations("common.status");
+  const t = useTranslations("common");
   const [show, setShow] = useState(false);
 
   useEffect(() => {

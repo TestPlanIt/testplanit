@@ -239,7 +239,7 @@ export function TwoFactorSettings({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Shield className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">{t("users.profile.twoFactor.label")}</span>
+          <span className="text-sm">{t("auth.signin.twoFactor.title")}</span>
         </div>
         <Switch checked={twoFactorEnabled} disabled />
       </div>
@@ -261,7 +261,7 @@ export function TwoFactorSettings({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Shield className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm">{t("users.profile.twoFactor.label")}</span>
+          <span className="text-sm">{t("auth.signin.twoFactor.title")}</span>
         </div>
         <div className="flex items-center gap-2">
           {twoFactorEnabled && (
@@ -318,11 +318,11 @@ export function TwoFactorSettings({
             <DialogTitle>
               {backupCodes
                 ? t("users.profile.twoFactor.setup.backupCodesTitle")
-                : t("users.profile.twoFactor.setup.title")}
+                : t("auth.twoFactorSetup.title")}
             </DialogTitle>
             <DialogDescription>
               {backupCodes
-                ? t("users.profile.twoFactor.setup.backupCodesDescription")
+                ? t("auth.twoFactorSetup.backupCodesInfo")
                 : t("users.profile.twoFactor.setup.description")}
             </DialogDescription>
           </DialogHeader>
@@ -347,7 +347,7 @@ export function TwoFactorSettings({
                   </div>
                   <div className="text-center">
                     <p className="text-xs text-muted-foreground mb-1">
-                      {t("users.profile.twoFactor.setup.manualEntry")}
+                      {t("auth.twoFactorSetup.manualEntry")}
                     </p>
                     <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
                       {setupData.secret}
@@ -360,7 +360,7 @@ export function TwoFactorSettings({
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">
-                  {t("users.profile.twoFactor.setup.verifyLabel")}
+                  {t("auth.twoFactorSetup.verifyLabel")}
                 </label>
                 <div className="flex justify-center">
                   <InputOTP
@@ -407,7 +407,7 @@ export function TwoFactorSettings({
                 ) : (
                   <>
                     <Copy className="h-4 w-4 mr-2" />
-                    {t("users.profile.twoFactor.setup.copyCodes")}
+                    {t("auth.twoFactorSetup.copyCodes")}
                   </>
                 )}
               </Button>
@@ -418,7 +418,7 @@ export function TwoFactorSettings({
             {!backupCodes ? (
               <>
                 <Button variant="outline" onClick={closeSetup}>
-                  {t("common.actions.cancel")}
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   onClick={completeSetup}
@@ -427,7 +427,7 @@ export function TwoFactorSettings({
                   {isLoading && (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   )}
-                  {t("users.profile.twoFactor.setup.verify")}
+                  {t("auth.twoFactorSetup.verify")}
                 </Button>
               </>
             ) : (
@@ -513,13 +513,15 @@ export function TwoFactorSettings({
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.actions.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
                 disable2FA();
               }}
-              disabled={isLoading || disableCode.length < (disableUseBackupCode ? 8 : 6)}
+              disabled={
+                isLoading || disableCode.length < (disableUseBackupCode ? 8 : 6)
+              }
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
@@ -600,7 +602,7 @@ export function TwoFactorSettings({
                 ) : (
                   <>
                     <Copy className="h-4 w-4 mr-2" />
-                    {t("users.profile.twoFactor.setup.copyCodes")}
+                    {t("auth.twoFactorSetup.copyCodes")}
                   </>
                 )}
               </Button>
@@ -611,7 +613,7 @@ export function TwoFactorSettings({
             {!newBackupCodes ? (
               <>
                 <Button variant="outline" onClick={closeRegenerate}>
-                  {t("common.actions.cancel")}
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   onClick={regenerateBackupCodes}

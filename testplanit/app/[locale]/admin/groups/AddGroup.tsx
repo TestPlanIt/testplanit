@@ -44,14 +44,15 @@ import { toast } from "sonner";
 
 const AddGroupFormSchema = z.object({
   name: z.string().min(1, {
-      error: "Group Name is required"
-}),
+    error: "Group Name is required",
+  }),
 });
 
 type AddGroupFormData = z.infer<typeof AddGroupFormSchema>;
 
 export function AddGroupModal() {
   const t = useTranslations("admin.groups");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -131,7 +132,9 @@ export function AddGroupModal() {
       // Invalidate queries to show the new group in the list
       await invalidateModelQueries(queryClient, "Groups");
 
-      toast.success(tCommon("messages.created", { item: t("title") }));
+      toast.success(
+        tCommon("messages.created", { item: tGlobal("common.fields.groups") })
+      );
       setOpen(false);
       reset({ name: "" });
       setAssignedUsers([]);
@@ -163,7 +166,7 @@ export function AddGroupModal() {
         <Button>
           <CirclePlus className="w-4 mr-1" />
           <span className="hidden md:inline">{t("add.button")}</span>
-          <span className="md:hidden">{tCommon("actions.add")}</span>
+          <span className="md:hidden">{tCommon("add")}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[700px]">
@@ -181,7 +184,7 @@ export function AddGroupModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {t("add.name")}
+                    {tCommon("fields.groupName")}
                     <HelpPopover helpKey="group.name" />
                   </FormLabel>
                   <FormControl>
@@ -251,11 +254,11 @@ export function AddGroupModal() {
                 onClick={handleCancel}
                 disabled={isSubmitting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting || usersLoading}>
                 {isSubmitting || usersLoading
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
               </Button>
             </DialogFooter>

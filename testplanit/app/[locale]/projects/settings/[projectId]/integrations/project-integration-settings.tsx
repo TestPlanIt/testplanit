@@ -48,6 +48,7 @@ export function ProjectIntegrationSettings({
   integration,
 }: ProjectIntegrationSettingsProps) {
   const t = useTranslations("projects.settings.integrations");
+  const tGlobal = useTranslations();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
@@ -200,7 +201,7 @@ export function ProjectIntegrationSettings({
           <div className="space-y-2 max-w-48">
             <div className="flex items-center">
               <Label htmlFor="externalProject">
-                {t("integration.externalProject")}
+                {tGlobal("issues.externalProject")}
               </Label>
               <HelpPopover helpKey="projects.settings.integrations.externalProjectHelp" />
             </div>
@@ -267,7 +268,8 @@ export function ProjectIntegrationSettings({
               fetchOptions={async (query, page, pageSize) => {
                 try {
                   // Use the project key from current config state
-                  const projectKey = config.externalProjectKey || config.externalProjectId;
+                  const projectKey =
+                    config.externalProjectKey || config.externalProjectId;
                   if (!projectKey) {
                     return { results: [], total: 0 };
                   }
@@ -341,7 +343,7 @@ export function ProjectIntegrationSettings({
               ) : (
                 <Save className=" h-4 w-4" />
               )}
-              {t("integration.saveSettings")}
+              {tGlobal("admin.notifications.save")}
             </Button>
           </div>
         )}

@@ -108,22 +108,15 @@ export function FieldValueInput({
   onChange,
   projectId,
   workflowsData = [],
-  availableTagsData = [],
-  canCreateTags = false, // Default to false
-  availableIssuesData = [], // Added default for issues
-  canEditRestricted = true, // Default to true
-  fieldIsRestricted = false, // Default to false
+  canCreateTags = false,
+  canEditRestricted = true,
+  fieldIsRestricted = false,
 }: FieldValueInputProps) {
-  // Define translations with correct namespaces
-  const t = useTranslations(); // Default for potentially unique keys
-  const commonT = useTranslations("common");
-  const repositoryT = useTranslations("repository");
-  const bulkEditT = useTranslations("repository.bulkEdit"); // Specific bulk edit keys
-  const locale = useLocale(); // Get locale for date formatting
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false); // State for date picker popover
+  const t = useTranslations();
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isStepsDialogOpen, setIsStepsDialogOpen] = useState(false);
-  const { data: session } = useSession();
-  const userPreferences = session?.user.preferences;
 
   // Create a schema dynamically based on the fieldKey
   const stepsSchema = createStepsSchema(fieldKey);
@@ -161,7 +154,7 @@ export function FieldValueInput({
       <Input
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={repositoryT("fields.name")}
+        placeholder={tCommon("name")}
         disabled={isDisabled}
       />
     );
@@ -191,7 +184,7 @@ export function FieldValueInput({
         disabled={isDisabled}
       >
         <SelectTrigger className="w-full">
-          <SelectValue placeholder={commonT("placeholders.select")} />
+          <SelectValue placeholder={tCommon("placeholders.select")} />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
@@ -216,7 +209,7 @@ export function FieldValueInput({
           disabled={isDisabled}
         />
         <Label htmlFor={`switch-${fieldKey}`}>
-          {value === null ? commonT("no") : commonT("yes")}
+          {value === null ? tCommon("no") : tCommon("yes")}
         </Label>
       </div>
     );
@@ -230,7 +223,7 @@ export function FieldValueInput({
         type="text"
         value={displayValue}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={commonT("placeholders.duration")}
+        placeholder={tCommon("placeholders.duration")}
         disabled={isDisabled}
       />
     );
@@ -263,7 +256,7 @@ export function FieldValueInput({
   // --- Custom Fields ---
   if (!fieldDefinition || !fieldType) {
     // Render a disabled input or placeholder if fieldDefinition is missing for a custom field
-    return <Input disabled placeholder={commonT("errors.error")} />;
+    return <Input disabled placeholder={tCommon("errors.error")} />;
   }
 
   switch (fieldType) {
@@ -282,7 +275,7 @@ export function FieldValueInput({
           disabled={isDisabled}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder={commonT("placeholders.select")} />
+            <SelectValue placeholder={tCommon("placeholders.select")} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
@@ -334,7 +327,7 @@ export function FieldValueInput({
           options={multiSelectOptions}
           isMulti
           styles={customStyles}
-          placeholder={commonT("placeholders.select")}
+          placeholder={tCommon("placeholders.select")}
           isDisabled={isDisabled}
         />
       );
@@ -349,7 +342,7 @@ export function FieldValueInput({
             disabled={isDisabled}
           />
           <Label htmlFor={`switch-${fieldKey}`}>
-            {value === null ? commonT("no") : commonT("yes")}
+            {value === null ? tCommon("no") : tCommon("yes")}
           </Label>
         </div>
       );
@@ -374,7 +367,7 @@ export function FieldValueInput({
                   locale: getDateFnsLocale(locale),
                 })
               ) : (
-                <span>{commonT("placeholders.date")}</span>
+                <span>{tCommon("placeholders.date")}</span>
               )}
             </Button>
           </PopoverTrigger>
@@ -398,7 +391,7 @@ export function FieldValueInput({
           type="url"
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={commonT("editor.enterUrl")}
+          placeholder={tCommon("editor.enterUrl")}
           disabled={isDisabled}
         />
       );
@@ -537,7 +530,7 @@ export function FieldValueInput({
               <DialogFooter>
                 <DialogClose asChild>
                   <Button type="button" variant="outline">
-                    {commonT("actions.cancel")}
+                    {tCommon("cancel")}
                   </Button>
                 </DialogClose>
                 <Button type="submit" form="bulk-steps-form">
@@ -553,7 +546,7 @@ export function FieldValueInput({
               size="sm"
               onClick={() => onChange(null)}
             >
-              {commonT("actions.clear")}
+              {tCommon("actions.clear")}
             </Button>
           )}
         </div>
@@ -564,7 +557,7 @@ export function FieldValueInput({
       return (
         <Input
           disabled
-          value={`${commonT("errors.unsupportedFieldType")}: ${fieldType}`}
+          value={`${tCommon("errors.unsupportedFieldType")}: ${fieldType}`}
         />
       );
   }

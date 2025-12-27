@@ -114,7 +114,7 @@ export function DeleteAppConfigModal({ config }: DeleteAppConfigModalProps) {
                 onClick={handleCancel}
                 disabled={isSubmitting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 type="button"
@@ -122,7 +122,9 @@ export function DeleteAppConfigModal({ config }: DeleteAppConfigModalProps) {
                 disabled={isSubmitting}
                 className="bg-destructive hover:bg-destructive/90"
               >
-                {isSubmitting ? tCommon("status.deleting") : "Delete"}
+                {isSubmitting
+                  ? tCommon("actions.deleting")
+                  : tCommon("actions.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </form>

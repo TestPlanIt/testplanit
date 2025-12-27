@@ -45,7 +45,14 @@ import {
 const createFormSchema = (t: any) =>
   z.object({
     name: z.string().min(1, t("validation.nameRequired")),
-    provider: z.enum(["OPENAI", "ANTHROPIC", "AZURE_OPENAI", "GEMINI", "OLLAMA", "CUSTOM_LLM"] as const),
+    provider: z.enum([
+      "OPENAI",
+      "ANTHROPIC",
+      "AZURE_OPENAI",
+      "GEMINI",
+      "OLLAMA",
+      "CUSTOM_LLM",
+    ] as const),
     apiKey: z.string().optional(),
     endpoint: z.string().optional(),
     deploymentName: z.string().optional(),
@@ -146,6 +153,10 @@ export function AddLlmIntegration({
   onSuccess,
 }: AddLlmIntegrationProps) {
   const t = useTranslations("admin.llm.add");
+  const tGlobal = useTranslations();
+  const tCommon = useTranslations("common");
+  const tIntegrations = useTranslations("admin.integrations");
+  const tLlm = useTranslations("admin.llm");
   const [loading, setLoading] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
@@ -302,16 +313,16 @@ export function AddLlmIntegration({
       const data = await response.json();
 
       if (data.success) {
-        toast.success(t("connectionSuccessful"), {
+        toast.success(tIntegrations("testSuccess"), {
           description: t("connectionSuccessfulDescription"),
         });
       } else {
-        toast.error(t("connectionFailed"), {
+        toast.error(tIntegrations("testFailed"), {
           description: data.error || t("failedToConnect"),
         });
       }
     } catch (error) {
-      toast.error(t("connectionFailed"), {
+      toast.error(tIntegrations("testFailed"), {
         description:
           error instanceof Error ? error.message : t("failedToConnect"),
       });
@@ -382,7 +393,7 @@ export function AddLlmIntegration({
           },
         });
 
-        toast.success(t("success"), {
+        toast.success(tCommon("fields.success"), {
           description: t("integrationCreated"),
         });
         onSuccess();
@@ -411,7 +422,7 @@ export function AddLlmIntegration({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("integrationName")}</FormLabel>
+                  <FormLabel>{tIntegrations("config.name")}</FormLabel>
                   <FormControl>
                     <Input
                       placeholder={t("integrationNamePlaceholder")}
@@ -428,7 +439,7 @@ export function AddLlmIntegration({
               name="provider"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("provider")}</FormLabel>
+                  <FormLabel>{tCommon("fields.provider")}</FormLabel>
                   <Select
                     onValueChange={(value) => {
                       field.onChange(value);
@@ -443,8 +454,12 @@ export function AddLlmIntegration({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="OPENAI">{t("openai")}</SelectItem>
-                      <SelectItem value="ANTHROPIC">{t("anthropic")}</SelectItem>
-                      <SelectItem value="AZURE_OPENAI">{t("azureOpenai")}</SelectItem>
+                      <SelectItem value="ANTHROPIC">
+                        {t("anthropic")}
+                      </SelectItem>
+                      <SelectItem value="AZURE_OPENAI">
+                        {t("azureOpenai")}
+                      </SelectItem>
                       <SelectItem value="GEMINI">{t("gemini")}</SelectItem>
                       <SelectItem value="OLLAMA">{t("ollama")}</SelectItem>
                       <SelectItem value="CUSTOM_LLM">
@@ -463,7 +478,7 @@ export function AddLlmIntegration({
                 name="apiKey"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("apiKey")}</FormLabel>
+                    <FormLabel>{tIntegrations("authType.api_key")}</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
@@ -521,7 +536,7 @@ export function AddLlmIntegration({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center justify-between">
-                    {t("defaultModel")}
+                    {tLlm("defaultModel")}
                     {PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) &&
                       fetchingModels && (
                         <div className="flex items-center text-sm text-muted-foreground">
@@ -569,8 +584,8 @@ export function AddLlmIntegration({
                         {provider === "GEMINI"
                           ? "Enter your API key and endpoint above. Models will be fetched automatically."
                           : provider === "OPENAI"
-                          ? "Enter your API key above. We'll fetch the available models automatically."
-                          : "Models will be fetched automatically from your Ollama instance."}
+                            ? "Enter your API key above. We'll fetch the available models automatically."
+                            : "Models will be fetched automatically from your Ollama instance."}
                       </FormDescription>
                     )}
                   {!PROVIDERS_WITH_DYNAMIC_MODELS.includes(provider) && (
@@ -816,14 +831,14 @@ export function AddLlmIntegration({
                 {testingConnection && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}
-                {t("testConnection")}
+                {tIntegrations("testConnection")}
               </Button>
               <Button type="button" variant="outline" onClick={onClose}>
-                {t("cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t("create")}
+                {tCommon("actions.create")}
               </Button>
             </DialogFooter>
           </form>

@@ -81,9 +81,9 @@ const CompletedRunsLineChart: React.FC<CompletedRunsLineChartProps> = ({
       .padding(0.5); // Add padding for points
 
     // Calculate max value across all series
-    const maxValue = d3.max(data, (d) =>
-      Math.max(d.count, d.manual || 0, d.automated || 0)
-    ) || 1;
+    const maxValue =
+      d3.max(data, (d) => Math.max(d.count, d.manual || 0, d.automated || 0)) ||
+      1;
 
     const yScale = d3
       .scaleLinear()
@@ -149,9 +149,21 @@ const CompletedRunsLineChart: React.FC<CompletedRunsLineChartProps> = ({
 
     // --- Draw three lines: manual, automated, total ---
     const series = [
-      { key: "manual" as const, color: colors.manual, accessor: (d: MonthlyCount) => d.manual || 0 },
-      { key: "automated" as const, color: colors.automated, accessor: (d: MonthlyCount) => d.automated || 0 },
-      { key: "total" as const, color: colors.total, accessor: (d: MonthlyCount) => d.count },
+      {
+        key: "manual" as const,
+        color: colors.manual,
+        accessor: (d: MonthlyCount) => d.manual || 0,
+      },
+      {
+        key: "automated" as const,
+        color: colors.automated,
+        accessor: (d: MonthlyCount) => d.automated || 0,
+      },
+      {
+        key: "total" as const,
+        color: colors.total,
+        accessor: (d: MonthlyCount) => d.count,
+      },
     ];
 
     series.forEach(({ key, color, accessor }) => {
@@ -204,8 +216,8 @@ const CompletedRunsLineChart: React.FC<CompletedRunsLineChartProps> = ({
             const monthName = d3.timeFormat("%B %Y")(date); // Full month name + year
             tooltipRef.current.innerHTML = `
               <strong>${monthName}</strong><br/>
-              <span style="color: ${colors.manual}">● ${t("runs.typeFilter.manual")}: ${d.manual || 0}</span><br/>
-              <span style="color: ${colors.automated}">● ${t("runs.typeFilter.automated")}: ${d.automated || 0}</span><br/>
+              <span style="color: ${colors.manual}">● ${t("common.fields.manual")}: ${d.manual || 0}</span><br/>
+              <span style="color: ${colors.automated}">● ${t("common.fields.automated")}: ${d.automated || 0}</span><br/>
               <span style="color: ${colors.total}">● ${t("common.labels.total")}: ${d.count}</span>
             `;
           }
@@ -230,8 +242,16 @@ const CompletedRunsLineChart: React.FC<CompletedRunsLineChartProps> = ({
 
     // --- Add Legend ---
     const legendData = [
-      { key: "manual", label: t("runs.typeFilter.manual"), color: colors.manual },
-      { key: "automated", label: t("runs.typeFilter.automated"), color: colors.automated },
+      {
+        key: "manual",
+        label: t("common.fields.manual"),
+        color: colors.manual,
+      },
+      {
+        key: "automated",
+        label: t("common.fields.automated"),
+        color: colors.automated,
+      },
       { key: "total", label: t("common.labels.total"), color: colors.total },
     ];
 

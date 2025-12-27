@@ -42,6 +42,7 @@ type AddTagFormData = z.infer<typeof AddTagSchema>;
 
 export function AddTagModal() {
   const t = useTranslations("admin.tags.add");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -92,16 +93,16 @@ export function AddTagModal() {
       <DialogTrigger asChild>
         <Button>
           <CirclePlus className="w-4" />
-          <span className="hidden md:inline">{t("button")}</span>
+          <span className="hidden md:inline">{tGlobal("tags.add.button")}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
-              <DialogTitle>{t("title")}</DialogTitle>
+              <DialogTitle>{tGlobal("tags.add.title")}</DialogTitle>
               <DialogDescription className="sr-only">
-                {t("title")}
+                {tGlobal("tags.add.title")}
               </DialogDescription>
             </DialogHeader>
             <FormField
@@ -110,11 +111,11 @@ export function AddTagModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="tag.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder={tCommon("fields.name")} {...field} />
+                    <Input placeholder={tCommon("name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -130,11 +131,11 @@ export function AddTagModal() {
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
               </Button>
             </DialogFooter>

@@ -206,7 +206,7 @@ export default function ProjectDocumentation({
                       </div>
                       <div>
                         {t("common.actions.edit")}{" "}
-                        {t("navigation.projects.menu.documentation")}
+                        {t("common.fields.documentation")}
                       </div>
                     </div>
                   </Button>
@@ -229,7 +229,7 @@ export default function ProjectDocumentation({
           onUpdate={isEditing ? handleUpdate : undefined}
           readOnly={!isEditing}
           className="h-auto"
-          placeholder={t("common.placeholders.documentation")}
+          placeholder={t("common.placeholders.docs")}
           projectId={projectId}
         />
         {isEditing && (
@@ -243,7 +243,7 @@ export default function ProjectDocumentation({
             <Button variant="outline" onClick={handleCancelEdit}>
               <div className="flex items-center">
                 <CircleSlash2 className="w-5 h-5 mr-2" />
-                <div>{t("common.actions.cancel")}</div>
+                <div>{t("common.cancel")}</div>
               </div>
             </Button>
           </div>

@@ -568,7 +568,7 @@ export function CreateIssueJiraForm({
                   {isLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  {t("issues.create")}
+                  {t("common.actions.create")}
                 </Button>
               </DialogFooter>
             </form>

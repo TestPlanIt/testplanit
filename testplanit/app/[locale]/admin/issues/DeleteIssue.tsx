@@ -40,6 +40,7 @@ export function DeleteIssueModal({ issue }: DeleteIssueModalProps) {
   } = form;
 
   const t = useTranslations("admin.issues.delete");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   async function onSubmit() {
@@ -83,7 +84,7 @@ export function DeleteIssueModal({ issue }: DeleteIssueModalProps) {
               })}
             </div>
             <div className="bg-destructive text-destructive-foreground p-2">
-              {t("warning")}
+              {tGlobal("runs.delete.warning")}
             </div>
             <AlertDialogFooter>
               {errors.root && (
@@ -95,7 +96,7 @@ export function DeleteIssueModal({ issue }: DeleteIssueModalProps) {
                 </div>
               )}
               <AlertDialogCancel type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={form.handleSubmit(onSubmit)}
@@ -103,7 +104,7 @@ export function DeleteIssueModal({ issue }: DeleteIssueModalProps) {
                 className="bg-destructive"
               >
                 {isSubmitting
-                  ? tCommon("status.deleting")
+                  ? tCommon("actions.deleting")
                   : tCommon("actions.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>

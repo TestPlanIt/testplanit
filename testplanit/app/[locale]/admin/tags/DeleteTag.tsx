@@ -91,7 +91,7 @@ export function DeleteTagModal({ tag }: DeleteTagModalProps) {
                 </div>
               )}
               <AlertDialogCancel type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={form.handleSubmit(onSubmit)}
@@ -99,7 +99,7 @@ export function DeleteTagModal({ tag }: DeleteTagModalProps) {
                 className="bg-destructive"
               >
                 {isSubmitting
-                  ? tCommon("status.deleting")
+                  ? tCommon("actions.deleting")
                   : tCommon("actions.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>

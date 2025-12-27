@@ -60,6 +60,7 @@ export default function UploadAttachments({
   allowedTypes,
 }: UploadAttachmentsProps) {
   const t = useTranslations("common.upload.attachments");
+  const tGlobal = useTranslations();
   const tBreadcrumb = useTranslations("common.ui.breadcrumb");
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -68,7 +69,9 @@ export default function UploadAttachments({
 
   // Generate unique IDs for file inputs to prevent conflicts when multiple instances exist
   const uniqueId = useId();
-  const fileInputId = compact ? `compact-file-upload-${uniqueId}` : `file-upload-${uniqueId}`;
+  const fileInputId = compact
+    ? `compact-file-upload-${uniqueId}`
+    : `file-upload-${uniqueId}`;
 
   const validateFileType = (file: File): boolean => {
     if (!allowedTypes || allowedTypes.length === 0) {
@@ -96,7 +99,10 @@ export default function UploadAttachments({
     setSelectedFiles((prevFiles) => {
       // Check if file with same name and size already exists to prevent duplicates
       const isDuplicate = prevFiles.some(
-        (f) => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified
+        (f) =>
+          f.name === file.name &&
+          f.size === file.size &&
+          f.lastModified === file.lastModified
       );
       if (isDuplicate) {
         setUploading(false);
@@ -266,10 +272,12 @@ export default function UploadAttachments({
           <CloudUpload className="w-5 h-5 text-primary mr-1" />
           <span className="text-sm truncate inline-block">
             {uploading
-              ? t("uploading")
+              ? tGlobal("common.status.uploading")
               : selectedFiles.length > 0
-              ? truncateFileName(selectedFiles[selectedFiles.length - 1].name)
-              : t("selectFiles", { count: selectedFiles.length })}
+                ? truncateFileName(selectedFiles[selectedFiles.length - 1].name)
+                : tGlobal("common.upload.attachments.selectFiles", {
+                    count: selectedFiles.length,
+                  })}
           </span>
         </label>
       </div>
@@ -320,8 +328,10 @@ export default function UploadAttachments({
             <span>
               <CloudUpload className="w-5 h-5 text-primary" />
               {uploading
-                ? t("uploading")
-                : t("selectFiles", { count: selectedFiles.length })}
+                ? tGlobal("common.status.uploading")
+                : tGlobal("common.upload.attachments.selectFiles", {
+                    count: selectedFiles.length,
+                  })}
             </span>
           </Button>
         </label>
@@ -341,7 +351,7 @@ export default function UploadAttachments({
                       onClick={() => removeFile(index)}
                     >
                       <XCircle className="w-6 h-6 text-destructive" />
-                      {t("cancel")}
+                      {tGlobal("common.cancel")}
                     </button>
                   </div>
                   <div className="w-[100px] lg:w-[150px]">
@@ -365,7 +375,7 @@ export default function UploadAttachments({
                   <button
                     type="button"
                     onClick={() => removeFile(index)}
-                    aria-label={t("cancel")}
+                    aria-label={tGlobal("common.cancel")}
                   >
                     <XCircle className="w-5 h-5 text-destructive" />
                   </button>

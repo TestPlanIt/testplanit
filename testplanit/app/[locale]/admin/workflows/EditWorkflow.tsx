@@ -62,11 +62,11 @@ const scopeKeys = Object.keys(scopeDisplayData) as [
 ];
 
 const getWorkflowTypeOptions = (
-  t: ReturnType<typeof useTranslations<"admin.workflows">>
+  tWorkflowTypes: ReturnType<typeof useTranslations<"enums.WorkflowType">>
 ) => [
-  { value: WorkflowType.NOT_STARTED, label: t("types.NOT_STARTED") },
-  { value: WorkflowType.IN_PROGRESS, label: t("types.IN_PROGRESS") },
-  { value: WorkflowType.DONE, label: t("types.DONE") },
+  { value: WorkflowType.NOT_STARTED, label: tWorkflowTypes("NOT_STARTED") },
+  { value: WorkflowType.IN_PROGRESS, label: tWorkflowTypes("IN_PROGRESS") },
+  { value: WorkflowType.DONE, label: tWorkflowTypes("DONE") },
 ];
 
 interface ExtendedWorkflows extends Workflows {
@@ -157,7 +157,9 @@ export function EditWorkflowsModal({
 
   const t = useTranslations("admin.workflows");
   const tCommon = useTranslations("common");
-  const workflowTypeOptions = getWorkflowTypeOptions(t);
+  const tGlobal = useTranslations();
+  const tWorkflowTypes = useTranslations("enums.WorkflowType");
+  const workflowTypeOptions = getWorkflowTypeOptions(tWorkflowTypes);
 
   const FormSchema = z.object({
     scope: z.enum(scopeKeys, {
@@ -306,7 +308,7 @@ export function EditWorkflowsModal({
                           >
                             <SelectTrigger>
                               <SelectValue
-                                placeholder={t("fields.selectWorkflow")}
+                                placeholder={tCommon("fields.selectWorkflow")}
                               />
                             </SelectTrigger>
                             <SelectContent>
@@ -335,7 +337,7 @@ export function EditWorkflowsModal({
             <div>
               <div className=" w-16 h-full">
                 <FormLabel className="whitespace-nowrap flex items-center">
-                  {t("fields.iconColor")}
+                  {tCommon("fields.iconColor")}
                   <HelpPopover helpKey="workflow.iconColor" />
                 </FormLabel>
                 <FieldIconPicker
@@ -354,11 +356,11 @@ export function EditWorkflowsModal({
                   <div className="flex items-center gap-2">
                     <div className="w-full">
                       <FormLabel className="flex items-center">
-                        {t("fields.name")}
+                        {tCommon("name")}
                         <HelpPopover helpKey="workflow.name" />
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder={t("fields.name")} {...field} />
+                        <Input placeholder={tCommon("name")} {...field} />
                       </FormControl>
                     </div>
                   </div>
@@ -372,7 +374,7 @@ export function EditWorkflowsModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {t("fields.type")}
+                    {tCommon("fields.type")}
                     <HelpPopover helpKey="workflow.type" />
                   </FormLabel>
                   <Select
@@ -419,13 +421,15 @@ export function EditWorkflowsModal({
                       />
                     </FormControl>
                     <FormLabel className="flex items-center">
-                      {t("fields.default")}
+                      {tCommon("fields.default")}
                       <HelpPopover helpKey="workflow.isDefault" />
                     </FormLabel>
                     <FormMessage />
                   </div>
                   {form.watch("isDefault") && (
-                    <FormMessage>{t("edit.defaultHelp")}</FormMessage>
+                    <FormMessage>
+                      {tGlobal("admin.workflows.add.defaultHelp")}
+                    </FormMessage>
                   )}
                 </FormItem>
               )}
@@ -444,7 +448,7 @@ export function EditWorkflowsModal({
                       />
                     </FormControl>
                     <FormLabel className="flex items-center">
-                      {t("fields.enabled")}
+                      {tCommon("fields.enabled")}
                       <HelpPopover helpKey="workflow.isEnabled" />
                     </FormLabel>
                     <FormMessage />
@@ -460,7 +464,7 @@ export function EditWorkflowsModal({
                 <FormItem>
                   <FormLabel className="flex justify-between items-center">
                     <span className="flex items-center">
-                      {t("fields.projects")}
+                      {tCommon("fields.projects")}
                       <HelpPopover helpKey="workflow.projects" />
                     </span>
                     <div
@@ -508,16 +512,16 @@ export function EditWorkflowsModal({
                   role="alert"
                 >
                   {errors.root.type === "nameExists"
-                    ? t("edit.errors.nameExists")
-                    : t("edit.errors.unknown")}
+                    ? tGlobal("admin.workflows.add.errors.nameExists")
+                    : tGlobal("common.errors.unknown")}
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
               </Button>
             </DialogFooter>

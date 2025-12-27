@@ -21,6 +21,7 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [openPopover, setOpenPopover] = useState(false);
   const t = useTranslations("users.avatar");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   async function onRemove() {
     setIsLoading(true);
@@ -52,7 +53,7 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-fit" side="bottom">
-        {t("delete.confirmMessage", {
+        {tGlobal("users.profile.edit.deleteAvatarConfirm", {
           name: tCommon("fields.avatar"),
         })}
         <div className="flex items-start justify-between gap-4 mt-2">
@@ -65,7 +66,7 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
               disabled={isLoading}
             >
               <CircleSlash2 className="h-4 w-4 mr-1" />{" "}
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </Button>
           </div>
           <div className="flex items-center">

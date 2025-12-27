@@ -132,9 +132,9 @@ export function CompleteSessionDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("sessions.completeDialog.title")}</DialogTitle>
+            <DialogTitle>{t("sessions.actions.complete")}</DialogTitle>
             <DialogDescription className="sr-only">
-              {t("sessions.completeDialog.title")}
+              {t("sessions.actions.complete")}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -216,11 +216,11 @@ export function CompleteSessionDialog({
               <div>
                 <CircleCheckBig className="h-6 w-6 shrink-0" />
               </div>
-              <div>{t("sessions.complete.title")}</div>
+              <div>{t("sessions.actions.complete")}</div>
             </div>
           </DialogTitle>
           <DialogDescription className="sr-only">
-            {t("sessions.complete.title")}
+            {t("sessions.actions.complete")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -230,7 +230,7 @@ export function CompleteSessionDialog({
 
           <div className="space-y-2">
             <label className="text-sm font-medium">
-              {t("sessions.complete.fields.state")}
+              {t("common.fields.state")}
             </label>
             <Select
               value={selectedStateId.toString()}
@@ -238,7 +238,7 @@ export function CompleteSessionDialog({
             >
               <SelectTrigger>
                 <SelectValue
-                  placeholder={t("sessions.complete.placeholders.selectState")}
+                  placeholder={t("common.placeholders.selectState")}
                 />
               </SelectTrigger>
               <SelectContent>
@@ -301,14 +301,14 @@ export function CompleteSessionDialog({
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
-            {t("sessions.complete.actions.cancel")}
+            {t("common.cancel")}
           </Button>
           <Button
             variant="destructive"
             onClick={handleComplete}
             disabled={isSubmitting}
           >
-            {t("sessions.complete.actions.complete")}
+            {t("sessions.actions.complete")}
           </Button>
         </DialogFooter>
       </DialogContent>

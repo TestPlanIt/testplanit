@@ -336,7 +336,7 @@ export function CustomFieldFilters({
             type="number"
             value={filter.value}
             onChange={(e) => updateFilter(index, { value: e.target.value })}
-            placeholder={t("search.enterValue")}
+            placeholder={t("common.fields.placeholders.value")}
             step={fieldType === "Integer" ? "1" : "0.01"}
           />
         );
@@ -346,7 +346,7 @@ export function CustomFieldFilters({
           <Input
             value={filter.value}
             onChange={(e) => updateFilter(index, { value: e.target.value })}
-            placeholder={t("search.enterValue")}
+            placeholder={t("common.fields.placeholders.value")}
           />
         );
     }

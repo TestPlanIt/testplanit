@@ -424,7 +424,7 @@ function TagList() {
         <CardHeader>
           <CardTitle>
             <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-              <CardTitle>{t("common.labels.tags")}</CardTitle>
+              <CardTitle>{t("common.fields.tags")}</CardTitle>
             </div>
           </CardTitle>
           <CardDescription className="uppercase">

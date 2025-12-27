@@ -93,6 +93,7 @@ export function TestRunCaseDetails({
   isCompleted = false,
 }: TestRunCaseDetailsProps) {
   const t = useTranslations("runs.details");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session } = useSession();
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
@@ -842,7 +843,7 @@ export function TestRunCaseDetails({
                     <UserNameCell userId={user.id} hideLink />
                   )}
                   getOptionValue={(user) => user.id}
-                  placeholder={t("selectUser")}
+                  placeholder={tGlobal("sessions.placeholders.selectUser")}
                   disabled={isDisabled}
                   className="h-8 w-[200px] bg-background"
                   pageSize={20}

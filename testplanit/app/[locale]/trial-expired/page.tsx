@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function TrialExpiredPage() {
   const t = useTranslations("TrialExpired");
+  const tGlobal = useTranslations();
 
   const contactEmail =
     process.env.NEXT_PUBLIC_CONTACT_EMAIL || "sales@testplanit.com";
@@ -41,7 +42,7 @@ export default function TrialExpiredPage() {
               <Link href={websiteUrl}>{t("pricingPlans")}</Link>
             </Button>
             <Button asChild size="lg">
-              <Link href={`mailto:${contactEmail}`}>{t("contactButton")}</Link>
+              <Link href={`mailto:${contactEmail}`}>{tGlobal("Trial.contactSales")}</Link>
             </Button>
           </div>
         </CardContent>

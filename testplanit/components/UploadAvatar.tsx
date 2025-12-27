@@ -23,6 +23,7 @@ export default function UploadAvatar({ onUpload }: UploadAvatarProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const t = useTranslations("users.avatar");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const handleFileRead = async (file: File) => {
     try {
@@ -85,8 +86,8 @@ export default function UploadAvatar({ onUpload }: UploadAvatarProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("upload.title")}</CardTitle>
-        <CardDescription>{t("upload.description")}</CardDescription>
+        <CardTitle>{tGlobal("common.upload.title")}</CardTitle>
+        <CardDescription>{tGlobal("common.upload.description")}</CardDescription>
       </CardHeader>
       <CardContent
         className={`flex flex-col items-center justify-center border-2 ${

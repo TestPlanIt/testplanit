@@ -539,7 +539,7 @@ export function UnifiedSearch({
       return (
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-2">
-            {t("search.results.noResults")}
+            {t("common.labels.noResults")}
           </p>
           <p className="text-sm text-muted-foreground">
             {t("search.results.tryAdjusting")}
@@ -622,7 +622,7 @@ export function UnifiedSearch({
           <div className="mt-4 space-y-2">
             {filteredHits.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <p>{t("search.results.noResults")}</p>
+                <p>{t("common.labels.noResults")}</p>
               </div>
             ) : (
               filteredHits.map((hit) => (
@@ -775,7 +775,7 @@ export function UnifiedSearch({
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{t("search.results.searchingFor")}</span>
             <Badge variant="secondary">{`"${query}"`}</Badge>
-            <span>{t("search.results.in")}</span>
+            <span>{t("common.in")}</span>
             <Badge variant="secondary">{selectedEntitiesText}</Badge>
             {currentProjectOnly && searchContext.projectId && (
               <>
@@ -830,9 +830,9 @@ export function UnifiedSearch({
             {totalPagesForTab > 1 && (
               <div className="mt-6 flex items-center justify-between">
                 <div className="text-sm text-muted-foreground">
-                  {t("search.results.showing")} {showingFromForTab}-
-                  {showingToForTab} {t("search.results.of")} {totalForTab}{" "}
-                  {t("search.results.results")}
+                  {t("common.pagination.showing")} {showingFromForTab}-
+                  {showingToForTab} {t("common.of")} {totalForTab}{" "}
+                  {t("common.results")}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -869,7 +869,7 @@ export function UnifiedSearch({
                       className="w-16 h-9 text-center"
                     />
                     <span className="text-sm">
-                      {t("search.results.of")} {totalPagesForTab}
+                      {t("common.of")} {totalPagesForTab}
                     </span>
                   </div>
 
@@ -897,7 +897,7 @@ export function UnifiedSearch({
 
         {!loading && !error && !results && !isFirstSearch && (
           <div className="text-center py-12 text-muted-foreground">
-            <p>{t("search.results.noResults")}</p>
+            <p>{t("common.labels.noResults")}</p>
           </div>
         )}
 
@@ -1083,8 +1083,8 @@ function SearchResultCard({
                 hit.source.isCompleted !== undefined && (
                   <StatusBadge
                     isCompleted={hit.source.isCompleted}
-                    completedText={t("common.status.completed")}
-                    activeText={t("common.status.active")}
+                    completedText={t("common.fields.completed")}
+                    activeText={t("common.fields.isActive")}
                   />
                 ),
                 hit.source.elapsed && (
@@ -1148,8 +1148,8 @@ function SearchResultCard({
                 hit.source.isCompleted !== undefined && (
                   <StatusBadge
                     isCompleted={hit.source.isCompleted}
-                    completedText={t("common.status.completed")}
-                    activeText={t("common.status.active")}
+                    completedText={t("common.fields.completed")}
+                    activeText={t("common.fields.isActive")}
                   />
                 ),
                 hit.source.estimate && (
@@ -1242,8 +1242,8 @@ function SearchResultCard({
                 hit.source.isCompleted !== undefined && (
                   <StatusBadge
                     isCompleted={hit.source.isCompleted}
-                    completedText={t("common.status.completed")}
-                    activeText={t("common.status.active")}
+                    completedText={t("common.fields.completed")}
+                    activeText={t("common.fields.isActive")}
                   />
                 ),
                 hit.source.dueDate && (

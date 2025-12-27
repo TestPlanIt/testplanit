@@ -95,15 +95,13 @@ function Tags() {
 
     const relations = (
       ["repositoryCases", "sessions", "testRuns"] as const
-    ).map(
-      (relation) => ({
-        [relation]: {
-          some: {
-            isDeleted: false,
-          },
+    ).map((relation) => ({
+      [relation]: {
+        some: {
+          isDeleted: false,
         },
-      })
-    );
+      },
+    }));
 
     return {
       ...baseWhere,
@@ -141,9 +139,7 @@ function Tags() {
         }
       : undefined,
     {
-      enabled:
-        !!tagsWhere &&
-        status === "authenticated",
+      enabled: !!tagsWhere && status === "authenticated",
     }
   );
 
@@ -154,24 +150,32 @@ function Tags() {
         }
       : undefined,
     {
-      enabled:
-        !!tagsWhere &&
-        status === "authenticated",
+      enabled: !!tagsWhere && status === "authenticated",
     }
   );
 
   // Fetch counts and projects separately to avoid bind variable explosion
-  const [tagCounts, setTagCounts] = useState<Record<number, {
-    repositoryCases: number;
-    sessions: number;
-    testRuns: number;
-  }>>({});
+  const [tagCounts, setTagCounts] = useState<
+    Record<
+      number,
+      {
+        repositoryCases: number;
+        sessions: number;
+        testRuns: number;
+      }
+    >
+  >({});
 
-  const [tagProjects, setTagProjects] = useState<Record<number, Array<{
-    id: number;
-    name: string;
-    iconUrl: string | null;
-  }>>>({});
+  const [tagProjects, setTagProjects] = useState<
+    Record<
+      number,
+      Array<{
+        id: number;
+        name: string;
+        iconUrl: string | null;
+      }>
+    >
+  >({});
 
   const [isLoadingCounts, setIsLoadingCounts] = useState(false);
 
@@ -183,7 +187,7 @@ function Tags() {
       return;
     }
 
-    const tagIds = tags.map(t => t.id);
+    const tagIds = tags.map((t) => t.id);
 
     const fetchCountsAndProjects = async () => {
       setIsLoadingCounts(true);
@@ -275,13 +279,16 @@ function Tags() {
     }
   }, [status, session, router]);
 
-  const columns = getColumns({
-    name: t("common.fields.name"),
-    testCases: t("common.fields.testCases"),
-    sessions: t("common.fields.sessions"),
-    testRuns: t("common.fields.testRuns"),
-    projects: t("common.fields.projects"),
-  }, isLoadingCounts);
+  const columns = getColumns(
+    {
+      name: t("common.name"),
+      testCases: t("common.fields.testCases"),
+      sessions: t("common.fields.sessions"),
+      testRuns: t("common.fields.testRuns"),
+      projects: t("common.fields.projects"),
+    },
+    isLoadingCounts
+  );
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
@@ -305,7 +312,7 @@ function Tags() {
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
-              <CardTitle>{t("tags.title")}</CardTitle>
+              <CardTitle>{t("enums.ApplicationArea.Tags")}</CardTitle>
             </div>
           </div>
           <CardDescription>{t("tags.description")}</CardDescription>
@@ -357,9 +364,7 @@ function Tags() {
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              isLoading={
-                isLoadingTags || !tagsWhere
-              }
+              isLoading={isLoadingTags || !tagsWhere}
               pageSize={effectivePageSize}
             />
           </div>

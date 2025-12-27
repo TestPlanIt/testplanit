@@ -57,6 +57,7 @@ export function EditMilestoneTypeModal({
   milestoneType,
 }: EditMilestoneTypeModalProps) {
   const t = useTranslations("admin.milestones.edit");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const [open, setOpen] = useState(false);
@@ -67,7 +68,7 @@ export function EditMilestoneTypeModal({
 
   const FormSchema = z.object({
     name: z.string().min(2, {
-        error: "Milestone Type name must be at least 2 characters."
+      error: "Milestone Type name must be at least 2 characters.",
     }),
     isDefault: z.boolean(),
     projects: z.array(z.number()).optional(),
@@ -231,11 +232,11 @@ export function EditMilestoneTypeModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="milestoneType.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder={tCommon("fields.name")} {...field} />
+                    <Input placeholder={tCommon("name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -252,7 +253,7 @@ export function EditMilestoneTypeModal({
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <FormLabel className="flex items-center !mt-0">
+                  <FormLabel className="flex items-center mt-0!">
                     {tCommon("fields.default")}
                     <HelpPopover helpKey="milestoneType.isDefault" />
                   </FormLabel>
@@ -260,9 +261,13 @@ export function EditMilestoneTypeModal({
                     <div>
                       <Alert>
                         <TriangleAlert className="w-8 h-8 -mx-2" />
-                        <AlertTitle>{t("setDefault.title")}</AlertTitle>
+                        <AlertTitle>
+                          {tGlobal(
+                            "admin.milestones.confirmDefaultDescription"
+                          )}
+                        </AlertTitle>
                         <AlertDescription>
-                          {t("setDefault.description")}
+                          {tGlobal("admin.milestones.warning")}
                         </AlertDescription>
                       </Alert>
                     </div>
@@ -328,11 +333,11 @@ export function EditMilestoneTypeModal({
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
               </Button>
             </DialogFooter>

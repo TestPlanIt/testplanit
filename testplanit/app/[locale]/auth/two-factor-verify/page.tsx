@@ -102,7 +102,7 @@ export default function TwoFactorVerifyPage() {
               <label className="text-sm font-medium">
                 {useBackupCode
                   ? t("auth.twoFactorVerify.backupCodeLabel")
-                  : t("auth.twoFactorVerify.codeLabel")}
+                  : t("auth.twoFactorSetup.verifyLabel")}
               </label>
               {useBackupCode ? (
                 <Input
@@ -161,7 +161,7 @@ export default function TwoFactorVerifyPage() {
               disabled={isLoading || verificationCode.length < (useBackupCode ? 8 : 6)}
             >
               {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {t("auth.twoFactorVerify.verify")}
+              {t("common.actions.verify")}
             </Button>
 
             <div className="text-center">

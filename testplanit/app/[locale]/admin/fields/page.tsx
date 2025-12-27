@@ -18,6 +18,7 @@ export default function Fields() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const t = useTranslations("admin.templates");
+  const tGlobal = useTranslations();
 
   if (status !== "loading" && !session) {
     router.push("/");
@@ -31,7 +32,7 @@ export default function Fields() {
         <Card>
           <CardHeader>
             <div className="text-primary text-2xl md:text-4xl">
-              <CardTitle>{t("title")}</CardTitle>
+              <CardTitle>{tGlobal("common.labels.templates")}</CardTitle>
               <CardDescription>{t("description")}</CardDescription>
             </div>
           </CardHeader>

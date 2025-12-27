@@ -296,7 +296,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                     <div className="text-left space-y-2 min-w-[50px] w-full">
                       {/* Name field - editable in deferred mode */}
                       <div className="text-sm">
-                        <strong>{t("common.fields.name")}</strong>
+                        <strong>{t("common.name")}</strong>
                         {deferredMode && !preventEditing ? (
                           <input
                             type="text"
@@ -314,7 +314,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                               }));
                             }}
                             className="w-full mt-1 px-2 py-1 text-sm border rounded-md bg-background"
-                            aria-label={t("common.fields.name")}
+                            aria-label={t("common.name")}
                           />
                         ) : (
                           <div className="truncate">{displayValues.name}</div>
@@ -338,11 +338,13 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                               }));
                             }}
                             className="w-full mt-1 text-sm min-h-[60px]"
-                            placeholder={t("common.placeholders.description")}
+                            placeholder={t(
+                              "common.fields.description_placeholder"
+                            )}
                           />
                         ) : (
                           <div className="w-full min-h-10 max-h-10 overflow-y-auto hover:max-h-24">
-                            {displayValues.note || t("common.labels.none")}
+                            {displayValues.note || t("common.access.none")}
                           </div>
                         )}
                       </div>
@@ -420,7 +422,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                   }
                                 >
                                   <CircleSlash2 className="h-4 w-4 mr-1" />
-                                  {t("common.actions.cancel")}
+                                  {t("common.cancel")}
                                 </Button>
                                 <Button
                                   type="button"
@@ -486,7 +488,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                             <div className="w-full h-20 max-h-24 md:max-h-48 overflow-auto">
                               {prevAttachment.note
                                 ? prevAttachment.note
-                                : t("common.labels.none")}
+                                : t("common.access.none")}
                             </div>
                           </div>
                           <Separator className="w-full" />

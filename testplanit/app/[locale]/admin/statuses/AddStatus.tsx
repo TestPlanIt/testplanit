@@ -14,7 +14,6 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod/v4";
-import { StatusCreateSchema } from "@zenstackhq/runtime/zod/models";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,6 +79,7 @@ const createAddStatusFormSchema = (
 
 export function AddStatusModal() {
   const t = useTranslations("admin.statuses.add");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -273,7 +273,10 @@ export function AddStatusModal() {
           message: t("errors.nameExists"),
         });
       } else {
-        form.setError("root", { type: "custom", message: t("errors.unknown") });
+        form.setError("root", {
+          type: "custom",
+          message: tGlobal("common.errors.unknown"),
+        });
       }
       setIsSubmitting(false);
       return;
@@ -318,14 +321,11 @@ export function AddStatusModal() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center">
-                        {tCommon("fields.name")}
+                        {tCommon("name")}
                         <HelpPopover helpKey="status.name" />
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder={tCommon("fields.name")}
-                          {...field}
-                        />
+                        <Input placeholder={tCommon("name")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -573,15 +573,15 @@ export function AddStatusModal() {
                     ? t("errors.nameExists")
                     : errors.root.type === "manual"
                       ? t("errors.missingColor")
-                      : t("errors.unknown")}
+                      : tGlobal("common.errors.unknown")}
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
               </Button>
             </DialogFooter>

@@ -271,7 +271,10 @@ beforeEach(() => {
       bulkEditCalls.push({ url, payload });
       return Promise.resolve({
         ok: true,
-        json: async () => ({ success: true, updatedCount: payload.caseIds?.length || 0 }),
+        json: async () => ({
+          success: true,
+          updatedCount: payload.caseIds?.length || 0,
+        }),
         status: 200,
         statusText: "OK",
         headers: new Headers(),
@@ -1040,7 +1043,9 @@ describe("BulkEditModal", () => {
       );
 
       expect(
-        screen.getByRole('heading', { name: '[t]repository.bulkEdit.title {"count":2}' })
+        screen.getByRole("heading", {
+          name: '[t]repository.bulkEdit.title {"count":2}',
+        })
       ).toBeInTheDocument();
     });
 
@@ -1057,22 +1062,20 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(
-          screen.queryByText("[t]repository.fields.name")
-        ).toBeInTheDocument();
+        expect(screen.queryByText("[t]common.name")).toBeInTheDocument();
       });
 
-      expect(screen.getByText("[t]repository.fields.name")).toBeInTheDocument();
+      expect(screen.getByText("[t]common.name")).toBeInTheDocument();
       expect(
-        screen.getByText("[t]repository.fields.state")
+        screen.getByText("[t]common.fields.state")
       ).toBeInTheDocument();
       expect(
-        screen.getByText("[t]repository.fields.automated")
+        screen.getByText("[t]common.fields.automated")
       ).toBeInTheDocument();
       expect(
-        screen.getByText("[t]repository.fields.estimate")
+        screen.getByText("[t]common.fields.estimate")
       ).toBeInTheDocument();
-      expect(screen.getByText("[t]repository.fields.tags")).toBeInTheDocument();
+      expect(screen.getByText("[t]common.fields.tags")).toBeInTheDocument();
       expect(screen.getByText("[t]common.fields.issues")).toBeInTheDocument();
     });
 
@@ -1111,15 +1114,13 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load and fields to appear
       await waitFor(() => {
-        expect(
-          screen.queryByText("[t]repository.fields.name")
-        ).toBeInTheDocument();
+        expect(screen.queryByText("[t]common.name")).toBeInTheDocument();
         expect(screen.queryByText("Description")).toBeInTheDocument();
       });
 
       // Name field should show <various> as the names differ
       const nameRow = screen
-        .getByText("[t]repository.fields.name")
+        .getByText("[t]common.name")
         .closest(".grid") as HTMLElement;
       expect(within(nameRow).getByText("<various>")).toBeInTheDocument();
 
@@ -1144,9 +1145,7 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(
-          screen.queryByText("[t]repository.fields.name")
-        ).toBeInTheDocument();
+        expect(screen.queryByText("[t]common.name")).toBeInTheDocument();
       });
 
       // Click the checkbox for name field
@@ -1176,9 +1175,7 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(
-          screen.queryByText("[t]repository.fields.name")
-        ).toBeInTheDocument();
+        expect(screen.queryByText("[t]common.name")).toBeInTheDocument();
       });
 
       // Enable editing for name field
@@ -1213,9 +1210,7 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(
-          screen.queryByText("[t]repository.fields.name")
-        ).toBeInTheDocument();
+        expect(screen.queryByText("[t]common.name")).toBeInTheDocument();
       });
 
       // Enable editing for name field
@@ -1261,9 +1256,7 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(
-          screen.queryByText("[t]repository.fields.name")
-        ).toBeInTheDocument();
+        expect(screen.queryByText("[t]common.name")).toBeInTheDocument();
       });
 
       // Enable editing for name field
@@ -1309,9 +1302,7 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(
-          screen.queryByText("[t]repository.fields.name")
-        ).toBeInTheDocument();
+        expect(screen.queryByText("[t]common.name")).toBeInTheDocument();
       });
 
       // Enable editing for name field
@@ -1366,9 +1357,7 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(
-          screen.queryByText("[t]repository.fields.name")
-        ).toBeInTheDocument();
+        expect(screen.queryByText("[t]common.name")).toBeInTheDocument();
       });
 
       // Enable editing for name field
@@ -1475,7 +1464,7 @@ describe("BulkEditModal", () => {
       // Wait for data to load
       await waitFor(() => {
         expect(
-          screen.queryByText("[t]repository.fields.state")
+          screen.queryByText("[t]common.fields.state")
         ).toBeInTheDocument();
       });
 
@@ -1640,7 +1629,9 @@ describe("BulkEditModal", () => {
             (u: any) => u.fieldId === 1
           );
           expect(descFieldUpdate).toBeDefined();
-          expect(descFieldUpdate.value).toBe("Updated description for all cases");
+          expect(descFieldUpdate.value).toBe(
+            "Updated description for all cases"
+          );
 
           // Should request version creation
           expect(payload.createVersions).toBe(true);
@@ -1674,7 +1665,7 @@ describe("BulkEditModal", () => {
       // Wait for data to load
       await waitFor(() => {
         expect(
-          screen.queryByText("[t]repository.fields.tags")
+          screen.queryByText("[t]common.fields.tags")
         ).toBeInTheDocument();
       });
 
@@ -1943,9 +1934,7 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(
-          screen.queryByText("[t]repository.fields.name")
-        ).toBeInTheDocument();
+        expect(screen.queryByText("[t]common.name")).toBeInTheDocument();
       });
 
       // Enable editing for name field (which has validation for non-empty)
@@ -2016,9 +2005,7 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(
-          screen.queryByText("[t]repository.fields.name")
-        ).toBeInTheDocument();
+        expect(screen.queryByText("[t]common.name")).toBeInTheDocument();
       });
 
       // Enable editing for name field
@@ -2072,9 +2059,7 @@ describe("BulkEditModal", () => {
 
       // Wait for data to load
       await waitFor(() => {
-        expect(
-          screen.queryByText("[t]repository.fields.name")
-        ).toBeInTheDocument();
+        expect(screen.queryByText("[t]common.name")).toBeInTheDocument();
       });
 
       // Enable editing for name field
@@ -2139,12 +2124,12 @@ describe("BulkEditModal", () => {
       // Wait for data to load
       await waitFor(() => {
         expect(
-          screen.queryByText("[t]repository.fields.tags")
+          screen.queryByText("[t]common.fields.tags")
         ).toBeInTheDocument();
       });
 
       // Tags field should still be visible but editing behavior may be restricted
-      expect(screen.getByText("[t]repository.fields.tags")).toBeInTheDocument();
+      expect(screen.getByText("[t]common.fields.tags")).toBeInTheDocument();
     });
 
     it("should show lock icon for restricted fields", async () => {

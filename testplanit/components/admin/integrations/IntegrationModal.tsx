@@ -75,6 +75,7 @@ export function IntegrationModal({
   onSuccess,
 }: IntegrationModalProps) {
   const t = useTranslations("admin.integrations");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [selectedType, setSelectedType] = useState<IntegrationProvider | null>(
     integration?.provider || null
@@ -209,7 +210,7 @@ export function IntegrationModal({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {integration ? t("edit.title") : t("add.title")}
+            {integration ? tGlobal("admin.integrations.editIntegration") : tGlobal("admin.integrations.addIntegration")}
           </DialogTitle>
           <DialogDescription>
             {integration ? t("edit.description") : t("add.description")}
@@ -318,7 +319,7 @@ export function IntegrationModal({
                       onClick={handleClose}
                       disabled={isLoading}
                     >
-                      {tCommon("actions.cancel")}
+                      {tCommon("cancel")}
                     </Button>
                     <Button type="submit" disabled={isLoading || !selectedType}>
                       {isLoading && (

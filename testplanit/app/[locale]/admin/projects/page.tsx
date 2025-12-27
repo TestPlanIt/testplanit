@@ -83,6 +83,7 @@ function ProjectAdmin() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const t = useTranslations("admin.projects");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const {
     currentPage,
@@ -372,7 +373,7 @@ function ProjectAdmin() {
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
               <CardTitle data-testid="admin-projects-page-title">
-                {t("title")}
+                {tGlobal("common.fields.projects")}
               </CardTitle>
             </div>
             <div>
@@ -457,7 +458,7 @@ function ProjectAdmin() {
                   <Button variant="outline" className="w-[240px]">
                     {completedAt
                       ? format(completedAt, "PPP")
-                      : t("complete.selectDate")}
+                      : tGlobal("common.placeholders.date")}
                     <CalendarDays className="ml-auto h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -484,7 +485,7 @@ function ProjectAdmin() {
             </div>
             <AlertDialogFooter className="mt-4">
               <AlertDialogCancel onClick={() => setIsAlertDialogOpen(false)}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 type="submit"

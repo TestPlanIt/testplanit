@@ -24,6 +24,7 @@ import { useFindManyProjects } from "~/lib/hooks";
 export const ProjectQuickSelector = () => {
   const router = useRouter();
   const t = useTranslations("common.ui.search");
+  const tGlobal = useTranslations();
   const tNav = useTranslations("navigation");
   const [open, setOpen] = useState(false);
 
@@ -57,13 +58,17 @@ export const ProjectQuickSelector = () => {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="link" className="underline" aria-expanded={open}>
-          {tNav("menu.projects")}
+          {tGlobal("common.fields.projects")}
           <ChevronDown className="h-3 w-3" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] px-0 py-2" align="start">
         <Command>
-          <CommandInput placeholder={t("projects").toLowerCase() + "..."} />
+          <CommandInput
+            placeholder={
+              tGlobal("common.fields.projects").toLowerCase() + "..."
+            }
+          />
           <CommandEmpty>
             {isLoading ? t("loadingProjects") : t("noProjectsFound")}
           </CommandEmpty>

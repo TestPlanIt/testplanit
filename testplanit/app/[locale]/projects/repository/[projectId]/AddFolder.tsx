@@ -35,8 +35,8 @@ import { HelpPopover } from "@/components/ui/help-popover";
 
 const FormSchema = z.object({
   name: z.string().min(2, {
-      error: "Please enter a name for the Folder"
-}),
+    error: "Please enter a name for the Folder",
+  }),
   docs: z.any().optional(),
 });
 
@@ -195,7 +195,7 @@ export function AddFolderModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {t("common.fields.name")}
+                    {t("common.name")}
                     <HelpPopover helpKey="folder.name" />
                   </FormLabel>
                   <FormControl>
@@ -242,12 +242,21 @@ export function AddFolderModal({
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel} data-testid="folder-cancel-button">
-                {t("common.actions.cancel")}
+              <Button
+                variant="outline"
+                type="button"
+                onClick={handleCancel}
+                data-testid="folder-cancel-button"
+              >
+                {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting} data-testid="folder-submit-button">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                data-testid="folder-submit-button"
+              >
                 {isSubmitting
-                  ? t("common.status.submitting")
+                  ? t("common.actions.submitting")
                   : t("common.actions.submit")}
               </Button>
             </DialogFooter>

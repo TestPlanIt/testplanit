@@ -304,8 +304,8 @@ function TagDetail() {
   const caseColumns = useMemo(
     () =>
       getCaseColumns({
-        testCases: t("common.table.columns.testCases"),
-        project: t("common.table.columns.project"),
+        testCases: t("common.fields.testCases"),
+        project: t("common.fields.project"),
         noProject: t("tags.noProject"),
       }),
     [t]
@@ -314,8 +314,8 @@ function TagDetail() {
   const sessionColumns = useMemo(
     () =>
       getSessionColumns({
-        sessions: t("common.table.columns.sessions"),
-        project: t("common.table.columns.project"),
+        sessions: t("common.fields.sessions"),
+        project: t("common.fields.project"),
         noProject: t("tags.noProject"),
       }),
     [t]
@@ -325,7 +325,7 @@ function TagDetail() {
     () =>
       getTestRunColumns({
         testRuns: t("common.fields.testRuns"),
-        project: t("common.table.columns.project"),
+        project: t("common.fields.project"),
         noProject: t("tags.noProject"),
       }),
     [t]
@@ -379,7 +379,6 @@ function TagDetail() {
     return null;
   }
 
-
   return (
     <Card className="flex w-full min-w-[400px]">
       <div className="flex-1 w-full relative">
@@ -411,13 +410,13 @@ function TagDetail() {
           >
             <TabsList className="mb-4">
               <TabsTrigger value="cases">
-                {t("common.table.columns.testCases")} {`(${casesCount ?? 0})`}
+                {t("common.fields.testCases")} {`(${casesCount ?? 0})`}
               </TabsTrigger>
               <TabsTrigger value="testRuns">
                 {t("common.fields.testRuns")} {`(${testRunsCount ?? 0})`}
               </TabsTrigger>
               <TabsTrigger value="sessions">
-                {t("common.table.columns.sessions")} {`(${sessionsCount ?? 0})`}
+                {t("common.fields.sessions")} {`(${sessionsCount ?? 0})`}
               </TabsTrigger>
             </TabsList>
 

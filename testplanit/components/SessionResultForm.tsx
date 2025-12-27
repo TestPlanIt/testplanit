@@ -111,7 +111,7 @@ const formSchema = (
   const baseSchema = {
     statusId: z.string().min(1, {
       message: tCommon("validation.required", {
-        field: tCommon("fields.status"),
+        field: tCommon("actions.status"),
       }),
     }),
     resultData: z.any().optional(),
@@ -185,6 +185,7 @@ export function SessionResultForm({
   onStatusColorChange,
 }: SessionResultFormProps) {
   const t = useTranslations("sessions.results");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const { data: session } = useSession();
@@ -917,7 +918,7 @@ export function SessionResultForm({
                     <FormItem>
                       <FormLabel className="flex items-center gap-1">
                         <CircleCheckBig className="h-4 w-4" />
-                        {tCommon("fields.status")}
+                        {tGlobal("common.actions.status")}
                       </FormLabel>
                       <FormControl>
                         <Select
@@ -987,7 +988,9 @@ export function SessionResultForm({
                         <div className="flex items-end space-x-2">
                           <Input
                             {...field}
-                            placeholder={tCommon("placeholders.elapsed")}
+                            placeholder={tGlobal(
+                              "sessions.placeholders.elapsed"
+                            )}
                             value={(field.value as string) ?? ""}
                             className="grow"
                           />

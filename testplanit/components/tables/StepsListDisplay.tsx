@@ -119,8 +119,7 @@ export const StepsListDisplay: React.FC<StepsListProps> = ({ steps }) => {
                         size={16}
                         className="mr-2 text-primary shrink-0"
                       />
-                      {step.sharedStepGroup?.name ||
-                        t("repository.fields.steps")}
+                      {step.sharedStepGroup?.name || t("common.fields.steps")}
                       <span className="text-xs text-muted-foreground ml-1">
                         {t("repository.steps.sharedGroupSuffix")}
                       </span>

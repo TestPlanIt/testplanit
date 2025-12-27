@@ -488,7 +488,7 @@ export function TestCasesSection({
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 shrink-0 font-semibold">
             <Combine className="w-4 h-4" />
-            <span>{t("common.labels.configurations")}:</span>
+            <span>{t("common.fields.configurations")}:</span>
           </div>
           <MultiAsyncCombobox<SiblingTestRun>
             value={selectedConfigurations}

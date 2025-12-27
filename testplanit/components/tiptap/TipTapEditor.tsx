@@ -1129,7 +1129,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
               onClick={rejectAiSuggestion}
               disabled={isAiLoading}
             >
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </Button>
             <Button
               type="button"

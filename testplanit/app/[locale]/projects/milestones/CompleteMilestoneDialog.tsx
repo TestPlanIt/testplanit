@@ -217,14 +217,14 @@ export function CompleteMilestoneDialog({
                   onClick={() => onOpenChange(false)}
                   disabled={isSubmitting}
                 >
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting
                     ? t("milestones.completeDialog.processing")
                     : showConfirmation
                       ? t("milestones.completeDialog.confirmAndCompleteAll")
-                      : t("milestones.completeDialog.completeButton")}
+                      : t("common.actions.complete")}
                 </Button>
               </DialogFooter>
             </form>

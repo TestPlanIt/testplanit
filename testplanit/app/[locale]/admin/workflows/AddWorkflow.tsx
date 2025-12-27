@@ -64,11 +64,11 @@ const scopeKeys = Object.keys(scopeDisplayData) as [
 ];
 
 const getWorkflowTypeOptions = (
-  t: ReturnType<typeof useTranslations<"admin.workflows">>
+  tWorkflowTypes: ReturnType<typeof useTranslations<"enums.WorkflowType">>
 ) => [
-  { value: WorkflowType.NOT_STARTED, label: t("types.NOT_STARTED") },
-  { value: WorkflowType.IN_PROGRESS, label: t("types.IN_PROGRESS") },
-  { value: WorkflowType.DONE, label: t("types.DONE") },
+  { value: WorkflowType.NOT_STARTED, label: tWorkflowTypes("NOT_STARTED") },
+  { value: WorkflowType.IN_PROGRESS, label: tWorkflowTypes("IN_PROGRESS") },
+  { value: WorkflowType.DONE, label: tWorkflowTypes("DONE") },
 ];
 
 const FormSchema: any = z.object({
@@ -76,11 +76,12 @@ const FormSchema: any = z.object({
     message: `Please choose a Workflow for the State`,
   }),
   name: z.string().min(1, {
-      error: "Please enter a name for the Workflow State"
-}),
+    error: "Please enter a name for the Workflow State",
+  }),
   workflowType: z.enum(WorkflowType, {
-      error: (issue) => issue.input === undefined ? "Please select a workflow type" : undefined
-}),
+    error: (issue) =>
+      issue.input === undefined ? "Please select a workflow type" : undefined,
+  }),
   isDefault: z.boolean().prefault(false).optional(),
   isEnabled: z.boolean().prefault(true).optional(),
   projects: z.array(z.number()).optional(),
@@ -92,7 +93,9 @@ export function AddWorkflowsModal() {
 
   const t = useTranslations("admin.workflows");
   const tCommon = useTranslations("common");
-  const workflowTypeOptions = getWorkflowTypeOptions(t);
+  const tGlobal = useTranslations();
+  const tWorkflowTypes = useTranslations("enums.WorkflowType");
+  const workflowTypeOptions = getWorkflowTypeOptions(tWorkflowTypes);
 
   const { data: defaultIconData } = useFindFirstFieldIcon({
     where: { name: "layout-list" },
@@ -279,7 +282,7 @@ export function AddWorkflowsModal() {
                           <Select onValueChange={onChange} value={value}>
                             <SelectTrigger>
                               <SelectValue
-                                placeholder={t("fields.selectWorkflow")}
+                                placeholder={tCommon("fields.selectWorkflow")}
                               />
                             </SelectTrigger>
                             <SelectContent>
@@ -308,7 +311,7 @@ export function AddWorkflowsModal() {
             <div>
               <div className=" w-16 h-full">
                 <FormLabel className="whitespace-nowrap flex items-center">
-                  {t("fields.iconColor")}
+                  {tCommon("fields.iconColor")}
                   <HelpPopover helpKey="workflow.iconColor" />
                 </FormLabel>
                 <FieldIconPicker
@@ -327,11 +330,11 @@ export function AddWorkflowsModal() {
                   <div className="flex items-center gap-2">
                     <div className="w-full">
                       <FormLabel className="flex items-center">
-                        {t("fields.name")}
+                        {tCommon("name")}
                         <HelpPopover helpKey="workflow.name" />
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder={t("fields.name")} {...field} />
+                        <Input placeholder={tCommon("name")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </div>
@@ -345,7 +348,7 @@ export function AddWorkflowsModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {t("fields.type")}
+                    {tCommon("fields.type")}
                     <HelpPopover helpKey="workflow.workflowType" />
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
@@ -382,7 +385,7 @@ export function AddWorkflowsModal() {
                       />
                     </FormControl>
                     <FormLabel className="flex items-center">
-                      {t("fields.default")}
+                      {tCommon("fields.default")}
                       <HelpPopover helpKey="workflow.isDefault" />
                     </FormLabel>
                     <FormMessage />
@@ -407,7 +410,7 @@ export function AddWorkflowsModal() {
                       />
                     </FormControl>
                     <FormLabel className="flex items-center">
-                      {t("fields.enabled")}
+                      {tCommon("fields.enabled")}
                       <HelpPopover helpKey="workflow.isActive" />
                     </FormLabel>
                     <FormMessage />
@@ -423,7 +426,7 @@ export function AddWorkflowsModal() {
                 <FormItem>
                   <FormLabel className="flex justify-between items-center">
                     <span className="flex items-center">
-                      {t("fields.projects")}
+                      {tCommon("fields.projects")}
                       <HelpPopover helpKey="workflow.projects" />
                     </span>
                     <div
@@ -470,16 +473,16 @@ export function AddWorkflowsModal() {
                   role="alert"
                 >
                   {errors.root.type === "nameExists"
-                    ? t("add.errors.nameExists")
-                    : t("add.errors.unknown")}
+                    ? tGlobal("admin.workflows.add.errors.nameExists")
+                    : tGlobal("common.errors.unknown")}
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
               </Button>
             </DialogFooter>

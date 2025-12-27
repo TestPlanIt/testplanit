@@ -180,6 +180,7 @@ export function GenerateTestCasesWizard({
   onImportComplete,
 }: GenerateTestCasesWizardProps) {
   const t = useTranslations("repository");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const params = useParams();
   const projectId = Number(params.projectId);
@@ -2314,7 +2315,7 @@ export function GenerateTestCasesWizard({
                   <div className="grid gap-4">
                     <div className="space-y-2">
                       <Label htmlFor={`generated-${testCase.id}-name`}>
-                        {tCommon("fields.name")}
+                        {tCommon("name")}
                       </Label>
                       <Controller
                         name="name"
@@ -2369,7 +2370,7 @@ export function GenerateTestCasesWizard({
 
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={handleCancel}>
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </Button>
                 <Button type="submit">{tCommon("actions.save")}</Button>
               </div>
@@ -2891,7 +2892,9 @@ export function GenerateTestCasesWizard({
                     {selectedTemplateId && (
                       <div className="mt-4 p-4 bg-muted rounded-lg">
                         <h5 className="font-medium mb-2">
-                          {t("generateTestCases.selectTemplate.fields")}
+                          {tGlobal(
+                            "admin.imports.testmo.mapping.templateColumnFields"
+                          )}
                         </h5>
                         <div className="flex items-center justify-between mb-3">
                           <p className="text-sm text-muted-foreground">
@@ -2906,7 +2909,7 @@ export function GenerateTestCasesWizard({
                               onClick={selectAllFields}
                               type="button"
                             >
-                              {t("generateTestCases.selectTemplate.selectAll")}
+                              {tCommon("actions.selectAll")}
                             </Button>
                             <Button
                               variant="outline"
@@ -3250,7 +3253,7 @@ export function GenerateTestCasesWizard({
                 onClick={() => setOpen(false)}
                 disabled={isImporting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
 
               {isLastStep ? (
@@ -3286,7 +3289,7 @@ export function GenerateTestCasesWizard({
                       {currentStep === WizardStep.ADD_NOTES ? (
                         <>
                           <Sparkles className="w-4 h-4" />
-                          {t("generateTestCases.generate")}
+                          {tGlobal("repository.generateTestCases.buttonText")}
                         </>
                       ) : (
                         <>
@@ -3360,7 +3363,7 @@ export function GenerateTestCasesWizard({
               variant="outline"
               onClick={() => setShowUnsavedEditsDialog(false)}
             >
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </Button>
             <Button variant="outline" onClick={handleDiscardAndImport}>
               {t("generateTestCases.unsavedEdits.discardAndImport")}

@@ -45,7 +45,7 @@ export function DeleteUserModal({ user }: DeleteUserModalProps) {
     } catch (err: any) {
       form.setError("root", {
         type: "custom",
-        message: t("admin.users.delete.errors.unknown"),
+        message: t("common.errors.unknown"),
       });
       setIsSubmitting(false);
       return;
@@ -69,10 +69,10 @@ export function DeleteUserModal({ user }: DeleteUserModalProps) {
               </AlertDialogTitle>
             </AlertDialogHeader>
             <div>
-              {t("admin.users.delete.confirmMessage", { name: user.name })}
+              {t("common.dialogs.delete.description", { name: user.name })}
             </div>
             <div className="bg-destructive text-destructive-foreground p-2">
-              {t("admin.users.delete.warning")}
+              {t("runs.delete.warning")}
             </div>
             <AlertDialogFooter>
               {errors.root && (
@@ -84,7 +84,7 @@ export function DeleteUserModal({ user }: DeleteUserModalProps) {
                 </div>
               )}
               <AlertDialogCancel disabled={isSubmitting}>
-                {t("common.actions.cancel")}
+                {t("common.cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 disabled={isSubmitting}

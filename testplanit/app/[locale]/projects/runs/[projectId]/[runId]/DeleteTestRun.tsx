@@ -136,7 +136,7 @@ export function DeleteTestRunModal({
                 </div>
               )}
               <AlertDialogCancel type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <button
                 type="submit"

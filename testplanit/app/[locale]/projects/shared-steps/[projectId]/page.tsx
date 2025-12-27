@@ -440,7 +440,9 @@ export default function SharedStepsPage() {
                           className="ml-2"
                         >
                           <Save className="w-4 h-4" />
-                          {saving ? tCommon("status.saving") : t("save")}
+                          {saving
+                            ? tCommon("actions.saving")
+                            : tCommon("actions.save")}
                         </Button>
                       </>
                     )}
@@ -527,7 +529,7 @@ export default function SharedStepsPage() {
               data-testid="confirm-delete-group-btn"
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {t("confirmDelete")}
+              {tCommon("actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

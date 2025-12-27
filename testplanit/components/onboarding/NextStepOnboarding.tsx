@@ -48,7 +48,9 @@ function TourCard({
                 className="h-8 w-8 p-0 hover:bg-muted"
               >
                 <X className="h-4 w-4" />
-                <span className="sr-only">{t("common.ui.search.skipTour")}</span>
+                <span className="sr-only">
+                  {t("common.ui.onboarding.skipTour")}
+                </span>
               </Button>
             )}
           </div>
@@ -114,7 +116,7 @@ const createTourSteps = (
       },
       {
         icon: null,
-        title: t("help.tour.mainTour.projects.title"),
+        title: t("common.fields.projects"),
         content: t("help.tour.mainTour.projects.content"),
         selector: "#projects-link",
         side: "bottom",
@@ -134,7 +136,7 @@ const createTourSteps = (
       },
       {
         icon: null,
-        title: t("help.tour.mainTour.search.title"),
+        title: t("search.title"),
         content: t("help.tour.mainTour.search.content"),
         selector: '[data-testid="global-search-trigger"]',
         side: "bottom",
@@ -154,7 +156,7 @@ const createTourSteps = (
       },
       {
         icon: null,
-        title: t("help.tour.mainTour.notifications.title"),
+        title: t("common.fields.notificationMode"),
         content: t("help.tour.mainTour.notifications.content"),
         selector: '[data-testid="notification-bell-button"]',
         side: "bottom-right",
@@ -175,7 +177,7 @@ const createTourSteps = (
       },
       {
         icon: null,
-        title: t("help.tour.mainTour.assignments.title"),
+        title: t("home.dashboard.yourAssignments"),
         content: t("help.tour.mainTour.assignments.content"),
         selector: "#dashboard-header",
         side: "right",
@@ -185,7 +187,7 @@ const createTourSteps = (
       },
       {
         icon: null,
-        title: t("help.tour.mainTour.projects.title"),
+        title: t("common.fields.projects"),
         content: t("help.tour.mainTour.projects.content"),
         selector: "#your-projects-header",
         side: "left",
@@ -233,7 +235,7 @@ const createTourSteps = (
       },
       {
         icon: null,
-        title: t("help.tour.projectTour.repository.title"),
+        title: t("repository.title"),
         content: t("help.tour.projectTour.repository.content"),
         selector: "#test-cases-link",
         side: "right",
@@ -269,7 +271,7 @@ const createTourSteps = (
       },
       {
         icon: null,
-        title: t("help.tour.projectTour.testRuns.title"),
+        title: t("navigation.projects.menu.runs"),
         content: t("help.tour.projectTour.testRuns.content"),
         selector: "#test-runs-link",
         side: "right",
@@ -403,7 +405,7 @@ const createTourSteps = (
       },
       {
         icon: null,
-        title: t("help.tour.adminTour.templatesAndFields.title"),
+        title: t("common.labels.templates"),
         content: t("help.tour.adminTour.templatesAndFields.content"),
         selector: "#admin-menu-fields",
         side: "right",
@@ -433,7 +435,7 @@ const createTourSteps = (
       },
       {
         icon: null,
-        title: t("help.tour.adminTour.milestones.title"),
+        title: t("common.fields.milestoneTypes"),
         content: t("help.tour.adminTour.milestones.content"),
         selector: "#admin-menu-milestones",
         side: "right-bottom",
@@ -493,7 +495,7 @@ const createTourSteps = (
       },
       {
         icon: null,
-        title: t("help.tour.adminTour.reports.title"),
+        title: t("navigation.admin.crossProjectReports"),
         content: t("help.tour.adminTour.reports.content"),
         selector: "#admin-menu-reports",
         side: "right-bottom",
@@ -543,7 +545,7 @@ const createTourSteps = (
       },
       {
         icon: null,
-        title: t("help.tour.adminTour.appConfig.title"),
+        title: t("admin.menu.appConfig"),
         content: t("help.tour.adminTour.appConfig.content"),
         selector: "#admin-menu-app-config",
         side: "top-left",
@@ -804,11 +806,12 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
     // Check if user has completed the welcome tour
     const hasSeenTourInStorage = hasSeenTour;
-    
+
     // Only proceed if we have user preferences loaded or user is not logged in
     // This prevents showing the tour while preferences are still loading
-    const hasCompletedTourInPreferences = userPreferences?.hasCompletedWelcomeTour;
-    
+    const hasCompletedTourInPreferences =
+      userPreferences?.hasCompletedWelcomeTour;
+
     // If user is logged in but preferences haven't loaded yet, don't show the tour
     if (session?.user?.id && userPreferences === undefined) {
       return; // Wait for preferences to load

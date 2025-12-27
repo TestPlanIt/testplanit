@@ -172,6 +172,7 @@ export default function AdminMenu() {
   const page = usePathname().split("/")[2];
   const menuButtonClass = "w-full rounded-none justify-start shadow-none";
   const t = useTranslations("admin.menu");
+  const tGlobal = useTranslations();
 
   useEffect(() => {
     if (page === undefined) {
@@ -194,7 +195,7 @@ export default function AdminMenu() {
     <Card className="sticky top-0 z-10 rounded-none border-none h-full shadow-none">
       <CardContent className="bg-primary-foreground h-full p-0 flex flex-col">
         <CardHeader className="hidden md:inline">
-          <CardTitle data-testid="admin-page-title">{t("header")}</CardTitle>
+          <CardTitle data-testid="admin-page-title">{tGlobal("navigation.menu.admin")}</CardTitle>
         </CardHeader>
         <div className="grow overflow-y-auto">
           {mainMenuItems.map((option: MenuOption, index: number) => {

@@ -232,7 +232,9 @@ function WorkflowComponent() {
             columns={columns}
             data={workflows}
             enableReorder
-            onReorder={(dragIndex: number, hoverIndex: number) => handleReorder(dragIndex, hoverIndex, workflows, scope)}
+            onReorder={(dragIndex: number, hoverIndex: number) =>
+              handleReorder(dragIndex, hoverIndex, workflows, scope)
+            }
             columnVisibility={columnVisibility}
             onColumnVisibilityChange={setColumnVisibility}
             isLoading={isLoading}
@@ -307,7 +309,7 @@ function WorkflowComponent() {
             <CardHeader className="w-full">
               <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
                 <div>
-                  <CardTitle>{t("title")}</CardTitle>
+                  <CardTitle>{tCommon("labels.workflows")}</CardTitle>
                 </div>
                 <div>
                   <AddWorkflowsModal />
@@ -341,7 +343,7 @@ function WorkflowComponent() {
               </AlertDialogDescription>
               <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setIsAlertDialogOpen(false)}>
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => handleConfirmToggleDefault()}

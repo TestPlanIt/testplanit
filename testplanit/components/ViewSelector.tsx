@@ -104,7 +104,7 @@ export function ViewSelector({
   totalCount,
   viewOptions,
 }: ViewSelectorProps) {
-  const t = useTranslations("repository.views");
+  const t = useTranslations("repository");
   const tCommon = useTranslations("common");
   const session = useSession();
   const hasAutoSelectedUser = useRef(false);
@@ -218,7 +218,7 @@ export function ViewSelector({
               onClick={(e) => handleFilterClick(null, e)}
             >
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="truncate">{t("allTemplates")}</span>
+                <span className="truncate">{t("views.allTemplates")}</span>
               </div>
               <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                 {viewOptions?.templates.reduce(
@@ -263,7 +263,7 @@ export function ViewSelector({
               onClick={(e) => handleFilterClick(null, e)}
             >
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="truncate">{t("allStates")}</span>
+                <span className="truncate">{t("views.allStates")}</span>
               </div>
               <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                 {viewOptions?.states.reduce(
@@ -313,7 +313,7 @@ export function ViewSelector({
             >
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <Users className="w-4 h-4 shrink-0" />
-                <span className="truncate">{t("allCreators")}</span>
+                <span className="truncate">{t("views.allCreators")}</span>
               </div>
               <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                 {viewOptions?.creators.reduce(
@@ -357,7 +357,7 @@ export function ViewSelector({
               onClick={(e) => handleFilterClick(null, e)}
             >
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="truncate">{t("allCases")}</span>
+                <span className="truncate">{t("views.allCases")}</span>
               </div>
               <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                 {totalCount}
@@ -384,7 +384,9 @@ export function ViewSelector({
                         <User className="w-4 h-4 shrink-0" />
                       )}
                       <span className="truncate">
-                        {item.value ? t("automated") : t("notAutomated")}
+                        {item.value
+                          ? tCommon("fields.automated")
+                          : tCommon("fields.notAutomated")}
                       </span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
@@ -418,7 +420,9 @@ export function ViewSelector({
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <CircleCheckBig className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{t("allStatuses")}</span>
+                    <span className="truncate">
+                      {tCommon("filters.allStatuses")}
+                    </span>
                   </div>
                   <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                     {(viewOptions as any)?.testRunOptions?.totalCount ||
@@ -440,7 +444,9 @@ export function ViewSelector({
                       className="w-3 h-3 rounded-full shrink-0"
                       style={{ backgroundColor: "#B1B2B3" }}
                     />
-                    <span className="truncate">{t("untested")}</span>
+                    <span className="truncate">
+                      {tCommon("labels.untested")}
+                    </span>
                   </div>
                   <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                     {untestedCount}
@@ -501,7 +507,7 @@ export function ViewSelector({
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <Users className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{t("allAssignees")}</span>
+                    <span className="truncate">{t("views.allAssignees")}</span>
                   </div>
                   <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                     {(viewOptions as any)?.testRunOptions?.totalCount ||
@@ -520,7 +526,9 @@ export function ViewSelector({
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <UserX className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{t("unassigned")}</span>
+                    <span className="truncate">
+                      {tCommon("labels.unassigned")}
+                    </span>
                   </div>
                   <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                     {unassignedCount}
@@ -599,7 +607,7 @@ export function ViewSelector({
               onClick={(e) => handleFilterClick(null, e)}
             >
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="truncate">{t("allValues")}</span>
+                <span className="truncate">{tCommon("fields.mixed")}</span>
               </div>
               <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                 {totalCount}
@@ -629,7 +637,7 @@ export function ViewSelector({
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <LinkIcon className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{t("hasLink")}</span>
+                      <span className="truncate">{t("fields.hasLink")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {hasLinkCount}
@@ -647,7 +655,7 @@ export function ViewSelector({
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <Link2Off className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{t("noLink")}</span>
+                      <span className="truncate">{t("fields.noLink")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {noLinkCount}
@@ -673,7 +681,7 @@ export function ViewSelector({
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <ListOrdered className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{t("hasSteps")}</span>
+                      <span className="truncate">{t("fields.hasSteps")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {hasStepsCount}
@@ -691,7 +699,7 @@ export function ViewSelector({
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <ListOrdered className="w-4 h-4 shrink-0 opacity-40" />
-                      <span className="truncate">{t("noSteps")}</span>
+                      <span className="truncate">{t("fields.noSteps")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {noStepsCount}
@@ -715,7 +723,9 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick(1, e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate">{t("checked")}</span>
+                      <span className="truncate">
+                        {tCommon("fields.checked")}
+                      </span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {checkedCount}
@@ -732,7 +742,7 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick(2, e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate">{t("unchecked")}</span>
+                      <span className="truncate">{t("fields.unchecked")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {uncheckedCount}
@@ -767,7 +777,7 @@ export function ViewSelector({
                       <div className="flex items-center gap-2 min-w-0 flex-1">
                         <CircleDashed className="w-4 h-4 shrink-0 opacity-40" />
                         <span className="truncate">
-                          {tCommon("labels.none")}
+                          {tCommon("access.none")}
                         </span>
                       </div>
                       <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">

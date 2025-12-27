@@ -45,8 +45,8 @@ const parseTipTapContent = (content: any) => {
 
 const FormSchema = z.object({
   name: z.string().min(1, {
-      error: "Enter a name for the Folder."
-}),
+    error: "Enter a name for the Folder.",
+  }),
   docs: z.any().optional(),
 });
 
@@ -172,9 +172,9 @@ export function EditFolderModal({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
-              <DialogTitle>{t("repository.editFolder.title")}</DialogTitle>
+              <DialogTitle>{t("repository.folderActions.edit")}</DialogTitle>
               <DialogDescription className="sr-only">
-                {t("repository.editFolder.title")}
+                {t("repository.folderActions.edit")}
               </DialogDescription>
             </DialogHeader>
             <FormField
@@ -183,7 +183,7 @@ export function EditFolderModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {t("common.fields.name")}
+                    {t("common.name")}
                     <HelpPopover helpKey="folder.name" />
                   </FormLabel>
                   <FormControl>
@@ -234,11 +234,11 @@ export function EditFolderModal({
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {t("common.actions.cancel")}
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? t("common.status.submitting")
+                  ? t("common.actions.submitting")
                   : t("common.actions.submit")}
               </Button>
             </DialogFooter>

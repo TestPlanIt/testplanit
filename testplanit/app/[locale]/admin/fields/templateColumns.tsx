@@ -35,7 +35,7 @@ export const getColumns = (
     {
       id: "templateName",
       accessorKey: "templateName",
-      header: tCommon("fields.name"),
+      header: tCommon("name"),
       enableSorting: true,
       enableResizing: true,
       enableHiding: false,
@@ -82,7 +82,7 @@ export const getColumns = (
     {
       id: "isEnabled",
       accessorKey: "isEnabled",
-      header: tCommon("status.enabled"),
+      header: tCommon("fields.enabled"),
       enableSorting: true,
       enableResizing: true,
       size: 100,
@@ -119,7 +119,7 @@ export const getColumns = (
     },
     {
       id: "actions",
-      header: tCommon("fields.actions"),
+      header: tCommon("actions.actionsLabel"),
       enableResizing: true,
       enableSorting: false,
       enableHiding: false,

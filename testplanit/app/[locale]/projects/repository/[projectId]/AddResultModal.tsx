@@ -39,7 +39,14 @@ import {
   useFindManyIssue,
 } from "~/lib/hooks";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
-import { ListChecks, SearchCheck, Bug, LockIcon, Layers, Combine } from "lucide-react";
+import {
+  ListChecks,
+  SearchCheck,
+  Bug,
+  LockIcon,
+  Layers,
+  Combine,
+} from "lucide-react";
 import { emptyEditorContent } from "~/app/constants";
 import { ExtendedCases } from "./columns";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
@@ -126,7 +133,7 @@ const formSchema = (
   const baseSchema = {
     statusId: z.string().min(1, {
       message: tCommon("validation.required", {
-        field: tCommon("fields.status"),
+        field: tCommon("actions.status"),
       }),
     }),
     resultData: z.any(),
@@ -1710,7 +1717,7 @@ export function AddResultModal({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                      {tCommon("fields.status")}
+                      {tCommon("actions.status")}
                       <HelpPopover helpKey="testResult.status" />
                     </FormLabel>
                     <FormControl>
@@ -1840,9 +1847,7 @@ export function AddResultModal({
             {/* Step results */}
             {steps.length > 0 && (
               <div className="space-y-4">
-                <div className="font-bold -mb-2">
-                  {t("repository.fields.steps")}
-                </div>
+                <div className="font-bold -mb-2">{tCommon("fields.steps")}</div>
                 <ol className="space-y-4">
                   {steps.map((step, index) => {
                     const stepId = step.id.toString();
@@ -1947,7 +1952,7 @@ export function AddResultModal({
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="flex items-center gap-2">
-                                  {tCommon("fields.status")}
+                                  {tCommon("actions.status")}
                                   <HelpPopover helpKey="testResult.stepStatus" />
                                 </FormLabel>
                                 <FormControl>
@@ -2088,11 +2093,11 @@ export function AddResultModal({
 
             <div className="flex justify-end space-x-2">
               <Button variant="outline" type="button" onClick={onClose}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
-                  <>{tCommon("status.submitting")}</>
+                  <>{tCommon("actions.submitting")}</>
                 ) : (
                   <>{tCommon("actions.save")}</>
                 )}
@@ -2259,7 +2264,7 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      {tCommon("fields.status")}{" "}
+                      {tCommon("actions.status")}{" "}
                       <HelpPopover helpKey="testResult.stepStatus" />
                     </FormLabel>
                     <FormControl>

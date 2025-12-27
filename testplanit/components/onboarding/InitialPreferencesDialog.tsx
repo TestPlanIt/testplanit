@@ -66,7 +66,10 @@ const FormSchema = z.object({
 export function InitialPreferencesDialog() {
   const { data: session, update } = useSession();
   const t = useTranslations("home.initialPreferences");
-  const tNotifications = useTranslations("users.profile.notifications.mode");
+  const tGlobal = useTranslations();
+  const tCommon = useTranslations("common");
+  const tNotificationsMode = useTranslations("users.profile.notifications.mode");
+  const tNotificationDefaultMode = useTranslations("admin.notifications.defaultMode");
   const tUserMenu = useTranslations("userMenu");
   const tProfileEdit = useTranslations("users.profile.edit");
   const [isOpen, setIsOpen] = useState(false);
@@ -260,15 +263,15 @@ export function InitialPreferencesDialog() {
   const getNotificationModeLabel = (mode: NotificationMode) => {
     switch (mode) {
       case "USE_GLOBAL":
-        return tNotifications("useGlobal");
+        return tNotificationsMode("useGlobal");
       case "NONE":
-        return tNotifications("none");
+        return tCommon("access.none");
       case "IN_APP":
-        return tNotifications("inApp");
+        return tNotificationDefaultMode("inApp");
       case "IN_APP_EMAIL_IMMEDIATE":
-        return tNotifications("inAppEmailImmediate");
+        return tNotificationDefaultMode("inAppEmailImmediate");
       case "IN_APP_EMAIL_DAILY":
-        return tNotifications("inAppEmailDaily");
+        return tNotificationDefaultMode("inAppEmailDaily");
       default:
         return mode;
     }
@@ -400,7 +403,7 @@ export function InitialPreferencesDialog() {
                 name="theme"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tUserMenu("theme")}</FormLabel>
+                    <FormLabel>{tCommon("fields.theme")}</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={(value) => {
@@ -411,7 +414,7 @@ export function InitialPreferencesDialog() {
                         value={field.value}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={tUserMenu("theme")} />
+                          <SelectValue placeholder={tCommon("fields.theme")} />
                         </SelectTrigger>
                         <SelectContent>
                           {themeOptions.map((option) => (
@@ -441,14 +444,14 @@ export function InitialPreferencesDialog() {
                 name="locale"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tUserMenu("language")}</FormLabel>
+                    <FormLabel>{tCommon("fields.locale")}</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={tUserMenu("language")} />
+                          <SelectValue placeholder={tCommon("fields.locale")} />
                         </SelectTrigger>
                         <SelectContent>
                           {localeOptions.map((option) => (
@@ -469,7 +472,7 @@ export function InitialPreferencesDialog() {
                 name="itemsPerPage"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tProfileEdit("itemsPerPage")}</FormLabel>
+                    <FormLabel>{tGlobal("common.fields.itemsPerPage")}</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
@@ -477,7 +480,7 @@ export function InitialPreferencesDialog() {
                       >
                         <SelectTrigger>
                           <SelectValue
-                            placeholder={tProfileEdit("itemsPerPage")}
+                            placeholder={tGlobal("common.fields.itemsPerPage")}
                           />
                         </SelectTrigger>
                         <SelectContent>
@@ -499,14 +502,14 @@ export function InitialPreferencesDialog() {
                 name="notificationMode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tNotifications("label")}</FormLabel>
+                    <FormLabel>{tNotificationsMode("label")}</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={tNotifications("label")} />
+                          <SelectValue placeholder={tNotificationsMode("label")} />
                         </SelectTrigger>
                         <SelectContent>
                           {notificationModeOptions.map((option) => (
@@ -593,7 +596,7 @@ export function InitialPreferencesDialog() {
                 name="timezone"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>{tProfileEdit("timezone")}</FormLabel>
+                    <FormLabel>{tGlobal("common.fields.timezone")}</FormLabel>
                     <FormControl>
                       <AsyncCombobox<TimezoneOption>
                         value={
@@ -630,7 +633,7 @@ export function InitialPreferencesDialog() {
                 {t("skip")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? t("saving") : t("save")}
+                {isSubmitting ? tGlobal("common.actions.saving") : t("save")}
               </Button>
             </DialogFooter>
           </form>

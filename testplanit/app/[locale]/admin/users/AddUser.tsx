@@ -54,6 +54,7 @@ import { Roles } from "@prisma/client";
 
 export function AddUserModal() {
   const t = useTranslations("admin.users.add");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,10 +72,11 @@ export function AddUserModal() {
   const AddUserFormValidationSchema = z
     .object({
       name: z.string().min(2, {
-        message: t("fields.name_error"),
+        message: tGlobal("common.fields.validation.nameRequired"),
       }),
-      email: z.email()
-              .min(1, { message: t("fields.email_error") }),
+      email: z
+        .email()
+        .min(1, { message: tGlobal("auth.signup.errors.emailRequired") }),
       password: z.string().min(4, t("fields.password_error")),
       confirmPassword: z.string().min(4, t("fields.confirmPassword_error")),
       isActive: z.boolean(),
@@ -89,11 +91,11 @@ export function AddUserModal() {
     .superRefine(({ confirmPassword, password }, ctx) => {
       if (confirmPassword !== password) {
         ctx.issues.push({
-                    code: "custom",
-                    message: t("fields.passwordsDoNotMatch"),
-                    path: ["confirmPassword"],
-                      input: ''
-                  });
+          code: "custom",
+          message: tGlobal("auth.signup.errors.passwordsDoNotMatch"),
+          path: ["confirmPassword"],
+          input: "",
+        });
       }
     });
 
@@ -250,7 +252,7 @@ export function AddUserModal() {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("root", {
           type: "custom",
-          message: t("errors.userExists"),
+          message: tGlobal("common.errors.emailExists"),
         });
       } else {
         form.setError("root", {
@@ -286,11 +288,11 @@ export function AddUserModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="user.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder={tCommon("fields.name")} {...field} />
+                    <Input placeholder={tCommon("name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -373,7 +375,7 @@ export function AddUserModal() {
                     />
                   </FormControl>
                   <FormLabel className="flex items-center">
-                    {tCommon("status.active")}
+                    {tCommon("fields.isActive")}
                     <HelpPopover helpKey="user.active" />
                   </FormLabel>
                   <FormMessage />
@@ -582,7 +584,9 @@ export function AddUserModal() {
                     {tCommon("fields.apiAccess")}
                     {accessValue === "ADMIN" && (
                       <span className="text-muted-foreground text-xs ml-2">
-                        {"("}{tCommon("fields.requiredForAdmin")}{")"}
+                        {"("}
+                        {tCommon("fields.requiredForAdmin")}
+                        {")"}
                       </span>
                     )}
                     <HelpPopover helpKey="user.api" />
@@ -602,11 +606,11 @@ export function AddUserModal() {
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
               </Button>
             </DialogFooter>

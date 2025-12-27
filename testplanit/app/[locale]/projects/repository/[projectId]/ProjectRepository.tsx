@@ -626,22 +626,22 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     const baseItems = [
       {
         id: "folders",
-        name: t("repository.views.byFolder"),
+        name: t("repository.folders"),
         icon: FolderTree,
       },
       {
         id: "templates",
-        name: t("repository.views.byTemplate"),
+        name: t("common.fields.template"),
         icon: LayoutTemplate,
       },
       {
         id: "states",
-        name: t("repository.views.byState"),
+        name: t("common.fields.state"),
         icon: Workflow,
       },
       {
         id: "creators",
-        name: t("repository.views.byCreator"),
+        name: t("reports.dimensions.creator"),
         icon: User,
       },
       {
@@ -661,12 +661,12 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     const runModeItems = [
       {
         id: "assignedTo",
-        name: t("repository.views.byAssignedTo"),
+        name: t("common.fields.assignedTo"),
         icon: UserCog,
         options: [
           {
             id: "unassigned",
-            name: t("repository.views.unassigned"),
+            name: t("common.labels.unassigned"),
             count: viewOptionsData?.testRunOptions?.unassignedCount || 0,
           },
           ...(viewOptionsData?.testRunOptions?.assignedTo || []).sort(
@@ -676,24 +676,17 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       },
       {
         id: "status",
-        name: t("repository.views.byStatus"),
+        name: t("common.actions.status"),
         icon: CircleCheckBig,
         options: [
           {
             id: "untested",
-            name: t("repository.views.untested"),
+            name: t("common.labels.untested"),
             count: viewOptionsData?.testRunOptions?.untestedCount || 0,
           },
           ...(viewOptionsData?.testRunOptions?.statuses || []),
         ],
       },
-      // Tags view moved to baseItems now
-      // {
-      //   id: "tags",
-      //   name: t("repository.views.byTag"),
-      //   icon: Tags,
-      //   options: viewOptions.tags.map((tag) => ({ ...tag })),
-      // },
     ];
 
     const dynamicFields = Object.entries(viewOptions.dynamicFields)
@@ -1189,7 +1182,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           <div className="text-primary text-lg md:text-xl font-extrabold">
                             <div className="flex items-center space-x-1">
                               <ListChecks className="w-5 h-5 min-w-5 min-h-5" />
-                              <div>{t("repository.testCases")}</div>
+                              <div>{t("common.fields.testCases")}</div>
                             </div>
                           </div>
                           {!isSelectionMode && !isRunMode && canAddEdit && (

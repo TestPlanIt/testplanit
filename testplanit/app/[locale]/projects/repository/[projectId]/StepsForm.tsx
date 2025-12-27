@@ -249,7 +249,7 @@ const StepItem: React.FC<StepItemProps> = ({
                         onClick={() => handlePopoverOpenChange(index, false)}
                       >
                         <CircleSlash2 className="h-4 w-4" />
-                        {tCommon("actions.cancel")}
+                        {tCommon("cancel")}
                       </Button>
                       <Button
                         type="button"
@@ -323,7 +323,7 @@ const StepItem: React.FC<StepItemProps> = ({
                     >
                       <Label className="mb-1 flex items-center font-semibold">
                         <ListOrdered className="mr-1 h-5 w-5 shrink-0" />
-                        {t("step")} {item.order + 1}
+                        {tCommon("fields.step")} {item.order + 1}
                       </Label>
 
                       <TipTapEditor
@@ -334,7 +334,7 @@ const StepItem: React.FC<StepItemProps> = ({
                       />
                       <Label className="mt-4 mb-1 flex items-center font-semibold">
                         <SearchCheck className="mr-1 h-5 w-5 shrink-0" />
-                        {t("expectedResult")}
+                        {tCommon("fields.expectedResult")}
                       </Label>
                       <TipTapEditor
                         content={expectedResultContentToRender}
@@ -392,7 +392,7 @@ const StepItem: React.FC<StepItemProps> = ({
                 <ListOrdered
                   className={`h-5 w-5 ml-${readOnly ? "2" : "6"} mr-1`}
                 />
-                {t("step")} {index + 1}
+                {tCommon("fields.step")} {index + 1}
               </FormLabel>
             </div>
             {!readOnly && (
@@ -426,7 +426,7 @@ const StepItem: React.FC<StepItemProps> = ({
                         onClick={() => handlePopoverOpenChange(index, false)}
                       >
                         <CircleSlash2 className="h-4 w-4" />
-                        {tCommon("actions.cancel")}
+                        {tCommon("cancel")}
                       </Button>
                     </div>
                     <div className="flex items-center">
@@ -461,7 +461,7 @@ const StepItem: React.FC<StepItemProps> = ({
           <div className="w-full ring-2 ring-primary/50 p-1 rounded-md bg-primary-foreground mb-2 rounded-t-none">
             <FormLabel className="font-bold flex items-center">
               <SearchCheck className="h-5 w-5 mr-1" />
-              {t("expectedResult")}
+              {tCommon("fields.expectedResult")}
             </FormLabel>
             <FormControl>
               <TipTapEditorWrapper
@@ -489,8 +489,8 @@ const StepsForm: React.FC<StepsFormProps> = ({
   onSharedStepCreated,
   hideSharedStepsButtons = false,
 }) => {
-  const t_common = useTranslations("common");
-  const t_repo_steps = useTranslations("repository.steps");
+  const tCommon = useTranslations("common");
+  const tRepoSteps = useTranslations("repository.steps");
   const { data: session } = useSession();
   const { watch, setValue, getValues } = useFormContext();
   const { fields, append, remove, move, update, replace } = useFieldArray({
@@ -710,13 +710,13 @@ const StepsForm: React.FC<StepsFormProps> = ({
   const handleCreateSharedStep = async () => {
     if (selectedStepIndices.length === 0 || !newSharedGroupName.trim()) {
       toast.error(
-        t_repo_steps("notifications.noStepsSelectedOrNameEmptyWarning" as any)
+        tRepoSteps("notifications.noStepsSelectedOrNameEmptyWarning" as any)
       );
       return;
     }
 
     if (!session?.user?.id) {
-      toast.error(t_common("errors.unauthorized"));
+      toast.error(tCommon("errors.unauthorized"));
       return;
     }
     const userId = session.user.id;
@@ -737,7 +737,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
 
       if (!newSharedGroup || !newSharedGroup.id) {
         toast.error(
-          t_repo_steps("notifications.failedToCreateSharedGroupError" as any)
+          tRepoSteps("notifications.failedToCreateSharedGroupError" as any)
         );
         return;
       }
@@ -778,16 +778,14 @@ const StepsForm: React.FC<StepsFormProps> = ({
       setNewSharedGroupName("");
       setShowCreateSharedDialog(false);
       toast.success(
-        t_repo_steps("notifications.sharedGroupCreatedSuccess" as any)
+        tRepoSteps("notifications.sharedGroupCreatedSuccess" as any)
       );
       if (onSharedStepCreated) {
         onSharedStepCreated();
       }
     } catch (error) {
       console.error("Error creating shared step group:", error);
-      toast.error(
-        t_repo_steps("notifications.errorCreatingSharedGroup" as any)
-      );
+      toast.error(tRepoSteps("notifications.errorCreatingSharedGroup" as any));
     }
   };
 
@@ -888,7 +886,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
                 className="flex items-center"
               >
                 <PlusCircle className="h-5 w-5" />
-                {t_repo_steps("add")}
+                {tRepoSteps("add")}
               </Button>
               {!hideSharedStepsButtons && (
                 <Button
@@ -899,7 +897,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
                   className="flex items-center"
                 >
                   <PlusCircle className="h-5 w-5" />
-                  {t_repo_steps("addSharedStepsButton")}
+                  {tRepoSteps("addSharedSteps")}
                 </Button>
               )}
             </div>
@@ -912,7 +910,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
                 className="flex items-center"
               >
                 <Layers className="h-5 w-5" />
-                {t_repo_steps("createSharedSteps", {
+                {tRepoSteps("createSharedSteps", {
                   number: selectedStepIndices.length || 0,
                 })}
               </Button>
@@ -930,31 +928,31 @@ const StepsForm: React.FC<StepsFormProps> = ({
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
               <Layers className="h-5 w-5 mr-1" />
-              {t_repo_steps("createSharedSteps", {
+              {tRepoSteps("createSharedSteps", {
                 number: selectedStepIndices.length || 0,
               })}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t_repo_steps("sharedStepsDescription", {
+              {tRepoSteps("sharedStepsDescription", {
                 number: selectedStepIndices.length,
               })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input
-            placeholder={t_repo_steps("sharedStepsNamePlaceholder" as any)}
+            placeholder={tRepoSteps("sharedStepsNamePlaceholder" as any)}
             value={newSharedGroupName}
             onChange={(e) => setNewSharedGroupName(e.target.value)}
             className="mt-2"
           />
           <AlertDialogFooter className="mt-4">
             <AlertDialogCancel onClick={() => setNewSharedGroupName("")}>
-              {t_common("actions.cancel")}
+              {tCommon("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleCreateSharedStep}
               disabled={!newSharedGroupName.trim()}
             >
-              {t_common("actions.create")}
+              {tCommon("actions.create")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -974,10 +972,10 @@ const StepsForm: React.FC<StepsFormProps> = ({
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center">
               <Layers className="h-5 w-5 mr-1" />
-              {t_repo_steps("selectSharedStepsTitle")}
+              {tRepoSteps("selectSharedStepsTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t_repo_steps("selectSharedStepsDescription")}
+              {tRepoSteps("selectSharedStepsDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="my-2">
@@ -991,7 +989,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
                 <div className="flex items-center justify-between w-full">
                   {group.name}
                   <span className="text-xs text-muted-foreground ml-1">
-                    {t_repo_steps("stepsCountLabel", {
+                    {tRepoSteps("stepsCountLabel", {
                       count: group._count?.items || 0,
                     })}
                   </span>
@@ -999,7 +997,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
               )}
               // Use getOptionValue for the key/value of the option
               getOptionValue={(group: SharedStepGroupWithCount) => group.id}
-              placeholder={t_repo_steps("searchSharedStepsPlaceholder")}
+              placeholder={tRepoSteps("searchSharedStepsPlaceholder")}
               pageSize={10}
               showTotal={true}
             />
@@ -1009,11 +1007,11 @@ const StepsForm: React.FC<StepsFormProps> = ({
           {selectedSharedGroupInDialog && (
             <div className="mt-4 max-h-[300px] overflow-y-auto p-2 border rounded-md bg-muted/50">
               <h4 className="font-semibold mb-2 text-sm">
-                {t_repo_steps("reviewSelectedStepsTitle")}
+                {tRepoSteps("reviewSelectedStepsTitle")}
               </h4>
               {isLoadingItemsOfSelectedSharedGroup && (
                 <p className="text-sm text-muted-foreground">
-                  {t_repo_steps("loadingSharedStepsItems")}
+                  {tRepoSteps("loadingSharedStepsItems")}
                 </p>
               )}
               {/* TODO: Handle errorItemsOfSelectedSharedGroup */}
@@ -1063,7 +1061,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
                           className="p-2 border-l-2 border-dashed border-primary/20 bg-background/70 rounded-r-md"
                         >
                           <div className="font-semibold text-xs mb-1 text-foreground/80">
-                            {t_repo_steps("step")} {item.order + 1}
+                            {tCommon("fields.step")} {item.order + 1}
                           </div>
                           <TipTapEditor
                             content={stepContentToRender}
@@ -1072,7 +1070,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
                             className="min-h-[30px] bg-background/50 p-1 rounded text-xs"
                           />
                           <div className="font-semibold text-xs mt-1 mb-1 text-foreground/80">
-                            {t_repo_steps("expectedResult")}
+                            {tCommon("fields.expectedResult")}
                           </div>
                           <TipTapEditor
                             content={expectedResultContentToRender}
@@ -1088,7 +1086,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
               {itemsOfSelectedSharedGroup &&
                 itemsOfSelectedSharedGroup.length === 0 && (
                   <p className="text-sm text-muted-foreground">
-                    {t_repo_steps("noStepsInSelectedSharedGroup" as any)}
+                    {tRepoSteps("noStepsInSelectedSharedGroup" as any)}
                   </p>
                 )}
             </div>
@@ -1101,7 +1099,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
                 setSelectedSharedGroupInDialog(null); // Reset selection on cancel
               }}
             >
-              {t_common("actions.cancel")}
+              {tCommon("cancel")}
             </AlertDialogCancel>
             {/* Removed the Add button as selection now directly calls handleAddExistingSharedStepGroup */}
             {/* Re-add the Add button */}
@@ -1111,7 +1109,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
               }
               disabled={!selectedSharedGroupInDialog} // Disable if no group is selected
             >
-              {t_repo_steps("addSharedSteps")}
+              {tRepoSteps("addSharedSteps")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

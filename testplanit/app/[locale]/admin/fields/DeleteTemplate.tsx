@@ -35,6 +35,7 @@ interface DeleteTemplateModalProps {
 
 export function DeleteTemplateModal({ template }: DeleteTemplateModalProps) {
   const t = useTranslations("admin.templates.delete");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -136,7 +137,7 @@ export function DeleteTemplateModal({ template }: DeleteTemplateModalProps) {
             </AlertDialogHeader>
             <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-900 dark:text-yellow-200 p-3 rounded border border-yellow-300 dark:border-yellow-700">
               <p className="font-semibold mb-1">{t("warning")}</p>
-              <p className="text-sm">{t("info")}</p>
+              <p className="text-sm">{tGlobal("runs.delete.warning")}</p>
             </div>
             <AlertDialogFooter>
               {errors.root && (
@@ -152,7 +153,7 @@ export function DeleteTemplateModal({ template }: DeleteTemplateModalProps) {
                 onClick={handleCancel}
                 disabled={isSubmitting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 type="button"
@@ -161,7 +162,7 @@ export function DeleteTemplateModal({ template }: DeleteTemplateModalProps) {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isSubmitting
-                  ? tCommon("status.deleting")
+                  ? tCommon("actions.deleting")
                   : tCommon("actions.confirm")}
               </AlertDialogAction>
             </AlertDialogFooter>

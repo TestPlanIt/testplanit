@@ -63,6 +63,7 @@ function MilestoneTypesList() {
 
 function MilestoneTypes() {
   const t = useTranslations("admin.milestones");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -282,7 +283,7 @@ function MilestoneTypes() {
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
               <CardTitle data-testid="milestones-page-title">
-                {t("title")}
+                {tGlobal("common.fields.milestoneTypes")}
               </CardTitle>
             </div>
             <div className="flex gap-2">
@@ -365,7 +366,7 @@ function MilestoneTypes() {
             <AlertDialogCancel
               onClick={() => setSelectedMilestoneTypeId(undefined)}
             >
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmToggleDefault}>
               {tCommon("actions.confirm")}

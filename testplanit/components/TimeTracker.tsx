@@ -209,7 +209,7 @@ export const TimeTracker = React.forwardRef<TimeTrackerRef, TimeTrackerProps>(
             </TooltipTrigger>
             <TooltipContent>
               {isRunning
-                ? tCommon("status.active")
+                ? tCommon("fields.isActive")
                 : seconds > 0 ||
                     displayMinutes !== "00" ||
                     displaySeconds !== "00"

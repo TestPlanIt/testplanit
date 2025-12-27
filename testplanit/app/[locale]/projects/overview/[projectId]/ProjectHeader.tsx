@@ -50,7 +50,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({
           </span>
           {project.completedAt && (
             <span className="block">
-              {t("projects.overview.completedOn")}{" "}
+              {t("common.fields.completedOn")}{" "}
               <DateFormatter
                 date={project.completedAt}
                 formatString={dateFormat}

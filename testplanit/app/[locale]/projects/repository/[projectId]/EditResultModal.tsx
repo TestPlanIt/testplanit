@@ -282,8 +282,6 @@ export function EditResultModal({
   projectId,
   steps = [],
 }: EditResultModalProps) {
-  const t: ReturnType<typeof useTranslationsType<"runs.edit">> =
-    useTranslations("runs.edit");
   const tCommon: ReturnType<typeof useTranslationsType<"common">> =
     useTranslations("common");
   const locale = useLocale();
@@ -896,7 +894,7 @@ export function EditResultModal({
         queryKey: ["testRunResults", testRunId, testRunCaseId],
       });
 
-      toast.success(t("actions.resultUpdated"));
+      toast.success(tCommon("actions.resultUpdated"));
       onClose();
     } catch (error) {
       console.error("Error updating result:", error);
@@ -928,7 +926,7 @@ export function EditResultModal({
         queryKey: ["testRunResults", testRunId, testRunCaseId],
       });
 
-      toast.success(t("actions.resultDeleted"));
+      toast.success(tCommon("actions.resultDeleted"));
       onClose();
     } catch (error) {
       console.error("Error deleting result:", error);
@@ -986,7 +984,7 @@ export function EditResultModal({
           render={({ field }) => (
             <FormItem>
               <FormLabel className="flex items-center">
-                {tCommon("fields.status")}
+                {tCommon("actions.status")}
                 <HelpPopover helpKey="testResult.stepStatus" />
               </FormLabel>
               <FormControl>
@@ -1055,7 +1053,7 @@ export function EditResultModal({
                     key={editorKey}
                     content={parseTipTapContent(field.value)}
                     onUpdate={(content: any) => field.onChange(content)}
-                    placeholder={t("actions.resultDetailsPlaceholder")}
+                    placeholder={tCommon("actions.resultDetailsPlaceholder")}
                     projectId={`step_${stepId}_notes`}
                   />
                 </div>
@@ -1388,7 +1386,7 @@ export function EditResultModal({
         }}
       >
         <DialogHeader>
-          <DialogTitle>{t("actions.editResult")}</DialogTitle>
+          <DialogTitle>{tCommon("actions.editResult")}</DialogTitle>
           <DialogDescription>
             <div className="text-sm text-muted-foreground flex items-center">
               <div className="flex items-center">
@@ -1414,7 +1412,7 @@ export function EditResultModal({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center">
-                      {tCommon("fields.status")}
+                      {tCommon("actions.status")}
                       <HelpPopover helpKey="testResult.status" />
                     </FormLabel>
                     <FormControl>
@@ -1501,7 +1499,7 @@ export function EditResultModal({
                         key={editorKey}
                         content={field.value as any}
                         onUpdate={field.onChange}
-                        placeholder={t("actions.resultDetailsPlaceholder")}
+                        placeholder={tCommon("actions.resultDetailsPlaceholder")}
                         projectId={projectId.toString()}
                       />
                     </div>
@@ -1523,7 +1521,7 @@ export function EditResultModal({
             {/* Step results */}
             {steps.length > 0 && (
               <div className="space-y-4">
-                <div className="font-bold">{t("fields.steps")}</div>
+                <div className="font-bold">{tCommon("fields.steps")}</div>
                 <ol className="space-y-4">
                   {steps.map((step, index) => {
                     const stepId = step.id.toString();
@@ -1617,22 +1615,22 @@ export function EditResultModal({
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        {t("actions.deleteResult")}
+                        {tCommon("actions.deleteResult")}
                       </AlertDialogTitle>
                       <AlertDialogDescription>
-                        {t("actions.deleteResultConfirmation")}
+                        {tCommon("actions.deleteResultConfirmation")}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>
-                        {tCommon("actions.cancel")}
+                        {tCommon("cancel")}
                       </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleDelete}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
                         {isDeleting ? (
-                          <>{tCommon("status.deleting")}</>
+                          <>{tCommon("actions.deleting")}</>
                         ) : (
                           <>{tCommon("actions.delete")}</>
                         )}
@@ -1644,13 +1642,13 @@ export function EditResultModal({
               {!(!isLoadingPermissions && canDeleteResults) && <div></div>}
               <div className="flex space-x-2">
                 <Button variant="outline" type="button" onClick={onClose}>
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
-                    <>{tCommon("status.submitting")}</>
+                    <>{tCommon("actions.submitting")}</>
                   ) : (
-                    <>{t("actions.save")}</>
+                    <>{tCommon("actions.save")}</>
                   )}
                 </Button>
               </div>

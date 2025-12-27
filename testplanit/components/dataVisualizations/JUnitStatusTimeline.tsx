@@ -176,7 +176,9 @@ const JUnitStatusTimeline: React.FC<JUnitStatusTimelineProps> = ({
                 `<strong>${d.testCaseName}</strong><br/>` +
                   t("charts.status", { status: d.statusName }) +
                   "<br/>" +
-                  t("charts.duration", { seconds: d.duration.toFixed(2) })
+                  t("common.ui.charts.duration", {
+                    seconds: d.duration.toFixed(2),
+                  })
               );
             d3.select(this).attr("opacity", 0.8);
           })

@@ -35,6 +35,7 @@ export function ManualSharedStepsDialog({
   onComplete,
 }: ManualSharedStepsDialogProps) {
   const t = useTranslations("sharedSteps");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const params = useParams();
   const projectId = parseInt(params.projectId as string);
@@ -165,7 +166,9 @@ export function ManualSharedStepsDialog({
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t("manualEntry.title")}</DialogTitle>
+          <DialogTitle>
+            {tGlobal("repository.steps.addSharedSteps")}
+          </DialogTitle>
           <DialogDescription>{t("manualEntry.description")}</DialogDescription>
         </DialogHeader>
 
@@ -184,7 +187,7 @@ export function ManualSharedStepsDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>{t("manualEntry.stepsLabel")}</Label>
+            <Label>{tGlobal("common.fields.steps")}</Label>
             <FormProvider {...form}>
               <StepsForm
                 control={form.control}
@@ -208,7 +211,7 @@ export function ManualSharedStepsDialog({
             disabled={isSaving || !groupName.trim()}
             data-testid="save-manual-shared-steps-btn"
           >
-            {isSaving ? tCommon("status.saving") : tCommon("actions.save")}
+            {isSaving ? tCommon("actions.saving") : tCommon("actions.save")}
           </Button>
         </DialogFooter>
       </DialogContent>

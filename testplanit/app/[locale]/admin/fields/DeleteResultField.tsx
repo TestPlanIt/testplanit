@@ -144,7 +144,7 @@ export function DeleteResultFieldModal({
                 onClick={handleCancel}
                 disabled={isSubmitting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 type="button"
@@ -153,7 +153,7 @@ export function DeleteResultFieldModal({
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isSubmitting
-                  ? tCommon("status.deleting")
+                  ? tCommon("actions.deleting")
                   : tCommon("actions.confirm")}
               </AlertDialogAction>
             </AlertDialogFooter>

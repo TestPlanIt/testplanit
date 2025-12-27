@@ -36,6 +36,7 @@ export default function UserListPage() {
 
 function UserList() {
   const t = useTranslations("admin.users");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -215,7 +216,9 @@ function UserList() {
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
-              <CardTitle data-testid="users-page-title">{t("title")}</CardTitle>
+              <CardTitle data-testid="users-page-title">
+                {tGlobal("common.fields.users")}
+              </CardTitle>
             </div>
             <div>
               <AddUserModal />
@@ -228,7 +231,7 @@ function UserList() {
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
                   key="users-filter"
-                  placeholder={t("filterPlaceholder")}
+                  placeholder={tGlobal("users.filter")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
                 />

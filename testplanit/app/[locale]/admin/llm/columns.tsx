@@ -31,7 +31,7 @@ export const getColumns = (
     id: "name",
     accessorKey: "name",
     header: () => (
-      <div className="bg-primary-foreground">{tCommon("fields.name")}</div>
+      <div className="bg-primary-foreground">{tCommon("name")}</div>
     ),
     enableSorting: true,
     enableResizing: true,
@@ -44,7 +44,7 @@ export const getColumns = (
         <span className="font-medium">{row.original.name}</span>
         {row.original.llmProviderConfig?.isDefault && (
           <Badge variant="secondary" className="text-xs">
-            {t("default")}
+            {tCommon("fields.default")}
           </Badge>
         )}
       </div>
@@ -81,7 +81,7 @@ export const getColumns = (
   {
     id: "status",
     accessorKey: "status",
-    header: tCommon("fields.status"),
+    header: tCommon("actions.status"),
     enableSorting: true,
     enableResizing: true,
     size: 150,
@@ -107,7 +107,7 @@ export const getColumns = (
   {
     id: "projects",
     accessorKey: "projectLlmIntegrations",
-    header: t("assignedProjects"),
+    header: tCommon("fields.projects"),
     enableSorting: false,
     enableResizing: true,
     size: 75,
@@ -213,7 +213,9 @@ export const getColumns = (
       <div className="whitespace-nowrap">
         <DateFormatter
           date={getValue() as Date | string}
-          formatString={session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"}
+          formatString={
+            session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"
+          }
           timezone={session.user.preferences?.timezone || "Etc/UTC"}
         />
       </div>
@@ -232,7 +234,9 @@ export const getColumns = (
       <div className="whitespace-nowrap">
         <DateFormatter
           date={getValue() as Date | string}
-          formatString={session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"}
+          formatString={
+            session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"
+          }
           timezone={session.user.preferences?.timezone || "Etc/UTC"}
         />
       </div>
@@ -240,7 +244,7 @@ export const getColumns = (
   },
   {
     id: "actions",
-    header: tCommon("fields.actions"),
+    header: tCommon("actions.actionsLabel"),
     enableResizing: true,
     enableSorting: false,
     enableHiding: false,

@@ -118,6 +118,8 @@ global.ResizeObserver = MockResizeObserver as any;
 // For simplicity here, we'll paste the messages object
 const messages = {
   common: {
+    loading: "Loading...",
+    cancel: "Cancel",
     status: {
       loading: "Loading...",
       pending: "Pending",
@@ -132,6 +134,11 @@ const messages = {
     },
     fields: {
       totalElapsed: "Total time",
+      theme: "Theme",
+      locale: "Language",
+    },
+    actions: {
+      signOut: "Sign Out",
     },
     plural: {
       // Basic handling for plural - won't fully work but avoids errors for now

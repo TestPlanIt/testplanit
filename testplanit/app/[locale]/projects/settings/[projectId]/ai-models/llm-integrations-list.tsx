@@ -62,6 +62,7 @@ export function LlmIntegrationsList({
   currentIntegration,
 }: LlmIntegrationsListProps) {
   const t = useTranslations("projects.settings.aiModels");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [isAssigning, setIsAssigning] = useState<number | null>(null);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
@@ -211,7 +212,7 @@ export function LlmIntegrationsList({
                   </div>
                   {isActive && (
                     <Badge variant="default" className="ml-auto">
-                      {t("active")}
+                      {tCommon("fields.isActive")}
                     </Badge>
                   )}
                 </div>
@@ -253,7 +254,7 @@ export function LlmIntegrationsList({
                           <TooltipTrigger>
                             <Badge variant="outline" className="text-xs">
                               <Zap className="h-3 w-3 mr-1" />
-                              {t("streaming")}
+                              {tGlobal("admin.llm.streaming")}
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -282,7 +283,7 @@ export function LlmIntegrationsList({
                       {isAssigning === -1 ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        t("remove")
+                        tCommon("actions.remove")
                       )}
                     </Button>
                   ) : (

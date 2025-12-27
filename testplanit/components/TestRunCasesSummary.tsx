@@ -45,6 +45,7 @@ export function TestRunCasesSummary({
   testRunType,
 }: TestRunCasesSummaryProps) {
   const tCommon = useTranslations("common");
+  const tGlobal = useTranslations();
   const locale = useLocale();
   const { data: session } = useSession();
   const params = useParams();
@@ -569,7 +570,7 @@ export function TestRunCasesSummary({
                           })}
                           {item.resultCount > 1 && (
                             <span className="ml-1">
-                              {`(${item.resultCount} ${tCommon("labels.results")})`}
+                              {`(${item.resultCount} ${tGlobal("common.results")})`}
                             </span>
                           )}
                         </div>

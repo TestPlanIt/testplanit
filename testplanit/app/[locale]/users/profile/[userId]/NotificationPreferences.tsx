@@ -27,6 +27,8 @@ export function NotificationPreferences({
   userId,
 }: NotificationPreferencesProps) {
   const t = useTranslations("users.profile.notifications");
+  const tGlobal = useTranslations();
+  const tCommon = useTranslations("common");
   const { data: session } = useSession();
   const { toast } = useToast();
   const [notificationMode, setNotificationMode] =
@@ -70,7 +72,7 @@ export function NotificationPreferences({
         },
         onError: () => {
           toast({
-            title: t("error.title"),
+            title: tCommon("messages.createError"),
             description: t("error.description"),
             variant: "destructive",
           });
@@ -118,11 +120,13 @@ export function NotificationPreferences({
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="NONE" id="none" />
-              <Label htmlFor="none">{t("mode.none")}</Label>
+              <Label htmlFor="none">{tCommon("access.none")}</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="IN_APP" id="in-app" />
-              <Label htmlFor="in-app">{t("mode.inApp")}</Label>
+              <Label htmlFor="in-app">
+                {tGlobal("admin.notifications.defaultMode.inApp")}
+              </Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem
@@ -130,7 +134,7 @@ export function NotificationPreferences({
                 id="in-app-email-immediate"
               />
               <Label htmlFor="in-app-email-immediate">
-                {t("mode.inAppEmailImmediate")}
+                {tGlobal("admin.notifications.defaultMode.inAppEmailImmediate")}
               </Label>
             </div>
             <div className="flex items-center space-x-2">
@@ -139,7 +143,7 @@ export function NotificationPreferences({
                 id="in-app-email-daily"
               />
               <Label htmlFor="in-app-email-daily">
-                {t("mode.inAppEmailDaily")}
+                {tGlobal("admin.notifications.defaultMode.inAppEmailDaily")}
               </Label>
             </div>
           </RadioGroup>
@@ -147,7 +151,7 @@ export function NotificationPreferences({
 
         <div className="flex justify-end pt-4">
           <Button onClick={handleSave} disabled={isPending}>
-            {isPending ? t("saving") : t("save")}
+            {isPending ? tCommon("actions.saving") : tCommon("actions.save")}
           </Button>
         </div>
       </CardContent>

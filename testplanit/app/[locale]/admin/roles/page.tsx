@@ -44,6 +44,7 @@ function RoleList() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const t = useTranslations("admin.roles");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const {
     currentPage,
@@ -230,7 +231,7 @@ function RoleList() {
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <div>
-              <CardTitle>{t("title")}</CardTitle>
+              <CardTitle>{tGlobal("common.labels.roles")}</CardTitle>
             </div>
             <div>
               <AddRoleModal />

@@ -78,6 +78,8 @@ function AuditLogsGuard() {
  */
 function AuditLogsContent({ session }: { session: Session }) {
   const t = useTranslations("admin.auditLogs");
+  const tGlobal = useTranslations();
+  const tCommon = useTranslations("common");
   const {
     currentPage,
     setCurrentPage,
@@ -247,16 +249,16 @@ function AuditLogsContent({ session }: { session: Session }) {
       // Define CSV headers
       const headers = [
         t("columns.timestamp"),
-        t("columns.action"),
-        t("columns.entityType"),
+        t("filterAction"),
+        t("filterEntityType"),
         t("columns.entityId"),
         t("columns.entityName"),
-        t("columns.user"),
-        t("columns.email"),
-        t("columns.project"),
-        "IP Address",
-        "User Agent",
-        "Metadata",
+        tGlobal("common.access.user"),
+        tGlobal("common.fields.email"),
+        tGlobal("common.fields.project"),
+        t("columns.ipAddress"),
+        t("columns.userAgent"),
+        t("metadata"),
       ];
 
       // Convert logs to CSV rows
@@ -338,14 +340,15 @@ function AuditLogsContent({ session }: { session: Session }) {
   }, [
     refetchAllLogs,
     t,
+    tGlobal,
     debouncedSearchString,
     actionFilter,
     entityTypeFilter,
   ]);
 
   const columns = useMemo(
-    () => getColumns(session, handleViewDetails, t),
-    [session, handleViewDetails, t]
+    () => getColumns(session, handleViewDetails, t, tCommon),
+    [session, handleViewDetails, t, tCommon]
   );
 
   const [columnVisibility, setColumnVisibility] = useState<
@@ -397,7 +400,7 @@ function AuditLogsContent({ session }: { session: Session }) {
             <div className="flex items-center gap-3">
               <ShieldCheck className="h-8 w-8" />
               <CardTitle data-testid="audit-logs-page-title">
-                {t("title")}
+                {tGlobal("admin.menu.auditLogs")}
               </CardTitle>
             </div>
           </div>
@@ -468,7 +471,9 @@ function AuditLogsContent({ session }: { session: Session }) {
                 disabled={isExporting || totalItems === 0}
               >
                 <Download className="h-4 w-4" />
-                {isExporting ? t("exporting") : t("exportCsv")}
+                {isExporting
+                  ? tGlobal("repository.exportModal.exporting")
+                  : t("exportCsv")}
               </Button>
             </div>
 

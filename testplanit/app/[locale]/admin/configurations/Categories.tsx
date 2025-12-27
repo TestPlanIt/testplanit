@@ -61,6 +61,7 @@ export default function CategoryList() {
 
 function ConfigCategoriesList() {
   const t = useTranslations("admin.configurations.categories");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -427,7 +428,7 @@ function ConfigCategoriesList() {
               disabled={isSubmitting}
               size="sm"
             >
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </Button>
             {variantError && (
               <div className="text-sm text-destructive mt-1">
@@ -445,7 +446,7 @@ function ConfigCategoriesList() {
             className="flex items-center p-0 h-auto text-sm"
           >
             <PlusCircle className="w-4 h-4 mr-1" />
-            {`${tCommon("actions.add")} Variant`}
+            {`${tCommon("add")} Variant`}
           </Button>
         )}
       </div>
@@ -492,7 +493,9 @@ function ConfigCategoriesList() {
             <CardTitle className="text-xl md:text-2xl">{t("title")}</CardTitle>
             <Button onClick={() => setIsAdding(true)}>
               <PlusCircle className="w-4" />
-              <span className="hidden md:inline">{t("addCategory")}</span>
+              <span className="hidden md:inline">
+                {tGlobal("common.fields.placeholders.addCategory")}
+              </span>
             </Button>
           </div>
         </CardHeader>
@@ -509,12 +512,14 @@ function ConfigCategoriesList() {
                   value={newRecordName}
                   onChange={handleNameChange}
                   onKeyDown={handleKeyDown}
-                  placeholder={t("addCategory")}
+                  placeholder={tGlobal(
+                    "common.fields.placeholders.addCategory"
+                  )}
                   className="max-w-xs"
                 />
                 <Button onClick={onSubmit} disabled={isSubmitting}>
                   {isSubmitting
-                    ? tCommon("status.submitting")
+                    ? tCommon("actions.submitting")
                     : tCommon("actions.submit")}
                 </Button>
                 <Button
@@ -522,7 +527,7 @@ function ConfigCategoriesList() {
                   onClick={handleCancel}
                   disabled={isSubmitting}
                 >
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </Button>
               </div>
               {error && <div className="text-sm text-destructive">{error}</div>}
@@ -542,7 +547,7 @@ function ConfigCategoriesList() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{tCommon("actions.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDisableVariant}>
               {tCommon("actions.confirm")}
             </AlertDialogAction>

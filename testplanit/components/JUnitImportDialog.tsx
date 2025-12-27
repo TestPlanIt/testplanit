@@ -193,7 +193,9 @@ export default function JUnitImportDialog({
       (data.selectedTags ?? []).forEach((id: number) =>
         formData.append("tagIds", id.toString())
       );
-      data.selectedFiles.forEach((file: File) => formData.append("files", file));
+      data.selectedFiles.forEach((file: File) =>
+        formData.append("files", file)
+      );
 
       const response = await fetch("/api/junit/import", {
         method: "POST",
@@ -509,10 +511,12 @@ export default function JUnitImportDialog({
                 disabled={isImporting}
                 type="button"
               >
-                {t("cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isImporting}>
-                {isImporting ? t("importing") : t("import")}
+                {isImporting
+                  ? tCommon("status.importing")
+                  : tCommon("actions.junit.import.import")}
               </Button>
             </DialogFooter>
           </form>

@@ -32,7 +32,9 @@ interface UseDrillDownColumnsProps {
 export function useDrillDownColumns({
   metricId,
 }: UseDrillDownColumnsProps): ColumnDef<DrillDownRecord, any>[] {
-  const tReports = useTranslations("reports.drillDown.columns");
+  const tReports = useTranslations("reports.drillDown");
+  const tCommon = useTranslations("common");
+  const tLinkedCases = useTranslations("linkedCases");
   const t = useTranslations();
   const locale = useLocale();
   const dateFnsLocale = getDateFnsLocale(locale);
@@ -161,7 +163,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.repositoryCase?.name, {
           id: "testCase",
-          header: () => tReports("caseName"),
+          header: () => tLinkedCases("testCase"),
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.repositoryCase?.project?.id;
@@ -182,7 +184,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.testRun?.name, {
           id: "testRun",
-          header: () => tReports("testRunName"),
+          header: () => tCommon("fields.testRuns"),
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.repositoryCase?.project?.id;
@@ -203,13 +205,13 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.status?.name, {
           id: "status",
-          header: () => tReports("statusName"),
+          header: () => tCommon("actions.status"),
           cell: (info) => {
             const row = info.row.original as any;
             if (!row.status) {
               return (
                 <span className="text-muted-foreground">
-                  {tReports("pending")}
+                  {tCommon("status.pending")}
                 </span>
               );
             }
@@ -227,7 +229,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.status?.isCompleted, {
           id: "completed",
-          header: () => tReports("completed"),
+          header: () => tCommon("fields.completed"),
           cell: (info) => {
             const value = info.getValue();
             if (value === true) {
@@ -250,7 +252,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.repositoryCase?.folder?.name, {
           id: "folder",
-          header: () => tReports("folderName"),
+          header: () => tCommon("fields.folder"),
           cell: (info) => {
             const value = info.getValue();
             return <span>{value || "-"}</span>;
@@ -262,7 +264,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.repositoryCase?.project?.name, {
           id: "project",
-          header: () => tReports("projectName"),
+          header: () => tCommon("fields.project"),
           cell: (info) => {
             const value = info.getValue();
             return <span>{value || "-"}</span>;
@@ -287,7 +289,7 @@ export function useDrillDownColumns({
           (row: any) => row.testRunCase?.repositoryCase?.name,
           {
             id: "testCase",
-            header: () => tReports("caseName"),
+            header: () => tLinkedCases("testCase"),
             cell: (info) => {
               const row = info.row.original as any;
               const projectId = row.testRun?.projectId;
@@ -310,7 +312,7 @@ export function useDrillDownColumns({
         ),
         columnHelper.accessor((row: any) => row.testRun?.name, {
           id: "testRun",
-          header: () => tReports("runName"),
+          header: () => tCommon("fields.testRuns"),
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.testRun?.projectId;
@@ -332,7 +334,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.status?.name, {
           id: "status",
-          header: () => tReports("status"),
+          header: () => tCommon("actions.status"),
           cell: (info) => {
             const row = info.row.original as any;
             return (
@@ -349,7 +351,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.executedBy?.name, {
           id: "executedBy",
-          header: () => tReports("executedBy"),
+          header: () => tCommon("fields.executedBy"),
           cell: (info) => {
             const row = info.row.original as any;
             return row.executedById ? (
@@ -365,7 +367,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.executedAt, {
           id: "executedAt",
-          header: () => tReports("date"),
+          header: () => tCommon("fields.date"),
           cell: (info) => {
             const value = info.getValue();
             if (!value) return <span>-</span>;
@@ -385,7 +387,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.elapsed, {
           id: "elapsed",
-          header: () => tReports("elapsedTime"),
+          header: () => tCommon("fields.elapsed"),
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
@@ -424,7 +426,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.elapsed, {
           id: "elapsed",
-          header: () => tReports("elapsedTime"),
+          header: () => tCommon("fields.elapsed"),
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
@@ -439,7 +441,7 @@ export function useDrillDownColumns({
           (row: any) => row.testRunCase?.repositoryCase?.name,
           {
             id: "testCase",
-            header: () => tReports("caseName"),
+            header: () => tLinkedCases("testCase"),
             cell: (info) => {
               const row = info.row.original as any;
               const projectId = row.testRun?.projectId;
@@ -462,7 +464,7 @@ export function useDrillDownColumns({
         ),
         columnHelper.accessor((row: any) => row.testRun?.name, {
           id: "testRun",
-          header: () => tReports("runName"),
+          header: () => tCommon("fields.testRuns"),
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.testRun?.projectId;
@@ -484,7 +486,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.executedBy?.name, {
           id: "executedBy",
-          header: () => tReports("executedBy"),
+          header: () => tCommon("fields.executedBy"),
           cell: (info) => {
             const row = info.row.original as any;
             return row.executedById ? (
@@ -500,7 +502,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.executedAt, {
           id: "executedAt",
-          header: () => tReports("date"),
+          header: () => tCommon("fields.date"),
           cell: (info) => {
             const value = info.getValue();
             if (!value) return <span>-</span>;
@@ -526,7 +528,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.elapsed, {
           id: "elapsed",
-          header: () => tReports("elapsedTime"),
+          header: () => tCommon("fields.elapsed"),
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
@@ -541,7 +543,7 @@ export function useDrillDownColumns({
           (row: any) => row.testRunCase?.repositoryCase?.name,
           {
             id: "testCase",
-            header: () => tReports("caseName"),
+            header: () => tLinkedCases("testCase"),
             cell: (info) => {
               const row = info.row.original as any;
               const projectId = row.testRun?.projectId;
@@ -564,7 +566,7 @@ export function useDrillDownColumns({
         ),
         columnHelper.accessor((row: any) => row.testRun?.name, {
           id: "testRun",
-          header: () => tReports("runName"),
+          header: () => tCommon("fields.testRuns"),
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.testRun?.projectId;
@@ -586,7 +588,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.executedBy?.name, {
           id: "executedBy",
-          header: () => tReports("executedBy"),
+          header: () => tCommon("fields.executedBy"),
           cell: (info) => {
             const row = info.row.original as any;
             return row.executedById ? (
@@ -602,7 +604,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.executedAt, {
           id: "executedAt",
-          header: () => tReports("date"),
+          header: () => tCommon("fields.date"),
           cell: (info) => {
             const value = info.getValue();
             if (!value) return <span>-</span>;
@@ -628,7 +630,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.name, {
           id: "name",
-          header: () => tReports("runName"),
+          header: () => tCommon("fields.testRuns"),
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
@@ -650,7 +652,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.state?.name, {
           id: "status",
-          header: () => tReports("status"),
+          header: () => tCommon("actions.status"),
           cell: (info) => {
             const row = info.row.original as any;
             return (
@@ -746,7 +748,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.name, {
           id: "testCase",
-          header: () => tReports("caseName"),
+          header: () => tLinkedCases("testCase"),
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
@@ -773,7 +775,7 @@ export function useDrillDownColumns({
           },
           {
             id: "stepCount",
-            header: () => tReports("steps"),
+            header: () => tCommon("fields.steps"),
             cell: (info) => {
               const value = info.getValue();
               return <span>{value}</span>;
@@ -792,7 +794,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.name, {
           id: "name",
-          header: () => tReports("caseName"),
+          header: () => tLinkedCases("testCase"),
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
@@ -871,7 +873,7 @@ export function useDrillDownColumns({
       const columns = [
         columnHelper.accessor((row: any) => row.name, {
           id: "testCase",
-          header: () => tReports("caseName"),
+          header: () => tLinkedCases("testCase"),
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
@@ -1333,7 +1335,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.status, {
           id: "status",
-          header: () => tReports("status"),
+          header: () => tCommon("actions.status"),
           cell: (info) => {
             const value = info.getValue();
             return <span>{value || "-"}</span>;
@@ -1457,7 +1459,7 @@ export function useDrillDownColumns({
         },
         {
           id: "status",
-          header: () => tReports("status"),
+          header: () => tCommon("actions.status"),
           cell: (info) => {
             const row = info.row.original as any;
             if (row.status) {
@@ -1511,5 +1513,5 @@ export function useDrillDownColumns({
         maxSize: 150,
       }),
     ];
-  }, [metricId, tReports, t, dateFnsLocale, columnHelper]);
+  }, [metricId, tCommon, tLinkedCases, t, dateFnsLocale, columnHelper]);
 }

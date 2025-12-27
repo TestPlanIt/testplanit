@@ -92,9 +92,7 @@ function formatDimensionSummary(context: DrillDownContext, t: any): string {
     parts.push(context.dimensions.project.name);
   }
 
-  return parts.length > 0
-    ? parts.join(" • ")
-    : t("allRecords");
+  return parts.length > 0 ? parts.join(" • ") : t("allRecords");
 }
 
 /**
@@ -115,7 +113,7 @@ export function DrillDownDrawer({
 }: DrillDownDrawerProps) {
   const t = useTranslations();
   const tReports = useTranslations("reports.drillDown");
-  const tReportsColumns = useTranslations("reports.drillDown.columns");
+  const tGlobal = useTranslations();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Get columns based on metric type
@@ -126,8 +124,8 @@ export function DrillDownDrawer({
   // Export functionality
   const { isExporting, exportToCSV } = useDrillDownExport({
     context,
-    t,
-    tReports: tReportsColumns,
+    t: tGlobal,
+    tReports,
   });
 
   // Infinite scroll: observe the load more trigger
@@ -214,7 +212,9 @@ export function DrillDownDrawer({
                 disabled={isExporting || isLoading || records.length === 0}
               >
                 <Download className="h-4 w-4 mr-2" />
-                {isExporting ? tReports("exporting") : tReports("exportCsv")}
+                {isExporting
+                  ? tGlobal("repository.exportModal.exporting")
+                  : tGlobal("admin.auditLogs.exportCsv")}
               </Button>
               <DrawerClose asChild>
                 <Button variant="ghost" size="icon">

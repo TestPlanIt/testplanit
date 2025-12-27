@@ -16,6 +16,7 @@ import {
 
 export default function AdminReportsPage() {
   const tReports = useTranslations("reports.ui");
+  const tGlobal = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -46,7 +47,7 @@ export default function AdminReportsPage() {
                 className="items-center flex gap-1"
               >
                 <Globe className="h-8 w-8 shrink-0" />
-                {tReports("crossProjectReports.title")}
+                {tGlobal("navigation.admin.crossProjectReports")}
               </CardTitle>
             </div>
             <CardDescription>

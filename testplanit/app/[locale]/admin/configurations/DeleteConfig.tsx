@@ -33,6 +33,7 @@ export function DeleteConfigurationModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateConfiguration } = useUpdateConfigurations();
   const t = useTranslations("admin.configurations");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const handleCancel = () => {
@@ -100,7 +101,7 @@ export function DeleteConfigurationModal({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="bg-destructive text-destructive-foreground p-2">
-              {t("delete.warning")}
+              {tGlobal("runs.delete.warning")}
             </div>
             <AlertDialogFooter>
               {errors.root && (
@@ -116,7 +117,7 @@ export function DeleteConfigurationModal({
                 onClick={handleCancel}
                 disabled={isSubmitting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 type="button"
@@ -125,7 +126,7 @@ export function DeleteConfigurationModal({
                 className="bg-destructive hover:bg-destructive/90"
               >
                 {isSubmitting
-                  ? tCommon("status.deleting")
+                  ? tCommon("actions.deleting")
                   : tCommon("actions.confirmDelete")}
               </AlertDialogAction>
             </AlertDialogFooter>

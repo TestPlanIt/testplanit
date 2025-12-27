@@ -44,6 +44,7 @@ export function UserDropdownMenu() {
     { enabled: !!session?.user?.id }
   );
   const t = useTranslations("userMenu");
+  const tCommon = useTranslations("common");
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -52,15 +53,15 @@ export function UserDropdownMenu() {
     if (isLoggingOut) {
       return;
     }
-    
+
     setIsLoggingOut(true);
-    
+
     try {
       // Call our comprehensive logout endpoint first
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -77,24 +78,31 @@ export function UserDropdownMenu() {
             localStorage.clear();
             sessionStorage.clear();
           } catch (storageError) {
-            console.warn('Failed to clear storage:', storageError);
+            console.warn("Failed to clear storage:", storageError);
           }
         }
 
         // Handle SSO logout URLs if provided
         if (data.ssoLogoutUrls && data.ssoLogoutUrls.length > 0) {
           // Check for SAML logout URLs that need redirection
-          const samlLogoutUrl = data.ssoLogoutUrls.find((url: string) => 
-            !url.includes('accounts.google.com')
-          );
-          
+          const samlLogoutUrl = data.ssoLogoutUrls.find((urlString: string) => {
+            try {
+              const parsed = new URL(urlString);
+              // Only treat it as a Google accounts logout URL if the hostname matches exactly.
+              return parsed.hostname !== "accounts.google.com";
+            } catch {
+              // If the URL is invalid, treat it as non-Google to preserve existing behavior.
+              return true;
+            }
+          });
+
           if (samlLogoutUrl) {
             // For SAML, redirect immediately without calling NextAuth signOut
             // The SAML logout process will handle the full logout flow
             window.location.href = samlLogoutUrl;
             return;
           }
-          
+
           // If only Google URLs (which we skip), continue with normal logout
         }
 
@@ -102,22 +110,22 @@ export function UserDropdownMenu() {
         try {
           await signOut({ redirect: false });
         } catch (signOutError) {
-          console.warn('NextAuth signOut failed:', signOutError);
+          console.warn("NextAuth signOut failed:", signOutError);
           // Continue with manual redirect even if signOut fails
         }
-        
+
         // Use window.location for immediate navigation to prevent React hooks issues
         window.location.href = "/signin";
       } else {
-        throw new Error(data.error || 'Logout failed');
+        throw new Error(data.error || "Logout failed");
       }
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
       // Fallback to NextAuth signOut on any error
       try {
         await signOut({ redirect: true, callbackUrl: "/signin" });
       } catch (fallbackError) {
-        console.error('Fallback signOut also failed:', fallbackError);
+        console.error("Fallback signOut also failed:", fallbackError);
         // Final fallback - manual navigation
         window.location.href = "/signin";
       }
@@ -302,7 +310,7 @@ export function UserDropdownMenu() {
           <DropdownMenuSub>
             <DropdownMenuSubTrigger data-testid="theme-submenu-trigger">
               <Sun className="h-4 w-4 mr-2" />
-              {t("theme")}
+              {tCommon("fields.theme")}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent data-testid="theme-submenu-content">
@@ -342,7 +350,7 @@ export function UserDropdownMenu() {
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Globe className="h-4 w-4 mr-2" />
-              {t("language")}
+              {tCommon("fields.locale")}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
@@ -371,12 +379,9 @@ export function UserDropdownMenu() {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem 
-            onClick={onSignout}
-            disabled={isLoggingOut}
-          >
+          <DropdownMenuItem onClick={onSignout} disabled={isLoggingOut}>
             <LogOut className="h-4 w-4 mr-2" />
-            {t("signOut")}
+            {tCommon("actions.signOut")}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

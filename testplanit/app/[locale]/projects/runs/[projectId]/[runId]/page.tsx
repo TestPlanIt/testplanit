@@ -1499,7 +1499,7 @@ export default function TestRunPage() {
                       <CircleCheckBig className="h-6 w-6 shrink-0" />
                       <div className="hidden md:block">
                         <span className="mr-1">
-                          {t("projects.overview.completedOn")}
+                          {t("common.fields.completedOn")}
                         </span>
                         <DateFormatter
                           date={testRunData?.completedAt}
@@ -1553,7 +1553,9 @@ export default function TestRunPage() {
                         {/* Duplicate and Complete buttons on the next row */}
                         <div className="flex items-center gap-2">
                           {canAddEditRun &&
-                            !isAutomatedTestRunType(testRunData?.testRunType) && (
+                            !isAutomatedTestRunType(
+                              testRunData?.testRunType
+                            ) && (
                               <Button
                                 type="button"
                                 variant="secondary"
@@ -1598,7 +1600,7 @@ export default function TestRunPage() {
                             disabled={isSubmitting}
                           >
                             <CircleSlash2 className="h-4 w-4 mr-2" />{" "}
-                            {t("common.actions.cancel")}
+                            {t("common.cancel")}
                           </Button>
                         </div>
                         {/* Delete button in edit mode for non-completed runs */}
@@ -1696,7 +1698,7 @@ export default function TestRunPage() {
                                         readOnly={!isEditMode || !canAddEditRun}
                                         className="h-auto"
                                         placeholder={t(
-                                          "common.placeholders.description"
+                                          "common.fields.description_placeholder"
                                         )}
                                         projectId={safeProjectId}
                                       />
@@ -1742,7 +1744,7 @@ export default function TestRunPage() {
                                         readOnly={!isEditMode || !canAddEditRun}
                                         className="h-auto"
                                         placeholder={t(
-                                          "common.placeholders.documentation"
+                                          "common.placeholders.docs"
                                         )}
                                         projectId={safeProjectId}
                                       />
@@ -1805,8 +1807,8 @@ export default function TestRunPage() {
                     <TooltipContent>
                       <div>
                         {isCollapsedRight
-                          ? t("repository.cases.panels.expandRight")
-                          : t("repository.cases.panels.collapseRight")}
+                          ? t("common.actions.expandRightPanel")
+                          : t("common.actions.collapseRightPanel")}
                       </div>
                     </TooltipContent>
                   </Tooltip>
@@ -1968,7 +1970,7 @@ export default function TestRunPage() {
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleRemoveCasesCancel}>
-              {t("common.actions.cancel")}
+              {t("common.cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemoveCasesConfirm}
@@ -1984,10 +1986,10 @@ export default function TestRunPage() {
         <SheetContent className="sm:max-w-4xl w-full p-0 test-run-details-sheet">
           <SheetHeader>
             <SheetTitle className="sr-only">
-              {t("repository.testCase.detailsRegion")}
+              {t("repository.version.detailsRegion")}
             </SheetTitle>
             <SheetDescription className="sr-only">
-              {t("repository.testCase.detailsRegion")}
+              {t("repository.version.detailsRegion")}
             </SheetDescription>
           </SheetHeader>
           {/* Using key to force remount on case change */}

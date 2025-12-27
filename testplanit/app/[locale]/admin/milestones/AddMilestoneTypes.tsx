@@ -38,6 +38,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 
 export function AddMilestoneTypeModal() {
   const t = useTranslations("admin.milestones.add");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [selectedIconId, setSelectedIconId] = useState<number | null>(null);
@@ -45,7 +46,7 @@ export function AddMilestoneTypeModal() {
 
   const FormSchema = z.object({
     name: z.string().min(2, {
-      message: t("fields.name_error"),
+      message: tGlobal("common.fields.validation.nameRequired"),
     }),
     isDefault: z.boolean(),
   });
@@ -101,7 +102,7 @@ export function AddMilestoneTypeModal() {
       } else {
         form.setError("root", {
           type: "custom",
-          message: t("errors.unknown"),
+          message: tGlobal("common.errors.unknown"),
         });
       }
       setIsSubmitting(false);
@@ -143,11 +144,11 @@ export function AddMilestoneTypeModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="milestoneType.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder={tCommon("fields.name")} {...field} />
+                    <Input placeholder={tCommon("name")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -164,7 +165,7 @@ export function AddMilestoneTypeModal() {
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <FormLabel className="flex items-center !mt-0">
+                  <FormLabel className="flex items-center mt-0!">
                     {tCommon("fields.default")}
                     <HelpPopover helpKey="milestoneType.isDefault" />
                   </FormLabel>
@@ -182,11 +183,11 @@ export function AddMilestoneTypeModal() {
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
               </Button>
             </DialogFooter>

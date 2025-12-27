@@ -46,6 +46,7 @@ export function ColumnSelection<TData>({
   const searchParams = useSearchParams();
   const columnVisibilityQuery = searchParams.get("columns");
   const t = useTranslations("common");
+  const tGlobal = useTranslations();
 
   // Use columnMetadata if provided, otherwise fall back to columns
   const metadataSource = columnMetadata || columns;
@@ -214,7 +215,7 @@ export function ColumnSelection<TData>({
           <div className="flex justify-between mb-2">
             <Button onClick={handleSelectAll} variant="ghost">
               <CirclePlus className="w-4 h-4 shrink-0" />
-              {t("table.selectAll")}
+              {tGlobal("common.actions.selectAll")}
             </Button>
             <Button onClick={handleSelectNone} variant="ghost">
               <CircleMinus className="w-4 h-4 shrink-0" />

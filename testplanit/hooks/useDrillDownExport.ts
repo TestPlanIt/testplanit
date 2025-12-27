@@ -226,7 +226,7 @@ export function useDrillDownExport({
       // Sessions
       if (metricId === "sessions" || metricId === "sessionCount") {
         return records.map((record: any) => ({
-          [t("common.fields.name")]: record.name || "",
+          [t("common.name")]: record.name || "",
           [t("common.fields.charter")]: record.charter || "",
           [t("common.fields.createdBy")]: record.createdBy?.name || "",
           [t("common.fields.startDate")]: record.startedAt
@@ -246,7 +246,7 @@ export function useDrillDownExport({
         metricId === "totalDuration"
       ) {
         return records.map((record: any) => ({
-          [t("common.fields.name")]: record.name || "",
+          [t("common.name")]: record.name || "",
           [t("common.fields.duration")]: record.duration
             ? toHumanReadable(record.duration)
             : "",

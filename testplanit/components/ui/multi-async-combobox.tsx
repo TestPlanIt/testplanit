@@ -61,7 +61,6 @@ export function MultiAsyncCombobox<T>({
   showTotal = false,
   hideSelected = false,
 }: MultiAsyncComboboxProps<T>) {
-  const t = useTranslations("common.ui.asyncCombobox");
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -211,6 +210,7 @@ export function MultiAsyncCombobox<T>({
                     ? renderSelectedOption(v)
                     : getOptionLabel(v)}
                   <span
+                    title={getOptionLabel(v)}
                     role="button"
                     tabIndex={0}
                     className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
@@ -253,7 +253,7 @@ export function MultiAsyncCombobox<T>({
               </div>
             )}
             <CommandList className="max-h-[300px]">
-              <CommandEmpty>{t("noResults")}</CommandEmpty>
+              <CommandEmpty>{tCommon("labels.noResults")}</CommandEmpty>
               <CommandGroup
                 className={cn(loading ? "opacity-50 pointer-events-none" : "")}
               >
@@ -350,7 +350,7 @@ export function MultiAsyncCombobox<T>({
                 }}
                 disabled={page === 0 || loading}
               >
-                {t("previous")}
+                {tCommon("actions.previous")}
               </Button>
               <span className="text-xs text-muted-foreground">
                 {total != null
@@ -381,7 +381,7 @@ export function MultiAsyncCombobox<T>({
                     : options.length < pageSize)
                 }
               >
-                {t("next")}
+                {tCommon("actions.next")}
               </Button>
             </div>
           </div>

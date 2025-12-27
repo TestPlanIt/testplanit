@@ -48,8 +48,8 @@ interface EditGroupModalProps {
 
 const EditGroupFormSchema = z.object({
   name: z.string().min(1, {
-      error: "Group Name is required"
-}),
+    error: "Group Name is required",
+  }),
 });
 
 type EditGroupFormData = z.infer<typeof EditGroupFormSchema>;
@@ -231,7 +231,7 @@ export function EditGroupModal({ group }: EditGroupModalProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tCommon("fields.name")}
+                    {tCommon("name")}
                     <HelpPopover helpKey="group.name" />
                   </FormLabel>
                   <FormControl>
@@ -256,7 +256,7 @@ export function EditGroupModal({ group }: EditGroupModalProps) {
               <div className="space-y-2 max-h-48 overflow-y-auto rounded-md border p-2">
                 {isLoading && (
                   <p className="text-sm text-muted-foreground text-center py-2">
-                    {tCommon("status.loading")}
+                    {tCommon("loading")}
                   </p>
                 )}
                 {!isLoading && assignedUsers.length === 0 && (
@@ -307,11 +307,11 @@ export function EditGroupModal({ group }: EditGroupModalProps) {
                 onClick={() => setOpen(false)}
                 disabled={isSubmitting}
               >
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting || isLoading}>
                 {isSubmitting || isLoading
-                  ? tCommon("status.saving")
+                  ? tCommon("actions.saving")
                   : tCommon("actions.save")}
               </Button>
             </DialogFooter>

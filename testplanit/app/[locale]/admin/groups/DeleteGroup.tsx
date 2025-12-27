@@ -28,6 +28,7 @@ interface DeleteGroupModalProps {
 
 export function DeleteGroupModal({ group }: DeleteGroupModalProps) {
   const t = useTranslations("admin.groups.delete");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,7 +48,7 @@ export function DeleteGroupModal({ group }: DeleteGroupModalProps) {
     } catch (err: any) {
       form.setError("root", {
         type: "custom",
-        message: t("errors.unknown"),
+        message: tGlobal("common.errors.unknown"),
       });
       setIsSubmitting(false);
       return;
@@ -72,7 +73,7 @@ export function DeleteGroupModal({ group }: DeleteGroupModalProps) {
             </AlertDialogHeader>
             <div>{t("deleteGroupDescription")}</div>
             <div className="bg-destructive text-destructive-foreground p-2">
-              {t("warning")}
+              {tGlobal("runs.delete.warning")}
             </div>
             <AlertDialogFooter>
               {errors.root && (
@@ -84,7 +85,7 @@ export function DeleteGroupModal({ group }: DeleteGroupModalProps) {
                 </div>
               )}
               <AlertDialogCancel disabled={isSubmitting}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 disabled={isSubmitting}
@@ -92,7 +93,7 @@ export function DeleteGroupModal({ group }: DeleteGroupModalProps) {
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isSubmitting
-                  ? tCommon("status.submitting")
+                  ? tCommon("actions.submitting")
                   : tCommon("actions.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>

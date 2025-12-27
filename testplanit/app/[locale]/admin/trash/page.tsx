@@ -110,6 +110,7 @@ const softDeletedItemTypes: Array<{
 
 export default function TrashPage() {
   const t = useTranslations("admin.trash");
+  const tGlobal = useTranslations();
 
   return (
     <Card>
@@ -117,7 +118,7 @@ export default function TrashPage() {
         <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
           <div className="flex items-center">
             <Trash2 className="mr-2" size={32} />
-            {t("title")}
+            {tGlobal("admin.menu.trash")}
           </div>
         </div>
       </CardHeader>

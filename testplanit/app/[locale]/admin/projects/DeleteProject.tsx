@@ -28,6 +28,7 @@ interface DeleteProjectModalProps {
 
 export function DeleteProjectModal({ project }: DeleteProjectModalProps) {
   const t = useTranslations("admin.projects.delete");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,7 +83,7 @@ export function DeleteProjectModal({ project }: DeleteProjectModalProps) {
               })}
             </div>
             <div className="bg-destructive text-destructive-foreground p-2">
-              {t("warning")}
+              {tGlobal("runs.delete.warning")}
             </div>
             <AlertDialogFooter>
               {errors.root && (
@@ -94,7 +95,7 @@ export function DeleteProjectModal({ project }: DeleteProjectModalProps) {
                 </div>
               )}
               <AlertDialogCancel disabled={isSubmitting}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </AlertDialogCancel>
               <AlertDialogAction
                 disabled={isSubmitting}

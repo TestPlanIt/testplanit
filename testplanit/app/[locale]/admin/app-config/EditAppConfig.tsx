@@ -102,7 +102,7 @@ export function EditAppConfigModal({ config }: EditAppConfigModalProps) {
               onClick={() => setOpen(false)}
               disabled={isSubmitting}
             >
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </Button>
             <Button
               type="submit"
@@ -110,7 +110,7 @@ export function EditAppConfigModal({ config }: EditAppConfigModalProps) {
               data-testid="app-config-submit-button"
             >
               {isSubmitting
-                ? tCommon("status.submitting")
+                ? tCommon("actions.submitting")
                 : tCommon("actions.submit")}
             </Button>
           </div>

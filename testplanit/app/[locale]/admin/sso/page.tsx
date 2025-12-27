@@ -280,7 +280,7 @@ export default function SSOAdminPage() {
       refetch(); // Refresh SSO providers
     } catch (error) {
       console.error("Failed to save SAML config:", error);
-      toast.error(t("admin.sso.messages.samlConfigFailed"));
+      toast.error(t("admin.sso.messages.googleConfigFailed"));
     } finally {
       setIsSavingSamlConfig(false);
     }
@@ -289,7 +289,7 @@ export default function SSOAdminPage() {
   if (session?.user?.access !== "ADMIN") {
     return (
       <div className="container mx-auto py-10">
-        <p>{t("admin.sso.errors.noPermission")}</p>
+        <p>{t("common.errors.permissionDenied")}</p>
       </div>
     );
   }
@@ -715,7 +715,7 @@ export default function SSOAdminPage() {
                 className="items-center flex"
               >
                 <ShieldUser className="inline mr-2 h-8 w-8" />
-                <span>{t("admin.sso.title")}</span>
+                <span>{t("admin.menu.sso")}</span>
               </CardTitle>
               <CardDescription data-testid="sso-page-description">
                 {t("admin.sso.description")}
@@ -743,7 +743,7 @@ export default function SSOAdminPage() {
               {!magicLinkConfigured && (
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="secondary">
-                    {t("admin.sso.status.notConfigured")}
+                    {t("admin.llm.notConfigured")}
                   </Badge>
                 </div>
               )}
@@ -771,7 +771,7 @@ export default function SSOAdminPage() {
           {/* Two-Factor Authentication Settings */}
           <div className="pt-4 border-t">
             <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-              {t("admin.sso.globalSettings.twoFactor.sectionTitle")}
+              {t("auth.signin.twoFactor.title")}
             </h4>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -832,7 +832,7 @@ export default function SSOAdminPage() {
                     className="h-6 px-2 text-xs"
                   >
                     <Edit className="h-3 w-3" />
-                    {t("admin.sso.status.configure")}
+                    {t("admin.integrations.table.configure")}
                   </Button>
                 </div>
               )}
@@ -840,7 +840,7 @@ export default function SSOAdminPage() {
                 !samlProvider) && (
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="secondary">
-                    {t("admin.sso.status.notConfigured")}
+                    {t("admin.llm.notConfigured")}
                   </Badge>
                   <Button
                     variant="ghost"
@@ -879,14 +879,14 @@ export default function SSOAdminPage() {
                     className="h-6 px-2 text-xs"
                   >
                     <Edit className="h-3 w-3" />
-                    {t("admin.sso.status.configure")}
+                    {t("admin.integrations.table.configure")}
                   </Button>
                 </div>
               )}
               {!appleConfigured && (
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="secondary">
-                    {t("admin.sso.status.notConfigured")}
+                    {t("admin.llm.notConfigured")}
                   </Badge>
                   <Button
                     variant="ghost"
@@ -925,14 +925,14 @@ export default function SSOAdminPage() {
                     className="h-6 px-2 text-xs"
                   >
                     <Edit className="h-3 w-3" />
-                    {t("admin.sso.status.configure")}
+                    {t("admin.integrations.editIntegration")}
                   </Button>
                 </div>
               )}
               {!googleConfigured && (
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="secondary">
-                    {t("admin.sso.status.notConfigured")}
+                    {t("admin.llm.notConfigured")}
                   </Badge>
                   <Button
                     variant="ghost"
@@ -1071,9 +1071,7 @@ export default function SSOAdminPage() {
                           </span>
                           {!domain.enabled && (
                             <Badge variant="secondary">
-                              {t(
-                                "admin.sso.registration.allowedDomains.disabled"
-                              )}
+                              {t("common.status.disabled")}
                             </Badge>
                           )}
                         </div>
@@ -1120,7 +1118,7 @@ export default function SSOAdminPage() {
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="clientId">
-                {t("admin.sso.dialogs.googleOAuth.clientId")}
+                {t("admin.integrations.config.clientId")}
               </Label>
               <Input
                 id="clientId"
@@ -1133,7 +1131,7 @@ export default function SSOAdminPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="clientSecret">
-                {t("admin.sso.dialogs.googleOAuth.clientSecret")}
+                {t("admin.integrations.config.clientSecret")}
               </Label>
               <Input
                 id="clientSecret"
@@ -1173,7 +1171,7 @@ export default function SSOAdminPage() {
               }}
               disabled={isSavingGoogleConfig}
             >
-              {t("admin.sso.dialogs.googleOAuth.cancel")}
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={saveGoogleConfig}
@@ -1182,8 +1180,8 @@ export default function SSOAdminPage() {
               }
             >
               {isSavingGoogleConfig
-                ? t("admin.sso.dialogs.googleOAuth.saving")
-                : t("admin.sso.dialogs.googleOAuth.save")}
+                ? t("common.actions.saving")
+                : t("admin.imports.testmo.mappingSaveConfiguration")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1193,7 +1191,7 @@ export default function SSOAdminPage() {
       <Dialog open={isSamlConfigOpen} onOpenChange={setIsSamlConfigOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>{t("admin.sso.dialogs.saml.title")}</DialogTitle>
+            <DialogTitle>{t("admin.sso.samlConfiguration.title")}</DialogTitle>
             <DialogDescription>
               {t("admin.sso.dialogs.saml.description")}
             </DialogDescription>
@@ -1222,7 +1220,9 @@ export default function SSOAdminPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="cert">{t("admin.sso.dialogs.saml.cert")}</Label>
+              <Label htmlFor="cert">
+                {t("admin.sso.samlConfiguration.samlSettings.certificate")}
+              </Label>
               <Input
                 id="cert"
                 value={samlCert}
@@ -1283,7 +1283,7 @@ export default function SSOAdminPage() {
               }}
               disabled={isSavingSamlConfig}
             >
-              {t("admin.sso.dialogs.saml.cancel")}
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={saveSamlConfig}
@@ -1296,8 +1296,8 @@ export default function SSOAdminPage() {
               }
             >
               {isSavingSamlConfig
-                ? t("admin.sso.dialogs.saml.saving")
-                : t("admin.sso.dialogs.saml.save")}
+                ? t("common.actions.saving")
+                : t("admin.imports.testmo.mappingSaveConfiguration")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1396,7 +1396,7 @@ export default function SSOAdminPage() {
               }}
               disabled={isSavingAppleConfig}
             >
-              {t("common.dialogs.complete.apple.cancel")}
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={saveAppleConfig}
@@ -1409,8 +1409,8 @@ export default function SSOAdminPage() {
               }
             >
               {isSavingAppleConfig
-                ? t("common.dialogs.complete.apple.saving")
-                : t("common.dialogs.complete.apple.save")}
+                ? t("common.actions.saving")
+                : t("admin.imports.testmo.mappingSaveConfiguration")}
             </Button>
           </DialogFooter>
         </DialogContent>

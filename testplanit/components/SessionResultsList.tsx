@@ -172,7 +172,7 @@ const createFormSchema = (
   tCommon: ReturnType<typeof useTranslations<"common">>,
   templateFields: any[] = []
 ) => {
-  const statusFieldName = tCommon("fields.status"); // Pre-calculate field name
+  const statusFieldName = tCommon("actions.status");
   // Create a base schema with required fields
   const baseSchema = {
     statusId: z.string().min(1, {
@@ -694,9 +694,9 @@ export function SessionResultsList({
 
   const handleSaveEdit = useCallback(
     async (values: FieldFormValues) => {
-      console.log('=== handleSaveEdit CALLED ===');
-      console.log('selectedFiles:', selectedFiles);
-      console.log('selectedFiles.length:', selectedFiles.length);
+      console.log("=== handleSaveEdit CALLED ===");
+      console.log("selectedFiles:", selectedFiles);
+      console.log("selectedFiles.length:", selectedFiles.length);
       if (!resultToEdit || !session?.user?.id) return;
 
       setIsSubmitting(true);
@@ -816,17 +816,32 @@ export function SessionResultsList({
         }
 
         // Then handle file uploads if any
-        console.log('[DEBUG] selectedFiles at upload time:', selectedFiles.length, selectedFiles.map(f => f.name));
+        console.log(
+          "[DEBUG] selectedFiles at upload time:",
+          selectedFiles.length,
+          selectedFiles.map((f) => f.name)
+        );
         if (selectedFiles.length > 0) {
           const prependString = session.user.id;
           const sanitizedFolder =
             typeof projectId === "string" ? projectId : projectId.toString();
 
           // Deduplicate files by name+size+lastModified before uploading
-          const uniqueFiles = selectedFiles.filter((file, index, self) =>
-            index === self.findIndex(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified)
+          const uniqueFiles = selectedFiles.filter(
+            (file, index, self) =>
+              index ===
+              self.findIndex(
+                (f) =>
+                  f.name === file.name &&
+                  f.size === file.size &&
+                  f.lastModified === file.lastModified
+              )
           );
-          console.log('[DEBUG] uniqueFiles after deduplication:', uniqueFiles.length, uniqueFiles.map(f => f.name));
+          console.log(
+            "[DEBUG] uniqueFiles after deduplication:",
+            uniqueFiles.length,
+            uniqueFiles.map((f) => f.name)
+          );
 
           const uploadAttachmentsPromises = uniqueFiles.map(async (file) => {
             try {
@@ -864,7 +879,10 @@ export function SessionResultsList({
         }
 
         // Apply pending attachment changes (edits and deletes)
-        if (pendingAttachmentChanges.edits.length > 0 || pendingAttachmentChanges.deletes.length > 0) {
+        if (
+          pendingAttachmentChanges.edits.length > 0 ||
+          pendingAttachmentChanges.deletes.length > 0
+        ) {
           // Apply edits
           const editPromises = pendingAttachmentChanges.edits.map((edit) =>
             updateAttachments({
@@ -1591,7 +1609,7 @@ export function SessionResultsList({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={handleCancelDelete}>
-              {tCommon("actions.cancel")}
+              {tCommon("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
@@ -1623,7 +1641,7 @@ export function SessionResultsList({
           <Form {...form}>
             <form
               onSubmit={(e) => {
-                console.log('=== FORM onSubmit CALLED ===');
+                console.log("=== FORM onSubmit CALLED ===");
                 e.preventDefault();
                 const formData = form.getValues() as FieldFormValues;
 
@@ -1679,7 +1697,7 @@ export function SessionResultsList({
                 name="statusId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tCommon("fields.status")}</FormLabel>
+                    <FormLabel>{tCommon("actions.status")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger className="w-full">
@@ -1746,7 +1764,7 @@ export function SessionResultsList({
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder={tCommon("placeholders.elapsed")}
+                        placeholder={tCommon("fields.elapsed")}
                         value={field.value ?? ""}
                       />
                     </FormControl>
@@ -1851,7 +1869,7 @@ export function SessionResultsList({
                   variant="outline"
                   onClick={handleCancelEdit}
                 >
-                  {tCommon("actions.cancel")}
+                  {tCommon("cancel")}
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting

@@ -23,11 +23,14 @@ interface DeleteLlmIntegrationProps {
   integration: any;
 }
 
-export function DeleteLlmIntegration({ integration }: DeleteLlmIntegrationProps) {
+export function DeleteLlmIntegration({
+  integration,
+}: DeleteLlmIntegrationProps) {
   const t = useTranslations("admin.llm.delete");
+  const tGlobal = useTranslations();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const { mutateAsync: deleteLlmIntegration } = useDeleteLlmIntegration();
   const { mutateAsync: deleteLlmProviderConfig } = useDeleteLlmProviderConfig();
 
@@ -47,7 +50,7 @@ export function DeleteLlmIntegration({ integration }: DeleteLlmIntegrationProps)
         where: { id: integration.id },
       });
 
-      toast.success(t("success"), {
+      toast.success(tGlobal("common.fields.success"), {
         description: t("integrationDeletedSuccess"),
       });
 
@@ -55,7 +58,7 @@ export function DeleteLlmIntegration({ integration }: DeleteLlmIntegrationProps)
       // ZenStack will automatically invalidate hooks - no manual refresh needed
     } catch (error: any) {
       console.error("Error deleting integration:", error);
-      toast.error(t("error"), {
+      toast.error(tGlobal("common.errors.error"), {
         description: error.message || t("failedToDeleteIntegration"),
       });
     } finally {
@@ -65,27 +68,27 @@ export function DeleteLlmIntegration({ integration }: DeleteLlmIntegrationProps)
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setOpen(true)}
-      >
+      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
         <Trash2 className="h-4 w-4" />
       </Button>
-      
+
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("confirmMessage", { name: integration?.name })}
+              {tGlobal("admin.llm.delete.description", {
+                name: integration?.name,
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setOpen(false)}>{t("cancel")}</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setOpen(false)}>
+              {tGlobal("common.cancel")}
+            </AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t("delete")}
+              {tGlobal("common.dialogs.confirmDelete.description")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

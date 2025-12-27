@@ -28,7 +28,10 @@ import { useDebounce } from "@/components/Debounce";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { ColumnSelection, ColumnMetadata } from "@/components/tables/ColumnSelection";
+import {
+  ColumnSelection,
+  ColumnMetadata,
+} from "@/components/tables/ColumnSelection";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Prisma } from "@prisma/client";
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
@@ -123,18 +126,26 @@ export default function Cases({
   // Use override pagination if provided (for modal), otherwise use context (for normal page)
   const contextPagination = usePagination();
 
-  const currentPage = overridePagination?.currentPage ?? contextPagination.currentPage;
-  const setCurrentPage = overridePagination?.setCurrentPage ?? contextPagination.setCurrentPage;
+  const currentPage =
+    overridePagination?.currentPage ?? contextPagination.currentPage;
+  const setCurrentPage =
+    overridePagination?.setCurrentPage ?? contextPagination.setCurrentPage;
   const pageSize = overridePagination?.pageSize ?? contextPagination.pageSize;
-  const setPageSize = overridePagination?.setPageSize ?? contextPagination.setPageSize;
-  const totalItems = overridePagination?.totalItems ?? contextPagination.totalItems;
-  const setTotalItems = overridePagination?.setTotalItems ?? contextPagination.setTotalItems;
+  const setPageSize =
+    overridePagination?.setPageSize ?? contextPagination.setPageSize;
+  const totalItems =
+    overridePagination?.totalItems ?? contextPagination.totalItems;
+  const setTotalItems =
+    overridePagination?.setTotalItems ?? contextPagination.setTotalItems;
 
   // Calculate derived pagination values
-  const effectivePageSize = typeof pageSize === 'number' ? pageSize : totalItems;
-  const startIndex = totalItems > 0 ? (currentPage - 1) * effectivePageSize + 1 : 0;
+  const effectivePageSize =
+    typeof pageSize === "number" ? pageSize : totalItems;
+  const startIndex =
+    totalItems > 0 ? (currentPage - 1) * effectivePageSize + 1 : 0;
   const endIndex = Math.min(startIndex + effectivePageSize - 1, totalItems);
-  const totalPages = effectivePageSize > 0 ? Math.ceil(totalItems / effectivePageSize) : 1;
+  const totalPages =
+    effectivePageSize > 0 ? Math.ceil(totalItems / effectivePageSize) : 1;
 
   const [sortConfig, setSortConfig] = useState<
     { column: string; direction: "asc" | "desc" } | undefined
@@ -192,7 +203,9 @@ export default function Cases({
 
   // State for shift+click select all across pages functionality
   const [fetchAllIdsForSelection, setFetchAllIdsForSelection] = useState(false);
-  const [selectAllAction, setSelectAllAction] = useState<'select' | 'deselect' | null>(null);
+  const [selectAllAction, setSelectAllAction] = useState<
+    "select" | "deselect" | null
+  >(null);
 
   // Local state for immediate reorder feedback
   const [optimisticReorder, setOptimisticReorder] = useState<{
@@ -260,7 +273,7 @@ export default function Cases({
       {
         enabled: Boolean(
           // Skip query if we know the selected folder has 0 cases
-          (viewType === "folders" && selectedFolderCaseCount === 0)
+          viewType === "folders" && selectedFolderCaseCount === 0
             ? false
             : !!projectId
         ),
@@ -427,215 +440,243 @@ export default function Cases({
 
   // Build repository case where clause (used for filtering by folder, view, template, etc.)
   // This excludes test run-specific filters like assignedTo and status
-  const repositoryCaseWhereClause: Prisma.RepositoryCasesWhereInput = useMemo(() => {
-    const baseConditions: Prisma.RepositoryCasesWhereInput[] = [
-      {
-        name: {
-          contains: deferredSearchString,
-          mode: "insensitive" as Prisma.QueryMode,
+  const repositoryCaseWhereClause: Prisma.RepositoryCasesWhereInput =
+    useMemo(() => {
+      const baseConditions: Prisma.RepositoryCasesWhereInput[] = [
+        {
+          name: {
+            contains: deferredSearchString,
+            mode: "insensitive" as Prisma.QueryMode,
+          },
         },
-      },
-      {
-        isDeleted: false,
-        isArchived: false,
-        projectId,
-      },
-    ];
+        {
+          isDeleted: false,
+          isArchived: false,
+          projectId,
+        },
+      ];
 
-    // --- Apply folder/view/filter logic ---
-    // Skip assignedTo and status filters here - they're handled separately for test run cases
-    const isTestRunSpecificView = viewType === "assignedTo" || viewType === "status";
+      // --- Apply folder/view/filter logic ---
+      // Skip assignedTo and status filters here - they're handled separately for test run cases
+      const isTestRunSpecificView =
+        viewType === "assignedTo" || viewType === "status";
 
-    if (viewType === "folders" && folderId) {
-      // 1. Folder view with specific folder
-      baseConditions.push({ folderId: { equals: folderId } });
-    } else if (!isTestRunSpecificView && (filterId === null || (Array.isArray(filterId) && filterId.length === 0))) {
-      // 2. Filter is null - means "All Values/All Items", so add no condition
-    } else if (!isTestRunSpecificView) {
-      // 4. Filter has specific value(s)
-      const filterArray = Array.isArray(filterId) ? filterId : [filterId];
-      const filterConditions: any[] = [];
+      if (viewType === "folders" && folderId) {
+        // 1. Folder view with specific folder
+        baseConditions.push({ folderId: { equals: folderId } });
+      } else if (
+        !isTestRunSpecificView &&
+        (filterId === null ||
+          (Array.isArray(filterId) && filterId.length === 0))
+      ) {
+        // 2. Filter is null - means "All Values/All Items", so add no condition
+      } else if (!isTestRunSpecificView) {
+        // 4. Filter has specific value(s)
+        const filterArray = Array.isArray(filterId) ? filterId : [filterId];
+        const filterConditions: any[] = [];
 
-      // Build a condition for each filter value
-      for (const singleFilterId of filterArray) {
-        if (viewType.startsWith("dynamic_")) {
-          // Apply specific filter for dynamic views
-          const [_, ...fieldParts] = viewType.split("_");
-          const fieldKey = fieldParts.join("_");
-          const [fieldId, fieldType] = fieldKey.split("_");
-          const numericFieldId = parseInt(fieldId);
+        // Build a condition for each filter value
+        for (const singleFilterId of filterArray) {
+          if (viewType.startsWith("dynamic_")) {
+            // Apply specific filter for dynamic views
+            const [_, ...fieldParts] = viewType.split("_");
+            const fieldKey = fieldParts.join("_");
+            const [fieldId, fieldType] = fieldKey.split("_");
+            const numericFieldId = parseInt(fieldId);
 
-          // Add the dynamic filtering logic here (Link, Dropdown, etc.)
-          if (fieldType === "Link") {
-            // singleFilterId 1 = Has Link, singleFilterId 2 = No Link
-            if ((singleFilterId as number) === 1) {
-              // Has link
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    AND: [
-                      { value: { not: Prisma.JsonNull } },
-                      { value: { not: { equals: "" } } },
-                    ],
-                  },
-                },
-              });
-            } else if ((singleFilterId as number) === 2) {
-              // No link
-              filterConditions.push({
-                OR: [
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        OR: [
-                          { value: { equals: Prisma.JsonNull } },
-                          { value: { equals: "" } },
-                        ],
-                      },
-                    },
-                  },
-                ],
-              });
-            }
-          } else if (fieldType === "Dropdown") {
-            // Handle special "none" value to filter for cases without this field
-            if (singleFilterId === "none") {
-              filterConditions.push({
-                OR: [
-                  // Case 1: No record exists for this fieldId
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  // Case 2: Record exists, but value is explicitly null
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { equals: Prisma.JsonNull },
-                      },
-                    },
-                  },
-                ],
-              });
-            } else {
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    OR: [
-                      {
-                        value: { equals: (singleFilterId as string | number).toString() },
-                      },
-                      { value: { equals: singleFilterId as string | number } },
-                    ],
-                  },
-                },
-              });
-            }
-          } else if (fieldType === "Multi-Select") {
-            // Handle special "none" value to filter for cases without this field
-            if (singleFilterId === "none") {
-              filterConditions.push({
-                OR: [
-                  // Case 1: No record exists for this fieldId
-                  { caseFieldValues: { none: { fieldId: numericFieldId } } },
-                  // Case 2: Record exists, but value is explicitly null
-                  {
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { equals: Prisma.JsonNull },
-                      },
-                    },
-                  },
-                ],
-              });
-            } else {
-              filterConditions.push({
-                caseFieldValues: {
-                  some: {
-                    fieldId: numericFieldId,
-                    value: { array_contains: [singleFilterId as string | number] },
-                  },
-                },
-              });
-            }
-          } else if (fieldType === "Steps") {
-            // singleFilterId 1 = Has Steps, singleFilterId 2 = No Steps
-            if ((singleFilterId as number) === 1) {
-              // Has steps
-              filterConditions.push({ steps: { some: { isDeleted: false } } });
-            } else if ((singleFilterId as number) === 2) {
-              // No steps
-              filterConditions.push({ steps: { none: { isDeleted: false } } });
-            }
-          } else if (fieldType === "Checkbox") {
-            // singleFilterId 1 = Checked, singleFilterId 2 = Unchecked
-            filterConditions.push({
-              caseFieldValues: {
-                some: {
-                  fieldId: numericFieldId,
-                  value: { equals: (singleFilterId as number) === 1 ? true : false },
-                },
-              },
-            });
-          }
-        } else {
-          // Apply specific filter for standard views (using switch)
-          switch (viewType) {
-            case "templates":
-              filterConditions.push({ templateId: { equals: Number(singleFilterId) } });
-              break;
-            case "states":
-              filterConditions.push({ stateId: { equals: Number(singleFilterId) } });
-              break;
-            case "creators":
-              filterConditions.push({
-                creatorId: { equals: singleFilterId?.toString() },
-              });
-              break;
-            case "automated":
-              filterConditions.push({
-                automated: (singleFilterId as number) === 1 ? true : false,
-              });
-              break;
-            case "tags":
-              if (singleFilterId === "any") {
-                filterConditions.push({ tags: { some: { isDeleted: false } } });
-              } else if (singleFilterId === "none") {
-                filterConditions.push({ tags: { none: { isDeleted: false } } });
-              } else {
+            // Add the dynamic filtering logic here (Link, Dropdown, etc.)
+            if (fieldType === "Link") {
+              // singleFilterId 1 = Has Link, singleFilterId 2 = No Link
+              if ((singleFilterId as number) === 1) {
+                // Has link
                 filterConditions.push({
-                  tags: { some: { id: Number(singleFilterId), isDeleted: false } },
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      AND: [
+                        { value: { not: Prisma.JsonNull } },
+                        { value: { not: { equals: "" } } },
+                      ],
+                    },
+                  },
+                });
+              } else if ((singleFilterId as number) === 2) {
+                // No link
+                filterConditions.push({
+                  OR: [
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { equals: Prisma.JsonNull } },
+                            { value: { equals: "" } },
+                          ],
+                        },
+                      },
+                    },
+                  ],
                 });
               }
-              break;
+            } else if (fieldType === "Dropdown") {
+              // Handle special "none" value to filter for cases without this field
+              if (singleFilterId === "none") {
+                filterConditions.push({
+                  OR: [
+                    // Case 1: No record exists for this fieldId
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    // Case 2: Record exists, but value is explicitly null
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          value: { equals: Prisma.JsonNull },
+                        },
+                      },
+                    },
+                  ],
+                });
+              } else {
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      OR: [
+                        {
+                          value: {
+                            equals: (
+                              singleFilterId as string | number
+                            ).toString(),
+                          },
+                        },
+                        {
+                          value: { equals: singleFilterId as string | number },
+                        },
+                      ],
+                    },
+                  },
+                });
+              }
+            } else if (fieldType === "Multi-Select") {
+              // Handle special "none" value to filter for cases without this field
+              if (singleFilterId === "none") {
+                filterConditions.push({
+                  OR: [
+                    // Case 1: No record exists for this fieldId
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    // Case 2: Record exists, but value is explicitly null
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          value: { equals: Prisma.JsonNull },
+                        },
+                      },
+                    },
+                  ],
+                });
+              } else {
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      value: {
+                        array_contains: [singleFilterId as string | number],
+                      },
+                    },
+                  },
+                });
+              }
+            } else if (fieldType === "Steps") {
+              // singleFilterId 1 = Has Steps, singleFilterId 2 = No Steps
+              if ((singleFilterId as number) === 1) {
+                // Has steps
+                filterConditions.push({
+                  steps: { some: { isDeleted: false } },
+                });
+              } else if ((singleFilterId as number) === 2) {
+                // No steps
+                filterConditions.push({
+                  steps: { none: { isDeleted: false } },
+                });
+              }
+            } else if (fieldType === "Checkbox") {
+              // singleFilterId 1 = Checked, singleFilterId 2 = Unchecked
+              filterConditions.push({
+                caseFieldValues: {
+                  some: {
+                    fieldId: numericFieldId,
+                    value: {
+                      equals: (singleFilterId as number) === 1 ? true : false,
+                    },
+                  },
+                },
+              });
+            }
+          } else {
+            // Apply specific filter for standard views (using switch)
+            switch (viewType) {
+              case "templates":
+                filterConditions.push({
+                  templateId: { equals: Number(singleFilterId) },
+                });
+                break;
+              case "states":
+                filterConditions.push({
+                  stateId: { equals: Number(singleFilterId) },
+                });
+                break;
+              case "creators":
+                filterConditions.push({
+                  creatorId: { equals: singleFilterId?.toString() },
+                });
+                break;
+              case "automated":
+                filterConditions.push({
+                  automated: (singleFilterId as number) === 1 ? true : false,
+                });
+                break;
+              case "tags":
+                if (singleFilterId === "any") {
+                  filterConditions.push({
+                    tags: { some: { isDeleted: false } },
+                  });
+                } else if (singleFilterId === "none") {
+                  filterConditions.push({
+                    tags: { none: { isDeleted: false } },
+                  });
+                } else {
+                  filterConditions.push({
+                    tags: {
+                      some: { id: Number(singleFilterId), isDeleted: false },
+                    },
+                  });
+                }
+                break;
+            }
           }
+        }
+
+        // Combine all filter conditions with OR (union of results)
+        if (filterConditions.length > 0) {
+          baseConditions.push({ OR: filterConditions });
         }
       }
 
-      // Combine all filter conditions with OR (union of results)
-      if (filterConditions.length > 0) {
-        baseConditions.push({ OR: filterConditions });
-      }
-    }
-
-    const finalWhereClause: Prisma.RepositoryCasesWhereInput = {
-      AND: baseConditions,
-    };
-    return finalWhereClause;
-  }, [
-    deferredSearchString,
-    projectId,
-    viewType,
-    folderId,
-    filterId,
-  ]);
+      const finalWhereClause: Prisma.RepositoryCasesWhereInput = {
+        AND: baseConditions,
+      };
+      return finalWhereClause;
+    }, [deferredSearchString, projectId, viewType, folderId, filterId]);
 
   // Build test run case where clause (used for filtering by assignedTo and status)
   const testRunCaseWhereClause: Prisma.TestRunCasesWhereInput = useMemo(() => {
-    if (!isRunMode || !filterId || (viewType !== "assignedTo" && viewType !== "status")) {
+    if (
+      !isRunMode ||
+      !filterId ||
+      (viewType !== "assignedTo" && viewType !== "status")
+    ) {
       return {};
     }
 
@@ -647,13 +688,17 @@ export default function Cases({
         if (singleFilterId === "unassigned") {
           filterConditions.push({ assignedToId: { equals: null } });
         } else {
-          filterConditions.push({ assignedToId: { equals: singleFilterId as string } });
+          filterConditions.push({
+            assignedToId: { equals: singleFilterId as string },
+          });
         }
       } else if (viewType === "status") {
         if (singleFilterId === "untested") {
           filterConditions.push({ statusId: { equals: null } });
         } else {
-          filterConditions.push({ statusId: { equals: singleFilterId as number } });
+          filterConditions.push({
+            statusId: { equals: singleFilterId as number },
+          });
         }
       }
     }
@@ -665,46 +710,55 @@ export default function Cases({
   }, [isRunMode, viewType, filterId]);
 
   // Create orderBy for TestRunCases based on sortConfig
-  const testRunCasesOrderBy: Prisma.TestRunCasesOrderByWithRelationInput = useMemo(() => {
-    if (!sortConfig || isDefaultSort) {
-      return { order: "asc" }; // Default to run order
-    }
+  const testRunCasesOrderBy: Prisma.TestRunCasesOrderByWithRelationInput =
+    useMemo(() => {
+      if (!sortConfig || isDefaultSort) {
+        return { order: "asc" }; // Default to run order
+      }
 
-    const column = sortConfig.column;
-    const direction = sortConfig.direction;
+      const column = sortConfig.column;
+      const direction = sortConfig.direction;
 
-    // Map column names to TestRunCases fields
-    if (column === "order") {
-      return { order: direction };
-    } else if (column === "assignedTo") {
-      return { assignedTo: { name: direction } };
-    } else if (column === "testRunStatus" || column === "status") {
-      return { status: { name: direction } };
-    } else if (column === "name") {
-      return { repositoryCase: { name: direction } };
-    } else if (column === "state") {
-      return { repositoryCase: { state: { name: direction } } };
-    } else if (column === "template") {
-      return { repositoryCase: { template: { templateName: direction } } };
-    } else if (column === "folder") {
-      return { repositoryCase: { folder: { name: direction } } };
-    } else if (column === "createdAt") {
-      return { repositoryCase: { createdAt: direction } };
-    } else {
-      // For any other column, try to order by the repositoryCase field
-      return { repositoryCase: { [column]: direction } };
-    }
-  }, [sortConfig, isDefaultSort]);
+      // Map column names to TestRunCases fields
+      if (column === "order") {
+        return { order: direction };
+      } else if (column === "assignedTo") {
+        return { assignedTo: { name: direction } };
+      } else if (column === "testRunStatus" || column === "status") {
+        return { status: { name: direction } };
+      } else if (column === "name") {
+        return { repositoryCase: { name: direction } };
+      } else if (column === "state") {
+        return { repositoryCase: { state: { name: direction } } };
+      } else if (column === "template") {
+        return { repositoryCase: { template: { templateName: direction } } };
+      } else if (column === "folder") {
+        return { repositoryCase: { folder: { name: direction } } };
+      } else if (column === "createdAt") {
+        return { repositoryCase: { createdAt: direction } };
+      } else {
+        // For any other column, try to order by the repositoryCase field
+        return { repositoryCase: { [column]: direction } };
+      }
+    }, [sortConfig, isDefaultSort]);
 
   // Determine which run IDs to query - use selectedRunIds if provided (multi-config), otherwise use single runId
-  const effectiveRunIds = selectedRunIds && selectedRunIds.length > 0 ? selectedRunIds : (runId ? [runId] : []);
+  const effectiveRunIds =
+    selectedRunIds && selectedRunIds.length > 0
+      ? selectedRunIds
+      : runId
+        ? [runId]
+        : [];
 
   // Fetch test run cases and their related repository cases for run mode
   const { data: testRunCasesData, refetch: refetchTestRunCases } =
     useFindManyTestRunCases(
       {
         where: {
-          testRunId: effectiveRunIds.length === 1 ? effectiveRunIds[0] : { in: effectiveRunIds },
+          testRunId:
+            effectiveRunIds.length === 1
+              ? effectiveRunIds[0]
+              : { in: effectiveRunIds },
           ...testRunCaseWhereClause,
           repositoryCase: repositoryCaseWhereClause,
         },
@@ -963,11 +1017,11 @@ export default function Cases({
     {
       enabled: Boolean(
         // Skip query if we know the selected folder has 0 cases
-        (viewType === "folders" && selectedFolderCaseCount === 0)
+        viewType === "folders" && selectedFolderCaseCount === 0
           ? false
           : !isRunMode && // Don't run this in run mode
-            ((!!session?.user && deferredSearchString.length === 0) ||
-            deferredSearchString.length > 0)
+              ((!!session?.user && deferredSearchString.length === 0) ||
+                deferredSearchString.length > 0)
       ),
       refetchOnWindowFocus: false,
       // Keep previous data to prevent count from dropping to 0 during refetch
@@ -980,7 +1034,10 @@ export default function Cases({
   const { data: testRunCasesCountData } = useCountTestRunCases(
     {
       where: {
-        testRunId: effectiveRunIds.length === 1 ? effectiveRunIds[0] : { in: effectiveRunIds },
+        testRunId:
+          effectiveRunIds.length === 1
+            ? effectiveRunIds[0]
+            : { in: effectiveRunIds },
         ...testRunCaseWhereClause,
         repositoryCase: repositoryCaseWhereClause,
       },
@@ -1028,7 +1085,13 @@ export default function Cases({
     }
     // In repository mode, use the repository cases count
     return filteredCountData || 0;
-  }, [isRunMode, testRunCasesCountData, filteredCountData, viewType, selectedFolderCaseCount]);
+  }, [
+    isRunMode,
+    testRunCasesCountData,
+    filteredCountData,
+    viewType,
+    selectedFolderCaseCount,
+  ]);
 
   // Update total items in pagination context
   useEffect(() => {
@@ -1042,15 +1105,19 @@ export default function Cases({
         .filter((tc: any) => !tc.isDeleted)
         .map((tc: any) => tc.id);
 
-      if (selectAllAction === 'select') {
+      if (selectAllAction === "select") {
         // Select all cases across all pages
         if (isSelectionMode && onSelectionChange) {
           onSelectionChange(selectableAllCaseIds);
         } else {
           setSelectedCaseIdsForBulkEdit(selectableAllCaseIds);
         }
-        toast.success(t("repository.selectedAllCases", { count: selectableAllCaseIds.length }));
-      } else if (selectAllAction === 'deselect') {
+        toast.success(
+          t("repository.selectedAllCases", {
+            count: selectableAllCaseIds.length,
+          })
+        );
+      } else if (selectAllAction === "deselect") {
         // Deselect all cases across all pages
         if (isSelectionMode && onSelectionChange) {
           onSelectionChange([]);
@@ -1065,13 +1132,7 @@ export default function Cases({
       setFetchAllIdsForSelection(false);
       setSelectAllAction(null);
     }
-  }, [
-    allCaseIdsData,
-    selectAllAction,
-    isSelectionMode,
-    onSelectionChange,
-    t,
-  ]);
+  }, [allCaseIdsData, selectAllAction, isSelectionMode, onSelectionChange, t]);
 
   const {
     data,
@@ -1256,11 +1317,11 @@ export default function Cases({
     {
       enabled: Boolean(
         // Skip query if we know the selected folder has 0 cases
-        (viewType === "folders" && selectedFolderCaseCount === 0)
+        viewType === "folders" && selectedFolderCaseCount === 0
           ? false
           : !isRunMode && // Don't run this query in run mode - we use testRunCasesData instead
-            ((!!session?.user && deferredSearchString.length === 0) ||
-            deferredSearchString.length > 0)
+              ((!!session?.user && deferredSearchString.length === 0) ||
+                deferredSearchString.length > 0)
       ),
       refetchOnWindowFocus: false,
     }
@@ -1475,7 +1536,8 @@ export default function Cases({
   }, [currentPage, sortConfig, folderId, viewType, filterId]);
 
   // Check if we're in multi-config mode (multiple test runs selected)
-  const isMultiConfigMode = isRunMode && selectedRunIds && selectedRunIds.length > 1;
+  const isMultiConfigMode =
+    isRunMode && selectedRunIds && selectedRunIds.length > 1;
 
   // Handle selection changes
   const handleSelectAll = useCallback(() => {
@@ -1495,7 +1557,13 @@ export default function Cases({
       : [...new Set([...selectedTestCases, ...currentPageIds])];
 
     onSelectionChange(newSelection);
-  }, [isSelectionMode, onSelectionChange, cases, selectedTestCases, isMultiConfigMode]);
+  }, [
+    isSelectionMode,
+    onSelectionChange,
+    cases,
+    selectedTestCases,
+    isMultiConfigMode,
+  ]);
 
   // Handle bulk edit selection changes
   const handleBulkEditSelectionChange = useCallback((ids: number[]) => {
@@ -1514,9 +1582,10 @@ export default function Cases({
     MappedCases.forEach((caseItem, index) => {
       // In multi-config mode, use testRunCaseId for unique identification
       // Otherwise use repositoryCaseId (caseItem.id)
-      const caseKey = isMultiConfigMode && (caseItem as any).testRunCaseId
-        ? (caseItem as any).testRunCaseId
-        : caseItem.id;
+      const caseKey =
+        isMultiConfigMode && (caseItem as any).testRunCaseId
+          ? (caseItem as any).testRunCaseId
+          : caseItem.id;
 
       if (currentExternalSelection.includes(caseKey)) {
         newRowSelectionModel[index.toString()] = true;
@@ -1718,11 +1787,11 @@ export default function Cases({
         if (allSelectableSelected) {
           // Deselect all cases across all pages
           setFetchAllIdsForSelection(true);
-          setSelectAllAction('deselect');
+          setSelectAllAction("deselect");
         } else {
           // Select all cases across all pages
           setFetchAllIdsForSelection(true);
-          setSelectAllAction('select');
+          setSelectAllAction("select");
         }
       } else {
         // Regular click: Toggle selection for current page only
@@ -1805,30 +1874,30 @@ export default function Cases({
       uniqueCaseFieldList,
       handleSelect,
       {
-        name: t("repository.fields.name"),
-        estimate: t("repository.fields.estimate"),
-        state: t("repository.fields.state"),
-        automated: t("repository.fields.automated"),
-        template: t("repository.fields.template"),
-        createdAt: t("repository.fields.createdAt"),
-        createdBy: t("repository.fields.createdBy"),
-        attachments: t("repository.fields.attachments"),
-        steps: t("repository.fields.steps"),
-        tags: t("repository.fields.tags"),
-        actions: t("repository.fields.actions"),
-        status: t("repository.fields.status"),
-        assignedTo: t("repository.fields.assignedTo"),
-        unassigned: t("repository.fields.unassigned"),
-        selectCase: t("repository.fields.selectCase"),
-        testRuns: t("repository.fields.testRuns"),
-        runOrder: t("repository.fields.runOrder"),
-        issues: t("repository.fields.issues"),
-        forecast: t("repository.fields.forecast"),
-        id: t("repository.fields.id"),
+        name: t("common.name"),
+        estimate: t("common.fields.estimate"),
+        state: t("common.fields.state"),
+        automated: t("common.fields.automated"),
+        template: t("common.fields.template"),
+        createdAt: t("common.fields.createdAt"),
+        createdBy: t("common.fields.createdBy"),
+        attachments: t("common.fields.attachments"),
+        steps: t("common.fields.steps"),
+        tags: t("common.fields.tags"),
+        actions: t("common.actions.actionsLabel"),
+        status: t("common.actions.status"),
+        assignedTo: t("common.fields.assignedTo"),
+        unassigned: t("common.labels.unassigned"),
+        selectCase: t("repository.columns.selectCase"),
+        testRuns: t("enums.ApplicationArea.TestRuns"),
+        runOrder: t("repository.columns.runOrder"),
+        issues: t("common.fields.issues"),
+        forecast: t("common.fields.forecast"),
+        id: t("common.fields.id"),
         linkedCases: t("repository.fields.linkedCases"),
-        versions: t("repository.fields.version"),
+        versions: t("common.fields.version"),
         clickToViewFullContent: t("repository.fields.clickToViewFullContent"),
-        comments: t("repository.fields.comments"),
+        comments: t("comments.title"),
         configuration: t("common.fields.configuration"),
       },
       isRunMode,
@@ -1856,7 +1925,9 @@ export default function Cases({
       // Pass totalItems for shift+click tooltip
       totalItems,
       // Pass selectedCount for determining if all are selected
-      isSelectionMode ? selectedTestCases.length : selectedCaseIdsForBulkEdit.length
+      isSelectionMode
+        ? selectedTestCases.length
+        : selectedCaseIdsForBulkEdit.length
     );
   }, [
     session,
@@ -1963,7 +2034,8 @@ export default function Cases({
       return;
     }
 
-    const effectivePageSize = typeof pageSize === "number" ? pageSize : totalItems;
+    const effectivePageSize =
+      typeof pageSize === "number" ? pageSize : totalItems;
     const totalPages = Math.ceil(totalItems / effectivePageSize);
 
     if (currentPage > totalPages) {
@@ -2017,9 +2089,9 @@ export default function Cases({
 
     // Check if selected items span multiple pages
     if (isDraggingSelectedBlock) {
-      const currentPageIds = new Set(originalCases.map(c => c.id));
+      const currentPageIds = new Set(originalCases.map((c) => c.id));
       const selectedItemsOnOtherPages = selectedCaseIdsForBulkEdit.filter(
-        id => !currentPageIds.has(id)
+        (id) => !currentPageIds.has(id)
       );
 
       if (selectedItemsOnOtherPages.length > 0) {
@@ -2242,11 +2314,11 @@ export default function Cases({
 
     // Map all selected IDs to drag items
     // For cases on current page, include the name; for others, just the ID
-    const currentPageCasesMap = new Map(cases.map(c => [c.id, c.name]));
+    const currentPageCasesMap = new Map(cases.map((c) => [c.id, c.name]));
 
-    return sourceIds.map(id => ({
+    return sourceIds.map((id) => ({
       id,
-      name: currentPageCasesMap.get(id) || `Case ${id}`
+      name: currentPageCasesMap.get(id) || `Case ${id}`,
     }));
   }, [cases, isSelectionMode, selectedTestCases, selectedCaseIdsForBulkEdit]);
 
@@ -2506,13 +2578,21 @@ export default function Cases({
             window.dispatchEvent(event);
           }}
           testRunId={addResultModalState.testRunId}
-          testRunCaseId={addResultModalState.isBulkResult ? undefined : addResultModalState.testRunCaseId}
+          testRunCaseId={
+            addResultModalState.isBulkResult
+              ? undefined
+              : addResultModalState.testRunCaseId
+          }
           caseName={addResultModalState.caseName || ""}
           projectId={addResultModalState.projectId || 0}
           defaultStatusId={addResultModalState.defaultStatusId}
           isBulkResult={addResultModalState.isBulkResult}
           selectedCases={addResultModalState.selectedCases}
-          steps={addResultModalState.isBulkResult ? undefined : addResultModalState.steps}
+          steps={
+            addResultModalState.isBulkResult
+              ? undefined
+              : addResultModalState.steps
+          }
           configuration={addResultModalState.configuration}
         />
       )}

@@ -179,7 +179,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
             <Tabs defaultValue="active">
               <TabsList className="w-full">
                 <TabsTrigger value="active" className="w-1/2">
-                  {t("common.status.active")}
+                  {t("common.fields.isActive")}
                 </TabsTrigger>
                 <TabsTrigger value="completed" className="w-1/2">
                   {t("common.fields.completed")}

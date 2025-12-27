@@ -30,6 +30,7 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const t = useTranslations("common.ui.dialog");
+  const tGlobal = useTranslations();
 
   const toggleFullScreen = (e: any) => {
     e.stopPropagation();
@@ -63,7 +64,7 @@ const DialogContent = React.forwardRef<
           </button>
           <DialogPrimitive.Close className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
             <X className="h-4 w-4" />
-            <span className="sr-only">{t("close")}</span>
+            <span className="sr-only">{tGlobal("common.actions.close")}</span>
           </DialogPrimitive.Close>
         </div>
       </DialogPrimitive.Content>

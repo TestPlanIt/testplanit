@@ -40,12 +40,15 @@ export const Header = () => {
   const { data: session, status } = useSession();
   const { setTheme } = useTheme();
   const t = useTranslations();
+  const tCommon = useTranslations("common");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMac, setIsMac] = useState(false);
   const [trialDaysRemaining, setTrialDaysRemaining] = useState<number | null>(
     null
   );
-  const [trialContactEmail, setTrialContactEmail] = useState<string>("sales@testplanit.com");
+  const [trialContactEmail, setTrialContactEmail] = useState<string>(
+    "sales@testplanit.com"
+  );
   const versionString = getVersionString();
 
   // Fetch trial configuration from API (env vars are baked in at build time, so we need runtime fetch)
@@ -180,21 +183,21 @@ export const Header = () => {
                       className={`${buttonVariants({ variant: "link" })}`}
                       href="/tags"
                     >
-                      {t("common.labels.tags")}
+                      {tCommon("fields.tags")}
                     </Link>
                     <Link
                       id="issues-link"
                       className={`${buttonVariants({ variant: "link" })}`}
                       href="/issues"
                     >
-                      {t("common.labels.issues")}
+                      {t("common.fields.issues")}
                     </Link>
                     <Link
                       id="users-link"
                       className={`${buttonVariants({ variant: "link" })}`}
                       href="/users"
                     >
-                      {t("common.labels.users")}
+                      {tCommon("fields.users")}
                     </Link>
                   </span>
                 </div>
@@ -206,7 +209,7 @@ export const Header = () => {
                     className={`${buttonVariants({ variant: "link" })}`}
                     href="/admin"
                   >
-                    {t("common.labels.admin")}
+                    {t("common.access.admin")}
                   </Link>
                 </span>
               )}
@@ -311,7 +314,7 @@ export const Header = () => {
                     className="cursor-pointer"
                   >
                     <BookOpen className="mr-2 h-4 w-4" />
-                    {t("help.menu.documentation") || "Documentation"}
+                    {t("common.fields.documentation") || "Documentation"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

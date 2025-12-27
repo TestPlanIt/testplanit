@@ -33,7 +33,7 @@ export default function ProjectIntegrationsPage() {
     isAuthenticated,
   } = useRequireAuth();
   const t = useTranslations("projects.settings.integrations");
-  const tSettings = useTranslations("projects.settings");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   // Fetch project data (allow global admin access or project assignment)
@@ -157,10 +157,10 @@ export default function ProjectIntegrationsPage() {
                 href={`/projects/settings/${projectId}`}
                 className="hover:underline"
               >
-                {tSettings("title")}
+                {tCommon("tabs.settings")}
               </Link>
               <ChevronRight className="h-5 w-5" />
-              <span>{t("title")}</span>
+              <span>{tGlobal("admin.menu.integrations")}</span>
             </CardTitle>
           </div>
           <CardDescription className="uppercase">

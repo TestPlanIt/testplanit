@@ -94,6 +94,7 @@ interface ZoomedChartDetails {
 
 const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   const t = useTranslations("runs");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const { projectId } = use(params);
   const router = useRouter();
@@ -135,7 +136,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   type RunTypeFilter = "both" | "manual" | "automated";
   const [runTypeFilter, setRunTypeFilter] = useTabState("runType", "both") as [
     RunTypeFilter,
-    (value: RunTypeFilter) => void
+    (value: RunTypeFilter) => void,
   ];
 
   // Calculate pagination for completed runs
@@ -857,36 +858,34 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   }, [latestAutomatedResult]);
 
   // Query 2: Get all automated results within 7 days of the latest result
-  const {
-    data: rawAutomatedResults,
-    isLoading: isLoadingAutomatedResults,
-  } = useFindManyJUnitTestResult(
-    {
-      where: {
-        testSuite: {
-          testRun: { projectId: numericProjectId ?? undefined },
+  const { data: rawAutomatedResults, isLoading: isLoadingAutomatedResults } =
+    useFindManyJUnitTestResult(
+      {
+        where: {
+          testSuite: {
+            testRun: { projectId: numericProjectId ?? undefined },
+          },
+          createdAt: { gte: sevenDaysBeforeLatestAutomated },
         },
-        createdAt: { gte: sevenDaysBeforeLatestAutomated },
-      },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        executedAt: true,
-        createdAt: true,
-        status: {
-          select: {
-            id: true,
-            name: true,
-            isSuccess: true,
-            color: { select: { value: true } },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          executedAt: true,
+          createdAt: true,
+          status: {
+            select: {
+              id: true,
+              name: true,
+              isSuccess: true,
+              color: { select: { value: true } },
+            },
           },
         },
       },
-    },
-    {
-      enabled: !!sevenDaysBeforeLatestAutomated,
-    }
-  );
+      {
+        enabled: !!sevenDaysBeforeLatestAutomated,
+      }
+    );
 
   // --- Process Automated Results ---
   useMemo(() => {
@@ -899,7 +898,9 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
     // Helper to get the effective date (use executedAt or createdAt)
     const getResultDate = (result: (typeof rawAutomatedResults)[0]) =>
-      result.executedAt ? new Date(result.executedAt) : new Date(result.createdAt);
+      result.executedAt
+        ? new Date(result.executedAt)
+        : new Date(result.createdAt);
 
     // Group by status and calculate metrics
     const statusSummary: {
@@ -953,7 +954,10 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
     setAutomatedResultsChartData(chartData);
     setAutomatedResultsSuccessRate(successRate);
-    setAutomatedResultsDateRange({ first: firstResultDate, last: lastResultDate });
+    setAutomatedResultsDateRange({
+      first: firstResultDate,
+      last: lastResultDate,
+    });
   }, [rawAutomatedResults]);
 
   // --- Process Completed Runs for Line Chart ---
@@ -1110,7 +1114,9 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
               <CardTitle>
                 <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
                   <div>
-                    <CardTitle>{t("title")}</CardTitle>
+                    <CardTitle>
+                      {tGlobal("enums.ApplicationArea.TestRuns")}
+                    </CardTitle>
                   </div>
                   <div>
                     {canAddEdit && (
@@ -1163,11 +1169,15 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                     <CardHeader className="pb-2 flex flex-row items-start justify-between">
                       <div>
                         <CardTitle className="font-medium">
-                          {t("summary.workDistribution")}
+                          {tGlobal("runs.summary.workDistributionTitle")}
                         </CardTitle>
                         <CardDescription>
                           <div className="flex flex-row gap-1">
-                            <p>{t("summary.totalEstTimeRemainingSunburst")}</p>
+                            <p>
+                              {tGlobal(
+                                "sessions.summary.workDistributionDescription"
+                              )}
+                            </p>
                             <p>
                               {toHumanReadable(
                                 totalRemainingEstimateForDisplay,
@@ -1187,7 +1197,9 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                         onClick={() =>
                           handleOpenChartOverlay({
                             type: "sunburst",
-                            title: t("summary.workDistribution"),
+                            title: tGlobal(
+                              "runs.summary.workDistributionTitle"
+                            ),
                             data: sunburstChartData,
                             projectId: projectId,
                             onLegendDataGenerated: handleLegendDataGenerated,
@@ -1216,7 +1228,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                         />
                       ) : (
                         <p className="text-sm text-muted-foreground text-center w-full h-[210px] flex items-center justify-center">
-                          {t("summary.noForecastData")}
+                          {tGlobal("milestones.empty.forecasts")}
                         </p>
                       )}
                     </CardContent>
@@ -1414,7 +1426,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                         />
                       ) : (
                         <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
-                          {t("summary.noCompletedRuns")}
+                          {tGlobal("sessions.summary.noCompletedRuns")}
                         </p>
                       )}
                     </CardContent>
@@ -1425,10 +1437,10 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
               <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full">
                   <TabsTrigger value="active" className="w-1/2">
-                    {tCommon("status.active")}
+                    {tCommon("fields.isActive")}
                   </TabsTrigger>
                   <TabsTrigger value="completed" className="w-1/2">
-                    {tCommon("status.completed")}
+                    {tCommon("fields.completed")}
                   </TabsTrigger>
                 </TabsList>
 
@@ -1445,8 +1457,8 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                             {runTypeFilter === "both"
                               ? t("typeFilter.both")
                               : runTypeFilter === "manual"
-                                ? t("typeFilter.manual")
-                                : t("typeFilter.automated")}
+                                ? tCommon("fields.manual")
+                                : tCommon("fields.automated")}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
@@ -1462,12 +1474,12 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                             <DropdownMenuItem
                               onClick={() => setRunTypeFilter("manual")}
                             >
-                              {t("typeFilter.manual")}
+                              {tCommon("fields.manual")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => setRunTypeFilter("automated")}
                             >
-                              {t("typeFilter.automated")}
+                              {tCommon("fields.automated")}
                             </DropdownMenuItem>
                           </DropdownMenuGroup>
                         </DropdownMenuContent>
@@ -1517,8 +1529,8 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                             {runTypeFilter === "both"
                               ? t("typeFilter.both")
                               : runTypeFilter === "manual"
-                                ? t("typeFilter.manual")
-                                : t("typeFilter.automated")}
+                                ? tCommon("fields.manual")
+                                : tCommon("fields.automated")}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
@@ -1534,12 +1546,12 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                             <DropdownMenuItem
                               onClick={() => setRunTypeFilter("manual")}
                             >
-                              {t("typeFilter.manual")}
+                              {tCommon("fields.manual")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => setRunTypeFilter("automated")}
                             >
-                              {t("typeFilter.automated")}
+                              {tCommon("fields.automated")}
                             </DropdownMenuItem>
                           </DropdownMenuGroup>
                         </DropdownMenuContent>

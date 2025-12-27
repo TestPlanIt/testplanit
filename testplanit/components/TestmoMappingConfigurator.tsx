@@ -1,5 +1,6 @@
 "use client";
 
+import { WorkflowType } from "@prisma/client";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import {
@@ -531,15 +532,11 @@ export default function TestmoMappingConfigurator({
   sectionDescriptions,
   sectionCounts,
 }: TestmoMappingConfiguratorProps) {
-  const t = useTranslations(
-    "admin.imports.testmo.mapping"
-  ) as unknown as Translator;
-  const tWorkflowTypes = useTranslations(
-    "admin.workflows.types"
-  ) as unknown as Translator;
+  const t = useTranslations("admin.imports.testmo.mapping") as Translator;
+  const tWorkflowTypes = useTranslations("enums.WorkflowType") as Translator;
   const tWorkflowCreate = useTranslations(
     "admin.imports.testmo.workflowCreate"
-  ) as unknown as Translator;
+  ) as Translator;
 
   const workflowSuggestions = analysis?.ambiguousEntities?.workflows ?? [];
   const statusSuggestions = analysis?.ambiguousEntities?.statuses ?? [];
@@ -767,7 +764,7 @@ export default function TestmoMappingConfigurator({
       .map((workflow) => {
         const scope = workflow.scope ?? "";
         const order = workflow.order ?? 0;
-        const typeKey = workflow.workflowType ?? null;
+        const typeKey = workflow.workflowType as WorkflowType;
         let typeLabel: string | null = null;
         if (typeKey) {
           try {
@@ -1895,7 +1892,7 @@ function UserMappingSection({
                     <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                       <Badge variant={isActiveValue ? "secondary" : "outline"}>
                         {isActiveValue
-                          ? tCommon("status.active")
+                          ? tCommon("fields.isActive")
                           : tCommon("status.disabled")}
                       </Badge>
                       {accessLabel(user.access) && (
@@ -2013,7 +2010,7 @@ function UserMappingSection({
                       <div className="grid gap-3 md:grid-cols-2">
                         <div className="space-y-1">
                           <p className="text-xs font-medium text-muted-foreground">
-                            {tCommon("fields.name")}
+                            {tCommon("name")}
                           </p>
                           <Input
                             value={nameValue}
@@ -3745,7 +3742,7 @@ function StatusMappingSection({
                       </div>
                       <div className="space-y-1">
                         <p className="text-xs font-medium text-muted-foreground">
-                          {tCommon("fields.name")}
+                          {tCommon("name")}
                         </p>
                         <Input
                           value={nameValue}
@@ -6164,7 +6161,7 @@ function MilestoneTypeMappingSection({
                     <div className="space-y-3">
                       <div className="space-y-1">
                         <p className="text-xs font-medium text-muted-foreground">
-                          {tCommon("fields.name")}
+                          {tCommon("name")}
                         </p>
                         <Input
                           value={current.name ?? milestoneType.name}

@@ -29,6 +29,7 @@ export default function AppConfigsPage() {
 
 function AppConfigs() {
   const t = useTranslations("admin.appConfig");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const {
     currentPage,
@@ -128,7 +129,7 @@ function AppConfigs() {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-          <CardTitle data-testid="app-config-title">{t("title")}</CardTitle>
+          <CardTitle data-testid="app-config-title">{tGlobal("admin.menu.appConfig")}</CardTitle>
           <AddAppConfigModal />
         </div>
       </CardHeader>

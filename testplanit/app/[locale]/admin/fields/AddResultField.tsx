@@ -133,6 +133,7 @@ export function AddResultFieldModal({
   submitLabel,
 }: AddResultFieldModalProps = {}) {
   const t = useTranslations("admin.templates.resultFields");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
@@ -667,7 +668,7 @@ export function AddResultFieldModal({
           {trigger ?? (
             <Button>
               <CirclePlus className="w-4" />
-              <span className="hidden md:inline">{t("title")}</span>
+              <span className="hidden md:inline">{tGlobal("common.fields.resultFields")}</span>
             </Button>
           )}
         </DialogTrigger>
@@ -676,9 +677,9 @@ export function AddResultFieldModal({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
-              <DialogTitle>{t("title")}</DialogTitle>
+              <DialogTitle>{tGlobal("common.fields.resultFields")}</DialogTitle>
               <DialogDescription className="sr-only">
-                {t("title")}
+                {tGlobal("common.fields.resultFields")}
               </DialogDescription>
             </DialogHeader>
             <FormField
@@ -864,7 +865,7 @@ export function AddResultFieldModal({
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {tCommon("actions.cancel")}
+                {tCommon("cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
