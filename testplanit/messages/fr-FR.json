@@ -212,6 +212,7 @@
       "allPriorities": "Toutes les priorités"
     },
     "fields": {
+      "groupName": "Nom du groupe",
       "users": "Utilisateurs",
       "mixed": "Toutes les valeurs",
       "type": "Taper",

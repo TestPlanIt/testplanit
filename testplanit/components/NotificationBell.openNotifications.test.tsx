@@ -51,6 +51,7 @@ vi.mock("next-intl", () => ({
       "actions.markUnread": "Mark as unread",
       "actions.delete": "Delete",
       "actions.markAllRead": "Mark all as read",
+      "fields.notificationMode": "Notifications",
     };
     return translations[key] || key;
   },

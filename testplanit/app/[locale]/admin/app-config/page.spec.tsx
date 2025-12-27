@@ -22,8 +22,8 @@ const mockSetTotalItems = vi.fn();
 
 // Translations
 vi.mock("next-intl", () => ({
-  useTranslations: (namespace: string) => (key: string) =>
-    `${namespace}.${key}`,
+  useTranslations: (namespace?: string) => (key: string) =>
+    namespace ? `${namespace}.${key}` : key,
 }));
 
 // Pagination Context Hook Mock
@@ -150,7 +150,7 @@ test("renders initial layout, title, and add button", async () => {
   renderPage(AppConfigs);
 
   // Assertions for static elements first
-  expect(screen.getByText("admin.appConfig.title")).toBeInTheDocument();
+  expect(screen.getByText("admin.menu.appConfig")).toBeInTheDocument();
   expect(screen.getByText("Mock Add Modal Trigger")).toBeInTheDocument();
   expect(
     screen.getByPlaceholderText("admin.appConfig.filterPlaceholder")

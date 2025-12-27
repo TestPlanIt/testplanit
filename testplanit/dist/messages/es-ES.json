@@ -212,6 +212,7 @@
       "allPriorities": "Todas las prioridades"
     },
     "fields": {
+      "groupName": "Nombre del grupo",
       "users": "Usuarios",
       "mixed": "Todos los valores",
       "type": "Tipo",

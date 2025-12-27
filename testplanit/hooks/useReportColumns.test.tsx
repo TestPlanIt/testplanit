@@ -204,7 +204,7 @@ describe("useReportColumns", () => {
       const cellContent = statusColumn.cell(mockInfo);
       const { getByText } = render(cellContent);
 
-      expect(getByText("Status: common.placeholders.unknown ()")).toBeTruthy();
+      expect(getByText("Status: labels.unknown ()")).toBeTruthy();
     });
 
     // Tests for dimensions that were showing IDs instead of names
@@ -402,7 +402,7 @@ describe("useReportColumns", () => {
       const cellContent = configColumn.cell(mockInfo);
       const { getByText } = render(cellContent);
 
-      expect(getByText("none")).toBeTruthy();
+      expect(getByText("access.none")).toBeTruthy();
     });
   });
 

@@ -5,6 +5,7 @@ import { NextIntlClientProvider } from "next-intl";
 // Define messages for tests
 const messages = {
   common: {
+    loading: "Loading...",
     status: {
       loading: "Loading...",
       pending: "Pending",
@@ -24,6 +25,11 @@ const messages = {
       estimate: "Estimate",
       elapsed: "Elapsed",
       steps: "Steps",
+      theme: "Theme",
+      locale: "Language",
+    },
+    actions: {
+      signOut: "Sign Out",
     },
     plural: {
       case: "{count, plural, =0 {cases} =1 {case} other {cases}}",

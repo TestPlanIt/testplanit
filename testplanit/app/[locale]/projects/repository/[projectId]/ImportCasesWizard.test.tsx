@@ -269,12 +269,22 @@ describe("ImportCasesWizard", () => {
     return commonTranslations[key] || key;
   };
 
+  const mockTGlobal = (key: string) => {
+    const globalTranslations: any = {
+      "sharedSteps.importWizard.page1.selectedFile": "Selected file",
+      "sharedSteps.importWizard.page1.title": "Upload and Configure",
+      "sharedSteps.importWizard.page1.uploadFile": "Upload CSV File",
+    };
+    return globalTranslations[key] || key;
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     (useParams as any).mockReturnValue({ projectId: "1" });
-    (useTranslations as any).mockImplementation((namespace: string) => {
+    (useTranslations as any).mockImplementation((namespace?: string) => {
       if (namespace === "repository.cases") return mockT;
       if (namespace === "common") return mockTCommon;
+      if (!namespace) return mockTGlobal;
       return () => "";
     });
     (useFindManyTemplates as any).mockReturnValue({ data: mockTemplates });

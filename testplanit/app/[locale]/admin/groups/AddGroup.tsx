@@ -184,7 +184,7 @@ export function AddGroupModal() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="flex items-center">
-                    {tGlobal("sharedSteps.manualEntry.groupNameLabel")}
+                    {tCommon("fields.groupName")}
                     <HelpPopover helpKey="group.name" />
                   </FormLabel>
                   <FormControl>

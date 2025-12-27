@@ -293,7 +293,7 @@ describe("UnifiedSearch Component", () => {
     fireEvent.change(searchInput, { target: { value: "nonexistent" } });
 
     await waitFor(() => {
-      expect(screen.getByText("search.results.noResults")).toBeInTheDocument();
+      expect(screen.getByText("common.labels.noResults")).toBeInTheDocument();
     });
   });
 
@@ -447,10 +447,10 @@ describe("UnifiedSearch Component", () => {
     await waitFor(() => {
       // First check if we have results
       expect(screen.getByText("Test Case 1")).toBeInTheDocument();
-      
+
       // Check pagination text - it's a single text node with all parts
       const paginationText = screen.getByText((content, element) => {
-        return element?.textContent === "search.results.showing 1-50 search.results.of 100 search.results.results";
+        return element?.textContent === "common.pagination.showing 1-50 common.of 100 common.results";
       });
       expect(paginationText).toBeInTheDocument();
     });
