@@ -32,21 +32,21 @@ export function ConfigurationNameDisplay({
   iconClassName,
   truncate = false,
 }: ConfigurationNameDisplayProps) {
-  const t = useTranslations("common.labels");
+  const tCommon = useTranslations("common");
 
   // Determine the display name from either the configuration object or direct name prop
   let displayName: string;
 
   if (name !== undefined) {
-    displayName = name || fallback || t("none");
+    displayName = name || fallback || tCommon("access.none");
   } else if (configuration) {
     displayName =
       configuration.name ||
       (configuration.id
         ? `${fallbackPrefix} ${configuration.id}`
-        : t("unknown"));
+        : tCommon("labels.unknown"));
   } else {
-    displayName = fallback || t("none");
+    displayName = fallback || tCommon("access.none");
   }
 
   const content = (

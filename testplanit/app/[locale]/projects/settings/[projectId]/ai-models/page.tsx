@@ -28,8 +28,8 @@ export default function ProjectAiModelsPage() {
   const projectId = parseInt(params.projectId as string);
   const { session, status, isLoading: isAuthLoading } = useRequireAuth();
   const t = useTranslations("projects.settings.aiModels");
-  const tSettings = useTranslations("projects.settings");
   const tCommon = useTranslations("common");
+  const tGlobal = useTranslations();
 
   // Fetch project data (allow global admin access or project assignment)
   const { data: project, isLoading: projectLoading } = useFindFirstProjects(
@@ -153,10 +153,10 @@ export default function ProjectAiModelsPage() {
                 href={`/projects/settings/${projectId}`}
                 className="hover:underline"
               >
-                {tSettings("title")}
+                {tCommon("tabs.settings")}
               </Link>
               <ChevronRight className="h-5 w-5" />
-              <span>{t("title")}</span>
+              <span>{tGlobal("admin.menu.llm")}</span>
             </CardTitle>
           </div>
           <CardDescription className="uppercase">
@@ -202,7 +202,9 @@ export default function ProjectAiModelsPage() {
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <p className="text-sm font-medium">{t("provider")}</p>
+                    <p className="text-sm font-medium">
+                      {tCommon("fields.provider")}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {currentIntegration.llmIntegration.provider.replace(
                         "_",
@@ -211,7 +213,9 @@ export default function ProjectAiModelsPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{t("status")}</p>
+                    <p className="text-sm font-medium">
+                      {tCommon("actions.status")}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {currentIntegration.llmIntegration.status}
                     </p>
@@ -220,7 +224,7 @@ export default function ProjectAiModelsPage() {
                     <>
                       <div>
                         <p className="text-sm font-medium">
-                          {t("defaultModel")}
+                          {tGlobal("admin.llm.defaultModel")}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {

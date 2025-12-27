@@ -177,8 +177,8 @@ export function QueueManagement() {
   const getQueueDisplayName = (name: string) => {
     const queueNames: Record<string, string> = {
       "forecast-updates": t("queueNames.forecast-updates"),
-      "notifications": tGlobal("common.fields.notificationMode"),
-      "emails": t("queueNames.emails"),
+      notifications: tGlobal("common.fields.notificationMode"),
+      emails: t("queueNames.emails"),
       "issue-sync": t("queueNames.issue-sync"),
       "testmo-imports": t("queueNames.testmo-imports"),
       "elasticsearch-reindex": t("queueNames.elasticsearch-reindex"),
@@ -214,7 +214,7 @@ export function QueueManagement() {
       return (
         <Badge variant="default" className="flex items-center gap-1">
           <Activity className="h-3 w-3 animate-pulse" />
-          {tGlobal("common.status.active")}
+          {tGlobal("common.fields.isActive")}
         </Badge>
       );
     }
@@ -235,8 +235,12 @@ export function QueueManagement() {
         <AlertTitle>{t("concurrency.title")}</AlertTitle>
         <AlertDescription>
           <p className="mb-2">{t("concurrency.description")}</p>
-          <p className="text-sm font-medium">{t("concurrency.configureTitle")}</p>
-          <p className="text-sm text-muted-foreground">{t("concurrency.configureDescription")}</p>
+          <p className="text-sm font-medium">
+            {t("concurrency.configureTitle")}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {t("concurrency.configureDescription")}
+          </p>
         </AlertDescription>
       </Alert>
 
@@ -269,13 +273,27 @@ export function QueueManagement() {
               <TableRow>
                 <TableHead>{t("table.queue")}</TableHead>
                 <TableHead>{tGlobal("common.actions.status")}</TableHead>
-                <TableHead className="text-right">{t("table.concurrency")}</TableHead>
-                <TableHead className="text-right">{t("table.waiting")}</TableHead>
-                <TableHead className="text-right">{tGlobal("common.status.active")}</TableHead>
-                <TableHead className="text-right">{tGlobal("dates.completed")}</TableHead>
-                <TableHead className="text-right">{t("table.failed")}</TableHead>
-                <TableHead className="text-right">{tGlobal("milestones.statusLabels.delayed")}</TableHead>
-                <TableHead className="text-right">{tGlobal("common.actions.actionsLabel")}</TableHead>
+                <TableHead className="text-right">
+                  {t("table.concurrency")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("table.waiting")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {tGlobal("common.fields.isActive")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {tGlobal("common.fields.completed")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("table.failed")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {tGlobal("milestones.statusLabels.delayed")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {tGlobal("common.actions.actionsLabel")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -315,12 +333,17 @@ export function QueueManagement() {
                     {queue.counts?.delayed ?? "-"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div
+                      className="flex justify-end gap-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {queue.isPaused ? (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => performQueueAction(queue.name, "resume")}
+                          onClick={() =>
+                            performQueueAction(queue.name, "resume")
+                          }
                           disabled={actionInProgress === queue.name}
                         >
                           <Play className="h-3 w-3" />
@@ -329,7 +352,9 @@ export function QueueManagement() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => performQueueAction(queue.name, "pause")}
+                          onClick={() =>
+                            performQueueAction(queue.name, "pause")
+                          }
                           disabled={actionInProgress === queue.name}
                         >
                           <Pause className="h-3 w-3" />
@@ -338,7 +363,9 @@ export function QueueManagement() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => performQueueAction(queue.name, "clean", true)}
+                        onClick={() =>
+                          performQueueAction(queue.name, "clean", true)
+                        }
                         disabled={actionInProgress === queue.name}
                       >
                         <Trash2 className="h-3 w-3" />
@@ -375,21 +402,19 @@ export function QueueManagement() {
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>{t("actions.warning")}</AlertTitle>
-              <AlertDescription>
-                {t("actions.irreversible")}
-              </AlertDescription>
+              <AlertDescription>{t("actions.irreversible")}</AlertDescription>
             </Alert>
             <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setConfirmDialog(null)}
-              >
+              <Button variant="outline" onClick={() => setConfirmDialog(null)}>
                 {tGlobal("common.cancel")}
               </Button>
               <Button
                 variant="destructive"
                 onClick={() =>
-                  performQueueAction(confirmDialog.queueName, confirmDialog.action)
+                  performQueueAction(
+                    confirmDialog.queueName,
+                    confirmDialog.action
+                  )
                 }
               >
                 {tGlobal("common.actions.confirm")}

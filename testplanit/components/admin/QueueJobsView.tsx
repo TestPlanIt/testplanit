@@ -71,7 +71,11 @@ interface QueueJobsViewProps {
   onRefresh: () => void;
 }
 
-export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewProps) {
+export function QueueJobsView({
+  queueName,
+  onClose,
+  onRefresh,
+}: QueueJobsViewProps) {
   const t = useTranslations("admin.queues.jobs");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common.actions");
@@ -116,27 +120,36 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
     loadJobs();
   }, [loadJobs]);
 
-  const performJobAction = async (jobId: string, action: string, force: boolean = false) => {
+  const performJobAction = async (
+    jobId: string,
+    action: string,
+    force: boolean = false
+  ) => {
     try {
       setActionInProgress(jobId);
 
       // Build URL with force parameter for DELETE requests
-      const url = action === "remove" && force
-        ? `/api/admin/queues/${queueName}/jobs/${jobId}?force=true`
-        : `/api/admin/queues/${queueName}/jobs/${jobId}`;
+      const url =
+        action === "remove" && force
+          ? `/api/admin/queues/${queueName}/jobs/${jobId}?force=true`
+          : `/api/admin/queues/${queueName}/jobs/${jobId}`;
 
       const response = await fetch(url, {
         method: action === "remove" ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: action !== "remove" ? JSON.stringify({ action, force }) : undefined,
+        body:
+          action !== "remove" ? JSON.stringify({ action, force }) : undefined,
       });
 
       if (!response.ok) {
         const error = await response.json();
 
         // Check if this is an active/locked job error
-        if ((error.error?.includes('Cannot remove active') ||
-             error.error?.includes('locked by a worker')) && !force) {
+        if (
+          (error.error?.includes("Cannot remove active") ||
+            error.error?.includes("locked by a worker")) &&
+          !force
+        ) {
           // Ask user if they want to force remove
           setForceRemoveDialog({
             show: true,
@@ -246,15 +259,32 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{tGlobal("repository.views.allStates")}</SelectItem>
-                  <SelectItem value="waiting">{tGlobal("admin.queues.table.waiting")}</SelectItem>
-                  <SelectItem value="active">{tGlobal("common.status.active")}</SelectItem>
-                  <SelectItem value="completed">{tGlobal("dates.completed")}</SelectItem>
-                  <SelectItem value="failed">{tGlobal("admin.queues.table.failed")}</SelectItem>
-                  <SelectItem value="delayed">{tGlobal("milestones.statusLabels.delayed")}</SelectItem>
+                  <SelectItem value="all">
+                    {tGlobal("repository.views.allStates")}
+                  </SelectItem>
+                  <SelectItem value="waiting">
+                    {tGlobal("admin.queues.table.waiting")}
+                  </SelectItem>
+                  <SelectItem value="active">
+                    {tGlobal("common.fields.isActive")}
+                  </SelectItem>
+                  <SelectItem value="completed">
+                    {tGlobal("common.fields.completed")}
+                  </SelectItem>
+                  <SelectItem value="failed">
+                    {tGlobal("admin.queues.table.failed")}
+                  </SelectItem>
+                  <SelectItem value="delayed">
+                    {tGlobal("milestones.statusLabels.delayed")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="sm" onClick={loadJobs} disabled={loading}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadJobs}
+                disabled={loading}
+              >
                 {loading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
@@ -281,15 +311,18 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
                   <TableHead>{tGlobal("common.fields.state")}</TableHead>
                   <TableHead>{t("table.attempts")}</TableHead>
                   <TableHead>{tGlobal("common.fields.created")}</TableHead>
-                  <TableHead>{tGlobal("charts.duration")}</TableHead>
-                  <TableHead className="text-right">{tGlobal("common.actions.actionsLabel")}</TableHead>
+                  <TableHead>{tGlobal("common.fields.duration")}</TableHead>
+                  <TableHead className="text-right">
+                    {tGlobal("common.actions.actionsLabel")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {jobs.map((job) => (
                   <TableRow key={job.id}>
                     <TableCell className="font-mono text-sm">
-                      {job.id?.substring(0, 8)}{"..."}
+                      {job.id?.substring(0, 8)}
+                      {"..."}
                     </TableCell>
                     <TableCell>{job.name}</TableCell>
                     <TableCell>{getStateBadge(job.state)}</TableCell>
@@ -359,13 +392,16 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
                 {t("details.title")} - {selectedJob.name}
               </DialogTitle>
               <DialogDescription>
-                {"ID: "}{selectedJob.id}
+                {"ID: "}
+                {selectedJob.id}
               </DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[60vh]">
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">{tGlobal("common.fields.state")}</h4>
+                  <h4 className="text-sm font-semibold mb-2">
+                    {tGlobal("common.fields.state")}
+                  </h4>
                   {getStateBadge(selectedJob.state)}
                 </div>
 
@@ -380,19 +416,22 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
                   </div>
                 )}
 
-                {selectedJob.stacktrace && selectedJob.stacktrace.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold mb-2 text-destructive">
-                      {t("details.stacktrace")}
-                    </h4>
-                    <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
-                      {selectedJob.stacktrace.join("\n")}
-                    </pre>
-                  </div>
-                )}
+                {selectedJob.stacktrace &&
+                  selectedJob.stacktrace.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold mb-2 text-destructive">
+                        {t("details.stacktrace")}
+                      </h4>
+                      <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
+                        {selectedJob.stacktrace.join("\n")}
+                      </pre>
+                    </div>
+                  )}
 
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">{t("details.data")}</h4>
+                  <h4 className="text-sm font-semibold mb-2">
+                    {t("details.data")}
+                  </h4>
                   <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
                     {JSON.stringify(selectedJob.data, null, 2)}
                   </pre>
@@ -400,7 +439,9 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
 
                 {selectedJob.returnvalue && (
                   <div>
-                    <h4 className="text-sm font-semibold mb-2">{t("details.returnValue")}</h4>
+                    <h4 className="text-sm font-semibold mb-2">
+                      {t("details.returnValue")}
+                    </h4>
                     <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
                       {JSON.stringify(selectedJob.returnvalue, null, 2)}
                     </pre>
@@ -408,7 +449,9 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
                 )}
 
                 <div>
-                  <h4 className="text-sm font-semibold mb-2">{t("details.options")}</h4>
+                  <h4 className="text-sm font-semibold mb-2">
+                    {t("details.options")}
+                  </h4>
                   <pre className="bg-muted p-3 rounded text-sm overflow-x-auto">
                     {JSON.stringify(selectedJob.opts, null, 2)}
                   </pre>
@@ -416,20 +459,31 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-semibold">{tGlobal("common.fields.created")}:</span>{" "}
+                    <span className="font-semibold">
+                      {tGlobal("common.fields.created")}:
+                    </span>{" "}
                     {formatTimestamp(selectedJob.timestamp)}
                   </div>
                   <div>
-                    <span className="font-semibold">{t("details.processed")}:</span>{" "}
+                    <span className="font-semibold">
+                      {t("details.processed")}:
+                    </span>{" "}
                     {formatTimestamp(selectedJob.processedOn)}
                   </div>
                   <div>
-                    <span className="font-semibold">{t("details.finished")}:</span>{" "}
+                    <span className="font-semibold">
+                      {t("details.finished")}:
+                    </span>{" "}
                     {formatTimestamp(selectedJob.finishedOn)}
                   </div>
                   <div>
-                    <span className="font-semibold">{tGlobal("charts.duration")}:</span>{" "}
-                    {formatDuration(selectedJob.processedOn, selectedJob.finishedOn)}
+                    <span className="font-semibold">
+                      {tGlobal("common.fields.duration")}:
+                    </span>{" "}
+                    {formatDuration(
+                      selectedJob.processedOn,
+                      selectedJob.finishedOn
+                    )}
                   </div>
                 </div>
               </div>
@@ -443,7 +497,12 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
         open={forceRemoveDialog.show}
         onOpenChange={(open) => {
           if (!open) {
-            setForceRemoveDialog({ show: false, jobId: null, action: null, errorMessage: null });
+            setForceRemoveDialog({
+              show: false,
+              jobId: null,
+              action: null,
+              errorMessage: null,
+            });
             setActionInProgress(null);
           }
         }}
@@ -465,18 +524,32 @@ export function QueueJobsView({ queueName, onClose, onRefresh }: QueueJobsViewPr
             <Button
               variant="outline"
               onClick={() => {
-                setForceRemoveDialog({ show: false, jobId: null, action: null, errorMessage: null });
+                setForceRemoveDialog({
+                  show: false,
+                  jobId: null,
+                  action: null,
+                  errorMessage: null,
+                });
                 setActionInProgress(null);
               }}
             >
-              {tCommon("cancel")}
+              {tGlobal("common.cancel")}
             </Button>
             <Button
               variant="destructive"
               onClick={async () => {
-                setForceRemoveDialog({ show: false, jobId: null, action: null, errorMessage: null });
+                setForceRemoveDialog({
+                  show: false,
+                  jobId: null,
+                  action: null,
+                  errorMessage: null,
+                });
                 if (forceRemoveDialog.jobId && forceRemoveDialog.action) {
-                  await performJobAction(forceRemoveDialog.jobId, forceRemoveDialog.action, true);
+                  await performJobAction(
+                    forceRemoveDialog.jobId,
+                    forceRemoveDialog.action,
+                    true
+                  );
                 }
               }}
             >

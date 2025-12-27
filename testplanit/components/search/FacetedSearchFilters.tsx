@@ -834,7 +834,7 @@ export function FacetedSearchFilters({
                           ).length > 0 && (
                             <>
                               <div className="text-xs font-semibold text-muted-foreground mt-2">
-                                {t("runs.title")}
+                                {t("common.fields.testRuns")}
                               </div>
                               {filterItems(
                                 workflowStates.filter((s) => s.scope === "RUNS")
@@ -1028,7 +1028,7 @@ export function FacetedSearchFilters({
                 <div className="space-y-2">
                   <Label className="text-sm font-medium flex items-center gap-2">
                     <Tags className="h-4 w-4" />
-                    {t("tags.title")}
+                    {t("common.fields.tags")}
                   </Label>
                   <div className="space-y-1 max-h-40 overflow-y-auto">
                     {filterItems(tags).map((tag) => (
@@ -1401,7 +1401,7 @@ export function FacetedSearchFilters({
                   <div className="space-y-2">
                     <Label className="text-sm font-medium flex items-center gap-2">
                       <Bot className="h-4 w-4" />
-                      {t("reports.dimensions.automationStatus")}
+                      {t("common.ui.search.automationStatus")}
                     </Label>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
@@ -1540,7 +1540,7 @@ export function FacetedSearchFilters({
               {entityTypes.includes(SearchableEntityType.TEST_RUN) && (
                 <div className="space-y-4 p-4 bg-muted rounded-lg border border-border/50 max-w-full overflow-x-hidden">
                   <h4 className="font-medium text-sm uppercase tracking-wider text-muted-foreground">
-                    {t("runs.title")}
+                    {t("common.fields.testRuns")}
                   </h4>
 
                   {/* Test Run Type */}
@@ -1561,9 +1561,7 @@ export function FacetedSearchFilters({
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue
-                          placeholder={t("search.allTypes")}
-                        />
+                        <SelectValue placeholder={t("search.allTypes")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="ALL">

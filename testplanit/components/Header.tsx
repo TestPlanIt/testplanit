@@ -40,12 +40,15 @@ export const Header = () => {
   const { data: session, status } = useSession();
   const { setTheme } = useTheme();
   const t = useTranslations();
+  const tCommon = useTranslations("common");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMac, setIsMac] = useState(false);
   const [trialDaysRemaining, setTrialDaysRemaining] = useState<number | null>(
     null
   );
-  const [trialContactEmail, setTrialContactEmail] = useState<string>("sales@testplanit.com");
+  const [trialContactEmail, setTrialContactEmail] = useState<string>(
+    "sales@testplanit.com"
+  );
   const versionString = getVersionString();
 
   // Fetch trial configuration from API (env vars are baked in at build time, so we need runtime fetch)
@@ -180,7 +183,7 @@ export const Header = () => {
                       className={`${buttonVariants({ variant: "link" })}`}
                       href="/tags"
                     >
-                      {t("tags.title")}
+                      {tCommon("fields.tags")}
                     </Link>
                     <Link
                       id="issues-link"
@@ -194,7 +197,7 @@ export const Header = () => {
                       className={`${buttonVariants({ variant: "link" })}`}
                       href="/users"
                     >
-                      {t("users.title")}
+                      {tCommon("fields.users")}
                     </Link>
                   </span>
                 </div>

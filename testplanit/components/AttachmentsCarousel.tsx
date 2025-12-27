@@ -220,7 +220,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                                     }
                                   >
                                     <CircleSlash2 className="h-4 w-4" />
-                                    {t("common.actions.cancel")}
+                                    {t("common.cancel")}
                                   </Button>
                                 </div>
                                 <div className="flex items-center">
@@ -270,7 +270,7 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                                 <span className="w-full h-24">
                                   {attachment.note
                                     ? attachment.note
-                                    : t("common.labels.none")}
+                                    : t("common.access.none")}
                                 </span>
                               )}
                             </div>
@@ -346,11 +346,11 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                       onClick={handleEditToggle}
                       disabled={isSubmitting}
                     >
-                      {t("common.actions.cancel")}
+                      {t("common.cancel")}
                     </Button>
                     <Button onClick={handleSubmit} disabled={isSubmitting}>
                       {isSubmitting
-                        ? t("common.status.submitting")
+                        ? t("common.actions.saving")
                         : t("common.actions.submit")}
                     </Button>
                   </>

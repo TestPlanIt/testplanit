@@ -680,17 +680,14 @@ export function AddSessionModal({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center">
-                        {t("common.fields.name")}
+                        {t("common.name")}
                         <sup>
                           <Asterisk className="w-3 h-3 text-destructive" />
                         </sup>
                         <HelpPopover helpKey="session.name" />
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder={t("common.name")}
-                          {...field}
-                        />
+                        <Input placeholder={t("common.name")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -714,7 +711,9 @@ export function AddSessionModal({
                           }}
                           readOnly={false}
                           className="h-auto max-h-[150px]"
-                          placeholder={t("common.placeholders.description")}
+                          placeholder={t(
+                            "common.fields.description_placeholder"
+                          )}
                           projectId={projectId!.toString()}
                         />
                       </FormControl>
@@ -744,13 +743,13 @@ export function AddSessionModal({
                             >
                               <SelectTrigger>
                                 <SelectValue
-                                  placeholder={t("common.labels.none")}
+                                  placeholder={t("common.access.none")}
                                 />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectGroup>
                                   <SelectItem value="0">
-                                    {t("common.labels.none")}
+                                    {t("common.access.none")}
                                   </SelectItem>
                                   {configurationsOptions.map(
                                     (configuration) => (
@@ -792,7 +791,7 @@ export function AddSessionModal({
                             field.onChange(numericValue);
                           }}
                           milestones={milestonesOptions}
-                          placeholder={t("common.labels.none")}
+                          placeholder={t("common.access.none")}
                         />
                       </FormControl>
                       <FormMessage />
@@ -983,13 +982,13 @@ export function AddSessionModal({
                             >
                               <SelectTrigger>
                                 <SelectValue
-                                  placeholder={t("common.labels.none")}
+                                  placeholder={t("common.access.none")}
                                 />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectGroup>
                                   <SelectItem value="none">
-                                    {t("common.labels.none")}
+                                    {t("common.access.none")}
                                   </SelectItem>
                                   {assignedToOptions.map((user) => (
                                     <SelectItem
@@ -1077,11 +1076,11 @@ export function AddSessionModal({
                 </div>
               )}
               <Button variant="outline" type="button" onClick={handleCancel}>
-                {t("common.actions.cancel")}
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? t("common.status.submitting")
+                  ? t("common.actions.submitting")
                   : t("common.actions.submit")}
               </Button>
             </DialogFooter>

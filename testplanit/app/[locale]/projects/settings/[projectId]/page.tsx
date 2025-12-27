@@ -22,9 +22,9 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const t = await getTranslations("projects.settings");
+  const tGlobal = await getTranslations();
   return {
-    title: t("title"),
+    title: tGlobal("enums.ApplicationArea.Settings"),
   };
 }
 
@@ -135,13 +135,13 @@ export default async function ProjectSettingsPage({ params }: PageProps) {
   }
 
   const t = await getTranslations("projects.settings");
-
+  const tGlobal = await getTranslations();
   return (
     <main>
       <Card>
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-            <CardTitle>{t("title")}</CardTitle>
+            <CardTitle>{tGlobal("enums.ApplicationArea.Settings")}</CardTitle>
           </div>
           <CardDescription className="uppercase">
             <span className="flex items-center gap-2">
@@ -157,7 +157,7 @@ export default async function ProjectSettingsPage({ params }: PageProps) {
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <Plug className="h-6 w-6 text-primary" />
-                    <CardTitle>{t("integrations.title")}</CardTitle>
+                    <CardTitle>{tGlobal("admin.menu.integrations")}</CardTitle>
                   </div>
                   <CardDescription>
                     {t("integrations.description")}
@@ -171,7 +171,7 @@ export default async function ProjectSettingsPage({ params }: PageProps) {
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <Sparkles className="h-6 w-6 text-primary" />
-                    <CardTitle>{t("aiModels.title")}</CardTitle>
+                    <CardTitle>{tGlobal("admin.menu.llm")}</CardTitle>
                   </div>
                   <CardDescription>{t("aiModels.description")}</CardDescription>
                 </CardHeader>

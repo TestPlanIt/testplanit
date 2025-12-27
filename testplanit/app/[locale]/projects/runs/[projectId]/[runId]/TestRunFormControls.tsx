@@ -299,7 +299,7 @@ function TestRunFormControls({
                       <SelectGroup>
                         <SelectItem value="0">
                           <div className="flex items-center gap-2">
-                            {t("common.labels.none")}
+                            {t("common.access.none")}
                           </div>
                         </SelectItem>
                         {configurations?.map((config) => (
@@ -370,7 +370,7 @@ function TestRunFormControls({
                       }
                       className="h-4 w-4 shrink-0 mt-0.5"
                     />
-                    {testRun?.milestone?.name || t("common.labels.none")}
+                    {testRun?.milestone?.name || t("common.access.none")}
                   </div>
                 )}
               </FormControl>
@@ -416,7 +416,7 @@ function TestRunFormControls({
                 ))
               : !isEditMode && (
                   <span className="text-muted-foreground text-sm">
-                    {t("common.labels.none")}
+                    {t("common.access.none")}
                   </span>
                 )}
           </div>

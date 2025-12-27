@@ -73,7 +73,9 @@ export function ManageSimpleUrlIssues({
           name: issueId,
           title: issueTitle || issueId,
           externalId: issueId,
-          externalUrl: config?.baseUrl ? config.baseUrl.replace("{issueId}", issueId) : undefined,
+          externalUrl: config?.baseUrl
+            ? config.baseUrl.replace("{issueId}", issueId)
+            : undefined,
           integrationId,
           projectId,
           createdById: "", // Will be set by the server
@@ -81,7 +83,9 @@ export function ManageSimpleUrlIssues({
         update: {
           // Update fields that might have changed
           title: issueTitle || issueId,
-          externalUrl: config?.baseUrl ? config.baseUrl.replace("{issueId}", issueId) : undefined,
+          externalUrl: config?.baseUrl
+            ? config.baseUrl.replace("{issueId}", issueId)
+            : undefined,
         },
       });
 
@@ -89,12 +93,12 @@ export function ManageSimpleUrlIssues({
       if (newIssue) {
         setLinkedIssueIds([...linkedIssueIds, newIssue.id]);
       }
-      
+
       // Reset form
       setIssueId("");
       setIssueTitle("");
       setIsAddOpen(false);
-      
+
       toast.success(t("common.messages.created"));
       refetch();
     } catch (error) {
@@ -104,7 +108,7 @@ export function ManageSimpleUrlIssues({
 
   const handleRemoveIssue = async (issueId: number) => {
     try {
-      setLinkedIssueIds(linkedIssueIds.filter(id => id !== issueId));
+      setLinkedIssueIds(linkedIssueIds.filter((id) => id !== issueId));
       toast.success(t("common.status.deleted"));
     } catch (error) {
       toast.error(t("common.errors.error"));
@@ -129,6 +133,7 @@ export function ManageSimpleUrlIssues({
               <span className="mr-1">{issue.name}</span>
               {url && (
                 <a
+                  title={url}
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -149,26 +154,24 @@ export function ManageSimpleUrlIssues({
             </Badge>
           );
         })}
-        
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsAddOpen(true)}
-        >
+
+        <Button variant="outline" size="sm" onClick={() => setIsAddOpen(true)}>
           <Plus className="h-4 w-4 mr-1" />
-          {t("common.actions.add")}
+          {t("common.add")}
         </Button>
       </div>
 
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t("common.actions.add")} {t("common.fields.issues")}</DialogTitle>
+            <DialogTitle>
+              {t("common.add")} {t("common.fields.issues")}
+            </DialogTitle>
             <DialogDescription className="sr-only">
-              {t("common.actions.add")} {t("common.fields.issues")}
+              {t("common.add")} {t("common.fields.issues")}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="issueId">{t("common.fields.id")}</Label>
@@ -179,31 +182,30 @@ export function ManageSimpleUrlIssues({
                 placeholder="ISSUE-123"
               />
             </div>
-            
+
             <div>
-              <Label htmlFor="issueTitle">{t("common.fields.name")}</Label>
+              <Label htmlFor="issueTitle">{t("common.name")}</Label>
               <Input
                 id="issueTitle"
                 value={issueTitle}
                 onChange={(e) => setIssueTitle(e.target.value)}
-                placeholder={t("common.fields.name")}
+                placeholder={t("common.name")}
               />
             </div>
 
             {config?.baseUrl && (
               <p className="text-sm text-muted-foreground">
-                {t("common.ui.issues.url")}{config.baseUrl.replace("{issueId}", issueId || "ISSUE-123")}
+                {t("common.ui.issues.url")}
+                {config.baseUrl.replace("{issueId}", issueId || "ISSUE-123")}
               </p>
             )}
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddOpen(false)}>
-              {t("common.actions.cancel")}
+              {t("common.cancel")}
             </Button>
-            <Button onClick={handleAddIssue}>
-              {t("common.actions.add")}
-            </Button>
+            <Button onClick={handleAddIssue}>{t("common.add")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

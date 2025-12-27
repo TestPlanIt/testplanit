@@ -429,7 +429,7 @@ export function BulkEditModal({
     }));
 
     return [...standardFields, ...customFields];
-  }, [tRepository, hasMultipleTemplates, templateFields, tCommon]);
+  }, [hasMultipleTemplates, templateFields, tCommon]);
 
   // --- Effects ---
 

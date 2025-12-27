@@ -51,6 +51,7 @@ export default function ProjectsMenu({
   const menuButtonClass = "w-full rounded-none justify-start shadow-none";
   const shouldRenderMenu = projectId && !isNaN(Number(projectId));
   const t = useTranslations();
+  const tCommon = useTranslations("common");
   const { data: session } = useSession();
 
   // Permission check for Shared Steps
@@ -125,7 +126,7 @@ export default function ProjectsMenu({
     },
     {
       icon: TagsIcon,
-      label: t("tags.title"),
+      label: tCommon("fields.tags"),
       path: "tags",
     },
     {
@@ -137,7 +138,7 @@ export default function ProjectsMenu({
       ? [
           {
             icon: ChartNoAxesCombined,
-            label: t("navigation.admin.reports"),
+            label: t("admin.menu.reports"),
             path: "reports",
           },
         ]
@@ -194,8 +195,7 @@ export default function ProjectsMenu({
 
               return sections.map((section, sectionIndex) => {
                 const sectionId =
-                  section.header?.label ===
-                  t("common.fields.project")
+                  section.header?.label === t("common.fields.project")
                     ? "project-section"
                     : section.header?.label ===
                         t("navigation.projects.sections.management")

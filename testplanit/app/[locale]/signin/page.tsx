@@ -410,7 +410,7 @@ const Signin: NextPage = () => {
             <div className="w-1/2 space-y-6 flex flex-col items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin" />
               <p className="text-muted-foreground text-center">
-                {t("common.status.loading")}
+                {tCommon("loading")}
               </p>
             </div>
           ) : !sessionCleared || isLoadingSsoProviders ? (
@@ -471,9 +471,7 @@ const Signin: NextPage = () => {
                     disabled={isLoading}
                   >
                     {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {isLoading
-                      ? t("common.status.loading")
-                      : t("common.actions.signIn")}
+                    {isLoading ? tCommon("loading") : tCommon("actions.signIn")}
                   </Button>
                 </div>
 
@@ -513,7 +511,7 @@ const Signin: NextPage = () => {
                             <Shield className="h-4 w-4" />
                           )}
                           {isSsoLoading === provider.id
-                            ? t("common.status.loading")
+                            ? tCommon("loading")
                             : provider.type === SsoProviderType.GOOGLE
                               ? t("auth.signin.sso.googleOAuth")
                               : provider.type === SsoProviderType.APPLE
@@ -563,7 +561,7 @@ const Signin: NextPage = () => {
                         <Shield className="h-4 w-4" />
                       )}
                       {isSsoLoading === provider.id
-                        ? t("common.status.loading")
+                        ? tCommon("loading")
                         : provider.type === SsoProviderType.GOOGLE
                           ? t("auth.signin.sso.googleOAuth")
                           : provider.type === SsoProviderType.APPLE
@@ -790,7 +788,7 @@ const Signin: NextPage = () => {
               onClick={cancel2FA}
               disabled={is2FALoading}
             >
-              {t("common.actions.cancel")}
+              {tCommon("cancel")}
             </Button>
             <Button
               type="button"
@@ -802,10 +800,10 @@ const Signin: NextPage = () => {
               {is2FALoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {t("common.status.loading")}
+                  {tCommon("loading")}
                 </>
               ) : (
-                t("common.actions.verify")
+                tCommon("actions.verify")
               )}
             </Button>
           </DialogFooter>

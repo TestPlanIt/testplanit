@@ -1047,10 +1047,12 @@
           "externalProjectHelp": "This sets the default project for creating new issues from TestPlanIt. You can still link and sync issues from other external projects - each issue tracks its own source project.",
           "defaultIssueTypeHelp": "When creating new issues from TestPlanIt, this issue type will be automatically selected. This saves time if you typically create the same type of issues.",
           "automaticSyncHelp": "When enabled, issues will automatically sync when changes are detected in the external system (via webhooks). Manual sync is always available.",
+          "removeWarningTitle": "Removing this issue integration will:",
           "removeWarning1": "Disconnect all linked issues from this issue integration (issues remain in database)",
           "removeWarning2": "Remove all issue integration-specific settings for this project",
           "removeWarning3": "Require reconfiguration if you want to use this issue integration again",
           "switchIntegration": "Switch Integration",
+          "switchWarningTitle": "Switching to a different AI model will:",
           "switchWarning1": "Disconnect all issues currently linked to the current issue integration",
           "switchWarning2": "Preserve the issues in the database (they become unlinked)",
           "switchWarning3": "Replace the current issue integration configuration with the new one"

@@ -210,6 +210,7 @@ export function MultiAsyncCombobox<T>({
                     ? renderSelectedOption(v)
                     : getOptionLabel(v)}
                   <span
+                    title={getOptionLabel(v)}
                     role="button"
                     tabIndex={0}
                     className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"

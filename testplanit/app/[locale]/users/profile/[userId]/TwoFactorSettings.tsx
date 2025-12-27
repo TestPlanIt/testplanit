@@ -418,7 +418,7 @@ export function TwoFactorSettings({
             {!backupCodes ? (
               <>
                 <Button variant="outline" onClick={closeSetup}>
-                  {t("common.actions.cancel")}
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   onClick={completeSetup}
@@ -513,13 +513,15 @@ export function TwoFactorSettings({
           </div>
 
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("common.actions.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
                 disable2FA();
               }}
-              disabled={isLoading || disableCode.length < (disableUseBackupCode ? 8 : 6)}
+              disabled={
+                isLoading || disableCode.length < (disableUseBackupCode ? 8 : 6)
+              }
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
@@ -611,7 +613,7 @@ export function TwoFactorSettings({
             {!newBackupCodes ? (
               <>
                 <Button variant="outline" onClick={closeRegenerate}>
-                  {t("common.actions.cancel")}
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   onClick={regenerateBackupCodes}

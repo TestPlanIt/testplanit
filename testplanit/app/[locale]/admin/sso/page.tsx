@@ -832,7 +832,7 @@ export default function SSOAdminPage() {
                     className="h-6 px-2 text-xs"
                   >
                     <Edit className="h-3 w-3" />
-                    {t("projects.settings.integrations.configure")}
+                    {t("admin.integrations.table.configure")}
                   </Button>
                 </div>
               )}
@@ -879,7 +879,7 @@ export default function SSOAdminPage() {
                     className="h-6 px-2 text-xs"
                   >
                     <Edit className="h-3 w-3" />
-                    {t("projects.settings.integrations.configure")}
+                    {t("admin.integrations.table.configure")}
                   </Button>
                 </div>
               )}
@@ -925,7 +925,7 @@ export default function SSOAdminPage() {
                     className="h-6 px-2 text-xs"
                   >
                     <Edit className="h-3 w-3" />
-                    {t("projects.settings.integrations.configure")}
+                    {t("admin.integrations.editIntegration")}
                   </Button>
                 </div>
               )}
@@ -1071,9 +1071,7 @@ export default function SSOAdminPage() {
                           </span>
                           {!domain.enabled && (
                             <Badge variant="secondary">
-                              {t(
-                                "common.status.disabled"
-                              )}
+                              {t("common.status.disabled")}
                             </Badge>
                           )}
                         </div>
@@ -1222,7 +1220,9 @@ export default function SSOAdminPage() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="cert">{t("admin.sso.samlConfiguration.samlSettings.certificate")}</Label>
+              <Label htmlFor="cert">
+                {t("admin.sso.samlConfiguration.samlSettings.certificate")}
+              </Label>
               <Input
                 id="cert"
                 value={samlCert}

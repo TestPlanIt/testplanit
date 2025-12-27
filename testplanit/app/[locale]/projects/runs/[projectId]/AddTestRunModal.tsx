@@ -216,7 +216,7 @@ const BasicInfoDialog = React.memo(
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center">
-                        {tCommon("fields.name")}
+                        {tCommon("name")}
                         <HelpPopover helpKey="testRun.name" />
                       </FormLabel>
                       <FormControl>
@@ -251,7 +251,9 @@ const BasicInfoDialog = React.memo(
                             }
                             readOnly={false}
                             className="h-auto max-h-[150px]"
-                            placeholder={tCommon("placeholders.description")}
+                            placeholder={tCommon(
+                              "fields.description_placeholder"
+                            )}
                             projectId={projectId}
                           />
                         </FormControl>
@@ -385,7 +387,7 @@ const BasicInfoDialog = React.memo(
                     return (
                       <FormItem>
                         <FormLabel className="flex items-center">
-                          {tCommon("labels.docs")}
+                          {tCommon("fields.documentation")}
                           <HelpPopover helpKey="testRun.docs" />
                         </FormLabel>
                         <FormControl>
@@ -830,7 +832,6 @@ export default function AddTestRunModal({
   const numericProjectId = Number(projectId);
   const t = useTranslations("runs.add");
   const tCommon = useTranslations("common");
-  const locale = useLocale();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [creationProgress, setCreationProgress] = useState({
     current: 0,
@@ -1357,8 +1358,9 @@ export default function AddTestRunModal({
       console.error("Failed to create test run:", error);
       toast({
         variant: "destructive",
-        title: t("errors.failedToCreate.title"),
-        description: error.message || t("errors.failedToCreate.message"),
+        title: tCommon("errors.failedToFetchAssignments.title"),
+        description:
+          error.message || tCommon("errors.failedToFetchAssignments.message"),
       });
     } finally {
       setIsSubmitting(false);

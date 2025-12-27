@@ -1047,10 +1047,12 @@
           "externalProjectHelp": "Cela définit le projet par défaut pour la création de nouveaux tickets depuis TestPlanIt. Vous pouvez toujours lier et synchroniser des tickets provenant d'autres projets externes ; chaque ticket est associé à son propre projet source.",
           "defaultIssueTypeHelp": "Lors de la création de nouveaux tickets dans TestPlanIt, ce type de ticket sera automatiquement sélectionné. Cela vous fera gagner du temps si vous créez régulièrement des tickets du même type.",
           "automaticSyncHelp": "Une fois activée, la synchronisation des tickets est automatique dès que des modifications sont détectées dans le système externe (via des webhooks). La synchronisation manuelle reste également possible.",
+          "removeWarningTitle": "La suppression de cette intégration permettra :",
           "removeWarning1": "Déconnecter tous les tickets liés de cette intégration (les tickets restent dans la base de données).",
           "removeWarning2": "Supprimez tous les paramètres spécifiques à l'intégration des problèmes pour ce projet.",
           "removeWarning3": "Une reconfiguration est nécessaire si vous souhaitez réutiliser cette intégration.",
           "switchIntegration": "Intégration de commutateur",
+          "switchWarningTitle": "Passer à un modèle d'IA différent permettra de :",
           "switchWarning1": "Déconnectez tous les problèmes actuellement liés à l'intégration du problème actuel",
           "switchWarning2": "Conserver les problèmes dans la base de données (ils seront dissociés).",
           "switchWarning3": "Remplacez la configuration d'intégration actuelle par la nouvelle."

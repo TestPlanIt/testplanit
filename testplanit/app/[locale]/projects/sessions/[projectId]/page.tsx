@@ -410,7 +410,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   const workDistributionChartData = useMemo(() => {
     if (!incompleteSessions || incompleteSessions.length === 0) {
       return {
-        name: t("sessions.summary.noWorkDistributionData", {
+        name: t("runs.summary.noWorkDistributionData", {
           defaultValue:
             "No active sessions with assignees or estimates to display.",
         }),
@@ -425,7 +425,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     );
     if (filteredSessions.length === 0) {
       return {
-        name: t("sessions.summary.noWorkDistributionData", {
+        name: t("runs.summary.noWorkDistributionData", {
           defaultValue:
             "No active sessions with assignees or estimates to display.",
         }),
@@ -452,8 +452,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
 
       if (session.assignedTo && session.assignedTo.id) {
         const assigneeName =
-          session.assignedTo.name ||
-          t("sessions.placeholders.unassigned", { defaultValue: "Unassigned" });
+          session.assignedTo.name || t("common.labels.unassigned");
         const assigneeId = `user-${session.assignedTo.id}`;
 
         sessionNodeChildren.push({
@@ -741,7 +740,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                     <CardHeader className="pb-2 flex flex-row items-start justify-between">
                       <div>
                         <CardTitle className="font-medium">
-                          {t("sessions.summary.workDistributionTitle")}
+                          {t("runs.summary.workDistributionTitle")}
                         </CardTitle>
                         <CardDescription>
                           <div className="flex flex-row gap-1">
@@ -765,7 +764,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                         onClick={() =>
                           handleOpenChartOverlay({
                             type: "sunburst",
-                            title: t("sessions.summary.workDistributionTitle"),
+                            title: t("runs.summary.workDistributionTitle"),
                             data: workDistributionChartData,
                             projectId: projectId,
                             onLegendDataGenerated: handleSunburstLegend,
@@ -795,10 +794,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                         />
                       ) : (
                         <p className="text-sm text-muted-foreground text-center px-4 h-[210px] flex items-center justify-center">
-                          {t("sessions.summary.noWorkDistributionData", {
-                            defaultValue:
-                              "No active sessions with assignees or estimates to display.",
-                          })}
+                          {t("runs.summary.noWorkDistributionData")}
                         </p>
                       )}
                     </CardContent>
@@ -943,10 +939,10 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
               <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="w-full">
                   <TabsTrigger value="active" className="w-1/2">
-                    {t("common.status.active")}
+                    {t("common.fields.isActive")}
                   </TabsTrigger>
                   <TabsTrigger value="completed" className="w-1/2">
-                    {t("common.status.completed")}
+                    {t("common.fields.completed")}
                   </TabsTrigger>
                 </TabsList>
 
@@ -1055,12 +1051,12 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
               <DialogTitle>
                 {zoomedChartDetails
                   ? zoomedChartDetails.title
-                  : t("sessions.summary.workDistributionTitle")}
+                  : t("runs.summary.workDistributionTitle")}
               </DialogTitle>
               <DialogDescription className="sr-only">
                 {zoomedChartDetails
                   ? zoomedChartDetails.title
-                  : t("sessions.summary.workDistributionTitle")}
+                  : t("runs.summary.workDistributionTitle")}
               </DialogDescription>
             </DialogHeader>
             {zoomedChartDetails && (

@@ -444,7 +444,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                   {tLinkedCases("on")}
                 </TableHead>
                 <TableHead className="w-[60px] text-right">
-                  {tLinkedCases("removeLink")}
+                  {tGlobal("common.actions.remove")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -678,7 +678,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                aria-label={tLinkedCases("removeLink")}
+                                aria-label={tGlobal("common.actions.remove")}
                                 onClick={() => setOpenPopoverLinkId(link.id)}
                               >
                                 <X className="w-4 h-4" />
@@ -703,7 +703,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                                   onClick={() => handleUnlink(link.id)}
                                 >
                                   <Trash2 className="w-4 h-4" />
-                                  {tLinkedCases("removeLink")}
+                                  {tGlobal("common.actions.remove")}
                                 </Button>
                               </div>
                             </PopoverContent>

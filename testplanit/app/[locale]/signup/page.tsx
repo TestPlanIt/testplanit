@@ -4,7 +4,11 @@ import { useState, useEffect } from "react";
 import type { NextPage } from "next";
 import { signIn } from "next-auth/react";
 import { useRouter } from "~/lib/navigation";
-import { useCreateUser, useFindManySsoProvider, useFindFirstRegistrationSettings } from "~/lib/hooks";
+import {
+  useCreateUser,
+  useFindManySsoProvider,
+  useFindFirstRegistrationSettings,
+} from "~/lib/hooks";
 import {
   generateEmailVerificationToken,
   resendVerificationEmail,
@@ -82,14 +86,15 @@ const Signup: NextPage = () => {
 
   // Check if Force SSO is enabled - if so, redirect to 404
   // Wait for session to be cleared before fetching to prevent 410 errors with stale sessions
-  const { data: ssoProviders, isLoading: isLoadingSsoProviders } = useFindManySsoProvider(
-    {
-      include: { samlConfig: true },
-    },
-    {
-      enabled: sessionCleared,
-    }
-  );
+  const { data: ssoProviders, isLoading: isLoadingSsoProviders } =
+    useFindManySsoProvider(
+      {
+        include: { samlConfig: true },
+      },
+      {
+        enabled: sessionCleared,
+      }
+    );
 
   // Fetch registration settings to get the default access level for new users
   const { data: registrationSettings } = useFindFirstRegistrationSettings(
@@ -197,7 +202,7 @@ const Signup: NextPage = () => {
       if (err.info?.prisma && err.info?.code === "P2002") {
         setSubmissionError(t("common.errors.emailExists"));
       } else {
-        setSubmissionError(t("milestones.errors.unknown"));
+        setSubmissionError(t("common.errors.unknown"));
       }
       return;
     }
@@ -260,7 +265,7 @@ const Signup: NextPage = () => {
             <div className="w-1/2 space-y-6 flex flex-col items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin" />
               <p className="text-muted-foreground text-center">
-                {t("common.status.loading")}
+                {t("common.loading")}
               </p>
             </div>
           ) : isStillLoading ? (
@@ -269,88 +274,88 @@ const Signup: NextPage = () => {
               {/* Invisible placeholder to prevent layout shift */}
             </div>
           ) : (
-          <Form {...form}>
-            <form
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="w-1/2 space-y-6"
-            >
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      {t("common.name")}
-                      <HelpPopover helpKey="user.name" />
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="w-1/2 space-y-6"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        {t("common.name")}
+                        <HelpPopover helpKey="user.name" />
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        {t("common.fields.email")}
+                        <HelpPopover helpKey="user.email" />
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        {t("common.fields.password")}
+                        <HelpPopover helpKey="user.password" />
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} type="password" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        {t("common.fields.confirmPassword")}
+                        <HelpPopover helpKey="user.confirmPassword" />
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} type="password" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit">{t("common.actions.signUp")}</Button>
+                {submissionError && (
+                  <div className="text-destructive">{submissionError}</div>
                 )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      {t("common.fields.email")}
-                      <HelpPopover helpKey="user.email" />
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      {t("common.fields.password")}
-                      <HelpPopover helpKey="user.password" />
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} type="password" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      {t("common.fields.confirmPassword")}
-                      <HelpPopover helpKey="user.confirmPassword" />
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} type="password" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit">{t("common.actions.signUp")}</Button>
-              {submissionError && (
-                <div className="text-destructive">{submissionError}</div>
-              )}
-              <div>
-                {t("common.or")}{" "}
-                <Link href="/signin" className="group">
-                  {t("auth.signup.signIn")}
-                  <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                </Link>
-              </div>
-            </form>
-          </Form>
+                <div>
+                  {t("common.or")}{" "}
+                  <Link href="/signin" className="group">
+                    {t("auth.signup.signIn")}
+                    <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                  </Link>
+                </div>
+              </form>
+            </Form>
           )}
         </CardContent>
       </Card>

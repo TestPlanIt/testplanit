@@ -39,7 +39,10 @@ function TagDetail() {
   const t = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { projectId, tagId } = useParams<{ projectId: string; tagId: string }>();
+  const { projectId, tagId } = useParams<{
+    projectId: string;
+    tagId: string;
+  }>();
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
   const [activeTab, setActiveTab] = useState<TabType>("cases");
@@ -259,7 +262,7 @@ function TagDetail() {
   const caseColumns = useMemo(
     () =>
       getCaseColumns({
-        testCases: t("repository.testCases"),
+        testCases: t("common.fields.testCases"),
       }),
     [t]
   );
@@ -328,7 +331,6 @@ function TagDetail() {
     return null;
   }
 
-
   return (
     <Card className="flex w-full min-w-[400px]">
       <div className="flex-1 w-full relative">
@@ -337,9 +339,9 @@ function TagDetail() {
             <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
               <div className="flex items-center gap-2">
                 <span>
-                  {t("repository.testCases")},{" "}
-                  {t("common.fields.testRuns")} {t("common.and")}{" "}
-                  {t("sessions.title", { count: 2 })} {t("common.for")}
+                  {t("common.fields.testCases")}, {t("common.fields.testRuns")}{" "}
+                  {t("common.and")} {t("sessions.title", { count: 2 })}{" "}
+                  {t("common.for")}
                 </span>
                 <TagsDisplay id={Number(tagId)} name={tagName} size="large" />
               </div>
@@ -364,7 +366,7 @@ function TagDetail() {
           >
             <TabsList className="mb-4">
               <TabsTrigger value="cases">
-                {t("repository.testCases")} {`(${casesCount ?? 0})`}
+                {t("common.fields.testCases")} {`(${casesCount ?? 0})`}
               </TabsTrigger>
               <TabsTrigger value="sessions">
                 {t("common.fields.sessions")} {`(${sessionsCount ?? 0})`}

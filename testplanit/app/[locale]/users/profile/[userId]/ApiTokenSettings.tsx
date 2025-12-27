@@ -174,7 +174,9 @@ export function ApiTokenSettings({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <KeyRound className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">{tGlobal("admin.menu.apiTokens")}</span>
+            <span className="text-sm font-medium">
+              {tGlobal("admin.menu.apiTokens")}
+            </span>
           </div>
           {isOwnProfile && (
             <Button
@@ -197,8 +199,12 @@ export function ApiTokenSettings({
                 <TableHead>{tGlobal("common.name")}</TableHead>
                 <TableHead>{tGlobal("common.fields.token")}</TableHead>
                 <TableHead>{tGlobal("common.fields.created")}</TableHead>
-                <TableHead>{t("lastUsed")}</TableHead>
-                <TableHead>{t("expires")}</TableHead>
+                <TableHead>
+                  {tGlobal("admin.apiTokens.columns.lastUsed")}
+                </TableHead>
+                <TableHead>
+                  {tGlobal("admin.apiTokens.columns.expires")}
+                </TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -248,7 +254,9 @@ export function ApiTokenSettings({
                         />
                       </Badge>
                     ) : (
-                      <Badge variant="outline">{tGlobal("admin.apiTokens.lastUsedNever")}</Badge>
+                      <Badge variant="outline">
+                        {tGlobal("admin.apiTokens.lastUsedNever")}
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell>

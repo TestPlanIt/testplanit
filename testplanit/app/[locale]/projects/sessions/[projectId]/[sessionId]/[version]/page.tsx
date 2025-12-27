@@ -90,6 +90,7 @@ export default function SessionVersionPage() {
   const panelRightRef = useRef<React.ComponentRef<typeof ResizablePanel>>(null);
   const panelLeftRef = useRef<React.ComponentRef<typeof ResizablePanel>>(null);
   const t = useTranslations();
+  const tCommon = useTranslations("common");
 
   const { data: currentVersion, isLoading } = useFindFirstSessionVersions({
     where: {
@@ -363,7 +364,7 @@ export default function SessionVersionPage() {
                 }
                 previousValue={previousVersion?.note}
                 fieldType="editor"
-                field={t("issues.description")}
+                field={tCommon("fields.description")}
                 testSession={currentVersion}
                 projectId={Number(projectId)}
               />
@@ -534,7 +535,7 @@ export default function SessionVersionPage() {
                 currentValue={sortedCurrentTags}
                 previousValue={sortedPreviousTags}
                 fieldType="tags"
-                field={t("tags.title")}
+                field={tCommon("fields.tags")}
                 testSession={currentVersion}
                 projectId={Number(projectId)}
               />

@@ -71,6 +71,7 @@ export function SessionVersionRenderer({
 }: SessionVersionRendererProps) {
   const { data: session } = useSession();
   const t = useTranslations();
+  const tCommon = useTranslations("common");
   const locale = useLocale();
 
   const renderValue = (value: any, type: FieldType) => {
@@ -136,7 +137,7 @@ export function SessionVersionRenderer({
                 field === "Configuration" ||
                 field === "Milestone") &&
                 (field === "Milestone" ? getCurrentIcon() : getIcon())}
-              {value || t("common.actions.none")}
+              {value || tCommon("access.none")}
             </div>
             {showTextDiff && (
               <div className="text-sm flex items-start gap-1 text-red-600 bg-red-100 p-2 rounded">
@@ -147,7 +148,7 @@ export function SessionVersionRenderer({
                   field === "Configuration" ||
                   field === "Milestone") &&
                   (field === "Milestone" ? getPreviousIcon() : getIcon())}
-                {previousValue || t("common.actions.none")}
+                {previousValue || tCommon("access.none")}
               </div>
             )}
           </div>
@@ -424,9 +425,7 @@ export function SessionVersionRenderer({
             </span>
             <DynamicIcon name="check-circle" className="h-6 w-6 shrink-0" />
             <div className="flex items-center truncate">
-              <span className="mr-1">
-                {t("common.fields.completedOn")}
-              </span>
+              <span className="mr-1">{t("common.fields.completedOn")}</span>
               <span className="truncate">
                 <DateFormatter
                   date={testSession.completedAt}

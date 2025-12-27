@@ -304,7 +304,7 @@ function TagDetail() {
   const caseColumns = useMemo(
     () =>
       getCaseColumns({
-        testCases: t("repository.testCases"),
+        testCases: t("common.fields.testCases"),
         project: t("common.fields.project"),
         noProject: t("tags.noProject"),
       }),
@@ -379,7 +379,6 @@ function TagDetail() {
     return null;
   }
 
-
   return (
     <Card className="flex w-full min-w-[400px]">
       <div className="flex-1 w-full relative">
@@ -411,7 +410,7 @@ function TagDetail() {
           >
             <TabsList className="mb-4">
               <TabsTrigger value="cases">
-                {t("repository.testCases")} {`(${casesCount ?? 0})`}
+                {t("common.fields.testCases")} {`(${casesCount ?? 0})`}
               </TabsTrigger>
               <TabsTrigger value="testRuns">
                 {t("common.fields.testRuns")} {`(${testRunsCount ?? 0})`}
