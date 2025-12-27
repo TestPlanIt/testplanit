@@ -62,7 +62,8 @@ function formatAction(action: AuditAction): string {
 export const getColumns = (
   session: any,
   onViewDetails: (log: ExtendedAuditLog) => void,
-  t: ReturnType<typeof useTranslations<"admin.auditLogs">>
+  t: ReturnType<typeof useTranslations<"admin.auditLogs">>,
+  tCommon: ReturnType<typeof useTranslations<"common">>
 ): ColumnDef<ExtendedAuditLog>[] => [
   {
     id: "timestamp",
@@ -83,7 +84,7 @@ export const getColumns = (
   {
     id: "action",
     accessorKey: "action",
-    header: t("columns.action"),
+    header: t("filterAction"),
     enableSorting: true,
     size: 150,
     cell: ({ getValue }) => {
@@ -98,7 +99,7 @@ export const getColumns = (
   {
     id: "entityType",
     accessorKey: "entityType",
-    header: t("columns.entityType"),
+    header: t("filterEntityType"),
     enableSorting: true,
     size: 150,
     cell: ({ getValue }) => (
@@ -132,7 +133,7 @@ export const getColumns = (
   {
     id: "userEmail",
     accessorKey: "userEmail",
-    header: t("columns.user"),
+    header: tCommon("access.user"),
     enableSorting: true,
     size: 200,
     cell: ({ row }) => {
@@ -154,7 +155,7 @@ export const getColumns = (
   {
     id: "project",
     accessorKey: "project",
-    header: t("columns.project"),
+    header: tCommon("fields.project"),
     enableSorting: false,
     size: 150,
     cell: ({ row }) => {

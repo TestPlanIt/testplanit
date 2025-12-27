@@ -118,6 +118,7 @@ function ReportBuilderContent({
   const t = useTranslations();
   const tReports = useTranslations("reports.ui");
   const tCommon = useTranslations("common");
+  const tAdminMenu = useTranslations("admin.menu");
   const tDimensions = useTranslations("reports.dimensions");
   const tMetrics = useTranslations("reports.metrics");
   const customStyles = getCustomStyles({ theme });
@@ -1346,10 +1347,10 @@ function ReportBuilderContent({
               >
                 <TabsList className="grid w-full grid-cols-2 mb-4">
                   <TabsTrigger value="reports">
-                    {tReports("tabs.reports")}
+                    {tAdminMenu("reports")}
                   </TabsTrigger>
                   <TabsTrigger value="builder">
-                    {tReports("tabs.reportBuilder")}
+                    {tReports("title")}
                   </TabsTrigger>
                 </TabsList>
 
@@ -1359,7 +1360,7 @@ function ReportBuilderContent({
                 >
                   <div className="mb-4">
                     <h2 className="text-lg font-semibold">
-                      {tReports("tabs.reports")}
+                      {tAdminMenu("reports")}
                     </h2>
                     <p className="text-sm text-muted-foreground">
                       {tReports("reportsTabDescription")}
@@ -1404,7 +1405,7 @@ function ReportBuilderContent({
                         <DateRangePickerField
                           control={form.control}
                           name="dateRange"
-                          label={tReports("dateRange.label")}
+                          label={tReports("dateRange.selectDateRange")}
                           helpKey="reportBuilder.dateRange"
                         />
                       </div>
@@ -1453,7 +1454,7 @@ function ReportBuilderContent({
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
                               <label className="text-sm font-medium">
-                                {tReports("filtersTitle")}
+                                {tCommon("ui.search.filters")}
                               </label>
                             </div>
                             <p className="text-xs text-muted-foreground">
@@ -1491,7 +1492,7 @@ function ReportBuilderContent({
                         data-testid="run-report-button"
                       >
                         {loading ? (
-                          <>{t("common.status.loading")}</>
+                          <>{tCommon("loading")}</>
                         ) : (
                           tReports("runReport")
                         )}
@@ -1559,7 +1560,7 @@ function ReportBuilderContent({
                         <DateRangePickerField
                           control={form.control}
                           name="dateRange"
-                          label={tReports("dateRange.label")}
+                          label={tReports("dateRange.selectDateRange")}
                           helpKey="reportBuilder.dateRange"
                         />
                       </div>
@@ -1619,8 +1620,8 @@ function ReportBuilderContent({
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
                               <label className="text-sm font-medium">
-                                {tReports("filtersTitle")} {" - "}{" "}
-                                {tReports("priorityFilter")}
+                                {tCommon("ui.search.filters")} {" - "}{" "}
+                                {tCommon("fields.priority")}
                               </label>
                             </div>
                             <MultiSelect
@@ -1719,7 +1720,7 @@ function ReportBuilderContent({
                         data-testid="run-report-button"
                       >
                         {loading ? (
-                          <>{t("common.status.loading")}</>
+                          <>{tCommon("loading")}</>
                         ) : (
                           tReports("runReport")
                         )}

@@ -98,6 +98,7 @@ export function useReportColumns(
   }) => void
 ) {
   const t = useTranslations();
+  const tCommon = useTranslations("common");
   const tReportsMetrics = useTranslations("reports.metrics");
   const locale = useLocale();
   const dateFnsLocale = getDateFnsLocale(locale);
@@ -216,10 +217,10 @@ export function useReportColumns(
                   // Check if the name is "None" from the API and translate it
                   const displayName =
                     userName === "None"
-                      ? t("common.actions.none")
+                      ? tCommon("access.none")
                       : userName;
                   return (
-                    <span>{displayName || t("common.actions.none")}</span>
+                    <span>{displayName || tCommon("access.none")}</span>
                   );
                 }
 
@@ -227,7 +228,7 @@ export function useReportColumns(
                   <UserNameCell userId={userId} hideLink={true} />
                 ) : (
                   <span>
-                    {userName || userEmail || t("common.placeholders.unknown")}
+                    {userName || userEmail || tCommon("labels.unknown")}
                   </span>
                 );
               }
@@ -236,7 +237,7 @@ export function useReportColumns(
                 const statusData = info.row.original[dimensionId];
                 return (
                   <StatusDotDisplay
-                    name={statusData?.name || t("common.placeholders.unknown")}
+                    name={statusData?.name || tCommon("labels.unknown")}
                     color={statusData?.color}
                   />
                 );
@@ -273,7 +274,7 @@ export function useReportColumns(
                   <span className="font-medium">
                     {projectData?.name ||
                       projectData?.title ||
-                      t("common.placeholders.unknown")}
+                      tCommon("labels.unknown")}
                   </span>
                 );
               }
@@ -310,7 +311,7 @@ export function useReportColumns(
                   return <span>{t("common.fields.API")}</span>;
                 }
                 return (
-                  <span>{sourceValue || t("common.placeholders.unknown")}</span>
+                  <span>{sourceValue || tCommon("labels.unknown")}</span>
                 );
               case "template": {
                 // Get the full template object from the row data
@@ -327,7 +328,7 @@ export function useReportColumns(
                 // Get the group ID from the accessor
                 const groupId = value;
                 if (!groupId) {
-                  return <span>{t("common.placeholders.unknown")}</span>;
+                  return <span>{tCommon("labels.unknown")}</span>;
                 }
                 return <GroupNameCell groupId={String(groupId)} />;
               }
@@ -340,7 +341,7 @@ export function useReportColumns(
                 // Get the full milestone object from the row data
                 const milestoneData = info.row.original[dimensionId];
                 if (!milestoneData || !milestoneData.id) {
-                  return <span>{t("common.placeholders.unknown")}</span>;
+                  return <span>{tCommon("labels.unknown")}</span>;
                 }
 
                 // Ensure milestoneType exists with proper structure
@@ -384,7 +385,7 @@ export function useReportColumns(
                 return (
                   <span className="flex items-center gap-1">
                     <Compass className="h-4 w-4" />
-                    {sessionData?.name || t("common.placeholders.unknown")}
+                    {sessionData?.name || tCommon("labels.unknown")}
                   </span>
                 );
               }
@@ -400,7 +401,7 @@ export function useReportColumns(
                     {value?.name ||
                       value?.title ||
                       value ||
-                      t("common.placeholders.unknown")}
+                      tCommon("labels.unknown")}
                   </span>
                 );
             }
@@ -459,7 +460,7 @@ export function useReportColumns(
                 (subRow) => subRow.original[dimensionId],
                 (status) => (
                   <StatusDotDisplay
-                    name={status?.name || t("common.placeholders.unknown")}
+                    name={status?.name || tCommon("labels.unknown")}
                     color={status?.color}
                   />
                 ),
@@ -534,7 +535,7 @@ export function useReportColumns(
                   }
                   return (
                     <span>
-                      {sourceValue || t("common.placeholders.unknown")}
+                      {sourceValue || tCommon("labels.unknown")}
                     </span>
                   );
                 },
@@ -563,7 +564,7 @@ export function useReportColumns(
                 (subRow) => subRow.getValue(dimensionId),
                 (groupId) => {
                   if (!groupId) {
-                    return <span>{t("common.placeholders.unknown")}</span>;
+                    return <span>{tCommon("labels.unknown")}</span>;
                   }
                   return <GroupNameCell groupId={String(groupId)} />;
                 },
@@ -588,7 +589,7 @@ export function useReportColumns(
                 (subRow) => subRow.original[dimensionId],
                 (milestoneData) => {
                   if (!milestoneData || !milestoneData.id) {
-                    return <span>{t("common.placeholders.unknown")}</span>;
+                    return <span>{tCommon("labels.unknown")}</span>;
                   }
                   // Try to get project ID from the first subrow that has it
                   const projectId = info.row.subRows[0]?.original?.projectId ||
@@ -635,7 +636,7 @@ export function useReportColumns(
                     {value?.name ||
                       value?.title ||
                       value ||
-                      t("common.placeholders.unknown")}
+                      tCommon("labels.unknown")}
                   </span>
                 );
               },
@@ -945,6 +946,7 @@ export function useReportColumns(
     locale,
     dateFnsLocale,
     t,
+    tCommon,
     tReportsMetrics,
     onMetricClick,
   ]);

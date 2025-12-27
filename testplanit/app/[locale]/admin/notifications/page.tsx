@@ -51,6 +51,7 @@ export default function NotificationSettingsPage() {
 
 function NotificationSettingsContent() {
   const t = useTranslations("admin.notifications");
+  const tCommon = useTranslations("common");
   const tGlobal = useTranslations();
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -78,7 +79,7 @@ function NotificationSettingsContent() {
     Record<string, boolean>
   >({});
 
-  const columns = useMemo(() => getColumns(session, t), [session, t]);
+  const columns = useMemo(() => getColumns(session, t, tCommon), [session, t, tCommon]);
 
   const tableData: NotificationHistoryItem[] = useMemo(
     () =>

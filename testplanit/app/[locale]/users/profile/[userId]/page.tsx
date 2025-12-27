@@ -99,6 +99,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
   const tCommon = useTranslations("common");
   const tEdit = useTranslations("users.profile.edit");
   const tNotifications = useTranslations("users.profile.notifications");
+  const tNotificationModes = useTranslations("admin.notifications.defaultMode");
   const tUserMenu = useTranslations("userMenu");
   const { mutateAsync: updateUser } = useUpdateUser();
   const { data: globalSettings } = useFindUniqueAppConfig({
@@ -304,13 +305,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
       case "USE_GLOBAL":
         return tNotifications("mode.useGlobal");
       case "NONE":
-        return tNotifications("mode.none");
+        return tCommon("access.none");
       case "IN_APP":
-        return tNotifications("mode.inApp");
+        return tNotificationModes("inApp");
       case "IN_APP_EMAIL_IMMEDIATE":
-        return tNotifications("mode.inAppEmailImmediate");
+        return tNotificationModes("inAppEmailImmediate");
       case "IN_APP_EMAIL_DAILY":
-        return tNotifications("mode.inAppEmailDaily");
+        return tNotificationModes("inAppEmailDaily");
       default:
         return mode;
     }
@@ -1184,7 +1185,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                             htmlFor="none"
                                             className="font-normal"
                                           >
-                                            {tNotifications("mode.none")}
+                                            {tCommon("access.none")}
                                           </Label>
                                         </div>
                                         <div className="flex items-center space-x-3">
@@ -1196,7 +1197,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                             htmlFor="in-app"
                                             className="font-normal"
                                           >
-                                            {tNotifications("mode.inApp")}
+                                            {tNotificationModes("inApp")}
                                           </Label>
                                         </div>
                                         <div className="flex items-center space-x-3">
@@ -1208,9 +1209,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                             htmlFor="in-app-email-immediate"
                                             className="font-normal"
                                           >
-                                            {tNotifications(
-                                              "mode.inAppEmailImmediate"
-                                            )}
+                                            {tNotificationModes("inAppEmailImmediate")}
                                           </Label>
                                         </div>
                                         <div className="flex items-center space-x-3 md:col-start-1">
@@ -1222,9 +1221,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                             htmlFor="in-app-email-daily"
                                             className="font-normal"
                                           >
-                                            {tNotifications(
-                                              "mode.inAppEmailDaily"
-                                            )}
+                                            {tNotificationModes("inAppEmailDaily")}
                                           </Label>
                                         </div>
                                       </RadioGroup>

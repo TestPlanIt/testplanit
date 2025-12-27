@@ -40,13 +40,14 @@ export const getColumns = (
   handleDeleteClick: (integration: Integration) => void,
   handleTestConnection: (integration: Integration) => void,
   tCommon: ReturnType<typeof useTranslations<"common">>,
-  t: ReturnType<typeof useTranslations<"admin.integrations">>
+  t: ReturnType<typeof useTranslations<"admin.integrations">>,
+  tApiTokens: ReturnType<typeof useTranslations<"admin.apiTokens">>
 ): ColumnDef<ExtendedIntegration>[] => [
   {
     id: "provider",
     accessorKey: "provider",
     header: () => (
-      <div className="bg-primary-foreground">{t("table.provider")}</div>
+      <div className="bg-primary-foreground">{tCommon("fields.provider")}</div>
     ),
     enableSorting: true,
     enableResizing: true,
@@ -77,7 +78,7 @@ export const getColumns = (
   {
     id: "status",
     accessorKey: "status",
-    header: tCommon("fields.status"),
+    header: tCommon("actions.status"),
     enableSorting: true,
     enableResizing: true,
     size: 150,
@@ -98,7 +99,7 @@ export const getColumns = (
   {
     id: "projects",
     accessorKey: "projectIntegrations",
-    header: t("assignedProjects"),
+    header: tCommon("fields.projects"),
     enableSorting: false,
     enableResizing: true,
     size: 75,
@@ -125,7 +126,7 @@ export const getColumns = (
       if (!lastSyncAt) {
         return (
           <span className="text-sm text-muted-foreground">
-            {t("table.never")}
+            {tApiTokens("lastUsedNever")}
           </span>
         );
       }

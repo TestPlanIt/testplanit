@@ -110,7 +110,7 @@ export const getColumns = (
   {
     id: "lastActiveAt",
     accessorKey: "lastActiveAt",
-    header: tCommon("fields.lastActiveAt"),
+    header: tCommon("fields.lastActive"),
     enableSorting: true,
     enableResizing: true,
     size: 75,

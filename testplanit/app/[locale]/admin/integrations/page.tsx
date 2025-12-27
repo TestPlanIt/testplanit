@@ -54,8 +54,9 @@ export default function IntegrationsPage() {
 
 function IntegrationList() {
   const t = useTranslations("admin.integrations");
-  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
+  const tApiTokens = useTranslations("admin.apiTokens");
+  const tAdminMenu = useTranslations("admin.menu");
   const { data: session, status } = useSession();
   const router = useRouter();
   const {
@@ -219,8 +220,8 @@ function IntegrationList() {
       { where: { id: integrationToDelete.id } },
       {
         onSuccess: () => {
-          toast.success(tGlobal("admin.integrations.deleteSuccess"), {
-            description: tGlobal("admin.integrations.deleteSuccessDescription"),
+          toast.success(t("deleteSuccess"), {
+            description: t("deleteSuccessDescription"),
           });
           refetch();
         },
@@ -233,7 +234,7 @@ function IntegrationList() {
     );
     setDeleteDialogOpen(false);
     setIntegrationToDelete(null);
-  }, [integrationToDelete, deleteIntegration, t, tGlobal, refetch]);
+  }, [integrationToDelete, deleteIntegration, t, refetch]);
 
   const handleTestConnection = useCallback(
     async (integration: Integration) => {
@@ -280,7 +281,8 @@ function IntegrationList() {
         handleDeleteClick,
         handleTestConnection,
         tCommon,
-        t
+        t,
+        tApiTokens
       ),
     [
       session,
@@ -289,6 +291,7 @@ function IntegrationList() {
       handleTestConnection,
       tCommon,
       t,
+      tApiTokens,
     ]
   );
 
@@ -324,7 +327,7 @@ function IntegrationList() {
                 className="items-center flex"
               >
                 <Plug className="inline mr-2 h-8 w-8" />
-                {tGlobal("admin.menu.integrations")}
+                {tAdminMenu("integrations")}
               </CardTitle>
               <CardDescription data-testid="integrations-admin-page-description">
                 {t("description")}
@@ -421,7 +424,7 @@ function IntegrationList() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Trash2 className="h-5 w-5 text-destructive" />
-              {tGlobal("admin.integrations.deleteIntegration")}
+              {t("deleteIntegration")}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <p>

@@ -14,12 +14,13 @@ export interface ExtendedApiToken extends ApiToken {
 export const getColumns = (
   session: any,
   onRevoke: (token: ExtendedApiToken) => void,
-  t: ReturnType<typeof useTranslations<"admin.apiTokens">>
+  t: ReturnType<typeof useTranslations<"admin.apiTokens">>,
+  tCommon: ReturnType<typeof useTranslations<"common">>
 ): ColumnDef<ExtendedApiToken>[] => [
   {
     id: "name",
     accessorKey: "name",
-    header: t("columns.name"),
+    header: tCommon("name"),
     enableSorting: true,
     enableResizing: true,
     enableHiding: false,
@@ -31,7 +32,7 @@ export const getColumns = (
   {
     id: "user",
     accessorKey: "userId",
-    header: t("columns.user"),
+    header: tCommon("access.user"),
     enableSorting: true,
     enableResizing: true,
     size: 200,
@@ -40,7 +41,7 @@ export const getColumns = (
   {
     id: "tokenPrefix",
     accessorKey: "tokenPrefix",
-    header: t("columns.token"),
+    header: tCommon("fields.token"),
     enableSorting: false,
     enableResizing: true,
     size: 150,
@@ -54,7 +55,7 @@ export const getColumns = (
   {
     id: "createdAt",
     accessorKey: "createdAt",
-    header: t("columns.created"),
+    header: tCommon("fields.created"),
     enableSorting: true,
     enableResizing: true,
     size: 150,
@@ -116,7 +117,7 @@ export const getColumns = (
   {
     id: "status",
     accessorKey: "isActive",
-    header: t("columns.status"),
+    header: tCommon("actions.status"),
     enableSorting: true,
     enableResizing: true,
     size: 100,
@@ -131,7 +132,7 @@ export const getColumns = (
       if (isExpired) {
         return <Badge variant="destructive">{t("status.expired")}</Badge>;
       }
-      return <Badge variant="default">{t("status.active")}</Badge>;
+      return <Badge variant="default">{tCommon("fields.isActive")}</Badge>;
     },
   },
   {

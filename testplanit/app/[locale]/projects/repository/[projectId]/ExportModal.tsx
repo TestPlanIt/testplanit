@@ -341,7 +341,7 @@ export function ExportModal({
                       htmlFor="textLongFormat-json"
                       className="cursor-pointer"
                     >
-                      {tGlobal("repository.exportModal.textLongFormat.json")}
+                      {tGlobal("repository.exportModal.attachmentFormat.json")}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -354,7 +354,7 @@ export function ExportModal({
                       htmlFor="textLongFormat-plainText"
                       className="cursor-pointer"
                     >
-                      {tGlobal("repository.exportModal.textLongFormat.plainText")}
+                      {tGlobal("repository.exportModal.stepsFormat.plainText")}
                     </Label>
                   </div>
                 </RadioGroup>
@@ -388,7 +388,7 @@ export function ExportModal({
                       htmlFor="stepsFormat-json"
                       className="cursor-pointer"
                     >
-                      {tGlobal("repository.exportModal.textLongFormat.json")}
+                      {tGlobal("repository.exportModal.attachmentFormat.json")}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -401,7 +401,7 @@ export function ExportModal({
                       htmlFor="stepsFormat-plainText"
                       className="cursor-pointer"
                     >
-                      {tGlobal("repository.exportModal.textLongFormat.plainText")}
+                      {tGlobal("repository.exportModal.stepsFormat.plainText")}
                     </Label>
                   </div>
                 </RadioGroup>
@@ -476,7 +476,7 @@ export function ExportModal({
                       htmlFor="attachmentFormat-json"
                       className="cursor-pointer"
                     >
-                      {tGlobal("repository.exportModal.textLongFormat.json")}
+                      {tGlobal("repository.exportModal.attachmentFormat.json")}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">

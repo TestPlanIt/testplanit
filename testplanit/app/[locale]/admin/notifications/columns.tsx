@@ -32,12 +32,13 @@ export interface NotificationHistoryItem {
 
 export const getColumns = (
   session: any,
-  t: ReturnType<typeof useTranslations<"admin.notifications">>
+  t: ReturnType<typeof useTranslations<"admin.notifications">>,
+  tCommon: ReturnType<typeof useTranslations<"common">>
 ): ColumnDef<NotificationHistoryItem>[] => [
   {
     id: "title",
     accessorKey: "title",
-    header: t("systemNotification.titleLabel"),
+    header: tCommon("fields.title"),
     enableSorting: false,
     enableResizing: true,
     size: 250,
@@ -68,7 +69,7 @@ export const getColumns = (
   {
     id: "message",
     accessorKey: "message",
-    header: t("systemNotification.history.message"),
+    header: tCommon("actions.automated.message"),
     enableSorting: false,
     enableResizing: true,
     size: 400,

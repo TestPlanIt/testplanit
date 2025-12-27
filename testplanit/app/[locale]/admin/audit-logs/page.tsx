@@ -79,6 +79,7 @@ function AuditLogsGuard() {
 function AuditLogsContent({ session }: { session: Session }) {
   const t = useTranslations("admin.auditLogs");
   const tGlobal = useTranslations();
+  const tCommon = useTranslations("common");
   const {
     currentPage,
     setCurrentPage,
@@ -346,8 +347,8 @@ function AuditLogsContent({ session }: { session: Session }) {
   ]);
 
   const columns = useMemo(
-    () => getColumns(session, handleViewDetails, t),
-    [session, handleViewDetails, t]
+    () => getColumns(session, handleViewDetails, t, tCommon),
+    [session, handleViewDetails, t, tCommon]
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

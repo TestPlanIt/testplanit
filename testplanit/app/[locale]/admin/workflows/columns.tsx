@@ -73,7 +73,7 @@ export const getColumns = (
   {
     id: "isDefault",
     accessorKey: "isDefault",
-    header: tCommon("fields.options.default"),
+    header: tCommon("fields.default"),
     enableSorting: false,
     enableResizing: true,
     size: 100,
@@ -92,7 +92,7 @@ export const getColumns = (
   {
     id: "isEnabled",
     accessorKey: "isEnabled",
-    header: tCommon("fields.options.enabled"),
+    header: tCommon("fields.enabled"),
     enableSorting: false,
     enableResizing: true,
     size: 100,

@@ -67,7 +67,9 @@ export function InitialPreferencesDialog() {
   const { data: session, update } = useSession();
   const t = useTranslations("home.initialPreferences");
   const tGlobal = useTranslations();
-  const tNotifications = useTranslations("users.profile.notifications.mode");
+  const tCommon = useTranslations("common");
+  const tNotificationsMode = useTranslations("users.profile.notifications.mode");
+  const tNotificationDefaultMode = useTranslations("admin.notifications.defaultMode");
   const tUserMenu = useTranslations("userMenu");
   const tProfileEdit = useTranslations("users.profile.edit");
   const [isOpen, setIsOpen] = useState(false);
@@ -261,15 +263,15 @@ export function InitialPreferencesDialog() {
   const getNotificationModeLabel = (mode: NotificationMode) => {
     switch (mode) {
       case "USE_GLOBAL":
-        return tNotifications("useGlobal");
+        return tNotificationsMode("useGlobal");
       case "NONE":
-        return tNotifications("none");
+        return tCommon("access.none");
       case "IN_APP":
-        return tNotifications("inApp");
+        return tNotificationDefaultMode("inApp");
       case "IN_APP_EMAIL_IMMEDIATE":
-        return tNotifications("inAppEmailImmediate");
+        return tNotificationDefaultMode("inAppEmailImmediate");
       case "IN_APP_EMAIL_DAILY":
-        return tNotifications("inAppEmailDaily");
+        return tNotificationDefaultMode("inAppEmailDaily");
       default:
         return mode;
     }
@@ -401,7 +403,7 @@ export function InitialPreferencesDialog() {
                 name="theme"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tUserMenu("theme")}</FormLabel>
+                    <FormLabel>{tCommon("fields.theme")}</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={(value) => {
@@ -412,7 +414,7 @@ export function InitialPreferencesDialog() {
                         value={field.value}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={tUserMenu("theme")} />
+                          <SelectValue placeholder={tCommon("fields.theme")} />
                         </SelectTrigger>
                         <SelectContent>
                           {themeOptions.map((option) => (
@@ -442,14 +444,14 @@ export function InitialPreferencesDialog() {
                 name="locale"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tUserMenu("language")}</FormLabel>
+                    <FormLabel>{tCommon("fields.locale")}</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={tUserMenu("language")} />
+                          <SelectValue placeholder={tCommon("fields.locale")} />
                         </SelectTrigger>
                         <SelectContent>
                           {localeOptions.map((option) => (
@@ -500,14 +502,14 @@ export function InitialPreferencesDialog() {
                 name="notificationMode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tNotifications("label")}</FormLabel>
+                    <FormLabel>{tNotificationsMode("label")}</FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={tNotifications("label")} />
+                          <SelectValue placeholder={tNotificationsMode("label")} />
                         </SelectTrigger>
                         <SelectContent>
                           {notificationModeOptions.map((option) => (

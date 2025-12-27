@@ -323,8 +323,8 @@ function ApiTokensList() {
   ]);
 
   const columns = useMemo(
-    () => getColumns(session, handleRevoke, t),
-    [session, handleRevoke, t]
+    () => getColumns(session, handleRevoke, t, tCommon),
+    [session, handleRevoke, t, tCommon]
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

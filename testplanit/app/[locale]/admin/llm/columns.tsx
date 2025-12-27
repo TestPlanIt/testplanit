@@ -44,7 +44,7 @@ export const getColumns = (
         <span className="font-medium">{row.original.name}</span>
         {row.original.llmProviderConfig?.isDefault && (
           <Badge variant="secondary" className="text-xs">
-            {t("default")}
+            {tCommon("fields.default")}
           </Badge>
         )}
       </div>
@@ -81,7 +81,7 @@ export const getColumns = (
   {
     id: "status",
     accessorKey: "status",
-    header: tCommon("fields.status"),
+    header: tCommon("actions.status"),
     enableSorting: true,
     enableResizing: true,
     size: 150,
@@ -107,7 +107,7 @@ export const getColumns = (
   {
     id: "projects",
     accessorKey: "projectLlmIntegrations",
-    header: t("assignedProjects"),
+    header: tCommon("fields.projects"),
     enableSorting: false,
     enableResizing: true,
     size: 75,
