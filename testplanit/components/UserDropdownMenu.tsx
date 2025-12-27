@@ -85,9 +85,16 @@ export function UserDropdownMenu() {
         // Handle SSO logout URLs if provided
         if (data.ssoLogoutUrls && data.ssoLogoutUrls.length > 0) {
           // Check for SAML logout URLs that need redirection
-          const samlLogoutUrl = data.ssoLogoutUrls.find(
-            (url: string) => !url.includes("accounts.google.com")
-          );
+          const samlLogoutUrl = data.ssoLogoutUrls.find((urlString: string) => {
+            try {
+              const parsed = new URL(urlString);
+              // Only treat it as a Google accounts logout URL if the hostname matches exactly.
+              return parsed.hostname !== "accounts.google.com";
+            } catch {
+              // If the URL is invalid, treat it as non-Google to preserve existing behavior.
+              return true;
+            }
+          });
 
           if (samlLogoutUrl) {
             // For SAML, redirect immediately without calling NextAuth signOut
