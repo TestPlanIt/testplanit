@@ -21,11 +21,30 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
       throw new Error("Azure endpoint and deployment name are required");
     }
 
-    const resourceName = new URL(azureEndpoint).hostname.split(".")[0];
+    let parsedEndpoint: URL;
+    try {
+      parsedEndpoint = new URL(azureEndpoint);
+    } catch {
+      throw new Error("Invalid Azure endpoint URL");
+    }
+
+    if (parsedEndpoint.protocol !== "https:") {
+      throw new Error("Azure endpoint must use HTTPS");
+    }
+
+    const hostname = parsedEndpoint.hostname.toLowerCase();
+    // Restrict to Azure OpenAI endpoints to prevent SSRF
+    if (!hostname.endsWith(".openai.azure.com")) {
+      throw new Error("Azure endpoint hostname is not a valid Azure OpenAI endpoint");
+    }
+
+    const resourceName = hostname.split(".")[0];
+
+   const normalizedEndpoint = parsedEndpoint.origin;
 
     const azureConfig: LlmAdapterConfig = {
       ...config,
-      baseUrl: `${azureEndpoint}/openai/deployments/${deploymentName}`,
+      baseUrl: `${normalizedEndpoint}/openai/deployments/${deploymentName}`,
     };
 
     super(azureConfig);
