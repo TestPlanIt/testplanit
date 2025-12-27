@@ -245,7 +245,7 @@ export function useIssueColumns({
       id: "status",
       accessorKey: "status",
       accessorFn: (row) => row.status || "",
-      header: tCommon("fields.status"),
+      header: tCommon("actions.status"),
       enableSorting: true,
       enableResizing: true,
       size: 120,
