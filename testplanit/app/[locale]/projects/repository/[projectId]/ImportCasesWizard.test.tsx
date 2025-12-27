@@ -87,6 +87,7 @@ vi.mock("@/components/UploadAttachments", () => ({
   default: ({ onFileSelect, allowedTypes }: any) => (
     <div>
       <input
+        title="file-upload"
         type="file"
         data-testid="file-upload"
         accept=".csv"
@@ -119,6 +120,7 @@ vi.mock("@/components/UploadAttachments", () => ({
 vi.mock("@/components/forms/FolderSelect", () => ({
   FolderSelect: ({ value, onChange }: any) => (
     <select
+      title="folder-select"
       value={value}
       onChange={(e) => onChange(e.target.value)}
       data-testid="folder-select"
