@@ -128,7 +128,7 @@ export const getColumns = (
   },
   {
     id: "actions",
-    header: tCommon("fields.actions"),
+    header: tCommon("actions.actionsLabel"),
     enableResizing: true,
     enableSorting: false,
     enableHiding: false,

@@ -35,7 +35,11 @@ vi.mock("papaparse", () => ({
       // Mock CSV parsing
       const mockData = [
         { Name: "Test Case 1", Description: "Description 1", Priority: "High" },
-        { Name: "Test Case 2", Description: "Description 2", Priority: "Medium" },
+        {
+          Name: "Test Case 2",
+          Description: "Description 2",
+          Priority: "Medium",
+        },
       ];
       options.complete({
         data: mockData,
@@ -64,11 +68,14 @@ vi.mock("@/components/ui/select", () => ({
     <div data-value={value}>{children}</div>
   ),
   SelectTrigger: ({ children, ...props }: any) => (
-    <div {...props} onClick={() => {
-      if (mockOnValueChange) {
-        mockOnValueChange("1");
-      }
-    }}>
+    <div
+      {...props}
+      onClick={() => {
+        if (mockOnValueChange) {
+          mockOnValueChange("1");
+        }
+      }}
+    >
       {children}
     </div>
   ),
@@ -88,10 +95,11 @@ vi.mock("@/components/UploadAttachments", () => ({
             const files = Array.from(e.target.files) as File[];
             // Validate CSV files if allowedTypes is provided
             if (allowedTypes && allowedTypes.length > 0) {
-              const validFiles = files.filter(file => 
-                allowedTypes.some((type: string) => 
-                  file.name.toLowerCase().endsWith(type.toLowerCase()) || 
-                  file.type === type
+              const validFiles = files.filter((file) =>
+                allowedTypes.some(
+                  (type: string) =>
+                    file.name.toLowerCase().endsWith(type.toLowerCase()) ||
+                    file.type === type
                 )
               );
               onFileSelect(validFiles);
@@ -167,9 +175,12 @@ describe("ImportCasesWizard", () => {
       "importWizard.page1.uploadFile": "Upload CSV File",
       "importWizard.page1.selectedFile": "Selected file",
       "importWizard.page1.importLocation.label": "Import Location",
-      "importWizard.page1.importLocation.singleFolder": "Import all cases to a single folder",
-      "importWizard.page1.importLocation.rootFolder": "Create folder structure under a root folder",
-      "importWizard.page1.importLocation.topLevel": "Create folder structure at top level",
+      "importWizard.page1.importLocation.singleFolder":
+        "Import all cases to a single folder",
+      "importWizard.page1.importLocation.rootFolder":
+        "Create folder structure under a root folder",
+      "importWizard.page1.importLocation.topLevel":
+        "Create folder structure at top level",
       "importWizard.page1.selectFolder": "Select Folder",
       "importWizard.page1.selectFolderPlaceholder": "Select a folder...",
       "importWizard.page1.delimiter": "Delimiter",
@@ -188,23 +199,30 @@ describe("ImportCasesWizard", () => {
       "importWizard.page2.description": "Map CSV columns to test case fields",
       "importWizard.page2.ignoreColumn": "-- Ignore this column --",
       "importWizard.page2.required": "Required",
-      "importWizard.page2.requiredFieldsWarning": "{{count}} required fields are not mapped",
+      "importWizard.page2.requiredFieldsWarning":
+        "{{count}} required fields are not mapped",
       "importWizard.page3.title": "Configure Import",
       "importWizard.page3.mappingSummary": "Field Mapping Summary",
       "importWizard.page3.folderSplitMode.label": "Folder Split Mode",
       "importWizard.page3.folderSplitMode.plain": "Plain text (no splitting)",
-      "importWizard.page3.folderSplitMode.plainExample": '"Test Folder" → Single folder named "Test Folder"',
+      "importWizard.page3.folderSplitMode.plainExample":
+        '"Test Folder" → Single folder named "Test Folder"',
       "importWizard.page3.folderSplitMode.slash": "Split by slash (/)",
-      "importWizard.page3.folderSplitMode.slashExample": '"UI/Login/Tests" → Three nested folders',
+      "importWizard.page3.folderSplitMode.slashExample":
+        '"UI/Login/Tests" → Three nested folders',
       "importWizard.page3.folderSplitMode.dot": "Split by dot (.)",
-      "importWizard.page3.folderSplitMode.dotExample": '"UI.Login.Tests" → Three nested folders',
-      "importWizard.page3.folderSplitMode.greaterThan": "Split by greater than (>)",
-      "importWizard.page3.folderSplitMode.greaterThanExample": '"UI > Login > Tests" → Three nested folders',
+      "importWizard.page3.folderSplitMode.dotExample":
+        '"UI.Login.Tests" → Three nested folders',
+      "importWizard.page3.folderSplitMode.greaterThan":
+        "Split by greater than (>)",
+      "importWizard.page3.folderSplitMode.greaterThanExample":
+        '"UI > Login > Tests" → Three nested folders',
       "importWizard.page4.title": "Preview Import",
-      "importWizard.page4.showing": "Showing {{start}}-{{end}} of {{total}} cases",
+      "importWizard.page4.showing":
+        "Showing {{start}}-{{end}} of {{total}} cases",
       "importWizard.page4.case": "Case #{{number}}",
       "importWizard.page4.noValue": "(empty)",
-      "importWizard.fields.name": "Name",
+      "importWizard.name": "Name",
       "importWizard.fields.folder": "Folder",
       "importWizard.fields.estimate": "Estimate",
       "importWizard.fields.forecast": "Forecast",
@@ -223,17 +241,22 @@ describe("ImportCasesWizard", () => {
       "importWizard.import": "Import",
       "importWizard.importing": "Importing...",
       "importWizard.success.title": "Import Successful",
-      "importWizard.success.description": "{{count}} test cases imported successfully",
+      "importWizard.success.description":
+        "{{count}} test cases imported successfully",
       "importWizard.errors.parseFailed": "Failed to parse CSV file",
       "importWizard.errors.validationFailed": "Validation Failed",
-      "importWizard.errors.validationDescription": "{{count}} validation errors found",
+      "importWizard.errors.validationDescription":
+        "{{count}} validation errors found",
       "importWizard.errors.importFailed": "Import Failed",
       "importWizard.errors.unknown": "An unknown error occurred",
     };
 
     let result = translations[key] || key;
     if (typeof result === "string" && values) {
-      result = result.replace(/\{\{(\w+)\}\}/g, (match, key) => values[key] || match);
+      result = result.replace(
+        /\{\{(\w+)\}\}/g,
+        (match, key) => values[key] || match
+      );
     }
     return result;
   };
@@ -262,17 +285,17 @@ describe("ImportCasesWizard", () => {
 
   it("renders the import wizard dialog", () => {
     render(<ImportCasesWizard />);
-    
+
     const button = screen.getByText("Import Test Cases");
     expect(button).toBeInTheDocument();
   });
 
   it("opens the wizard when clicking the import button", async () => {
     render(<ImportCasesWizard />);
-    
+
     const button = screen.getByText("Import Test Cases");
     fireEvent.click(button);
-    
+
     await waitFor(() => {
       expect(screen.getByText("Upload and Configure")).toBeInTheDocument();
     });
@@ -282,27 +305,29 @@ describe("ImportCasesWizard", () => {
     it("allows file selection", async () => {
       const user = userEvent.setup();
       render(<ImportCasesWizard />);
-      
+
       fireEvent.click(screen.getByText("Import Test Cases"));
-      
+
       const file = new File(["test,content"], "test.csv", {
         type: "text/csv",
       });
       const fileInput = screen.getByTestId("file-upload");
-      
+
       await user.upload(fileInput, file);
-      
+
       await waitFor(() => {
         expect(screen.getByTestId("selected-file-info")).toBeInTheDocument();
-        expect(screen.getByTestId("selected-file-info")).toHaveTextContent("Selected file: test.csv");
+        expect(screen.getByTestId("selected-file-info")).toHaveTextContent(
+          "Selected file: test.csv"
+        );
       });
     });
 
     it("allows import location selection", async () => {
       render(<ImportCasesWizard />);
-      
+
       fireEvent.click(screen.getByText("Import Test Cases"));
-      
+
       const singleFolderRadio = screen.getByLabelText(
         "Import all cases to a single folder"
       );
@@ -312,24 +337,24 @@ describe("ImportCasesWizard", () => {
       const topLevelRadio = screen.getByLabelText(
         "Create folder structure at top level"
       );
-      
+
       expect(singleFolderRadio).toBeChecked();
-      
+
       fireEvent.click(rootFolderRadio);
       expect(rootFolderRadio).toBeChecked();
-      
+
       fireEvent.click(topLevelRadio);
       expect(topLevelRadio).toBeChecked();
     });
 
     it("shows folder select when single folder or root folder is selected", async () => {
       render(<ImportCasesWizard />);
-      
+
       fireEvent.click(screen.getByText("Import Test Cases"));
-      
+
       // Single folder mode - should show folder select
       expect(screen.getByText("Select Folder")).toBeInTheDocument();
-      
+
       // Top level mode - should not show folder select
       fireEvent.click(
         screen.getByLabelText("Create folder structure at top level")
@@ -339,9 +364,9 @@ describe("ImportCasesWizard", () => {
 
     it("allows delimiter selection", async () => {
       render(<ImportCasesWizard />);
-      
+
       fireEvent.click(screen.getByText("Import Test Cases"));
-      
+
       // Should have delimiter select (mocked)
       const selects = screen.getAllByTestId("mock-select");
       expect(selects.length).toBeGreaterThan(0);
@@ -349,9 +374,9 @@ describe("ImportCasesWizard", () => {
 
     it("has checkbox for headers", async () => {
       render(<ImportCasesWizard />);
-      
+
       fireEvent.click(screen.getByText("Import Test Cases"));
-      
+
       const checkbox = screen.getByLabelText("First row contains column names");
       expect(checkbox).toBeInTheDocument();
       expect(checkbox).toBeChecked();
@@ -360,31 +385,35 @@ describe("ImportCasesWizard", () => {
     it("only accepts CSV files", async () => {
       const user = userEvent.setup();
       render(<ImportCasesWizard />);
-      
+
       fireEvent.click(screen.getByText("Import Test Cases"));
-      
+
       // Try to upload a non-CSV file
       const nonCsvFile = new File(["test content"], "test.txt", {
         type: "text/plain",
       });
       const fileInput = screen.getByTestId("file-upload");
-      
+
       await user.upload(fileInput, nonCsvFile);
-      
+
       // Should not show selected file info for non-CSV files
-      expect(screen.queryByTestId("selected-file-info")).not.toBeInTheDocument();
-      
+      expect(
+        screen.queryByTestId("selected-file-info")
+      ).not.toBeInTheDocument();
+
       // Upload a CSV file
       const csvFile = new File(["test,content"], "test.csv", {
         type: "text/csv",
       });
-      
+
       await user.upload(fileInput, csvFile);
-      
+
       // Should show selected file info for CSV files
       await waitFor(() => {
         expect(screen.getByTestId("selected-file-info")).toBeInTheDocument();
-        expect(screen.getByTestId("selected-file-info")).toHaveTextContent("Selected file: test.csv");
+        expect(screen.getByTestId("selected-file-info")).toHaveTextContent(
+          "Selected file: test.csv"
+        );
       });
     });
   });
@@ -393,9 +422,9 @@ describe("ImportCasesWizard", () => {
     it("handles CSV parsing", async () => {
       const user = userEvent.setup();
       render(<ImportCasesWizard />);
-      
+
       fireEvent.click(screen.getByText("Import Test Cases"));
-      
+
       const file = new File(
         ["Name,Description,Priority\nTest 1,Desc 1,High"],
         "test.csv",
@@ -403,25 +432,27 @@ describe("ImportCasesWizard", () => {
       );
       const fileInput = screen.getByTestId("file-upload");
       await user.upload(fileInput, file);
-      
+
       // File should be uploaded
       await waitFor(() => {
         expect(screen.getByTestId("selected-file-info")).toBeInTheDocument();
-        expect(screen.getByTestId("selected-file-info")).toHaveTextContent("Selected file: test.csv");
+        expect(screen.getByTestId("selected-file-info")).toHaveTextContent(
+          "Selected file: test.csv"
+        );
       });
     });
 
     it("validates required fields before enabling next button", async () => {
       render(<ImportCasesWizard />);
-      
+
       fireEvent.click(screen.getByText("Import Test Cases"));
-      
+
       const nextButton = screen.getByText("Next");
       expect(nextButton).not.toBeDisabled();
-      
+
       // Click next button without filling required fields
       fireEvent.click(nextButton);
-      
+
       // Should show validation errors but stay on same page
       await waitFor(() => {
         expect(screen.getByText("Upload and Configure")).toBeInTheDocument();
@@ -431,24 +462,24 @@ describe("ImportCasesWizard", () => {
     it("handles navigation between pages", async () => {
       const user = userEvent.setup();
       render(<ImportCasesWizard />);
-      
+
       fireEvent.click(screen.getByText("Import Test Cases"));
-      
+
       // Upload file to enable navigation
       const file = new File(["test,content"], "test.csv", {
         type: "text/csv",
       });
       const fileInput = screen.getByTestId("file-upload");
       await user.upload(fileInput, file);
-      
+
       // Select folder
       const folderSelect = screen.getByTestId("folder-select");
       fireEvent.change(folderSelect, { target: { value: "1" } });
-      
+
       // Click on template select to set value
       const templateSelect = screen.getByTestId("template-select");
       fireEvent.click(templateSelect);
-      
+
       await waitFor(() => {
         const nextButton = screen.getByTestId("next-button");
         expect(nextButton).not.toBeDisabled();
@@ -460,23 +491,23 @@ describe("ImportCasesWizard", () => {
     it("shows import button on final page", async () => {
       const user = userEvent.setup();
       render(<ImportCasesWizard />);
-      
+
       fireEvent.click(screen.getByText("Import Test Cases"));
-      
+
       // Setup minimal required data
       const file = new File(["Name\nTest 1"], "test.csv", {
         type: "text/csv",
       });
       const fileInput = screen.getByTestId("file-upload");
       await user.upload(fileInput, file);
-      
+
       const folderSelect = screen.getByTestId("folder-select");
       fireEvent.change(folderSelect, { target: { value: "1" } });
-      
+
       // Click template select
       const templateSelect = screen.getByTestId("template-select");
       fireEvent.click(templateSelect);
-      
+
       // Should have Next button enabled
       await waitFor(() => {
         expect(screen.getByTestId("next-button")).not.toBeDisabled();
@@ -486,25 +517,27 @@ describe("ImportCasesWizard", () => {
     it("calls onImportComplete after successful import", async () => {
       const mockOnImportComplete = vi.fn();
       const user = userEvent.setup();
-      
+
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({ success: true, importedCount: 1 }),
       });
-      
+
       render(<ImportCasesWizard onImportComplete={mockOnImportComplete} />);
-      
+
       fireEvent.click(screen.getByText("Import Test Cases"));
-      
+
       // Setup minimal data
       const file = new File(["Name\nTest 1"], "test.csv", {
         type: "text/csv",
       });
       const fileInput = screen.getByTestId("file-upload");
       await user.upload(fileInput, file);
-      
+
       expect(screen.getByTestId("selected-file-info")).toBeInTheDocument();
-      expect(screen.getByTestId("selected-file-info")).toHaveTextContent("Selected file: test.csv");
+      expect(screen.getByTestId("selected-file-info")).toHaveTextContent(
+        "Selected file: test.csv"
+      );
     });
   });
 });

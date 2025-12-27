@@ -19,7 +19,7 @@ export const getColumns = (
     id: "name",
     accessorKey: "name",
     accessorFn: (row) => row.name,
-    header: t("fields.name"),
+    header: t("name"),
     enableSorting: true,
     enableResizing: true,
     enableHiding: false,
@@ -43,7 +43,7 @@ export const getColumns = (
   },
   {
     id: "actions",
-    header: t("fields.actions"),
+    header: t("actions.actionsLabel"),
     enableResizing: true,
     enableSorting: false,
     enableHiding: false,

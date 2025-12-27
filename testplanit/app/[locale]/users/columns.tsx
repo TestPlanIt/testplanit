@@ -15,7 +15,7 @@ export const getColumns = (tCommon: any): ColumnDef<ExtendedUser>[] => [
   {
     id: "name",
     accessorKey: "name",
-    header: tCommon("fields.name"),
+    header: tCommon("name"),
     enableSorting: true,
     enableResizing: true,
     enableHiding: false,

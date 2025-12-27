@@ -47,7 +47,7 @@ export const getColumns = (
     id: "name",
     accessorKey: "name",
     header: () => (
-      <div className="bg-primary-foreground">{tCommon("fields.name")}</div>
+      <div className="bg-primary-foreground">{tCommon("name")}</div>
     ),
     enableSorting: true,
     enableResizing: true,
@@ -80,7 +80,9 @@ export const getColumns = (
       <div className="whitespace-nowrap">
         <DateFormatter
           date={getValue() as Date | string}
-          formatString={session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"}
+          formatString={
+            session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"
+          }
           timezone={session.user.preferences?.timezone || "Etc/UTC"}
         />
       </div>
@@ -190,7 +192,9 @@ export const getColumns = (
       <div className="whitespace-nowrap">
         <DateFormatter
           date={getValue() as Date | string}
-          formatString={session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"}
+          formatString={
+            session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"
+          }
           timezone={session.user.preferences?.timezone || "Etc/UTC"}
         />
       </div>
@@ -213,7 +217,7 @@ export const getColumns = (
   },
   {
     id: "actions",
-    header: tCommon("fields.actions"),
+    header: tCommon("actions.actionsLabel"),
     enableResizing: true,
     enableSorting: false,
     enableHiding: false,

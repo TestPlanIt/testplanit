@@ -5,7 +5,9 @@ import { authenticateApiToken } from "~/lib/api-token-auth";
 import { prisma } from "@/lib/prisma";
 
 // Helper to check admin authentication (session or API token)
-async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextResponse; userId?: string }> {
+async function checkAdminAuth(
+  request: NextRequest
+): Promise<{ error?: NextResponse; userId?: string }> {
   const session = await getServerAuthSession();
   let userId = session?.user?.id;
   let userAccess: string | undefined = session?.user?.access ?? undefined;
@@ -40,7 +42,10 @@ async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextRespo
 
   if (userAccess !== "ADMIN") {
     return {
-      error: NextResponse.json({ error: "Admin access required" }, { status: 403 }),
+      error: NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      ),
     };
   }
 
@@ -109,7 +114,7 @@ export async function GET(
 
   const whereClause: any = { isDeleted: true };
 
-  if (search && model.fields && model.fields.name) {
+  if (search && model.fields && model.name) {
     whereClause.AND = whereClause.AND || [];
     whereClause.AND.push({
       name: {

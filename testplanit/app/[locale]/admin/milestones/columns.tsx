@@ -25,7 +25,7 @@ export const getColumns = (
   {
     id: "name",
     accessorKey: "name",
-    header: tCommon("fields.name"),
+    header: tCommon("name"),
     enableSorting: true,
     enableResizing: true,
     enableHiding: false,
@@ -76,7 +76,7 @@ export const getColumns = (
   },
   {
     id: "actions",
-    header: tCommon("fields.actions"),
+    header: tCommon("actions.actionsLabel"),
     enableResizing: true,
     enableSorting: false,
     enableHiding: false,

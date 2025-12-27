@@ -30,7 +30,7 @@ export const getColumns = (
       id: "name",
       accessorKey: "name",
       accessorFn: (row) => row.name,
-      header: t("common.fields.name"),
+      header: t("common.name"),
       enableSorting: false,
       enableResizing: true,
       meta: { isPinned: "left" },

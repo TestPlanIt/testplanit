@@ -2315,7 +2315,7 @@ export function GenerateTestCasesWizard({
                   <div className="grid gap-4">
                     <div className="space-y-2">
                       <Label htmlFor={`generated-${testCase.id}-name`}>
-                        {tCommon("fields.name")}
+                        {tCommon("name")}
                       </Label>
                       <Controller
                         name="name"

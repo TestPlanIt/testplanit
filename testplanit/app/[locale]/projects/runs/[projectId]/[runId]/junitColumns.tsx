@@ -25,7 +25,7 @@ export function getJunitColumns({
   return [
     {
       id: "name",
-      header: t("common.fields.name"),
+      header: t("common.name"),
       accessorKey: "name",
       enableSorting: true,
       enableHiding: false,
