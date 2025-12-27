@@ -38,17 +38,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "@/components/ui/use-toast";
 import { useFindManyProjectIntegration } from "@/lib/hooks/project-integration";
 import { useCreateIssue } from "@/lib/hooks/issue";
-import { 
-  useUpdateRepositoryCases,
-  useUpdateSessions,
-  useUpdateTestRuns,
-  useUpdateTestRunResults,
-  useUpdateTestRunStepResults,
-  useUpdateSessionResults
-} from "@/lib/hooks";
-import { IntegrationIcon } from "@/components/admin/integrations/integration-icon";
 import { useSession } from "next-auth/react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
 const createIssueSchema = z.object({
@@ -132,7 +122,8 @@ export function CreateIssueDialog({
   const integrationId = activeIntegration?.integrationId;
 
   // Check if this is a Simple URL integration
-  const isSimpleUrlIntegration = activeIntegration?.integration?.provider === "SIMPLE_URL";
+  const isSimpleUrlIntegration =
+    activeIntegration?.integration?.provider === "SIMPLE_URL";
 
   // Determine if we should use integration based on project configuration
   // For Simple URL integrations, we always create internal issues
@@ -240,7 +231,8 @@ export function CreateIssueDialog({
     setLoadingFields(true);
     try {
       const config = activeIntegration.config as Record<string, any>;
-      const projectKey = config?.externalProjectKey || config?.externalProjectId || "";
+      const projectKey =
+        config?.externalProjectKey || config?.externalProjectId || "";
 
       const response = await fetch(
         `/api/integrations/${activeIntegration.integrationId}/issue-type-fields?issueTypeId=${selectedIssueType.id}&projectKey=${encodeURIComponent(projectKey)}`
@@ -490,7 +482,9 @@ export function CreateIssueDialog({
 
         if (response.status === 401) {
           const errorData = await response.json();
-          setAuthError(errorData.authUrl || errorData.error || errorData.message);
+          setAuthError(
+            errorData.authUrl || errorData.error || errorData.message
+          );
           return;
         }
 
@@ -520,8 +514,8 @@ export function CreateIssueDialog({
                 provider: activeIntegration.integration.provider,
               })
             : isSimpleUrlIntegration
-            ? t("issues.createdInternalSimpleUrl")
-            : t("issues.createdInternal"),
+              ? t("issues.createdInternalSimpleUrl")
+              : t("issues.createdInternal"),
       });
 
       onIssueCreated?.(issue);
@@ -638,8 +632,8 @@ export function CreateIssueDialog({
                   provider: activeIntegration.integration.provider,
                 })
               : isSimpleUrlIntegration
-              ? t("issues.createIssueDescriptionSimpleUrl")
-              : t("issues.createIssueDescription")}
+                ? t("issues.createIssueDescriptionSimpleUrl")
+                : t("issues.createIssueDescription")}
           </DialogDescription>
         </DialogHeader>
 
@@ -671,55 +665,64 @@ export function CreateIssueDialog({
             )}
 
             {/* Check if external integration is configured */}
-            {useIntegration && activeIntegration && !authError && (() => {
-              const config = activeIntegration.config as Record<string, any>;
-              const hasExternalProject = config?.externalProjectKey || config?.externalProjectId;
+            {useIntegration &&
+              activeIntegration &&
+              !authError &&
+              (() => {
+                const config = activeIntegration.config as Record<string, any>;
+                const hasExternalProject =
+                  config?.externalProjectKey || config?.externalProjectId;
 
-              if (!hasExternalProject) {
-                return (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>{t("issues.integrationNotConfigured")}</AlertTitle>
-                    <AlertDescription>
-                      {t("issues.integrationNotConfiguredDescription")}
-                    </AlertDescription>
-                  </Alert>
-                );
-              }
-              return null;
-            })()}
+                if (!hasExternalProject) {
+                  return (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>
+                        {t("issues.integrationNotConfigured")}
+                      </AlertTitle>
+                      <AlertDescription>
+                        {t("issues.integrationNotConfiguredDescription")}
+                      </AlertDescription>
+                    </Alert>
+                  );
+                }
+                return null;
+              })()}
 
             {/* Only show issue type selector for providers that support it (not GitHub) */}
-            {useIntegration && activeIntegration && !authError &&
+            {useIntegration &&
+              activeIntegration &&
+              !authError &&
               activeIntegration.integration?.provider !== "GITHUB" &&
               (() => {
                 const config = activeIntegration.config as Record<string, any>;
-                const hasExternalProject = config?.externalProjectKey || config?.externalProjectId;
+                const hasExternalProject =
+                  config?.externalProjectKey || config?.externalProjectId;
                 return hasExternalProject;
               })() && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  {t("issues.issueType")}
-                </label>
-                <AsyncCombobox
-                  value={selectedIssueType}
-                  onValueChange={setSelectedIssueType}
-                  fetchOptions={fetchIssueTypes}
-                  renderOption={(type) => type.name}
-                  getOptionValue={(type) => type.id}
-                  placeholder={t("issues.selectIssueType")}
-                  className="w-full"
-                  showTotal
-                />
-              </div>
-            )}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    {t("issues.issueType")}
+                  </label>
+                  <AsyncCombobox
+                    value={selectedIssueType}
+                    onValueChange={setSelectedIssueType}
+                    fetchOptions={fetchIssueTypes}
+                    renderOption={(type) => type.name}
+                    getOptionValue={(type) => type.id}
+                    placeholder={t("issues.selectIssueType")}
+                    className="w-full"
+                    showTotal
+                  />
+                </div>
+              )}
 
             <FormField
               control={form.control as any}
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("issues.title")}</FormLabel>
+                  <FormLabel>{t("common.fields.issues")}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -733,7 +736,7 @@ export function CreateIssueDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("issues.description")}</FormLabel>
+                  <FormLabel>{t("common.fields.description")}</FormLabel>
                   <FormControl>
                     <Textarea {...field} rows={4} />
                   </FormControl>
@@ -747,7 +750,7 @@ export function CreateIssueDialog({
               name="priority"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("issues.priority")}</FormLabel>
+                  <FormLabel>{t("common.fields.priority")}</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -756,13 +759,13 @@ export function CreateIssueDialog({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="low">
-                        {t("issues.priorityLow")}
+                        {t("common.priority.low")}
                       </SelectItem>
                       <SelectItem value="medium">
-                        {t("issues.priorityMedium")}
+                        {t("common.priority.medium")}
                       </SelectItem>
                       <SelectItem value="high">
-                        {t("issues.priorityHigh")}
+                        {t("common.priority.high")}
                       </SelectItem>
                       <SelectItem value="urgent">
                         {t("issues.priorityUrgent")}
@@ -812,9 +815,12 @@ export function CreateIssueDialog({
               >
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={isCreating || !isIntegrationConfigured}>
+              <Button
+                type="submit"
+                disabled={isCreating || !isIntegrationConfigured}
+              >
                 {isCreating && <Loader2 className=" h-4 w-4 animate-spin" />}
-                {t("issues.create")}
+                {t("common.actions.create")}
               </Button>
             </DialogFooter>
           </form>

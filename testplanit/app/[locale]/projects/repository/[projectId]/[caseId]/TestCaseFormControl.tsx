@@ -71,13 +71,13 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
               render={({ field }) => (
                 <li className="mb-2 mr-6">
                   <label htmlFor="estimate" className="font-bold">
-                    {t("repository.fields.estimate")}
+                    {t("common.fields.estimate")}
                   </label>
                   <FormControl>
                     <Input
                       id="estimate"
                       type="text"
-                      placeholder={t("repository.fields.estimate")}
+                      placeholder={t("common.fields.estimate")}
                       {...field}
                       disabled={
                         isSubmitting ||
@@ -101,17 +101,18 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                 <li className="mb-2 mr-6">
                   <div className="flex items-center gap-1">
                     <label htmlFor="automated" className="font-bold">
-                      {t("repository.fields.automated")}
+                      {t("common.fields.automated")}
                     </label>
                     <FormControl>
                       <Switch
                         id="automated"
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        aria-label={t("repository.testCase.toggleAutomated")}
+                        aria-label={t("common.fields.automated")}
                         disabled={
                           isSubmitting ||
-                          (isEditMode && isAutomatedCaseSource(testcase?.source))
+                          (isEditMode &&
+                            isAutomatedCaseSource(testcase?.source))
                         }
                       />
                     </FormControl>
@@ -210,7 +211,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
             {testcase.estimate != null && testcase.estimate > 0 && (
               <li className="mb-2 mr-6">
                 <div id="estimate-display" className="font-bold">
-                  {t("repository.fields.estimate")}
+                  {t("common.fields.estimate")}
                 </div>
                 <div aria-labelledby="estimate-display">
                   <DurationDisplay seconds={testcase.estimate} />
@@ -251,7 +252,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
 
             <li className="mb-2 mr-6 flex items-center gap-1">
               <div id="automated-display" className="font-bold">
-                {t("repository.fields.automated")}
+                {t("common.fields.automated")}
               </div>
               <div aria-labelledby="automated-display">
                 <Switch
@@ -259,7 +260,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                   checked={testcase.automated}
                   aria-label={t("repository.testCase.automatedStatus", {
                     status: testcase.automated
-                      ? t("common.status.enabled")
+                      ? t("common.fields.isActive")
                       : t("common.status.disabled"),
                   })}
                 />
@@ -316,7 +317,9 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                     <div
                       key={issue.id}
                       className={
-                        isSubmitting ? "opacity-50 cursor-not-allowed w-full" : "w-full"
+                        isSubmitting
+                          ? "opacity-50 cursor-not-allowed w-full"
+                          : "w-full"
                       }
                       role="listitem"
                     >
