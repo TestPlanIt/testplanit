@@ -210,7 +210,7 @@
     "react-lite-youtube-embed": "^3.3.3",
     "react-markdown": "^10.1.0",
     "react-redux": "^9.2.0",
-    "react-resizable-panels": "^4.0.16",
+    "react-resizable-panels": "~3.0.6",
     "react-select": "^5.10.2",
     "react-tweet": "^3.3.0",
     "react-window": "^2.2.3",
