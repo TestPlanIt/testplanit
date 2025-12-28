@@ -22,7 +22,7 @@ The CLI can auto-detect the format based on file content, or you can specify it 
 
 ### Standalone Binaries (Recommended)
 
-Download the appropriate binary for your platform from the [latest release](https://github.com/testplanit/testplanit/releases):
+Download the appropriate binary for your platform from the [CLI releases](https://github.com/testplanit/testplanit/releases?q=cli&expanded=true):
 
 | Platform | Binary |
 |----------|--------|
