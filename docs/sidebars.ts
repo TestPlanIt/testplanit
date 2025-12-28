@@ -37,23 +37,6 @@ const sidebars: SidebarsConfig = {
       ],
     },
     'getting-started', // Corresponds to getting-started.md
-    'api-reference', // Add api-reference.md
-    'cli', // CLI tool documentation
-    'api-tokens', // API tokens documentation
-    // SDK & Integrations category
-    {
-      type: 'category',
-      label: 'SDK & Integrations',
-      link: {
-        type: 'doc',
-        id: 'sdk/sdk-overview', // Link to the overview page
-      },
-      items: [
-        'sdk/api-client', // @testplanit/api package
-        'sdk/webdriverio-reporter', // @testplanit/wdio-reporter package
-      ],
-    },
-
     // Define the User Guide category manually
     {
       type: 'category',
@@ -195,8 +178,6 @@ const sidebars: SidebarsConfig = {
         },
         'user-guide/advanced-search', // Advanced search documentation
         'user-guide/forecasting', // Add forecasting.md as last item
-        'best-practices', // Best practices guide
-        'faq', // Frequently asked questions
       ],
       // Remove the generated-index link for the main User Guide category
       // link: {
@@ -204,6 +185,24 @@ const sidebars: SidebarsConfig = {
       //  title: 'User Guide Overview',
       //  slug: '/category/user-guide'
       // }
+    },
+    'best-practices', // Best practices guide
+    'faq', // Frequently asked questions
+    'api-reference', // Add api-reference.md
+    'cli', // CLI tool documentation
+    'api-tokens', // API tokens documentation
+    // SDK & Integrations category
+    {
+      type: 'category',
+      label: 'SDK & Integrations',
+      link: {
+        type: 'doc',
+        id: 'sdk/sdk-overview', // Link to the overview page
+      },
+      items: [
+        'sdk/api-client', // @testplanit/api package
+        'sdk/webdriverio-reporter', // @testplanit/wdio-reporter package
+      ],
     },
     // Add other categories or items here if needed in the future
   ],
