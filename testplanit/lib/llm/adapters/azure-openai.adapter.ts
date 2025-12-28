@@ -150,7 +150,12 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
 
   async testConnection(): Promise<boolean> {
     try {
-      const response = await fetch(this.getChatCompletionsUrl(), {
+      const url = new URL(this.getChatCompletionsUrl());
+      if (!url.hostname.endsWith(".openai.azure.com")) {
+        return false;
+      }
+
+      const response = await fetch(url.toString(), {
         method: "POST",
         headers: this.getOpenAIHeaders(),
         body: JSON.stringify({
