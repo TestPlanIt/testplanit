@@ -8,7 +8,7 @@ Use these details when submitting to Atlassian Marketplace:
 
 ## Support Channels
 - **Support Email**: support@testplanit.com (or admin@testplanit.com)
-- **Documentation**: https://docs.testplanit.com/integrations/jira
+- **Documentation**: https://docs.testplanit.com/docs/user-guide/integrations/#1-jira-integration
 - **Website**: https://testplanit.com
 
 ## Legal URLs (Update these with your actual URLs)

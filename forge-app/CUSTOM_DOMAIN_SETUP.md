@@ -243,7 +243,7 @@ Then redeploy.
 
 For questions about custom domain setup:
 - Check Forge documentation: https://developer.atlassian.com/platform/forge/
-- Review TestPlanIt integration docs: https://docs.testplanit.com/integrations/jira
+- Review TestPlanIt Jira integration docs: https://docs.testplanit.com/docs/user-guide/integrations/#1-jira-integration
 - Contact: admin@testplanit.com
 
 ---

@@ -89,7 +89,7 @@ TestPlanIt for Jira brings your test management data directly into your Jira wor
 
 ### Support
 
-- **Documentation:** https://docs.testplanit.com/integrations/jira
+- **Documentation:** https://docs.testplanit.com/docs/user-guide/integrations/#1-jira-integration
 - **Email:** admin@testplanit.com
 - **Website:** https://testplanit.com
 
@@ -140,7 +140,7 @@ Free (or choose your pricing model)
 
 ## Support & Resources
 
-- Documentation: https://docs.testplanit.com/integrations/jira
+- Documentation: https://docs.testplanit.com/docs/user-guide/integrations/#1-jira-integration
 - GitHub: https://github.com/yourorg/testplanit
 - Privacy Policy: https://testplanit.com/privacy
 - Terms of Service: https://testplanit.com/terms

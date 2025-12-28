@@ -17,6 +17,7 @@ const sidebars: SidebarsConfig = {
   tutorialSidebar: [
     // Define top-level items
     'intro', // Corresponds to intro.md
+    'features', // Features overview page
     {
       type: 'category',
       label: 'Installation', // Set the label for the sidebar category
@@ -194,6 +195,8 @@ const sidebars: SidebarsConfig = {
         },
         'user-guide/advanced-search', // Advanced search documentation
         'user-guide/forecasting', // Add forecasting.md as last item
+        'best-practices', // Best practices guide
+        'faq', // Frequently asked questions
       ],
       // Remove the generated-index link for the main User Guide category
       // link: {
