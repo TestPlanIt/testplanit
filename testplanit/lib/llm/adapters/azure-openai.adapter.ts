@@ -148,14 +148,33 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
     ];
   }
 
+  private static readonly AZURE_OPENAI_DOMAIN = ".openai.azure.com";
+
+  private validateAndSanitizeUrl(urlString: string): string | null {
+    try {
+      const url = new URL(urlString);
+      if (url.protocol !== "https:") {
+        return null;
+      }
+      const hostname = url.hostname.toLowerCase();
+      if (!hostname.endsWith(AzureOpenAIAdapter.AZURE_OPENAI_DOMAIN)) {
+        return null;
+      }
+      // Reconstruct URL from validated components to break taint tracking
+      return `https://${hostname}${url.pathname}${url.search}`;
+    } catch {
+      return null;
+    }
+  }
+
   async testConnection(): Promise<boolean> {
     try {
-      const url = new URL(this.getChatCompletionsUrl());
-      if (!url.hostname.endsWith(".openai.azure.com")) {
+      const sanitizedUrl = this.validateAndSanitizeUrl(this.getChatCompletionsUrl());
+      if (!sanitizedUrl) {
         return false;
       }
 
-      const response = await fetch(url.toString(), {
+      const response = await fetch(sanitizedUrl, {
         method: "POST",
         headers: this.getOpenAIHeaders(),
         body: JSON.stringify({
