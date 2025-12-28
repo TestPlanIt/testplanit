@@ -1,3 +1,5 @@
+## [1.1.1](https://github.com/testplanit/testplanit/compare/cli-v1.1.0...cli-v1.1.1) (2025-12-28)
+
 # [1.1.0](https://github.com/testplanit/testplanit/compare/cli-v1.0.2...cli-v1.1.0) (2025-12-19)
 
 
