@@ -21,12 +21,8 @@ export default defineConfig({
     ...(process.env.CI
       ? {
           pool: "threads",
-          poolOptions: {
-            threads: {
-              singleThread: true,
-              isolate: false,
-            },
-          },
+          singleThread: true,
+          isolate: false,
           maxConcurrency: 1,
           sequence: {
             concurrent: false,
@@ -34,11 +30,7 @@ export default defineConfig({
         }
       : {
           pool: "forks",
-          poolOptions: {
-            forks: {
-              isolate: true,
-            },
-          },
+          isolate: true,
         }),
     exclude: [
       "node_modules/",
