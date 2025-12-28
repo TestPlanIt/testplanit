@@ -63,7 +63,8 @@ export const getColumns = (
   session: any,
   onViewDetails: (log: ExtendedAuditLog) => void,
   t: ReturnType<typeof useTranslations<"admin.auditLogs">>,
-  tCommon: ReturnType<typeof useTranslations<"common">>
+  tCommon: ReturnType<typeof useTranslations<"common">>,
+  tUserMenu: ReturnType<typeof useTranslations<"userMenu">>
 ): ColumnDef<ExtendedAuditLog>[] => [
   {
     id: "timestamp",
@@ -146,7 +147,7 @@ export const getColumns = (
             <span className="text-xs text-muted-foreground">{email}</span>
           )}
           {!name && !email && (
-            <span className="text-muted-foreground">{t("system")}</span>
+            <span className="text-muted-foreground">{tUserMenu("themes.system")}</span>
           )}
         </div>
       );

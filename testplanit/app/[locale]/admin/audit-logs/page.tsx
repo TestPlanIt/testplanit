@@ -80,6 +80,7 @@ function AuditLogsContent({ session }: { session: Session }) {
   const t = useTranslations("admin.auditLogs");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
+  const tUserMenu = useTranslations("userMenu");
   const {
     currentPage,
     setCurrentPage,
@@ -278,7 +279,7 @@ function AuditLogsContent({ session }: { session: Session }) {
           log.entityType,
           log.entityId || "",
           log.entityName || "",
-          log.userName || t("system"),
+          log.userName || tGlobal("userMenu.themes.system"),
           log.userEmail || "",
           log.project?.name || "",
           ipAddress,
@@ -347,8 +348,8 @@ function AuditLogsContent({ session }: { session: Session }) {
   ]);
 
   const columns = useMemo(
-    () => getColumns(session, handleViewDetails, t, tCommon),
-    [session, handleViewDetails, t, tCommon]
+    () => getColumns(session, handleViewDetails, t, tCommon, tUserMenu),
+    [session, handleViewDetails, t, tCommon, tUserMenu]
   );
 
   const [columnVisibility, setColumnVisibility] = useState<
