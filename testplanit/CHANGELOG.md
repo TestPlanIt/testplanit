@@ -1,3 +1,10 @@
+## [0.8.21](https://github.com/TestPlanIt/testplanit/compare/v0.8.20...v0.8.21) (2025-12-28)
+
+
+### Bug Fixes
+
+* **adapter:** enhance URL validation in AzureOpenAIAdapter's testConnection method ([fb3d0fa](https://github.com/TestPlanIt/testplanit/commit/fb3d0fab714f66c81bfb3d747ab9cf94665c7a66))
+
 ## [0.8.20](https://github.com/TestPlanIt/testplanit/compare/v0.8.19...v0.8.20) (2025-12-27)
 
 ## [0.8.18](https://github.com/TestPlanIt/testplanit/compare/v0.8.17...v0.8.18) (2025-12-16)
