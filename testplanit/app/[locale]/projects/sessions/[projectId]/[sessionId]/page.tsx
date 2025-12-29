@@ -1277,7 +1277,7 @@ export default function SessionPage() {
       const noteData = sessionData.note || JSON.stringify(emptyEditorContent);
       try {
         const parsedNote = JSON.parse(noteData as string);
-        if (parsedNote.type === "doc") {
+        if (parsedNote && parsedNote.type === "doc") {
           setNoteContent(parsedNote);
         } else {
           setNoteContent(emptyEditorContent);
@@ -1292,7 +1292,7 @@ export default function SessionPage() {
         sessionData.mission || JSON.stringify(emptyEditorContent);
       try {
         const parsedMission = JSON.parse(missionData as string);
-        if (parsedMission.type === "doc") {
+        if (parsedMission && parsedMission.type === "doc") {
           setMissionContent(parsedMission);
         } else {
           setMissionContent(emptyEditorContent);

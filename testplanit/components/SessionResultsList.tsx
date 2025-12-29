@@ -1632,7 +1632,7 @@ export function SessionResultsList({
           setEditDialogOpen(open);
         }}
       >
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
             <DialogTitle>{t("edit")}</DialogTitle>
             <DialogDescription>{t("editDescription")}</DialogDescription>

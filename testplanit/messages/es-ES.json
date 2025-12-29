@@ -1144,7 +1144,9 @@
       "unscheduled": "No programado",
       "upcoming": "Próximamente",
       "delayed": "Retrasado",
-      "pastDue": "Últimas fechas"
+      "pastDue": "Últimas fechas",
+      "started": "Comenzó",
+      "completed": "Terminado"
     },
     "status": {
       "stop": "Parar",

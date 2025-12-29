@@ -123,7 +123,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
 
   // Check trial expiration status
   const trialEndDate = process.env.TRIAL_END_DATE;
-  const isTrialInstance = process.env.IS_TRIAL_INSTANCE === 'true';
+  const isTrialInstance = process.env.IS_TRIAL_INSTANCE === "true";
 
   if (isTrialInstance && trialEndDate) {
     const expirationDate = new Date(trialEndDate);
@@ -133,7 +133,10 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     const pathWithoutLocale = pathname.replace(/^\/[^/]+/, "");
 
     // Only check trial expiration for non-trial-expired routes
-    if (!pathWithoutLocale.startsWith('/trial-expired') && now > expirationDate) {
+    if (
+      !pathWithoutLocale.startsWith("/trial-expired") &&
+      now > expirationDate
+    ) {
       // Trial has expired - redirect to expiration page
       const pathSegments = pathname.split("/").filter(Boolean);
       const locale = pathSegments[0] || defaultLocale;
@@ -144,14 +147,25 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   }
 
   // Define public routes that don't require authentication
-  const publicRoutes = ["/signin", "/signup", "/verify-email", "/trial-expired", "/auth/two-factor-setup", "/auth/two-factor-verify"];
+  const publicRoutes = [
+    "/signin",
+    "/signup",
+    "/verify-email",
+    "/trial-expired",
+    "/auth/two-factor-setup",
+    "/auth/two-factor-verify",
+  ];
 
   // Extract the route path without locale (e.g., /en-US/signin -> /signin)
   const pathWithoutLocale = pathname.replace(/^\/[^/]+/, "");
 
   // Handle malformed double paths (e.g., /en-US/signin/signin)
   // This can happen if redirects are misconfigured somewhere
-  if (pathWithoutLocale.match(/^\/(signin|signup|verify-email)\/(signin|signup|verify-email)/)) {
+  if (
+    pathWithoutLocale.match(
+      /^\/(signin|signup|verify-email)\/(signin|signup|verify-email)/
+    )
+  ) {
     const pathSegments = pathname.split("/").filter(Boolean);
     const locale = pathSegments[0] || defaultLocale;
     const correctRoute = pathSegments[1]; // Get the first route segment
@@ -163,8 +177,9 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   }
 
   // Check if this is a public route
-  const isPublicRoute = publicRoutes.some(route =>
-    pathWithoutLocale === route || pathWithoutLocale.startsWith(`${route}/`)
+  const isPublicRoute = publicRoutes.some(
+    (route) =>
+      pathWithoutLocale === route || pathWithoutLocale.startsWith(`${route}/`)
   );
 
   // Get the JWT token from the request for all protected routes
@@ -172,7 +187,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   if (!isPublicRoute) {
     token = await getToken({
       req: request,
-      secret: process.env.NEXTAUTH_SECRET
+      secret: process.env.NEXTAUTH_SECRET,
     });
 
     // For unauthenticated users trying to access protected routes

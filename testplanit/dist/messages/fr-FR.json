@@ -1144,7 +1144,9 @@
       "unscheduled": "Non programmé",
       "upcoming": "Prochain",
       "delayed": "Retardé",
-      "pastDue": "En retard de paiement"
+      "pastDue": "En retard de paiement",
+      "started": "Commencé",
+      "completed": "Complété"
     },
     "status": {
       "stop": "Arrêt",

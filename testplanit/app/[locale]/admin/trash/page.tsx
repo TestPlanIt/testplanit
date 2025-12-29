@@ -22,94 +22,129 @@ const softDeletedItemTypes: Array<{
   translationKey: string;
   iconName: IconName;
 }> = [
-  { name: "Projects", translationKey: "projects", iconName: "boxes" },
+  {
+    name: "Projects",
+    translationKey: "admin.menu.projects",
+    iconName: "boxes",
+  },
   {
     name: "Templates",
-    translationKey: "templates",
+    translationKey: "common.fields.templates",
     iconName: "layout-template",
   },
-  { name: "CaseFields", translationKey: "caseFields", iconName: "layout-list" },
+  {
+    name: "CaseFields",
+    translationKey: "common.fields.caseFields",
+    iconName: "layout-list",
+  },
   {
     name: "ResultFields",
-    translationKey: "resultFields",
+    translationKey: "common.fields.resultFields",
     iconName: "square-check",
   },
   {
     name: "FieldOptions",
-    translationKey: "fieldOptions",
+    translationKey: "admin.trash.itemTypes.fieldOptions",
     iconName: "settings-2",
   },
-  { name: "Workflows", translationKey: "workflows", iconName: "workflow" },
-  { name: "Status", translationKey: "statuses", iconName: "circle-check-big" },
-  { name: "Milestones", translationKey: "milestones", iconName: "flag" },
+  {
+    name: "Workflows",
+    translationKey: "admin.menu.workflows",
+    iconName: "workflow",
+  },
+  {
+    name: "Status",
+    translationKey: "admin.menu.statuses",
+    iconName: "circle-check-big",
+  },
+  {
+    name: "Milestones",
+    translationKey: "common.fields.milestones",
+    iconName: "flag",
+  },
   {
     name: "MilestoneTypes",
-    translationKey: "milestoneTypes",
+    translationKey: "admin.menu.milestoneTypes",
     iconName: "milestone",
   },
   {
     name: "Configurations",
-    translationKey: "configurations",
+    translationKey: "admin.menu.configurations",
     iconName: "combine",
   },
   {
     name: "ConfigCategories",
-    translationKey: "configCategories",
+    translationKey: "admin.trash.itemTypes.configCategories",
     iconName: "layers-2",
   },
   {
     name: "ConfigVariants",
-    translationKey: "configVariants",
+    translationKey: "admin.trash.itemTypes.configVariants",
     iconName: "component",
   },
-  { name: "User", translationKey: "users", iconName: "user" },
-  { name: "Groups", translationKey: "groups", iconName: "users" },
-  { name: "Roles", translationKey: "roles", iconName: "drama" },
-  { name: "Tags", translationKey: "tags", iconName: "tags" },
-  { name: "Issues", translationKey: "issues", iconName: "bug" },
-  { name: "TestRuns", translationKey: "testRuns", iconName: "play-circle" },
+  { name: "User", translationKey: "admin.menu.users", iconName: "user" },
+  { name: "Groups", translationKey: "admin.menu.groups", iconName: "users" },
+  { name: "Roles", translationKey: "admin.menu.roles", iconName: "drama" },
+  { name: "Tags", translationKey: "admin.menu.tags", iconName: "tags" },
+  { name: "Issues", translationKey: "common.fields.issues", iconName: "bug" },
+  {
+    name: "TestRuns",
+    translationKey: "common.fields.testRuns",
+    iconName: "play-circle",
+  },
   {
     name: "TestRunResults",
-    translationKey: "testRunResults",
+    translationKey: "enums.ApplicationArea.TestRunResults",
     iconName: "clipboard-list",
   },
   {
     name: "TestRunStepResults",
-    translationKey: "testRunStepResults",
+    translationKey: "admin.trash.itemTypes.testRunStepResults",
     iconName: "list-todo",
   },
-  { name: "Sessions", translationKey: "sessions", iconName: "compass" },
+  {
+    name: "Sessions",
+    translationKey: "common.fields.sessions",
+    iconName: "compass",
+  },
   {
     name: "SessionResults",
-    translationKey: "sessionResults",
+    translationKey: "enums.ApplicationArea.SessionResults",
     iconName: "clipboard-check",
   },
   {
     name: "RepositoryFolders",
-    translationKey: "repositoryFolders",
+    translationKey: "admin.trash.itemTypes.repositoryFolders",
     iconName: "folder-open",
   },
   {
     name: "RepositoryCases",
-    translationKey: "repositoryCases",
+    translationKey: "search.entityTypes.repositoryCase",
     iconName: "list-checks",
   },
   {
     name: "RepositoryCaseLink",
-    translationKey: "repositoryCaseLinks",
+    translationKey: "admin.trash.itemTypes.repositoryCaseLinks",
     iconName: "link-2",
   },
   {
     name: "RepositoryCaseVersions",
-    translationKey: "repositoryCaseVersions",
+    translationKey: "admin.trash.itemTypes.repositoryCaseVersions",
     iconName: "history",
   },
-  { name: "Steps", translationKey: "steps", iconName: "list-ordered" },
-  { name: "Attachments", translationKey: "attachments", iconName: "paperclip" },
+  {
+    name: "Steps",
+    translationKey: "common.fields.steps",
+    iconName: "list-ordered",
+  },
+  {
+    name: "Attachments",
+    translationKey: "common.fields.attachments",
+    iconName: "paperclip",
+  },
 ];
 
 export default function TrashPage() {
-  const t = useTranslations("admin.trash");
   const tGlobal = useTranslations();
 
   return (
@@ -132,7 +167,7 @@ export default function TrashPage() {
                     name={itemType.iconName as IconName}
                     className="mr-2 h-5 w-5"
                   />
-                  {t(`itemTypes.${itemType.translationKey}` as any)}
+                  {tGlobal(itemType.translationKey as any)}
                 </div>
               </AccordionTrigger>
               <AccordionContent>

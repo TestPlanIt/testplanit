@@ -40,7 +40,10 @@ import { Filter } from "@/components/tables/Filter";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { usePagination, defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
+import {
+  usePagination,
+  defaultPageSizeOptions,
+} from "~/lib/contexts/PaginationContext";
 import { DataTable } from "@/components/tables/DataTable";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { DeleteTestRunModal } from "./DeleteTestRun";
@@ -557,8 +560,8 @@ function JunitTableSection({
                     <TooltipContent>
                       <div>
                         {isCollapsedRight
-                          ? t("repository.cases.panels.expandRight")
-                          : t("repository.cases.panels.collapseRight")}
+                          ? t("common.actions.expandRightPanel")
+                          : t("common.actions.collapseRightPanel")}
                       </div>
                     </TooltipContent>
                   </Tooltip>

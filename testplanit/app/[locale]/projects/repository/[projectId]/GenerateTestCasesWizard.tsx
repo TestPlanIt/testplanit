@@ -170,7 +170,7 @@ interface WizardStepDefinition {
 const stepTitles = [
   "generateTestCases.steps.selectIssue",
   "generateTestCases.steps.selectTemplate",
-  "generateTestCases.steps.addNotes",
+  "generateTestCases.addNotes.title",
   "generateTestCases.steps.reviewGenerated",
 ];
 

@@ -1144,7 +1144,9 @@
       "unscheduled": "Unscheduled",
       "upcoming": "Upcoming",
       "delayed": "Delayed",
-      "pastDue": "Past Due"
+      "pastDue": "Past Due",
+      "started": "Started",
+      "completed": "Completed"
     },
     "status": {
       "stop": "Stop",
@@ -3439,7 +3441,11 @@
         "apiKeyPlaceholder": "Enter new API key to update...",
         "update": "Update",
         "integrationUpdated": "AI model integration updated successfully",
-        "failedToUpdate": "Failed to update AI model integration"
+        "failedToUpdate": "Failed to update AI model integration",
+        "validation": {
+          "nameRequired": "Integration name is required",
+          "defaultModelRequired": "Default model is required"
+        }
       },
       "delete": {
         "title": "Delete AI Model Integration",

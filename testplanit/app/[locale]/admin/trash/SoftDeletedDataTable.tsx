@@ -42,7 +42,7 @@ export default function SoftDeletedDataTable({
 }: SoftDeletedDataTableProps) {
   const t = useTranslations("admin.trash.table");
   const tActions = useTranslations("common.actions");
-  const tItemTypes = useTranslations("admin.trash.itemTypes");
+  const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
   const [data, setData] = useState<SoftDeletedItem[]>([]);
@@ -147,7 +147,7 @@ export default function SoftDeletedDataTable({
   const executeConfirmedAction = async () => {
     if (!alertActionType || alertItemId === null) return;
 
-    const currentItemTypeDisplay = tItemTypes(translationKey as any);
+    const currentItemTypeDisplay = tGlobal(translationKey as any);
 
     try {
       let response;
@@ -294,13 +294,13 @@ export default function SoftDeletedDataTable({
   let tableContent;
   if (isLoading && data.length === 0 && !error) {
     tableContent = (
-      <p>{t("loading", { itemType: tItemTypes(translationKey as any) })}</p>
+      <p>{t("loading", { itemType: tGlobal(translationKey as any) })}</p>
     );
   } else if (error) {
     tableContent = (
       <p>
         {t("error", {
-          itemType: tItemTypes(translationKey as any),
+          itemType: tGlobal(translationKey as any),
           message: error,
         })}
       </p>
@@ -308,14 +308,14 @@ export default function SoftDeletedDataTable({
   } else if (!isLoading && data.length === 0 && !debouncedSearchString) {
     tableContent = (
       <p className="mt-4 text-center">
-        {t("noItems", { itemType: tItemTypes(translationKey as any) })}
+        {t("noItems", { itemType: tGlobal(translationKey as any) })}
       </p>
     );
   } else if (!isLoading && data.length === 0 && debouncedSearchString) {
     tableContent = (
       <p className="mt-4 text-center">
         {t("noResults", {
-          itemType: tItemTypes(translationKey as any),
+          itemType: tGlobal(translationKey as any),
           query: debouncedSearchString,
         })}
       </p>
@@ -342,7 +342,7 @@ export default function SoftDeletedDataTable({
           <Filter
             key={`${itemType}-filter`}
             placeholder={tCommon("filter.placeholder", {
-              item: tItemTypes(translationKey as any).toLowerCase(),
+              item: tGlobal(translationKey as any).toLowerCase(),
             })}
             initialSearchString={searchString}
             onSearchChange={setSearchString}
@@ -394,11 +394,11 @@ export default function SoftDeletedDataTable({
             <AlertDialogDescription>
               {alertActionType === "restore" &&
                 t("restoreConfirmationMessage", {
-                  itemType: tItemTypes(translationKey as any),
+                  itemType: tGlobal(translationKey as any),
                 })}
               {alertActionType === "purge" &&
                 t("purgeConfirmationMessage", {
-                  itemType: tItemTypes(translationKey as any),
+                  itemType: tGlobal(translationKey as any),
                 })}
             </AlertDialogDescription>
           </AlertDialogHeader>
