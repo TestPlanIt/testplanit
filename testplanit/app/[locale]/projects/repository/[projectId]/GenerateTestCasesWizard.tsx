@@ -629,7 +629,8 @@ export function GenerateTestCasesWizard({
 
   // Helper function to get display name for integration provider
   const getProviderDisplayName = (provider: string | undefined): string => {
-    if (!provider) return "External System";
+    const externalSystem = t("generateTestCases.externalSystem");
+    if (!provider) return externalSystem;
 
     switch (provider) {
       case "JIRA":
@@ -639,9 +640,9 @@ export function GenerateTestCasesWizard({
       case "AZURE_DEVOPS":
         return "Azure DevOps";
       case "SIMPLE_URL":
-        return "External System";
+        return externalSystem;
       default:
-        return "External System";
+        return externalSystem;
     }
   };
 
@@ -651,28 +652,26 @@ export function GenerateTestCasesWizard({
 
     // Enhanced validation with specific error messages
     if (!hasActiveLlm) {
-      toast.error(
-        "No AI model is configured for this project. Please configure an AI model in project settings."
-      );
+      toast.error(t("generateTestCases.errors.noAiModel"));
       return;
     }
 
     if (!hasSource) {
       if (sourceType === "issue") {
-        toast.error("Please select an issue to generate test cases from.");
+        toast.error(t("generateTestCases.errors.noIssueSelected"));
       } else {
-        toast.error("Please provide requirements document details.");
+        toast.error(t("generateTestCases.errors.noDocumentProvided"));
       }
       return;
     }
 
     if (!selectedTemplateId) {
-      toast.error("Please select a template for the test cases.");
+      toast.error(t("generateTestCases.errors.noTemplateSelected"));
       return;
     }
 
     if (selectedFieldIds.size === 0) {
-      toast.error("Please select at least one field to generate content for.");
+      toast.error(t("generateTestCases.errors.noFieldsSelected"));
       return;
     }
 
@@ -703,7 +702,7 @@ export function GenerateTestCasesWizard({
           comments: [],
         };
       } else {
-        throw new Error("Invalid source configuration");
+        throw new Error(t("generateTestCases.errors.invalidSourceConfig"));
       }
 
       const response = await fetch("/api/llm/generate-test-cases", {
@@ -804,7 +803,7 @@ export function GenerateTestCasesWizard({
 
       if (!response.ok) {
         const errorData = await response.text();
-        let errorMessage = "Failed to generate test cases";
+        let errorMessage = t("generateTestCases.errors.generateFailed");
         let parsedError: any = null;
 
         try {
@@ -821,8 +820,7 @@ export function GenerateTestCasesWizard({
             errorData.includes("<html>") ||
             errorData.includes("Synology")
           ) {
-            errorMessage =
-              "Network routing or server configuration issue - received HTML error page instead of API response";
+            errorMessage = t("generateTestCases.errors.networkRoutingError");
           } else if (errorData && errorData.trim().length > 0) {
             errorMessage = errorData.trim();
           } else {
@@ -1146,35 +1144,27 @@ export function GenerateTestCasesWizard({
 
   const importSelectedTestCases = async () => {
     if (selectedTestCases.size === 0) {
-      toast.error("Please select at least one test case to import.");
+      toast.error(t("generateTestCases.errors.noTestCasesSelectedForImport"));
       return;
     }
 
     if (!selectedTemplateId) {
-      toast.error(
-        "Template selection is required. Please go back and select a template."
-      );
+      toast.error(t("generateTestCases.errors.templateRequired"));
       return;
     }
 
     if (!project?.repositories?.[0]?.id) {
-      toast.error(
-        "Project repository not found. Please contact your administrator."
-      );
+      toast.error(t("generateTestCases.errors.repositoryNotFound"));
       return;
     }
 
     if (!defaultWorkflow?.id) {
-      toast.error(
-        "Project workflow not configured. Please verify project settings."
-      );
+      toast.error(t("generateTestCases.errors.workflowNotConfigured"));
       return;
     }
 
     if (!session?.user?.id) {
-      toast.error(
-        "Authentication error. Please refresh the page and try again."
-      );
+      toast.error(t("generateTestCases.errors.authenticationError"));
       return;
     }
 
@@ -1227,7 +1217,7 @@ export function GenerateTestCasesWizard({
               create: {
                 name: issueKey || selectedIssue.title,
                 title: selectedIssue.title,
-                description: "External issue linked from test case generation",
+                description: t("generateTestCases.importData.issueDescription"),
                 externalKey: issueKey,
                 externalId: selectedIssue.id || issueKey,
                 externalUrl: selectedIssue.url || selectedIssue.externalUrl,
@@ -1295,25 +1285,39 @@ export function GenerateTestCasesWizard({
             });
 
             // Show specific error to user for case creation failures
-            let caseErrorMessage = `Failed to create test case: ${testCase.name}`;
+            let caseErrorMessage = t(
+              "generateTestCases.errors.caseCreationFailed",
+              { name: testCase.name }
+            );
             if (error instanceof Error) {
               if (
                 error.message.includes("unique constraint") ||
                 error.message.includes("duplicate")
               ) {
-                caseErrorMessage = `Test case "${testCase.name}" already exists in this folder.`;
+                caseErrorMessage = t(
+                  "generateTestCases.errors.caseAlreadyExists",
+                  { name: testCase.name }
+                );
               } else if (
                 error.message.includes("template") ||
                 error.message.includes("templateId")
               ) {
-                caseErrorMessage = `Invalid template configuration for test case "${testCase.name}".`;
+                caseErrorMessage = t(
+                  "generateTestCases.errors.invalidTemplateConfig",
+                  { name: testCase.name }
+                );
               } else if (
                 error.message.includes("name") &&
                 error.message.includes("length")
               ) {
-                caseErrorMessage = `Test case name "${testCase.name}" is too long. Please use a shorter name.`;
+                caseErrorMessage = t("generateTestCases.errors.nameTooLong", {
+                  name: testCase.name,
+                });
               } else if (error.message.trim().length > 5) {
-                caseErrorMessage = `Failed to create "${testCase.name}": ${error.message}`;
+                caseErrorMessage = t(
+                  "generateTestCases.errors.caseCreationError",
+                  { name: testCase.name, error: error.message }
+                );
               }
             }
             toast.error(caseErrorMessage);
@@ -1388,21 +1392,21 @@ export function GenerateTestCasesWizard({
               data: {
                 repositoryCase: { connect: { id: newCase.id } },
                 project: { connect: { id: projectId } },
-                staticProjectName: project?.name || "Unknown Project",
+                staticProjectName: project?.name || tCommon("labels.unknownProject"),
                 staticProjectId: projectId,
                 repositoryId: project?.repositories?.[0]?.id || 0,
                 folderId: folderId,
-                folderName: "Generated", // Use a default folder name since it's required
+                folderName: t("generateTestCases.importData.generatedFolderName"), // Use a default folder name since it's required
                 templateId: selectedTemplateId,
                 templateName: selectedTemplate.templateName,
                 name: testCase.name.slice(0, 255),
                 stateId: defaultWorkflow.id,
-                stateName: defaultWorkflow.name || "Unknown State",
+                stateName: defaultWorkflow.name || tCommon("labels.unknown"),
                 estimate: 0, // AI generated cases don't have duration estimates by default
                 order: calculatedOrder,
                 createdAt: new Date(),
                 creatorId: session.user.id,
-                creatorName: session.user.name || "Unknown User",
+                creatorName: session.user.name || tCommon("labels.unknownUser"),
                 automated: false,
                 isArchived: false,
                 isDeleted: false,
@@ -1415,7 +1419,7 @@ export function GenerateTestCasesWizard({
             });
 
             if (!newCaseVersion) {
-              throw new Error("Failed to create case version");
+              throw new Error(t("generateTestCases.errors.failedToCreateCaseVersion"));
             }
           } catch (error) {
             console.error(
@@ -1731,40 +1735,36 @@ export function GenerateTestCasesWizard({
 
       if (error instanceof Error) {
         if (error.message.includes("template not found")) {
-          errorMessage =
-            "Selected template could not be found. Please refresh and try again.";
+          errorMessage = t("generateTestCases.errors.templateNotFound");
         } else if (
           error.message.includes("repository") ||
           error.message.includes("repositoryId")
         ) {
-          errorMessage =
-            "Project repository configuration error. Please contact your administrator.";
+          errorMessage = t("generateTestCases.errors.repositoryConfigError");
         } else if (
           error.message.includes("workflow") ||
           error.message.includes("stateId")
         ) {
-          errorMessage =
-            "Project workflow configuration error. Please verify project settings.";
+          errorMessage = t("generateTestCases.errors.workflowConfigError");
         } else if (
           error.message.includes("permission") ||
           error.message.includes("forbidden")
         ) {
-          errorMessage =
-            "You don't have permission to create test cases in this project.";
+          errorMessage = t("generateTestCases.errors.permissionDenied");
         } else if (
           error.message.includes("validation") ||
           error.message.includes("constraint")
         ) {
-          errorMessage =
-            "Data validation failed. Please check test case content and try again.";
+          errorMessage = t("generateTestCases.errors.validationFailed");
         } else if (
           error.message.includes("database") ||
           error.message.includes("connection")
         ) {
-          errorMessage =
-            "Database connection error. Please try again in a moment.";
+          errorMessage = t("generateTestCases.errors.databaseError");
         } else if (error.message.trim().length > 10) {
-          errorMessage = `Import failed: ${error.message}`;
+          errorMessage = t("generateTestCases.errors.genericImportError", {
+            error: error.message,
+          });
         }
       }
 
@@ -2826,7 +2826,9 @@ export function GenerateTestCasesWizard({
                                 if (description) {
                                   setDocumentRequirements({
                                     id: `doc_${Date.now()}`,
-                                    title: "Requirements Document",
+                                    title: t(
+                                      "generateTestCases.selectSource.documentDescription"
+                                    ),
                                     description,
                                     isDocument: true,
                                   });
@@ -2876,7 +2878,7 @@ export function GenerateTestCasesWizard({
                             key={template.id}
                             value={template.id.toString()}
                           >
-                            <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center justify-between w-full gap-2">
                               <span>{template.templateName}</span>
                               {template.isDefault && (
                                 <Badge variant="secondary" className="">
@@ -3462,6 +3464,7 @@ function WizardProgress({
 // Component to handle expandable issue descriptions
 function IssueDescriptionText({ description }: { description: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const tCommon = useTranslations("common");
 
   const isHtml = description.includes("<") && description.includes(">");
 
@@ -3494,7 +3497,7 @@ function IssueDescriptionText({ description }: { description: string }) {
         onClick={() => setIsExpanded(!isExpanded)}
         className="text-primary hover:text-primary/80 transition-colors ml-1 underline text-sm mt-2"
       >
-        {isExpanded ? "(click to collapse)" : "(click to expand)"}
+        {isExpanded ? tCommon("ui.clickToCollapse") : tCommon("ui.clickToExpand")}
       </button>
     </div>
   );
