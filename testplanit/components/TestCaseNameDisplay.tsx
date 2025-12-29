@@ -4,6 +4,8 @@ import { cn, type ClassValue } from "~/utils";
 import { Link } from "~/lib/navigation";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
+export type TestCaseNameDisplaySize = "small" | "medium" | "large" | "xl";
+
 interface TestCaseNameDisplayProps {
   testCase:
     | {
@@ -24,7 +26,15 @@ interface TestCaseNameDisplayProps {
   showIcon?: boolean;
   fallbackPrefix?: string;
   className?: ClassValue;
+  size?: TestCaseNameDisplaySize;
 }
+
+const iconSizeClasses: Record<TestCaseNameDisplaySize, string> = {
+  small: "h-3 w-3",
+  medium: "h-4 w-4",
+  large: "h-4 w-4",
+  xl: "h-6 w-6",
+};
 
 export function TestCaseNameDisplay({
   testCase,
@@ -32,6 +42,7 @@ export function TestCaseNameDisplay({
   showIcon = true,
   fallbackPrefix = "Case",
   className,
+  size = "medium",
 }: TestCaseNameDisplayProps) {
   const t = useTranslations("common.labels");
 
@@ -48,15 +59,18 @@ export function TestCaseNameDisplay({
 
   // Determine which icon to show
   let icon = null;
+  const iconSize = iconSizeClasses[size];
   if (showIcon) {
     if (isDeleted) {
       icon = (
-        <Trash2 className="shrink-0 mt-0.5 h-4 w-4 text-muted-foreground" />
+        <Trash2
+          className={cn("shrink-0 mt-0.5 text-muted-foreground", iconSize)}
+        />
       );
     } else if (isAutomatedCaseSource(source)) {
-      icon = <Bot className="shrink-0 mt-0.5 h-4 w-4" />;
+      icon = <Bot className={cn("shrink-0 mt-0.5", iconSize)} />;
     } else {
-      icon = <ListChecks className="shrink-0 mt-0.5 h-4 w-4" />;
+      icon = <ListChecks className={cn("shrink-0 mt-0.5", iconSize)} />;
     }
   }
 
@@ -64,7 +78,7 @@ export function TestCaseNameDisplay({
   const displayName = name || (id ? `${fallbackPrefix} ${id}` : t("unknown"));
 
   const content = (
-    <>
+    <div className="flex items-center gap-1">
       {icon}
       <span
         className={cn(
@@ -75,7 +89,7 @@ export function TestCaseNameDisplay({
       >
         {displayName}
       </span>
-    </>
+    </div>
   );
 
   // If we have projectId and id, make it a link

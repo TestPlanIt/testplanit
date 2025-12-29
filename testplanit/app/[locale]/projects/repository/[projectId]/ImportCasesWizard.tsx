@@ -47,6 +47,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { z } from "zod/v4";
+import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 
 interface ImportCasesWizardProps {
   onImportComplete?: () => void;
@@ -112,6 +113,7 @@ export function ImportCasesWizard({
   const [open, setOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
 
   // Page 1 state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -372,7 +374,6 @@ export function ImportCasesWizard({
                 "case name": "name",
                 "test case name": "name",
                 title: "name",
-                description: "name",
                 tag: "tags",
                 step: "steps",
                 "test steps": "steps",
@@ -561,6 +562,7 @@ export function ImportCasesWizard({
 
   const handleImport = async () => {
     setIsImporting(true);
+    setImportProgress(0);
 
     try {
       const response = await fetch(`/api/repository/import`, {
@@ -584,35 +586,75 @@ export function ImportCasesWizard({
         }),
       });
 
-      const result = await response.json();
+      // Handle SSE stream
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-      if (response.ok) {
-        toast({
-          title: tCommon("fields.title"),
-          description: tCommon("fields.description", {
-            count: result.importedCount,
-          }),
-        });
+      if (!reader) {
+        throw new Error("Failed to get response stream");
+      }
 
-        setOpen(false);
-        onImportComplete?.();
-      } else {
-        if (result.errors && result.errors.length > 0) {
-          toast({
-            title: tGlobal("sharedSteps.importWizard.errors.validationFailed"),
-            description: tGlobal(
-              "sharedSteps.importWizard.errors.validationDescription",
-              {
-                count: result.errors.length,
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.error) {
+                // Handle error
+                if (data.errors && data.errors.length > 0) {
+                  toast({
+                    title: tGlobal(
+                      "sharedSteps.importWizard.errors.validationFailed"
+                    ),
+                    description: tGlobal(
+                      "sharedSteps.importWizard.errors.validationDescription",
+                      {
+                        count: data.errors.length,
+                      }
+                    ),
+                    variant: "destructive",
+                  });
+                } else {
+                  throw new Error(
+                    data.error ||
+                      tGlobal("sharedSteps.importWizard.errors.importFailed")
+                  );
+                }
+                return;
               }
-            ),
-            variant: "destructive",
-          });
-        } else {
-          throw new Error(
-            result.error ||
-              tGlobal("sharedSteps.importWizard.errors.importFailed")
-          );
+
+              if (data.complete) {
+                // Import completed
+                toast({
+                  title: tCommon("fields.title"),
+                  description: tCommon("fields.description", {
+                    count: data.importedCount,
+                  }),
+                });
+
+                setOpen(false);
+                onImportComplete?.();
+                return;
+              }
+
+              // Progress update
+              if (data.imported !== undefined) {
+                setImportProgress(data.imported);
+              }
+            } catch (parseError) {
+              console.error("Failed to parse SSE data:", parseError);
+            }
+          }
         }
       }
     } catch (error) {
@@ -624,6 +666,7 @@ export function ImportCasesWizard({
       });
     } finally {
       setIsImporting(false);
+      setImportProgress(0);
     }
   };
 
@@ -906,7 +949,7 @@ export function ImportCasesWizard({
                     <SelectItem key={field.id} value={field.id}>
                       {field.displayName}
                       {field.isRequired && (
-                        <Badge variant="secondary">
+                        <Badge variant="secondary" className="ml-2">
                           {tCommon("fields.required")}
                         </Badge>
                       )}
@@ -941,11 +984,11 @@ export function ImportCasesWizard({
                 return (
                   <div
                     key={mapping.csvColumn}
-                    className="flex items-center justify-between"
+                    className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center"
                   >
                     <span className="font-medium">{mapping.csvColumn}</span>
                     <span className="text-muted-foreground">{"→"}</span>
-                    <span>{field?.displayName}</span>
+                    <span className="text-right">{field?.displayName}</span>
                   </div>
                 );
               })}
@@ -1175,6 +1218,13 @@ export function ImportCasesWizard({
         </div>
 
         <div className="flex-1 min-h-0 overflow-y-auto">
+          {isImporting && (
+            <LoadingSpinnerAlert
+              message={tGlobal("repository.generateTestCases.importing", {
+                count: parsedData.length - importProgress,
+              })}
+            />
+          )}
           {currentPage === 1 && renderPage1()}
           {currentPage === 2 && renderPage2()}
           {currentPage === 3 && renderPage3()}
@@ -1206,7 +1256,7 @@ export function ImportCasesWizard({
             >
               {isImporting
                 ? tGlobal("repository.generateTestCases.importing", {
-                    count: parsedData.length,
+                    count: parsedData.length - importProgress,
                   })
                 : tGlobal("repository.generateTestCases.import", {
                     count: parsedData.length,

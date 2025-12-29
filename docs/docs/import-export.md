@@ -31,33 +31,55 @@ Import test cases from CSV files with flexible field mapping.
 
 #### CSV Format Requirements
 
-Your CSV file should include these standard columns:
+Your CSV file can use any column names - you'll map them to TestPlanIt fields during import. The only requirement is that your CSV has a header row.
 
-| Column | Required | Description |
-|--------|----------|-------------|
-| `title` | Yes | Test case title |
-| `description` | No | Test case description |
-| `steps` | No | Test steps (formatted) |
-| `expected_result` | No | Expected outcome |
-| `folder_path` | No | Repository folder path |
-| `tags` | No | Comma-separated tags |
-| `automation_status` | No | MANUAL or AUTOMATED |
-| `estimate` | No | Time estimate in minutes |
-| `template_name` | No | Template to apply |
+**Available Fields for Mapping:**
+
+The fields available for mapping depend on the template you select. You'll always have access to system fields, plus any custom fields defined in the template.
+
+**System Fields (always available):**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| Name | Yes | Test case name/title |
+| Steps | No | Test steps (formatted) |
+| Tags | No | Comma-separated tags |
+| Automated | No | Whether the test is automated (checkbox) |
+| Estimate | No | Time estimate in minutes |
+| Forecast | No | Forecasted time in minutes |
+| Attachments | No | File attachments |
+| Issues | No | Linked issues |
+| Linked Cases | No | Related test cases |
+| Workflow State | No | Current workflow state |
+| Created At | No | Creation date/time |
+| Created By | No | User who created the case |
+| Version | No | Version number |
+| Test Runs | No | Associated test runs |
+| ID | No | Test case ID |
+| Folder | Conditional | Required when importing to multiple folders |
+
+**Template Custom Fields:**
+
+Any custom fields defined in the selected template will also be available for mapping. For example, if your template includes fields like "Priority", "Severity", "Preconditions", or "Expected Result", these will appear in the mapping options.
 
 #### Example CSV Format
 
+Your CSV might look like this (column names are flexible):
+
 ```csv
-title,description,steps,expected_result,folder_path,tags,automation_status,estimate
-"Login Test","Test user login functionality","1. Navigate to login page\n2. Enter credentials\n3. Click login","User is logged in successfully","/Authentication/Login","smoke,login",MANUAL,5
-"Password Reset","Test password reset flow","1. Click forgot password\n2. Enter email\n3. Check email","Reset link received","/Authentication/Password","email,security",MANUAL,10
+Test Name,Details,Procedure,Labels,Priority,Automated
+"Login Test","Test user login functionality","1. Navigate to login page\n2. Enter credentials\n3. Click login","smoke,login",High,false
+"Password Reset","Test password reset flow","1. Click forgot password\n2. Enter email\n3. Check email","email,security",Medium,false
 ```
+
+During import, you'll map these columns to the available fields. The wizard auto-matches columns when names are similar.
 
 #### Step Format in CSV
 
 Test steps can be formatted in several ways:
 
 **Simple Format:**
+
 ```
 1. Step one
 2. Step two
@@ -65,6 +87,7 @@ Test steps can be formatted in several ways:
 ```
 
 **Detailed Format with Expected Results:**
+
 ```
 1. Navigate to login page | Login page displays
 2. Enter username and password | Fields accept input
@@ -100,21 +123,23 @@ Test steps can be formatted in several ways:
 
 #### Field Mapping Options
 
-**Standard Fields:**
-- Title, Description, Expected Result
-- Automation Status, Estimate
-- Priority, Severity (if configured)
+**System Fields:**
 
-**Custom Fields:**
-- Map to template-specific custom fields
-- Automatic type conversion (text, number, date)
-- Default value assignment for missing data
+- Name (required), Steps, Tags, Automated
+- Estimate, Forecast, Attachments, Issues
+- Linked Cases, Workflow State, ID
+- Folder (when using multi-folder import)
+
+**Template Custom Fields:**
+
+- All custom fields from the selected template are available
+- Automatic type conversion based on field type (text, number, date, checkbox, etc.)
 
 **Special Handling:**
-- **Folders**: Auto-create folder hierarchy
-- **Tags**: Merge with existing or replace
-- **Templates**: Apply template and custom fields
-- **Attachments**: Reference external files
+
+- **Folders**: Auto-create folder hierarchy based on folder split mode
+- **Tags**: Comma-separated values are split into individual tags
+- **Auto-matching**: Column names are automatically matched to similar field names
 
 ### CSV Export
 
@@ -376,6 +401,7 @@ title,description,attachments
 ```
 
 Requirements:
+
 - Files must be accessible via URL or local path
 - Supported file types only
 - File size within limits
@@ -406,6 +432,7 @@ Update multiple test cases via CSV:
 #### Bulk Tag Management
 
 Import/export operations support bulk tag operations:
+
 - Add tags to multiple test cases
 - Remove tags from filtered cases
 - Replace tag sets entirely
@@ -415,6 +442,7 @@ Import/export operations support bulk tag operations:
 #### Import Validation
 
 Common validation errors:
+
 - **Missing required fields**
 - **Invalid data types**
 - **Duplicate test cases**
@@ -433,6 +461,7 @@ Common validation errors:
 ### Comprehensive Data Export
 
 Export complete project data including:
+
 - Test cases with all fields and attachments
 - Test runs and results
 - Sessions and outcomes
@@ -442,6 +471,7 @@ Export complete project data including:
 ### Export Formats
 
 #### CSV Export
+
 - Standard comma-separated values
 - Configurable field selection
 - Custom formatting options
@@ -469,11 +499,13 @@ Export complete project data including:
 - **Embed Images**: Embed image attachments directly in the PDF document. Non-image files are listed by name. Supported image formats: JPEG, PNG, GIF, WebP, BMP.
 
 #### Excel Export (Future)
+
 - Multi-sheet workbooks
 - Formatted data with styles
 - Charts and pivot tables
 
 #### JSON Export (API)
+
 - Complete data structure
 - Relationship preservation
 - API-compatible format

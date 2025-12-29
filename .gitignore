@@ -62,3 +62,4 @@ testplanit/docker-data/**
 testplanit/test/test-data/Testmo Exports/*
 testplanit/test-data/tpi*test*
 
+test-cases/*
