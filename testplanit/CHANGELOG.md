@@ -1,3 +1,10 @@
+## [0.8.23](https://github.com/TestPlanIt/testplanit/compare/v0.8.22...v0.8.23) (2025-12-29)
+
+
+### Bug Fixes
+
+* **translations:** add new translation keys for workflow types and dimensions ([475c5cc](https://github.com/TestPlanIt/testplanit/commit/475c5ccb38187cfa6197b4d109fdc5842351e359))
+
 ## [0.8.22](https://github.com/TestPlanIt/testplanit/compare/v0.8.21...v0.8.22) (2025-12-29)
 
 
