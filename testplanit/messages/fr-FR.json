@@ -1492,6 +1492,7 @@
     "themes": {
       "light": "Lumière",
       "dark": "Sombre",
+      "system": "Système",
       "green": "Vert",
       "purple": "Violet",
       "orange": "Orange"
@@ -3656,7 +3657,6 @@
         "ipAddress": "Adresse IP",
         "userAgent": "Agent utilisateur"
       },
-      "system": "Système",
       "exportCsv": "Exporter au format CSV"
     }
   },
