@@ -1,3 +1,10 @@
+## [0.8.22](https://github.com/TestPlanIt/testplanit/compare/v0.8.21...v0.8.22) (2025-12-29)
+
+
+### Bug Fixes
+
+* **translations:** update translation keys and improve localization consistency ([c733c9d](https://github.com/TestPlanIt/testplanit/commit/c733c9db5665de8621b167d752b4bedf02ad30f3))
+
 ## [0.8.21](https://github.com/TestPlanIt/testplanit/compare/v0.8.20...v0.8.21) (2025-12-28)
 
 
