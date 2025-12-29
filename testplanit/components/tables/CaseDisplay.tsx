@@ -11,13 +11,15 @@ import { RepositoryCaseSource } from "@prisma/client";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { cn, type ClassValue } from "~/utils";
 
+export type CaseDisplaySize = "small" | "medium" | "large" | "xl";
+
 interface Case {
   id: number;
   name: string;
   source: RepositoryCaseSource;
   isDeleted?: boolean;
   link?: string;
-  large?: boolean;
+  size?: CaseDisplaySize;
   className?: ClassValue;
   maxLines?: number;
 }
@@ -26,7 +28,7 @@ export const CaseDisplay: React.FC<Case> = ({
   id,
   name,
   link,
-  large,
+  size = "medium",
   source,
   isDeleted,
   className,
@@ -63,32 +65,36 @@ export const CaseDisplay: React.FC<Case> = ({
       }}
       showIcon={true}
       className={cn(className, clampClass)}
+      size={size}
     />
   );
+
+  const isLargeOrXl = size === "large" || size === "xl";
+  const iconSizeClass = size === "xl" ? "w-5 h-5" : "w-4 h-4";
 
   const content = link ? (
     <Link href={link} className={`flex items-start max-w-full w-full group`}>
       {nameDisplay}
-      {large && (
-        <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+      {isLargeOrXl && (
+        <LinkIcon className={`${iconSizeClass} inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0`} />
       )}
     </Link>
   ) : (
     <div
-      className={`flex ${large ? "items-start" : "items-center"} max-w-full w-full`}
+      className={`flex ${isLargeOrXl ? "items-start" : "items-center"} max-w-full w-full`}
     >
       {nameDisplay}
     </div>
   );
 
-  // Show tooltip when className includes line-clamp or when not large (original behavior)
+  // Show tooltip when className includes line-clamp or when size is small/medium (original behavior)
   const classNameStr = cn(className);
   const hasClampedClass =
     clampClass === "truncate" ||
     clampClass?.includes("line-clamp") ||
     classNameStr.includes("line-clamp") ||
     classNameStr.includes("truncate");
-  const shouldShowTooltip = hasClampedClass || !large;
+  const shouldShowTooltip = hasClampedClass || !isLargeOrXl;
 
   return shouldShowTooltip ? (
     <TooltipProvider>

@@ -898,7 +898,7 @@ export function TestRunCaseDetails({
           <CaseDisplay
             id={testcase.id}
             name={testcase.name}
-            large={true}
+            size="large"
             source={testcase.source}
           />
           {testcase.testRuns?.[0]?.testRun?.configuration && (

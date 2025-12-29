@@ -145,714 +145,732 @@ interface ImportError {
 }
 
 export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    const body: ImportRequest = await request.json();
+  const body: ImportRequest = await request.json();
 
-    // Get full user object for enhance
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: {
-        role: {
-          include: {
-            rolePermissions: true,
-          },
-        },
-      },
-    });
-
-    const enhancedDb = enhance(db, { user: user ?? undefined });
-
-    // Validate project access
-    const project = await enhancedDb.projects.findFirst({
-      where: { id: body.projectId },
-      include: {
-        assignedUsers: true,
-      },
-    });
-
-    if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
-    }
-
-    // Get repository
-    const repository = await enhancedDb.repositories.findFirst({
-      where: {
-        projectId: body.projectId,
-        isActive: true,
-        isDeleted: false,
-      },
-    });
-
-    if (!repository) {
-      return NextResponse.json(
-        { error: "Repository not found" },
-        { status: 404 }
-      );
-    }
-
-    // Get template with fields
-    const template = await enhancedDb.templates.findUnique({
-      where: { id: body.templateId },
-      include: {
-        caseFields: {
-          include: {
-            caseField: {
-              include: {
-                type: true,
-                fieldOptions: {
-                  include: {
-                    fieldOption: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!template) {
-      return NextResponse.json(
-        { error: "Template not found" },
-        { status: 404 }
-      );
-    }
-
-    // Get default workflow
-    const defaultWorkflow = await enhancedDb.workflows.findFirst({
-      where: {
-        isDeleted: false,
-        isEnabled: true,
-        scope: "CASES",
-        isDefault: true,
-        projects: {
-          some: { projectId: body.projectId },
-        },
-      },
-    });
-
-    if (!defaultWorkflow) {
-      return NextResponse.json(
-        { error: "No default workflow found" },
-        { status: 400 }
-      );
-    }
-
-    // Parse CSV
-    const parseResult = Papa.parse(body.file, {
-      delimiter: body.delimiter,
-      header: body.hasHeaders,
-      skipEmptyLines: true,
-    });
-
-    if (parseResult.errors.length > 0) {
-      return NextResponse.json(
-        { error: "CSV parsing failed", details: parseResult.errors },
-        { status: 400 }
-      );
-    }
-
-    const rows = parseResult.data as any[];
-    const errors: ImportError[] = [];
-    const casesToImport: any[] = [];
-
-    // Process each row
-    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-      const row = rows[rowIndex];
-      const caseData: any = {
-        name: "",
-        projectId: body.projectId,
-        repositoryId: repository.id,
-        templateId: body.templateId,
-        stateId: defaultWorkflow.id,
-        source: RepositoryCaseSource.MANUAL,
-        creatorId: session.user.id,
-        automated: false,
-        fieldValues: {},
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const sendProgress = (imported: number, total: number) => {
+        const data = JSON.stringify({ imported, total });
+        controller.enqueue(encoder.encode(`data: ${data}\n\n`));
       };
 
-      // Map fields
-      for (const mapping of body.fieldMappings) {
-        const csvValue = body.hasHeaders
-          ? row[mapping.csvColumn]
-          : row[parseInt(mapping.csvColumn.replace(/\D/g, "")) - 1];
+      const sendComplete = (importedCount: number, errors: ImportError[]) => {
+        const data = JSON.stringify({ complete: true, importedCount, errors });
+        controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+        controller.close();
+      };
 
-        if (mapping.templateField === "folder") {
-          // Handle folder mapping
-          caseData.folderPath = csvValue;
-        } else if (mapping.templateField === "estimate") {
-          caseData.estimate = parseInt(csvValue) || null;
-        } else if (mapping.templateField === "forecast") {
-          caseData.forecastManual = parseInt(csvValue) || null;
-        } else if (mapping.templateField === "automated") {
-          caseData.automated =
-            csvValue?.toLowerCase() === "true" ||
-            csvValue === "1" ||
-            csvValue?.toLowerCase() === "yes";
-        } else if (mapping.templateField === "name") {
-          caseData.name = csvValue || "";
-        } else if (mapping.templateField === "tags") {
-          // Handle tags field
-          caseData.tags = parseTags(csvValue);
-        } else if (mapping.templateField === "attachments") {
-          // Handle attachments field (store for later processing)
-          caseData.attachments = csvValue;
-        } else if (mapping.templateField === "issues") {
-          // Handle issues field (store for later processing)
-          caseData.issues = csvValue;
-        } else if (mapping.templateField === "linkedCases") {
-          // Handle linked cases field (store for later processing)
-          caseData.linkedCases = csvValue;
-        } else if (mapping.templateField === "workflowState") {
-          // Handle workflow state field (store for later processing)
-          caseData.workflowStateName = csvValue;
-        } else if (mapping.templateField === "createdAt") {
-          // Handle created at field
-          caseData.createdAt = csvValue;
-        } else if (mapping.templateField === "createdBy") {
-          // Handle created by field (store for later processing)
-          caseData.createdByName = csvValue;
-        } else if (mapping.templateField === "version") {
-          // Handle version field
-          caseData.version = parseInt(csvValue) || 1;
-        } else if (mapping.templateField === "testRuns") {
-          // Handle test runs field (store for later processing)
-          caseData.testRuns = csvValue;
-        } else if (mapping.templateField === "id") {
-          // Handle ID field for update/create functionality
-          caseData.id = parseInt(csvValue) || null;
-        } else if (mapping.templateField === "steps") {
-          // Handle steps as a special case
-          const field = template.caseFields?.find(
-            (cf: any) => cf.caseField.type.type === "Steps"
-          ) as any;
-          if (field) {
-            try {
-              const validatedValue = validateFieldValue(
-                csvValue,
-                field.caseField,
-                rowIndex + 1
-              );
-              caseData.fieldValues[field.caseField.id] = validatedValue;
-            } catch (error: any) {
-              errors.push({
-                row: rowIndex + 1,
-                field: "Steps",
-                error: error.message,
-              });
-            }
-          }
-        } else {
-          // Custom field
-          const field = template.caseFields?.find(
-            (cf: any) => cf.caseField.systemName === mapping.templateField
-          ) as any;
-          if (field) {
-            try {
-              const validatedValue = validateFieldValue(
-                csvValue,
-                field.caseField,
-                rowIndex + 1
-              );
-              caseData.fieldValues[field.caseField.id] = validatedValue;
-            } catch (error: any) {
-              errors.push({
-                row: rowIndex + 1,
-                field: field.caseField.displayName,
-                error: error.message,
-              });
-            }
-          }
-        }
-      }
+      const sendError = (error: string, errors?: ImportError[]) => {
+        const data = JSON.stringify({ error, errors });
+        controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+        controller.close();
+      };
 
-      // Validate required fields
-      const nameMapping = body.fieldMappings.find(
-        (m) => m.templateField === "name"
-      );
-      if (!nameMapping || !caseData.name) {
-        errors.push({
-          row: rowIndex + 1,
-          field: "Name",
-          error: "Name is required",
-        });
-        continue;
-      }
-
-      // Validate required template fields
-      for (const cf of template.caseFields || []) {
-        if (cf.caseField.isRequired && !caseData.fieldValues[cf.caseField.id]) {
-          errors.push({
-            row: rowIndex + 1,
-            field: cf.caseField.displayName,
-            error: "Required field is missing",
-          });
-        }
-      }
-
-      // Determine folder
-      if (body.importLocation === "single_folder") {
-        caseData.folderId = body.folderId;
-      } else {
-        // Handle folder creation/lookup
-        const folderPath = caseData.folderPath || "";
-        delete caseData.folderPath;
-
-        try {
-          const folderId = await getOrCreateFolder(
-            enhancedDb,
-            body.projectId,
-            repository.id,
-            folderPath,
-            body.importLocation === "root_folder"
-              ? body.folderId || null
-              : null,
-            body.folderSplitMode || "plain",
-            session.user.id
-          );
-          caseData.folderId = folderId;
-        } catch (error: any) {
-          errors.push({
-            row: rowIndex + 1,
-            field: "Folder",
-            error: error.message,
-          });
-          continue;
-        }
-      }
-
-      if (errors.length === 0) {
-        casesToImport.push(caseData);
-      }
-    }
-
-    // If there are errors, don't import anything
-    if (errors.length > 0) {
-      return NextResponse.json(
-        { error: "Validation failed", errors },
-        { status: 400 }
-      );
-    }
-
-    // Import cases
-    let importedCount = 0;
-
-    for (const caseData of casesToImport) {
       try {
-        // Look up workflow state if specified
-        let stateId = caseData.stateId;
-        if (caseData.workflowStateName) {
-          const workflowState = await enhancedDb.workflows.findFirst({
-            where: {
-              name: caseData.workflowStateName,
-              isDeleted: false,
-              isEnabled: true,
-              scope: "CASES",
-              projects: {
-                some: { projectId: body.projectId },
+        // Get full user object for enhance
+        const user = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          include: {
+            role: {
+              include: {
+                rolePermissions: true,
               },
             },
-          });
+          },
+        });
 
-          if (workflowState) {
-            stateId = workflowState.id;
-          }
+        const enhancedDb = enhance(db, { user: user ?? undefined });
+
+        // Validate project access
+        const project = await enhancedDb.projects.findFirst({
+          where: { id: body.projectId },
+          include: {
+            assignedUsers: true,
+          },
+        });
+
+        if (!project) {
+          sendError("Project not found");
+          return;
         }
 
-        // Look up creator if specified
-        let creatorId = caseData.creatorId;
-        if (caseData.createdByName) {
-          const creator = await enhancedDb.user.findFirst({
-            where: {
-              OR: [
-                { name: caseData.createdByName },
-                { email: caseData.createdByName },
-              ],
-            },
-          });
+        // Get repository
+        const repository = await enhancedDb.repositories.findFirst({
+          where: {
+            projectId: body.projectId,
+            isActive: true,
+            isDeleted: false,
+          },
+        });
 
-          if (creator) {
-            creatorId = creator.id;
-          }
+        if (!repository) {
+          sendError("Repository not found");
+          return;
         }
 
-        // Parse created date if specified
-        let createdAt = undefined;
-        if (caseData.createdAt) {
-          try {
-            createdAt = new Date(caseData.createdAt);
-            // Validate the date
-            if (isNaN(createdAt.getTime())) {
-              createdAt = undefined;
-            }
-          } catch {
-            // Invalid date format, use default
-            createdAt = undefined;
-          }
-        }
-
-        // Check if we should update an existing case or create a new one
-        let newCase;
-        let isUpdate = false;
-
-        if (caseData.id) {
-          // Check if a case with this ID exists
-          const existingCase = await enhancedDb.repositoryCases.findFirst({
-            where: {
-              id: caseData.id,
-              projectId: body.projectId,
-            },
-          });
-
-          if (existingCase) {
-            // Update existing case
-            isUpdate = true;
-            newCase = await enhancedDb.repositoryCases.update({
-              where: { id: caseData.id },
-              data: {
-                name: caseData.name,
-                folderId: caseData.folderId,
-                templateId: caseData.templateId,
-                stateId: stateId,
-                automated: caseData.automated,
-                estimate: caseData.estimate,
-                forecastManual: caseData.forecastManual,
-                // Note: We don't update createdAt, creatorId, source, etc. for existing cases
-              },
-            });
-
-            // Delete existing field values to replace them
-            await enhancedDb.caseFieldValues.deleteMany({
-              where: { testCaseId: caseData.id },
-            });
-          } else {
-            // Create new case with specific ID
-            newCase = await enhancedDb.repositoryCases.create({
-              data: {
-                id: caseData.id,
-                name: caseData.name,
-                projectId: caseData.projectId,
-                repositoryId: caseData.repositoryId,
-                folderId: caseData.folderId,
-                templateId: caseData.templateId,
-                stateId: stateId,
-                source: caseData.source,
-                creatorId: creatorId,
-                automated: caseData.automated,
-                estimate: caseData.estimate,
-                forecastManual: caseData.forecastManual,
-                ...(createdAt && { createdAt }),
-              },
-            });
-          }
-        } else {
-          // No ID specified, create new case with auto-generated ID
-          newCase = await enhancedDb.repositoryCases.create({
-            data: {
-              name: caseData.name,
-              projectId: caseData.projectId,
-              repositoryId: caseData.repositoryId,
-              folderId: caseData.folderId,
-              templateId: caseData.templateId,
-              stateId: stateId,
-              source: caseData.source,
-              creatorId: creatorId,
-              automated: caseData.automated,
-              estimate: caseData.estimate,
-              forecastManual: caseData.forecastManual,
-              ...(createdAt && { createdAt }),
-            },
-          });
-        }
-
-        // Create field values
-        for (const [fieldId, value] of Object.entries(caseData.fieldValues)) {
-          if (value !== null && value !== undefined) {
-            await enhancedDb.caseFieldValues.create({
-              data: {
-                testCaseId: newCase.id,
-                fieldId: parseInt(fieldId),
-                value: value as Prisma.InputJsonValue,
-              },
-            });
-          }
-        }
-
-        // Create or update version
-        if (isUpdate) {
-          // For updates, create a new version
-          const latestVersion =
-            await enhancedDb.repositoryCaseVersions.findFirst({
-              where: { repositoryCaseId: newCase.id },
-              orderBy: { version: "desc" },
-            });
-
-          const nextVersion = (latestVersion?.version || 0) + 1;
-
-          await enhancedDb.repositoryCaseVersions.create({
-            data: {
-              repositoryCaseId: newCase.id,
-              staticProjectId: project.id,
-              staticProjectName: project.name,
-              projectId: project.id,
-              repositoryId: repository.id,
-              folderId: caseData.folderId,
-              folderName: "", // Would need to fetch this
-              templateId: template.id,
-              templateName: template.templateName,
-              name: caseData.name,
-              stateId: stateId,
-              stateName: caseData.workflowStateName || defaultWorkflow.name,
-              estimate: caseData.estimate,
-              forecastManual: caseData.forecastManual,
-              automated: caseData.automated,
-              creatorId: session.user.id, // Use current user for update
-              creatorName: session.user.name || session.user.email || "",
-              version: caseData.version || nextVersion,
-              createdAt: new Date(), // Use current date for update
-            },
-          });
-        } else {
-          // For new cases, create initial version
-          await enhancedDb.repositoryCaseVersions.create({
-            data: {
-              repositoryCaseId: newCase.id,
-              staticProjectId: project.id,
-              staticProjectName: project.name,
-              projectId: project.id,
-              repositoryId: repository.id,
-              folderId: caseData.folderId,
-              folderName: "", // Would need to fetch this
-              templateId: template.id,
-              templateName: template.templateName,
-              name: caseData.name,
-              stateId: stateId,
-              stateName: caseData.workflowStateName || defaultWorkflow.name,
-              estimate: caseData.estimate,
-              forecastManual: caseData.forecastManual,
-              automated: caseData.automated,
-              creatorId: creatorId,
-              creatorName:
-                caseData.createdByName ||
-                session.user.name ||
-                session.user.email ||
-                "",
-              version: caseData.version || 1,
-              ...(createdAt && { createdAt }),
-            },
-          });
-        }
-
-        // Handle tags if present
-        if (caseData.tags && Array.isArray(caseData.tags)) {
-          // For updates, disconnect all existing tags first
-          if (isUpdate) {
-            await enhancedDb.repositoryCases.update({
-              where: { id: newCase.id },
-              data: {
-                tags: {
-                  set: [], // Clear all existing tags
-                },
-              },
-            });
-          }
-
-          for (const tagName of caseData.tags) {
-            // Find or create tag
-            let tag = await enhancedDb.tags.findFirst({
-              where: { name: tagName, isDeleted: false },
-            });
-
-            if (!tag) {
-              tag = await enhancedDb.tags.create({
-                data: { name: tagName },
-              });
-            }
-
-            // Connect tag to case
-            await enhancedDb.repositoryCases.update({
-              where: { id: newCase.id },
-              data: {
-                tags: {
-                  connect: { id: tag.id },
-                },
-              },
-            });
-          }
-        }
-
-        // Handle issues if present
-        if (caseData.issues) {
-          const issueNames = parseIssues(caseData.issues);
-
-          // For updates, disconnect all existing issues first
-          if (isUpdate) {
-            await enhancedDb.repositoryCases.update({
-              where: { id: newCase.id },
-              data: {
-                issues: {
-                  set: [], // Clear all existing issues
-                },
-              },
-            });
-          }
-
-          for (const issueName of issueNames) {
-            // Find issue by name
-            const issue = await enhancedDb.issue.findFirst({
-              where: {
-                name: issueName,
-                isDeleted: false,
-              },
-            });
-
-            if (issue) {
-              // Connect issue to case
-              await enhancedDb.repositoryCases.update({
-                where: { id: newCase.id },
-                data: {
-                  issues: {
-                    connect: { id: issue.id },
+        // Get template with fields
+        const template = await enhancedDb.templates.findUnique({
+          where: { id: body.templateId },
+          include: {
+            caseFields: {
+              include: {
+                caseField: {
+                  include: {
+                    type: true,
+                    fieldOptions: {
+                      include: {
+                        fieldOption: true,
+                      },
+                    },
                   },
                 },
-              });
-            }
-          }
-        }
-
-        // Handle linked cases if present
-        if (caseData.linkedCases) {
-          // For now, we'll skip linked cases as they require complex validation
-          // This could be implemented in the future by parsing case IDs/names
-        }
-
-        // Handle attachments if present
-        if (caseData.attachments) {
-          const attachments = parseAttachments(caseData.attachments);
-
-          // For updates, delete existing attachments first
-          if (isUpdate) {
-            await enhancedDb.attachments.deleteMany({
-              where: { testCaseId: newCase.id },
-            });
-          }
-
-          for (const attachment of attachments) {
-            try {
-              await enhancedDb.attachments.create({
-                data: {
-                  url: attachment.url,
-                  name: attachment.name,
-                  note: attachment.note,
-                  size: attachment.size,
-                  mimeType: attachment.mimeType,
-                  testCaseId: newCase.id,
-                  createdById: session.user.id,
-                },
-              });
-            } catch (error) {
-              // Failed to create attachment for case ${newCase.id}
-              // Continue with other attachments even if one fails
-            }
-          }
-        }
-
-        // Handle test runs if present
-        if (caseData.testRuns) {
-          const testRunNames = parseTestRuns(caseData.testRuns);
-
-          // For updates, remove existing test run associations first
-          if (isUpdate) {
-            await enhancedDb.testRunCases.deleteMany({
-              where: { repositoryCaseId: newCase.id },
-            });
-          }
-
-          for (const testRunName of testRunNames) {
-            // Find test run by name in the project
-            const testRun = await enhancedDb.testRuns.findFirst({
-              where: {
-                name: testRunName,
-                projectId: body.projectId,
-                isDeleted: false,
               },
-            });
+            },
+          },
+        });
 
-            if (testRun) {
-              // Create test run case association
-              try {
-                await enhancedDb.testRunCases.create({
-                  data: {
-                    testRunId: testRun.id,
-                    repositoryCaseId: newCase.id,
-                    order: 0,
-                  },
-                });
-              } catch (error) {
-                // Failed to associate case ${newCase.id} with test run ${testRunName}
-                // Continue with other test runs even if one fails
+        if (!template) {
+          sendError("Template not found");
+          return;
+        }
+
+        // Get default workflow
+        const defaultWorkflow = await enhancedDb.workflows.findFirst({
+          where: {
+            isDeleted: false,
+            isEnabled: true,
+            scope: "CASES",
+            isDefault: true,
+            projects: {
+              some: { projectId: body.projectId },
+            },
+          },
+        });
+
+        if (!defaultWorkflow) {
+          sendError("No default workflow found");
+          return;
+        }
+
+        // Parse CSV
+        const parseResult = Papa.parse(body.file, {
+          delimiter: body.delimiter,
+          header: body.hasHeaders,
+          skipEmptyLines: true,
+        });
+
+        if (parseResult.errors.length > 0) {
+          sendError("CSV parsing failed");
+          return;
+        }
+
+        const rows = parseResult.data as any[];
+        const errors: ImportError[] = [];
+        const casesToImport: any[] = [];
+
+        // Process each row
+        for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+          const row = rows[rowIndex];
+          const caseData: any = {
+            name: "",
+            projectId: body.projectId,
+            repositoryId: repository.id,
+            templateId: body.templateId,
+            stateId: defaultWorkflow.id,
+            source: RepositoryCaseSource.MANUAL,
+            creatorId: session.user.id,
+            automated: false,
+            fieldValues: {},
+          };
+
+          // Map fields
+          for (const mapping of body.fieldMappings) {
+            const csvValue = body.hasHeaders
+              ? row[mapping.csvColumn]
+              : row[parseInt(mapping.csvColumn.replace(/\D/g, "")) - 1];
+
+            if (mapping.templateField === "folder") {
+              caseData.folderPath = csvValue;
+            } else if (mapping.templateField === "estimate") {
+              caseData.estimate = parseInt(csvValue) || null;
+            } else if (mapping.templateField === "forecast") {
+              caseData.forecastManual = parseInt(csvValue) || null;
+            } else if (mapping.templateField === "automated") {
+              caseData.automated =
+                csvValue?.toLowerCase() === "true" ||
+                csvValue === "1" ||
+                csvValue?.toLowerCase() === "yes";
+            } else if (mapping.templateField === "name") {
+              caseData.name = csvValue || "";
+            } else if (mapping.templateField === "tags") {
+              caseData.tags = parseTags(csvValue);
+            } else if (mapping.templateField === "attachments") {
+              caseData.attachments = csvValue;
+            } else if (mapping.templateField === "issues") {
+              caseData.issues = csvValue;
+            } else if (mapping.templateField === "linkedCases") {
+              caseData.linkedCases = csvValue;
+            } else if (mapping.templateField === "workflowState") {
+              caseData.workflowStateName = csvValue;
+            } else if (mapping.templateField === "createdAt") {
+              caseData.createdAt = csvValue;
+            } else if (mapping.templateField === "createdBy") {
+              caseData.createdByName = csvValue;
+            } else if (mapping.templateField === "version") {
+              caseData.version = parseInt(csvValue) || 1;
+            } else if (mapping.templateField === "testRuns") {
+              caseData.testRuns = csvValue;
+            } else if (mapping.templateField === "id") {
+              caseData.id = parseInt(csvValue) || null;
+            } else if (mapping.templateField === "steps") {
+              const field = template.caseFields?.find(
+                (cf: any) => cf.caseField.type.type === "Steps"
+              ) as any;
+              if (field) {
+                try {
+                  const validatedValue = validateFieldValue(
+                    csvValue,
+                    field.caseField,
+                    rowIndex + 1
+                  );
+                  // Store steps separately for insertion into Steps table (not CaseFieldValues)
+                  caseData.steps = validatedValue;
+                } catch (error: any) {
+                  errors.push({
+                    row: rowIndex + 1,
+                    field: "Steps",
+                    error: error.message,
+                  });
+                }
+              }
+            } else {
+              // Match by systemName or displayName (case-insensitive)
+              const field = template.caseFields?.find(
+                (cf: any) =>
+                  cf.caseField.systemName.toLowerCase() ===
+                    mapping.templateField.toLowerCase() ||
+                  cf.caseField.displayName.toLowerCase() ===
+                    mapping.templateField.toLowerCase()
+              ) as any;
+              if (field) {
+                try {
+                  const validatedValue = validateFieldValue(
+                    csvValue,
+                    field.caseField,
+                    rowIndex + 1
+                  );
+                  // Steps type fields go to the Steps table, not CaseFieldValues
+                  if (field.caseField.type.type === "Steps") {
+                    caseData.steps = validatedValue;
+                  } else {
+                    caseData.fieldValues[field.caseField.id] = validatedValue;
+                  }
+                } catch (error: any) {
+                  errors.push({
+                    row: rowIndex + 1,
+                    field: field.caseField.displayName,
+                    error: error.message,
+                  });
+                }
               }
             }
           }
+
+          // Validate required fields
+          const nameMapping = body.fieldMappings.find(
+            (m) => m.templateField === "name"
+          );
+          if (!nameMapping || !caseData.name) {
+            errors.push({
+              row: rowIndex + 1,
+              field: "Name",
+              error: "Name is required",
+            });
+            continue;
+          }
+
+          // Validate required template fields
+          for (const cf of template.caseFields || []) {
+            if (
+              cf.caseField.isRequired &&
+              !caseData.fieldValues[cf.caseField.id]
+            ) {
+              errors.push({
+                row: rowIndex + 1,
+                field: cf.caseField.displayName,
+                error: "Required field is missing",
+              });
+            }
+          }
+
+          // Determine folder
+          if (body.importLocation === "single_folder") {
+            caseData.folderId = body.folderId;
+          } else {
+            const folderPath = caseData.folderPath || "";
+            delete caseData.folderPath;
+
+            try {
+              const folderId = await getOrCreateFolder(
+                enhancedDb,
+                body.projectId,
+                repository.id,
+                folderPath,
+                body.importLocation === "root_folder"
+                  ? body.folderId || null
+                  : null,
+                body.folderSplitMode || "plain",
+                session.user.id
+              );
+              caseData.folderId = folderId;
+            } catch (error: any) {
+              errors.push({
+                row: rowIndex + 1,
+                field: "Folder",
+                error: error.message,
+              });
+              continue;
+            }
+          }
+
+          if (errors.length === 0) {
+            casesToImport.push(caseData);
+          }
         }
 
-        // Manually sync to Elasticsearch since enhanced Prisma client bypasses extensions
-        await syncRepositoryCaseToElasticsearch(newCase.id).catch(
-          (error: any) => {
-            console.error(
-              `Failed to sync repository case ${newCase.id} to Elasticsearch:`,
-              error
+        // If there are validation errors, don't import anything
+        if (errors.length > 0) {
+          sendError("Validation failed", errors);
+          return;
+        }
+
+        // Import cases with progress updates
+        let importedCount = 0;
+        const totalCases = casesToImport.length;
+
+        // Get unique folder IDs and find max order for each folder
+        const folderIds = [...new Set(casesToImport.map((c) => c.folderId))];
+        const folderMaxOrders: Record<number, number> = {};
+
+        for (const folderId of folderIds) {
+          const maxOrderCase = await enhancedDb.repositoryCases.findFirst({
+            where: { folderId },
+            orderBy: { order: "desc" },
+            select: { order: true },
+          });
+          folderMaxOrders[folderId] = maxOrderCase?.order ?? -1;
+        }
+
+        // Send initial progress
+        sendProgress(0, totalCases);
+
+        for (const caseData of casesToImport) {
+          try {
+            // Look up folder name for version record
+            const folder = await enhancedDb.repositoryFolders.findUnique({
+              where: { id: caseData.folderId },
+              select: { name: true },
+            });
+            const folderName = folder?.name || "Unknown";
+
+            // Look up workflow state if specified
+            let stateId = caseData.stateId;
+            if (caseData.workflowStateName) {
+              const workflowState = await enhancedDb.workflows.findFirst({
+                where: {
+                  name: caseData.workflowStateName,
+                  isDeleted: false,
+                  isEnabled: true,
+                  scope: "CASES",
+                  projects: {
+                    some: { projectId: body.projectId },
+                  },
+                },
+              });
+
+              if (workflowState) {
+                stateId = workflowState.id;
+              }
+            }
+
+            // Look up creator if specified
+            let creatorId = caseData.creatorId;
+            if (caseData.createdByName) {
+              const creator = await enhancedDb.user.findFirst({
+                where: {
+                  OR: [
+                    { name: caseData.createdByName },
+                    { email: caseData.createdByName },
+                  ],
+                },
+              });
+
+              if (creator) {
+                creatorId = creator.id;
+              }
+            }
+
+            // Parse created date if specified
+            let createdAt = undefined;
+            if (caseData.createdAt) {
+              try {
+                createdAt = new Date(caseData.createdAt);
+                if (isNaN(createdAt.getTime())) {
+                  createdAt = undefined;
+                }
+              } catch {
+                createdAt = undefined;
+              }
+            }
+
+            // Check if we should update an existing case or create a new one
+            let newCase;
+            let isUpdate = false;
+
+            // Calculate the order for this test case (increment per folder)
+            folderMaxOrders[caseData.folderId]++;
+            const caseOrder = folderMaxOrders[caseData.folderId];
+
+            if (caseData.id) {
+              const existingCase = await enhancedDb.repositoryCases.findFirst({
+                where: {
+                  id: caseData.id,
+                  projectId: body.projectId,
+                },
+              });
+
+              if (existingCase) {
+                isUpdate = true;
+                newCase = await enhancedDb.repositoryCases.update({
+                  where: { id: caseData.id },
+                  data: {
+                    name: caseData.name,
+                    folderId: caseData.folderId,
+                    templateId: caseData.templateId,
+                    stateId: stateId,
+                    automated: caseData.automated,
+                    estimate: caseData.estimate,
+                    forecastManual: caseData.forecastManual,
+                  },
+                });
+
+                await enhancedDb.caseFieldValues.deleteMany({
+                  where: { testCaseId: caseData.id },
+                });
+              } else {
+                newCase = await enhancedDb.repositoryCases.create({
+                  data: {
+                    id: caseData.id,
+                    name: caseData.name,
+                    projectId: caseData.projectId,
+                    repositoryId: caseData.repositoryId,
+                    folderId: caseData.folderId,
+                    templateId: caseData.templateId,
+                    stateId: stateId,
+                    source: caseData.source,
+                    creatorId: creatorId,
+                    automated: caseData.automated,
+                    estimate: caseData.estimate,
+                    forecastManual: caseData.forecastManual,
+                    order: caseOrder,
+                    ...(createdAt && { createdAt }),
+                  },
+                });
+              }
+            } else {
+              newCase = await enhancedDb.repositoryCases.create({
+                data: {
+                  name: caseData.name,
+                  projectId: caseData.projectId,
+                  repositoryId: caseData.repositoryId,
+                  folderId: caseData.folderId,
+                  templateId: caseData.templateId,
+                  stateId: stateId,
+                  source: caseData.source,
+                  creatorId: creatorId,
+                  automated: caseData.automated,
+                  estimate: caseData.estimate,
+                  forecastManual: caseData.forecastManual,
+                  order: caseOrder,
+                  ...(createdAt && { createdAt }),
+                },
+              });
+            }
+
+            // Create field values
+            for (const [fieldId, value] of Object.entries(
+              caseData.fieldValues
+            )) {
+              if (value !== null && value !== undefined) {
+                await enhancedDb.caseFieldValues.create({
+                  data: {
+                    testCaseId: newCase.id,
+                    fieldId: parseInt(fieldId),
+                    value: value as Prisma.InputJsonValue,
+                  },
+                });
+              }
+            }
+
+            // Create steps in the Steps table if present
+            if (caseData.steps && Array.isArray(caseData.steps)) {
+              // Delete existing steps if updating
+              if (isUpdate) {
+                await enhancedDb.steps.deleteMany({
+                  where: { testCaseId: newCase.id },
+                });
+              }
+
+              for (const stepData of caseData.steps) {
+                await enhancedDb.steps.create({
+                  data: {
+                    testCaseId: newCase.id,
+                    step: stepData.step,
+                    expectedResult: stepData.expectedResult,
+                    order: stepData.order,
+                  },
+                });
+              }
+            }
+
+            // Create or update version
+            if (isUpdate) {
+              const latestVersion =
+                await enhancedDb.repositoryCaseVersions.findFirst({
+                  where: { repositoryCaseId: newCase.id },
+                  orderBy: { version: "desc" },
+                });
+
+              const nextVersion = (latestVersion?.version || 0) + 1;
+
+              await enhancedDb.repositoryCaseVersions.create({
+                data: {
+                  repositoryCaseId: newCase.id,
+                  staticProjectId: project.id,
+                  staticProjectName: project.name,
+                  projectId: project.id,
+                  repositoryId: repository.id,
+                  folderId: caseData.folderId,
+                  folderName,
+                  templateId: template.id,
+                  templateName: template.templateName,
+                  name: caseData.name,
+                  stateId: stateId,
+                  stateName: caseData.workflowStateName || defaultWorkflow.name,
+                  estimate: caseData.estimate,
+                  forecastManual: caseData.forecastManual,
+                  automated: caseData.automated,
+                  creatorId: session.user.id,
+                  creatorName: session.user.name || session.user.email || "",
+                  version: caseData.version || nextVersion,
+                  createdAt: new Date(),
+                },
+              });
+            } else {
+              await enhancedDb.repositoryCaseVersions.create({
+                data: {
+                  repositoryCaseId: newCase.id,
+                  staticProjectId: project.id,
+                  staticProjectName: project.name,
+                  projectId: project.id,
+                  repositoryId: repository.id,
+                  folderId: caseData.folderId,
+                  folderName,
+                  templateId: template.id,
+                  templateName: template.templateName,
+                  name: caseData.name,
+                  stateId: stateId,
+                  stateName: caseData.workflowStateName || defaultWorkflow.name,
+                  estimate: caseData.estimate,
+                  forecastManual: caseData.forecastManual,
+                  automated: caseData.automated,
+                  creatorId: creatorId,
+                  creatorName:
+                    caseData.createdByName ||
+                    session.user.name ||
+                    session.user.email ||
+                    "",
+                  version: caseData.version || 1,
+                  ...(createdAt && { createdAt }),
+                },
+              });
+            }
+
+            // Handle tags if present
+            if (caseData.tags && Array.isArray(caseData.tags)) {
+              if (isUpdate) {
+                await enhancedDb.repositoryCases.update({
+                  where: { id: newCase.id },
+                  data: { tags: { set: [] } },
+                });
+              }
+
+              for (const tagName of caseData.tags) {
+                let tag = await enhancedDb.tags.findFirst({
+                  where: { name: tagName, isDeleted: false },
+                });
+
+                if (!tag) {
+                  tag = await enhancedDb.tags.create({
+                    data: { name: tagName },
+                  });
+                }
+
+                await enhancedDb.repositoryCases.update({
+                  where: { id: newCase.id },
+                  data: { tags: { connect: { id: tag.id } } },
+                });
+              }
+            }
+
+            // Handle issues if present
+            if (caseData.issues) {
+              const issueNames = parseIssues(caseData.issues);
+
+              if (isUpdate) {
+                await enhancedDb.repositoryCases.update({
+                  where: { id: newCase.id },
+                  data: { issues: { set: [] } },
+                });
+              }
+
+              for (const issueName of issueNames) {
+                const issue = await enhancedDb.issue.findFirst({
+                  where: { name: issueName, isDeleted: false },
+                });
+
+                if (issue) {
+                  await enhancedDb.repositoryCases.update({
+                    where: { id: newCase.id },
+                    data: { issues: { connect: { id: issue.id } } },
+                  });
+                }
+              }
+            }
+
+            // Handle attachments if present
+            if (caseData.attachments) {
+              const attachments = parseAttachments(caseData.attachments);
+
+              if (isUpdate) {
+                await enhancedDb.attachments.deleteMany({
+                  where: { testCaseId: newCase.id },
+                });
+              }
+
+              for (const attachment of attachments) {
+                try {
+                  await enhancedDb.attachments.create({
+                    data: {
+                      url: attachment.url,
+                      name: attachment.name,
+                      note: attachment.note,
+                      size: attachment.size,
+                      mimeType: attachment.mimeType,
+                      testCaseId: newCase.id,
+                      createdById: session.user.id,
+                    },
+                  });
+                } catch {
+                  // Continue with other attachments even if one fails
+                }
+              }
+            }
+
+            // Handle test runs if present
+            if (caseData.testRuns) {
+              const testRunNames = parseTestRuns(caseData.testRuns);
+
+              if (isUpdate) {
+                await enhancedDb.testRunCases.deleteMany({
+                  where: { repositoryCaseId: newCase.id },
+                });
+              }
+
+              for (const testRunName of testRunNames) {
+                const testRun = await enhancedDb.testRuns.findFirst({
+                  where: {
+                    name: testRunName,
+                    projectId: body.projectId,
+                    isDeleted: false,
+                  },
+                });
+
+                if (testRun) {
+                  try {
+                    await enhancedDb.testRunCases.create({
+                      data: {
+                        testRunId: testRun.id,
+                        repositoryCaseId: newCase.id,
+                        order: 0,
+                      },
+                    });
+                  } catch {
+                    // Continue with other test runs even if one fails
+                  }
+                }
+              }
+            }
+
+            // Sync to Elasticsearch
+            await syncRepositoryCaseToElasticsearch(newCase.id).catch(
+              (error: any) => {
+                console.error(
+                  `Failed to sync repository case ${newCase.id} to Elasticsearch:`,
+                  error
+                );
+              }
             );
+
+            importedCount++;
+            // Send progress update after each case
+            sendProgress(importedCount, totalCases);
+          } catch (error: any) {
+            errors.push({
+              row: casesToImport.indexOf(caseData) + 1,
+              field: "General",
+              error: error.message,
+            });
           }
-        );
+        }
 
-        importedCount++;
-      } catch (error: any) {
-        // Failed to import case
-        errors.push({
-          row: casesToImport.indexOf(caseData) + 1,
-          field: "General",
-          error: error.message,
-        });
+        // Audit the bulk import
+        if (importedCount > 0) {
+          auditBulkCreate("RepositoryCases", importedCount, body.projectId, {
+            source: "CSV Import",
+            templateId: body.templateId,
+            importLocation: body.importLocation,
+          }).catch((error) =>
+            console.error("[AuditLog] Failed to audit repository import:", error)
+          );
+        }
+
+        // Send completion
+        sendComplete(importedCount, errors);
+      } catch (error) {
+        sendError(error instanceof Error ? error.message : "Import failed");
       }
-    }
+    },
+  });
 
-    if (errors.length > 0) {
-      return NextResponse.json(
-        { error: "Some cases failed to import", errors, importedCount },
-        { status: 400 }
-      );
-    }
-
-    // Audit the bulk import
-    if (importedCount > 0) {
-      auditBulkCreate("RepositoryCases", importedCount, body.projectId, {
-        source: "CSV Import",
-        templateId: body.templateId,
-        importLocation: body.importLocation,
-      }).catch((error) =>
-        console.error("[AuditLog] Failed to audit repository import:", error)
-      );
-    }
-
-    return NextResponse.json({ success: true, importedCount });
-  } catch (error) {
-    // Import error
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Import failed" },
-      { status: 500 }
-    );
-  }
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
 }
 
 function validateFieldValue(
   value: any,
-  field: CaseFields & { type: CaseFieldTypes },
+  field: CaseFields & { type: CaseFieldTypes; fieldOptions?: any[] },
   rowNumber: number
 ): any {
   if (!value && field.isRequired) {
@@ -866,10 +884,15 @@ function validateFieldValue(
       return value.toString();
 
     case "Text Long":
-      // For CSV import, treat as plain text
+      // For CSV import, convert plain text to TipTap JSON format
       return {
         type: "doc",
-        content: [{ type: "paragraph", text: value.toString() }],
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: value.toString() }],
+          },
+        ],
       };
 
     case "Integer":
@@ -910,8 +933,55 @@ function validateFieldValue(
       return value === "true" || value === "1" || value === true;
 
     case "Dropdown":
+      // Look up the field option ID by name (case-insensitive)
+      if (field.fieldOptions && field.fieldOptions.length > 0) {
+        const stringValue = value.toString().trim();
+        const matchingOption = field.fieldOptions.find(
+          (fo: any) =>
+            fo.fieldOption.name.toLowerCase() === stringValue.toLowerCase()
+        );
+        if (matchingOption) {
+          return matchingOption.fieldOption.id;
+        }
+        // If no match found, throw an error with available options
+        const availableOptions = field.fieldOptions
+          .map((fo: any) => fo.fieldOption.name)
+          .join(", ");
+        throw new Error(
+          `Invalid option "${stringValue}". Available options: ${availableOptions}`
+        );
+      }
+      return value.toString();
+
     case "Multi-select":
-      // Would need to validate against field options
+      // Handle comma-separated values and look up IDs for each
+      if (field.fieldOptions && field.fieldOptions.length > 0) {
+        const stringValue = value.toString();
+        // Split by comma and trim each value
+        const values = stringValue
+          .split(",")
+          .map((v: string) => v.trim())
+          .filter((v: string) => v);
+
+        const ids: number[] = [];
+        for (const val of values) {
+          const matchingOption = field.fieldOptions.find(
+            (fo: any) =>
+              fo.fieldOption.name.toLowerCase() === val.toLowerCase()
+          );
+          if (matchingOption) {
+            ids.push(matchingOption.fieldOption.id);
+          } else {
+            const availableOptions = field.fieldOptions
+              .map((fo: any) => fo.fieldOption.name)
+              .join(", ");
+            throw new Error(
+              `Invalid option "${val}". Available options: ${availableOptions}`
+            );
+          }
+        }
+        return ids;
+      }
       return value.toString();
 
     case "Link":
@@ -924,48 +994,43 @@ function validateFieldValue(
       }
 
     case "Steps":
-      // Handle both JSON and plain text formats
-      if (typeof value === "string") {
-        try {
-          // Try to parse as JSON array first
-          const parsed = JSON.parse(value);
-          if (Array.isArray(parsed)) {
-            return parsed.map((step: any, index: number) => ({
-              step:
-                typeof step.step === "string"
-                  ? {
-                      type: "doc",
-                      content: [{ type: "paragraph", text: step.step }],
-                    }
-                  : step.step,
-              expectedResult: step.expectedResult
-                ? typeof step.expectedResult === "string"
-                  ? {
-                      type: "doc",
-                      content: [
-                        { type: "paragraph", text: step.expectedResult },
-                      ],
-                    }
-                  : step.expectedResult
-                : null,
-              order: index,
-            }));
-          }
-        } catch {
-          // Not JSON, treat as plain text
-        }
-      }
-      // Plain text format
-      return [
-        {
+      // Parse pipe-separated format: "1. Step text | Expected result"
+      const stepsText = value.toString();
+      const lines = stepsText.split(/\n/).filter((line: string) => line.trim());
+
+      return lines.map((line: string, index: number) => {
+        // Remove step number prefix if present (e.g., "1. ", "2. ")
+        const withoutNumber = line.replace(/^\d+\.\s*/, "").trim();
+
+        // Split by pipe to get step and expected result
+        const parts = withoutNumber.split("|").map((p: string) => p.trim());
+        const stepText = parts[0] || "";
+        const expectedResultText = parts[1] || null;
+
+        return {
           step: {
             type: "doc",
-            content: [{ type: "paragraph", text: value.toString() }],
+            content: [
+              {
+                type: "paragraph",
+                content: stepText ? [{ type: "text", text: stepText }] : [],
+              },
+            ],
           },
-          expectedResult: null,
-          order: 0,
-        },
-      ];
+          expectedResult: expectedResultText
+            ? {
+                type: "doc",
+                content: [
+                  {
+                    type: "paragraph",
+                    content: [{ type: "text", text: expectedResultText }],
+                  },
+                ],
+              }
+            : null,
+          order: index,
+        };
+      });
 
     default:
       return value;

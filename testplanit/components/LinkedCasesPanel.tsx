@@ -350,7 +350,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm">
-                <Plus className="w-4 h-4 mr-1" /> {tLinkedCases("addLink")}
+                <Plus className="w-4 h-4" /> {tLinkedCases("addLink")}
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -378,12 +378,37 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                         id={option.id}
                         name={option.name}
                         source={option.source}
-                        large={true}
+                        size="large"
                       />
                     )}
                     getOptionValue={(option: any) => option.id}
                     placeholder={tLinkedCases("testCase")}
                     showTotal
+                    renderTrigger={({ value, defaultContent }) => (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="justify-start text-left w-full"
+                      >
+                        {value ? (
+                          <span className="flex items-center gap-1 overflow-hidden">
+                            {isAutomatedCaseSource(value.source) ? (
+                              <Bot className="h-4 w-4 shrink-0" />
+                            ) : (
+                              <ListChecks className="h-4 w-4 shrink-0" />
+                            )}
+                            <span
+                              className="truncate whitespace-nowrap overflow-hidden"
+                              style={{ maxWidth: 400 }}
+                            >
+                              {value.name}
+                            </span>
+                          </span>
+                        ) : (
+                          defaultContent
+                        )}
+                      </Button>
+                    )}
                   />
                 </div>
                 <div>

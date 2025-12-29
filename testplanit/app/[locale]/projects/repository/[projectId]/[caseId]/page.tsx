@@ -1617,7 +1617,7 @@ export default function TestCaseDetails() {
                     <CaseDisplay
                       id={testcase.id}
                       name={testcase.name}
-                      large={true}
+                      size="xl"
                       source={testcase.source}
                     />
                   </div>

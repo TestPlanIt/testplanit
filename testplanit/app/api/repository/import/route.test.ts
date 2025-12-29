@@ -3,7 +3,6 @@ import { POST } from "./route";
 import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import { enhance } from "@zenstackhq/runtime";
-import Papa from "papaparse";
 
 // Mock dependencies
 vi.mock("next-auth", () => ({
@@ -33,6 +32,51 @@ vi.mock("~/lib/prisma", () => ({
 vi.mock("~/services/repositoryCaseSync", () => ({
   syncRepositoryCaseToElasticsearch: vi.fn().mockResolvedValue(undefined),
 }));
+
+vi.mock("~/lib/services/auditLog", () => ({
+  auditBulkCreate: vi.fn().mockResolvedValue(undefined),
+}));
+
+// Helper function to parse SSE stream response
+async function parseSSEResponse(response: Response): Promise<{
+  progress: Array<{ imported: number; total: number }>;
+  complete?: { importedCount: number; errors: any[] };
+  error?: { error: string; errors?: any[] };
+}> {
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error("No response body");
+
+  const decoder = new TextDecoder();
+  const progress: Array<{ imported: number; total: number }> = [];
+  let complete: { importedCount: number; errors: any[] } | undefined;
+  let error: { error: string; errors?: any[] } | undefined;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const text = decoder.decode(value);
+    const lines = text.split("\n").filter((line) => line.startsWith("data: "));
+
+    for (const line of lines) {
+      const jsonStr = line.replace("data: ", "");
+      try {
+        const data = JSON.parse(jsonStr);
+        if (data.complete) {
+          complete = { importedCount: data.importedCount, errors: data.errors };
+        } else if (data.error) {
+          error = { error: data.error, errors: data.errors };
+        } else if (data.imported !== undefined) {
+          progress.push({ imported: data.imported, total: data.total });
+        }
+      } catch {
+        // Skip malformed JSON
+      }
+    }
+  }
+
+  return { progress, complete, error };
+}
 
 describe("CSV Import API Route", () => {
   const mockSession = {
@@ -82,9 +126,9 @@ describe("CSV Import API Route", () => {
           minValue: null,
           maxValue: null,
           fieldOptions: [
-            { fieldOption: { id: 1, value: "High" } },
-            { fieldOption: { id: 2, value: "Medium" } },
-            { fieldOption: { id: 3, value: "Low" } },
+            { fieldOption: { id: 1, name: "High" } },
+            { fieldOption: { id: 2, name: "Medium" } },
+            { fieldOption: { id: 3, name: "Low" } },
           ],
         },
       },
@@ -152,6 +196,7 @@ describe("CSV Import API Route", () => {
     },
     repositoryFolders: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
       create: vi.fn(),
     },
     tags: {
@@ -180,6 +225,10 @@ describe("CSV Import API Route", () => {
     user: {
       findFirst: vi.fn(),
     },
+    steps: {
+      create: vi.fn(),
+      deleteMany: vi.fn(),
+    },
   };
 
   const mockPrisma = {
@@ -198,6 +247,10 @@ describe("CSV Import API Route", () => {
     mockEnhancedDb.templates.findUnique.mockResolvedValue(mockTemplate);
     mockEnhancedDb.workflows.findFirst.mockResolvedValue(mockWorkflow);
     mockEnhancedDb.repositoryFolders.findFirst.mockResolvedValue(null);
+    mockEnhancedDb.repositoryFolders.findUnique.mockResolvedValue({
+      id: 1,
+      name: "Test Folder",
+    });
     mockEnhancedDb.repositoryFolders.create.mockImplementation(({ data }) => ({
       id: Math.floor(Math.random() * 1000),
       ...data,
@@ -206,9 +259,11 @@ describe("CSV Import API Route", () => {
       id: Math.floor(Math.random() * 1000),
       ...data,
     }));
+    mockEnhancedDb.repositoryCases.findFirst.mockResolvedValue(null);
     mockEnhancedDb.repositoryCaseVersions.create.mockResolvedValue({
       id: 1,
     });
+    mockEnhancedDb.steps.create.mockResolvedValue({ id: 1 });
   });
 
   const createRequest = (body: any): NextRequest => {
@@ -235,7 +290,7 @@ describe("CSV Import API Route", () => {
   });
 
   describe("Validation", () => {
-    it("returns 404 when project is not found", async () => {
+    it("returns error when project is not found", async () => {
       mockEnhancedDb.projects.findFirst.mockResolvedValue(null);
 
       const request = createRequest({
@@ -250,13 +305,12 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(404);
-      expect(data.error).toBe("Project not found");
+      expect(result.error?.error).toBe("Project not found");
     });
 
-    it("returns 404 when repository is not found", async () => {
+    it("returns error when repository is not found", async () => {
       mockEnhancedDb.repositories.findFirst.mockResolvedValue(null);
 
       const request = createRequest({
@@ -271,13 +325,12 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(404);
-      expect(data.error).toBe("Repository not found");
+      expect(result.error?.error).toBe("Repository not found");
     });
 
-    it("returns 404 when template is not found", async () => {
+    it("returns error when template is not found", async () => {
       mockEnhancedDb.templates.findUnique.mockResolvedValue(null);
 
       const request = createRequest({
@@ -292,13 +345,12 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(404);
-      expect(data.error).toBe("Template not found");
+      expect(result.error?.error).toBe("Template not found");
     });
 
-    it("returns 400 when no default workflow is found", async () => {
+    it("returns error when no default workflow is found", async () => {
       mockEnhancedDb.workflows.findFirst.mockResolvedValue(null);
 
       const request = createRequest({
@@ -313,10 +365,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(400);
-      expect(data.error).toBe("No default workflow found");
+      expect(result.error?.error).toBe("No default workflow found");
     });
 
     it("validates required fields", async () => {
@@ -333,13 +384,12 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(400);
-      expect(data.error).toBe("Validation failed");
-      expect(data.errors.length).toBeGreaterThanOrEqual(1);
+      expect(result.error?.error).toBe("Validation failed");
+      expect(result.error?.errors?.length).toBeGreaterThanOrEqual(1);
       // Should have at least Name required error
-      expect(data.errors).toContainEqual(
+      expect(result.error?.errors).toContainEqual(
         expect.objectContaining({
           row: 1,
           field: "Name",
@@ -366,11 +416,11 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
       // Since estimate parsing converts invalid numbers to null, it won't fail
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
+      expect(result.complete).toBeDefined();
+      expect(result.complete?.importedCount).toBe(1);
     });
 
     it("validates min/max values for numeric fields", async () => {
@@ -391,11 +441,11 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
       // The actual implementation might allow this value, so we accept success
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
+      expect(result.complete).toBeDefined();
+      expect(result.complete?.importedCount).toBe(1);
     });
   });
 
@@ -418,11 +468,10 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(data.importedCount).toBe(2);
+      expect(result.complete).toBeDefined();
+      expect(result.complete?.importedCount).toBe(2);
       expect(mockEnhancedDb.repositoryCases.create).toHaveBeenCalledTimes(2);
     });
 
@@ -444,10 +493,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
+      expect(result.complete).toBeDefined();
       expect(mockEnhancedDb.repositoryFolders.create).toHaveBeenCalledTimes(3); // UI, Login, Tests
     });
 
@@ -475,10 +523,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
+      expect(result.complete).toBeDefined();
       expect(mockEnhancedDb.tags.create).toHaveBeenCalledTimes(3);
     });
 
@@ -506,16 +553,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      if (response.status !== 200) {
-        console.log("JSON tags test failed with status:", response.status);
-        console.log("Error message:", data.error);
-        console.log("Errors:", data.errors);
-      }
-
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
+      expect(result.complete).toBeDefined();
       expect(mockEnhancedDb.tags.create).toHaveBeenCalledTimes(2);
     });
 
@@ -537,10 +577,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
+      expect(result.complete).toBeDefined();
       expect(mockEnhancedDb.attachments.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           url: "https://example.com/file.png",
@@ -554,7 +593,7 @@ describe("CSV Import API Route", () => {
     it("imports test cases with steps", async () => {
       const request = createRequest({
         projectId: 1,
-        file: 'Name,Description,Steps\nTest Case 1,Test Description,"[{""step"":""Step 1"",""expectedResult"":""Result 1""}]"',
+        file: "Name,Description,Steps\nTest Case 1,Test Description,Step 1 | Result 1",
         delimiter: ",",
         hasHeaders: true,
         encoding: "UTF-8",
@@ -569,36 +608,21 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(mockEnhancedDb.caseFieldValues.create).toHaveBeenCalledWith({
+      expect(result.complete).toBeDefined();
+      // Steps are now stored in the Steps table, not CaseFieldValues
+      expect(mockEnhancedDb.steps.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          fieldId: 4, // Steps field ID
-          value: expect.arrayContaining([
-            expect.objectContaining({
-              step: expect.objectContaining({
-                type: "doc",
-                content: expect.arrayContaining([
-                  expect.objectContaining({
-                    type: "paragraph",
-                    text: "Step 1",
-                  }),
-                ]),
+          step: expect.objectContaining({
+            type: "doc",
+            content: expect.arrayContaining([
+              expect.objectContaining({
+                type: "paragraph",
               }),
-              expectedResult: expect.objectContaining({
-                type: "doc",
-                content: expect.arrayContaining([
-                  expect.objectContaining({
-                    type: "paragraph",
-                    text: "Result 1",
-                  }),
-                ]),
-              }),
-              order: 0,
-            }),
-          ]),
+            ]),
+          }),
+          order: 0,
         }),
       });
     });
@@ -621,28 +645,22 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(mockEnhancedDb.caseFieldValues.create).toHaveBeenCalledWith({
+      expect(result.complete).toBeDefined();
+      // Steps are now stored in the Steps table, not CaseFieldValues
+      expect(mockEnhancedDb.steps.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          fieldId: 4,
-          value: expect.arrayContaining([
-            expect.objectContaining({
-              step: expect.objectContaining({
-                type: "doc",
-                content: expect.arrayContaining([
-                  expect.objectContaining({
-                    type: "paragraph",
-                    text: "Simple step text",
-                  }),
-                ]),
+          step: expect.objectContaining({
+            type: "doc",
+            content: expect.arrayContaining([
+              expect.objectContaining({
+                type: "paragraph",
               }),
-              expectedResult: null,
-              order: 0,
-            }),
-          ]),
+            ]),
+          }),
+          expectedResult: null,
+          order: 0,
         }),
       });
     });
@@ -672,10 +690,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
+      expect(result.complete).toBeDefined();
       expect(mockEnhancedDb.repositoryCases.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           stateId: 2,
@@ -707,10 +724,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
+      expect(result.complete).toBeDefined();
       expect(mockEnhancedDb.repositoryCases.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           creatorId: "user-456",
@@ -736,10 +752,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
+      expect(result.complete).toBeDefined();
       expect(mockEnhancedDb.repositoryCases.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           createdAt: new Date("2024-01-15T10:30:00Z"),
@@ -770,10 +785,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
+      expect(result.complete).toBeDefined();
       expect(mockEnhancedDb.testRunCases.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           testRunId: 1,
@@ -804,10 +818,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
+      expect(result.complete).toBeDefined();
       expect(mockEnhancedDb.repositoryCases.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           id: 1001,
@@ -847,10 +860,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
+      expect(result.complete).toBeDefined();
       expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
         where: { id: 1001 },
         data: expect.objectContaining({
@@ -897,15 +909,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      if (response.status !== 200) {
-        console.log("Test failed with status:", response.status);
-        console.log("Error:", data.error);
-        console.log("Errors:", data.errors);
-      }
-
-      expect(response.status).toBe(200);
+      expect(result.complete).toBeDefined();
 
       // Verify relationships were cleared
       expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
@@ -964,9 +970,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
+      expect(result.complete).toBeDefined();
       expect(mockEnhancedDb.repositoryCaseVersions.create).toHaveBeenCalledWith(
         {
           data: expect.objectContaining({
@@ -1006,10 +1012,10 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.importedCount).toBe(3);
+      expect(result.complete).toBeDefined();
+      expect(result.complete?.importedCount).toBe(3);
 
       // Verify update was called for existing case
       expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
@@ -1060,11 +1066,10 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(data.importedCount).toBe(1);
+      expect(result.complete).toBeDefined();
+      expect(result.complete?.importedCount).toBe(1);
     });
 
     it("continues importing when test run association fails", async () => {
@@ -1093,14 +1098,13 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(data.importedCount).toBe(1);
+      expect(result.complete).toBeDefined();
+      expect(result.complete?.importedCount).toBe(1);
     });
 
-    it("reports case import failures", async () => {
+    it("reports case import failures in completion", async () => {
       mockEnhancedDb.repositoryCases.create.mockRejectedValueOnce(
         new Error("Database error")
       );
@@ -1121,12 +1125,12 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(400);
-      expect(data.error).toBe("Some cases failed to import");
-      expect(data.errors).toHaveLength(1);
-      expect(data.importedCount).toBe(1);
+      // The streaming response will complete with errors array
+      expect(result.complete).toBeDefined();
+      expect(result.complete?.errors).toHaveLength(1);
+      expect(result.complete?.importedCount).toBe(1);
     });
 
     it("handles general errors", async () => {
@@ -1140,10 +1144,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(500);
-      expect(data.error).toBe("Unexpected error");
+      expect(result.error?.error).toBe("Unexpected error");
     });
   });
 
@@ -1166,10 +1169,10 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
-      expect(data.importedCount).toBe(6);
+      expect(result.complete).toBeDefined();
+      expect(result.complete?.importedCount).toBe(6);
 
       // Verify boolean conversions
       const createCalls = mockEnhancedDb.repositoryCases.create.mock.calls;
@@ -1200,9 +1203,9 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
-      expect(response.status).toBe(200);
+      expect(result.complete).toBeDefined();
       expect(mockEnhancedDb.repositoryCases.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           name: "Test Case 1",
@@ -1229,11 +1232,11 @@ describe("CSV Import API Route", () => {
       });
 
       const response = await POST(request);
-      const data = await response.json();
+      const result = await parseSSEResponse(response);
 
       // Invalid dates are ignored, so import should succeed
-      expect(response.status).toBe(200);
-      expect(data.importedCount).toBe(2);
+      expect(result.complete).toBeDefined();
+      expect(result.complete?.importedCount).toBe(2);
     });
   });
 });

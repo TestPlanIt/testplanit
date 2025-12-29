@@ -582,14 +582,14 @@ export default function TestCaseVersions() {
                   <CaseDisplay
                     id={testcase.id}
                     name={testcase.name}
-                    large={true}
+                    size="large"
                     source={testcase.source}
                   />,
                   previousTestcase ? (
                     <CaseDisplay
                       id={previousTestcase.id}
                       name={previousTestcase.name}
-                      large={true}
+                      size="large"
                       source={previousTestcase.source}
                     />
                   ) : null

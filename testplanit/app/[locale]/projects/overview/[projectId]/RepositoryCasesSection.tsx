@@ -265,7 +265,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
                     <CaseDisplay
                       id={caseItem.id}
                       name={caseItem.name}
-                      large={true}
+                      size="large"
                       source={caseItem.source}
                       className="line-clamp-2"
                     />
