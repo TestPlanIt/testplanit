@@ -1917,9 +1917,20 @@
             "title": "Délai d'attente dépassé",
             "message": "La requête IA a mis trop de temps à s'exécuter. Cela peut se produire en cas d'exigences complexes ou d'un grand nombre de cas de test."
           },
+          "network": {
+            "title": "Erreur réseau",
+            "message": "Impossible de se connecter au service d'IA. Veuillez vérifier votre connexion Internet et réessayer."
+          },
           "retryButton": "Réessayer",
           "dismissButton": "Rejeter",
           "suggestionsHeading": "Suggestions",
+          "suggestions": {
+            "retryLater": "Réessayez dans quelques minutes.",
+            "contactAdmin": "Contactez votre administrateur si le problème persiste.",
+            "checkStatus": "Vérifier l'état du service d'IA",
+            "checkNetwork": "Vérifiez votre connexion internet"
+          },
+          "timestampLabel": "Une erreur s'est produite à",
           "showDetails": "Afficher les détails",
           "hideDetails": "Masquer les détails",
           "copyDetails": "Détails de la copie",

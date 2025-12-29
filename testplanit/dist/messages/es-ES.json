@@ -1917,9 +1917,20 @@
             "title": "Solicitud agotada",
             "message": "La solicitud de IA tardó demasiado en completarse. Esto podría ocurrir con requisitos complejos o un gran número de casos de prueba."
           },
+          "network": {
+            "title": "Error de red",
+            "message": "No se puede conectar al servicio de IA. Comprueba tu conexión a internet y vuelve a intentarlo."
+          },
           "retryButton": "Rever",
           "dismissButton": "Despedir",
           "suggestionsHeading": "Sugerencias",
+          "suggestions": {
+            "retryLater": "Inténtalo de nuevo en unos minutos.",
+            "contactAdmin": "Comuníquese con su administrador si el problema persiste.",
+            "checkStatus": "Comprobar el estado del servicio de IA",
+            "checkNetwork": "Comprueba tu conexión a Internet"
+          },
+          "timestampLabel": "Se produjo un error en",
           "showDetails": "Mostrar detalles",
           "hideDetails": "Ocultar detalles",
           "copyDetails": "Detalles de la copia",
