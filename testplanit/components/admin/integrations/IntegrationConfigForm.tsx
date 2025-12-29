@@ -120,7 +120,7 @@ const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
   [IntegrationProvider.GITHUB]: [
     {
       name: "personalAccessToken",
-      label: "config.personalAccessToken",
+      label: "authType.personal_access_token",
       placeholder: "config.personalAccessTokenPlaceholder",
       help: "config.personalAccessTokenHelp",
       type: "password",
@@ -131,7 +131,7 @@ const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
   [IntegrationProvider.AZURE_DEVOPS]: [
     {
       name: "personalAccessToken",
-      label: "config.personalAccessToken",
+      label: "authType.personal_access_token",
       placeholder: "config.personalAccessTokenPlaceholder",
       help: "config.personalAccessTokenHelp",
       type: "password",
