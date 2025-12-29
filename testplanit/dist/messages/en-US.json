@@ -2853,6 +2853,11 @@
     },
     "workflows": {
       "description": "Manage test case workflows",
+      "types": {
+        "NOT_STARTED": "Not Started",
+        "IN_PROGRESS": "In Progress",
+        "DONE": "Done"
+      },
       "add": {
         "button": "Add Workflow",
         "title": "Add New Workflow",
@@ -3224,6 +3229,7 @@
       "allIntegrations": "All Integrations",
       "manageDescription": "Configure and manage your external service issue integrations",
       "status": {
+        "active": "Active",
         "inactive": "Inactive"
       },
       "connectedProjects": "Connected Projects",
@@ -4531,21 +4537,39 @@
       "unexpectedError": "An unexpected error occurred."
     },
     "dimensions": {
+      "project": "Project",
+      "status": "Status",
+      "user": "User",
       "executor": "Executor",
+      "configuration": "Configuration",
+      "date": "Date",
       "executionDate": "Execution Date",
       "creationDate": "Creation Date",
       "activityDate": "Activity Date",
+      "testRun": "Test Run",
+      "testCase": "Test Case",
+      "milestone": "Milestone",
+      "template": "Template",
       "creator": "Creator",
+      "state": "State",
       "source": "Source",
+      "folder": "Folder",
       "group": "Group",
+      "role": "Role",
       "session": "Session",
       "weekEnding": "Week Ending",
-      "period": "Period"
+      "period": "Period",
+      "priority": "Priority",
+      "automationStatus": "Automation Status",
+      "issueType": "Issue Type"
     },
     "metrics": {
+      "testResults": "Test Results",
       "testResultCount": "Test Results Count",
       "passRate": "Pass Rate (%)",
       "avgElapsed": "Avg. Elapsed Time",
+      "avgElapsedTime": "Avg. Elapsed Time",
+      "totalElapsedTime": "Total Elapsed Time",
       "testRunCount": "Test Runs Count",
       "testCaseCount": "Test Cases Count",
       "automationRate": "Automation Rate (%)",

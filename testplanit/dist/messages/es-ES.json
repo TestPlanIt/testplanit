@@ -2853,6 +2853,11 @@
     },
     "workflows": {
       "description": "Administrar flujos de trabajo de casos de prueba",
+      "types": {
+        "NOT_STARTED": "No iniciado",
+        "IN_PROGRESS": "En curso",
+        "DONE": "Hecho"
+      },
       "add": {
         "button": "Añadir flujo de trabajo",
         "title": "Añadir nuevo flujo de trabajo",
@@ -3224,6 +3229,7 @@
       "allIntegrations": "Todas las integraciones",
       "manageDescription": "Configurar y administrar sus integraciones de problemas de servicio externo",
       "status": {
+        "active": "Activo",
         "inactive": "Inactivo"
       },
       "connectedProjects": "Proyectos conectados",
@@ -3441,7 +3447,11 @@
         "apiKeyPlaceholder": "Introduzca una nueva clave API para actualizar...",
         "update": "Actualizar",
         "integrationUpdated": "Integración del modelo de IA actualizada correctamente",
-        "failedToUpdate": "Error al actualizar la integración del modelo AI"
+        "failedToUpdate": "Error al actualizar la integración del modelo AI",
+        "validation": {
+          "nameRequired": "El nombre de la integración es obligatorio",
+          "defaultModelRequired": "Se requiere el modelo predeterminado"
+        }
       },
       "delete": {
         "title": "Eliminar Integración del Modelo AI",
@@ -4527,21 +4537,39 @@
       "unexpectedError": "Se ha producido un error inesperado."
     },
     "dimensions": {
+      "project": "Proyecto",
+      "status": "Estado",
+      "user": "Usuario",
       "executor": "Ejecutador",
+      "configuration": "Configuración",
+      "date": "Fecha",
       "executionDate": "Fecha de ejecución",
       "creationDate": "Fecha de creación",
       "activityDate": "Fecha de actividad",
+      "testRun": "Prueba de funcionamiento",
+      "testCase": "Caso de prueba",
+      "milestone": "Hito",
+      "template": "Plantilla",
       "creator": "Creador",
+      "state": "Estado",
       "source": "Fuente",
+      "folder": "Carpeta",
       "group": "Grupo",
+      "role": "Role",
       "session": "Sesión",
       "weekEnding": "Semana que termina",
-      "period": "Período"
+      "period": "Período",
+      "priority": "Prioridad",
+      "automationStatus": "Estado de la automatización",
+      "issueType": "Tipo de problema"
     },
     "metrics": {
+      "testResults": "Resultados de la prueba",
       "testResultCount": "Número de resultados de la prueba",
       "passRate": "Tasa de pasaje (%)",
       "avgElapsed": "Tiempo medio transcurrido",
+      "avgElapsedTime": "Tiempo transcurrido promedio",
+      "totalElapsedTime": "Tiempo total transcurrido",
       "testRunCount": "Número de Ejecuciones de Prueba",
       "testCaseCount": "Número de casos de prueba",
       "automationRate": "Tasa de automatización (%)",

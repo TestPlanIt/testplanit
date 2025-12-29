@@ -2853,6 +2853,11 @@
     },
     "workflows": {
       "description": "Gérer les flux de travail des cas de test",
+      "types": {
+        "NOT_STARTED": "Non démarré",
+        "IN_PROGRESS": "En cours",
+        "DONE": "Fait"
+      },
       "add": {
         "button": "Ajouter un flux de travail",
         "title": "Ajouter un nouveau flux de travail",
@@ -3224,6 +3229,7 @@
       "allIntegrations": "Toutes les intégrations",
       "manageDescription": "Configurez et gérez vos intégrations de services externes.",
       "status": {
+        "active": "Actif",
         "inactive": "Inactif"
       },
       "connectedProjects": "Projets connectés",
@@ -3441,7 +3447,11 @@
         "apiKeyPlaceholder": "Saisissez une nouvelle clé API pour mettre à jour...",
         "update": "Mise à jour",
         "integrationUpdated": "L'intégration du modèle d'IA a été mise à jour avec succès",
-        "failedToUpdate": "Échec de la mise à jour de l'intégration du modèle d'IA"
+        "failedToUpdate": "Échec de la mise à jour de l'intégration du modèle d'IA",
+        "validation": {
+          "nameRequired": "Le nom de l'intégration est requis.",
+          "defaultModelRequired": "Le modèle par défaut est requis"
+        }
       },
       "delete": {
         "title": "Supprimer l'intégration du modèle d'IA",
@@ -4527,21 +4537,39 @@
       "unexpectedError": "Une erreur inattendue s'est produite."
     },
     "dimensions": {
+      "project": "Projet",
+      "status": "Statut",
+      "user": "Utilisateur",
       "executor": "Exécuteur",
+      "configuration": "Configuration",
+      "date": "Date",
       "executionDate": "Date d'exécution",
       "creationDate": "Date de création",
       "activityDate": "Date d'activité",
+      "testRun": "Essai",
+      "testCase": "Cas de test",
+      "milestone": "Jalon",
+      "template": "Modèle",
       "creator": "Créateur",
+      "state": "État",
       "source": "Source",
+      "folder": "Dossier",
       "group": "Groupe",
+      "role": "Rôle",
       "session": "Session",
       "weekEnding": "Semaine se terminant",
-      "period": "Période"
+      "period": "Période",
+      "priority": "Priorité",
+      "automationStatus": "État de l'automatisation",
+      "issueType": "Type de problème"
     },
     "metrics": {
+      "testResults": "Résultats des tests",
       "testResultCount": "Nombre de résultats de test",
       "passRate": "Taux de réussite (%)",
       "avgElapsed": "Temps moyen écoulé",
+      "avgElapsedTime": "Temps moyen écoulé",
+      "totalElapsedTime": "Temps total écoulé",
       "testRunCount": "Nombre d'exécutions de tests",
       "testCaseCount": "Nombre de cas de test",
       "automationRate": "Taux d'automatisation (%)",
