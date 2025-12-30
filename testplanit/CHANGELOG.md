@@ -1,3 +1,10 @@
+## [0.9.3](https://github.com/TestPlanIt/testplanit/compare/v0.9.2...v0.9.3) (2025-12-30)
+
+
+### Bug Fixes
+
+* **folders:** Fix the folder issues described in Issue 33 ([#35](https://github.com/TestPlanIt/testplanit/issues/35)) ([f94a1a0](https://github.com/TestPlanIt/testplanit/commit/f94a1a0f9c9e3950fec28a7024f81b32ea3b94c0))
+
 ## [0.9.2](https://github.com/TestPlanIt/testplanit/compare/v0.9.1...v0.9.2) (2025-12-30)
 
 
