@@ -1392,11 +1392,14 @@ export function GenerateTestCasesWizard({
               data: {
                 repositoryCase: { connect: { id: newCase.id } },
                 project: { connect: { id: projectId } },
-                staticProjectName: project?.name || tCommon("labels.unknownProject"),
+                staticProjectName:
+                  project?.name || tCommon("labels.unknownProject"),
                 staticProjectId: projectId,
                 repositoryId: project?.repositories?.[0]?.id || 0,
                 folderId: folderId,
-                folderName: t("generateTestCases.importData.generatedFolderName"), // Use a default folder name since it's required
+                folderName: t(
+                  "generateTestCases.importData.generatedFolderName"
+                ), // Use a default folder name since it's required
                 templateId: selectedTemplateId,
                 templateName: selectedTemplate.templateName,
                 name: testCase.name.slice(0, 255),
@@ -1419,7 +1422,9 @@ export function GenerateTestCasesWizard({
             });
 
             if (!newCaseVersion) {
-              throw new Error(t("generateTestCases.errors.failedToCreateCaseVersion"));
+              throw new Error(
+                t("generateTestCases.errors.failedToCreateCaseVersion")
+              );
             }
           } catch (error) {
             console.error(
@@ -3497,7 +3502,9 @@ function IssueDescriptionText({ description }: { description: string }) {
         onClick={() => setIsExpanded(!isExpanded)}
         className="text-primary hover:text-primary/80 transition-colors ml-1 underline text-sm mt-2"
       >
-        {isExpanded ? tCommon("ui.clickToCollapse") : tCommon("ui.clickToExpand")}
+        {isExpanded
+          ? tCommon("ui.clickToCollapse")
+          : tCommon("ui.clickToExpand")}
       </button>
     </div>
   );

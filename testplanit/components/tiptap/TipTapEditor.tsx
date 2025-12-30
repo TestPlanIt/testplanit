@@ -12,6 +12,7 @@ import { Link } from "@tiptap/extension-link";
 import { Emoji, EmojiItem, gitHubEmojis } from "@tiptap/extension-emoji";
 import { Video } from "./video";
 import { FileHandler } from "@tiptap/extension-file-handler";
+import { ContentItemMenu } from "./menus/ContentItemMenu";
 import Focus from "@tiptap/extension-focus";
 // import { Image } from "@tiptap/extension-image";
 // import ImageResize from "tiptap-extension-resize-image";
@@ -1058,10 +1059,11 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           </Button>
         </div>
       )}
-      <div className="overflow-y-auto flex-1 w-full">
+      <div className="overflow-y-auto flex-1 w-full relative">
+        <ContentItemMenu editor={editor} editable={!readOnly} />
         <EditorContent
           editor={editor}
-          className={`mt-0.5 border-accent-foreground/10 border rounded-lg prose prose-xs sm:prose-sm lg:prose xl:prose-lg max-w-none w-full focus:outline-none ${styles.editorContent}`}
+          className={`mt-0.5 ${!readOnly ? "pl-3 border-4 border-primary/20" : ""} border-accent-foreground/10 border rounded-lg prose prose-xs sm:prose-sm lg:prose xl:prose-lg max-w-none w-full focus:outline-none ${styles.editorContent}`}
         />
       </div>
 

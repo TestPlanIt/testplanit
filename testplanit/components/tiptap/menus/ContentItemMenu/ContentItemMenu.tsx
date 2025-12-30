@@ -39,12 +39,12 @@ export const ContentItemMenu = ({ editor, editable }: ContentItemMenuProps) => {
       onNodeChange={data.handleNodeChange}
     >
       <div className={`flex items-center gap-0.5 ${!editable ? "hidden" : ""}`}>
-        <Toolbar.Button onClick={actions.handleAdd}>
-          <Icon name="Plus" />
-        </Toolbar.Button>
         <Popover.Root open={menuOpen} onOpenChange={setMenuOpen}>
           <Popover.Trigger asChild>
-            <Toolbar.Button>
+            <Toolbar.Button
+              className="cursor-grab active:cursor-grabbing p-0 min-w-0!"
+              data-drag-handle
+            >
               <Icon name="GripVertical" />
             </Toolbar.Button>
           </Popover.Trigger>
@@ -59,6 +59,12 @@ export const ContentItemMenu = ({ editor, editable }: ContentItemMenuProps) => {
               style={{ pointerEvents: "auto", zIndex: 9999 }}
             >
               <Surface className="p-2 flex flex-col min-w-[16rem]">
+                <Popover.Close>
+                  <DropdownButton onClick={actions.handleAdd}>
+                    <Icon name="Plus" />
+                    Add paragraph below
+                  </DropdownButton>
+                </Popover.Close>
                 <Popover.Close>
                   <DropdownButton onClick={actions.resetTextFormatting}>
                     <Icon name="RemoveFormatting" />
