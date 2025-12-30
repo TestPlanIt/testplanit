@@ -1,3 +1,10 @@
+## [0.9.2](https://github.com/TestPlanIt/testplanit/compare/v0.9.1...v0.9.2) (2025-12-30)
+
+
+### Bug Fixes
+
+* **tooltip:** update TooltipTrigger components to include type="button" ([d0fb809](https://github.com/TestPlanIt/testplanit/commit/d0fb80906584768da6da81c969ef9c62c7284b0d))
+
 ## [0.9.1](https://github.com/TestPlanIt/testplanit/compare/v0.9.0...v0.9.1) (2025-12-30)
 
 
