@@ -1,3 +1,10 @@
+## [0.9.1](https://github.com/TestPlanIt/testplanit/compare/v0.9.0...v0.9.1) (2025-12-30)
+
+
+### Bug Fixes
+
+* **tiptap:** prevent rendering of ContentItemMenu when editor lacks plugin support ([d33d52f](https://github.com/TestPlanIt/testplanit/commit/d33d52f38645c2ccb5c6d36df3c86d63f3e5f1e7))
+
 # [0.9.0](https://github.com/TestPlanIt/testplanit/compare/v0.8.27...v0.9.0) (2025-12-30)
 
 
