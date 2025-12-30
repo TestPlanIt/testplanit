@@ -1,3 +1,10 @@
+## [0.8.27](https://github.com/TestPlanIt/testplanit/compare/v0.8.26...v0.8.27) (2025-12-30)
+
+
+### Bug Fixes
+
+* **bulk-edit:** increment version number in bulk edit route ([ba93044](https://github.com/TestPlanIt/testplanit/commit/ba93044041037e39b77183d5f670976d2dd222da))
+
 ## [0.8.26](https://github.com/TestPlanIt/testplanit/compare/v0.8.25...v0.8.26) (2025-12-30)
 
 
