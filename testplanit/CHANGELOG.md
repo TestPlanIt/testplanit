@@ -1,3 +1,10 @@
+## [0.8.26](https://github.com/TestPlanIt/testplanit/compare/v0.8.25...v0.8.26) (2025-12-30)
+
+
+### Bug Fixes
+
+* **bulk-edit:** update state handling in bulk edit route ([18e68c9](https://github.com/TestPlanIt/testplanit/commit/18e68c93b4b9cbb3d78bd19f05c02bc17e092307))
+
 ## [0.8.25](https://github.com/TestPlanIt/testplanit/compare/v0.8.24...v0.8.25) (2025-12-29)
 
 
