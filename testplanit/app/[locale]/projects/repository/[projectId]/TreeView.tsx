@@ -872,13 +872,35 @@ const TreeView: React.FC<{
             e.stopPropagation();
             if (hasChildren) {
               const wasOpen = node.isOpen;
+              const isRootFolder = data?.parentId === null;
               // Option key (Mac) / Alt key (Windows) expands/collapses all descendants
+              // If on a root folder, expand/collapse ALL root folders
               if (e.altKey) {
-                if (wasOpen) {
-                  collapseAllDescendants(node);
+                if (isRootFolder && treeRef.current) {
+                  // Expand/collapse all root folders
+                  const rootNodes = treeData
+                    .map((n) => treeRef.current?.get(n.id))
+                    .filter(Boolean) as NodeApi<ArboristNode>[];
+                  if (wasOpen) {
+                    // Collapse all root folders
+                    for (const rootNode of rootNodes) {
+                      collapseAllDescendants(rootNode);
+                    }
+                  } else {
+                    // Expand all root folders
+                    for (const rootNode of rootNodes) {
+                      await expandAllDescendants(rootNode);
+                    }
+                    node.select();
+                  }
                 } else {
-                  await expandAllDescendants(node);
-                  node.select();
+                  // Non-root folder: expand/collapse only descendants
+                  if (wasOpen) {
+                    collapseAllDescendants(node);
+                  } else {
+                    await expandAllDescendants(node);
+                    node.select();
+                  }
                 }
               } else {
                 if (!childrenLoaded) {
@@ -991,6 +1013,7 @@ const TreeView: React.FC<{
         indent={24}
         rowHeight={32}
         overscanCount={0}
+        paddingBottom={64}
         selection={selectedId || selectedFolderId?.toString() || undefined}
         onSelect={handleSelect}
         onToggle={async (id) => {

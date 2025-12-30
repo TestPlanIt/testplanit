@@ -18,7 +18,7 @@ const prisma = new PrismaClient();
 const PermissionCheckSchema = z.object({
   userId: z.string().min(1),
   projectId: z.int().positive(),
-  area: z.enum(ApplicationArea).optional(),
+  area: z.nativeEnum(ApplicationArea).optional(),
   checkAccessOnly: z.boolean().optional(), // New flag to only check if user has project access
 });
 

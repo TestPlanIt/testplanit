@@ -1122,10 +1122,21 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 parentId={selectedFolderId}
                                 repositoryId={repository.id}
                                 panelWidth={panelWidth}
-                                onFolderCreated={() => {
+                                onFolderCreated={(
+                                  newFolderId: number,
+                                  createdParentId: number | null
+                                ) => {
                                   if (refetchFoldersRef.current) {
                                     refetchFoldersRef.current();
                                   }
+                                  // After refetch completes, select the new folder to expand parent
+                                  setTimeout(() => {
+                                    window.dispatchEvent(
+                                      new CustomEvent("folderSelectionChanged", {
+                                        detail: { folderId: newFolderId },
+                                      })
+                                    );
+                                  }, 100);
                                 }}
                               />
                             )}
