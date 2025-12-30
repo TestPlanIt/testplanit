@@ -25,12 +25,18 @@ export const ContentItemMenu = ({ editor, editable }: ContentItemMenuProps) => {
   );
 
   useEffect(() => {
+    if (!editor?.commands) return;
     if (menuOpen) {
       editor.commands.setMeta("lockDragHandle", true);
     } else {
       editor.commands.setMeta("lockDragHandle", false);
     }
   }, [editor, menuOpen]);
+
+  // Don't render DragHandle if editor doesn't support plugins (e.g., in tests)
+  if (!editor?.registerPlugin) {
+    return null;
+  }
 
   return (
     <DragHandle
