@@ -257,7 +257,7 @@ export async function POST(
           updateData.name = validatedData.updates.name;
         }
         if (validatedData.updates.state !== undefined) {
-          updateData.state = validatedData.updates.state;
+          updateData.stateId = validatedData.updates.state;
         }
         if (validatedData.updates.automated !== undefined) {
           updateData.automated = validatedData.updates.automated;
