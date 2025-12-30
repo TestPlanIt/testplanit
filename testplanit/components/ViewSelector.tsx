@@ -186,7 +186,7 @@ export function ViewSelector({
   );
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col pt-0.5     w-full">
       <Select value={selectedItem} onValueChange={onValueChange}>
         <SelectTrigger className="mr-6 ml-1 text-primary text-lg md:text-xl font-extrabold">
           <SelectValue placeholder="Select an option" />
@@ -205,7 +205,7 @@ export function ViewSelector({
         </SelectContent>
       </Select>
 
-      <div className="px-4 space-y-1 mt-4">
+      <div className="px-4 space-y-1">
         {selectedItem === "templates" && (
           <>
             <div

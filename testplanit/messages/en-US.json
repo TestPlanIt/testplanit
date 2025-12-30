@@ -1692,6 +1692,8 @@
     },
     "parentFolder": "Parent Folder",
     "rootFolder": "Root Folder",
+    "removeParentFolder": "Remove parent folder",
+    "createInSelectedFolder": "Revert to parent folder",
     "deleteCase": {
       "title": "Delete Test Case",
       "confirmMessageStart": "Are you sure you want to delete the Test Case ",

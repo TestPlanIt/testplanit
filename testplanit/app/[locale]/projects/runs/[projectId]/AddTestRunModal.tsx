@@ -555,6 +555,7 @@ const TestCasesDialog = React.memo(
     projectId,
     linkedIssueIds,
   }: any) => {
+    const tRepository = useTranslations("repository");
     // Local pagination state for the modal (independent from parent page)
     const [modalCurrentPage, setModalCurrentPage] = useState(1);
     const [modalPageSize, setModalPageSize] = useState<number>(10);
@@ -681,7 +682,7 @@ const TestCasesDialog = React.memo(
     return (
       <DialogContent className="max-w-[1200px] h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-0 pr-4">
-          <DialogTitle>{t("selectCases")}</DialogTitle>
+          <DialogTitle>{tRepository("cases.selectCases")}</DialogTitle>
           <DialogDescription className="flex justify-between items-start text-muted-foreground">
             <div className="flex items-center gap-4">
               <MagicSelectButton

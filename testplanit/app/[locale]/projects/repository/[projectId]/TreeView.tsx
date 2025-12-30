@@ -75,7 +75,7 @@ const TreeView: React.FC<{
     directCaseCount: number;
     totalCaseCount: number;
   }>;
-  onRefetchFolders?: (refetch: () => void) => void;
+  onRefetchFolders?: (refetch: () => Promise<unknown>) => void;
   onRefetchStats?: () => void;
   /** Ref to an element to scope DnD events to (prevents "Cannot have two HTML5 backends" error in portals) */
   dndRootElement?: HTMLElement | null;
@@ -197,6 +197,7 @@ const TreeView: React.FC<{
     () => new Set()
   );
   const [showSpinner, setShowSpinner] = useState(false);
+  const [visibleNodeCount, setVisibleNodeCount] = useState(0);
 
   // Delay showing spinner to prevent flashing on fast loads
   const isLoading = foldersLoading;
@@ -559,6 +560,16 @@ const TreeView: React.FC<{
     ensureFolderPathLoaded,
   ]);
 
+  // Initialize visible node count when tree data changes
+  useEffect(() => {
+    if (treeRef.current) {
+      setVisibleNodeCount(treeRef.current.visibleNodes.length);
+    } else if (treeData.length > 0) {
+      // Fallback to treeData length if ref not ready
+      setVisibleNodeCount(treeData.length);
+    }
+  }, [treeData]);
+
   // Set initial selection after tree is rendered
   // Only run when selectedFolderId actually changes from the parent, not on treeData changes
   useEffect(() => {
@@ -622,6 +633,11 @@ const TreeView: React.FC<{
             }
 
             onSelectFolder(folderId);
+
+            // Update URL with the new folder ID
+            const url = new URL(window.location.href);
+            url.searchParams.set("node", folderId.toString());
+            window.history.pushState({}, "", url.toString());
           }
         }, 0);
       }
@@ -872,13 +888,35 @@ const TreeView: React.FC<{
             e.stopPropagation();
             if (hasChildren) {
               const wasOpen = node.isOpen;
+              const isRootFolder = data?.parentId === null;
               // Option key (Mac) / Alt key (Windows) expands/collapses all descendants
+              // If on a root folder, expand/collapse ALL root folders
               if (e.altKey) {
-                if (wasOpen) {
-                  collapseAllDescendants(node);
+                if (isRootFolder && treeRef.current) {
+                  // Expand/collapse all root folders
+                  const rootNodes = treeData
+                    .map((n) => treeRef.current?.get(n.id))
+                    .filter(Boolean) as NodeApi<ArboristNode>[];
+                  if (wasOpen) {
+                    // Collapse all root folders
+                    for (const rootNode of rootNodes) {
+                      collapseAllDescendants(rootNode);
+                    }
+                  } else {
+                    // Expand all root folders
+                    for (const rootNode of rootNodes) {
+                      await expandAllDescendants(rootNode);
+                    }
+                    node.select();
+                  }
                 } else {
-                  await expandAllDescendants(node);
-                  node.select();
+                  // Non-root folder: expand/collapse only descendants
+                  if (wasOpen) {
+                    collapseAllDescendants(node);
+                  } else {
+                    await expandAllDescendants(node);
+                    node.select();
+                  }
                 }
               } else {
                 if (!childrenLoaded) {
@@ -963,6 +1001,46 @@ const TreeView: React.FC<{
     );
   };
 
+  // Handle drag leave to hide cursor when dragging outside tree area
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    // Only hide cursor if we're actually leaving the tree container
+    // Check if relatedTarget is outside the container
+    const container = e.currentTarget;
+    const relatedTarget = e.relatedTarget as Node | null;
+    if (!relatedTarget || !container.contains(relatedTarget)) {
+      treeRef.current?.hideCursor();
+    }
+  }, []);
+
+  // Bottom drop zone for moving folders to end of root level
+  const [{ isOverBottom }, bottomDropRef] = useDrop<
+    { id: string; dragIds: string[] },
+    void,
+    { isOverBottom: boolean }
+  >(
+    () => ({
+      accept: "NODE", // react-arborist uses "NODE" for folder drag items
+      canDrop: () => canAddEdit && !filteredFolders,
+      drop: (item) => {
+        // Move the dragged folder to the end of root level
+        const rootFolders = folders?.filter((f) => f.parentId === null) || [];
+        const maxOrder = rootFolders.reduce(
+          (max, f) => Math.max(max, f.order),
+          -1
+        );
+        handleMove({
+          dragIds: item.dragIds || [item.id],
+          parentId: null,
+          index: maxOrder + 1,
+        });
+      },
+      collect: (monitor) => ({
+        isOverBottom: monitor.isOver() && monitor.canDrop(),
+      }),
+    }),
+    [canAddEdit, filteredFolders, folders, handleMove]
+  );
+
   // Show loading spinner while data is being fetched (with delay to prevent flashing)
   if (showSpinner || folders === undefined) {
     return <LoadingSpinner />;
@@ -979,33 +1057,89 @@ const TreeView: React.FC<{
     );
   }
 
+  // Calculate tree height based on visible nodes - add 7px to prevent scrollbar
+  // Use treeData.length as fallback when visibleNodeCount hasn't been set yet
+  const effectiveNodeCount = visibleNodeCount || treeData.length;
+  const treeHeight = effectiveNodeCount * 32 + 4;
+
   return (
     <>
-      <Tree
-        ref={treeRef}
-        data={treeData}
-        openByDefault={false}
-        initialOpenState={initialOpenState}
-        width="100%"
-        height={Math.max(treeData.length * 35, 700)}
-        indent={24}
-        rowHeight={32}
-        overscanCount={0}
-        selection={selectedId || selectedFolderId?.toString() || undefined}
-        onSelect={handleSelect}
-        onToggle={async (id) => {
-          const folderId = Number(id);
-          if (!Number.isNaN(folderId) && treeRef.current?.isOpen(id)) {
-            await ensureFolderChildrenLoaded(folderId);
-          }
-        }}
-        onMove={canAddEdit && !filteredFolders ? handleMove : undefined}
-        disableDrag={!canAddEdit || !!filteredFolders}
-        disableDrop={!canAddEdit || !!filteredFolders}
-        dndRootElement={dndRootElement || undefined}
+      <div
+        onDragLeave={handleDragLeave}
+        className="flex flex-col"
+        style={{ minHeight: 700 }}
       >
-        {Node}
-      </Tree>
+        <Tree
+          ref={treeRef}
+          data={treeData}
+          openByDefault={false}
+          initialOpenState={initialOpenState}
+          width="100%"
+          height={treeHeight}
+          indent={24}
+          rowHeight={32}
+          overscanCount={0}
+          onScroll={() => {
+            // Update visible node count when tree scrolls/renders
+            if (treeRef.current) {
+              const count = treeRef.current.visibleNodes.length;
+              if (count !== visibleNodeCount) {
+                setVisibleNodeCount(count);
+              }
+            }
+          }}
+          selection={selectedId || selectedFolderId?.toString() || undefined}
+          onSelect={handleSelect}
+          onToggle={async (id) => {
+            const folderId = Number(id);
+            if (!Number.isNaN(folderId) && treeRef.current?.isOpen(id)) {
+              await ensureFolderChildrenLoaded(folderId);
+            }
+            // Update visible node count after toggle
+            setTimeout(() => {
+              if (treeRef.current) {
+                setVisibleNodeCount(treeRef.current.visibleNodes.length);
+              }
+            }, 0);
+          }}
+          onMove={canAddEdit && !filteredFolders ? handleMove : undefined}
+          disableDrag={!canAddEdit || !!filteredFolders}
+          disableDrop={!canAddEdit || !!filteredFolders}
+          dndRootElement={dndRootElement || undefined}
+        >
+          {Node}
+        </Tree>
+        {/* Bottom drop zone for moving folders to end of root level - fills remaining space */}
+        {canAddEdit && !filteredFolders && (
+          <div
+            ref={(el) => {
+              bottomDropRef(el);
+            }}
+            className="flex-1 min-h-16 w-full relative"
+          >
+            {/* Drop indicator line with circle - matches react-arborist cursor style */}
+            {isOverBottom && (
+              <div className="absolute top-0 left-0 right-6 flex items-center z-10 pointer-events-none">
+                <div
+                  className="rounded-full"
+                  style={{
+                    width: 4,
+                    height: 4,
+                    boxShadow: "0 0 0 3px #4B91E2",
+                  }}
+                />
+                <div
+                  className="flex-1 rounded-sm"
+                  style={{
+                    height: 2,
+                    background: "#4B91E2",
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Edit Modal */}
       {editModalState.open && editModalState.folderId && (

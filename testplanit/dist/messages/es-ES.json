@@ -1692,6 +1692,8 @@
     },
     "parentFolder": "Carpeta padre",
     "rootFolder": "Carpeta raíz",
+    "removeParentFolder": "Eliminar la carpeta principal",
+    "createInSelectedFolder": "Revertir a la carpeta principal",
     "deleteCase": {
       "title": "Eliminar Caso de Prueba",
       "confirmMessageStart": "¿Está seguro que desea eliminar el caso de prueba ",
