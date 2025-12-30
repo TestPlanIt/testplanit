@@ -1692,6 +1692,8 @@
     },
     "parentFolder": "Dossier parent",
     "rootFolder": "Dossier racine",
+    "removeParentFolder": "Supprimer le dossier parent",
+    "createInSelectedFolder": "Revenir au dossier parent",
     "deleteCase": {
       "title": "Supprimer le cas de test",
       "confirmMessageStart": "Êtes-vous sûr de vouloir supprimer le cas de test ? ",

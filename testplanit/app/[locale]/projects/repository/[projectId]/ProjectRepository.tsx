@@ -385,7 +385,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const [folderHierarchy, setFolderHierarchy] = useState<FolderNode[]>([]);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
   const panelRef = useRef<ImperativePanelHandle>(null);
-  const refetchFoldersRef = useRef<(() => void) | null>(null);
+  const refetchFoldersRef = useRef<(() => Promise<unknown>) | null>(null);
   // Ref for scoping DnD events when used in portaled contexts (modals)
   const dndContainerRef = useRef<HTMLDivElement>(null);
 
@@ -845,9 +845,12 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     setFolderHierarchy(hierarchy);
   }, []);
 
-  const handleRefetchFolders = useCallback((refetch: () => void) => {
-    refetchFoldersRef.current = refetch;
-  }, []);
+  const handleRefetchFolders = useCallback(
+    (refetch: () => Promise<unknown>) => {
+      refetchFoldersRef.current = refetch;
+    },
+    []
+  );
 
   const getBreadcrumbItems = useMemo(() => {
     if (!deferredFolderId || folderHierarchy.length === 0) return [];
@@ -1100,7 +1103,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                   >
                     <div className="flex flex-col h-full">
                       <div
-                        className="flex items-center justify-between mr-2 shrink-0"
+                        className="flex items-start justify-between mr-2 shrink-0"
                         data-testid="repository-left-panel-header"
                       >
                         <ViewSelector
@@ -1113,7 +1116,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                           viewOptions={viewOptions}
                           totalCount={viewOptionsData?.totalCount || 0}
                         />
-                        <div className="-mt-4 ml-4">
+                        <div className="ml-4">
                           {selectedItem === "folders" &&
                             !hideHeader &&
                             canAddEdit && (
@@ -1122,21 +1125,25 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 parentId={selectedFolderId}
                                 repositoryId={repository.id}
                                 panelWidth={panelWidth}
-                                onFolderCreated={(
+                                onFolderCreated={async (
                                   newFolderId: number,
-                                  createdParentId: number | null
+                                  _createdParentId: number | null
                                 ) => {
                                   if (refetchFoldersRef.current) {
-                                    refetchFoldersRef.current();
+                                    // Wait for refetch to complete before selecting the new folder
+                                    await refetchFoldersRef.current();
                                   }
-                                  // After refetch completes, select the new folder to expand parent
+                                  // Small delay to ensure tree has re-rendered with new data
                                   setTimeout(() => {
                                     window.dispatchEvent(
-                                      new CustomEvent("folderSelectionChanged", {
-                                        detail: { folderId: newFolderId },
-                                      })
+                                      new CustomEvent(
+                                        "folderSelectionChanged",
+                                        {
+                                          detail: { folderId: newFolderId },
+                                        }
+                                      )
                                     );
-                                  }, 100);
+                                  }, 50);
                                 }}
                               />
                             )}
