@@ -292,6 +292,18 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
         });
       }
 
+      // Clear the server-side LLM adapter cache so the new settings take effect
+      try {
+        await fetch("/api/admin/llm/clear-cache", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ llmIntegrationId: integration.id }),
+        });
+      } catch (cacheError) {
+        console.warn("Failed to clear LLM cache:", cacheError);
+        // Don't fail the whole operation if cache clearing fails
+      }
+
       toast.success(tCommon("fields.success"), {
         description: t("integrationUpdated"),
       });
