@@ -251,7 +251,7 @@ export function LlmIntegrationsList({
                     <div className="flex items-center gap-2">
                       {config.streamingEnabled && (
                         <Tooltip>
-                          <TooltipTrigger>
+                          <TooltipTrigger type="button">
                             <Badge variant="outline" className="text-xs">
                               <Zap className="h-3 w-3 mr-1" />
                               {tGlobal("admin.llm.streaming")}

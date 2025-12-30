@@ -47,7 +47,7 @@ const BreadcrumbComponent: React.FC<BreadcrumbComponentProps> = ({
                 <BreadcrumbPage className="overflow-hidden">
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger className="text-muted-foreground font-bold">
+                      <TooltipTrigger type="button" className="text-muted-foreground font-bold">
                         <div className="cursor-pointer inline-flex items-center p-0 m-0 max-w-xs compact-button">
                           <span className="truncate">{folder.text}</span>
                         </div>
@@ -65,7 +65,7 @@ const BreadcrumbComponent: React.FC<BreadcrumbComponentProps> = ({
                 >
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger>
+                      <TooltipTrigger type="button">
                         <Link
                           href={`/projects/repository/${projectId}/?node=${folder.id}`}
                           className="text-primary/50 cursor-pointer inline-flex items-center p-0 m-0 max-w-xs compact-button hover:underline"

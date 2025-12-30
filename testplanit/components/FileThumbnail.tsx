@@ -16,7 +16,7 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({ attachment }) => {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger className="cursor-default">
+        <TooltipTrigger type="button" className="cursor-default">
           <Image
             src={attachment.url}
             alt={attachment.name}

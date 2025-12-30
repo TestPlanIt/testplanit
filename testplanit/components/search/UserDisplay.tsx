@@ -50,7 +50,7 @@ export const UserDisplay: React.FC<UserDisplayProps> = ({
       />
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger className="text-left min-w-0 flex-1 overflow-hidden">
+          <TooltipTrigger type="button" className="text-left min-w-0 flex-1 overflow-hidden">
             <span
               className={`flex items-center gap-1 ${isCurrentUser ? "font-semibold" : ""} ${size === "large" ? "text-base" : ""}`}
             >

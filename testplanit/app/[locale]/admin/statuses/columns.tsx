@@ -203,7 +203,7 @@ export const getColumns = (
             <span key={index}>
               <TooltipProvider>
                 <Tooltip>
-                  <TooltipTrigger className="cursor-default">
+                  <TooltipTrigger type="button" className="cursor-default">
                     <DynamicIcon
                       name={scope.scope.icon as IconName}
                       size={20}

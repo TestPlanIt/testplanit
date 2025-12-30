@@ -105,7 +105,7 @@ const Avatar: React.FC<AvatarProps> = ({
   return showTooltip ? (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger className="cursor-default">
+        <TooltipTrigger type="button" className="cursor-default">
           {renderContent()}
         </TooltipTrigger>
         <TooltipContent>

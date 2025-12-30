@@ -31,7 +31,7 @@ export const ProjectNameCell: React.FC<ProjectNameCellProps> = ({
       >
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger className="text-left block truncate">
+            <TooltipTrigger type="button" className="text-left block truncate">
               <span className="truncate">{value}</span>
             </TooltipTrigger>
             <TooltipContent align="start">

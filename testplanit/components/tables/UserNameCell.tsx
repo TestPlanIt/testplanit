@@ -67,7 +67,7 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
       />
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger className="text-left block truncate min-w-0">
+          <TooltipTrigger type="button" className="text-left block truncate min-w-0">
             <div
               className={cn(
                 "flex items-center truncate",

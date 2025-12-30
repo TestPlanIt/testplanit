@@ -1471,7 +1471,7 @@ export const getColumns = (
         return (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger type="button">
                 <div
                   className="truncate whitespace-nowrap overflow-hidden"
                   style={{ maxWidth: column.getSize() }}

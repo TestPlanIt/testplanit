@@ -517,7 +517,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                           <div className="flex space-x-2 mt-4">
                             <TooltipProvider>
                               <Tooltip>
-                                <TooltipTrigger>
+                                <TooltipTrigger type="button">
                                   <Button type="button" className="mt-4">
                                     <Link
                                       href={

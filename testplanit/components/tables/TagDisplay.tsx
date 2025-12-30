@@ -36,7 +36,7 @@ export const TagsDisplay: React.FC<Tags> = ({
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger className="cursor-default">
+        <TooltipTrigger type="button" className="cursor-default">
           <div className="flex items-center max-w-full">
             <Badge key={id} className="mr-1 mb-1">
               {link ? (
