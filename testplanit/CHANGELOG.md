@@ -1,3 +1,10 @@
+# [0.9.0](https://github.com/TestPlanIt/testplanit/compare/v0.8.27...v0.9.0) (2025-12-30)
+
+
+### Features
+
+* **tiptap:** add ContentItemMenu and drag handle functionality ([85d8c4a](https://github.com/TestPlanIt/testplanit/commit/85d8c4a66e623fc89c488ae64989a981472cfdbb))
+
 ## [0.8.27](https://github.com/TestPlanIt/testplanit/compare/v0.8.26...v0.8.27) (2025-12-30)
 
 
