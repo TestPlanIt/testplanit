@@ -224,7 +224,7 @@ export async function POST(
             stateName: caseItem.state?.name || "",
             automated: caseItem.automated || false,
             estimate: caseItem.estimate,
-            version: caseItem.currentVersion,
+            version: caseItem.currentVersion + 1,
             creatorId: caseItem.creatorId,
             creatorName: caseItem.creator?.name || "",
             isArchived: caseItem.isArchived || false,
