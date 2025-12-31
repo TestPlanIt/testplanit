@@ -1284,6 +1284,30 @@ export default function Cases({
                 isCompleted: true,
               },
             },
+            results: {
+              select: {
+                id: true,
+                executedAt: true,
+                status: {
+                  select: {
+                    id: true,
+                    name: true,
+                    color: {
+                      select: {
+                        value: true,
+                      },
+                    },
+                  },
+                },
+              },
+              where: {
+                isDeleted: false,
+              },
+              orderBy: {
+                executedAt: "desc",
+              },
+              take: 1,
+            },
           },
         },
         linksFrom: {
@@ -1467,6 +1491,30 @@ export default function Cases({
                     isCompleted: true;
                   };
                 };
+                results: {
+                  select: {
+                    id: true;
+                    executedAt: true;
+                    status: {
+                      select: {
+                        id: true;
+                        name: true;
+                        color: {
+                          select: {
+                            value: true;
+                          };
+                        };
+                      };
+                    };
+                  };
+                  where: {
+                    isDeleted: false;
+                  };
+                  orderBy: {
+                    executedAt: "desc";
+                  };
+                  take: 1;
+                };
               };
             };
             linksFrom: {
@@ -1517,7 +1565,61 @@ export default function Cases({
       }));
     }
     // Not in isRunMode. Use 'data' directly (already server-side paginated and filtered).
-    return data || [];
+    // Compute lastTestResult for each case by finding the most recent result across all test runs
+    if (data) {
+      return data.map((caseItem) => {
+        // Find the most recent result across all test runs for this case
+        let lastTestResult: {
+          status: { id: number; name: string; color?: { value: string } };
+          executedAt: Date;
+          testRun?: { id: number; name: string };
+        } | null = null;
+
+        if (caseItem.testRuns && caseItem.testRuns.length > 0) {
+          // Collect all results from all test runs
+          const allResults: {
+            result: {
+              id: number;
+              executedAt: Date;
+              status: { id: number; name: string; color?: { value: string } };
+            };
+            testRun: { id: number; name: string };
+          }[] = [];
+
+          for (const trLink of caseItem.testRuns) {
+            if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
+              for (const result of trLink.results) {
+                allResults.push({
+                  result: result as any,
+                  testRun: { id: trLink.testRun.id, name: trLink.testRun.name },
+                });
+              }
+            }
+          }
+
+          // Sort by executedAt descending and pick the first one
+          if (allResults.length > 0) {
+            allResults.sort(
+              (a, b) =>
+                new Date(b.result.executedAt).getTime() -
+                new Date(a.result.executedAt).getTime()
+            );
+            const mostRecent = allResults[0];
+            lastTestResult = {
+              status: mostRecent.result.status,
+              executedAt: mostRecent.result.executedAt,
+              testRun: mostRecent.testRun,
+            };
+          }
+        }
+
+        return {
+          ...caseItem,
+          lastTestResult,
+        };
+      });
+    }
+    return [];
   }, [isRunMode, testRunCasesData, data, optimisticReorder]);
 
   const uniqueCaseFieldList = useMemo(() => {
@@ -1899,6 +2001,7 @@ export default function Cases({
         clickToViewFullContent: t("repository.fields.clickToViewFullContent"),
         comments: t("comments.title"),
         configuration: t("common.fields.configuration"),
+        lastTestResult: t("repository.columns.lastTestResult"),
       },
       isRunMode,
       isSelectionMode,
