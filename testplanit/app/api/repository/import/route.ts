@@ -712,14 +712,35 @@ export async function POST(request: NextRequest) {
               }
 
               for (const tagName of caseData.tags) {
+                // Case-insensitive tag matching - first check for active tag
                 let tag = await enhancedDb.tags.findFirst({
-                  where: { name: tagName, isDeleted: false },
+                  where: {
+                    name: { equals: tagName, mode: "insensitive" },
+                    isDeleted: false,
+                  },
                 });
 
                 if (!tag) {
-                  tag = await enhancedDb.tags.create({
-                    data: { name: tagName },
+                  // Check for soft-deleted tag with same name and restore it
+                  const deletedTag = await enhancedDb.tags.findFirst({
+                    where: {
+                      name: { equals: tagName, mode: "insensitive" },
+                      isDeleted: true,
+                    },
                   });
+
+                  if (deletedTag) {
+                    // Restore the soft-deleted tag
+                    tag = await enhancedDb.tags.update({
+                      where: { id: deletedTag.id },
+                      data: { isDeleted: false },
+                    });
+                  } else {
+                    // Create new tag only if no existing tag found
+                    tag = await enhancedDb.tags.create({
+                      data: { name: tagName },
+                    });
+                  }
                 }
 
                 await enhancedDb.repositoryCases.update({
