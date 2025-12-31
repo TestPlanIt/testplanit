@@ -1,5 +1,4 @@
-import React from "react";
-import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
+import { describe, it, expect, vi, beforeAll } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
@@ -251,6 +250,15 @@ describe("LastTestResultCell via getColumns", () => {
       return columns.find((col) => col.id === "lastTestResult");
     };
 
+    // Helper to render a cell - handles the union type of cell being string | function
+    const renderCell = (column: ReturnType<typeof getLastResultColumn>, mockRow: { original: ExtendedCases }) => {
+      const cell = column?.cell;
+      if (typeof cell === "function") {
+        return render(<div>{cell({ row: mockRow } as any)}</div>);
+      }
+      return render(<div>{cell}</div>);
+    };
+
     it("should render null when lastTestResult is undefined", () => {
       const column = getLastResultColumn();
       const mockRow = {
@@ -261,9 +269,7 @@ describe("LastTestResultCell via getColumns", () => {
         } as ExtendedCases,
       };
 
-      const { container } = render(
-        <div>{column?.cell?.({ row: mockRow } as any)}</div>
-      );
+      const { container } = renderCell(column, mockRow);
 
       // Should render empty (just the wrapper div)
       expect(container.textContent).toBe("");
@@ -279,9 +285,7 @@ describe("LastTestResultCell via getColumns", () => {
         } as ExtendedCases,
       };
 
-      const { container } = render(
-        <div>{column?.cell?.({ row: mockRow } as any)}</div>
-      );
+      const { container } = renderCell(column, mockRow);
 
       expect(container.textContent).toBe("");
     });
@@ -304,7 +308,7 @@ describe("LastTestResultCell via getColumns", () => {
         } as ExtendedCases,
       };
 
-      render(<div>{column?.cell?.({ row: mockRow } as any)}</div>);
+      renderCell(column, mockRow);
 
       // Should display the status name
       expect(screen.getByText("Passed")).toBeInTheDocument();
@@ -328,7 +332,7 @@ describe("LastTestResultCell via getColumns", () => {
         } as ExtendedCases,
       };
 
-      render(<div>{column?.cell?.({ row: mockRow } as any)}</div>);
+      renderCell(column, mockRow);
 
       expect(screen.getByText("Failed")).toBeInTheDocument();
       // The color dot should have the correct background color
@@ -353,7 +357,7 @@ describe("LastTestResultCell via getColumns", () => {
         } as ExtendedCases,
       };
 
-      render(<div>{column?.cell?.({ row: mockRow } as any)}</div>);
+      renderCell(column, mockRow);
 
       expect(screen.getByText("Blocked")).toBeInTheDocument();
     });
@@ -377,7 +381,7 @@ describe("LastTestResultCell via getColumns", () => {
         } as ExtendedCases,
       };
 
-      render(<div>{column?.cell?.({ row: mockRow } as any)}</div>);
+      renderCell(column, mockRow);
 
       // Hover over the status to trigger tooltip
       const statusElement = screen.getByText("Passed");
@@ -408,7 +412,7 @@ describe("LastTestResultCell via getColumns", () => {
         } as ExtendedCases,
       };
 
-      render(<div>{column?.cell?.({ row: mockRow } as any)}</div>);
+      renderCell(column, mockRow);
 
       const statusElement = screen.getByText("Passed");
       await user.hover(statusElement);
@@ -437,7 +441,7 @@ describe("LastTestResultCell via getColumns", () => {
         } as ExtendedCases,
       };
 
-      render(<div>{column?.cell?.({ row: mockRow } as any)}</div>);
+      renderCell(column, mockRow);
 
       const statusElement = screen.getByText("Passed");
       await user.hover(statusElement);
@@ -467,7 +471,7 @@ describe("LastTestResultCell via getColumns", () => {
         } as ExtendedCases,
       };
 
-      render(<div>{column?.cell?.({ row: mockRow } as any)}</div>);
+      renderCell(column, mockRow);
 
       const statusElement = screen.getByText("Passed");
       await user.hover(statusElement);
