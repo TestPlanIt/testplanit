@@ -939,7 +939,7 @@ const TreeView: React.FC<{
         </Button>
         <IconComponent
           className={`w-4 h-4 ml-1 ${
-            isSelected ? "text-primary" : "text-muted-foreground"
+            isSelected ? "text-secondary-foreground" : "text-muted-foreground"
           }`}
         />
         <span className="ml-2 truncate flex-1">{node.data.name}</span>
@@ -993,7 +993,9 @@ const TreeView: React.FC<{
         )}
 
         {data && (data.directCaseCount > 0 || data.totalCaseCount > 0) && (
-          <span className="ml-2 text-xs text-muted-foreground shrink-0">
+          <span
+            className={`ml-2 text-xs shrink-0 ${isSelected ? "text-secondary-foreground" : "text-muted-foreground"}`}
+          >
             {`(${data.directCaseCount}/${data.totalCaseCount})`}
           </span>
         )}
