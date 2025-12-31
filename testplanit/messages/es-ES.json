@@ -1685,7 +1685,9 @@
     },
     "columns": {
       "selectCase": "Seleccionar Caso",
-      "runOrder": "Ejecutar pedido"
+      "runOrder": "Ejecutar pedido",
+      "lastTestResult": "Último resultado",
+      "testedOn": "Última prueba"
     },
     "actions": {
       "archive": "Archivar"

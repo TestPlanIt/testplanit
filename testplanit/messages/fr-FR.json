@@ -1685,7 +1685,9 @@
     },
     "columns": {
       "selectCase": "Sélectionner le cas",
-      "runOrder": "Ordre de passage"
+      "runOrder": "Ordre de passage",
+      "lastTestResult": "Dernier résultat",
+      "testedOn": "Dernière vérification"
     },
     "actions": {
       "archive": "Archive"
