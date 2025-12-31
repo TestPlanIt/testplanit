@@ -4672,6 +4672,7 @@
     "saveSuccess": "Étapes partagées mises à jour avec succès.",
     "saveError": "Une erreur s'est produite lors de l'enregistrement des étapes partagées.",
     "stepsCount": "{count, plural, one {# étape} other {# étapes}}",
+    "testCasesUsing": "{count, plural, one {# cas de test} other {# cas de test}}",
     "importWizard": {
       "title": "Importer les étapes partagées",
       "fields": {

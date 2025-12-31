@@ -201,13 +201,14 @@ export const getColumns = (
       enableResizing: true,
       enableHiding: false,
       meta: { isPinned: "right" },
-      size: 120,
+      size: 80,
       cell: ({ row }) => (
         <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
           <Button
-            variant="secondary"
+            variant="ghost"
             size="icon"
             onClick={() => handleOpenEditModal(row.original)}
+            className="px-2 py-1 h-auto"
           >
             <SquarePen className="h-4 w-4" />
           </Button>

@@ -221,7 +221,7 @@ export const getColumns = (
     enableResizing: true,
     enableSorting: false,
     enableHiding: false,
-    size: 120,
+    size: 80,
     meta: { isPinned: "right" },
     cell: ({ row }) => (
       <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
@@ -234,7 +234,7 @@ export const getColumns = (
         ) : (
           <Button
             variant="ghost"
-            className="text-muted-foreground cursor-not-allowed"
+            className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
             disabled
           >
             <Trash2 className="h-5 w-5" />

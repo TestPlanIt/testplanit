@@ -902,7 +902,7 @@ const ActionsCell = React.memo(function ActionsCell({
             <TooltipTrigger asChild>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="secondary" disabled={isSoftDeletedInRun}>
+                  <Button variant="ghost" className="px-2 py-1 h-auto" disabled={isSoftDeletedInRun}>
                     <PlusSquare className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -2107,7 +2107,7 @@ export const getColumns = (
         enableSorting: false,
         enableHiding: false,
         meta: { isPinned: "right" },
-        size: 120,
+        size: 80,
         cell: ({ row }) => (
           <ActionsCell
             row={row}

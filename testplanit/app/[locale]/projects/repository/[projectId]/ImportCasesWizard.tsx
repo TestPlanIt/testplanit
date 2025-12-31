@@ -644,6 +644,8 @@ export function ImportCasesWizard({
 
                 setOpen(false);
                 onImportComplete?.();
+                // Dispatch event to refresh Cases component data
+                window.dispatchEvent(new CustomEvent("repositoryCasesChanged"));
                 return;
               }
 
@@ -1070,6 +1072,127 @@ export function ImportCasesWizard({
     );
   };
 
+  // Helper function to parse and render steps
+  const renderStepsPreview = (stepsValue: string) => {
+    if (!stepsValue) return null;
+
+    // Try to parse as JSON array first
+    let steps: Array<{ action?: string; expected?: string }> = [];
+    try {
+      const parsed = JSON.parse(stepsValue);
+      if (Array.isArray(parsed)) {
+        steps = parsed;
+      }
+    } catch {
+      // If not JSON, parse as pipe-separated format: "Action | Expected Result"
+      // Split by newlines only - each line should be a complete step
+      const stepLines = stepsValue.split(/\n/).filter((s) => s.trim());
+
+      steps = stepLines.map((line) => {
+        // Remove leading step number if present (e.g., "1. ", "10. ")
+        const trimmed = line.replace(/^\d+\.\s*/, "").trim();
+        // Check for pipe separator for expected result
+        const pipeIndex = trimmed.indexOf("|");
+        if (pipeIndex > -1) {
+          return {
+            action: trimmed.substring(0, pipeIndex).trim(),
+            expected: trimmed.substring(pipeIndex + 1).trim(),
+          };
+        }
+        return { action: trimmed };
+      });
+    }
+
+    if (steps.length === 0) {
+      return <span className="text-muted-foreground">{stepsValue}</span>;
+    }
+
+    return (
+      <div className="space-y-2">
+        {steps.map((step, idx) => (
+          <div key={idx} className="border rounded p-2 bg-muted/30">
+            <div className="flex gap-2">
+              <Badge variant="outline" className="shrink-0">
+                {idx + 1}
+              </Badge>
+              <div className="flex-1 space-y-1">
+                <div className="text-sm">{step.action}</div>
+                {step.expected && (
+                  <div className="text-sm text-muted-foreground">
+                    <span className="font-medium">
+                      {tCommon("fields.expectedResult")}:{" "}
+                    </span>
+                    {step.expected}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // Helper function to parse and render tags
+  const renderTagsPreview = (tagsValue: string) => {
+    if (!tagsValue) return null;
+
+    let tags: string[] = [];
+    try {
+      const parsed = JSON.parse(tagsValue);
+      if (Array.isArray(parsed)) {
+        tags = parsed.map((t) => (typeof t === "string" ? t : t.name || ""));
+      }
+    } catch {
+      // Parse as comma-separated
+      tags = tagsValue.split(",").map((t) => t.trim());
+    }
+
+    tags = tags.filter((t) => t.length > 0);
+
+    if (tags.length === 0) {
+      return (
+        <span className="text-muted-foreground">
+          {tGlobal("sharedSteps.importWizard.page3.noValue")}
+        </span>
+      );
+    }
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {tags.map((tag, idx) => (
+          <Badge key={idx} variant="secondary">
+            {tag}
+          </Badge>
+        ))}
+      </div>
+    );
+  };
+
+  // Helper to render field value based on type
+  const renderFieldValue = (
+    field: { id: string; type: string } | undefined,
+    value: string
+  ) => {
+    if (!value) {
+      return (
+        <span className="text-muted-foreground">
+          {tGlobal("sharedSteps.importWizard.page3.noValue")}
+        </span>
+      );
+    }
+
+    if (field?.id === "steps" || field?.type === "Steps") {
+      return renderStepsPreview(value);
+    }
+
+    if (field?.id === "tags" || field?.type === "Tags") {
+      return renderTagsPreview(value);
+    }
+
+    return <span>{value}</span>;
+  };
+
   const renderPage4 = () => {
     const previewData = getPreviewData();
     const mappedFields = getMappedFields();
@@ -1116,25 +1239,30 @@ export function ImportCasesWizard({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {mappedFields.map((mapping) => {
                       const field = templateFields.find(
                         (f) => f.id === mapping.templateField
                       );
                       const value = caseData[mapping.csvColumn];
+                      const isExpandedField =
+                        field?.id === "steps" || field?.id === "tags";
 
                       return (
                         <div
                           key={mapping.csvColumn}
-                          className="grid grid-cols-2 gap-2 text-sm"
+                          className={
+                            isExpandedField
+                              ? "space-y-1"
+                              : "grid grid-cols-[120px_1fr] gap-2 text-sm"
+                          }
                         >
-                          <span className="font-medium">
+                          <span className="font-medium text-sm shrink-0">
                             {field?.displayName}:
                           </span>
-                          <span className="truncate">
-                            {value ||
-                              tGlobal("sharedSteps.importWizard.page3.noValue")}
-                          </span>
+                          <div className={isExpandedField ? "mt-1" : ""}>
+                            {renderFieldValue(field, value)}
+                          </div>
                         </div>
                       );
                     })}
@@ -1217,7 +1345,7 @@ export function ImportCasesWizard({
           ))}
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto px-0.5">
           {isImporting && (
             <LoadingSpinnerAlert
               message={tGlobal("repository.generateTestCases.importing", {

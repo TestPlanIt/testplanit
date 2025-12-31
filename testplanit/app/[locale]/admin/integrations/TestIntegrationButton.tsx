@@ -25,9 +25,8 @@ export function TestIntegrationButton({ integration, onTest }: TestIntegrationBu
         <TooltipTrigger asChild>
           <Button
             variant="ghost"
-            size="sm"
             onClick={() => onTest(integration)}
-            className="h-8 w-8 p-0"
+            className="px-2 py-1 h-auto"
           >
             <Activity className="h-4 w-4" />
             <span className="sr-only">{t("testConnection")}</span>

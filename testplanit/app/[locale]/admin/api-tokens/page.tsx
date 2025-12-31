@@ -465,7 +465,7 @@ function ApiTokensList() {
 
       {/* Revoke Single Token Dialog */}
       <AlertDialog open={revokeDialogOpen} onOpenChange={setRevokeDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border-destructive">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("revokeConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>

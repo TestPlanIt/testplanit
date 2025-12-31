@@ -58,10 +58,9 @@ export function SyncIntegrationButton({ integration }: SyncIntegrationButtonProp
         <TooltipTrigger asChild>
           <Button
             variant="ghost"
-            size="sm"
             onClick={handleSync}
             disabled={isSyncing}
-            className="h-8 w-8 p-0"
+            className="px-2 py-1 h-auto"
           >
             <RefreshCw
               className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`}

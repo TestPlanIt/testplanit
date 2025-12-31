@@ -219,7 +219,7 @@ export const SessionsListDisplay: React.FC<SessionsListProps> = ({
               "gap-1 whitespace-nowrap text-xs"
             )}
           >
-            <Compass className="w-4 h-4" />
+            <Compass className="w-4 h-4 shrink-0" />
             {displayLabel && <span>{displayLabel}</span>}
           </button>
         );

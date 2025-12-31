@@ -26,10 +26,16 @@ export const ContentItemMenu = ({ editor, editable }: ContentItemMenuProps) => {
 
   useEffect(() => {
     if (!editor?.commands) return;
-    if (menuOpen) {
-      editor.commands.setMeta("lockDragHandle", true);
-    } else {
-      editor.commands.setMeta("lockDragHandle", false);
+    try {
+      if (menuOpen) {
+        editor.commands.setMeta("lockDragHandle", true);
+      } else {
+        editor.commands.setMeta("lockDragHandle", false);
+      }
+    } catch (error) {
+      // Silently handle invalid content errors - the editor may have been
+      // initialized with malformed content that doesn't match the schema
+      console.warn("ContentItemMenu: Error setting meta on editor", error);
     }
   }, [editor, menuOpen]);
 

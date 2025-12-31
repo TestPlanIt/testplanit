@@ -98,6 +98,8 @@ export function DeleteCaseModal({
       });
       setOpen(false);
       onDeleteSuccess?.();
+      // Dispatch event to refresh Cases component data
+      window.dispatchEvent(new CustomEvent("repositoryCasesChanged"));
     } catch (err: any) {
       console.error("Error deleting case:", err);
     } finally {
@@ -108,8 +110,8 @@ export function DeleteCaseModal({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <Button
-        variant="secondary"
-        className="text-destructive"
+        variant="destructive"
+        className="px-2 py-1 h-auto"
         type="button"
         onClick={handleOpen}
       >

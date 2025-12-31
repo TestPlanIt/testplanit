@@ -4672,6 +4672,7 @@
     "saveSuccess": "Pasos compartidos actualizados correctamente.",
     "saveError": "Se ha producido un error al guardar los pasos compartidos.",
     "stepsCount": "{count, plural, one {# paso} other {# pasos}}",
+    "testCasesUsing": "{count, plural, one {# caso de prueba} other {# casos de prueba}}",
     "importWizard": {
       "title": "Importar pasos compartidos",
       "fields": {

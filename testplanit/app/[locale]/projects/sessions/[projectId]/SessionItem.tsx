@@ -167,11 +167,8 @@ const SessionItem: React.FC<SessionItemProps> = ({
         {!testSession.isCompleted && canComplete && (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="secondary"
-                className="w-15 m-0 p-0 shrink-0 ml-2"
-              >
-                <MoreVertical />
+              <Button variant="ghost" size="icon" className="h-7 w-7">
+                <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>

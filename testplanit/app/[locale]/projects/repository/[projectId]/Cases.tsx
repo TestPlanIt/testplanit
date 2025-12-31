@@ -1010,7 +1010,7 @@ export default function Cases({
 
   // Add filtered count query for accurate pagination
   // For repository mode: count repository cases
-  const { data: filteredCountData } = useCountRepositoryCases(
+  const { data: filteredCountData, refetch: refetchFilteredCount } = useCountRepositoryCases(
     {
       where: repositoryCaseWhereClause,
     },
@@ -1071,7 +1071,6 @@ export default function Cases({
   );
 
   const isTotalLoading = false;
-  const refetchRepositoryCases = useCallback(() => {}, []);
 
   // Calculate total count based on mode
   const totalRepositoryCases = useMemo(() => {
@@ -1537,6 +1536,30 @@ export default function Cases({
     isLoading: boolean;
     refetch: any;
   };
+
+  // Refetch all repository cases data (both list and count)
+  const refetchRepositoryCases = useCallback(() => {
+    refetchData();
+    refetchFilteredCount();
+  }, [refetchData, refetchFilteredCount]);
+
+  // Listen for repository cases changes (e.g., after import or bulk delete)
+  useEffect(() => {
+    const handleRepositoryCasesChanged = () => {
+      refetchRepositoryCases();
+    };
+
+    window.addEventListener(
+      "repositoryCasesChanged",
+      handleRepositoryCasesChanged as EventListener
+    );
+    return () => {
+      window.removeEventListener(
+        "repositoryCasesChanged",
+        handleRepositoryCasesChanged as EventListener
+      );
+    };
+  }, [refetchRepositoryCases]);
 
   // For isRunMode, flatten testRunCasesData for the table
   const cases = useMemo(() => {
@@ -2340,8 +2363,7 @@ export default function Cases({
   const handleCloseBulkEditModal = (refetchNeeded?: boolean) => {
     setIsBulkEditModalOpen(false);
     if (refetchNeeded) {
-      refetchRepositoryCases();
-      refetchData();
+      refetchRepositoryCases(); // This refetches both data and count
       refetchTestRunCases();
       // Clear selection after successful bulk edit operation
       setRowSelection({});

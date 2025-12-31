@@ -69,7 +69,7 @@ export const UserProjectsDisplay: React.FC<UserProjectsDisplayProps> = ({
   }
 
   if (!allProjects || allProjects.length === 0) {
-    return <span className="text-muted-foreground text-sm">-</span>;
+    return;
   }
 
   const renderContent = () => (

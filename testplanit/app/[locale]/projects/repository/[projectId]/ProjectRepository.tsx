@@ -19,7 +19,6 @@ import {
   useFindManyRepositoryCases,
   useFindManyTestRunCases,
 } from "~/lib/hooks";
-import { useFindManyRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { useFolderStats } from "~/lib/useFolderStats";
 import TreeView from "./TreeView";
 import {
@@ -470,6 +469,24 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       enabled: isValidProjectId,
     }
   );
+
+  // Listen for repository cases changes (e.g., after import or bulk delete) to refresh folder stats
+  useEffect(() => {
+    const handleRepositoryCasesChanged = () => {
+      refetchFolderStats();
+    };
+
+    window.addEventListener(
+      "repositoryCasesChanged",
+      handleRepositoryCasesChanged as EventListener
+    );
+    return () => {
+      window.removeEventListener(
+        "repositoryCasesChanged",
+        handleRepositoryCasesChanged as EventListener
+      );
+    };
+  }, [refetchFolderStats]);
 
   // Get the total case count for the selected folder
   const selectedFolderCaseCount = useMemo(() => {
@@ -1178,7 +1195,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                     </div>
                   </ResizablePanel>
                   <ResizableHandle withHandle className="w-1" />
-                  <div>
+                  <div className="shrink-0 pt-0.5">
                     <Button
                       type="button"
                       onClick={toggleCollapse}
@@ -1196,7 +1213,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                     {/* Empty state is now handled by TreeView component */}
                     <>
                       <div data-testid="repository-right-panel-header">
-                        <div className="flex items-center justify-between mx-2">
+                        <div className="flex items-center justify-between mx-2 pt-0.5">
                           <div className="text-primary text-lg md:text-xl font-extrabold">
                             <div className="flex items-center space-x-1">
                               <ListChecks className="w-5 h-5 min-w-5 min-h-5" />

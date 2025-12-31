@@ -68,12 +68,17 @@ export function DeleteLlmIntegration({
 
   return (
     <>
-      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
-        <Trash2 className="h-4 w-4" />
+      <Button
+        variant="destructive"
+        size="icon"
+        onClick={() => setOpen(true)}
+        className="px-2 py-1 h-auto"
+      >
+        <Trash2 className="h-8 w-8 shrink-0" />
       </Button>
 
       <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="border-destructive">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("title")}</AlertDialogTitle>
             <AlertDialogDescription>
@@ -86,9 +91,13 @@ export function DeleteLlmIntegration({
             <AlertDialogCancel onClick={() => setOpen(false)}>
               {tGlobal("common.cancel")}
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={loading}>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDelete}
+              disabled={loading}
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {tGlobal("common.dialogs.confirmDelete.description")}
+              {tGlobal("common.actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

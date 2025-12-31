@@ -4672,6 +4672,7 @@
     "saveSuccess": "Shared steps updated successfully.",
     "saveError": "An error occurred while saving shared steps.",
     "stepsCount": "{count, plural, one {# step} other {# steps}}",
+    "testCasesUsing": "{count, plural, one {# test case} other {# test cases}}",
     "importWizard": {
       "title": "Import Shared Steps",
       "fields": {

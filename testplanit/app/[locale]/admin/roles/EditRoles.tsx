@@ -264,7 +264,7 @@ export function EditRoleModal({ role }: EditRoleModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary">
+        <Button variant="ghost" className="px-2 py-1 h-auto">
           <SquarePen className="h-5 w-5" />
         </Button>
       </DialogTrigger>

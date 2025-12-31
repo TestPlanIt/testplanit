@@ -175,7 +175,7 @@ export const getColumns = (
     cell: ({ row }) => (
       <Button
         variant="ghost"
-        size="icon"
+        className="px-2 py-1 h-auto"
         onClick={() => onViewDetails(row.original)}
         title={t("viewDetails")}
       >

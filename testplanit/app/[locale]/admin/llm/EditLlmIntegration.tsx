@@ -322,7 +322,12 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
 
   return (
     <>
-      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setOpen(true)}
+        className="px-2 py-1 h-auto"
+      >
         <Edit className="h-4 w-4" />
       </Button>
 

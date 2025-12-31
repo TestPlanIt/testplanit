@@ -261,7 +261,7 @@ export default function SoftDeletedDataTable({
             <div className="flex space-x-2">
               <Button
                 variant="outline"
-                size="sm"
+                className="px-2 py-1 h-auto"
                 onClick={() => handleRestore(item.id)}
               >
                 <UndoDot className="h-5 w-5" />
@@ -269,7 +269,7 @@ export default function SoftDeletedDataTable({
               </Button>
               <Button
                 variant="destructive"
-                size="sm"
+                className="px-2 py-1 h-auto"
                 onClick={() => handlePurge(item.id)}
               >
                 <AlertTriangle className="h-5 w-5" />
