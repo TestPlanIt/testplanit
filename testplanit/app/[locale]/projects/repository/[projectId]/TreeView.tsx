@@ -877,7 +877,16 @@ const TreeView: React.FC<{
         ref={setCombinedRef}
         style={style}
         className={`group flex items-center rounded-md ${backgroundColor} ${textColor} hover:bg-secondary/80 cursor-pointer px-2 py-1`}
-        onClick={() => node.select()}
+        onClick={async () => {
+          node.select();
+          // Toggle expand/collapse when clicking anywhere on the folder row
+          if (hasChildren) {
+            if (!childrenLoaded) {
+              await ensureFolderChildrenLoaded(data?.folderId);
+            }
+            node.toggle();
+          }
+        }}
         data-testid={`folder-node-${data?.folderId}`}
       >
         <Button

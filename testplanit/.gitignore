@@ -54,3 +54,9 @@ messages/*.d.json.ts
 # version file (generated at build time)
 .env.production.local
 public/version.json
+
+# E2E tests
+e2e/.auth/
+e2e/playwright-report/
+e2e/test-results/
+.env.e2e
