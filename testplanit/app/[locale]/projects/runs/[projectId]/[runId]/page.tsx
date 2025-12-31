@@ -130,6 +130,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import AddTestRunModal from "../AddTestRunModal";
+import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 
 // Form Values interface
 interface FormValues {
@@ -2037,37 +2038,39 @@ export default function TestRunPage() {
           onPrepareCloneDataAndProceed={handlePrepareCloneDataAndProceed}
         />
       )}
-      {/* Render AddTestRunModal for Duplication */}
+      {/* Render AddTestRunModal for Duplication - wrapped in SimpleDndProvider for DnD context */}
       {isAddRunModalOpenForDuplicate && addRunModalInitPropsForDuplicate && (
-        <AddTestRunModal
-          open={isAddRunModalOpenForDuplicate}
-          onOpenChange={(isOpen) => {
-            setIsAddRunModalOpenForDuplicate(isOpen);
-            if (!isOpen) setAddRunModalInitPropsForDuplicate(null); // Clear props when closed
-          }}
-          initialSelectedCaseIds={
-            addRunModalInitPropsForDuplicate.initialSelectedCaseIds
-          }
-          duplicationPreset={addRunModalInitPropsForDuplicate.duplicationPreset}
-          defaultMilestoneId={
-            addRunModalInitPropsForDuplicate.defaultMilestoneId
-          }
-          onSelectedCasesChange={(ids) => {
-            // Add basic onSelectedCasesChange handler
-            if (addRunModalInitPropsForDuplicate) {
-              const currentIds =
-                addRunModalInitPropsForDuplicate.initialSelectedCaseIds || [];
-              const newIdsSorted = [...(ids || [])].sort().join(",");
-              const currentIdsSorted = [...currentIds].sort().join(",");
-              if (newIdsSorted !== currentIdsSorted) {
-                setAddRunModalInitPropsForDuplicate({
-                  ...addRunModalInitPropsForDuplicate,
-                  initialSelectedCaseIds: ids,
-                });
-              }
+        <SimpleDndProvider>
+          <AddTestRunModal
+            open={isAddRunModalOpenForDuplicate}
+            onOpenChange={(isOpen) => {
+              setIsAddRunModalOpenForDuplicate(isOpen);
+              if (!isOpen) setAddRunModalInitPropsForDuplicate(null); // Clear props when closed
+            }}
+            initialSelectedCaseIds={
+              addRunModalInitPropsForDuplicate.initialSelectedCaseIds
             }
-          }}
-        />
+            duplicationPreset={addRunModalInitPropsForDuplicate.duplicationPreset}
+            defaultMilestoneId={
+              addRunModalInitPropsForDuplicate.defaultMilestoneId
+            }
+            onSelectedCasesChange={(ids) => {
+              // Add basic onSelectedCasesChange handler
+              if (addRunModalInitPropsForDuplicate) {
+                const currentIds =
+                  addRunModalInitPropsForDuplicate.initialSelectedCaseIds || [];
+                const newIdsSorted = [...(ids || [])].sort().join(",");
+                const currentIdsSorted = [...currentIds].sort().join(",");
+                if (newIdsSorted !== currentIdsSorted) {
+                  setAddRunModalInitPropsForDuplicate({
+                    ...addRunModalInitPropsForDuplicate,
+                    initialSelectedCaseIds: ids,
+                  });
+                }
+              }
+            }}
+          />
+        </SimpleDndProvider>
       )}
     </Card>
   );

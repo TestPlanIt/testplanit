@@ -280,7 +280,7 @@ const SummarySunburstChart: React.FC<SummarySunburstChartProps> = ({
             let tooltipContent = `<strong>${name}</strong>`;
             if (value > 0) {
               if (duration && duration.trim() !== "") {
-                tooltipContent += `<br/>${t("common.ui.charts.duration")}: ${duration}`;
+                tooltipContent += `<br/>${t("common.ui.charts.durationLabel")}: ${duration}`;
               }
             }
             tooltipRef.current.innerHTML = tooltipContent;

@@ -792,7 +792,8 @@
         "zoomDonutChart": "Graphique en anneau zoom",
         "zoomStatusTimeline": "Chronologie de l'état de Zoom",
         "zoomHistogramChart": "Graphique histogramme zoom",
-        "duration": "Durée : {seconds} secondes"
+        "duration": "Durée : {seconds} secondes",
+        "durationLabel": "Durée"
       },
       "import": {
         "encoding": {

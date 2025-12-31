@@ -792,7 +792,8 @@
         "zoomDonutChart": "Zoom Donut Chart",
         "zoomStatusTimeline": "Zoom Status Timeline",
         "zoomHistogramChart": "Zoom Histogram Chart",
-        "duration": "Duration: {seconds} seconds"
+        "duration": "Duration: {seconds} seconds",
+        "durationLabel": "Duration"
       },
       "import": {
         "encoding": {
