@@ -15,10 +15,9 @@ export function EditIntegrationButton({ integration, onEdit }: EditIntegrationBu
 
   return (
     <Button
-      variant="secondary"
-      size="sm"
+      variant="ghost"
       onClick={() => onEdit(integration)}
-      className="h-8 w-8 p-0"
+      className="px-2 py-1 h-auto"
       title={tCommon("actions.edit")}
     >
       <SquarePen className="h-4 w-4" />

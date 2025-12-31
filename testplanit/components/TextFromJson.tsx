@@ -96,6 +96,22 @@ const TextFromJson: React.FC<TextFromJsonProps> = ({
   );
 };
 
+const isValidTipTapContent = (content: any): boolean => {
+  // Check if it's a valid TipTap document structure
+  if (!content || typeof content !== "object") return false;
+  if (content.type !== "doc") return false;
+  if (!Array.isArray(content.content)) return false;
+
+  // Basic validation of content nodes
+  for (const node of content.content) {
+    if (!node || typeof node !== "object" || !node.type) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 const TipTapEditorWrapper: React.FC<{
   jsonString: string;
   room: string;
@@ -105,6 +121,20 @@ const TipTapEditorWrapper: React.FC<{
   try {
     content = JSON.parse(jsonString);
   } catch (error) {
+    return <span>{jsonString}</span>;
+  }
+
+  // Validate that the parsed content is a valid TipTap document
+  if (!isValidTipTapContent(content)) {
+    // If it's not valid TipTap content, render as plain text or HTML
+    if (typeof jsonString === "string" && jsonString.includes("<")) {
+      return (
+        <div
+          className="prose prose-sm max-w-none"
+          dangerouslySetInnerHTML={{ __html: jsonString }}
+        />
+      );
+    }
     return <span>{jsonString}</span>;
   }
 

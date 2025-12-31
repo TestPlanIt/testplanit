@@ -110,8 +110,8 @@ export function DeleteCaseModal({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <Button
-        variant="secondary"
-        className="text-destructive"
+        variant="destructive"
+        className="px-2 py-1 h-auto"
         type="button"
         onClick={handleOpen}
       >

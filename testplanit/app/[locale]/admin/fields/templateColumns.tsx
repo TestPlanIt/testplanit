@@ -124,7 +124,7 @@ export const getColumns = (
       enableSorting: false,
       enableHiding: false,
       meta: { isPinned: "right" },
-      size: 120,
+      size: 80,
       cell: ({ row }) => (
         <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
           <EditTemplateModal
@@ -134,7 +134,7 @@ export const getColumns = (
           {row.original.isDefault ? (
             <Button
               variant="ghost"
-              className="text-muted-foreground cursor-not-allowed"
+              className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
               disabled
             >
               <Trash2 className="h-5 w-5" />

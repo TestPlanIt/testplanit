@@ -74,9 +74,8 @@ export function DeleteAppConfigModal({ config }: DeleteAppConfigModalProps) {
     >
       <AlertDialogTrigger asChild>
         <Button
-          variant="ghost"
-          size="icon"
-          className="text-destructive hover:bg-destructive/10"
+          variant="destructive"
+          className="px-2 py-1 h-auto"
           data-testid="delete-config"
         >
           <Trash2 className="h-4 w-4" />

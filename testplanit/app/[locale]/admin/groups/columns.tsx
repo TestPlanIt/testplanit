@@ -48,7 +48,7 @@ export const getColumns = (
     enableSorting: false,
     enableHiding: false,
     meta: { isPinned: "right" },
-    size: 120,
+    size: 80,
     cell: ({ row }) => (
       <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
         <EditGroupModal key={`edit-${row.original.id}`} group={row.original} />

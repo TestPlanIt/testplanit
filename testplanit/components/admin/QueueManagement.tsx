@@ -339,36 +339,36 @@ export function QueueManagement() {
                     >
                       {queue.isPaused ? (
                         <Button
-                          size="sm"
-                          variant="outline"
+                          variant="ghost"
+                          className="px-2 py-1 h-auto"
                           onClick={() =>
                             performQueueAction(queue.name, "resume")
                           }
                           disabled={actionInProgress === queue.name}
                         >
-                          <Play className="h-3 w-3" />
+                          <Play className="h-4 w-4" />
                         </Button>
                       ) : (
                         <Button
-                          size="sm"
-                          variant="outline"
+                          variant="ghost"
+                          className="px-2 py-1 h-auto"
                           onClick={() =>
                             performQueueAction(queue.name, "pause")
                           }
                           disabled={actionInProgress === queue.name}
                         >
-                          <Pause className="h-3 w-3" />
+                          <Pause className="h-4 w-4" />
                         </Button>
                       )}
                       <Button
-                        size="sm"
-                        variant="outline"
+                        variant="destructive"
+                        className="px-2 py-1 h-auto"
                         onClick={() =>
                           performQueueAction(queue.name, "clean", true)
                         }
                         disabled={actionInProgress === queue.name}
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>

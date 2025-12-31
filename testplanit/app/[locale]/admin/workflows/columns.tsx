@@ -9,7 +9,7 @@ import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { WorkflowScope } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, GripVertical } from "lucide-react";
 
 // Helper function to check if a workflow is the last of its type in its scope
 const isLastWorkflowOfType = (
@@ -46,14 +46,13 @@ export const getColumns = (
     meta: { isPinned: "left" },
     size: 500,
     cell: ({ row }) => (
-      <div className="flex space-x-1 items-center">
-        <div>
-          <DynamicIcon
-            name={row.original.icon.name as IconName}
-            color={row.original.color.value}
-          />
-        </div>
-        <div>{row.original.name}</div>
+      <div className="relative flex items-center gap-1 group/row">
+        <GripVertical className="absolute -left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground opacity-0 group-hover/row:opacity-100 transition-opacity cursor-grab" />
+        <DynamicIcon
+          name={row.original.icon.name as IconName}
+          color={row.original.color.value}
+        />
+        <span>{row.original.name}</span>
       </div>
     ),
   },
@@ -133,7 +132,7 @@ export const getColumns = (
     enableSorting: false,
     enableHiding: false,
     meta: { isPinned: "right" },
-    size: 120,
+    size: 80,
     cell: ({ row }) => {
       const workflow = row.original;
       const canDelete =
@@ -146,7 +145,7 @@ export const getColumns = (
           ) : (
             <Button
               variant="ghost"
-              className="text-muted-foreground cursor-not-allowed"
+              className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
               disabled
             >
               <Trash2 className="h-5 w-5" />

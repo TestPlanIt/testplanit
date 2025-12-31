@@ -338,40 +338,40 @@ export function QueueJobsView({
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
-                          size="sm"
                           variant="ghost"
+                          className="px-2 py-1 h-auto"
                           onClick={() => setSelectedJob(job)}
                           disabled={actionInProgress === job.id}
                         >
-                          <Eye className="h-3 w-3" />
+                          <Eye className="h-4 w-4" />
                         </Button>
                         {job.state === "failed" && (
                           <Button
-                            size="sm"
                             variant="ghost"
+                            className="px-2 py-1 h-auto"
                             onClick={() => performJobAction(job.id, "retry")}
                             disabled={actionInProgress === job.id}
                           >
-                            <RotateCcw className="h-3 w-3" />
+                            <RotateCcw className="h-4 w-4" />
                           </Button>
                         )}
                         {job.state === "delayed" && (
                           <Button
-                            size="sm"
                             variant="ghost"
+                            className="px-2 py-1 h-auto"
                             onClick={() => performJobAction(job.id, "promote")}
                             disabled={actionInProgress === job.id}
                           >
-                            <ChevronUp className="h-3 w-3" />
+                            <ChevronUp className="h-4 w-4" />
                           </Button>
                         )}
                         <Button
-                          size="sm"
-                          variant="ghost"
+                          variant="destructive"
+                          className="px-2 py-1 h-auto"
                           onClick={() => performJobAction(job.id, "remove")}
                           disabled={actionInProgress === job.id}
                         >
-                          <Trash2 className="h-3 w-3 text-destructive" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>

@@ -766,7 +766,7 @@ export function EditProjectModal({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="secondary" size="icon">
+        <Button variant="ghost" className="px-2 py-1 h-auto">
           <SquarePen className="h-4 w-4" />
         </Button>
       </DialogTrigger>

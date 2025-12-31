@@ -104,6 +104,7 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
         variant="ghost"
         size="sm"
         onClick={() => setOpen(true)}
+        className="px-2 py-1 h-auto"
       >
         <Settings className="h-4 w-4" />
       </Button>

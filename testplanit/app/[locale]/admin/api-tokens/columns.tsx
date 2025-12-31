@@ -25,9 +25,7 @@ export const getColumns = (
     enableResizing: true,
     enableHiding: false,
     size: 200,
-    cell: ({ row }) => (
-      <div className="font-medium">{row.original.name}</div>
-    ),
+    cell: ({ row }) => <div className="font-medium">{row.original.name}</div>,
   },
   {
     id: "user",
@@ -63,7 +61,9 @@ export const getColumns = (
       <div className="whitespace-nowrap text-sm text-muted-foreground">
         <DateFormatter
           date={getValue() as Date | string}
-          formatString={session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"}
+          formatString={
+            session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"
+          }
           timezone={session.user.preferences?.timezone || "Etc/UTC"}
         />
       </div>
@@ -81,7 +81,9 @@ export const getColumns = (
         {row.original.lastUsedAt ? (
           <DateFormatter
             date={row.original.lastUsedAt}
-            formatString={session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"}
+            formatString={
+              session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"
+            }
             timezone={session.user.preferences?.timezone || "Etc/UTC"}
           />
         ) : (
@@ -107,7 +109,9 @@ export const getColumns = (
         <Badge variant={isExpired ? "destructive" : "secondary"}>
           <DateFormatter
             date={expiresAt}
-            formatString={session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"}
+            formatString={
+              session.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"
+            }
             timezone={session.user.preferences?.timezone || "Etc/UTC"}
           />
         </Badge>
@@ -137,7 +141,7 @@ export const getColumns = (
   },
   {
     id: "actions",
-    header: "",
+    header: tCommon("actions.actionsLabel"),
     enableResizing: false,
     enableSorting: false,
     enableHiding: false,
@@ -150,10 +154,9 @@ export const getColumns = (
       }
       return (
         <Button
-          variant="outline"
-          size="icon"
+          variant="destructive"
           onClick={() => onRevoke(token)}
-          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+          className="px-2 py-1 h-auto"
           title={t("revokeToken")}
         >
           <Ban className="h-4 w-4" />

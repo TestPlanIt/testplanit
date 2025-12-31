@@ -60,7 +60,7 @@ export function EditAppConfigModal({ config }: EditAppConfigModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" data-testid="edit-config-button">
+        <Button variant="ghost" className="px-2 py-1 h-auto" data-testid="edit-config-button">
           <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>

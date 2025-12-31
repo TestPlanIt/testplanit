@@ -61,7 +61,7 @@ export function DeleteProjectModal({ project }: DeleteProjectModalProps) {
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="secondary" className="text-destructive">
+        <Button variant="destructive" className="px-2 py-1 h-auto">
           <Trash2 className="h-5 w-5" />
         </Button>
       </AlertDialogTrigger>

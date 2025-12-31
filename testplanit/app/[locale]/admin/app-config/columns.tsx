@@ -77,7 +77,7 @@ export function getColumns(
       enableResizing: true,
       enableSorting: false,
       enableHiding: false,
-      size: 120,
+      size: 80,
       meta: { isPinned: "right" },
       cell: ({ row }) => (
         <div className="whitespace-nowrap flex justify-center gap-1">
