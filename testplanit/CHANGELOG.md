@@ -1,3 +1,10 @@
+## [0.9.7](https://github.com/TestPlanIt/testplanit/compare/v0.9.6...v0.9.7) (2025-12-31)
+
+
+### Bug Fixes
+
+* **TestRunPage:** wrap AddTestRunModal in SimpleDndProvider for drag-and-drop context ([f667303](https://github.com/TestPlanIt/testplanit/commit/f6673036c59bc7929a09446b4d96ca5db6e7f5af))
+
 ## [0.9.6](https://github.com/TestPlanIt/testplanit/compare/v0.9.5...v0.9.6) (2025-12-31)
 
 
