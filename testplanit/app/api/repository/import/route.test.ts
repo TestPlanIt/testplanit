@@ -202,6 +202,7 @@ describe("CSV Import API Route", () => {
     tags: {
       findFirst: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
     },
     issues: {
       findFirst: vi.fn(),
@@ -557,6 +558,138 @@ describe("CSV Import API Route", () => {
 
       expect(result.complete).toBeDefined();
       expect(mockEnhancedDb.tags.create).toHaveBeenCalledTimes(2);
+    });
+
+    it("matches existing tags case-insensitively", async () => {
+      const existingTag = { id: 1, name: "Smoke", isDeleted: false };
+      mockEnhancedDb.tags.findFirst.mockImplementation(({ where }) => {
+        // Simulate case-insensitive matching - findFirst is called with mode: "insensitive"
+        if (
+          where.name?.equals?.toLowerCase() === "smoke" &&
+          where.isDeleted === false
+        ) {
+          return existingTag;
+        }
+        return null;
+      });
+
+      const request = createRequest({
+        projectId: 1,
+        file: 'Name,Description,Tags\nTest Case 1,Test Description,"smoke"',
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+          { csvColumn: "Tags", templateField: "tags" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete).toBeDefined();
+      // Should not create a new tag since "smoke" matches "Smoke" case-insensitively
+      expect(mockEnhancedDb.tags.create).not.toHaveBeenCalled();
+      // Should connect the existing tag
+      expect(mockEnhancedDb.repositoryCases.update).toHaveBeenCalledWith({
+        where: { id: expect.any(Number) },
+        data: { tags: { connect: { id: 1 } } },
+      });
+    });
+
+    it("restores soft-deleted tags instead of creating duplicates", async () => {
+      const deletedTag = { id: 2, name: "Regression", isDeleted: true };
+      let tagRestored = false;
+
+      mockEnhancedDb.tags.findFirst.mockImplementation(({ where }) => {
+        // First call checks for active tag - returns null
+        if (where.isDeleted === false) {
+          return null;
+        }
+        // Second call checks for soft-deleted tag - returns the deleted tag
+        if (where.isDeleted === true) {
+          return deletedTag;
+        }
+        return null;
+      });
+
+      mockEnhancedDb.tags.update.mockImplementation(({ where, data }) => {
+        if (where.id === deletedTag.id && data.isDeleted === false) {
+          tagRestored = true;
+          return { ...deletedTag, isDeleted: false };
+        }
+        return null;
+      });
+
+      const request = createRequest({
+        projectId: 1,
+        file: 'Name,Description,Tags\nTest Case 1,Test Description,"Regression"',
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+          { csvColumn: "Tags", templateField: "tags" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete).toBeDefined();
+      // Should not create a new tag
+      expect(mockEnhancedDb.tags.create).not.toHaveBeenCalled();
+      // Should restore the soft-deleted tag
+      expect(tagRestored).toBe(true);
+      expect(mockEnhancedDb.tags.update).toHaveBeenCalledWith({
+        where: { id: 2 },
+        data: { isDeleted: false },
+      });
+    });
+
+    it("trims whitespace from tag names", async () => {
+      mockEnhancedDb.tags.findFirst.mockResolvedValue(null);
+      mockEnhancedDb.tags.create.mockImplementation(({ data }) => ({
+        id: Math.floor(Math.random() * 1000),
+        ...data,
+      }));
+
+      const request = createRequest({
+        projectId: 1,
+        file: 'Name,Description,Tags\nTest Case 1,Test Description,"  tag1  ,  tag2  "',
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+          { csvColumn: "Tags", templateField: "tags" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete).toBeDefined();
+      // Tags should be created with trimmed names
+      expect(mockEnhancedDb.tags.create).toHaveBeenCalledWith({
+        data: { name: "tag1" },
+      });
+      expect(mockEnhancedDb.tags.create).toHaveBeenCalledWith({
+        data: { name: "tag2" },
+      });
     });
 
     it("imports test cases with attachments", async () => {
