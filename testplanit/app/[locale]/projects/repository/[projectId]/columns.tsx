@@ -1298,7 +1298,7 @@ export const getColumns = (
         );
 
         const value = caseFieldValue?.value;
-        const fieldType = caseFieldValue?.field.type.type;
+        const fieldType = caseFieldValue?.field?.type?.type;
         if (fieldType === "Dropdown" || fieldType === "Multi-Select") {
           const valuesArray = Array.isArray(value)
             ? value.map((val) => Number(val))
@@ -1777,10 +1777,10 @@ export const getColumns = (
         <div className="flex items-center space-x-1 whitespace-nowrap">
           <DynamicIcon
             className="w-5 h-5 min-w-5 min-h-5"
-            name={row.original.state.icon.name as IconName}
-            color={row.original.state.color.value}
+            name={row.original.state?.icon?.name as IconName}
+            color={row.original.state?.color?.value}
           />
-          <div>{row.original.state.name}</div>
+          <div>{row.original.state?.name}</div>
         </div>
       ),
     },
