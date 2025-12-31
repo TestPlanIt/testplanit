@@ -37,6 +37,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -91,8 +92,9 @@ import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
 import StatusDotDisplay from "@/components/StatusDotDisplay";
-import { ScrollArea } from "~/components/ui/scroll-area";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
+import { useSession } from "next-auth/react";
 
 export interface ExtendedCases extends RepositoryCases {
   className: string | null;
@@ -206,6 +208,21 @@ export interface ExtendedCases extends RepositoryCases {
   linksFrom?: { caseBId: number; isDeleted: boolean }[];
   linksTo?: { caseAId: number; isDeleted: boolean }[];
   testRunConfiguration?: { id: number; name: string } | null;
+  // Last test result for repository mode (most recent result across all test runs)
+  lastTestResult?: {
+    status: {
+      id: number;
+      name: string;
+      color?: {
+        value: string;
+      };
+    };
+    executedAt: Date;
+    testRun?: {
+      id: number;
+      name: string;
+    };
+  } | null;
 }
 
 interface NameCellProps {
@@ -999,6 +1016,64 @@ const AssigneeCell = React.memo(function AssigneeCell({
   );
 });
 
+// Component for displaying last test result in repository mode
+const LastTestResultCell = React.memo(function LastTestResultCell({
+  lastTestResult,
+  projectId,
+}: {
+  lastTestResult: ExtendedCases["lastTestResult"];
+  projectId: number;
+}) {
+  const t = useTranslations();
+  const { data: session } = useSession();
+
+  if (!lastTestResult || !lastTestResult.status) {
+    return null;
+  }
+
+  const dateFormat = session?.user?.preferences?.dateFormat;
+  const timeFormat = session?.user?.preferences?.timeFormat;
+  const timezone = session?.user?.preferences?.timezone;
+  const formatString =
+    dateFormat && timeFormat ? `${dateFormat} ${timeFormat}` : undefined;
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex items-center gap-2 cursor-default">
+            <StatusDotDisplay
+              name={lastTestResult.status.name}
+              color={lastTestResult.status.color?.value}
+            />
+          </div>
+        </TooltipTrigger>
+        <TooltipPrimitive.Portal>
+          <TooltipContent side="top" className="max-w-xs">
+            <div className="space-y-1 text-xs">
+              <div className="flex items-center gap-1">
+                <span>{t("repository.columns.testedOn")}:</span>
+                <DateFormatter
+                  date={lastTestResult.executedAt}
+                  formatString={formatString}
+                  timezone={timezone}
+                />
+              </div>
+              {lastTestResult.testRun && (
+                <TestRunNameDisplay
+                  testRun={lastTestResult.testRun}
+                  projectId={projectId}
+                  showIcon={true}
+                />
+              )}
+            </div>
+          </TooltipContent>
+        </TooltipPrimitive.Portal>
+      </Tooltip>
+    </TooltipProvider>
+  );
+});
+
 // Component for select all checkbox with shift-key detection and tooltip
 const SelectAllCheckbox = React.memo(function SelectAllCheckbox({
   table,
@@ -1128,6 +1203,7 @@ export const getColumns = (
     clickToViewFullContent: string;
     comments: string;
     configuration: string;
+    lastTestResult: string;
   },
   isRunMode: boolean = false,
   isSelectionMode: boolean = false,
@@ -1604,6 +1680,22 @@ export const getColumns = (
     ...(!isRunMode && !isSelectionMode
       ? [
           {
+            id: "lastTestResult",
+            header: columnTranslations.lastTestResult,
+            enableSorting: false,
+            enableResizing: true,
+            enableHiding: true,
+            meta: { isVisible: true },
+            size: 130,
+            minSize: 100,
+            cell: ({ row }: { row: { original: ExtendedCases } }) => (
+              <LastTestResultCell
+                lastTestResult={row.original.lastTestResult}
+                projectId={row.original.projectId}
+              />
+            ),
+          },
+          {
             id: "testRuns",
             header: columnTranslations.testRuns,
             enableSorting: false,
@@ -1642,7 +1734,8 @@ export const getColumns = (
                 );
 
               // Count only non-deleted test runs for the badge
-              const activeRunsCount = mappedTestRuns?.filter(run => !run.isDeleted).length || 0;
+              const activeRunsCount =
+                mappedTestRuns?.filter((run) => !run.isDeleted).length || 0;
 
               return (
                 <div className="flex justify-center">
