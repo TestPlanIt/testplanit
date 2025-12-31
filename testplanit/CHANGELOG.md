@@ -1,3 +1,10 @@
+## [0.9.9](https://github.com/TestPlanIt/testplanit/compare/v0.9.8...v0.9.9) (2025-12-31)
+
+
+### Bug Fixes
+
+* **CustomNode:** remove CustomNode component ([876af42](https://github.com/TestPlanIt/testplanit/commit/876af429d5abbce51f34d4b2e194f2f076c1567e))
+
 ## [0.9.8](https://github.com/TestPlanIt/testplanit/compare/v0.9.7...v0.9.8) (2025-12-31)
 
 
