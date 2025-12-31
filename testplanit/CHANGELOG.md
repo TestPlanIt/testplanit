@@ -1,3 +1,11 @@
+## [0.9.8](https://github.com/TestPlanIt/testplanit/compare/v0.9.7...v0.9.8) (2025-12-31)
+
+
+### Bug Fixes
+
+* **tags:** implement case-insensitive tag matching and restore soft-deleted tags ([c395d73](https://github.com/TestPlanIt/testplanit/commit/c395d73b7e1ef2406cfaf232b0d73548c12b3722))
+* **tags:** update tag handling in CSV import process ([c85328f](https://github.com/TestPlanIt/testplanit/commit/c85328faa92bbd89a650c0e4dded1cb2be5b531c))
+
 ## [0.9.7](https://github.com/TestPlanIt/testplanit/compare/v0.9.6...v0.9.7) (2025-12-31)
 
 
