@@ -4538,6 +4538,7 @@
           "description": "Métricas de finalización de la sesión, duración y asignación"
         },
         "issueTracking": {
+          "label": "Seguimiento de problemas",
           "description": "Análisis de creación, resolución y impacto de problemas"
         },
         "automationTrends": {

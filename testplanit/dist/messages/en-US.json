@@ -4538,6 +4538,7 @@
           "description": "Session completion, duration, and assignment metrics"
         },
         "issueTracking": {
+          "label": "Issue Tracking",
           "description": "Issue creation, resolution, and impact analysis"
         },
         "automationTrends": {

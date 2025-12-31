@@ -4538,6 +4538,7 @@
           "description": "Indicateurs de réussite, de durée et d'attribution des sessions"
         },
         "issueTracking": {
+          "label": "Suivi des problèmes",
           "description": "Création, résolution et analyse d'impact des problèmes"
         },
         "automationTrends": {

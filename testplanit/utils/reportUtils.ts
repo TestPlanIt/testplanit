@@ -484,6 +484,7 @@ export function createTestExecutionMetricRegistry(
               executedById: true,
               statusId: true,
               testRunId: true,
+              testRunCaseId: true,
               status: {
                 select: {
                   id: true,
@@ -520,6 +521,8 @@ export function createTestExecutionMetricRegistry(
                   return result.testRun.milestoneId;
                 } else if (field === "testRunId") {
                   return result.testRunId;
+                } else if (field === "testRunCaseId") {
+                  return result.testRunCaseId;
                 }
                 return null;
               })
@@ -544,6 +547,8 @@ export function createTestExecutionMetricRegistry(
                     obj[field] = result.testRun.milestoneId;
                   } else if (field === "testRunId") {
                     obj[field] = result.testRunId;
+                  } else if (field === "testRunCaseId") {
+                    obj[field] = result.testRunCaseId;
                   }
                   return obj;
                 }, {}),
@@ -594,6 +599,7 @@ export function createTestExecutionMetricRegistry(
             executedById: true,
             statusId: true,
             testRunId: true,
+            testRunCaseId: true,
             status: {
               select: {
                 id: true,
@@ -622,6 +628,7 @@ export function createTestExecutionMetricRegistry(
               if (field === "executedById") return result.executedById;
               if (field === "statusId") return result.statusId;
               if (field === "testRunId") return result.testRunId;
+              if (field === "testRunCaseId") return result.testRunCaseId;
               return null;
             })
             .join("|");
@@ -641,6 +648,8 @@ export function createTestExecutionMetricRegistry(
                 groupData.statusId = result.statusId;
               } else if (field === "testRunId") {
                 groupData.testRunId = result.testRunId;
+              } else if (field === "testRunCaseId") {
+                groupData.testRunCaseId = result.testRunCaseId;
               }
             });
             groupData.testResults = 0;
@@ -685,6 +694,7 @@ export function createTestExecutionMetricRegistry(
               executedById: true,
               statusId: true,
               testRunId: true,
+              testRunCaseId: true,
               status: {
                 select: {
                   id: true,
@@ -722,6 +732,8 @@ export function createTestExecutionMetricRegistry(
                   return result.testRun.milestoneId;
                 } else if (field === "testRunId") {
                   return result.testRunId;
+                } else if (field === "testRunCaseId") {
+                  return result.testRunCaseId;
                 }
                 return null;
               })
@@ -746,6 +758,8 @@ export function createTestExecutionMetricRegistry(
                     obj[field] = result.testRun.milestoneId;
                   } else if (field === "testRunId") {
                     obj[field] = result.testRunId;
+                  } else if (field === "testRunCaseId") {
+                    obj[field] = result.testRunCaseId;
                   }
                   return obj;
                 }, {}),
@@ -823,6 +837,7 @@ export function createTestExecutionMetricRegistry(
             executedById: true,
             statusId: true,
             testRunId: true,
+            testRunCaseId: true,
             status: {
               select: {
                 id: true,
@@ -852,6 +867,7 @@ export function createTestExecutionMetricRegistry(
               if (field === "executedById") return result.executedById;
               if (field === "statusId") return result.statusId;
               if (field === "testRunId") return result.testRunId;
+              if (field === "testRunCaseId") return result.testRunCaseId;
               return null;
             })
             .join("|");
@@ -871,6 +887,8 @@ export function createTestExecutionMetricRegistry(
                 groupData.statusId = result.statusId;
               } else if (field === "testRunId") {
                 groupData.testRunId = result.testRunId;
+              } else if (field === "testRunCaseId") {
+                groupData.testRunCaseId = result.testRunCaseId;
               }
             });
             groupData.totalResults = 0;

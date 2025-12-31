@@ -751,7 +751,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 <DateFormatter
                                   date={user.lastActiveAt}
                                   formatString={
-                                    session?.user.preferences?.dateFormat
+                                    session?.user.preferences?.dateFormat &&
+                                    session?.user.preferences?.timeFormat
+                                      ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
+                                      : session?.user.preferences?.dateFormat
                                   }
                                   timezone={session?.user.preferences?.timezone}
                                 />
@@ -1254,7 +1257,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 <DateFormatter
                                   date={user.createdAt}
                                   formatString={
-                                    session?.user.preferences?.dateFormat
+                                    session?.user.preferences?.dateFormat &&
+                                    session?.user.preferences?.timeFormat
+                                      ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
+                                      : session?.user.preferences?.dateFormat
                                   }
                                   timezone={session?.user.preferences?.timezone}
                                 />
@@ -1285,7 +1291,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                   <DateFormatter
                                     date={user.emailVerified}
                                     formatString={
-                                      session?.user.preferences?.dateFormat
+                                      session?.user.preferences?.dateFormat &&
+                                      session?.user.preferences?.timeFormat
+                                        ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
+                                        : session?.user.preferences?.dateFormat
                                     }
                                     timezone={
                                       session?.user.preferences?.timezone

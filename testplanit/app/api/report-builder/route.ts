@@ -84,28 +84,51 @@ const DIMENSION_REGISTRY: Record<
   testCase: {
     id: "testCase",
     label: "Executed Test Case",
-    getValues: async (prisma: any, projectId: number) =>
-      await prisma.testRunCases.findMany({
+    getValues: async (prisma: any, projectId: number) => {
+      const testCases = await prisma.testRunCases.findMany({
         where: {
           testRun: { projectId: Number(projectId), isDeleted: false },
         },
         select: {
           id: true,
+          repositoryCaseId: true,
           repositoryCase: {
             select: {
+              id: true,
               name: true,
               isDeleted: true,
               source: true,
             },
           },
         },
-      }),
+      });
+      // Flatten the structure to have name at root level
+      return testCases.map(
+        (tc: {
+          id: number;
+          repositoryCaseId: number;
+          repositoryCase: {
+            id: number;
+            name: string;
+            isDeleted: boolean;
+            source: string;
+          } | null;
+        }) => ({
+          id: tc.id,
+          repositoryCaseId: tc.repositoryCaseId,
+          name: tc.repositoryCase?.name || `Case ${tc.id}`,
+          isDeleted: tc.repositoryCase?.isDeleted || false,
+          source: tc.repositoryCase?.source || "MANUAL",
+        })
+      );
+    },
     groupBy: "testRunCaseId",
     join: {
       testRunCase: {
         include: {
           repositoryCase: {
             select: {
+              id: true,
               name: true,
               isDeleted: true,
               source: true,
@@ -115,7 +138,7 @@ const DIMENSION_REGISTRY: Record<
       },
     },
     display: (val: any) => {
-      // Handle different value formats
+      // Handle null/undefined
       if (!val) {
         return {
           name: "Unknown",
@@ -125,17 +148,7 @@ const DIMENSION_REGISTRY: Record<
         };
       }
 
-      // If val has repositoryCase, use it
-      if (val.repositoryCase) {
-        return {
-          name: val.repositoryCase.name || `Case ${val.id}`,
-          id: val.id,
-          isDeleted: val.repositoryCase.isDeleted || false,
-          source: val.repositoryCase.source || "MANUAL",
-        };
-      }
-
-      // If val itself has name (from joined data), use it
+      // Check for name at root level first (from flattened getValues or joined data)
       if (val.name) {
         return {
           name: val.name,
@@ -145,7 +158,17 @@ const DIMENSION_REGISTRY: Record<
         };
       }
 
-      // Fallback
+      // If val has repositoryCase (from join), use it
+      if (val.repositoryCase) {
+        return {
+          name: val.repositoryCase.name || `Case ${val.id}`,
+          id: val.id,
+          isDeleted: val.repositoryCase.isDeleted || false,
+          source: val.repositoryCase.source || "MANUAL",
+        };
+      }
+
+      // Fallback - use id for name
       return {
         name: `Case ${val.id || val}`,
         id: val.id || val,
