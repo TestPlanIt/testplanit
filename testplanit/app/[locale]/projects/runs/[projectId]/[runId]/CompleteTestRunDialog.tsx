@@ -84,10 +84,8 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
 
   useEffect(() => {
     if (workflows && workflows.length > 0) {
-      const lastWorkflow = workflows.reduce((prev, curr) =>
-        curr.order > prev.order ? curr : prev
-      );
-      setSelectedStateId(lastWorkflow?.id ?? stateId);
+      // workflows are already sorted by order ascending, so first item is the lowest order
+      setSelectedStateId(workflows[0].id ?? stateId);
     } else if (workflows && workflows.length === 0) {
       setSelectedStateId(stateId);
     }
