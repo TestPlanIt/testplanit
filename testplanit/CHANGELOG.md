@@ -1,3 +1,10 @@
+## [0.9.5](https://github.com/TestPlanIt/testplanit/compare/v0.9.4...v0.9.5) (2025-12-31)
+
+
+### Bug Fixes
+
+* **columns:** add optional chaining to prevent runtime errors ([2f71454](https://github.com/TestPlanIt/testplanit/commit/2f71454a4a5ec8d72ab19a7ed26ce919bfce831b))
+
 ## [0.9.4](https://github.com/TestPlanIt/testplanit/compare/v0.9.3...v0.9.4) (2025-12-31)
 
 
