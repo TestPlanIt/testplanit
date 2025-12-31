@@ -1,3 +1,10 @@
+## [0.9.6](https://github.com/TestPlanIt/testplanit/compare/v0.9.5...v0.9.6) (2025-12-31)
+
+
+### Bug Fixes
+
+* **columns:** improve error handling in column data processing ([a859481](https://github.com/TestPlanIt/testplanit/commit/a859481cde0be1887eac20fa8b4b8d8c402c8d2b))
+
 ## [0.9.5](https://github.com/TestPlanIt/testplanit/compare/v0.9.4...v0.9.5) (2025-12-31)
 
 
