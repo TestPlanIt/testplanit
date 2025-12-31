@@ -98,6 +98,8 @@ export function DeleteCaseModal({
       });
       setOpen(false);
       onDeleteSuccess?.();
+      // Dispatch event to refresh Cases component data
+      window.dispatchEvent(new CustomEvent("repositoryCasesChanged"));
     } catch (err: any) {
       console.error("Error deleting case:", err);
     } finally {

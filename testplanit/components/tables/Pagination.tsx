@@ -80,7 +80,7 @@ const PaginationComponent: React.FC<PaginationProps> = ({
           }}
           aria-disabled={isFirstPage ? "true" : undefined}
           tabIndex={isFirstPage ? -1 : undefined}
-          className={isFirstPage ? "pointer-events-none opacity-50" : ""}
+          className={`px-2 py-1 h-auto ${isFirstPage ? "pointer-events-none opacity-50" : ""}`}
           aria-label={t("goToPrevious")}
         />
       </PaginationItem>
@@ -101,11 +101,11 @@ const PaginationComponent: React.FC<PaginationProps> = ({
                 onPageChange(i);
               }}
               isActive={currentPage === i}
-              className={
+              className={`px-2 py-1 h-auto ${
                 currentPage === i
                   ? "text-primary-foreground no-underline bg-primary/50 pointer-events-none text-primary-background"
                   : "hover:bg-primary/50 hover:text-accent-foreground"
-              }
+              }`}
             >
               {i}
             </PaginationLink>
@@ -144,7 +144,7 @@ const PaginationComponent: React.FC<PaginationProps> = ({
           }}
           aria-disabled={isLastPage ? "true" : undefined}
           tabIndex={isLastPage ? -1 : undefined}
-          className={isLastPage ? "pointer-events-none opacity-50" : ""}
+          className={`px-2 py-1 h-auto ${isLastPage ? "pointer-events-none opacity-50" : ""}`}
           aria-label={t("goToNext")}
         />
       </PaginationItem>
@@ -155,7 +155,7 @@ const PaginationComponent: React.FC<PaginationProps> = ({
 
   return (
     <Pagination>
-      <PaginationContent className="p-2">
+      <PaginationContent className="pt-1">
         {renderPaginationItems()}
       </PaginationContent>
     </Pagination>

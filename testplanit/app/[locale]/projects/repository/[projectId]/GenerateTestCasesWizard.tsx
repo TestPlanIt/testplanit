@@ -1730,6 +1730,8 @@ export function GenerateTestCasesWizard({
       );
 
       onImportComplete?.();
+      // Dispatch event to refresh Cases component data
+      window.dispatchEvent(new CustomEvent("repositoryCasesChanged"));
       setOpen(false);
       resetWizard();
     } catch (error) {

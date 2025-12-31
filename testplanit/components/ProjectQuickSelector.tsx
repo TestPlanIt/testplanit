@@ -63,23 +63,19 @@ export const ProjectQuickSelector = () => {
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] px-0 py-2" align="start">
-        <Command>
-          <CommandInput
-            placeholder={
-              tGlobal("common.fields.projects").toLowerCase() + "..."
-            }
-          />
+        <Command className="py-0.5">
+          <CommandInput placeholder={tGlobal("common.fields.projects")} />
           <CommandEmpty>
             {isLoading ? t("loadingProjects") : t("noProjectsFound")}
           </CommandEmpty>
-          <CommandGroup className="max-h-[300px] overflow-y-auto">
+          <CommandGroup className="max-h-[600px] overflow-y-auto">
             <CommandItem
               key={-1}
               value="view-all-projects"
               onSelect={() => handleProjectSelect(-1)}
               className="font-medium text-primary"
             >
-              <ExternalLink className="mr-2 h-4 w-4" />
+              <ExternalLink className="h-4 w-4 shrink-0" />
               {t("viewAllProjects")}
             </CommandItem>
             {projects.map((project) => (
