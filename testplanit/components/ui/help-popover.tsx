@@ -94,8 +94,10 @@ export function HelpPopover({ helpKey, side = "bottom", tabIndex }: HelpPopoverP
 
   return (
     <Popover>
-      <PopoverTrigger className="ml-2" tabIndex={tabIndex}>
-        <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+      <PopoverTrigger asChild>
+        <button type="button" className="ml-2 inline-flex" tabIndex={tabIndex} aria-label="Help">
+          <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+        </button>
       </PopoverTrigger>
       <PopoverContent side={side} className="w-80">
         <div className="p-4">

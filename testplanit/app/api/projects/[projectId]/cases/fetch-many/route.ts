@@ -180,7 +180,16 @@ export async function POST(
       .map(id => cases.find(c => c.id === id))
       .filter(c => c !== undefined);
 
-    return NextResponse.json({ cases: orderedCases, totalCount });
+    // Convert BigInt fields to strings for JSON serialization
+    const serializedCases = orderedCases.map(c => ({
+      ...c,
+      attachments: c.attachments?.map(a => ({
+        ...a,
+        size: a.size.toString(),
+      })),
+    }));
+
+    return NextResponse.json({ cases: serializedCases, totalCount });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

@@ -683,69 +683,71 @@ const TestCasesDialog = React.memo(
       <DialogContent className="max-w-[1200px] h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-0 pr-4">
           <DialogTitle>{tRepository("cases.selectCases")}</DialogTitle>
-          <DialogDescription className="flex justify-between items-start text-muted-foreground">
-            <div className="flex items-center gap-4">
-              <MagicSelectButton
-                projectId={Number(projectId)}
-                testRunMetadata={{
-                  name: form.getValues("name"),
-                  description: form.getValues("note"),
-                  docs: form.getValues("docs"),
-                  linkedIssueIds: linkedIssueIds || [],
-                }}
-                selectedTestCases={selectedTestCases}
-                onSuggestionsAccepted={setSelectedTestCases}
-              />
-              <div className="flex items-start text-sm divide-x divide-muted-foreground">
-                {(isLoadingForecast || isLoadingTestCasesForDrawer) &&
-                selectedTestCases.length > 0 ? (
-                  <div className="px-2">
-                    <LoadingSpinner className="w-4 h-4" />
-                  </div>
-                ) : forecastData ? (
-                  <>
-                    {forecastData.manualEstimate > 0 && (
-                      <div className="px-2">
-                        <ForecastDisplay
-                          seconds={forecastData.manualEstimate}
-                          className="text-xs"
-                          type="manual"
-                        />
-                      </div>
-                    )}
-                    {forecastData.automatedEstimate > 0 && (
-                      <div className="px-2">
-                        <ForecastDisplay
-                          seconds={forecastData.automatedEstimate}
-                          type="automated"
-                          className="text-xs"
-                          round={false}
-                        />
-                      </div>
-                    )}
-                    {forecastData.mixedEstimate > 0 &&
-                      forecastData.mixedEstimate !==
-                        forecastData.manualEstimate &&
-                      forecastData.mixedEstimate !==
-                        forecastData.automatedEstimate && (
+          <DialogDescription asChild>
+            <div className="flex justify-between items-start text-muted-foreground">
+              <div className="flex items-center gap-4">
+                <MagicSelectButton
+                  projectId={Number(projectId)}
+                  testRunMetadata={{
+                    name: form.getValues("name"),
+                    description: form.getValues("note"),
+                    docs: form.getValues("docs"),
+                    linkedIssueIds: linkedIssueIds || [],
+                  }}
+                  selectedTestCases={selectedTestCases}
+                  onSuggestionsAccepted={setSelectedTestCases}
+                />
+                <div className="flex items-start text-sm divide-x divide-muted-foreground">
+                  {(isLoadingForecast || isLoadingTestCasesForDrawer) &&
+                  selectedTestCases.length > 0 ? (
+                    <div className="px-2">
+                      <LoadingSpinner className="w-4 h-4" />
+                    </div>
+                  ) : forecastData ? (
+                    <>
+                      {forecastData.manualEstimate > 0 && (
                         <div className="px-2">
                           <ForecastDisplay
-                            seconds={forecastData.mixedEstimate}
-                            type="mixed"
+                            seconds={forecastData.manualEstimate}
+                            className="text-xs"
+                            type="manual"
+                          />
+                        </div>
+                      )}
+                      {forecastData.automatedEstimate > 0 && (
+                        <div className="px-2">
+                          <ForecastDisplay
+                            seconds={forecastData.automatedEstimate}
+                            type="automated"
                             className="text-xs"
                             round={false}
                           />
                         </div>
                       )}
-                  </>
-                ) : null}
+                      {forecastData.mixedEstimate > 0 &&
+                        forecastData.mixedEstimate !==
+                          forecastData.manualEstimate &&
+                        forecastData.mixedEstimate !==
+                          forecastData.automatedEstimate && (
+                          <div className="px-2">
+                            <ForecastDisplay
+                              seconds={forecastData.mixedEstimate}
+                              type="mixed"
+                              className="text-xs"
+                              round={false}
+                            />
+                          </div>
+                        )}
+                    </>
+                  ) : null}
+                </div>
               </div>
+              <SelectedTestCasesDrawer
+                selectedTestCases={selectedTestCases}
+                onSelectionChange={setSelectedTestCases}
+                projectId={Number(projectId)}
+              />
             </div>
-            <SelectedTestCasesDrawer
-              selectedTestCases={selectedTestCases}
-              onSelectionChange={setSelectedTestCases}
-              projectId={Number(projectId)}
-            />
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1">
