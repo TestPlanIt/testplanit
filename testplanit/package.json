@@ -22,6 +22,7 @@
     "test:e2e:report": "playwright show-report e2e/playwright-report",
     "test:e2e:setup-db": "dotenv -e .env.e2e -- tsx e2e/setup-db.ts",
     "test:e2e:run": "pnpm test:e2e:setup-db && pnpm test:e2e",
+    "test:e2e:prod": "pnpm build && dotenv -e .env.e2e -- cross-env E2E_PROD=on playwright test --config e2e/playwright.config.ts",
     "worker:notification": "dotenv -- tsx workers/notificationWorker.ts",
     "worker:email": "dotenv -- tsx workers/emailWorker.ts",
     "worker:forecast": "dotenv -- tsx workers/forecastWorker.ts",

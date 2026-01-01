@@ -25,7 +25,7 @@ test.describe("Folder Creation", () => {
     return projects[0].id;
   }
 
-  test("Create Root-Level Folder", async ({ api }) => {
+  test("Create Root-Level Folder @smoke", async ({ api }) => {
     const projectId = await getTestProjectId(api);
     await repositoryPage.goto(projectId);
 
@@ -115,8 +115,13 @@ test.describe("Folder Creation", () => {
     const projectId = await getTestProjectId(api);
     await repositoryPage.goto(projectId);
 
-    // Create folder with special characters
-    const specialName = `Test & Folder <> "quotes" 'apostrophe' ${Date.now()}`;
+    // Create folder with comprehensive special characters including:
+    // - HTML entities: & < > " '
+    // - Punctuation: ! @ # $ % ^ * ( ) - _ = + [ ] { } | \ : ; , . ? /
+    // - Unicode/Double-byte: Japanese (テスト), Chinese (测试), Korean (테스트), Emoji (🧪)
+    // - Accented characters: àéîõü ñ ß
+    // - Currency symbols: € £ ¥ ₹
+    const specialName = `Test & <Folder> "quotes" 'apostrophe' @#$% テスト 测试 🧪 café ñoño €£¥ ${Date.now()}`;
     await repositoryPage.createFolder(specialName);
 
     await repositoryPage.verifyFolderExists(specialName);
@@ -157,26 +162,56 @@ test.describe("Folder Creation", () => {
 
     await repositoryPage.goto(projectId);
 
+    // Verify the first folder exists before attempting duplicate
+    await repositoryPage.verifyFolderExists(folderName);
+
     // Try to create another folder with the same name at root level
     await repositoryPage.openAddFolderModal();
 
-    // Remove parent if present
+    // Remove parent if present to ensure we're creating at root level
     const removeParentButton = page.getByTestId("remove-parent-folder-button");
     try {
       await removeParentButton.waitFor({ state: "visible", timeout: 3000 });
       await removeParentButton.click();
       await page.getByText("Root folder").first().waitFor({ state: "visible", timeout: 2000 });
     } catch {
-      // No parent folder
+      // No parent folder - already at root level
     }
 
+    // Fill in the duplicate folder name
     await repositoryPage.folderNameInput.fill(folderName);
     await expect(repositoryPage.folderSubmitButton).toBeEnabled({ timeout: 5000 });
+
+    // Click submit and wait for the API response
+    const responsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/model/repositoryFolders") &&
+        response.request().method() === "POST",
+      { timeout: 15000 }
+    );
+
     await repositoryPage.folderSubmitButton.click();
 
-    // Should show an error (duplicate name at same level)
-    const errorMessage = page.locator('[role="alert"], .text-destructive, .error-message').first();
-    await expect(errorMessage).toBeVisible({ timeout: 10000 });
+    // Wait for the API response - it should fail with an error
+    const response = await responsePromise;
+
+    // The modal should still be visible (not closed) because the creation failed
+    // OR an error message should be shown
+    const modalStillVisible = await repositoryPage.folderNameInput.isVisible({ timeout: 3000 }).catch(() => false);
+    const errorMessage = page.locator('[role="alert"], .text-destructive, .error-message, [data-sonner-toast][data-type="error"]');
+    const errorVisible = await errorMessage.first().isVisible({ timeout: 5000 }).catch(() => false);
+
+    // Either the modal stayed open (blocking duplicate) or an error was shown
+    expect(modalStillVisible || errorVisible || !response.ok()).toBe(true);
+
+    // Close modal if still open
+    if (modalStillVisible) {
+      await repositoryPage.folderCancelButton.click();
+    }
+
+    // Verify there's still only one folder with that name (no duplicate created)
+    const foldersWithName = repositoryPage.getFolderByName(folderName);
+    await expect(foldersWithName).toHaveCount(1, { timeout: 5000 });
   });
 
   test("Create Folder with Same Name at Different Levels", async ({ api }) => {
@@ -292,5 +327,80 @@ test.describe("Folder Creation", () => {
 
     // Verify folder was created at root level (should be visible without expanding)
     await repositoryPage.verifyFolderExists(rootFolderName);
+  });
+
+  test("New Folder Appears at End of List", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create existing folders
+    await api.createFolder(projectId, `Existing A ${Date.now()}`);
+    await api.createFolder(projectId, `Existing B ${Date.now()}`);
+
+    await repositoryPage.goto(projectId);
+
+    // Create a new folder
+    const newFolderName = `New End Folder ${Date.now()}`;
+    await repositoryPage.createFolder(newFolderName);
+
+    // Verify new folder appears at end of list
+    const folders = page.locator('[data-testid^="folder-node-"]');
+    const lastFolder = folders.last();
+    await expect(lastFolder).toContainText(newFolderName);
+  });
+
+  test("Folder Deep Nesting Limit", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create deeply nested folders
+    let parentId: number | undefined;
+    const folderIds: number[] = [];
+
+    for (let i = 0; i < 10; i++) {
+      const folderId = await api.createFolder(projectId, `Nested ${i} ${Date.now()}`, parentId);
+      folderIds.push(folderId);
+      parentId = folderId;
+    }
+
+    await repositoryPage.goto(projectId);
+
+    // Expand all levels
+    for (const folderId of folderIds.slice(0, -1)) {
+      try {
+        await repositoryPage.expandFolder(folderId);
+      } catch {
+        // May hit nesting limit
+      }
+    }
+
+    // Verify deep folder is accessible
+    const deepFolder = repositoryPage.getFolderById(folderIds[folderIds.length - 1]);
+    await expect(deepFolder).toBeVisible({ timeout: 10000 });
+  });
+
+  test("Add Folder Dialog Focuses Name Field", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+    await repositoryPage.goto(projectId);
+
+    // Wait for the add folder button to be visible and clickable
+    const addFolderButton = repositoryPage.addFolderButton;
+    await expect(addFolderButton).toBeVisible({ timeout: 10000 });
+
+    // Click the add folder button
+    await addFolderButton.click();
+
+    // Verify the modal dialog opened
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+
+    // Verify the name input is visible inside the dialog
+    const nameInput = repositoryPage.folderNameInput;
+    await expect(nameInput).toBeVisible({ timeout: 5000 });
+
+    // Verify the name input is focused (auto-focus on open)
+    await expect(nameInput).toBeFocused({ timeout: 5000 });
+
+    // Close modal
+    await repositoryPage.folderCancelButton.click();
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
   });
 });

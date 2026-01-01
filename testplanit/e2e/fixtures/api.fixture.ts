@@ -9,6 +9,7 @@ export class ApiHelper {
   private baseURL: string;
   private createdFolderIds: number[] = [];
   private createdCaseIds: number[] = [];
+  private createdTagIds: number[] = [];
   private cachedTemplateId: number | null = null;
   private cachedStateId: number | null = null;
   private cachedRepositoryId: number | null = null;
@@ -220,41 +221,103 @@ export class ApiHelper {
   }
 
   /**
-   * Delete a folder via API
+   * Create a tag via API
    */
-  async deleteFolder(folderId: number): Promise<void> {
+  async createTag(name: string): Promise<number> {
     const response = await this.request.post(
-      `${this.baseURL}/api/model/repositoryFolders/update`,
+      `${this.baseURL}/api/model/tags/create`,
       {
         data: {
-          where: { id: folderId },
-          data: { isDeleted: true },
+          data: {
+            name,
+            isDeleted: false,
+          },
         },
       }
     );
 
     if (!response.ok()) {
-      console.warn(`Failed to delete folder ${folderId}`);
+      const error = await response.text();
+      throw new Error(`Failed to create tag: ${error}`);
     }
+
+    const result = await response.json();
+    const tagId = result.data.id;
+    this.createdTagIds.push(tagId);
+    return tagId;
   }
 
   /**
-   * Delete a test case via API
+   * Add a tag to a test case via API
    */
-  async deleteTestCase(caseId: number): Promise<void> {
+  async addTagToTestCase(caseId: number, tagId: number): Promise<void> {
     const response = await this.request.post(
       `${this.baseURL}/api/model/repositoryCases/update`,
       {
         data: {
           where: { id: caseId },
-          data: { isDeleted: true },
+          data: {
+            tags: {
+              connect: [{ id: tagId }],
+            },
+          },
         },
       }
     );
 
     if (!response.ok()) {
-      console.warn(`Failed to delete test case ${caseId}`);
+      const error = await response.text();
+      throw new Error(`Failed to add tag to test case: ${error}`);
     }
+  }
+
+  /**
+   * Delete a tag via API (soft delete)
+   * Silently ignores failures - item may already be deleted by the test
+   */
+  async deleteTag(tagId: number): Promise<void> {
+    this.request
+      .post(`${this.baseURL}/api/model/tags/update`, {
+        data: {
+          where: { id: tagId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Delete a folder via API (soft delete)
+   * Silently ignores failures - item may already be deleted by the test
+   */
+  async deleteFolder(folderId: number): Promise<void> {
+    // Fire and forget - don't wait or check response
+    // Item may already be deleted by the test itself
+    this.request
+      .post(`${this.baseURL}/api/model/repositoryFolders/update`, {
+        data: {
+          where: { id: folderId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Delete a test case via API (soft delete)
+   * Silently ignores failures - item may already be deleted by the test
+   */
+  async deleteTestCase(caseId: number): Promise<void> {
+    // Fire and forget - don't wait or check response
+    // Item may already be deleted by the test itself
+    this.request
+      .post(`${this.baseURL}/api/model/repositoryCases/update`, {
+        data: {
+          where: { id: caseId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
   }
 
   /**
@@ -305,7 +368,7 @@ export class ApiHelper {
    * Clean up all test data created during tests
    */
   async cleanup(): Promise<void> {
-    // Delete test cases first (they reference folders)
+    // Delete test cases first (they reference folders and tags)
     for (const caseId of this.createdCaseIds) {
       await this.deleteTestCase(caseId);
     }
@@ -316,5 +379,11 @@ export class ApiHelper {
       await this.deleteFolder(folderId);
     }
     this.createdFolderIds = [];
+
+    // Finally delete tags
+    for (const tagId of this.createdTagIds) {
+      await this.deleteTag(tagId);
+    }
+    this.createdTagIds = [];
   }
 }

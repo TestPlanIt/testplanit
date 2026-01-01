@@ -43,34 +43,29 @@ test.describe("Issues", () => {
 
     // Find issue link button/input
     const linkIssueButton = page.locator('[data-testid="link-issue"], button:has-text("Link Issue")').first();
-    if (await linkIssueButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await linkIssueButton.click();
+    await expect(linkIssueButton).toBeVisible({ timeout: 5000 });
+    await linkIssueButton.click();
 
-      // Enter issue ID or search for issue
-      const issueInput = page.locator('[data-testid="issue-input"], input[placeholder*="issue"]').first();
-      if (await issueInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await issueInput.fill("JIRA-123");
+    // Enter issue ID or search for issue
+    const issueInput = page.locator('[data-testid="issue-input"], input[placeholder*="issue"]').first();
+    await expect(issueInput).toBeVisible({ timeout: 5000 });
+    await issueInput.fill("JIRA-123");
 
-        // Search or select
-        const searchButton = page.locator('button:has-text("Search"), button:has-text("Link")').first();
-        await searchButton.click();
+    // Search or select
+    const searchButton = page.locator('button:has-text("Search"), button:has-text("Link")').first();
+    await searchButton.click();
 
-        await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("networkidle");
 
-        // If issue found, select it
-        const issueOption = page.locator('[role="option"], [data-testid="issue-result"]').first();
-        if (await issueOption.isVisible({ timeout: 5000 }).catch(() => false)) {
-          await issueOption.click();
-          await page.waitForLoadState("networkidle");
+    // If issue found, select it
+    const issueOption = page.locator('[role="option"], [data-testid="issue-result"]').first();
+    await expect(issueOption).toBeVisible({ timeout: 5000 });
+    await issueOption.click();
+    await page.waitForLoadState("networkidle");
 
-          // Verify issue is linked
-          const linkedIssue = page.locator('[data-testid="linked-issue"], .issue-link');
-          await expect(linkedIssue.first()).toBeVisible({ timeout: 5000 });
-        }
-      }
-    } else {
-      test.skip();
-    }
+    // Verify issue is linked
+    const linkedIssue = page.locator('[data-testid="linked-issue"], .issue-link');
+    await expect(linkedIssue.first()).toBeVisible({ timeout: 5000 });
   });
 
   test("Attach Multiple Issues to Test Case", async ({ api, page }) => {
@@ -90,34 +85,30 @@ test.describe("Issues", () => {
     await page.waitForLoadState("networkidle");
 
     const linkIssueButton = page.locator('[data-testid="link-issue"]').first();
-    if (await linkIssueButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      // Link first issue
-      await linkIssueButton.click();
-      const issueInput = page.locator('[data-testid="issue-input"]').first();
-      await issueInput.fill("JIRA-123");
-      const issueOption = page.locator('[role="option"]').first();
-      if (await issueOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await issueOption.click();
-      }
+    await expect(linkIssueButton).toBeVisible({ timeout: 5000 });
 
-      await page.waitForLoadState("networkidle");
+    // Link first issue
+    await linkIssueButton.click();
+    const issueInput = page.locator('[data-testid="issue-input"]').first();
+    await issueInput.fill("JIRA-123");
+    const issueOption = page.locator('[role="option"]').first();
+    await expect(issueOption).toBeVisible({ timeout: 3000 });
+    await issueOption.click();
 
-      // Link second issue
-      await linkIssueButton.click();
-      await issueInput.fill("JIRA-456");
-      const issueOption2 = page.locator('[role="option"]').first();
-      if (await issueOption2.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await issueOption2.click();
-      }
+    await page.waitForLoadState("networkidle");
 
-      await page.waitForLoadState("networkidle");
+    // Link second issue
+    await linkIssueButton.click();
+    await issueInput.fill("JIRA-456");
+    const issueOption2 = page.locator('[role="option"]').first();
+    await expect(issueOption2).toBeVisible({ timeout: 3000 });
+    await issueOption2.click();
 
-      // Verify both issues are linked
-      const linkedIssues = page.locator('[data-testid="linked-issue"]');
-      expect(await linkedIssues.count()).toBeGreaterThanOrEqual(2);
-    } else {
-      test.skip();
-    }
+    await page.waitForLoadState("networkidle");
+
+    // Verify both issues are linked
+    const linkedIssues = page.locator('[data-testid="linked-issue"]');
+    expect(await linkedIssues.count()).toBeGreaterThanOrEqual(2);
   });
 
   test("Remove Issue from Test Case", async ({ api, page }) => {
@@ -138,37 +129,33 @@ test.describe("Issues", () => {
 
     // First link an issue
     const linkIssueButton = page.locator('[data-testid="link-issue"]').first();
-    if (await linkIssueButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await linkIssueButton.click();
-      const issueInput = page.locator('[data-testid="issue-input"]').first();
-      await issueInput.fill("JIRA-789");
-      const issueOption = page.locator('[role="option"]').first();
-      if (await issueOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await issueOption.click();
-      }
-      await page.waitForLoadState("networkidle");
-    }
+    await expect(linkIssueButton).toBeVisible({ timeout: 5000 });
+    await linkIssueButton.click();
+    const issueInput = page.locator('[data-testid="issue-input"]').first();
+    await issueInput.fill("JIRA-789");
+    const issueOption = page.locator('[role="option"]').first();
+    await expect(issueOption).toBeVisible({ timeout: 3000 });
+    await issueOption.click();
+    await page.waitForLoadState("networkidle");
 
     // Now remove the issue
     const linkedIssue = page.locator('[data-testid="linked-issue"]').first();
-    if (await linkedIssue.isVisible({ timeout: 5000 }).catch(() => false)) {
-      const removeButton = linkedIssue.locator('[data-testid="remove-issue"], button, .remove');
-      if (await removeButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await removeButton.click();
+    await expect(linkedIssue).toBeVisible({ timeout: 5000 });
 
-        // Confirm if needed
-        const confirmButton = page.locator('[role="alertdialog"] button:has-text("Remove")').first();
-        if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await confirmButton.click();
-        }
+    const removeButton = linkedIssue.locator('[data-testid="remove-issue"], button, .remove');
+    await expect(removeButton).toBeVisible({ timeout: 3000 });
+    await removeButton.click();
 
-        await page.waitForLoadState("networkidle");
-
-        // Verify issue is removed
-        await expect(linkedIssue).not.toBeVisible({ timeout: 5000 });
-      }
+    // Confirm if needed
+    const confirmButton = page.locator('[role="alertdialog"] button:has-text("Remove")').first();
+    if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await confirmButton.click();
     }
-    test.skip();
+
+    await page.waitForLoadState("networkidle");
+
+    // Verify issue is removed
+    await expect(linkedIssue).not.toBeVisible({ timeout: 5000 });
   });
 
   test("Navigate to Issue from Test Case", async ({ api, page }) => {
@@ -189,28 +176,23 @@ test.describe("Issues", () => {
 
     // First link an issue
     const linkIssueButton = page.locator('[data-testid="link-issue"]').first();
-    if (await linkIssueButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await linkIssueButton.click();
-      const issueOption = page.locator('[role="option"]').first();
-      if (await issueOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await issueOption.click();
-      }
-      await page.waitForLoadState("networkidle");
-    }
+    await expect(linkIssueButton).toBeVisible({ timeout: 5000 });
+    await linkIssueButton.click();
+    const issueOption = page.locator('[role="option"]').first();
+    await expect(issueOption).toBeVisible({ timeout: 3000 });
+    await issueOption.click();
+    await page.waitForLoadState("networkidle");
 
     // Click on the linked issue to navigate
     const linkedIssue = page.locator('[data-testid="linked-issue"] a, .issue-link a').first();
-    if (await linkedIssue.isVisible({ timeout: 5000 }).catch(() => false)) {
-      // Check that clicking opens the issue (might open in new tab)
-      const href = await linkedIssue.getAttribute("href");
-      expect(href).toBeTruthy();
+    await expect(linkedIssue).toBeVisible({ timeout: 5000 });
 
-      // Verify it links to an external issue tracker
-      if (href) {
-        expect(href).toMatch(/jira|github|azure|gitlab/i);
-      }
-    }
-    test.skip();
+    // Check that clicking opens the issue (might open in new tab)
+    const href = await linkedIssue.getAttribute("href");
+    expect(href).toBeTruthy();
+
+    // Verify it links to an external issue tracker
+    expect(href).toMatch(/jira|github|azure|gitlab/i);
   });
 
   test("View Issue Details Preview", async ({ api, page }) => {
@@ -231,28 +213,24 @@ test.describe("Issues", () => {
 
     // Link an issue
     const linkIssueButton = page.locator('[data-testid="link-issue"]').first();
-    if (await linkIssueButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await linkIssueButton.click();
-      const issueOption = page.locator('[role="option"]').first();
-      if (await issueOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await issueOption.click();
-      }
-      await page.waitForLoadState("networkidle");
-    }
+    await expect(linkIssueButton).toBeVisible({ timeout: 5000 });
+    await linkIssueButton.click();
+    const issueOption = page.locator('[role="option"]').first();
+    await expect(issueOption).toBeVisible({ timeout: 3000 });
+    await issueOption.click();
+    await page.waitForLoadState("networkidle");
 
     // Hover over linked issue to see preview
     const linkedIssue = page.locator('[data-testid="linked-issue"]').first();
-    if (await linkedIssue.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await linkedIssue.hover();
+    await expect(linkedIssue).toBeVisible({ timeout: 5000 });
+    await linkedIssue.hover();
 
-      // Look for preview tooltip/popover
-      const preview = page.locator('[data-testid="issue-preview"], .issue-popover, [role="tooltip"]');
-      if (await preview.isVisible({ timeout: 5000 }).catch(() => false)) {
-        // Verify preview contains issue details
-        await expect(preview).toContainText(/title|status|description/i);
-      }
-    }
-    test.skip();
+    // Look for preview tooltip/popover
+    const preview = page.locator('[data-testid="issue-preview"], .issue-popover, [role="tooltip"]');
+    await expect(preview).toBeVisible({ timeout: 5000 });
+
+    // Verify preview contains issue details
+    await expect(preview).toContainText(/title|status|description/i);
   });
 
   test("Issue Link Shows Status Badge", async ({ api, page }) => {
@@ -273,22 +251,19 @@ test.describe("Issues", () => {
 
     // Link an issue
     const linkIssueButton = page.locator('[data-testid="link-issue"]').first();
-    if (await linkIssueButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await linkIssueButton.click();
-      const issueOption = page.locator('[role="option"]').first();
-      if (await issueOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await issueOption.click();
-      }
-      await page.waitForLoadState("networkidle");
-    }
+    await expect(linkIssueButton).toBeVisible({ timeout: 5000 });
+    await linkIssueButton.click();
+    const issueOption = page.locator('[role="option"]').first();
+    await expect(issueOption).toBeVisible({ timeout: 3000 });
+    await issueOption.click();
+    await page.waitForLoadState("networkidle");
 
     // Verify issue shows status badge
     const linkedIssue = page.locator('[data-testid="linked-issue"]').first();
-    if (await linkedIssue.isVisible({ timeout: 5000 }).catch(() => false)) {
-      const statusBadge = linkedIssue.locator('[data-testid="issue-status"], .status-badge, .badge');
-      await expect(statusBadge.first()).toBeVisible({ timeout: 5000 });
-    }
-    test.skip();
+    await expect(linkedIssue).toBeVisible({ timeout: 5000 });
+
+    const statusBadge = linkedIssue.locator('[data-testid="issue-status"], .status-badge, .badge');
+    await expect(statusBadge.first()).toBeVisible({ timeout: 5000 });
   });
 
   test("Bulk Link Issue to Test Cases", async ({ api, page }) => {
@@ -307,34 +282,29 @@ test.describe("Issues", () => {
     const checkbox1 = page.locator(`[data-testid="case-checkbox-${case1Id}"]`).first();
     const checkbox2 = page.locator(`[data-testid="case-checkbox-${case2Id}"]`).first();
 
-    if (await checkbox1.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await checkbox1.click();
-      await checkbox2.click();
+    await expect(checkbox1).toBeVisible({ timeout: 5000 });
+    await checkbox1.click();
+    await checkbox2.click();
 
-      // Open bulk edit menu
-      const bulkEditButton = page.locator('[data-testid="bulk-edit"]').first();
-      if (await bulkEditButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await bulkEditButton.click();
+    // Open bulk edit menu
+    const bulkEditButton = page.locator('[data-testid="bulk-edit"]').first();
+    await expect(bulkEditButton).toBeVisible({ timeout: 3000 });
+    await bulkEditButton.click();
 
-        // Select "Link Issue" option
-        const linkIssueOption = page.locator('[role="menuitem"]:has-text("Issue"), [data-testid="bulk-link-issue"]').first();
-        if (await linkIssueOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await linkIssueOption.click();
+    // Select "Link Issue" option
+    const linkIssueOption = page.locator('[role="menuitem"]:has-text("Issue"), [data-testid="bulk-link-issue"]').first();
+    await expect(linkIssueOption).toBeVisible({ timeout: 3000 });
+    await linkIssueOption.click();
 
-          // Enter/select issue
-          const issueOption = page.locator('[role="option"]').first();
-          if (await issueOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-            await issueOption.click();
+    // Enter/select issue
+    const issueOption = page.locator('[role="option"]').first();
+    await expect(issueOption).toBeVisible({ timeout: 3000 });
+    await issueOption.click();
 
-            const applyButton = page.locator('button:has-text("Apply")').first();
-            await applyButton.click();
+    const applyButton = page.locator('button:has-text("Apply")').first();
+    await applyButton.click();
 
-            await page.waitForLoadState("networkidle");
-          }
-        }
-      }
-    }
-    test.skip();
+    await page.waitForLoadState("networkidle");
   });
 
   test("Issue Integration Error Handling", async ({ api, page }) => {
@@ -354,27 +324,23 @@ test.describe("Issues", () => {
     await page.waitForLoadState("networkidle");
 
     const linkIssueButton = page.locator('[data-testid="link-issue"]').first();
-    if (await linkIssueButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await linkIssueButton.click();
+    await expect(linkIssueButton).toBeVisible({ timeout: 5000 });
+    await linkIssueButton.click();
 
-      // Try to search for a non-existent issue
-      const issueInput = page.locator('[data-testid="issue-input"]').first();
-      if (await issueInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await issueInput.fill("NONEXISTENT-99999");
+    // Try to search for a non-existent issue
+    const issueInput = page.locator('[data-testid="issue-input"]').first();
+    await expect(issueInput).toBeVisible({ timeout: 5000 });
+    await issueInput.fill("NONEXISTENT-99999");
 
-        const searchButton = page.locator('button:has-text("Search")').first();
-        if (await searchButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await searchButton.click();
+    const searchButton = page.locator('button:has-text("Search")').first();
+    await expect(searchButton).toBeVisible({ timeout: 3000 });
+    await searchButton.click();
 
-          await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("networkidle");
 
-          // Verify error or "not found" message
-          const errorMessage = page.locator('[role="alert"], .error-message, text=/not found|no results|error/i');
-          await expect(errorMessage.first()).toBeVisible({ timeout: 5000 });
-        }
-      }
-    }
-    test.skip();
+    // Verify error or "not found" message
+    const errorMessage = page.locator('[role="alert"], .error-message, text=/not found|no results|error/i');
+    await expect(errorMessage.first()).toBeVisible({ timeout: 5000 });
   });
 
   test("Create Issue from Test Case", async ({ api, page }) => {
@@ -395,25 +361,22 @@ test.describe("Issues", () => {
 
     // Look for "Create Issue" button
     const createIssueButton = page.locator('[data-testid="create-issue"], button:has-text("Create Issue")').first();
-    if (await createIssueButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await createIssueButton.click();
+    await expect(createIssueButton).toBeVisible({ timeout: 5000 });
+    await createIssueButton.click();
 
-      // Fill in issue form
-      const issueTitleInput = page.locator('[data-testid="issue-title"], input[name="title"]').first();
-      if (await issueTitleInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await issueTitleInput.fill(`Bug from test case ${Date.now()}`);
+    // Fill in issue form
+    const issueTitleInput = page.locator('[data-testid="issue-title"], input[name="title"]').first();
+    await expect(issueTitleInput).toBeVisible({ timeout: 5000 });
+    await issueTitleInput.fill(`Bug from test case ${Date.now()}`);
 
-        const submitButton = page.locator('button[type="submit"], button:has-text("Create")').first();
-        await submitButton.click();
+    const submitButton = page.locator('button[type="submit"], button:has-text("Create")').first();
+    await submitButton.click();
 
-        await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("networkidle");
 
-        // Verify issue was created and linked
-        const linkedIssue = page.locator('[data-testid="linked-issue"]').first();
-        await expect(linkedIssue).toBeVisible({ timeout: 10000 });
-      }
-    }
-    test.skip();
+    // Verify issue was created and linked
+    const linkedIssue = page.locator('[data-testid="linked-issue"]').first();
+    await expect(linkedIssue).toBeVisible({ timeout: 10000 });
   });
 
   test("Sync Issue Status", async ({ api, page }) => {
@@ -434,29 +397,24 @@ test.describe("Issues", () => {
 
     // Link an issue first
     const linkIssueButton = page.locator('[data-testid="link-issue"]').first();
-    if (await linkIssueButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await linkIssueButton.click();
-      const issueOption = page.locator('[role="option"]').first();
-      if (await issueOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await issueOption.click();
-      }
-      await page.waitForLoadState("networkidle");
-    }
+    await expect(linkIssueButton).toBeVisible({ timeout: 5000 });
+    await linkIssueButton.click();
+    const issueOption = page.locator('[role="option"]').first();
+    await expect(issueOption).toBeVisible({ timeout: 3000 });
+    await issueOption.click();
+    await page.waitForLoadState("networkidle");
 
     // Look for sync button
     const syncButton = page.locator('[data-testid="sync-issue"], button:has-text("Sync"), button:has-text("Refresh")').first();
-    if (await syncButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await syncButton.click();
+    await expect(syncButton).toBeVisible({ timeout: 5000 });
+    await syncButton.click();
 
-      await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("networkidle");
 
-      // Verify status is updated (or at least no error)
-      const statusBadge = page.locator('[data-testid="issue-status"]').first();
-      if (await statusBadge.isVisible({ timeout: 3000 }).catch(() => false)) {
-        expect(await statusBadge.textContent()).toBeTruthy();
-      }
-    }
-    test.skip();
+    // Verify status is updated (or at least no error)
+    const statusBadge = page.locator('[data-testid="issue-status"]').first();
+    await expect(statusBadge).toBeVisible({ timeout: 3000 });
+    expect(await statusBadge.textContent()).toBeTruthy();
   });
 
   test("Issue Link Bidirectional", async ({ api, page }) => {
@@ -477,27 +435,15 @@ test.describe("Issues", () => {
 
     // Link an issue
     const linkIssueButton = page.locator('[data-testid="link-issue"]').first();
-    if (await linkIssueButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await linkIssueButton.click();
-      const issueOption = page.locator('[role="option"]').first();
-      if (await issueOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await issueOption.click();
-      }
-      await page.waitForLoadState("networkidle");
+    await expect(linkIssueButton).toBeVisible({ timeout: 5000 });
+    await linkIssueButton.click();
+    const issueOption = page.locator('[role="option"]').first();
+    await expect(issueOption).toBeVisible({ timeout: 3000 });
+    await issueOption.click();
+    await page.waitForLoadState("networkidle");
 
-      // Verify bidirectional link indicator
-      const bidirectionalIndicator = page.locator('[data-testid="bidirectional-link"], .sync-icon');
-      if (await bidirectionalIndicator.isVisible({ timeout: 5000 }).catch(() => false)) {
-        // Link is bidirectional
-        expect(await bidirectionalIndicator.isVisible()).toBe(true);
-      } else {
-        // Check if there's a note about the link being created in both systems
-        const successMessage = page.locator('text=/linked.*both|bidirectional|synced/i');
-        if (await successMessage.isVisible({ timeout: 3000 }).catch(() => false)) {
-          expect(await successMessage.isVisible()).toBe(true);
-        }
-      }
-    }
-    test.skip();
+    // Verify bidirectional link indicator or success message
+    const bidirectionalIndicator = page.locator('[data-testid="bidirectional-link"], .sync-icon, text=/linked.*both|bidirectional|synced/i');
+    await expect(bidirectionalIndicator.first()).toBeVisible({ timeout: 5000 });
   });
 });

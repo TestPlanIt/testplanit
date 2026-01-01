@@ -32,33 +32,30 @@ test.describe("Custom Fields", () => {
 
     // Click add custom field button
     const addFieldButton = page.locator('[data-testid="add-custom-field"], button:has-text("Add Field"), button:has-text("New Field")').first();
-    if (await addFieldButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await addFieldButton.click();
+    await expect(addFieldButton).toBeVisible({ timeout: 5000 });
+    await addFieldButton.click();
 
-      // Select text type
-      const textTypeOption = page.locator('[data-testid="field-type-text"], [data-value="text"]').first();
-      if (await textTypeOption.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await textTypeOption.click();
-      }
-
-      // Fill in field name
-      const fieldNameInput = page.locator('[data-testid="field-name-input"], input[name="name"]').first();
-      await expect(fieldNameInput).toBeVisible({ timeout: 5000 });
-
-      const fieldName = `Text Field ${Date.now()}`;
-      await fieldNameInput.fill(fieldName);
-
-      // Submit
-      const submitButton = page.locator('button[type="submit"], button:has-text("Create")').first();
-      await submitButton.click();
-
-      await page.waitForLoadState("networkidle");
-
-      // Verify field was created
-      await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
-    } else {
-      test.skip();
+    // Select text type
+    const textTypeOption = page.locator('[data-testid="field-type-text"], [data-value="text"]').first();
+    if (await textTypeOption.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await textTypeOption.click();
     }
+
+    // Fill in field name
+    const fieldNameInput = page.locator('[data-testid="field-name-input"], input[name="name"]').first();
+    await expect(fieldNameInput).toBeVisible({ timeout: 5000 });
+
+    const fieldName = `Text Field ${Date.now()}`;
+    await fieldNameInput.fill(fieldName);
+
+    // Submit
+    const submitButton = page.locator('button[type="submit"], button:has-text("Create")').first();
+    await submitButton.click();
+
+    await page.waitForLoadState("networkidle");
+
+    // Verify field was created
+    await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
   });
 
   test("Create Dropdown Custom Field", async ({ api, page }) => {
@@ -68,40 +65,37 @@ test.describe("Custom Fields", () => {
     await page.waitForLoadState("networkidle");
 
     const addFieldButton = page.locator('[data-testid="add-custom-field"]').first();
-    if (await addFieldButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await addFieldButton.click();
+    await expect(addFieldButton).toBeVisible({ timeout: 5000 });
+    await addFieldButton.click();
 
-      // Select dropdown type
-      const dropdownTypeOption = page.locator('[data-testid="field-type-dropdown"], [data-value="dropdown"]').first();
-      if (await dropdownTypeOption.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await dropdownTypeOption.click();
-      }
-
-      const fieldNameInput = page.locator('[data-testid="field-name-input"]').first();
-      const fieldName = `Dropdown Field ${Date.now()}`;
-      await fieldNameInput.fill(fieldName);
-
-      // Add options
-      const addOptionButton = page.locator('[data-testid="add-option"], button:has-text("Add Option")').first();
-      if (await addOptionButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await addOptionButton.click();
-        const optionInput = page.locator('[data-testid="option-input"]').last();
-        await optionInput.fill("Option 1");
-
-        await addOptionButton.click();
-        const optionInput2 = page.locator('[data-testid="option-input"]').last();
-        await optionInput2.fill("Option 2");
-      }
-
-      const submitButton = page.locator('button[type="submit"]').first();
-      await submitButton.click();
-
-      await page.waitForLoadState("networkidle");
-
-      await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
-    } else {
-      test.skip();
+    // Select dropdown type
+    const dropdownTypeOption = page.locator('[data-testid="field-type-dropdown"], [data-value="dropdown"]').first();
+    if (await dropdownTypeOption.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await dropdownTypeOption.click();
     }
+
+    const fieldNameInput = page.locator('[data-testid="field-name-input"]').first();
+    const fieldName = `Dropdown Field ${Date.now()}`;
+    await fieldNameInput.fill(fieldName);
+
+    // Add options
+    const addOptionButton = page.locator('[data-testid="add-option"], button:has-text("Add Option")').first();
+    if (await addOptionButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await addOptionButton.click();
+      const optionInput = page.locator('[data-testid="option-input"]').last();
+      await optionInput.fill("Option 1");
+
+      await addOptionButton.click();
+      const optionInput2 = page.locator('[data-testid="option-input"]').last();
+      await optionInput2.fill("Option 2");
+    }
+
+    const submitButton = page.locator('button[type="submit"]').first();
+    await submitButton.click();
+
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
   });
 
   test("Create Number Custom Field", async ({ api, page }) => {
@@ -111,27 +105,24 @@ test.describe("Custom Fields", () => {
     await page.waitForLoadState("networkidle");
 
     const addFieldButton = page.locator('[data-testid="add-custom-field"]').first();
-    if (await addFieldButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await addFieldButton.click();
+    await expect(addFieldButton).toBeVisible({ timeout: 5000 });
+    await addFieldButton.click();
 
-      const numberTypeOption = page.locator('[data-testid="field-type-number"], [data-value="number"]').first();
-      if (await numberTypeOption.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await numberTypeOption.click();
-      }
-
-      const fieldNameInput = page.locator('[data-testid="field-name-input"]').first();
-      const fieldName = `Number Field ${Date.now()}`;
-      await fieldNameInput.fill(fieldName);
-
-      const submitButton = page.locator('button[type="submit"]').first();
-      await submitButton.click();
-
-      await page.waitForLoadState("networkidle");
-
-      await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
-    } else {
-      test.skip();
+    const numberTypeOption = page.locator('[data-testid="field-type-number"], [data-value="number"]').first();
+    if (await numberTypeOption.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await numberTypeOption.click();
     }
+
+    const fieldNameInput = page.locator('[data-testid="field-name-input"]').first();
+    const fieldName = `Number Field ${Date.now()}`;
+    await fieldNameInput.fill(fieldName);
+
+    const submitButton = page.locator('button[type="submit"]').first();
+    await submitButton.click();
+
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
   });
 
   test("Create Date Custom Field", async ({ api, page }) => {
@@ -141,27 +132,24 @@ test.describe("Custom Fields", () => {
     await page.waitForLoadState("networkidle");
 
     const addFieldButton = page.locator('[data-testid="add-custom-field"]').first();
-    if (await addFieldButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await addFieldButton.click();
+    await expect(addFieldButton).toBeVisible({ timeout: 5000 });
+    await addFieldButton.click();
 
-      const dateTypeOption = page.locator('[data-testid="field-type-date"], [data-value="date"]').first();
-      if (await dateTypeOption.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await dateTypeOption.click();
-      }
-
-      const fieldNameInput = page.locator('[data-testid="field-name-input"]').first();
-      const fieldName = `Date Field ${Date.now()}`;
-      await fieldNameInput.fill(fieldName);
-
-      const submitButton = page.locator('button[type="submit"]').first();
-      await submitButton.click();
-
-      await page.waitForLoadState("networkidle");
-
-      await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
-    } else {
-      test.skip();
+    const dateTypeOption = page.locator('[data-testid="field-type-date"], [data-value="date"]').first();
+    if (await dateTypeOption.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await dateTypeOption.click();
     }
+
+    const fieldNameInput = page.locator('[data-testid="field-name-input"]').first();
+    const fieldName = `Date Field ${Date.now()}`;
+    await fieldNameInput.fill(fieldName);
+
+    const submitButton = page.locator('button[type="submit"]').first();
+    await submitButton.click();
+
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
   });
 
   test("Create Checkbox Custom Field", async ({ api, page }) => {
@@ -171,27 +159,24 @@ test.describe("Custom Fields", () => {
     await page.waitForLoadState("networkidle");
 
     const addFieldButton = page.locator('[data-testid="add-custom-field"]').first();
-    if (await addFieldButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await addFieldButton.click();
+    await expect(addFieldButton).toBeVisible({ timeout: 5000 });
+    await addFieldButton.click();
 
-      const checkboxTypeOption = page.locator('[data-testid="field-type-checkbox"], [data-value="checkbox"]').first();
-      if (await checkboxTypeOption.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await checkboxTypeOption.click();
-      }
-
-      const fieldNameInput = page.locator('[data-testid="field-name-input"]').first();
-      const fieldName = `Checkbox Field ${Date.now()}`;
-      await fieldNameInput.fill(fieldName);
-
-      const submitButton = page.locator('button[type="submit"]').first();
-      await submitButton.click();
-
-      await page.waitForLoadState("networkidle");
-
-      await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
-    } else {
-      test.skip();
+    const checkboxTypeOption = page.locator('[data-testid="field-type-checkbox"], [data-value="checkbox"]').first();
+    if (await checkboxTypeOption.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await checkboxTypeOption.click();
     }
+
+    const fieldNameInput = page.locator('[data-testid="field-name-input"]').first();
+    const fieldName = `Checkbox Field ${Date.now()}`;
+    await fieldNameInput.fill(fieldName);
+
+    const submitButton = page.locator('button[type="submit"]').first();
+    await submitButton.click();
+
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
   });
 
   test("Create Multi-Select Custom Field", async ({ api, page }) => {
@@ -201,39 +186,36 @@ test.describe("Custom Fields", () => {
     await page.waitForLoadState("networkidle");
 
     const addFieldButton = page.locator('[data-testid="add-custom-field"]').first();
-    if (await addFieldButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await addFieldButton.click();
+    await expect(addFieldButton).toBeVisible({ timeout: 5000 });
+    await addFieldButton.click();
 
-      const multiSelectTypeOption = page.locator('[data-testid="field-type-multiselect"], [data-value="multiselect"]').first();
-      if (await multiSelectTypeOption.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await multiSelectTypeOption.click();
-      }
-
-      const fieldNameInput = page.locator('[data-testid="field-name-input"]').first();
-      const fieldName = `Multi-Select Field ${Date.now()}`;
-      await fieldNameInput.fill(fieldName);
-
-      // Add options
-      const addOptionButton = page.locator('[data-testid="add-option"]').first();
-      if (await addOptionButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await addOptionButton.click();
-        const optionInput = page.locator('[data-testid="option-input"]').last();
-        await optionInput.fill("Option A");
-
-        await addOptionButton.click();
-        const optionInput2 = page.locator('[data-testid="option-input"]').last();
-        await optionInput2.fill("Option B");
-      }
-
-      const submitButton = page.locator('button[type="submit"]').first();
-      await submitButton.click();
-
-      await page.waitForLoadState("networkidle");
-
-      await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
-    } else {
-      test.skip();
+    const multiSelectTypeOption = page.locator('[data-testid="field-type-multiselect"], [data-value="multiselect"]').first();
+    if (await multiSelectTypeOption.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await multiSelectTypeOption.click();
     }
+
+    const fieldNameInput = page.locator('[data-testid="field-name-input"]').first();
+    const fieldName = `Multi-Select Field ${Date.now()}`;
+    await fieldNameInput.fill(fieldName);
+
+    // Add options
+    const addOptionButton = page.locator('[data-testid="add-option"]').first();
+    if (await addOptionButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await addOptionButton.click();
+      const optionInput = page.locator('[data-testid="option-input"]').last();
+      await optionInput.fill("Option A");
+
+      await addOptionButton.click();
+      const optionInput2 = page.locator('[data-testid="option-input"]').last();
+      await optionInput2.fill("Option B");
+    }
+
+    const submitButton = page.locator('button[type="submit"]').first();
+    await submitButton.click();
+
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
   });
 
   test("Edit Custom Field", async ({ api, page }) => {
@@ -243,27 +225,25 @@ test.describe("Custom Fields", () => {
     await page.waitForLoadState("networkidle");
 
     const fieldItem = page.locator('[data-testid="custom-field-item"]').first();
-    if (await fieldItem.isVisible({ timeout: 5000 }).catch(() => false)) {
-      // Click edit
-      const editButton = fieldItem.locator('[data-testid="edit-field"], button:has-text("Edit")');
-      await editButton.click();
+    await expect(fieldItem).toBeVisible({ timeout: 5000 });
 
-      // Edit the name
-      const nameInput = page.locator('[data-testid="field-name-input"]').first();
-      const newName = `Edited Field ${Date.now()}`;
-      await nameInput.clear();
-      await nameInput.fill(newName);
+    // Click edit
+    const editButton = fieldItem.locator('[data-testid="edit-field"], button:has-text("Edit")');
+    await editButton.click();
 
-      // Save
-      const saveButton = page.locator('button:has-text("Save")').first();
-      await saveButton.click();
+    // Edit the name
+    const nameInput = page.locator('[data-testid="field-name-input"]').first();
+    const newName = `Edited Field ${Date.now()}`;
+    await nameInput.clear();
+    await nameInput.fill(newName);
 
-      await page.waitForLoadState("networkidle");
+    // Save
+    const saveButton = page.locator('button:has-text("Save")').first();
+    await saveButton.click();
 
-      await expect(page.locator(`text="${newName}"`).first()).toBeVisible({ timeout: 5000 });
-    } else {
-      test.skip();
-    }
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator(`text="${newName}"`).first()).toBeVisible({ timeout: 5000 });
   });
 
   test("Delete Custom Field", async ({ api, page }) => {
@@ -273,23 +253,20 @@ test.describe("Custom Fields", () => {
     await page.waitForLoadState("networkidle");
 
     const fieldItem = page.locator('[data-testid="custom-field-item"]').first();
-    if (await fieldItem.isVisible({ timeout: 5000 }).catch(() => false)) {
-      const fieldName = await fieldItem.textContent();
+    await expect(fieldItem).toBeVisible({ timeout: 5000 });
+    const fieldName = await fieldItem.textContent();
 
-      const deleteButton = fieldItem.locator('[data-testid="delete-field"], button:has-text("Delete")');
-      await deleteButton.click();
+    const deleteButton = fieldItem.locator('[data-testid="delete-field"], button:has-text("Delete")');
+    await deleteButton.click();
 
-      // Confirm deletion
-      const confirmButton = page.locator('[role="alertdialog"] button:has-text("Delete")').first();
-      await confirmButton.click();
+    // Confirm deletion
+    const confirmButton = page.locator('[role="alertdialog"] button:has-text("Delete")').first();
+    await confirmButton.click();
 
-      await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("networkidle");
 
-      if (fieldName) {
-        await expect(page.locator(`text="${fieldName}"`)).not.toBeVisible({ timeout: 5000 });
-      }
-    } else {
-      test.skip();
+    if (fieldName) {
+      await expect(page.locator(`text="${fieldName}"`)).not.toBeVisible({ timeout: 5000 });
     }
   });
 
@@ -301,26 +278,23 @@ test.describe("Custom Fields", () => {
 
     // Find a field that's in use
     const fieldItem = page.locator('[data-testid="custom-field-item"]').first();
-    if (await fieldItem.isVisible({ timeout: 5000 }).catch(() => false)) {
-      const deleteButton = fieldItem.locator('[data-testid="delete-field"]');
-      await deleteButton.click();
+    await expect(fieldItem).toBeVisible({ timeout: 5000 });
+    const deleteButton = fieldItem.locator('[data-testid="delete-field"]');
+    await deleteButton.click();
 
-      // Should show warning about field being in use
-      const warningDialog = page.locator('[role="alertdialog"]');
-      await expect(warningDialog).toBeVisible({ timeout: 5000 });
+    // Should show warning about field being in use
+    const warningDialog = page.locator('[role="alertdialog"]');
+    await expect(warningDialog).toBeVisible({ timeout: 5000 });
 
-      // Check for warning message
-      const warningText = warningDialog.locator('text=/in use|will be removed|affected/i');
-      if (await warningText.isVisible({ timeout: 3000 }).catch(() => false)) {
-        expect(await warningText.isVisible()).toBe(true);
-      }
-
-      // Cancel
-      const cancelButton = warningDialog.locator('button:has-text("Cancel")').first();
-      await cancelButton.click();
-    } else {
-      test.skip();
+    // Check for warning message
+    const warningText = warningDialog.locator('text=/in use|will be removed|affected/i');
+    if (await warningText.isVisible({ timeout: 3000 }).catch(() => false)) {
+      expect(await warningText.isVisible()).toBe(true);
     }
+
+    // Cancel
+    const cancelButton = warningDialog.locator('button:has-text("Cancel")').first();
+    await cancelButton.click();
   });
 
   test("Set Custom Field Value on Test Case", async ({ api, page }) => {
@@ -341,17 +315,14 @@ test.describe("Custom Fields", () => {
 
     // Find a custom field input
     const customFieldInput = page.locator('[data-testid="custom-field-input"]').first();
-    if (await customFieldInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await customFieldInput.fill("Custom value");
+    await expect(customFieldInput).toBeVisible({ timeout: 5000 });
+    await customFieldInput.fill("Custom value");
 
-      // Save
-      const saveButton = page.locator('button:has-text("Save")').first();
-      if (await saveButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await saveButton.click();
-        await page.waitForLoadState("networkidle");
-      }
-    } else {
-      test.skip();
+    // Save
+    const saveButton = page.locator('button:has-text("Save")').first();
+    if (await saveButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await saveButton.click();
+      await page.waitForLoadState("networkidle");
     }
   });
 
@@ -382,7 +353,6 @@ test.describe("Custom Fields", () => {
         }
       }
     }
-    test.skip();
   });
 
   test("Custom Field Required Validation", async ({ api, page }) => {
@@ -435,7 +405,6 @@ test.describe("Custom Fields", () => {
         await expect(errorMessage.first()).toBeVisible({ timeout: 5000 });
       }
     }
-    test.skip();
   });
 
   test("Custom Field Import/Export", async ({ api, page }) => {
@@ -464,7 +433,6 @@ test.describe("Custom Fields", () => {
       const importDialog = page.locator('[role="dialog"]');
       await expect(importDialog.first()).toBeVisible({ timeout: 5000 });
     }
-    test.skip();
   });
 
   test("Custom Field Reorder", async ({ api, page }) => {
@@ -491,7 +459,6 @@ test.describe("Custom Fields", () => {
         await page.waitForLoadState("networkidle");
       }
     }
-    test.skip();
   });
 
   test("Custom Field Visibility per Template", async ({ api, page }) => {
@@ -501,26 +468,24 @@ test.describe("Custom Fields", () => {
     await page.waitForLoadState("networkidle");
 
     const fieldItem = page.locator('[data-testid="custom-field-item"]').first();
-    if (await fieldItem.isVisible({ timeout: 5000 }).catch(() => false)) {
-      const editButton = fieldItem.locator('[data-testid="edit-field"]');
-      await editButton.click();
+    await expect(fieldItem).toBeVisible({ timeout: 5000 });
+    const editButton = fieldItem.locator('[data-testid="edit-field"]');
+    await editButton.click();
 
-      // Look for template visibility settings
-      const templateSection = page.locator('[data-testid="template-visibility"]').first();
-      if (await templateSection.isVisible({ timeout: 5000 }).catch(() => false)) {
-        // Toggle visibility for specific templates
-        const templateToggle = templateSection.locator('input[type="checkbox"]').first();
-        if (await templateToggle.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await templateToggle.click();
+    // Look for template visibility settings
+    const templateSection = page.locator('[data-testid="template-visibility"]').first();
+    await expect(templateSection).toBeVisible({ timeout: 5000 });
 
-          const saveButton = page.locator('button:has-text("Save")').first();
-          await saveButton.click();
+    // Toggle visibility for specific templates
+    const templateToggle = templateSection.locator('input[type="checkbox"]').first();
+    if (await templateToggle.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await templateToggle.click();
 
-          await page.waitForLoadState("networkidle");
-        }
-      }
+      const saveButton = page.locator('button:has-text("Save")').first();
+      await saveButton.click();
+
+      await page.waitForLoadState("networkidle");
     }
-    test.skip();
   });
 
   test("Custom Field Default Values", async ({ api, page }) => {
@@ -530,28 +495,25 @@ test.describe("Custom Fields", () => {
     await page.waitForLoadState("networkidle");
 
     const addFieldButton = page.locator('[data-testid="add-custom-field"]').first();
-    if (await addFieldButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await addFieldButton.click();
+    await expect(addFieldButton).toBeVisible({ timeout: 5000 });
+    await addFieldButton.click();
 
-      const fieldNameInput = page.locator('[data-testid="field-name-input"]').first();
-      const fieldName = `Default Value Field ${Date.now()}`;
-      await fieldNameInput.fill(fieldName);
+    const fieldNameInput = page.locator('[data-testid="field-name-input"]').first();
+    const fieldName = `Default Value Field ${Date.now()}`;
+    await fieldNameInput.fill(fieldName);
 
-      // Set default value
-      const defaultValueInput = page.locator('[data-testid="default-value-input"]').first();
-      if (await defaultValueInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await defaultValueInput.fill("Default text");
-      }
-
-      const submitButton = page.locator('button[type="submit"]').first();
-      await submitButton.click();
-
-      await page.waitForLoadState("networkidle");
-
-      await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
-    } else {
-      test.skip();
+    // Set default value
+    const defaultValueInput = page.locator('[data-testid="default-value-input"]').first();
+    if (await defaultValueInput.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await defaultValueInput.fill("Default text");
     }
+
+    const submitButton = page.locator('button[type="submit"]').first();
+    await submitButton.click();
+
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator(`text="${fieldName}"`).first()).toBeVisible({ timeout: 10000 });
   });
 
   test("Clear Custom Field Value", async ({ api, page }) => {
@@ -572,24 +534,22 @@ test.describe("Custom Fields", () => {
 
     // Find a custom field with a value
     const customFieldInput = page.locator('[data-testid="custom-field-input"]').first();
-    if (await customFieldInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-      // Clear the value
-      await customFieldInput.clear();
+    await expect(customFieldInput).toBeVisible({ timeout: 5000 });
 
-      // Or use clear button if available
-      const clearButton = page.locator('[data-testid="clear-field-value"]').first();
-      if (await clearButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await clearButton.click();
-      }
+    // Clear the value
+    await customFieldInput.clear();
 
-      // Save
-      const saveButton = page.locator('button:has-text("Save")').first();
-      if (await saveButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await saveButton.click();
-        await page.waitForLoadState("networkidle");
-      }
-    } else {
-      test.skip();
+    // Or use clear button if available
+    const clearButton = page.locator('[data-testid="clear-field-value"]').first();
+    if (await clearButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await clearButton.click();
+    }
+
+    // Save
+    const saveButton = page.locator('button:has-text("Save")').first();
+    if (await saveButton.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await saveButton.click();
+      await page.waitForLoadState("networkidle");
     }
   });
 });

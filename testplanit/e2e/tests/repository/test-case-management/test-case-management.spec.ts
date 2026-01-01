@@ -70,6 +70,27 @@ test.describe("Test Case Management", () => {
     }
   });
 
+  test("Create Test Case in Folder @smoke", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder via API (folder creation is tested separately)
+    const folderName = `E2E TC Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+
+    await repositoryPage.goto(projectId);
+
+    // Select the folder first
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Create a test case via UI using page object method
+    const testCaseName = `E2E Test Case ${Date.now()}`;
+    await repositoryPage.createTestCase(testCaseName);
+
+    // Verify the test case was created and is visible
+    await repositoryPage.verifyTestCaseExists(testCaseName);
+  });
+
   test("Add Test Case to Folder", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
@@ -160,8 +181,6 @@ test.describe("Test Case Management", () => {
       // Verify it's no longer in the source folder
       await repositoryPage.selectFolder(sourceFolderId);
       await expect(page.locator(`text="${testCaseName}"`)).not.toBeVisible({ timeout: 5000 });
-    } else {
-      test.skip();
     }
   });
 
@@ -242,8 +261,6 @@ test.describe("Test Case Management", () => {
         if (await selectionIndicator.isVisible({ timeout: 3000 }).catch(() => false)) {
           await expect(selectionIndicator).toContainText("2");
         }
-      } else {
-        test.skip();
       }
     }
   });
@@ -339,8 +356,6 @@ test.describe("Test Case Management", () => {
       await repositoryPage.selectFolder(targetFolderId);
       const copiedCase = page.locator(`text=/.*${testCaseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|Copy of ${testCaseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/`);
       await expect(copiedCase.first()).toBeVisible({ timeout: 10000 });
-    } else {
-      test.skip();
     }
   });
 });

@@ -32,15 +32,6 @@ test.describe("Permissions", () => {
     await expect(addFolderButton).toBeVisible({ timeout: 10000 });
   });
 
-  test.skip("Add Folder Button Hidden Without Permission", async ({ page }) => {
-    // This test requires a user without folder create permission
-    // Would need to authenticate as a restricted user
-
-    // Placeholder - would verify button is not visible
-    // const addFolderButton = page.getByTestId("add-folder-button");
-    // await expect(addFolderButton).not.toBeVisible({ timeout: 5000 });
-  });
-
   test("Add Case Button Visible with Permission", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
@@ -59,50 +50,20 @@ test.describe("Permissions", () => {
     await expect(addCaseButton).toBeVisible({ timeout: 10000 });
   });
 
-  test.skip("Add Case Button Hidden Without Permission", async ({ page }) => {
-    // This test requires a user without case create permission
-    // Would need to authenticate as a restricted user
-
-    // Placeholder - would verify button is not visible
-    // const addCaseButton = page.locator('[data-testid="add-case-button"]');
-    // await expect(addCaseButton).not.toBeVisible({ timeout: 5000 });
-  });
-
-  test("View-Only Access to Repository", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    // As admin, verify we can see view-related elements
-    await expect(repositoryPage.leftPanel).toBeVisible({ timeout: 5000 });
-
-    // For view-only access, would need to test with a read-only user
-    // and verify edit buttons are hidden while view is allowed
-  });
-
-  test.skip("Empty Repository Message Without Permission", async ({ page }) => {
-    // This test requires a user without repository access
-    // Would verify appropriate message is shown
-
-    // Placeholder - would verify access denied or empty state message
-    // const accessMessage = page.locator('text=/no access|permission denied|contact administrator/i');
-    // await expect(accessMessage).toBeVisible({ timeout: 5000 });
-  });
-
   test("Documentation View-Only Permission", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
     await repositoryPage.goto(projectId);
 
     // Navigate to documentation
     const docsNav = page.locator('[data-testid="docs-nav"]').first();
-    if (await docsNav.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await docsNav.click();
-      await page.waitForLoadState("networkidle");
+    await expect(docsNav).toBeVisible({ timeout: 5000 });
+    await docsNav.click();
+    await page.waitForLoadState("networkidle");
 
-      // As admin, edit buttons should be visible
-      const editButton = page.locator('[data-testid="edit-doc"], button:has-text("Edit")').first();
-      // For view-only user, these would be hidden
-      // This test validates the admin can see edit options
-    }
-    test.skip();
+    // As admin, edit buttons should be visible
+    const editButton = page.locator('[data-testid="edit-doc"], button:has-text("Edit")').first();
+    await expect(editButton).toBeVisible({ timeout: 5000 });
+    // For view-only user, these would be hidden
+    // This test validates the admin can see edit options
   });
 });

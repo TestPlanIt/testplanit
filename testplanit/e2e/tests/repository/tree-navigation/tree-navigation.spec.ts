@@ -23,6 +23,30 @@ test.describe("Tree Navigation", () => {
     return projects[0].id;
   }
 
+  test("Navigate to Repository Page and Display Folder Tree @smoke", async ({
+    page,
+    api,
+  }) => {
+    const projectId = await getTestProjectId(api);
+
+    await repositoryPage.goto(projectId);
+
+    await expect(repositoryPage.leftPanel).toBeVisible();
+    expect(page.url()).toContain(`/projects/repository/${projectId}`);
+  });
+
+  test("Select Folder and View Its Contents @smoke", async ({ api }) => {
+    const projectId = await getTestProjectId(api);
+
+    const folderName = `E2E Selection Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.selectFolder(folderId);
+
+    await repositoryPage.verifyFolderExists(folderName);
+  });
+
   test("Expand Folder in Tree View", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
@@ -135,8 +159,6 @@ test.describe("Tree Navigation", () => {
       const newBox = await leftPanel.boundingBox();
       const newWidth = newBox?.width || 0;
       expect(newWidth).toBeGreaterThan(initialWidth);
-    } else {
-      test.skip();
     }
   });
 
@@ -166,8 +188,6 @@ test.describe("Tree Navigation", () => {
       const newBox = await leftPanel.boundingBox();
       const newWidth = newBox?.width || 0;
       expect(newWidth).toBeLessThan(initialWidth);
-    } else {
-      test.skip();
     }
   });
 

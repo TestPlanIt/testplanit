@@ -40,21 +40,18 @@ test.describe("Sorting", () => {
 
     // Find the order column header and click to sort
     const orderHeader = page.locator('th:has-text("Order"), th:has-text("#"), [data-testid="order-column-header"]').first();
-    if (await orderHeader.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await orderHeader.click();
-      await page.waitForLoadState("networkidle");
+    await expect(orderHeader).toBeVisible({ timeout: 5000 });
+    await orderHeader.click();
+    await page.waitForLoadState("networkidle");
 
-      // Verify rows are sorted by order
-      const rows = page.locator('[data-testid^="case-row-"], tbody tr');
-      const count = await rows.count();
-      expect(count).toBeGreaterThan(0);
+    // Verify rows are sorted by order
+    const rows = page.locator('[data-testid^="case-row-"], tbody tr');
+    const count = await rows.count();
+    expect(count).toBeGreaterThan(0);
 
-      // Click again to reverse sort
-      await orderHeader.click();
-      await page.waitForLoadState("networkidle");
-    } else {
-      test.skip();
-    }
+    // Click again to reverse sort
+    await orderHeader.click();
+    await page.waitForLoadState("networkidle");
   });
 
   test("Maintain Test Case Order Within Folder", async ({ api, page }) => {

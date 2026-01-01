@@ -66,20 +66,17 @@ test.describe("Breadcrumbs", () => {
 
     // Click on parent in breadcrumb to navigate back
     const breadcrumbs = page.locator('[data-testid="breadcrumbs"], .breadcrumb');
-    if (await breadcrumbs.isVisible({ timeout: 5000 }).catch(() => false)) {
-      const parentLink = breadcrumbs.locator(`a:has-text("${parentName}"), button:has-text("${parentName}")`).first();
-      if (await parentLink.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await parentLink.click();
-        await page.waitForLoadState("networkidle");
+    await expect(breadcrumbs).toBeVisible({ timeout: 5000 });
 
-        // Verify we navigated to parent folder
-        // The parent folder should now be selected
-        const selectedFolder = repositoryPage.getFolderById(parentId);
-        await expect(selectedFolder).toHaveClass(/selected|active/, { timeout: 5000 });
-      }
-    } else {
-      test.skip();
-    }
+    const parentLink = breadcrumbs.locator(`a:has-text("${parentName}"), button:has-text("${parentName}")`).first();
+    await expect(parentLink).toBeVisible({ timeout: 3000 });
+    await parentLink.click();
+    await page.waitForLoadState("networkidle");
+
+    // Verify we navigated to parent folder
+    // The parent folder should now be selected
+    const selectedFolder = repositoryPage.getFolderById(parentId);
+    await expect(selectedFolder).toHaveClass(/selected|active/, { timeout: 5000 });
   });
 
   test("Documentation Page Breadcrumbs", async ({ api, page }) => {
@@ -88,26 +85,22 @@ test.describe("Breadcrumbs", () => {
 
     // Navigate to documentation
     const docsNav = page.locator('[data-testid="docs-nav"]').first();
-    if (await docsNav.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await docsNav.click();
-      await page.waitForLoadState("networkidle");
+    await expect(docsNav).toBeVisible({ timeout: 5000 });
+    await docsNav.click();
+    await page.waitForLoadState("networkidle");
 
-      // Navigate to a nested documentation page
-      const docFolder = page.locator('[data-testid="doc-folder-item"]').first();
-      if (await docFolder.isVisible({ timeout: 5000 }).catch(() => false)) {
-        await docFolder.click();
+    // Navigate to a nested documentation page
+    const docFolder = page.locator('[data-testid="doc-folder-item"]').first();
+    await expect(docFolder).toBeVisible({ timeout: 5000 });
+    await docFolder.click();
 
-        const docPage = page.locator('[data-testid="doc-page-item"]').first();
-        if (await docPage.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await docPage.click();
-          await page.waitForLoadState("networkidle");
+    const docPage = page.locator('[data-testid="doc-page-item"]').first();
+    await expect(docPage).toBeVisible({ timeout: 3000 });
+    await docPage.click();
+    await page.waitForLoadState("networkidle");
 
-          // Verify documentation breadcrumbs
-          const breadcrumbs = page.locator('[data-testid="doc-breadcrumbs"], .breadcrumb');
-          await expect(breadcrumbs.first()).toBeVisible({ timeout: 5000 });
-        }
-      }
-    }
-    test.skip();
+    // Verify documentation breadcrumbs
+    const breadcrumbs = page.locator('[data-testid="doc-breadcrumbs"], .breadcrumb');
+    await expect(breadcrumbs.first()).toBeVisible({ timeout: 5000 });
   });
 });

@@ -194,7 +194,10 @@ export class RepositoryPage extends BasePage {
    * Verify a folder exists in the tree
    */
   async verifyFolderExists(name: string): Promise<void> {
-    await expect(this.getFolderByName(name).first()).toBeVisible({ timeout: 10000 });
+    const folder = this.getFolderByName(name).first();
+    // Scroll the folder into view in case it's off-screen in the tree
+    await folder.scrollIntoViewIfNeeded({ timeout: 10000 });
+    await expect(folder).toBeVisible({ timeout: 10000 });
   }
 
   /**
@@ -236,6 +239,49 @@ export class RepositoryPage extends BasePage {
     await expect(
       this.page.locator('[role="dialog"]')
     ).toBeVisible({ timeout: 5000 });
+  }
+
+  /**
+   * Create a new test case via UI
+   */
+  async createTestCase(name: string): Promise<void> {
+    await this.openAddCaseModal();
+
+    // Fill in the test case name
+    const nameInput = this.page.getByTestId("case-name-input").or(
+      this.page.locator('[role="dialog"] input[name="name"], [role="dialog"] input[placeholder*="name" i]').first()
+    );
+    await expect(nameInput).toBeVisible({ timeout: 5000 });
+    await nameInput.fill(name);
+
+    // Submit the form
+    const submitButton = this.page.getByTestId("case-submit-button").or(
+      this.page.locator('[role="dialog"] button[type="submit"], [role="dialog"] button:has-text("Create"), [role="dialog"] button:has-text("Save")').first()
+    );
+    await expect(submitButton).toBeEnabled({ timeout: 5000 });
+
+    // Wait for the API call to complete
+    const responsePromise = this.page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/model/repositoryCases") &&
+        response.request().method() === "POST",
+      { timeout: 15000 }
+    );
+
+    await submitButton.click();
+
+    // Wait for the API response
+    const response = await responsePromise;
+    if (!response.ok()) {
+      const text = await response.text();
+      throw new Error(`Test case creation failed: ${response.status()} - ${text}`);
+    }
+
+    // Wait for modal to close (indicates success)
+    await expect(this.page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
+
+    // Wait for network to settle after creation
+    await this.page.waitForLoadState("networkidle");
   }
 
   /**

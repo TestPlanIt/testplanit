@@ -188,4 +188,26 @@ test.describe("Folder Delete", () => {
     // Close the menu
     await page.keyboard.press("Escape");
   });
+
+  test("Soft Deleted Items Not Visible", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder and delete it via API
+    const folderName = `Soft Delete Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+
+    await repositoryPage.goto(projectId);
+
+    // Verify folder exists
+    await repositoryPage.verifyFolderExists(folderName);
+
+    // Delete the folder via API (soft delete)
+    await api.deleteFolder(folderId);
+
+    // Reload and verify folder is not visible
+    await page.reload();
+    await repositoryPage.waitForRepositoryLoad();
+
+    await repositoryPage.verifyFolderNotExists(folderName);
+  });
 });

@@ -123,9 +123,4 @@ test.describe("Folder Edit", () => {
     await page.keyboard.press("Escape");
   });
 
-  test.skip("Edit Folder Option Hidden Without Permission", async ({ page }) => {
-    // This test requires a user without edit permissions
-    // Skip for now - would need to create a restricted user fixture
-    // TODO: Implement when multi-user fixtures are available
-  });
 });

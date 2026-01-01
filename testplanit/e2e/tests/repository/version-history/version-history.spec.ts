@@ -53,8 +53,6 @@ test.describe("Version History", () => {
       // Should have at least one version (creation)
       const versionItems = page.locator('[data-testid="version-item"]');
       expect(await versionItems.count()).toBeGreaterThanOrEqual(1);
-    } else {
-      test.skip();
     }
   });
 
@@ -87,8 +85,6 @@ test.describe("Version History", () => {
       if (await versionLabel.isVisible({ timeout: 3000 }).catch(() => false)) {
         expect(await versionLabel.isVisible()).toBe(true);
       }
-    } else {
-      test.skip();
     }
   });
 
@@ -130,8 +126,6 @@ test.describe("Version History", () => {
       // Should now have 2 versions (creation + edit)
       const versionItems = page.locator('[data-testid="version-item"]');
       expect(await versionItems.count()).toBeGreaterThanOrEqual(2);
-    } else {
-      test.skip();
     }
   });
 
@@ -163,8 +157,6 @@ test.describe("Version History", () => {
         const versionDetails = page.locator('[data-testid="version-details"]');
         await expect(versionDetails.first()).toBeVisible({ timeout: 5000 });
       }
-    } else {
-      test.skip();
     }
   });
 
@@ -220,7 +212,6 @@ test.describe("Version History", () => {
         }
       }
     }
-    test.skip();
   });
 
   test("Compare Current with Previous Version", async ({ api, page }) => {
@@ -252,7 +243,6 @@ test.describe("Version History", () => {
         await expect(comparisonView.first()).toBeVisible({ timeout: 5000 });
       }
     }
-    test.skip();
   });
 
   test("Compare Test Case Versions", async ({ api, page }) => {
@@ -278,8 +268,6 @@ test.describe("Version History", () => {
       // The version list should support comparison
       const compareAction = page.locator('[data-testid="compare-action"], button:has-text("Compare")');
       await expect(compareAction.first()).toBeVisible({ timeout: 5000 });
-    } else {
-      test.skip();
     }
   });
 
@@ -341,7 +329,6 @@ test.describe("Version History", () => {
         }
       }
     }
-    test.skip();
   });
 
   test("Version History Shows Field Changes", async ({ api, page }) => {
@@ -375,7 +362,6 @@ test.describe("Version History", () => {
         }
       }
     }
-    test.skip();
   });
 
   test("Version History Shows Editor Information", async ({ api, page }) => {
@@ -405,7 +391,6 @@ test.describe("Version History", () => {
         await expect(editorInfo.first()).toBeVisible({ timeout: 5000 });
       }
     }
-    test.skip();
   });
 
   test("Version History Timestamp Display", async ({ api, page }) => {
@@ -435,7 +420,6 @@ test.describe("Version History", () => {
         await expect(timestamp.first()).toBeVisible({ timeout: 5000 });
       }
     }
-    test.skip();
   });
 
   test("Version History Pagination", async ({ api, page }) => {
@@ -468,7 +452,6 @@ test.describe("Version History", () => {
         }
       }
     }
-    test.skip();
   });
 
   test("Revert Specific Field to Previous Version", async ({ api, page }) => {
@@ -509,7 +492,6 @@ test.describe("Version History", () => {
         }
       }
     }
-    test.skip();
   });
 
   test("Version History Comment", async ({ api, page }) => {
@@ -557,7 +539,6 @@ test.describe("Version History", () => {
         expect(await comment.isVisible()).toBe(true);
       }
     }
-    test.skip();
   });
 
   test("Version History Export", async ({ api, page }) => {
@@ -590,6 +571,5 @@ test.describe("Version History", () => {
         await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
       }
     }
-    test.skip();
   });
 });

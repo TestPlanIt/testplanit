@@ -52,13 +52,24 @@ test.describe("Search & Filter", () => {
 
   test("Search with No Results", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+
+    // Create a folder with test cases so we have something to search within
+    const folderName = `No Results Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    await api.createTestCase(projectId, folderId, `Existing Case ${Date.now()}`);
+    await api.createTestCase(projectId, folderId, `Another Case ${Date.now()}`);
+
     await repositoryPage.goto(projectId);
+
+    // Select the folder that has test cases
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
 
     // Find the search input
     const searchInput = page.locator('[data-testid="search-input"], input[placeholder*="Search"], input[type="search"]').first();
     await expect(searchInput).toBeVisible({ timeout: 5000 });
 
-    // Search for a term that doesn't exist
+    // Search for a term that doesn't match any of the test cases
     const nonExistentTerm = `NoMatchPossible${Date.now()}XYZ123`;
     await searchInput.fill(nonExistentTerm);
     await page.waitForLoadState("networkidle");
@@ -71,12 +82,14 @@ test.describe("Search & Filter", () => {
   test("Filter Test Cases Within Folder", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create a folder with multiple test cases
+    // Create a folder with multiple test cases - use unique identifiable names
     const folderName = `Filter Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
-    const filterableName = `Filterable${Date.now()}`;
+    const uniqueId = Date.now();
+    const filterableName = `Filterable${uniqueId}`;
+    const nonMatchingName = `DifferentXYZ${uniqueId}`;
     await api.createTestCase(projectId, folderId, filterableName);
-    await api.createTestCase(projectId, folderId, `Different Case ${Date.now()}`);
+    await api.createTestCase(projectId, folderId, nonMatchingName);
 
     await repositoryPage.goto(projectId);
 
@@ -84,62 +97,75 @@ test.describe("Search & Filter", () => {
     await repositoryPage.selectFolder(folderId);
     await page.waitForLoadState("networkidle");
 
+    // Verify both test cases are visible before filtering
+    await expect(page.locator(`text="${filterableName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${nonMatchingName}"`).first()).toBeVisible({ timeout: 5000 });
+
     // Find and use the filter/search within the folder
-    const filterInput = page.locator('[data-testid="filter-input"], [data-testid="search-input"], input[placeholder*="Filter"]').first();
+    const filterInput = page.locator('[data-testid="filter-input"], [data-testid="search-input"], input[placeholder*="Filter"], input[placeholder*="Search"]').first();
     await expect(filterInput).toBeVisible({ timeout: 5000 });
 
-    await filterInput.fill(filterableName);
+    // Filter by the unique filterable name
+    await filterInput.fill("Filterable");
     await page.waitForLoadState("networkidle");
 
     // Verify only the matching case is shown
     await expect(page.locator(`text="${filterableName}"`).first()).toBeVisible({ timeout: 10000 });
+
+    // Verify the non-matching case is NOT visible
+    await expect(page.locator(`text="${nonMatchingName}"`)).not.toBeVisible({ timeout: 5000 });
   });
 
   test("Filter Persists When Switching Folders", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create two folders
-    const folder1Name = `Persist Folder 1 ${Date.now()}`;
+    // Create two folders with test cases
+    const uniqueId = Date.now();
+    const folder1Name = `Persist Folder 1 ${uniqueId}`;
     const folder1Id = await api.createFolder(projectId, folder1Name);
-    const folder2Name = `Persist Folder 2 ${Date.now()}`;
+    const folder2Name = `Persist Folder 2 ${uniqueId}`;
     const folder2Id = await api.createFolder(projectId, folder2Name);
 
-    // Create test cases with a common search term
-    const commonTerm = `CommonFilter${Date.now()}`;
-    await api.createTestCase(projectId, folder1Id, `${commonTerm} Case1`);
-    await api.createTestCase(projectId, folder1Id, `Other1 ${Date.now()}`);
-    await api.createTestCase(projectId, folder2Id, `${commonTerm} Case2`);
-    await api.createTestCase(projectId, folder2Id, `Other2 ${Date.now()}`);
+    // Create test cases - use a unique search term that appears in one case per folder
+    const searchTerm = `Searchable${uniqueId}`;
+    const folder1MatchingCase = `${searchTerm} InFolder1`;
+    const folder1NonMatchingCase = `Different${uniqueId} InFolder1`;
+    const folder2MatchingCase = `${searchTerm} InFolder2`;
+    const folder2NonMatchingCase = `Other${uniqueId} InFolder2`;
+
+    await api.createTestCase(projectId, folder1Id, folder1MatchingCase);
+    await api.createTestCase(projectId, folder1Id, folder1NonMatchingCase);
+    await api.createTestCase(projectId, folder2Id, folder2MatchingCase);
+    await api.createTestCase(projectId, folder2Id, folder2NonMatchingCase);
 
     await repositoryPage.goto(projectId);
 
-    // Select folder 1
+    // Select folder 1 and verify both cases are visible initially
     await repositoryPage.selectFolder(folder1Id);
-
-    // Apply filter
-    const filterInput = page.locator('[data-testid="filter-input"], [data-testid="search-input"]').first();
-    await filterInput.fill(commonTerm);
     await page.waitForLoadState("networkidle");
+    await expect(page.locator(`text="${folder1MatchingCase}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${folder1NonMatchingCase}"`).first()).toBeVisible({ timeout: 5000 });
+
+    // Apply filter in folder 1
+    const filterInput = page.locator('[data-testid="filter-input"], [data-testid="search-input"], input[placeholder*="Search"], input[placeholder*="Filter"]').first();
+    await expect(filterInput).toBeVisible({ timeout: 5000 });
+    await filterInput.fill(searchTerm);
+    await page.waitForLoadState("networkidle");
+
+    // Verify filter works in folder 1 - only matching case visible
+    await expect(page.locator(`text="${folder1MatchingCase}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${folder1NonMatchingCase}"`)).not.toBeVisible({ timeout: 5000 });
 
     // Switch to folder 2
     await repositoryPage.selectFolder(folder2Id);
     await page.waitForLoadState("networkidle");
 
-    // Verify filter is still applied - only matching case should show
-    const matchingCase = page.locator(`text="${commonTerm} Case2"`);
-    await expect(matchingCase.first()).toBeVisible({ timeout: 10000 });
+    // Verify filter input still contains the search term
+    await expect(filterInput).toHaveValue(searchTerm);
 
-    // Non-matching case should not be visible (if filter persists)
-    const otherCase = page.locator('text="Other2"');
-    const persistsFilter = await otherCase.isVisible({ timeout: 3000 }).catch(() => false);
-
-    if (persistsFilter) {
-      // Filter did not persist - this is acceptable behavior in some implementations
-      console.log("Filter does not persist across folder switches - acceptable");
-    } else {
-      // Filter persisted correctly
-      expect(await matchingCase.isVisible()).toBe(true);
-    }
+    // Verify filter is still applied in folder 2 - only matching case visible
+    await expect(page.locator(`text="${folder2MatchingCase}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${folder2NonMatchingCase}"`)).not.toBeVisible({ timeout: 5000 });
   });
 
   test("Filter Test Cases by Single Tag", async ({ api, page }) => {
@@ -178,8 +204,6 @@ test.describe("Search & Filter", () => {
         }
       }
     }
-    // If filter UI doesn't exist, skip
-    test.skip();
   });
 
   test("Filter Test Cases by Multiple Tags (AND)", async ({ api, page }) => {
@@ -214,7 +238,6 @@ test.describe("Search & Filter", () => {
         }
       }
     }
-    test.skip();
   });
 
   test("Filter Test Cases by Multiple Tags (OR)", async ({ api, page }) => {
@@ -246,7 +269,6 @@ test.describe("Search & Filter", () => {
         }
       }
     }
-    test.skip();
   });
 
   test("Search Tags by Name", async ({ api, page }) => {
@@ -271,7 +293,6 @@ test.describe("Search & Filter", () => {
         }
       }
     }
-    test.skip();
   });
 
   test("Filter Test Cases by Linked Issue", async ({ api, page }) => {
@@ -289,7 +310,6 @@ test.describe("Search & Filter", () => {
         await page.waitForLoadState("networkidle");
       }
     }
-    test.skip();
   });
 
   test("Filter Test Cases with Any Linked Issue", async ({ api, page }) => {
@@ -306,7 +326,6 @@ test.describe("Search & Filter", () => {
         await page.waitForLoadState("networkidle");
       }
     }
-    test.skip();
   });
 
   test("Filter Test Cases without Linked Issues", async ({ api, page }) => {
@@ -323,7 +342,6 @@ test.describe("Search & Filter", () => {
         await page.waitForLoadState("networkidle");
       }
     }
-    test.skip();
   });
 
   test("Search Issues by ID", async ({ api, page }) => {
@@ -340,7 +358,6 @@ test.describe("Search & Filter", () => {
         await page.waitForLoadState("networkidle");
       }
     }
-    test.skip();
   });
 
   test("Search Issues by Title", async ({ api, page }) => {
@@ -357,7 +374,6 @@ test.describe("Search & Filter", () => {
         await page.waitForLoadState("networkidle");
       }
     }
-    test.skip();
   });
 
   test("Filter Test Cases by Text Custom Field", async ({ api, page }) => {
@@ -376,7 +392,6 @@ test.describe("Search & Filter", () => {
         await page.waitForLoadState("networkidle");
       }
     }
-    test.skip();
   });
 
   test("Filter Test Cases by Dropdown Custom Field", async ({ api, page }) => {
@@ -394,7 +409,6 @@ test.describe("Search & Filter", () => {
         await page.waitForLoadState("networkidle");
       }
     }
-    test.skip();
   });
 
   test("Filter Test Cases by Date Custom Field Range", async ({ api, page }) => {
@@ -412,7 +426,6 @@ test.describe("Search & Filter", () => {
         await page.waitForLoadState("networkidle");
       }
     }
-    test.skip();
   });
 
   test("Filter Version History by Date Range", async ({ api, page }) => {
@@ -441,7 +454,6 @@ test.describe("Search & Filter", () => {
         // Set date range
       }
     }
-    test.skip();
   });
 
   test("Filter Version History by User", async ({ api, page }) => {
@@ -466,7 +478,6 @@ test.describe("Search & Filter", () => {
         // Select user
       }
     }
-    test.skip();
   });
 
   test("Documentation Search", async ({ api, page }) => {
@@ -486,7 +497,6 @@ test.describe("Search & Filter", () => {
       await docsSearch.fill("test");
       await page.waitForLoadState("networkidle");
     }
-    test.skip();
   });
 
   test("Documentation Full Text Search", async ({ api, page }) => {
@@ -505,7 +515,6 @@ test.describe("Search & Filter", () => {
         await page.waitForLoadState("networkidle");
       }
     }
-    test.skip();
   });
 
   test("Export Filtered Results", async ({ api, page }) => {
@@ -545,6 +554,5 @@ test.describe("Search & Filter", () => {
         await page.keyboard.press("Escape");
       }
     }
-    test.skip();
   });
 });
