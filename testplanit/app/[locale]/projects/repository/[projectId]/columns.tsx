@@ -1229,7 +1229,8 @@ export const getColumns = (
   }) => void,
   isMultiConfigRun?: boolean,
   totalItems?: number,
-  selectedCount?: number
+  selectedCount?: number,
+  enableReorder?: boolean
 ): ColumnDef<ExtendedCases>[] => {
   const isStepsFieldPresent = uniqueCaseFieldList.some(
     (field) => field.displayName === "Steps"
@@ -1272,11 +1273,8 @@ export const getColumns = (
   const selectionColumn: ColumnDef<ExtendedCases> = {
     id: "select",
     header: ({ table }) => {
-      // Determine if the handle *would* be shown in rows to adjust header padding
-      const isMode1 = !isRunMode && !isSelectionMode;
-      const isSortedByOrder = sortConfig?.column === "order";
-      const showHandle =
-        !isSelectionMode && (isRunMode || (isMode1 && isSortedByOrder));
+      // Show handle when reordering is enabled
+      const showHandle = enableReorder;
 
       // Determine if all items are selected (for tooltip message)
       const isAllSelected =
@@ -1300,13 +1298,8 @@ export const getColumns = (
     },
     cell: ({ row }) => {
       const isDeletedInRun = isRunMode && row.original.isDeleted;
-      // Determine if the handle should be shown
-      // Mode 3 (Run Mode): Always show if not selection mode
-      // Mode 1 (Repo Mode): Show only if sorted by order AND not selection mode
-      const isMode1 = !isRunMode && !isSelectionMode;
-      const isSortedByOrder = sortConfig?.column === "order";
-      const showHandle =
-        !isSelectionMode && (isRunMode || (isMode1 && isSortedByOrder));
+      // Show handle when reordering is enabled
+      const showHandle = enableReorder;
 
       return (
         <div

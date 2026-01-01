@@ -2053,7 +2053,12 @@ export default function Cases({
       // Pass selectedCount for determining if all are selected
       isSelectionMode
         ? selectedTestCases.length
-        : selectedCaseIdsForBulkEdit.length
+        : selectedCaseIdsForBulkEdit.length,
+      // Pass enableReorder to show/hide grip handle
+      isDefaultSort &&
+        !isSelectionMode &&
+        !isCompleted &&
+        ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit))
     );
   }, [
     session,
@@ -2069,6 +2074,8 @@ export default function Cases({
     canAddEditResults,
     canDelete,
     canAddEditRun,
+    canAddEdit,
+    isDefaultSort,
     sortConfig,
     handleCheckboxClick,
     handleSelectAllClick,
