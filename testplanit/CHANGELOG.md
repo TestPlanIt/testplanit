@@ -1,3 +1,10 @@
+## [0.9.10](https://github.com/TestPlanIt/testplanit/compare/v0.9.9...v0.9.10) (2026-01-01)
+
+
+### Bug Fixes
+
+* **Cases, columns:** show grip handle when data table rows are sortable in Cases.tsx ([89bba65](https://github.com/TestPlanIt/testplanit/commit/89bba6563ec9fbb10b6a3fc952f3995e0b466740))
+
 ## [0.9.9](https://github.com/TestPlanIt/testplanit/compare/v0.9.8...v0.9.9) (2025-12-31)
 
 
