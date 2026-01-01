@@ -6,16 +6,19 @@ import { RepositoryPage } from "../../page-objects/repository/repository.page";
  *
  * Critical path validation tests for the Repository page functionality.
  * These tests verify the core user journeys work correctly.
+ *
+ * Run with: pnpm test:e2e --grep @smoke
  */
-test.describe("Repository Smoke Tests", () => {
+test.describe("Repository Smoke Tests @smoke", () => {
   let repositoryPage: RepositoryPage;
 
   test.beforeEach(async ({ page }) => {
     repositoryPage = new RepositoryPage(page);
   });
 
-  // Helper to get a test project ID
-  async function getTestProjectId(api: import("../../fixtures/api.fixture").ApiHelper): Promise<number> {
+  async function getTestProjectId(
+    api: import("../../fixtures/api.fixture").ApiHelper
+  ): Promise<number> {
     const projects = await api.getProjects();
     if (projects.length === 0) {
       throw new Error("No projects found in test database. Run seed first.");
@@ -23,130 +26,90 @@ test.describe("Repository Smoke Tests", () => {
     return projects[0].id;
   }
 
-  test("should navigate to repository page and display folder tree", async ({
+  test("navigate to repository page and display folder tree @smoke", async ({
     page,
     api,
   }) => {
     const projectId = await getTestProjectId(api);
 
-    // Navigate to repository
     await repositoryPage.goto(projectId);
 
-    // Verify the page loaded successfully
     await expect(repositoryPage.leftPanel).toBeVisible();
-
-    // Verify we're on the correct URL
     expect(page.url()).toContain(`/projects/repository/${projectId}`);
   });
 
-  test("should create a new folder", async ({ page, api }) => {
+  test("create a new folder @smoke", async ({ api }) => {
     const projectId = await getTestProjectId(api);
 
-    // Navigate to repository first
     await repositoryPage.goto(projectId);
 
-    // Generate unique folder name
-    const folderName = `E2E UI Folder ${Date.now()}`;
-
-    // Create folder via UI
+    const folderName = `E2E Smoke Folder ${Date.now()}`;
     await repositoryPage.createFolder(folderName);
 
-    // Verify folder appears in the tree
     await repositoryPage.verifyFolderExists(folderName);
   });
 
-  test("should select a folder and view its contents", async ({ api }) => {
+  test("select a folder and view its contents @smoke", async ({ api }) => {
     const projectId = await getTestProjectId(api);
 
-    // First, create a folder via API for reliable test data
-    const folderName = `E2E Folder Selection ${Date.now()}`;
+    const folderName = `E2E Smoke Selection ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
 
-    // Navigate to repository
     await repositoryPage.goto(projectId);
-
-    // Select the folder
     await repositoryPage.selectFolder(folderId);
 
-    // Verify the folder is selected (could check URL or visual state)
     await repositoryPage.verifyFolderExists(folderName);
   });
 
-  test("should create a test case in a folder", async ({ api }) => {
+  test("create a test case in a folder @smoke", async ({ api }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create a folder via API first
-    const folderName = `E2E Test Case Folder ${Date.now()}`;
+    const folderName = `E2E Smoke TC Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
 
-    // Create a test case via API
-    const testCaseName = `E2E Test Case ${Date.now()}`;
+    const testCaseName = `E2E Smoke Test Case ${Date.now()}`;
     await api.createTestCase(projectId, folderId, testCaseName);
 
-    // Navigate to repository and select the folder
     await repositoryPage.goto(projectId);
     await repositoryPage.selectFolder(folderId);
 
-    // Verify the test case appears in the list
     await repositoryPage.verifyTestCaseExists(testCaseName);
   });
 
-  test("should search for test cases", async ({ api }) => {
+  test("search for test cases @smoke", async ({ api }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create a folder and test case via API
-    const folderName = `E2E Search Folder ${Date.now()}`;
+    const folderName = `E2E Smoke Search ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
 
-    const uniqueSearchTerm = `UniqueSearch${Date.now()}`;
+    const uniqueSearchTerm = `SmokeSearch${Date.now()}`;
     const testCaseName = `Test Case ${uniqueSearchTerm}`;
     await api.createTestCase(projectId, folderId, testCaseName);
 
-    // Navigate to repository
     await repositoryPage.goto(projectId);
-
-    // Select the folder first
     await repositoryPage.selectFolder(folderId);
-
-    // Search for the test case
     await repositoryPage.searchTestCases(uniqueSearchTerm);
 
-    // Verify the test case is found
     await repositoryPage.verifyTestCaseExists(testCaseName);
   });
 });
 
 /**
- * Authentication Smoke Test
- *
- * Verifies that the authentication state is preserved correctly.
+ * Authentication Smoke Tests
  */
-test.describe("Authentication Smoke Tests", () => {
-  test("should be authenticated and access protected pages", async ({
-    page,
-  }) => {
-    // Navigate directly to a protected page
+test.describe("Authentication Smoke Tests @smoke", () => {
+  test("authenticated and access protected pages @smoke", async ({ page }) => {
     await page.goto("/en-US/projects");
 
-    // We should NOT be redirected to signin
     await page.waitForLoadState("networkidle");
     expect(page.url()).not.toContain("/signin");
-
-    // Should see the projects page
     expect(page.url()).toContain("/projects");
   });
 
-  test("should display user information in header", async ({ page }) => {
-    // Navigate to home
+  test("display user information in header @smoke", async ({ page }) => {
     await page.goto("/en-US");
     await page.waitForLoadState("networkidle");
 
-    // Look for user avatar or profile menu (indicates logged in state)
-    const userIndicator = page.locator(
-      '[data-testid="user-menu"], [data-testid="user-avatar"], button:has(img[alt*="avatar"])'
-    ).first();
-
-    // Just verify we're logged in by not being on signin
     expect(page.url()).not.toContain("/signin");
   });
 });
