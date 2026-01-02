@@ -51,39 +51,34 @@ test.describe("Folder Creation", () => {
     const childName = `Child Folder ${Date.now()}`;
     await repositoryPage.createNestedFolder(childName, parentId);
 
-    // Expand parent to see child
-    await repositoryPage.expandFolder(parentId);
+    // Parent should auto-expand after creating a child, so we can verify the child directly
     await repositoryPage.verifyFolderExists(childName);
   });
 
   test("Create Folder with Documentation", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+
+    // Create a specific parent folder for this test to ensure deterministic behavior
+    const parentFolderName = `Docs Parent ${Date.now()}`;
+    const parentFolderId = await api.createFolder(projectId, parentFolderName);
+
     await repositoryPage.goto(projectId);
+
+    // Select the parent folder we just created
+    await repositoryPage.selectFolder(parentFolderId);
 
     const folderName = `Folder With Docs ${Date.now()}`;
 
-    // Open the add folder modal
+    // Open the add folder modal - parent will be auto-selected
     await repositoryPage.openAddFolderModal();
-
-    // Remove parent if present to create at root
-    const removeParentButton = page.getByTestId("remove-parent-folder-button");
-    try {
-      await removeParentButton.waitFor({ state: "visible", timeout: 3000 });
-      await removeParentButton.click();
-      await page
-        .getByText("Root folder")
-        .first()
-        .waitFor({ state: "visible", timeout: 2000 });
-    } catch {
-      // No parent folder shown
-    }
 
     // Fill folder name
     await repositoryPage.folderNameInput.fill(folderName);
 
-    // Find and fill documentation field
-    const docsEditor = page.locator('[data-testid="folder-docs-editor"], .tiptap, .ProseMirror').first();
-    await expect(docsEditor).toBeVisible({ timeout: 2000 });
+    // Find and fill documentation field - the TipTap editor has .tiptap class
+    const dialog = page.locator('[role="dialog"]');
+    const docsEditor = dialog.locator('.tiptap, .ProseMirror').first();
+    await expect(docsEditor).toBeVisible({ timeout: 5000 });
     await docsEditor.click();
     await page.keyboard.type("This is folder documentation");
 
@@ -93,7 +88,7 @@ test.describe("Folder Creation", () => {
     await expect(repositoryPage.folderNameInput).not.toBeVisible({ timeout: 10000 });
     await page.waitForLoadState("networkidle");
 
-    // Verify folder was created
+    // Parent should auto-expand after creating a child, so we can verify the folder directly
     await repositoryPage.verifyFolderExists(folderName);
   });
 
@@ -130,23 +125,21 @@ test.describe("Folder Creation", () => {
     const projectId = await getTestProjectId(api);
     await repositoryPage.goto(projectId);
 
-    // Open the add folder modal
+    // Open the add folder modal - when no folder is selected, it creates at root level
     await repositoryPage.openAddFolderModal();
-
-    // Remove parent if present
-    const removeParentButton = page.getByTestId("remove-parent-folder-button");
-    try {
-      await removeParentButton.waitFor({ state: "visible", timeout: 3000 });
-      await removeParentButton.click();
-    } catch {
-      // No parent folder
-    }
 
     // Leave the name empty and try to submit
     await repositoryPage.folderNameInput.fill("");
 
-    // Submit button should be disabled
-    await expect(repositoryPage.folderSubmitButton).toBeDisabled();
+    // Click submit - form validation should prevent submission and show error
+    await repositoryPage.folderSubmitButton.click();
+
+    // Form should show validation error for empty name (Zod validation requires min 2 chars)
+    const validationError = page.locator('text=/Please enter a name|at least 2 character/i');
+    await expect(validationError.first()).toBeVisible({ timeout: 5000 });
+
+    // Modal should still be open (submission prevented)
+    await expect(repositoryPage.folderNameInput).toBeVisible();
 
     // Close the modal
     await repositoryPage.folderCancelButton.click();
@@ -155,54 +148,46 @@ test.describe("Folder Creation", () => {
   test("Create Folder with Duplicate Name at Same Level", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create a folder first via API
+    // Create a parent folder to ensure consistent test isolation
+    const parentFolderName = `Dup Parent ${Date.now()}`;
+    const parentFolderId = await api.createFolder(projectId, parentFolderName);
+
+    // Create a folder under the parent via API
     const folderName = `Duplicate Test ${Date.now()}`;
-    await api.createFolder(projectId, folderName);
+    await api.createFolder(projectId, folderName, parentFolderId);
 
     await repositoryPage.goto(projectId);
+
+    // Select the parent folder - clicking a folder with children toggles its expanded state
+    // Since the parent has a child, clicking will expand it to show the child
+    await repositoryPage.selectFolder(parentFolderId);
 
     // Verify the first folder exists before attempting duplicate
     await repositoryPage.verifyFolderExists(folderName);
 
-    // Try to create another folder with the same name at root level
+    // Try to create another folder with the same name under the same parent
+    // The parent will be auto-selected since we selected it
     await repositoryPage.openAddFolderModal();
 
-    // Remove parent if present to ensure we're creating at root level
-    const removeParentButton = page.getByTestId("remove-parent-folder-button");
-    try {
-      await removeParentButton.waitFor({ state: "visible", timeout: 3000 });
-      await removeParentButton.click();
-      await page.getByText("Root folder").first().waitFor({ state: "visible", timeout: 2000 });
-    } catch {
-      // No parent folder - already at root level
-    }
+    // Verify parent is selected in the modal
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog.getByText(parentFolderName)).toBeVisible({ timeout: 5000 });
 
     // Fill in the duplicate folder name
     await repositoryPage.folderNameInput.fill(folderName);
     await expect(repositoryPage.folderSubmitButton).toBeEnabled({ timeout: 5000 });
 
-    // Click submit and wait for the API response
-    const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes("/api/model/repositoryFolders") &&
-        response.request().method() === "POST",
-      { timeout: 15000 }
-    );
-
+    // Click submit - the API will catch the P2002 unique constraint violation
+    // and sets a form error client-side
     await repositoryPage.folderSubmitButton.click();
 
-    // Wait for the API response - it should fail with an error
-    const response = await responsePromise;
-
-    // The API should reject the duplicate folder creation
-    expect(response.ok()).toBe(false);
+    // Wait for the error to be displayed - the form shows "A user with this name already exists" error
+    // (Note: the translation key common.errors.nameExists is used which shows a generic message)
+    const errorMessage = page.locator('text=/already exists|this name already exists/i');
+    await expect(errorMessage.first()).toBeVisible({ timeout: 10000 });
 
     // The modal should still be visible (not closed) because the creation failed
     await expect(repositoryPage.folderNameInput).toBeVisible({ timeout: 3000 });
-
-    // An error message should be shown
-    const errorMessage = page.locator('[role="alert"], .text-destructive, .error-message, [data-sonner-toast][data-type="error"]');
-    await expect(errorMessage.first()).toBeVisible({ timeout: 5000 });
 
     // Close modal
     await repositoryPage.folderCancelButton.click();
@@ -229,9 +214,7 @@ test.describe("Folder Creation", () => {
     await repositoryPage.selectFolder(parentId);
     await repositoryPage.createNestedFolder(sharedName, parentId);
 
-    // Expand parent and verify both folders exist
-    await repositoryPage.expandFolder(parentId);
-
+    // Parent should auto-expand after creating a child
     // Should have two folders with the same name (one at root, one nested)
     const folders = repositoryPage.getFolderByName(sharedName);
     await expect(folders.first()).toBeVisible({ timeout: 10000 });
@@ -268,8 +251,7 @@ test.describe("Folder Creation", () => {
     await expect(repositoryPage.folderNameInput).not.toBeVisible({ timeout: 10000 });
     await page.waitForLoadState("networkidle");
 
-    // Expand parent and verify nested folder
-    await repositoryPage.expandFolder(parentId);
+    // Parent should auto-expand after creating a child, so we can verify the nested folder directly
     await repositoryPage.verifyFolderExists(childName);
   });
 
@@ -299,8 +281,10 @@ test.describe("Folder Creation", () => {
     // Click to remove the parent (create at root level instead)
     await removeParentButton.click();
 
-    // Should now show "Root folder" or similar text indicating root level
-    await expect(page.getByText("Root folder")).toBeVisible({ timeout: 5000 });
+    // Should now show "Root Folder" text in the dialog header indicating root level
+    // Scope to the dialog to avoid matching folder nodes in the tree
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog.getByText("Root Folder")).toBeVisible({ timeout: 5000 });
 
     // Create the folder at root level
     const rootFolderName = `Root Via Remove ${Date.now()}`;
@@ -345,7 +329,7 @@ test.describe("Folder Creation", () => {
     await expect(lastFolder).toContainText(newFolderName);
   });
 
-  test("Folder Deep Nesting Limit", async ({ api, page }) => {
+  test("Folder Deep Nesting Limit", async ({ api }) => {
     const projectId = await getTestProjectId(api);
 
     // Create deeply nested folders
@@ -360,13 +344,9 @@ test.describe("Folder Creation", () => {
 
     await repositoryPage.goto(projectId);
 
-    // Expand all levels
+    // Expand all levels (except the last one which has no children)
     for (const folderId of folderIds.slice(0, -1)) {
-      try {
-        await repositoryPage.expandFolder(folderId);
-      } catch {
-        // May hit nesting limit
-      }
+      await repositoryPage.expandFolder(folderId);
     }
 
     // Verify deep folder is accessible
