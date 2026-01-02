@@ -686,6 +686,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             size="sm"
             className="p-2"
             onClick={() => editor.chain().focus().toggleBold().run()}
+            data-testid="tiptap-bold"
           >
             <Bold className="w-4 h-4" />
           </Button>
@@ -695,6 +696,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             size="sm"
             className="p-2"
             onClick={() => editor.chain().focus().toggleItalic().run()}
+            data-testid="tiptap-italic"
           >
             <Italic className="w-4 h-4" />
           </Button>
@@ -704,6 +706,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             size="sm"
             className="p-2"
             onClick={() => editor.chain().focus().toggleStrike().run()}
+            data-testid="tiptap-strikethrough"
           >
             <StrikethroughIcon className="w-4 h-4" />
           </Button>
@@ -713,6 +716,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             size="sm"
             className="p-2"
             onClick={() => editor.chain().focus().toggleUnderline().run()}
+            data-testid="tiptap-underline"
           >
             <UnderlineIcon className="w-4 h-4" />
           </Button>
@@ -722,6 +726,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             size="sm"
             className="p-2"
             onClick={() => editor.chain().focus().toggleCode().run()}
+            data-testid="tiptap-code"
           >
             <CodeIcon className="w-4 h-4" />
           </Button>
@@ -729,7 +734,13 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
           <Popover>
             <PopoverTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="p-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="p-2"
+                data-testid="tiptap-heading-trigger"
+              >
                 {editor.isActive("heading", { level: 1 }) && <Heading1 />}
                 {editor.isActive("heading", { level: 2 }) && <Heading2 />}
                 {editor.isActive("heading", { level: 3 }) && <Heading3 />}
@@ -737,12 +748,16 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 {editor.isActive("codeBlock") && <CodeBlockIcon />}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-1">
+            <PopoverContent
+              className="w-full p-1"
+              data-testid="tiptap-heading-menu"
+            >
               <Button
                 type="button"
                 variant="ghost"
                 className="w-full flex justify-between"
                 onClick={() => editor.chain().focus().setParagraph().run()}
+                data-testid="tiptap-paragraph"
               >
                 <Pilcrow size={16} />
                 {editor.isActive("paragraph") && <Check size={16} />}
@@ -754,6 +769,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 onClick={() =>
                   editor.chain().focus().toggleHeading({ level: 1 }).run()
                 }
+                data-testid="tiptap-heading-1"
               >
                 <Heading1 size={16} />
                 {editor.isActive("heading", { level: 1 }) && (
@@ -767,6 +783,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 onClick={() =>
                   editor.chain().focus().toggleHeading({ level: 2 }).run()
                 }
+                data-testid="tiptap-heading-2"
               >
                 <Heading2 size={16} />
                 {editor.isActive("heading", { level: 2 }) && (
@@ -780,6 +797,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 onClick={() =>
                   editor.chain().focus().toggleHeading({ level: 3 }).run()
                 }
+                data-testid="tiptap-heading-3"
               >
                 <Heading3 size={16} />
                 {editor.isActive("heading", { level: 3 }) && (
@@ -791,6 +809,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 variant="ghost"
                 className="w-full flex justify-between"
                 onClick={() => editor.chain().focus().setCodeBlock().run()}
+                data-testid="tiptap-code-block"
               >
                 <CodeBlockIcon size={16} />
                 {editor.isActive("codeBlock") && <Check size={16} />}
@@ -804,6 +823,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             size="sm"
             className="p-2"
             onClick={() => editor.chain().focus().toggleBulletList().run()}
+            data-testid="tiptap-bullet-list"
           >
             <List className="w-4 h-4" />
           </Button>
@@ -813,6 +833,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             size="sm"
             className="p-2"
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            data-testid="tiptap-ordered-list"
           >
             <ListOrdered className="w-4 h-4" />
           </Button>
@@ -822,6 +843,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             size="sm"
             className="p-2"
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            data-testid="tiptap-blockquote"
           >
             <QuoteIcon className="w-4 h-4" />
           </Button>

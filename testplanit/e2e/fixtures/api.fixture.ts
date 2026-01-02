@@ -7,6 +7,7 @@ import { APIRequestContext } from "@playwright/test";
 export class ApiHelper {
   private request: APIRequestContext;
   private baseURL: string;
+  private createdProjectIds: number[] = [];
   private createdFolderIds: number[] = [];
   private createdCaseIds: number[] = [];
   private createdTagIds: number[] = [];
@@ -209,7 +210,9 @@ export class ApiHelper {
 
     const result = await response.json();
     if (result.data.length === 0) {
-      throw new Error("No repositories found in test database. Run seed first.");
+      throw new Error(
+        "No repositories found in test database. Run seed first."
+      );
     }
 
     this.cachedRepositoryId = result.data[0].id;
@@ -419,6 +422,191 @@ export class ApiHelper {
   }
 
   /**
+   * Delete a project via API (soft delete)
+   * Silently ignores failures - item may already be deleted by the test
+   */
+  async deleteProject(projectId: number): Promise<void> {
+    // Fire and forget - don't wait or check response
+    // Item may already be deleted by the test itself
+    this.request
+      .patch(`${this.baseURL}/api/model/projects/update`, {
+        data: {
+          where: { id: projectId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Get the current authenticated user ID
+   */
+  async getCurrentUserId(): Promise<string> {
+    const response = await this.request.get(`${this.baseURL}/api/auth/session`);
+
+    if (!response.ok()) {
+      throw new Error("Failed to get current user session");
+    }
+
+    const session = await response.json();
+    if (!session?.user?.id) {
+      throw new Error("No authenticated user found in session");
+    }
+
+    return session.user.id;
+  }
+
+  /**
+   * Create a project via API
+   * Follows the same pattern as setup-db.ts:
+   * - Creates project with createdBy
+   * - Creates repository
+   * - Assigns default template
+   * - Assigns all workflows
+   * - Adds user as project member
+   */
+  async createProject(name: string): Promise<number> {
+    // Get current user ID to set as creator
+    const userId = await this.getCurrentUserId();
+
+    // Get default template (required for test cases)
+    const templateResponse = await this.request.get(
+      `${this.baseURL}/api/model/templates/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { isDefault: true, isDeleted: false },
+          }),
+        },
+      }
+    );
+
+    let defaultTemplateId: number | null = null;
+    if (templateResponse.ok()) {
+      const templateResult = await templateResponse.json();
+      defaultTemplateId = templateResult.data?.id || null;
+    }
+
+    // Create the project with explicit createdBy field (matching setup-db.ts pattern)
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/projects/create`,
+      {
+        data: {
+          data: {
+            name,
+            isDeleted: false,
+            createdBy: userId, // Explicitly set the creator (scalar field)
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create project: ${error}`);
+    }
+
+    const result = await response.json();
+    const projectId = result.data.id;
+    this.createdProjectIds.push(projectId);
+
+    // Create repository for the project (required for many operations)
+    const repoResponse = await this.request.post(
+      `${this.baseURL}/api/model/repositories/create`,
+      {
+        data: {
+          data: {
+            project: { connect: { id: projectId } },
+          },
+        },
+      }
+    );
+
+    if (!repoResponse.ok()) {
+      // Repository creation is not critical, log but don't fail
+      console.warn(`Failed to create repository for project ${projectId}`);
+    }
+
+    // Assign default template to project (matching setup-db.ts)
+    if (defaultTemplateId) {
+      const templateAssignResponse = await this.request.post(
+        `${this.baseURL}/api/model/templateProjectAssignment/create`,
+        {
+          data: {
+            data: {
+              templateId: defaultTemplateId,
+              projectId: projectId,
+            },
+          },
+        }
+      );
+      // Template assignment failure is not critical for documentation tests
+      if (!templateAssignResponse.ok()) {
+        console.warn(`Failed to assign template to project ${projectId}`);
+      }
+    }
+
+    // Assign all workflows to project (matching setup-db.ts)
+    const workflowsResponse = await this.request.get(
+      `${this.baseURL}/api/model/workflows/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { isDeleted: false, isEnabled: true },
+          }),
+        },
+      }
+    );
+
+    if (workflowsResponse.ok()) {
+      const workflowsResult = await workflowsResponse.json();
+      const workflows = workflowsResult.data || [];
+
+      if (workflows.length > 0) {
+        const workflowAssignments = workflows.map((w: { id: number }) => ({
+          workflowId: w.id,
+          projectId: projectId,
+        }));
+
+        const workflowAssignResponse = await this.request.post(
+          `${this.baseURL}/api/model/projectWorkflowAssignment/createMany`,
+          {
+            data: {
+              data: workflowAssignments,
+            },
+          }
+        );
+        // Workflow assignment failure is not critical for documentation tests
+        if (!workflowAssignResponse.ok()) {
+          console.warn(`Failed to assign workflows to project ${projectId}`);
+        }
+      }
+    }
+
+    // Add user as project member (matching setup-db.ts - critical for access)
+    const assignmentResponse = await this.request.post(
+      `${this.baseURL}/api/model/projectAssignment/create`,
+      {
+        data: {
+          data: {
+            userId: userId,
+            projectId: projectId,
+          },
+        },
+      }
+    );
+
+    if (!assignmentResponse.ok()) {
+      // Project assignment is critical - user won't be able to access the project
+      console.warn(
+        `Failed to assign user to project ${projectId} - access may be limited`
+      );
+    }
+
+    return projectId;
+  }
+
+  /**
    * Get projects list
    */
   async getProjects(): Promise<Array<{ id: number; name: string }>> {
@@ -478,10 +666,16 @@ export class ApiHelper {
     }
     this.createdFolderIds = [];
 
-    // Finally delete tags
+    // Delete tags
     for (const tagId of this.createdTagIds) {
       await this.deleteTag(tagId);
     }
     this.createdTagIds = [];
+
+    // Finally delete projects (they reference everything else)
+    for (const projectId of this.createdProjectIds) {
+      await this.deleteProject(projectId);
+    }
+    this.createdProjectIds = [];
   }
 }
