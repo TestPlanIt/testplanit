@@ -251,7 +251,7 @@ export class ApiHelper {
    * Add a tag to a test case via API
    */
   async addTagToTestCase(caseId: number, tagId: number): Promise<void> {
-    const response = await this.request.post(
+    const response = await this.request.patch(
       `${this.baseURL}/api/model/repositoryCases/update`,
       {
         data: {
@@ -273,17 +273,23 @@ export class ApiHelper {
 
   /**
    * Delete a tag via API (soft delete)
-   * Silently ignores failures - item may already be deleted by the test
+   * Waits for completion to ensure the tag is deleted before continuing
    */
   async deleteTag(tagId: number): Promise<void> {
-    this.request
-      .post(`${this.baseURL}/api/model/tags/update`, {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/tags/update`,
+      {
         data: {
           where: { id: tagId },
           data: { isDeleted: true },
         },
-      })
-      .catch(() => {});
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to delete tag: ${error}`);
+    }
   }
 
   /**
@@ -294,7 +300,7 @@ export class ApiHelper {
     // Fire and forget - don't wait or check response
     // Item may already be deleted by the test itself
     this.request
-      .post(`${this.baseURL}/api/model/repositoryFolders/update`, {
+      .patch(`${this.baseURL}/api/model/repositoryFolders/update`, {
         data: {
           where: { id: folderId },
           data: { isDeleted: true },
@@ -311,7 +317,7 @@ export class ApiHelper {
     // Fire and forget - don't wait or check response
     // Item may already be deleted by the test itself
     this.request
-      .post(`${this.baseURL}/api/model/repositoryCases/update`, {
+      .patch(`${this.baseURL}/api/model/repositoryCases/update`, {
         data: {
           where: { id: caseId },
           data: { isDeleted: true },

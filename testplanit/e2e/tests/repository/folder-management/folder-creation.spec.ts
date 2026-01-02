@@ -81,12 +81,11 @@ test.describe("Folder Creation", () => {
     // Fill folder name
     await repositoryPage.folderNameInput.fill(folderName);
 
-    // Find and fill documentation field (if visible)
+    // Find and fill documentation field
     const docsEditor = page.locator('[data-testid="folder-docs-editor"], .tiptap, .ProseMirror').first();
-    if (await docsEditor.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await docsEditor.click();
-      await page.keyboard.type("This is folder documentation");
-    }
+    await expect(docsEditor).toBeVisible({ timeout: 2000 });
+    await docsEditor.click();
+    await page.keyboard.type("This is folder documentation");
 
     // Submit
     await expect(repositoryPage.folderSubmitButton).toBeEnabled({ timeout: 5000 });
@@ -195,19 +194,18 @@ test.describe("Folder Creation", () => {
     // Wait for the API response - it should fail with an error
     const response = await responsePromise;
 
+    // The API should reject the duplicate folder creation
+    expect(response.ok()).toBe(false);
+
     // The modal should still be visible (not closed) because the creation failed
-    // OR an error message should be shown
-    const modalStillVisible = await repositoryPage.folderNameInput.isVisible({ timeout: 3000 }).catch(() => false);
+    await expect(repositoryPage.folderNameInput).toBeVisible({ timeout: 3000 });
+
+    // An error message should be shown
     const errorMessage = page.locator('[role="alert"], .text-destructive, .error-message, [data-sonner-toast][data-type="error"]');
-    const errorVisible = await errorMessage.first().isVisible({ timeout: 5000 }).catch(() => false);
+    await expect(errorMessage.first()).toBeVisible({ timeout: 5000 });
 
-    // Either the modal stayed open (blocking duplicate) or an error was shown
-    expect(modalStillVisible || errorVisible || !response.ok()).toBe(true);
-
-    // Close modal if still open
-    if (modalStillVisible) {
-      await repositoryPage.folderCancelButton.click();
-    }
+    // Close modal
+    await repositoryPage.folderCancelButton.click();
 
     // Verify there's still only one folder with that name (no duplicate created)
     const foldersWithName = repositoryPage.getFolderByName(folderName);
@@ -258,12 +256,11 @@ test.describe("Folder Creation", () => {
     const childName = `Nested Docs Folder ${Date.now()}`;
     await repositoryPage.folderNameInput.fill(childName);
 
-    // Add documentation if the editor is available
+    // Add documentation
     const docsEditor = page.locator('[data-testid="folder-docs-editor"], .tiptap, .ProseMirror').first();
-    if (await docsEditor.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await docsEditor.click();
-      await page.keyboard.type("Documentation for nested folder");
-    }
+    await expect(docsEditor).toBeVisible({ timeout: 2000 });
+    await docsEditor.click();
+    await page.keyboard.type("Documentation for nested folder");
 
     // Submit
     await expect(repositoryPage.folderSubmitButton).toBeEnabled({ timeout: 5000 });

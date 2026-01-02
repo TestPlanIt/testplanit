@@ -19,7 +19,12 @@ const prisma = new PrismaClient();
 // E2E Test user credentials
 const E2E_ADMIN_EMAIL = "admin@example.com";
 const E2E_ADMIN_PASSWORD = "admin";
-const E2E_PROJECT_NAME = "E2E Test Project";
+
+// E2E Test projects - add more as needed
+const E2E_PROJECTS = [
+  "E2E Test Project",
+  "E2E Test Project 2",
+];
 
 async function resetDatabase() {
   console.log("🗑️  Resetting database...");
@@ -134,8 +139,8 @@ async function ensureAdminUser() {
   return admin;
 }
 
-async function createTestProject(adminId: string) {
-  console.log("📁 Creating E2E test project...");
+async function createTestProject(adminId: string, projectName: string) {
+  console.log(`📁 Creating E2E test project: ${projectName}...`);
 
   // Get default template
   const defaultTemplate = await prisma.templates.findFirst({
@@ -157,12 +162,12 @@ async function createTestProject(adminId: string) {
 
   // Create test project
   const project = await prisma.projects.upsert({
-    where: { name: E2E_PROJECT_NAME },
+    where: { name: projectName },
     update: {
       isDeleted: false,
     },
     create: {
-      name: E2E_PROJECT_NAME,
+      name: projectName,
       createdBy: adminId,
     },
   });
@@ -271,6 +276,19 @@ async function createTestProject(adminId: string) {
   return project;
 }
 
+async function createTestProjects(adminId: string) {
+  console.log(`\n📁 Creating ${E2E_PROJECTS.length} E2E test projects...\n`);
+
+  const projects = [];
+  for (const projectName of E2E_PROJECTS) {
+    const project = await createTestProject(adminId, projectName);
+    projects.push(project);
+    console.log(""); // Empty line between projects
+  }
+
+  return projects;
+}
+
 async function clearAuthSession() {
   console.log("🔑 Clearing stale auth session...");
   const fs = await import("fs");
@@ -299,8 +317,8 @@ async function main() {
     // Step 3: Ensure admin user with correct settings
     const admin = await ensureAdminUser();
 
-    // Step 4: Create test project
-    await createTestProject(admin.id);
+    // Step 4: Create test projects
+    await createTestProjects(admin.id);
 
     // Step 5: Clear stale auth session (so global-setup will regenerate)
     await clearAuthSession();

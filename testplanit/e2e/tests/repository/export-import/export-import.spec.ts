@@ -46,11 +46,10 @@ test.describe("Export & Import", () => {
     const importDialog = page.locator('[role="dialog"], [data-testid="import-dialog"]');
     await expect(importDialog.first()).toBeVisible({ timeout: 5000 });
 
-    // Select CSV option if there's a format selector
+    // Select CSV option from the format selector
     const csvOption = importDialog.locator('[data-testid="import-csv"], button:has-text("CSV"), label:has-text("CSV")').first();
-    if (await csvOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await csvOption.click();
-    }
+    await expect(csvOption).toBeVisible({ timeout: 3000 });
+    await csvOption.click();
 
     // Create a CSV file with test case data
     const case1Name = `Imported Case 1 ${uniqueId}`;
@@ -177,11 +176,10 @@ ${case2Name},Description for case 2`;
     const exportDialog = page.locator('[role="dialog"], [data-testid="export-dialog"]');
     await expect(exportDialog.first()).toBeVisible({ timeout: 5000 });
 
-    // Select CSV format if there's a format selector
+    // Select CSV format from the format selector
     const csvFormat = exportDialog.locator('[data-testid="format-csv"], [data-value="csv"], label:has-text("CSV")').first();
-    if (await csvFormat.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await csvFormat.click();
-    }
+    await expect(csvFormat).toBeVisible({ timeout: 3000 });
+    await csvFormat.click();
 
     // Find and click the export submit button
     const exportSubmit = exportDialog.locator('button:has-text("Export"), button[type="submit"]').first();

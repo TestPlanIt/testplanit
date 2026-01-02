@@ -443,14 +443,10 @@ test.describe("Drag & Drop", () => {
 
     // Find the bottom of the tree
     const treeBottom = page.locator('[data-testid="folder-tree-end"], .tree-end').first();
-    let targetY = 500; // Default fallback
-
-    if (await treeBottom.isVisible({ timeout: 2000 }).catch(() => false)) {
-      const bottomBox = await treeBottom.boundingBox();
-      if (bottomBox) {
-        targetY = bottomBox.y + bottomBox.height;
-      }
-    }
+    await expect(treeBottom).toBeVisible({ timeout: 2000 });
+    const bottomBox = await treeBottom.boundingBox();
+    expect(bottomBox).not.toBeNull();
+    const targetY = bottomBox!.y + bottomBox!.height;
 
     await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
     await page.mouse.down();

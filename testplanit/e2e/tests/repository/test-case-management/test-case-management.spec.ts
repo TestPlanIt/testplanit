@@ -62,12 +62,8 @@ test.describe("Test Case Management", () => {
 
     // Look for a count indicator (badge, parentheses, etc.)
     const countIndicator = folder.locator('[data-testid="case-count"], .case-count, .badge').first();
-    if (await countIndicator.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await expect(countIndicator).toContainText("3");
-    } else {
-      // Alternative: count might be inline in folder text
-      await expect(folder).toContainText(/3|Cases: 3/);
-    }
+    await expect(countIndicator).toBeVisible({ timeout: 3000 });
+    await expect(countIndicator).toContainText("3");
   });
 
   test("Create Test Case in Folder @smoke", async ({ api, page }) => {
@@ -160,28 +156,27 @@ test.describe("Test Case Management", () => {
 
     // Find and click on the folder selector to change the folder
     const folderSelector = page.locator('[data-testid="folder-select"], [data-testid="folder-picker"]').first();
-    if (await folderSelector.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await folderSelector.click();
+    await expect(folderSelector).toBeVisible({ timeout: 3000 });
+    await folderSelector.click();
 
-      // Select the target folder
-      const targetOption = page.locator(`[role="option"]:has-text("${targetFolder}"), [data-value="${targetFolderId}"]`).first();
-      await targetOption.click();
+    // Select the target folder
+    const targetOption = page.locator(`[role="option"]:has-text("${targetFolder}"), [data-value="${targetFolderId}"]`).first();
+    await targetOption.click();
 
-      // Save the changes
-      const saveButton = page.locator('button:has-text("Save"), button[type="submit"]').first();
-      await saveButton.click();
+    // Save the changes
+    const saveButton = page.locator('button:has-text("Save"), button[type="submit"]').first();
+    await saveButton.click();
 
-      await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("networkidle");
 
-      // Select the target folder and verify the test case is there
-      await repositoryPage.selectFolder(targetFolderId);
-      const movedCase = page.locator(`text="${testCaseName}"`).first();
-      await expect(movedCase).toBeVisible({ timeout: 10000 });
+    // Select the target folder and verify the test case is there
+    await repositoryPage.selectFolder(targetFolderId);
+    const movedCase = page.locator(`text="${testCaseName}"`).first();
+    await expect(movedCase).toBeVisible({ timeout: 10000 });
 
-      // Verify it's no longer in the source folder
-      await repositoryPage.selectFolder(sourceFolderId);
-      await expect(page.locator(`text="${testCaseName}"`)).not.toBeVisible({ timeout: 5000 });
-    }
+    // Verify it's no longer in the source folder
+    await repositoryPage.selectFolder(sourceFolderId);
+    await expect(page.locator(`text="${testCaseName}"`)).not.toBeVisible({ timeout: 5000 });
   });
 
   test("View Test Cases in Selected Folder Only", async ({ api, page }) => {
@@ -237,32 +232,16 @@ test.describe("Test Case Management", () => {
     const checkbox1 = page.locator(`[data-testid="case-checkbox-${case1Id}"], tr:has([data-testid="case-row-${case1Id}"]) input[type="checkbox"]`).first();
     const checkbox2 = page.locator(`[data-testid="case-checkbox-${case2Id}"], tr:has([data-testid="case-row-${case2Id}"]) input[type="checkbox"]`).first();
 
-    // Check if checkboxes exist
-    if (await checkbox1.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await checkbox1.click();
-      await checkbox2.click();
+    // Verify checkboxes are visible and click them
+    await expect(checkbox1).toBeVisible({ timeout: 5000 });
+    await expect(checkbox2).toBeVisible({ timeout: 5000 });
+    await checkbox1.click();
+    await checkbox2.click();
 
-      // Verify selection indicator shows 2 selected
-      const selectionIndicator = page.locator('[data-testid="selection-count"], .selection-count, text=/\\d+ selected/');
-      await expect(selectionIndicator).toContainText("2");
-    } else {
-      // Alternative: try Ctrl+click selection
-      const row1 = page.locator(`[data-testid="case-row-${case1Id}"]`).first();
-      const row2 = page.locator(`[data-testid="case-row-${case2Id}"]`).first();
-
-      if (await row1.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await row1.click();
-        await page.keyboard.down("Control");
-        await row2.click();
-        await page.keyboard.up("Control");
-
-        // Verify multiple selection
-        const selectionIndicator = page.locator('[data-testid="selection-count"], text=/\\d+ selected/');
-        if (await selectionIndicator.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await expect(selectionIndicator).toContainText("2");
-        }
-      }
-    }
+    // Verify selection indicator shows 2 selected
+    const selectionIndicator = page.locator('[data-testid="selection-count"], .selection-count, text=/\\d+ selected/');
+    await expect(selectionIndicator).toBeVisible({ timeout: 3000 });
+    await expect(selectionIndicator).toContainText("2");
   });
 
   test("Folder Path Display in Test Case", async ({ api, page }) => {
@@ -293,15 +272,11 @@ test.describe("Test Case Management", () => {
 
     // Verify the folder path is displayed (parent > child format or breadcrumb)
     const pathDisplay = page.locator('[data-testid="folder-path"], .folder-path, .breadcrumb');
-    if (await pathDisplay.isVisible({ timeout: 5000 }).catch(() => false)) {
-      // Path should contain both parent and child folder names
-      const pathText = await pathDisplay.textContent();
-      expect(pathText).toContain(parentName);
-      expect(pathText).toContain(childName);
-    } else {
-      // Alternative: check for folder name in the test case detail
-      await expect(page.locator(`text="${childName}"`)).toBeVisible({ timeout: 5000 });
-    }
+    await expect(pathDisplay).toBeVisible({ timeout: 5000 });
+    // Path should contain both parent and child folder names
+    const pathText = await pathDisplay.textContent();
+    expect(pathText).toContain(parentName);
+    expect(pathText).toContain(childName);
   });
 
   test("Copy Test Case to Different Folder", async ({ api, page }) => {
@@ -329,33 +304,31 @@ test.describe("Test Case Management", () => {
 
     // Click copy option
     const copyOption = page.locator('[role="menuitem"]:has-text("Copy"), [role="menuitem"]:has-text("Duplicate")').first();
+    await expect(copyOption).toBeVisible({ timeout: 3000 });
+    await copyOption.click();
 
-    if (await copyOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await copyOption.click();
+    // A dialog should appear to select destination folder
+    const folderPicker = page.locator('[data-testid="destination-folder"], [role="dialog"]').first();
+    await expect(folderPicker).toBeVisible({ timeout: 3000 });
 
-      // A dialog might appear to select destination folder
-      const folderPicker = page.locator('[data-testid="destination-folder"], [role="dialog"]').first();
-      if (await folderPicker.isVisible({ timeout: 3000 }).catch(() => false)) {
-        // Select the target folder
-        const targetOption = page.locator(`[role="option"]:has-text("${targetFolder}"), button:has-text("${targetFolder}")`).first();
-        await targetOption.click();
+    // Select the target folder
+    const targetOption = page.locator(`[role="option"]:has-text("${targetFolder}"), button:has-text("${targetFolder}")`).first();
+    await targetOption.click();
 
-        // Confirm the copy
-        const confirmButton = page.locator('button:has-text("Copy"), button:has-text("Confirm")').first();
-        await confirmButton.click();
-      }
+    // Confirm the copy
+    const confirmButton = page.locator('button:has-text("Copy"), button:has-text("Confirm")').first();
+    await confirmButton.click();
 
-      await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("networkidle");
 
-      // Verify the test case exists in both folders
-      // Check source folder still has original
-      await repositoryPage.selectFolder(sourceFolderId);
-      await expect(page.locator(`text="${testCaseName}"`).first()).toBeVisible({ timeout: 10000 });
+    // Verify the test case exists in both folders
+    // Check source folder still has original
+    await repositoryPage.selectFolder(sourceFolderId);
+    await expect(page.locator(`text="${testCaseName}"`).first()).toBeVisible({ timeout: 10000 });
 
-      // Check target folder has the copy (may have "Copy" suffix or be identical)
-      await repositoryPage.selectFolder(targetFolderId);
-      const copiedCase = page.locator(`text=/.*${testCaseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|Copy of ${testCaseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/`);
-      await expect(copiedCase.first()).toBeVisible({ timeout: 10000 });
-    }
+    // Check target folder has the copy (may have "Copy" suffix or be identical)
+    await repositoryPage.selectFolder(targetFolderId);
+    const copiedCase = page.locator(`text=/.*${testCaseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|Copy of ${testCaseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/`);
+    await expect(copiedCase.first()).toBeVisible({ timeout: 10000 });
   });
 });

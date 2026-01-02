@@ -139,27 +139,27 @@ test.describe("Tree Navigation", () => {
 
     // Find the resizable panel handle
     const resizeHandle = page.locator('[data-panel-resize-handle-id], .resize-handle').first();
+    await expect(resizeHandle).toBeVisible({ timeout: 3000 });
 
-    if (await resizeHandle.isVisible({ timeout: 3000 }).catch(() => false)) {
-      // Get initial width of left panel
-      const leftPanel = repositoryPage.leftPanel;
-      const initialBox = await leftPanel.boundingBox();
-      const initialWidth = initialBox?.width || 0;
+    // Get initial width of left panel
+    const leftPanel = repositoryPage.leftPanel;
+    const initialBox = await leftPanel.boundingBox();
+    expect(initialBox).not.toBeNull();
+    const initialWidth = initialBox!.width;
 
-      // Drag the handle to the right to expand
-      const handleBox = await resizeHandle.boundingBox();
-      if (handleBox) {
-        await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
-        await page.mouse.down();
-        await page.mouse.move(handleBox.x + 100, handleBox.y + handleBox.height / 2);
-        await page.mouse.up();
-      }
+    // Drag the handle to the right to expand
+    const handleBox = await resizeHandle.boundingBox();
+    expect(handleBox).not.toBeNull();
+    await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(handleBox!.x + 100, handleBox!.y + handleBox!.height / 2);
+    await page.mouse.up();
 
-      // Verify panel expanded
-      const newBox = await leftPanel.boundingBox();
-      const newWidth = newBox?.width || 0;
-      expect(newWidth).toBeGreaterThan(initialWidth);
-    }
+    // Verify panel expanded
+    const newBox = await leftPanel.boundingBox();
+    expect(newBox).not.toBeNull();
+    const newWidth = newBox!.width;
+    expect(newWidth).toBeGreaterThan(initialWidth);
   });
 
   test("Resizable Panel - Collapse Folder Tree", async ({ api, page }) => {
@@ -168,27 +168,27 @@ test.describe("Tree Navigation", () => {
 
     // Find the resizable panel handle
     const resizeHandle = page.locator('[data-panel-resize-handle-id], .resize-handle').first();
+    await expect(resizeHandle).toBeVisible({ timeout: 3000 });
 
-    if (await resizeHandle.isVisible({ timeout: 3000 }).catch(() => false)) {
-      // Get initial width of left panel
-      const leftPanel = repositoryPage.leftPanel;
-      const initialBox = await leftPanel.boundingBox();
-      const initialWidth = initialBox?.width || 0;
+    // Get initial width of left panel
+    const leftPanel = repositoryPage.leftPanel;
+    const initialBox = await leftPanel.boundingBox();
+    expect(initialBox).not.toBeNull();
+    const initialWidth = initialBox!.width;
 
-      // Drag the handle to the left to collapse
-      const handleBox = await resizeHandle.boundingBox();
-      if (handleBox) {
-        await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
-        await page.mouse.down();
-        await page.mouse.move(handleBox.x - 100, handleBox.y + handleBox.height / 2);
-        await page.mouse.up();
-      }
+    // Drag the handle to the left to collapse
+    const handleBox = await resizeHandle.boundingBox();
+    expect(handleBox).not.toBeNull();
+    await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(handleBox!.x - 100, handleBox!.y + handleBox!.height / 2);
+    await page.mouse.up();
 
-      // Verify panel collapsed (or at minimum size)
-      const newBox = await leftPanel.boundingBox();
-      const newWidth = newBox?.width || 0;
-      expect(newWidth).toBeLessThan(initialWidth);
-    }
+    // Verify panel collapsed (or at minimum size)
+    const newBox = await leftPanel.boundingBox();
+    expect(newBox).not.toBeNull();
+    const newWidth = newBox!.width;
+    expect(newWidth).toBeLessThan(initialWidth);
   });
 
   test("Parent Folder Expands After Adding First Child", async ({ api, page }) => {

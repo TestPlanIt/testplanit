@@ -146,11 +146,10 @@ test.describe("Issues", () => {
     await expect(removeButton).toBeVisible({ timeout: 3000 });
     await removeButton.click();
 
-    // Confirm if needed
+    // Confirm removal in dialog
     const confirmButton = page.locator('[role="alertdialog"] button:has-text("Remove")').first();
-    if (await confirmButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await confirmButton.click();
-    }
+    await expect(confirmButton).toBeVisible({ timeout: 2000 });
+    await confirmButton.click();
 
     await page.waitForLoadState("networkidle");
 

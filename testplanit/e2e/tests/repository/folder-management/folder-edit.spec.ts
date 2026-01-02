@@ -85,10 +85,9 @@ test.describe("Folder Edit", () => {
 
     // Find and update documentation
     const docsEditor = page.locator('[data-testid="folder-docs-editor"], .tiptap, .ProseMirror').first();
-    if (await docsEditor.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await docsEditor.click();
-      await page.keyboard.type("Updated documentation content");
-    }
+    await expect(docsEditor).toBeVisible({ timeout: 3000 });
+    await docsEditor.click();
+    await page.keyboard.type("Updated documentation content");
 
     // Submit the change
     const saveButton = page.locator('[data-testid="folder-submit-button"], button:has-text("Save")').first();

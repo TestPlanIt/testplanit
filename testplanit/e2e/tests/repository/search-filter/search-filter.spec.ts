@@ -185,25 +185,22 @@ test.describe("Search & Filter", () => {
 
     // Open filter panel/dropdown
     const filterButton = page.locator('[data-testid="filter-button"], button:has-text("Filter")').first();
-    if (await filterButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await filterButton.click();
+    await expect(filterButton).toBeVisible({ timeout: 3000 });
+    await filterButton.click();
 
-      // Look for tag filter option
-      const tagFilter = page.locator('[data-testid="tag-filter"], text="Tags"').first();
-      if (await tagFilter.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await tagFilter.click();
+    // Look for tag filter option
+    const tagFilter = page.locator('[data-testid="tag-filter"], text="Tags"').first();
+    await expect(tagFilter).toBeVisible({ timeout: 3000 });
+    await tagFilter.click();
 
-        // Select a tag (if any exist)
-        const tagOption = page.locator('[data-testid="tag-option"], [role="option"]').first();
-        if (await tagOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await tagOption.click();
-          await page.waitForLoadState("networkidle");
+    // Select a tag (if any exist)
+    const tagOption = page.locator('[data-testid="tag-option"], [role="option"]').first();
+    await expect(tagOption).toBeVisible({ timeout: 3000 });
+    await tagOption.click();
+    await page.waitForLoadState("networkidle");
 
-          // Verify filtering works
-          // This depends on test data setup
-        }
-      }
-    }
+    // Verify filtering works
+    // This depends on test data setup
   });
 
   test("Filter Test Cases by Multiple Tags (AND)", async ({ api, page }) => {
@@ -212,32 +209,29 @@ test.describe("Search & Filter", () => {
 
     // Open filter panel
     const filterButton = page.locator('[data-testid="filter-button"], button:has-text("Filter")').first();
-    if (await filterButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await filterButton.click();
+    await expect(filterButton).toBeVisible({ timeout: 3000 });
+    await filterButton.click();
 
-      // Look for tag filter with multi-select
-      const tagFilter = page.locator('[data-testid="tag-filter-multi"], [data-testid="tag-filter"]').first();
-      if (await tagFilter.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await tagFilter.click();
+    // Look for tag filter with multi-select
+    const tagFilter = page.locator('[data-testid="tag-filter-multi"], [data-testid="tag-filter"]').first();
+    await expect(tagFilter).toBeVisible({ timeout: 3000 });
+    await tagFilter.click();
 
-        // Select multiple tags
-        const tagOptions = page.locator('[data-testid="tag-option"], [role="option"]');
-        const count = await tagOptions.count();
-        if (count >= 2) {
-          await tagOptions.nth(0).click();
-          await tagOptions.nth(1).click();
+    // Select multiple tags
+    const tagOptions = page.locator('[data-testid="tag-option"], [role="option"]');
+    await expect(tagOptions.first()).toBeVisible({ timeout: 3000 });
+    const count = await tagOptions.count();
+    expect(count).toBeGreaterThanOrEqual(2);
+    await tagOptions.nth(0).click();
+    await tagOptions.nth(1).click();
 
-          // Look for AND/OR toggle
-          const andToggle = page.locator('button:has-text("AND"), [data-testid="filter-mode-and"]');
-          if (await andToggle.isVisible({ timeout: 2000 }).catch(() => false)) {
-            await andToggle.click();
-          }
+    // Look for AND/OR toggle
+    const andToggle = page.locator('button:has-text("AND"), [data-testid="filter-mode-and"]');
+    await expect(andToggle).toBeVisible({ timeout: 2000 });
+    await andToggle.click();
 
-          await page.waitForLoadState("networkidle");
-          // Verify filtering - should show only cases with ALL selected tags
-        }
-      }
-    }
+    await page.waitForLoadState("networkidle");
+    // Verify filtering - should show only cases with ALL selected tags
   });
 
   test("Filter Test Cases by Multiple Tags (OR)", async ({ api, page }) => {
@@ -246,29 +240,27 @@ test.describe("Search & Filter", () => {
 
     // Similar to AND test but with OR mode
     const filterButton = page.locator('[data-testid="filter-button"]').first();
-    if (await filterButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await filterButton.click();
+    await expect(filterButton).toBeVisible({ timeout: 3000 });
+    await filterButton.click();
 
-      const tagFilter = page.locator('[data-testid="tag-filter"]').first();
-      if (await tagFilter.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await tagFilter.click();
+    const tagFilter = page.locator('[data-testid="tag-filter"]').first();
+    await expect(tagFilter).toBeVisible({ timeout: 3000 });
+    await tagFilter.click();
 
-        const tagOptions = page.locator('[role="option"]');
-        if (await tagOptions.count() >= 2) {
-          await tagOptions.nth(0).click();
-          await tagOptions.nth(1).click();
+    const tagOptions = page.locator('[role="option"]');
+    await expect(tagOptions.first()).toBeVisible({ timeout: 3000 });
+    const count = await tagOptions.count();
+    expect(count).toBeGreaterThanOrEqual(2);
+    await tagOptions.nth(0).click();
+    await tagOptions.nth(1).click();
 
-          // Look for OR toggle
-          const orToggle = page.locator('button:has-text("OR"), [data-testid="filter-mode-or"]');
-          if (await orToggle.isVisible({ timeout: 2000 }).catch(() => false)) {
-            await orToggle.click();
-          }
+    // Look for OR toggle
+    const orToggle = page.locator('button:has-text("OR"), [data-testid="filter-mode-or"]');
+    await expect(orToggle).toBeVisible({ timeout: 2000 });
+    await orToggle.click();
 
-          await page.waitForLoadState("networkidle");
-          // Verify filtering - should show cases with ANY of the selected tags
-        }
-      }
-    }
+    await page.waitForLoadState("networkidle");
+    // Verify filtering - should show cases with ANY of the selected tags
   });
 
   test("Search Tags by Name", async ({ api, page }) => {
@@ -277,22 +269,19 @@ test.describe("Search & Filter", () => {
 
     // Open tag management or filter panel
     const filterButton = page.locator('[data-testid="filter-button"]').first();
-    if (await filterButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await filterButton.click();
+    await expect(filterButton).toBeVisible({ timeout: 3000 });
+    await filterButton.click();
 
-      const tagFilter = page.locator('[data-testid="tag-filter"]').first();
-      if (await tagFilter.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await tagFilter.click();
+    const tagFilter = page.locator('[data-testid="tag-filter"]').first();
+    await expect(tagFilter).toBeVisible({ timeout: 3000 });
+    await tagFilter.click();
 
-        // Look for search input within tag filter
-        const tagSearch = page.locator('[data-testid="tag-search"], input[placeholder*="tag"]').first();
-        if (await tagSearch.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await tagSearch.fill("test");
-          await page.waitForLoadState("networkidle");
-          // Verify tags are filtered
-        }
-      }
-    }
+    // Look for search input within tag filter
+    const tagSearch = page.locator('[data-testid="tag-search"], input[placeholder*="tag"]').first();
+    await expect(tagSearch).toBeVisible({ timeout: 3000 });
+    await tagSearch.fill("test");
+    await page.waitForLoadState("networkidle");
+    // Verify tags are filtered
   });
 
   test("Filter Test Cases by Linked Issue", async ({ api, page }) => {
@@ -300,16 +289,14 @@ test.describe("Search & Filter", () => {
     await repositoryPage.goto(projectId);
 
     const filterButton = page.locator('[data-testid="filter-button"]').first();
-    if (await filterButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await filterButton.click();
+    await expect(filterButton).toBeVisible({ timeout: 3000 });
+    await filterButton.click();
 
-      const issueFilter = page.locator('[data-testid="issue-filter"], text="Issue"').first();
-      if (await issueFilter.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await issueFilter.click();
-        // Select a specific issue or "Has linked issue"
-        await page.waitForLoadState("networkidle");
-      }
-    }
+    const issueFilter = page.locator('[data-testid="issue-filter"], text="Issue"').first();
+    await expect(issueFilter).toBeVisible({ timeout: 3000 });
+    await issueFilter.click();
+    // Select a specific issue or "Has linked issue"
+    await page.waitForLoadState("networkidle");
   });
 
   test("Filter Test Cases with Any Linked Issue", async ({ api, page }) => {
@@ -317,15 +304,13 @@ test.describe("Search & Filter", () => {
     await repositoryPage.goto(projectId);
 
     const filterButton = page.locator('[data-testid="filter-button"]').first();
-    if (await filterButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await filterButton.click();
+    await expect(filterButton).toBeVisible({ timeout: 3000 });
+    await filterButton.click();
 
-      const hasIssueOption = page.locator('[data-testid="has-issue-filter"], text=/has issue|with issue/i').first();
-      if (await hasIssueOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await hasIssueOption.click();
-        await page.waitForLoadState("networkidle");
-      }
-    }
+    const hasIssueOption = page.locator('[data-testid="has-issue-filter"], text=/has issue|with issue/i').first();
+    await expect(hasIssueOption).toBeVisible({ timeout: 3000 });
+    await hasIssueOption.click();
+    await page.waitForLoadState("networkidle");
   });
 
   test("Filter Test Cases without Linked Issues", async ({ api, page }) => {
@@ -333,15 +318,13 @@ test.describe("Search & Filter", () => {
     await repositoryPage.goto(projectId);
 
     const filterButton = page.locator('[data-testid="filter-button"]').first();
-    if (await filterButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await filterButton.click();
+    await expect(filterButton).toBeVisible({ timeout: 3000 });
+    await filterButton.click();
 
-      const noIssueOption = page.locator('[data-testid="no-issue-filter"], text=/no issue|without issue/i').first();
-      if (await noIssueOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await noIssueOption.click();
-        await page.waitForLoadState("networkidle");
-      }
-    }
+    const noIssueOption = page.locator('[data-testid="no-issue-filter"], text=/no issue|without issue/i').first();
+    await expect(noIssueOption).toBeVisible({ timeout: 3000 });
+    await noIssueOption.click();
+    await page.waitForLoadState("networkidle");
   });
 
   test("Search Issues by ID", async ({ api, page }) => {
@@ -349,15 +332,13 @@ test.describe("Search & Filter", () => {
     await repositoryPage.goto(projectId);
 
     const filterButton = page.locator('[data-testid="filter-button"]').first();
-    if (await filterButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await filterButton.click();
+    await expect(filterButton).toBeVisible({ timeout: 3000 });
+    await filterButton.click();
 
-      const issueSearch = page.locator('[data-testid="issue-search"], input[placeholder*="issue"]').first();
-      if (await issueSearch.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await issueSearch.fill("JIRA-123");
-        await page.waitForLoadState("networkidle");
-      }
-    }
+    const issueSearch = page.locator('[data-testid="issue-search"], input[placeholder*="issue"]').first();
+    await expect(issueSearch).toBeVisible({ timeout: 3000 });
+    await issueSearch.fill("JIRA-123");
+    await page.waitForLoadState("networkidle");
   });
 
   test("Search Issues by Title", async ({ api, page }) => {
@@ -365,15 +346,13 @@ test.describe("Search & Filter", () => {
     await repositoryPage.goto(projectId);
 
     const filterButton = page.locator('[data-testid="filter-button"]').first();
-    if (await filterButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await filterButton.click();
+    await expect(filterButton).toBeVisible({ timeout: 3000 });
+    await filterButton.click();
 
-      const issueSearch = page.locator('[data-testid="issue-search"]').first();
-      if (await issueSearch.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await issueSearch.fill("Bug in login");
-        await page.waitForLoadState("networkidle");
-      }
-    }
+    const issueSearch = page.locator('[data-testid="issue-search"]').first();
+    await expect(issueSearch).toBeVisible({ timeout: 3000 });
+    await issueSearch.fill("Bug in login");
+    await page.waitForLoadState("networkidle");
   });
 
   test("Filter Test Cases by Text Custom Field", async ({ api, page }) => {
@@ -381,17 +360,15 @@ test.describe("Search & Filter", () => {
     await repositoryPage.goto(projectId);
 
     const filterButton = page.locator('[data-testid="filter-button"]').first();
-    if (await filterButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await filterButton.click();
+    await expect(filterButton).toBeVisible({ timeout: 3000 });
+    await filterButton.click();
 
-      // Look for custom field filters
-      const customFieldFilter = page.locator('[data-testid="custom-field-filter"]').first();
-      if (await customFieldFilter.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await customFieldFilter.click();
-        // Enter text value to filter by
-        await page.waitForLoadState("networkidle");
-      }
-    }
+    // Look for custom field filters
+    const customFieldFilter = page.locator('[data-testid="custom-field-filter"]').first();
+    await expect(customFieldFilter).toBeVisible({ timeout: 3000 });
+    await customFieldFilter.click();
+    // Enter text value to filter by
+    await page.waitForLoadState("networkidle");
   });
 
   test("Filter Test Cases by Dropdown Custom Field", async ({ api, page }) => {
@@ -399,16 +376,14 @@ test.describe("Search & Filter", () => {
     await repositoryPage.goto(projectId);
 
     const filterButton = page.locator('[data-testid="filter-button"]').first();
-    if (await filterButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await filterButton.click();
+    await expect(filterButton).toBeVisible({ timeout: 3000 });
+    await filterButton.click();
 
-      const customFieldFilter = page.locator('[data-testid="dropdown-field-filter"]').first();
-      if (await customFieldFilter.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await customFieldFilter.click();
-        // Select dropdown option
-        await page.waitForLoadState("networkidle");
-      }
-    }
+    const customFieldFilter = page.locator('[data-testid="dropdown-field-filter"]').first();
+    await expect(customFieldFilter).toBeVisible({ timeout: 3000 });
+    await customFieldFilter.click();
+    // Select dropdown option
+    await page.waitForLoadState("networkidle");
   });
 
   test("Filter Test Cases by Date Custom Field Range", async ({ api, page }) => {
@@ -416,16 +391,14 @@ test.describe("Search & Filter", () => {
     await repositoryPage.goto(projectId);
 
     const filterButton = page.locator('[data-testid="filter-button"]').first();
-    if (await filterButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await filterButton.click();
+    await expect(filterButton).toBeVisible({ timeout: 3000 });
+    await filterButton.click();
 
-      const dateFilter = page.locator('[data-testid="date-field-filter"]').first();
-      if (await dateFilter.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await dateFilter.click();
-        // Set date range
-        await page.waitForLoadState("networkidle");
-      }
-    }
+    const dateFilter = page.locator('[data-testid="date-field-filter"]').first();
+    await expect(dateFilter).toBeVisible({ timeout: 3000 });
+    await dateFilter.click();
+    // Set date range
+    await page.waitForLoadState("networkidle");
   });
 
   test("Filter Version History by Date Range", async ({ api, page }) => {
@@ -444,16 +417,14 @@ test.describe("Search & Filter", () => {
 
     // Open version history tab/panel
     const historyTab = page.locator('[data-testid="history-tab"], button:has-text("History")').first();
-    if (await historyTab.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await historyTab.click();
+    await expect(historyTab).toBeVisible({ timeout: 5000 });
+    await historyTab.click();
 
-      // Look for date range filter
-      const dateFilter = page.locator('[data-testid="history-date-filter"]').first();
-      if (await dateFilter.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await dateFilter.click();
-        // Set date range
-      }
-    }
+    // Look for date range filter
+    const dateFilter = page.locator('[data-testid="history-date-filter"]').first();
+    await expect(dateFilter).toBeVisible({ timeout: 3000 });
+    await dateFilter.click();
+    // Set date range
   });
 
   test("Filter Version History by User", async ({ api, page }) => {
@@ -469,15 +440,13 @@ test.describe("Search & Filter", () => {
     await page.locator(`[data-testid="case-row-${testCaseId}"]`).first().click();
 
     const historyTab = page.locator('[data-testid="history-tab"], button:has-text("History")').first();
-    if (await historyTab.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await historyTab.click();
+    await expect(historyTab).toBeVisible({ timeout: 5000 });
+    await historyTab.click();
 
-      const userFilter = page.locator('[data-testid="history-user-filter"]').first();
-      if (await userFilter.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await userFilter.click();
-        // Select user
-      }
-    }
+    const userFilter = page.locator('[data-testid="history-user-filter"]').first();
+    await expect(userFilter).toBeVisible({ timeout: 3000 });
+    await userFilter.click();
+    // Select user
   });
 
   test("Documentation Search", async ({ api, page }) => {
@@ -486,17 +455,15 @@ test.describe("Search & Filter", () => {
 
     // Navigate to documentation section if separate
     const docsNav = page.locator('[data-testid="docs-nav"], a:has-text("Documentation")').first();
-    if (await docsNav.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await docsNav.click();
-      await page.waitForLoadState("networkidle");
-    }
+    await expect(docsNav).toBeVisible({ timeout: 3000 });
+    await docsNav.click();
+    await page.waitForLoadState("networkidle");
 
     // Search in documentation
     const docsSearch = page.locator('[data-testid="docs-search"], input[placeholder*="documentation"]').first();
-    if (await docsSearch.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await docsSearch.fill("test");
-      await page.waitForLoadState("networkidle");
-    }
+    await expect(docsSearch).toBeVisible({ timeout: 3000 });
+    await docsSearch.fill("test");
+    await page.waitForLoadState("networkidle");
   });
 
   test("Documentation Full Text Search", async ({ api, page }) => {
@@ -505,16 +472,14 @@ test.describe("Search & Filter", () => {
 
     // Navigate to documentation
     const docsNav = page.locator('[data-testid="docs-nav"]').first();
-    if (await docsNav.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await docsNav.click();
+    await expect(docsNav).toBeVisible({ timeout: 3000 });
+    await docsNav.click();
 
-      // Use full-text search
-      const fullTextSearch = page.locator('[data-testid="full-text-search"]').first();
-      if (await fullTextSearch.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await fullTextSearch.fill("specific content");
-        await page.waitForLoadState("networkidle");
-      }
-    }
+    // Use full-text search
+    const fullTextSearch = page.locator('[data-testid="full-text-search"]').first();
+    await expect(fullTextSearch).toBeVisible({ timeout: 3000 });
+    await fullTextSearch.fill("specific content");
+    await page.waitForLoadState("networkidle");
   });
 
   test("Export Filtered Results", async ({ api, page }) => {
@@ -531,28 +496,24 @@ test.describe("Search & Filter", () => {
 
     // Apply a filter
     const searchInput = page.locator('[data-testid="search-input"]').first();
-    if (await searchInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await searchInput.fill(exportableName);
-      await page.waitForLoadState("networkidle");
+    await expect(searchInput).toBeVisible({ timeout: 3000 });
+    await searchInput.fill(exportableName);
+    await page.waitForLoadState("networkidle");
 
-      // Click export button
-      const exportButton = page.locator('[data-testid="export-button"], button:has-text("Export")').first();
-      if (await exportButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await exportButton.click();
+    // Click export button
+    const exportButton = page.locator('[data-testid="export-button"], button:has-text("Export")').first();
+    await expect(exportButton).toBeVisible({ timeout: 3000 });
+    await exportButton.click();
 
-        // Verify export dialog mentions filtered results
-        const exportDialog = page.locator('[role="dialog"]');
-        await expect(exportDialog).toBeVisible({ timeout: 5000 });
+    // Verify export dialog mentions filtered results
+    const exportDialog = page.locator('[role="dialog"]');
+    await expect(exportDialog).toBeVisible({ timeout: 5000 });
 
-        // Look for indication that filtered results will be exported
-        const filteredIndicator = exportDialog.locator('text=/filtered|1 case|selected/i');
-        if (await filteredIndicator.isVisible({ timeout: 2000 }).catch(() => false)) {
-          expect(await filteredIndicator.isVisible()).toBe(true);
-        }
+    // Look for indication that filtered results will be exported
+    const filteredIndicator = exportDialog.locator('text=/filtered|1 case|selected/i');
+    await expect(filteredIndicator).toBeVisible({ timeout: 2000 });
 
-        // Close dialog
-        await page.keyboard.press("Escape");
-      }
-    }
+    // Close dialog
+    await page.keyboard.press("Escape");
   });
 });

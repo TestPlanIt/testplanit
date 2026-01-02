@@ -184,16 +184,12 @@ test.describe("View Switching", () => {
 
     // Ensure we're in folder view
     const viewSwitcher = page.locator('[data-testid="view-switcher"], [data-testid="view-mode-select"]').first();
-    if (await viewSwitcher.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await viewSwitcher.click();
-      const folderViewOption = page.locator('[role="option"]:has-text("Folder")').first();
-      if (await folderViewOption.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await folderViewOption.click();
-        await page.waitForLoadState("networkidle");
-      } else {
-        await page.keyboard.press("Escape");
-      }
-    }
+    await expect(viewSwitcher).toBeVisible({ timeout: 3000 });
+    await viewSwitcher.click();
+    const folderViewOption = page.locator('[role="option"]:has-text("Folder")').first();
+    await expect(folderViewOption).toBeVisible({ timeout: 2000 });
+    await folderViewOption.click();
+    await page.waitForLoadState("networkidle");
 
     // Verify folder 1 shows count of 2
     const folder1 = repositoryPage.getFolderById(folder1Id);
@@ -201,17 +197,15 @@ test.describe("View Switching", () => {
 
     // Check for count indicator
     const count1 = folder1.locator('[data-testid="case-count"], .case-count, .badge');
-    if (await count1.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await expect(count1).toContainText("2");
-    }
+    await expect(count1).toBeVisible({ timeout: 2000 });
+    await expect(count1).toContainText("2");
 
     // Verify folder 2 shows count of 3
     const folder2 = repositoryPage.getFolderById(folder2Id);
     await expect(folder2).toBeVisible({ timeout: 5000 });
 
     const count2 = folder2.locator('[data-testid="case-count"], .case-count, .badge');
-    if (await count2.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await expect(count2).toContainText("3");
-    }
+    await expect(count2).toBeVisible({ timeout: 2000 });
+    await expect(count2).toContainText("3");
   });
 });

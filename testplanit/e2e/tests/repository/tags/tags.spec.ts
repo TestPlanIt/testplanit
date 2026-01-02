@@ -23,106 +23,59 @@ test.describe("Tags", () => {
     return projects[0].id;
   }
 
-  test("Create Tag", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
+  test("Create Tag", async ({ page }) => {
+    // Navigate to admin tags page where tags are created
+    await page.goto("/en-US/admin/tags");
+    await page.waitForLoadState("networkidle");
 
-    // Open tag management or settings
-    const settingsButton = page
-      .locator('[data-testid="settings-button"], button:has-text("Settings")')
-      .first();
-    if (await settingsButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await settingsButton.click();
-    }
+    // Verify we're on the tags page
+    await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible({
+      timeout: 10000,
+    });
 
-    // Navigate to tags section
-    const tagsSection = page
-      .locator('[data-testid="tags-section"], a:has-text("Tags")')
-      .first();
-    if (await tagsSection.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await tagsSection.click();
-    }
-
-    // Click add tag button
+    // Click the add tag button (CirclePlus icon button)
     const addTagButton = page
-      .locator(
-        '[data-testid="add-tag-button"], button:has-text("Add Tag"), button:has-text("New Tag")'
-      )
+      .locator("button:has(svg.lucide-circle-plus)")
       .first();
-    if (await addTagButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await addTagButton.click();
+    await expect(addTagButton).toBeVisible({ timeout: 5000 });
+    await addTagButton.click();
 
-      // Fill tag name
-      const tagNameInput = page
-        .locator('[data-testid="tag-name-input"], input[placeholder*="name"]')
-        .first();
-      await expect(tagNameInput).toBeVisible({ timeout: 5000 });
+    // Wait for the dialog to open
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
 
-      const tagName = `TestTag${Date.now()}`;
-      await tagNameInput.fill(tagName);
+    // Fill in the tag name
+    const tagName = `E2ETestTag${Date.now()}`;
+    const tagNameInput = dialog.locator("input[placeholder]").first();
+    await expect(tagNameInput).toBeVisible({ timeout: 3000 });
+    await tagNameInput.fill(tagName);
 
-      // Submit
-      const submitButton = page
-        .locator(
-          'button[type="submit"], button:has-text("Create"), button:has-text("Save")'
-        )
-        .first();
-      await submitButton.click();
+    // Submit the form
+    const submitButton = dialog.locator('button[type="submit"]');
+    await submitButton.click();
 
-      await page.waitForLoadState("networkidle");
+    // Wait for the dialog to close (indicates success)
+    await expect(dialog).not.toBeVisible({ timeout: 10000 });
 
-      // Verify tag was created
-      await expect(page.locator(`text="${tagName}"`).first()).toBeVisible({
-        timeout: 10000,
-      });
-    }
+    // Use the filter to find the tag (since pagination may hide it)
+    const filterInput = page.locator('input[placeholder*="Filter"]').first();
+    await filterInput.fill(tagName);
+    await page.waitForLoadState("networkidle");
+
+    // Verify the tag appears in the filtered list
+    await expect(page.locator(`text="${tagName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
-  test("Create Tag with Color", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    const addTagButton = page.locator('[data-testid="add-tag-button"]').first();
-    if (await addTagButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await addTagButton.click();
-
-      const tagNameInput = page
-        .locator('[data-testid="tag-name-input"]')
-        .first();
-      await expect(tagNameInput).toBeVisible({ timeout: 5000 });
-
-      const tagName = `ColorTag${Date.now()}`;
-      await tagNameInput.fill(tagName);
-
-      // Select color
-      const colorPicker = page
-        .locator('[data-testid="color-picker"], [data-testid="tag-color"]')
-        .first();
-      if (await colorPicker.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await colorPicker.click();
-
-        // Select a color option
-        const colorOption = page
-          .locator('[data-testid="color-option"], .color-swatch')
-          .first();
-        if (await colorOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await colorOption.click();
-        }
-      }
-
-      const submitButton = page.locator('button[type="submit"]').first();
-      await submitButton.click();
-
-      await page.waitForLoadState("networkidle");
-
-      // Verify tag was created with color
-      const createdTag = page.locator(`text="${tagName}"`).first();
-      await expect(createdTag).toBeVisible({ timeout: 10000 });
-    }
-  });
+  // NOTE: Tags don't have a color field in the schema - this test is removed
 
   test("Apply Existing Tag to Test Case", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+
+    // First create a tag that we'll apply
+    const tagName = `ApplyTag${Date.now()}`;
+    await api.createTag(tagName);
 
     // Create a folder and test case
     const folderName = `Tag Apply Folder ${Date.now()}`;
@@ -133,243 +86,296 @@ test.describe("Tags", () => {
       `Tag Apply Case ${Date.now()}`
     );
 
-    await repositoryPage.goto(projectId);
-
-    // Select the folder and test case
-    await repositoryPage.selectFolder(folderId);
-
-    // Click on the test case
-    const testCaseRow = page
-      .locator(`[data-testid="case-row-${testCaseId}"]`)
-      .first();
-    await testCaseRow.click();
-
+    // Navigate directly to the test case detail page
+    await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
     await page.waitForLoadState("networkidle");
 
-    // Find tag input/selector
-    const tagSelector = page
-      .locator('[data-testid="tag-selector"], [data-testid="add-tag"]')
+    // The page opens in view mode - we need to click Edit to access the tag selector
+    const editButton = page.locator('button:has-text("Edit")').first();
+    await expect(editButton).toBeVisible({ timeout: 10000 });
+    await editButton.click();
+    await page.waitForLoadState("networkidle");
+
+    // Find the tags section - ManageTags uses react-select
+    // The react-select input is inside a div with min-w-[200px] class
+    const tagSelectInput = page.locator(".min-w-\\[200px\\] input").first();
+    await expect(tagSelectInput).toBeVisible({ timeout: 10000 });
+
+    // Click to focus and open the dropdown
+    await tagSelectInput.click();
+
+    // Type the tag name to filter
+    await tagSelectInput.fill(tagName);
+
+    // Wait for and click the option
+    const tagOption = page
+      .locator(`[role="option"]:has-text("${tagName}")`)
       .first();
-    if (await tagSelector.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await tagSelector.click();
+    await expect(tagOption).toBeVisible({ timeout: 5000 });
+    await tagOption.click();
 
-      // Select an existing tag
-      const tagOption = page
-        .locator('[role="option"], [data-testid="tag-option"]')
-        .first();
-      if (await tagOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-        const tagText = await tagOption.textContent();
-        await tagOption.click();
+    // Click Save to persist the tag assignment
+    const saveButton = page
+      .locator('button[type="submit"]:has(svg.lucide-save)')
+      .first();
+    await expect(saveButton).toBeVisible({ timeout: 5000 });
+    await saveButton.click();
 
-        await page.waitForLoadState("networkidle");
+    // Wait for save to complete - Edit button reappears when back in view mode
+    await expect(editButton).toBeVisible({ timeout: 15000 });
+    await page.waitForLoadState("networkidle");
 
-        // Verify tag is now attached
-        const appliedTag = page.locator(
-          `[data-testid="applied-tag"]:has-text("${tagText}"), .tag:has-text("${tagText}")`
-        );
-        await expect(appliedTag.first()).toBeVisible({ timeout: 5000 });
-      }
-    }
+    // Verify the tag appears in view mode (tags section with id="tags-display")
+    const tagsDisplaySection = page.locator("#tags-display").first();
+    await expect(tagsDisplaySection).toBeVisible({ timeout: 10000 });
+
+    // Verify our tag name is displayed
+    await expect(page.locator(`text="${tagName}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Apply Multiple Tags to Test Case", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+    const uniqueId = Date.now();
 
-    const folderName = `Multi Tag Folder ${Date.now()}`;
+    // Create two tags that we'll apply
+    const tagName1 = `MultiTag1_${uniqueId}`;
+    const tagName2 = `MultiTag2_${uniqueId}`;
+    await api.createTag(tagName1);
+    await api.createTag(tagName2);
+
+    // Create a folder and test case
+    const folderName = `Multi Tag Folder ${uniqueId}`;
     const folderId = await api.createFolder(projectId, folderName);
     const testCaseId = await api.createTestCase(
       projectId,
       folderId,
-      `Multi Tag Case ${Date.now()}`
+      `Multi Tag Case ${uniqueId}`
     );
 
-    await repositoryPage.goto(projectId);
-
-    await repositoryPage.selectFolder(folderId);
-
-    const testCaseRow = page
-      .locator(`[data-testid="case-row-${testCaseId}"]`)
-      .first();
-    await testCaseRow.click();
-
+    // Navigate directly to the test case detail page
+    await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
     await page.waitForLoadState("networkidle");
 
-    const tagSelector = page.locator('[data-testid="tag-selector"]').first();
-    if (await tagSelector.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await tagSelector.click();
+    // Click Edit to enter edit mode
+    const editButton = page.locator('button:has-text("Edit")').first();
+    await expect(editButton).toBeVisible({ timeout: 10000 });
+    await editButton.click();
+    await page.waitForLoadState("networkidle");
 
-      const tagOptions = page.locator('[role="option"]');
-      const count = await tagOptions.count();
+    // Find the tags section - ManageTags uses react-select
+    const tagSelectInput = page.locator(".min-w-\\[200px\\] input").first();
+    await expect(tagSelectInput).toBeVisible({ timeout: 10000 });
 
-      if (count >= 2) {
-        await tagOptions.nth(0).click();
-        await tagSelector.click();
-        await tagOptions.nth(1).click();
+    // Add first tag
+    await tagSelectInput.click();
+    await tagSelectInput.fill(tagName1);
+    const tagOption1 = page
+      .locator(`[role="option"]:has-text("${tagName1}")`)
+      .first();
+    await expect(tagOption1).toBeVisible({ timeout: 5000 });
+    await tagOption1.click();
 
-        await page.waitForLoadState("networkidle");
+    // Add second tag
+    await tagSelectInput.click();
+    await tagSelectInput.fill(tagName2);
+    const tagOption2 = page
+      .locator(`[role="option"]:has-text("${tagName2}")`)
+      .first();
+    await expect(tagOption2).toBeVisible({ timeout: 5000 });
+    await tagOption2.click();
 
-        // Verify multiple tags are attached
-        const appliedTags = page.locator('[data-testid="applied-tag"], .tag');
-        expect(await appliedTags.count()).toBeGreaterThanOrEqual(2);
-      }
-    }
+    // Click Save to persist the tag assignments
+    const saveButton = page
+      .locator('button[type="submit"]:has(svg.lucide-save)')
+      .first();
+    await expect(saveButton).toBeVisible({ timeout: 5000 });
+    await saveButton.click();
+
+    // Wait for save to complete - Edit button reappears when back in view mode
+    await expect(editButton).toBeVisible({ timeout: 15000 });
+    await page.waitForLoadState("networkidle");
+
+    // Verify both tags appear in view mode
+    const tagsDisplaySection = page.locator("#tags-display").first();
+    await expect(tagsDisplaySection).toBeVisible({ timeout: 10000 });
+
+    // Verify both tag names are displayed
+    await expect(page.locator(`text="${tagName1}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
+    await expect(page.locator(`text="${tagName2}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Remove Tag from Test Case", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+    const uniqueId = Date.now();
 
-    const folderName = `Remove Tag Folder ${Date.now()}`;
+    // Create a tag
+    const tagName = `RemoveTag${uniqueId}`;
+    const tagId = await api.createTag(tagName);
+
+    // Create a folder and test case
+    const folderName = `Remove Tag Folder ${uniqueId}`;
     const folderId = await api.createFolder(projectId, folderName);
     const testCaseId = await api.createTestCase(
       projectId,
       folderId,
-      `Remove Tag Case ${Date.now()}`
+      `Remove Tag Case ${uniqueId}`
     );
 
-    await repositoryPage.goto(projectId);
+    // Apply the tag to the test case via API (so we start with it attached)
+    await api.addTagToTestCase(testCaseId, tagId);
 
-    await repositoryPage.selectFolder(folderId);
-
-    const testCaseRow = page
-      .locator(`[data-testid="case-row-${testCaseId}"]`)
-      .first();
-    await testCaseRow.click();
-
+    // Navigate to the test case detail page
+    await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
     await page.waitForLoadState("networkidle");
 
-    // First apply a tag
-    const tagSelector = page.locator('[data-testid="tag-selector"]').first();
-    if (await tagSelector.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await tagSelector.click();
-      const tagOption = page.locator('[role="option"]').first();
-      if (await tagOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await tagOption.click();
-        await page.waitForLoadState("networkidle");
-      }
-    }
+    // Verify the tag appears in view mode first
+    const tagsDisplaySection = page.locator("#tags-display").first();
+    await expect(tagsDisplaySection).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${tagName}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
 
-    // Now remove the tag
-    const appliedTag = page
-      .locator('[data-testid="applied-tag"], .tag')
+    // Click Edit to enter edit mode
+    const editButton = page.locator('button:has-text("Edit")').first();
+    await expect(editButton).toBeVisible({ timeout: 10000 });
+    await editButton.click();
+    await page.waitForLoadState("networkidle");
+
+    // Find the tag in the react-select and remove it
+    // React-select shows selected tags with an "x" button to remove them
+    const selectedTagRemoveButton = page
+      .locator(
+        `.min-w-\\[200px\\] [class*="multiValue"] [class*="Remove"], .min-w-\\[200px\\] svg[class*="css"]`
+      )
       .first();
-    if (await appliedTag.isVisible({ timeout: 5000 }).catch(() => false)) {
-      const removeButton = appliedTag.locator(
-        '[data-testid="remove-tag"], button, .remove'
-      );
-      if (await removeButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await removeButton.click();
-        await page.waitForLoadState("networkidle");
+    await expect(selectedTagRemoveButton).toBeVisible({ timeout: 5000 });
+    await selectedTagRemoveButton.click();
 
-        // Verify tag is removed
-        await expect(appliedTag).not.toBeVisible({ timeout: 5000 });
-      }
-    }
+    // Click Save to persist the removal
+    const saveButton = page
+      .locator('button[type="submit"]:has(svg.lucide-save)')
+      .first();
+    await expect(saveButton).toBeVisible({ timeout: 5000 });
+    await saveButton.click();
+
+    // Wait for save to complete - Edit button reappears when back in view mode
+    await expect(editButton).toBeVisible({ timeout: 15000 });
+    await page.waitForLoadState("networkidle");
+
+    // Verify the tag is no longer displayed in view mode
+    // The tags section should either not be visible or not contain our tag
+    await expect(page.locator(`text="${tagName}"`)).not.toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Edit Tag Name", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
+    // First create a tag to edit
+    const originalName = `EditTestTag${Date.now()}`;
+    await api.createTag(originalName);
 
-    // Navigate to tag management
-    const tagsSection = page.locator('[data-testid="tags-section"]').first();
-    if (await tagsSection.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await tagsSection.click();
+    // Navigate to admin tags page
+    await page.goto("/en-US/admin/tags");
+    await page.waitForLoadState("networkidle");
 
-      // Find an existing tag
-      const tagItem = page.locator('[data-testid="tag-item"]').first();
-      if (await tagItem.isVisible({ timeout: 5000 }).catch(() => false)) {
-        // Click edit
-        const editButton = tagItem.locator(
-          '[data-testid="edit-tag"], button:has-text("Edit")'
-        );
-        await editButton.click();
+    // Verify we're on the tags page
+    await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible({
+      timeout: 10000,
+    });
 
-        // Edit the name
-        const nameInput = page
-          .locator('[data-testid="tag-name-input"]')
-          .first();
-        const newName = `EditedTag${Date.now()}`;
-        await nameInput.clear();
-        await nameInput.fill(newName);
+    // Use filter to find the tag (since pagination may hide it)
+    const filterInput = page.locator('input[placeholder*="Filter"]').first();
+    await filterInput.fill(originalName);
+    await page.waitForLoadState("networkidle");
 
-        // Save
-        const saveButton = page.locator('button:has-text("Save")').first();
-        await saveButton.click();
+    // Find the row with our tag
+    const tagRow = page.locator(`tr:has-text("${originalName}")`).first();
+    await expect(tagRow).toBeVisible({ timeout: 5000 });
 
-        await page.waitForLoadState("networkidle");
+    // Click the edit button (SquarePen icon) in that row
+    const editButton = tagRow.locator("button:has(svg.lucide-square-pen)");
+    await expect(editButton).toBeVisible({ timeout: 3000 });
+    await editButton.click();
 
-        // Verify name was changed
-        await expect(page.locator(`text="${newName}"`).first()).toBeVisible({
-          timeout: 5000,
-        });
-      }
-    }
+    // Wait for the dialog to open
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+
+    // Edit the name
+    const newName = `EditedTag${Date.now()}`;
+    const nameInput = dialog.locator("input").first();
+    await nameInput.clear();
+    await nameInput.fill(newName);
+
+    // Submit the form
+    const submitButton = dialog.locator('button[type="submit"]');
+    await submitButton.click();
+
+    // Wait for the dialog to close
+    await expect(dialog).not.toBeVisible({ timeout: 10000 });
+
+    // Filter for the new name to verify it was updated
+    await filterInput.clear();
+    await filterInput.fill(newName);
+    await page.waitForLoadState("networkidle");
+
+    // Verify the new name appears in the list
+    await expect(page.locator(`text="${newName}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
-  test("Edit Tag Color", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    const tagsSection = page.locator('[data-testid="tags-section"]').first();
-    if (await tagsSection.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await tagsSection.click();
-
-      const tagItem = page.locator('[data-testid="tag-item"]').first();
-      if (await tagItem.isVisible({ timeout: 5000 }).catch(() => false)) {
-        const editButton = tagItem.locator('[data-testid="edit-tag"]');
-        await editButton.click();
-
-        // Change color
-        const colorPicker = page
-          .locator('[data-testid="color-picker"]')
-          .first();
-        if (await colorPicker.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await colorPicker.click();
-          const colorOption = page.locator(".color-swatch").nth(1);
-          await colorOption.click();
-        }
-
-        const saveButton = page.locator('button:has-text("Save")').first();
-        await saveButton.click();
-
-        await page.waitForLoadState("networkidle");
-      }
-    }
-  });
+  // NOTE: Tags don't have a color field in the schema - "Edit Tag Color" test removed
 
   test("Delete Tag", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
+    // First create a tag to delete
+    const tagName = `DeleteTestTag${Date.now()}`;
+    await api.createTag(tagName);
 
-    const tagsSection = page.locator('[data-testid="tags-section"]').first();
-    if (await tagsSection.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await tagsSection.click();
+    // Navigate to admin tags page
+    await page.goto("/en-US/admin/tags");
+    await page.waitForLoadState("networkidle");
 
-      const tagItem = page.locator('[data-testid="tag-item"]').first();
-      if (await tagItem.isVisible({ timeout: 5000 }).catch(() => false)) {
-        const tagName = await tagItem.textContent();
+    // Verify we're on the tags page
+    await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible({
+      timeout: 10000,
+    });
 
-        const deleteButton = tagItem.locator(
-          '[data-testid="delete-tag"], button:has-text("Delete")'
-        );
-        await deleteButton.click();
+    // Use filter to find the tag (since pagination may hide it)
+    const filterInput = page.locator('input[placeholder*="Filter"]').first();
+    await filterInput.fill(tagName);
+    await page.waitForLoadState("networkidle");
 
-        // Confirm deletion
-        const confirmButton = page
-          .locator('[role="alertdialog"] button:has-text("Delete")')
-          .first();
-        await confirmButton.click();
+    // Find the row with our tag
+    const tagRow = page.locator(`tr:has-text("${tagName}")`).first();
+    await expect(tagRow).toBeVisible({ timeout: 5000 });
 
-        await page.waitForLoadState("networkidle");
+    // Click the delete button (Trash2 icon) in that row
+    const deleteButton = tagRow.locator("button:has(svg.lucide-trash-2)");
+    await expect(deleteButton).toBeVisible({ timeout: 3000 });
+    await deleteButton.click();
 
-        // Verify tag is deleted
-        if (tagName) {
-          await expect(page.locator(`text="${tagName}"`)).not.toBeVisible({
-            timeout: 5000,
-          });
-        }
-      }
-    }
+    // Wait for the alert dialog to open
+    const alertDialog = page.locator('[role="alertdialog"]');
+    await expect(alertDialog).toBeVisible({ timeout: 5000 });
+
+    // Confirm deletion by clicking the delete button in the dialog
+    const confirmButton = alertDialog.locator('button:has-text("Delete")');
+    await confirmButton.click();
+
+    // Wait for the dialog to close
+    await expect(alertDialog).not.toBeVisible({ timeout: 10000 });
+
+    // Verify tag is no longer visible in the filtered list
+    await expect(page.locator(`tr:has-text("${tagName}")`)).not.toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Tags Display in Test Case List", async ({ api, page }) => {
@@ -398,337 +404,631 @@ test.describe("Tags", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify the test case is visible in the list
-    const testCaseRow = page.locator(`tr:has-text("${testCaseName}")`).first();
+    const testCaseRow = page.locator(`[data-row-id="${testCaseId}"]`).first();
     await expect(testCaseRow).toBeVisible({ timeout: 10000 });
 
-    // Verify the tag badge/component appears in the test case row
-    // Tags are typically displayed as badges or chips with the tag name
-    const tagBadge = testCaseRow
-      .locator(
-        `[data-testid="tag-badge"], .tag, .badge, span:has-text("${tagName}")`
-      )
-      .first();
-    await expect(tagBadge).toBeVisible({ timeout: 5000 });
+    // The Tags column shows a count - click it to open the tag list popover
+    // The cell contains a clickable div with the count
+    const tagCountCell = testCaseRow.locator("td").nth(7);
+    await expect(tagCountCell).toContainText("1");
+    await tagCountCell.click();
 
-    // Verify the tag text content matches
-    await expect(tagBadge).toContainText(tagName);
-  });
-
-  test("Bulk Apply Tags to Test Cases", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-
-    const folderName = `Bulk Tags Folder ${Date.now()}`;
-    const folderId = await api.createFolder(projectId, folderName);
-    const case1Id = await api.createTestCase(
-      projectId,
-      folderId,
-      `Bulk Tag 1 ${Date.now()}`
-    );
-    const case2Id = await api.createTestCase(
-      projectId,
-      folderId,
-      `Bulk Tag 2 ${Date.now()}`
-    );
-
-    await repositoryPage.goto(projectId);
-
-    await repositoryPage.selectFolder(folderId);
-
-    // Select multiple test cases
-    const checkbox1 = page
-      .locator(`[data-testid="case-checkbox-${case1Id}"]`)
-      .first();
-    const checkbox2 = page
-      .locator(`[data-testid="case-checkbox-${case2Id}"]`)
-      .first();
-
-    if (await checkbox1.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await checkbox1.click();
-      await checkbox2.click();
-
-      // Open bulk edit menu
-      const bulkEditButton = page
-        .locator('[data-testid="bulk-edit"], button:has-text("Bulk Edit")')
-        .first();
-      if (
-        await bulkEditButton.isVisible({ timeout: 3000 }).catch(() => false)
-      ) {
-        await bulkEditButton.click();
-
-        // Select "Add Tags" option
-        const addTagsOption = page
-          .locator(
-            '[role="menuitem"]:has-text("Tags"), [data-testid="bulk-add-tags"]'
-          )
-          .first();
-        await addTagsOption.click();
-
-        // Select a tag
-        const tagOption = page.locator('[role="option"]').first();
-        if (await tagOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-          await tagOption.click();
-
-          // Apply
-          const applyButton = page.locator('button:has-text("Apply")').first();
-          await applyButton.click();
-
-          await page.waitForLoadState("networkidle");
-        }
-      }
-    }
+    // Verify the tag name appears in the popover
+    const tagNameInPopover = page.locator(`text="${tagName}"`).first();
+    await expect(tagNameInPopover).toBeVisible({ timeout: 5000 });
   });
 
   test("Bulk Remove Tags from Test Cases", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+    const uniqueId = Date.now();
 
-    const folderName = `Bulk Remove Tags ${Date.now()}`;
+    // Create a tag and apply it to test cases via API
+    const tagName = `BulkRemoveTag${uniqueId}`;
+    const tagId = await api.createTag(tagName);
+
+    // Create a folder and two test cases
+    const folderName = `Bulk Remove Tags ${uniqueId}`;
     const folderId = await api.createFolder(projectId, folderName);
     const case1Id = await api.createTestCase(
       projectId,
       folderId,
-      `Bulk Remove 1 ${Date.now()}`
+      `Bulk Remove 1 ${uniqueId}`
     );
     const case2Id = await api.createTestCase(
       projectId,
       folderId,
-      `Bulk Remove 2 ${Date.now()}`
+      `Bulk Remove 2 ${uniqueId}`
     );
 
+    // Apply the tag to both test cases via API
+    await api.addTagToTestCase(case1Id, tagId);
+    await api.addTagToTestCase(case2Id, tagId);
+
     await repositoryPage.goto(projectId);
-
     await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
 
-    const checkbox1 = page
-      .locator(`[data-testid="case-checkbox-${case1Id}"]`)
+    // Wait for the test case rows to appear
+    const row1 = page.locator(`[data-row-id="${case1Id}"]`).first();
+    const row2 = page.locator(`[data-row-id="${case2Id}"]`).first();
+    await expect(row1).toBeVisible({ timeout: 10000 });
+    await expect(row2).toBeVisible({ timeout: 10000 });
+
+    // Select the test cases by clicking the checkboxes
+    const checkbox1 = row1.locator('button[role="checkbox"]').first();
+    const checkbox2 = row2.locator('button[role="checkbox"]').first();
+    await checkbox1.click();
+    await checkbox2.click();
+
+    // Wait for and click bulk edit button
+    const bulkEditButton = page
+      .locator('[data-testid="bulk-edit-button"]')
       .first();
-    const checkbox2 = page
-      .locator(`[data-testid="case-checkbox-${case2Id}"]`)
+    await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
+    await bulkEditButton.click();
+
+    // Wait for the bulk edit modal to open
+    const bulkEditModal = page.locator('[role="dialog"]');
+    await expect(bulkEditModal).toBeVisible({ timeout: 5000 });
+
+    // Check the "Tags" field checkbox to enable editing
+    const tagsCheckbox = bulkEditModal
+      .locator('input[id="edit-tags"], [id="edit-tags"]')
       .first();
+    await expect(tagsCheckbox).toBeVisible({ timeout: 3000 });
+    await tagsCheckbox.click();
 
-    if (await checkbox1.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await checkbox1.click();
-      await checkbox2.click();
+    // The tag should be shown as selected - remove it by clicking the remove button
+    // Wait for the tag to appear in the multiselect (it shows as a chip with an x)
+    const tagChip = bulkEditModal.locator(`text="${tagName}"`).first();
+    await expect(tagChip).toBeVisible({ timeout: 5000 });
 
-      const bulkEditButton = page.locator('[data-testid="bulk-edit"]').first();
-      if (
-        await bulkEditButton.isVisible({ timeout: 3000 }).catch(() => false)
-      ) {
-        await bulkEditButton.click();
+    // Click the remove button (X) on the tag chip - it's an SVG or element right after the tag text
+    // The x button in react-select has role="button" or is a sibling element
+    const tagRemoveButton = bulkEditModal
+      .locator(`.min-w-\\[200px\\]`)
+      .locator(`[class*="multiValue"]`)
+      .first()
+      .locator('svg, [role="button"]')
+      .first();
+    await tagRemoveButton.click();
 
-        const removeTagsOption = page
-          .locator('[data-testid="bulk-remove-tags"]')
-          .first();
-        if (
-          await removeTagsOption.isVisible({ timeout: 3000 }).catch(() => false)
-        ) {
-          await removeTagsOption.click();
+    // Verify the tag was removed from the selector (tag text no longer visible in the field)
+    await expect(
+      bulkEditModal.locator(`.min-w-\\[200px\\]`).locator(`text="${tagName}"`)
+    ).not.toBeVisible({ timeout: 3000 });
 
-          // Select tags to remove
-          const tagOption = page.locator('[role="option"]').first();
-          if (await tagOption.isVisible({ timeout: 3000 }).catch(() => false)) {
-            await tagOption.click();
+    // Click Save in the modal
+    const saveButton = bulkEditModal.locator('button:has-text("Save")').first();
+    await expect(saveButton).toBeVisible({ timeout: 3000 });
+    await saveButton.click();
 
-            const applyButton = page
-              .locator('button:has-text("Apply")')
-              .first();
-            await applyButton.click();
+    // Wait for modal to close
+    await expect(bulkEditModal).not.toBeVisible({ timeout: 10000 });
 
-            await page.waitForLoadState("networkidle");
-          }
-        }
-      }
-    }
+    // Verify by navigating to first test case and checking tag is removed
+    await page.goto(`/en-US/projects/repository/${projectId}/${case1Id}`);
+    await page.waitForLoadState("networkidle");
+
+    // Wait for page to load
+    const editButton = page.locator('button:has-text("Edit")').first();
+    await expect(editButton).toBeVisible({ timeout: 10000 });
+
+    // Verify tag is no longer displayed
+    await expect(page.locator(`text="${tagName}"`)).not.toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Bulk Edit - Assign Tags", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+    const uniqueId = Date.now();
 
-    const folderName = `Bulk Assign Tags ${Date.now()}`;
+    // Create a tag to assign
+    const tagName = `AssignTag${uniqueId}`;
+    await api.createTag(tagName);
+
+    // Create a folder and two test cases
+    const folderName = `Bulk Assign Tags ${uniqueId}`;
     const folderId = await api.createFolder(projectId, folderName);
-    await api.createTestCase(projectId, folderId, `Assign 1 ${Date.now()}`);
-    await api.createTestCase(projectId, folderId, `Assign 2 ${Date.now()}`);
+    const case1Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Assign 1 ${uniqueId}`
+    );
+    const case2Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Assign 2 ${uniqueId}`
+    );
 
     await repositoryPage.goto(projectId);
-
     await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
 
-    // Select all
-    const selectAll = page.locator('[data-testid="select-all"]').first();
-    if (await selectAll.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await selectAll.click();
+    // Wait for the test case rows to appear
+    const row1 = page.locator(`[data-row-id="${case1Id}"]`).first();
+    const row2 = page.locator(`[data-row-id="${case2Id}"]`).first();
+    await expect(row1).toBeVisible({ timeout: 10000 });
+    await expect(row2).toBeVisible({ timeout: 10000 });
 
-      const bulkEditButton = page.locator('[data-testid="bulk-edit"]').first();
-      if (
-        await bulkEditButton.isVisible({ timeout: 3000 }).catch(() => false)
-      ) {
-        await bulkEditButton.click();
+    // Select both test cases
+    const checkbox1 = row1.locator('button[role="checkbox"]').first();
+    const checkbox2 = row2.locator('button[role="checkbox"]').first();
+    await checkbox1.click();
+    await checkbox2.click();
 
-        const assignTagsOption = page
-          .locator('[data-testid="assign-tags"]')
-          .first();
-        if (
-          await assignTagsOption.isVisible({ timeout: 3000 }).catch(() => false)
-        ) {
-          await assignTagsOption.click();
-          await page.waitForLoadState("networkidle");
-        }
-      }
-    }
+    // Click bulk edit button
+    const bulkEditButton = page
+      .locator('[data-testid="bulk-edit-button"]')
+      .first();
+    await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
+    await bulkEditButton.click();
+
+    // Wait for the bulk edit modal
+    const bulkEditModal = page.locator('[role="dialog"]');
+    await expect(bulkEditModal).toBeVisible({ timeout: 5000 });
+
+    // Enable editing of the Tags field
+    const tagsCheckbox = bulkEditModal
+      .locator('input[id="edit-tags"], [id="edit-tags"]')
+      .first();
+    await expect(tagsCheckbox).toBeVisible({ timeout: 3000 });
+    await tagsCheckbox.click();
+
+    // Add the tag
+    const tagSelectInput = bulkEditModal
+      .locator(".min-w-\\[200px\\] input")
+      .first();
+    await expect(tagSelectInput).toBeVisible({ timeout: 5000 });
+    await tagSelectInput.click();
+    await tagSelectInput.fill(tagName);
+
+    const tagOption = page
+      .locator(`[role="option"]:has-text("${tagName}")`)
+      .first();
+    await expect(tagOption).toBeVisible({ timeout: 5000 });
+    await tagOption.click();
+
+    // Save
+    const saveButton = bulkEditModal.locator('button:has-text("Save")').first();
+    await saveButton.click();
+    await expect(bulkEditModal).not.toBeVisible({ timeout: 10000 });
+
+    // Verify tag was assigned to both test cases by checking each one
+    await page.goto(`/en-US/projects/repository/${projectId}/${case1Id}`);
+    await page.waitForLoadState("networkidle");
+
+    const tagsDisplaySection1 = page.locator("#tags-display").first();
+    await expect(tagsDisplaySection1).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${tagName}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Also verify on second test case
+    await page.goto(`/en-US/projects/repository/${projectId}/${case2Id}`);
+    await page.waitForLoadState("networkidle");
+
+    const tagsDisplaySection2 = page.locator("#tags-display").first();
+    await expect(tagsDisplaySection2).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${tagName}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Tag Autocomplete Suggestions", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+    const uniqueId = Date.now();
 
-    const folderName = `Autocomplete Tag ${Date.now()}`;
+    // Create some tags that will appear in autocomplete
+    const tagPrefix = `AutoTag${uniqueId}`;
+    await api.createTag(`${tagPrefix}_Alpha`);
+    await api.createTag(`${tagPrefix}_Beta`);
+    await api.createTag(`${tagPrefix}_Gamma`);
+
+    // Create a folder and test case
+    const folderName = `Autocomplete Tag ${uniqueId}`;
     const folderId = await api.createFolder(projectId, folderName);
     const testCaseId = await api.createTestCase(
       projectId,
       folderId,
-      `Autocomplete Case ${Date.now()}`
+      `Autocomplete Case ${uniqueId}`
     );
 
-    await repositoryPage.goto(projectId);
-
-    await repositoryPage.selectFolder(folderId);
-
-    const testCaseRow = page
-      .locator(`[data-testid="case-row-${testCaseId}"]`)
-      .first();
-    await testCaseRow.click();
-
+    // Navigate to the test case detail page
+    await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
     await page.waitForLoadState("networkidle");
 
-    const tagInput = page
-      .locator('[data-testid="tag-input"], input[placeholder*="tag"]')
-      .first();
-    if (await tagInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-      // Type partial tag name
-      await tagInput.fill("test");
+    // Click Edit to access the tag selector
+    const editButton = page.locator('button:has-text("Edit")').first();
+    await expect(editButton).toBeVisible({ timeout: 10000 });
+    await editButton.click();
+    await page.waitForLoadState("networkidle");
 
-      // Verify autocomplete suggestions appear
-      const suggestions = page.locator(
-        '[role="listbox"], [data-testid="tag-suggestions"]'
-      );
-      await expect(suggestions.first()).toBeVisible({ timeout: 5000 });
-    }
+    // Find the tag select input
+    const tagSelectInput = page.locator(".min-w-\\[200px\\] input").first();
+    await expect(tagSelectInput).toBeVisible({ timeout: 10000 });
+
+    // Click to focus and type partial tag name to trigger autocomplete
+    await tagSelectInput.click();
+    await tagSelectInput.fill(tagPrefix);
+
+    // Verify autocomplete suggestions appear with our tags
+    const alphaOption = page
+      .locator(`[role="option"]:has-text("${tagPrefix}_Alpha")`)
+      .first();
+    const betaOption = page
+      .locator(`[role="option"]:has-text("${tagPrefix}_Beta")`)
+      .first();
+    const gammaOption = page
+      .locator(`[role="option"]:has-text("${tagPrefix}_Gamma")`)
+      .first();
+
+    await expect(alphaOption).toBeVisible({ timeout: 5000 });
+    await expect(betaOption).toBeVisible({ timeout: 5000 });
+    await expect(gammaOption).toBeVisible({ timeout: 5000 });
+
+    // Select one option to confirm autocomplete works
+    await alphaOption.click();
+
+    // Verify the tag was selected (appears as a chip in the select)
+    const selectedTag = page
+      .locator(`.min-w-\\[200px\\]`)
+      .getByText(`${tagPrefix}_Alpha`)
+      .first();
+    await expect(selectedTag).toBeVisible({ timeout: 5000 });
   });
 
-  test("Tags Cross-Project Visibility", async ({ api, page }) => {
-    // This test verifies that tags from one project aren't visible in another
+  test("Tags Are Visible Across Projects", async ({ api, page }) => {
+    // Tags are global in the system - verify a tag created globally is visible across projects
     const projects = await api.getProjects();
 
-    const project1Id = projects[0].id;
+    if (projects.length < 2) {
+      throw new Error(
+        "Need at least 2 projects for cross-project tag test. Check e2e setup."
+      );
+    }
+
+    // Use the second project
     const project2Id = projects[1].id;
+    const uniqueId = Date.now();
 
-    // Create a unique tag in project 1
-    await repositoryPage.goto(project1Id);
+    // Create a unique tag via API (tags are global, not project-scoped)
+    const globalTagName = `GlobalTag${uniqueId}`;
+    await api.createTag(globalTagName);
 
-    const addTagButton = page.locator('[data-testid="add-tag-button"]').first();
-    if (await addTagButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await addTagButton.click();
+    // Create test data in PROJECT 2
+    const folderName = `Cross Project Tag Folder ${uniqueId}`;
+    const folderId = await api.createFolder(project2Id, folderName);
+    const testCaseId = await api.createTestCase(
+      project2Id,
+      folderId,
+      `Cross Project Tag Case ${uniqueId}`
+    );
 
-      const tagNameInput = page
-        .locator('[data-testid="tag-name-input"]')
-        .first();
-      const uniqueTag = `UniqueProject1Tag${Date.now()}`;
-      await tagNameInput.fill(uniqueTag);
+    // Navigate to the test case detail page in PROJECT 2
+    await page.goto(`/en-US/projects/repository/${project2Id}/${testCaseId}`);
+    await page.waitForLoadState("networkidle");
 
-      const submitButton = page.locator('button[type="submit"]').first();
-      await submitButton.click();
+    // Click Edit to access the tag selector
+    const editButton = page.locator('button:has-text("Edit")').first();
+    await expect(editButton).toBeVisible({ timeout: 10000 });
+    await editButton.click();
+    await page.waitForLoadState("networkidle");
 
-      await page.waitForLoadState("networkidle");
+    // Find the tag select input
+    const tagSelectInput = page.locator(".min-w-\\[200px\\] input").first();
+    await expect(tagSelectInput).toBeVisible({ timeout: 10000 });
 
-      // Switch to project 2
-      await repositoryPage.goto(project2Id);
+    // Type the global tag name to search for it
+    await tagSelectInput.click();
+    await tagSelectInput.fill(globalTagName);
 
-      // Verify the tag is not visible
-      await expect(page.locator(`text="${uniqueTag}"`)).not.toBeVisible({
-        timeout: 5000,
-      });
-    }
+    // Verify the globally created tag appears in the options
+    const tagOption = page
+      .locator(`[role="option"]:has-text("${globalTagName}")`)
+      .first();
+    await expect(tagOption).toBeVisible({ timeout: 5000 });
+
+    // Select it
+    await tagOption.click();
+
+    // Save the test case
+    const saveButton = page
+      .locator('button[type="submit"]:has(svg.lucide-save)')
+      .first();
+    await saveButton.click();
+
+    // Wait for view mode
+    await expect(editButton).toBeVisible({ timeout: 15000 });
+    await page.waitForLoadState("networkidle");
+
+    // Verify the global tag is now displayed on the test case
+    const tagsDisplaySection = page.locator("#tags-display").first();
+    await expect(tagsDisplaySection).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${globalTagName}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
-  test("Tag Case Sensitivity", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
+  test("Tag Case Insensitivity", async ({ page }) => {
+    const uniqueId = Date.now();
 
-    const addTagButton = page.locator('[data-testid="add-tag-button"]').first();
-    if (await addTagButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      // Create tag with lowercase
-      await addTagButton.click();
-      const tagNameInput = page
-        .locator('[data-testid="tag-name-input"]')
-        .first();
-      await tagNameInput.fill("casesensitive");
-      const submitButton = page.locator('button[type="submit"]').first();
-      await submitButton.click();
-      await page.waitForLoadState("networkidle");
+    // Create a tag with lowercase via the admin page
+    const lowerCaseTagName = `casesensitive${uniqueId}`;
+    const upperCaseTagName = `CASESENSITIVE${uniqueId}`;
 
-      // Try to create tag with uppercase (should either fail or create separate tag)
-      await addTagButton.click();
-      await tagNameInput.fill("CASESENSITIVE");
-      await submitButton.click();
-      await page.waitForLoadState("networkidle");
+    // Navigate to admin tags page
+    await page.goto("/en-US/admin/tags");
+    await page.waitForLoadState("networkidle");
 
-      // Check behavior - either error or two tags exist
-    }
+    // Verify we're on the tags page
+    await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible({
+      timeout: 10000,
+    });
+
+    // Click the add tag button
+    const addTagButton = page
+      .locator("button:has(svg.lucide-circle-plus)")
+      .first();
+    await expect(addTagButton).toBeVisible({ timeout: 5000 });
+    await addTagButton.click();
+
+    // Wait for the dialog
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+
+    // Fill and create lowercase tag
+    const tagNameInput = dialog.locator("input[placeholder]").first();
+    await tagNameInput.fill(lowerCaseTagName);
+    const submitButton = dialog.locator('button[type="submit"]');
+    await submitButton.click();
+
+    // Wait for dialog to close - this MUST succeed
+    await expect(dialog).not.toBeVisible({ timeout: 10000 });
+
+    // Verify the lowercase tag appears
+    const filterInput = page.locator('input[placeholder*="Filter"]').first();
+    await filterInput.fill(lowerCaseTagName);
+    await page.waitForLoadState("networkidle");
+    await expect(
+      page.locator(`text="${lowerCaseTagName}"`).first()
+    ).toBeVisible({ timeout: 5000 });
+
+    // Now try to create the uppercase version - the system is case-insensitive so it should fail
+    await addTagButton.click();
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+
+    const tagNameInput2 = dialog.locator("input[placeholder]").first();
+    await tagNameInput2.fill(upperCaseTagName);
+    const submitButton2 = dialog.locator('button[type="submit"]');
+    await submitButton2.click();
+
+    // Dialog should stay open with an error message because tag already exists (case-insensitive)
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+
+    // Verify error message is shown
+    const errorMessage = dialog.locator("text=/already exists|Name is taken/i");
+    await expect(errorMessage).toBeVisible({ timeout: 5000 });
+
+    // Close the dialog
+    const cancelButton = dialog.locator('button:has-text("Cancel")');
+    await cancelButton.click();
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+
+    // Verify only the original lowercase tag exists
+    await filterInput.clear();
+    await filterInput.fill(lowerCaseTagName);
+    await page.waitForLoadState("networkidle");
+    await expect(
+      page.locator(`text="${lowerCaseTagName}"`).first()
+    ).toBeVisible({ timeout: 5000 });
   });
 
-  test("Tag with Special Characters", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
+  test("Restore Soft-Deleted Tag on Create", async ({ api, page }) => {
+    const uniqueId = Date.now();
+    const tagName = `restoretag${uniqueId}`;
 
-    const addTagButton = page.locator('[data-testid="add-tag-button"]').first();
-    if (await addTagButton.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await addTagButton.click();
+    // Create a tag via API and then soft-delete it
+    const tagId = await api.createTag(tagName);
+    await api.deleteTag(tagId);
 
-      const tagNameInput = page
-        .locator('[data-testid="tag-name-input"]')
-        .first();
-      const specialTag = `Tag-with_special.chars & more!`;
-      await tagNameInput.fill(specialTag);
+    // Navigate to admin tags page
+    await page.goto("/en-US/admin/tags");
+    await page.waitForLoadState("networkidle");
 
-      const submitButton = page.locator('button[type="submit"]').first();
-      await submitButton.click();
+    // Verify the deleted tag is NOT visible in the list
+    const filterInput = page.locator('input[placeholder*="Filter"]').first();
+    await filterInput.fill(tagName);
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator(`text="${tagName}"`)).not.toBeVisible({
+      timeout: 3000,
+    });
+    await filterInput.clear();
 
-      await page.waitForLoadState("networkidle");
+    // Now try to create a tag with the same name - it should restore the deleted one
+    const addTagButton = page
+      .locator("button:has(svg.lucide-circle-plus)")
+      .first();
+    await addTagButton.click();
 
-      // Verify tag was created (or error message shown for invalid chars)
-      const createdTag = page.locator(`text="${specialTag}"`);
-      const errorMessage = page.locator('[role="alert"], .error-message');
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
 
-      const tagCreated = await createdTag
-        .isVisible({ timeout: 5000 })
-        .catch(() => false);
-      const hasError = await errorMessage
-        .isVisible({ timeout: 3000 })
-        .catch(() => false);
+    const tagNameInput = dialog.locator("input[placeholder]").first();
+    await tagNameInput.fill(tagName);
+    const submitButton = dialog.locator('button[type="submit"]');
+    await submitButton.click();
 
-      expect(tagCreated || hasError).toBe(true);
-    }
+    // Dialog should close successfully (tag was restored)
+    await expect(dialog).not.toBeVisible({ timeout: 10000 });
+
+    // Verify the tag is now visible in the list (restored)
+    await filterInput.fill(tagName);
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator(`text="${tagName}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
+  });
+
+  test("Edit Tag to Soft-Deleted Tag Name", async ({ api, page }) => {
+    const uniqueId = Date.now();
+    const activeTagName = `activetag${uniqueId}`;
+    const deletedTagName = `deletedtag${uniqueId}`;
+
+    // Create two tags - one active and one that will be deleted
+    await api.createTag(activeTagName);
+    const deletedTagId = await api.createTag(deletedTagName);
+    await api.deleteTag(deletedTagId);
+
+    // Navigate to admin tags page
+    await page.goto("/en-US/admin/tags");
+    await page.waitForLoadState("networkidle");
+
+    // Find and click edit on the active tag
+    const filterInput = page.locator('input[placeholder*="Filter"]').first();
+    await filterInput.fill(activeTagName);
+    await page.waitForLoadState("networkidle");
+
+    // Click the edit button for this tag
+    const editButton = page.locator("button:has(svg.lucide-square-pen)").first();
+    await expect(editButton).toBeVisible({ timeout: 5000 });
+    await editButton.click();
+
+    // Wait for the edit dialog
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+
+    // Change the name to the deleted tag's name
+    const tagNameInput = dialog.locator("input").first();
+    await tagNameInput.clear();
+    await tagNameInput.fill(deletedTagName);
+
+    const submitButton = dialog.locator('button[type="submit"]');
+    await submitButton.click();
+
+    // Dialog should close successfully (deleted tag was renamed to allow this)
+    await expect(dialog).not.toBeVisible({ timeout: 10000 });
+
+    // Verify the tag now has the new name
+    await filterInput.clear();
+    await filterInput.fill(deletedTagName);
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator(`text="${deletedTagName}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
+
+    // The old name should no longer exist as an active tag
+    await filterInput.clear();
+    await filterInput.fill(activeTagName);
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator(`text="${activeTagName}"`)).not.toBeVisible({
+      timeout: 3000,
+    });
+  });
+
+  test("Tag with Special Characters", async ({ page }) => {
+    const uniqueId = Date.now();
+
+    // Navigate to admin tags page
+    await page.goto("/en-US/admin/tags");
+    await page.waitForLoadState("networkidle");
+
+    // Verify we're on the tags page
+    await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible({
+      timeout: 10000,
+    });
+
+    // Click the add tag button
+    const addTagButton = page
+      .locator("button:has(svg.lucide-circle-plus)")
+      .first();
+    await expect(addTagButton).toBeVisible({ timeout: 5000 });
+    await addTagButton.click();
+
+    // Wait for the dialog
+    const dialog = page.locator('[role="dialog"]');
+    await expect(dialog).toBeVisible({ timeout: 5000 });
+
+    // Create a tag with special characters (hyphen and underscore are allowed)
+    const specialTag = `Tag-with_special${uniqueId}`;
+    const tagNameInput = dialog.locator("input[placeholder]").first();
+    await tagNameInput.fill(specialTag);
+
+    const submitButton = dialog.locator('button[type="submit"]');
+    await submitButton.click();
+
+    // Wait for dialog to close - this should succeed
+    await expect(dialog).not.toBeVisible({ timeout: 10000 });
+
+    // Verify the tag was created and appears in the list
+    const filterInput = page.locator('input[placeholder*="Filter"]').first();
+    await filterInput.fill(specialTag);
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator(`text="${specialTag}"`).first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Tag Usage Count", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
+    const uniqueId = Date.now();
 
-    // Navigate to tag management
-    const tagsSection = page.locator('[data-testid="tags-section"]').first();
-    if (await tagsSection.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await tagsSection.click();
+    // Create a tag
+    const tagName = `UsageCountTag${uniqueId}`;
+    const tagId = await api.createTag(tagName);
 
-      // Look for usage count on tags
-      const tagItem = page.locator('[data-testid="tag-item"]').first();
-      if (await tagItem.isVisible({ timeout: 5000 }).catch(() => false)) {
-        const usageCount = tagItem.locator(
-          '[data-testid="tag-usage-count"], .usage-count'
-        );
-        if (await usageCount.isVisible({ timeout: 3000 }).catch(() => false)) {
-          // Verify it shows a number
-          const countText = await usageCount.textContent();
-          expect(countText).toMatch(/\d+/);
-        }
-      }
-    }
+    // Create a folder and test cases to apply the tag to
+    const folderName = `Usage Count Folder ${uniqueId}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    const case1Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Usage Count Case 1 ${uniqueId}`
+    );
+    const case2Id = await api.createTestCase(
+      projectId,
+      folderId,
+      `Usage Count Case 2 ${uniqueId}`
+    );
+
+    // Apply the tag to both test cases via API
+    await api.addTagToTestCase(case1Id, tagId);
+    await api.addTagToTestCase(case2Id, tagId);
+
+    // Navigate to admin tags page
+    await page.goto("/en-US/admin/tags");
+    await page.waitForLoadState("networkidle");
+
+    // Verify we're on the tags page
+    await expect(page.locator('[data-testid="tags-page-title"]')).toBeVisible({
+      timeout: 10000,
+    });
+
+    // Filter to find our tag
+    const filterInput = page.locator('input[placeholder*="Filter"]').first();
+    await filterInput.fill(tagName);
+    await page.waitForLoadState("networkidle");
+
+    // Find the row with our tag
+    const tagRow = page.locator(`tr:has-text("${tagName}")`).first();
+    await expect(tagRow).toBeVisible({ timeout: 5000 });
+
+    // The "Test Cases" column shows the usage count
+    // Looking at columns.tsx, test cases count is in the "cases" column
+    // The cell contains CasesListDisplay with a count
+    const testCasesCell = tagRow.locator("td").nth(1); // Second column (after name) is "cases"
+
+    // The count should show "2" since we applied the tag to 2 test cases
+    // Click on the cell to open the popover with cases
+    await testCasesCell.click();
+
+    // Wait a moment for the popover/count to be interactive
+    await page.waitForTimeout(500);
+
+    // Verify the count displays (the column shows a count that when clicked opens a list)
+    // The text should contain "2" or similar
+    const cellText = await testCasesCell.textContent();
+    expect(cellText).toContain("2");
   });
 });

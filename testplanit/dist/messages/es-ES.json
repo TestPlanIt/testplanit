@@ -1989,6 +1989,9 @@
       "title": "Añadir nueva etiqueta",
       "fields": {
         "name_error": "El nombre de la etiqueta es obligatorio"
+      },
+      "errors": {
+        "nameExists": "Ya existe una etiqueta con este nombre"
       }
     },
     "edit": {
