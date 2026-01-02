@@ -39,8 +39,8 @@ test.describe("Breadcrumbs", () => {
     await repositoryPage.selectFolder(childId);
     await page.waitForLoadState("networkidle");
 
-    // Verify breadcrumbs are visible
-    const breadcrumbs = page.locator('[data-testid="breadcrumbs"], .breadcrumb, nav[aria-label="Breadcrumb"]');
+    // Verify breadcrumbs are visible - uses aria-label="breadcrumb" (lowercase)
+    const breadcrumbs = page.locator('nav[aria-label="breadcrumb"]');
     await expect(breadcrumbs.first()).toBeVisible({ timeout: 5000 });
 
     // Breadcrumbs should show parent > child
@@ -64,43 +64,44 @@ test.describe("Breadcrumbs", () => {
     await repositoryPage.selectFolder(childId);
     await page.waitForLoadState("networkidle");
 
-    // Click on parent in breadcrumb to navigate back
-    const breadcrumbs = page.locator('[data-testid="breadcrumbs"], .breadcrumb');
+    // Verify breadcrumbs are visible
+    const breadcrumbs = page.locator('nav[aria-label="breadcrumb"]');
     await expect(breadcrumbs).toBeVisible({ timeout: 5000 });
 
-    const parentLink = breadcrumbs.locator(`a:has-text("${parentName}"), button:has-text("${parentName}")`).first();
+    // Click on parent in breadcrumb to navigate back
+    const parentLink = breadcrumbs.locator(`a:has-text("${parentName}")`).first();
     await expect(parentLink).toBeVisible({ timeout: 3000 });
     await parentLink.click();
     await page.waitForLoadState("networkidle");
 
-    // Verify we navigated to parent folder
-    // The parent folder should now be selected
-    const selectedFolder = repositoryPage.getFolderById(parentId);
-    await expect(selectedFolder).toHaveClass(/selected|active/, { timeout: 5000 });
+    // Verify we navigated to parent folder - URL should contain node=parentId
+    await expect(page).toHaveURL(new RegExp(`node=${parentId}`), { timeout: 5000 });
   });
 
-  test("Documentation Page Breadcrumbs", async ({ api, page }) => {
+  test("Deep Nested Breadcrumbs", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+
+    // Create 3-level nested folders
+    const grandparentName = `Grandparent ${Date.now()}`;
+    const grandparentId = await api.createFolder(projectId, grandparentName);
+    const parentName = `Parent ${Date.now()}`;
+    const parentId = await api.createFolder(projectId, parentName, grandparentId);
+    const childName = `Child ${Date.now()}`;
+    const childId = await api.createFolder(projectId, childName, parentId);
+
     await repositoryPage.goto(projectId);
 
-    // Navigate to documentation
-    const docsNav = page.locator('[data-testid="docs-nav"]').first();
-    await expect(docsNav).toBeVisible({ timeout: 5000 });
-    await docsNav.click();
+    // Navigate to deepest folder
+    await repositoryPage.expandFolder(grandparentId);
+    await repositoryPage.expandFolder(parentId);
+    await repositoryPage.selectFolder(childId);
     await page.waitForLoadState("networkidle");
 
-    // Navigate to a nested documentation page
-    const docFolder = page.locator('[data-testid="doc-folder-item"]').first();
-    await expect(docFolder).toBeVisible({ timeout: 5000 });
-    await docFolder.click();
-
-    const docPage = page.locator('[data-testid="doc-page-item"]').first();
-    await expect(docPage).toBeVisible({ timeout: 3000 });
-    await docPage.click();
-    await page.waitForLoadState("networkidle");
-
-    // Verify documentation breadcrumbs
-    const breadcrumbs = page.locator('[data-testid="doc-breadcrumbs"], .breadcrumb');
-    await expect(breadcrumbs.first()).toBeVisible({ timeout: 5000 });
+    // Verify breadcrumbs show full path
+    const breadcrumbs = page.locator('nav[aria-label="breadcrumb"]');
+    await expect(breadcrumbs).toBeVisible({ timeout: 5000 });
+    await expect(breadcrumbs).toContainText(grandparentName);
+    await expect(breadcrumbs).toContainText(parentName);
+    await expect(breadcrumbs).toContainText(childName);
   });
 });
