@@ -888,6 +888,8 @@ const TreeView: React.FC<{
           }
         }}
         data-testid={`folder-node-${data?.folderId}`}
+        data-drop-target={isOver && canDrop ? "true" : undefined}
+        data-drop-invalid={isOver && !canDrop ? "true" : undefined}
       >
         <Button
           variant="ghost"
@@ -1127,6 +1129,7 @@ const TreeView: React.FC<{
               bottomDropRef(el);
             }}
             className="flex-1 min-h-16 w-full relative"
+            data-testid="folder-tree-end"
           >
             {/* Drop indicator line with circle - matches react-arborist cursor style */}
             {isOverBottom && (

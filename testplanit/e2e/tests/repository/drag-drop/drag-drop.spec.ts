@@ -324,32 +324,39 @@ test.describe("Drag & Drop", () => {
   test("Drag and Drop Visual Feedback - Valid Target", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
-    const folder1Name = `Visual 1 ${Date.now()}`;
-    const folder1Id = await api.createFolder(projectId, folder1Name);
-    const folder2Name = `Visual 2 ${Date.now()}`;
-    const folder2Id = await api.createFolder(projectId, folder2Name);
+    // Create a source folder with a test case and a target folder
+    const sourceFolderName = `Visual Source ${Date.now()}`;
+    const sourceFolderId = await api.createFolder(projectId, sourceFolderName);
+    const targetFolderName = `Visual Target ${Date.now()}`;
+    const targetFolderId = await api.createFolder(projectId, targetFolderName);
+    const caseName = `Visual Case ${Date.now()}`;
+    await api.createTestCase(projectId, sourceFolderId, caseName);
 
     await repositoryPage.goto(projectId);
 
-    const folder1 = repositoryPage.getFolderById(folder1Id);
-    const folder2 = repositoryPage.getFolderById(folder2Id);
+    // Select source folder to see the test case
+    await repositoryPage.selectFolder(sourceFolderId);
+    await page.waitForLoadState("networkidle");
 
-    await expect(folder1).toBeVisible({ timeout: 5000 });
-    await expect(folder2).toBeVisible({ timeout: 5000 });
+    const testCaseRow = page.locator(`text="${caseName}"`).first();
+    const targetFolder = repositoryPage.getFolderById(targetFolderId);
 
-    const box1 = await folder1.boundingBox();
-    const box2 = await folder2.boundingBox();
+    await expect(testCaseRow).toBeVisible({ timeout: 5000 });
+    await expect(targetFolder).toBeVisible({ timeout: 5000 });
 
-    expect(box1).not.toBeNull();
-    expect(box2).not.toBeNull();
+    const caseBox = await testCaseRow.boundingBox();
+    const targetBox = await targetFolder.boundingBox();
 
-    // Start dragging
-    await page.mouse.move(box1!.x + box1!.width / 2, box1!.y + box1!.height / 2);
+    expect(caseBox).not.toBeNull();
+    expect(targetBox).not.toBeNull();
+
+    // Start dragging test case toward target folder
+    await page.mouse.move(caseBox!.x + caseBox!.width / 2, caseBox!.y + caseBox!.height / 2);
     await page.mouse.down();
-    await page.mouse.move(box2!.x + box2!.width / 2, box2!.y + box2!.height / 2, { steps: 5 });
+    await page.mouse.move(targetBox!.x + targetBox!.width / 2, targetBox!.y + targetBox!.height / 2, { steps: 10 });
 
-    // Verify visual feedback (hover/drop target highlighting)
-    const dropIndicator = page.locator('.drop-indicator, .drag-over, [data-drop-target="true"]');
+    // Verify visual feedback (drop target highlighting)
+    const dropIndicator = page.locator('[data-drop-target="true"]');
     await expect(dropIndicator).toBeVisible({ timeout: 2000 });
 
     await page.mouse.up();
@@ -358,35 +365,37 @@ test.describe("Drag & Drop", () => {
   test("Drag and Drop Visual Feedback - Invalid Target", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
-    const parentName = `Invalid Parent ${Date.now()}`;
-    const parentId = await api.createFolder(projectId, parentName);
-    const childName = `Invalid Child ${Date.now()}`;
-    const childId = await api.createFolder(projectId, childName, parentId);
+    // Create a folder with a test case - dragging case to its own folder is invalid
+    const folderName = `Invalid Target Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    const caseName = `Invalid Case ${Date.now()}`;
+    await api.createTestCase(projectId, folderId, caseName);
 
     await repositoryPage.goto(projectId);
 
-    // Expand parent
-    await repositoryPage.expandFolder(parentId);
+    // Select folder to see the test case
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
 
-    const parent = repositoryPage.getFolderById(parentId);
-    const child = repositoryPage.getFolderById(childId);
+    const testCaseRow = page.locator(`text="${caseName}"`).first();
+    const folder = repositoryPage.getFolderById(folderId);
 
-    await expect(parent).toBeVisible({ timeout: 5000 });
-    await expect(child).toBeVisible({ timeout: 5000 });
+    await expect(testCaseRow).toBeVisible({ timeout: 5000 });
+    await expect(folder).toBeVisible({ timeout: 5000 });
 
-    const parentBox = await parent.boundingBox();
-    const childBox = await child.boundingBox();
+    const caseBox = await testCaseRow.boundingBox();
+    const folderBox = await folder.boundingBox();
 
-    expect(parentBox).not.toBeNull();
-    expect(childBox).not.toBeNull();
+    expect(caseBox).not.toBeNull();
+    expect(folderBox).not.toBeNull();
 
-    // Try to drag parent into its own child (invalid)
-    await page.mouse.move(parentBox!.x + parentBox!.width / 2, parentBox!.y + parentBox!.height / 2);
+    // Try to drag case to its own folder (invalid - same folder)
+    await page.mouse.move(caseBox!.x + caseBox!.width / 2, caseBox!.y + caseBox!.height / 2);
     await page.mouse.down();
-    await page.mouse.move(childBox!.x + childBox!.width / 2, childBox!.y + childBox!.height / 2, { steps: 5 });
+    await page.mouse.move(folderBox!.x + folderBox!.width / 2, folderBox!.y + folderBox!.height / 2, { steps: 10 });
 
-    // Should show invalid target feedback
-    const invalidIndicator = page.locator('.drop-invalid, [data-drop-invalid="true"]');
+    // Should show invalid target feedback (case already in this folder)
+    const invalidIndicator = page.locator('[data-drop-invalid="true"]');
     await expect(invalidIndicator).toBeVisible({ timeout: 2000 });
 
     await page.mouse.up();

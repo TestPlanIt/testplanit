@@ -110,11 +110,15 @@ export class RepositoryPage extends BasePage {
    */
   async expandFolder(folderId: number): Promise<void> {
     const folder = this.getFolderById(folderId);
-    const expandButton = folder.locator('svg[class*="chevron-right"]').first();
+    // Look for the expand button - it's a Button with ChevronRight svg inside
+    // The button has class containing "h-6 w-6" and the svg has class "w-4 h-4"
+    const expandButton = folder.locator('button').filter({ has: this.page.locator('svg.lucide-chevron-right, svg[class*="lucide-chevron"]') }).first();
     if (await expandButton.isVisible()) {
       await expandButton.click();
       // Wait for children to be visible (animation complete)
       await this.page.waitForLoadState("networkidle");
+      // Give tree a moment to render children
+      await this.page.waitForTimeout(300);
     }
   }
 
