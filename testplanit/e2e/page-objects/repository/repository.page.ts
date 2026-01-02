@@ -81,8 +81,9 @@ export class RepositoryPage extends BasePage {
    * Get a folder node by name
    */
   getFolderByName(name: string): Locator {
-    // Try both data-testid and treeitem role
-    return this.leftPanel.locator('[data-testid^="folder-node-"], [role="treeitem"]').filter({
+    // Match folder nodes in the tree - use data-testid which is more specific
+    // and avoid matching nested elements by targeting only direct folder nodes
+    return this.leftPanel.locator('[data-testid^="folder-node-"]').filter({
       hasText: name,
     });
   }

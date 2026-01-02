@@ -3,7 +3,9 @@ import { useState, useMemo, useCallback } from "react";
 import {
   useUpdateManyRepositoryCases,
   useUpdateManyRepositoryFolders,
+  useUpdateRepositoryFolders,
   useFindManyRepositoryCases,
+  useFindManyRepositoryFolders,
 } from "~/lib/hooks";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -55,6 +57,7 @@ export function DeleteFolderModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateManyCases } = useUpdateManyRepositoryCases();
   const { mutateAsync: updateManyFolders } = useUpdateManyRepositoryFolders();
+  const { mutateAsync: updateFolder } = useUpdateRepositoryFolders();
   const { projectId } = useParams<{ projectId: string }>();
 
   // Helper to get all descendant folder IDs (including self)
@@ -117,11 +120,25 @@ export function DeleteFolderModal({
         data: { isDeleted: true },
         where: { folderId: { in: folderIdsToDelete } },
       });
-      // Mark all folders as deleted
-      await updateManyFolders({
-        data: { isDeleted: true },
-        where: { id: { in: folderIdsToDelete } },
-      });
+
+      // Rename and mark each folder as deleted individually
+      // Appending timestamp to name frees up the original name for reuse
+      // while avoiding unique constraint violations on multiple soft-deletes
+      const deletionTimestamp = Date.now();
+      await Promise.all(
+        folderIdsToDelete.map((folderId) => {
+          const folder = allFolders.find((f) => f.id === folderId);
+          const originalName = folder?.text || `folder_${folderId}`;
+          return updateFolder({
+            where: { id: folderId },
+            data: {
+              isDeleted: true,
+              name: `${originalName}_deleted_${deletionTimestamp}`,
+            },
+          });
+        })
+      );
+
       setOpen(false);
       toast.success(t("repository.deleteFolder.success"));
       refetchFolders?.();

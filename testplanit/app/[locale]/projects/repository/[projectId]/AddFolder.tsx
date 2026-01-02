@@ -213,7 +213,15 @@ export function AddFolderModal({
           onFolderCreated(newFolder.id, effectiveParentId);
         }
       } catch (err: any) {
-        if (err.info?.prisma && err.info?.code === "P2002") {
+        // Check for Prisma unique constraint errors in different possible locations
+        // ZenStack may wrap the error differently depending on the context
+        const isPrismaError =
+          err.info?.prisma ||
+          err.code === "P2002" ||
+          err.message?.includes("Unique constraint");
+        const errorCode = err.info?.code || err.code;
+
+        if (isPrismaError && errorCode === "P2002") {
           form.setError("name", {
             type: "custom",
             message: t("common.errors.nameExists"),
