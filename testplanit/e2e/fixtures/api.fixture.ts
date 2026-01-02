@@ -94,6 +94,98 @@ export class ApiHelper {
   }
 
   /**
+   * Get multiple workflow IDs for the project (used for creating test cases with different states)
+   */
+  async getStateIds(projectId: number, count: number = 2): Promise<number[]> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/workflows/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: {
+              isDeleted: false,
+              projects: {
+                some: { projectId },
+              },
+            },
+            take: count,
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      throw new Error("Failed to fetch workflows");
+    }
+
+    const result = await response.json();
+    if (result.data.length === 0) {
+      throw new Error("No workflows found for project. Run seed first.");
+    }
+
+    return result.data.map((w: { id: number }) => w.id);
+  }
+
+  /**
+   * Create a test case with a specific state via API
+   */
+  async createTestCaseWithState(
+    projectId: number,
+    folderId: number,
+    name: string,
+    stateId: number
+  ): Promise<number> {
+    const [repositoryId, templateId] = await Promise.all([
+      this.getRepositoryId(projectId),
+      this.getTemplateId(projectId),
+    ]);
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/repositoryCases/create`,
+      {
+        data: {
+          data: {
+            name,
+            order: 0,
+            automated: false,
+            isArchived: false,
+            isDeleted: false,
+            currentVersion: 1,
+            source: "MANUAL",
+            project: { connect: { id: projectId } },
+            repository: { connect: { id: repositoryId } },
+            folder: { connect: { id: folderId } },
+            template: { connect: { id: templateId } },
+            state: { connect: { id: stateId } },
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create test case: ${error}`);
+    }
+
+    const result = await response.json();
+    const caseId = result.data.id;
+    this.createdCaseIds.push(caseId);
+    return caseId;
+  }
+
+  /**
+   * Get root folder ID for a project
+   */
+  async getRootFolderId(projectId: number): Promise<number> {
+    const folders = await this.getFolders(projectId);
+    const rootFolder = folders.find((f) => f.parentId === null);
+    if (!rootFolder) {
+      throw new Error("No root folder found for project");
+    }
+    return rootFolder.id;
+  }
+
+  /**
    * Get the repository ID for a project
    */
   async getRepositoryId(projectId: number): Promise<number> {

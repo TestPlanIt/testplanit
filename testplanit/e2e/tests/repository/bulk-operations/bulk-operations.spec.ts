@@ -55,7 +55,7 @@ test.describe("Bulk Operations", () => {
     await bulkEditButton.click();
 
     // Verify bulk edit modal opens (Dialog component)
-    const bulkEditModal = page.locator('[role="dialog"]');
+    const bulkEditModal = page.getByRole('dialog', { name: /Bulk Edit/i });
     await expect(bulkEditModal).toBeVisible({ timeout: 5000 });
 
     // Verify it shows count of selected items in the title or content
@@ -93,7 +93,7 @@ test.describe("Bulk Operations", () => {
     await bulkEditButton.click();
 
     // Wait for modal to open
-    const bulkEditModal = page.locator('[role="dialog"]');
+    const bulkEditModal = page.getByRole('dialog', { name: /Bulk Edit/i });
     await expect(bulkEditModal).toBeVisible({ timeout: 5000 });
 
     // Enable editing of the "state" field by clicking its checkbox
@@ -219,7 +219,7 @@ test.describe("Bulk Operations", () => {
     await bulkEditButton.click();
 
     // Wait for modal to open
-    const bulkEditModal = page.locator('[role="dialog"]');
+    const bulkEditModal = page.getByRole('dialog', { name: /Bulk Edit/i });
     await expect(bulkEditModal).toBeVisible({ timeout: 5000 });
 
     // Click delete button
@@ -272,7 +272,7 @@ test.describe("Bulk Operations", () => {
     await bulkEditButton.click();
 
     // Wait for modal to open
-    const bulkEditModal = page.locator('[role="dialog"]');
+    const bulkEditModal = page.getByRole('dialog', { name: /Bulk Edit/i });
     await expect(bulkEditModal).toBeVisible({ timeout: 5000 });
 
     // Click delete button to open confirmation
