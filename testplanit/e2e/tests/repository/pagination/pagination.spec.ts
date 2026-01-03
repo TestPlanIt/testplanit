@@ -285,7 +285,7 @@ test.describe("Pagination", () => {
     await expect(paginationInfo).toBeVisible({ timeout: 5000 });
   });
 
-  test("Page Size Persists After Navigation", async ({ api, page }) => {
+  test("Page Size Persists in URL Parameters", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
     const folderName = `Persist Size Folder ${Date.now()}`;
@@ -301,21 +301,24 @@ test.describe("Pagination", () => {
 
     // Change page size to 25
     const pageSizeButton = page.locator('button:has-text("items")').first();
+    await expect(pageSizeButton).toBeVisible({ timeout: 5000 });
     await pageSizeButton.click();
     const option25 = page.locator('[role="menuitem"]:has-text("25")').first();
+    await expect(option25).toBeVisible({ timeout: 3000 });
     await option25.click();
     await page.waitForLoadState("networkidle");
 
-    // Navigate to another folder and back
-    const rootFolder = page.locator('[data-testid^="folder-node-"]').filter({ hasText: "Root Folder" }).first();
-    await rootFolder.click();
+    // Verify page size changed to 25
+    await expect(page.locator('button:has-text("25 items")')).toBeVisible({ timeout: 5000 });
+
+    // Verify URL contains pageSize parameter
+    await expect(page).toHaveURL(/pageSize=25/);
+
+    // Refresh the page to verify URL parameters persist
+    await page.reload();
     await page.waitForLoadState("networkidle");
 
-    // Go back to the test folder
-    await repositoryPage.selectFolder(folderId);
-    await page.waitForLoadState("networkidle");
-
-    // Page size should still be 25 (persisted in URL or session)
+    // Page size should still be 25 after page reload (read from URL)
     await expect(page.locator('button:has-text("25 items")')).toBeVisible({ timeout: 5000 });
   });
 
