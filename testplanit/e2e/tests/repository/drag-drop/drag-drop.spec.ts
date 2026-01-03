@@ -137,7 +137,8 @@ test.describe("Drag & Drop", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for UI to stabilize after drag operation before expanding
-    await expect(parent).toBeVisible({ timeout: 5000 });
+    // Re-fetch element reference since DOM may have changed during drag
+    await expect(repositoryPage.getFolderById(parentId)).toBeVisible({ timeout: 5000 });
 
     // Expand the parent folder to see nested children
     await repositoryPage.expandFolder(parentId);
@@ -146,6 +147,9 @@ test.describe("Drag & Drop", () => {
     // Verify the child folder is still visible (either as nested or at root level)
     const childAfterDrag = repositoryPage.getFolderByName(childName);
     await expect(childAfterDrag.first()).toBeVisible({ timeout: 5000 });
+
+    // Scroll into view before getting bounding box
+    await childAfterDrag.first().scrollIntoViewIfNeeded();
 
     // Check if the child is now indented (nested under parent)
     // This verifies the drag-to-nest worked
@@ -174,20 +178,28 @@ test.describe("Drag & Drop", () => {
 
     await repositoryPage.goto(projectId);
 
+    // Wait for parent folder to be visible before expanding
+    await expect(repositoryPage.getFolderById(parentId)).toBeVisible({ timeout: 5000 });
+
     // Expand parent to see nested child
     await repositoryPage.expandFolder(parentId);
     await page.waitForLoadState("networkidle");
 
     // Wait for child folder to be visible (nested under parent)
+    await expect(repositoryPage.getFolderById(childId)).toBeVisible({ timeout: 10000 });
+
+    // Re-fetch element references after DOM has settled (elements may have been re-rendered)
     const child = repositoryPage.getFolderById(childId);
-    await expect(child).toBeVisible({ timeout: 10000 });
+    const parent = repositoryPage.getFolderById(parentId);
+
+    // Scroll child into view to ensure we can get its bounding box
+    await child.scrollIntoViewIfNeeded();
 
     // Get the child's position while nested - it should be indented
     const childBoxBefore = await child.boundingBox();
     expect(childBoxBefore).not.toBeNull();
 
     // Also get the parent's position for reference
-    const parent = repositoryPage.getFolderById(parentId);
     const parentBox = await parent.boundingBox();
     expect(parentBox).not.toBeNull();
 
@@ -251,6 +263,10 @@ test.describe("Drag & Drop", () => {
 
     await expect(testCaseRow).toBeVisible({ timeout: 5000 });
     await expect(targetFolderElement).toBeVisible({ timeout: 5000 });
+
+    // Scroll elements into view to ensure we can get their bounding boxes
+    await testCaseRow.scrollIntoViewIfNeeded();
+    await targetFolderElement.scrollIntoViewIfNeeded();
 
     const caseBox = await testCaseRow.boundingBox();
     const targetBox = await targetFolderElement.boundingBox();
@@ -396,6 +412,10 @@ test.describe("Drag & Drop", () => {
     await expect(testCaseRow).toBeVisible({ timeout: 5000 });
     await expect(folder).toBeVisible({ timeout: 5000 });
 
+    // Scroll elements into view to ensure we can get their bounding boxes
+    await testCaseRow.scrollIntoViewIfNeeded();
+    await folder.scrollIntoViewIfNeeded();
+
     const caseBox = await testCaseRow.boundingBox();
     const folderBox = await folder.boundingBox();
 
@@ -493,17 +513,20 @@ test.describe("Drag & Drop", () => {
     await repositoryPage.goto(projectId);
 
     // Wait for parent folder to be visible before expanding
-    const parentFolder = repositoryPage.getFolderById(parentId);
-    await expect(parentFolder).toBeVisible({ timeout: 5000 });
+    await expect(repositoryPage.getFolderById(parentId)).toBeVisible({ timeout: 5000 });
 
     await repositoryPage.expandFolder(parentId);
 
-    // Try to move parent into its child (should be prevented)
+    // Wait for child to be visible after expand
+    await expect(repositoryPage.getFolderById(childId)).toBeVisible({ timeout: 5000 });
+
+    // Re-fetch element references after DOM has settled (elements may have been re-rendered)
     const parent = repositoryPage.getFolderById(parentId);
     const child = repositoryPage.getFolderById(childId);
 
-    await expect(parent).toBeVisible({ timeout: 5000 });
-    await expect(child).toBeVisible({ timeout: 5000 });
+    // Scroll elements into view to ensure we can get their bounding boxes
+    await parent.scrollIntoViewIfNeeded();
+    await child.scrollIntoViewIfNeeded();
 
     const parentBox = await parent.boundingBox();
     const childBox = await child.boundingBox();

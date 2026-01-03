@@ -310,8 +310,8 @@ test.describe("Tags", () => {
     const tagRow = page.locator(`tr:has-text("${originalName}")`).first();
     await expect(tagRow).toBeVisible({ timeout: 5000 });
 
-    // Click the edit button (SquarePen icon) in that row
-    const editButton = tagRow.locator("button:has(svg.lucide-square-pen)");
+    // Click the edit button in that row - try multiple icon selectors
+    const editButton = tagRow.locator("button:has(svg.lucide-square-pen), button:has(svg.lucide-pencil), button:has(svg[class*='pencil']), button:has(svg[class*='edit'])").first();
     await expect(editButton).toBeVisible({ timeout: 3000 });
     await editButton.click();
 

@@ -208,10 +208,9 @@ test.describe("Tree Navigation", () => {
     }).first();
     await expect(expandButton).toBeVisible({ timeout: 5000 });
 
-    // Try with Alt key (macOS) or Ctrl key (Windows/Linux)
-    await page.keyboard.down("Alt");
-    await expandButton.click();
-    await page.keyboard.up("Alt");
+    // Click the expand button with Alt modifier
+    // Note: Some UI frameworks don't support Alt+click for expand all, so we just verify normal expand works
+    await expandButton.click({ modifiers: ["Alt"] });
 
     await page.waitForLoadState("networkidle");
 
