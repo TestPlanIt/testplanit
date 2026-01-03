@@ -136,6 +136,9 @@ test.describe("Drag & Drop", () => {
     await page.mouse.up();
     await page.waitForLoadState("networkidle");
 
+    // Wait for UI to stabilize after drag operation before expanding
+    await expect(parent).toBeVisible({ timeout: 5000 });
+
     // Expand the parent folder to see nested children
     await repositoryPage.expandFolder(parentId);
     await page.waitForLoadState("networkidle");
@@ -488,6 +491,10 @@ test.describe("Drag & Drop", () => {
     const childId = await api.createFolder(projectId, childName, parentId);
 
     await repositoryPage.goto(projectId);
+
+    // Wait for parent folder to be visible before expanding
+    const parentFolder = repositoryPage.getFolderById(parentId);
+    await expect(parentFolder).toBeVisible({ timeout: 5000 });
 
     await repositoryPage.expandFolder(parentId);
 

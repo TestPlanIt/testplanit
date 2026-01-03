@@ -200,11 +200,17 @@ test.describe("Tree Navigation", () => {
     // Hold modifier key (Alt/Option or Ctrl) and click expand on one folder
     // This should expand all root folders
     const parent1 = repositoryPage.getFolderById(parent1Id);
-    const chevron = parent1.locator('svg[class*="chevron"]').first();
+    // Hover to make the expand button visible
+    await parent1.hover();
+    // Find the expand button that contains the chevron
+    const expandButton = parent1.locator('button').filter({
+      has: page.locator('svg[class*="chevron"]')
+    }).first();
+    await expect(expandButton).toBeVisible({ timeout: 5000 });
 
     // Try with Alt key (macOS) or Ctrl key (Windows/Linux)
     await page.keyboard.down("Alt");
-    await chevron.click();
+    await expandButton.click();
     await page.keyboard.up("Alt");
 
     await page.waitForLoadState("networkidle");

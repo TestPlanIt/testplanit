@@ -53,7 +53,20 @@ test.describe("Folder Edit", () => {
 
     // Submit the change - look for Submit button in the dialog
     const saveButton = editDialog.locator('button[type="submit"], button:has-text("Submit")').first();
+    await expect(saveButton).toBeEnabled({ timeout: 3000 });
+
+    // Wait for the API call to complete
+    const responsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/model/repositoryFolders") &&
+        (response.request().method() === "PUT" || response.request().method() === "PATCH"),
+      { timeout: 15000 }
+    );
+
     await saveButton.click();
+
+    // Wait for the API response
+    await responsePromise;
 
     // Wait for modal to close
     await expect(editDialog).not.toBeVisible({ timeout: 10000 });

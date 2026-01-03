@@ -223,10 +223,14 @@ test.describe("Documentation", () => {
     // Wait for editor content to be restored
     await expect(editor).toBeVisible({ timeout: 5000 });
 
+    // Wait for the canceled content to be replaced (editor should no longer contain "This should be canceled")
+    await expect(editor).not.toContainText("This should be canceled", { timeout: 5000 });
+
     // Verify content was reverted (normalize whitespace for comparison)
-    const finalContent = ((await editor.textContent()) || "").trim();
+    const finalContent = ((await editor.textContent()) || "").trim().replace(/\s+/g, " ");
+    const normalizedInitial = initialContent.replace(/\s+/g, " ");
     // Content should match (allowing for minor whitespace differences)
-    expect(finalContent).toBe(initialContent);
+    expect(finalContent).toBe(normalizedInitial);
   });
 
   test("Rich text formatting - headings", async ({ api, page }) => {
