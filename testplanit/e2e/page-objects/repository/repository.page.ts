@@ -246,10 +246,15 @@ export class RepositoryPage extends BasePage {
    * Verify a folder exists in the tree
    */
   async verifyFolderExists(name: string): Promise<void> {
+    // Wait for the folder to be visible first, then scroll if needed
     const folder = this.getFolderByName(name).first();
-    // Scroll the folder into view in case it's off-screen in the tree
-    await folder.scrollIntoViewIfNeeded({ timeout: 10000 });
     await expect(folder).toBeVisible({ timeout: 10000 });
+    // Only try to scroll if already visible (avoid race conditions)
+    try {
+      await folder.scrollIntoViewIfNeeded({ timeout: 3000 });
+    } catch {
+      // Ignore scroll errors - the element is already verified as visible
+    }
   }
 
   /**
