@@ -67,10 +67,7 @@ test.describe("Drag & Drop", () => {
     await page.mouse.up();
     await page.waitForLoadState("networkidle");
 
-    // Give time for the reorder to complete and UI to update
-    await page.waitForTimeout(500);
-
-    // Verify the folders are still visible after drag
+    // Verify the folders are still visible after drag (this also waits for UI to stabilize)
     await expect(folder1).toBeVisible({ timeout: 5000 });
     await expect(folder2).toBeVisible({ timeout: 5000 });
 
@@ -138,9 +135,6 @@ test.describe("Drag & Drop", () => {
 
     await page.mouse.up();
     await page.waitForLoadState("networkidle");
-
-    // Give time for the nesting to complete
-    await page.waitForTimeout(500);
 
     // Expand the parent folder to see nested children
     await repositoryPage.expandFolder(parentId);
@@ -213,10 +207,7 @@ test.describe("Drag & Drop", () => {
     await page.mouse.up();
     await page.waitForLoadState("networkidle");
 
-    // Give time for the move to complete and UI to update
-    await page.waitForTimeout(500);
-
-    // Verify the child folder is still visible
+    // Verify the child folder is still visible (this also waits for UI to stabilize)
     await expect(child).toBeVisible({ timeout: 5000 });
 
     // Get the child's new position
@@ -270,8 +261,6 @@ test.describe("Drag & Drop", () => {
     await page.mouse.up();
 
     await page.waitForLoadState("networkidle");
-    // Give extra time for the drag operation to complete and UI to update
-    await page.waitForTimeout(500);
 
     // Verify case moved to target folder (or is still in source if drag not supported for cases)
     await repositoryPage.selectFolder(targetFolderId);

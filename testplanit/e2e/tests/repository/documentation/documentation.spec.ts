@@ -203,7 +203,8 @@ test.describe("Documentation", () => {
 
     // Wait for editor to be editable
     await editor.click();
-    await page.waitForTimeout(500);
+    // Wait for editor to be focused and ready for input
+    await expect(editor).toBeFocused({ timeout: 2000 });
 
     // Make changes
     await page.keyboard.press("ControlOrMeta+a");
@@ -219,7 +220,8 @@ test.describe("Documentation", () => {
 
     // Wait for page to reload and editor to update
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
+    // Wait for editor content to be restored
+    await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Verify content was reverted (normalize whitespace for comparison)
     const finalContent = ((await editor.textContent()) || "").trim();
@@ -250,7 +252,8 @@ test.describe("Documentation", () => {
 
     const editor = page.locator(".ProseMirror").first();
     await editor.click();
-    await page.waitForTimeout(500);
+    // Wait for editor to be focused
+    await expect(editor).toBeFocused({ timeout: 2000 });
 
     // Type text first
     await page.keyboard.type("Heading 1");
@@ -265,13 +268,11 @@ test.describe("Documentation", () => {
     const headingTrigger = page.getByTestId("tiptap-heading-trigger");
     await expect(headingTrigger).toBeVisible({ timeout: 3000 });
     await headingTrigger.click();
-    await page.waitForTimeout(500);
 
-    // Click H1 option
+    // Click H1 option - wait for dropdown to appear
     const h1Button = page.getByTestId("tiptap-heading-1");
     await expect(h1Button).toBeVisible({ timeout: 3000 });
     await h1Button.click();
-    await page.waitForTimeout(300);
 
     // Verify heading was created
     const h1Element = editor.locator("h1").first();
@@ -297,21 +298,19 @@ test.describe("Documentation", () => {
 
     const editor = page.locator(".ProseMirror").first();
     await editor.click();
-    await page.waitForTimeout(500);
+    // Wait for editor to be focused
+    await expect(editor).toBeFocused({ timeout: 2000 });
 
     // Type text
     await page.keyboard.type("Bold text");
-    await page.waitForTimeout(200);
 
     // Select all text - use platform-aware shortcut
     await page.keyboard.press("ControlOrMeta+a");
-    await page.waitForTimeout(200);
 
     // Click bold button in toolbar (using test ID we added)
     const boldButton = page.getByTestId("tiptap-bold");
     await expect(boldButton).toBeVisible({ timeout: 3000 });
     await boldButton.click();
-    await page.waitForTimeout(500);
 
     // Verify bold formatting exists
     // Check the editor HTML for bold tags
@@ -359,13 +358,13 @@ test.describe("Documentation", () => {
 
     const editor = page.locator(".ProseMirror").first();
     await editor.click();
-    await page.waitForTimeout(500);
+    // Wait for editor to be focused
+    await expect(editor).toBeFocused({ timeout: 2000 });
 
     // Click bullet list button
     const listButton = page.getByTestId("tiptap-bullet-list");
     await expect(listButton).toBeVisible({ timeout: 3000 });
     await listButton.click();
-    await page.waitForTimeout(300);
 
     // Type list items
     await page.keyboard.type("Item 1");
@@ -407,11 +406,16 @@ test.describe("Documentation", () => {
 
     // Try to insert code block via slash command
     await page.keyboard.type("/code");
-    await page.waitForTimeout(500);
 
-    // Look for code block option in suggestions or just type code
-    await page.keyboard.press("Enter");
-    await page.waitForTimeout(500);
+    // Wait for slash command menu to appear and select code block
+    const codeOption = page.locator('[role="option"]:has-text("Code"), [data-suggestion]:has-text("Code")').first();
+    // If slash command menu appears, click the option; otherwise press Enter
+    const hasCodeOption = await codeOption.isVisible({ timeout: 1000 }).catch(() => false);
+    if (hasCodeOption) {
+      await codeOption.click();
+    } else {
+      await page.keyboard.press("Enter");
+    }
 
     // Type code content
     await page.keyboard.type("const test = 'code';");

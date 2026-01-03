@@ -38,15 +38,16 @@ export abstract class BasePage {
     if (await overlay.isVisible({ timeout: 1000 }).catch(() => false)) {
       // Try to close it by pressing Escape or clicking skip/close button
       await this.page.keyboard.press("Escape");
-      // Wait a moment for the overlay to close
-      await this.page.waitForTimeout(500);
+      // Wait for overlay to potentially close
+      await expect(overlay).not.toBeVisible({ timeout: 2000 }).catch(() => {});
 
       // If still visible, try clicking any skip/close buttons
       if (await overlay.isVisible().catch(() => false)) {
         const closeButton = this.page.locator('[data-name="nextstep-overlay"] button:has-text("Skip"), [data-name="nextstep-overlay"] button:has-text("Close"), [data-name="nextstep-overlay"] button:has-text("Done")').first();
         if (await closeButton.isVisible().catch(() => false)) {
           await closeButton.click();
-          await this.page.waitForTimeout(500);
+          // Wait for overlay to close after clicking button
+          await expect(overlay).not.toBeVisible({ timeout: 2000 }).catch(() => {});
         }
       }
     }

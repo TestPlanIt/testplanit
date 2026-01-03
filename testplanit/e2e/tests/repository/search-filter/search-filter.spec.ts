@@ -405,9 +405,7 @@ test.describe("Search & Filter", () => {
     await searchInput.focus();
     await searchInput.pressSequentially("Target", { delay: 100 });
 
-    // Wait for debounce to complete and results to filter
-    // The debounce is 300ms, so wait a bit longer for network
-    await page.waitForTimeout(500);
+    // Wait for debounce to complete and network to settle
     await page.waitForLoadState("networkidle");
 
     // After typing completes and debounce triggers, only the target case should be visible

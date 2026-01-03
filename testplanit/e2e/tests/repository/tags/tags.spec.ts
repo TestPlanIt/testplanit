@@ -1032,14 +1032,13 @@ test.describe("Tags", () => {
     const testCasesCell = tagRow.locator("td").nth(1); // Second column (after name) is "cases"
 
     // The count should show "2" since we applied the tag to 2 test cases
+    // Verify the count displays before clicking
+    await expect(testCasesCell).toContainText("2", { timeout: 5000 });
+
     // Click on the cell to open the popover with cases
     await testCasesCell.click();
 
-    // Wait a moment for the popover/count to be interactive
-    await page.waitForTimeout(500);
-
     // Verify the count displays (the column shows a count that when clicked opens a list)
-    // The text should contain "2" or similar
     const cellText = await testCasesCell.textContent();
     expect(cellText).toContain("2");
   });

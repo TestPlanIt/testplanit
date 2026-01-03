@@ -111,10 +111,11 @@ test.describe("Permissions", () => {
 
     // Hover over the folder to make the more actions button visible
     await folderTreeItem.hover();
-    await page.waitForTimeout(300);
+    // Wait for button to become visible after hover
+    await expect(moreButton).toBeVisible({ timeout: 3000 });
 
     // Click the more actions button to open dropdown
-    await moreButton.click({ force: true });
+    await moreButton.click();
 
     // Admin user should see the Edit and Delete options in the dropdown
     const editOption = page.locator('[role="menuitem"]').filter({ hasText: /edit/i }).first();

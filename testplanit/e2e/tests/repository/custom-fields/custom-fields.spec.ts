@@ -437,11 +437,8 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     if (isSearchVisible) {
       // Type a search term
       await searchInput.first().fill("test");
-      await page.waitForLoadState("networkidle");
-
-      // The table should filter based on search
       // Wait for debounce and API response
-      await page.waitForTimeout(500);
+      await page.waitForLoadState("networkidle");
     } else {
       // Search might not be visible in all views
       test.skip();

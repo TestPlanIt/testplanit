@@ -96,10 +96,7 @@ test.describe("Tree Navigation", () => {
     await expect(collapseButton).toBeVisible({ timeout: 5000 });
     await collapseButton.click();
 
-    // Wait for collapse animation
-    await page.waitForTimeout(500);
-
-    // Child should no longer be visible
+    // Child should no longer be visible after collapse animation completes
     await expect(childFolder).not.toBeVisible({ timeout: 5000 });
   });
 

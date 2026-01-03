@@ -121,8 +121,6 @@ export class RepositoryPage extends BasePage {
     await expandButton.click();
     // Wait for children to be visible (animation complete)
     await this.page.waitForLoadState("networkidle");
-    // Give tree a moment to render children
-    await this.page.waitForTimeout(300);
   }
 
   /**

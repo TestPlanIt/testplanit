@@ -293,10 +293,7 @@ test.describe("Issues", () => {
     // Close the popover
     await page.keyboard.press('Escape');
 
-    // Wait for popover to close and table to update
-    await page.waitForTimeout(500);
-
-    // Verify the Issues column is now hidden
+    // Verify the Issues column is now hidden (popover should close automatically)
     issuesColumnHeader = table.locator('th').filter({ hasText: 'Issues' });
     await expect(issuesColumnHeader).not.toBeVisible({ timeout: 5000 });
   });

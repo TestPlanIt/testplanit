@@ -30,9 +30,8 @@ test.describe("Keyboard Shortcuts", () => {
     // Click on a neutral area (the page header/title area) to ensure no input is focused
     const pageTitle = page.locator('text="Test Case Repository"').first();
     await pageTitle.click();
-
-    // Small delay to ensure focus is established
-    await page.waitForTimeout(100);
+    // Ensure the click completed and focus moved away from any inputs
+    await expect(pageTitle).toBeVisible();
 
     // Press Shift+N to open add folder modal - use key combination
     await page.keyboard.down("Shift");

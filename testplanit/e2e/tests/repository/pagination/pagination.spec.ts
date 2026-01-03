@@ -180,9 +180,9 @@ test.describe("Pagination", () => {
     // Find and click the page size button - use the specific button with Page Size text
     const pageSizeButton = page.locator('button:has-text("Page Size")').first();
     await expect(pageSizeButton).toBeVisible({ timeout: 5000 });
-    // Wait a moment for any loading states to clear
-    await page.waitForTimeout(500);
-    await pageSizeButton.click({ force: true });
+    // Ensure button is enabled before clicking
+    await expect(pageSizeButton).toBeEnabled({ timeout: 3000 });
+    await pageSizeButton.click();
 
     // Select "All" option
     const optionAll = page.locator('[role="menuitem"]:has-text("All"), [role="option"]:has-text("All")').first();
@@ -350,9 +350,8 @@ test.describe("Pagination", () => {
 
     if (ellipsisExists) {
       await ellipsisDropdown.click();
-      await page.waitForTimeout(300);
 
-      // Select page 5 from the dropdown
+      // Select page 5 from the dropdown (wait for dropdown to appear)
       const page5Option = page.locator('[role="option"]:has-text("5"), [role="listbox"] >> text="5"').first();
       await expect(page5Option).toBeVisible({ timeout: 3000 });
       await page5Option.click();
