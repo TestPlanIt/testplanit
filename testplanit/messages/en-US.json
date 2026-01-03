@@ -1989,6 +1989,9 @@
       "title": "Add New Tag",
       "fields": {
         "name_error": "Tag name is required"
+      },
+      "errors": {
+        "nameExists": "A tag with this name already exists"
       }
     },
     "edit": {

@@ -1388,16 +1388,25 @@ export function BulkEditModal({
 
           const newTagIds = Array.isArray(newValue) ? newValue.map(Number) : [];
 
-          // For bulk operations, we connect new tags and don't disconnect
-          // This is because different cases may have different current tags
+          // Connect new tags that aren't currently on any case
           const tagsToConnect = newTagIds
             .filter((id) => !allCurrentTagIds.has(id))
             .map((id) => ({ id }));
 
-          if (newTagIds.length > 0) {
-            payload.updates.tags = {
-              connect: tagsToConnect.length > 0 ? tagsToConnect : [],
-            };
+          // Disconnect tags that were removed (were on cases but not in new selection)
+          const tagsToDisconnect = Array.from(allCurrentTagIds)
+            .filter((id) => !newTagIds.includes(id))
+            .map((id) => ({ id }));
+
+          // Only update tags if there are actual changes
+          if (tagsToConnect.length > 0 || tagsToDisconnect.length > 0) {
+            payload.updates.tags = {};
+            if (tagsToConnect.length > 0) {
+              payload.updates.tags.connect = tagsToConnect;
+            }
+            if (tagsToDisconnect.length > 0) {
+              payload.updates.tags.disconnect = tagsToDisconnect;
+            }
           }
         } else if (fieldKey === "issues") {
           // Similar logic to tags

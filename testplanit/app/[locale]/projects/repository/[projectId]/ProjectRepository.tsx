@@ -1144,7 +1144,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                 panelWidth={panelWidth}
                                 onFolderCreated={async (
                                   newFolderId: number,
-                                  _createdParentId: number | null
+                                  createdParentId: number | null
                                 ) => {
                                   if (refetchFoldersRef.current) {
                                     // Wait for refetch to complete before selecting the new folder
@@ -1156,7 +1156,10 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                       new CustomEvent(
                                         "folderSelectionChanged",
                                         {
-                                          detail: { folderId: newFolderId },
+                                          detail: {
+                                            folderId: newFolderId,
+                                            expandParentId: createdParentId,
+                                          },
                                         }
                                       )
                                     );

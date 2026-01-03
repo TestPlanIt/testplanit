@@ -15,6 +15,14 @@
     "test": "vitest --config vitest.config.mts",
     "test:unit": "vitest --config vitest.config.mts",
     "test:cov": "vitest run --coverage --config vitest.config.mts",
+    "test:e2e": "dotenv -e .env.e2e -- playwright test --config e2e/playwright.config.ts",
+    "test:e2e:ui": "dotenv -e .env.e2e -- playwright test --config e2e/playwright.config.ts --ui",
+    "test:e2e:debug": "dotenv -e .env.e2e -- playwright test --config e2e/playwright.config.ts --debug",
+    "test:e2e:headed": "dotenv -e .env.e2e -- playwright test --config e2e/playwright.config.ts --headed",
+    "test:e2e:report": "playwright show-report e2e/playwright-report",
+    "test:e2e:setup-db": "dotenv -e .env.e2e -- tsx e2e/setup-db.ts",
+    "test:e2e:run": "pnpm test:e2e:setup-db && pnpm test:e2e",
+    "test:e2e:prod": "pnpm build && dotenv -e .env.e2e -- cross-env E2E_PROD=on playwright test --config e2e/playwright.config.ts",
     "worker:notification": "dotenv -- tsx workers/notificationWorker.ts",
     "worker:email": "dotenv -- tsx workers/emailWorker.ts",
     "worker:forecast": "dotenv -- tsx workers/forecastWorker.ts",
@@ -317,7 +325,8 @@
     "v8cov": "^0.0.0",
     "vite-tsconfig-paths": "^6.0.3",
     "vitest": "^4.0.16",
-    "zenstack": "~2.22.1"
+    "zenstack": "~2.22.1",
+    "@playwright/test": "^1.49.0"
   },
   "ct3aMetadata": {
     "initVersion": "7.28.0"

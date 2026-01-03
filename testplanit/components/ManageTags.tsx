@@ -1,6 +1,6 @@
 "use client";
 
-import { useFindManyTags, useCreateTags } from "~/lib/hooks";
+import { useFindManyTags, useCreateTags, useUpdateTags } from "~/lib/hooks";
 import CreatableSelect from "react-select/creatable";
 import Select from "react-select";
 import { MultiValue } from "react-select";
@@ -39,22 +39,25 @@ export function ManageTags({
     isLoading,
     isFetching,
   } = useFindManyTags({
-    where: {
-      isDeleted: false,
-    },
     orderBy: {
       name: "asc",
     },
-    select: { id: true, name: true },
+    select: { id: true, name: true, isDeleted: true },
   });
 
   useEffect(() => {
     if (tags) {
-      setAllTagOptions(tags.map((tag) => ({ label: tag.name, value: tag.id })));
+      // Only show non-deleted tags in the dropdown options
+      setAllTagOptions(
+        tags
+          .filter((tag) => !tag.isDeleted)
+          .map((tag) => ({ label: tag.name, value: tag.id }))
+      );
     }
   }, [tags]);
 
   const { mutateAsync: createTags, isPending: isCreating } = useCreateTags();
+  const { mutateAsync: updateTags } = useUpdateTags();
 
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
@@ -72,6 +75,35 @@ export function ManageTags({
       if (sanitizedName === "") {
         console.error("Sanitized name is empty, cannot create tag.");
         // Optionally, provide user feedback here
+        return;
+      }
+
+      // Check for case-insensitive duplicate (including soft-deleted tags)
+      const nameToCheck = sanitizedName.toLowerCase();
+      const existingTag = tags?.find(
+        (tag) => tag.name.toLowerCase() === nameToCheck
+      );
+
+      if (existingTag) {
+        if (existingTag.isDeleted) {
+          // Restore the soft-deleted tag
+          await updateTags({
+            where: { id: existingTag.id },
+            data: { isDeleted: false },
+          });
+          const restoredOption: TagOption = {
+            label: existingTag.name,
+            value: existingTag.id,
+          };
+          setAllTagOptions([...allTagOptions, restoredOption]);
+          setSelectedTags([...selectedTags, existingTag.id]);
+          refetch();
+        } else {
+          // Tag already exists (case-insensitive match), select it instead of creating
+          if (!selectedTags.includes(existingTag.id)) {
+            setSelectedTags([...selectedTags, existingTag.id]);
+          }
+        }
         return;
       }
 

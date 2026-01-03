@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useFindFirstRepositoryFolders,
   useFindFirstRepositoryCases,
@@ -232,6 +233,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
   const { data: session } = useSession();
   const { projectId } = useParams();
   const numericProjectId = Number(projectId);
+  const queryClient = useQueryClient();
 
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -918,6 +920,23 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
           });
 
         await Promise.all(createCaseFieldVersionValuesPromises);
+
+        // Invalidate folder stats first - this updates the case count which enables the Cases query
+        await queryClient.invalidateQueries({
+          queryKey: ["folderStats"],
+          refetchType: "all",
+        });
+
+        // Invalidate RepositoryCases queries to refresh the table
+        // ZenStack query keys are: ["zenstack", model, operation, args, options]
+        // Using refetchType: 'all' to ensure queries are refetched immediately
+        await queryClient.invalidateQueries({
+          predicate: (query) =>
+            Array.isArray(query.queryKey) &&
+            query.queryKey[0] === "zenstack" &&
+            query.queryKey[1] === "RepositoryCases",
+          refetchType: "all",
+        });
 
         setOpen(false);
         setIsSubmitting(false);

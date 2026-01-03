@@ -277,6 +277,7 @@ function SortableItem<
           transition-opacity duration-100 ease-in-out
         `}
         data-row-id={row.original.id}
+        data-testid={`case-row-${row.original.id}`}
         data-handler-id={handlerId}
         onClick={(e) => {
           if (!isDragging) {

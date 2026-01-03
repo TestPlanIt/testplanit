@@ -778,6 +778,7 @@ export function DataTable<TData extends DataRow, TValue>({
                           : "hover:bg-muted/50"
                   }`}
                   data-row-id={row.original.id}
+                  data-testid={`case-row-${row.original.id}`}
                   onClick={() => {
                     if (onTestCaseClick && !isGrouped) {
                       onTestCaseClick(row.original.id);

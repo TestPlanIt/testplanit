@@ -111,12 +111,12 @@ export function DeleteCaseModal({
     <AlertDialog open={open} onOpenChange={setOpen}>
       <Button
         variant="destructive"
-        className="px-2 py-1 h-auto"
+        className="px-2 py-1 h-auto w-full"
         type="button"
         onClick={handleOpen}
       >
         <Trash2 className="h-5 w-5" />
-        {showLabel && <div>{t("common.actions.confirmDelete")}</div>}
+        {showLabel && <div>{t("common.actions.delete")}</div>}
       </Button>
       <AlertDialogContent className="sm:max-w-[425px] lg:max-w-[600px] border-destructive">
         <div className="space-y-4">

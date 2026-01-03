@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useFindFirstRepositoryFolders,
   useFindFirstRepositoryCases,
@@ -57,6 +58,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
   const t = useTranslations();
   const { data: session } = useSession();
   const { projectId } = useParams();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
@@ -263,6 +265,23 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
 
         if (!newCaseVersion)
           throw new Error("Failed to create new case version");
+
+        // Invalidate folder stats first - this updates the case count which enables the Cases query
+        await queryClient.invalidateQueries({
+          queryKey: ["folderStats"],
+          refetchType: "all",
+        });
+
+        // Invalidate RepositoryCases queries to refresh the table
+        // ZenStack query keys are: ["zenstack", model, operation, args, options]
+        // Using refetchType: 'all' to ensure queries are refetched immediately
+        await queryClient.invalidateQueries({
+          predicate: (query) =>
+            Array.isArray(query.queryKey) &&
+            query.queryKey[0] === "zenstack" &&
+            query.queryKey[1] === "RepositoryCases",
+          refetchType: "all",
+        });
 
         reset({ name: "", workflowId: defaultWorkflowId });
 

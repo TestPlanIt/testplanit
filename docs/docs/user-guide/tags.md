@@ -7,6 +7,10 @@ title: Tags
 
 Tags are labels that can be applied to various items like Test Cases, Test Runs, and Sessions for categorization, filtering, and reporting purposes. Managing tags centrally ensures consistency across your projects.
 
+:::info Case Insensitivity
+Tag names are **case-insensitive**. For example, "Smoke", "smoke", and "SMOKE" are all treated as the same tag. This prevents accidental duplicates caused by different capitalizations.
+:::
+
 To access this page, enter the Administration area and select **Tags** from the left-hand navigation menu.
 
 ## Viewing Tags
@@ -31,7 +35,8 @@ The Tags page displays a table listing all defined tags (excluding those marked 
 3. Enter a unique **Name** for the new Tag in the input field.
 4. Click **Submit**.
 
-    - If the name already exists, an error message "Name already exists" will be displayed below the input field.
+    - If the name already exists (case-insensitive match), an error message "Name already exists" will be displayed below the input field.
+    - If a previously deleted tag with the same name exists, it will be restored instead of creating a new tag.
     - If any other error occurs, a general error message will appear near the bottom of the modal.
 
 ## Editing an Existing Tag
@@ -41,7 +46,8 @@ The Tags page displays a table listing all defined tags (excluding those marked 
 3. A modal dialog titled "Edit Tag" will appear, pre-filled with the current tag name.
 4. Modify the **Name** as needed.
 5. Click **Submit**.
-    - Error handling for duplicate names or other issues is similar to adding a tag.
+    - If the new name matches an existing active tag (case-insensitive), an error message will be displayed.
+    - If the new name matches a previously deleted tag, the deleted tag will be renamed to allow the change.
 
 ## Deleting a Tag
 

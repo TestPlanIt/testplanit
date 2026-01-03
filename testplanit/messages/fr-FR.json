@@ -1989,6 +1989,9 @@
       "title": "Ajouter une nouvelle balise",
       "fields": {
         "name_error": "Le nom de l'étiquette est requis."
+      },
+      "errors": {
+        "nameExists": "Une étiquette portant ce nom existe déjà."
       }
     },
     "edit": {
