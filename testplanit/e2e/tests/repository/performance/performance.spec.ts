@@ -34,7 +34,7 @@ test.describe("Performance", () => {
 
     const loadTime = Date.now() - startTime;
 
-    // Repository should load within reasonable time (10 seconds)
-    expect(loadTime).toBeLessThan(10000);
+    // Repository should load within reasonable time (2 seconds)
+    expect(loadTime).toBeLessThan(2000);
   });
 });
