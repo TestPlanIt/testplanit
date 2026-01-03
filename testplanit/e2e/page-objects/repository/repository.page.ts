@@ -123,6 +123,54 @@ export class RepositoryPage extends BasePage {
   }
 
   /**
+   * Open the folder context menu (dropdown menu with Edit/Delete options)
+   * The menu button appears on hover over the folder row
+   */
+  async openFolderContextMenu(folderId: number): Promise<void> {
+    const folder = this.getFolderById(folderId);
+    // Hover to make the menu button visible
+    await folder.hover();
+    // Find the "more" button (MoreVertical icon) - it's a button inside the folder row
+    const moreButton = folder.locator('button').filter({
+      has: this.page.locator('svg.lucide-more-vertical, svg[class*="lucide-ellipsis"]')
+    }).first();
+    // If the specific icon isn't found, try a more generic approach - look for any button that's not the expand button
+    const menuButton = await moreButton.isVisible()
+      ? moreButton
+      : folder.locator('button').last();
+    await menuButton.click();
+    // Wait for dropdown menu to appear
+    await this.page.locator('[role="menu"], [data-radix-menu-content]').waitFor({ state: 'visible', timeout: 5000 });
+  }
+
+  /**
+   * Open folder context menu by folder name
+   */
+  async openFolderContextMenuByName(name: string): Promise<void> {
+    const folder = this.getFolderByName(name).first();
+    // Hover to make the menu button visible
+    await folder.hover();
+    // Find the "more" button (MoreVertical icon)
+    const moreButton = folder.locator('button').filter({
+      has: this.page.locator('svg.lucide-more-vertical, svg[class*="lucide-ellipsis"]')
+    }).first();
+    const menuButton = await moreButton.isVisible()
+      ? moreButton
+      : folder.locator('button').last();
+    await menuButton.click();
+    // Wait for dropdown menu to appear
+    await this.page.locator('[role="menu"], [data-radix-menu-content]').waitFor({ state: 'visible', timeout: 5000 });
+  }
+
+  /**
+   * Click on a menu item in the folder context menu
+   */
+  async clickFolderMenuItem(itemText: string): Promise<void> {
+    const menuItem = this.page.locator('[role="menuitem"]').filter({ hasText: itemText }).first();
+    await menuItem.click();
+  }
+
+  /**
    * Open the add folder modal
    */
   async openAddFolderModal(): Promise<void> {

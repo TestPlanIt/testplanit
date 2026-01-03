@@ -35,13 +35,11 @@ test.describe("Folder Delete", () => {
     // Verify folder exists
     await repositoryPage.verifyFolderExists(folderName);
 
-    // Right-click on folder to open context menu
-    const folder = repositoryPage.getFolderById(folderId);
-    await folder.click({ button: "right" });
+    // Open folder context menu (hover to show menu button, then click it)
+    await repositoryPage.openFolderContextMenu(folderId);
 
     // Click delete option
-    const deleteOption = page.locator('[role="menuitem"]:has-text("Delete")').first();
-    await deleteOption.click();
+    await repositoryPage.clickFolderMenuItem("Delete");
 
     // Confirm deletion in dialog
     const confirmButton = page.locator('[role="alertdialog"] button:has-text("Delete"), button:has-text("Confirm")').first();
@@ -67,13 +65,11 @@ test.describe("Folder Delete", () => {
     // Verify folder exists
     await repositoryPage.verifyFolderExists(folderName);
 
-    // Right-click on folder to open context menu
-    const folder = repositoryPage.getFolderById(folderId);
-    await folder.click({ button: "right" });
+    // Open folder context menu (hover to show menu button, then click it)
+    await repositoryPage.openFolderContextMenu(folderId);
 
     // Click delete option
-    const deleteOption = page.locator('[role="menuitem"]:has-text("Delete")').first();
-    await deleteOption.click();
+    await repositoryPage.clickFolderMenuItem("Delete");
 
     // Should show a warning about contained test cases
     const dialog = page.locator('[role="alertdialog"]');
@@ -109,13 +105,11 @@ test.describe("Folder Delete", () => {
     await repositoryPage.verifyFolderExists(parentName);
     await repositoryPage.verifyFolderExists(childName);
 
-    // Right-click on parent folder to open context menu
-    const folder = repositoryPage.getFolderById(parentId);
-    await folder.click({ button: "right" });
+    // Open folder context menu (hover to show menu button, then click it)
+    await repositoryPage.openFolderContextMenu(parentId);
 
     // Click delete option
-    const deleteOption = page.locator('[role="menuitem"]:has-text("Delete")').first();
-    await deleteOption.click();
+    await repositoryPage.clickFolderMenuItem("Delete");
 
     // Should show a warning about nested folders
     const dialog = page.locator('[role="alertdialog"]');
@@ -145,13 +139,11 @@ test.describe("Folder Delete", () => {
     // Verify folder exists
     await repositoryPage.verifyFolderExists(folderName);
 
-    // Right-click on folder to open context menu
-    const folder = repositoryPage.getFolderById(folderId);
-    await folder.click({ button: "right" });
+    // Open folder context menu (hover to show menu button, then click it)
+    await repositoryPage.openFolderContextMenu(folderId);
 
     // Click delete option
-    const deleteOption = page.locator('[role="menuitem"]:has-text("Delete")').first();
-    await deleteOption.click();
+    await repositoryPage.clickFolderMenuItem("Delete");
 
     // Dialog should appear
     const dialog = page.locator('[role="alertdialog"]');
@@ -177,12 +169,11 @@ test.describe("Folder Delete", () => {
 
     await repositoryPage.goto(projectId);
 
-    // Right-click on folder to open context menu
-    const folder = repositoryPage.getFolderById(folderId);
-    await folder.click({ button: "right" });
+    // Open folder context menu (hover to show menu button, then click it)
+    await repositoryPage.openFolderContextMenu(folderId);
 
     // Verify delete option is visible (admin has permissions)
-    const deleteOption = page.locator('[role="menuitem"]:has-text("Delete")').first();
+    const deleteOption = page.locator('[role="menuitem"]').filter({ hasText: "Delete" }).first();
     await expect(deleteOption).toBeVisible({ timeout: 5000 });
 
     // Close the menu

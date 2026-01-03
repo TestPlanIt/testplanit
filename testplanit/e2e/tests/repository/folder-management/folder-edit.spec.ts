@@ -32,16 +32,18 @@ test.describe("Folder Edit", () => {
 
     await repositoryPage.goto(projectId);
 
-    // Find the folder and open context menu
-    const folder = repositoryPage.getFolderById(folderId);
-    await folder.click({ button: "right" });
+    // Open folder context menu (hover to show menu button, then click it)
+    await repositoryPage.openFolderContextMenu(folderId);
 
-    // Click rename option
-    const renameOption = page.locator('[role="menuitem"]:has-text("Rename"), [role="menuitem"]:has-text("Edit")').first();
-    await renameOption.click();
+    // Click edit option
+    await repositoryPage.clickFolderMenuItem("Edit");
 
-    // Wait for edit modal/input to appear
-    const editInput = page.locator('[data-testid="folder-name-input"], [data-testid="edit-folder-name"]').first();
+    // Wait for edit modal to appear and find the name input
+    const editDialog = page.locator('[role="dialog"]');
+    await expect(editDialog).toBeVisible({ timeout: 5000 });
+
+    // Find the name input inside the dialog - it's after the "Name" label
+    const editInput = editDialog.locator('input').first();
     await expect(editInput).toBeVisible({ timeout: 5000 });
 
     // Clear and enter new name
@@ -49,12 +51,12 @@ test.describe("Folder Edit", () => {
     await editInput.clear();
     await editInput.fill(newName);
 
-    // Submit the change
-    const saveButton = page.locator('[data-testid="folder-submit-button"], button:has-text("Save")').first();
+    // Submit the change - look for Submit button in the dialog
+    const saveButton = editDialog.locator('button[type="submit"], button:has-text("Submit")').first();
     await saveButton.click();
 
     // Wait for modal to close
-    await expect(editInput).not.toBeVisible({ timeout: 10000 });
+    await expect(editDialog).not.toBeVisible({ timeout: 10000 });
     await page.waitForLoadState("networkidle");
 
     // Verify the folder was renamed
@@ -71,30 +73,28 @@ test.describe("Folder Edit", () => {
 
     await repositoryPage.goto(projectId);
 
-    // Find the folder and open context menu
-    const folder = repositoryPage.getFolderById(folderId);
-    await folder.click({ button: "right" });
+    // Open folder context menu (hover to show menu button, then click it)
+    await repositoryPage.openFolderContextMenu(folderId);
 
     // Click edit option
-    const editOption = page.locator('[role="menuitem"]:has-text("Edit")').first();
-    await editOption.click();
+    await repositoryPage.clickFolderMenuItem("Edit");
 
     // Wait for edit modal to appear
-    const editInput = page.locator('[data-testid="folder-name-input"], [data-testid="edit-folder-name"]').first();
-    await expect(editInput).toBeVisible({ timeout: 5000 });
+    const editDialog = page.locator('[role="dialog"]');
+    await expect(editDialog).toBeVisible({ timeout: 5000 });
 
-    // Find and update documentation
-    const docsEditor = page.locator('[data-testid="folder-docs-editor"], .tiptap, .ProseMirror').first();
+    // Find and update documentation - the TipTap editor uses .ProseMirror class
+    const docsEditor = editDialog.locator('.tiptap, .ProseMirror').first();
     await expect(docsEditor).toBeVisible({ timeout: 3000 });
     await docsEditor.click();
     await page.keyboard.type("Updated documentation content");
 
-    // Submit the change
-    const saveButton = page.locator('[data-testid="folder-submit-button"], button:has-text("Save")').first();
+    // Submit the change - look for Submit button in the dialog
+    const saveButton = editDialog.locator('button[type="submit"], button:has-text("Submit")').first();
     await saveButton.click();
 
     // Wait for modal to close
-    await expect(editInput).not.toBeVisible({ timeout: 10000 });
+    await expect(editDialog).not.toBeVisible({ timeout: 10000 });
     await page.waitForLoadState("networkidle");
 
     // Verify folder still exists
@@ -110,12 +110,11 @@ test.describe("Folder Edit", () => {
 
     await repositoryPage.goto(projectId);
 
-    // Find the folder and open context menu
-    const folder = repositoryPage.getFolderById(folderId);
-    await folder.click({ button: "right" });
+    // Open folder context menu (hover to show menu button, then click it)
+    await repositoryPage.openFolderContextMenu(folderId);
 
     // Verify edit option is visible (admin user has permissions)
-    const editOption = page.locator('[role="menuitem"]:has-text("Edit"), [role="menuitem"]:has-text("Rename")').first();
+    const editOption = page.locator('[role="menuitem"]').filter({ hasText: "Edit" }).first();
     await expect(editOption).toBeVisible({ timeout: 5000 });
 
     // Close the menu
