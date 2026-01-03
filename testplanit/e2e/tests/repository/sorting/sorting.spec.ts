@@ -5,6 +5,7 @@ import { RepositoryPage } from "../../../page-objects/repository/repository.page
  * Sorting Tests
  *
  * Test cases for sorting test cases in the repository.
+ * Available sortable columns: Name, State, ID, Version, Estimate, Forecast, Automated, Created At
  */
 test.describe("Sorting", () => {
   let repositoryPage: RepositoryPage;
@@ -23,11 +24,11 @@ test.describe("Sorting", () => {
     return projects[0].id;
   }
 
-  test("Sort Test Cases by Order Column", async ({ api, page }) => {
+  test("Sort Test Cases by Name Column", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
     // Create a folder with multiple test cases
-    const folderName = `Sort Order Folder ${Date.now()}`;
+    const folderName = `Sort Name Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
     await api.createTestCase(projectId, folderId, `B Case ${Date.now()}`);
     await api.createTestCase(projectId, folderId, `A Case ${Date.now()}`);
@@ -38,20 +39,71 @@ test.describe("Sorting", () => {
     await repositoryPage.selectFolder(folderId);
     await page.waitForLoadState("networkidle");
 
-    // Find the order column header and click to sort
-    const orderHeader = page.locator('th:has-text("Order"), th:has-text("#"), [data-testid="order-column-header"]').first();
-    await expect(orderHeader).toBeVisible({ timeout: 5000 });
-    await orderHeader.click();
-    await page.waitForLoadState("networkidle");
+    // Verify the table is visible with rows
+    const table = page.locator("table").first();
+    await expect(table).toBeVisible({ timeout: 10000 });
 
-    // Verify rows are sorted by order
-    const rows = page.locator('[data-testid^="case-row-"], tbody tr');
-    const count = await rows.count();
-    expect(count).toBeGreaterThan(0);
+    // Wait for rows to appear in tbody
+    const rows = table.locator("tbody tr");
+    await expect(rows.first()).toBeVisible({ timeout: 10000 });
+    expect(await rows.count()).toBe(3);
+
+    // Find the Name column sort button
+    const nameHeader = table.locator('th').filter({ hasText: 'Name' }).first();
+    await expect(nameHeader).toBeVisible({ timeout: 5000 });
+
+    // The sort button is inside the header with accessible name "Sort column"
+    const sortButton = nameHeader.getByRole('button', { name: 'Sort column' }).first();
+    await expect(sortButton).toBeVisible({ timeout: 5000 });
+    await sortButton.click();
+
+    // Wait for rows to reappear after sort (sorting triggers data refetch)
+    await expect(rows.first()).toBeVisible({ timeout: 10000 });
+    expect(await rows.count()).toBe(3);
 
     // Click again to reverse sort
-    await orderHeader.click();
+    await sortButton.click();
+
+    // Wait for rows to reappear after reverse sort
+    await expect(rows.first()).toBeVisible({ timeout: 10000 });
+    expect(await rows.count()).toBe(3);
+  });
+
+  test("Sort Test Cases by State Column", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder with test cases
+    const folderName = `Sort State Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    await api.createTestCase(projectId, folderId, `State Case 1 ${Date.now()}`);
+    await api.createTestCase(projectId, folderId, `State Case 2 ${Date.now()}`);
+
+    await repositoryPage.goto(projectId);
+
+    await repositoryPage.selectFolder(folderId);
     await page.waitForLoadState("networkidle");
+
+    // Verify the table is visible
+    const table = page.locator("table").first();
+    await expect(table).toBeVisible({ timeout: 10000 });
+
+    // Wait for rows to appear in tbody
+    const rows = table.locator("tbody tr");
+    await expect(rows.first()).toBeVisible({ timeout: 10000 });
+    expect(await rows.count()).toBe(2);
+
+    // Find the State column sort button
+    const stateHeader = table.locator('th').filter({ hasText: 'State' }).first();
+    await expect(stateHeader).toBeVisible({ timeout: 5000 });
+
+    // The sort button is inside the header with accessible name "Sort column"
+    const sortButton = stateHeader.getByRole('button', { name: 'Sort column' }).first();
+    await expect(sortButton).toBeVisible({ timeout: 5000 });
+    await sortButton.click();
+
+    // Wait for rows to reappear after sort (sorting triggers data refetch)
+    await expect(rows.first()).toBeVisible({ timeout: 10000 });
+    expect(await rows.count()).toBe(2);
   });
 
   test("Maintain Test Case Order Within Folder", async ({ api, page }) => {
@@ -60,17 +112,22 @@ test.describe("Sorting", () => {
     // Create a folder with test cases in specific order
     const folderName = `Maintain Order Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
-    const case1Id = await api.createTestCase(projectId, folderId, `First Case ${Date.now()}`);
-    const case2Id = await api.createTestCase(projectId, folderId, `Second Case ${Date.now()}`);
-    const case3Id = await api.createTestCase(projectId, folderId, `Third Case ${Date.now()}`);
+    await api.createTestCase(projectId, folderId, `First Case ${Date.now()}`);
+    await api.createTestCase(projectId, folderId, `Second Case ${Date.now()}`);
+    await api.createTestCase(projectId, folderId, `Third Case ${Date.now()}`);
 
     await repositoryPage.goto(projectId);
 
     await repositoryPage.selectFolder(folderId);
     await page.waitForLoadState("networkidle");
 
-    // Get the order of test cases
-    const rows = page.locator('[data-testid^="case-row-"]');
+    // Verify the table is visible
+    const table = page.locator("table").first();
+    await expect(table).toBeVisible({ timeout: 10000 });
+
+    // Wait for rows to appear in tbody
+    const rows = table.locator("tbody tr");
+    await expect(rows.first()).toBeVisible({ timeout: 10000 });
     const count = await rows.count();
     expect(count).toBe(3);
 
@@ -80,8 +137,54 @@ test.describe("Sorting", () => {
     await repositoryPage.selectFolder(folderId);
     await page.waitForLoadState("networkidle");
 
-    // Verify order is maintained
-    const rowsAfter = page.locator('[data-testid^="case-row-"]');
-    expect(await rowsAfter.count()).toBe(3);
+    // Verify order is maintained (same number of rows)
+    await expect(table).toBeVisible({ timeout: 10000 });
+    await expect(rows.first()).toBeVisible({ timeout: 10000 });
+    expect(await rows.count()).toBe(3);
+  });
+
+  test("Sort Cycles Through Default, Ascending, Descending", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder with test cases
+    const folderName = `Sort Cycle Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    await api.createTestCase(projectId, folderId, `Alpha Case ${Date.now()}`);
+    await api.createTestCase(projectId, folderId, `Beta Case ${Date.now()}`);
+
+    await repositoryPage.goto(projectId);
+
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    const table = page.locator("table").first();
+    await expect(table).toBeVisible({ timeout: 10000 });
+
+    const rows = table.locator("tbody tr");
+    await expect(rows.first()).toBeVisible({ timeout: 10000 });
+
+    // Find the Name column header and sort button
+    const nameHeader = table.locator('th').filter({ hasText: 'Name' }).first();
+    const sortButton = nameHeader.getByRole('button', { name: 'Sort column' }).first();
+    await expect(sortButton).toBeVisible({ timeout: 5000 });
+
+    // Initial state: "Not sorted" - check the sort icon inside the button
+    const sortIcon = sortButton.getByRole('img');
+    await expect(sortIcon).toHaveAccessibleName('Not sorted');
+
+    // Click 1: Should change to ascending
+    await sortButton.click();
+    await expect(rows.first()).toBeVisible({ timeout: 10000 });
+    await expect(sortIcon).toHaveAccessibleName('Sorted ascending');
+
+    // Click 2: Should change to descending
+    await sortButton.click();
+    await expect(rows.first()).toBeVisible({ timeout: 10000 });
+    await expect(sortIcon).toHaveAccessibleName('Sorted descending');
+
+    // Click 3: Should return to default (not sorted)
+    await sortButton.click();
+    await expect(rows.first()).toBeVisible({ timeout: 10000 });
+    await expect(sortIcon).toHaveAccessibleName('Not sorted');
   });
 });
