@@ -21,9 +21,9 @@ test.describe("Authentication", () => {
     // Verify we're authenticated (not redirected to signin)
     expect(page.url()).not.toContain("/signin");
 
-    // Find the user menu/avatar in the header
+    // Find the user menu button in the header - it's labeled "User menu" in aria
     const userMenu = page.locator(
-      '[data-testid="user-menu"], [data-testid="user-avatar"], [data-testid="header-user"], button:has([data-testid="avatar"]), header button:has(img[alt*="avatar" i]), header [role="button"]:has(img)'
+      'button[aria-label*="User menu" i], button:has-text("User menu"), [data-testid="user-menu"], [data-testid="user-avatar"], button:has([data-testid="avatar"])'
     ).first();
     await expect(userMenu).toBeVisible({ timeout: 10000 });
 
@@ -35,7 +35,7 @@ test.describe("Authentication", () => {
     await expect(userDropdown).toBeVisible({ timeout: 5000 });
 
     // Look for user email or name in the dropdown
-    const userInfo = userDropdown.locator('text=/@|admin|user/i').first();
+    const userInfo = userDropdown.locator('text=/@|admin|user|account/i').first();
     await expect(userInfo).toBeVisible({ timeout: 5000 });
 
     // Close the dropdown

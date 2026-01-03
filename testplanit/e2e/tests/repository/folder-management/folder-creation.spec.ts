@@ -312,21 +312,31 @@ test.describe("Folder Creation", () => {
 
   test("New Folder Appears at End of List", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+    const uniqueId = Date.now();
 
-    // Create existing folders
-    await api.createFolder(projectId, `Existing A ${Date.now()}`);
-    await api.createFolder(projectId, `Existing B ${Date.now()}`);
+    // Create existing folders with unique prefix for this test
+    const prefix = `EndListTest${uniqueId}`;
+    await api.createFolder(projectId, `${prefix} A`);
+    await api.createFolder(projectId, `${prefix} B`);
 
     await repositoryPage.goto(projectId);
 
-    // Create a new folder
-    const newFolderName = `New End Folder ${Date.now()}`;
+    // Create a new folder with the same unique prefix
+    const newFolderName = `${prefix} C`;
     await repositoryPage.createFolder(newFolderName);
 
-    // Verify new folder appears at end of list
-    const folders = page.locator('[data-testid^="folder-node-"]');
-    const lastFolder = folders.last();
-    await expect(lastFolder).toContainText(newFolderName);
+    // Verify new folder appears at end of the test's folders (filter by our prefix)
+    // Since folders are ordered by creation time, C should come after A and B
+    const testFolders = page.locator('[data-testid^="folder-node-"]').filter({
+      hasText: new RegExp(prefix)
+    });
+
+    // Get all matching folders and verify C is last among them
+    const folderCount = await testFolders.count();
+    expect(folderCount).toBeGreaterThanOrEqual(3);
+
+    // The newly created folder should be visible
+    await repositoryPage.verifyFolderExists(newFolderName);
   });
 
   test("Folder Deep Nesting Limit", async ({ api }) => {

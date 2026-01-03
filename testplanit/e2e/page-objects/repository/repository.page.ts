@@ -111,6 +111,9 @@ export class RepositoryPage extends BasePage {
    */
   async expandFolder(folderId: number): Promise<void> {
     const folder = this.getFolderById(folderId);
+    // Hover over the folder first to make the expand button visible
+    // (the button has CSS class "invisible" until hovered)
+    await folder.hover();
     // Look for the expand button - it's a Button with ChevronRight svg inside
     // The button has class containing "h-6 w-6" and the svg has class "w-4 h-4"
     const expandButton = folder.locator('button').filter({ has: this.page.locator('svg.lucide-chevron-right, svg[class*="lucide-chevron"]') }).first();

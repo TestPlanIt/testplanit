@@ -257,12 +257,24 @@ test.describe("Tags", () => {
     await expect(selectedTagRemoveButton).toBeVisible({ timeout: 5000 });
     await selectedTagRemoveButton.click();
 
-    // Click Save to persist the removal
+    // Click Save to persist the removal and wait for the API response
     const saveButton = page
       .locator('button[type="submit"]:has(svg.lucide-save)')
       .first();
     await expect(saveButton).toBeVisible({ timeout: 5000 });
+
+    // Wait for the PUT/PATCH API call to complete
+    const saveResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/model/repositoryCases") &&
+        (response.request().method() === "PUT" ||
+          response.request().method() === "PATCH") &&
+        response.ok(),
+      { timeout: 15000 }
+    );
+
     await saveButton.click();
+    await saveResponsePromise;
 
     // Wait for save to complete - Edit button reappears when back in view mode
     await expect(editButton).toBeVisible({ timeout: 15000 });

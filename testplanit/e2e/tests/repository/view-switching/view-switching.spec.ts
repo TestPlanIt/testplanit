@@ -192,6 +192,10 @@ test.describe("View Switching", () => {
     let viewSwitcher = await getViewSwitcher(page);
     await expect(viewSwitcher).toContainText(/Template/i);
 
+    // Verify the URL contains the view parameter before reloading
+    // This ensures the view state is properly persisted in the URL
+    await expect(page).toHaveURL(/view=templates/, { timeout: 5000 });
+
     // Reload the page
     await page.reload();
     await repositoryPage.waitForRepositoryLoad();
