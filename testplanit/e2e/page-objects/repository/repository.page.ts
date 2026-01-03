@@ -304,17 +304,13 @@ export class RepositoryPage extends BasePage {
   async createTestCase(name: string): Promise<void> {
     await this.openAddCaseModal();
 
-    // Fill in the test case name
-    const nameInput = this.page.getByTestId("case-name-input").or(
-      this.page.locator('[role="dialog"] input[name="name"], [role="dialog"] input[placeholder*="name" i]').first()
-    );
+    // Fill in the test case name (it's a textarea, not an input)
+    const nameInput = this.page.getByTestId("case-name-input");
     await expect(nameInput).toBeVisible({ timeout: 5000 });
     await nameInput.fill(name);
 
-    // Submit the form
-    const submitButton = this.page.getByTestId("case-submit-button").or(
-      this.page.locator('[role="dialog"] button[type="submit"], [role="dialog"] button:has-text("Create"), [role="dialog"] button:has-text("Save")').first()
-    );
+    // Submit the form - button says "Create Test Case"
+    const submitButton = this.page.locator('[role="dialog"] button:has-text("Create Test Case")').first();
     await expect(submitButton).toBeEnabled({ timeout: 5000 });
 
     // Wait for the API call to complete
@@ -337,7 +333,23 @@ export class RepositoryPage extends BasePage {
     // Wait for modal to close (indicates success)
     await expect(this.page.locator('[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
 
-    // Wait for network to settle after creation
+    // Wait for network to settle after creation - the mutation should trigger query invalidation
+    await this.page.waitForLoadState("networkidle");
+
+    // Wait for the GET request that refetches the cases list after invalidation
+    try {
+      await this.page.waitForResponse(
+        (response) =>
+          response.url().includes("/api/model/repositoryCases") &&
+          response.request().method() === "GET" &&
+          response.ok(),
+        { timeout: 5000 }
+      );
+    } catch {
+      // If no GET request is seen, the cache may have already been updated
+    }
+
+    // Wait for the table to update
     await this.page.waitForLoadState("networkidle");
   }
 
