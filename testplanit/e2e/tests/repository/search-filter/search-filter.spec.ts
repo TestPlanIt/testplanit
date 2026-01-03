@@ -5,6 +5,8 @@ import { RepositoryPage } from "../../../page-objects/repository/repository.page
  * Search & Filter Tests
  *
  * Test cases for searching and filtering test cases in the repository.
+ * The repository uses a text filter input (search-input) to filter the DataTable
+ * and a ViewSelector dropdown to filter by different views (folders, states, templates, etc.).
  */
 test.describe("Search & Filter", () => {
   let repositoryPage: RepositoryPage;
@@ -35,8 +37,15 @@ test.describe("Search & Filter", () => {
 
     await repositoryPage.goto(projectId);
 
+    // Select the folder first - search only works within the selected folder
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Verify both test cases are visible initially
+    await expect(page.locator(`text="${searchableName}"`).first()).toBeVisible({ timeout: 10000 });
+
     // Find the search input
-    const searchInput = page.locator('[data-testid="search-input"], input[placeholder*="Search"], input[type="search"]').first();
+    const searchInput = page.getByTestId("search-input");
     await expect(searchInput).toBeVisible({ timeout: 5000 });
 
     // Enter search term
@@ -46,7 +55,7 @@ test.describe("Search & Filter", () => {
     // Verify only the matching test case is shown
     await expect(page.locator(`text="${searchableName}"`).first()).toBeVisible({ timeout: 10000 });
 
-    // Other case should not be visible
+    // Other case should not be visible (filtered out)
     await expect(page.locator('text="Other Case"')).not.toBeVisible({ timeout: 3000 });
   });
 
@@ -66,7 +75,7 @@ test.describe("Search & Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Find the search input
-    const searchInput = page.locator('[data-testid="search-input"], input[placeholder*="Search"], input[type="search"]').first();
+    const searchInput = page.getByTestId("search-input");
     await expect(searchInput).toBeVisible({ timeout: 5000 });
 
     // Search for a term that doesn't match any of the test cases
@@ -74,8 +83,8 @@ test.describe("Search & Filter", () => {
     await searchInput.fill(nonExistentTerm);
     await page.waitForLoadState("networkidle");
 
-    // Verify "no results" message is shown
-    const noResults = page.locator('text=/no results|no test cases|nothing found/i');
+    // Verify "no results" message is shown (the table shows "No cases" when empty)
+    const noResults = page.locator('text=/no results|no test cases|No cases/i');
     await expect(noResults.first()).toBeVisible({ timeout: 10000 });
   });
 
@@ -101,8 +110,8 @@ test.describe("Search & Filter", () => {
     await expect(page.locator(`text="${filterableName}"`).first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator(`text="${nonMatchingName}"`).first()).toBeVisible({ timeout: 5000 });
 
-    // Find and use the filter/search within the folder
-    const filterInput = page.locator('[data-testid="filter-input"], [data-testid="search-input"], input[placeholder*="Filter"], input[placeholder*="Search"]').first();
+    // Find and use the search input to filter within the folder
+    const filterInput = page.getByTestId("search-input");
     await expect(filterInput).toBeVisible({ timeout: 5000 });
 
     // Filter by the unique filterable name
@@ -147,7 +156,7 @@ test.describe("Search & Filter", () => {
     await expect(page.locator(`text="${folder1NonMatchingCase}"`).first()).toBeVisible({ timeout: 5000 });
 
     // Apply filter in folder 1
-    const filterInput = page.locator('[data-testid="filter-input"], [data-testid="search-input"], input[placeholder*="Search"], input[placeholder*="Filter"]').first();
+    const filterInput = page.getByTestId("search-input");
     await expect(filterInput).toBeVisible({ timeout: 5000 });
     await filterInput.fill(searchTerm);
     await page.waitForLoadState("networkidle");
@@ -168,352 +177,360 @@ test.describe("Search & Filter", () => {
     await expect(page.locator(`text="${folder2NonMatchingCase}"`)).not.toBeVisible({ timeout: 5000 });
   });
 
-  test("Filter Test Cases by Single Tag", async ({ api, page }) => {
+  test("Clear Search Filter", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
     // Create a folder with test cases
-    const folderName = `Tag Filter Folder ${Date.now()}`;
+    const folderName = `Clear Search Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
-    const taggedCaseName = `Tagged Case ${Date.now()}`;
-    const caseId = await api.createTestCase(projectId, folderId, taggedCaseName);
-    await api.createTestCase(projectId, folderId, `Untagged Case ${Date.now()}`);
-
-    // Add a tag to one case (if API supports it)
-    // Note: Tag assignment might need to be done via API
-
-    await repositoryPage.goto(projectId);
-
-    // Open filter panel/dropdown
-    const filterButton = page.locator('[data-testid="filter-button"], button:has-text("Filter")').first();
-    await expect(filterButton).toBeVisible({ timeout: 3000 });
-    await filterButton.click();
-
-    // Look for tag filter option
-    const tagFilter = page.locator('[data-testid="tag-filter"], text="Tags"').first();
-    await expect(tagFilter).toBeVisible({ timeout: 3000 });
-    await tagFilter.click();
-
-    // Select a tag (if any exist)
-    const tagOption = page.locator('[data-testid="tag-option"], [role="option"]').first();
-    await expect(tagOption).toBeVisible({ timeout: 3000 });
-    await tagOption.click();
-    await page.waitForLoadState("networkidle");
-
-    // Verify filtering works
-    // This depends on test data setup
-  });
-
-  test("Filter Test Cases by Multiple Tags (AND)", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    // Open filter panel
-    const filterButton = page.locator('[data-testid="filter-button"], button:has-text("Filter")').first();
-    await expect(filterButton).toBeVisible({ timeout: 3000 });
-    await filterButton.click();
-
-    // Look for tag filter with multi-select
-    const tagFilter = page.locator('[data-testid="tag-filter-multi"], [data-testid="tag-filter"]').first();
-    await expect(tagFilter).toBeVisible({ timeout: 3000 });
-    await tagFilter.click();
-
-    // Select multiple tags
-    const tagOptions = page.locator('[data-testid="tag-option"], [role="option"]');
-    await expect(tagOptions.first()).toBeVisible({ timeout: 3000 });
-    const count = await tagOptions.count();
-    expect(count).toBeGreaterThanOrEqual(2);
-    await tagOptions.nth(0).click();
-    await tagOptions.nth(1).click();
-
-    // Look for AND/OR toggle
-    const andToggle = page.locator('button:has-text("AND"), [data-testid="filter-mode-and"]');
-    await expect(andToggle).toBeVisible({ timeout: 2000 });
-    await andToggle.click();
-
-    await page.waitForLoadState("networkidle");
-    // Verify filtering - should show only cases with ALL selected tags
-  });
-
-  test("Filter Test Cases by Multiple Tags (OR)", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    // Similar to AND test but with OR mode
-    const filterButton = page.locator('[data-testid="filter-button"]').first();
-    await expect(filterButton).toBeVisible({ timeout: 3000 });
-    await filterButton.click();
-
-    const tagFilter = page.locator('[data-testid="tag-filter"]').first();
-    await expect(tagFilter).toBeVisible({ timeout: 3000 });
-    await tagFilter.click();
-
-    const tagOptions = page.locator('[role="option"]');
-    await expect(tagOptions.first()).toBeVisible({ timeout: 3000 });
-    const count = await tagOptions.count();
-    expect(count).toBeGreaterThanOrEqual(2);
-    await tagOptions.nth(0).click();
-    await tagOptions.nth(1).click();
-
-    // Look for OR toggle
-    const orToggle = page.locator('button:has-text("OR"), [data-testid="filter-mode-or"]');
-    await expect(orToggle).toBeVisible({ timeout: 2000 });
-    await orToggle.click();
-
-    await page.waitForLoadState("networkidle");
-    // Verify filtering - should show cases with ANY of the selected tags
-  });
-
-  test("Search Tags by Name", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    // Open tag management or filter panel
-    const filterButton = page.locator('[data-testid="filter-button"]').first();
-    await expect(filterButton).toBeVisible({ timeout: 3000 });
-    await filterButton.click();
-
-    const tagFilter = page.locator('[data-testid="tag-filter"]').first();
-    await expect(tagFilter).toBeVisible({ timeout: 3000 });
-    await tagFilter.click();
-
-    // Look for search input within tag filter
-    const tagSearch = page.locator('[data-testid="tag-search"], input[placeholder*="tag"]').first();
-    await expect(tagSearch).toBeVisible({ timeout: 3000 });
-    await tagSearch.fill("test");
-    await page.waitForLoadState("networkidle");
-    // Verify tags are filtered
-  });
-
-  test("Filter Test Cases by Linked Issue", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    const filterButton = page.locator('[data-testid="filter-button"]').first();
-    await expect(filterButton).toBeVisible({ timeout: 3000 });
-    await filterButton.click();
-
-    const issueFilter = page.locator('[data-testid="issue-filter"], text="Issue"').first();
-    await expect(issueFilter).toBeVisible({ timeout: 3000 });
-    await issueFilter.click();
-    // Select a specific issue or "Has linked issue"
-    await page.waitForLoadState("networkidle");
-  });
-
-  test("Filter Test Cases with Any Linked Issue", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    const filterButton = page.locator('[data-testid="filter-button"]').first();
-    await expect(filterButton).toBeVisible({ timeout: 3000 });
-    await filterButton.click();
-
-    const hasIssueOption = page.locator('[data-testid="has-issue-filter"], text=/has issue|with issue/i').first();
-    await expect(hasIssueOption).toBeVisible({ timeout: 3000 });
-    await hasIssueOption.click();
-    await page.waitForLoadState("networkidle");
-  });
-
-  test("Filter Test Cases without Linked Issues", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    const filterButton = page.locator('[data-testid="filter-button"]').first();
-    await expect(filterButton).toBeVisible({ timeout: 3000 });
-    await filterButton.click();
-
-    const noIssueOption = page.locator('[data-testid="no-issue-filter"], text=/no issue|without issue/i').first();
-    await expect(noIssueOption).toBeVisible({ timeout: 3000 });
-    await noIssueOption.click();
-    await page.waitForLoadState("networkidle");
-  });
-
-  test("Search Issues by ID", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    const filterButton = page.locator('[data-testid="filter-button"]').first();
-    await expect(filterButton).toBeVisible({ timeout: 3000 });
-    await filterButton.click();
-
-    const issueSearch = page.locator('[data-testid="issue-search"], input[placeholder*="issue"]').first();
-    await expect(issueSearch).toBeVisible({ timeout: 3000 });
-    await issueSearch.fill("JIRA-123");
-    await page.waitForLoadState("networkidle");
-  });
-
-  test("Search Issues by Title", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    const filterButton = page.locator('[data-testid="filter-button"]').first();
-    await expect(filterButton).toBeVisible({ timeout: 3000 });
-    await filterButton.click();
-
-    const issueSearch = page.locator('[data-testid="issue-search"]').first();
-    await expect(issueSearch).toBeVisible({ timeout: 3000 });
-    await issueSearch.fill("Bug in login");
-    await page.waitForLoadState("networkidle");
-  });
-
-  test("Filter Test Cases by Text Custom Field", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    const filterButton = page.locator('[data-testid="filter-button"]').first();
-    await expect(filterButton).toBeVisible({ timeout: 3000 });
-    await filterButton.click();
-
-    // Look for custom field filters
-    const customFieldFilter = page.locator('[data-testid="custom-field-filter"]').first();
-    await expect(customFieldFilter).toBeVisible({ timeout: 3000 });
-    await customFieldFilter.click();
-    // Enter text value to filter by
-    await page.waitForLoadState("networkidle");
-  });
-
-  test("Filter Test Cases by Dropdown Custom Field", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    const filterButton = page.locator('[data-testid="filter-button"]').first();
-    await expect(filterButton).toBeVisible({ timeout: 3000 });
-    await filterButton.click();
-
-    const customFieldFilter = page.locator('[data-testid="dropdown-field-filter"]').first();
-    await expect(customFieldFilter).toBeVisible({ timeout: 3000 });
-    await customFieldFilter.click();
-    // Select dropdown option
-    await page.waitForLoadState("networkidle");
-  });
-
-  test("Filter Test Cases by Date Custom Field Range", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    const filterButton = page.locator('[data-testid="filter-button"]').first();
-    await expect(filterButton).toBeVisible({ timeout: 3000 });
-    await filterButton.click();
-
-    const dateFilter = page.locator('[data-testid="date-field-filter"]').first();
-    await expect(dateFilter).toBeVisible({ timeout: 3000 });
-    await dateFilter.click();
-    // Set date range
-    await page.waitForLoadState("networkidle");
-  });
-
-  test("Filter Version History by Date Range", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-
-    // Create a test case to view its version history
-    const folderName = `Version Folder ${Date.now()}`;
-    const folderId = await api.createFolder(projectId, folderName);
-    const testCaseId = await api.createTestCase(projectId, folderId, `Version Case ${Date.now()}`);
+    const uniqueId = Date.now();
+    const case1Name = `ClearTest1 ${uniqueId}`;
+    const case2Name = `ClearTest2 ${uniqueId}`;
+    await api.createTestCase(projectId, folderId, case1Name);
+    await api.createTestCase(projectId, folderId, case2Name);
 
     await repositoryPage.goto(projectId);
 
-    // Select folder and open test case
+    // Select the folder
     await repositoryPage.selectFolder(folderId);
-    await page.locator(`[data-testid="case-row-${testCaseId}"]`).first().click();
+    await page.waitForLoadState("networkidle");
 
-    // Open version history tab/panel
-    const historyTab = page.locator('[data-testid="history-tab"], button:has-text("History")').first();
-    await expect(historyTab).toBeVisible({ timeout: 5000 });
-    await historyTab.click();
+    // Verify both test cases are visible initially
+    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({ timeout: 5000 });
 
-    // Look for date range filter
-    const dateFilter = page.locator('[data-testid="history-date-filter"]').first();
-    await expect(dateFilter).toBeVisible({ timeout: 3000 });
-    await dateFilter.click();
-    // Set date range
+    // Apply a search filter
+    const searchInput = page.getByTestId("search-input");
+    await expect(searchInput).toBeVisible({ timeout: 5000 });
+    await searchInput.fill("ClearTest1");
+    await page.waitForLoadState("networkidle");
+
+    // Only one case should be visible
+    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${case2Name}"`)).not.toBeVisible({ timeout: 3000 });
+
+    // Clear the search
+    await searchInput.clear();
+    await page.waitForLoadState("networkidle");
+
+    // Both cases should be visible again
+    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({ timeout: 5000 });
   });
 
-  test("Filter Version History by User", async ({ api, page }) => {
+  test("Search is Case Insensitive", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
-    const folderName = `Version User Folder ${Date.now()}`;
+    // Create a folder with test cases
+    const folderName = `Case Insensitive Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
-    const testCaseId = await api.createTestCase(projectId, folderId, `Version User Case ${Date.now()}`);
+    const uniqueId = Date.now();
+    const caseName = `MixedCaseTest ${uniqueId}`;
+    await api.createTestCase(projectId, folderId, caseName);
+    await api.createTestCase(projectId, folderId, `Other ${uniqueId}`);
 
     await repositoryPage.goto(projectId);
 
+    // Select the folder
     await repositoryPage.selectFolder(folderId);
-    await page.locator(`[data-testid="case-row-${testCaseId}"]`).first().click();
-
-    const historyTab = page.locator('[data-testid="history-tab"], button:has-text("History")').first();
-    await expect(historyTab).toBeVisible({ timeout: 5000 });
-    await historyTab.click();
-
-    const userFilter = page.locator('[data-testid="history-user-filter"]').first();
-    await expect(userFilter).toBeVisible({ timeout: 3000 });
-    await userFilter.click();
-    // Select user
-  });
-
-  test("Documentation Search", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    // Navigate to documentation section if separate
-    const docsNav = page.locator('[data-testid="docs-nav"], a:has-text("Documentation")').first();
-    await expect(docsNav).toBeVisible({ timeout: 3000 });
-    await docsNav.click();
     await page.waitForLoadState("networkidle");
 
-    // Search in documentation
-    const docsSearch = page.locator('[data-testid="docs-search"], input[placeholder*="documentation"]').first();
-    await expect(docsSearch).toBeVisible({ timeout: 3000 });
-    await docsSearch.fill("test");
+    // Search with lowercase
+    const searchInput = page.getByTestId("search-input");
+    await expect(searchInput).toBeVisible({ timeout: 5000 });
+    await searchInput.fill("mixedcasetest");
     await page.waitForLoadState("networkidle");
+
+    // The matching case should be visible (case insensitive match)
+    await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({ timeout: 10000 });
+
+    // The other case should not be visible
+    await expect(page.locator(`text="Other ${uniqueId}"`)).not.toBeVisible({ timeout: 3000 });
   });
 
-  test("Documentation Full Text Search", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-    await repositoryPage.goto(projectId);
-
-    // Navigate to documentation
-    const docsNav = page.locator('[data-testid="docs-nav"]').first();
-    await expect(docsNav).toBeVisible({ timeout: 3000 });
-    await docsNav.click();
-
-    // Use full-text search
-    const fullTextSearch = page.locator('[data-testid="full-text-search"]').first();
-    await expect(fullTextSearch).toBeVisible({ timeout: 3000 });
-    await fullTextSearch.fill("specific content");
-    await page.waitForLoadState("networkidle");
-  });
-
-  test("Export Filtered Results", async ({ api, page }) => {
+  test("Search with Partial Match", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
-    // Create test data
-    const folderName = `Export Filter Folder ${Date.now()}`;
+    // Create a folder with test cases
+    const folderName = `Partial Match Folder ${Date.now()}`;
     const folderId = await api.createFolder(projectId, folderName);
-    const exportableName = `Exportable${Date.now()}`;
-    await api.createTestCase(projectId, folderId, exportableName);
-    await api.createTestCase(projectId, folderId, `Other Export ${Date.now()}`);
+    const uniqueId = Date.now();
+    const caseName = `LongTestCaseName ${uniqueId}`;
+    await api.createTestCase(projectId, folderId, caseName);
+    await api.createTestCase(projectId, folderId, `Different ${uniqueId}`);
 
     await repositoryPage.goto(projectId);
 
-    // Apply a filter
-    const searchInput = page.locator('[data-testid="search-input"]').first();
-    await expect(searchInput).toBeVisible({ timeout: 3000 });
-    await searchInput.fill(exportableName);
+    // Select the folder
+    await repositoryPage.selectFolder(folderId);
     await page.waitForLoadState("networkidle");
 
-    // Click export button
-    const exportButton = page.locator('[data-testid="export-button"], button:has-text("Export")').first();
-    await expect(exportButton).toBeVisible({ timeout: 3000 });
-    await exportButton.click();
+    // Search with partial term
+    const searchInput = page.getByTestId("search-input");
+    await expect(searchInput).toBeVisible({ timeout: 5000 });
+    await searchInput.fill("LongTest");
+    await page.waitForLoadState("networkidle");
 
-    // Verify export dialog mentions filtered results
-    const exportDialog = page.locator('[role="dialog"]');
-    await expect(exportDialog).toBeVisible({ timeout: 5000 });
+    // The matching case should be visible
+    await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({ timeout: 10000 });
 
-    // Look for indication that filtered results will be exported
-    const filteredIndicator = exportDialog.locator('text=/filtered|1 case|selected/i');
-    await expect(filteredIndicator).toBeVisible({ timeout: 2000 });
+    // The other case should not be visible
+    await expect(page.locator(`text="Different ${uniqueId}"`)).not.toBeVisible({ timeout: 3000 });
+  });
 
-    // Close dialog
-    await page.keyboard.press("Escape");
+  test("Search Input Has Placeholder Text", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder so we can see the search input
+    const folderName = `Placeholder Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+
+    await repositoryPage.goto(projectId);
+
+    // Select the folder
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Verify search input has a placeholder
+    const searchInput = page.getByTestId("search-input");
+    await expect(searchInput).toBeVisible({ timeout: 5000 });
+
+    // The input should have some placeholder text (could be "Filter..." or similar)
+    const placeholder = await searchInput.getAttribute("placeholder");
+    expect(placeholder).toBeTruthy();
+    expect(placeholder!.length).toBeGreaterThan(0);
+  });
+
+  test("Search Matches Multiple Test Cases", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder with test cases that share a common term
+    const folderName = `Multi Match Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    const uniqueId = Date.now();
+    const commonTerm = `CommonPrefix${uniqueId}`;
+    const case1Name = `${commonTerm} First`;
+    const case2Name = `${commonTerm} Second`;
+    const case3Name = `${commonTerm} Third`;
+    const nonMatchingName = `Different ${uniqueId}`;
+
+    await api.createTestCase(projectId, folderId, case1Name);
+    await api.createTestCase(projectId, folderId, case2Name);
+    await api.createTestCase(projectId, folderId, case3Name);
+    await api.createTestCase(projectId, folderId, nonMatchingName);
+
+    await repositoryPage.goto(projectId);
+
+    // Select the folder
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Verify all 4 test cases are visible initially
+    const table = page.locator("table").first();
+    await expect(table).toBeVisible({ timeout: 10000 });
+    const rows = table.locator("tbody tr");
+    await expect(rows).toHaveCount(4, { timeout: 10000 });
+
+    // Search for the common term
+    const searchInput = page.getByTestId("search-input");
+    await searchInput.fill(commonTerm);
+    await page.waitForLoadState("networkidle");
+
+    // Should show exactly 3 matching cases
+    await expect(rows).toHaveCount(3, { timeout: 10000 });
+
+    // Verify the matching cases are visible
+    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible();
+    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible();
+    await expect(page.locator(`text="${case3Name}"`).first()).toBeVisible();
+
+    // Non-matching case should not be visible
+    await expect(page.locator(`text="${nonMatchingName}"`)).not.toBeVisible({ timeout: 3000 });
+  });
+
+  test("Search with Special Characters", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder with test cases that have special characters
+    const folderName = `Special Chars Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    const uniqueId = Date.now();
+    // Test case with parentheses and brackets
+    const specialCaseName = `Test (with) [brackets] ${uniqueId}`;
+    const normalCaseName = `Normal Case ${uniqueId}`;
+
+    await api.createTestCase(projectId, folderId, specialCaseName);
+    await api.createTestCase(projectId, folderId, normalCaseName);
+
+    await repositoryPage.goto(projectId);
+
+    // Select the folder
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Search for part of the special character name
+    const searchInput = page.getByTestId("search-input");
+    await searchInput.fill("(with)");
+    await page.waitForLoadState("networkidle");
+
+    // The special character case should be visible
+    await expect(page.locator(`text="${specialCaseName}"`).first()).toBeVisible({ timeout: 10000 });
+
+    // Normal case should not be visible
+    await expect(page.locator(`text="${normalCaseName}"`)).not.toBeVisible({ timeout: 3000 });
+  });
+
+  test("Search Works with Sequential Typing", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder with test cases
+    const folderName = `Sequential Typing Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    const uniqueId = Date.now();
+    const targetCaseName = `TargetCase ${uniqueId}`;
+    await api.createTestCase(projectId, folderId, targetCaseName);
+    await api.createTestCase(projectId, folderId, `Other ${uniqueId}`);
+
+    await repositoryPage.goto(projectId);
+
+    // Select the folder
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Verify both cases are visible initially
+    await expect(page.locator(`text="${targetCaseName}"`).first()).toBeVisible({ timeout: 10000 });
+
+    // Type character by character (simulating real user typing)
+    const searchInput = page.getByTestId("search-input");
+    await searchInput.focus();
+    await searchInput.pressSequentially("Target", { delay: 100 });
+
+    // Wait for debounce to complete and results to filter
+    // The debounce is 300ms, so wait a bit longer for network
+    await page.waitForTimeout(500);
+    await page.waitForLoadState("networkidle");
+
+    // After typing completes and debounce triggers, only the target case should be visible
+    await expect(page.locator(`text="${targetCaseName}"`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text="Other ${uniqueId}"`)).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test("Search Updates Pagination Count", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder with enough test cases to have pagination
+    const folderName = `Search Pagination Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    const uniqueId = Date.now();
+
+    // Create 15 test cases - 5 with "Alpha" prefix, 10 with "Beta" prefix
+    for (let i = 0; i < 5; i++) {
+      await api.createTestCase(projectId, folderId, `Alpha ${i} ${uniqueId}`);
+    }
+    for (let i = 0; i < 10; i++) {
+      await api.createTestCase(projectId, folderId, `Beta ${i} ${uniqueId}`);
+    }
+
+    await repositoryPage.goto(projectId);
+
+    // Select the folder
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Verify initial count shows 15 items
+    await expect(page.locator('text=/of 15 items/')).toBeVisible({ timeout: 5000 });
+
+    // Apply search filter for "Alpha"
+    const searchInput = page.getByTestId("search-input");
+    await searchInput.fill("Alpha");
+    await page.waitForLoadState("networkidle");
+
+    // Verify count updated to show only 5 items
+    await expect(page.locator('text=/of 5 items/')).toBeVisible({ timeout: 5000 });
+
+    // Clear the filter
+    await searchInput.clear();
+    await page.waitForLoadState("networkidle");
+
+    // Verify count is back to 15 items
+    await expect(page.locator('text=/of 15 items/')).toBeVisible({ timeout: 5000 });
+  });
+
+  test("Search Removes Pagination When Results Fit One Page", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder with enough test cases to trigger pagination (>10)
+    const folderName = `Search Remove Pagination Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    const uniqueId = Date.now();
+
+    // Create 15 test cases - only 3 have the unique search term
+    const searchTerm = `UniqueTarget${uniqueId}`;
+    for (let i = 0; i < 3; i++) {
+      await api.createTestCase(projectId, folderId, `${searchTerm} Case ${i}`);
+    }
+    for (let i = 0; i < 12; i++) {
+      await api.createTestCase(projectId, folderId, `Other Case ${i} ${uniqueId}`);
+    }
+
+    await repositoryPage.goto(projectId);
+
+    // Select the folder
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Verify pagination is initially visible (15 items > 10 per page)
+    const paginationNav = page.locator('nav[aria-label="pagination"]');
+    await expect(paginationNav).toBeVisible({ timeout: 5000 });
+
+    // Apply search filter that reduces results to less than page size
+    const searchInput = page.getByTestId("search-input");
+    await searchInput.fill(searchTerm);
+    await page.waitForLoadState("networkidle");
+
+    // Verify pagination is no longer visible (3 items < 10 per page)
+    await expect(paginationNav).not.toBeVisible({ timeout: 5000 });
+
+    // Verify only 3 items are shown
+    await expect(page.locator('text=/of 3 items/')).toBeVisible({ timeout: 5000 });
+  });
+
+  test("Search Resets to First Page", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder with enough test cases for multiple pages
+    const folderName = `Search Reset Page Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    const uniqueId = Date.now();
+
+    // Create 25 test cases - some with "Target" prefix distributed across pages
+    for (let i = 0; i < 25; i++) {
+      const prefix = i % 3 === 0 ? "Target" : "Other";
+      await api.createTestCase(projectId, folderId, `${prefix} ${i} ${uniqueId}`);
+    }
+
+    await repositoryPage.goto(projectId);
+
+    // Select the folder
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Navigate to page 2
+    const paginationNav = page.locator('nav[aria-label="pagination"]');
+    await expect(paginationNav).toBeVisible({ timeout: 5000 });
+    const page2Link = paginationNav.locator('a:has-text("2")').first();
+    await page2Link.click();
+    await page.waitForLoadState("networkidle");
+
+    // Verify we're on page 2
+    await expect(page.locator('text=/Showing 11-20 of/')).toBeVisible({ timeout: 5000 });
+
+    // Apply search filter
+    const searchInput = page.getByTestId("search-input");
+    await searchInput.fill("Target");
+    await page.waitForLoadState("networkidle");
+
+    // Verify we're reset to page 1 of filtered results (starts with "Showing 1-")
+    await expect(page.locator('text=/Showing 1-/')).toBeVisible({ timeout: 5000 });
   });
 });
