@@ -269,6 +269,7 @@ export class ApiHelper {
   /**
    * Create a test case via API
    * Uses ZenStack's relation connect syntax
+   * Also creates the initial version 1 record (matching UI behavior)
    */
   async createTestCase(
     projectId: number,
@@ -280,6 +281,16 @@ export class ApiHelper {
       this.getTemplateId(projectId),
       this.getStateId(projectId),
     ]);
+
+    // Get additional info needed for version record
+    const [folderInfo, templateInfo, stateInfo, projectInfo, userInfo] =
+      await Promise.all([
+        this.getFolderInfo(folderId),
+        this.getTemplateInfo(templateId),
+        this.getWorkflowInfo(stateId),
+        this.getProjectInfo(projectId),
+        this.getCurrentUserInfo(),
+      ]);
 
     const response = await this.request.post(
       `${this.baseURL}/api/model/repositoryCases/create`,
@@ -299,6 +310,7 @@ export class ApiHelper {
             folder: { connect: { id: folderId } },
             template: { connect: { id: templateId } },
             state: { connect: { id: stateId } },
+            creator: { connect: { id: userInfo.id } },
           },
         },
       }
@@ -312,7 +324,161 @@ export class ApiHelper {
     const result = await response.json();
     const caseId = result.data.id;
     this.createdCaseIds.push(caseId);
+
+    // Create version 1 record (matching UI behavior)
+    const versionResponse = await this.request.post(
+      `${this.baseURL}/api/model/repositoryCaseVersions/create`,
+      {
+        data: {
+          data: {
+            repositoryCase: { connect: { id: caseId } },
+            project: { connect: { id: projectId } },
+            staticProjectName: projectInfo.name,
+            staticProjectId: projectId,
+            repositoryId: repositoryId,
+            folderId: folderId,
+            folderName: folderInfo.name,
+            templateId: templateId,
+            templateName: templateInfo.name,
+            name: name,
+            stateId: stateId,
+            stateName: stateInfo.name,
+            estimate: 0,
+            creatorId: userInfo.id,
+            creatorName: userInfo.name,
+            automated: false,
+            isArchived: false,
+            isDeleted: false,
+            version: 1,
+            steps: [],
+            tags: [],
+            issues: [],
+            attachments: [],
+          },
+        },
+      }
+    );
+
+    if (!versionResponse.ok()) {
+      // Log warning but don't fail - version record is needed for version selector
+      console.warn(`Failed to create initial version record for case ${caseId}`);
+    }
+
     return caseId;
+  }
+
+  /**
+   * Helper: Get folder info
+   */
+  private async getFolderInfo(
+    folderId: number
+  ): Promise<{ id: number; name: string }> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/repositoryFolders/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { id: folderId },
+            select: { id: true, name: true },
+          }),
+        },
+      }
+    );
+    if (!response.ok()) {
+      return { id: folderId, name: "Unknown" };
+    }
+    const result = await response.json();
+    return result.data || { id: folderId, name: "Unknown" };
+  }
+
+  /**
+   * Helper: Get template info
+   */
+  private async getTemplateInfo(
+    templateId: number
+  ): Promise<{ id: number; name: string }> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/templates/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { id: templateId },
+            select: { id: true, templateName: true },
+          }),
+        },
+      }
+    );
+    if (!response.ok()) {
+      return { id: templateId, name: "Unknown" };
+    }
+    const result = await response.json();
+    return {
+      id: result.data?.id || templateId,
+      name: result.data?.templateName || "Unknown",
+    };
+  }
+
+  /**
+   * Helper: Get workflow/state info
+   */
+  private async getWorkflowInfo(
+    workflowId: number
+  ): Promise<{ id: number; name: string }> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/workflows/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { id: workflowId },
+            select: { id: true, name: true },
+          }),
+        },
+      }
+    );
+    if (!response.ok()) {
+      return { id: workflowId, name: "Unknown" };
+    }
+    const result = await response.json();
+    return result.data || { id: workflowId, name: "Unknown" };
+  }
+
+  /**
+   * Helper: Get project info
+   */
+  private async getProjectInfo(
+    projectId: number
+  ): Promise<{ id: number; name: string }> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/projects/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { id: projectId },
+            select: { id: true, name: true },
+          }),
+        },
+      }
+    );
+    if (!response.ok()) {
+      return { id: projectId, name: "Unknown" };
+    }
+    const result = await response.json();
+    return result.data || { id: projectId, name: "Unknown" };
+  }
+
+  /**
+   * Helper: Get current user info
+   */
+  private async getCurrentUserInfo(): Promise<{ id: string; name: string }> {
+    const response = await this.request.get(`${this.baseURL}/api/auth/session`);
+    if (!response.ok()) {
+      return { id: "", name: "Unknown" };
+    }
+    const session = await response.json();
+    return {
+      id: session?.user?.id || "",
+      name: session?.user?.name || "Unknown",
+    };
   }
 
   /**
@@ -340,6 +506,109 @@ export class ApiHelper {
     const tagId = result.data.id;
     this.createdTagIds.push(tagId);
     return tagId;
+  }
+
+  /**
+   * Update a test case name via API and create a new version record
+   * This properly creates a new version in the system (like the UI does)
+   */
+  async updateTestCaseName(caseId: number, newName: string): Promise<void> {
+    // First, fetch the current test case to get all required data including tags
+    const caseResponse = await this.request.get(
+      `${this.baseURL}/api/model/repositoryCases/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { id: caseId },
+            include: {
+              project: { select: { id: true, name: true } },
+              folder: { select: { id: true, name: true } },
+              template: { select: { id: true, templateName: true } },
+              state: { select: { id: true, name: true } },
+              creator: { select: { id: true, name: true } },
+              tags: { select: { id: true, name: true } },
+            },
+          }),
+        },
+      }
+    );
+
+    if (!caseResponse.ok()) {
+      const error = await caseResponse.text();
+      throw new Error(`Failed to fetch test case: ${error}`);
+    }
+
+    const caseResult = await caseResponse.json();
+    const testcase = caseResult.data;
+
+    if (!testcase) {
+      throw new Error(`Test case ${caseId} not found`);
+    }
+
+    const newVersion = testcase.currentVersion + 1;
+
+    // Extract tag names for the version snapshot
+    const tagNames = (testcase.tags || []).map(
+      (tag: { name: string }) => tag.name
+    );
+
+    // Create the new version record
+    const versionResponse = await this.request.post(
+      `${this.baseURL}/api/model/repositoryCaseVersions/create`,
+      {
+        data: {
+          data: {
+            repositoryCase: { connect: { id: caseId } },
+            project: { connect: { id: testcase.project.id } },
+            staticProjectName: testcase.project.name || "",
+            staticProjectId: testcase.project.id,
+            repositoryId: testcase.repositoryId || 0,
+            folderId: testcase.folder?.id || 0,
+            folderName: testcase.folder?.name || "Unknown",
+            templateId: testcase.template?.id || 0,
+            templateName: testcase.template?.templateName || "Unknown",
+            name: newName,
+            stateId: testcase.state?.id || 0,
+            stateName: testcase.state?.name || "Unknown",
+            estimate: testcase.estimate || 0,
+            creatorId: testcase.creatorId,
+            creatorName: testcase.creator?.name || "Unknown",
+            automated: testcase.automated || false,
+            isArchived: false,
+            isDeleted: false,
+            version: newVersion,
+            steps: [],
+            tags: tagNames,
+            issues: [],
+            attachments: [],
+          },
+        },
+      }
+    );
+
+    if (!versionResponse.ok()) {
+      const error = await versionResponse.text();
+      throw new Error(`Failed to create version record: ${error}`);
+    }
+
+    // Update the test case with the new name and increment currentVersion
+    const updateResponse = await this.request.patch(
+      `${this.baseURL}/api/model/repositoryCases/update`,
+      {
+        data: {
+          where: { id: caseId },
+          data: {
+            name: newName,
+            currentVersion: newVersion,
+          },
+        },
+      }
+    );
+
+    if (!updateResponse.ok()) {
+      const error = await updateResponse.text();
+      throw new Error(`Failed to update test case: ${error}`);
+    }
   }
 
   /**
