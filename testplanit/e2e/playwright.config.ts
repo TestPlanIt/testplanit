@@ -30,7 +30,7 @@ export default defineConfig({
 
   // Limit workers for stability (dev server can get overwhelmed)
   // Production build can handle more workers than dev server
-  workers: isCI ? 2 : useProdBuild ? 7 : 1,
+  workers: isCI ? 2 : useProdBuild ? 6 : 1,
 
   // Reporter configuration
   reporter: [
