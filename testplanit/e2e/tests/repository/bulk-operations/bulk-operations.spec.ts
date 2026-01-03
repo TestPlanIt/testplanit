@@ -302,4 +302,51 @@ test.describe("Bulk Operations", () => {
     await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({ timeout: 5000 });
     await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({ timeout: 5000 });
   });
+
+  test("Select All Checkbox in Table Header", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder with multiple test cases
+    const folderName = `Select All Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `Select All Case 1 ${Date.now()}`
+    );
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `Select All Case 2 ${Date.now()}`
+    );
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `Select All Case 3 ${Date.now()}`
+    );
+
+    await repositoryPage.goto(projectId);
+
+    // Select the folder
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Find the "Select All" checkbox in the table header
+    // The checkbox can be a native input[type="checkbox"] or a Radix checkbox (button[role="checkbox"])
+    const headerRow = page.locator("thead tr").first();
+    const selectAllCheckbox = headerRow
+      .locator('[role="checkbox"], input[type="checkbox"]')
+      .first();
+    await expect(selectAllCheckbox).toBeVisible({ timeout: 10000 });
+
+    // Click to select all
+    await selectAllCheckbox.click();
+
+    // Verify bulk edit button appears (indicates items are selected)
+    // Need to wait for the button to become visible after selection state changes
+    const bulkEditButton = page
+      .locator('[data-testid="bulk-edit-button"]')
+      .first();
+    await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
+  });
 });

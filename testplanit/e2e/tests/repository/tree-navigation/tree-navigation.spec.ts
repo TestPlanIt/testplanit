@@ -302,4 +302,45 @@ test.describe("Tree Navigation", () => {
     await expect(rootFolder.first()).toBeVisible({ timeout: 5000 });
   });
 
+  test("View Test Cases in Selected Folder Only", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create two folders with different test cases
+    const folder1Name = `Folder1 Isolation ${Date.now()}`;
+    const folder1Id = await api.createFolder(projectId, folder1Name);
+    const case1Name = `Case In Folder1 ${Date.now()}`;
+    await api.createTestCase(projectId, folder1Id, case1Name);
+
+    const folder2Name = `Folder2 Isolation ${Date.now()}`;
+    const folder2Id = await api.createFolder(projectId, folder2Name);
+    const case2Name = `Case In Folder2 ${Date.now()}`;
+    await api.createTestCase(projectId, folder2Id, case2Name);
+
+    await repositoryPage.goto(projectId);
+
+    // Select folder 1
+    await repositoryPage.selectFolder(folder1Id);
+    await page.waitForLoadState("networkidle");
+
+    // Verify only folder 1's test case is visible
+    await expect(page.locator(`text="${case1Name}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator(`text="${case2Name}"`)).not.toBeVisible({
+      timeout: 3000,
+    });
+
+    // Select folder 2
+    await repositoryPage.selectFolder(folder2Id);
+    await page.waitForLoadState("networkidle");
+
+    // Verify only folder 2's test case is visible
+    await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.locator(`text="${case1Name}"`)).not.toBeVisible({
+      timeout: 3000,
+    });
+  });
+
 });

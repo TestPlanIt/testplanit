@@ -393,4 +393,79 @@ test.describe("View Switching", () => {
     // Dropdown should be closed
     await expect(options.first()).not.toBeVisible({ timeout: 2000 });
   });
+
+  test("Test Case Table Shows Required Columns", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder with a test case
+    const folderName = `Columns Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    await api.createTestCase(
+      projectId,
+      folderId,
+      `Column Test Case ${Date.now()}`
+    );
+
+    await repositoryPage.goto(projectId);
+
+    // Select the folder
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Verify essential columns are visible in the table header
+    const table = page.locator("table").first();
+    await expect(table).toBeVisible({ timeout: 10000 });
+
+    // Check for Name column
+    await expect(table.locator('th:has-text("Name")')).toBeVisible();
+
+    // Check for State column
+    await expect(table.locator('th:has-text("State")')).toBeVisible();
+  });
+
+  test("Empty Folder Shows No Test Cases Message", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create an empty folder
+    const folderName = `Empty Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+
+    await repositoryPage.goto(projectId);
+
+    // Select the empty folder
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Verify empty state message is shown
+    const emptyMessage = page.locator("text=/No test cases|No cases/i");
+    await expect(emptyMessage.first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test("Test Case Shows State Badge", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder with a test case
+    const folderName = `State Badge Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    const testCaseName = `State Badge Case ${Date.now()}`;
+    const testCaseId = await api.createTestCase(
+      projectId,
+      folderId,
+      testCaseName
+    );
+
+    await repositoryPage.goto(projectId);
+
+    // Select the folder
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Find the test case row
+    const testCaseRow = page.locator(`[data-row-id="${testCaseId}"]`).first();
+    await expect(testCaseRow).toBeVisible({ timeout: 10000 });
+
+    // The row should contain a state badge (default state is usually "New" or "Draft")
+    // Look for state text in the state column
+    await expect(testCaseRow).toContainText(/New|Draft|Ready|Approved/i);
+  });
 });
