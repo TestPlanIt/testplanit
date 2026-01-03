@@ -189,15 +189,17 @@ test.describe("Tree Navigation", () => {
     // Create multiple parent folders with children
     const parent1Name = `Parent1 ModKey ${Date.now()}`;
     const parent1Id = await api.createFolder(projectId, parent1Name);
-    await api.createFolder(projectId, `Child1 ${Date.now()}`, parent1Id);
+    const child1Name = `Child1 ModKey ${Date.now()}`;
+    await api.createFolder(projectId, child1Name, parent1Id);
 
     const parent2Name = `Parent2 ModKey ${Date.now()}`;
     const parent2Id = await api.createFolder(projectId, parent2Name);
-    await api.createFolder(projectId, `Child2 ${Date.now()}`, parent2Id);
+    const child2Name = `Child2 ModKey ${Date.now()}`;
+    await api.createFolder(projectId, child2Name, parent2Id);
 
     await repositoryPage.goto(projectId);
 
-    // Hold modifier key (Alt/Option or Ctrl) and click expand on one folder
+    // Hold modifier key (Ctrl on Windows/Linux, Meta/Cmd on macOS) and click expand on one folder
     // This should expand all root folders
     const parent1 = repositoryPage.getFolderById(parent1Id);
     // Hover to make the expand button visible
@@ -208,16 +210,15 @@ test.describe("Tree Navigation", () => {
     }).first();
     await expect(expandButton).toBeVisible({ timeout: 5000 });
 
-    // Click the expand button with Alt modifier
-    // Note: Some UI frameworks don't support Alt+click for expand all, so we just verify normal expand works
-    await expandButton.click({ modifiers: ["Alt"] });
+    // Click the expand button with ControlOrMeta modifier (works on both Mac and Windows)
+    await expandButton.click({ modifiers: ["ControlOrMeta"] });
 
     await page.waitForLoadState("networkidle");
 
     // Both children should now be visible
     // This behavior depends on implementation - if not supported, children may not all be visible
     // Check at least one expanded
-    const parent1Children = repositoryPage.getFolderByName(`Child1`);
+    const parent1Children = repositoryPage.getFolderByName(child1Name);
     await expect(parent1Children.first()).toBeVisible({ timeout: 5000 });
   });
 

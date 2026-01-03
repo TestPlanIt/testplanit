@@ -148,8 +148,14 @@ test.describe("Drag & Drop", () => {
     const childAfterDrag = repositoryPage.getFolderByName(childName);
     await expect(childAfterDrag.first()).toBeVisible({ timeout: 5000 });
 
-    // Scroll into view before getting bounding box
-    await childAfterDrag.first().scrollIntoViewIfNeeded();
+    // Wait for element to have stable bounding box (not animating)
+    await expect(async () => {
+      const box = await childAfterDrag.first().boundingBox();
+      expect(box).not.toBeNull();
+    }).toPass({ timeout: 5000 });
+
+    // Scroll into view
+    await childAfterDrag.first().evaluate((el) => el.scrollIntoView({ block: "center" }));
 
     // Check if the child is now indented (nested under parent)
     // This verifies the drag-to-nest worked
@@ -186,14 +192,24 @@ test.describe("Drag & Drop", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for child folder to be visible (nested under parent)
-    await expect(repositoryPage.getFolderById(childId)).toBeVisible({ timeout: 10000 });
-
-    // Re-fetch element references after DOM has settled (elements may have been re-rendered)
     const child = repositoryPage.getFolderById(childId);
+    await expect(child).toBeVisible({ timeout: 10000 });
+
+    // Wait for DOM to stabilize after animation
+    await page.waitForLoadState("networkidle");
+
+    // Get element reference for parent
     const parent = repositoryPage.getFolderById(parentId);
 
-    // Scroll child into view to ensure we can get its bounding box
-    await child.scrollIntoViewIfNeeded();
+    // Wait for elements to have stable bounding boxes (not animating)
+    await expect(async () => {
+      const box = await child.boundingBox();
+      expect(box).not.toBeNull();
+    }).toPass({ timeout: 5000 });
+
+    // Scroll elements into view
+    await child.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await parent.evaluate((el) => el.scrollIntoView({ block: "center" }));
 
     // Get the child's position while nested - it should be indented
     const childBoxBefore = await child.boundingBox();
@@ -264,9 +280,9 @@ test.describe("Drag & Drop", () => {
     await expect(testCaseRow).toBeVisible({ timeout: 5000 });
     await expect(targetFolderElement).toBeVisible({ timeout: 5000 });
 
-    // Scroll elements into view to ensure we can get their bounding boxes
-    await testCaseRow.scrollIntoViewIfNeeded();
-    await targetFolderElement.scrollIntoViewIfNeeded();
+    // Use evaluate to scroll elements into view (more stable than scrollIntoViewIfNeeded)
+    await testCaseRow.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await targetFolderElement.evaluate((el) => el.scrollIntoView({ block: "center" }));
 
     const caseBox = await testCaseRow.boundingBox();
     const targetBox = await targetFolderElement.boundingBox();
@@ -517,16 +533,19 @@ test.describe("Drag & Drop", () => {
 
     await repositoryPage.expandFolder(parentId);
 
-    // Wait for child to be visible after expand
-    await expect(repositoryPage.getFolderById(childId)).toBeVisible({ timeout: 5000 });
-
-    // Re-fetch element references after DOM has settled (elements may have been re-rendered)
-    const parent = repositoryPage.getFolderById(parentId);
+    // Wait for child to be visible and stable after expand
     const child = repositoryPage.getFolderById(childId);
+    await expect(child).toBeVisible({ timeout: 5000 });
 
-    // Scroll elements into view to ensure we can get their bounding boxes
-    await parent.scrollIntoViewIfNeeded();
-    await child.scrollIntoViewIfNeeded();
+    // Wait a moment for DOM to stabilize after animation
+    await page.waitForLoadState("networkidle");
+
+    // Get element references and their bounding boxes
+    const parent = repositoryPage.getFolderById(parentId);
+
+    // Use evaluate to scroll and get bounding boxes in a single stable operation
+    await parent.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    await child.evaluate((el) => el.scrollIntoView({ block: "center" }));
 
     const parentBox = await parent.boundingBox();
     const childBox = await child.boundingBox();
