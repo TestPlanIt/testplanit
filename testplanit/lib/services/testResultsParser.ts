@@ -365,17 +365,17 @@ export async function parseTestResults(
 
 /**
  * Normalize durations across the result tree
- * Most formats use milliseconds, but we store in seconds for consistency
+ * The test-results-parser library returns durations in milliseconds for ALL formats
+ * (including JUnit, even though JUnit XML uses seconds - the library converts them).
+ * We convert to seconds for consistency with our database schema.
  */
 function normalizeDurations(
   result: ITestResult,
   format: TestResultFormat
 ): void {
-  // JUnit already uses seconds in XML, but the parser may convert
-  // For safety, we check if durations seem to be in ms (> 1000 for typical tests)
-  // and convert accordingly
-
-  const needsConversion = format !== "junit";
+  // The test-results-parser library converts ALL formats to milliseconds internally,
+  // including JUnit (which has seconds in XML). We always need to convert back to seconds.
+  const needsConversion = true;
 
   if (needsConversion) {
     // Convert result duration
