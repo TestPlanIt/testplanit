@@ -1,3 +1,10 @@
+## [0.9.11](https://github.com/TestPlanIt/testplanit/compare/v0.9.10...v0.9.11) (2026-01-04)
+
+
+### Bug Fixes
+
+* **translations:** Update related import messages for consistency across test result formats. ([19e69b8](https://github.com/TestPlanIt/testplanit/commit/19e69b86ae2b49fb992f9c4696ddafd4017c372d))
+
 ## [0.9.10](https://github.com/TestPlanIt/testplanit/compare/v0.9.9...v0.9.10) (2026-01-01)
 
 
