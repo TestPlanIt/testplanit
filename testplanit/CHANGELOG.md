@@ -1,3 +1,10 @@
+## [0.9.12](https://github.com/TestPlanIt/testplanit/compare/v0.9.11...v0.9.12) (2026-01-04)
+
+
+### Bug Fixes
+
+* **testResultsParser:** update duration normalization logic to ensure consistent conversion from milliseconds to seconds ([9094504](https://github.com/TestPlanIt/testplanit/commit/9094504fce2cda2119f1ef2ed9bc5761c2cba1be))
+
 ## [0.9.11](https://github.com/TestPlanIt/testplanit/compare/v0.9.10...v0.9.11) (2026-01-04)
 
 
