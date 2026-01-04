@@ -191,6 +191,7 @@ const sidebars: SidebarsConfig = {
     'api-reference', // Add api-reference.md
     'cli', // CLI tool documentation
     'api-tokens', // API tokens documentation
+    'e2e-testing', // E2E testing guide for contributors
     // SDK & Integrations category
     {
       type: 'category',

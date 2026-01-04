@@ -9,7 +9,6 @@ This monorepo contains the source code and related files for the TestPlanIt proj
 ![Sessions](testplanit/assets/sessions.png)
 ![Reports](testplanit/assets/reports.png)
 
-
 ## Structure
 
 This repository uses [pnpm workspaces](https://pnpm.io/workspaces) to manage multiple packages.
@@ -17,6 +16,8 @@ This repository uses [pnpm workspaces](https://pnpm.io/workspaces) to manage mul
 -   **`testplanit/`**: The main TestPlanIt application.
 -   **`docs/`**: Documentation for the project.
 -   **`forge-app/`**: TestPlanIt for Jira plugin.
+-   **`cli/`**: Command-line interface tool.
+-   **`packages/`**: Shared packages (API client, reporters).
 -   **`pnpm-workspace.yaml`**: Defines the workspaces within the monorepo.
 -   **`package.json`**: Root package configuration.
 
