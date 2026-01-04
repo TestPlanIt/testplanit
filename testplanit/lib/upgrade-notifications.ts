@@ -100,6 +100,31 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>See the <a href="https://docs.testplanit.com/docs/cli" target="_blank">CLI documentation</a> and <a href="https://docs.testplanit.com/docs/api-tokens" target="_blank">API Tokens documentation</a> for details.</p>
     `,
   },
+  "0.9.14": {
+    title: "New Features: Enhanced Repository Navigation & Editor Improvements",
+    message: `
+      <p>This release focuses on improving your daily workflow with editor enhancements and streamlined folder navigation.</p>
+      <h4>Rich Text Editor Drag Handles</h4>
+      <ul>
+        <li>Drag and reorder content blocks in test case documentation</li>
+        <li>Hover over any content block to reveal the drag handle</li>
+      </ul>
+      <h4>"Last Test Result" Column</h4>
+      <ul>
+        <li>New column in the repository shows the most recent test result status for each test case</li>
+        <li>Hover to see when it was tested and which test run it was part of</li>
+      </ul>
+      <h4>Folder Tree Improvements</h4>
+      <ul>
+        <li>Press <strong>Shift+N</strong> to quickly open the Add Folder dialog</li>
+        <li>Click anywhere on a folder row to expand/collapse</li>
+        <li>Alt+click on a root folder to expand/collapse ALL root folders at once</li>
+        <li>New drop zone at bottom of tree for moving folders to root level</li>
+        <li>Newly created folders are automatically selected</li>
+        <li>Override parent folder when creating to place new folders at root level</li>
+      </ul>
+    `,
+  },
 };
 
 /**
