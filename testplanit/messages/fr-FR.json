@@ -112,15 +112,15 @@
       "junit": {
         "details": "Détails JUnit",
         "import": {
-          "trigger": "Importer les résultats JUnit",
-          "title": "Importer les résultats XML JUnit",
-          "description": "Téléversez un fichier XML JUnit pour importer les résultats des tests dans l'exécution de test sélectionnée.",
+          "trigger": "Résultats des tests d'importation",
+          "title": "Résultats des tests d'importation",
+          "description": "Importez les fichiers de résultats de test dans une nouvelle exécution. Formats pris en charge : JUnit, TestNG, xUnit, NUnit, MSTest, Mocha et Cucumber.",
           "testRun": {
             "label": "Essai",
             "placeholder": "Sélectionnez un test d'exécution"
           },
           "file": {
-            "label": "Fichiers XML JUnit"
+            "label": "Fichiers de résultats de test"
           },
           "import": "Importer",
           "selectFolder": "Sélectionnez un dossier",
@@ -140,14 +140,14 @@
           },
           "error": {
             "title": "Erreur d'importation",
-            "missingFields": "Veuillez sélectionner un test et télécharger un fichier XML JUnit.",
-            "importFailed": "Échec de l'importation des résultats JUnit. Veuillez réessayer."
+            "missingFields": "Veuillez remplir tous les champs obligatoires et télécharger les fichiers de résultats de test.",
+            "importFailed": "Échec de l'importation des résultats des tests. Veuillez réessayer."
           },
           "success": {
             "title": "Importation réussie",
-            "description": "Les résultats JUnit ont été importés avec succès."
+            "description": "Les résultats des tests ont été importés avec succès."
           },
-          "fileRequired": "Veuillez téléverser au moins un fichier XML JUnit."
+          "fileRequired": "Veuillez télécharger au moins un fichier de résultats de test."
         }
       },
       "testResults": {

@@ -112,15 +112,15 @@
       "junit": {
         "details": "JUnit Details",
         "import": {
-          "trigger": "Import JUnit Results",
-          "title": "Import JUnit XML Results",
-          "description": "Upload a JUnit XML file to import test results into the selected test run.",
+          "trigger": "Import Test Results",
+          "title": "Import Test Results",
+          "description": "Upload test result files to import into a new test run. Supports JUnit, TestNG, xUnit, NUnit, MSTest, Mocha, and Cucumber formats.",
           "testRun": {
             "label": "Test Run",
             "placeholder": "Select a test run"
           },
           "file": {
-            "label": "JUnit XML Files"
+            "label": "Test Result Files"
           },
           "import": "Import",
           "selectFolder": "Select a folder",
@@ -140,14 +140,14 @@
           },
           "error": {
             "title": "Import Error",
-            "missingFields": "Please select a test run and upload a JUnit XML file.",
-            "importFailed": "Failed to import JUnit results. Please try again."
+            "missingFields": "Please fill in all required fields and upload test result files.",
+            "importFailed": "Failed to import test results. Please try again."
           },
           "success": {
             "title": "Import Successful",
-            "description": "JUnit results have been successfully imported."
+            "description": "Test results have been successfully imported."
           },
-          "fileRequired": "Please upload at least one JUnit XML file."
+          "fileRequired": "Please upload at least one test result file."
         }
       },
       "testResults": {

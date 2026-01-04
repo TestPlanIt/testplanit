@@ -40,7 +40,7 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { IconName } from "~/types/globals";
 import { FolderSelect, transformFolders } from "./forms/FolderSelect";
 import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
-import { Asterisk } from "lucide-react";
+import { Asterisk, Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -339,7 +339,10 @@ export default function TestResultsImportDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">{t("trigger")}</Button>
+        <Button variant="outline">
+          <Upload className="h-4 w-4" />
+          {t("trigger")}
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
@@ -379,7 +382,7 @@ export default function TestResultsImportDialog({
               {/* Format selector */}
               <div className="grid gap-2">
                 <Label htmlFor="format" className="flex items-center">
-                  {tCommon("fields.options.label")}
+                  {tFormat("label")}
                   <sup>
                     <Asterisk className="w-3 h-3 text-destructive" />
                   </sup>
