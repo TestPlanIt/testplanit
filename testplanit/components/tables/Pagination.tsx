@@ -47,8 +47,8 @@ const PaginationComponent: React.FC<PaginationProps> = ({
   const renderEllipsisDropdown = (pageNumbers: number[]) => {
     return (
       <Select value={selectedPage} onValueChange={handlePageSelect}>
-        <SelectTrigger aria-label={t("selectPage")}>
-          <SelectValue placeholder={<PaginationEllipsis />} />
+        <SelectTrigger aria-label={t("selectPage")} className="h-auto w-auto border-0 px-2 py-1 shadow-none">
+          <SelectValue placeholder={<PaginationEllipsis className="h-auto w-auto" />} />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
