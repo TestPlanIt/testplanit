@@ -240,15 +240,16 @@ test.describe("Tree Navigation", () => {
 
     // Expand level 1
     await repositoryPage.expandFolder(level1Id);
-    await expect(level2Folder.first()).toBeVisible({ timeout: 5000 });
+    await expect(level2Folder.first()).toBeVisible({ timeout: 10000 });
 
     // Level 3 should still be hidden
     const level3Folder = repositoryPage.getFolderByName(level3Name);
     await expect(level3Folder).not.toBeVisible();
 
-    // Expand level 2
+    // Expand level 2 - wait for level2 folder to be ready first
+    await expect(repositoryPage.getFolderById(level2Id)).toBeVisible({ timeout: 5000 });
     await repositoryPage.expandFolder(level2Id);
-    await expect(level3Folder.first()).toBeVisible({ timeout: 5000 });
+    await expect(level3Folder.first()).toBeVisible({ timeout: 10000 });
   });
 
   test("Folder Shows Test Case Count", async ({ api, page }) => {

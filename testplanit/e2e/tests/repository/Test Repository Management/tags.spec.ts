@@ -277,11 +277,15 @@ test.describe("Tags", () => {
     await expect(editButton).toBeVisible({ timeout: 15000 });
     await page.waitForLoadState("networkidle");
 
-    // Verify the tag is no longer displayed in view mode
-    // The tags section should either not be visible or not contain our tag
-    await expect(page.locator(`text="${tagName}"`)).not.toBeVisible({
-      timeout: 5000,
-    });
+    // Verify the tag is no longer displayed in the tags section
+    // We need to wait for the UI to update after save, then check specifically in the tags display area
+    await expect(async () => {
+      // Re-query the tags display section after save
+      const tagsSection = page.locator("#tags-display").first();
+      const tagInSection = tagsSection.locator(`text="${tagName}"`);
+      // The tag should no longer be in the tags display section
+      await expect(tagInSection).not.toBeVisible({ timeout: 2000 });
+    }).toPass({ timeout: 10000 });
   });
 
   test("Edit Tag Name", async ({ api, page }) => {

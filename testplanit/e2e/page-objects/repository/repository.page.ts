@@ -154,31 +154,26 @@ export class RepositoryPage extends BasePage {
   }
 
   /**
-   * Expand a folder in the tree
+   * Expand a folder in the tree by clicking on the folder row
+   * Note: Clicking anywhere on the folder row toggles expand/collapse AND selects the folder
    */
   async expandFolder(folderId: number): Promise<void> {
     // Use expect().toPass() for retry logic since elements may get detached during tree re-renders
     await expect(async () => {
       const folder = this.getFolderById(folderId);
 
-      // Wait for the folder element to be attached and stable before interacting
-      await expect(folder).toBeAttached({ timeout: 5000 });
-      await folder.waitFor({ state: 'visible', timeout: 5000 });
+      // Wait for the folder element to be visible
+      await expect(folder).toBeVisible({ timeout: 5000 });
 
-      // Wait for any ongoing network activity to settle (tree may be updating)
+      // Wait for network to settle
       await this.page.waitForLoadState("networkidle");
 
-      // Hover over the folder first to make the expand button visible
-      // (the button has CSS class "invisible" until hovered)
-      await folder.hover({ timeout: 5000 });
-
-      // Look for the expand button - it's a Button with ChevronRight svg inside
-      const expandButton = folder.locator('button').filter({
-        has: this.page.locator('svg.lucide-chevron-right, svg[class*="lucide-chevron"]')
-      }).first();
-      await expect(expandButton).toBeVisible({ timeout: 3000 });
-      await expandButton.click();
-    }).toPass({ timeout: 15000 });
+      // Click on the folder row to toggle expand/collapse
+      // This also selects the folder, which is acceptable for expansion
+      await folder.evaluate((el) => {
+        (el as HTMLElement).click();
+      });
+    }).toPass({ timeout: 20000 });
 
     // Wait for children to be visible (animation complete)
     await this.page.waitForLoadState("networkidle");

@@ -277,11 +277,14 @@ test.describe("Issues", () => {
     const issuesCheckbox = page.locator('#issues');
     await expect(issuesCheckbox).toBeVisible({ timeout: 10000 });
 
-    // Click the checkbox directly to hide the column
-    await issuesCheckbox.click({ force: true });
+    // Click the checkbox using JavaScript to avoid element detachment issues
+    await issuesCheckbox.evaluate((el) => {
+      (el as HTMLElement).click();
+    });
 
     // Close the popover by clicking outside
     await page.keyboard.press('Escape');
+    await page.waitForLoadState('networkidle');
 
     // Verify Issues column is now hidden
     await expect(issuesColumnHeader).not.toBeVisible({ timeout: 5000 });
