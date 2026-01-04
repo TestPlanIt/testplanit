@@ -23,6 +23,7 @@ export const test = base.extend<TestFixtures>({
     const api = new ApiHelper(request, baseURL || "http://localhost:3000");
 
     // Provide the API helper to the test
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(api);
 
     // Cleanup after test

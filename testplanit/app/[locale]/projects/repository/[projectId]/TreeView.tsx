@@ -408,7 +408,7 @@ const TreeView: React.FC<{
       return [];
     }
     return buildTree(null);
-  }, [buildTree, folders, combinedLoadedFolderIds]);
+  }, [buildTree, folders]);
 
   // Handle folder selection
   const handleSelect = useCallback(
