@@ -1728,7 +1728,10 @@
       "allAssignees": "All Assignees",
       "anyTag": "Any Tag",
       "noTags": "No Tags",
-      "byTag": "Tag"
+      "byTag": "Tag",
+      "byIssue": "Issue",
+      "anyIssue": "Any Issue",
+      "noIssues": "No Issues"
     },
     "noFoldersTitle": "No Folders Yet",
     "noFoldersDescription": "Get started by creating your first folder to organize your test cases.",

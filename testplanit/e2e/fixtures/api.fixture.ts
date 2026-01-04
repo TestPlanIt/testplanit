@@ -11,6 +11,7 @@ export class ApiHelper {
   private createdFolderIds: number[] = [];
   private createdCaseIds: number[] = [];
   private createdTagIds: number[] = [];
+  private createdIssueIds: number[] = [];
   private cachedTemplateId: number | null = null;
   private cachedStateId: number | null = null;
   private cachedRepositoryId: number | null = null;
@@ -654,6 +655,83 @@ export class ApiHelper {
       const error = await response.text();
       throw new Error(`Failed to delete tag: ${error}`);
     }
+  }
+
+  /**
+   * Create an issue via API
+   * Issues can be linked to test cases, test runs, sessions, etc.
+   */
+  async createIssue(
+    projectId: number,
+    name: string,
+    title: string
+  ): Promise<number> {
+    const userId = await this.getCurrentUserId();
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/issues/create`,
+      {
+        data: {
+          data: {
+            name,
+            title,
+            isDeleted: false,
+            project: { connect: { id: projectId } },
+            createdBy: { connect: { id: userId } },
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create issue: ${error}`);
+    }
+
+    const result = await response.json();
+    const issueId = result.data.id;
+    this.createdIssueIds.push(issueId);
+    return issueId;
+  }
+
+  /**
+   * Link an issue to a test case via API
+   * Uses the many-to-many relationship between Issues and RepositoryCases
+   */
+  async linkIssueToTestCase(issueId: number, caseId: number): Promise<void> {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/repositoryCases/update`,
+      {
+        data: {
+          where: { id: caseId },
+          data: {
+            issues: {
+              connect: [{ id: issueId }],
+            },
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to link issue to test case: ${error}`);
+    }
+  }
+
+  /**
+   * Delete an issue via API (soft delete)
+   * Silently ignores failures - item may already be deleted by the test
+   */
+  async deleteIssue(issueId: number): Promise<void> {
+    this.request
+      .patch(`${this.baseURL}/api/model/issues/update`, {
+        data: {
+          where: { id: issueId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
   }
 
   /**

@@ -77,6 +77,11 @@ interface ViewSelectorProps {
       name: string;
       count?: number;
     }>;
+    issues?: Array<{
+      id: number | string;
+      name: string;
+      count?: number;
+    }>;
     testRunOptions?: {
       statuses: Array<{
         id: number;
@@ -588,6 +593,35 @@ export function ViewSelector({
                   {tagOption.count !== undefined && (
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {tagOption.count}
+                    </span>
+                  )}
+                </div>
+              ))}
+          </>
+        )}
+
+        {selectedItem === "issues" && (
+          <>
+            {viewItems
+              .find((item) => item.id === "issues")
+              ?.options?.map((issueOption) => (
+                <div
+                  key={issueOption.id}
+                  role="button"
+                  tabIndex={0}
+                  className={cn(
+                    "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                    isValueSelected(issueOption.id) &&
+                      "bg-primary/20 hover:bg-primary/30"
+                  )}
+                  onClick={(e) => handleFilterClick(issueOption.id, e)}
+                >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="truncate">{issueOption.name}</span>
+                  </div>
+                  {issueOption.count !== undefined && (
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {issueOption.count}
                     </span>
                   )}
                 </div>

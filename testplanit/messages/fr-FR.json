@@ -1728,7 +1728,10 @@
       "allAssignees": "Tous les cessionnaires",
       "anyTag": "N'importe quelle étiquette",
       "noTags": "Aucune étiquette",
-      "byTag": "Étiqueter"
+      "byTag": "Étiqueter",
+      "byIssue": "Problème",
+      "anyIssue": "Un problème quelconque",
+      "noIssues": "Aucun problème"
     },
     "noFoldersTitle": "Aucun dossier pour le moment",
     "noFoldersDescription": "Commencez par créer votre premier dossier pour organiser vos cas de test.",

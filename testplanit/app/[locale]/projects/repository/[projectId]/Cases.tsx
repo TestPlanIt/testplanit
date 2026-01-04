@@ -654,6 +654,23 @@ export default function Cases({
                   });
                 }
                 break;
+              case "issues":
+                if (singleFilterId === "any") {
+                  filterConditions.push({
+                    issues: { some: { isDeleted: false } },
+                  });
+                } else if (singleFilterId === "none") {
+                  filterConditions.push({
+                    issues: { none: { isDeleted: false } },
+                  });
+                } else {
+                  filterConditions.push({
+                    issues: {
+                      some: { id: Number(singleFilterId), isDeleted: false },
+                    },
+                  });
+                }
+                break;
             }
           }
         }
