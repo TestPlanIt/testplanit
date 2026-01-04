@@ -1,3 +1,10 @@
+## [0.9.13](https://github.com/TestPlanIt/testplanit/compare/v0.9.12...v0.9.13) (2026-01-04)
+
+
+### Bug Fixes
+
+* **translations:** streamline translation usage across components ([de33bcb](https://github.com/TestPlanIt/testplanit/commit/de33bcb5963118c77bfba0e2534d1db8a6cf73f7))
+
 ## [0.9.12](https://github.com/TestPlanIt/testplanit/compare/v0.9.11...v0.9.12) (2026-01-04)
 
 
