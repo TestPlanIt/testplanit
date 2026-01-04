@@ -366,7 +366,7 @@ function JunitTableSection({
                       <CircleCheckBig className="h-6 w-6 shrink-0" />
                       <div className="hidden md:block">
                         <span className="mr-1">
-                          {t("projects.overview.completedOn")}
+                          {t("common.fields.completedOn")}
                         </span>
                         <DateFormatter
                           date={testRunData?.completedAt}
