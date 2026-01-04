@@ -103,10 +103,10 @@ export class RepositoryPage extends BasePage {
 
   /**
    * Get a folder node by ID
-   * Uses draggable attribute to avoid matching drag preview/ghost elements
    */
   getFolderById(folderId: number): Locator {
-    return this.page.locator(`[data-testid="folder-node-${folderId}"][draggable="true"]`);
+    // Use CSS selector directly to ensure exact match on the data-testid
+    return this.page.locator(`[data-testid="folder-node-${folderId}"]`);
   }
 
   /**
@@ -124,8 +124,20 @@ export class RepositoryPage extends BasePage {
    * Select a folder in the tree
    */
   async selectFolder(folderId: number): Promise<void> {
+    // Wait for the tree to be fully loaded
+    await this.page.waitForLoadState("networkidle");
+
+    // Wait for the specific folder to be visible
     const folder = this.getFolderById(folderId);
-    await folder.click();
+    await expect(folder).toBeVisible({ timeout: 10000 });
+
+    // Use evaluate to click via JavaScript to ensure we're clicking the exact element
+    await folder.evaluate((el) => {
+      (el as HTMLElement).click();
+    });
+
+    // Wait for the URL to update with the selected folder
+    await expect(this.page).toHaveURL(new RegExp(`node=${folderId}`), { timeout: 10000 });
     await this.page.waitForLoadState("networkidle");
   }
 

@@ -126,7 +126,7 @@ export function EditFolderModal({
     setIsSubmitting(true);
     try {
       await updateRepositoryFolder({
-        where: { id: folder?.id },
+        where: { id: folderId },
         data: {
           name: data.name,
           docs: data.docs
@@ -244,7 +244,7 @@ export function EditFolderModal({
               <Button variant="outline" type="button" onClick={handleCancel}>
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || isLoadingFolder}>
                 {isSubmitting
                   ? t("common.actions.submitting")
                   : t("common.actions.submit")}
