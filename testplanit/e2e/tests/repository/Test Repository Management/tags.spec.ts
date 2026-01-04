@@ -16,11 +16,8 @@ test.describe("Tags", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    const projects = await api.getProjects();
-    if (projects.length === 0) {
-      throw new Error("No projects found in test database. Run seed first.");
-    }
-    return projects[0].id;
+    // Create a project for this test - tests should be self-contained
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("Create Tag", async ({ page }) => {
@@ -693,16 +690,11 @@ test.describe("Tags", () => {
 
   test("Tags Are Visible Across Projects", async ({ api, page }) => {
     // Tags are global in the system - verify a tag created globally is visible across projects
-    const projects = await api.getProjects();
+    // Create two separate projects for this test - tests should be self-contained
+    const project1Id = await api.createProject(`E2E Tag Project 1 ${Date.now()}`);
+    const project2Id = await api.createProject(`E2E Tag Project 2 ${Date.now()}`);
 
-    if (projects.length < 2) {
-      throw new Error(
-        "Need at least 2 projects for cross-project tag test. Check e2e setup."
-      );
-    }
-
-    // Use the second project
-    const project2Id = projects[1].id;
+    // Use project1Id implicitly for tag creation (tags are global), and project2Id for the test case
     const uniqueId = Date.now();
 
     // Create a unique tag via API (tags are global, not project-scoped)

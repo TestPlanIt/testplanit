@@ -206,7 +206,10 @@ export function ColumnSelection<TData>({
 
   return (
     <Popover>
-      <PopoverTrigger className="text-sm whitespace-nowrap flex items-center">
+      <PopoverTrigger
+        className="text-sm whitespace-nowrap flex items-center"
+        data-testid="column-selection-trigger"
+      >
         <Columns3 className="w-4 h-4 mr-1" />
         {t("table.columns.columns")}
       </PopoverTrigger>

@@ -55,8 +55,8 @@ export default defineConfig({
     // Screenshot on failure
     screenshot: "only-on-failure",
 
-    // Video recording: E2E_VIDEO=on for always, otherwise only on retry
-    video: recordVideo ? "on" : "on-first-retry",
+    // Video recording: E2E_VIDEO=on for always, otherwise on retries
+    video: recordVideo ? "on" : "retain-on-failure",
 
     // Browser context options
     viewport: { width: 1280, height: 720 },

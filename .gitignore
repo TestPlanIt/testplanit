@@ -63,3 +63,4 @@ testplanit/test/test-data/Testmo Exports/*
 testplanit/test-data/tpi*test*
 
 *cases/*
+.*-mcp/**

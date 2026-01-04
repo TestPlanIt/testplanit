@@ -16,11 +16,8 @@ test.describe("Drag & Drop", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    const projects = await api.getProjects();
-    if (projects.length === 0) {
-      throw new Error("No projects found in test database. Run seed first.");
-    }
-    return projects[0].id;
+    // Create a project for this test - tests should be self-contained
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("Drag Folder to New Position (Same Level)", async ({ api, page }) => {
@@ -573,21 +570,19 @@ test.describe("Drag & Drop", () => {
     // Get element references
     const parent = repositoryPage.getFolderById(parentId);
 
-    // Wait for elements to have stable bounding boxes (not animating)
-    await expect(async () => {
-      const box = await parent.boundingBox();
-      expect(box).not.toBeNull();
-    }).toPass({ timeout: 5000 });
+    // Scroll parent into view (child should be visible after expand)
+    await parent.scrollIntoViewIfNeeded();
 
-    // Scroll elements into view
-    await parent.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    await child.evaluate((el) => el.scrollIntoView({ block: "center" }));
+    // Wait for both elements to have stable bounding boxes
+    await expect(async () => {
+      const pBox = await parent.boundingBox();
+      const cBox = await child.boundingBox();
+      expect(pBox).not.toBeNull();
+      expect(cBox).not.toBeNull();
+    }).toPass({ timeout: 5000 });
 
     const parentBox = await parent.boundingBox();
     const childBox = await child.boundingBox();
-
-    expect(parentBox).not.toBeNull();
-    expect(childBox).not.toBeNull();
 
     await page.mouse.move(parentBox!.x + parentBox!.width / 2, parentBox!.y + parentBox!.height / 2);
     await page.mouse.down();

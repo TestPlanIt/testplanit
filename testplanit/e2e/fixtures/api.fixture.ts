@@ -669,7 +669,7 @@ export class ApiHelper {
     const userId = await this.getCurrentUserId();
 
     const response = await this.request.post(
-      `${this.baseURL}/api/model/issues/create`,
+      `${this.baseURL}/api/model/issue/create`,
       {
         data: {
           data: {
@@ -725,7 +725,7 @@ export class ApiHelper {
    */
   async deleteIssue(issueId: number): Promise<void> {
     this.request
-      .patch(`${this.baseURL}/api/model/issues/update`, {
+      .patch(`${this.baseURL}/api/model/issue/update`, {
         data: {
           where: { id: issueId },
           data: { isDeleted: true },
@@ -869,9 +869,40 @@ export class ApiHelper {
       }
     );
 
+    let repositoryId: number | null = null;
     if (!repoResponse.ok()) {
       // Repository creation is not critical, log but don't fail
       console.warn(`Failed to create repository for project ${projectId}`);
+    } else {
+      const repoResult = await repoResponse.json();
+      repositoryId = repoResult.data?.id || null;
+    }
+
+    // Create root folder for the project (required for test cases)
+    if (repositoryId) {
+      const folderResponse = await this.request.post(
+        `${this.baseURL}/api/model/repositoryFolders/create`,
+        {
+          data: {
+            data: {
+              name: "Root Folder",
+              order: 0,
+              isDeleted: false,
+              docs: JSON.stringify({
+                type: "doc",
+                content: [{ type: "paragraph" }],
+              }),
+              project: { connect: { id: projectId } },
+              repository: { connect: { id: repositoryId } },
+              creator: { connect: { id: userId } },
+            },
+          },
+        }
+      );
+
+      if (!folderResponse.ok()) {
+        console.warn(`Failed to create root folder for project ${projectId}`);
+      }
     }
 
     // Assign default template to project (matching setup-db.ts)
@@ -1001,7 +1032,7 @@ export class ApiHelper {
    * Clean up all test data created during tests
    */
   async cleanup(): Promise<void> {
-    // Delete test cases first (they reference folders and tags)
+    // Delete test cases first (they reference folders, tags, and issues)
     for (const caseId of this.createdCaseIds) {
       await this.deleteTestCase(caseId);
     }
@@ -1018,6 +1049,12 @@ export class ApiHelper {
       await this.deleteTag(tagId);
     }
     this.createdTagIds = [];
+
+    // Delete issues
+    for (const issueId of this.createdIssueIds) {
+      await this.deleteIssue(issueId);
+    }
+    this.createdIssueIds = [];
 
     // Finally delete projects (they reference everything else)
     for (const projectId of this.createdProjectIds) {

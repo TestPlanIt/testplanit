@@ -19,11 +19,8 @@ test.describe("Issues", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    const projects = await api.getProjects();
-    if (projects.length === 0) {
-      throw new Error("No projects found in test database. Run seed first.");
-    }
-    return projects[0].id;
+    // Create a project for this test - tests should be self-contained
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("Issues Column Visible in Data Table", async ({ api, page }) => {
@@ -133,20 +130,16 @@ test.describe("Issues", () => {
     const table = page.locator("table").first();
     await expect(table).toBeVisible({ timeout: 10000 });
 
-    // The ColumnSelection component uses a PopoverTrigger which renders as a button-like element
-    // Find it by looking for the element with the Columns3 icon and "Columns" text
-    const columnsButton = page.locator('button').filter({ hasText: 'Columns' }).first();
+    // Open the Columns selector using the data-testid for reliable clicking
+    const columnsButton = page.getByTestId('column-selection-trigger');
     await expect(columnsButton).toBeVisible({ timeout: 5000 });
-
-    // Click and wait for popover
     await columnsButton.click({ force: true });
 
-    // Wait for the popover content to appear - look for "Select All" button which is always in the popover
-    const popoverContent = page.locator('button').filter({ hasText: /select all/i }).first();
-    await expect(popoverContent).toBeVisible({ timeout: 5000 });
+    // Wait for the popover content to appear
+    const selectAllButton = page.getByRole('button', { name: /Select All/i }).first();
+    await expect(selectAllButton).toBeVisible({ timeout: 10000 });
 
-    // The column selector uses a Popover with Checkbox components
-    // Look for "Issues" label next to a checkbox in the popover
+    // Look for "Issues" label in the popover
     const issuesLabel = page.locator('label').filter({ hasText: 'Issues' }).first();
     await expect(issuesLabel).toBeVisible({ timeout: 5000 });
 
@@ -268,33 +261,29 @@ test.describe("Issues", () => {
     await repositoryPage.selectFolder(folderId);
     await page.waitForLoadState("networkidle");
 
-    // Verify the Issues column is initially visible
     const table = page.locator("table").first();
     await expect(table).toBeVisible({ timeout: 10000 });
 
-    let issuesColumnHeader = table.locator('th').filter({ hasText: 'Issues' });
+    // Issues column is visible by default
+    const issuesColumnHeader = table.locator('th').filter({ hasText: 'Issues' });
     await expect(issuesColumnHeader).toBeVisible({ timeout: 5000 });
 
-    // Open the Columns selector using the button with force click
-    const columnsButton = page.locator('button').filter({ hasText: 'Columns' }).first();
+    // Open the Columns selector - use force to handle potential re-renders
+    const columnsButton = page.getByTestId('column-selection-trigger');
     await expect(columnsButton).toBeVisible({ timeout: 5000 });
     await columnsButton.click({ force: true });
 
-    // Wait for popover to open - look for Select All button
-    const selectAllButton = page.locator('button').filter({ hasText: /select all/i }).first();
-    await expect(selectAllButton).toBeVisible({ timeout: 5000 });
-
-    // Find the Issues checkbox by its id and click it with force to avoid detachment issues
-    // The checkbox has id="issues" and is inside a ScrollArea which can cause element detachment
+    // Wait for popover to open by checking for the issues checkbox
     const issuesCheckbox = page.locator('#issues');
-    await expect(issuesCheckbox).toBeVisible({ timeout: 3000 });
+    await expect(issuesCheckbox).toBeVisible({ timeout: 10000 });
+
+    // Click the checkbox directly to hide the column
     await issuesCheckbox.click({ force: true });
 
-    // Close the popover
+    // Close the popover by clicking outside
     await page.keyboard.press('Escape');
 
-    // Verify the Issues column is now hidden (popover should close automatically)
-    issuesColumnHeader = table.locator('th').filter({ hasText: 'Issues' });
+    // Verify Issues column is now hidden
     await expect(issuesColumnHeader).not.toBeVisible({ timeout: 5000 });
   });
 

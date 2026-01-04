@@ -30,11 +30,8 @@ test.describe("Custom Fields - Repository View and Filter", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    const projects = await api.getProjects();
-    if (projects.length === 0) {
-      throw new Error("No projects found in test database. Run seed first.");
-    }
-    return projects[0].id;
+    // Create a project for this test - tests should be self-contained
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("View selector shows available view options", async ({ api, page }) => {
@@ -456,11 +453,8 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    const projects = await api.getProjects();
-    if (projects.length === 0) {
-      throw new Error("No projects found in test database. Run seed first.");
-    }
-    return projects[0].id;
+    // Create a project for this test - tests should be self-contained
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("Priority custom field appears in view selector", async ({
@@ -621,11 +615,8 @@ test.describe("Custom Fields - Filter Count Display", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    const projects = await api.getProjects();
-    if (projects.length === 0) {
-      throw new Error("No projects found in test database. Run seed first.");
-    }
-    return projects[0].id;
+    // Create a project for this test - tests should be self-contained
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("Filter options show count of matching test cases", async ({

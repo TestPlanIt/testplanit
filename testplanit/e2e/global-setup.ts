@@ -1,6 +1,7 @@
 import { chromium, FullConfig } from "@playwright/test";
 import path from "path";
 import fs from "fs";
+import { execSync } from "child_process";
 
 const AUTH_DIR = path.join(__dirname, ".auth");
 const ADMIN_AUTH_FILE = path.join(AUTH_DIR, "admin.json");
@@ -8,20 +9,26 @@ const ADMIN_AUTH_FILE = path.join(AUTH_DIR, "admin.json");
 async function globalSetup(config: FullConfig) {
   console.log("Running global setup...");
 
+  // Step 1: Reset and seed the database
+  console.log("Resetting and seeding test database...");
+  try {
+    execSync("pnpm test:e2e:setup-db", {
+      cwd: path.join(__dirname, ".."),
+      stdio: "inherit",
+      env: process.env,
+    });
+    console.log("Database reset complete.");
+  } catch (error) {
+    console.error("Failed to reset database:", error);
+    throw error;
+  }
+
   // Ensure auth directory exists
   if (!fs.existsSync(AUTH_DIR)) {
     fs.mkdirSync(AUTH_DIR, { recursive: true });
   }
 
-  // Skip if auth file already exists and is recent (less than 1 hour old)
-  if (fs.existsSync(ADMIN_AUTH_FILE)) {
-    const stats = fs.statSync(ADMIN_AUTH_FILE);
-    const ageInHours = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60);
-    if (ageInHours < 1) {
-      console.log("Using existing auth session (less than 1 hour old)");
-      return;
-    }
-  }
+  // Always re-authenticate after database reset (auth session was cleared by setup-db)
 
   // Get base URL from config
   const baseURL =

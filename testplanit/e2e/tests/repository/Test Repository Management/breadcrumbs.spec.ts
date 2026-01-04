@@ -16,11 +16,8 @@ test.describe("Breadcrumbs", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    const projects = await api.getProjects();
-    if (projects.length === 0) {
-      throw new Error("No projects found in test database. Run seed first.");
-    }
-    return projects[0].id;
+    // Create a project for this test - tests should be self-contained
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("View Folder Breadcrumbs", async ({ api, page }) => {
@@ -61,17 +58,29 @@ test.describe("Breadcrumbs", () => {
 
     // Navigate to child folder
     await repositoryPage.expandFolder(parentId);
-    await repositoryPage.selectFolder(childId);
+
+    // Click on the child folder and ensure it's selected
+    const childTreeItem = page.getByTestId(`folder-node-${childId}`);
+    await expect(childTreeItem).toBeVisible({ timeout: 5000 });
+    await childTreeItem.click();
     await page.waitForLoadState("networkidle");
 
-    // Verify breadcrumbs are visible
+    // Verify URL contains the child folder node
+    await expect(page).toHaveURL(new RegExp(`node=${childId}`), { timeout: 5000 });
+
+    // Verify breadcrumbs show both parent and child (proving we're in child folder)
     const breadcrumbs = page.locator('nav[aria-label="breadcrumb"]');
     await expect(breadcrumbs).toBeVisible({ timeout: 5000 });
+    await expect(breadcrumbs).toContainText(parentName);
+    await expect(breadcrumbs).toContainText(childName);
 
     // Click on parent in breadcrumb to navigate back
-    const parentLink = breadcrumbs.locator(`a:has-text("${parentName}")`).first();
-    await expect(parentLink).toBeVisible({ timeout: 3000 });
-    await parentLink.click();
+    // The breadcrumb uses buttons inside links, so find the button with the parent name
+    const parentBreadcrumb = breadcrumbs.getByRole('button', { name: parentName }).first();
+    await expect(parentBreadcrumb).toBeVisible({ timeout: 5000 });
+    await expect(parentBreadcrumb).toBeEnabled({ timeout: 5000 });
+    // Use force click to handle potential DOM re-renders
+    await parentBreadcrumb.click({ force: true });
     await page.waitForLoadState("networkidle");
 
     // Verify we navigated to parent folder - URL should contain node=parentId

@@ -68,13 +68,45 @@ export class RepositoryPage extends BasePage {
     await expect(this.layout).toBeVisible({ timeout: 15000 });
     // Dismiss any onboarding overlays that may be blocking interactions
     await this.dismissOnboardingOverlay();
+    // Ensure the left panel is wide enough to interact with nested folders
+    await this.resizeLeftPanel(400);
+  }
+
+  /**
+   * Resize the left folder panel by dragging the separator
+   * This ensures deeply nested folders are visible and interactable
+   */
+  async resizeLeftPanel(width: number = 350): Promise<void> {
+    const separator = this.page.locator('[data-panel-resize-handle-id], [role="separator"]').first();
+
+    // Wait for separator to be visible
+    try {
+      await separator.waitFor({ state: 'visible', timeout: 3000 });
+    } catch {
+      // Separator may not exist in all layouts
+      return;
+    }
+
+    // Get current position of separator
+    const box = await separator.boundingBox();
+    if (!box) return;
+
+    // Drag separator to the right to make left panel wider
+    await separator.hover();
+    await this.page.mouse.down();
+    await this.page.mouse.move(width, box.y + box.height / 2);
+    await this.page.mouse.up();
+
+    // Wait for layout to settle
+    await this.page.waitForTimeout(200);
   }
 
   /**
    * Get a folder node by ID
+   * Uses draggable attribute to avoid matching drag preview/ghost elements
    */
   getFolderById(folderId: number): Locator {
-    return this.page.getByTestId(`folder-node-${folderId}`);
+    return this.page.locator(`[data-testid="folder-node-${folderId}"][draggable="true"]`);
   }
 
   /**
@@ -111,14 +143,25 @@ export class RepositoryPage extends BasePage {
    */
   async expandFolder(folderId: number): Promise<void> {
     const folder = this.getFolderById(folderId);
+
+    // Wait for the folder element to be attached and stable before interacting
+    await expect(folder).toBeAttached({ timeout: 10000 });
+    await folder.waitFor({ state: 'visible', timeout: 10000 });
+
+    // Wait for any ongoing network activity to settle (tree may be updating)
+    await this.page.waitForLoadState("networkidle");
+
     // Hover over the folder first to make the expand button visible
     // (the button has CSS class "invisible" until hovered)
-    await folder.hover();
+    await folder.hover({ timeout: 10000 });
+
     // Look for the expand button - it's a Button with ChevronRight svg inside
-    // The button has class containing "h-6 w-6" and the svg has class "w-4 h-4"
-    const expandButton = folder.locator('button').filter({ has: this.page.locator('svg.lucide-chevron-right, svg[class*="lucide-chevron"]') }).first();
+    const expandButton = folder.locator('button').filter({
+      has: this.page.locator('svg.lucide-chevron-right, svg[class*="lucide-chevron"]')
+    }).first();
     await expect(expandButton).toBeVisible({ timeout: 5000 });
     await expandButton.click();
+
     // Wait for children to be visible (animation complete)
     await this.page.waitForLoadState("networkidle");
   }
