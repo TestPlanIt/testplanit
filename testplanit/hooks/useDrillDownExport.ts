@@ -17,8 +17,6 @@ interface UseDrillDownExportProps {
   context: DrillDownContext | null;
   /** Translation function */
   t: any;
-  /** Translation function for reports */
-  tReports: any;
 }
 
 interface UseDrillDownExportReturn {
@@ -34,7 +32,6 @@ interface UseDrillDownExportReturn {
 export function useDrillDownExport({
   context,
   t,
-  tReports,
 }: UseDrillDownExportProps): UseDrillDownExportReturn {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -84,15 +81,15 @@ export function useDrillDownExport({
       // Test execution records
       if (metricId === "testResults" || metricId === "passRate") {
         return records.map((record: any) => ({
-          [tReports("caseName")]:
+          [t("common.fields.testCases")]:
             record.testRunCase?.repositoryCase?.name || "",
-          [tReports("runName")]: record.testRun?.name || "",
-          [tReports("status")]: record.status?.name || "",
-          [tReports("executedBy")]: record.executedBy?.name || "",
-          [tReports("date")]: record.executedAt
+          [t("common.fields.testRuns")]: record.testRun?.name || "",
+          [t("common.actions.status")]: record.status?.name || "",
+          [t("common.fields.executedBy")]: record.executedBy?.name || "",
+          [t("common.fields.date")]: record.executedAt
             ? format(new Date(record.executedAt), "yyyy-MM-dd HH:mm:ss")
             : "",
-          [tReports("elapsedTime")]: record.elapsed
+          [t("common.fields.elapsed")]: record.elapsed
             ? toHumanReadable(record.elapsed)
             : "",
           [t("common.fields.configuration")]:
@@ -110,14 +107,14 @@ export function useDrillDownExport({
         metricId === "averageElapsed"
       ) {
         return records.map((record: any) => ({
-          [tReports("elapsedTime")]: record.elapsed
+          [t("common.fields.elapsed")]: record.elapsed
             ? toHumanReadable(record.elapsed)
             : "",
-          [tReports("caseName")]:
+          [t("common.fields.testCases")]:
             record.testRunCase?.repositoryCase?.name || "",
-          [tReports("runName")]: record.testRun?.name || "",
-          [tReports("executedBy")]: record.executedBy?.name || "",
-          [tReports("date")]: record.executedAt
+          [t("common.fields.testRuns")]: record.testRun?.name || "",
+          [t("common.fields.executedBy")]: record.executedBy?.name || "",
+          [t("common.fields.date")]: record.executedAt
             ? format(new Date(record.executedAt), "yyyy-MM-dd HH:mm:ss")
             : "",
         }));
@@ -126,14 +123,14 @@ export function useDrillDownExport({
       // Total Elapsed Time metrics
       if (metricId === "sumElapsed" || metricId === "totalElapsedTime") {
         return records.map((record: any) => ({
-          [tReports("elapsedTime")]: record.elapsed
+          [t("common.fields.elapsed")]: record.elapsed
             ? toHumanReadable(record.elapsed)
             : "",
-          [tReports("caseName")]:
+          [t("common.fields.testCases")]:
             record.testRunCase?.repositoryCase?.name || "",
-          [tReports("runName")]: record.testRun?.name || "",
-          [tReports("executedBy")]: record.executedBy?.name || "",
-          [tReports("date")]: record.executedAt
+          [t("common.fields.testRuns")]: record.testRun?.name || "",
+          [t("common.fields.executedBy")]: record.executedBy?.name || "",
+          [t("common.fields.date")]: record.executedAt
             ? format(new Date(record.executedAt), "yyyy-MM-dd HH:mm:ss")
             : "",
         }));
@@ -150,19 +147,18 @@ export function useDrillDownExport({
           const executed = total - (record.untested || 0);
 
           return {
-            [tReports("runName")]: record.name || "",
-            [tReports("status")]: record.status?.name || "",
+            [t("common.fields.testRuns")]: record.name || "",
+            [t("common.actions.status")]: record.state?.name || "",
             [t("common.fields.createdBy")]: record.createdBy?.name || "",
             [t("common.fields.startDate")]: record.startedAt
               ? format(new Date(record.startedAt), "yyyy-MM-dd HH:mm:ss")
               : "",
-            [t("common.fields.progress")]:
-              total > 0 ? `${executed}/${total}` : "",
+            Progress: total > 0 ? `${executed}/${total}` : "",
             [t("common.fields.milestone")]: record.milestone?.name || "",
-            [t("common.fields.passed")]: record.passed || 0,
-            [t("common.fields.failed")]: record.failed || 0,
-            [t("common.fields.blocked")]: record.blocked || 0,
-            [t("common.fields.untested")]: record.untested || 0,
+            Passed: record.passed || 0,
+            Failed: record.failed || 0,
+            Blocked: record.blocked || 0,
+            Untested: record.untested || 0,
           };
         });
       }
@@ -170,8 +166,8 @@ export function useDrillDownExport({
       // Test cases
       if (metricId === "testCases") {
         return records.map((record: any) => ({
-          [tReports("caseName")]: record.name || "",
-          [tReports("status")]: record.status?.name || "",
+          [t("common.fields.testCases")]: record.name || "",
+          [t("common.fields.state")]: record.state?.name || "",
           [t("common.fields.folder")]: record.folder?.name || "",
           [t("common.fields.createdAt")]: record.createdAt
             ? format(new Date(record.createdAt), "yyyy-MM-dd")
@@ -191,10 +187,10 @@ export function useDrillDownExport({
         return records.map((record: any) => {
           const result: Record<string, any> = {
             ID: record.id || "",
-            [tReports("caseName")]: record.name || "",
+            [t("common.fields.testCases")]: record.name || "",
             [t("common.fields.project")]: record.project?.name || "",
             [t("common.fields.folder")]: record.folder?.name || "",
-            [tReports("status")]: record.state?.name || "",
+            [t("common.fields.state")]: record.state?.name || "",
             [t("common.fields.createdBy")]:
               record.creator?.name || record.creator?.email || "",
             [t("common.fields.template")]: record.template?.templateName || "",
@@ -209,7 +205,7 @@ export function useDrillDownExport({
             metricId === "totalSteps" ||
             metricId === "avgStepsPerCase"
           ) {
-            result[tReports("steps")] = record.steps?.length || 0;
+            result[t("common.fields.steps")] = record.steps?.length || 0;
           }
 
           // Add other fields that might be useful
@@ -227,7 +223,7 @@ export function useDrillDownExport({
       if (metricId === "sessions" || metricId === "sessionCount") {
         return records.map((record: any) => ({
           [t("common.name")]: record.name || "",
-          [t("common.fields.charter")]: record.charter || "",
+          Charter: record.charter || "",
           [t("common.fields.createdBy")]: record.createdBy?.name || "",
           [t("common.fields.startDate")]: record.startedAt
             ? format(new Date(record.startedAt), "yyyy-MM-dd HH:mm:ss")
@@ -250,7 +246,7 @@ export function useDrillDownExport({
           [t("common.fields.duration")]: record.duration
             ? toHumanReadable(record.duration)
             : "",
-          [t("common.fields.charter")]: record.charter || "",
+          Charter: record.charter || "",
           [t("common.fields.createdBy")]: record.createdBy?.name || "",
           [t("common.fields.startDate")]: record.startedAt
             ? format(new Date(record.startedAt), "yyyy-MM-dd HH:mm:ss")
@@ -262,10 +258,10 @@ export function useDrillDownExport({
       if (metricId === "issues") {
         return records.map((record: any) => ({
           [t("common.fields.key")]: record.key || "",
-          [t("common.fields.summary")]: record.summary || "",
-          [tReports("status")]: record.issueStatus?.name || "",
+          Summary: record.summary || "",
+          [t("common.actions.status")]: record.issueStatus?.name || "",
           [t("common.fields.priority")]: record.issuePriority?.name || "",
-          [t("common.fields.assignee")]: record.assignee?.name || "",
+          [t("common.fields.assignedTo")]: record.assignee?.name || "",
           [t("common.fields.createdAt")]: record.createdAt
             ? format(new Date(record.createdAt), "yyyy-MM-dd")
             : "",
@@ -334,7 +330,7 @@ export function useDrillDownExport({
         return flattened;
       });
     },
-    [t, tReports]
+    [t]
   );
 
   /**

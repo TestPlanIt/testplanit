@@ -32,13 +32,51 @@ interface UseDrillDownColumnsProps {
 export function useDrillDownColumns({
   metricId,
 }: UseDrillDownColumnsProps): ColumnDef<DrillDownRecord, any>[] {
-  const tReports = useTranslations("reports.drillDown");
   const tCommon = useTranslations("common");
   const tLinkedCases = useTranslations("linkedCases");
-  const t = useTranslations();
+  const tMilestones = useTranslations("milestones");
   const locale = useLocale();
   const dateFnsLocale = getDateFnsLocale(locale);
   const columnHelper = createColumnHelper<DrillDownRecord>();
+
+  // Memoize translation values to avoid issues with useMemo dependencies
+  const translations = useMemo(
+    () => ({
+      milestone: tCommon("fields.milestone"),
+      project: tCommon("fields.project"),
+      createdBy: tCommon("fields.createdBy"),
+      createdAt: tCommon("fields.createdAt"),
+      status: tCommon("actions.status"),
+      state: tCommon("fields.state"),
+      testRuns: tCommon("fields.testRuns"),
+      completed: tCommon("fields.completed"),
+      folder: tCommon("fields.folder"),
+      executedBy: tCommon("fields.executedBy"),
+      date: tCommon("fields.date"),
+      elapsed: tCommon("fields.elapsed"),
+      configuration: tCommon("fields.configuration"),
+      steps: tCommon("fields.steps"),
+      priority: tCommon("fields.priority"),
+      duration: tCommon("fields.duration"),
+      startDate: tCommon("fields.startDate"),
+      yes: tCommon("yes"),
+      no: tCommon("no"),
+      name: tCommon("name"),
+      statusPending: tCommon("status.pending"),
+      key: tCommon("fields.key"),
+      summary: tCommon("fields.summary"),
+      progress: tCommon("fields.progress"),
+      automated: tCommon("fields.automated"),
+      manual: tCommon("fields.manual"),
+      charter: tCommon("fields.charter"),
+      session: tCommon("fields.session"),
+      testCase: tLinkedCases("testCase"),
+      milestoneStatusNotStarted: tMilestones("statusLabels.NOT_STARTED"),
+      milestoneStatusInProgress: tMilestones("statusLabels.IN_PROGRESS"),
+      milestoneStatusCompleted: tMilestones("statusLabels.completed"),
+    }),
+    [tCommon, tLinkedCases, tMilestones]
+  );
 
   return useMemo(() => {
     // Milestone metrics columns
@@ -46,7 +84,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.name, {
           id: "milestone",
-          header: () => "Milestone",
+          header: () => translations.milestone,
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
@@ -68,7 +106,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.project?.name, {
           id: "project",
-          header: () => t("common.fields.project"),
+          header: () => translations.project,
           cell: (info) => {
             const value = info.getValue();
             return <span>{value || "-"}</span>;
@@ -82,7 +120,7 @@ export function useDrillDownColumns({
           (row: any) => row.creator?.name || row.creator?.email,
           {
             id: "creator",
-            header: () => t("common.fields.createdBy"),
+            header: () => translations.createdBy,
             cell: (info) => {
               const row = info.row.original as any;
               return row.createdBy ? (
@@ -100,20 +138,20 @@ export function useDrillDownColumns({
         columnHelper.accessor(
           (row: any) => {
             // Show status based on isStarted and isCompleted
-            if (row.isCompleted) return "Completed";
-            if (row.isStarted) return "In Progress";
-            return "Not Started";
+            if (row.isCompleted) return translations.milestoneStatusCompleted;
+            if (row.isStarted) return translations.milestoneStatusInProgress;
+            return translations.milestoneStatusNotStarted;
           },
           {
             id: "status",
-            header: () => "Status",
+            header: () => translations.status,
             cell: (info) => {
               const row = info.row.original as any;
               const status = row.isCompleted
-                ? "Completed"
+                ? translations.milestoneStatusCompleted
                 : row.isStarted
-                  ? "In Progress"
-                  : "Not Started";
+                  ? translations.milestoneStatusInProgress
+                  : translations.milestoneStatusNotStarted;
               // Use a simple badge-like display
               return (
                 <span
@@ -137,7 +175,7 @@ export function useDrillDownColumns({
         ),
         columnHelper.accessor((row: any) => row.createdAt, {
           id: "createdAt",
-          header: () => t("common.fields.createdAt"),
+          header: () => translations.createdAt,
           cell: (info) => {
             const value = info.getValue();
             if (!value) return <span>-</span>;
@@ -163,7 +201,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.repositoryCase?.name, {
           id: "testCase",
-          header: () => tLinkedCases("testCase"),
+          header: () => translations.testCase,
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.repositoryCase?.project?.id;
@@ -184,7 +222,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.testRun?.name, {
           id: "testRun",
-          header: () => tCommon("fields.testRuns"),
+          header: () => translations.testRuns,
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.repositoryCase?.project?.id;
@@ -205,13 +243,13 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.status?.name, {
           id: "status",
-          header: () => tCommon("actions.status"),
+          header: () => translations.status,
           cell: (info) => {
             const row = info.row.original as any;
             if (!row.status) {
               return (
                 <span className="text-muted-foreground">
-                  {tCommon("status.pending")}
+                  {translations.statusPending}
                 </span>
               );
             }
@@ -229,19 +267,19 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.status?.isCompleted, {
           id: "completed",
-          header: () => tCommon("fields.completed"),
+          header: () => translations.completed,
           cell: (info) => {
             const value = info.getValue();
             if (value === true) {
               return (
                 <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-success/10 text-success">
-                  {t("common.yes")}
+                  {translations.yes}
                 </span>
               );
             }
             return (
               <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-muted text-muted-foreground">
-                {t("common.no")}
+                {translations.no}
               </span>
             );
           },
@@ -252,7 +290,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.repositoryCase?.folder?.name, {
           id: "folder",
-          header: () => tCommon("fields.folder"),
+          header: () => translations.folder,
           cell: (info) => {
             const value = info.getValue();
             return <span>{value || "-"}</span>;
@@ -264,7 +302,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.repositoryCase?.project?.name, {
           id: "project",
-          header: () => tCommon("fields.project"),
+          header: () => translations.project,
           cell: (info) => {
             const value = info.getValue();
             return <span>{value || "-"}</span>;
@@ -289,7 +327,7 @@ export function useDrillDownColumns({
           (row: any) => row.testRunCase?.repositoryCase?.name,
           {
             id: "testCase",
-            header: () => tLinkedCases("testCase"),
+            header: () => translations.testCase,
             cell: (info) => {
               const row = info.row.original as any;
               const projectId = row.testRun?.projectId;
@@ -312,7 +350,7 @@ export function useDrillDownColumns({
         ),
         columnHelper.accessor((row: any) => row.testRun?.name, {
           id: "testRun",
-          header: () => tCommon("fields.testRuns"),
+          header: () => translations.testRuns,
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.testRun?.projectId;
@@ -334,7 +372,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.status?.name, {
           id: "status",
-          header: () => tCommon("actions.status"),
+          header: () => translations.status,
           cell: (info) => {
             const row = info.row.original as any;
             return (
@@ -351,7 +389,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.executedBy?.name, {
           id: "executedBy",
-          header: () => tCommon("fields.executedBy"),
+          header: () => translations.executedBy,
           cell: (info) => {
             const row = info.row.original as any;
             return row.executedById ? (
@@ -367,7 +405,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.executedAt, {
           id: "executedAt",
-          header: () => tCommon("fields.date"),
+          header: () => translations.date,
           cell: (info) => {
             const value = info.getValue();
             if (!value) return <span>-</span>;
@@ -387,7 +425,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.elapsed, {
           id: "elapsed",
-          header: () => tCommon("fields.elapsed"),
+          header: () => translations.elapsed,
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
@@ -400,7 +438,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.testRun?.configuration?.name, {
           id: "configuration",
-          header: () => "Configuration",
+          header: () => translations.configuration,
           cell: (info) => {
             const row = info.row.original as any;
             return (
@@ -426,7 +464,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.elapsed, {
           id: "elapsed",
-          header: () => tCommon("fields.elapsed"),
+          header: () => translations.elapsed,
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
@@ -441,7 +479,7 @@ export function useDrillDownColumns({
           (row: any) => row.testRunCase?.repositoryCase?.name,
           {
             id: "testCase",
-            header: () => tLinkedCases("testCase"),
+            header: () => translations.testCase,
             cell: (info) => {
               const row = info.row.original as any;
               const projectId = row.testRun?.projectId;
@@ -464,7 +502,7 @@ export function useDrillDownColumns({
         ),
         columnHelper.accessor((row: any) => row.testRun?.name, {
           id: "testRun",
-          header: () => tCommon("fields.testRuns"),
+          header: () => translations.testRuns,
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.testRun?.projectId;
@@ -486,7 +524,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.executedBy?.name, {
           id: "executedBy",
-          header: () => tCommon("fields.executedBy"),
+          header: () => translations.executedBy,
           cell: (info) => {
             const row = info.row.original as any;
             return row.executedById ? (
@@ -502,7 +540,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.executedAt, {
           id: "executedAt",
-          header: () => tCommon("fields.date"),
+          header: () => translations.date,
           cell: (info) => {
             const value = info.getValue();
             if (!value) return <span>-</span>;
@@ -528,7 +566,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.elapsed, {
           id: "elapsed",
-          header: () => tCommon("fields.elapsed"),
+          header: () => translations.elapsed,
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
@@ -543,7 +581,7 @@ export function useDrillDownColumns({
           (row: any) => row.testRunCase?.repositoryCase?.name,
           {
             id: "testCase",
-            header: () => tLinkedCases("testCase"),
+            header: () => translations.testCase,
             cell: (info) => {
               const row = info.row.original as any;
               const projectId = row.testRun?.projectId;
@@ -566,7 +604,7 @@ export function useDrillDownColumns({
         ),
         columnHelper.accessor((row: any) => row.testRun?.name, {
           id: "testRun",
-          header: () => tCommon("fields.testRuns"),
+          header: () => translations.testRuns,
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.testRun?.projectId;
@@ -588,7 +626,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.executedBy?.name, {
           id: "executedBy",
-          header: () => tCommon("fields.executedBy"),
+          header: () => translations.executedBy,
           cell: (info) => {
             const row = info.row.original as any;
             return row.executedById ? (
@@ -604,7 +642,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.executedAt, {
           id: "executedAt",
-          header: () => tCommon("fields.date"),
+          header: () => translations.date,
           cell: (info) => {
             const value = info.getValue();
             if (!value) return <span>-</span>;
@@ -630,7 +668,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.name, {
           id: "name",
-          header: () => tCommon("fields.testRuns"),
+          header: () => translations.testRuns,
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
@@ -652,7 +690,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.state?.name, {
           id: "status",
-          header: () => tCommon("actions.status"),
+          header: () => translations.status,
           cell: (info) => {
             const row = info.row.original as any;
             return (
@@ -669,7 +707,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.createdBy?.name, {
           id: "createdBy",
-          header: () => "Created By",
+          header: () => translations.createdBy,
           cell: (info) => {
             const row = info.row.original as any;
             return row.createdById ? (
@@ -685,7 +723,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.startedAt, {
           id: "startedAt",
-          header: () => "Start Date",
+          header: () => translations.startDate,
           cell: (info) => {
             const value = info.getValue();
             if (!value) return <span>-</span>;
@@ -716,7 +754,7 @@ export function useDrillDownColumns({
           },
           {
             id: "progress",
-            header: () => "Progress",
+            header: () => translations.progress,
             cell: (info) => <span>{info.getValue()}</span>,
             enableSorting: false,
             size: 100,
@@ -726,7 +764,7 @@ export function useDrillDownColumns({
         ),
         columnHelper.accessor((row: any) => row.milestone?.name, {
           id: "milestone",
-          header: () => "Milestone",
+          header: () => translations.milestone,
           cell: (info) => {
             const value = info.getValue();
             return <span>{value || "-"}</span>;
@@ -748,7 +786,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.name, {
           id: "testCase",
-          header: () => tLinkedCases("testCase"),
+          header: () => translations.testCase,
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
@@ -775,7 +813,7 @@ export function useDrillDownColumns({
           },
           {
             id: "stepCount",
-            header: () => tCommon("fields.steps"),
+            header: () => translations.steps,
             cell: (info) => {
               const value = info.getValue();
               return <span>{value}</span>;
@@ -794,7 +832,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.name, {
           id: "name",
-          header: () => tLinkedCases("testCase"),
+          header: () => translations.testCase,
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
@@ -816,7 +854,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.state?.name, {
           id: "state",
-          header: () => t("common.fields.state"),
+          header: () => translations.state,
           cell: (info) => {
             const row = info.row.original as any;
             if (!row.state) return <span>-</span>;
@@ -829,7 +867,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.folder?.name, {
           id: "folder",
-          header: () => "Folder",
+          header: () => translations.folder,
           cell: (info) => {
             const value = info.getValue();
             return <span>{value || "-"}</span>;
@@ -841,7 +879,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.createdAt, {
           id: "createdAt",
-          header: () => "Created At",
+          header: () => translations.createdAt,
           cell: (info) => {
             const value = info.getValue();
             if (!value) return <span>-</span>;
@@ -873,7 +911,7 @@ export function useDrillDownColumns({
       const columns = [
         columnHelper.accessor((row: any) => row.name, {
           id: "testCase",
-          header: () => tLinkedCases("testCase"),
+          header: () => translations.testCase,
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.projectId || row.project?.id;
@@ -895,7 +933,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.state?.name, {
           id: "state",
-          header: () => t("common.fields.state"),
+          header: () => translations.state,
           cell: (info) => {
             const row = info.row.original as any;
             if (!row.state) return <span>-</span>;
@@ -908,7 +946,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.folder?.name, {
           id: "folder",
-          header: () => "Folder",
+          header: () => translations.folder,
           cell: (info) => {
             const value = info.getValue();
             return <span>{value || "-"}</span>;
@@ -920,7 +958,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.project?.name, {
           id: "project",
-          header: () => t("common.fields.project"),
+          header: () => translations.project,
           cell: (info) => {
             const value = info.getValue();
             return <span>{value || "-"}</span>;
@@ -934,7 +972,7 @@ export function useDrillDownColumns({
           (row: any) => row.creator?.name || row.creator?.email,
           {
             id: "creator",
-            header: () => t("common.fields.createdBy"),
+            header: () => translations.createdBy,
             cell: (info) => {
               const row = info.row.original as any;
               return row.creatorId ? (
@@ -951,7 +989,7 @@ export function useDrillDownColumns({
         ),
         columnHelper.accessor((row: any) => row.createdAt, {
           id: "createdAt",
-          header: () => t("common.fields.createdAt"),
+          header: () => translations.createdAt,
           cell: (info) => {
             const value = info.getValue();
             if (!value) return <span>-</span>;
@@ -978,7 +1016,7 @@ export function useDrillDownColumns({
           0,
           columnHelper.accessor((row: any) => row.automated, {
             id: "automated",
-            header: () => "Automated",
+            header: () => translations.automated,
             cell: (info) => {
               const value = info.getValue();
               if (value === null || value === undefined) return <span>-</span>;
@@ -988,7 +1026,7 @@ export function useDrillDownColumns({
                     value ? "text-success font-medium" : "text-muted-foreground"
                   }
                 >
-                  {value ? "Automated" : "Manual"}
+                  {value ? translations.automated : translations.manual}
                 </span>
               );
             },
@@ -1008,7 +1046,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.id, {
           id: "name",
-          header: () => "Name",
+          header: () => translations.name,
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.project?.id ?? row.projectId;
@@ -1043,7 +1081,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.charter, {
           id: "charter",
-          header: () => "Charter",
+          header: () => translations.charter,
           cell: (info) => {
             const value = info.getValue();
             return <span className="truncate">{value || "-"}</span>;
@@ -1055,7 +1093,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.createdBy?.name, {
           id: "createdBy",
-          header: () => "Created By",
+          header: () => translations.createdBy,
           cell: (info) => {
             const row = info.row.original as any;
             return row.createdById ? (
@@ -1071,7 +1109,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.startedAt, {
           id: "startedAt",
-          header: () => "Start Date",
+          header: () => translations.startDate,
           cell: (info) => {
             const value = info.getValue();
             if (!value) return <span>-</span>;
@@ -1091,7 +1129,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.duration, {
           id: "duration",
-          header: () => "Duration",
+          header: () => translations.duration,
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
@@ -1115,7 +1153,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.id, {
           id: "name",
-          header: () => "Name",
+          header: () => translations.name,
           cell: (info) => {
             const row = info.row.original as any;
             const projectId = row.project?.id ?? row.projectId;
@@ -1150,7 +1188,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.duration, {
           id: "duration",
-          header: () => "Duration",
+          header: () => translations.duration,
           cell: (info) => {
             const value = info.getValue();
             if (value === null || value === undefined) return <span>-</span>;
@@ -1163,7 +1201,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.charter, {
           id: "charter",
-          header: () => "Charter",
+          header: () => translations.charter,
           cell: (info) => {
             const value = info.getValue();
             return <span className="truncate">{value || "-"}</span>;
@@ -1175,7 +1213,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.createdBy?.name, {
           id: "createdBy",
-          header: () => "Created By",
+          header: () => translations.createdBy,
           cell: (info) => {
             const row = info.row.original as any;
             return row.createdById ? (
@@ -1191,7 +1229,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.startedAt, {
           id: "startedAt",
-          header: () => "Start Date",
+          header: () => translations.startDate,
           cell: (info) => {
             const value = info.getValue();
             if (!value) return <span>-</span>;
@@ -1217,7 +1255,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.session?.id, {
           id: "session",
-          header: () => "Session",
+          header: () => translations.session,
           cell: (info) => {
             const row = info.row.original as any;
             const session = row.session;
@@ -1257,7 +1295,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.session?.project?.name, {
           id: "project",
-          header: () => t("common.fields.project"),
+          header: () => translations.project,
           cell: (info) => {
             const value = info.getValue();
             return <span>{value || "-"}</span>;
@@ -1269,7 +1307,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.createdBy?.name, {
           id: "createdBy",
-          header: () => "Created By",
+          header: () => translations.createdBy,
           cell: (info) => {
             const row = info.row.original as any;
             return row.createdById ? (
@@ -1285,7 +1323,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.createdAt, {
           id: "createdAt",
-          header: () => "Created At",
+          header: () => translations.createdAt,
           cell: (info) => {
             const value = info.getValue();
             if (!value) return <span>-</span>;
@@ -1311,7 +1349,7 @@ export function useDrillDownColumns({
       return [
         columnHelper.accessor((row: any) => row.key, {
           id: "key",
-          header: () => "Key",
+          header: () => translations.key,
           cell: (info) => {
             const value = info.getValue();
             return <span className="font-mono font-medium">{value}</span>;
@@ -1323,7 +1361,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.summary, {
           id: "summary",
-          header: () => "Summary",
+          header: () => translations.summary,
           cell: (info) => {
             const value = info.getValue();
             return <span className="truncate">{value}</span>;
@@ -1335,7 +1373,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.status, {
           id: "status",
-          header: () => tCommon("actions.status"),
+          header: () => translations.status,
           cell: (info) => {
             const value = info.getValue();
             return <span>{value || "-"}</span>;
@@ -1347,7 +1385,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.priority, {
           id: "priority",
-          header: () => "Priority",
+          header: () => translations.priority,
           cell: (info) => {
             const value = info.getValue();
             return <span>{value || "-"}</span>;
@@ -1359,7 +1397,7 @@ export function useDrillDownColumns({
         }),
         columnHelper.accessor((row: any) => row.createdBy?.name, {
           id: "createdBy",
-          header: () => "Created By",
+          header: () => translations.createdBy,
           cell: (info) => {
             const row = info.row.original as any;
             return row.createdById ? (
@@ -1393,7 +1431,7 @@ export function useDrillDownColumns({
         },
         {
           id: "name",
-          header: () => "Name",
+          header: () => translations.name,
           cell: (info) => {
             const row = info.row.original as any;
             // Try to use TestCaseNameDisplay if it looks like a test case
@@ -1459,7 +1497,7 @@ export function useDrillDownColumns({
         },
         {
           id: "status",
-          header: () => tCommon("actions.status"),
+          header: () => translations.status,
           cell: (info) => {
             const row = info.row.original as any;
             if (row.status) {
@@ -1513,5 +1551,5 @@ export function useDrillDownColumns({
         maxSize: 150,
       }),
     ];
-  }, [metricId, tCommon, tLinkedCases, t, dateFnsLocale, columnHelper]);
+  }, [metricId, translations, dateFnsLocale, columnHelper]);
 }

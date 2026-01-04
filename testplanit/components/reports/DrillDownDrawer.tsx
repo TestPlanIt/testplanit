@@ -125,7 +125,6 @@ export function DrillDownDrawer({
   const { isExporting, exportToCSV } = useDrillDownExport({
     context,
     t: tGlobal,
-    tReports,
   });
 
   // Infinite scroll: observe the load more trigger
