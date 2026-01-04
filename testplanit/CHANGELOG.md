@@ -1,3 +1,10 @@
+## [0.9.16](https://github.com/TestPlanIt/testplanit/compare/v0.9.15...v0.9.16) (2026-01-04)
+
+
+### Bug Fixes
+
+* **JunitTableSection:** update translation key for completed date display ([c474c32](https://github.com/TestPlanIt/testplanit/commit/c474c321f00ccc88fa4ed5009187840cb4c45f69))
+
 ## [0.9.15](https://github.com/TestPlanIt/testplanit/compare/v0.9.14...v0.9.15) (2026-01-04)
 
 ## [0.9.14](https://github.com/TestPlanIt/testplanit/compare/v0.9.13...v0.9.14) (2026-01-04)
