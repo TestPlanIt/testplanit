@@ -683,4 +683,316 @@ describe("LastTestResult computation in Cases", () => {
 
     expect(allResults.length).toBe(0);
   });
+
+  it("should include JUnit (automated) results in computation", () => {
+    const testRuns: any[] = [];
+    const junitResults = [
+      {
+        id: 100,
+        executedAt: new Date("2025-12-25T10:00:00Z"),
+        status: { id: 1, name: "Passed", color: { value: "#00FF00" } },
+        testSuite: {
+          id: 1,
+          testRun: { id: 10, name: "Automated Run", isDeleted: false },
+        },
+      },
+    ];
+
+    // Simulate the computation logic from Cases.tsx
+    const allResults: any[] = [];
+
+    // Collect manual test run results
+    for (const trLink of testRuns) {
+      if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
+        for (const result of trLink.results) {
+          allResults.push({
+            result: result,
+            testRun: { id: trLink.testRun.id, name: trLink.testRun.name },
+          });
+        }
+      }
+    }
+
+    // Collect JUnit results
+    for (const junitResult of junitResults) {
+      if (junitResult.executedAt && junitResult.status && junitResult.testSuite?.testRun && !junitResult.testSuite.testRun.isDeleted) {
+        allResults.push({
+          result: {
+            id: junitResult.id,
+            executedAt: junitResult.executedAt,
+            status: junitResult.status,
+          },
+          testRun: {
+            id: junitResult.testSuite.testRun.id,
+            name: junitResult.testSuite.testRun.name,
+          },
+        });
+      }
+    }
+
+    expect(allResults.length).toBe(1);
+    expect(allResults[0].testRun.name).toBe("Automated Run");
+    expect(allResults[0].result.status.name).toBe("Passed");
+  });
+
+  it("should select most recent result when both manual and JUnit results exist", () => {
+    const testRuns = [
+      {
+        testRun: { id: 1, name: "Manual Run", isDeleted: false },
+        results: [
+          {
+            id: 1,
+            executedAt: new Date("2025-12-20T10:00:00Z"),
+            status: { id: 2, name: "Failed", color: { value: "#FF0000" } },
+          },
+        ],
+      },
+    ];
+    const junitResults = [
+      {
+        id: 100,
+        executedAt: new Date("2025-12-25T10:00:00Z"), // More recent
+        status: { id: 1, name: "Passed", color: { value: "#00FF00" } },
+        testSuite: {
+          id: 1,
+          testRun: { id: 10, name: "Automated Run", isDeleted: false },
+        },
+      },
+    ];
+
+    const allResults: any[] = [];
+
+    // Collect manual results
+    for (const trLink of testRuns) {
+      if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
+        for (const result of trLink.results) {
+          allResults.push({
+            result: result,
+            testRun: { id: trLink.testRun.id, name: trLink.testRun.name },
+          });
+        }
+      }
+    }
+
+    // Collect JUnit results
+    for (const junitResult of junitResults) {
+      if (junitResult.executedAt && junitResult.status && junitResult.testSuite?.testRun && !junitResult.testSuite.testRun.isDeleted) {
+        allResults.push({
+          result: {
+            id: junitResult.id,
+            executedAt: junitResult.executedAt,
+            status: junitResult.status,
+          },
+          testRun: {
+            id: junitResult.testSuite.testRun.id,
+            name: junitResult.testSuite.testRun.name,
+          },
+        });
+      }
+    }
+
+    allResults.sort(
+      (a, b) =>
+        new Date(b.result.executedAt).getTime() -
+        new Date(a.result.executedAt).getTime()
+    );
+
+    expect(allResults.length).toBe(2);
+    const mostRecent = allResults[0];
+    expect(mostRecent.testRun.name).toBe("Automated Run");
+    expect(mostRecent.result.status.name).toBe("Passed");
+  });
+
+  it("should select manual result when it is more recent than JUnit result", () => {
+    const testRuns = [
+      {
+        testRun: { id: 1, name: "Manual Run", isDeleted: false },
+        results: [
+          {
+            id: 1,
+            executedAt: new Date("2025-12-28T10:00:00Z"), // More recent
+            status: { id: 2, name: "Failed", color: { value: "#FF0000" } },
+          },
+        ],
+      },
+    ];
+    const junitResults = [
+      {
+        id: 100,
+        executedAt: new Date("2025-12-25T10:00:00Z"),
+        status: { id: 1, name: "Passed", color: { value: "#00FF00" } },
+        testSuite: {
+          id: 1,
+          testRun: { id: 10, name: "Automated Run", isDeleted: false },
+        },
+      },
+    ];
+
+    const allResults: any[] = [];
+
+    // Collect manual results
+    for (const trLink of testRuns) {
+      if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
+        for (const result of trLink.results) {
+          allResults.push({
+            result: result,
+            testRun: { id: trLink.testRun.id, name: trLink.testRun.name },
+          });
+        }
+      }
+    }
+
+    // Collect JUnit results
+    for (const junitResult of junitResults) {
+      if (junitResult.executedAt && junitResult.status && junitResult.testSuite?.testRun && !junitResult.testSuite.testRun.isDeleted) {
+        allResults.push({
+          result: {
+            id: junitResult.id,
+            executedAt: junitResult.executedAt,
+            status: junitResult.status,
+          },
+          testRun: {
+            id: junitResult.testSuite.testRun.id,
+            name: junitResult.testSuite.testRun.name,
+          },
+        });
+      }
+    }
+
+    allResults.sort(
+      (a, b) =>
+        new Date(b.result.executedAt).getTime() -
+        new Date(a.result.executedAt).getTime()
+    );
+
+    const mostRecent = allResults[0];
+    expect(mostRecent.testRun.name).toBe("Manual Run");
+    expect(mostRecent.result.status.name).toBe("Failed");
+  });
+
+  it("should exclude JUnit results from deleted test runs", () => {
+    const testRuns: any[] = [];
+    const junitResults = [
+      {
+        id: 100,
+        executedAt: new Date("2025-12-25T10:00:00Z"),
+        status: { id: 1, name: "Passed", color: { value: "#00FF00" } },
+        testSuite: {
+          id: 1,
+          testRun: { id: 10, name: "Deleted Automated Run", isDeleted: true },
+        },
+      },
+      {
+        id: 101,
+        executedAt: new Date("2025-12-20T10:00:00Z"),
+        status: { id: 2, name: "Failed", color: { value: "#FF0000" } },
+        testSuite: {
+          id: 2,
+          testRun: { id: 11, name: "Active Automated Run", isDeleted: false },
+        },
+      },
+    ];
+
+    const allResults: any[] = [];
+
+    // Collect manual results (none in this test)
+    for (const trLink of testRuns) {
+      if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
+        for (const result of trLink.results) {
+          allResults.push({
+            result: result,
+            testRun: { id: trLink.testRun.id, name: trLink.testRun.name },
+          });
+        }
+      }
+    }
+
+    // Collect JUnit results - should skip deleted test runs
+    for (const junitResult of junitResults) {
+      if (junitResult.executedAt && junitResult.status && junitResult.testSuite?.testRun && !junitResult.testSuite.testRun.isDeleted) {
+        allResults.push({
+          result: {
+            id: junitResult.id,
+            executedAt: junitResult.executedAt,
+            status: junitResult.status,
+          },
+          testRun: {
+            id: junitResult.testSuite.testRun.id,
+            name: junitResult.testSuite.testRun.name,
+          },
+        });
+      }
+    }
+
+    expect(allResults.length).toBe(1);
+    expect(allResults[0].testRun.name).toBe("Active Automated Run");
+  });
+
+  it("should skip JUnit results without executedAt", () => {
+    const junitResults = [
+      {
+        id: 100,
+        executedAt: null, // No execution date
+        status: { id: 1, name: "Passed", color: { value: "#00FF00" } },
+        testSuite: {
+          id: 1,
+          testRun: { id: 10, name: "Automated Run", isDeleted: false },
+        },
+      },
+    ];
+
+    const allResults: any[] = [];
+
+    for (const junitResult of junitResults) {
+      if (junitResult.executedAt && junitResult.status && junitResult.testSuite?.testRun && !junitResult.testSuite.testRun.isDeleted) {
+        allResults.push({
+          result: {
+            id: junitResult.id,
+            executedAt: junitResult.executedAt,
+            status: junitResult.status,
+          },
+          testRun: {
+            id: junitResult.testSuite.testRun.id,
+            name: junitResult.testSuite.testRun.name,
+          },
+        });
+      }
+    }
+
+    expect(allResults.length).toBe(0);
+  });
+
+  it("should skip JUnit results without status", () => {
+    const junitResults = [
+      {
+        id: 100,
+        executedAt: new Date("2025-12-25T10:00:00Z"),
+        status: null, // No status
+        testSuite: {
+          id: 1,
+          testRun: { id: 10, name: "Automated Run", isDeleted: false },
+        },
+      },
+    ];
+
+    const allResults: any[] = [];
+
+    for (const junitResult of junitResults) {
+      if (junitResult.executedAt && junitResult.status && junitResult.testSuite?.testRun && !junitResult.testSuite.testRun.isDeleted) {
+        allResults.push({
+          result: {
+            id: junitResult.id,
+            executedAt: junitResult.executedAt,
+            status: junitResult.status,
+          },
+          testRun: {
+            id: junitResult.testSuite.testRun.id,
+            name: junitResult.testSuite.testRun.name,
+          },
+        });
+      }
+    }
+
+    expect(allResults.length).toBe(0);
+  });
 });
