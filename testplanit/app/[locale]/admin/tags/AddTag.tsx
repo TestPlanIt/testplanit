@@ -1,12 +1,11 @@
 "use client";
 import { useState } from "react";
-import { useCreateTags } from "~/lib/hooks";
+import { useCreateTags, useFindManyTags, useUpdateTags } from "~/lib/hooks";
 import { useTranslations } from "next-intl";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
-import { TagsCreateSchema } from "@zenstackhq/runtime/zod/models";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,12 +40,17 @@ const AddTagSchema = z.object({
 type AddTagFormData = z.infer<typeof AddTagSchema>;
 
 export function AddTagModal() {
-  const t = useTranslations("admin.tags.add");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
+  const tTags = useTranslations("tags.add");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: createTag } = useCreateTags();
+  const { mutateAsync: updateTag } = useUpdateTags();
+  // Query all tags (including soft-deleted) for case-insensitive duplicate checking
+  const { data: allTags } = useFindManyTags({
+    select: { id: true, name: true, isDeleted: true },
+  });
 
   const handleCancel = () => setOpen(false);
 
@@ -63,6 +67,43 @@ export function AddTagModal() {
 
   async function onSubmit(data: AddTagFormData) {
     setIsSubmitting(true);
+
+    // Check for case-insensitive duplicate (including soft-deleted tags)
+    const nameToCheck = data.name.toLowerCase();
+    const existingTag = allTags?.find(
+      (tag) => tag.name.toLowerCase() === nameToCheck
+    );
+
+    if (existingTag) {
+      if (existingTag.isDeleted) {
+        // Restore the soft-deleted tag
+        try {
+          await updateTag({
+            where: { id: existingTag.id },
+            data: { isDeleted: false },
+          });
+          setOpen(false);
+          setIsSubmitting(false);
+          return;
+        } catch (err: any) {
+          form.setError("root", {
+            type: "custom",
+            message: tCommon("errors.unknown"),
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        // Tag already exists and is active
+        form.setError("name", {
+          type: "custom",
+          message: tTags("errors.nameExists"),
+        });
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     try {
       await createTag({
         data: {
@@ -75,7 +116,7 @@ export function AddTagModal() {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
           type: "custom",
-          message: tCommon("errors.nameExists"),
+          message: tTags("errors.nameExists"),
         });
       } else {
         form.setError("root", {

@@ -5,6 +5,7 @@ import {
   useFindFirstRepositoryFolders,
   useFindManyRepositoryFolders,
 } from "~/lib/hooks";
+import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
@@ -63,6 +64,7 @@ export function AddFolderModal({
   onFolderCreated,
 }: AddFolderModalProps) {
   const t = useTranslations();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: createFolder } = useCreateRepositoryFolders();
@@ -200,6 +202,7 @@ export function AddFolderModal({
             order: newOrder,
           },
         });
+
         setOpen(false);
         setIsSubmitting(false);
         form.reset();
@@ -210,7 +213,15 @@ export function AddFolderModal({
           onFolderCreated(newFolder.id, effectiveParentId);
         }
       } catch (err: any) {
-        if (err.info?.prisma && err.info?.code === "P2002") {
+        // Check for Prisma unique constraint errors in different possible locations
+        // ZenStack may wrap the error differently depending on the context
+        const isPrismaError =
+          err.info?.prisma ||
+          err.code === "P2002" ||
+          err.message?.includes("Unique constraint");
+        const errorCode = err.info?.code || err.code;
+
+        if (isPrismaError && errorCode === "P2002") {
           form.setError("name", {
             type: "custom",
             message: t("common.errors.nameExists"),
@@ -273,6 +284,7 @@ export function AddFolderModal({
                             size="sm"
                             className="h-5 w-5 p-0"
                             onClick={() => setEffectiveParentId(null)}
+                            data-testid="remove-parent-folder-button"
                           >
                             <CircleX className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                           </Button>

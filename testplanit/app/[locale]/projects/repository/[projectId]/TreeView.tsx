@@ -113,39 +113,22 @@ const TreeView: React.FC<{
   const [folders, setFolders] = useState<RepositoryFolders[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-  // Fetch lightweight metadata for ALL folders (just id and parentId to build hierarchy)
-  // This is much faster than loading full folder objects
-  const { data: folderHierarchyData } = useFindManyRepositoryFolders(
-    {
-      where: {
-        projectId: Number(projectId),
-        isDeleted: false,
-      },
-      select: {
-        id: true,
-        parentId: true,
-      },
-    },
-    {
-      optimisticUpdate: false,
-    }
-  );
-
-  // Build a map of which folders have children (from lightweight data)
+  // Build a map of which folders have children (computed from main folders data)
+  // This ensures hasChildren is always in sync with the folder list
   const hasChildrenMap = useMemo(() => {
     const map = new Map<number, boolean>();
-    if (folderHierarchyData) {
+    if (folders) {
       // Initialize all folders as having no children
-      folderHierarchyData.forEach((f) => map.set(f.id, false));
+      folders.forEach((f) => map.set(f.id, false));
       // Mark folders that have children
-      folderHierarchyData.forEach((f) => {
+      folders.forEach((f) => {
         if (f.parentId !== null) {
           map.set(f.parentId, true);
         }
       });
     }
     return map;
-  }, [folderHierarchyData]);
+  }, [folders]);
 
   // Load ALL folders at once (full data)
   // This is more efficient than lazy loading because:
@@ -613,10 +596,30 @@ const TreeView: React.FC<{
   useEffect(() => {
     const handleFolderSelectionChanged = (event: CustomEvent) => {
       const folderId = event.detail?.folderId;
+      const expandParentId = event.detail?.expandParentId;
       if (folderId && treeRef.current) {
         const nodeId = folderId.toString();
         ensureFolderPathLoaded(folderId);
-        setTimeout(() => {
+
+        // If we need to expand a parent (creating a child folder), first load its children
+        // This triggers a state update, so we need to wait for re-render before accessing the child
+        if (expandParentId) {
+          ensureFolderChildrenLoaded(expandParentId);
+        }
+
+        // Helper function to select node with retry logic for newly created nodes
+        const selectNodeWithRetry = (retriesLeft: number) => {
+          // If a parent folder should be expanded, ensure its children are loaded and expand it
+          // We call ensureFolderChildrenLoaded on each retry to ensure the state update
+          // triggers a re-render that includes the children in the tree
+          if (expandParentId) {
+            ensureFolderChildrenLoaded(expandParentId);
+            const parentNode = treeRef.current?.get(expandParentId.toString());
+            if (parentNode) {
+              parentNode.open();
+            }
+          }
+
           const node = treeRef.current?.get(nodeId);
           if (node) {
             node.select();
@@ -638,8 +641,15 @@ const TreeView: React.FC<{
             const url = new URL(window.location.href);
             url.searchParams.set("node", folderId.toString());
             window.history.pushState({}, "", url.toString());
+          } else if (retriesLeft > 0) {
+            // Node not found yet (may still be rendering after state update), retry after a delay
+            // Use longer delay to allow React to complete its render cycle
+            setTimeout(() => selectNodeWithRetry(retriesLeft - 1), 100);
           }
-        }, 0);
+        };
+
+        // Start the retry loop after a short initial delay to allow state updates to propagate
+        setTimeout(() => selectNodeWithRetry(15), 100);
       }
     };
 
@@ -877,8 +887,19 @@ const TreeView: React.FC<{
         ref={setCombinedRef}
         style={style}
         className={`group flex items-center rounded-md ${backgroundColor} ${textColor} hover:bg-secondary/80 cursor-pointer px-2 py-1`}
-        onClick={() => node.select()}
+        onClick={async () => {
+          node.select();
+          // Toggle expand/collapse when clicking anywhere on the folder row
+          if (hasChildren) {
+            if (!childrenLoaded) {
+              await ensureFolderChildrenLoaded(data?.folderId);
+            }
+            node.toggle();
+          }
+        }}
         data-testid={`folder-node-${data?.folderId}`}
+        data-drop-target={isOver && canDrop ? "true" : undefined}
+        data-drop-invalid={isOver && !canDrop ? "true" : undefined}
       >
         <Button
           variant="ghost"
@@ -1118,6 +1139,7 @@ const TreeView: React.FC<{
               bottomDropRef(el);
             }}
             className="flex-1 min-h-16 w-full relative"
+            data-testid="folder-tree-end"
           >
             {/* Drop indicator line with circle - matches react-arborist cursor style */}
             {isOverBottom && (

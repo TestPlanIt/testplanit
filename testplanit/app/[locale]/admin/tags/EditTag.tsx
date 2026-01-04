@@ -1,12 +1,11 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { useUpdateTags } from "~/lib/hooks";
+import { useUpdateTags, useFindManyTags } from "~/lib/hooks";
 import { Tags } from "@prisma/client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
-import { TagsUpdateSchema } from "@zenstackhq/runtime/zod/models";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,10 +47,15 @@ interface EditTagModalProps {
 
 export function EditTagModal({ tag }: EditTagModalProps) {
   const t = useTranslations("admin.tags.edit");
+  const tTags = useTranslations("tags.edit");
   const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateTag } = useUpdateTags();
+  // Query all tags (including soft-deleted) for case-insensitive duplicate checking
+  const { data: allTags } = useFindManyTags({
+    select: { id: true, name: true, isDeleted: true },
+  });
 
   const handleCancel = () => setOpen(false);
 
@@ -83,6 +87,40 @@ export function EditTagModal({ tag }: EditTagModalProps) {
 
   async function onSubmit(data: EditTagFormData) {
     setIsSubmitting(true);
+
+    // Check for case-insensitive duplicate (excluding the current tag)
+    const nameToCheck = data.name.toLowerCase();
+    const conflictingTag = allTags?.find(
+      (t) => t.name.toLowerCase() === nameToCheck && t.id !== tag.id
+    );
+
+    if (conflictingTag) {
+      if (conflictingTag.isDeleted) {
+        // Rename the deleted tag to something unique so we can use this name
+        try {
+          await updateTag({
+            where: { id: conflictingTag.id },
+            data: { name: `${conflictingTag.name}_deleted_${Date.now()}` },
+          });
+        } catch {
+          form.setError("root", {
+            type: "custom",
+            message: tCommon("errors.unknown"),
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        // Active tag with this name exists
+        form.setError("name", {
+          type: "custom",
+          message: tTags("errors.nameExists"),
+        });
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     try {
       await updateTag({
         where: { id: tag.id },
@@ -96,7 +134,7 @@ export function EditTagModal({ tag }: EditTagModalProps) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
           type: "custom",
-          message: tCommon("errors.nameExists"),
+          message: tTags("errors.nameExists"),
         });
       } else {
         form.setError("root", {

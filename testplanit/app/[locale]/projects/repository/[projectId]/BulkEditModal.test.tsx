@@ -110,6 +110,10 @@ vi.mock("~/lib/hooks", () => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
+  useUpdateTags: vi.fn(() => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  })),
   useCreateRepositoryCaseVersions: vi.fn(() => ({
     mutateAsync: vi.fn(),
     isPending: false,

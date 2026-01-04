@@ -314,7 +314,9 @@ async function handler(
       }
     }
 
-    const response = await baseHandler(modifiedReq, { params: Promise.resolve(params) });
+    const response = await baseHandler(modifiedReq, {
+      params: Promise.resolve(params),
+    });
 
     // Clone the response to add headers (NextResponse is immutable)
     const responseBody = await response.clone().text();

@@ -1335,6 +1335,7 @@ export const getColumns = (
             }}
             aria-label={columnTranslations.selectCase}
             disabled={isDeletedInRun} // Disable checkbox if deleted in run
+            data-testid={`case-checkbox-${row.original.id}`}
           />
         </div>
       );
