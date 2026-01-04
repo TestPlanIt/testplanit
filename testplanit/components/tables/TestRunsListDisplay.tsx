@@ -142,14 +142,15 @@ const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
     <Link
       href={`/projects/runs/${projectId}/${id}`}
       className={cn(
-        "flex items-start gap-1 hover:text-primary group max-w-full",
-        isCompleted ? "text-muted-foreground/80" : undefined
+        "flex items-start gap-1 no-underline hover:underline group max-w-full",
+        "text-inherit",
+        isCompleted && "opacity-70"
       )}
     >
       <PlayCircle className="w-4 h-4 shrink-0 mt-0.5" />
       <span className={textClass}>{name}</span>
       {configurationGroupId && (
-        <Combine className="w-3 h-3 shrink-0 mt-0.5 text-muted-foreground" />
+        <Combine className="w-3 h-3 shrink-0 mt-0.5 opacity-70" />
       )}
     </Link>
   );
