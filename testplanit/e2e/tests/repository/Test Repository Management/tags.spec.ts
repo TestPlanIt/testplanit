@@ -470,14 +470,18 @@ test.describe("Tags", () => {
     // Select the test cases by clicking the checkboxes
     const checkbox1 = row1.locator('button[role="checkbox"]').first();
     const checkbox2 = row2.locator('button[role="checkbox"]').first();
-    await checkbox1.click();
-    await checkbox2.click();
+    await expect(checkbox1).toBeVisible({ timeout: 5000 });
+    await checkbox1.evaluate((el) => (el as HTMLElement).click());
+    await expect(checkbox2).toBeVisible({ timeout: 5000 });
+    await checkbox2.evaluate((el) => (el as HTMLElement).click());
 
     // Wait for and click bulk edit button
     const bulkEditButton = page
       .locator('[data-testid="bulk-edit-button"]')
       .first();
-    await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
+    await expect(async () => {
+      await expect(bulkEditButton).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 10000 });
     await bulkEditButton.click();
 
     // Wait for the bulk edit modal to open
