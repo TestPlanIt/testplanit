@@ -48,6 +48,7 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { ExportModal, ExportOptions } from "./ExportModal";
 import { useExportData, TFunction } from "~/hooks/useExportData";
 import { fetchAllCasesForExport as fetchAllCasesAction } from "~/app/actions/exportActions";
+import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
 import {
   RowSelectionState,
   Updater as TableUpdater,
@@ -1690,78 +1691,12 @@ export default function Cases({
       }));
     }
     // Not in isRunMode. Use 'data' directly (already server-side paginated and filtered).
-    // Compute lastTestResult for each case by finding the most recent result across all test runs AND junit results
+    // Compute lastTestResult for each case using the shared server-side function
     if (data) {
-      return data.map((caseItem) => {
-        // Find the most recent result across all test runs and junit results for this case
-        let lastTestResult: {
-          status: { id: number; name: string; color?: { value: string } };
-          executedAt: Date;
-          testRun?: { id: number; name: string };
-        } | null = null;
-
-        // Collect all results from manual test runs
-        const allResults: {
-          result: {
-            id: number;
-            executedAt: Date;
-            status: { id: number; name: string; color?: { value: string } };
-          };
-          testRun: { id: number; name: string };
-        }[] = [];
-
-        if (caseItem.testRuns && caseItem.testRuns.length > 0) {
-          for (const trLink of caseItem.testRuns) {
-            if (trLink.results && trLink.results.length > 0 && trLink.testRun && !trLink.testRun.isDeleted) {
-              for (const result of trLink.results) {
-                allResults.push({
-                  result: result as any,
-                  testRun: { id: trLink.testRun.id, name: trLink.testRun.name },
-                });
-              }
-            }
-          }
-        }
-
-        // Also collect automated (JUnit) results
-        if ((caseItem as any).junitResults && (caseItem as any).junitResults.length > 0) {
-          for (const junitResult of (caseItem as any).junitResults) {
-            if (junitResult.executedAt && junitResult.status && junitResult.testSuite?.testRun && !junitResult.testSuite.testRun.isDeleted) {
-              allResults.push({
-                result: {
-                  id: junitResult.id,
-                  executedAt: junitResult.executedAt,
-                  status: junitResult.status,
-                },
-                testRun: {
-                  id: junitResult.testSuite.testRun.id,
-                  name: junitResult.testSuite.testRun.name,
-                },
-              });
-            }
-          }
-        }
-
-        // Sort by executedAt descending and pick the first one
-        if (allResults.length > 0) {
-          allResults.sort(
-            (a, b) =>
-              new Date(b.result.executedAt).getTime() -
-              new Date(a.result.executedAt).getTime()
-          );
-          const mostRecent = allResults[0];
-          lastTestResult = {
-            status: mostRecent.result.status,
-            executedAt: mostRecent.result.executedAt,
-            testRun: mostRecent.testRun,
-          };
-        }
-
-        return {
-          ...caseItem,
-          lastTestResult,
-        };
-      });
+      return data.map((caseItem) => ({
+        ...caseItem,
+        lastTestResult: computeLastTestResult(caseItem),
+      }));
     }
     return [];
   }, [isRunMode, testRunCasesData, data, optimisticReorder]);

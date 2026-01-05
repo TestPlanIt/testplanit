@@ -1231,6 +1231,7 @@ model TestRunResults {
   @@index([executedById])
   @@index([statusId])
   @@index([executedAt])
+  @@index([testRunCaseId, executedAt(sort: Desc)])
 }
 
 model TestRunStepResults {
@@ -1460,6 +1461,7 @@ model JUnitTestResult {
 
   @@index([testSuiteId])
   @@index([repositoryCaseId])
+  @@index([repositoryCaseId, executedAt(sort: Desc)])
 }
 
 model JUnitProperty {

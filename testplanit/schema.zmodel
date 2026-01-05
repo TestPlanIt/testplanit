@@ -2080,6 +2080,7 @@ model TestRunResults {
     @@index([executedById])
     @@index([statusId])
     @@index([executedAt])
+    @@index([testRunCaseId, executedAt(sort: Desc)]) // Optimize "latest result per case" queries
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
 
@@ -2549,6 +2550,7 @@ model JUnitTestResult {
 
     @@index([testSuiteId])
     @@index([repositoryCaseId])
+    @@index([repositoryCaseId, executedAt(sort: Desc)]) // Optimize "latest result per case" queries
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
 
