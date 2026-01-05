@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { div as MotionDiv } from "motion/react-client";
 import { Separator } from "@/components/ui/separator";
 import svgIcon from "~/public/tpi_logo.svg";
 import { useTranslations } from "next-intl";
@@ -13,7 +13,7 @@ export function Loading() {
       data-testid="loading-indicator"
     >
       <div className="flex items-center">
-        <motion.div
+        <MotionDiv
           animate={{
             x: [-20, 20, -20],
             rotate: [0, 360, 0],
@@ -30,9 +30,9 @@ export function Loading() {
             width={25}
             priority={true}
           />
-        </motion.div>
+        </MotionDiv>
         <Separator orientation="vertical" className="px-1" />
-        <motion.div
+        <MotionDiv
           initial={{ x: 0 }}
           animate={{
             x: [0, 0, 0, 50, 0],
@@ -45,7 +45,7 @@ export function Loading() {
           }}
         >
           {tGlobal("common.loading")}
-        </motion.div>
+        </MotionDiv>
       </div>
     </div>
   );
