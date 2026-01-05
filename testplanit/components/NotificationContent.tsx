@@ -288,7 +288,9 @@ export function NotificationContent({
       return (
         <div className="space-y-2">
           <h4 className="font-medium text-sm">
-            {isOverdue ? t("milestoneOverdueTitle") : t("milestoneDueSoonTitle")}
+            {isOverdue
+              ? t("milestoneOverdueTitle")
+              : t("milestoneDueSoonTitle")}
           </h4>
           <div className="text-sm text-muted-foreground space-y-1">
             <div className="flex items-center gap-1 flex-wrap">
@@ -339,15 +341,17 @@ export function NotificationContent({
 
     return (
       <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Megaphone className="h-4 w-4 text-primary" />
+        <div className="flex items-start -mt-1 gap-2">
+          <Megaphone className="h-4 w-4 text-primary shrink-0 mt-0.5" />
           <h4 className="font-medium text-sm">{notification.title}</h4>
         </div>
         <div className="space-y-1">
           {hasHtmlContent ? (
             <div
               className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-strong:text-foreground prose-strong:font-semibold prose-a:text-primary prose-a:underline"
-              dangerouslySetInnerHTML={{ __html: notification.data.htmlContent }}
+              dangerouslySetInnerHTML={{
+                __html: notification.data.htmlContent,
+              }}
             />
           ) : hasRichContent ? (
             <div className="text-sm text-muted-foreground">

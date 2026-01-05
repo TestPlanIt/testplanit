@@ -753,6 +753,22 @@ export default function Cases({
         return { repositoryCase: { folder: { name: direction } } };
       } else if (column === "createdAt") {
         return { repositoryCase: { createdAt: direction } };
+      } else if (column === "creator") {
+        return { repositoryCase: { creator: { name: direction } } };
+      } else if (column === "linkedCases") {
+        return { repositoryCase: { linksFrom: { _count: direction } } };
+      } else if (column === "testRuns") {
+        return { repositoryCase: { testRuns: { _count: direction } } };
+      } else if (column === "comments") {
+        return { repositoryCase: { comments: { _count: direction } } };
+      } else if (column === "attachments") {
+        return { repositoryCase: { attachments: { _count: direction } } };
+      } else if (column === "steps") {
+        return { repositoryCase: { steps: { _count: direction } } };
+      } else if (column === "tags") {
+        return { repositoryCase: { tags: { _count: direction } } };
+      } else if (column === "issues") {
+        return { repositoryCase: { issues: { _count: direction } } };
       } else {
         // For any other column, try to order by the repositoryCase field
         return { repositoryCase: { [column]: direction } };
@@ -1022,7 +1038,43 @@ export default function Cases({
       if (!sortConfig) {
         return { order: "asc" };
       }
-      return { [sortConfig.column]: sortConfig.direction };
+
+      const column = sortConfig.column;
+      const direction = sortConfig.direction;
+
+      // Count-based sorting using relation aggregate input
+      if (column === "linkedCases") {
+        return { linksFrom: { _count: direction } };
+      }
+      if (column === "testRuns") {
+        return { testRuns: { _count: direction } };
+      }
+      if (column === "comments") {
+        return { comments: { _count: direction } };
+      }
+      if (column === "attachments") {
+        return { attachments: { _count: direction } };
+      }
+      if (column === "steps") {
+        return { steps: { _count: direction } };
+      }
+      if (column === "tags") {
+        return { tags: { _count: direction } };
+      }
+      if (column === "issues") {
+        return { issues: { _count: direction } };
+      }
+
+      // Text-based sorting on related entities
+      if (column === "template") {
+        return { template: { templateName: direction } };
+      }
+      if (column === "creator") {
+        return { creator: { name: direction } };
+      }
+
+      // Direct field sorting (existing behavior)
+      return { [column]: direction };
     }, [sortConfig, isDefaultSort]);
 
   // Add filtered count query for accurate pagination
