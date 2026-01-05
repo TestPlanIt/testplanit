@@ -39,7 +39,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd testplanit
-          pnpm install
+          pnpm install --ignore-scripts
 
       - name: Generate ZenStack and Prisma
         run: |

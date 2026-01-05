@@ -41,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd testplanit
-          pnpm install --frozen-lockfile
+          pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Release
         id: release
