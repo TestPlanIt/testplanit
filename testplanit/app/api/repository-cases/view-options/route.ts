@@ -228,6 +228,7 @@ export async function POST(request: Request) {
       creators,
       automatedCounts,
       tags,
+      issues,
       dynamicFieldInfo,
       testRunData,
       totalCount,
@@ -295,6 +296,48 @@ export async function POST(request: Request) {
 
         return result.map(row => ({
           tagId: row.tagId,
+          count: row.count,
+        }));
+      })(),
+
+      // Issues - use raw SQL to count issues efficiently with GROUP BY
+      // In the _IssueToRepositoryCases join table: "A" = Issue.id, "B" = RepositoryCases.id
+      (async () => {
+        let result: Array<{ issueId: number; count: bigint }>;
+
+        if (isRunMode && effectiveSelectedTestCases && effectiveSelectedTestCases.length > 0) {
+          result = await prisma.$queryRaw<Array<{ issueId: number; count: bigint }>>`
+            SELECT rci."A" as "issueId", COUNT(*)::bigint as count
+            FROM "public"."_IssueToRepositoryCases" rci
+            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rci."B"
+            INNER JOIN "public"."Issue" i ON i.id = rci."A"
+            LEFT JOIN "public"."RepositoryFolders" rf ON rf.id = rc."folderId"
+            WHERE rc."isDeleted" = false
+              AND rc."isArchived" = false
+              AND rc."projectId" = ${projectId}
+              AND rf."isDeleted" = false
+              AND i."isDeleted" = false
+              AND rc.id = ANY(${effectiveSelectedTestCases})
+            GROUP BY rci."A"
+          `;
+        } else {
+          result = await prisma.$queryRaw<Array<{ issueId: number; count: bigint }>>`
+            SELECT rci."A" as "issueId", COUNT(*)::bigint as count
+            FROM "public"."_IssueToRepositoryCases" rci
+            INNER JOIN "public"."RepositoryCases" rc ON rc.id = rci."B"
+            INNER JOIN "public"."Issue" i ON i.id = rci."A"
+            LEFT JOIN "public"."RepositoryFolders" rf ON rf.id = rc."folderId"
+            WHERE rc."isDeleted" = false
+              AND rc."isArchived" = false
+              AND rc."projectId" = ${projectId}
+              AND rf."isDeleted" = false
+              AND i."isDeleted" = false
+            GROUP BY rci."A"
+          `;
+        }
+
+        return result.map(row => ({
+          issueId: row.issueId,
           count: row.count,
         }));
       })(),
@@ -394,7 +437,7 @@ export async function POST(request: Request) {
     ]);
 
     // Fetch template names and state details
-    const [templateDetails, stateDetails, creatorDetails, tagDetails] =
+    const [templateDetails, stateDetails, creatorDetails, tagDetails, issueDetails] =
       await Promise.all([
         prisma.templates.findMany({
           where: {
@@ -447,6 +490,20 @@ export async function POST(request: Request) {
               select: {
                 id: true,
                 name: true,
+              },
+            })
+          : Promise.resolve([]),
+
+        issues.length > 0
+          ? prisma.issue.findMany({
+              where: {
+                id: { in: issues.map((i) => i.issueId) },
+                isDeleted: false,
+              },
+              select: {
+                id: true,
+                name: true,
+                title: true,
               },
             })
           : Promise.resolve([]),
@@ -665,6 +722,97 @@ export async function POST(request: Request) {
           id: t.tagId,
           name: tag?.name || "Unknown",
           count: t.count,
+        };
+      }),
+    ];
+
+    // Calculate issue counts including special options
+    const casesWithIssues = await prisma.repositoryCases.count({
+      where: {
+        ...baseWhere,
+        issues: {
+          some: {
+            isDeleted: false,
+          },
+        },
+      },
+    });
+
+    // For multi-config, recalculate issue counts based on TestRunCases
+    let effectiveCasesWithIssues = casesWithIssues;
+    let effectiveCasesWithoutIssues = totalCount - casesWithIssues;
+
+    if (casePropertiesMap && allTestRunCaseIds.length > 0) {
+      // Fetch which cases have issues
+      const casesWithIssuesSet = new Set(
+        (await prisma.repositoryCases.findMany({
+          where: {
+            id: { in: effectiveSelectedTestCases },
+            issues: { some: { isDeleted: false } },
+          },
+          select: { id: true },
+        })).map((c) => c.id)
+      );
+
+      effectiveCasesWithIssues = allTestRunCaseIds.filter((id) => casesWithIssuesSet.has(id)).length;
+      effectiveCasesWithoutIssues = allTestRunCaseIds.length - effectiveCasesWithIssues;
+    }
+
+    // For multi-config, recalculate individual issue counts
+    let issueCountsForList = issues.map((i) => ({
+      issueId: i.issueId,
+      count: Number(i.count),
+    }));
+
+    if (casePropertiesMap && allTestRunCaseIds.length > 0) {
+      // Fetch issue associations for all cases
+      const caseIssueAssociations = await prisma.repositoryCases.findMany({
+        where: { id: { in: effectiveSelectedTestCases } },
+        select: {
+          id: true,
+          issues: { select: { id: true }, where: { isDeleted: false } },
+        },
+      });
+
+      const caseIssuesMap = new Map<number, Set<number>>(
+        caseIssueAssociations.map((c) => [c.id, new Set(c.issues.map((i) => i.id))])
+      );
+
+      // Count issues based on TestRunCases
+      const issueCountMap = new Map<number, number>();
+      allTestRunCaseIds.forEach((caseId) => {
+        const caseIssues = caseIssuesMap.get(caseId);
+        if (caseIssues) {
+          caseIssues.forEach((issueId) => {
+            issueCountMap.set(issueId, (issueCountMap.get(issueId) || 0) + 1);
+          });
+        }
+      });
+
+      issueCountsForList = Array.from(issueCountMap.entries()).map(([issueId, count]) => ({
+        issueId,
+        count,
+      }));
+    }
+
+    const issuesWithCounts = [
+      {
+        id: "any" as const,
+        name: "Any Issue",
+        count: effectiveCasesWithIssues,
+      },
+      {
+        id: "none" as const,
+        name: "No Issues",
+        count: effectiveCasesWithoutIssues,
+      },
+      ...issueCountsForList.map((i) => {
+        const issue = issueDetails.find((id) => id.id === i.issueId);
+        return {
+          id: i.issueId,
+          name: issue?.name || "Unknown",
+          title: issue?.title,
+          count: i.count,
         };
       }),
     ];
@@ -959,6 +1107,7 @@ export async function POST(request: Request) {
       creators: creatorsWithCounts.sort((a, b) => a.name.localeCompare(b.name)),
       automated: automatedWithCounts,
       tags: tagsWithCounts,
+      issues: issuesWithCounts,
       dynamicFields,
       testRunOptions,
       totalCount: effectiveTotalCount,

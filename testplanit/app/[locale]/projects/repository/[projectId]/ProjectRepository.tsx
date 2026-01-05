@@ -37,6 +37,7 @@ import {
   CircleCheckBig,
   UserCog,
   Tags,
+  Bug,
 } from "lucide-react";
 import {
   Card,
@@ -233,6 +234,11 @@ interface ViewOptions {
   }>;
   dynamicFields: Record<string, DynamicField>;
   tags: Array<{
+    id: number | string;
+    name: string;
+    count?: number;
+  }>;
+  issues: Array<{
     id: number | string;
     name: string;
     count?: number;
@@ -599,6 +605,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         automated: [],
         dynamicFields: {},
         tags: [],
+        issues: [],
       };
     }
 
@@ -628,6 +635,18 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       }
     );
 
+    // Transform API response for issues
+    const issueOptions = (viewOptionsData.issues || []).map((issue: any) => ({
+      id: issue.id,
+      name:
+        issue.id === "any"
+          ? t("repository.views.anyIssue")
+          : issue.id === "none"
+            ? t("repository.views.noIssues")
+            : issue.name,
+      count: issue.count,
+    }));
+
     return {
       templates: viewOptionsData.templates,
       states: viewOptionsData.states,
@@ -635,6 +654,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       automated: viewOptionsData.automated || [],
       dynamicFields,
       tags: tagOptions,
+      issues: issueOptions,
       testRunOptions: viewOptionsData.testRunOptions,
     };
   }, [viewOptionsData, t]);
@@ -674,6 +694,20 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         options: viewOptions.tags.map((tag) => ({ ...tag })), // Populate options from viewOptions
       },
     ];
+
+    // Only include Issues view if there are cases with issues
+    const casesWithIssues = viewOptions.issues.find((i) => i.id === "any");
+    const issuesViewItem =
+      casesWithIssues && casesWithIssues.count && casesWithIssues.count > 0
+        ? [
+            {
+              id: "issues",
+              name: t("repository.views.byIssue"),
+              icon: Bug,
+              options: viewOptions.issues.map((issue) => ({ ...issue })),
+            },
+          ]
+        : [];
 
     const runModeItems = [
       {
@@ -736,17 +770,23 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       const runModeBaseItems = runModeItems.filter(
         (item) => item.id !== "tags"
       );
-      return [...runModeBaseItems, ...baseItems, ...dynamicFields];
+      return [
+        ...runModeBaseItems,
+        ...baseItems,
+        ...issuesViewItem,
+        ...dynamicFields,
+      ];
     }
 
-    // For non-run mode, just return baseItems (which now includes Tags) and dynamicFields
-    return [...baseItems, ...dynamicFields];
+    // For non-run mode, just return baseItems (which now includes Tags), Issues, and dynamicFields
+    return [...baseItems, ...issuesViewItem, ...dynamicFields];
   }, [
     viewOptions.dynamicFields,
     t,
     isRunMode,
     viewOptionsData,
     viewOptions.tags,
+    viewOptions.issues,
   ]);
 
   const [selectedItem, setSelectedItem] = useState<string>(() => {
@@ -759,6 +799,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       "status",
       "assignedTo",
       "tags",
+      "issues",
     ];
 
     if (viewParam) {
@@ -810,6 +851,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         "status",
         "assignedTo",
         "tags",
+        "issues",
       ];
 
       if (validViewTypes.includes(viewParam)) {
@@ -937,6 +979,10 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         setSelectedFilter(
           viewOptions.tags.find((t) => t.id === "any") ? ["any"] : null
         );
+      } else if (value === "issues") {
+        setSelectedFilter(
+          viewOptions.issues.find((i) => i.id === "any") ? ["any"] : null
+        );
       } else if (value.startsWith("dynamic_")) {
         const [_, fieldKey] = value.split("_");
         const [fieldId, fieldType] = fieldKey.split("_");
@@ -979,6 +1025,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       session?.user.id,
       handleSelectFolder,
       viewOptions.tags,
+      viewOptions.issues,
     ]
   );
 

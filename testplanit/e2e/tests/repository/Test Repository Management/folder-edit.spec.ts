@@ -16,11 +16,8 @@ test.describe("Folder Edit", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    const projects = await api.getProjects();
-    if (projects.length === 0) {
-      throw new Error("No projects found in test database. Run seed first.");
-    }
-    return projects[0].id;
+    // Create a project for this test - tests should be self-contained
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("Rename Existing Folder", async ({ api, page }) => {
@@ -66,14 +63,19 @@ test.describe("Folder Edit", () => {
     await saveButton.click();
 
     // Wait for the API response
-    await responsePromise;
+    const response = await responsePromise;
+    expect(response.ok()).toBe(true);
 
     // Wait for modal to close
     await expect(editDialog).not.toBeVisible({ timeout: 10000 });
     await page.waitForLoadState("networkidle");
 
-    // Verify the folder was renamed
-    await repositoryPage.verifyFolderExists(newName);
+    // Wait for the tree to refetch and re-render with the new folder name
+    // The React Query cache invalidation may take a moment to trigger a refetch
+    await expect(async () => {
+      await repositoryPage.verifyFolderExists(newName);
+    }).toPass({ timeout: 15000 });
+
     await repositoryPage.verifyFolderNotExists(originalName);
   });
 

@@ -1728,7 +1728,10 @@
       "allAssignees": "Todos los asignados",
       "anyTag": "Cualquier etiqueta",
       "noTags": "Sin Etiquetas",
-      "byTag": "Etiqueta"
+      "byTag": "Etiqueta",
+      "byIssue": "Asunto",
+      "anyIssue": "Cualquier problema",
+      "noIssues": "No hay problemas"
     },
     "noFoldersTitle": "Aún no hay carpetas",
     "noFoldersDescription": "Comienza creando tu primera carpeta para organizar tus casos de prueba.",

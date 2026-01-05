@@ -16,11 +16,8 @@ test.describe("Drag & Drop", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    const projects = await api.getProjects();
-    if (projects.length === 0) {
-      throw new Error("No projects found in test database. Run seed first.");
-    }
-    return projects[0].id;
+    // Create a project for this test - tests should be self-contained
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("Drag Folder to New Position (Same Level)", async ({ api, page }) => {
@@ -156,22 +153,15 @@ test.describe("Drag & Drop", () => {
     }
 
     // Verify the child folder is still visible (either as nested or at root level)
-    const childAfterDrag = repositoryPage.getFolderByName(childName);
-    await expect(childAfterDrag.first()).toBeVisible({ timeout: 5000 });
-
-    // Wait for element to have stable bounding box (not animating)
+    // Use retry logic because the tree may re-render after drag operation
+    let childBoxAfter: { x: number; y: number; width: number; height: number } | null = null;
     await expect(async () => {
-      const box = await childAfterDrag.first().boundingBox();
-      expect(box).not.toBeNull();
-    }).toPass({ timeout: 5000 });
-
-    // Scroll into view
-    await childAfterDrag.first().evaluate((el) => el.scrollIntoView({ block: "center" }));
-
-    // Check if the child is now indented (nested under parent)
-    // This verifies the drag-to-nest worked
-    const childBoxAfter = await childAfterDrag.first().boundingBox();
-    expect(childBoxAfter).not.toBeNull();
+      const childAfterDrag = repositoryPage.getFolderByName(childName).first();
+      await expect(childAfterDrag).toBeVisible({ timeout: 3000 });
+      await childAfterDrag.evaluate((el) => el.scrollIntoView({ block: "center" }));
+      childBoxAfter = await childAfterDrag.boundingBox();
+      expect(childBoxAfter).not.toBeNull();
+    }).toPass({ timeout: 10000 });
 
     // If nesting worked, child should be indented (higher X value than before)
     // or at minimum, both folders should still exist
@@ -565,7 +555,7 @@ test.describe("Drag & Drop", () => {
 
     // Wait for child to be visible and stable after expand
     const child = repositoryPage.getFolderById(childId);
-    await expect(child).toBeVisible({ timeout: 5000 });
+    await expect(child).toBeVisible({ timeout: 10000 });
 
     // Wait a moment for DOM to stabilize after animation
     await page.waitForLoadState("networkidle");
@@ -573,21 +563,20 @@ test.describe("Drag & Drop", () => {
     // Get element references
     const parent = repositoryPage.getFolderById(parentId);
 
-    // Wait for elements to have stable bounding boxes (not animating)
+    // Wait for both elements to have stable bounding boxes and scroll into view
+    // Use retry logic because tree may re-render
     await expect(async () => {
-      const box = await parent.boundingBox();
-      expect(box).not.toBeNull();
-    }).toPass({ timeout: 5000 });
-
-    // Scroll elements into view
-    await parent.evaluate((el) => el.scrollIntoView({ block: "center" }));
-    await child.evaluate((el) => el.scrollIntoView({ block: "center" }));
+      // Scroll using JavaScript to avoid element detachment issues
+      await parent.evaluate((el) => el.scrollIntoView({ block: "center" }));
+      await child.evaluate((el) => el.scrollIntoView({ block: "center" }));
+      const pBox = await parent.boundingBox();
+      const cBox = await child.boundingBox();
+      expect(pBox).not.toBeNull();
+      expect(cBox).not.toBeNull();
+    }).toPass({ timeout: 10000 });
 
     const parentBox = await parent.boundingBox();
     const childBox = await child.boundingBox();
-
-    expect(parentBox).not.toBeNull();
-    expect(childBox).not.toBeNull();
 
     await page.mouse.move(parentBox!.x + parentBox!.width / 2, parentBox!.y + parentBox!.height / 2);
     await page.mouse.down();

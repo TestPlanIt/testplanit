@@ -17,11 +17,8 @@ test.describe("View Switching", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    const projects = await api.getProjects();
-    if (projects.length === 0) {
-      throw new Error("No projects found in test database. Run seed first.");
-    }
-    return projects[0].id;
+    // Create a project for this test - tests should be self-contained
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   /**
@@ -251,6 +248,10 @@ test.describe("View Switching", () => {
   test("State View Shows Individual States with Icons", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
+    // Create a test case so the state view has data to show
+    const rootFolderId = await api.getRootFolderId(projectId);
+    await api.createTestCase(projectId, rootFolderId, `State View Case ${Date.now()}`);
+
     await repositoryPage.goto(projectId);
     await switchToView(page, "State");
 
@@ -284,6 +285,10 @@ test.describe("View Switching", () => {
 
   test("Automation View Shows Automated and Not Automated Options", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+
+    // Create a test case so the automation view has data to show
+    const rootFolderId = await api.getRootFolderId(projectId);
+    await api.createTestCase(projectId, rootFolderId, `Automation View Case ${Date.now()}`);
 
     await repositoryPage.goto(projectId);
     await switchToView(page, "Automation");

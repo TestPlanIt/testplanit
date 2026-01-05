@@ -68,13 +68,48 @@ export class RepositoryPage extends BasePage {
     await expect(this.layout).toBeVisible({ timeout: 15000 });
     // Dismiss any onboarding overlays that may be blocking interactions
     await this.dismissOnboardingOverlay();
+    // Ensure the left panel is wide enough to interact with nested folders
+    await this.resizeLeftPanel(400);
+  }
+
+  /**
+   * Resize the left folder panel by dragging the separator
+   * This ensures deeply nested folders are visible and interactable
+   */
+  async resizeLeftPanel(width: number = 350): Promise<void> {
+    const separator = this.page.locator('[data-panel-resize-handle-id], [role="separator"]').first();
+
+    // Wait for separator to be visible
+    try {
+      await separator.waitFor({ state: 'visible', timeout: 3000 });
+    } catch {
+      // Separator may not exist in all layouts
+      return;
+    }
+
+    // Get current position of separator
+    const box = await separator.boundingBox();
+    if (!box) return;
+
+    // Drag separator to the right to make left panel wider
+    await separator.hover();
+    await this.page.mouse.down();
+    await this.page.mouse.move(width, box.y + box.height / 2);
+    await this.page.mouse.up();
+
+    // Wait for layout to settle
+    await this.page.waitForTimeout(200);
   }
 
   /**
    * Get a folder node by ID
+   * Note: We use .first() internally because react-arborist may create a drag preview
+   * element with the same data-testid during drag operations
    */
   getFolderById(folderId: number): Locator {
-    return this.page.getByTestId(`folder-node-${folderId}`);
+    // Use CSS selector directly to ensure exact match on the data-testid
+    // The first match is the actual folder element (the preview, if any, comes later in DOM)
+    return this.page.locator(`[data-testid="folder-node-${folderId}"]`).first();
   }
 
   /**
@@ -92,8 +127,20 @@ export class RepositoryPage extends BasePage {
    * Select a folder in the tree
    */
   async selectFolder(folderId: number): Promise<void> {
+    // Wait for the tree to be fully loaded
+    await this.page.waitForLoadState("networkidle");
+
+    // Wait for the specific folder to be visible
     const folder = this.getFolderById(folderId);
-    await folder.click();
+    await expect(folder).toBeVisible({ timeout: 10000 });
+
+    // Use evaluate to click via JavaScript to ensure we're clicking the exact element
+    await folder.evaluate((el) => {
+      (el as HTMLElement).click();
+    });
+
+    // Wait for the URL to update with the selected folder
+    await expect(this.page).toHaveURL(new RegExp(`node=${folderId}`), { timeout: 10000 });
     await this.page.waitForLoadState("networkidle");
   }
 
@@ -107,18 +154,49 @@ export class RepositoryPage extends BasePage {
   }
 
   /**
-   * Expand a folder in the tree
+   * Expand a folder in the tree by clicking the chevron button
+   * Note: Clicking the chevron only toggles expand/collapse without changing selection
    */
   async expandFolder(folderId: number): Promise<void> {
-    const folder = this.getFolderById(folderId);
-    // Hover over the folder first to make the expand button visible
-    // (the button has CSS class "invisible" until hovered)
-    await folder.hover();
-    // Look for the expand button - it's a Button with ChevronRight svg inside
-    // The button has class containing "h-6 w-6" and the svg has class "w-4 h-4"
-    const expandButton = folder.locator('button').filter({ has: this.page.locator('svg.lucide-chevron-right, svg[class*="lucide-chevron"]') }).first();
-    await expect(expandButton).toBeVisible({ timeout: 5000 });
-    await expandButton.click();
+    // Use expect().toPass() for retry logic since elements may get detached during tree re-renders
+    await expect(async () => {
+      const folder = this.getFolderById(folderId);
+
+      // Wait for the folder element to be visible
+      await expect(folder).toBeVisible({ timeout: 5000 });
+
+      // Wait for network to settle
+      await this.page.waitForLoadState("networkidle");
+
+      // Check if already expanded (has aria-expanded="true" or [expanded] attribute)
+      const isExpanded = await folder.getAttribute("aria-expanded") === "true" ||
+        await folder.evaluate((el) => el.hasAttribute("data-expanded") || el.classList.contains("expanded"));
+
+      if (isExpanded) {
+        // Already expanded, no need to click
+        return;
+      }
+
+      // Find the chevron button inside the folder row - it's the button with the chevron icon
+      const chevronButton = folder.locator("button").first();
+      const hasChevron = await chevronButton.isVisible().catch(() => false);
+
+      if (hasChevron) {
+        // Click the chevron button to expand
+        await chevronButton.evaluate((el) => {
+          (el as HTMLElement).click();
+        });
+      } else {
+        // Fallback: click on the folder row itself
+        await folder.evaluate((el) => {
+          (el as HTMLElement).click();
+        });
+      }
+
+      // Wait a bit for the tree to update after the click
+      await this.page.waitForTimeout(200);
+    }).toPass({ timeout: 20000 });
+
     // Wait for children to be visible (animation complete)
     await this.page.waitForLoadState("networkidle");
   }

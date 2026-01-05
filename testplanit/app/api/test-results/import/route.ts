@@ -535,6 +535,8 @@ export async function POST(request: NextRequest) {
               // Upsert RepositoryCase
               // className is used as part of the composite unique key to identify test cases
               // For JUnit: fully qualified class name, for Cucumber: feature name, etc.
+              // When updating existing cases, we intentionally do NOT update folderId
+              // to preserve the user's folder organization
               const repositoryCase = await prisma.repositoryCases.upsert({
                 where: {
                   projectId_name_className_source: {
@@ -550,7 +552,7 @@ export async function POST(request: NextRequest) {
                   isArchived: false,
                   stateId: defaultCaseStateId,
                   templateId: template.id,
-                  folderId: finalFolder.id,
+                  // Note: folderId is intentionally not updated to preserve existing folder structure
                   repositoryId: repository.id,
                   creatorId: userId,
                   order: caseOrder,

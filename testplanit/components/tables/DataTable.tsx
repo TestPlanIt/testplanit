@@ -222,12 +222,24 @@ export function DataTable<TData extends DataRow, TValue>({
 
   useEffect(() => {
     if (Object.keys(columnVisibility).length > 0) {
-      setEffectiveColumnVisibility(columnVisibility);
+      // Merge column visibility with defaults for any new columns not in the state
+      // This ensures new columns (e.g., custom fields from different test cases)
+      // get proper visibility based on their meta.isVisible property
+      const mergedVisibility: Record<string, boolean> = { ...columnVisibility };
+      columns.forEach((column) => {
+        const columnId = column.id as string;
+        if (mergedVisibility[columnId] === undefined) {
+          // Column not in visibility state - set based on meta.isVisible or default to hidden
+          const metaVisible = (column.meta as CustomColumnMeta)?.isVisible;
+          mergedVisibility[columnId] = metaVisible ?? false;
+        }
+      });
+      setEffectiveColumnVisibility(mergedVisibility);
     } else {
       // Only use getInitialVisibility as fallback when columnVisibility is empty
       setEffectiveColumnVisibility(getInitialVisibility);
     }
-  }, [columnVisibility, getInitialVisibility]);
+  }, [columnVisibility, getInitialVisibility, columns]);
 
   const visibleColumns = useMemo(() => {
     // If we have effectiveColumnVisibility set, use it but still respect enableHiding: false
@@ -848,21 +860,8 @@ export function DataTable<TData extends DataRow, TValue>({
                             : "border-r border-accent"
                         }`}
                       >
-                        <div
-                          className="truncate whitespace-nowrap overflow-hidden flex items-center"
-                          style={
-                            shouldIndent
-                              ? { paddingLeft: `${depth * 1.5}rem` }
-                              : undefined
-                          }
-                          title={
-                            typeof cell.getValue() === "string"
-                              ? (cell.getValue() as string)
-                              : undefined
-                          }
-                        >
-                          {cellContent}
-                        </div>
+                        {/* Render content directly like SortableItem does to preserve cell alignment */}
+                        {cellContent}
                       </TableCell>
                     );
                   })}

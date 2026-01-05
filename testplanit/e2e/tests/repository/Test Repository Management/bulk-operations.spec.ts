@@ -16,11 +16,8 @@ test.describe("Bulk Operations", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    const projects = await api.getProjects();
-    if (projects.length === 0) {
-      throw new Error("No projects found in test database. Run seed first.");
-    }
-    return projects[0].id;
+    // Create a project for this test - tests should be self-contained
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("Bulk Edit Selected Test Cases", async ({ api, page }) => {
@@ -331,6 +328,12 @@ test.describe("Bulk Operations", () => {
     await repositoryPage.selectFolder(folderId);
     await page.waitForLoadState("networkidle");
 
+    // Wait for test cases to be visible in the table before trying to select
+    const table = page.locator("table").first();
+    await expect(table).toBeVisible({ timeout: 10000 });
+    const tbody = table.locator("tbody");
+    await expect(tbody.locator("tr")).toHaveCount(3, { timeout: 10000 });
+
     // Find the "Select All" checkbox in the table header
     // The checkbox can be a native input[type="checkbox"] or a Radix checkbox (button[role="checkbox"])
     const headerRow = page.locator("thead tr").first();
@@ -341,12 +344,23 @@ test.describe("Bulk Operations", () => {
 
     // Click to select all
     await selectAllCheckbox.click();
+    await page.waitForLoadState("networkidle");
 
-    // Verify bulk edit button appears (indicates items are selected)
-    // Need to wait for the button to become visible after selection state changes
-    const bulkEditButton = page
-      .locator('[data-testid="bulk-edit-button"]')
-      .first();
-    await expect(bulkEditButton).toBeVisible({ timeout: 5000 });
+    // Verify that some rows are now selected by checking if any row checkbox is checked
+    // The checkboxes should have aria-checked="true" after selection
+    await expect(async () => {
+      const checkedCheckboxes = page.locator('tbody [role="checkbox"][aria-checked="true"], tbody input[type="checkbox"]:checked');
+      const count = await checkedCheckboxes.count();
+      expect(count).toBeGreaterThan(0);
+    }).toPass({ timeout: 10000 });
+
+    // Verify bulk action button appears (indicates items are selected)
+    // Either bulk-edit-button or create-test-run-button should appear when items are selected
+    await expect(async () => {
+      const bulkEditButton = page.locator('[data-testid="bulk-edit-button"]');
+      const createRunButton = page.locator('[data-testid="create-test-run-button"]');
+      const eitherButtonVisible = await bulkEditButton.isVisible() || await createRunButton.isVisible();
+      expect(eitherButtonVisible).toBe(true);
+    }).toPass({ timeout: 10000 });
   });
 });

@@ -82,6 +82,7 @@ The **View Selector** in the left panel provides powerful ways to slice your tes
 * **By Creator**: Groups cases by the user who created them.
 * **By Automation**: Filters cases based on whether they are marked as automated.
 * **By Tag**: Filters cases based on assigned tags (Any Tag, No Tags, or a specific tag).
+* **By Issue**: Filters cases based on linked issues (Any Issue, No Issues, or a specific issue). This view only appears when there are test cases with issues attached.
 * **By Custom Field**: If custom fields (Dropdown, Multi-Select, Link, Steps, Checkbox types) are defined in templates, views will be available to filter by the values of those fields.
 
 ## Test Case Table Columns

@@ -11,9 +11,13 @@ export class ApiHelper {
   private createdFolderIds: number[] = [];
   private createdCaseIds: number[] = [];
   private createdTagIds: number[] = [];
+  private createdIssueIds: number[] = [];
+  private createdTestRunIds: number[] = [];
+  private createdTestRunCaseIds: number[] = [];
   private cachedTemplateId: number | null = null;
   private cachedStateId: number | null = null;
   private cachedRepositoryId: number | null = null;
+  private cachedStatusIds: Map<string, number> = new Map();
 
   constructor(request: APIRequestContext, baseURL: string) {
     this.request = request;
@@ -657,6 +661,83 @@ export class ApiHelper {
   }
 
   /**
+   * Create an issue via API
+   * Issues can be linked to test cases, test runs, sessions, etc.
+   */
+  async createIssue(
+    projectId: number,
+    name: string,
+    title: string
+  ): Promise<number> {
+    const userId = await this.getCurrentUserId();
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/issue/create`,
+      {
+        data: {
+          data: {
+            name,
+            title,
+            isDeleted: false,
+            project: { connect: { id: projectId } },
+            createdBy: { connect: { id: userId } },
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create issue: ${error}`);
+    }
+
+    const result = await response.json();
+    const issueId = result.data.id;
+    this.createdIssueIds.push(issueId);
+    return issueId;
+  }
+
+  /**
+   * Link an issue to a test case via API
+   * Uses the many-to-many relationship between Issues and RepositoryCases
+   */
+  async linkIssueToTestCase(issueId: number, caseId: number): Promise<void> {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/repositoryCases/update`,
+      {
+        data: {
+          where: { id: caseId },
+          data: {
+            issues: {
+              connect: [{ id: issueId }],
+            },
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to link issue to test case: ${error}`);
+    }
+  }
+
+  /**
+   * Delete an issue via API (soft delete)
+   * Silently ignores failures - item may already be deleted by the test
+   */
+  async deleteIssue(issueId: number): Promise<void> {
+    this.request
+      .patch(`${this.baseURL}/api/model/issue/update`, {
+        data: {
+          where: { id: issueId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
+  }
+
+  /**
    * Delete a folder via API (soft delete)
    * Silently ignores failures - item may already be deleted by the test
    */
@@ -791,9 +872,40 @@ export class ApiHelper {
       }
     );
 
+    let repositoryId: number | null = null;
     if (!repoResponse.ok()) {
       // Repository creation is not critical, log but don't fail
       console.warn(`Failed to create repository for project ${projectId}`);
+    } else {
+      const repoResult = await repoResponse.json();
+      repositoryId = repoResult.data?.id || null;
+    }
+
+    // Create root folder for the project (required for test cases)
+    if (repositoryId) {
+      const folderResponse = await this.request.post(
+        `${this.baseURL}/api/model/repositoryFolders/create`,
+        {
+          data: {
+            data: {
+              name: "Root Folder",
+              order: 0,
+              isDeleted: false,
+              docs: JSON.stringify({
+                type: "doc",
+                content: [{ type: "paragraph" }],
+              }),
+              project: { connect: { id: projectId } },
+              repository: { connect: { id: repositoryId } },
+              creator: { connect: { id: userId } },
+            },
+          },
+        }
+      );
+
+      if (!folderResponse.ok()) {
+        console.warn(`Failed to create root folder for project ${projectId}`);
+      }
     }
 
     // Assign default template to project (matching setup-db.ts)
@@ -919,11 +1031,412 @@ export class ApiHelper {
     return result.data;
   }
 
+  // ============================================
+  // Test Run Methods
+  // ============================================
+
+  /**
+   * Get an available status ID for test runs
+   * Statuses are used for TestRunCases and TestRunResults
+   * @param statusType - Optional filter: 'passed', 'failed', 'blocked', or 'any' (default)
+   */
+  async getStatusId(statusType: "passed" | "failed" | "blocked" | "any" = "any"): Promise<number> {
+    const cacheKey = statusType;
+    if (this.cachedStatusIds.has(cacheKey)) {
+      return this.cachedStatusIds.get(cacheKey)!;
+    }
+
+    const whereClause: Record<string, unknown> = {
+      isDeleted: false,
+      isEnabled: true,
+    };
+
+    // Filter by status type if specified
+    if (statusType === "passed") {
+      whereClause.isSuccess = true;
+    } else if (statusType === "failed") {
+      whereClause.isFailure = true;
+    } else if (statusType === "blocked") {
+      whereClause.isBlocked = true;
+    }
+
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/status/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: whereClause,
+            take: 1,
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      throw new Error("Failed to fetch statuses");
+    }
+
+    const result = await response.json();
+    if (result.data.length === 0) {
+      throw new Error(`No ${statusType} status found. Run seed first.`);
+    }
+
+    const statusId = result.data[0].id;
+    this.cachedStatusIds.set(cacheKey, statusId);
+    return statusId;
+  }
+
+  /**
+   * Get multiple status IDs for test runs
+   * Useful for testing different status scenarios
+   */
+  async getStatusIds(count: number = 3): Promise<number[]> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/status/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: {
+              isDeleted: false,
+              isEnabled: true,
+            },
+            take: count,
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      throw new Error("Failed to fetch statuses");
+    }
+
+    const result = await response.json();
+    if (result.data.length === 0) {
+      throw new Error("No statuses found. Run seed first.");
+    }
+
+    return result.data.map((s: { id: number }) => s.id);
+  }
+
+  /**
+   * Create a test run via API
+   * Test runs contain test cases and track execution status
+   */
+  async createTestRun(
+    projectId: number,
+    name: string,
+    options?: {
+      stateId?: number;
+      milestoneId?: number;
+      configId?: number;
+      testRunType?: "REGULAR" | "JUNIT" | "TESTNG" | "XUNIT" | "NUNIT" | "MSTEST" | "MOCHA" | "CUCUMBER";
+    }
+  ): Promise<number> {
+    const userId = await this.getCurrentUserId();
+    const stateId = options?.stateId || await this.getStateId(projectId);
+
+    const data: Record<string, unknown> = {
+      name,
+      isCompleted: false,
+      isDeleted: false,
+      testRunType: options?.testRunType || "REGULAR",
+      project: { connect: { id: projectId } },
+      state: { connect: { id: stateId } },
+      createdBy: { connect: { id: userId } },
+    };
+
+    if (options?.milestoneId) {
+      data.milestone = { connect: { id: options.milestoneId } };
+    }
+
+    if (options?.configId) {
+      data.config = { connect: { id: options.configId } };
+    }
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/testRuns/create`,
+      {
+        data: { data },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create test run: ${error}`);
+    }
+
+    const result = await response.json();
+    const testRunId = result.data.id;
+    this.createdTestRunIds.push(testRunId);
+    return testRunId;
+  }
+
+  /**
+   * Add a test case to a test run via API
+   * Creates a TestRunCases entry linking the case to the run
+   * @returns The TestRunCases ID (not the RepositoryCases ID)
+   */
+  async addTestCaseToTestRun(
+    testRunId: number,
+    repositoryCaseId: number,
+    options?: {
+      order?: number;
+      statusId?: number;
+      assignedToId?: string;
+    }
+  ): Promise<number> {
+    const data: Record<string, unknown> = {
+      order: options?.order ?? 0,
+      isCompleted: false,
+      testRun: { connect: { id: testRunId } },
+      repositoryCase: { connect: { id: repositoryCaseId } },
+    };
+
+    if (options?.statusId) {
+      data.status = { connect: { id: options.statusId } };
+    }
+
+    if (options?.assignedToId) {
+      data.assignedTo = { connect: { id: options.assignedToId } };
+    }
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/testRunCases/create`,
+      {
+        data: { data },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to add test case to test run: ${error}`);
+    }
+
+    const result = await response.json();
+    const testRunCaseId = result.data.id;
+    this.createdTestRunCaseIds.push(testRunCaseId);
+    return testRunCaseId;
+  }
+
+  /**
+   * Add multiple test cases to a test run with sequential order
+   * Convenience method for bulk adding cases
+   * @returns Array of TestRunCases IDs
+   */
+  async addTestCasesToTestRun(
+    testRunId: number,
+    repositoryCaseIds: number[],
+    options?: {
+      assignedToId?: string;
+    }
+  ): Promise<number[]> {
+    const testRunCaseIds: number[] = [];
+
+    for (let i = 0; i < repositoryCaseIds.length; i++) {
+      const testRunCaseId = await this.addTestCaseToTestRun(
+        testRunId,
+        repositoryCaseIds[i],
+        {
+          order: i + 1,
+          assignedToId: options?.assignedToId,
+        }
+      );
+      testRunCaseIds.push(testRunCaseId);
+    }
+
+    return testRunCaseIds;
+  }
+
+  /**
+   * Assign a user to a test run case
+   */
+  async assignTestRunCase(testRunCaseId: number, userId: string): Promise<void> {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/testRunCases/update`,
+      {
+        data: {
+          where: { id: testRunCaseId },
+          data: {
+            assignedTo: { connect: { id: userId } },
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to assign test run case: ${error}`);
+    }
+  }
+
+  /**
+   * Set the status of a test run case
+   */
+  async setTestRunCaseStatus(testRunCaseId: number, statusId: number): Promise<void> {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/testRunCases/update`,
+      {
+        data: {
+          where: { id: testRunCaseId },
+          data: {
+            status: { connect: { id: statusId } },
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to set test run case status: ${error}`);
+    }
+  }
+
+  /**
+   * Mark a test run case as completed
+   */
+  async completeTestRunCase(testRunCaseId: number): Promise<void> {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/testRunCases/update`,
+      {
+        data: {
+          where: { id: testRunCaseId },
+          data: {
+            isCompleted: true,
+            completedAt: new Date().toISOString(),
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to complete test run case: ${error}`);
+    }
+  }
+
+  /**
+   * Create a test result for a test run case
+   * Test results record the outcome of executing a test case
+   */
+  async createTestResult(
+    testRunId: number,
+    testRunCaseId: number,
+    statusId: number,
+    options?: {
+      notes?: string;
+      elapsed?: number;
+    }
+  ): Promise<number> {
+    const userId = await this.getCurrentUserId();
+
+    const data: Record<string, unknown> = {
+      executedAt: new Date().toISOString(),
+      testRun: { connect: { id: testRunId } },
+      testRunCase: { connect: { id: testRunCaseId } },
+      status: { connect: { id: statusId } },
+      executedBy: { connect: { id: userId } },
+    };
+
+    if (options?.notes) {
+      data.notes = JSON.stringify({
+        type: "doc",
+        content: [{ type: "paragraph", content: [{ type: "text", text: options.notes }] }],
+      });
+    }
+
+    if (options?.elapsed !== undefined) {
+      data.elapsed = options.elapsed;
+    }
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/testRunResults/create`,
+      {
+        data: { data },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create test result: ${error}`);
+    }
+
+    const result = await response.json();
+    return result.data.id;
+  }
+
+  /**
+   * Get test run cases for a test run
+   */
+  async getTestRunCases(
+    testRunId: number
+  ): Promise<Array<{ id: number; repositoryCaseId: number; order: number; statusId: number | null; assignedToId: string | null }>> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/testRunCases/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { testRunId },
+            orderBy: { order: "asc" },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      throw new Error("Failed to fetch test run cases");
+    }
+
+    const result = await response.json();
+    return result.data;
+  }
+
+  /**
+   * Delete a test run via API (soft delete)
+   * Silently ignores failures - item may already be deleted by the test
+   */
+  async deleteTestRun(testRunId: number): Promise<void> {
+    this.request
+      .patch(`${this.baseURL}/api/model/testRuns/update`, {
+        data: {
+          where: { id: testRunId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Delete a test run case via API
+   * Uses hard delete since TestRunCases doesn't have isDeleted field
+   * Silently ignores failures
+   */
+  async deleteTestRunCase(testRunCaseId: number): Promise<void> {
+    this.request
+      .delete(`${this.baseURL}/api/model/testRunCases/delete`, {
+        data: {
+          where: { id: testRunCaseId },
+        },
+      })
+      .catch(() => {});
+  }
+
   /**
    * Clean up all test data created during tests
    */
   async cleanup(): Promise<void> {
-    // Delete test cases first (they reference folders and tags)
+    // Delete test run cases first (they reference test runs and repository cases)
+    for (const testRunCaseId of this.createdTestRunCaseIds) {
+      await this.deleteTestRunCase(testRunCaseId);
+    }
+    this.createdTestRunCaseIds = [];
+
+    // Delete test runs (they reference projects)
+    for (const testRunId of this.createdTestRunIds) {
+      await this.deleteTestRun(testRunId);
+    }
+    this.createdTestRunIds = [];
+
+    // Delete test cases (they reference folders, tags, and issues)
     for (const caseId of this.createdCaseIds) {
       await this.deleteTestCase(caseId);
     }
@@ -940,6 +1453,12 @@ export class ApiHelper {
       await this.deleteTag(tagId);
     }
     this.createdTagIds = [];
+
+    // Delete issues
+    for (const issueId of this.createdIssueIds) {
+      await this.deleteIssue(issueId);
+    }
+    this.createdIssueIds = [];
 
     // Finally delete projects (they reference everything else)
     for (const projectId of this.createdProjectIds) {

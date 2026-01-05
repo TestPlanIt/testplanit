@@ -18,11 +18,8 @@ test.describe("Search & Filter", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    const projects = await api.getProjects();
-    if (projects.length === 0) {
-      throw new Error("No projects found in test database. Run seed first.");
-    }
-    return projects[0].id;
+    // Create a project for this test - tests should be self-contained
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("Search Test Cases", async ({ api, page }) => {
@@ -83,9 +80,12 @@ test.describe("Search & Filter", () => {
     await searchInput.fill(nonExistentTerm);
     await page.waitForLoadState("networkidle");
 
-    // Verify "no results" message is shown (the table shows "No cases" when empty)
-    const noResults = page.locator('text=/no results|no test cases|No cases/i');
-    await expect(noResults.first()).toBeVisible({ timeout: 10000 });
+    // Verify "no test cases" message is shown in the main content area (not in folder tree)
+    // The message is "No test cases in this folder." from translation key repository.cases.noTestCases
+    // Use the right panel area to avoid matching the folder name "No Results Folder" in the tree
+    const casesArea = page.getByTestId("repository-right-panel-header").locator(".."); // Get parent container
+    const noResults = casesArea.locator('text=/No test cases/i').first();
+    await expect(noResults).toBeVisible({ timeout: 10000 });
   });
 
   test("Filter Test Cases Within Folder", async ({ api, page }) => {

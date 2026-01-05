@@ -18,11 +18,8 @@ test.describe("Folder Creation", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    const projects = await api.getProjects();
-    if (projects.length === 0) {
-      throw new Error("No projects found in test database. Run seed first.");
-    }
-    return projects[0].id;
+    // Create a project for this test - tests should be self-contained
+    return await api.createProject(`E2E Test Project ${Date.now()}`);
   }
 
   test("Create Root-Level Folder @smoke", async ({ api }) => {
@@ -339,7 +336,7 @@ test.describe("Folder Creation", () => {
     await repositoryPage.verifyFolderExists(newFolderName);
   });
 
-  test("Folder Deep Nesting Limit", async ({ api }) => {
+  test("Folder Deep Nesting Limit", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
     // Create deeply nested folders
@@ -355,8 +352,35 @@ test.describe("Folder Creation", () => {
     await repositoryPage.goto(projectId);
 
     // Expand all levels (except the last one which has no children)
-    for (const folderId of folderIds.slice(0, -1)) {
+    // Need to wait for each child to be visible before expanding it (virtualized tree)
+    for (let i = 0; i < folderIds.length - 1; i++) {
+      const folderId = folderIds[i];
+      const childId = folderIds[i + 1];
+
+      // Wait for the folder to be visible (may need scrolling in virtualized tree)
+      const folder = repositoryPage.getFolderById(folderId);
+      await expect(folder).toBeVisible({ timeout: 10000 });
+
+      // Expand this folder
       await repositoryPage.expandFolder(folderId);
+      await page.waitForLoadState("networkidle");
+
+      // Wait for the child folder to be visible before continuing
+      // The tree may need to scroll to show the child at deeper levels
+      await expect(async () => {
+        const childFolder = repositoryPage.getFolderById(childId);
+        // Check if visible, and if not wait for virtualized tree to render it
+        const isVisible = await childFolder.isVisible().catch(() => false);
+        if (!isVisible) {
+          // Scroll the tree container down to trigger virtualization render
+          const treeContainer = page.locator('[role="tree"]');
+          await treeContainer.evaluate((el) => {
+            el.scrollTop = el.scrollHeight;
+          });
+          await page.waitForTimeout(100);
+        }
+        await expect(childFolder).toBeVisible({ timeout: 3000 });
+      }).toPass({ timeout: 15000 });
     }
 
     // Verify deep folder is accessible

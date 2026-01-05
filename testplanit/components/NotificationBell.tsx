@@ -76,14 +76,15 @@ function NotificationItem({
     };
   }, []);
 
+  const isUnreadAnnouncement =
+    !notification.isRead && notification.type === "SYSTEM_ANNOUNCEMENT";
+
   return (
     <div
       className={cn(
         "p-3 border-b last:border-0 hover:bg-muted/50 transition-colors",
         !notification.isRead && "bg-primary/20",
-        !notification.isRead &&
-          notification.type === "SYSTEM_ANNOUNCEMENT" &&
-          "bg-accent"
+        isUnreadAnnouncement && "bg-accent dark:bg-primary/30"
       )}
       data-notification-item
       data-state={notification.isRead ? "read" : "unread"}

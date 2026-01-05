@@ -30,7 +30,7 @@ export default defineConfig({
 
   // Limit workers for stability (dev server can get overwhelmed)
   // Production build can handle more workers than dev server
-  workers: isCI ? 2 : useProdBuild ? 6 : 1,
+  workers: isCI ? 2 : useProdBuild ? 5 : 1,
 
   // Reporter configuration
   reporter: [
@@ -55,8 +55,8 @@ export default defineConfig({
     // Screenshot on failure
     screenshot: "only-on-failure",
 
-    // Video recording: E2E_VIDEO=on for always, otherwise only on retry
-    video: recordVideo ? "on" : "on-first-retry",
+    // Video recording: E2E_VIDEO=on for always, otherwise on retries
+    video: recordVideo ? "on" : "retain-on-failure",
 
     // Browser context options
     viewport: { width: 1280, height: 720 },
