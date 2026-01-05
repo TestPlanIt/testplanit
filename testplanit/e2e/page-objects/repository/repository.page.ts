@@ -154,8 +154,8 @@ export class RepositoryPage extends BasePage {
   }
 
   /**
-   * Expand a folder in the tree by clicking on the folder row
-   * Note: Clicking anywhere on the folder row toggles expand/collapse AND selects the folder
+   * Expand a folder in the tree by clicking the chevron button
+   * Note: Clicking the chevron only toggles expand/collapse without changing selection
    */
   async expandFolder(folderId: number): Promise<void> {
     // Use expect().toPass() for retry logic since elements may get detached during tree re-renders
@@ -168,11 +168,33 @@ export class RepositoryPage extends BasePage {
       // Wait for network to settle
       await this.page.waitForLoadState("networkidle");
 
-      // Click on the folder row to toggle expand/collapse
-      // This also selects the folder, which is acceptable for expansion
-      await folder.evaluate((el) => {
-        (el as HTMLElement).click();
-      });
+      // Check if already expanded (has aria-expanded="true" or [expanded] attribute)
+      const isExpanded = await folder.getAttribute("aria-expanded") === "true" ||
+        await folder.evaluate((el) => el.hasAttribute("data-expanded") || el.classList.contains("expanded"));
+
+      if (isExpanded) {
+        // Already expanded, no need to click
+        return;
+      }
+
+      // Find the chevron button inside the folder row - it's the button with the chevron icon
+      const chevronButton = folder.locator("button").first();
+      const hasChevron = await chevronButton.isVisible().catch(() => false);
+
+      if (hasChevron) {
+        // Click the chevron button to expand
+        await chevronButton.evaluate((el) => {
+          (el as HTMLElement).click();
+        });
+      } else {
+        // Fallback: click on the folder row itself
+        await folder.evaluate((el) => {
+          (el as HTMLElement).click();
+        });
+      }
+
+      // Wait a bit for the tree to update after the click
+      await this.page.waitForTimeout(200);
     }).toPass({ timeout: 20000 });
 
     // Wait for children to be visible (animation complete)
