@@ -2405,6 +2405,10 @@ export default function Cases({
       setTimeout(() => {
         setOptimisticReorder({ inProgress: false, cases: null });
       }, 100);
+
+      // Clear selection after successful reorder
+      setRowSelection({});
+      setSelectedCaseIdsForBulkEdit([]);
     } catch (error) {
       console.error("Failed to reorder cases", error);
       toast.error(t("common.errors.somethingWentWrong"));

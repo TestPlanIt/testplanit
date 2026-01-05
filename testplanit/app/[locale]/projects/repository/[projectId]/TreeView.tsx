@@ -377,11 +377,9 @@ const TreeView: React.FC<{
           return {
             id: child.id.toString(),
             name: child.name,
-            children: hasChildren
-              ? childrenLoaded
-                ? buildTree(child.id)
-                : []
-              : undefined,
+            // Always use an array for children (not undefined) so folders are treated as
+            // internal nodes that can accept drops. undefined = leaf node = no drops allowed.
+            children: hasChildren && childrenLoaded ? buildTree(child.id) : [],
             data: meta
               ? {
                   ...meta,
@@ -771,9 +769,10 @@ const TreeView: React.FC<{
     dragHandle?: (el: HTMLDivElement | null) => void;
   }) => {
     const isSelected = node.isSelected;
-    const IconComponent = node.isOpen ? FolderOpen : Folder;
     const data = node.data?.data;
     const hasChildren = !!data?.hasChildren;
+    // Only show open folder icon if folder is open AND has children
+    const IconComponent = node.isOpen && hasChildren ? FolderOpen : Folder;
     const childrenLoaded = !!data?.childrenLoaded;
 
     // Handle test case drops
@@ -874,10 +873,14 @@ const TreeView: React.FC<{
       [drop, dragHandle]
     );
 
+    // willReceiveDrop is true when a folder is being dragged over this folder (react-arborist)
+    const willReceiveFolderDrop = node.state.willReceiveDrop;
+
     let backgroundColor = isSelected ? "bg-secondary" : "bg-transparent";
     const textColor = isSelected ? "text-secondary-foreground" : "";
-    if (isOver && canDrop) {
-      backgroundColor = "bg-primary/50";
+    // Highlight when receiving a folder drop (react-arborist) or test case drop (react-dnd)
+    if (willReceiveFolderDrop || (isOver && canDrop)) {
+      backgroundColor = "bg-primary/20 ring-2 ring-primary ring-inset";
     } else if (isOver && !canDrop && data?.folderId !== 0) {
       backgroundColor = "";
     }
@@ -898,6 +901,7 @@ const TreeView: React.FC<{
           }
         }}
         data-testid={`folder-node-${data?.folderId}`}
+        data-folder-drop-target={willReceiveFolderDrop ? "true" : undefined}
         data-drop-target={isOver && canDrop ? "true" : undefined}
         data-drop-invalid={isOver && !canDrop ? "true" : undefined}
       >
