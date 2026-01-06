@@ -37,7 +37,7 @@ test.describe("Case Fields - Table Display", () => {
     await expect(templatesPage.addCaseFieldButton).toBeVisible();
   });
 
-  test("Toggle enabled via table switch", async ({ api }) => {
+  test("Toggle enabled via table switch", async ({ api, page }) => {
     // Create an enabled case field
     const fieldName = `E2E Toggle Enabled ${Date.now()}`;
     await api.createCaseField({
@@ -53,10 +53,10 @@ test.describe("Case Fields - Table Display", () => {
     await templatesPage.toggleCaseFieldEnabledInTable(fieldName);
 
     // Wait for update
-    await templatesPage.page.waitForLoadState("networkidle");
+    await page.waitForLoadState("networkidle");
   });
 
-  test("Toggle required via table switch", async ({ api }) => {
+  test("Toggle required via table switch", async ({ api, page }) => {
     // Create a case field
     const fieldName = `E2E Toggle Required ${Date.now()}`;
     await api.createCaseField({
@@ -72,10 +72,10 @@ test.describe("Case Fields - Table Display", () => {
     await templatesPage.toggleCaseFieldRequiredInTable(fieldName);
 
     // Wait for update
-    await templatesPage.page.waitForLoadState("networkidle");
+    await page.waitForLoadState("networkidle");
   });
 
-  test("Toggle restricted via table switch", async ({ api }) => {
+  test("Toggle restricted via table switch", async ({ api, page }) => {
     // Create a case field
     const fieldName = `E2E Toggle Restricted ${Date.now()}`;
     await api.createCaseField({
@@ -91,7 +91,7 @@ test.describe("Case Fields - Table Display", () => {
     await templatesPage.toggleCaseFieldRestrictedInTable(fieldName);
 
     // Wait for update
-    await templatesPage.page.waitForLoadState("networkidle");
+    await page.waitForLoadState("networkidle");
   });
 });
 
@@ -425,19 +425,6 @@ test.describe("Case Fields - Link Type", () => {
 
     await templatesPage.expectCaseFieldInTable(fieldName);
   });
-
-  // Note: Link fields don't have a defaultValue option in the seed data
-  test.skip("Add Link field - with default value", async () => {
-    const fieldName = `E2E Link Default ${Date.now()}`;
-
-    await templatesPage.clickAddCaseField();
-    await templatesPage.fillCaseFieldDisplayName(fieldName);
-    await templatesPage.selectCaseFieldType("Link");
-    await templatesPage.setCaseFieldDefaultValue("https://example.com");
-    await templatesPage.submitCaseField();
-
-    await templatesPage.expectCaseFieldInTable(fieldName);
-  });
 });
 
 test.describe("Case Fields - Dropdown Type", () => {
@@ -581,7 +568,9 @@ test.describe("Case Fields - Validation", () => {
     await templatesPage.selectCaseFieldType("Text String");
 
     // System name should be auto-generated
-    const systemNameInput = templatesPage.dialog.locator('input[name="systemName"]').first();
+    const systemNameInput = templatesPage.dialog
+      .locator('input[name="systemName"]')
+      .first();
     const systemName = await systemNameInput.inputValue();
     expect(systemName).toBeTruthy();
     expect(systemName.length).toBeGreaterThan(0);
@@ -679,7 +668,8 @@ test.describe("Case Fields - Delete Operations", () => {
     await templatesPage.goto();
 
     // Verify template has the field
-    let fieldCount = await templatesPage.getTemplateCaseFieldsCount(templateName);
+    let fieldCount =
+      await templatesPage.getTemplateCaseFieldsCount(templateName);
     expect(fieldCount).toBe(1);
 
     // Delete the field
