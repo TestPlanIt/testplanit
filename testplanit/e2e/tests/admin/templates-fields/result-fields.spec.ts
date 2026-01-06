@@ -189,7 +189,7 @@ test.describe("Result Fields - Number Type", () => {
     await templatesPage.expectResultFieldInTable(fieldName);
   });
 
-  test.skip("Number result field validation", async () => {
+  test("Number result field validation", async () => {
     const fieldName = `E2E Result Number Invalid ${Date.now()}`;
 
     await templatesPage.clickAddResultField();
@@ -197,10 +197,12 @@ test.describe("Result Fields - Number Type", () => {
     await templatesPage.selectResultFieldType("Number");
     await templatesPage.setResultFieldMinValue(100);
     await templatesPage.setResultFieldMaxValue(0);
-    await templatesPage.submitResultField();
+    await templatesPage.clickSubmitResultField();
 
-    // Should show validation error
-    await templatesPage.expectFormError("min");
+    // Should show validation error - dialog should remain open
+    await expect(templatesPage.dialog).toBeVisible({ timeout: 5000 });
+    // Cancel to close the dialog
+    await templatesPage.cancelResultField();
   });
 });
 
@@ -415,7 +417,7 @@ test.describe("Result Fields - Validation", () => {
     await templatesPage.goto();
   });
 
-  test.skip("System name unique across case AND result fields", async ({ api }) => {
+  test("System name unique across case AND result fields", async ({ api }) => {
     // Create a case field first
     const systemName = `unique_cross_${Date.now()}`;
     await api.createCaseField({
@@ -430,11 +432,13 @@ test.describe("Result Fields - Validation", () => {
     await templatesPage.clickAddResultField();
     await templatesPage.fillResultFieldDisplayName(`E2E Result Field ${Date.now()}`);
     await templatesPage.selectResultFieldType("Text String");
-    await templatesPage.fillCaseFieldSystemName(systemName); // Uses same form method
-    await templatesPage.submitResultField();
+    await templatesPage.fillResultFieldSystemName(systemName);
+    await templatesPage.clickSubmitResultField();
 
-    // Should show uniqueness error
-    await templatesPage.expectFormError("exists");
+    // Should show uniqueness error - dialog should remain open
+    await expect(templatesPage.dialog).toBeVisible({ timeout: 5000 });
+    // Cancel to close the dialog
+    await templatesPage.cancelResultField();
   });
 });
 

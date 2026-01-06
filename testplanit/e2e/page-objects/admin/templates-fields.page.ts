@@ -533,6 +533,21 @@ export class TemplatesFieldsPage extends BasePage {
   }
 
   /**
+   * Toggle the enabled state of a dropdown option
+   */
+  async toggleDropdownOptionEnabled(optionName: string): Promise<void> {
+    // Find the option row - it's a div with class "cursor-ns-resize"
+    const optionRow = this.dialog.locator('div.cursor-ns-resize').filter({
+      hasText: optionName,
+    }).first();
+
+    // Find and click the switch button (role="switch") in that row
+    const switchButton = optionRow.locator('button[role="switch"]').first();
+    await switchButton.click();
+    await this.page.waitForTimeout(200);
+  }
+
+  /**
    * Remove a dropdown option
    */
   async removeDropdownOption(optionName: string): Promise<void> {
@@ -555,6 +570,16 @@ export class TemplatesFieldsPage extends BasePage {
     await submitButton.click();
     await expect(this.dialog).not.toBeVisible({ timeout: 10000 });
     await this.page.waitForLoadState("networkidle");
+  }
+
+  /**
+   * Click the submit button without expecting dialog to close
+   * Useful for testing validation errors
+   */
+  async clickSubmitCaseField(): Promise<void> {
+    const submitButton = this.page.getByTestId("case-field-submit-button");
+    await submitButton.click();
+    await this.page.waitForTimeout(500);
   }
 
   /**
@@ -740,6 +765,16 @@ export class TemplatesFieldsPage extends BasePage {
     await submitButton.click();
     await expect(this.dialog).not.toBeVisible({ timeout: 10000 });
     await this.page.waitForLoadState("networkidle");
+  }
+
+  /**
+   * Click the submit button without expecting dialog to close
+   * Useful for testing validation errors
+   */
+  async clickSubmitResultField(): Promise<void> {
+    const submitButton = this.page.getByTestId("result-field-submit-button");
+    await submitButton.click();
+    await this.page.waitForTimeout(500);
   }
 
   /**

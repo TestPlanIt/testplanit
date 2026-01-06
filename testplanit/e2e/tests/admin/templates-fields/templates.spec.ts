@@ -230,6 +230,7 @@ test.describe("Templates - Edit Operations", () => {
     await templatesPage.expectTemplateNotInTable(originalName);
   });
 
+  // Note: These tests are flaky due to timing issues with field selection in dialogs
   test.skip("Edit template - add case fields", async ({ api }) => {
     // Create a template and a field
     const templateName = `E2E Add Fields ${Date.now()}`;
@@ -249,11 +250,15 @@ test.describe("Templates - Edit Operations", () => {
     await templatesPage.selectCaseField(fieldName);
     await templatesPage.submitTemplate();
 
+    // Wait for table to update and reload page to get fresh data
+    await templatesPage.goto();
+
     // Verify field count increased
     const fieldCount = await templatesPage.getTemplateCaseFieldsCount(templateName);
     expect(fieldCount).toBeGreaterThanOrEqual(1);
   });
 
+  // Note: These tests are flaky due to timing issues with field selection in dialogs
   test.skip("Edit template - add result fields", async ({ api }) => {
     // Create a template and a field
     const templateName = `E2E Add Results ${Date.now()}`;
@@ -272,6 +277,9 @@ test.describe("Templates - Edit Operations", () => {
     await templatesPage.clickEditTemplate(templateName);
     await templatesPage.selectResultField(fieldName);
     await templatesPage.submitTemplate();
+
+    // Wait for table to update and reload page to get fresh data
+    await templatesPage.goto();
 
     // Verify field count increased
     const fieldCount = await templatesPage.getTemplateResultFieldsCount(templateName);

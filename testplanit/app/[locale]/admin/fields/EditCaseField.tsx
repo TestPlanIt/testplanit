@@ -461,6 +461,7 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
                           onChange={handleInputChange}
                           onKeyDown={handleKeyDown}
                           className="my-2"
+                          data-testid="dropdown-option-input"
                         />
                         {error && (
                           <div className="text-destructive text-sm">
