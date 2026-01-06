@@ -18,6 +18,64 @@ import type {
 } from "../types.js";
 
 /**
+ * Format a network error into a helpful message with context
+ */
+function formatNetworkError(error: unknown, url: string, operation: string): Error {
+  const baseUrl = new URL(url).origin;
+
+  if (error instanceof TypeError) {
+    const message = error.message.toLowerCase();
+
+    if (message.includes("fetch failed") || message.includes("econnrefused")) {
+      return new Error(
+        `Failed to connect to TestPlanIt server at ${baseUrl}\n` +
+        `  → Is the server running?\n` +
+        `  → Check your URL with: testplanit config`
+      );
+    }
+
+    if (message.includes("enotfound") || message.includes("getaddrinfo")) {
+      return new Error(
+        `Could not resolve hostname for ${baseUrl}\n` +
+        `  → Check that the URL is correct\n` +
+        `  → Verify your network connection`
+      );
+    }
+
+    if (message.includes("etimedout") || message.includes("timeout")) {
+      return new Error(
+        `Request timed out while ${operation}\n` +
+        `  → The server at ${baseUrl} may be slow or unresponsive\n` +
+        `  → Check your network connection`
+      );
+    }
+
+    if (message.includes("econnreset") || message.includes("socket hang up")) {
+      return new Error(
+        `Connection was reset while ${operation}\n` +
+        `  → The server at ${baseUrl} closed the connection unexpectedly\n` +
+        `  → Try again, or check server logs`
+      );
+    }
+
+    if (message.includes("cert") || message.includes("ssl") || message.includes("tls")) {
+      return new Error(
+        `SSL/TLS certificate error connecting to ${baseUrl}\n` +
+        `  → The server's certificate may be invalid or self-signed\n` +
+        `  → Check your TESTPLANIT_URL configuration`
+      );
+    }
+  }
+
+  // For other errors, include the original message with context
+  const originalMessage = error instanceof Error ? error.message : String(error);
+  return new Error(
+    `Network error while ${operation}: ${originalMessage}\n` +
+    `  → Server: ${baseUrl}`
+  );
+}
+
+/**
  * Import test result files to TestPlanIt
  *
  * Supports multiple formats: JUnit, TestNG, xUnit, NUnit, MSTest, Mocha, Cucumber
@@ -90,14 +148,19 @@ export async function importTestResults(
   // Use the multi-format import endpoint
   const apiUrl = new URL("/api/test-results/import", url).toString();
 
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...form.getHeaders(),
-    },
-    body: new Uint8Array(form.getBuffer()),
-  });
+  let response: Response;
+  try {
+    response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...form.getHeaders(),
+      },
+      body: new Uint8Array(form.getBuffer()),
+    });
+  } catch (error) {
+    throw formatNetworkError(error, apiUrl, "importing test results");
+  }
 
   if (!response.ok) {
     let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -210,14 +273,19 @@ export async function lookup(
     requestBody.projectId = projectId;
   }
 
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(requestBody),
-  });
+  let response: Response;
+  try {
+    response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+    });
+  } catch (error) {
+    throw formatNetworkError(error, apiUrl, `looking up ${type} "${name}"`);
+  }
 
   if (!response.ok) {
     let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
