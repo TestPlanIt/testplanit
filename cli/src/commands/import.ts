@@ -215,7 +215,13 @@ Examples:
       } catch (error) {
         logger.failSpinner("Import failed");
         if (error instanceof Error) {
-          logger.error(error.message);
+          // Print each line of the error message separately for proper formatting
+          const lines = error.message.split("\n");
+          for (const line of lines) {
+            if (line.trim()) {
+              logger.error(line);
+            }
+          }
         } else {
           logger.error("Unknown error occurred");
         }
