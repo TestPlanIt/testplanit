@@ -168,7 +168,7 @@ export default function TemplateComponent() {
   if (session && session.user.access === "ADMIN") {
     return (
       <>
-        <Card>
+        <Card data-testid="templates-section">
           <CardHeader>
             <div className="flex items-center justify-between text-primary">
               <div className="flex items-center justify-between text-primary text-xl md:text-2xl">

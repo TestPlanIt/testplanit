@@ -14,6 +14,10 @@ export class ApiHelper {
   private createdIssueIds: number[] = [];
   private createdTestRunIds: number[] = [];
   private createdTestRunCaseIds: number[] = [];
+  private createdCaseFieldIds: number[] = [];
+  private createdResultFieldIds: number[] = [];
+  private createdTemplateIds: number[] = [];
+  private createdFieldOptionIds: number[] = [];
   private cachedTemplateId: number | null = null;
   private cachedStateId: number | null = null;
   private cachedRepositoryId: number | null = null;
@@ -1420,6 +1424,592 @@ export class ApiHelper {
       .catch(() => {});
   }
 
+  // ============================================
+  // Templates & Fields Methods
+  // ============================================
+
+  /**
+   * Get available case field types
+   */
+  async getCaseFieldTypes(): Promise<Array<{ id: number; type: string }>> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/caseFieldTypes/findMany`,
+      {
+        params: {
+          q: JSON.stringify({}),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      throw new Error("Failed to fetch case field types");
+    }
+
+    const result = await response.json();
+    return result.data;
+  }
+
+  /**
+   * Get a case field type ID by name
+   */
+  async getCaseFieldTypeId(typeName: string): Promise<number> {
+    const types = await this.getCaseFieldTypes();
+    const type = types.find((t) => t.type.toLowerCase() === typeName.toLowerCase());
+    if (!type) {
+      throw new Error(`Case field type "${typeName}" not found`);
+    }
+    return type.id;
+  }
+
+  /**
+   * Create a case field via API
+   */
+  async createCaseField(options: {
+    displayName: string;
+    systemName?: string;
+    typeName: string;
+    hint?: string;
+    isEnabled?: boolean;
+    isRequired?: boolean;
+    isRestricted?: boolean;
+    defaultValue?: string;
+    minValue?: number;
+    maxValue?: number;
+    initialHeight?: number;
+    isChecked?: boolean;
+  }): Promise<number> {
+    const typeId = await this.getCaseFieldTypeId(options.typeName);
+
+    // Generate system name from display name if not provided
+    const systemName = options.systemName ||
+      options.displayName.replace(/[^a-zA-Z0-9]/g, "_").replace(/^(\d)/, "_$1");
+
+    const data: Record<string, unknown> = {
+      displayName: options.displayName,
+      systemName: systemName,
+      typeId: typeId,
+      isEnabled: options.isEnabled ?? true,
+      isDeleted: false,
+      isRequired: options.isRequired ?? false,
+      isRestricted: options.isRestricted ?? false,
+    };
+
+    if (options.hint) data.hint = options.hint;
+    if (options.defaultValue !== undefined) data.defaultValue = options.defaultValue;
+    if (options.minValue !== undefined) data.minValue = options.minValue;
+    if (options.maxValue !== undefined) data.maxValue = options.maxValue;
+    if (options.initialHeight !== undefined) data.initialHeight = options.initialHeight;
+    if (options.isChecked !== undefined) data.isChecked = options.isChecked;
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/caseFields/create`,
+      {
+        data: { data },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create case field: ${error}`);
+    }
+
+    const result = await response.json();
+    const fieldId = result.data.id;
+    this.createdCaseFieldIds.push(fieldId);
+    return fieldId;
+  }
+
+  /**
+   * Delete a case field via API (soft delete)
+   */
+  async deleteCaseField(fieldId: number): Promise<void> {
+    this.request
+      .patch(`${this.baseURL}/api/model/caseFields/update`, {
+        data: {
+          where: { id: fieldId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Create a result field via API
+   */
+  async createResultField(options: {
+    displayName: string;
+    systemName?: string;
+    typeName: string;
+    hint?: string;
+    isEnabled?: boolean;
+    isRequired?: boolean;
+    isRestricted?: boolean;
+    defaultValue?: string;
+    minValue?: number;
+    maxValue?: number;
+    initialHeight?: number;
+    isChecked?: boolean;
+  }): Promise<number> {
+    const typeId = await this.getCaseFieldTypeId(options.typeName);
+
+    // Generate system name from display name if not provided
+    const systemName = options.systemName ||
+      options.displayName.replace(/[^a-zA-Z0-9]/g, "_").replace(/^(\d)/, "_$1");
+
+    const data: Record<string, unknown> = {
+      displayName: options.displayName,
+      systemName: systemName,
+      typeId: typeId,
+      isEnabled: options.isEnabled ?? true,
+      isDeleted: false,
+      isRequired: options.isRequired ?? false,
+      isRestricted: options.isRestricted ?? false,
+    };
+
+    if (options.hint) data.hint = options.hint;
+    if (options.defaultValue !== undefined) data.defaultValue = options.defaultValue;
+    if (options.minValue !== undefined) data.minValue = options.minValue;
+    if (options.maxValue !== undefined) data.maxValue = options.maxValue;
+    if (options.initialHeight !== undefined) data.initialHeight = options.initialHeight;
+    if (options.isChecked !== undefined) data.isChecked = options.isChecked;
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/resultFields/create`,
+      {
+        data: { data },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create result field: ${error}`);
+    }
+
+    const result = await response.json();
+    const fieldId = result.data.id;
+    this.createdResultFieldIds.push(fieldId);
+    return fieldId;
+  }
+
+  /**
+   * Delete a result field via API (soft delete)
+   */
+  async deleteResultField(fieldId: number): Promise<void> {
+    this.request
+      .patch(`${this.baseURL}/api/model/resultFields/update`, {
+        data: {
+          where: { id: fieldId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Create a template via API
+   */
+  async createTemplate(options: {
+    name: string;
+    isEnabled?: boolean;
+    isDefault?: boolean;
+    caseFieldIds?: number[];
+    resultFieldIds?: number[];
+    projectIds?: number[];
+  }): Promise<number> {
+    // If setting as default, unset other defaults first
+    if (options.isDefault) {
+      await this.request.patch(
+        `${this.baseURL}/api/model/templates/updateMany`,
+        {
+          data: {
+            where: { isDefault: true },
+            data: { isDefault: false },
+          },
+        }
+      );
+    }
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/templates/create`,
+      {
+        data: {
+          data: {
+            templateName: options.name,
+            isEnabled: options.isEnabled ?? true,
+            isDefault: options.isDefault ?? false,
+            isDeleted: false,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create template: ${error}`);
+    }
+
+    const result = await response.json();
+    const templateId = result.data.id;
+    this.createdTemplateIds.push(templateId);
+
+    // Assign case fields if provided
+    if (options.caseFieldIds && options.caseFieldIds.length > 0) {
+      await this.request.post(
+        `${this.baseURL}/api/model/templateCaseAssignment/createMany`,
+        {
+          data: {
+            data: options.caseFieldIds.map((fieldId, index) => ({
+              templateId: templateId,
+              caseFieldId: fieldId,
+              order: index + 1,
+            })),
+          },
+        }
+      );
+    }
+
+    // Assign result fields if provided
+    if (options.resultFieldIds && options.resultFieldIds.length > 0) {
+      await this.request.post(
+        `${this.baseURL}/api/model/templateResultAssignment/createMany`,
+        {
+          data: {
+            data: options.resultFieldIds.map((fieldId, index) => ({
+              templateId: templateId,
+              resultFieldId: fieldId,
+              order: index + 1,
+            })),
+          },
+        }
+      );
+    }
+
+    // Assign projects if provided
+    if (options.projectIds && options.projectIds.length > 0) {
+      await this.request.post(
+        `${this.baseURL}/api/model/templateProjectAssignment/createMany`,
+        {
+          data: {
+            data: options.projectIds.map((projectId) => ({
+              templateId: templateId,
+              projectId: projectId,
+            })),
+          },
+        }
+      );
+    }
+
+    return templateId;
+  }
+
+  /**
+   * Delete a template via API (soft delete)
+   */
+  async deleteTemplate(templateId: number): Promise<void> {
+    this.request
+      .patch(`${this.baseURL}/api/model/templates/update`, {
+        data: {
+          where: { id: templateId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Create a field option for dropdown/multi-select fields
+   */
+  async createFieldOption(options: {
+    name: string;
+    caseFieldId?: number;
+    resultFieldId?: number;
+    isDefault?: boolean;
+    isEnabled?: boolean;
+    order?: number;
+    iconId?: number;
+    iconColorId?: number;
+  }): Promise<number> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/fieldOptions/create`,
+      {
+        data: {
+          data: {
+            name: options.name,
+            isEnabled: options.isEnabled ?? true,
+            isDeleted: false,
+            isDefault: options.isDefault ?? false,
+            order: options.order ?? 0,
+            ...(options.iconId && { iconId: options.iconId }),
+            ...(options.iconColorId && { iconColorId: options.iconColorId }),
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create field option: ${error}`);
+    }
+
+    const result = await response.json();
+    const optionId = result.data.id;
+    this.createdFieldOptionIds.push(optionId);
+
+    // Link to case field if provided
+    if (options.caseFieldId) {
+      await this.request.post(
+        `${this.baseURL}/api/model/caseFieldAssignment/create`,
+        {
+          data: {
+            data: {
+              fieldOptionId: optionId,
+              caseFieldId: options.caseFieldId,
+            },
+          },
+        }
+      );
+    }
+
+    // Link to result field if provided
+    if (options.resultFieldId) {
+      await this.request.post(
+        `${this.baseURL}/api/model/resultFieldAssignment/create`,
+        {
+          data: {
+            data: {
+              fieldOptionId: optionId,
+              resultFieldId: options.resultFieldId,
+            },
+          },
+        }
+      );
+    }
+
+    return optionId;
+  }
+
+  /**
+   * Delete a field option via API (soft delete)
+   */
+  async deleteFieldOption(optionId: number): Promise<void> {
+    this.request
+      .patch(`${this.baseURL}/api/model/fieldOptions/update`, {
+        data: {
+          where: { id: optionId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Get field options for a case field
+   */
+  async getCaseFieldOptions(caseFieldId: number): Promise<Array<{ id: number; name: string; isDefault: boolean }>> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/caseFieldAssignment/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { caseFieldId: caseFieldId },
+            include: { fieldOption: true },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      throw new Error("Failed to fetch case field options");
+    }
+
+    const result = await response.json();
+    return result.data.map((assignment: { fieldOption: { id: number; name: string; isDefault: boolean } }) => ({
+      id: assignment.fieldOption.id,
+      name: assignment.fieldOption.name,
+      isDefault: assignment.fieldOption.isDefault,
+    }));
+  }
+
+  /**
+   * Get all templates
+   */
+  async getTemplates(): Promise<Array<{ id: number; templateName: string; isDefault: boolean; isEnabled: boolean }>> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/templates/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { isDeleted: false },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      throw new Error("Failed to fetch templates");
+    }
+
+    const result = await response.json();
+    return result.data;
+  }
+
+  /**
+   * Assign a case field to an existing template via API
+   */
+  async assignCaseFieldToTemplate(templateId: number, caseFieldId: number, order?: number): Promise<void> {
+    // Get current count to determine order if not provided
+    let fieldOrder = order;
+    if (fieldOrder === undefined) {
+      const response = await this.request.get(
+        `${this.baseURL}/api/model/templateCaseAssignment/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { templateId: templateId },
+            }),
+          },
+        }
+      );
+      if (response.ok()) {
+        const result = await response.json();
+        fieldOrder = (result.data?.length || 0) + 1;
+      } else {
+        fieldOrder = 1;
+      }
+    }
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/templateCaseAssignment/create`,
+      {
+        data: {
+          data: {
+            templateId: templateId,
+            caseFieldId: caseFieldId,
+            order: fieldOrder,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to assign case field to template: ${error}`);
+    }
+  }
+
+  /**
+   * Assign a result field to an existing template via API
+   */
+  async assignResultFieldToTemplate(templateId: number, resultFieldId: number, order?: number): Promise<void> {
+    // Get current count to determine order if not provided
+    let fieldOrder = order;
+    if (fieldOrder === undefined) {
+      const response = await this.request.get(
+        `${this.baseURL}/api/model/templateResultAssignment/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { templateId: templateId },
+            }),
+          },
+        }
+      );
+      if (response.ok()) {
+        const result = await response.json();
+        fieldOrder = (result.data?.length || 0) + 1;
+      } else {
+        fieldOrder = 1;
+      }
+    }
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/templateResultAssignment/create`,
+      {
+        data: {
+          data: {
+            templateId: templateId,
+            resultFieldId: resultFieldId,
+            order: fieldOrder,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to assign result field to template: ${error}`);
+    }
+  }
+
+  /**
+   * Get the default template
+   */
+  async getDefaultTemplate(): Promise<{ id: number; templateName: string } | null> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/templates/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { isDefault: true, isDeleted: false },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      return null;
+    }
+
+    const result = await response.json();
+    return result.data;
+  }
+
+  /**
+   * Get all case fields
+   */
+  async getCaseFields(): Promise<Array<{ id: number; displayName: string; systemName: string; typeId: number }>> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/caseFields/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { isDeleted: false },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      throw new Error("Failed to fetch case fields");
+    }
+
+    const result = await response.json();
+    return result.data;
+  }
+
+  /**
+   * Get all result fields
+   */
+  async getResultFields(): Promise<Array<{ id: number; displayName: string; systemName: string; typeId: number }>> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/resultFields/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { isDeleted: false },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      throw new Error("Failed to fetch result fields");
+    }
+
+    const result = await response.json();
+    return result.data;
+  }
+
   /**
    * Clean up all test data created during tests
    */
@@ -1465,5 +2055,29 @@ export class ApiHelper {
       await this.deleteProject(projectId);
     }
     this.createdProjectIds = [];
+
+    // Delete templates (created test data)
+    for (const templateId of this.createdTemplateIds) {
+      await this.deleteTemplate(templateId);
+    }
+    this.createdTemplateIds = [];
+
+    // Delete field options
+    for (const optionId of this.createdFieldOptionIds) {
+      await this.deleteFieldOption(optionId);
+    }
+    this.createdFieldOptionIds = [];
+
+    // Delete case fields
+    for (const fieldId of this.createdCaseFieldIds) {
+      await this.deleteCaseField(fieldId);
+    }
+    this.createdCaseFieldIds = [];
+
+    // Delete result fields
+    for (const fieldId of this.createdResultFieldIds) {
+      await this.deleteResultField(fieldId);
+    }
+    this.createdResultFieldIds = [];
   }
 }
