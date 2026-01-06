@@ -354,13 +354,13 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
+        <Button variant="ghost" className="px-2 py-1 h-auto" data-testid="edit-template-button">
           <SquarePen className="h-5 w-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
+      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]" data-testid="template-dialog">
         <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-fit">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-fit" data-testid="template-form">
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription className="sr-only">
@@ -377,7 +377,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                     <HelpPopover helpKey="template.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} data-testid="template-name-input" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -394,6 +394,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={isDefault}
+                        data-testid="template-enabled-switch"
                       />
                     </FormControl>
                     <FormLabel className="flex items-center">
@@ -414,6 +415,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={template.isDefault}
+                        data-testid="template-default-switch"
                       />
                     </FormControl>
                     <FormLabel className="flex items-center mt-0!">
@@ -502,6 +504,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                     <div
                       onClick={selectAllProjects}
                       style={{ cursor: "pointer" }}
+                      data-testid="select-all-projects"
                     >
                       {tCommon("actions.selectAll")}
                     </div>
@@ -541,10 +544,11 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                 type="button"
                 onClick={() => setOpen(false)}
                 variant="outline"
+                data-testid="template-cancel-button"
               >
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} data-testid="template-submit-button">
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}

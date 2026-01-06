@@ -107,7 +107,7 @@ export default function ResultFields() {
 
   if (session && session.user.access === "ADMIN" && resultfields) {
     return (
-      <Card>
+      <Card data-testid="result-fields-section">
         <CardHeader>
           <div className="flex items-center justify-between text-primary">
             <div className="flex items-center justify-between text-primary text-xl md:text-2xl">

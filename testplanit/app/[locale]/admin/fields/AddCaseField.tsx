@@ -671,16 +671,16 @@ export function AddCaseFieldModal({
       {trigger !== null && (
         <DialogTrigger asChild>
           {trigger ?? (
-            <Button>
+            <Button data-testid="add-case-field-button">
               <CirclePlus className="w-4" />
               <span className="hidden md:inline">{t("title")}</span>
             </Button>
           )}
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
+      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]" data-testid="case-field-dialog">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="case-field-form">
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription className="sr-only">
@@ -699,6 +699,7 @@ export function AddCaseFieldModal({
                   <FormControl>
                     <Input
                       placeholder={tCommon("fields.placeholders.displayName")}
+                      data-testid="case-field-display-name"
                       {...field}
                     />
                   </FormControl>
@@ -835,7 +836,7 @@ export function AddCaseFieldModal({
                       }}
                       value={field.value}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger data-testid="case-field-type-select">
                         <SelectValue
                           placeholder={tCommon("fields.fieldType")}
                         />
@@ -865,14 +866,15 @@ export function AddCaseFieldModal({
                 <div
                   className=" bg-destructive text-destructive-foreground text-sm p-2"
                   role="alert"
+                  data-testid="case-field-form-error"
                 >
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={handleCancel} data-testid="case-field-cancel-button">
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} data-testid="case-field-submit-button">
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : (submitLabel ?? tCommon("actions.submit"))}

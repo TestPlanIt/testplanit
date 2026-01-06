@@ -106,7 +106,7 @@ export function DeleteResultFieldModal({
       }}
     >
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" className="px-2 py-1 h-auto">
+        <Button variant="destructive" className="px-2 py-1 h-auto" data-testid="delete-result-field-button">
           <Trash2 className="h-5 w-5" />
         </Button>
       </AlertDialogTrigger>

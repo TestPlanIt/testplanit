@@ -651,7 +651,7 @@ export function EditResultFieldModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
+        <Button variant="ghost" className="px-2 py-1 h-auto" data-testid="edit-result-field-button">
           <SquarePen className="h-5 w-5" />
         </Button>
       </DialogTrigger>

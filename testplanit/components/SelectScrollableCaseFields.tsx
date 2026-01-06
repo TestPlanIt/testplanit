@@ -36,7 +36,7 @@ export function SelectScrollable({
         }
       }}
     >
-      <SelectTrigger className="w-[280px]">
+      <SelectTrigger className="w-[280px]" data-testid={`add-${type}-field-select`}>
         <SelectValue
           placeholder={`Add a field to ${type.charAt(0).toUpperCase() + type.slice(1)} Fields`}
         />

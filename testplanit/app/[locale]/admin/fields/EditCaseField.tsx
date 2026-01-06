@@ -661,7 +661,7 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
+        <Button variant="ghost" className="px-2 py-1 h-auto" data-testid="edit-case-field-button">
           <SquarePen className="h-5 w-5" />
         </Button>
       </DialogTrigger>

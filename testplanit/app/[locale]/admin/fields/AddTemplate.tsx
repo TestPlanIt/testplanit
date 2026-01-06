@@ -303,14 +303,14 @@ export function AddTemplateModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button data-testid="add-template-button">
           <CirclePlus className="w-4" />
           <span className="hidden md:inline">{t("title")}</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
+      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]" data-testid="template-dialog">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="template-form">
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription className="sr-only">
@@ -329,6 +329,7 @@ export function AddTemplateModal() {
                   <FormControl>
                     <Input
                       placeholder={tCommon("placeholders.name")}
+                      data-testid="template-name-input"
                       {...field}
                     />
                   </FormControl>
@@ -352,6 +353,7 @@ export function AddTemplateModal() {
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={isDefault}
+                        data-testid="template-enabled-switch"
                       />
                     </FormControl>
                     <FormMessage />
@@ -371,6 +373,7 @@ export function AddTemplateModal() {
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        data-testid="template-default-switch"
                       />
                     </FormControl>
                     {isDefault && (
@@ -461,6 +464,7 @@ export function AddTemplateModal() {
                     <div
                       onClick={selectAllProjects}
                       style={{ cursor: "pointer" }}
+                      data-testid="select-all-projects"
                     >
                       {tCommon("actions.selectAll")}
                     </div>
@@ -502,6 +506,7 @@ export function AddTemplateModal() {
                 <div
                   className=" bg-destructive text-destructive-foreground text-sm p-2"
                   role="alert"
+                  data-testid="template-form-error"
                 >
                   {errors.root.message}
                 </div>
@@ -511,10 +516,11 @@ export function AddTemplateModal() {
                 variant="outline"
                 onClick={() => setOpen(false)}
                 disabled={isSubmitting}
+                data-testid="template-cancel-button"
               >
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} data-testid="template-submit-button">
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
