@@ -1,3 +1,10 @@
+## [0.9.19](https://github.com/TestPlanIt/testplanit/compare/v0.9.18...v0.9.19) (2026-01-06)
+
+
+### Bug Fixes
+
+* **theme:** replace theme with resolvedTheme in multiple components and update theme options ([ce9cfb7](https://github.com/TestPlanIt/testplanit/commit/ce9cfb77b91fa9f47cd3db4c6d8bf243d8806ed1))
+
 ## [0.9.18](https://github.com/TestPlanIt/testplanit/compare/v0.9.17...v0.9.18) (2026-01-06)
 
 
