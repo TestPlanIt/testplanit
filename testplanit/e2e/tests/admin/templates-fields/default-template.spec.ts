@@ -248,7 +248,7 @@ test.describe("Default Template - Cascade Behaviors", () => {
     // Verification depends on UI implementation
   });
 
-  test("Deleting non-default template preserves default", async ({ api }) => {
+  test("Deleting non-default template preserves default", async ({ api, page }) => {
     // Create a default template and a non-default template
     const defaultTemplateName = `E2E Preserve Default ${Date.now()}`;
     const otherTemplateName = `E2E Delete Me ${Date.now()}`;
@@ -267,6 +267,9 @@ test.describe("Default Template - Cascade Behaviors", () => {
     // Delete the non-default template
     await templatesPage.clickDeleteTemplate(otherTemplateName);
     await templatesPage.confirmDelete();
+
+    // Wait for deletion to complete and table to update
+    await page.waitForTimeout(500);
 
     // Default template should still exist and be default
     await templatesPage.expectTemplateInTable(defaultTemplateName);

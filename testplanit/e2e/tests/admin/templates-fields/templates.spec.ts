@@ -242,14 +242,33 @@ test.describe("Templates - Edit Operations", () => {
       isEnabled: true,
     });
 
-    // Reload
+    // Reload to see the new field
     await templatesPage.goto();
+    // Wait for case fields table to show the new field
+    await expect(
+      templatesPage.caseFieldsTable.locator("tr").filter({ hasText: fieldName }).first()
+    ).toBeVisible({ timeout: 10000 });
 
     // Edit and add field
     await templatesPage.clickEditTemplate(templateName);
-    // Wait for dialog content to fully load including the field selectors
-    await page.waitForTimeout(1000);
-    await templatesPage.selectCaseField(fieldName);
+    // Wait for dialog to be visible
+    await expect(templatesPage.dialog).toBeVisible({ timeout: 5000 });
+    // Wait for React Query to fetch the field data for the dropdown
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
+
+    // Wait for the case field dropdown to contain our field before trying to select
+    const caseFieldSelect = templatesPage.dialog.getByTestId("add-case-field-select");
+    await expect(caseFieldSelect).toBeVisible({ timeout: 5000 });
+    await caseFieldSelect.click();
+
+    // Wait for listbox with the field option to appear
+    await page.waitForSelector('[role="listbox"]', { timeout: 5000 });
+    const option = page.locator('[role="option"]').filter({ hasText: fieldName }).first();
+    await expect(option).toBeVisible({ timeout: 10000 });
+    await option.click();
+    await page.waitForTimeout(500);
+
     await templatesPage.submitTemplate();
 
     // Wait for table to update and reload page to get fresh data
@@ -281,8 +300,11 @@ test.describe("Templates - Edit Operations", () => {
 
     // Edit and add field
     await templatesPage.clickEditTemplate(templateName);
-    // Wait for dialog to be visible and data to load
+    // Wait for dialog to be visible
     await expect(templatesPage.dialog).toBeVisible({ timeout: 5000 });
+    // Wait for React Query to fetch the field data for the dropdown
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(500);
 
     // Wait for the result field dropdown to contain our field before trying to select
     const resultFieldSelect = templatesPage.dialog.getByTestId("add-result-field-select");
