@@ -31,7 +31,7 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
   projectId,
 }) => {
   const { data: session } = useSession();
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const t = useTranslations();
   const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
     include: { colorFamily: true },
@@ -115,7 +115,7 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           <MilestoneItemCard
             milestone={currentMilestone}
             projectId={projectId}
-            theme={theme}
+            theme={resolvedTheme}
             colorMap={colorMap}
             session={session}
             isParentCompleted={isParentCompleted}

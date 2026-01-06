@@ -31,7 +31,7 @@ export default function Providers({ children }: { children: ReactNode }) {
       attribute="class"
       defaultTheme="system"
       enableSystem
-      themes={["light", "dark", "system", "green", "orange", "purple"]}
+      themes={["light", "dark", "green", "orange", "purple"]}
     >
       <SearchStateProvider>{children}</SearchStateProvider>
     </ThemeProvider>

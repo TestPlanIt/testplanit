@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
 import {
   Sessions,
   Templates,
@@ -203,6 +204,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
   canCloseSession,
 }) => {
   const { data: session } = useSession();
+  const { resolvedTheme } = useTheme();
   const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
@@ -315,7 +317,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
 
       const status = getStatus(milestone);
       const condition = getCondition(milestone);
-      const { badge } = getStatusStyle(status, "light", colorMap);
+      const { badge } = getStatusStyle(status, resolvedTheme || "light", colorMap);
 
       // Check if there are sessions under this milestone
       const hasSessionsUnderMilestone =

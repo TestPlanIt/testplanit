@@ -82,7 +82,7 @@ export default function MilestoneFormControls({
 
     prevCompletedAtRef.current = completedAt;
   }, [completedAt, setValue]);
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const t = useTranslations("milestones");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -315,7 +315,7 @@ export default function MilestoneFormControls({
               style={{
                 backgroundColor: getStatusStyle(
                   getStatus(milestone),
-                  theme || "light",
+                  resolvedTheme || "light",
                   colorMap
                 ).badge,
               }}

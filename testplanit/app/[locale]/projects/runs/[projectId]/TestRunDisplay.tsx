@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useTheme } from "next-themes";
 import { Prisma } from "@prisma/client";
 import { useFindManyColor, useUpdateTestRuns } from "~/lib/hooks";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -356,6 +357,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   const tSessions = useTranslations("sessions");
   const { projectId } = useParams();
   const { data: session } = useSession();
+  const { resolvedTheme } = useTheme();
   const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
@@ -598,7 +600,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       if (!hasTestRuns(milestone)) return null;
 
       const status = getStatus(milestone);
-      const { badge } = getStatusStyle(status, "light", colorMap);
+      const { badge } = getStatusStyle(status, resolvedTheme || "light", colorMap);
 
       // Check if there are test runs under this milestone
       const hasTestRunsUnderMilestone =

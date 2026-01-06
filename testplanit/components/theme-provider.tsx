@@ -14,7 +14,7 @@ type ThemeProviderProps = {
 export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
     <NextThemesProvider
-      themes={["light", "dark", "system", "green", "orange", "purple"]}
+      themes={["light", "dark", "green", "orange", "purple"]}
       defaultTheme="system"
       attribute="class"
       {...(props as any)}

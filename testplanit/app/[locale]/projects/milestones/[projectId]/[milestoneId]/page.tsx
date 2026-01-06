@@ -112,7 +112,7 @@ export default function MilestoneDetailsPage() {
   const [isLoadingForecast, setIsLoadingForecast] = useState(false);
   const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
   const router = useRouter();
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   const { data: sessionAuth } = useSession();
 
@@ -489,7 +489,7 @@ export default function MilestoneDetailsPage() {
           key={currentChildMilestone.id}
           milestone={currentChildMilestone}
           projectId={projectId}
-          theme={theme}
+          theme={resolvedTheme}
           colorMap={colorMap}
           level={level}
           onMilestoneClick={handleMilestoneClick}

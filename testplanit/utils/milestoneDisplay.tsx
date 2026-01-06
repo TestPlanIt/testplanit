@@ -1,6 +1,5 @@
 import React from "react";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
 import { Badge } from "@/components/ui/badge";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { DateTextDisplay } from "@/components/DateTextDisplay";

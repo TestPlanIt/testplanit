@@ -46,7 +46,7 @@ interface ColorMap {
 export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
   milestones,
 }) => {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const { data: colors, isLoading: isColorsLoading } = useFindManyColor({
     include: { colorFamily: true },
     orderBy: { colorFamily: { order: "asc" } },
@@ -89,7 +89,7 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
       <PopoverContent className="flex flex-wrap items-center min-w-[400px] max-w-[600px] overflow-auto max-h-[calc(100vh-400px)]">
         {milestones.map((milestone) => {
           const status = getStatus(milestone);
-          const { badge } = getStatusStyle(status, theme || "light", colorMap);
+          const { badge } = getStatusStyle(status, resolvedTheme || "light", colorMap);
 
           return (
             <div key={milestone.id}>
