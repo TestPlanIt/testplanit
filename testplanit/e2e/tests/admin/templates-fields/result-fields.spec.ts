@@ -51,15 +51,15 @@ test.describe("Result Fields - Table Display", () => {
 
     // Toggle enabled
     await templatesPage.toggleResultFieldEnabledInTable(fieldName);
-    await templatesPage.page.waitForLoadState("networkidle");
+    await templatesPage.waitForPageLoad();
 
     // Toggle required
     await templatesPage.toggleResultFieldRequiredInTable(fieldName);
-    await templatesPage.page.waitForLoadState("networkidle");
+    await templatesPage.waitForPageLoad();
 
     // Toggle restricted
     await templatesPage.toggleResultFieldRestrictedInTable(fieldName);
-    await templatesPage.page.waitForLoadState("networkidle");
+    await templatesPage.waitForPageLoad();
   });
 });
 

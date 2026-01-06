@@ -80,7 +80,7 @@ test.describe("Default Template - Basic Behavior", () => {
 
     if (defaultTemplate) {
       // Verify the default template has a visual indicator
-      await templatesPage.expectTemplateInTable(defaultTemplate.name);
+      await templatesPage.expectTemplateInTable(defaultTemplate.templateName);
       // The UI should show a "Default" badge or indicator
       // Exact verification depends on UI implementation
     }
@@ -206,7 +206,7 @@ test.describe("Default Template - Project Assignment", () => {
 
     // Default template should be available for the new project
     if (defaultTemplate) {
-      await templatesPage.expectTemplateInTable(defaultTemplate.name);
+      await templatesPage.expectTemplateInTable(defaultTemplate.templateName);
     }
   });
 });
