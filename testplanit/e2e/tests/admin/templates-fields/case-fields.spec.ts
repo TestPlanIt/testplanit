@@ -660,12 +660,13 @@ test.describe("Case Fields - Delete Operations", () => {
     await templatesPage.expectCaseFieldNotInTable(fieldName);
   });
 
-  test("Delete case field removes from templates", async ({ api }) => {
-    // Create a field
+  test("Delete case field removes from templates", async ({ api, page }) => {
+    // Create a field (must be enabled to be assignable)
     const fieldName = `E2E Field To Remove ${Date.now()}`;
     const fieldId = await api.createCaseField({
       displayName: fieldName,
       typeName: "Text String",
+      isEnabled: true,
     });
 
     // Create a template with that field
@@ -685,8 +686,12 @@ test.describe("Case Fields - Delete Operations", () => {
     await templatesPage.clickDeleteCaseField(fieldName);
     await templatesPage.confirmDelete();
 
+    // Wait for deletion to complete
+    await page.waitForTimeout(500);
+
     // Reload and verify template's field count decreased
     await templatesPage.goto();
+    await page.waitForTimeout(500);
     fieldCount = await templatesPage.getTemplateCaseFieldsCount(templateName);
     expect(fieldCount).toBe(0);
   });

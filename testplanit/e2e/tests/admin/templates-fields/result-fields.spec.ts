@@ -473,12 +473,13 @@ test.describe("Result Fields - Delete Operations", () => {
     await templatesPage.expectResultFieldNotInTable(fieldName);
   });
 
-  test("Delete result field removes from templates", async ({ api }) => {
-    // Create a field
+  test("Delete result field removes from templates", async ({ api, page }) => {
+    // Create a field (must be enabled to be assignable)
     const fieldName = `E2E Result To Remove ${Date.now()}`;
     const fieldId = await api.createResultField({
       displayName: fieldName,
       typeName: "Text String",
+      isEnabled: true,
     });
 
     // Create a template with that field
@@ -498,8 +499,12 @@ test.describe("Result Fields - Delete Operations", () => {
     await templatesPage.clickDeleteResultField(fieldName);
     await templatesPage.confirmDelete();
 
+    // Wait for deletion to complete
+    await page.waitForTimeout(500);
+
     // Reload and verify template's field count decreased
     await templatesPage.goto();
+    await page.waitForTimeout(500);
     fieldCount = await templatesPage.getTemplateResultFieldsCount(templateName);
     expect(fieldCount).toBe(0);
   });

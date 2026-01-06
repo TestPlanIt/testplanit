@@ -231,7 +231,7 @@ test.describe("Templates - Edit Operations", () => {
   });
 
   test("Edit template - add case fields", async ({ api, page }) => {
-    // Create a template and a field
+    // Create a template and a field (field must be enabled to appear in dropdown)
     const templateName = `E2E Add Fields ${Date.now()}`;
     const fieldName = `E2E Field To Add ${Date.now()}`;
 
@@ -239,6 +239,7 @@ test.describe("Templates - Edit Operations", () => {
     await api.createCaseField({
       displayName: fieldName,
       typeName: "Text String",
+      isEnabled: true,
     });
 
     // Reload
@@ -246,8 +247,8 @@ test.describe("Templates - Edit Operations", () => {
 
     // Edit and add field
     await templatesPage.clickEditTemplate(templateName);
-    // Wait for dialog content to fully load
-    await page.waitForTimeout(500);
+    // Wait for dialog content to fully load including the field selectors
+    await page.waitForTimeout(1000);
     await templatesPage.selectCaseField(fieldName);
     await templatesPage.submitTemplate();
 
@@ -260,7 +261,7 @@ test.describe("Templates - Edit Operations", () => {
   });
 
   test("Edit template - add result fields", async ({ api, page }) => {
-    // Create a template and a field
+    // Create a template and a field (field must be enabled to appear in dropdown)
     const templateName = `E2E Add Results ${Date.now()}`;
     const fieldName = `E2E Result To Add ${Date.now()}`;
 
@@ -268,6 +269,7 @@ test.describe("Templates - Edit Operations", () => {
     await api.createResultField({
       displayName: fieldName,
       typeName: "Text String",
+      isEnabled: true,
     });
 
     // Reload
@@ -275,8 +277,8 @@ test.describe("Templates - Edit Operations", () => {
 
     // Edit and add field
     await templatesPage.clickEditTemplate(templateName);
-    // Wait for dialog content to fully load
-    await page.waitForTimeout(500);
+    // Wait for dialog content to fully load including the field selectors
+    await page.waitForTimeout(1000);
     await templatesPage.selectResultField(fieldName);
     await templatesPage.submitTemplate();
 

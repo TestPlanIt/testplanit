@@ -91,12 +91,13 @@ test.describe("Template-Field Relationships", () => {
     await templatesPage.cancelTemplate();
   });
 
-  test("Deleted field auto-removed from template", async ({ api }) => {
+  test("Deleted field auto-removed from template", async ({ api, page }) => {
     // Create a field
     const fieldName = `E2E Delete From Tmpl ${Date.now()}`;
     const fieldId = await api.createCaseField({
       displayName: fieldName,
       typeName: "Text String",
+      isEnabled: true,
     });
 
     // Create template with the field
@@ -116,8 +117,12 @@ test.describe("Template-Field Relationships", () => {
     await templatesPage.clickDeleteCaseField(fieldName);
     await templatesPage.confirmDelete();
 
+    // Wait for deletion to complete
+    await page.waitForTimeout(500);
+
     // Reload and verify template's field count is now 0
     await templatesPage.goto();
+    await page.waitForTimeout(500);
     fieldCount = await templatesPage.getTemplateCaseFieldsCount(templateName);
     expect(fieldCount).toBe(0);
   });
