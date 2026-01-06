@@ -1,3 +1,10 @@
+## [0.9.18](https://github.com/TestPlanIt/testplanit/compare/v0.9.17...v0.9.18) (2026-01-06)
+
+
+### Bug Fixes
+
+* **cli-release:** enable npm publishing in release configuration ([5c751a9](https://github.com/TestPlanIt/testplanit/commit/5c751a926d40660c71303a71ce47753ffa531cc3))
+
 ## [0.9.17](https://github.com/TestPlanIt/testplanit/compare/v0.9.16...v0.9.17) (2026-01-05)
 
 ## [0.9.16](https://github.com/TestPlanIt/testplanit/compare/v0.9.15...v0.9.16) (2026-01-04)
