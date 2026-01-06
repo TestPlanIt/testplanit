@@ -107,7 +107,7 @@ export default function CaseFields() {
 
   if (session && session.user.access === "ADMIN" && casefields) {
     return (
-      <Card>
+      <Card data-testid="case-fields-section">
         <CardHeader>
           <div className="flex items-center justify-between text-primary">
             <div className="flex items-center justify-between text-primary text-xl md:text-2xl">

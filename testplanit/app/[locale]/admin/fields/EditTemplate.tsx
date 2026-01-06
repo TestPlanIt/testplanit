@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   useUpdateTemplates,
   useUpdateManyTemplates,
@@ -109,6 +109,11 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
     DraggableField[]
   >([]);
 
+  // Track whether fields have been initialized for this dialog session
+  // This prevents React Query refetches from resetting user selections
+  const caseFieldsInitializedRef = useRef(false);
+  const resultFieldsInitializedRef = useRef(false);
+
   const { mutateAsync: updateTemplate } = useUpdateTemplates();
   const { mutateAsync: updateManyTemplates } = useUpdateManyTemplates();
   const { mutateAsync: createManyTemplateProjectAssignment } =
@@ -191,56 +196,71 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
   useEffect(() => {
     if (open) {
       form.reset(defaultFormValues);
+      // Reset the initialization flags when dialog opens so fields get re-initialized
+      caseFieldsInitializedRef.current = false;
+      resultFieldsInitializedRef.current = false;
     }
   }, [open, defaultFormValues, form, form.reset]);
 
+  // Initialize case fields only once when dialog opens and data is available
+  // Using a ref to prevent React Query refetches from resetting user selections during form submission
   useEffect(() => {
-    if (caseFields && template.caseFields) {
-      const selectedIds = new Set(
-        template.caseFields.map((cf) => cf.caseFieldId)
-      );
-      const sortedSelectedFields = template.caseFields
-        .map((cf) => ({
-          id: cf.caseFieldId,
-          label:
-            caseFields.find((field) => field.id === cf.caseFieldId)
-              ?.displayName || "Unknown Field",
-          order: cf.order,
-        }))
-        .sort((a, b) => a.order - b.order);
+    // Only initialize if dialog is open, data is available, and we haven't initialized yet
+    if (!open || caseFieldsInitializedRef.current || !caseFields) return;
 
-      const availableFields = caseFields
-        .filter((cf) => !selectedIds.has(cf.id))
-        .map((cf) => ({ id: cf.id as string | number, label: cf.displayName }));
+    const caseSelectedIds = new Set(
+      template.caseFields.map((cf) => cf.caseFieldId)
+    );
+    const sortedSelectedCaseFields = template.caseFields
+      .map((cf) => ({
+        id: cf.caseFieldId,
+        label:
+          caseFields.find((field) => field.id === cf.caseFieldId)
+            ?.displayName || "Unknown Field",
+        order: cf.order,
+      }))
+      .sort((a, b) => a.order - b.order);
 
-      setSelectedCaseFields(sortedSelectedFields);
-      setAvailableCaseFields(availableFields);
-    }
-  }, [caseFields, template.caseFields]);
+    const availableCaseFieldsList = caseFields
+      .filter((cf) => !caseSelectedIds.has(cf.id))
+      .map((cf) => ({ id: cf.id as string | number, label: cf.displayName }));
 
+    setSelectedCaseFields(sortedSelectedCaseFields);
+    setAvailableCaseFields(availableCaseFieldsList);
+
+    // Mark as initialized to prevent re-runs from React Query refetches
+    caseFieldsInitializedRef.current = true;
+  }, [open, caseFields, template.caseFields]);
+
+  // Initialize result fields only once when dialog opens and data is available
+  // Using a ref to prevent React Query refetches from resetting user selections during form submission
   useEffect(() => {
-    if (resultFields && template.resultFields) {
-      const selectedIds = new Set(
-        template.resultFields.map((rf) => rf.resultFieldId)
-      );
-      const sortedSelectedFields = template.resultFields
-        .map((rf) => ({
-          id: rf.resultFieldId,
-          label:
-            resultFields.find((field) => field.id === rf.resultFieldId)
-              ?.displayName || "Unknown Field",
-          order: rf.order,
-        }))
-        .sort((a, b) => a.order - b.order);
+    // Only initialize if dialog is open, data is available, and we haven't initialized yet
+    if (!open || resultFieldsInitializedRef.current || !resultFields) return;
 
-      const availableFields = resultFields
-        .filter((rf) => !selectedIds.has(rf.id))
-        .map((rf) => ({ id: rf.id as string | number, label: rf.displayName }));
+    const resultSelectedIds = new Set(
+      template.resultFields.map((rf) => rf.resultFieldId)
+    );
+    const sortedSelectedResultFields = template.resultFields
+      .map((rf) => ({
+        id: rf.resultFieldId,
+        label:
+          resultFields.find((field) => field.id === rf.resultFieldId)
+            ?.displayName || "Unknown Field",
+        order: rf.order,
+      }))
+      .sort((a, b) => a.order - b.order);
 
-      setSelectedResultFields(sortedSelectedFields);
-      setAvailableResultFields(availableFields);
-    }
-  }, [resultFields, template.resultFields]);
+    const availableResultFieldsList = resultFields
+      .filter((rf) => !resultSelectedIds.has(rf.id))
+      .map((rf) => ({ id: rf.id as string | number, label: rf.displayName }));
+
+    setSelectedResultFields(sortedSelectedResultFields);
+    setAvailableResultFields(availableResultFieldsList);
+
+    // Mark as initialized to prevent re-runs from React Query refetches
+    resultFieldsInitializedRef.current = true;
+  }, [open, resultFields, template.resultFields]);
 
   const handleAddField = (field: DraggableField, type: string) => {
     if (type === "case") {
@@ -354,13 +374,13 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
+        <Button variant="ghost" className="px-2 py-1 h-auto" data-testid="edit-template-button">
           <SquarePen className="h-5 w-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
+      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]" data-testid="template-dialog">
         <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-fit">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-fit" data-testid="template-form">
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription className="sr-only">
@@ -377,7 +397,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                     <HelpPopover helpKey="template.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} data-testid="template-name-input" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -394,6 +414,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={isDefault}
+                        data-testid="template-enabled-switch"
                       />
                     </FormControl>
                     <FormLabel className="flex items-center">
@@ -414,6 +435,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={template.isDefault}
+                        data-testid="template-default-switch"
                       />
                     </FormControl>
                     <FormLabel className="flex items-center mt-0!">
@@ -502,6 +524,7 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                     <div
                       onClick={selectAllProjects}
                       style={{ cursor: "pointer" }}
+                      data-testid="select-all-projects"
                     >
                       {tCommon("actions.selectAll")}
                     </div>
@@ -541,10 +564,11 @@ export function EditTemplateModal({ template }: EditTemplateModalProps) {
                 type="button"
                 onClick={() => setOpen(false)}
                 variant="outline"
+                data-testid="template-cancel-button"
               >
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} data-testid="template-submit-button">
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
