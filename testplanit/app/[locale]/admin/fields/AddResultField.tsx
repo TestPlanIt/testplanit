@@ -496,6 +496,7 @@ export function AddResultFieldModal({
                           onChange={handleInputChange}
                           onKeyDown={handleKeyDown}
                           className="my-2"
+                          data-testid="dropdown-option-input"
                         />
                         {error && (
                           <div className="text-destructive text-sm">
@@ -532,6 +533,7 @@ export function AddResultFieldModal({
                         type="text"
                         onChange={field.onChange}
                         value={(field.value ?? "") as string}
+                        data-testid={`result-field-${option.key}`}
                       />
                     ) : option.key.includes("Value") ||
                       option.key === "initialHeight" ? (
@@ -552,6 +554,7 @@ export function AddResultFieldModal({
                           )
                         }
                         value={(field.value ?? "") as string | number}
+                        data-testid={`result-field-${option.key}`}
                       />
                     ) : (
                       <Input
@@ -666,16 +669,16 @@ export function AddResultFieldModal({
       {trigger !== null && (
         <DialogTrigger asChild>
           {trigger ?? (
-            <Button>
+            <Button data-testid="add-result-field-button">
               <CirclePlus className="w-4" />
               <span className="hidden md:inline">{tGlobal("common.fields.resultFields")}</span>
             </Button>
           )}
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
+      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]" data-testid="result-field-dialog">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="result-field-form">
             <DialogHeader>
               <DialogTitle>{tGlobal("common.fields.resultFields")}</DialogTitle>
               <DialogDescription className="sr-only">
@@ -694,6 +697,7 @@ export function AddResultFieldModal({
                   <FormControl>
                     <Input
                       placeholder={tCommon("fields.placeholders.displayName")}
+                      data-testid="result-field-display-name"
                       {...field}
                     />
                   </FormControl>
@@ -830,7 +834,7 @@ export function AddResultFieldModal({
                       }}
                       value={field.value}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger data-testid="result-field-type-select">
                         <SelectValue
                           placeholder={tCommon("fields.fieldType")}
                         />
@@ -860,14 +864,15 @@ export function AddResultFieldModal({
                 <div
                   className=" bg-destructive text-destructive-foreground text-sm p-2"
                   role="alert"
+                  data-testid="result-field-form-error"
                 >
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={handleCancel} data-testid="result-field-cancel-button">
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} data-testid="result-field-submit-button">
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : (submitLabel ?? tCommon("actions.submit"))}

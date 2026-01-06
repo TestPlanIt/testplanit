@@ -461,6 +461,7 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
                           onChange={handleInputChange}
                           onKeyDown={handleKeyDown}
                           className="my-2"
+                          data-testid="dropdown-option-input"
                         />
                         {error && (
                           <div className="text-destructive text-sm">
@@ -661,16 +662,17 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
+        <Button variant="ghost" className="px-2 py-1 h-auto" data-testid="edit-case-field-button">
           <SquarePen className="h-5 w-5" />
         </Button>
       </DialogTrigger>
       <DialogContent
         key={casefield.id}
         className="sm:max-w-[600px] lg:max-w-[1000px]"
+        data-testid="case-field-dialog"
       >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="case-field-form">
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription className="sr-only">
@@ -687,7 +689,7 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
                     <HelpPopover helpKey="caseField.displayName" />
                   </FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} data-testid="case-field-display-name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -830,10 +832,10 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={handleCancel} data-testid="case-field-cancel-button">
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} data-testid="case-field-submit-button">
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}

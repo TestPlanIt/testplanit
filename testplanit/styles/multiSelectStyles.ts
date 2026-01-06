@@ -2,14 +2,10 @@ export const getCustomStyles = ({ theme = "light" }: { theme?: string }) => ({
   control: (provided: any, state: { isFocused: boolean }) => ({
     ...provided,
     backgroundColor: "hsl(var(--background))",
-    borderColor: state.isFocused
-      ? "hsl(var(--ring))"
-      : "hsl(var(--border))",
+    borderColor: state.isFocused ? "hsl(var(--ring))" : "hsl(var(--border))",
     boxShadow: state.isFocused ? "0 0 0 2px hsl(var(--ring) / 0.2)" : "none",
     "&:hover": {
-      borderColor: state.isFocused
-        ? "hsl(var(--ring))"
-        : "hsl(var(--border))",
+      borderColor: state.isFocused ? "hsl(var(--ring))" : "hsl(var(--border))",
     },
     borderRadius: "calc(var(--radius) - 2px)",
     color: "hsl(var(--foreground))",
@@ -34,9 +30,9 @@ export const getCustomStyles = ({ theme = "light" }: { theme?: string }) => ({
     backgroundColor: state.isSelected
       ? "hsl(var(--primary))"
       : state.isFocused
-        ? "hsl(var(--accent))"
+        ? "hsl(var(--muted-foreground) / 0.5)"
         : "transparent",
-    color: state.isSelected 
+    color: state.isSelected
       ? "hsl(var(--primary-foreground))"
       : "hsl(var(--popover-foreground))",
     "&:active": {

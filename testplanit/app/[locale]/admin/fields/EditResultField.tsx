@@ -651,16 +651,17 @@ export function EditResultFieldModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="px-2 py-1 h-auto">
+        <Button variant="ghost" className="px-2 py-1 h-auto" data-testid="edit-result-field-button">
           <SquarePen className="h-5 w-5" />
         </Button>
       </DialogTrigger>
       <DialogContent
         key={resultfield.id}
         className="sm:max-w-[600px] lg:max-w-[1000px]"
+        data-testid="result-field-dialog"
       >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="result-field-form">
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription className="sr-only">
@@ -677,7 +678,7 @@ export function EditResultFieldModal({
                     <HelpPopover helpKey="resultField.displayName" />
                   </FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} data-testid="result-field-display-name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -820,10 +821,10 @@ export function EditResultFieldModal({
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={handleCancel} data-testid="result-field-cancel-button">
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} data-testid="result-field-submit-button">
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
