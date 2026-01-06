@@ -255,20 +255,37 @@ test.describe("Templates - Edit Operations", () => {
     await expect(templatesPage.dialog).toBeVisible({ timeout: 5000 });
     // Wait for React Query to fetch the field data for the dropdown
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+
+    // Retry loop to handle race conditions with React Query data loading
+    let optionClicked = false;
+    for (let attempt = 0; attempt < 3 && !optionClicked; attempt++) {
+      // Wait for the case field dropdown to contain our field before trying to select
+      const caseFieldSelect = templatesPage.dialog.getByTestId("add-case-field-select");
+      await expect(caseFieldSelect).toBeVisible({ timeout: 5000 });
+      await caseFieldSelect.click();
+
+      // Wait for listbox with the field option to appear
+      try {
+        await page.waitForSelector('[role="listbox"]', { timeout: 3000 });
+        const option = page.locator('[role="option"]').filter({ hasText: fieldName }).first();
+        const isVisible = await option.isVisible().catch(() => false);
+        if (isVisible) {
+          await option.click();
+          optionClicked = true;
+        } else {
+          // Close dropdown and retry
+          await page.keyboard.press("Escape");
+          await page.waitForTimeout(500);
+        }
+      } catch {
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(500);
+      }
+    }
+
+    expect(optionClicked).toBe(true);
     await page.waitForTimeout(500);
-
-    // Wait for the case field dropdown to contain our field before trying to select
-    const caseFieldSelect = templatesPage.dialog.getByTestId("add-case-field-select");
-    await expect(caseFieldSelect).toBeVisible({ timeout: 5000 });
-    await caseFieldSelect.click();
-
-    // Wait for listbox with the field option to appear
-    await page.waitForSelector('[role="listbox"]', { timeout: 5000 });
-    const option = page.locator('[role="option"]').filter({ hasText: fieldName }).first();
-    await expect(option).toBeVisible({ timeout: 10000 });
-    await option.click();
-    await page.waitForTimeout(500);
-
     await templatesPage.submitTemplate();
 
     // Wait for table to update and reload page to get fresh data
@@ -304,20 +321,37 @@ test.describe("Templates - Edit Operations", () => {
     await expect(templatesPage.dialog).toBeVisible({ timeout: 5000 });
     // Wait for React Query to fetch the field data for the dropdown
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+
+    // Retry loop to handle race conditions with React Query data loading
+    let optionClicked = false;
+    for (let attempt = 0; attempt < 3 && !optionClicked; attempt++) {
+      // Wait for the result field dropdown to contain our field before trying to select
+      const resultFieldSelect = templatesPage.dialog.getByTestId("add-result-field-select");
+      await expect(resultFieldSelect).toBeVisible({ timeout: 5000 });
+      await resultFieldSelect.click();
+
+      // Wait for listbox with the field option to appear
+      try {
+        await page.waitForSelector('[role="listbox"]', { timeout: 3000 });
+        const option = page.locator('[role="option"]').filter({ hasText: fieldName }).first();
+        const isVisible = await option.isVisible().catch(() => false);
+        if (isVisible) {
+          await option.click();
+          optionClicked = true;
+        } else {
+          // Close dropdown and retry
+          await page.keyboard.press("Escape");
+          await page.waitForTimeout(500);
+        }
+      } catch {
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(500);
+      }
+    }
+
+    expect(optionClicked).toBe(true);
     await page.waitForTimeout(500);
-
-    // Wait for the result field dropdown to contain our field before trying to select
-    const resultFieldSelect = templatesPage.dialog.getByTestId("add-result-field-select");
-    await expect(resultFieldSelect).toBeVisible({ timeout: 5000 });
-    await resultFieldSelect.click();
-
-    // Wait for listbox with the field option to appear
-    await page.waitForSelector('[role="listbox"]', { timeout: 5000 });
-    const option = page.locator('[role="option"]').filter({ hasText: fieldName }).first();
-    await expect(option).toBeVisible({ timeout: 10000 });
-    await option.click();
-    await page.waitForTimeout(500);
-
     await templatesPage.submitTemplate();
 
     // Wait for table to update and reload page to get fresh data
