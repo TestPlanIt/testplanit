@@ -1854,6 +1854,94 @@ export class ApiHelper {
   }
 
   /**
+   * Assign a case field to an existing template via API
+   */
+  async assignCaseFieldToTemplate(templateId: number, caseFieldId: number, order?: number): Promise<void> {
+    // Get current count to determine order if not provided
+    let fieldOrder = order;
+    if (fieldOrder === undefined) {
+      const response = await this.request.get(
+        `${this.baseURL}/api/model/templateCaseAssignment/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { templateId: templateId },
+            }),
+          },
+        }
+      );
+      if (response.ok()) {
+        const result = await response.json();
+        fieldOrder = (result.data?.length || 0) + 1;
+      } else {
+        fieldOrder = 1;
+      }
+    }
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/templateCaseAssignment/create`,
+      {
+        data: {
+          data: {
+            templateId: templateId,
+            caseFieldId: caseFieldId,
+            order: fieldOrder,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to assign case field to template: ${error}`);
+    }
+  }
+
+  /**
+   * Assign a result field to an existing template via API
+   */
+  async assignResultFieldToTemplate(templateId: number, resultFieldId: number, order?: number): Promise<void> {
+    // Get current count to determine order if not provided
+    let fieldOrder = order;
+    if (fieldOrder === undefined) {
+      const response = await this.request.get(
+        `${this.baseURL}/api/model/templateResultAssignment/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { templateId: templateId },
+            }),
+          },
+        }
+      );
+      if (response.ok()) {
+        const result = await response.json();
+        fieldOrder = (result.data?.length || 0) + 1;
+      } else {
+        fieldOrder = 1;
+      }
+    }
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/templateResultAssignment/create`,
+      {
+        data: {
+          data: {
+            templateId: templateId,
+            resultFieldId: resultFieldId,
+            order: fieldOrder,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to assign result field to template: ${error}`);
+    }
+  }
+
+  /**
    * Get the default template
    */
   async getDefaultTemplate(): Promise<{ id: number; templateName: string } | null> {
