@@ -281,9 +281,21 @@ test.describe("Templates - Edit Operations", () => {
 
     // Edit and add field
     await templatesPage.clickEditTemplate(templateName);
-    // Wait for dialog content to fully load including the field selectors
-    await page.waitForTimeout(1500);
-    await templatesPage.selectResultField(fieldName);
+    // Wait for dialog to be visible and data to load
+    await expect(templatesPage.dialog).toBeVisible({ timeout: 5000 });
+
+    // Wait for the result field dropdown to contain our field before trying to select
+    const resultFieldSelect = templatesPage.dialog.getByTestId("add-result-field-select");
+    await expect(resultFieldSelect).toBeVisible({ timeout: 5000 });
+    await resultFieldSelect.click();
+
+    // Wait for listbox with the field option to appear
+    await page.waitForSelector('[role="listbox"]', { timeout: 5000 });
+    const option = page.locator('[role="option"]').filter({ hasText: fieldName }).first();
+    await expect(option).toBeVisible({ timeout: 10000 });
+    await option.click();
+    await page.waitForTimeout(500);
+
     await templatesPage.submitTemplate();
 
     // Wait for table to update and reload page to get fresh data
