@@ -153,13 +153,19 @@ export class TemplatesFieldsPage extends BasePage {
   async selectCaseField(fieldName: string): Promise<void> {
     // The SelectScrollable component has a test ID: add-case-field-select
     const fieldSelector = this.dialog.getByTestId("add-case-field-select");
+
+    // Wait for the selector to be visible and enabled
+    await expect(fieldSelector).toBeVisible({ timeout: 5000 });
     await fieldSelector.click();
 
     // Wait for dropdown to open and select the field
     await this.page.waitForSelector('[role="listbox"]', { timeout: 5000 });
+
+    // Wait for the specific option to appear in the listbox
     const option = this.page.locator('[role="option"]').filter({
       hasText: fieldName,
     }).first();
+    await expect(option).toBeVisible({ timeout: 5000 });
     await option.click();
 
     // Wait for the field to be added to the list
@@ -172,13 +178,19 @@ export class TemplatesFieldsPage extends BasePage {
   async selectResultField(fieldName: string): Promise<void> {
     // The SelectScrollable component has a test ID: add-result-field-select
     const fieldSelector = this.dialog.getByTestId("add-result-field-select");
+
+    // Wait for the selector to be visible and enabled
+    await expect(fieldSelector).toBeVisible({ timeout: 5000 });
     await fieldSelector.click();
 
     // Wait for dropdown to open and select the field
     await this.page.waitForSelector('[role="listbox"]', { timeout: 5000 });
+
+    // Wait for the specific option to appear in the listbox
     const option = this.page.locator('[role="option"]').filter({
       hasText: fieldName,
     }).first();
+    await expect(option).toBeVisible({ timeout: 5000 });
     await option.click();
 
     // Wait for the field to be added to the list
