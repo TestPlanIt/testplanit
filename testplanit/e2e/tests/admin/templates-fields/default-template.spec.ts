@@ -115,7 +115,7 @@ test.describe("Default Template - Protection Rules", () => {
     await templatesPage.cancelTemplate();
   });
 
-  test("Cannot delete default template", async ({ api, page }) => {
+  test("Cannot delete default template", async ({ api }) => {
     // Create a default template
     const templateName = `E2E No Delete ${Date.now()}`;
     await api.createTemplate({
@@ -126,33 +126,24 @@ test.describe("Default Template - Protection Rules", () => {
     await templatesPage.goto();
 
     // For default templates, the delete button should either be:
-    // 1. Disabled
-    // 2. Hidden
+    // 1. Not present (with the testid - meaning it's disabled/placeholder)
+    // 2. Disabled
     // 3. Show an error when clicked
     const row = templatesPage.templatesTable.locator("tr").filter({ hasText: templateName }).first();
+    await expect(row).toBeVisible({ timeout: 5000 });
+
+    // The delete button with testid should NOT be present for default templates
+    // (The UI renders a disabled placeholder button without the testid)
     const deleteButton = row.getByTestId("delete-template-button");
+    const buttonExists = await deleteButton.count() > 0;
 
-    // Check if button is disabled
-    const isDisabled = await deleteButton.isDisabled().catch(() => false);
-
-    if (!isDisabled) {
-      // Button exists and is enabled - try clicking and check for error or dialog
-      await deleteButton.click();
-      await page.waitForTimeout(500);
-
-      // Check if confirm dialog appears
-      const confirmButton = page.getByRole("button", { name: /confirm|delete/i });
-      const hasConfirmDialog = await confirmButton.isVisible().catch(() => false);
-
-      if (hasConfirmDialog) {
-        // Confirm and check if template still exists (delete should fail)
-        await confirmButton.click();
-        await page.waitForTimeout(500);
-      }
+    if (buttonExists) {
+      // If button exists, it should be disabled
+      const isDisabled = await deleteButton.isDisabled().catch(() => false);
+      expect(isDisabled).toBe(true);
     }
 
-    // Regardless of path, template should still exist
-    await templatesPage.goto();
+    // Verify template still exists (cannot be deleted)
     await templatesPage.expectTemplateInTable(templateName);
   });
 

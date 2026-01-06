@@ -83,7 +83,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
                     <SelectItem
                       key={color.id}
                       value={color.id.toString()}
-                      className={`grid justify-center items-center -m-0 p-0 text-white`}
+                      className={`grid justify-center items-center m-0 p-0 text-white`}
                       onClick={() => handleColorSelect(color.id)} // Directly handle onClick
                     >
                       <span

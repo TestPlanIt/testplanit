@@ -272,13 +272,17 @@ test.describe("Templates - Edit Operations", () => {
       isEnabled: true,
     });
 
-    // Reload
+    // Reload to see the new field
     await templatesPage.goto();
+    // Wait for result fields table to show the new field
+    await expect(
+      templatesPage.resultFieldsTable.locator("tr").filter({ hasText: fieldName }).first()
+    ).toBeVisible({ timeout: 10000 });
 
     // Edit and add field
     await templatesPage.clickEditTemplate(templateName);
     // Wait for dialog content to fully load including the field selectors
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1500);
     await templatesPage.selectResultField(fieldName);
     await templatesPage.submitTemplate();
 

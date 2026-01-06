@@ -262,6 +262,8 @@ export class TemplatesFieldsPage extends BasePage {
     const editButton = row.getByTestId("edit-template-button");
     await editButton.click();
     await expect(this.dialog).toBeVisible({ timeout: 5000 });
+    // Wait for dialog data to load (field selectors need time to populate)
+    await this.page.waitForLoadState("networkidle");
   }
 
   /**
