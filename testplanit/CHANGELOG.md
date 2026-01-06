@@ -1,3 +1,10 @@
+## [0.9.20](https://github.com/TestPlanIt/testplanit/compare/v0.9.19...v0.9.20) (2026-01-06)
+
+
+### Bug Fixes
+
+* **theme:** update theme reference in MilestoneDisplay component ([13747b4](https://github.com/TestPlanIt/testplanit/commit/13747b460a09100b27503b003a534479b3723c41))
+
 ## [0.9.19](https://github.com/TestPlanIt/testplanit/compare/v0.9.18...v0.9.19) (2026-01-06)
 
 
