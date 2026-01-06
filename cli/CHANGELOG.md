@@ -1,3 +1,35 @@
+# [1.2.0](https://github.com/testplanit/testplanit/compare/cli-v1.1.1...cli-v1.2.0) (2026-01-06)
+
+
+### Bug Fixes
+
+* **adapter:** enhance URL validation in AzureOpenAIAdapter's testConnection method ([fb3d0fa](https://github.com/testplanit/testplanit/commit/fb3d0fab714f66c81bfb3d747ab9cf94665c7a66))
+* **bulk-edit:** increment version number in bulk edit route ([ba93044](https://github.com/testplanit/testplanit/commit/ba93044041037e39b77183d5f670976d2dd222da))
+* **bulk-edit:** update state handling in bulk edit route ([18e68c9](https://github.com/testplanit/testplanit/commit/18e68c93b4b9cbb3d78bd19f05c02bc17e092307))
+* **Cases, columns:** show grip handle when data table rows are sortable in Cases.tsx ([89bba65](https://github.com/testplanit/testplanit/commit/89bba6563ec9fbb10b6a3fc952f3995e0b466740))
+* **columns:** add optional chaining to prevent runtime errors ([2f71454](https://github.com/testplanit/testplanit/commit/2f71454a4a5ec8d72ab19a7ed26ce919bfce831b))
+* **columns:** improve error handling in column data processing ([a859481](https://github.com/testplanit/testplanit/commit/a859481cde0be1887eac20fa8b4b8d8c402c8d2b))
+* **CustomNode:** remove CustomNode component ([876af42](https://github.com/testplanit/testplanit/commit/876af429d5abbce51f34d4b2e194f2f076c1567e))
+* **folders:** Fix the folder issues described in Issue 33 ([#35](https://github.com/testplanit/testplanit/issues/35)) ([f94a1a0](https://github.com/testplanit/testplanit/commit/f94a1a0f9c9e3950fec28a7024f81b32ea3b94c0))
+* **JunitTableSection:** update translation key for completed date display ([c474c32](https://github.com/testplanit/testplanit/commit/c474c321f00ccc88fa4ed5009187840cb4c45f69))
+* **tags:** implement case-insensitive tag matching and restore soft-deleted tags ([c395d73](https://github.com/testplanit/testplanit/commit/c395d73b7e1ef2406cfaf232b0d73548c12b3722))
+* **tags:** update tag handling in CSV import process ([c85328f](https://github.com/testplanit/testplanit/commit/c85328faa92bbd89a650c0e4dded1cb2be5b531c))
+* **testResultsParser:** update duration normalization logic to ensure consistent conversion from milliseconds to seconds ([9094504](https://github.com/testplanit/testplanit/commit/9094504fce2cda2119f1ef2ed9bc5761c2cba1be))
+* **TestRunPage:** wrap AddTestRunModal in SimpleDndProvider for drag-and-drop context ([f667303](https://github.com/testplanit/testplanit/commit/f6673036c59bc7929a09446b4d96ca5db6e7f5af))
+* **tiptap:** prevent rendering of ContentItemMenu when editor lacks plugin support ([d33d52f](https://github.com/testplanit/testplanit/commit/d33d52f38645c2ccb5c6d36df3c86d63f3e5f1e7))
+* **tooltip:** update TooltipTrigger components to include type="button" ([d0fb809](https://github.com/testplanit/testplanit/commit/d0fb80906584768da6da81c969ef9c62c7284b0d))
+* **translations:** add new translation keys for workflow types and dimensions ([475c5cc](https://github.com/testplanit/testplanit/commit/475c5ccb38187cfa6197b4d109fdc5842351e359))
+* **translations:** streamline translation usage across components ([de33bcb](https://github.com/testplanit/testplanit/commit/de33bcb5963118c77bfba0e2534d1db8a6cf73f7))
+* **translations:** update error messages and display names for better user experience ([05967df](https://github.com/testplanit/testplanit/commit/05967dfc469947eb1f78818143a0f011a9c6aa0e))
+* **translations:** Update related import messages for consistency across test result formats. ([19e69b8](https://github.com/testplanit/testplanit/commit/19e69b86ae2b49fb992f9c4696ddafd4017c372d))
+* **translations:** update translation keys and improve localization consistency ([c733c9d](https://github.com/testplanit/testplanit/commit/c733c9db5665de8621b167d752b4bedf02ad30f3))
+* **UserProfile:** enhance date formatting logic to include time format ([1f4d45e](https://github.com/testplanit/testplanit/commit/1f4d45ef8d3471cb169217001263c6402b468ae9))
+
+
+### Features
+
+* **tiptap:** add ContentItemMenu and drag handle functionality ([85d8c4a](https://github.com/testplanit/testplanit/commit/85d8c4a66e623fc89c488ae64989a981472cfdbb))
+
 ## [1.1.1](https://github.com/testplanit/testplanit/compare/cli-v1.1.0...cli-v1.1.1) (2025-12-28)
 
 # [1.1.0](https://github.com/testplanit/testplanit/compare/cli-v1.0.2...cli-v1.1.0) (2025-12-19)
