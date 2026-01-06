@@ -172,7 +172,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
       <div className="flex w-24 justify-center">
         <Badge
           style={{ backgroundColor: badge }}
-          className="text-secondary-background border-2 border-secondary-foreground text-sm"
+          className="text-foreground border-2 border-secondary-foreground text-sm"
         >
           {t(`statusLabels.${status}` as any)}
         </Badge>
