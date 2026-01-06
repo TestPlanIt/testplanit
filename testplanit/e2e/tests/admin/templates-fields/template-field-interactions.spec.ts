@@ -91,7 +91,7 @@ test.describe("Template-Field Relationships", () => {
     await templatesPage.cancelTemplate();
   });
 
-  test.skip("Deleted field auto-removed from template", async ({ api }) => {
+  test("Deleted field auto-removed from template", async ({ api }) => {
     // Create a field
     const fieldName = `E2E Delete From Tmpl ${Date.now()}`;
     const fieldId = await api.createCaseField({

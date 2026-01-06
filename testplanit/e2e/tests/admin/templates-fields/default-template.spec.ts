@@ -115,7 +115,7 @@ test.describe("Default Template - Protection Rules", () => {
     await templatesPage.cancelTemplate();
   });
 
-  test.skip("Cannot delete default template", async ({ api, page }) => {
+  test("Cannot delete default template", async ({ api, page }) => {
     // Create a default template
     const templateName = `E2E No Delete ${Date.now()}`;
     await api.createTemplate({
@@ -125,21 +125,35 @@ test.describe("Default Template - Protection Rules", () => {
 
     await templatesPage.goto();
 
-    // Try to delete
-    await templatesPage.clickDeleteTemplate(templateName);
+    // For default templates, the delete button should either be:
+    // 1. Disabled
+    // 2. Hidden
+    // 3. Show an error when clicked
+    const row = templatesPage.templatesTable.locator("tr").filter({ hasText: templateName }).first();
+    const deleteButton = row.getByTestId("delete-template-button");
 
-    // Either the delete button should be disabled/hidden,
-    // or clicking it should show an error
-    // The confirm dialog may not appear for default templates
+    // Check if button is disabled
+    const isDisabled = await deleteButton.isDisabled().catch(() => false);
 
-    // Check if we can find an error message
-    const errorVisible = await page
-      .locator('[role="alert"], .error-message, [data-testid="error-toast"]')
-      .isVisible()
-      .catch(() => false);
+    if (!isDisabled) {
+      // Button exists and is enabled - try clicking and check for error or dialog
+      await deleteButton.click();
+      await page.waitForTimeout(500);
 
-    // If no error shown, the delete may have been prevented
-    // Verification depends on UI implementation
+      // Check if confirm dialog appears
+      const confirmButton = page.getByRole("button", { name: /confirm|delete/i });
+      const hasConfirmDialog = await confirmButton.isVisible().catch(() => false);
+
+      if (hasConfirmDialog) {
+        // Confirm and check if template still exists (delete should fail)
+        await confirmButton.click();
+        await page.waitForTimeout(500);
+      }
+    }
+
+    // Regardless of path, template should still exist
+    await templatesPage.goto();
+    await templatesPage.expectTemplateInTable(templateName);
   });
 
   test("Cannot unset default without setting another", async ({ api }) => {

@@ -350,7 +350,7 @@ test.describe("Result Fields - Dropdown Type", () => {
     await templatesPage.expectResultFieldInTable(fieldName);
   });
 
-  test.skip("Add Dropdown result field - with icons/colors", async () => {
+  test("Add Dropdown result field - with icons/colors", async () => {
     const fieldName = `E2E Result Dropdown Styled ${Date.now()}`;
 
     await templatesPage.clickAddResultField();
@@ -359,6 +359,9 @@ test.describe("Result Fields - Dropdown Type", () => {
     await templatesPage.addDropdownOption("Success");
     await templatesPage.addDropdownOption("Warning");
     await templatesPage.addDropdownOption("Error");
+    // Set icons and colors for options
+    await templatesPage.setDropdownOptionIcon("Success");
+    await templatesPage.setDropdownOptionColor("Warning");
     await templatesPage.submitResultField();
 
     await templatesPage.expectResultFieldInTable(fieldName);
@@ -470,7 +473,7 @@ test.describe("Result Fields - Delete Operations", () => {
     await templatesPage.expectResultFieldNotInTable(fieldName);
   });
 
-  test.skip("Delete result field removes from templates", async ({ api }) => {
+  test("Delete result field removes from templates", async ({ api }) => {
     // Create a field
     const fieldName = `E2E Result To Remove ${Date.now()}`;
     const fieldId = await api.createResultField({

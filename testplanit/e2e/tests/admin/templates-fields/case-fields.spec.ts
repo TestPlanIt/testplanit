@@ -477,27 +477,29 @@ test.describe("Case Fields - Dropdown Type", () => {
     await templatesPage.expectCaseFieldInTable(fieldName);
   });
 
-  test.skip("Add Dropdown field - with icons", async () => {
+  test("Add Dropdown field - with icons", async () => {
     const fieldName = `E2E Dropdown Icons ${Date.now()}`;
 
     await templatesPage.clickAddCaseField();
     await templatesPage.fillCaseFieldDisplayName(fieldName);
     await templatesPage.selectCaseFieldType("Dropdown");
     await templatesPage.addDropdownOption("Critical");
-    // Icon selection depends on UI implementation
+    // Change the icon for the option
+    await templatesPage.setDropdownOptionIcon("Critical");
     await templatesPage.submitCaseField();
 
     await templatesPage.expectCaseFieldInTable(fieldName);
   });
 
-  test.skip("Add Dropdown field - with colors", async () => {
+  test("Add Dropdown field - with colors", async () => {
     const fieldName = `E2E Dropdown Colors ${Date.now()}`;
 
     await templatesPage.clickAddCaseField();
     await templatesPage.fillCaseFieldDisplayName(fieldName);
     await templatesPage.selectCaseFieldType("Dropdown");
     await templatesPage.addDropdownOption("Red Item");
-    // Color selection depends on UI implementation
+    // Change the color for the option
+    await templatesPage.setDropdownOptionColor("Red Item");
     await templatesPage.submitCaseField();
 
     await templatesPage.expectCaseFieldInTable(fieldName);
@@ -526,7 +528,7 @@ test.describe("Case Fields - Multi-Select Type", () => {
     await templatesPage.expectCaseFieldInTable(fieldName);
   });
 
-  test.skip("Add Multi-Select field - with icons and colors", async () => {
+  test("Add Multi-Select field - with icons and colors", async () => {
     const fieldName = `E2E MultiSelect Styled ${Date.now()}`;
 
     await templatesPage.clickAddCaseField();
@@ -534,6 +536,9 @@ test.describe("Case Fields - Multi-Select Type", () => {
     await templatesPage.selectCaseFieldType("Multi-Select");
     await templatesPage.addDropdownOption("Category 1");
     await templatesPage.addDropdownOption("Category 2");
+    // Set icon and color for options
+    await templatesPage.setDropdownOptionIcon("Category 1");
+    await templatesPage.setDropdownOptionColor("Category 2");
     await templatesPage.submitCaseField();
 
     await templatesPage.expectCaseFieldInTable(fieldName);
@@ -655,7 +660,7 @@ test.describe("Case Fields - Delete Operations", () => {
     await templatesPage.expectCaseFieldNotInTable(fieldName);
   });
 
-  test.skip("Delete case field removes from templates", async ({ api }) => {
+  test("Delete case field removes from templates", async ({ api }) => {
     // Create a field
     const fieldName = `E2E Field To Remove ${Date.now()}`;
     const fieldId = await api.createCaseField({

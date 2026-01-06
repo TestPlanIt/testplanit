@@ -493,43 +493,41 @@ export class TemplatesFieldsPage extends BasePage {
   /**
    * Set the icon for a dropdown option
    */
-  async setDropdownOptionIcon(optionName: string, iconName: string): Promise<void> {
-    // Find the option row
-    const optionRow = this.dialog.locator('[class*="option"], [class*="item"]').filter({
+  async setDropdownOptionIcon(optionName: string): Promise<void> {
+    // Find the option row - it's a div with class "cursor-ns-resize"
+    const optionRow = this.dialog.locator('div.cursor-ns-resize').filter({
       hasText: optionName,
     }).first();
 
-    // Click the icon picker button
-    const iconButton = optionRow.locator('button').filter({
-      has: this.page.locator('svg'),
-    }).first();
+    // Click the icon picker button (has aria-label="icon-picker")
+    const iconButton = optionRow.locator('button[aria-label="icon-picker"]').first();
     await iconButton.click();
+    await this.page.waitForTimeout(300);
 
-    // Select the icon from the picker
-    const iconOption = this.page.locator('[role="option"], [role="menuitem"], button').filter({
-      has: this.page.locator(`svg[class*="${iconName}" i]`),
-    }).first();
+    // Select the first available icon (any SelectItem in the grid)
+    const iconOption = this.page.locator('[role="option"]').first();
     await iconOption.click();
+    await this.page.waitForTimeout(200);
   }
 
   /**
    * Set the color for a dropdown option
    */
-  async setDropdownOptionColor(optionName: string, colorName: string): Promise<void> {
-    // Find the option row
-    const optionRow = this.dialog.locator('[class*="option"], [class*="item"]').filter({
+  async setDropdownOptionColor(optionName: string): Promise<void> {
+    // Find the option row - it's a div with class "cursor-ns-resize"
+    const optionRow = this.dialog.locator('div.cursor-ns-resize').filter({
       hasText: optionName,
     }).first();
 
-    // Click the color picker button
-    const colorButton = optionRow.locator('button[class*="color" i], button[aria-label*="color" i]').first();
+    // Click the color picker button (has aria-label="color-picker")
+    const colorButton = optionRow.locator('button[aria-label="color-picker"]').first();
     await colorButton.click();
+    await this.page.waitForTimeout(300);
 
-    // Select the color from the picker
-    const colorOption = this.page.locator('[role="option"], button').filter({
-      hasText: new RegExp(colorName, "i"),
-    }).first();
+    // Select the first available color (any SelectItem)
+    const colorOption = this.page.locator('[role="option"]').first();
     await colorOption.click();
+    await this.page.waitForTimeout(200);
   }
 
   /**
