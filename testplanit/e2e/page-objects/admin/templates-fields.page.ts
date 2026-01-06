@@ -402,7 +402,7 @@ export class TemplatesFieldsPage extends BasePage {
    * Set the default value for text fields
    */
   async setCaseFieldDefaultValue(value: string): Promise<void> {
-    const defaultValueInput = this.dialog.locator('input[name="defaultValue"], input[placeholder*="Default" i]').first();
+    const defaultValueInput = this.dialog.getByTestId("case-field-defaultValue");
     await defaultValueInput.fill(value);
   }
 
@@ -410,7 +410,7 @@ export class TemplatesFieldsPage extends BasePage {
    * Set the minimum value for number fields
    */
   async setCaseFieldMinValue(value: number): Promise<void> {
-    const minInput = this.dialog.locator('input[name="minValue"], input[placeholder*="Min" i]').first();
+    const minInput = this.dialog.getByTestId("case-field-minValue");
     await minInput.fill(value.toString());
   }
 
@@ -418,7 +418,7 @@ export class TemplatesFieldsPage extends BasePage {
    * Set the maximum value for number fields
    */
   async setCaseFieldMaxValue(value: number): Promise<void> {
-    const maxInput = this.dialog.locator('input[name="maxValue"], input[placeholder*="Max" i]').first();
+    const maxInput = this.dialog.getByTestId("case-field-maxValue");
     await maxInput.fill(value.toString());
   }
 
@@ -426,8 +426,24 @@ export class TemplatesFieldsPage extends BasePage {
    * Set the initial height for text long fields
    */
   async setCaseFieldInitialHeight(height: number): Promise<void> {
-    const heightInput = this.dialog.locator('input[name="initialHeight"], input[placeholder*="Height" i]').first();
+    const heightInput = this.dialog.getByTestId("case-field-initialHeight");
     await heightInput.fill(height.toString());
+  }
+
+  /**
+   * Set the minimum value for integer fields
+   */
+  async setCaseFieldMinIntegerValue(value: number): Promise<void> {
+    const minInput = this.dialog.getByTestId("case-field-minIntegerValue");
+    await minInput.fill(value.toString());
+  }
+
+  /**
+   * Set the maximum value for integer fields
+   */
+  async setCaseFieldMaxIntegerValue(value: number): Promise<void> {
+    const maxInput = this.dialog.getByTestId("case-field-maxIntegerValue");
+    await maxInput.fill(value.toString());
   }
 
   /**
@@ -448,36 +464,30 @@ export class TemplatesFieldsPage extends BasePage {
    * Add a dropdown option
    */
   async addDropdownOption(name: string): Promise<void> {
-    // Find the add option button or input
-    const addOptionButton = this.dialog.locator('button:has-text("Add Option"), button:has-text("Add")').filter({
-      has: this.page.locator('svg[class*="plus" i]'),
-    }).first();
+    // Find the option input field with the test ID
+    const optionInput = this.dialog.getByTestId("dropdown-option-input");
 
-    // Fallback: look for an "Add" button near options
-    const fallbackButton = this.dialog.locator('button:has-text("Add")').last();
-    const targetButton = await addOptionButton.isVisible() ? addOptionButton : fallbackButton;
+    // Type the option name and press Enter to add it
+    await optionInput.fill(name);
+    await optionInput.press("Enter");
 
-    // Click to add a new option row
-    await targetButton.click();
-
-    // Fill in the option name in the last option input
-    const optionInputs = this.dialog.locator('input[placeholder*="Option" i], input[name*="option" i]');
-    const lastOptionInput = optionInputs.last();
-    await lastOptionInput.fill(name);
+    // Wait a moment for the option to be added
+    await this.page.waitForTimeout(300);
   }
 
   /**
    * Set an option as the default for dropdown fields
    */
   async setDropdownOptionDefault(optionName: string): Promise<void> {
-    // Find the option row by name
-    const optionRow = this.dialog.locator('[class*="option"], [class*="item"]').filter({
+    // Find the option row by name - it's a div with class "cursor-ns-resize"
+    const optionRow = this.dialog.locator('div.cursor-ns-resize').filter({
       hasText: optionName,
     }).first();
 
-    // Find and click the default radio/checkbox in that row
-    const defaultSelector = optionRow.locator('input[type="radio"], input[type="checkbox"], [role="radio"]').first();
-    await defaultSelector.click();
+    // Find and click the radio button (role="radio") in that row
+    const radioButton = optionRow.locator('button[role="radio"]').first();
+    await radioButton.click();
+    await this.page.waitForTimeout(200);
   }
 
   /**
@@ -526,16 +536,15 @@ export class TemplatesFieldsPage extends BasePage {
    * Remove a dropdown option
    */
   async removeDropdownOption(optionName: string): Promise<void> {
-    // Find the option row
-    const optionRow = this.dialog.locator('[class*="option"], [class*="item"]').filter({
+    // Find the option row - it's a div with class "cursor-ns-resize"
+    const optionRow = this.dialog.locator('div.cursor-ns-resize').filter({
       hasText: optionName,
     }).first();
 
-    // Click the remove button (usually an X or trash icon)
-    const removeButton = optionRow.locator('button').filter({
-      has: this.page.locator('svg[class*="x" i], svg[class*="trash" i], svg[class*="close" i]'),
-    }).first();
+    // Click the remove button (the Trash2 icon button with destructive class)
+    const removeButton = optionRow.locator('button.text-destructive').first();
     await removeButton.click();
+    await this.page.waitForTimeout(200);
   }
 
   /**
@@ -679,28 +688,48 @@ export class TemplatesFieldsPage extends BasePage {
    * Set result field default value
    */
   async setResultFieldDefaultValue(value: string): Promise<void> {
-    await this.setCaseFieldDefaultValue(value);
+    const defaultValueInput = this.dialog.getByTestId("result-field-defaultValue");
+    await defaultValueInput.fill(value);
   }
 
   /**
    * Set result field min value
    */
   async setResultFieldMinValue(value: number): Promise<void> {
-    await this.setCaseFieldMinValue(value);
+    const minInput = this.dialog.getByTestId("result-field-minValue");
+    await minInput.fill(value.toString());
   }
 
   /**
    * Set result field max value
    */
   async setResultFieldMaxValue(value: number): Promise<void> {
-    await this.setCaseFieldMaxValue(value);
+    const maxInput = this.dialog.getByTestId("result-field-maxValue");
+    await maxInput.fill(value.toString());
   }
 
   /**
    * Set result field initial height
    */
   async setResultFieldInitialHeight(height: number): Promise<void> {
-    await this.setCaseFieldInitialHeight(height);
+    const heightInput = this.dialog.getByTestId("result-field-initialHeight");
+    await heightInput.fill(height.toString());
+  }
+
+  /**
+   * Set the minimum value for integer result fields
+   */
+  async setResultFieldMinIntegerValue(value: number): Promise<void> {
+    const minInput = this.dialog.getByTestId("result-field-minIntegerValue");
+    await minInput.fill(value.toString());
+  }
+
+  /**
+   * Set the maximum value for integer result fields
+   */
+  async setResultFieldMaxIntegerValue(value: number): Promise<void> {
+    const maxInput = this.dialog.getByTestId("result-field-maxIntegerValue");
+    await maxInput.fill(value.toString());
   }
 
   /**

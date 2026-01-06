@@ -668,9 +668,10 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
       <DialogContent
         key={casefield.id}
         className="sm:max-w-[600px] lg:max-w-[1000px]"
+        data-testid="case-field-dialog"
       >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="case-field-form">
             <DialogHeader>
               <DialogTitle>{t("title")}</DialogTitle>
               <DialogDescription className="sr-only">
@@ -687,7 +688,7 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
                     <HelpPopover helpKey="caseField.displayName" />
                   </FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} data-testid="case-field-display-name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -830,10 +831,10 @@ export function EditCaseFieldModal({ casefield }: EditCaseFieldModalProps) {
                   {errors.root.message}
                 </div>
               )}
-              <Button variant="outline" type="button" onClick={handleCancel}>
+              <Button variant="outline" type="button" onClick={handleCancel} data-testid="case-field-cancel-button">
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} data-testid="case-field-submit-button">
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}

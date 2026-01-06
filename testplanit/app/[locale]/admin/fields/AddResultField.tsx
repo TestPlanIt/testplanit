@@ -496,6 +496,7 @@ export function AddResultFieldModal({
                           onChange={handleInputChange}
                           onKeyDown={handleKeyDown}
                           className="my-2"
+                          data-testid="dropdown-option-input"
                         />
                         {error && (
                           <div className="text-destructive text-sm">
@@ -532,6 +533,7 @@ export function AddResultFieldModal({
                         type="text"
                         onChange={field.onChange}
                         value={(field.value ?? "") as string}
+                        data-testid={`result-field-${option.key}`}
                       />
                     ) : option.key.includes("Value") ||
                       option.key === "initialHeight" ? (
@@ -552,6 +554,7 @@ export function AddResultFieldModal({
                           )
                         }
                         value={(field.value ?? "") as string | number}
+                        data-testid={`result-field-${option.key}`}
                       />
                     ) : (
                       <Input

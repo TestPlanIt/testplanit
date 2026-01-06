@@ -501,6 +501,7 @@ export function AddCaseFieldModal({
                           onChange={handleInputChange}
                           onKeyDown={handleKeyDown}
                           className="my-2"
+                          data-testid="dropdown-option-input"
                         />
                         {error && (
                           <div className="text-destructive text-sm">
@@ -537,6 +538,7 @@ export function AddCaseFieldModal({
                         type="text"
                         onChange={field.onChange}
                         value={(field.value ?? "") as string}
+                        data-testid={`case-field-${option.key}`}
                       />
                     ) : option.key.includes("Value") ||
                       option.key === "initialHeight" ? (
@@ -557,6 +559,7 @@ export function AddCaseFieldModal({
                           )
                         }
                         value={(field.value ?? "") as string | number}
+                        data-testid={`case-field-${option.key}`}
                       />
                     ) : (
                       <Input

@@ -162,7 +162,7 @@ test.describe("Case Fields - Text String Type", () => {
     await templatesPage.expectCaseFieldInTable(fieldName);
   });
 
-  test.skip("Edit Text String field", async ({ api }) => {
+  test("Edit Text String field", async ({ api }) => {
     const fieldName = `E2E Edit Text ${Date.now()}`;
     await api.createCaseField({
       displayName: fieldName,
@@ -245,24 +245,28 @@ test.describe("Case Fields - Number Type", () => {
     await templatesPage.expectCaseFieldInTable(fieldName);
   });
 
-  test.skip("Add Number field - with min value", async () => {
+  test("Add Number field - with min value", async () => {
     const fieldName = `E2E Number Min ${Date.now()}`;
 
     await templatesPage.clickAddCaseField();
     await templatesPage.fillCaseFieldDisplayName(fieldName);
     await templatesPage.selectCaseFieldType("Number");
+    // Both min and max must be set together per validation rules
     await templatesPage.setCaseFieldMinValue(0);
+    await templatesPage.setCaseFieldMaxValue(1000);
     await templatesPage.submitCaseField();
 
     await templatesPage.expectCaseFieldInTable(fieldName);
   });
 
-  test.skip("Add Number field - with max value", async () => {
+  test("Add Number field - with max value", async () => {
     const fieldName = `E2E Number Max ${Date.now()}`;
 
     await templatesPage.clickAddCaseField();
     await templatesPage.fillCaseFieldDisplayName(fieldName);
     await templatesPage.selectCaseFieldType("Number");
+    // Both min and max must be set together per validation rules
+    await templatesPage.setCaseFieldMinValue(-1000);
     await templatesPage.setCaseFieldMaxValue(100);
     await templatesPage.submitCaseField();
 
@@ -322,6 +326,7 @@ test.describe("Case Fields - Integer Type", () => {
     await templatesPage.clickAddCaseField();
     await templatesPage.fillCaseFieldDisplayName(fieldName);
     await templatesPage.selectCaseFieldType("Integer");
+    // Integer fields use the same minValue/maxValue keys as Number fields in the UI
     await templatesPage.setCaseFieldMinValue(1);
     await templatesPage.setCaseFieldMaxValue(10);
     await templatesPage.submitCaseField();
@@ -335,6 +340,7 @@ test.describe("Case Fields - Integer Type", () => {
     await templatesPage.clickAddCaseField();
     await templatesPage.fillCaseFieldDisplayName(fieldName);
     await templatesPage.selectCaseFieldType("Integer");
+    // Integer fields use the same minValue/maxValue keys as Number fields in the UI
     await templatesPage.setCaseFieldMinValue(10);
     await templatesPage.setCaseFieldMaxValue(1);
     await templatesPage.submitCaseField();
@@ -416,6 +422,7 @@ test.describe("Case Fields - Link Type", () => {
     await templatesPage.expectCaseFieldInTable(fieldName);
   });
 
+  // Note: Link fields don't have a defaultValue option in the seed data
   test.skip("Add Link field - with default value", async () => {
     const fieldName = `E2E Link Default ${Date.now()}`;
 
@@ -437,7 +444,7 @@ test.describe("Case Fields - Dropdown Type", () => {
     await templatesPage.goto();
   });
 
-  test.skip("Add Dropdown field - basic with options", async () => {
+  test("Add Dropdown field - basic with options", async () => {
     const fieldName = `E2E Dropdown ${Date.now()}`;
 
     await templatesPage.clickAddCaseField();
@@ -451,7 +458,7 @@ test.describe("Case Fields - Dropdown Type", () => {
     await templatesPage.expectCaseFieldInTable(fieldName);
   });
 
-  test.skip("Add Dropdown field - with default option", async () => {
+  test("Add Dropdown field - with default option", async () => {
     const fieldName = `E2E Dropdown Default ${Date.now()}`;
 
     await templatesPage.clickAddCaseField();
@@ -501,7 +508,7 @@ test.describe("Case Fields - Multi-Select Type", () => {
     await templatesPage.goto();
   });
 
-  test.skip("Add Multi-Select field - basic", async () => {
+  test("Add Multi-Select field - basic", async () => {
     const fieldName = `E2E MultiSelect ${Date.now()}`;
 
     await templatesPage.clickAddCaseField();

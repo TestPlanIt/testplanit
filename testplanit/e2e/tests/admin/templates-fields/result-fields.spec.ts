@@ -106,7 +106,7 @@ test.describe("Result Fields - Text String Type", () => {
     await templatesPage.expectResultFieldInTable(fieldName);
   });
 
-  test.skip("Edit Text String result field", async ({ api }) => {
+  test("Edit Text String result field", async ({ api }) => {
     const fieldName = `E2E Edit Result Text ${Date.now()}`;
     await api.createResultField({
       displayName: fieldName,
@@ -229,6 +229,7 @@ test.describe("Result Fields - Integer Type", () => {
     await templatesPage.clickAddResultField();
     await templatesPage.fillResultFieldDisplayName(fieldName);
     await templatesPage.selectResultFieldType("Integer");
+    // Integer fields use the same minValue/maxValue keys as Number fields in the UI
     await templatesPage.setResultFieldMinValue(1);
     await templatesPage.setResultFieldMaxValue(5);
     await templatesPage.submitResultField();
@@ -318,7 +319,7 @@ test.describe("Result Fields - Dropdown Type", () => {
     await templatesPage.goto();
   });
 
-  test.skip("Add Dropdown result field - with options", async () => {
+  test("Add Dropdown result field - with options", async () => {
     const fieldName = `E2E Result Dropdown ${Date.now()}`;
 
     await templatesPage.clickAddResultField();
@@ -332,7 +333,7 @@ test.describe("Result Fields - Dropdown Type", () => {
     await templatesPage.expectResultFieldInTable(fieldName);
   });
 
-  test.skip("Add Dropdown result field - with default", async () => {
+  test("Add Dropdown result field - with default", async () => {
     const fieldName = `E2E Result Dropdown Default ${Date.now()}`;
 
     await templatesPage.clickAddResultField();
@@ -370,7 +371,7 @@ test.describe("Result Fields - Multi-Select Type", () => {
     await templatesPage.goto();
   });
 
-  test.skip("Add Multi-Select result field", async () => {
+  test("Add Multi-Select result field", async () => {
     const fieldName = `E2E Result MultiSelect ${Date.now()}`;
 
     await templatesPage.clickAddResultField();
