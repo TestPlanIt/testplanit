@@ -6,15 +6,20 @@
  */
 
 import { Command } from "commander";
+import { createRequire } from "module";
 import { createConfigCommand } from "./commands/config.js";
 import { createImportCommand } from "./commands/import.js";
+
+// Read version from package.json
+const require = createRequire(import.meta.url);
+const packageJson = require("../package.json");
 
 const program = new Command();
 
 program
   .name("testplanit")
   .description("CLI tool for TestPlanIt - import test results and manage test data")
-  .version("0.1.0")
+  .version(packageJson.version)
   .addHelpText("after", `
 Examples:
 

@@ -2,6 +2,7 @@
 
 // src/index.ts
 import { Command as Command3 } from "commander";
+import { createRequire } from "module";
 
 // src/commands/config.ts
 import { Command } from "commander";
@@ -224,6 +225,52 @@ import * as path2 from "path";
 import FormData from "form-data";
 import * as fs from "fs";
 import * as path from "path";
+function formatNetworkError(error2, url, operation) {
+  const baseUrl = new URL(url).origin;
+  if (error2 instanceof TypeError) {
+    const message = error2.message.toLowerCase();
+    if (message.includes("fetch failed") || message.includes("econnrefused")) {
+      return new Error(
+        `Failed to connect to TestPlanIt server at ${baseUrl}
+  \u2192 Is the server running?
+  \u2192 Check your URL with: testplanit config`
+      );
+    }
+    if (message.includes("enotfound") || message.includes("getaddrinfo")) {
+      return new Error(
+        `Could not resolve hostname for ${baseUrl}
+  \u2192 Check that the URL is correct
+  \u2192 Verify your network connection`
+      );
+    }
+    if (message.includes("etimedout") || message.includes("timeout")) {
+      return new Error(
+        `Request timed out while ${operation}
+  \u2192 The server at ${baseUrl} may be slow or unresponsive
+  \u2192 Check your network connection`
+      );
+    }
+    if (message.includes("econnreset") || message.includes("socket hang up")) {
+      return new Error(
+        `Connection was reset while ${operation}
+  \u2192 The server at ${baseUrl} closed the connection unexpectedly
+  \u2192 Try again, or check server logs`
+      );
+    }
+    if (message.includes("cert") || message.includes("ssl") || message.includes("tls")) {
+      return new Error(
+        `SSL/TLS certificate error connecting to ${baseUrl}
+  \u2192 The server's certificate may be invalid or self-signed
+  \u2192 Check your TESTPLANIT_URL configuration`
+      );
+    }
+  }
+  const originalMessage = error2 instanceof Error ? error2.message : String(error2);
+  return new Error(
+    `Network error while ${operation}: ${originalMessage}
+  \u2192 Server: ${baseUrl}`
+  );
+}
 async function importTestResults(files, options, onProgress) {
   const url = getUrl();
   const token = getToken();
@@ -234,9 +281,11 @@ async function importTestResults(files, options, onProgress) {
     throw new Error("API token is not configured");
   }
   const form = new FormData();
-  form.append("name", options.name);
   form.append("projectId", options.projectId.toString());
   form.append("format", options.format || "auto");
+  if (options.name) {
+    form.append("name", options.name);
+  }
   if (options.stateId !== void 0) {
     form.append("stateId", options.stateId.toString());
   }
@@ -260,18 +309,23 @@ async function importTestResults(files, options, onProgress) {
   for (const filePath of files) {
     const absolutePath = path.resolve(filePath);
     const fileName = path.basename(absolutePath);
-    const fileStream = fs.createReadStream(absolutePath);
-    form.append("files", fileStream, { filename: fileName });
+    const fileBuffer = fs.readFileSync(absolutePath);
+    form.append("files", fileBuffer, { filename: fileName });
   }
   const apiUrl = new URL("/api/test-results/import", url).toString();
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      ...form.getHeaders()
-    },
-    body: form.getBuffer()
-  });
+  let response;
+  try {
+    response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...form.getHeaders()
+      },
+      body: new Uint8Array(form.getBuffer())
+    });
+  } catch (error2) {
+    throw formatNetworkError(error2, apiUrl, "importing test results");
+  }
   if (!response.ok) {
     let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
     try {
@@ -346,14 +400,19 @@ async function lookup(projectId, type, name, createIfMissing = false) {
   if (projectId !== void 0) {
     requestBody.projectId = projectId;
   }
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(requestBody)
-  });
+  let response;
+  try {
+    response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(requestBody)
+    });
+  } catch (error2) {
+    throw formatNetworkError(error2, apiUrl, `looking up ${type} "${name}"`);
+  }
   if (!response.ok) {
     let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
     try {
@@ -441,7 +500,7 @@ var TEST_RESULT_FORMATS = {
 // src/commands/import.ts
 var VALID_FORMATS = ["auto", ...Object.keys(TEST_RESULT_FORMATS)];
 function createImportCommand() {
-  const cmd = new Command2("import").description("Import test results into TestPlanIt").argument("<files...>", "Test result files or glob patterns (e.g., ./results/*.xml)").requiredOption("-p, --project <value>", "Project (ID or exact name)").requiredOption("-n, --name <name>", "Test run name").option(
+  const cmd = new Command2("import").description("Import test results into TestPlanIt").argument("<files...>", "Test result files or glob patterns (e.g., ./results/*.xml)").requiredOption("-p, --project <value>", "Project (ID or exact name)").option("-n, --name <name>", "Test run name (required unless appending to existing run with -r)").option(
     "-F, --format <format>",
     `File format: ${VALID_FORMATS.join(", ")} (default: auto-detect)`,
     "auto"
@@ -457,6 +516,9 @@ Examples:
   Import multiple files with glob pattern:
     $ testplanit import "./test-results/**/*.xml" -p "My Project" -n "Full Test Suite"
 
+  Append results to an existing test run (no -n needed):
+    $ testplanit import ./results.xml -p "My Project" -r "Existing Test Run"
+
   All options with names:
     $ testplanit import ./results/*.xml \\
         --project "My Project" \\
@@ -466,11 +528,10 @@ Examples:
         --config "Chrome - Production" \\
         --milestone "Sprint 15" \\
         --folder "Automated Tests" \\
-        --tags "regression,automated,ci" \\
-        --test-run "Existing Test Run"
+        --tags "regression,automated,ci"
 
   All options with IDs:
-    $ testplanit import ./results.xml -p 1 -n "Build" -F junit -s 5 -c 10 -m 3 -f 42 -t 1,2,3 -r 100
+    $ testplanit import ./results.xml -p 1 -n "Build" -F junit -s 5 -c 10 -m 3 -f 42 -t 1,2,3
 
   CI/CD with environment variables:
     $ TESTPLANIT_URL=https://testplanit.example.com \\
@@ -480,6 +541,11 @@ Examples:
     const validationError = validateConfig();
     if (validationError) {
       error(validationError);
+      process.exit(1);
+    }
+    if (!options.name && !options.testRun) {
+      error("Option -n, --name is required when not appending to an existing test run");
+      info("Either provide --name for a new test run, or --test-run to append to an existing one");
       process.exit(1);
     }
     const format = options.format.toLowerCase();
@@ -575,13 +641,18 @@ Examples:
       console.log();
       success(`Test run created with ID: ${formatNumber(result.testRunId)}`);
       if (url) {
-        const testRunUrl = `${url}/test-runs/${result.testRunId}`;
+        const testRunUrl = `${url}/projects/runs/${projectId}/${result.testRunId}`;
         info(`View at: ${formatUrl(testRunUrl)}`);
       }
     } catch (error2) {
       failSpinner("Import failed");
       if (error2 instanceof Error) {
-        error(error2.message);
+        const lines = error2.message.split("\n");
+        for (const line of lines) {
+          if (line.trim()) {
+            error(line);
+          }
+        }
       } else {
         error("Unknown error occurred");
       }
@@ -592,8 +663,10 @@ Examples:
 }
 
 // src/index.ts
+var require2 = createRequire(import.meta.url);
+var packageJson = require2("../package.json");
 var program = new Command3();
-program.name("testplanit").description("CLI tool for TestPlanIt - import test results and manage test data").version("0.1.0").addHelpText("after", `
+program.name("testplanit").description("CLI tool for TestPlanIt - import test results and manage test data").version(packageJson.version).addHelpText("after", `
 Examples:
 
   Configure the CLI:
