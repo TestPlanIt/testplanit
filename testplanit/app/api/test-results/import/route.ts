@@ -376,6 +376,15 @@ export async function POST(request: NextRequest) {
         let processedTestCases = 0;
         let caseOrder = 1;
 
+        // Track attachment mappings for CLI upload
+        const attachmentMappings: Array<{
+          suiteName: string;
+          testName: string;
+          className: string;
+          junitTestResultId: number;
+          attachments: Array<{ name: string; path: string }>;
+        }> = [];
+
         sendProgress(
           25,
           progressMessages.countingTests(totalTestCases, files.length)
@@ -629,7 +638,7 @@ export async function POST(request: NextRequest) {
                 }
 
                 // Create the test result (using JUnitTestResult for all formats)
-                await prisma.jUnitTestResult.create({
+                const junitTestResult = await prisma.jUnitTestResult.create({
                   data: {
                     type: resultType,
                     message: testCase.failure || undefined,
@@ -644,6 +653,20 @@ export async function POST(request: NextRequest) {
                     time: testCaseTime,
                   },
                 });
+
+                // Track attachments for CLI upload (if any)
+                if (testCase.attachments && testCase.attachments.length > 0) {
+                  attachmentMappings.push({
+                    suiteName: suite.name || "Test Suite",
+                    testName: testCase.name,
+                    className: className,
+                    junitTestResultId: junitTestResult.id,
+                    attachments: testCase.attachments.map((att) => ({
+                      name: att.name,
+                      path: att.path,
+                    })),
+                  });
+                }
 
                 // Update test run case status
                 if (matchingStatus) {
@@ -744,10 +767,21 @@ export async function POST(request: NextRequest) {
         }
 
         sendProgress(100, progressMessages.completed);
+
+        // Include attachment mappings in response for CLI to upload files
+        const responseData: {
+          complete: true;
+          testRunId: number;
+          attachmentMappings?: typeof attachmentMappings;
+        } = { complete: true, testRunId };
+
+        // Only include mappings if there are attachments to upload
+        if (attachmentMappings.length > 0) {
+          responseData.attachmentMappings = attachmentMappings;
+        }
+
         controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({ complete: true, testRunId })}\n\n`
-          )
+          encoder.encode(`data: ${JSON.stringify(responseData)}\n\n`)
         );
         controller.close();
       } catch (error: unknown) {

@@ -78,6 +78,9 @@ function warn(message) {
 function error(message) {
   console.error(chalk.red("\u2716"), message);
 }
+function dim(message) {
+  console.log(chalk.dim(message));
+}
 function startSpinner(message) {
   if (currentSpinner) {
     currentSpinner.stop();
@@ -218,8 +221,8 @@ over stored configuration.
 // src/commands/import.ts
 import { Command as Command2 } from "commander";
 import { glob } from "glob";
-import * as fs2 from "fs";
-import * as path2 from "path";
+import * as fs3 from "fs";
+import * as path3 from "path";
 
 // src/lib/api.ts
 import FormData from "form-data";
@@ -346,7 +349,7 @@ async function importTestResults(files, options, onProgress) {
   }
   const decoder = new TextDecoder();
   let buffer = "";
-  let testRunId;
+  let result;
   while (true) {
     const { done, value } = await reader.read();
     if (done) {
@@ -366,7 +369,10 @@ async function importTestResults(files, options, onProgress) {
             onProgress(data);
           }
           if (data.complete && data.testRunId !== void 0) {
-            testRunId = data.testRunId;
+            result = {
+              testRunId: data.testRunId,
+              attachmentMappings: data.attachmentMappings
+            };
           }
         } catch (e) {
           if (e instanceof SyntaxError) {
@@ -377,10 +383,10 @@ async function importTestResults(files, options, onProgress) {
       }
     }
   }
-  if (testRunId === void 0) {
+  if (!result) {
     throw new Error("Import completed but no test run ID was returned");
   }
-  return { testRunId };
+  return result;
 }
 async function lookup(projectId, type, name, createIfMissing = false) {
   const url = getUrl();
@@ -485,6 +491,276 @@ function parseTagsString(input) {
   }
   return result;
 }
+async function uploadAttachmentsBulk(attachments, onProgress) {
+  const url = getUrl();
+  const token = getToken();
+  if (!url) {
+    throw new Error("TestPlanIt URL is not configured");
+  }
+  if (!token) {
+    throw new Error("API token is not configured");
+  }
+  const existingAttachments = attachments.filter(
+    (a) => a.exists && a.resolvedPath
+  );
+  if (existingAttachments.length === 0) {
+    return {
+      summary: { total: 0, success: 0, failed: 0 },
+      results: []
+    };
+  }
+  const form = new FormData();
+  const mappings = [];
+  for (const attachment of existingAttachments) {
+    if (!attachment.resolvedPath) continue;
+    const uniqueFileName = `${attachment.junitTestResultId}_${attachment.name}`;
+    const fileBuffer = fs.readFileSync(attachment.resolvedPath);
+    form.append("files", fileBuffer, {
+      filename: uniqueFileName,
+      contentType: attachment.mimeType || "application/octet-stream"
+    });
+    mappings.push({
+      fileName: uniqueFileName,
+      junitTestResultId: attachment.junitTestResultId
+    });
+  }
+  form.append("mappings", JSON.stringify(mappings));
+  const apiUrl = new URL("/api/junit/attachments/bulk", url).toString();
+  let response;
+  try {
+    response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...form.getHeaders()
+      },
+      body: new Uint8Array(form.getBuffer())
+    });
+  } catch (error2) {
+    throw formatNetworkError(error2, apiUrl, "uploading attachments");
+  }
+  if (!response.ok) {
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    try {
+      const errorBody = await response.json();
+      if (errorBody.error) {
+        errorMessage = errorBody.error;
+        if (errorBody.code) {
+          errorMessage += ` (${errorBody.code})`;
+        }
+      }
+    } catch {
+    }
+    throw new Error(errorMessage);
+  }
+  const result = await response.json();
+  if (onProgress) {
+    onProgress(result.summary.success, result.summary.total);
+  }
+  return result;
+}
+async function uploadTestRunAttachments(testRunId, attachments) {
+  const url = getUrl();
+  const token = getToken();
+  if (!url) {
+    throw new Error("TestPlanIt URL is not configured");
+  }
+  if (!token) {
+    throw new Error("API token is not configured");
+  }
+  if (attachments.length === 0) {
+    return {
+      summary: { total: 0, success: 0, failed: 0 },
+      results: []
+    };
+  }
+  const form = new FormData();
+  form.append("testRunId", testRunId.toString());
+  for (const attachment of attachments) {
+    const fileBuffer = fs.readFileSync(attachment.filePath);
+    form.append("files", fileBuffer, {
+      filename: attachment.name,
+      contentType: attachment.mimeType
+    });
+  }
+  const apiUrl = new URL("/api/test-runs/attachments", url).toString();
+  let response;
+  try {
+    response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...form.getHeaders()
+      },
+      body: new Uint8Array(form.getBuffer())
+    });
+  } catch (error2) {
+    throw formatNetworkError(error2, apiUrl, "uploading test run attachments");
+  }
+  if (!response.ok) {
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    try {
+      const errorBody = await response.json();
+      if (errorBody.error) {
+        errorMessage = errorBody.error;
+        if (errorBody.code) {
+          errorMessage += ` (${errorBody.code})`;
+        }
+      }
+    } catch {
+    }
+    throw new Error(errorMessage);
+  }
+  return await response.json();
+}
+
+// src/lib/attachments.ts
+import * as fs2 from "fs";
+import * as path2 from "path";
+var MIME_TYPES = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".svg": "image/svg+xml",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".mov": "video/quicktime",
+  ".avi": "video/x-msvideo",
+  ".pdf": "application/pdf",
+  ".txt": "text/plain",
+  ".md": "text/markdown",
+  ".html": "text/html",
+  ".htm": "text/html",
+  ".json": "application/json",
+  ".xml": "application/xml",
+  ".log": "text/plain",
+  ".csv": "text/csv",
+  ".zip": "application/zip"
+};
+function getMimeType(filePath) {
+  const ext = path2.extname(filePath).toLowerCase();
+  return MIME_TYPES[ext] || "application/octet-stream";
+}
+function resolveAttachmentPath(attachmentPath, baseDir) {
+  if (!attachmentPath) {
+    return null;
+  }
+  if (path2.isAbsolute(attachmentPath)) {
+    return attachmentPath;
+  }
+  return path2.resolve(baseDir, attachmentPath);
+}
+function resolveAttachments(mappings, xmlFilePaths, attachmentsBaseDir) {
+  const resolved = [];
+  let baseDir;
+  if (attachmentsBaseDir) {
+    baseDir = path2.resolve(attachmentsBaseDir);
+  } else if (xmlFilePaths.length > 0) {
+    baseDir = path2.dirname(path2.resolve(xmlFilePaths[0]));
+  } else {
+    baseDir = process.cwd();
+  }
+  for (const mapping of mappings) {
+    for (const attachment of mapping.attachments) {
+      const resolvedPath = resolveAttachmentPath(attachment.path, baseDir);
+      const info2 = {
+        name: attachment.name,
+        originalPath: attachment.path,
+        resolvedPath,
+        exists: false,
+        junitTestResultId: mapping.junitTestResultId
+      };
+      if (resolvedPath) {
+        try {
+          const stats = fs2.statSync(resolvedPath);
+          if (stats.isFile()) {
+            info2.exists = true;
+            info2.size = stats.size;
+            info2.mimeType = getMimeType(resolvedPath);
+          }
+        } catch {
+          info2.exists = false;
+        }
+      }
+      resolved.push(info2);
+    }
+  }
+  return resolved;
+}
+function filterExistingAttachments(attachments) {
+  const existing = [];
+  const missing = [];
+  for (const attachment of attachments) {
+    if (attachment.exists && attachment.resolvedPath) {
+      existing.push(attachment);
+    } else {
+      missing.push(attachment);
+    }
+  }
+  return { existing, missing };
+}
+function getAttachmentSummary(attachments) {
+  let existing = 0;
+  let missing = 0;
+  let totalSize = 0;
+  for (const attachment of attachments) {
+    if (attachment.exists) {
+      existing++;
+      totalSize += attachment.size || 0;
+    } else {
+      missing++;
+    }
+  }
+  return {
+    total: attachments.length,
+    existing,
+    missing,
+    totalSize
+  };
+}
+function formatFileSize(bytes) {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  } else if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  } else if (bytes < 1024 * 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  } else {
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  }
+}
+function getMimeTypeForFile(filePath) {
+  const ext = path2.extname(filePath).toLowerCase();
+  return MIME_TYPES[ext] || "application/octet-stream";
+}
+function resolveTestRunAttachmentFiles(filePaths) {
+  const files = [];
+  const missing = [];
+  let totalSize = 0;
+  for (const filePath of filePaths) {
+    const absolutePath = path2.resolve(filePath);
+    try {
+      const stats = fs2.statSync(absolutePath);
+      if (stats.isFile()) {
+        const file = {
+          filePath: absolutePath,
+          name: path2.basename(absolutePath),
+          size: stats.size,
+          mimeType: getMimeTypeForFile(absolutePath)
+        };
+        files.push(file);
+        totalSize += stats.size;
+      } else {
+        missing.push(filePath);
+      }
+    } catch {
+      missing.push(filePath);
+    }
+  }
+  return { files, missing, totalSize };
+}
 
 // src/types.ts
 var TEST_RESULT_FORMATS = {
@@ -504,7 +780,7 @@ function createImportCommand() {
     "-F, --format <format>",
     `File format: ${VALID_FORMATS.join(", ")} (default: auto-detect)`,
     "auto"
-  ).option("-s, --state <value>", "Workflow state (ID or exact name)").option("-c, --config <value>", "Configuration (ID or exact name)").option("-m, --milestone <value>", "Milestone (ID or exact name)").option("-f, --folder <value>", "Parent folder for test cases (ID or exact name)").option("-t, --tags <values>", "Tags (comma-separated IDs or names, use quotes for names with commas)").option("-r, --test-run <value>", "Existing test run to append results (ID or exact name)").addHelpText("after", `
+  ).option("-s, --state <value>", "Workflow state (ID or exact name)").option("-c, --config <value>", "Configuration (ID or exact name)").option("-m, --milestone <value>", "Milestone (ID or exact name)").option("-f, --folder <value>", "Parent folder for test cases (ID or exact name)").option("-t, --tags <values>", "Tags (comma-separated IDs or names, use quotes for names with commas)").option("-r, --test-run <value>", "Existing test run to append results (ID or exact name)").option("-d, --attachments-dir <path>", "Base directory for resolving attachment paths (default: directory of test result file)").option("--no-attachments", "Skip uploading attachments").option("-a, --run-attachments <files...>", "Files to attach to the test run (e.g., test plans, reports)").addHelpText("after", `
 Examples:
 
   Minimal example (required options only):
@@ -537,6 +813,15 @@ Examples:
     $ TESTPLANIT_URL=https://testplanit.example.com \\
       TESTPLANIT_TOKEN=tpi_xxx \\
       testplanit import ./junit.xml -p 1 -n "CI Build $BUILD_NUMBER"
+
+  Import with attachments from a custom directory:
+    $ testplanit import ./results.xml -p "My Project" -n "Build" -d ./test-artifacts
+
+  Import without uploading attachments:
+    $ testplanit import ./results.xml -p "My Project" -n "Build" --no-attachments
+
+  Attach files to the test run (test plans, reports, etc.):
+    $ testplanit import ./results.xml -p "My Project" -n "Build" -a ./test-plan.pdf ./coverage-report.html
 `).action(async (filePatterns, options) => {
     const validationError = validateConfig();
     if (validationError) {
@@ -558,7 +843,7 @@ Examples:
     for (const pattern of filePatterns) {
       const matches = await glob(pattern, { nodir: true });
       if (matches.length === 0) {
-        if (fs2.existsSync(pattern)) {
+        if (fs3.existsSync(pattern)) {
           files.push(pattern);
         } else {
           warn(`No files matched pattern: ${pattern}`);
@@ -571,7 +856,7 @@ Examples:
     if (format !== "auto") {
       const expectedExtensions = TEST_RESULT_FORMATS[format].extensions;
       filteredFiles = files.filter((file) => {
-        const ext = path2.extname(file).toLowerCase();
+        const ext = path3.extname(file).toLowerCase();
         return expectedExtensions.includes(ext);
       });
       if (filteredFiles.length < files.length) {
@@ -585,7 +870,7 @@ Examples:
     }
     for (const file of filteredFiles) {
       try {
-        fs2.accessSync(file, fs2.constants.R_OK);
+        fs3.accessSync(file, fs3.constants.R_OK);
       } catch {
         error(`Cannot read file: ${file}`);
         process.exit(1);
@@ -640,7 +925,111 @@ Examples:
       const url = getUrl();
       console.log();
       success(`Test run created with ID: ${formatNumber(result.testRunId)}`);
+      if (options.attachments !== false && result.attachmentMappings && result.attachmentMappings.length > 0) {
+        console.log();
+        info("Processing attachments...");
+        const resolvedAttachments = resolveAttachments(
+          result.attachmentMappings,
+          filteredFiles,
+          options.attachmentsDir
+        );
+        const summary = getAttachmentSummary(resolvedAttachments);
+        if (summary.total > 0) {
+          info(`  Found: ${formatNumber(summary.existing)} attachment(s)`);
+          if (summary.missing > 0) {
+            warn(`  Missing: ${formatNumber(summary.missing)} attachment(s) (skipped)`);
+            const { missing } = filterExistingAttachments(resolvedAttachments);
+            for (const attachment of missing.slice(0, 5)) {
+              dim(`    - ${attachment.name}`);
+            }
+            if (missing.length > 5) {
+              dim(`    ... and ${missing.length - 5} more`);
+            }
+          }
+          if (summary.existing > 0) {
+            const attachSpinner = startSpinner(
+              `Uploading ${summary.existing} attachment(s) (${formatFileSize(summary.totalSize)})...`
+            );
+            try {
+              const { existing } = filterExistingAttachments(resolvedAttachments);
+              const uploadResult = await uploadAttachmentsBulk(existing);
+              if (uploadResult.summary.failed > 0) {
+                succeedSpinner(
+                  `Uploaded ${formatNumber(uploadResult.summary.success)} attachment(s), ${formatNumber(uploadResult.summary.failed)} failed`
+                );
+                for (const r of uploadResult.results.filter((r2) => !r2.success)) {
+                  warn(`  Failed: ${r.fileName} - ${r.error || "Unknown error"}`);
+                }
+              } else {
+                succeedSpinner(
+                  `Uploaded ${formatNumber(uploadResult.summary.success)} attachment(s)`
+                );
+              }
+            } catch (attachError) {
+              failSpinner("Attachment upload failed");
+              if (attachError instanceof Error) {
+                warn(`  ${attachError.message}`);
+              }
+            }
+          }
+        }
+      }
+      if (options.runAttachments && options.runAttachments.length > 0) {
+        console.log();
+        info("Processing test run attachments...");
+        const runAttachmentPaths = [];
+        for (const pattern of options.runAttachments) {
+          const matches = await glob(pattern, { nodir: true });
+          if (matches.length === 0) {
+            if (fs3.existsSync(pattern)) {
+              runAttachmentPaths.push(pattern);
+            } else {
+              warn(`  No files matched pattern: ${pattern}`);
+            }
+          } else {
+            runAttachmentPaths.push(...matches);
+          }
+        }
+        if (runAttachmentPaths.length > 0) {
+          const { files: runAttachmentFiles, missing, totalSize } = resolveTestRunAttachmentFiles(runAttachmentPaths);
+          if (missing.length > 0) {
+            warn(`  Missing: ${formatNumber(missing.length)} file(s) (skipped)`);
+            for (const missingPath of missing.slice(0, 5)) {
+              dim(`    - ${missingPath}`);
+            }
+            if (missing.length > 5) {
+              dim(`    ... and ${missing.length - 5} more`);
+            }
+          }
+          if (runAttachmentFiles.length > 0) {
+            const runAttachSpinner = startSpinner(
+              `Uploading ${runAttachmentFiles.length} test run attachment(s) (${formatFileSize(totalSize)})...`
+            );
+            try {
+              const uploadResult = await uploadTestRunAttachments(result.testRunId, runAttachmentFiles);
+              if (uploadResult.summary.failed > 0) {
+                succeedSpinner(
+                  `Uploaded ${formatNumber(uploadResult.summary.success)} test run attachment(s), ${formatNumber(uploadResult.summary.failed)} failed`
+                );
+                for (const r of uploadResult.results.filter((r2) => !r2.success)) {
+                  warn(`  Failed: ${r.fileName} - ${r.error || "Unknown error"}`);
+                }
+              } else {
+                succeedSpinner(
+                  `Uploaded ${formatNumber(uploadResult.summary.success)} test run attachment(s)`
+                );
+              }
+            } catch (runAttachError) {
+              failSpinner("Test run attachment upload failed");
+              if (runAttachError instanceof Error) {
+                warn(`  ${runAttachError.message}`);
+              }
+            }
+          }
+        }
+      }
       if (url) {
+        console.log();
         const testRunUrl = `${url}/projects/runs/${projectId}/${result.testRunId}`;
         info(`View at: ${formatUrl(testRunUrl)}`);
       }

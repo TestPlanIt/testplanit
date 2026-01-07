@@ -91,3 +91,91 @@ export interface LookupResponse {
   name: string;
   created?: boolean;
 }
+
+/**
+ * Attachment mapping from import API response
+ */
+export interface AttachmentMapping {
+  suiteName: string;
+  testName: string;
+  className: string;
+  junitTestResultId: number;
+  attachments: Array<{ name: string; path: string }>;
+}
+
+/**
+ * Extended SSE progress event with attachment mappings
+ */
+export interface ImportSSEProgressEvent extends SSEProgressEvent {
+  attachmentMappings?: AttachmentMapping[];
+}
+
+/**
+ * Resolved attachment info for upload
+ */
+export interface ResolvedAttachment {
+  /** Original filename from test results */
+  name: string;
+  /** Original path from test results (may be relative) */
+  originalPath: string;
+  /** Resolved absolute path on filesystem */
+  resolvedPath: string | null;
+  /** Whether the file exists on disk */
+  exists: boolean;
+  /** File size in bytes (if exists) */
+  size?: number;
+  /** MIME type (if determined) */
+  mimeType?: string;
+  /** JUnit test result ID to link the attachment to */
+  junitTestResultId: number;
+}
+
+/**
+ * Result of uploading a single attachment
+ */
+export interface AttachmentUploadResult {
+  fileName: string;
+  success: boolean;
+  error?: string;
+  attachmentId?: number;
+  url?: string;
+}
+
+/**
+ * Bulk attachment upload response
+ */
+export interface BulkAttachmentUploadResponse {
+  summary: {
+    total: number;
+    success: number;
+    failed: number;
+  };
+  results: AttachmentUploadResult[];
+}
+
+/**
+ * Import result with optional attachment mappings
+ */
+export interface ImportResult {
+  testRunId: number;
+  attachmentMappings?: AttachmentMapping[];
+}
+
+/**
+ * Test run attachment file info (for uploading artifacts to test runs)
+ */
+export interface TestRunAttachmentFile {
+  /** Absolute path to the file */
+  filePath: string;
+  /** File name */
+  name: string;
+  /** File size in bytes */
+  size: number;
+  /** MIME type */
+  mimeType: string;
+}
+
+/**
+ * Test run attachment upload response (same structure as bulk response)
+ */
+export type TestRunAttachmentUploadResponse = BulkAttachmentUploadResponse;

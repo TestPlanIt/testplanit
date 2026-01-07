@@ -47,6 +47,13 @@ export function debug(message: string): void {
 }
 
 /**
+ * Log a dimmed message (for secondary information)
+ */
+export function dim(message: string): void {
+  console.log(chalk.dim(message));
+}
+
+/**
  * Start a progress spinner
  */
 export function startSpinner(message: string): Ora {

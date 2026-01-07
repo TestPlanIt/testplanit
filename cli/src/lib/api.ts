@@ -15,6 +15,12 @@ import type {
   APIError,
   LookupType,
   LookupResponse,
+  ImportSSEProgressEvent,
+  ImportResult,
+  ResolvedAttachment,
+  BulkAttachmentUploadResponse,
+  TestRunAttachmentFile,
+  TestRunAttachmentUploadResponse,
 } from "../types.js";
 
 /**
@@ -83,13 +89,13 @@ function formatNetworkError(error: unknown, url: string, operation: string): Err
  * @param files - Array of file paths to import
  * @param options - Import options (projectId, name, format, etc.)
  * @param onProgress - Callback for progress updates
- * @returns Promise that resolves when import is complete
+ * @returns Promise that resolves with test run ID and optional attachment mappings
  */
 export async function importTestResults(
   files: string[],
   options: ImportOptions,
   onProgress?: (event: SSEProgressEvent) => void
-): Promise<{ testRunId: number }> {
+): Promise<ImportResult> {
   const url = getUrl();
   const token = getToken();
 
@@ -186,7 +192,7 @@ export async function importTestResults(
 
   const decoder = new TextDecoder();
   let buffer = "";
-  let testRunId: number | undefined;
+  let result: ImportResult | undefined;
 
   while (true) {
     const { done, value } = await reader.read();
@@ -204,7 +210,7 @@ export async function importTestResults(
     for (const line of lines) {
       if (line.startsWith("data: ")) {
         try {
-          const data = JSON.parse(line.substring(6)) as SSEProgressEvent;
+          const data = JSON.parse(line.substring(6)) as ImportSSEProgressEvent;
 
           if (data.error) {
             throw new Error(data.error);
@@ -215,7 +221,10 @@ export async function importTestResults(
           }
 
           if (data.complete && data.testRunId !== undefined) {
-            testRunId = data.testRunId;
+            result = {
+              testRunId: data.testRunId,
+              attachmentMappings: data.attachmentMappings,
+            };
           }
         } catch (e) {
           if (e instanceof SyntaxError) {
@@ -228,11 +237,11 @@ export async function importTestResults(
     }
   }
 
-  if (testRunId === undefined) {
+  if (!result) {
     throw new Error("Import completed but no test run ID was returned");
   }
 
-  return { testRunId };
+  return result;
 }
 
 /**
@@ -419,4 +428,184 @@ export function parseTagsString(input: string): string[] {
   }
 
   return result;
+}
+
+/**
+ * Upload multiple attachment files and link them to JUnit test results
+ *
+ * @param attachments - Array of resolved attachments with file paths and result IDs
+ * @param onProgress - Callback for upload progress (uploaded count, total count)
+ * @returns Promise with upload results for each file
+ */
+export async function uploadAttachmentsBulk(
+  attachments: ResolvedAttachment[],
+  onProgress?: (uploaded: number, total: number) => void
+): Promise<BulkAttachmentUploadResponse> {
+  const url = getUrl();
+  const token = getToken();
+
+  if (!url) {
+    throw new Error("TestPlanIt URL is not configured");
+  }
+
+  if (!token) {
+    throw new Error("API token is not configured");
+  }
+
+  // Filter to only existing attachments
+  const existingAttachments = attachments.filter(
+    (a) => a.exists && a.resolvedPath
+  );
+
+  if (existingAttachments.length === 0) {
+    return {
+      summary: { total: 0, success: 0, failed: 0 },
+      results: [],
+    };
+  }
+
+  // Build the form data
+  const form = new FormData();
+
+  // Add files with unique names to avoid collisions
+  // We use a mapping to track which file name maps to which result ID
+  const mappings: Array<{ fileName: string; junitTestResultId: number }> = [];
+
+  for (const attachment of existingAttachments) {
+    if (!attachment.resolvedPath) continue;
+
+    // Use a unique filename to avoid collisions
+    const uniqueFileName = `${attachment.junitTestResultId}_${attachment.name}`;
+    const fileBuffer = fs.readFileSync(attachment.resolvedPath);
+
+    form.append("files", fileBuffer, {
+      filename: uniqueFileName,
+      contentType: attachment.mimeType || "application/octet-stream",
+    });
+
+    mappings.push({
+      fileName: uniqueFileName,
+      junitTestResultId: attachment.junitTestResultId,
+    });
+  }
+
+  // Add mappings as JSON
+  form.append("mappings", JSON.stringify(mappings));
+
+  const apiUrl = new URL("/api/junit/attachments/bulk", url).toString();
+
+  let response: Response;
+  try {
+    response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...form.getHeaders(),
+      },
+      body: new Uint8Array(form.getBuffer()),
+    });
+  } catch (error) {
+    throw formatNetworkError(error, apiUrl, "uploading attachments");
+  }
+
+  if (!response.ok) {
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    try {
+      const errorBody = (await response.json()) as APIError;
+      if (errorBody.error) {
+        errorMessage = errorBody.error;
+        if (errorBody.code) {
+          errorMessage += ` (${errorBody.code})`;
+        }
+      }
+    } catch {
+      // Ignore JSON parse errors
+    }
+    throw new Error(errorMessage);
+  }
+
+  const result = (await response.json()) as BulkAttachmentUploadResponse;
+
+  // Notify progress completion
+  if (onProgress) {
+    onProgress(result.summary.success, result.summary.total);
+  }
+
+  return result;
+}
+
+/**
+ * Upload attachment files and link them to a test run
+ *
+ * @param testRunId - The test run ID to attach files to
+ * @param attachments - Array of attachment files with file paths
+ * @returns Promise with upload results for each file
+ */
+export async function uploadTestRunAttachments(
+  testRunId: number,
+  attachments: TestRunAttachmentFile[]
+): Promise<TestRunAttachmentUploadResponse> {
+  const url = getUrl();
+  const token = getToken();
+
+  if (!url) {
+    throw new Error("TestPlanIt URL is not configured");
+  }
+
+  if (!token) {
+    throw new Error("API token is not configured");
+  }
+
+  if (attachments.length === 0) {
+    return {
+      summary: { total: 0, success: 0, failed: 0 },
+      results: [],
+    };
+  }
+
+  // Build the form data
+  const form = new FormData();
+  form.append("testRunId", testRunId.toString());
+
+  for (const attachment of attachments) {
+    const fileBuffer = fs.readFileSync(attachment.filePath);
+    form.append("files", fileBuffer, {
+      filename: attachment.name,
+      contentType: attachment.mimeType,
+    });
+  }
+
+  const apiUrl = new URL("/api/test-runs/attachments", url).toString();
+
+  let response: Response;
+  try {
+    response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...form.getHeaders(),
+      },
+      body: new Uint8Array(form.getBuffer()),
+    });
+  } catch (error) {
+    throw formatNetworkError(error, apiUrl, "uploading test run attachments");
+  }
+
+  if (!response.ok) {
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    try {
+      const errorBody = (await response.json()) as APIError;
+      if (errorBody.error) {
+        errorMessage = errorBody.error;
+        if (errorBody.code) {
+          errorMessage += ` (${errorBody.code})`;
+        }
+      }
+    } catch {
+      // Ignore JSON parse errors
+    }
+    throw new Error(errorMessage);
+  }
+
+  return (await response.json()) as TestRunAttachmentUploadResponse;
 }

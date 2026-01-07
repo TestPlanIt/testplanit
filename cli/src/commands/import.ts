@@ -11,6 +11,13 @@ import * as path from "path";
 import * as config from "../lib/config.js";
 import * as api from "../lib/api.js";
 import * as logger from "../lib/logger.js";
+import {
+  resolveAttachments,
+  filterExistingAttachments,
+  getAttachmentSummary,
+  formatFileSize,
+  resolveTestRunAttachmentFiles,
+} from "../lib/attachments.js";
 import { TEST_RESULT_FORMATS, type TestResultFormat, type SSEProgressEvent, type ImportOptions } from "../types.js";
 
 const VALID_FORMATS = ["auto", ...Object.keys(TEST_RESULT_FORMATS)] as const;
@@ -32,6 +39,9 @@ export function createImportCommand(): Command {
     .option("-f, --folder <value>", "Parent folder for test cases (ID or exact name)")
     .option("-t, --tags <values>", "Tags (comma-separated IDs or names, use quotes for names with commas)")
     .option("-r, --test-run <value>", "Existing test run to append results (ID or exact name)")
+    .option("-d, --attachments-dir <path>", "Base directory for resolving attachment paths (default: directory of test result file)")
+    .option("--no-attachments", "Skip uploading attachments")
+    .option("-a, --run-attachments <files...>", "Files to attach to the test run (e.g., test plans, reports)")
     .addHelpText("after", `
 Examples:
 
@@ -65,6 +75,15 @@ Examples:
     $ TESTPLANIT_URL=https://testplanit.example.com \\
       TESTPLANIT_TOKEN=tpi_xxx \\
       testplanit import ./junit.xml -p 1 -n "CI Build $BUILD_NUMBER"
+
+  Import with attachments from a custom directory:
+    $ testplanit import ./results.xml -p "My Project" -n "Build" -d ./test-artifacts
+
+  Import without uploading attachments:
+    $ testplanit import ./results.xml -p "My Project" -n "Build" --no-attachments
+
+  Attach files to the test run (test plans, reports, etc.):
+    $ testplanit import ./results.xml -p "My Project" -n "Build" -a ./test-plan.pdf ./coverage-report.html
 `)
     .action(async (filePatterns: string[], options) => {
       // Validate configuration
@@ -208,7 +227,142 @@ Examples:
         console.log();
         logger.success(`Test run created with ID: ${logger.formatNumber(result.testRunId)}`);
 
+        // Handle attachment uploads if present and not disabled
+        if (
+          options.attachments !== false &&
+          result.attachmentMappings &&
+          result.attachmentMappings.length > 0
+        ) {
+          console.log();
+          logger.info("Processing attachments...");
+
+          // Resolve attachment paths
+          const resolvedAttachments = resolveAttachments(
+            result.attachmentMappings,
+            filteredFiles,
+            options.attachmentsDir
+          );
+
+          const summary = getAttachmentSummary(resolvedAttachments);
+
+          if (summary.total > 0) {
+            logger.info(`  Found: ${logger.formatNumber(summary.existing)} attachment(s)`);
+
+            // Warn about missing files
+            if (summary.missing > 0) {
+              logger.warn(`  Missing: ${logger.formatNumber(summary.missing)} attachment(s) (skipped)`);
+              const { missing } = filterExistingAttachments(resolvedAttachments);
+              for (const attachment of missing.slice(0, 5)) {
+                logger.dim(`    - ${attachment.name}`);
+              }
+              if (missing.length > 5) {
+                logger.dim(`    ... and ${missing.length - 5} more`);
+              }
+            }
+
+            // Upload existing attachments
+            if (summary.existing > 0) {
+              const attachSpinner = logger.startSpinner(
+                `Uploading ${summary.existing} attachment(s) (${formatFileSize(summary.totalSize)})...`
+              );
+
+              try {
+                const { existing } = filterExistingAttachments(resolvedAttachments);
+                const uploadResult = await api.uploadAttachmentsBulk(existing);
+
+                if (uploadResult.summary.failed > 0) {
+                  logger.succeedSpinner(
+                    `Uploaded ${logger.formatNumber(uploadResult.summary.success)} attachment(s), ${logger.formatNumber(uploadResult.summary.failed)} failed`
+                  );
+                  // Show failed uploads
+                  for (const r of uploadResult.results.filter((r) => !r.success)) {
+                    logger.warn(`  Failed: ${r.fileName} - ${r.error || "Unknown error"}`);
+                  }
+                } else {
+                  logger.succeedSpinner(
+                    `Uploaded ${logger.formatNumber(uploadResult.summary.success)} attachment(s)`
+                  );
+                }
+              } catch (attachError) {
+                logger.failSpinner("Attachment upload failed");
+                if (attachError instanceof Error) {
+                  logger.warn(`  ${attachError.message}`);
+                }
+                // Don't exit - import was successful, just attachments failed
+              }
+            }
+          }
+        }
+
+        // Handle test run attachments if provided
+        if (options.runAttachments && options.runAttachments.length > 0) {
+          console.log();
+          logger.info("Processing test run attachments...");
+
+          // Expand glob patterns for run attachments
+          const runAttachmentPaths: string[] = [];
+          for (const pattern of options.runAttachments as string[]) {
+            const matches = await glob(pattern, { nodir: true });
+            if (matches.length === 0) {
+              // Check if it's a literal file path
+              if (fs.existsSync(pattern)) {
+                runAttachmentPaths.push(pattern);
+              } else {
+                logger.warn(`  No files matched pattern: ${pattern}`);
+              }
+            } else {
+              runAttachmentPaths.push(...matches);
+            }
+          }
+
+          if (runAttachmentPaths.length > 0) {
+            const { files: runAttachmentFiles, missing, totalSize } = resolveTestRunAttachmentFiles(runAttachmentPaths);
+
+            if (missing.length > 0) {
+              logger.warn(`  Missing: ${logger.formatNumber(missing.length)} file(s) (skipped)`);
+              for (const missingPath of missing.slice(0, 5)) {
+                logger.dim(`    - ${missingPath}`);
+              }
+              if (missing.length > 5) {
+                logger.dim(`    ... and ${missing.length - 5} more`);
+              }
+            }
+
+            if (runAttachmentFiles.length > 0) {
+              const runAttachSpinner = logger.startSpinner(
+                `Uploading ${runAttachmentFiles.length} test run attachment(s) (${formatFileSize(totalSize)})...`
+              );
+
+              try {
+                const uploadResult = await api.uploadTestRunAttachments(result.testRunId, runAttachmentFiles);
+
+                if (uploadResult.summary.failed > 0) {
+                  logger.succeedSpinner(
+                    `Uploaded ${logger.formatNumber(uploadResult.summary.success)} test run attachment(s), ${logger.formatNumber(uploadResult.summary.failed)} failed`
+                  );
+                  // Show failed uploads
+                  for (const r of uploadResult.results.filter((r) => !r.success)) {
+                    logger.warn(`  Failed: ${r.fileName} - ${r.error || "Unknown error"}`);
+                  }
+                } else {
+                  logger.succeedSpinner(
+                    `Uploaded ${logger.formatNumber(uploadResult.summary.success)} test run attachment(s)`
+                  );
+                }
+              } catch (runAttachError) {
+                logger.failSpinner("Test run attachment upload failed");
+                if (runAttachError instanceof Error) {
+                  logger.warn(`  ${runAttachError.message}`);
+                }
+                // Don't exit - import was successful, just attachments failed
+              }
+            }
+          }
+        }
+
+        // Show final URL
         if (url) {
+          console.log();
           const testRunUrl = `${url}/projects/runs/${projectId}/${result.testRunId}`;
           logger.info(`View at: ${logger.formatUrl(testRunUrl)}`);
         }
