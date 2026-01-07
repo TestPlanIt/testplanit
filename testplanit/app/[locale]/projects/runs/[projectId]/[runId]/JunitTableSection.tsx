@@ -438,7 +438,7 @@ function JunitTableSection({
                               disabled={isSubmitting}
                             >
                               <CircleSlash2 className="h-4 w-4" />
-                              {t("common.actions.cancel")}
+                              {t("common.cancel")}
                             </Button>
                           </div>
                           {effectiveCanDelete && (
