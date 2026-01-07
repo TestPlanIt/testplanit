@@ -56,6 +56,7 @@ import {
   FormControl,
   FormLabel,
 } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
 import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
 import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsDonut";
 import { useFindManyJUnitTestResult } from "~/lib/hooks";
@@ -343,9 +344,9 @@ function JunitTableSection({
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <textarea
+                          <Textarea
                             {...field}
-                            className="text-xl md:text-2xl mr-4 w-full"
+                            className="text-xl md:text-2xl mr-4"
                             readOnly={!canAddEditRun}
                           />
                         </FormControl>
@@ -438,7 +439,7 @@ function JunitTableSection({
                               disabled={isSubmitting}
                             >
                               <CircleSlash2 className="h-4 w-4" />
-                              {t("common.actions.cancel")}
+                              {t("common.cancel")}
                             </Button>
                           </div>
                           {effectiveCanDelete && (

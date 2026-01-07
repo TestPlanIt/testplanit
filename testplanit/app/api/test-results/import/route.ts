@@ -33,6 +33,9 @@ import {
   extractClassName,
   detectFormatFromFiles,
   TEST_RESULT_FORMATS,
+  parseExtendedTestCaseData,
+  getExtendedDataKey,
+  type ExtendedTestCaseDataMap,
 } from "~/lib/services/testResultsParser";
 
 // Helper function to find matching status
@@ -269,7 +272,12 @@ export async function POST(request: NextRequest) {
 
         sendProgress(10, progressMessages.parsing(validFormat));
 
-        // Parse the files using the new parser
+        // Read file contents for extended data parsing (system-out/err, assertions)
+        const fileContentsForExtended = await Promise.all(
+          files.map(async (file) => file.text())
+        );
+
+        // Parse the files using the main parser
         let parsedResults;
         try {
           parsedResults = await parseTestResults(files, validFormat);
@@ -288,6 +296,18 @@ export async function POST(request: NextRequest) {
         }
 
         const { result, errors } = parsedResults;
+
+        // Parse extended data (system-out, system-err, assertions) that the main parser doesn't expose
+        let extendedDataMap: ExtendedTestCaseDataMap = new Map();
+        try {
+          extendedDataMap = parseExtendedTestCaseData(
+            fileContentsForExtended,
+            validFormat
+          );
+        } catch {
+          // Non-fatal - extended data is supplementary
+          console.warn("Failed to parse extended test case data");
+        }
 
         if (errors.length > 0) {
           sendProgress(12, progressMessages.parseWarnings(errors.length));
@@ -375,6 +395,15 @@ export async function POST(request: NextRequest) {
         const totalTestCases = countTotalTestCases(result);
         let processedTestCases = 0;
         let caseOrder = 1;
+
+        // Track attachment mappings for CLI upload
+        const attachmentMappings: Array<{
+          suiteName: string;
+          testName: string;
+          className: string;
+          junitTestResultId: number;
+          attachments: Array<{ name: string; path: string }>;
+        }> = [];
 
         sendProgress(
           25,
@@ -532,6 +561,14 @@ export async function POST(request: NextRequest) {
               const className = extractClassName(testCase, suite);
               const normalizedStatus = normalizeStatus(testCase.status);
 
+              // Look up extended data (system-out, system-err, assertions) for this test case
+              const extendedDataKey = getExtendedDataKey(
+                suite.name || "Test Suite",
+                testCase.name,
+                className
+              );
+              const extendedData = extendedDataMap.get(extendedDataKey);
+
               // Upsert RepositoryCase
               // className is used as part of the composite unique key to identify test cases
               // For JUnit: fully qualified class name, for Cucumber: feature name, etc.
@@ -629,11 +666,16 @@ export async function POST(request: NextRequest) {
                 }
 
                 // Create the test result (using JUnitTestResult for all formats)
-                await prisma.jUnitTestResult.create({
+                const junitTestResult = await prisma.jUnitTestResult.create({
                   data: {
                     type: resultType,
                     message: testCase.failure || undefined,
                     content: testCase.stack_trace || undefined,
+                    // Store raw system-out and system-err from extended data
+                    systemOut: extendedData?.systemOut || undefined,
+                    systemErr: extendedData?.systemErr || undefined,
+                    // Store assertions count from extended data
+                    assertions: extendedData?.assertions,
                     repositoryCase: { connect: { id: repositoryCase.id } },
                     createdBy: { connect: { id: userId } },
                     status: matchingStatus
@@ -644,6 +686,20 @@ export async function POST(request: NextRequest) {
                     time: testCaseTime,
                   },
                 });
+
+                // Track attachments for CLI upload (if any)
+                if (testCase.attachments && testCase.attachments.length > 0) {
+                  attachmentMappings.push({
+                    suiteName: suite.name || "Test Suite",
+                    testName: testCase.name,
+                    className: className,
+                    junitTestResultId: junitTestResult.id,
+                    attachments: testCase.attachments.map((att) => ({
+                      name: att.name,
+                      path: att.path,
+                    })),
+                  });
+                }
 
                 // Update test run case status
                 if (matchingStatus) {
@@ -695,20 +751,10 @@ export async function POST(request: NextRequest) {
                   }
                 }
 
-                // Process attachments if available
-                if (testCase.attachments && testCase.attachments.length > 0) {
-                  for (const attachment of testCase.attachments) {
-                    await prisma.jUnitAttachment.create({
-                      data: {
-                        name: attachment.name,
-                        value: attachment.path,
-                        type: "FILE",
-                        repositoryCase: { connect: { id: repositoryCase.id } },
-                        createdBy: { connect: { id: userId } },
-                      },
-                    });
-                  }
-                }
+                // Note: Attachments from JUnit XML are tracked in attachmentMappings
+                // and uploaded via CLI to the Attachments table (linked to junitTestResultId).
+                // We no longer create JUnitAttachment records here to avoid showing
+                // text paths on the test case page - actual files appear on the test result.
               } catch (error) {
                 console.error(
                   "Error processing test case:",
@@ -744,10 +790,21 @@ export async function POST(request: NextRequest) {
         }
 
         sendProgress(100, progressMessages.completed);
+
+        // Include attachment mappings in response for CLI to upload files
+        const responseData: {
+          complete: true;
+          testRunId: number;
+          attachmentMappings?: typeof attachmentMappings;
+        } = { complete: true, testRunId };
+
+        // Only include mappings if there are attachments to upload
+        if (attachmentMappings.length > 0) {
+          responseData.attachmentMappings = attachmentMappings;
+        }
+
         controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({ complete: true, testRunId })}\n\n`
-          )
+          encoder.encode(`data: ${JSON.stringify(responseData)}\n\n`)
         );
         controller.close();
       } catch (error: unknown) {

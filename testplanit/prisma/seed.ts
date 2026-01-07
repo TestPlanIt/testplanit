@@ -1322,6 +1322,7 @@ async function seedWorkflows() {
       isEnabled: true,
       isDefault: false,
       scope: "CASES",
+      workflowType: "IN_PROGRESS",
     },
     {
       order: 4,
@@ -1398,6 +1399,7 @@ async function seedWorkflows() {
             isEnabled: workflow.isEnabled,
             isDefault: workflow.isDefault,
             scope: workflow.scope as WorkflowScope,
+            workflowType: workflow.workflowType as "NOT_STARTED" | "IN_PROGRESS" | "DONE",
           },
         });
       }

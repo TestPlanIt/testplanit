@@ -8,7 +8,10 @@ import {
   resolveTags,
   lookup,
   importTestResults,
+  uploadAttachmentsBulk,
+  uploadTestRunAttachments,
 } from "./api.js";
+import type { ResolvedAttachment, TestRunAttachmentFile } from "../types.js";
 
 // Mock the config module
 vi.mock("./config.js", () => ({
@@ -18,7 +21,7 @@ vi.mock("./config.js", () => ({
 
 import { getUrl, getToken } from "./config.js";
 
-// Mock fs module for importTestResults - must return a proper stream-like object
+// Mock fs module for importTestResults and attachment uploads
 vi.mock("fs", () => {
   const { EventEmitter } = require("events");
   return {
@@ -32,6 +35,7 @@ vi.mock("fs", () => {
       setTimeout(() => stream.emit("end"), 0);
       return stream;
     }),
+    readFileSync: vi.fn(() => Buffer.from("mock file content")),
   };
 });
 
@@ -492,5 +496,307 @@ describe("API Module", () => {
     // Note: Tests for HTTP responses, SSE stream parsing, and form data
     // require actual file streams with buffering (form-data library).
     // These would be better suited as integration tests.
+  });
+
+  describe("uploadAttachmentsBulk", () => {
+    const mockFetch = vi.fn();
+
+    beforeEach(() => {
+      vi.stubGlobal("fetch", mockFetch);
+      (getUrl as any).mockReturnValue("https://testplanit.example.com");
+      (getToken as any).mockReturnValue("tpi_test_token");
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("throws error when URL is not configured", async () => {
+      (getUrl as any).mockReturnValue(undefined);
+
+      const attachments: ResolvedAttachment[] = [
+        {
+          name: "test.png",
+          originalPath: "test.png",
+          resolvedPath: "/path/test.png",
+          exists: true,
+          size: 1000,
+          mimeType: "image/png",
+          junitTestResultId: 1,
+        },
+      ];
+
+      await expect(uploadAttachmentsBulk(attachments)).rejects.toThrow(
+        "TestPlanIt URL is not configured"
+      );
+    });
+
+    it("throws error when token is not configured", async () => {
+      (getToken as any).mockReturnValue(undefined);
+
+      const attachments: ResolvedAttachment[] = [
+        {
+          name: "test.png",
+          originalPath: "test.png",
+          resolvedPath: "/path/test.png",
+          exists: true,
+          size: 1000,
+          mimeType: "image/png",
+          junitTestResultId: 1,
+        },
+      ];
+
+      await expect(uploadAttachmentsBulk(attachments)).rejects.toThrow(
+        "API token is not configured"
+      );
+    });
+
+    it("returns empty result for empty attachments", async () => {
+      const result = await uploadAttachmentsBulk([]);
+
+      expect(result).toEqual({
+        summary: { total: 0, success: 0, failed: 0 },
+        results: [],
+      });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("filters out non-existing attachments", async () => {
+      const attachments: ResolvedAttachment[] = [
+        {
+          name: "missing.png",
+          originalPath: "missing.png",
+          resolvedPath: "/path/missing.png",
+          exists: false,
+          junitTestResultId: 1,
+        },
+      ];
+
+      const result = await uploadAttachmentsBulk(attachments);
+
+      expect(result).toEqual({
+        summary: { total: 0, success: 0, failed: 0 },
+        results: [],
+      });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("makes correct API request for existing attachments", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            summary: { total: 1, success: 1, failed: 0 },
+            results: [{ fileName: "1_test.png", success: true, attachmentId: 123 }],
+          }),
+      });
+
+      const attachments: ResolvedAttachment[] = [
+        {
+          name: "test.png",
+          originalPath: "test.png",
+          resolvedPath: "/path/test.png",
+          exists: true,
+          size: 1000,
+          mimeType: "image/png",
+          junitTestResultId: 1,
+        },
+      ];
+
+      const result = await uploadAttachmentsBulk(attachments);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://testplanit.example.com/api/junit/attachments/bulk",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            Authorization: "Bearer tpi_test_token",
+          }),
+        })
+      );
+      expect(result.summary.success).toBe(1);
+    });
+
+    it("throws error on HTTP error response", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        json: () => Promise.resolve({ error: "Upload failed" }),
+      });
+
+      const attachments: ResolvedAttachment[] = [
+        {
+          name: "test.png",
+          originalPath: "test.png",
+          resolvedPath: "/path/test.png",
+          exists: true,
+          size: 1000,
+          mimeType: "image/png",
+          junitTestResultId: 1,
+        },
+      ];
+
+      await expect(uploadAttachmentsBulk(attachments)).rejects.toThrow(
+        "Upload failed"
+      );
+    });
+  });
+
+  describe("uploadTestRunAttachments", () => {
+    const mockFetch = vi.fn();
+
+    beforeEach(() => {
+      vi.stubGlobal("fetch", mockFetch);
+      (getUrl as any).mockReturnValue("https://testplanit.example.com");
+      (getToken as any).mockReturnValue("tpi_test_token");
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("throws error when URL is not configured", async () => {
+      (getUrl as any).mockReturnValue(undefined);
+
+      const attachments: TestRunAttachmentFile[] = [
+        {
+          filePath: "/path/test-plan.pdf",
+          name: "test-plan.pdf",
+          size: 1000,
+          mimeType: "application/pdf",
+        },
+      ];
+
+      await expect(uploadTestRunAttachments(123, attachments)).rejects.toThrow(
+        "TestPlanIt URL is not configured"
+      );
+    });
+
+    it("throws error when token is not configured", async () => {
+      (getToken as any).mockReturnValue(undefined);
+
+      const attachments: TestRunAttachmentFile[] = [
+        {
+          filePath: "/path/test-plan.pdf",
+          name: "test-plan.pdf",
+          size: 1000,
+          mimeType: "application/pdf",
+        },
+      ];
+
+      await expect(uploadTestRunAttachments(123, attachments)).rejects.toThrow(
+        "API token is not configured"
+      );
+    });
+
+    it("returns empty result for empty attachments", async () => {
+      const result = await uploadTestRunAttachments(123, []);
+
+      expect(result).toEqual({
+        summary: { total: 0, success: 0, failed: 0 },
+        results: [],
+      });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("makes correct API request", async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            summary: { total: 1, success: 1, failed: 0 },
+            results: [{ fileName: "test-plan.pdf", success: true, attachmentId: 456 }],
+          }),
+      });
+
+      const attachments: TestRunAttachmentFile[] = [
+        {
+          filePath: "/path/test-plan.pdf",
+          name: "test-plan.pdf",
+          size: 1000,
+          mimeType: "application/pdf",
+        },
+      ];
+
+      const result = await uploadTestRunAttachments(123, attachments);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://testplanit.example.com/api/test-runs/attachments",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            Authorization: "Bearer tpi_test_token",
+          }),
+        })
+      );
+      expect(result.summary.success).toBe(1);
+    });
+
+    it("throws error on HTTP error response", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        json: () => Promise.resolve({ error: "Access denied" }),
+      });
+
+      const attachments: TestRunAttachmentFile[] = [
+        {
+          filePath: "/path/test-plan.pdf",
+          name: "test-plan.pdf",
+          size: 1000,
+          mimeType: "application/pdf",
+        },
+      ];
+
+      await expect(uploadTestRunAttachments(123, attachments)).rejects.toThrow(
+        "Access denied"
+      );
+    });
+
+    it("handles HTTP error with error code", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 400,
+        statusText: "Bad Request",
+        json: () => Promise.resolve({ error: "Invalid test run", code: "INVALID_TEST_RUN" }),
+      });
+
+      const attachments: TestRunAttachmentFile[] = [
+        {
+          filePath: "/path/test-plan.pdf",
+          name: "test-plan.pdf",
+          size: 1000,
+          mimeType: "application/pdf",
+        },
+      ];
+
+      await expect(uploadTestRunAttachments(123, attachments)).rejects.toThrow(
+        "Invalid test run (INVALID_TEST_RUN)"
+      );
+    });
+
+    it("handles HTTP error with non-JSON response", async () => {
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 502,
+        statusText: "Bad Gateway",
+        json: () => Promise.reject(new Error("Invalid JSON")),
+      });
+
+      const attachments: TestRunAttachmentFile[] = [
+        {
+          filePath: "/path/test-plan.pdf",
+          name: "test-plan.pdf",
+          size: 1000,
+          mimeType: "application/pdf",
+        },
+      ];
+
+      await expect(uploadTestRunAttachments(123, attachments)).rejects.toThrow(
+        "HTTP 502: Bad Gateway"
+      );
+    });
   });
 });

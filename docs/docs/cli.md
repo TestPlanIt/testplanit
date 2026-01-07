@@ -12,7 +12,7 @@ TestPlanIt provides a command-line interface (CLI) for importing test results an
 The CLI supports importing test results from 7 different formats:
 
 | Format | Description | File Extensions |
-|--------|-------------|-----------------|
+| -------- | ------------- | ----------------- |
 | `junit` | JUnit XML | `.xml` |
 | `testng` | TestNG XML | `.xml` |
 | `xunit` | xUnit XML | `.xml` |
@@ -30,7 +30,7 @@ The CLI can auto-detect the format based on file content, or you can specify it 
 Download the appropriate binary for your platform from the [CLI releases](https://github.com/testplanit/testplanit/releases?q=cli&expanded=true):
 
 | Platform | Binary |
-|----------|--------|
+| ---------- | -------- |
 | Linux (x64) | `testplanit-linux-x64` |
 | macOS (Apple Silicon) | `testplanit-macos-arm64` |
 | macOS (Intel) | `testplanit-macos-x64` |
@@ -92,7 +92,7 @@ testplanit config path
 Environment variables take precedence over stored configuration, making them ideal for CI/CD:
 
 | Variable | Description |
-|----------|-------------|
+| ---------- | ------------- |
 | `TESTPLANIT_URL` | TestPlanIt instance URL |
 | `TESTPLANIT_TOKEN` | API token |
 
@@ -125,7 +125,7 @@ testplanit import <files...> --project <id|name> --name <name> [options]
 #### Required Parameters
 
 | Parameter | Description |
-|-----------|-------------|
+| ----------- | ------------- |
 | `<files...>` | Test result files or glob patterns (e.g., `./results/*.xml`) |
 | `-p, --project <value>` | Target project (ID or exact name) |
 | `-n, --name <name>` | Name for the test run (required unless appending to existing run with `-r`) |
@@ -133,7 +133,7 @@ testplanit import <files...> --project <id|name> --name <name> [options]
 #### Optional Parameters
 
 | Parameter | Description |
-|-----------|-------------|
+| ----------- | ------------- |
 | `-F, --format <format>` | File format: `auto`, `junit`, `testng`, `xunit`, `nunit`, `mstest`, `mocha`, `cucumber` (default: auto-detect) |
 | `-s, --state <value>` | Workflow state (ID or exact name) |
 | `-c, --config <value>` | Configuration (ID or exact name) |
@@ -141,10 +141,35 @@ testplanit import <files...> --project <id|name> --name <name> [options]
 | `-f, --folder <value>` | Parent folder for test cases (ID or exact name) |
 | `-t, --tags <values>` | Tags (comma-separated IDs or names; use quotes for names with commas) |
 | `-r, --test-run <value>` | Existing test run to append results (ID or exact name) |
+| `-d, --attachments-dir <path>` | Base directory for resolving attachment paths (default: directory of test result file) |
+| `--no-attachments` | Skip uploading attachments from test results |
+| `-a, --run-attachments <files...>` | Files to attach to the test run (e.g., test plans, reports) |
 
 :::note
 For project, state, config, milestone, folder, and test run options, the CLI looks up entities by exact name match. If no match is found, an error is returned. For tags, if a tag name doesn't exist, it will be created automatically.
 :::
+
+#### Attachments
+
+The CLI supports two types of attachments:
+
+1. **Test Result Attachments**: Screenshots, videos, and other files referenced in your test results (JUnit, NUnit, MSTest, Cucumber). These are automatically detected and uploaded, then linked to the specific test case results.
+
+2. **Test Run Attachments**: Files you want to attach to the test run itself, such as test plans, requirements documents, or coverage reports. Use the `-a` option to specify these files.
+
+| Format | Attachment Support | Path Format |
+| -------- | ------------------- | ------------- |
+| JUnit | `[[ATTACHMENT\|path]]` in system-out | Relative to XML file |
+| NUnit | `<attachment><filePath>` elements | Absolute paths |
+| MSTest | `ResultFiles/ResultFile` elements | Relative to test run directory |
+| Cucumber | `embeddings` array | Embedded base64 or file paths |
+| TestNG | Not supported | - |
+| xUnit | Not supported | - |
+| Mocha | Not supported | - |
+
+Use `-d, --attachments-dir` to specify a custom base directory for resolving relative attachment paths. By default, paths are resolved relative to the test result file's directory.
+
+Use `--no-attachments` to skip uploading test result attachments entirely.
 
 #### Examples
 
@@ -197,6 +222,21 @@ testplanit import results.xml -p 1 -n "Build 123" \
 testplanit import more-results.xml \
   -p "My Project" \
   --test-run "Build 123"
+
+# Import with attachments from a custom directory
+testplanit import results.xml -p 1 -n "Build" -d ./test-artifacts
+
+# Import without uploading attachments
+testplanit import results.xml -p 1 -n "Build" --no-attachments
+
+# Attach files to the test run (test plans, reports, etc.)
+testplanit import results.xml -p 1 -n "Build" \
+  -a ./test-plan.pdf ./coverage-report.html
+
+# Combine test result attachments with test run attachments
+testplanit import results.xml -p 1 -n "Build" \
+  -d ./screenshots \
+  -a ./test-plan.pdf ./requirements.docx
 ```
 
 ## CI/CD Integration
