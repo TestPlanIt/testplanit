@@ -33,6 +33,9 @@ import {
   extractClassName,
   detectFormatFromFiles,
   TEST_RESULT_FORMATS,
+  parseExtendedTestCaseData,
+  getExtendedDataKey,
+  type ExtendedTestCaseDataMap,
 } from "~/lib/services/testResultsParser";
 
 // Helper function to find matching status
@@ -269,7 +272,12 @@ export async function POST(request: NextRequest) {
 
         sendProgress(10, progressMessages.parsing(validFormat));
 
-        // Parse the files using the new parser
+        // Read file contents for extended data parsing (system-out/err, assertions)
+        const fileContentsForExtended = await Promise.all(
+          files.map(async (file) => file.text())
+        );
+
+        // Parse the files using the main parser
         let parsedResults;
         try {
           parsedResults = await parseTestResults(files, validFormat);
@@ -288,6 +296,18 @@ export async function POST(request: NextRequest) {
         }
 
         const { result, errors } = parsedResults;
+
+        // Parse extended data (system-out, system-err, assertions) that the main parser doesn't expose
+        let extendedDataMap: ExtendedTestCaseDataMap = new Map();
+        try {
+          extendedDataMap = parseExtendedTestCaseData(
+            fileContentsForExtended,
+            validFormat
+          );
+        } catch {
+          // Non-fatal - extended data is supplementary
+          console.warn("Failed to parse extended test case data");
+        }
 
         if (errors.length > 0) {
           sendProgress(12, progressMessages.parseWarnings(errors.length));
@@ -541,6 +561,14 @@ export async function POST(request: NextRequest) {
               const className = extractClassName(testCase, suite);
               const normalizedStatus = normalizeStatus(testCase.status);
 
+              // Look up extended data (system-out, system-err, assertions) for this test case
+              const extendedDataKey = getExtendedDataKey(
+                suite.name || "Test Suite",
+                testCase.name,
+                className
+              );
+              const extendedData = extendedDataMap.get(extendedDataKey);
+
               // Upsert RepositoryCase
               // className is used as part of the composite unique key to identify test cases
               // For JUnit: fully qualified class name, for Cucumber: feature name, etc.
@@ -643,6 +671,11 @@ export async function POST(request: NextRequest) {
                     type: resultType,
                     message: testCase.failure || undefined,
                     content: testCase.stack_trace || undefined,
+                    // Store raw system-out and system-err from extended data
+                    systemOut: extendedData?.systemOut || undefined,
+                    systemErr: extendedData?.systemErr || undefined,
+                    // Store assertions count from extended data
+                    assertions: extendedData?.assertions,
                     repositoryCase: { connect: { id: repositoryCase.id } },
                     createdBy: { connect: { id: userId } },
                     status: matchingStatus

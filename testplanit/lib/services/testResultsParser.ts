@@ -466,3 +466,220 @@ export function countTotalTestCases(result: ITestResult): number {
   }
   return total;
 }
+
+/**
+ * Extended test case data with raw system-out, system-err, and assertions
+ * that the test-results-parser library doesn't expose
+ */
+export interface ExtendedTestCaseData {
+  /** Raw system-out content (not just attachment patterns) */
+  systemOut?: string;
+  /** Raw system-err content (not just stack trace) */
+  systemErr?: string;
+  /** Number of assertions from the assertions attribute */
+  assertions?: number;
+}
+
+/**
+ * Map of test case key to extended data
+ * Key format: "suiteName|testName|className"
+ */
+export type ExtendedTestCaseDataMap = Map<string, ExtendedTestCaseData>;
+
+/**
+ * Generate a key for looking up extended test case data
+ */
+export function getExtendedDataKey(
+  suiteName: string,
+  testName: string,
+  className: string
+): string {
+  return `${suiteName}|${testName}|${className}`;
+}
+
+/**
+ * Parse JUnit/TestNG/xUnit/NUnit XML files to extract raw system-out, system-err,
+ * and assertions that the test-results-parser library doesn't expose.
+ *
+ * This is a supplementary parsing pass that provides additional data not available
+ * from the main parser.
+ *
+ * @param fileContents - Array of file content strings (XML)
+ * @param format - The test result format
+ * @returns Map of test case keys to extended data
+ */
+export function parseExtendedTestCaseData(
+  fileContents: string[],
+  format: TestResultFormat
+): ExtendedTestCaseDataMap {
+  const dataMap: ExtendedTestCaseDataMap = new Map();
+
+  // Only XML-based formats have system-out/err and assertions
+  if (format === "mocha" || format === "cucumber") {
+    return dataMap;
+  }
+
+  for (const content of fileContents) {
+    try {
+      parseXmlForExtendedData(content, format, dataMap);
+    } catch (error) {
+      // Log but don't fail - extended data is supplementary
+      console.warn("Failed to parse extended test case data:", error);
+    }
+  }
+
+  return dataMap;
+}
+
+/**
+ * Parse a single XML file for extended test case data
+ */
+function parseXmlForExtendedData(
+  content: string,
+  format: TestResultFormat,
+  dataMap: ExtendedTestCaseDataMap
+): void {
+  // Use a simple regex-based approach for extracting the data
+  // This avoids adding a heavy XML parsing dependency
+
+  // Find all testsuites/testsuite elements
+  const testsuiteRegex =
+    /<testsuite\s+([^>]*?)(?:\/?>|>([\s\S]*?)<\/testsuite>)/gi;
+  let suiteMatch;
+
+  while ((suiteMatch = testsuiteRegex.exec(content)) !== null) {
+    const suiteAttrs = suiteMatch[1];
+    const suiteContent = suiteMatch[2] || "";
+
+    // Extract suite name
+    const suiteNameMatch = suiteAttrs.match(/name\s*=\s*["']([^"']*)["']/);
+    const suiteName = suiteNameMatch ? suiteNameMatch[1] : "Test Suite";
+
+    // Find all testcase elements within this suite
+    const testcaseRegex =
+      /<testcase\s+([^>]*?)(?:\/>|>([\s\S]*?)<\/testcase>)/gi;
+    let caseMatch;
+
+    while ((caseMatch = testcaseRegex.exec(suiteContent)) !== null) {
+      const caseAttrs = caseMatch[1];
+      const caseContent = caseMatch[2] || "";
+
+      // Extract test case attributes
+      const testNameMatch = caseAttrs.match(/name\s*=\s*["']([^"']*)["']/);
+      const classNameMatch = caseAttrs.match(
+        /classname\s*=\s*["']([^"']*)["']/
+      );
+      const assertionsMatch = caseAttrs.match(
+        /assertions\s*=\s*["'](\d+)["']/
+      );
+
+      const testName = testNameMatch ? decodeXmlEntities(testNameMatch[1]) : "";
+      const className = classNameMatch
+        ? decodeXmlEntities(classNameMatch[1])
+        : suiteName;
+
+      if (!testName) continue;
+
+      // Extract system-out content
+      const systemOutMatch = caseContent.match(
+        /<system-out>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/system-out>/i
+      );
+      const systemOut = systemOutMatch
+        ? decodeXmlEntities(systemOutMatch[1].trim())
+        : undefined;
+
+      // Extract system-err content
+      const systemErrMatch = caseContent.match(
+        /<system-err>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/system-err>/i
+      );
+      const systemErr = systemErrMatch
+        ? decodeXmlEntities(systemErrMatch[1].trim())
+        : undefined;
+
+      // Parse assertions count
+      const assertions = assertionsMatch
+        ? parseInt(assertionsMatch[1], 10)
+        : undefined;
+
+      // Only add if we have some extended data
+      if (systemOut || systemErr || assertions !== undefined) {
+        const key = getExtendedDataKey(suiteName, testName, className);
+        dataMap.set(key, { systemOut, systemErr, assertions });
+      }
+    }
+  }
+
+  // Also handle testsuites wrapper (JUnit format variation)
+  if (!dataMap.size) {
+    // Try parsing without testsuite wrapper (direct testcase elements)
+    parseTestcasesFromContent(content, "Test Suite", dataMap);
+  }
+}
+
+/**
+ * Parse testcase elements directly from content (when not wrapped in testsuite)
+ */
+function parseTestcasesFromContent(
+  content: string,
+  defaultSuiteName: string,
+  dataMap: ExtendedTestCaseDataMap
+): void {
+  const testcaseRegex =
+    /<testcase\s+([^>]*?)(?:\/>|>([\s\S]*?)<\/testcase>)/gi;
+  let caseMatch;
+
+  while ((caseMatch = testcaseRegex.exec(content)) !== null) {
+    const caseAttrs = caseMatch[1];
+    const caseContent = caseMatch[2] || "";
+
+    const testNameMatch = caseAttrs.match(/name\s*=\s*["']([^"']*)["']/);
+    const classNameMatch = caseAttrs.match(/classname\s*=\s*["']([^"']*)["']/);
+    const assertionsMatch = caseAttrs.match(/assertions\s*=\s*["'](\d+)["']/);
+
+    const testName = testNameMatch ? decodeXmlEntities(testNameMatch[1]) : "";
+    const className = classNameMatch
+      ? decodeXmlEntities(classNameMatch[1])
+      : defaultSuiteName;
+
+    if (!testName) continue;
+
+    const systemOutMatch = caseContent.match(
+      /<system-out>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/system-out>/i
+    );
+    const systemOut = systemOutMatch
+      ? decodeXmlEntities(systemOutMatch[1].trim())
+      : undefined;
+
+    const systemErrMatch = caseContent.match(
+      /<system-err>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/system-err>/i
+    );
+    const systemErr = systemErrMatch
+      ? decodeXmlEntities(systemErrMatch[1].trim())
+      : undefined;
+
+    const assertions = assertionsMatch
+      ? parseInt(assertionsMatch[1], 10)
+      : undefined;
+
+    if (systemOut || systemErr || assertions !== undefined) {
+      const key = getExtendedDataKey(defaultSuiteName, testName, className);
+      dataMap.set(key, { systemOut, systemErr, assertions });
+    }
+  }
+}
+
+/**
+ * Decode common XML entities
+ */
+function decodeXmlEntities(str: string): string {
+  return str
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+      String.fromCharCode(parseInt(hex, 16))
+    );
+}
