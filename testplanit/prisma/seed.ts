@@ -1,13 +1,5 @@
-import fs from "fs";
-import path from "path";
-import {
-  PrismaClient,
-  WorkflowScope,
-  ApplicationArea,
-  ProjectAccessType,
-} from "@prisma/client";
+import { PrismaClient, WorkflowScope, ApplicationArea } from "@prisma/client";
 import { seedFieldIcons } from "./seedFieldIcons";
-import { seedMilestoneEdgeCases } from "./seedMilestoneEdgeCases";
 import bcrypt from "bcrypt";
 
 export const prisma = new PrismaClient();
@@ -1226,9 +1218,9 @@ async function seedWorkflows() {
     },
     {
       order: 4,
-      name: "Rejected",
-      icon: "package-x",
-      color: "Red",
+      name: "Done",
+      icon: "package-check",
+      color: "Green",
       isEnabled: true,
       isDefault: false,
       scope: "SESSIONS",
@@ -1236,9 +1228,9 @@ async function seedWorkflows() {
     },
     {
       order: 5,
-      name: "Done",
-      icon: "package-check",
-      color: "Green",
+      name: "Rejected",
+      icon: "package-x",
+      color: "Red",
       isEnabled: true,
       isDefault: false,
       scope: "SESSIONS",
@@ -1276,9 +1268,9 @@ async function seedWorkflows() {
     },
     {
       order: 4,
-      name: "Rejected",
-      icon: "package-x",
-      color: "Red",
+      name: "Done",
+      icon: "package-check",
+      color: "Green",
       isEnabled: true,
       isDefault: false,
       scope: "RUNS",
@@ -1286,9 +1278,9 @@ async function seedWorkflows() {
     },
     {
       order: 5,
-      name: "Done",
-      icon: "package-check",
-      color: "Green",
+      name: "Rejected",
+      icon: "package-x",
+      color: "Red",
       isEnabled: true,
       isDefault: false,
       scope: "RUNS",
@@ -1399,7 +1391,10 @@ async function seedWorkflows() {
             isEnabled: workflow.isEnabled,
             isDefault: workflow.isDefault,
             scope: workflow.scope as WorkflowScope,
-            workflowType: workflow.workflowType as "NOT_STARTED" | "IN_PROGRESS" | "DONE",
+            workflowType: workflow.workflowType as
+              | "NOT_STARTED"
+              | "IN_PROGRESS"
+              | "DONE",
           },
         });
       }
