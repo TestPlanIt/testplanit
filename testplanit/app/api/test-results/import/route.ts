@@ -751,20 +751,10 @@ export async function POST(request: NextRequest) {
                   }
                 }
 
-                // Process attachments if available
-                if (testCase.attachments && testCase.attachments.length > 0) {
-                  for (const attachment of testCase.attachments) {
-                    await prisma.jUnitAttachment.create({
-                      data: {
-                        name: attachment.name,
-                        value: attachment.path,
-                        type: "FILE",
-                        repositoryCase: { connect: { id: repositoryCase.id } },
-                        createdBy: { connect: { id: userId } },
-                      },
-                    });
-                  }
-                }
+                // Note: Attachments from JUnit XML are tracked in attachmentMappings
+                // and uploaded via CLI to the Attachments table (linked to junitTestResultId).
+                // We no longer create JUnitAttachment records here to avoid showing
+                // text paths on the test case page - actual files appear on the test result.
               } catch (error) {
                 console.error(
                   "Error processing test case:",
