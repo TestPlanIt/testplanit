@@ -1,3 +1,10 @@
+## [0.9.25](https://github.com/TestPlanIt/testplanit/compare/v0.9.24...v0.9.25) (2026-01-08)
+
+
+### Bug Fixes
+
+* **db:** accept data loss on db push due to a new unique constraint ([0d8bc0f](https://github.com/TestPlanIt/testplanit/commit/0d8bc0fb338e8d1bae55dd66c93aa5c5d02ef600))
+
 ## [0.9.24](https://github.com/TestPlanIt/testplanit/compare/v0.9.23...v0.9.24) (2026-01-08)
 
 ## [0.9.23](https://github.com/TestPlanIt/testplanit/compare/v0.9.22...v0.9.23) (2026-01-08)
