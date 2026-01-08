@@ -1349,9 +1349,7 @@ function ReportBuilderContent({
                   <TabsTrigger value="reports">
                     {tAdminMenu("reports")}
                   </TabsTrigger>
-                  <TabsTrigger value="builder">
-                    {tReports("title")}
-                  </TabsTrigger>
+                  <TabsTrigger value="builder">{tReports("title")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent
@@ -1367,7 +1365,7 @@ function ReportBuilderContent({
                     </p>
                   </div>
                   <Form {...form}>
-                    <form className="grid gap-4 relative">
+                    <form className="grid gap-4 relative px-0.5">
                       {/* Pre-built Report Selection */}
                       <div className="grid gap-2">
                         <label className="text-sm font-medium">
@@ -1509,7 +1507,7 @@ function ReportBuilderContent({
 
                 <TabsContent
                   value="builder"
-                  className="flex-1 overflow-y-auto mt-0"
+                  className="flex-1 overflow-y-auto mt-0 m-1"
                 >
                   <div className="mb-4">
                     <h2 className="text-lg font-semibold">
