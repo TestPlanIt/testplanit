@@ -235,14 +235,36 @@ test.describe("View Switching", () => {
     await api.createTestCase(projectId, folderId, `Template Case ${Date.now()}`);
 
     await repositoryPage.goto(projectId);
+
+    // Wait for the page to fully load and view options to be fetched
+    await page.waitForLoadState("networkidle");
+
     await switchToView(page, "Template");
 
+    // Wait for network to settle after switching views
+    await page.waitForLoadState("networkidle");
+
     // The left panel should show individual templates with counts
-    // Default Template should have at least 1 count
-    const templateWithCount = repositoryPage.leftPanel.locator('[role="button"]').filter({
-      hasText: /Default Template/i
-    });
-    await expect(templateWithCount.first()).toBeVisible({ timeout: 5000 });
+    // We look for any template button with a count (not "All Templates")
+    // This is more robust than relying on a specific template name since
+    // other tests may change the default template
+    const templateButtons = repositoryPage.leftPanel.locator('[role="button"]');
+
+    // Wait for template buttons to appear (at least "All Templates" and one individual template)
+    await expect(templateButtons.first()).toBeVisible({ timeout: 10000 });
+
+    // There should be at least 2 buttons: "All Templates" and at least one individual template
+    const buttonCount = await templateButtons.count();
+    expect(buttonCount).toBeGreaterThanOrEqual(2);
+
+    // The second button (first individual template) should have a count displayed
+    // Template buttons show the template name and a count
+    const individualTemplate = templateButtons.nth(1);
+    await expect(individualTemplate).toBeVisible();
+
+    // Verify the template shows a count (number in the button)
+    const templateText = await individualTemplate.textContent();
+    expect(templateText).toMatch(/\d+/); // Should contain a number (the count)
   });
 
   test("State View Shows Individual States with Icons", async ({ api, page }) => {
