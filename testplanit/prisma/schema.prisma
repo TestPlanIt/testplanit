@@ -938,6 +938,8 @@ model RepositoryCaseVersions {
   issues                 Json?
   links                  Json?
   attachments            Json?
+
+  @@unique([repositoryCaseId, version])
 }
 
 model CaseFieldValues {

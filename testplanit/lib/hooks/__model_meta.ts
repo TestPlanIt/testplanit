@@ -3091,6 +3091,9 @@ const metadata: ModelMeta = {
                 id: {
                     name: "id",
                     fields: ["id"]
+                }, repositoryCaseId_version: {
+                    name: "repositoryCaseId_version",
+                    fields: ["repositoryCaseId", "version"]
                 },
             },
         },

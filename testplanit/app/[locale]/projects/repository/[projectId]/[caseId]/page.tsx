@@ -1857,7 +1857,7 @@ export default function TestCaseDetails() {
                               )}
                             </div>
                           )}
-                          <FieldValueRenderer
+<FieldValueRenderer
                             fieldValue={fieldValue}
                             fieldType={field.caseField.type.type}
                             caseId={caseId?.toString() || ""}

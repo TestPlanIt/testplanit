@@ -37,17 +37,27 @@ export function VersionSelect({
 
   if (!versions || versions.length <= 1) return null;
 
+  // Find current version index to handle duplicate version numbers
+  const currentIndex = versions.findIndex(
+    (v) => v.version.toString() === currentVersion
+  );
+
   return (
     <Select
-      value={currentVersion?.toString() || versions[0].version.toString()}
-      onValueChange={onVersionChange}
+      value={currentIndex >= 0 ? currentIndex.toString() : "0"}
+      onValueChange={(indexStr) => {
+        const idx = parseInt(indexStr, 10);
+        if (idx >= 0 && idx < versions.length) {
+          onVersionChange(versions[idx].version.toString());
+        }
+      }}
     >
       <SelectTrigger className="w-fit">
         <SelectValue placeholder="Select Version" />
       </SelectTrigger>
       <SelectContent>
         {versions.map((v, index) => (
-          <SelectItem key={v.id ?? `version-${v.version}-${index}`} value={v.version.toString()}>
+          <SelectItem key={`version-select-${index}`} value={index.toString()}>
             <div className="flex items-center space-x-1 whitespace-nowrap">
               <Badge className="text-primary-foreground text-xs">
                 {tGlobal("common.version.prefix")}

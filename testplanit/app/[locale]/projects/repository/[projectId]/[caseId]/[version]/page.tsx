@@ -599,9 +599,12 @@ export default function TestCaseVersions() {
                 {versions?.length && versions.length > 1 && (
                   <>
                     <Select
-                      value={version?.toString()}
-                      onValueChange={(value) => {
-                        viewVersion(value);
+                      value={currentVersionIndex !== undefined && currentVersionIndex >= 0 ? currentVersionIndex.toString() : "0"}
+                      onValueChange={(indexStr) => {
+                        const idx = parseInt(indexStr, 10);
+                        if (versions && idx >= 0 && idx < versions.length) {
+                          viewVersion(versions[idx].version.toString());
+                        }
                       }}
                     >
                       <SelectTrigger className="w-fit">
@@ -610,8 +613,8 @@ export default function TestCaseVersions() {
                       <SelectContent>
                         {versions?.map((v, index) => (
                           <SelectItem
-                            key={v.id ?? `version-${v.version}-${index}`}
-                            value={v.version.toString()}
+                            key={`version-select-${index}`}
+                            value={index.toString()}
                           >
                             <div className="flex items-center space-x-1 whitespace-nowrap">
                               <Badge className="text-primary-foreground text-xs">
