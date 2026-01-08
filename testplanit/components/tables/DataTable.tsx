@@ -382,7 +382,9 @@ export function DataTable<TData extends DataRow, TValue>({
             </span>
           </button>
         ) : null,
-      size: 32,
+      size: 24,
+      minSize: 24,
+      maxSize: 24,
       enableResizing: false,
       enableHiding: false,
       meta: { isPinned: "left" },

@@ -4596,6 +4596,10 @@
         "automationTrends": {
           "label": "Tendencias de automatización entre proyectos",
           "description": "Realizar un seguimiento semanal del progreso de la automatización por prioridad en todos los proyectos."
+        },
+        "flakyTests": {
+          "label": "Pruebas inestables entre proyectos",
+          "description": "Identificar pruebas con resultados inconsistentes de aprobado/reprobado en los distintos proyectos"
         }
       }
     },

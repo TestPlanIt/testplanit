@@ -20,6 +20,10 @@ interface FlakyTestRow {
   testCaseSource: string;
   flipCount: number;
   executions: ExecutionStatus[];
+  project?: {
+    id: number;
+    name?: string;
+  };
 }
 
 interface RawExecutionResult {
@@ -34,6 +38,8 @@ interface RawExecutionResult {
   is_failure: boolean;
   executed_at: Date;
   row_num: bigint;
+  project_id?: number;
+  project_name?: string;
 }
 
 /**
@@ -103,7 +109,11 @@ export async function handleFlakyTestsPOST(
       startDate,
       endDate,
       automatedFilter, // "all" | "automated" | "manual"
+      dimensions = [], // Array of dimension IDs
     } = body;
+    
+    // Check if project dimension is requested
+    const includeProject = isCrossProject && dimensions.includes("project");
 
     // Validate parameters
     const runs = Math.min(Math.max(Number(consecutiveRuns), 5), 30);
@@ -143,6 +153,17 @@ export async function handleFlakyTestsPOST(
     let rawResults: RawExecutionResult[];
 
     if (isCrossProject) {
+      // Build project fields for SELECT and PARTITION BY
+      const projectSelectFields = includeProject
+        ? Prisma.sql`, p.id as project_id, p.name as project_name`
+        : Prisma.empty;
+      const projectJoin = includeProject
+        ? Prisma.sql`INNER JOIN "Projects" p ON p.id = rc."projectId"`
+        : Prisma.empty;
+      const partitionBy = includeProject
+        ? Prisma.sql`PARTITION BY test_case_id, project_id`
+        : Prisma.sql`PARTITION BY test_case_id`;
+
       if (startDateParsed && endDateParsed) {
         rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
           WITH combined_results AS (
@@ -157,7 +178,9 @@ export async function handleFlakyTestsPOST(
               s."isSuccess" as is_success,
               s."isFailure" as is_failure,
               trr."executedAt" as executed_at
+              ${projectSelectFields}
             FROM "RepositoryCases" rc
+            ${projectJoin}
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
             LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
@@ -188,7 +211,9 @@ export async function handleFlakyTestsPOST(
               COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
               COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
               jr."executedAt" as executed_at
+              ${projectSelectFields}
             FROM "RepositoryCases" rc
+            ${projectJoin}
             INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
             INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
             LEFT JOIN "TestRuns" tr ON tr.id = jts."testRunId"
@@ -212,11 +237,12 @@ export async function handleFlakyTestsPOST(
               status_color,
               is_success,
               is_failure,
-              executed_at,
-              ROW_NUMBER() OVER (PARTITION BY test_case_id ORDER BY executed_at DESC) as row_num
+              executed_at
+              ${includeProject ? Prisma.sql`, project_id, project_name` : Prisma.empty},
+              ROW_NUMBER() OVER (${partitionBy} ORDER BY executed_at DESC) as row_num
             FROM combined_results
           )
-          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? Prisma.sql`, project_id` : Prisma.empty}, row_num
         `;
       } else if (startDateParsed) {
         rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
@@ -232,7 +258,9 @@ export async function handleFlakyTestsPOST(
               s."isSuccess" as is_success,
               s."isFailure" as is_failure,
               trr."executedAt" as executed_at
+              ${projectSelectFields}
             FROM "RepositoryCases" rc
+            ${projectJoin}
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
             LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
@@ -262,7 +290,9 @@ export async function handleFlakyTestsPOST(
               COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
               COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
               jr."executedAt" as executed_at
+              ${projectSelectFields}
             FROM "RepositoryCases" rc
+            ${projectJoin}
             INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
             INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
             LEFT JOIN "TestRuns" tr ON tr.id = jts."testRunId"
@@ -285,11 +315,12 @@ export async function handleFlakyTestsPOST(
               status_color,
               is_success,
               is_failure,
-              executed_at,
-              ROW_NUMBER() OVER (PARTITION BY test_case_id ORDER BY executed_at DESC) as row_num
+              executed_at
+              ${includeProject ? Prisma.sql`, project_id, project_name` : Prisma.empty},
+              ROW_NUMBER() OVER (${partitionBy} ORDER BY executed_at DESC) as row_num
             FROM combined_results
           )
-          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? Prisma.sql`, project_id` : Prisma.empty}, row_num
         `;
       } else if (endDateParsed) {
         rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
@@ -305,7 +336,9 @@ export async function handleFlakyTestsPOST(
               s."isSuccess" as is_success,
               s."isFailure" as is_failure,
               trr."executedAt" as executed_at
+              ${projectSelectFields}
             FROM "RepositoryCases" rc
+            ${projectJoin}
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
             LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
@@ -335,7 +368,9 @@ export async function handleFlakyTestsPOST(
               COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
               COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
               jr."executedAt" as executed_at
+              ${projectSelectFields}
             FROM "RepositoryCases" rc
+            ${projectJoin}
             INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
             INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
             LEFT JOIN "TestRuns" tr ON tr.id = jts."testRunId"
@@ -358,11 +393,12 @@ export async function handleFlakyTestsPOST(
               status_color,
               is_success,
               is_failure,
-              executed_at,
-              ROW_NUMBER() OVER (PARTITION BY test_case_id ORDER BY executed_at DESC) as row_num
+              executed_at
+              ${includeProject ? Prisma.sql`, project_id, project_name` : Prisma.empty},
+              ROW_NUMBER() OVER (${partitionBy} ORDER BY executed_at DESC) as row_num
             FROM combined_results
           )
-          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? Prisma.sql`, project_id` : Prisma.empty}, row_num
         `;
       } else {
         rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
@@ -378,7 +414,9 @@ export async function handleFlakyTestsPOST(
               s."isSuccess" as is_success,
               s."isFailure" as is_failure,
               trr."executedAt" as executed_at
+              ${projectSelectFields}
             FROM "RepositoryCases" rc
+            ${projectJoin}
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
             LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
@@ -407,7 +445,9 @@ export async function handleFlakyTestsPOST(
               COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
               COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
               jr."executedAt" as executed_at
+              ${projectSelectFields}
             FROM "RepositoryCases" rc
+            ${projectJoin}
             INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
             INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
             LEFT JOIN "TestRuns" tr ON tr.id = jts."testRunId"
@@ -429,11 +469,12 @@ export async function handleFlakyTestsPOST(
               status_color,
               is_success,
               is_failure,
-              executed_at,
-              ROW_NUMBER() OVER (PARTITION BY test_case_id ORDER BY executed_at DESC) as row_num
+              executed_at
+              ${includeProject ? Prisma.sql`, project_id, project_name` : Prisma.empty},
+              ROW_NUMBER() OVER (${partitionBy} ORDER BY executed_at DESC) as row_num
             FROM combined_results
           )
-          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id${includeProject ? Prisma.sql`, project_id` : Prisma.empty}, row_num
         `;
       }
     } else {
@@ -741,27 +782,35 @@ export async function handleFlakyTestsPOST(
       }
     }
 
-    // Group results by test case
-    const testCaseMap = new Map<number, {
+    // Group results by test case (and project if included)
+    const testCaseMap = new Map<string, {
       testCaseId: number;
       testCaseName: string;
       testCaseSource: string;
+      projectId?: number;
+      projectName?: string;
       executions: ExecutionStatus[];
     }>();
 
     for (const row of rawResults) {
       const testCaseId = row.test_case_id;
+      // Create a unique key that includes project if it's included
+      const key = includeProject && row.project_id
+        ? `${testCaseId}-${row.project_id}`
+        : `${testCaseId}`;
 
-      if (!testCaseMap.has(testCaseId)) {
-        testCaseMap.set(testCaseId, {
+      if (!testCaseMap.has(key)) {
+        testCaseMap.set(key, {
           testCaseId,
           testCaseName: row.test_case_name,
           testCaseSource: row.test_case_source,
+      projectId: includeProject ? row.project_id : undefined,
+      projectName: includeProject ? row.project_name : undefined,
           executions: [],
         });
       }
 
-      testCaseMap.get(testCaseId)!.executions.push({
+      testCaseMap.get(key)!.executions.push({
         resultId: row.result_id,
         testRunId: row.test_run_id,
         statusName: row.status_name,
@@ -797,6 +846,12 @@ export async function handleFlakyTestsPOST(
           testCaseSource: testCase.testCaseSource,
           flipCount,
           executions: testCase.executions,
+          project: includeProject && testCase.projectId
+            ? {
+                id: testCase.projectId,
+                name: testCase.projectName,
+              }
+            : undefined,
         });
       }
     }

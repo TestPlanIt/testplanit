@@ -4596,6 +4596,10 @@
         "automationTrends": {
           "label": "Tendances en matière d'automatisation inter-projets",
           "description": "Suivre l'avancement de l'automatisation semaine après semaine, par priorité, pour l'ensemble des projets."
+        },
+        "flakyTests": {
+          "label": "Tests instables inter-projets",
+          "description": "Identifier les tests présentant des résultats de réussite/échec incohérents d'un projet à l'autre"
         }
       }
     },

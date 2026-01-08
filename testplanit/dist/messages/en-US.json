@@ -4596,6 +4596,10 @@
         "automationTrends": {
           "label": "Cross-Project Automation Trends",
           "description": "Track automation progress week-over-week by priority across projects"
+        },
+        "flakyTests": {
+          "label": "Cross-Project Flaky Tests",
+          "description": "Identify tests with inconsistent pass/fail results across projects"
         }
       }
     },

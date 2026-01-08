@@ -44,6 +44,7 @@ import {
   Filter,
   FolderOpen,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import {
   Card,
@@ -568,7 +569,12 @@ function ReportBuilderContent({
   );
 
   // Use flaky tests columns for flaky-tests report
-  const flakyTestsColumns = useFlakyTestsColumns(consecutiveRuns, projectId);
+  const flakyTestsColumns = useFlakyTestsColumns(
+    consecutiveRuns,
+    projectId,
+    lastUsedDimensions.map((d) => d.value),
+    mode === "cross-project"
+  );
 
   // Choose which columns to use based on report type
   const columns =
@@ -824,7 +830,32 @@ function ReportBuilderContent({
           const selectedDims = dimIds
             .map((id) => dimOpts.find((d: any) => d.value === id))
             .filter(Boolean);
-          setDimensions(selectedDims);
+
+          // For cross-project flaky tests, ensure "project" is the first dimension
+          if (mode === "cross-project" && reportType === "flaky-tests") {
+            const projectDim = dimOpts.find((d: any) => d.value === "project");
+            if (projectDim) {
+              // Remove project if it exists, then add it as first
+              const otherDims = selectedDims.filter(
+                (d: any) => d.value !== "project"
+              );
+              setDimensions([projectDim, ...otherDims]);
+            } else {
+              setDimensions(selectedDims);
+            }
+          } else {
+            setDimensions(selectedDims);
+          }
+        } else if (
+          mode === "cross-project" &&
+          reportType === "flaky-tests" &&
+          dimOpts.length > 0
+        ) {
+          // Automatically add "project" as the first dimension for cross-project flaky tests
+          const projectDim = dimOpts.find((d: any) => d.value === "project");
+          if (projectDim) {
+            setDimensions([projectDim]);
+          }
         }
 
         if (metricsParam) {
@@ -841,9 +872,22 @@ function ReportBuilderContent({
           const dimIds = dimensionsParam.split(",");
           const metIds = metricsParam.split(",");
           // Preserve order from URL by mapping instead of filtering
-          const selectedDims = dimIds
+          let selectedDims = dimIds
             .map((id) => dimOpts.find((d: any) => d.value === id))
             .filter(Boolean);
+
+          // For cross-project flaky tests, ensure "project" is the first dimension
+          if (mode === "cross-project" && reportType === "flaky-tests") {
+            const projectDim = dimOpts.find((d: any) => d.value === "project");
+            if (projectDim) {
+              // Remove project if it exists, then add it as first
+              const otherDims = selectedDims.filter(
+                (d: any) => d.value !== "project"
+              );
+              selectedDims = [projectDim, ...otherDims];
+            }
+          }
+
           const selectedMets = metIds
             .map((id) => metOpts.find((m: any) => m.value === id))
             .filter(Boolean);
@@ -939,11 +983,20 @@ function ReportBuilderContent({
           body.dateGrouping = dateGrouping;
         }
 
-        // For flaky tests, add consecutive runs, flip threshold, and automated filter
+        // For flaky tests, add consecutive runs, flip threshold, automated filter, and dimensions
         if (reportType === "flaky-tests") {
           body.consecutiveRuns = consecutiveRuns;
           body.flipThreshold = flipThreshold;
           body.automatedFilter = flakyAutomatedFilter;
+          // Always include dimensions for cross-project reports (project should be auto-added)
+          if (mode === "cross-project") {
+            const dimValues = selectedDimensions.map((d) => d.value);
+            // Ensure project is included if it's not already there
+            if (!dimValues.includes("project")) {
+              dimValues.unshift("project");
+            }
+            body.dimensions = dimValues;
+          }
         }
 
         // Add sorting parameters if configured
@@ -1026,21 +1079,74 @@ function ReportBuilderContent({
           // Set total count to all data length
           setTotalCount(allData.length);
 
-          // Slice data for current page
-          if (pageSize === "All") {
-            // Show all data when pageSize is "All"
-            setResults(allData);
-          } else {
-            const startIndex = (currentPage - 1) * (pageSize as number);
-            const endIndex = startIndex + (pageSize as number);
-            setResults(allData.slice(startIndex, endIndex));
-          }
-
           // Store all data when running a new report
           if (updateUrl) {
             setAllResults(allData);
             chartDataRef.current = allData;
             setChartDataVersion((prev) => prev + 1);
+            // Set lastUsedDimensions for flaky tests so columns can access them
+            setLastUsedDimensions(selectedDimensions);
+            lastUsedDimensionsRef.current = selectedDimensions;
+
+            // Set initial sort order for flaky tests: Flips Desc
+            if (
+              (reportType === "flaky-tests" ||
+                reportType === "cross-project-flaky-tests") &&
+              !sortConfig
+            ) {
+              setSortConfig({ column: "flipCount", direction: "desc" });
+            }
+          }
+
+          // Apply sorting if configured
+          let sortedData = [...allData];
+          const effectiveSortConfig =
+            updateUrl &&
+            (reportType === "flaky-tests" ||
+              reportType === "cross-project-flaky-tests") &&
+            !sortConfig
+              ? { column: "flipCount", direction: "desc" as const }
+              : sortConfig;
+
+          if (effectiveSortConfig) {
+            sortedData.sort((a, b) => {
+              let aVal = a[effectiveSortConfig.column];
+              let bVal = b[effectiveSortConfig.column];
+
+              // Handle project column - extract name from object
+              if (effectiveSortConfig.column === "project") {
+                aVal = aVal?.name || "";
+                bVal = bVal?.name || "";
+              }
+
+              if (aVal === bVal) return 0;
+              if (aVal === null || aVal === undefined) return 1;
+              if (bVal === null || bVal === undefined) return -1;
+
+              // For strings, use localeCompare for proper alphabetical sorting
+              if (typeof aVal === "string" && typeof bVal === "string") {
+                const comparison = aVal.localeCompare(bVal);
+                return effectiveSortConfig.direction === "asc"
+                  ? comparison
+                  : -comparison;
+              }
+
+              // For numbers or other types, use standard comparison
+              const comparison = aVal < bVal ? -1 : 1;
+              return effectiveSortConfig.direction === "asc"
+                ? comparison
+                : -comparison;
+            });
+          }
+
+          // Slice data for current page
+          if (pageSize === "All") {
+            // Show all data when pageSize is "All"
+            setResults(sortedData);
+          } else {
+            const startIndex = (currentPage - 1) * (pageSize as number);
+            const endIndex = startIndex + (pageSize as number);
+            setResults(sortedData.slice(startIndex, endIndex));
           }
         } else {
           // Standard server-side pagination for other reports
@@ -1172,11 +1278,26 @@ function ReportBuilderContent({
       let sortedResults = [...allResults];
       if (sortConfig) {
         sortedResults.sort((a, b) => {
-          const aVal = a[sortConfig.column];
-          const bVal = b[sortConfig.column];
+          let aVal = a[sortConfig.column];
+          let bVal = b[sortConfig.column];
+
+          // Handle project column - extract name from object
+          if (sortConfig.column === "project") {
+            aVal = aVal?.name || "";
+            bVal = bVal?.name || "";
+          }
+
           if (aVal === bVal) return 0;
           if (aVal === null || aVal === undefined) return 1;
           if (bVal === null || bVal === undefined) return -1;
+
+          // For strings, use localeCompare for proper alphabetical sorting
+          if (typeof aVal === "string" && typeof bVal === "string") {
+            const comparison = aVal.localeCompare(bVal);
+            return sortConfig.direction === "asc" ? comparison : -comparison;
+          }
+
+          // For numbers or other types, use standard comparison
           const comparison = aVal < bVal ? -1 : 1;
           return sortConfig.direction === "asc" ? comparison : -comparison;
         });
@@ -1242,6 +1363,32 @@ function ReportBuilderContent({
     setFilteredMetricOptions(metricOptions);
     setCompatWarning(null);
   }, [dimensionOptions, metricOptions]);
+
+  // Automatically add "project" as first dimension for cross-project flaky tests
+  useEffect(() => {
+    if (
+      mode === "cross-project" &&
+      reportType === "flaky-tests" &&
+      dimensionOptions.length > 0
+    ) {
+      const projectDim = dimensionOptions.find(
+        (d: any) => d.value === "project"
+      );
+      if (projectDim) {
+        // Always ensure project is first dimension
+        const hasProject = dimensions.some((d: any) => d.value === "project");
+        if (!hasProject) {
+          setDimensions([projectDim, ...dimensions]);
+        } else if (dimensions[0]?.value !== "project") {
+          // Project exists but not first - move it to first
+          const otherDims = dimensions.filter(
+            (d: any) => d.value !== "project"
+          );
+          setDimensions([projectDim, ...otherDims]);
+        }
+      }
+    }
+  }, [mode, reportType, dimensionOptions, dimensions]);
 
   const handleRunReport = () => {
     setCurrentPage(1); // Reset to first page when running new report
@@ -1674,7 +1821,10 @@ function ReportBuilderContent({
                         data-testid="run-report-button"
                       >
                         {loading ? (
-                          <>{tCommon("loading")}</>
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            {tCommon("loading")}
+                          </>
                         ) : (
                           tReports("runReport")
                         )}
@@ -1904,7 +2054,10 @@ function ReportBuilderContent({
                         data-testid="run-report-button"
                       >
                         {loading ? (
-                          <>{tCommon("loading")}</>
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {tCommon("loading")}
+                          </>
                         ) : (
                           tReports("runReport")
                         )}
