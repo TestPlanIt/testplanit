@@ -96,20 +96,24 @@ export function useFlakyTestsColumns(
       columnHelper.accessor("testCaseName", {
         id: "testCaseName",
         header: () => <span>{t("reports.dimensions.testCase")}</span>,
-        cell: (info) => (
-          <CaseDisplay
-            id={info.row.original.testCaseId}
-            name={info.row.original.testCaseName}
-            source={info.row.original.testCaseSource as RepositoryCaseSource}
-            link={
-              projectId
-                ? `/projects/repository/${projectId}/${info.row.original.testCaseId}`
-                : undefined
-            }
-            size="medium"
-            maxLines={2}
-          />
-        ),
+        cell: (info) => {
+          // Use project ID from row data for cross-project, or fall back to prop
+          const rowProjectId = info.row.original.project?.id || projectId;
+          return (
+            <CaseDisplay
+              id={info.row.original.testCaseId}
+              name={info.row.original.testCaseName}
+              source={info.row.original.testCaseSource as RepositoryCaseSource}
+              link={
+                rowProjectId
+                  ? `/projects/repository/${rowProjectId}/${info.row.original.testCaseId}`
+                  : undefined
+              }
+              size="medium"
+              maxLines={2}
+            />
+          );
+        },
         enableSorting: true,
         size: 500,
         minSize: 200,
@@ -163,9 +167,11 @@ export function useFlakyTestsColumns(
                   .slice(0, consecutiveRuns)
                   .map((execution, index) => {
                     const testCaseId = info.row.original.testCaseId;
-                    const hasLink = projectId && execution.testRunId;
+                    // Use project ID from row data for cross-project, or fall back to prop
+                    const rowProjectId = info.row.original.project?.id || projectId;
+                    const hasLink = rowProjectId && execution.testRunId;
                     const linkHref = hasLink
-                      ? `/projects/runs/${projectId}/${execution.testRunId}?selectedCase=${testCaseId}`
+                      ? `/projects/runs/${rowProjectId}/${execution.testRunId}?selectedCase=${testCaseId}`
                       : undefined;
 
                     const boxStyle = {
