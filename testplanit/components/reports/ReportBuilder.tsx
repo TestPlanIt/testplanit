@@ -1147,37 +1147,58 @@ function ReportBuilderContent({
 
   // Re-fetch data when pagination changes (without full loading state)
   useEffect(() => {
-    // For automation trends, handle client-side pagination instead of API call
-    if (
-      (reportType === "automation-trends" ||
-        reportType === "cross-project-automation-trends") &&
-      allResults &&
-      allResults.length > 0
-    ) {
+    // For pre-built reports (automation-trends, flaky-tests), handle client-side pagination
+    const isPreBuiltReport =
+      reportType === "automation-trends" ||
+      reportType === "cross-project-automation-trends" ||
+      reportType === "flaky-tests" ||
+      reportType === "cross-project-flaky-tests";
+
+    if (isPreBuiltReport && allResults && allResults.length > 0) {
+      // Apply client-side sorting first
+      let sortedResults = [...allResults];
+      if (sortConfig) {
+        sortedResults.sort((a, b) => {
+          const aVal = a[sortConfig.column];
+          const bVal = b[sortConfig.column];
+          if (aVal === bVal) return 0;
+          if (aVal === null || aVal === undefined) return 1;
+          if (bVal === null || bVal === undefined) return -1;
+          const comparison = aVal < bVal ? -1 : 1;
+          return sortConfig.direction === "asc" ? comparison : -comparison;
+        });
+      }
+
+      // Then apply pagination
       if (pageSize === "All") {
-        // Show all data when pageSize is "All"
-        setResults(allResults);
+        setResults(sortedResults);
       } else {
         const startIdx = (currentPage - 1) * pageSize;
         const endIdx = startIdx + pageSize;
-        setResults(allResults.slice(startIdx, endIdx));
+        setResults(sortedResults.slice(startIdx, endIdx));
       }
     } else if (
       lastUsedDimensions.length > 0 &&
       lastUsedMetrics.length > 0 &&
       results &&
-      reportType !== "automation-trends" &&
-      reportType !== "cross-project-automation-trends"
+      !isPreBuiltReport
     ) {
       // Standard server-side pagination for other reports
       fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, sortConfig, reportType]);
 
-  // Re-fetch data when sort changes (without full loading state)
+  // Re-fetch data when sort changes for non-prebuilt reports (without full loading state)
   useEffect(() => {
+    const isPreBuiltReport =
+      reportType === "automation-trends" ||
+      reportType === "cross-project-automation-trends" ||
+      reportType === "flaky-tests" ||
+      reportType === "cross-project-flaky-tests";
+
     if (
+      !isPreBuiltReport &&
       lastUsedDimensions.length > 0 &&
       lastUsedMetrics.length > 0 &&
       results

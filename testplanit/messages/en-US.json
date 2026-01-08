@@ -4570,6 +4570,8 @@
         "flipThresholdHelp": "Minimum number of pass/fail transitions required to be considered flaky.",
         "flips": "Flips",
         "lastNResults": "Last {count} Results",
+        "newest": "New",
+        "oldest": "Old",
         "noFlakyTests": "No flaky tests found matching the criteria"
       },
       "crossProjectReportTypes": {

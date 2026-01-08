@@ -19,6 +19,18 @@ interface FlakyTestRow {
   executions: ExecutionStatus[];
 }
 
+interface RawExecutionResult {
+  test_case_id: number;
+  test_case_name: string;
+  result_id: number;
+  status_name: string;
+  status_color: string;
+  is_success: boolean;
+  is_failure: boolean;
+  executed_at: Date;
+  row_num: bigint;
+}
+
 /**
  * Count the number of status flips (transitions between success and failure) in a sequence of executions.
  * Only counts transitions between definitive results (isSuccess or isFailure).
@@ -46,48 +58,6 @@ export function countStatusFlips(executions: ExecutionStatus[]): number {
   }
 
   return flips;
-}
-
-/**
- * Map JUnit result type to success/failure flags and default colors
- */
-function mapJUnitResultType(type: string): {
-  isSuccess: boolean;
-  isFailure: boolean;
-  statusName: string;
-  defaultColor: string;
-} {
-  switch (type) {
-    case "PASSED":
-      return {
-        isSuccess: true,
-        isFailure: false,
-        statusName: "Passed",
-        defaultColor: "#22c55e", // green
-      };
-    case "FAILURE":
-      return {
-        isSuccess: false,
-        isFailure: true,
-        statusName: "Failed",
-        defaultColor: "#ef4444", // red
-      };
-    case "ERROR":
-      return {
-        isSuccess: false,
-        isFailure: true,
-        statusName: "Error",
-        defaultColor: "#f97316", // orange
-      };
-    default:
-      // SKIPPED or unknown - not definitive
-      return {
-        isSuccess: false,
-        isFailure: false,
-        statusName: type,
-        defaultColor: "#6b7280", // gray
-      };
-  }
 }
 
 /**
@@ -141,189 +111,586 @@ export async function handleFlakyTestsPOST(
       );
     }
 
-    // Build date filter for executions
-    const dateFilter: any = {};
-    if (startDate) {
-      dateFilter.gte = new Date(startDate);
-    }
-    if (endDate) {
-      dateFilter.lte = new Date(endDate);
+    // Parse dates
+    const startDateParsed = startDate ? new Date(startDate) : null;
+    const endDateParsed = endDate ? new Date(endDate) : null;
+    const projectIdNum = projectId ? Number(projectId) : null;
+
+    // Use raw SQL with window functions to efficiently get recent results per test case
+    // Build query based on whether it's cross-project and date filters
+    let rawResults: RawExecutionResult[];
+
+    if (isCrossProject) {
+      if (startDateParsed && endDateParsed) {
+        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+          WITH combined_results AS (
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              trr.id as result_id,
+              s.name as status_name,
+              c.value as status_color,
+              s."isSuccess" as is_success,
+              s."isFailure" as is_failure,
+              trr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
+            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND trr."executedAt" >= ${startDateParsed}
+              AND trr."executedAt" <= ${endDateParsed}
+
+            UNION ALL
+
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              jr.id as result_id,
+              COALESCE(s.name, jr.type::text) as status_name,
+              COALESCE(c.value,
+                CASE jr.type
+                  WHEN 'PASSED' THEN '#22c55e'
+                  WHEN 'FAILURE' THEN '#ef4444'
+                  WHEN 'ERROR' THEN '#f97316'
+                  ELSE '#6b7280'
+                END
+              ) as status_color,
+              COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
+              COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
+              jr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            LEFT JOIN "Status" s ON s.id = jr."statusId"
+            LEFT JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND jr.type != 'SKIPPED'
+              AND jr."executedAt" IS NOT NULL
+              AND jr."executedAt" >= ${startDateParsed}
+              AND jr."executedAt" <= ${endDateParsed}
+          ),
+          ranked_results AS (
+            SELECT
+              test_case_id,
+              test_case_name,
+              result_id,
+              status_name,
+              status_color,
+              is_success,
+              is_failure,
+              executed_at,
+              ROW_NUMBER() OVER (PARTITION BY test_case_id ORDER BY executed_at DESC) as row_num
+            FROM combined_results
+          )
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
+        `;
+      } else if (startDateParsed) {
+        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+          WITH combined_results AS (
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              trr.id as result_id,
+              s.name as status_name,
+              c.value as status_color,
+              s."isSuccess" as is_success,
+              s."isFailure" as is_failure,
+              trr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
+            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND trr."executedAt" >= ${startDateParsed}
+
+            UNION ALL
+
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              jr.id as result_id,
+              COALESCE(s.name, jr.type::text) as status_name,
+              COALESCE(c.value,
+                CASE jr.type
+                  WHEN 'PASSED' THEN '#22c55e'
+                  WHEN 'FAILURE' THEN '#ef4444'
+                  WHEN 'ERROR' THEN '#f97316'
+                  ELSE '#6b7280'
+                END
+              ) as status_color,
+              COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
+              COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
+              jr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            LEFT JOIN "Status" s ON s.id = jr."statusId"
+            LEFT JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND jr.type != 'SKIPPED'
+              AND jr."executedAt" IS NOT NULL
+              AND jr."executedAt" >= ${startDateParsed}
+          ),
+          ranked_results AS (
+            SELECT
+              test_case_id,
+              test_case_name,
+              result_id,
+              status_name,
+              status_color,
+              is_success,
+              is_failure,
+              executed_at,
+              ROW_NUMBER() OVER (PARTITION BY test_case_id ORDER BY executed_at DESC) as row_num
+            FROM combined_results
+          )
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
+        `;
+      } else if (endDateParsed) {
+        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+          WITH combined_results AS (
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              trr.id as result_id,
+              s.name as status_name,
+              c.value as status_color,
+              s."isSuccess" as is_success,
+              s."isFailure" as is_failure,
+              trr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
+            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND trr."executedAt" <= ${endDateParsed}
+
+            UNION ALL
+
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              jr.id as result_id,
+              COALESCE(s.name, jr.type::text) as status_name,
+              COALESCE(c.value,
+                CASE jr.type
+                  WHEN 'PASSED' THEN '#22c55e'
+                  WHEN 'FAILURE' THEN '#ef4444'
+                  WHEN 'ERROR' THEN '#f97316'
+                  ELSE '#6b7280'
+                END
+              ) as status_color,
+              COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
+              COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
+              jr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            LEFT JOIN "Status" s ON s.id = jr."statusId"
+            LEFT JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND jr.type != 'SKIPPED'
+              AND jr."executedAt" IS NOT NULL
+              AND jr."executedAt" <= ${endDateParsed}
+          ),
+          ranked_results AS (
+            SELECT
+              test_case_id,
+              test_case_name,
+              result_id,
+              status_name,
+              status_color,
+              is_success,
+              is_failure,
+              executed_at,
+              ROW_NUMBER() OVER (PARTITION BY test_case_id ORDER BY executed_at DESC) as row_num
+            FROM combined_results
+          )
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
+        `;
+      } else {
+        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+          WITH combined_results AS (
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              trr.id as result_id,
+              s.name as status_name,
+              c.value as status_color,
+              s."isSuccess" as is_success,
+              s."isFailure" as is_failure,
+              trr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
+            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+
+            UNION ALL
+
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              jr.id as result_id,
+              COALESCE(s.name, jr.type::text) as status_name,
+              COALESCE(c.value,
+                CASE jr.type
+                  WHEN 'PASSED' THEN '#22c55e'
+                  WHEN 'FAILURE' THEN '#ef4444'
+                  WHEN 'ERROR' THEN '#f97316'
+                  ELSE '#6b7280'
+                END
+              ) as status_color,
+              COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
+              COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
+              jr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            LEFT JOIN "Status" s ON s.id = jr."statusId"
+            LEFT JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND jr.type != 'SKIPPED'
+              AND jr."executedAt" IS NOT NULL
+          ),
+          ranked_results AS (
+            SELECT
+              test_case_id,
+              test_case_name,
+              result_id,
+              status_name,
+              status_color,
+              is_success,
+              is_failure,
+              executed_at,
+              ROW_NUMBER() OVER (PARTITION BY test_case_id ORDER BY executed_at DESC) as row_num
+            FROM combined_results
+          )
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
+        `;
+      }
+    } else {
+      // Project-specific queries
+      if (startDateParsed && endDateParsed) {
+        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+          WITH combined_results AS (
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              trr.id as result_id,
+              s.name as status_name,
+              c.value as status_color,
+              s."isSuccess" as is_success,
+              s."isFailure" as is_failure,
+              trr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
+            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND rc."projectId" = ${projectIdNum}
+              AND trr."executedAt" >= ${startDateParsed}
+              AND trr."executedAt" <= ${endDateParsed}
+
+            UNION ALL
+
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              jr.id as result_id,
+              COALESCE(s.name, jr.type::text) as status_name,
+              COALESCE(c.value,
+                CASE jr.type
+                  WHEN 'PASSED' THEN '#22c55e'
+                  WHEN 'FAILURE' THEN '#ef4444'
+                  WHEN 'ERROR' THEN '#f97316'
+                  ELSE '#6b7280'
+                END
+              ) as status_color,
+              COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
+              COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
+              jr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            LEFT JOIN "Status" s ON s.id = jr."statusId"
+            LEFT JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND rc."projectId" = ${projectIdNum}
+              AND jr.type != 'SKIPPED'
+              AND jr."executedAt" IS NOT NULL
+              AND jr."executedAt" >= ${startDateParsed}
+              AND jr."executedAt" <= ${endDateParsed}
+          ),
+          ranked_results AS (
+            SELECT
+              test_case_id,
+              test_case_name,
+              result_id,
+              status_name,
+              status_color,
+              is_success,
+              is_failure,
+              executed_at,
+              ROW_NUMBER() OVER (PARTITION BY test_case_id ORDER BY executed_at DESC) as row_num
+            FROM combined_results
+          )
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
+        `;
+      } else if (startDateParsed) {
+        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+          WITH combined_results AS (
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              trr.id as result_id,
+              s.name as status_name,
+              c.value as status_color,
+              s."isSuccess" as is_success,
+              s."isFailure" as is_failure,
+              trr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
+            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND rc."projectId" = ${projectIdNum}
+              AND trr."executedAt" >= ${startDateParsed}
+
+            UNION ALL
+
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              jr.id as result_id,
+              COALESCE(s.name, jr.type::text) as status_name,
+              COALESCE(c.value,
+                CASE jr.type
+                  WHEN 'PASSED' THEN '#22c55e'
+                  WHEN 'FAILURE' THEN '#ef4444'
+                  WHEN 'ERROR' THEN '#f97316'
+                  ELSE '#6b7280'
+                END
+              ) as status_color,
+              COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
+              COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
+              jr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            LEFT JOIN "Status" s ON s.id = jr."statusId"
+            LEFT JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND rc."projectId" = ${projectIdNum}
+              AND jr.type != 'SKIPPED'
+              AND jr."executedAt" IS NOT NULL
+              AND jr."executedAt" >= ${startDateParsed}
+          ),
+          ranked_results AS (
+            SELECT
+              test_case_id,
+              test_case_name,
+              result_id,
+              status_name,
+              status_color,
+              is_success,
+              is_failure,
+              executed_at,
+              ROW_NUMBER() OVER (PARTITION BY test_case_id ORDER BY executed_at DESC) as row_num
+            FROM combined_results
+          )
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
+        `;
+      } else if (endDateParsed) {
+        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+          WITH combined_results AS (
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              trr.id as result_id,
+              s.name as status_name,
+              c.value as status_color,
+              s."isSuccess" as is_success,
+              s."isFailure" as is_failure,
+              trr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
+            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND rc."projectId" = ${projectIdNum}
+              AND trr."executedAt" <= ${endDateParsed}
+
+            UNION ALL
+
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              jr.id as result_id,
+              COALESCE(s.name, jr.type::text) as status_name,
+              COALESCE(c.value,
+                CASE jr.type
+                  WHEN 'PASSED' THEN '#22c55e'
+                  WHEN 'FAILURE' THEN '#ef4444'
+                  WHEN 'ERROR' THEN '#f97316'
+                  ELSE '#6b7280'
+                END
+              ) as status_color,
+              COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
+              COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
+              jr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            LEFT JOIN "Status" s ON s.id = jr."statusId"
+            LEFT JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND rc."projectId" = ${projectIdNum}
+              AND jr.type != 'SKIPPED'
+              AND jr."executedAt" IS NOT NULL
+              AND jr."executedAt" <= ${endDateParsed}
+          ),
+          ranked_results AS (
+            SELECT
+              test_case_id,
+              test_case_name,
+              result_id,
+              status_name,
+              status_color,
+              is_success,
+              is_failure,
+              executed_at,
+              ROW_NUMBER() OVER (PARTITION BY test_case_id ORDER BY executed_at DESC) as row_num
+            FROM combined_results
+          )
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
+        `;
+      } else {
+        rawResults = await prisma.$queryRaw<RawExecutionResult[]>`
+          WITH combined_results AS (
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              trr.id as result_id,
+              s.name as status_name,
+              c.value as status_color,
+              s."isSuccess" as is_success,
+              s."isFailure" as is_failure,
+              trr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
+            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND rc."projectId" = ${projectIdNum}
+
+            UNION ALL
+
+            SELECT
+              rc.id as test_case_id,
+              rc.name as test_case_name,
+              jr.id as result_id,
+              COALESCE(s.name, jr.type::text) as status_name,
+              COALESCE(c.value,
+                CASE jr.type
+                  WHEN 'PASSED' THEN '#22c55e'
+                  WHEN 'FAILURE' THEN '#ef4444'
+                  WHEN 'ERROR' THEN '#f97316'
+                  ELSE '#6b7280'
+                END
+              ) as status_color,
+              COALESCE(s."isSuccess", jr.type = 'PASSED') as is_success,
+              COALESCE(s."isFailure", jr.type IN ('FAILURE', 'ERROR')) as is_failure,
+              jr."executedAt" as executed_at
+            FROM "RepositoryCases" rc
+            INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            LEFT JOIN "Status" s ON s.id = jr."statusId"
+            LEFT JOIN "Color" c ON c.id = s."colorId"
+            WHERE rc."isDeleted" = false
+              AND rc."projectId" = ${projectIdNum}
+              AND jr.type != 'SKIPPED'
+              AND jr."executedAt" IS NOT NULL
+          ),
+          ranked_results AS (
+            SELECT
+              test_case_id,
+              test_case_name,
+              result_id,
+              status_name,
+              status_color,
+              is_success,
+              is_failure,
+              executed_at,
+              ROW_NUMBER() OVER (PARTITION BY test_case_id ORDER BY executed_at DESC) as row_num
+            FROM combined_results
+          )
+          SELECT * FROM ranked_results WHERE row_num <= ${runs} ORDER BY test_case_id, row_num
+        `;
+      }
     }
 
-    // Build base where clause for test cases
-    const baseWhere: any = {
-      isDeleted: false,
-    };
+    // Group results by test case
+    const testCaseMap = new Map<number, {
+      testCaseId: number;
+      testCaseName: string;
+      executions: ExecutionStatus[];
+    }>();
 
-    if (!isCrossProject) {
-      baseWhere.projectId = Number(projectId);
+    for (const row of rawResults) {
+      const testCaseId = row.test_case_id;
+
+      if (!testCaseMap.has(testCaseId)) {
+        testCaseMap.set(testCaseId, {
+          testCaseId,
+          testCaseName: row.test_case_name,
+          executions: [],
+        });
+      }
+
+      testCaseMap.get(testCaseId)!.executions.push({
+        resultId: row.result_id,
+        statusName: row.status_name,
+        statusColor: row.status_color,
+        isSuccess: row.is_success,
+        isFailure: row.is_failure,
+        executedAt: row.executed_at.toISOString(),
+      });
     }
-
-    // Query all test cases with their recent test run results AND JUnit results
-    // We need to get results across all test run cases for each repository case
-    const testCases = await prisma.repositoryCases.findMany({
-      where: baseWhere,
-      select: {
-        id: true,
-        name: true,
-        // Manual test run results
-        testRuns: {
-          where: {
-            testRun: {
-              isDeleted: false,
-            },
-          },
-          select: {
-            results: {
-              where: {
-                isDeleted: false,
-                // Exclude untested status
-                status: {
-                  systemName: {
-                    not: "untested",
-                  },
-                },
-                ...(Object.keys(dateFilter).length > 0
-                  ? { executedAt: dateFilter }
-                  : {}),
-              },
-              orderBy: {
-                executedAt: "desc",
-              },
-              select: {
-                id: true,
-                executedAt: true,
-                status: {
-                  select: {
-                    name: true,
-                    isSuccess: true,
-                    isFailure: true,
-                    color: {
-                      select: {
-                        value: true,
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        // JUnit automated test results
-        junitResults: {
-          where: {
-            // Exclude SKIPPED results (similar to excluding untested)
-            type: {
-              not: "SKIPPED",
-            },
-            ...(Object.keys(dateFilter).length > 0
-              ? { executedAt: dateFilter }
-              : {}),
-          },
-          orderBy: {
-            executedAt: "desc",
-          },
-          select: {
-            id: true,
-            executedAt: true,
-            type: true,
-            status: {
-              select: {
-                name: true,
-                isSuccess: true,
-                isFailure: true,
-                color: {
-                  select: {
-                    value: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
 
     // Process each test case to find flaky ones
     const flakyTests: FlakyTestRow[] = [];
 
-    for (const testCase of testCases) {
-      // Collect all results from both manual test runs and JUnit results
-      const allExecutions: ExecutionStatus[] = [];
-
-      // Add manual test run results
-      for (const testRunCase of testCase.testRuns) {
-        for (const result of testRunCase.results) {
-          allExecutions.push({
-            resultId: result.id,
-            statusName: result.status.name,
-            statusColor: result.status.color.value,
-            isSuccess: result.status.isSuccess,
-            isFailure: result.status.isFailure,
-            executedAt: result.executedAt.toISOString(),
-          });
-        }
-      }
-
-      // Add JUnit automated test results
-      for (const junitResult of testCase.junitResults) {
-        // Skip results without executedAt (shouldn't happen, but be safe)
-        if (!junitResult.executedAt) continue;
-
-        const junitMapping = mapJUnitResultType(junitResult.type);
-
-        // Use linked status if available, otherwise use JUnit type mapping
-        if (junitResult.status) {
-          allExecutions.push({
-            resultId: junitResult.id,
-            statusName: junitResult.status.name,
-            statusColor: junitResult.status.color?.value || junitMapping.defaultColor,
-            isSuccess: junitResult.status.isSuccess,
-            isFailure: junitResult.status.isFailure,
-            executedAt: junitResult.executedAt.toISOString(),
-          });
-        } else {
-          // No linked status - use JUnit result type directly
-          allExecutions.push({
-            resultId: junitResult.id,
-            statusName: junitMapping.statusName,
-            statusColor: junitMapping.defaultColor,
-            isSuccess: junitMapping.isSuccess,
-            isFailure: junitMapping.isFailure,
-            executedAt: junitResult.executedAt.toISOString(),
-          });
-        }
-      }
-
-      // Sort by executedAt descending (most recent first)
-      allExecutions.sort(
-        (a, b) =>
-          new Date(b.executedAt).getTime() - new Date(a.executedAt).getTime()
-      );
-
-      // Take only the last N results
-      const recentExecutions = allExecutions.slice(0, runs);
-
+    for (const testCase of testCaseMap.values()) {
       // Skip if not enough results
-      if (recentExecutions.length < 2) {
+      if (testCase.executions.length < 2) {
         continue;
       }
 
       // Check if test has both success and failure results
-      if (!hasRequiredFlakiness(recentExecutions)) {
+      if (!hasRequiredFlakiness(testCase.executions)) {
         continue;
       }
 
       // Count flips
-      const flipCount = countStatusFlips(recentExecutions);
+      const flipCount = countStatusFlips(testCase.executions);
 
       // Include if flip count meets threshold
       if (flipCount >= threshold) {
         flakyTests.push({
-          testCaseId: testCase.id,
-          testCaseName: testCase.name,
+          testCaseId: testCase.testCaseId,
+          testCaseName: testCase.testCaseName,
           flipCount,
-          executions: recentExecutions,
+          executions: testCase.executions,
         });
       }
     }

@@ -72,6 +72,15 @@ export function useFlakyTestsColumns(
         ),
         cell: (info) => {
           const executions = info.row.original.executions || [];
+          const totalSlots = Math.max(executions.length, consecutiveRuns);
+
+          // Calculate opacity: index 0 = 1 (full), index 1 = 0.7, then fade to 0.2
+          const getOpacity = (index: number) => {
+            if (index === 0) return 1;
+            if (totalSlots <= 2) return 0.7;
+            // From index 1 (0.7) to the last index (0.2)
+            return 0.7 - ((index - 1) / (totalSlots - 2)) * 0.5;
+          };
 
           return (
             <TooltipProvider>
@@ -81,15 +90,18 @@ export function useFlakyTestsColumns(
                     <TooltipTrigger asChild>
                       <div
                         className="w-4 h-4 rounded-sm cursor-pointer"
-                        style={{ backgroundColor: execution.statusColor }}
+                        style={{
+                          backgroundColor: execution.statusColor,
+                          opacity: getOpacity(index),
+                        }}
                       />
                     </TooltipTrigger>
                     <TooltipContent>
                       <div className="text-xs">
-                        <div className="font-medium text-popover-foreground">
+                        <div className="font-medium">
                           {execution.statusName}
                         </div>
-                        <div className="text-popover-foreground/70">
+                        <div className="opacity-80">
                           {format(new Date(execution.executedAt), "PPp")}
                         </div>
                       </div>
@@ -102,6 +114,7 @@ export function useFlakyTestsColumns(
                       <div
                         key={`${info.row.id}-empty-${index}`}
                         className="w-4 h-4 rounded-sm bg-muted"
+                        style={{ opacity: getOpacity(executions.length + index) }}
                       />
                     )
                   )}
