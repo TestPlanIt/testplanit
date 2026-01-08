@@ -1,3 +1,11 @@
+## [0.9.23](https://github.com/TestPlanIt/testplanit/compare/v0.9.22...v0.9.23) (2026-01-08)
+
+
+### Bug Fixes
+
+* **dependencies:** downgrade form-data version in pnpm-lock.yaml ([660f218](https://github.com/TestPlanIt/testplanit/commit/660f218e266fb501234dacf329d6796e0f004fd4))
+* **dependencies:** update package versions in pnpm-lock.yaml and package.json ([fb6c0ba](https://github.com/TestPlanIt/testplanit/commit/fb6c0ba0156e618956a0364b8089aac6e2db0251))
+
 ## [0.9.22](https://github.com/TestPlanIt/testplanit/compare/v0.9.21...v0.9.22) (2026-01-07)
 
 
