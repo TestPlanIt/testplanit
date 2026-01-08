@@ -4557,7 +4557,22 @@
         "automationTrends": {
           "label": "Automation Trends",
           "description": "Track automation progress week-over-week by priority"
+        },
+        "flakyTests": {
+          "label": "Flaky Tests",
+          "description": "Identify tests with inconsistent pass/fail results"
         }
+      },
+      "flakyTests": {
+        "consecutiveRuns": "Last Consecutive Runs",
+        "consecutiveRunsHelp": "Number of recent test executions to analyze (5-30). Results with 'untested' status are excluded.",
+        "flipThreshold": "Minimum Flips",
+        "flipThresholdHelp": "Minimum number of pass/fail transitions required to be considered flaky.",
+        "flips": "Flips",
+        "lastNResults": "Last {count} Results",
+        "newest": "New",
+        "oldest": "Old",
+        "noFlakyTests": "No flaky tests found matching the criteria"
       },
       "crossProjectReportTypes": {
         "testExecution": {

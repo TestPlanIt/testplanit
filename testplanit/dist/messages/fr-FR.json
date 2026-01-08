@@ -4557,7 +4557,22 @@
         "automationTrends": {
           "label": "Tendances en matière d'automatisation",
           "description": "Suivre les progrès de l'automatisation semaine après semaine par priorité"
+        },
+        "flakyTests": {
+          "label": "Tests peu fiables",
+          "description": "Identifier les tests présentant des résultats réussite/échec incohérents."
         }
+      },
+      "flakyTests": {
+        "consecutiveRuns": "Dernières courses consécutives",
+        "consecutiveRunsHelp": "Nombre d'exécutions de tests récentes à analyser (5-30). Les résultats dont le statut est « non testé » sont exclus.",
+        "flipThreshold": "Retournements minimums",
+        "flipThresholdHelp": "Nombre minimal de transitions réussite/échec requis pour être considéré comme instable.",
+        "flips": "Flips",
+        "lastNResults": "Derniers résultats {count}",
+        "newest": "Nouveau",
+        "oldest": "Vieux",
+        "noFlakyTests": "Aucun test non concluant correspondant aux critères n'a été trouvé."
       },
       "crossProjectReportTypes": {
         "testExecution": {

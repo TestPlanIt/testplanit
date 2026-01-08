@@ -557,7 +557,7 @@ function ReportBuilderContent({
   );
 
   // Use flaky tests columns for flaky-tests report
-  const flakyTestsColumns = useFlakyTestsColumns(consecutiveRuns);
+  const flakyTestsColumns = useFlakyTestsColumns(consecutiveRuns, projectId);
 
   // Choose which columns to use based on report type
   const columns =

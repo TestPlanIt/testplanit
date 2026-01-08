@@ -9,6 +9,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { format } from "date-fns";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { RepositoryCaseSource } from "@prisma/client";
 
 interface ExecutionStatus {
   resultId: number;
@@ -22,12 +24,14 @@ interface ExecutionStatus {
 interface FlakyTestRow {
   testCaseId: number;
   testCaseName: string;
+  testCaseSource: string;
   flipCount: number;
   executions: ExecutionStatus[];
 }
 
 export function useFlakyTestsColumns(
-  consecutiveRuns: number
+  consecutiveRuns: number,
+  projectId?: number | string
 ): ColumnDef<FlakyTestRow, any>[] {
   const t = useTranslations();
   const columnHelper = createColumnHelper<FlakyTestRow>();
@@ -41,9 +45,23 @@ export function useFlakyTestsColumns(
         id: "testCaseName",
         header: () => <span>{t("reports.dimensions.testCase")}</span>,
         cell: (info) => (
-          <span className="font-medium">{info.getValue()}</span>
+          <CaseDisplay
+            id={info.row.original.testCaseId}
+            name={info.row.original.testCaseName}
+            source={info.row.original.testCaseSource as RepositoryCaseSource}
+            link={
+              projectId
+                ? `/projects/repository/${projectId}/${info.row.original.testCaseId}`
+                : undefined
+            }
+            size="medium"
+            maxLines={2}
+          />
         ),
         enableSorting: true,
+        size: 500,
+        minSize: 200,
+        maxSize: 1500,
       }) as ColumnDef<FlakyTestRow, any>
     );
 
@@ -58,6 +76,8 @@ export function useFlakyTestsColumns(
           </span>
         ),
         enableSorting: true,
+        size: 100,
+        minSize: 100,
       }) as ColumnDef<FlakyTestRow, any>
     );
 
@@ -67,7 +87,9 @@ export function useFlakyTestsColumns(
         id: "executionHistory",
         header: () => (
           <span>
-            {t("reports.ui.flakyTests.lastNResults", { count: consecutiveRuns })}
+            {t("reports.ui.flakyTests.lastNResults", {
+              count: consecutiveRuns,
+            })}
           </span>
         ),
         cell: (info) => {
@@ -85,39 +107,42 @@ export function useFlakyTestsColumns(
           return (
             <TooltipProvider>
               <div className="flex items-center gap-0.5">
-                {executions.slice(0, consecutiveRuns).map((execution, index) => (
-                  <Tooltip key={`${info.row.id}-exec-${index}`}>
-                    <TooltipTrigger asChild>
-                      <div
-                        className="w-4 h-4 rounded-sm cursor-pointer"
-                        style={{
-                          backgroundColor: execution.statusColor,
-                          opacity: getOpacity(index),
-                        }}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <div className="text-xs">
-                        <div className="font-medium">
-                          {execution.statusName}
+                {executions
+                  .slice(0, consecutiveRuns)
+                  .map((execution, index) => (
+                    <Tooltip key={`${info.row.id}-exec-${index}`}>
+                      <TooltipTrigger asChild>
+                        <div
+                          className="w-4 h-4 rounded-sm cursor-pointer"
+                          style={{
+                            backgroundColor: execution.statusColor,
+                            opacity: getOpacity(index),
+                          }}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="text-xs space-y-1">
+                          <StatusDotDisplay
+                            name={execution.statusName}
+                            color={execution.statusColor}
+                          />
+                          <div className="opacity-80">
+                            {format(new Date(execution.executedAt), "PPp")}
+                          </div>
                         </div>
-                        <div className="opacity-80">
-                          {format(new Date(execution.executedAt), "PPp")}
-                        </div>
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
                 {executions.length < consecutiveRuns &&
-                  Array.from({ length: consecutiveRuns - executions.length }).map(
-                    (_, index) => (
-                      <div
-                        key={`${info.row.id}-empty-${index}`}
-                        className="w-4 h-4 rounded-sm bg-muted"
-                        style={{ opacity: getOpacity(executions.length + index) }}
-                      />
-                    )
-                  )}
+                  Array.from({
+                    length: consecutiveRuns - executions.length,
+                  }).map((_, index) => (
+                    <div
+                      key={`${info.row.id}-empty-${index}`}
+                      className="w-4 h-4 rounded-sm bg-muted"
+                      style={{ opacity: getOpacity(executions.length + index) }}
+                    />
+                  ))}
               </div>
             </TooltipProvider>
           );
@@ -127,5 +152,5 @@ export function useFlakyTestsColumns(
     );
 
     return columns;
-  }, [consecutiveRuns, columnHelper, t]);
+  }, [consecutiveRuns, columnHelper, t, projectId]);
 }

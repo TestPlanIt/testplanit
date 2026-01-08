@@ -4557,7 +4557,22 @@
         "automationTrends": {
           "label": "Tendencias de automatización",
           "description": "Seguimiento del progreso de la automatización semana a semana por prioridad"
+        },
+        "flakyTests": {
+          "label": "Pruebas inestables",
+          "description": "Identificar pruebas con resultados inconsistentes de aprobado/reprobado"
         }
+      },
+      "flakyTests": {
+        "consecutiveRuns": "Últimas carreras consecutivas",
+        "consecutiveRunsHelp": "Número de ejecuciones de pruebas recientes para analizar (5-30). Se excluyen los resultados con estado \"no probado\".",
+        "flipThreshold": "Volteos mínimos",
+        "flipThresholdHelp": "Se requiere un número mínimo de transiciones de aprobado/reprobado para que se considere inestable.",
+        "flips": "volteretas",
+        "lastNResults": "Últimos {count} resultados",
+        "newest": "Nuevo",
+        "oldest": "Viejo",
+        "noFlakyTests": "No se encontraron pruebas inconsistentes que coincidan con los criterios"
       },
       "crossProjectReportTypes": {
         "testExecution": {

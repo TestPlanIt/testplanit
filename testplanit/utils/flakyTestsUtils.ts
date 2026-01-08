@@ -15,6 +15,7 @@ interface ExecutionStatus {
 interface FlakyTestRow {
   testCaseId: number;
   testCaseName: string;
+  testCaseSource: string;
   flipCount: number;
   executions: ExecutionStatus[];
 }
@@ -22,6 +23,7 @@ interface FlakyTestRow {
 interface RawExecutionResult {
   test_case_id: number;
   test_case_name: string;
+  test_case_source: string;
   result_id: number;
   status_name: string;
   status_color: string;
@@ -127,6 +129,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               trr.id as result_id,
               s.name as status_name,
               c.value as status_color,
@@ -148,6 +151,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               jr.id as result_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
@@ -175,6 +179,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               test_case_id,
               test_case_name,
+              test_case_source,
               result_id,
               status_name,
               status_color,
@@ -192,6 +197,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               trr.id as result_id,
               s.name as status_name,
               c.value as status_color,
@@ -212,6 +218,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               jr.id as result_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
@@ -238,6 +245,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               test_case_id,
               test_case_name,
+              test_case_source,
               result_id,
               status_name,
               status_color,
@@ -255,6 +263,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               trr.id as result_id,
               s.name as status_name,
               c.value as status_color,
@@ -275,6 +284,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               jr.id as result_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
@@ -301,6 +311,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               test_case_id,
               test_case_name,
+              test_case_source,
               result_id,
               status_name,
               status_color,
@@ -318,6 +329,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               trr.id as result_id,
               s.name as status_name,
               c.value as status_color,
@@ -337,6 +349,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               jr.id as result_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
@@ -362,6 +375,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               test_case_id,
               test_case_name,
+              test_case_source,
               result_id,
               status_name,
               status_color,
@@ -382,6 +396,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               trr.id as result_id,
               s.name as status_name,
               c.value as status_color,
@@ -404,6 +419,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               jr.id as result_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
@@ -432,6 +448,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               test_case_id,
               test_case_name,
+              test_case_source,
               result_id,
               status_name,
               status_color,
@@ -449,6 +466,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               trr.id as result_id,
               s.name as status_name,
               c.value as status_color,
@@ -470,6 +488,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               jr.id as result_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
@@ -497,6 +516,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               test_case_id,
               test_case_name,
+              test_case_source,
               result_id,
               status_name,
               status_color,
@@ -514,6 +534,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               trr.id as result_id,
               s.name as status_name,
               c.value as status_color,
@@ -535,6 +556,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               jr.id as result_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
@@ -562,6 +584,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               test_case_id,
               test_case_name,
+              test_case_source,
               result_id,
               status_name,
               status_color,
@@ -579,6 +602,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               trr.id as result_id,
               s.name as status_name,
               c.value as status_color,
@@ -599,6 +623,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               rc.id as test_case_id,
               rc.name as test_case_name,
+              rc.source::text as test_case_source,
               jr.id as result_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
@@ -625,6 +650,7 @@ export async function handleFlakyTestsPOST(
             SELECT
               test_case_id,
               test_case_name,
+              test_case_source,
               result_id,
               status_name,
               status_color,
@@ -643,6 +669,7 @@ export async function handleFlakyTestsPOST(
     const testCaseMap = new Map<number, {
       testCaseId: number;
       testCaseName: string;
+      testCaseSource: string;
       executions: ExecutionStatus[];
     }>();
 
@@ -653,6 +680,7 @@ export async function handleFlakyTestsPOST(
         testCaseMap.set(testCaseId, {
           testCaseId,
           testCaseName: row.test_case_name,
+          testCaseSource: row.test_case_source,
           executions: [],
         });
       }
@@ -689,6 +717,7 @@ export async function handleFlakyTestsPOST(
         flakyTests.push({
           testCaseId: testCase.testCaseId,
           testCaseName: testCase.testCaseName,
+          testCaseSource: testCase.testCaseSource,
           flipCount,
           executions: testCase.executions,
         });
