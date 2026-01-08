@@ -379,6 +379,11 @@ export function buildRepositoryStatsQuery(
     where.source = context.dimensions.source.id as any;
   }
 
+  // Apply testCase filter (when drilling down by individual test case)
+  if (context.dimensions.testCase) {
+    where.id = Number(context.dimensions.testCase.id);
+  }
+
   // Apply automated filter for automatedCount/manualCount metrics
   if (context.metricId === "automatedCount") {
     where.automated = true;

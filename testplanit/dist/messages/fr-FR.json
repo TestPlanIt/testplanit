@@ -4527,7 +4527,7 @@
       },
       "chartDataTruncated": {
         "title": "Données du graphique tronquées",
-        "message": "Affichage du premier {shown} point de données sur {total} . Utilisez des plages de dates pour réduire la taille de l'ensemble de données."
+        "message": "Affichage de {shown} sur {total} points de données pour une meilleure lisibilité. Utilisez des filtres ou des plages de dates pour affiner vos résultats, ou consultez l'ensemble des données dans le tableau des résultats ci-dessous."
       },
       "reportTypes": {
         "testExecution": {

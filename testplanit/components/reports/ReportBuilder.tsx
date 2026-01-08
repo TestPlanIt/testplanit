@@ -747,16 +747,21 @@ function ReportBuilderContent({
         const data = await response.json();
 
         // Transform to react-select format with translations for display
-        const dimOpts = data.dimensions.map((d: any) => ({
-          value: d.id,
-          label: tDimensions(d.id) || d.label, // Translated label for display
-          apiLabel: d.label, // Keep English label for API data access
-        }));
-        const metOpts = data.metrics.map((m: any) => ({
-          value: m.id,
-          label: tMetrics(m.id) || m.label, // Translated label for display
-          apiLabel: m.label, // Keep English label for API data access
-        }));
+        // Sort alphabetically by translated label
+        const dimOpts = data.dimensions
+          .map((d: any) => ({
+            value: d.id,
+            label: tDimensions(d.id) || d.label, // Translated label for display
+            apiLabel: d.label, // Keep English label for API data access
+          }))
+          .sort((a: any, b: any) => a.label.localeCompare(b.label));
+        const metOpts = data.metrics
+          .map((m: any) => ({
+            value: m.id,
+            label: tMetrics(m.id) || m.label, // Translated label for display
+            apiLabel: m.label, // Keep English label for API data access
+          }))
+          .sort((a: any, b: any) => a.label.localeCompare(b.label));
 
         setDimensionOptions(dimOpts);
         setMetricOptions(metOpts);
@@ -1268,8 +1273,9 @@ function ReportBuilderContent({
     [chartDataVersion, allResults] // Only recompute when chart data version changes
   );
 
-  // Maximum number of data points to render in charts to prevent browser crashes
-  const MAX_CHART_DATA_POINTS = 1000;
+  // Maximum number of data points to render in charts
+  // Keep this low enough for charts to remain readable and useful
+  const MAX_CHART_DATA_POINTS = 50;
 
   // Memoize the chart component to prevent re-renders when parent re-renders
   // Use chartDataRef.current for stable reference that doesn't change on pagination
@@ -1520,7 +1526,7 @@ function ReportBuilderContent({
                     </p>
                   </div>
                   <Form {...form}>
-                    <form className="grid gap-4 relative">
+                    <form className="grid gap-4 relative px-0.5">
                       {/* Custom Report Type Selection */}
                       <div className="grid gap-2">
                         <label className="text-sm font-medium">
@@ -1772,25 +1778,19 @@ function ReportBuilderContent({
                       <CardDescription>{enhancedReportSummary}</CardDescription>
                     )}
                   </CardHeader>
-                  <CardContent className="h-[calc(100%-4rem)] p-6">
-                    <div className="h-full w-full">
+                  <CardContent className="h-[calc(100%-4rem)] p-6 flex flex-col">
+                    <div className="flex-1 min-h-0 w-full">
                       {memoizedChart.chart}
-                      {memoizedChart.isTruncated && (
-                        <Alert className="mt-4">
-                          <AlertTitle className="flex items-center gap-1">
-                            <AlertCircle className="h-4 w-4 stroke-primary" />
-                            {tReports("chartDataTruncated.title")}
-                          </AlertTitle>
-                          <AlertDescription className="ml-5">
-                            {tReports("chartDataTruncated.message", {
-                              shown: MAX_CHART_DATA_POINTS.toLocaleString(),
-                              total:
-                                memoizedChart.totalDataPoints.toLocaleString(),
-                            })}
-                          </AlertDescription>
-                        </Alert>
-                      )}
                     </div>
+                    {memoizedChart.isTruncated && (
+                      <p className="text-xs text-muted-foreground mt-2 shrink-0">
+                        {tReports("chartDataTruncated.message", {
+                          shown: MAX_CHART_DATA_POINTS.toLocaleString(),
+                          total:
+                            memoizedChart.totalDataPoints.toLocaleString(),
+                        })}
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
               </ResizablePanel>

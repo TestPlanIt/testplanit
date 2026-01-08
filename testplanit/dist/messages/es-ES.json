@@ -4527,7 +4527,7 @@
       },
       "chartDataTruncated": {
         "title": "Datos del gráfico truncados",
-        "message": "Se muestran los primeros {shown} de {total} puntos de datos. Utilice rangos de fechas para reducir el tamaño del conjunto de datos."
+        "message": "Se muestran {shown} de {total} puntos de datos para facilitar la lectura. Utilice filtros o rangos de fechas para restringir los resultados o consulte los datos completos en la tabla de resultados a continuación."
       },
       "reportTypes": {
         "testExecution": {
