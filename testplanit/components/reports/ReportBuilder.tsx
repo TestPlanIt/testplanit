@@ -67,6 +67,7 @@ import {
 } from "~/utils/reportUtils";
 import { useReportColumns } from "~/hooks/useReportColumns";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
+import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import {
   ReportType,
   getProjectReportTypes,
@@ -170,11 +171,17 @@ function ReportBuilderContent({
 
   // Split report types into pre-built reports and custom reports
   const preBuiltReports = useMemo(
-    () => reportTypes.filter((r) => r.id === "automation-trends"),
+    () =>
+      reportTypes.filter(
+        (r) => r.id === "automation-trends" || r.id === "flaky-tests"
+      ),
     [reportTypes]
   );
   const customReports = useMemo(
-    () => reportTypes.filter((r) => r.id !== "automation-trends"),
+    () =>
+      reportTypes.filter(
+        (r) => r.id !== "automation-trends" && r.id !== "flaky-tests"
+      ),
     [reportTypes]
   );
 
@@ -256,6 +263,10 @@ function ReportBuilderContent({
   const [lastUsedDateRange, setLastUsedDateRange] = useState<
     DateRange | undefined
   >(undefined);
+
+  // Flaky tests state
+  const [consecutiveRuns, setConsecutiveRuns] = useState(10);
+  const [flipThreshold, setFlipThreshold] = useState(5);
 
   // Table state
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -545,11 +556,16 @@ function ReportBuilderContent({
     lastUsedDateGrouping
   );
 
+  // Use flaky tests columns for flaky-tests report
+  const flakyTestsColumns = useFlakyTestsColumns(consecutiveRuns);
+
   // Choose which columns to use based on report type
   const columns =
     reportType === "automation-trends"
       ? automationTrendsColumns
-      : standardColumns;
+      : reportType === "flaky-tests"
+        ? flakyTestsColumns
+        : standardColumns;
 
   // When lastUsedDimensions change (after running a report), update grouping
   React.useEffect(() => {
@@ -912,6 +928,12 @@ function ReportBuilderContent({
           body.dateGrouping = dateGrouping;
         }
 
+        // For flaky tests, add consecutive runs and flip threshold
+        if (reportType === "flaky-tests") {
+          body.consecutiveRuns = consecutiveRuns;
+          body.flipThreshold = flipThreshold;
+        }
+
         // Add sorting parameters if configured
         if (sortConfig) {
           // Map frontend column IDs to backend metric IDs
@@ -975,10 +997,12 @@ function ReportBuilderContent({
 
         const data = await response.json();
 
-        // Handle client-side pagination for automation trends
+        // Handle client-side pagination for automation trends and flaky tests
         if (
           reportType === "automation-trends" ||
-          reportType === "cross-project-automation-trends"
+          reportType === "cross-project-automation-trends" ||
+          reportType === "flaky-tests" ||
+          reportType === "cross-project-flaky-tests"
         ) {
           const allData = data.data || data.results;
 
@@ -1089,6 +1113,8 @@ function ReportBuilderContent({
       tReports,
       dateGrouping,
       selectedFilterValues,
+      consecutiveRuns,
+      flipThreshold,
     ]
   );
 
@@ -1488,6 +1514,73 @@ function ReportBuilderContent({
                           </div>
                         )}
 
+                      {/* Flaky Tests Parameters */}
+                      {(reportType === "flaky-tests" ||
+                        reportType === "cross-project-flaky-tests") && (
+                        <div className="grid gap-4">
+                          {/* Consecutive Runs */}
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tReports("flakyTests.consecutiveRuns")}
+                              </label>
+                              <HelpPopover
+                                helpKey={`## ${tReports("flakyTests.consecutiveRuns")}\n${tReports("flakyTests.consecutiveRunsHelp")}`}
+                              />
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="range"
+                                min={5}
+                                max={30}
+                                step={1}
+                                value={consecutiveRuns}
+                                onChange={(e) => {
+                                  const value = Number(e.target.value);
+                                  setConsecutiveRuns(value);
+                                  // Ensure flip threshold doesn't exceed consecutive runs - 1
+                                  if (flipThreshold >= value) {
+                                    setFlipThreshold(value - 1);
+                                  }
+                                }}
+                                className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                              />
+                              <span className="w-8 text-sm font-mono text-center">
+                                {consecutiveRuns}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Flip Threshold */}
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tReports("flakyTests.flipThreshold")}
+                              </label>
+                              <HelpPopover
+                                helpKey={`## ${tReports("flakyTests.flipThreshold")}\n${tReports("flakyTests.flipThresholdHelp")}`}
+                              />
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="range"
+                                min={2}
+                                max={consecutiveRuns - 1}
+                                step={1}
+                                value={flipThreshold}
+                                onChange={(e) =>
+                                  setFlipThreshold(Number(e.target.value))
+                                }
+                                className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                              />
+                              <span className="w-8 text-sm font-mono text-center">
+                                {flipThreshold}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Run Report Button */}
                       <Button
                         onClick={handleRunReport}
@@ -1654,56 +1747,57 @@ function ReportBuilderContent({
                           </div>
                         )}
 
-                      {/* Metrics Selection - Hidden for automation trends */}
-                      {reportType !== "automation-trends" && (
-                        <div className="grid gap-2">
-                          <div className="flex items-center gap-2">
-                            <label className="text-sm font-medium">
-                              {tReports("metrics")}
-                            </label>
-                            <HelpPopover helpKey="reportBuilder.metrics" />
-                          </div>
-
-                          {/* Metric Order - shown when multiple metrics selected */}
-                          {metrics.length > 1 && (
-                            <div className="mb-2">
-                              <label className="text-xs text-muted-foreground mb-1 block">
-                                {tReports("metricOrder")}
+                      {/* Metrics Selection - Hidden for automation trends and flaky tests */}
+                      {reportType !== "automation-trends" &&
+                        reportType !== "flaky-tests" && (
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tReports("metrics")}
                               </label>
-                              <DraggableList
-                                items={metrics.map(dimensionToDraggableField)}
-                                setItems={(items) =>
-                                  setMetrics(
-                                    items.map(draggableFieldToDimension)
-                                  )
-                                }
-                                onRemove={(id) =>
-                                  setMetrics(
-                                    metrics.filter((m) => m.value !== id)
-                                  )
-                                }
-                              />
+                              <HelpPopover helpKey="reportBuilder.metrics" />
                             </div>
-                          )}
 
-                          <MultiSelect
-                            isMulti
-                            value={metrics}
-                            onChange={handleMetricsChange as any}
-                            options={filteredMetricOptions}
-                            styles={customStyles}
-                            placeholder={tReports("selectMetrics")}
-                            className="basic-multi-select"
-                            classNamePrefix="select"
-                            menuPortalTarget={
-                              isClient ? document.body : undefined
-                            }
-                            menuPosition="fixed"
-                            inputId="metrics-select"
-                            data-testid="metrics-select"
-                          />
-                        </div>
-                      )}
+                            {/* Metric Order - shown when multiple metrics selected */}
+                            {metrics.length > 1 && (
+                              <div className="mb-2">
+                                <label className="text-xs text-muted-foreground mb-1 block">
+                                  {tReports("metricOrder")}
+                                </label>
+                                <DraggableList
+                                  items={metrics.map(dimensionToDraggableField)}
+                                  setItems={(items) =>
+                                    setMetrics(
+                                      items.map(draggableFieldToDimension)
+                                    )
+                                  }
+                                  onRemove={(id) =>
+                                    setMetrics(
+                                      metrics.filter((m) => m.value !== id)
+                                    )
+                                  }
+                                />
+                              </div>
+                            )}
+
+                            <MultiSelect
+                              isMulti
+                              value={metrics}
+                              onChange={handleMetricsChange as any}
+                              options={filteredMetricOptions}
+                              styles={customStyles}
+                              placeholder={tReports("selectMetrics")}
+                              className="basic-multi-select"
+                              classNamePrefix="select"
+                              menuPortalTarget={
+                                isClient ? document.body : undefined
+                              }
+                              menuPosition="fixed"
+                              inputId="metrics-select"
+                              data-testid="metrics-select"
+                            />
+                          </div>
+                        )}
 
                       {compatWarning && (
                         <div className="rounded-md bg-yellow-50 p-4 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
@@ -1716,8 +1810,9 @@ function ReportBuilderContent({
                         onClick={handleRunReport}
                         disabled={
                           loading ||
-                          (reportType === "automation-trends"
-                            ? false // No requirements for automation trends
+                          (reportType === "automation-trends" ||
+                          reportType === "flaky-tests"
+                            ? false // No requirements for pre-built reports
                             : dimensions.length === 0 || metrics.length === 0)
                         }
                         className="w-full"
@@ -1786,8 +1881,7 @@ function ReportBuilderContent({
                       <p className="text-xs text-muted-foreground mt-2 shrink-0">
                         {tReports("chartDataTruncated.message", {
                           shown: MAX_CHART_DATA_POINTS.toLocaleString(),
-                          total:
-                            memoizedChart.totalDataPoints.toLocaleString(),
+                          total: memoizedChart.totalDataPoints.toLocaleString(),
                         })}
                       </p>
                     )}

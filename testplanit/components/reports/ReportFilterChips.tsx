@@ -32,7 +32,9 @@ export function ReportFilterChips({
 
   return (
     <div className="flex flex-wrap gap-2 items-center">
-      <span className="text-sm text-muted-foreground">{tReports("activeFilters")}</span>
+      <span className="text-sm text-muted-foreground">
+        {tReports("activeFilters")}
+      </span>
       {activeFilters.map((filter, index) => (
         <Badge
           key={`${filter.filterType}-${filter.valueId}-${index}`}

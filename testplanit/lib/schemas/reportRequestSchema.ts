@@ -52,11 +52,13 @@ export const reportRequestSchema = z
       });
     }
 
-    // Rule: At least one metric is always required (except for automation-trends)
+    // Rule: At least one metric is always required (except for pre-built reports like automation-trends and flaky-tests)
     if (
       data.metrics.length === 0 &&
       data.reportType !== "automation-trends" &&
-      data.reportType !== "cross-project-automation-trends"
+      data.reportType !== "cross-project-automation-trends" &&
+      data.reportType !== "flaky-tests" &&
+      data.reportType !== "cross-project-flaky-tests"
     ) {
       ctx.addIssue({
         code: "custom",
