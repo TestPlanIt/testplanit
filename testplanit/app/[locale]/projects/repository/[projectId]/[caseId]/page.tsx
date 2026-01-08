@@ -1825,7 +1825,7 @@ export default function TestCaseDetails() {
               >
                 <div className="mb-4">
                   <ul>
-                    {(testcase?.template?.caseFields || []).map((field) => {
+                    {(testcase?.template?.caseFields || []).map((field, fieldIndex) => {
                       let fieldValue = testcase.caseFieldValues.find(
                         (value) => value.fieldId === field.caseField.id
                       )?.value;
@@ -1838,7 +1838,7 @@ export default function TestCaseDetails() {
                       )
                         return null;
                       return (
-                        <li key={field.caseField.id} className="mb-2 mr-6">
+                        <li key={`case-field-${field.caseField.id}-${fieldIndex}`} className="mb-2 mr-6">
                           {field.caseField.type.type !== "Steps" && (
                             <div className="font-bold flex items-center">
                               {field.caseField.displayName}
