@@ -1,10 +1,12 @@
 import { NextRequest } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "~/server/auth";
 
 interface ExecutionStatus {
   resultId: number;
+  testRunId: number | null;
   statusName: string;
   statusColor: string;
   isSuccess: boolean;
@@ -25,6 +27,7 @@ interface RawExecutionResult {
   test_case_name: string;
   test_case_source: string;
   result_id: number;
+  test_run_id: number | null;
   status_name: string;
   status_color: string;
   is_success: boolean;
@@ -99,6 +102,7 @@ export async function handleFlakyTestsPOST(
       flipThreshold = 5,
       startDate,
       endDate,
+      automatedFilter, // "all" | "automated" | "manual"
     } = body;
 
     // Validate parameters
@@ -118,6 +122,22 @@ export async function handleFlakyTestsPOST(
     const endDateParsed = endDate ? new Date(endDate) : null;
     const projectIdNum = projectId ? Number(projectId) : null;
 
+    // Determine source filter based on automatedFilter
+    // Automated sources: JUNIT, TESTNG, XUNIT, NUNIT, MSTEST, MOCHA, CUCUMBER
+    // Manual sources: MANUAL, API
+    const automatedSources = ["JUNIT", "TESTNG", "XUNIT", "NUNIT", "MSTEST", "MOCHA", "CUCUMBER"];
+    const manualSources = ["MANUAL", "API"];
+    const sourceFilter = automatedFilter === "automated"
+      ? automatedSources
+      : automatedFilter === "manual"
+        ? manualSources
+        : null; // null means no filter (show all)
+
+    // Build source filter SQL fragment
+    const sourceFilterSql = sourceFilter
+      ? Prisma.sql`AND rc.source::text = ANY(${sourceFilter})`
+      : Prisma.empty;
+
     // Use raw SQL with window functions to efficiently get recent results per test case
     // Build query based on whether it's cross-project and date filters
     let rawResults: RawExecutionResult[];
@@ -131,6 +151,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               trr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
               c.value as status_color,
               s."isSuccess" as is_success,
@@ -138,11 +159,12 @@ export async function handleFlakyTestsPOST(
               trr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
-            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
             INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND trr."executedAt" >= ${startDateParsed}
               AND trr."executedAt" <= ${endDateParsed}
 
@@ -153,6 +175,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               jr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
                 CASE jr.type
@@ -167,9 +190,12 @@ export async function handleFlakyTestsPOST(
               jr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
+            LEFT JOIN "TestRuns" tr ON tr.id = jts."testRunId"
             LEFT JOIN "Status" s ON s.id = jr."statusId"
             LEFT JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND jr.type != 'SKIPPED'
               AND jr."executedAt" IS NOT NULL
               AND jr."executedAt" >= ${startDateParsed}
@@ -181,6 +207,7 @@ export async function handleFlakyTestsPOST(
               test_case_name,
               test_case_source,
               result_id,
+              test_run_id,
               status_name,
               status_color,
               is_success,
@@ -199,6 +226,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               trr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
               c.value as status_color,
               s."isSuccess" as is_success,
@@ -206,11 +234,12 @@ export async function handleFlakyTestsPOST(
               trr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
-            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
             INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND trr."executedAt" >= ${startDateParsed}
 
             UNION ALL
@@ -220,6 +249,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               jr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
                 CASE jr.type
@@ -234,9 +264,12 @@ export async function handleFlakyTestsPOST(
               jr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
+            LEFT JOIN "TestRuns" tr ON tr.id = jts."testRunId"
             LEFT JOIN "Status" s ON s.id = jr."statusId"
             LEFT JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND jr.type != 'SKIPPED'
               AND jr."executedAt" IS NOT NULL
               AND jr."executedAt" >= ${startDateParsed}
@@ -247,6 +280,7 @@ export async function handleFlakyTestsPOST(
               test_case_name,
               test_case_source,
               result_id,
+              test_run_id,
               status_name,
               status_color,
               is_success,
@@ -265,6 +299,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               trr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
               c.value as status_color,
               s."isSuccess" as is_success,
@@ -272,11 +307,12 @@ export async function handleFlakyTestsPOST(
               trr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
-            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
             INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND trr."executedAt" <= ${endDateParsed}
 
             UNION ALL
@@ -286,6 +322,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               jr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
                 CASE jr.type
@@ -300,9 +337,12 @@ export async function handleFlakyTestsPOST(
               jr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
+            LEFT JOIN "TestRuns" tr ON tr.id = jts."testRunId"
             LEFT JOIN "Status" s ON s.id = jr."statusId"
             LEFT JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND jr.type != 'SKIPPED'
               AND jr."executedAt" IS NOT NULL
               AND jr."executedAt" <= ${endDateParsed}
@@ -313,6 +353,7 @@ export async function handleFlakyTestsPOST(
               test_case_name,
               test_case_source,
               result_id,
+              test_run_id,
               status_name,
               status_color,
               is_success,
@@ -331,6 +372,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               trr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
               c.value as status_color,
               s."isSuccess" as is_success,
@@ -338,11 +380,12 @@ export async function handleFlakyTestsPOST(
               trr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
-            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
             INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
 
             UNION ALL
 
@@ -351,6 +394,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               jr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
                 CASE jr.type
@@ -365,9 +409,12 @@ export async function handleFlakyTestsPOST(
               jr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
+            LEFT JOIN "TestRuns" tr ON tr.id = jts."testRunId"
             LEFT JOIN "Status" s ON s.id = jr."statusId"
             LEFT JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND jr.type != 'SKIPPED'
               AND jr."executedAt" IS NOT NULL
           ),
@@ -377,6 +424,7 @@ export async function handleFlakyTestsPOST(
               test_case_name,
               test_case_source,
               result_id,
+              test_run_id,
               status_name,
               status_color,
               is_success,
@@ -398,6 +446,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               trr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
               c.value as status_color,
               s."isSuccess" as is_success,
@@ -405,11 +454,12 @@ export async function handleFlakyTestsPOST(
               trr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
-            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
             INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND rc."projectId" = ${projectIdNum}
               AND trr."executedAt" >= ${startDateParsed}
               AND trr."executedAt" <= ${endDateParsed}
@@ -421,6 +471,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               jr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
                 CASE jr.type
@@ -435,9 +486,12 @@ export async function handleFlakyTestsPOST(
               jr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
+            LEFT JOIN "TestRuns" tr ON tr.id = jts."testRunId"
             LEFT JOIN "Status" s ON s.id = jr."statusId"
             LEFT JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND rc."projectId" = ${projectIdNum}
               AND jr.type != 'SKIPPED'
               AND jr."executedAt" IS NOT NULL
@@ -450,6 +504,7 @@ export async function handleFlakyTestsPOST(
               test_case_name,
               test_case_source,
               result_id,
+              test_run_id,
               status_name,
               status_color,
               is_success,
@@ -468,6 +523,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               trr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
               c.value as status_color,
               s."isSuccess" as is_success,
@@ -475,11 +531,12 @@ export async function handleFlakyTestsPOST(
               trr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
-            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
             INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND rc."projectId" = ${projectIdNum}
               AND trr."executedAt" >= ${startDateParsed}
 
@@ -490,6 +547,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               jr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
                 CASE jr.type
@@ -504,9 +562,12 @@ export async function handleFlakyTestsPOST(
               jr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
+            LEFT JOIN "TestRuns" tr ON tr.id = jts."testRunId"
             LEFT JOIN "Status" s ON s.id = jr."statusId"
             LEFT JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND rc."projectId" = ${projectIdNum}
               AND jr.type != 'SKIPPED'
               AND jr."executedAt" IS NOT NULL
@@ -518,6 +579,7 @@ export async function handleFlakyTestsPOST(
               test_case_name,
               test_case_source,
               result_id,
+              test_run_id,
               status_name,
               status_color,
               is_success,
@@ -536,6 +598,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               trr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
               c.value as status_color,
               s."isSuccess" as is_success,
@@ -543,11 +606,12 @@ export async function handleFlakyTestsPOST(
               trr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
-            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
             INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND rc."projectId" = ${projectIdNum}
               AND trr."executedAt" <= ${endDateParsed}
 
@@ -558,6 +622,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               jr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
                 CASE jr.type
@@ -572,9 +637,12 @@ export async function handleFlakyTestsPOST(
               jr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
+            LEFT JOIN "TestRuns" tr ON tr.id = jts."testRunId"
             LEFT JOIN "Status" s ON s.id = jr."statusId"
             LEFT JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND rc."projectId" = ${projectIdNum}
               AND jr.type != 'SKIPPED'
               AND jr."executedAt" IS NOT NULL
@@ -586,6 +654,7 @@ export async function handleFlakyTestsPOST(
               test_case_name,
               test_case_source,
               result_id,
+              test_run_id,
               status_name,
               status_color,
               is_success,
@@ -604,6 +673,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               trr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
               c.value as status_color,
               s."isSuccess" as is_success,
@@ -611,11 +681,12 @@ export async function handleFlakyTestsPOST(
               trr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
-            INNER JOIN "TestRuns" tr ON tr.id = trc."testRunId" AND tr."isDeleted" = false
+            LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
             INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND rc."projectId" = ${projectIdNum}
 
             UNION ALL
@@ -625,6 +696,7 @@ export async function handleFlakyTestsPOST(
               rc.name as test_case_name,
               rc.source::text as test_case_source,
               jr.id as result_id,
+              CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
               COALESCE(c.value,
                 CASE jr.type
@@ -639,9 +711,12 @@ export async function handleFlakyTestsPOST(
               jr."executedAt" as executed_at
             FROM "RepositoryCases" rc
             INNER JOIN "JUnitTestResult" jr ON jr."repositoryCaseId" = rc.id
+            INNER JOIN "JUnitTestSuite" jts ON jts.id = jr."testSuiteId"
+            LEFT JOIN "TestRuns" tr ON tr.id = jts."testRunId"
             LEFT JOIN "Status" s ON s.id = jr."statusId"
             LEFT JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
+              ${sourceFilterSql}
               AND rc."projectId" = ${projectIdNum}
               AND jr.type != 'SKIPPED'
               AND jr."executedAt" IS NOT NULL
@@ -652,6 +727,7 @@ export async function handleFlakyTestsPOST(
               test_case_name,
               test_case_source,
               result_id,
+              test_run_id,
               status_name,
               status_color,
               is_success,
@@ -687,6 +763,7 @@ export async function handleFlakyTestsPOST(
 
       testCaseMap.get(testCaseId)!.executions.push({
         resultId: row.result_id,
+        testRunId: row.test_run_id,
         statusName: row.status_name,
         statusColor: row.status_color,
         isSuccess: row.is_success,

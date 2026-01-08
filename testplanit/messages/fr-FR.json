@@ -4572,7 +4572,9 @@
         "lastNResults": "Derniers résultats {count}",
         "newest": "Nouveau",
         "oldest": "Vieux",
-        "noFlakyTests": "Aucun test non concluant correspondant aux critères n'a été trouvé."
+        "noFlakyTests": "Aucun test non concluant correspondant aux critères n'a été trouvé.",
+        "includeFilter": "Inclure",
+        "testRunDeleted": "L'essai a été supprimé."
       },
       "crossProjectReportTypes": {
         "testExecution": {

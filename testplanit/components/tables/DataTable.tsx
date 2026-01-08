@@ -782,7 +782,7 @@ export function DataTable<TData extends DataRow, TValue>({
                   data-state={row.getIsSelected() ? "selected" : undefined}
                   className={`${onTestCaseClick || handleExpandClick ? "cursor-pointer" : "cursor-default"} ${
                     isSelected
-                      ? "bg-primary/20 hover:bg-primary border-4 border-primary"
+                      ? "bg-primary/20 hover:bg-primary/30 border-4 border-primary"
                       : isSubRow
                         ? "bg-muted/5 hover:bg-muted/20"
                         : isGrouped

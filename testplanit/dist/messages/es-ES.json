@@ -4572,7 +4572,9 @@
         "lastNResults": "Últimos {count} resultados",
         "newest": "Nuevo",
         "oldest": "Viejo",
-        "noFlakyTests": "No se encontraron pruebas inconsistentes que coincidan con los criterios"
+        "noFlakyTests": "No se encontraron pruebas inconsistentes que coincidan con los criterios",
+        "includeFilter": "Incluir",
+        "testRunDeleted": "Se ha eliminado la ejecución de prueba"
       },
       "crossProjectReportTypes": {
         "testExecution": {

@@ -11,9 +11,11 @@ import {
 import { format } from "date-fns";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { RepositoryCaseSource } from "@prisma/client";
+import { Link } from "~/lib/navigation";
 
 interface ExecutionStatus {
   resultId: number;
+  testRunId: number | null;
   statusName: string;
   statusColor: string;
   isSuccess: boolean;
@@ -109,30 +111,53 @@ export function useFlakyTestsColumns(
               <div className="flex items-center gap-0.5">
                 {executions
                   .slice(0, consecutiveRuns)
-                  .map((execution, index) => (
-                    <Tooltip key={`${info.row.id}-exec-${index}`}>
-                      <TooltipTrigger asChild>
-                        <div
-                          className="w-4 h-4 rounded-sm cursor-pointer"
-                          style={{
-                            backgroundColor: execution.statusColor,
-                            opacity: getOpacity(index),
-                          }}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <div className="text-xs space-y-1">
-                          <StatusDotDisplay
-                            name={execution.statusName}
-                            color={execution.statusColor}
-                          />
-                          <div className="opacity-80">
-                            {format(new Date(execution.executedAt), "PPp")}
+                  .map((execution, index) => {
+                    const testCaseId = info.row.original.testCaseId;
+                    const hasLink = projectId && execution.testRunId;
+                    const linkHref = hasLink
+                      ? `/projects/runs/${projectId}/${execution.testRunId}?selectedCase=${testCaseId}`
+                      : undefined;
+
+                    const boxStyle = {
+                      backgroundColor: execution.statusColor,
+                      opacity: getOpacity(index),
+                    };
+
+                    const boxContent = hasLink ? (
+                      <Link
+                        href={linkHref!}
+                        className="block w-4 h-4 rounded-sm transition-all hover:opacity-80"
+                        style={boxStyle}
+                      />
+                    ) : (
+                      <div
+                        className="w-4 h-4 rounded-sm cursor-default"
+                        style={boxStyle}
+                      />
+                    );
+
+                    return (
+                      <Tooltip key={`${info.row.id}-exec-${index}`}>
+                        <TooltipTrigger asChild>{boxContent}</TooltipTrigger>
+                        <TooltipContent>
+                          <div className="text-xs space-y-1">
+                            <StatusDotDisplay
+                              name={execution.statusName}
+                              color={execution.statusColor}
+                            />
+                            <div className="opacity-80">
+                              {format(new Date(execution.executedAt), "PPp")}
+                            </div>
+                            {!execution.testRunId && (
+                              <div className="text-destructive text-xs">
+                                {t("reports.ui.flakyTests.testRunDeleted")}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
                 {executions.length < consecutiveRuns &&
                   Array.from({
                     length: consecutiveRuns - executions.length,

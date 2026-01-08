@@ -4572,7 +4572,9 @@
         "lastNResults": "Last {count} Results",
         "newest": "New",
         "oldest": "Old",
-        "noFlakyTests": "No flaky tests found matching the criteria"
+        "noFlakyTests": "No flaky tests found matching the criteria",
+        "includeFilter": "Include",
+        "testRunDeleted": "Test run has been deleted"
       },
       "crossProjectReportTypes": {
         "testExecution": {

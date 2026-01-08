@@ -43,6 +43,7 @@ import {
   Bot,
   Filter,
   FolderOpen,
+  ChevronDown,
 } from "lucide-react";
 import {
   Card,
@@ -59,6 +60,13 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
 import {
   getReportSummary,
@@ -69,7 +77,6 @@ import { useReportColumns } from "~/hooks/useReportColumns";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import {
-  ReportType,
   getProjectReportTypes,
   getCrossProjectReportTypes,
 } from "~/lib/config/reportTypes";
@@ -122,6 +129,7 @@ function ReportBuilderContent({
   const tAdminMenu = useTranslations("admin.menu");
   const tDimensions = useTranslations("reports.dimensions");
   const tMetrics = useTranslations("reports.metrics");
+  const tRuns = useTranslations("runs");
   const customStyles = getCustomStyles({ theme });
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -267,6 +275,9 @@ function ReportBuilderContent({
   // Flaky tests state
   const [consecutiveRuns, setConsecutiveRuns] = useState(10);
   const [flipThreshold, setFlipThreshold] = useState(5);
+  const [flakyAutomatedFilter, setFlakyAutomatedFilter] = useState<
+    "all" | "automated" | "manual"
+  >("all");
 
   // Table state
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -928,10 +939,11 @@ function ReportBuilderContent({
           body.dateGrouping = dateGrouping;
         }
 
-        // For flaky tests, add consecutive runs and flip threshold
+        // For flaky tests, add consecutive runs, flip threshold, and automated filter
         if (reportType === "flaky-tests") {
           body.consecutiveRuns = consecutiveRuns;
           body.flipThreshold = flipThreshold;
+          body.automatedFilter = flakyAutomatedFilter;
         }
 
         // Add sorting parameters if configured
@@ -1115,6 +1127,7 @@ function ReportBuilderContent({
       selectedFilterValues,
       consecutiveRuns,
       flipThreshold,
+      flakyAutomatedFilter,
     ]
   );
 
@@ -1598,6 +1611,57 @@ function ReportBuilderContent({
                                 {flipThreshold}
                               </span>
                             </div>
+                          </div>
+
+                          {/* Test Case Type Filter */}
+                          <div className="grid gap-2">
+                            <label className="text-sm font-medium">
+                              {tReports("flakyTests.includeFilter")}
+                            </label>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full justify-between"
+                                >
+                                  {flakyAutomatedFilter === "all"
+                                    ? tRuns("typeFilter.both")
+                                    : flakyAutomatedFilter === "manual"
+                                      ? tCommon("fields.manual")
+                                      : tCommon("fields.automated")}
+                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="start"
+                                className="w-full"
+                              >
+                                <DropdownMenuGroup>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setFlakyAutomatedFilter("all")
+                                    }
+                                  >
+                                    {tRuns("typeFilter.both")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setFlakyAutomatedFilter("manual")
+                                    }
+                                  >
+                                    {tCommon("fields.manual")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setFlakyAutomatedFilter("automated")
+                                    }
+                                  >
+                                    {tCommon("fields.automated")}
+                                  </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       )}
