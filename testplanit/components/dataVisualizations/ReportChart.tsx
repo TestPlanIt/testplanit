@@ -11,6 +11,7 @@ import {
   SmallMultipleData,
 } from "./ReportSmallMultiplesGroupedBar";
 import RecentResultsDonut from "./RecentResultsDonut";
+import { FlakyTestsBubbleChart } from "./FlakyTestsBubbleChart";
 import { stringToColorCode } from "~/utils/stringToColorCode";
 import { toHumanReadable } from "~/utils/duration";
 import { useLocale, useTranslations } from "next-intl";
@@ -79,6 +80,9 @@ interface ReportChartProps {
   metrics: { value: string; label: string; originalLabel?: string }[];
   reportType?: string; // Optional report type to handle special cases like automation-trends
   projects?: Array<{ id: number; name: string }>; // For automation trends report
+  consecutiveRuns?: number; // For flaky tests report
+  totalFlakyTests?: number; // Total count of flaky tests (for showing "not shown" count)
+  projectId?: number | string; // Project ID for building links in charts
 }
 
 // Helper to determine chart type
@@ -286,6 +290,9 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   metrics,
   reportType,
   projects,
+  consecutiveRuns = 10,
+  totalFlakyTests,
+  projectId,
 }) => {
   const locale = useLocale();
   const t = useTranslations();
@@ -370,6 +377,22 @@ export const ReportChart: React.FC<ReportChartProps> = ({
 
     const transformedData = Array.from(seriesMap.values());
     return <ReportMultiLineChart data={transformedData} />;
+  }
+
+  // Special handling for flaky tests report - use bubble chart
+  // Shows flip count vs recency of failures - tests in top-right need most attention
+  if (
+    reportType === "flaky-tests" ||
+    reportType === "cross-project-flaky-tests"
+  ) {
+    return (
+      <FlakyTestsBubbleChart
+        data={results}
+        consecutiveRuns={consecutiveRuns}
+        totalCount={totalFlakyTests}
+        projectId={projectId}
+      />
+    );
   }
 
   const chartType = getChartType(dimensions, chartMetrics);

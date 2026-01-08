@@ -4574,7 +4574,19 @@
         "oldest": "Old",
         "noFlakyTests": "No flaky tests found matching the criteria",
         "includeFilter": "Include",
-        "testRunDeleted": "Test run has been deleted"
+        "testRunDeleted": "Test run has been deleted",
+        "chart": {
+          "highPriority": "Needs attention",
+          "lowPriority": "Lower priority",
+          "recencyAxis": "Failure Recency",
+          "flipsAxis": "Flip Count",
+          "oldFailures": "Older",
+          "recentFailures": "Recent",
+          "failureRate": "Failure rate",
+          "recency": "Recency score",
+          "backlogTitle": "Lower Priority Tests",
+          "backlogDescription": "{count} additional flaky tests not shown"
+        }
       },
       "crossProjectReportTypes": {
         "testExecution": {

@@ -608,9 +608,9 @@ export default function TestCaseVersions() {
                         <SelectValue placeholder="Select Version" />
                       </SelectTrigger>
                       <SelectContent>
-                        {versions?.map((v) => (
+                        {versions?.map((v, index) => (
                           <SelectItem
-                            key={v.version}
+                            key={v.id ?? `version-${v.version}-${index}`}
                             value={v.version.toString()}
                           >
                             <div className="flex items-center space-x-1 whitespace-nowrap">

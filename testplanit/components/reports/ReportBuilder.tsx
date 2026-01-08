@@ -1489,23 +1489,63 @@ function ReportBuilderContent({
   const memoizedChart = useMemo(() => {
     const chartData = chartDataRef.current;
 
-    // For automation trends, we don't need traditional dimensions/metrics
-    // as the chart uses projects and time series data
+    // For automation trends and flaky tests, we don't need traditional dimensions/metrics
+    // as the chart uses specialized data structures
     const isAutomationTrends = reportType === "automation-trends";
+    const isFlakyTests =
+      reportType === "flaky-tests" ||
+      reportType === "cross-project-flaky-tests";
 
     if (
       !chartData ||
       (!isAutomationTrends &&
+        !isFlakyTests &&
         (chartDimensions.length === 0 || chartMetrics.length === 0))
     ) {
       return { chart: null, isTruncated: false, totalDataPoints: 0 };
     }
 
     // Limit the number of data points to prevent browser crashes
-    const isTruncated = chartData.length > MAX_CHART_DATA_POINTS;
+    // For flaky tests, prioritize tests with highest attention score (flip count + recency)
+    let dataToLimit = chartData;
+    if (isFlakyTests && chartData.length > MAX_CHART_DATA_POINTS) {
+      // Calculate priority score for each test and sort by it
+      dataToLimit = [...chartData]
+        .map((test: any) => {
+          // Calculate recency score using exponential decay
+          let recencyScore = 0;
+          let weight = 1;
+          const decayFactor = 0.7;
+          const executions = test.executions || [];
+
+          for (const execution of executions) {
+            if (!execution.isSuccess) {
+              recencyScore += weight;
+            }
+            weight *= decayFactor;
+          }
+
+          // Normalize recency score
+          const maxScore =
+            executions.length > 0
+              ? (1 - Math.pow(decayFactor, executions.length)) /
+                (1 - decayFactor)
+              : 1;
+          const normalizedRecency = maxScore > 0 ? recencyScore / maxScore : 0;
+
+          // Priority combines flip count and recency
+          const normalizedFlips = test.flipCount / (consecutiveRuns - 1 || 1);
+          const priorityScore = normalizedFlips * 0.5 + normalizedRecency * 0.5;
+
+          return { ...test, _priorityScore: priorityScore };
+        })
+        .sort((a: any, b: any) => b._priorityScore - a._priorityScore);
+    }
+
+    const isTruncated = dataToLimit.length > MAX_CHART_DATA_POINTS;
     const limitedChartData = isTruncated
-      ? chartData.slice(0, MAX_CHART_DATA_POINTS)
-      : chartData;
+      ? dataToLimit.slice(0, MAX_CHART_DATA_POINTS)
+      : dataToLimit;
 
     return {
       chart: (
@@ -1516,6 +1556,9 @@ function ReportBuilderContent({
           metrics={chartMetrics}
           reportType={reportType}
           projects={automationTrendsProjects}
+          consecutiveRuns={consecutiveRuns}
+          totalFlakyTests={isFlakyTests ? chartData.length : undefined}
+          projectId={projectId}
         />
       ),
       isTruncated,
@@ -1529,6 +1572,7 @@ function ReportBuilderContent({
     chartDataVersion,
     reportType,
     automationTrendsProjects,
+    consecutiveRuns,
   ]); // Depend on version instead of array lengths
 
   return (
@@ -2107,6 +2151,14 @@ function ReportBuilderContent({
                 <Card className="h-full rounded-none border-0 overflow-hidden">
                   <CardHeader className="pt-2 pb-2">
                     <CardTitle>{t("common.visualization")}</CardTitle>
+                    {memoizedChart.isTruncated && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {tReports("chartDataTruncated.message", {
+                          shown: MAX_CHART_DATA_POINTS.toLocaleString(),
+                          total: memoizedChart.totalDataPoints.toLocaleString(),
+                        })}
+                      </p>
+                    )}
                     {enhancedReportSummary && (
                       <CardDescription>{enhancedReportSummary}</CardDescription>
                     )}
@@ -2115,14 +2167,6 @@ function ReportBuilderContent({
                     <div className="flex-1 min-h-0 w-full">
                       {memoizedChart.chart}
                     </div>
-                    {memoizedChart.isTruncated && (
-                      <p className="text-xs text-muted-foreground mt-2 shrink-0">
-                        {tReports("chartDataTruncated.message", {
-                          shown: MAX_CHART_DATA_POINTS.toLocaleString(),
-                          total: memoizedChart.totalDataPoints.toLocaleString(),
-                        })}
-                      </p>
-                    )}
                   </CardContent>
                 </Card>
               </ResizablePanel>

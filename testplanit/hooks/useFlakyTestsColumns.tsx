@@ -78,7 +78,7 @@ export function useFlakyTestsColumns(
           sortingFn: (rowA, rowB) => {
             const aVal = rowA.original.project;
             const bVal = rowB.original.project;
-            
+
             // Handle object sorting by name
             const aStr = aVal?.name || String(aVal || "");
             const bStr = bVal?.name || String(bVal || "");
@@ -168,7 +168,8 @@ export function useFlakyTestsColumns(
                   .map((execution, index) => {
                     const testCaseId = info.row.original.testCaseId;
                     // Use project ID from row data for cross-project, or fall back to prop
-                    const rowProjectId = info.row.original.project?.id || projectId;
+                    const rowProjectId =
+                      info.row.original.project?.id || projectId;
                     const hasLink = rowProjectId && execution.testRunId;
                     const linkHref = hasLink
                       ? `/projects/runs/${rowProjectId}/${execution.testRunId}?selectedCase=${testCaseId}`
@@ -193,7 +194,9 @@ export function useFlakyTestsColumns(
                     );
 
                     return (
-                      <Tooltip key={`${info.row.id}-exec-${index}`}>
+                      <Tooltip
+                        key={`${info.row.original.testCaseId}-exec-${execution.resultId}-${index}`}
+                      >
                         <TooltipTrigger asChild>{boxContent}</TooltipTrigger>
                         <TooltipContent>
                           <div className="text-xs space-y-1">
@@ -219,7 +222,7 @@ export function useFlakyTestsColumns(
                     length: consecutiveRuns - executions.length,
                   }).map((_, index) => (
                     <div
-                      key={`${info.row.id}-empty-${index}`}
+                      key={`${info.row.original.testCaseId}-empty-${executions.length + index}`}
                       className="w-4 h-4 rounded-sm bg-muted"
                       style={{ opacity: getOpacity(executions.length + index) }}
                     />
@@ -233,5 +236,13 @@ export function useFlakyTestsColumns(
     );
 
     return columns;
-  }, [consecutiveRuns, columnHelper, t, tCommon, projectId, dimensions, isCrossProject]);
+  }, [
+    consecutiveRuns,
+    columnHelper,
+    t,
+    tCommon,
+    projectId,
+    dimensions,
+    isCrossProject,
+  ]);
 }

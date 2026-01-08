@@ -4574,7 +4574,19 @@
         "oldest": "Vieux",
         "noFlakyTests": "Aucun test non concluant correspondant aux critères n'a été trouvé.",
         "includeFilter": "Inclure",
-        "testRunDeleted": "L'essai a été supprimé."
+        "testRunDeleted": "L'essai a été supprimé.",
+        "chart": {
+          "highPriority": "Nécessite une attention particulière",
+          "lowPriority": "priorité inférieure",
+          "recencyAxis": "Récence de l'échec",
+          "flipsAxis": "Nombre de retournements",
+          "oldFailures": "Plus vieux",
+          "recentFailures": "Récent",
+          "failureRate": "taux d'échec",
+          "recency": "score de récence",
+          "backlogTitle": "Tests de priorité inférieure",
+          "backlogDescription": "{count} tests supplémentaires instables non affichés"
+        }
       },
       "crossProjectReportTypes": {
         "testExecution": {

@@ -106,7 +106,7 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
         // });
         return (
           <div
-            key={item.id || itemIndex}
+            key={`shared-group-${sharedStepGroupId}-item-${item.id || itemIndex}`}
             className="border-2 border-primary/20 rounded-lg p-2"
           >
             <div className="font-semibold mb-1 text-foreground/80 flex items-start w-full">
@@ -406,7 +406,7 @@ export const StepsDisplay: React.FC<StepsProps> = ({
             // Regular step rendering (existing logic)
             // console.log("Rendering regular step:", { step, index });
             return (
-              <li key={step.id} className="mb-4">
+              <li key={`step-${step.id}-${index}`} className="mb-4">
                 <div className="">
                   <div className="flex gap-2 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
                     <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
@@ -441,7 +441,7 @@ export const StepsDisplay: React.FC<StepsProps> = ({
           {previousSteps && previousSteps.length > steps.length && (
             <li key="deleted-steps" className="mb-4">
               {previousSteps.slice(steps.length).map((step, index) => (
-                <div key={step.id} className="">
+                <div key={`deleted-step-${step.id}-${index}`} className="">
                   <div className="flex gap-2 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
                     <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
                       {steps.length + index + 1}

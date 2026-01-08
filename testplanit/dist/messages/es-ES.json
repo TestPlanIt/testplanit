@@ -4574,7 +4574,19 @@
         "oldest": "Viejo",
         "noFlakyTests": "No se encontraron pruebas inconsistentes que coincidan con los criterios",
         "includeFilter": "Incluir",
-        "testRunDeleted": "Se ha eliminado la ejecución de prueba"
+        "testRunDeleted": "Se ha eliminado la ejecución de prueba",
+        "chart": {
+          "highPriority": "Necesita atención",
+          "lowPriority": "Prioridad más baja",
+          "recencyAxis": "Recencia del fallo",
+          "flipsAxis": "Conteo de volteos",
+          "oldFailures": "Más viejo",
+          "recentFailures": "Reciente",
+          "failureRate": "Porcentaje de averías",
+          "recency": "Puntuación de actualidad",
+          "backlogTitle": "Pruebas de menor prioridad",
+          "backlogDescription": "{count} No se muestran pruebas adicionales"
+        }
       },
       "crossProjectReportTypes": {
         "testExecution": {

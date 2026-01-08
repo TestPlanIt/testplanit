@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 
 interface Version {
+  id: number;
   version: number;
   createdAt: Date;
 }
@@ -45,8 +46,8 @@ export function VersionSelect({
         <SelectValue placeholder="Select Version" />
       </SelectTrigger>
       <SelectContent>
-        {versions.map((v) => (
-          <SelectItem key={v.version} value={v.version.toString()}>
+        {versions.map((v, index) => (
+          <SelectItem key={v.id ?? `version-${v.version}-${index}`} value={v.version.toString()}>
             <div className="flex items-center space-x-1 whitespace-nowrap">
               <Badge className="text-primary-foreground text-xs">
                 {tGlobal("common.version.prefix")}

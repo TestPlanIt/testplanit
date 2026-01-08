@@ -43,29 +43,25 @@ interface RawExecutionResult {
 }
 
 /**
- * Count the number of status flips (transitions between success and failure) in a sequence of executions.
- * Only counts transitions between definitive results (isSuccess or isFailure).
- * Results that are neither success nor failure (e.g., blocked, retest) are skipped.
+ * Count the number of status flips (transitions between different status types) in a sequence of executions.
+ * Counts transitions between:
+ * - Success (isSuccess = true) and any non-success (isSuccess = false)
+ * - This includes transitions to Failed, Blocked, Retest, Skipped, etc.
+ * Results are compared based on whether they are success or not, capturing all status changes.
  */
 export function countStatusFlips(executions: ExecutionStatus[]): number {
   let flips = 0;
-  let lastDefinitiveResult: boolean | null = null;
+  let lastIsSuccess: boolean | null = null;
 
   for (const execution of executions) {
-    // Only consider definitive results (success or failure)
-    const isDefinitive = execution.isSuccess || execution.isFailure;
-    if (!isDefinitive) {
-      continue;
-    }
-
     const currentIsSuccess = execution.isSuccess;
 
-    // If we have a previous definitive result and it differs, count as flip
-    if (lastDefinitiveResult !== null && currentIsSuccess !== lastDefinitiveResult) {
+    // If we have a previous result and it differs from current (success <-> non-success), count as flip
+    if (lastIsSuccess !== null && currentIsSuccess !== lastIsSuccess) {
       flips++;
     }
 
-    lastDefinitiveResult = currentIsSuccess;
+    lastIsSuccess = currentIsSuccess;
   }
 
   return flips;
@@ -73,19 +69,31 @@ export function countStatusFlips(executions: ExecutionStatus[]): number {
 
 /**
  * Check if a test case qualifies as flaky based on its execution history.
- * A test is flaky if it has both success and failure results within the executions.
+ * A test is flaky if it has:
+ * 1. Both success and failure results (traditional flakiness), OR
+ * 2. Any non-success results (including Blocked, Retest, Skipped, etc.) - to show tests with other statuses
  */
 function hasRequiredFlakiness(executions: ExecutionStatus[]): boolean {
   let hasSuccess = false;
   let hasFailure = false;
+  let hasNonSuccess = false;
 
   for (const execution of executions) {
-    if (execution.isSuccess) hasSuccess = true;
+    if (execution.isSuccess) {
+      hasSuccess = true;
+    } else {
+      // Any result that is not a success (including failures, blocked, retest, skipped, etc.)
+      hasNonSuccess = true;
+    }
     if (execution.isFailure) hasFailure = true;
+
+    // Return true if we have both success and failure (traditional flakiness)
     if (hasSuccess && hasFailure) return true;
   }
 
-  return false;
+  // Also return true if we have both success and any non-success result
+  // This includes tests with Blocked, Retest, Skipped, etc. statuses
+  return hasSuccess && hasNonSuccess;
 }
 
 export async function handleFlakyTestsPOST(
@@ -111,7 +119,7 @@ export async function handleFlakyTestsPOST(
       automatedFilter, // "all" | "automated" | "manual"
       dimensions = [], // Array of dimension IDs
     } = body;
-    
+
     // Check if project dimension is requested
     const includeProject = isCrossProject && dimensions.includes("project");
 
@@ -135,13 +143,22 @@ export async function handleFlakyTestsPOST(
     // Determine source filter based on automatedFilter
     // Automated sources: JUNIT, TESTNG, XUNIT, NUNIT, MSTEST, MOCHA, CUCUMBER
     // Manual sources: MANUAL, API
-    const automatedSources = ["JUNIT", "TESTNG", "XUNIT", "NUNIT", "MSTEST", "MOCHA", "CUCUMBER"];
+    const automatedSources = [
+      "JUNIT",
+      "TESTNG",
+      "XUNIT",
+      "NUNIT",
+      "MSTEST",
+      "MOCHA",
+      "CUCUMBER",
+    ];
     const manualSources = ["MANUAL", "API"];
-    const sourceFilter = automatedFilter === "automated"
-      ? automatedSources
-      : automatedFilter === "manual"
-        ? manualSources
-        : null; // null means no filter (show all)
+    const sourceFilter =
+      automatedFilter === "automated"
+        ? automatedSources
+        : automatedFilter === "manual"
+          ? manualSources
+          : null; // null means no filter (show all)
 
     // Build source filter SQL fragment
     const sourceFilterSql = sourceFilter
@@ -184,7 +201,7 @@ export async function handleFlakyTestsPOST(
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
             LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
-            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" NOT IN ('untested', 'skipped')
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
               ${sourceFilterSql}
@@ -264,7 +281,7 @@ export async function handleFlakyTestsPOST(
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
             LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
-            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" NOT IN ('untested', 'skipped')
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
               ${sourceFilterSql}
@@ -342,7 +359,7 @@ export async function handleFlakyTestsPOST(
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
             LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
-            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" NOT IN ('untested', 'skipped')
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
               ${sourceFilterSql}
@@ -420,7 +437,7 @@ export async function handleFlakyTestsPOST(
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
             LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
-            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" NOT IN ('untested', 'skipped')
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
               ${sourceFilterSql}
@@ -497,7 +514,7 @@ export async function handleFlakyTestsPOST(
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
             LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
-            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" NOT IN ('untested', 'skipped')
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
               ${sourceFilterSql}
@@ -574,7 +591,7 @@ export async function handleFlakyTestsPOST(
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
             LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
-            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" NOT IN ('untested', 'skipped')
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
               ${sourceFilterSql}
@@ -649,7 +666,7 @@ export async function handleFlakyTestsPOST(
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
             LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
-            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" NOT IN ('untested', 'skipped')
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
               ${sourceFilterSql}
@@ -724,7 +741,7 @@ export async function handleFlakyTestsPOST(
             INNER JOIN "TestRunCases" trc ON trc."repositoryCaseId" = rc.id
             LEFT JOIN "TestRuns" tr ON tr.id = trc."testRunId"
             INNER JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
-            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" != 'untested'
+            INNER JOIN "Status" s ON s.id = trr."statusId" AND s."systemName" NOT IN ('untested', 'skipped')
             INNER JOIN "Color" c ON c.id = s."colorId"
             WHERE rc."isDeleted" = false
               ${sourceFilterSql}
@@ -783,29 +800,33 @@ export async function handleFlakyTestsPOST(
     }
 
     // Group results by test case (and project if included)
-    const testCaseMap = new Map<string, {
-      testCaseId: number;
-      testCaseName: string;
-      testCaseSource: string;
-      projectId?: number;
-      projectName?: string;
-      executions: ExecutionStatus[];
-    }>();
+    const testCaseMap = new Map<
+      string,
+      {
+        testCaseId: number;
+        testCaseName: string;
+        testCaseSource: string;
+        projectId?: number;
+        projectName?: string;
+        executions: ExecutionStatus[];
+      }
+    >();
 
     for (const row of rawResults) {
       const testCaseId = row.test_case_id;
       // Create a unique key that includes project if it's included
-      const key = includeProject && row.project_id
-        ? `${testCaseId}-${row.project_id}`
-        : `${testCaseId}`;
+      const key =
+        includeProject && row.project_id
+          ? `${testCaseId}-${row.project_id}`
+          : `${testCaseId}`;
 
       if (!testCaseMap.has(key)) {
         testCaseMap.set(key, {
           testCaseId,
           testCaseName: row.test_case_name,
           testCaseSource: row.test_case_source,
-      projectId: includeProject ? row.project_id : undefined,
-      projectName: includeProject ? row.project_name : undefined,
+          projectId: includeProject ? row.project_id : undefined,
+          projectName: includeProject ? row.project_name : undefined,
           executions: [],
         });
       }
@@ -846,12 +867,13 @@ export async function handleFlakyTestsPOST(
           testCaseSource: testCase.testCaseSource,
           flipCount,
           executions: testCase.executions,
-          project: includeProject && testCase.projectId
-            ? {
-                id: testCase.projectId,
-                name: testCase.projectName,
-              }
-            : undefined,
+          project:
+            includeProject && testCase.projectId
+              ? {
+                  id: testCase.projectId,
+                  name: testCase.projectName,
+                }
+              : undefined,
         });
       }
     }

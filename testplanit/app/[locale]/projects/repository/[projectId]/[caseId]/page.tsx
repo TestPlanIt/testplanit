@@ -1908,8 +1908,8 @@ export default function TestCaseDetails() {
                             {t("common.fields.steps")}
                           </div>
                           <ul className="list-disc ml-6">
-                            {junitSteps.map((step) => (
-                              <li key={step.id}>
+                            {junitSteps.map((step, index) => (
+                              <li key={`junit-step-${step.id}-${index}`}>
                                 {step.name}
                                 {step.content ? `: ${step.content}` : ""}
                               </li>
@@ -1923,8 +1923,8 @@ export default function TestCaseDetails() {
                             {t("common.fields.attachments")}
                           </div>
                           <ul className="list-disc ml-6">
-                            {junitAttachments.map((att) => (
-                              <li key={att.id}>
+                            {junitAttachments.map((att, index) => (
+                              <li key={`junit-att-${att.id}-${index}`}>
                                 {att.name} {"("}
                                 {att.type}
                                 {")"}
@@ -1939,8 +1939,8 @@ export default function TestCaseDetails() {
                             {t("common.fields.properties")}
                           </div>
                           <ul className="list-disc ml-6">
-                            {junitProperties.map((prop) => (
-                              <li key={prop.id}>
+                            {junitProperties.map((prop, index) => (
+                              <li key={`junit-prop-${prop.id}-${index}`}>
                                 {prop.name}
                                 {prop.value ? `: ${prop.value}` : ""}
                               </li>
