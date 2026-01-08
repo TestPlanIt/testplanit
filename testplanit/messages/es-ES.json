@@ -4527,7 +4527,7 @@
       },
       "chartDataTruncated": {
         "title": "Datos del gráfico truncados",
-        "message": "Se muestran los primeros {shown} de {total} puntos de datos. Utilice rangos de fechas para reducir el tamaño del conjunto de datos."
+        "message": "Se muestran {shown} de {total} puntos de datos para facilitar la lectura. Utilice filtros o rangos de fechas para restringir los resultados o consulte los datos completos en la tabla de resultados a continuación."
       },
       "reportTypes": {
         "testExecution": {
@@ -4557,6 +4557,35 @@
         "automationTrends": {
           "label": "Tendencias de automatización",
           "description": "Seguimiento del progreso de la automatización semana a semana por prioridad"
+        },
+        "flakyTests": {
+          "label": "Pruebas inestables",
+          "description": "Identificar pruebas con resultados inconsistentes de aprobado/reprobado"
+        }
+      },
+      "flakyTests": {
+        "consecutiveRuns": "Últimas carreras consecutivas",
+        "consecutiveRunsHelp": "Número de ejecuciones de pruebas recientes para analizar (5-30). Se excluyen los resultados con estado \"no probado\".",
+        "flipThreshold": "Volteos mínimos",
+        "flipThresholdHelp": "Se requiere un número mínimo de transiciones de aprobado/reprobado para que se considere inestable.",
+        "flips": "volteretas",
+        "lastNResults": "Últimos {count} resultados",
+        "newest": "Nuevo",
+        "oldest": "Viejo",
+        "noFlakyTests": "No se encontraron pruebas inconsistentes que coincidan con los criterios",
+        "includeFilter": "Incluir",
+        "testRunDeleted": "Se ha eliminado la ejecución de prueba",
+        "chart": {
+          "highPriority": "Necesita atención",
+          "lowPriority": "Prioridad más baja",
+          "recencyAxis": "Recencia del fallo",
+          "flipsAxis": "Conteo de volteos",
+          "oldFailures": "Más viejo",
+          "recentFailures": "Reciente",
+          "failureRate": "Porcentaje de averías",
+          "recency": "Puntuación de actualidad",
+          "backlogTitle": "Pruebas de menor prioridad",
+          "backlogDescription": "{count} No se muestran pruebas adicionales"
         }
       },
       "crossProjectReportTypes": {
@@ -4579,6 +4608,10 @@
         "automationTrends": {
           "label": "Tendencias de automatización entre proyectos",
           "description": "Realizar un seguimiento semanal del progreso de la automatización por prioridad en todos los proyectos."
+        },
+        "flakyTests": {
+          "label": "Pruebas inestables entre proyectos",
+          "description": "Identificar pruebas con resultados inconsistentes de aprobado/reprobado en los distintos proyectos"
         }
       }
     },

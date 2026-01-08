@@ -4527,7 +4527,7 @@
       },
       "chartDataTruncated": {
         "title": "Données du graphique tronquées",
-        "message": "Affichage du premier {shown} point de données sur {total} . Utilisez des plages de dates pour réduire la taille de l'ensemble de données."
+        "message": "Affichage de {shown} sur {total} points de données pour une meilleure lisibilité. Utilisez des filtres ou des plages de dates pour affiner vos résultats, ou consultez l'ensemble des données dans le tableau des résultats ci-dessous."
       },
       "reportTypes": {
         "testExecution": {
@@ -4557,6 +4557,35 @@
         "automationTrends": {
           "label": "Tendances en matière d'automatisation",
           "description": "Suivre les progrès de l'automatisation semaine après semaine par priorité"
+        },
+        "flakyTests": {
+          "label": "Tests peu fiables",
+          "description": "Identifier les tests présentant des résultats réussite/échec incohérents."
+        }
+      },
+      "flakyTests": {
+        "consecutiveRuns": "Dernières courses consécutives",
+        "consecutiveRunsHelp": "Nombre d'exécutions de tests récentes à analyser (5-30). Les résultats dont le statut est « non testé » sont exclus.",
+        "flipThreshold": "Retournements minimums",
+        "flipThresholdHelp": "Nombre minimal de transitions réussite/échec requis pour être considéré comme instable.",
+        "flips": "Flips",
+        "lastNResults": "Derniers résultats {count}",
+        "newest": "Nouveau",
+        "oldest": "Vieux",
+        "noFlakyTests": "Aucun test non concluant correspondant aux critères n'a été trouvé.",
+        "includeFilter": "Inclure",
+        "testRunDeleted": "L'essai a été supprimé.",
+        "chart": {
+          "highPriority": "Nécessite une attention particulière",
+          "lowPriority": "priorité inférieure",
+          "recencyAxis": "Récence de l'échec",
+          "flipsAxis": "Nombre de retournements",
+          "oldFailures": "Plus vieux",
+          "recentFailures": "Récent",
+          "failureRate": "taux d'échec",
+          "recency": "score de récence",
+          "backlogTitle": "Tests de priorité inférieure",
+          "backlogDescription": "{count} tests supplémentaires instables non affichés"
         }
       },
       "crossProjectReportTypes": {
@@ -4579,6 +4608,10 @@
         "automationTrends": {
           "label": "Tendances en matière d'automatisation inter-projets",
           "description": "Suivre l'avancement de l'automatisation semaine après semaine, par priorité, pour l'ensemble des projets."
+        },
+        "flakyTests": {
+          "label": "Tests instables inter-projets",
+          "description": "Identifier les tests présentant des résultats de réussite/échec incohérents d'un projet à l'autre"
         }
       }
     },

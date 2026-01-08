@@ -1,4 +1,4 @@
-import { PlayCircle, ListTree, Users, Heart, Compass, Bug, TrendingUp } from "lucide-react";
+import { PlayCircle, ListTree, Users, Heart, Compass, Bug, TrendingUp, Shuffle } from "lucide-react";
 
 export interface ReportType {
   id: string;
@@ -59,6 +59,13 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     icon: TrendingUp,
     endpoint: "/api/report-builder/automation-trends",
   },
+  {
+    id: "flaky-tests",
+    label: tReports("reportTypes.flakyTests.label"),
+    description: tReports("reportTypes.flakyTests.description"),
+    icon: Shuffle,
+    endpoint: "/api/report-builder/flaky-tests",
+  },
 ];
 
 // Cross-project report types for admin - using function to access translations
@@ -99,5 +106,12 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("crossProjectReportTypes.automationTrends.description"),
     icon: TrendingUp,
     endpoint: "/api/report-builder/cross-project-automation-trends",
+  },
+  {
+    id: "flaky-tests",
+    label: tReports("crossProjectReportTypes.flakyTests.label"),
+    description: tReports("crossProjectReportTypes.flakyTests.description"),
+    icon: Shuffle,
+    endpoint: "/api/report-builder/cross-project-flaky-tests",
   },
 ];

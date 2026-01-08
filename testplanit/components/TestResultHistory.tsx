@@ -408,7 +408,7 @@ const StepResultsDisplay = ({
               renderedSharedGroupIds.add(stepResult.step.sharedStepGroupId);
               stepCounter++; // Increment for shared group header
               return (
-                <div key={`shared-group-${stepResult.step.sharedStepGroupId}`}>
+                <div key={`result-${resultId}-shared-group-${stepResult.step.sharedStepGroupId}`}>
                   <div className="font-bold truncate flex items-center mb-1">
                     <div className="flex items-center">
                       <Layers
@@ -468,7 +468,7 @@ const StepResultsDisplay = ({
 
             return (
               <div
-                key={stepResult.id}
+                key={`result-${resultId}-step-${stepResult.id}-${index}`}
                 className="space-y-2 border rounded-lg p-4"
               >
                 <div className="flex items-center justify-between">
@@ -617,7 +617,7 @@ const RenderSharedGroupInHistoryList: React.FC<{
 
         return (
           <li
-            key={item.id || itemIndex}
+            key={`result-${testRunResultId}-shared-${sharedStepGroupId}-item-${item.id || itemIndex}`}
             className="mb-4 p-4 border rounded-md bg-muted/20"
           >
             <div className="flex justify-between items-start">

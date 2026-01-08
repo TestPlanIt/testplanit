@@ -121,7 +121,7 @@ export function ReportFilters({
   );
 
   return (
-    <div className="flex flex-col w-full space-y-4 overflow-hidden">
+    <div className="flex flex-col w-full space-y-4 overflow-hidden p-0.5">
       <Select value={selectedFilter} onValueChange={onFilterChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder={tFilters("selectFilter")} />

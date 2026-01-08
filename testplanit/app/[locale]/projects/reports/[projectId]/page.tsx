@@ -1,8 +1,8 @@
 import { getTranslations } from "next-intl/server";
 import { authOptions } from "~/server/auth";
 import { getServerSession } from "next-auth/next";
-import { enhance } from "@zenstackhq/runtime";
 import { notFound } from "next/navigation";
+import { getEnhancedDb } from "~/lib/auth/utils";
 import {
   Card,
   CardContent,
@@ -33,9 +33,8 @@ export default async function ProjectReportsPage({ params }: PageProps) {
     notFound();
   }
 
-  const { prisma } = await import("@/lib/prisma");
-  const db = enhance(prisma, { user: session.user as any });
   const { projectId: projectIdParam } = await params;
+  const db = await getEnhancedDb(session);
   const projectId = parseInt(projectIdParam);
 
   // First check if the project exists and user has basic access to it

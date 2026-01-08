@@ -73,7 +73,7 @@ const RenderSharedGroupItemsForResults: React.FC<
         }
 
         return (
-          <div key={item.id || itemIndex} className="space-y-2 w-full">
+          <div key={`shared-group-${sharedStepGroupId}-item-${item.id || itemIndex}`} className="space-y-2 w-full">
             <div className="flex">
               <div className="shrink-0 pt-[0.4rem]">
                 <div className="text-sm font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6">
@@ -177,7 +177,7 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
           }
 
           return (
-            <li key={step.id} className="mb-4">
+            <li key={`step-result-${step.id}-${index}`} className="mb-4">
               <div className="flex gap-2 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
                 <div className="mt-2 font-bold flex items-center justify-center p-1 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 text-sm">
                   {index + 1}

@@ -327,6 +327,15 @@ describe("drillDownQueryBuilders", () => {
       expect(result.where?.source).toBe("MANUAL");
     });
 
+    it("should apply testCase dimension filter", () => {
+      const context = createBaseContext({
+        dimensions: { testCase: { id: 42, name: "My Test Case" } },
+      });
+      const result = buildRepositoryStatsQuery(context, 0, 10);
+
+      expect(result.where?.id).toBe(42);
+    });
+
     it("should filter automated for automatedCount metric", () => {
       const context = createBaseContext({ metricId: "automatedCount" });
       const result = buildRepositoryStatsQuery(context, 0, 10);

@@ -1300,6 +1300,7 @@ model RepositoryCaseVersions {
     links                  Json?
     attachments            Json?
 
+    @@unique([repositoryCaseId, version])
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
 

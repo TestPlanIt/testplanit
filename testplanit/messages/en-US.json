@@ -4527,7 +4527,7 @@
       },
       "chartDataTruncated": {
         "title": "Chart data truncated",
-        "message": "Showing the first {shown} of {total} data points. Use date ranges to reduce the dataset size."
+        "message": "Showing {shown} of {total} data points for readability. Use filters or date ranges to narrow your results, or view the full data in the Results table below."
       },
       "reportTypes": {
         "testExecution": {
@@ -4557,6 +4557,35 @@
         "automationTrends": {
           "label": "Automation Trends",
           "description": "Track automation progress week-over-week by priority"
+        },
+        "flakyTests": {
+          "label": "Flaky Tests",
+          "description": "Identify tests with inconsistent pass/fail results"
+        }
+      },
+      "flakyTests": {
+        "consecutiveRuns": "Last Consecutive Runs",
+        "consecutiveRunsHelp": "Number of recent test executions to analyze (5-30). Results with 'untested' status are excluded.",
+        "flipThreshold": "Minimum Flips",
+        "flipThresholdHelp": "Minimum number of pass/fail transitions required to be considered flaky.",
+        "flips": "Flips",
+        "lastNResults": "Last {count} Results",
+        "newest": "New",
+        "oldest": "Old",
+        "noFlakyTests": "No flaky tests found matching the criteria",
+        "includeFilter": "Include",
+        "testRunDeleted": "Test run has been deleted",
+        "chart": {
+          "highPriority": "Needs attention",
+          "lowPriority": "Lower priority",
+          "recencyAxis": "Failure Recency",
+          "flipsAxis": "Flip Count",
+          "oldFailures": "Older",
+          "recentFailures": "Recent",
+          "failureRate": "Failure rate",
+          "recency": "Recency score",
+          "backlogTitle": "Lower Priority Tests",
+          "backlogDescription": "{count} additional flaky tests not shown"
         }
       },
       "crossProjectReportTypes": {
@@ -4579,6 +4608,10 @@
         "automationTrends": {
           "label": "Cross-Project Automation Trends",
           "description": "Track automation progress week-over-week by priority across projects"
+        },
+        "flakyTests": {
+          "label": "Cross-Project Flaky Tests",
+          "description": "Identify tests with inconsistent pass/fail results across projects"
         }
       }
     },

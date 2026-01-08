@@ -2070,6 +2070,26 @@ export function createRepositoryStatsDimensionRegistry(
         return { createdAt: date.toISOString() };
       },
     },
+    testCase: {
+      id: "testCase",
+      label: "Test Case",
+      getValues: async (prisma: any, projectId?: number) => {
+        const cases = await prisma.repositoryCases.findMany({
+          where: {
+            ...(isProjectSpecific && projectId
+              ? { projectId: Number(projectId) }
+              : {}),
+            isDeleted: false,
+          },
+          select: { id: true, name: true },
+          orderBy: { name: "asc" },
+        });
+        return cases;
+      },
+      groupBy: "id",
+      join: {},
+      display: (val: any) => ({ name: val.name, id: val.id }),
+    },
   };
 }
 

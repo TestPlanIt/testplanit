@@ -294,8 +294,13 @@ export default function SessionVersionPage() {
             {versions?.length && versions.length > 1 && (
               <>
                 <Select
-                  value={version?.toString()}
-                  onValueChange={handleVersionChange}
+                  value={currentVersionIndex !== undefined && currentVersionIndex >= 0 ? currentVersionIndex.toString() : "0"}
+                  onValueChange={(indexStr) => {
+                    const idx = parseInt(indexStr, 10);
+                    if (versions && idx >= 0 && idx < versions.length) {
+                      handleVersionChange(versions[idx].version.toString());
+                    }
+                  }}
                 >
                   <SelectTrigger className="w-fit">
                     <SelectValue
@@ -303,8 +308,8 @@ export default function SessionVersionPage() {
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {versions?.map((v) => (
-                      <SelectItem key={v.version} value={v.version.toString()}>
+                    {versions?.map((v, index) => (
+                      <SelectItem key={`version-select-${index}`} value={index.toString()}>
                         <div className="flex items-center space-x-1 whitespace-nowrap">
                           <Badge className="text-primary-foreground text-xs">
                             {t("common.version.prefix")}
