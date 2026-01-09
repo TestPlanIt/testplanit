@@ -140,7 +140,7 @@ export const Header = () => {
         <div
           id="header-container"
           data-testid="header-container"
-          className={`items-center p-2 rounded-sm ${path.includes("admin") ? "bg-linear-to-b from-transparent from-70% to-red-500 inset-ring-2 inset-ring-red-500" : ""}`}
+          className={`items-center p-2 rounded-sm ${path.includes("admin") ? "bg-linear-to-b from-transparent from-60% to-red-500" : ""}`}
         >
           <div className="flex items-center justify-between">
             <div className="flex">
@@ -216,6 +216,14 @@ export const Header = () => {
             </div>
 
             <div className="flex items-center gap-4 shrink-0">
+              {path.includes("admin") && (
+                <Badge
+                  variant="destructive"
+                  className="gap-1 px-3 py-1.5 text-center"
+                >
+                  {t("common.access.admin")} {t("common.fields.configuration")}
+                </Badge>
+              )}
               {trialDaysRemaining !== null && (
                 <div className="flex items-center gap-2">
                   <Badge
@@ -283,7 +291,7 @@ export const Header = () => {
                     className="cursor-pointer"
                   >
                     <Navigation className="mr-2 h-4 w-4" />
-                    {t("help.menu.startTour") || "Start Guided Tour"}
+                    {t("help.menu.startTour")}
                   </DropdownMenuItem>
                   {path.includes("/projects/") && (
                     <DropdownMenuItem
@@ -293,7 +301,7 @@ export const Header = () => {
                       className="cursor-pointer"
                     >
                       <Waypoints className="mr-2 h-4 w-4" />
-                      {t("help.menu.startProjectTour") || "Project Tour"}
+                      {t("help.menu.startProjectTour")}
                     </DropdownMenuItem>
                   )}
                   {path.includes("/admin/") && (
@@ -304,7 +312,7 @@ export const Header = () => {
                       className="cursor-pointer"
                     >
                       <LucideWaypoints className="mr-2 h-4 w-4" />
-                      {t("help.menu.startAdminTour") || "Admin Tour"}
+                      {t("help.menu.startAdminTour")}
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem
@@ -314,7 +322,7 @@ export const Header = () => {
                     className="cursor-pointer"
                   >
                     <BookOpen className="mr-2 h-4 w-4" />
-                    {t("common.fields.documentation") || "Documentation"}
+                    {t("common.fields.documentation")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

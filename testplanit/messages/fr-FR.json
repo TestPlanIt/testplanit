@@ -4461,6 +4461,7 @@
       "noDataMatchingCriteria": "Aucune donnée ne correspond aux dimensions et aux indicateurs sélectionnés.",
       "noDataMatchingCriteriaWithDateFilter": "Aucune donnée ne correspond aux dimensions et aux indicateurs sélectionnés. Veuillez ajuster votre filtre de plage de dates.",
       "noDataAvailable": "Aucune donnée n'est disponible pour ce rapport.",
+      "generatedAt": "Rapport généré à",
       "crossProjectAnalytics": "Analyse et reporting inter-projets",
       "unauthorizedAdmin": "Accès non autorisé : accès administrateur requis.",
       "title": "Générateur de rapports",

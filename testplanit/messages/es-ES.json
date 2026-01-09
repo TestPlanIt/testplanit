@@ -4461,6 +4461,7 @@
       "noDataMatchingCriteria": "No se encontraron datos que coincidan con las dimensiones y métricas seleccionadas.",
       "noDataMatchingCriteriaWithDateFilter": "No se encontraron datos que coincidan con las dimensiones y métricas seleccionadas. Intente ajustar su filtro de rango de fechas.",
       "noDataAvailable": "No hay datos disponibles para este informe.",
+      "generatedAt": "Informe generado en",
       "crossProjectAnalytics": "Análisis y reporte de varios proyectos",
       "unauthorizedAdmin": "No autorizado: Se requiere acceso administrativo.",
       "title": "Constructor de informes",

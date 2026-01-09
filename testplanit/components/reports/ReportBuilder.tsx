@@ -180,17 +180,11 @@ function ReportBuilderContent({
 
   // Split report types into pre-built reports and custom reports
   const preBuiltReports = useMemo(
-    () =>
-      reportTypes.filter(
-        (r) => r.id === "automation-trends" || r.id === "flaky-tests"
-      ),
+    () => reportTypes.filter((r) => r.isPreBuilt),
     [reportTypes]
   );
   const customReports = useMemo(
-    () =>
-      reportTypes.filter(
-        (r) => r.id !== "automation-trends" && r.id !== "flaky-tests"
-      ),
+    () => reportTypes.filter((r) => !r.isPreBuilt),
     [reportTypes]
   );
 
@@ -279,6 +273,10 @@ function ReportBuilderContent({
   const [flakyAutomatedFilter, setFlakyAutomatedFilter] = useState<
     "all" | "automated" | "manual"
   >("all");
+  // Track the consecutiveRuns value used when report was last run (for stable chart/table rendering)
+  const [lastUsedConsecutiveRuns, setLastUsedConsecutiveRuns] = useState(10);
+  // Track when the report was last generated (for display and future export functionality)
+  const [reportGeneratedAt, setReportGeneratedAt] = useState<Date | null>(null);
 
   // Table state
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -559,7 +557,8 @@ function ReportBuilderContent({
     lastUsedMetrics.map((m) => m.value),
     lastUsedDimensions,
     lastUsedMetrics,
-    handleMetricClick
+    handleMetricClick,
+    projectId
   );
 
   // Use automation trends columns for automation-trends report
@@ -569,8 +568,9 @@ function ReportBuilderContent({
   );
 
   // Use flaky tests columns for flaky-tests report
+  // Use lastUsedConsecutiveRuns to prevent table re-renders when form values change
   const flakyTestsColumns = useFlakyTestsColumns(
-    consecutiveRuns,
+    lastUsedConsecutiveRuns,
     projectId,
     lastUsedDimensions.map((d) => d.value),
     mode === "cross-project"
@@ -747,6 +747,7 @@ function ReportBuilderContent({
     setDimensions([]);
     setMetrics([]);
     setResults(null);
+    setAllResults(null);
     setError(null);
     setCompatWarning(null);
     setLastUsedDimensions([]);
@@ -756,6 +757,8 @@ function ReportBuilderContent({
     chartDataRef.current = null;
     setChartDataVersion(0);
     setLastUsedDateRange(undefined);
+    setLastUsedConsecutiveRuns(10);
+    setReportGeneratedAt(null);
   }, [reportType]);
 
   // Load report metadata and URL parameters
@@ -1062,13 +1065,8 @@ function ReportBuilderContent({
 
         const data = await response.json();
 
-        // Handle client-side pagination for automation trends and flaky tests
-        if (
-          reportType === "automation-trends" ||
-          reportType === "cross-project-automation-trends" ||
-          reportType === "flaky-tests" ||
-          reportType === "cross-project-flaky-tests"
-        ) {
+        // Handle client-side pagination for pre-built reports
+        if (currentReport?.isPreBuilt) {
           const allData = data.data || data.results;
 
           // Store projects for automation trends report
@@ -1182,6 +1180,12 @@ function ReportBuilderContent({
           if (reportType === "automation-trends") {
             setLastUsedDateGrouping(dateGrouping);
           }
+          // Update last used consecutive runs for flaky tests
+          if (reportType === "flaky-tests") {
+            setLastUsedConsecutiveRuns(consecutiveRuns);
+          }
+          // Record when the report was generated
+          setReportGeneratedAt(new Date());
 
           // Update URL with selections
           const newParams = new URLSearchParams();
@@ -1266,14 +1270,8 @@ function ReportBuilderContent({
 
   // Re-fetch data when pagination changes (without full loading state)
   useEffect(() => {
-    // For pre-built reports (automation-trends, flaky-tests), handle client-side pagination
-    const isPreBuiltReport =
-      reportType === "automation-trends" ||
-      reportType === "cross-project-automation-trends" ||
-      reportType === "flaky-tests" ||
-      reportType === "cross-project-flaky-tests";
-
-    if (isPreBuiltReport && allResults && allResults.length > 0) {
+    // For pre-built reports, handle client-side pagination
+    if (currentReport?.isPreBuilt && allResults && allResults.length > 0) {
       // Apply client-side sorting first
       let sortedResults = [...allResults];
       if (sortConfig) {
@@ -1315,7 +1313,7 @@ function ReportBuilderContent({
       lastUsedDimensions.length > 0 &&
       lastUsedMetrics.length > 0 &&
       results &&
-      !isPreBuiltReport
+      !currentReport?.isPreBuilt
     ) {
       // Standard server-side pagination for other reports
       fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
@@ -1325,14 +1323,8 @@ function ReportBuilderContent({
 
   // Re-fetch data when sort changes for non-prebuilt reports (without full loading state)
   useEffect(() => {
-    const isPreBuiltReport =
-      reportType === "automation-trends" ||
-      reportType === "cross-project-automation-trends" ||
-      reportType === "flaky-tests" ||
-      reportType === "cross-project-flaky-tests";
-
     if (
-      !isPreBuiltReport &&
+      !currentReport?.isPreBuilt &&
       lastUsedDimensions.length > 0 &&
       lastUsedMetrics.length > 0 &&
       results
@@ -1534,7 +1526,8 @@ function ReportBuilderContent({
           const normalizedRecency = maxScore > 0 ? recencyScore / maxScore : 0;
 
           // Priority combines flip count and recency
-          const normalizedFlips = test.flipCount / (consecutiveRuns - 1 || 1);
+          const normalizedFlips =
+            test.flipCount / (lastUsedConsecutiveRuns - 1 || 1);
           const priorityScore = normalizedFlips * 0.5 + normalizedRecency * 0.5;
 
           return { ...test, _priorityScore: priorityScore };
@@ -1556,7 +1549,7 @@ function ReportBuilderContent({
           metrics={chartMetrics}
           reportType={reportType}
           projects={automationTrendsProjects}
-          consecutiveRuns={consecutiveRuns}
+          consecutiveRuns={lastUsedConsecutiveRuns}
           totalFlakyTests={isFlakyTests ? chartData.length : undefined}
           projectId={projectId}
         />
@@ -1572,7 +1565,7 @@ function ReportBuilderContent({
     chartDataVersion,
     reportType,
     automationTrendsProjects,
-    consecutiveRuns,
+    lastUsedConsecutiveRuns,
   ]); // Depend on version instead of array lengths
 
   return (
@@ -2151,6 +2144,19 @@ function ReportBuilderContent({
                 <Card className="h-full rounded-none border-0 overflow-hidden">
                   <CardHeader className="pt-2 pb-2">
                     <CardTitle>{t("common.visualization")}</CardTitle>
+                    {enhancedReportSummary && (
+                      <CardDescription>{enhancedReportSummary}</CardDescription>
+                    )}
+                    {reportGeneratedAt && (
+                      <p className="text-xs text-muted-foreground">
+                        {tReports("generatedAt")}{" "}
+                        <DateFormatter
+                          date={reportGeneratedAt}
+                          formatString="PPp"
+                          timezone={session?.user?.preferences?.timezone}
+                        />
+                      </p>
+                    )}
                     {memoizedChart.isTruncated && (
                       <p className="text-xs text-muted-foreground mt-1">
                         {tReports("chartDataTruncated.message", {
@@ -2158,9 +2164,6 @@ function ReportBuilderContent({
                           total: memoizedChart.totalDataPoints.toLocaleString(),
                         })}
                       </p>
-                    )}
-                    {enhancedReportSummary && (
-                      <CardDescription>{enhancedReportSummary}</CardDescription>
                     )}
                   </CardHeader>
                   <CardContent className="h-[calc(100%-4rem)] p-6 flex flex-col">
@@ -2249,8 +2252,7 @@ function ReportBuilderContent({
                       ? lastUsedDateRange?.from
                         ? tReports("noDataMatchingCriteriaWithDateFilter")
                         : tReports("noDataMatchingCriteria")
-                      : reportType === "automation-trends" ||
-                          reportType === "cross-project-automation-trends"
+                      : currentReport?.isPreBuilt
                         ? tReports("noDataAvailable")
                         : tReports("selectAtLeastOneDimensionAndMetric")}
                   </CardDescription>

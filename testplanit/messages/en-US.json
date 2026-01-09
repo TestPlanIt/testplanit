@@ -4461,6 +4461,7 @@
       "noDataMatchingCriteria": "No data found matching the selected dimensions and metrics.",
       "noDataMatchingCriteriaWithDateFilter": "No data found matching the selected dimensions and metrics. Try adjusting your date range filter.",
       "noDataAvailable": "No data available for this report.",
+      "generatedAt": "Report generated at",
       "crossProjectAnalytics": "Cross-Project Analytics & Reporting",
       "unauthorizedAdmin": "Unauthorized: Admin access required.",
       "title": "Report Builder",

@@ -6,6 +6,8 @@ export interface ReportType {
   description: string;
   icon: React.ComponentType<any>;
   endpoint: string;
+  /** Pre-built reports have fixed configurations and don't require dimension/metric selection */
+  isPreBuilt?: boolean;
 }
 
 // Project-level report types - using function to access translations
@@ -58,6 +60,7 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("reportTypes.automationTrends.description"),
     icon: TrendingUp,
     endpoint: "/api/report-builder/automation-trends",
+    isPreBuilt: true,
   },
   {
     id: "flaky-tests",
@@ -65,6 +68,7 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("reportTypes.flakyTests.description"),
     icon: Shuffle,
     endpoint: "/api/report-builder/flaky-tests",
+    isPreBuilt: true,
   },
 ];
 
@@ -106,6 +110,7 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("crossProjectReportTypes.automationTrends.description"),
     icon: TrendingUp,
     endpoint: "/api/report-builder/cross-project-automation-trends",
+    isPreBuilt: true,
   },
   {
     id: "flaky-tests",
@@ -113,5 +118,6 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("crossProjectReportTypes.flakyTests.description"),
     icon: Shuffle,
     endpoint: "/api/report-builder/cross-project-flaky-tests",
+    isPreBuilt: true,
   },
 ];

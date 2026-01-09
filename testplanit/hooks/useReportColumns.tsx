@@ -20,7 +20,7 @@ import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { TemplateNameDisplay } from "~/components/TemplateNameDisplay";
 import { MilestoneIconAndName } from "~/components/MilestoneIconAndName";
 import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
-import { TestCaseNameDisplay } from "~/components/TestCaseNameDisplay";
+import { CaseDisplay } from "~/components/tables/CaseDisplay";
 import { ConfigurationNameDisplay } from "~/components/ConfigurationNameDisplay";
 import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
 import { FolderNameDisplay } from "~/components/FolderNameDisplay";
@@ -95,7 +95,9 @@ export function useReportColumns(
     metricLabel: string;
     metricValue: number;
     row: any;
-  }) => void
+  }) => void,
+  /** Project ID for generating links in project-specific reports */
+  projectId?: number | string
 ) {
   const t = useTranslations();
   const tCommon = useTranslations("common");
@@ -367,7 +369,29 @@ export function useReportColumns(
               case "testCase": {
                 // Get the full object from the row data
                 const testCaseData = info.row.original[dimensionId];
-                return <TestCaseNameDisplay testCase={testCaseData} />;
+                // Get project ID from the row if available, or use the passed projectId for project-specific reports
+                const rowProjectId =
+                  info.row.original.projectId ||
+                  info.row.original.project?.id ||
+                  projectId;
+                const testCaseId = testCaseData?.id;
+                const testCaseName =
+                  testCaseData?.name || tCommon("labels.unknown");
+                const testCaseSource = testCaseData?.source || "MANUAL";
+                const linkHref =
+                  rowProjectId && testCaseId
+                    ? `/projects/repository/${rowProjectId}/${testCaseId}`
+                    : undefined;
+                return (
+                  <CaseDisplay
+                    id={testCaseId}
+                    name={testCaseName}
+                    source={testCaseSource}
+                    link={linkHref}
+                    size="medium"
+                    maxLines={2}
+                  />
+                );
               }
               case "folder": {
                 // Get the full object from the row data
@@ -620,7 +644,31 @@ export function useReportColumns(
               return getAggregatedDimensionDisplay(
                 info.row.subRows,
                 (subRow) => subRow.original[dimensionId],
-                (testCaseData) => <TestCaseNameDisplay testCase={testCaseData} />,
+                (testCaseData) => {
+                  // Try to get project ID from the first subrow, or use the passed projectId
+                  const rowProjectId =
+                    info.row.subRows[0]?.original?.projectId ||
+                    info.row.subRows[0]?.original?.project?.id ||
+                    projectId;
+                  const testCaseId = testCaseData?.id;
+                  const testCaseName =
+                    testCaseData?.name || tCommon("labels.unknown");
+                  const testCaseSource = testCaseData?.source || "MANUAL";
+                  const linkHref =
+                    rowProjectId && testCaseId
+                      ? `/projects/repository/${rowProjectId}/${testCaseId}`
+                      : undefined;
+                  return (
+                    <CaseDisplay
+                      id={testCaseId}
+                      name={testCaseName}
+                      source={testCaseSource}
+                      link={linkHref}
+                      size="medium"
+                      maxLines={2}
+                    />
+                  );
+                },
                 t("common.fields.multipleValues" as any)
               );
             }
@@ -663,6 +711,10 @@ export function useReportColumns(
             const bStr = bVal?.name || bVal?.title || String(bVal || "");
             return aStr.localeCompare(bStr);
           },
+          // Set column size based on dimension type
+          ...(dimensionId === "testCase"
+            ? { size: 500, minSize: 150, maxSize: 1500 }
+            : {}),
         })
       );
     });
@@ -949,5 +1001,6 @@ export function useReportColumns(
     tCommon,
     tReportsMetrics,
     onMetricClick,
+    projectId,
   ]);
 }
