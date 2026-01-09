@@ -1,3 +1,10 @@
+## [0.9.27](https://github.com/TestPlanIt/testplanit/compare/v0.9.26...v0.9.27) (2026-01-09)
+
+
+### Bug Fixes
+
+* **localization:** update notification and digest messages for English, Spanish, and French ([f698d68](https://github.com/TestPlanIt/testplanit/commit/f698d68332d0ae99a927709c05c6ab4c563fb37b))
+
 ## [0.9.26](https://github.com/TestPlanIt/testplanit/compare/v0.9.25...v0.9.26) (2026-01-09)
 
 ## [0.9.25](https://github.com/TestPlanIt/testplanit/compare/v0.9.24...v0.9.25) (2026-01-08)
