@@ -317,6 +317,21 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
     }
   };
 
+  const getGlobalModeLabel = (mode: string | undefined) => {
+    switch (mode) {
+      case "NONE":
+        return tCommon("access.none");
+      case "IN_APP":
+        return tNotificationModes("inApp");
+      case "IN_APP_EMAIL_IMMEDIATE":
+        return tNotificationModes("inAppEmailImmediate");
+      case "IN_APP_EMAIL_DAILY":
+        return tNotificationModes("inAppEmailDaily");
+      default:
+        return mode ?? "";
+    }
+  };
+
   const getLocaleLabel = (locale: Locale) => {
     switch (locale) {
       case "en_US":
@@ -841,11 +856,23 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                   <span className="text-sm">
                                     {tCommon("fields.notificationMode")}
                                   </span>
-                                  <Badge variant="secondary">
-                                    {getNotificationModeLabel(
-                                      user.userPreferences.notificationMode
-                                    )}
-                                  </Badge>
+                                  <div className="flex items-center gap-1">
+                                    <Badge variant="secondary">
+                                      {getNotificationModeLabel(
+                                        user.userPreferences.notificationMode
+                                      )}
+                                    </Badge>
+                                    {user.userPreferences.notificationMode ===
+                                      "USE_GLOBAL" &&
+                                      globalSettings?.value && (
+                                        <span className="text-xs text-primary/60 font-semibold">
+                                          {`(${getGlobalModeLabel(
+                                            (globalSettings.value as any)
+                                              .defaultMode
+                                          )})`}
+                                        </span>
+                                      )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -978,7 +1005,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                       >
                                         <SelectTrigger>
                                           <SelectValue
-                                            placeholder={tGlobal("common.fields.itemsPerPage")}
+                                            placeholder={tGlobal(
+                                              "common.fields.itemsPerPage"
+                                            )}
                                           />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -1006,7 +1035,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel className="flex items-center">
-                                      {tGlobal("home.initialPreferences.dateFormat")}
+                                      {tGlobal(
+                                        "home.initialPreferences.dateFormat"
+                                      )}
                                       <HelpPopover helpKey="user.dateFormat" />
                                     </FormLabel>
                                     <FormControl>
@@ -1022,7 +1053,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                       >
                                         <SelectTrigger>
                                           <SelectValue
-                                            placeholder={tGlobal("home.initialPreferences.dateFormat")}
+                                            placeholder={tGlobal(
+                                              "home.initialPreferences.dateFormat"
+                                            )}
                                           />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -1057,7 +1090,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel className="flex items-center">
-                                      {tGlobal("home.initialPreferences.timeFormat")}
+                                      {tGlobal(
+                                        "home.initialPreferences.timeFormat"
+                                      )}
                                       <HelpPopover helpKey="user.timeFormat" />
                                     </FormLabel>
                                     <FormControl>
@@ -1073,7 +1108,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                       >
                                         <SelectTrigger>
                                           <SelectValue
-                                            placeholder={tGlobal("home.initialPreferences.timeFormat")}
+                                            placeholder={tGlobal(
+                                              "home.initialPreferences.timeFormat"
+                                            )}
                                           />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -1151,16 +1188,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                       {tNotifications("mode.label")}
                                       <HelpPopover helpKey="user.notificationMode" />
                                     </FormLabel>
-                                    {globalSettings?.value &&
-                                      field.value === "USE_GLOBAL" && (
-                                        <p className="text-sm text-muted-foreground">
-                                          {tNotifications("currentGlobal", {
-                                            mode: tNotifications(
-                                              `modes.${(globalSettings.value as any).defaultMode?.toLowerCase()}` as any
-                                            ),
-                                          })}
-                                        </p>
-                                      )}
                                     <FormControl>
                                       <RadioGroup
                                         onValueChange={field.onChange}
@@ -1177,6 +1204,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                             className="font-normal"
                                           >
                                             {tNotifications("mode.useGlobal")}
+                                            {globalSettings?.value && (
+                                              <span className="text-sm text-primary/60 font-semibold ml-1">
+                                                {`(${getGlobalModeLabel(
+                                                  (globalSettings.value as any)
+                                                    .defaultMode
+                                                )})`}
+                                              </span>
+                                            )}
                                           </Label>
                                         </div>
                                         <div className="flex items-center space-x-3">
@@ -1212,7 +1247,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                             htmlFor="in-app-email-immediate"
                                             className="font-normal"
                                           >
-                                            {tNotificationModes("inAppEmailImmediate")}
+                                            {tNotificationModes(
+                                              "inAppEmailImmediate"
+                                            )}
                                           </Label>
                                         </div>
                                         <div className="flex items-center space-x-3 md:col-start-1">
@@ -1224,7 +1261,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                             htmlFor="in-app-email-daily"
                                             className="font-normal"
                                           >
-                                            {tNotificationModes("inAppEmailDaily")}
+                                            {tNotificationModes(
+                                              "inAppEmailDaily"
+                                            )}
                                           </Label>
                                         </div>
                                       </RadioGroup>

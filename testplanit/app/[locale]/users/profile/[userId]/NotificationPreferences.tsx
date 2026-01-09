@@ -29,6 +29,7 @@ export function NotificationPreferences({
   const t = useTranslations("users.profile.notifications");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
+  const tNotificationModes = useTranslations("admin.notifications.defaultMode");
   const { data: session } = useSession();
   const { toast } = useToast();
   const [notificationMode, setNotificationMode] =
@@ -81,6 +82,21 @@ export function NotificationPreferences({
     );
   };
 
+  const getGlobalModeLabel = (mode: string | undefined) => {
+    switch (mode) {
+      case "NONE":
+        return tCommon("access.none");
+      case "IN_APP":
+        return tNotificationModes("inApp");
+      case "IN_APP_EMAIL_IMMEDIATE":
+        return tNotificationModes("inAppEmailImmediate");
+      case "IN_APP_EMAIL_DAILY":
+        return tNotificationModes("inAppEmailDaily");
+      default:
+        return mode ?? "";
+    }
+  };
+
   // Only show preferences if user is viewing their own profile
   if (session?.user?.id !== userId) {
     return null;
@@ -90,18 +106,7 @@ export function NotificationPreferences({
     <Card className="mt-4">
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>
-          {t("description")}
-          {globalSettings?.value && notificationMode === "USE_GLOBAL" && (
-            <span className="block mt-2 text-sm">
-              {t("currentGlobal", {
-                mode: t(
-                  `modes.${(globalSettings.value as any).defaultMode?.toLowerCase()}` as any
-                ),
-              })}
-            </span>
-          )}
-        </CardDescription>
+        <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div>
@@ -116,7 +121,16 @@ export function NotificationPreferences({
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="USE_GLOBAL" id="use-global" />
-              <Label htmlFor="use-global">{t("mode.useGlobal")}</Label>
+              <Label htmlFor="use-global">
+                {t("mode.useGlobal")}
+                {globalSettings?.value && (
+                  <span className="opacity-70">
+                    {` (${getGlobalModeLabel(
+                      (globalSettings.value as any).defaultMode
+                    )})`}
+                  </span>
+                )}
+              </Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="NONE" id="none" />
