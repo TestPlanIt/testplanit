@@ -4869,10 +4869,13 @@
     "greeting": "Hola,",
     "greetingWithName": "Hi {name},",
     "notification": {
-      "intro": "Tienes una nueva notificación:"
+      "intro": "Tienes una nueva notificación:",
+      "viewDetails": "Ver detalles",
+      "viewAll": "Ver todas las notificaciones"
     },
     "digest": {
       "intro": "Aquí está tu resumen diario de las notificaciones de TestPlanIt:",
+      "viewDetails": "Ver detalles",
       "viewAll": "Ver todas las notificaciones",
       "noNotifications": "No tienes ninguna nueva notificación hoy.",
       "footer": "Estás recibiendo este correo electrónico porque tienes activadas las notificaciones de resumen diarias. Puedes cambiar tus preferencias de notificación en tus",

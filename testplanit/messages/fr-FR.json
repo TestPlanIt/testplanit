@@ -4869,10 +4869,13 @@
     "greeting": "Bonjour,",
     "greetingWithName": "Salut {name},",
     "notification": {
-      "intro": "Vous avez une nouvelle notification :"
+      "intro": "Vous avez une nouvelle notification :",
+      "viewDetails": "Voir les détails",
+      "viewAll": "Afficher toutes les notifications"
     },
     "digest": {
       "intro": "Voici votre récapitulatif quotidien des notifications de TestPlanIt :",
+      "viewDetails": "Voir les détails",
       "viewAll": "Afficher toutes les notifications",
       "noNotifications": "Vous n'avez aucune nouvelle notification aujourd'hui.",
       "footer": "Vous recevez ce courriel car vous avez activé les notifications récapitulatives quotidiennes. Vous pouvez modifier vos préférences de notification dans vos paramètres.",

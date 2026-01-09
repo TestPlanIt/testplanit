@@ -4869,10 +4869,13 @@
     "greeting": "Hello,",
     "greetingWithName": "Hi {name},",
     "notification": {
-      "intro": "You have a new notification:"
+      "intro": "You have a new notification:",
+      "viewDetails": "View Details",
+      "viewAll": "View All Notifications"
     },
     "digest": {
       "intro": "Here's your daily digest of notifications from TestPlanIt:",
+      "viewDetails": "View Details",
       "viewAll": "View All Notifications",
       "noNotifications": "You don't have any new notifications today.",
       "footer": "You're receiving this email because you have daily digest notifications enabled. You can change your notification preferences in your",
