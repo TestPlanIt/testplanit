@@ -1,3 +1,10 @@
+## [0.9.28](https://github.com/TestPlanIt/testplanit/compare/v0.9.27...v0.9.28) (2026-01-09)
+
+
+### Bug Fixes
+
+* **notification:** enhance notification preferences with global mode label ([79a27a9](https://github.com/TestPlanIt/testplanit/commit/79a27a9b58f6f7d0a599b12fba35774eea01e733))
+
 ## [0.9.27](https://github.com/TestPlanIt/testplanit/compare/v0.9.26...v0.9.27) (2026-01-09)
 
 
