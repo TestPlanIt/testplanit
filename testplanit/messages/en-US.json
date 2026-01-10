@@ -2186,7 +2186,7 @@
       "groups": "Groups",
       "roles": "Roles",
       "tags": "Tags",
-      "issueTracker": "Issue Tracker",
+      "issues": "Issues",
       "appConfig": "Application Configuration",
       "notifications": "Notifications",
       "systemHeader": "System",
@@ -4565,6 +4565,10 @@
         "flakyTests": {
           "label": "Flaky Tests",
           "description": "Identify tests with inconsistent pass/fail results"
+        },
+        "testCaseHealth": {
+          "label": "Test Case Health",
+          "description": "Identify stale, broken, or suspicious test cases based on execution patterns"
         }
       },
       "flakyTests": {
@@ -4592,6 +4596,61 @@
           "backlogDescription": "{count} additional flaky tests not shown"
         }
       },
+      "testCaseHealth": {
+        "staleDaysThreshold": "Stale After (days)",
+        "staleDaysThresholdHelp": "Number of days without execution before a test is considered stale (7-90).",
+        "minExecutions": "Min Executions for Rate",
+        "minExecutionsHelp": "Minimum number of executions required to calculate meaningful pass rate statistics (3-20).",
+        "lookbackDays": "Lookback Period",
+        "lookbackDaysHelp": "Number of days to analyze execution history (30-365).",
+        "includeFilter": "Include",
+        "status": "Health Status",
+        "healthScore": "Score",
+        "lastExecuted": "Last Executed",
+        "executions": "Executions",
+        "passRate": "Pass Rate",
+        "passCount": "Passes",
+        "failCount": "Failures",
+        "never": "Never",
+        "daysSince": "Days since execution",
+        "count": "Count",
+        "totalTests": "test cases",
+        "noData": "No test cases found",
+        "noExecutedTests": "No executed tests to display",
+        "healthStatus": {
+          "healthy": "Healthy",
+          "stale": "Stale",
+          "neverExecuted": "Never Executed",
+          "alwaysPassing": "Always Passing",
+          "alwaysFailing": "Always Failing"
+        },
+        "chart": {
+          "distribution": "Status Distribution",
+          "healthyRecent": "Healthy & Recent",
+          "unhealthyStale": "Needs attention",
+          "daysAxis": "Days Since Last Execution",
+          "healthScoreAxis": "Health Score"
+        },
+        "stats": {
+          "totalTests": "Total Tests",
+          "needsAttention": "Needs Attention",
+          "needsAttentionTooltip": "Always Failing + Never Executed + Stale tests",
+          "healthy": "Healthy",
+          "healthyTooltip": "Healthy + Always Passing tests",
+          "avgScore": "Avg Health Score"
+        },
+        "healthScoreTooltip": {
+          "title": "Score starts at 100, deductions:",
+          "neverExecuted": "Never executed: -50",
+          "stale90": "Not run in 90+ days: -40",
+          "stale60": "Not run in 60+ days: -25",
+          "stale30": "Not run in 30+ days: -10",
+          "alwaysPassing": "Always passing (100%): -5",
+          "alwaysFailing": "Always failing (0%): -30",
+          "lowPassRate": "Low pass rate (<50%): -20",
+          "lowExecutions": "Few executions (<3): -10"
+        }
+      },
       "crossProjectReportTypes": {
         "testExecution": {
           "label": "Cross-Project Test Execution",
@@ -4616,6 +4675,10 @@
         "flakyTests": {
           "label": "Cross-Project Flaky Tests",
           "description": "Identify tests with inconsistent pass/fail results across projects"
+        },
+        "testCaseHealth": {
+          "label": "Cross-Project Test Case Health",
+          "description": "Identify stale, broken, or suspicious test cases across projects"
         }
       }
     },

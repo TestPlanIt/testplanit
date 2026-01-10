@@ -383,7 +383,7 @@ export const FlakyTestsBubbleChart: React.FC<FlakyTestsBubbleChartProps> = ({
           tooltipRef.current.style.display = "block";
           tooltipRef.current.innerHTML = `
             <div style="font-weight: 600; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${d.name}</div>
-            <div style="display: grid; grid-template-columns: auto auto; gap: 2px 8px; font-size: 11px;">
+            <div style="display: grid; grid-template-columns: max-content auto; gap: 2px 6px; font-size: 11px;">
               <span style="opacity: 0.7;">${t("flips")}:</span>
               <span style="font-weight: 500;">${d.flipCount}</span>
               <span style="opacity: 0.7;">${t("chart.failureRate")}:</span>
@@ -438,10 +438,9 @@ export const FlakyTestsBubbleChart: React.FC<FlakyTestsBubbleChartProps> = ({
     // Add backlog bubble if there are more tests than shown
     const notShownCount = (totalCount || data.length) - data.length;
     if (notShownCount > 0) {
-      const backlogRadius = Math.min(
-        sizeScale(0.3),
-        Math.max(20, Math.min(chartWidth, chartHeight) / 15)
-      );
+      // Scale radius based on digit count to fit the text (+1 for the "+" symbol)
+      const textLength = String(notShownCount).length + 1;
+      const backlogRadius = 10 + textLength * 4;
 
       // Position in lower-left area (low priority zone), above the "Lower priority" text
       const backlogX = xScale(0.08);

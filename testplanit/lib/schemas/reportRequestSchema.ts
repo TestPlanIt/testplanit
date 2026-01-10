@@ -39,8 +39,15 @@ export const reportRequestSchema = z
       }
     }
     // Rule: At least one dimension is required for most reports, unless only one metric is requested (for totals)
+    // Pre-built reports (automation-trends, flaky-tests, test-case-health) are exempt from this rule
     if (
       data.reportType !== "issue-tracking" &&
+      data.reportType !== "automation-trends" &&
+      data.reportType !== "cross-project-automation-trends" &&
+      data.reportType !== "flaky-tests" &&
+      data.reportType !== "cross-project-flaky-tests" &&
+      data.reportType !== "test-case-health" &&
+      data.reportType !== "cross-project-test-case-health" &&
       data.dimensions.length === 0 &&
       data.metrics.length > 1
     ) {
@@ -52,13 +59,15 @@ export const reportRequestSchema = z
       });
     }
 
-    // Rule: At least one metric is always required (except for pre-built reports like automation-trends and flaky-tests)
+    // Rule: At least one metric is always required (except for pre-built reports like automation-trends, flaky-tests, and test-case-health)
     if (
       data.metrics.length === 0 &&
       data.reportType !== "automation-trends" &&
       data.reportType !== "cross-project-automation-trends" &&
       data.reportType !== "flaky-tests" &&
-      data.reportType !== "cross-project-flaky-tests"
+      data.reportType !== "cross-project-flaky-tests" &&
+      data.reportType !== "test-case-health" &&
+      data.reportType !== "cross-project-test-case-health"
     ) {
       ctx.addIssue({
         code: "custom",

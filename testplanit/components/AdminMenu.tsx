@@ -88,8 +88,14 @@ const menuOptions: MenuOption[] = [
   { icon: Tags, translationKey: "tags", path: "tags", section: "main" },
   {
     icon: Bug,
-    translationKey: "issueTracker",
+    translationKey: "issues",
     path: "issues",
+    section: "main",
+  },
+  {
+    icon: Plug,
+    translationKey: "integrations",
+    path: "integrations",
     section: "main",
   },
   {
@@ -102,12 +108,6 @@ const menuOptions: MenuOption[] = [
     icon: Bell,
     translationKey: "notifications",
     path: "notifications",
-    section: "main",
-  },
-  {
-    icon: Plug,
-    translationKey: "integrations",
-    path: "integrations",
     section: "main",
   },
   {
@@ -195,7 +195,9 @@ export default function AdminMenu() {
     <Card className="sticky top-0 z-10 rounded-none border-none h-full shadow-none">
       <CardContent className="bg-primary-foreground h-full p-0 flex flex-col">
         <CardHeader className="hidden md:inline">
-          <CardTitle data-testid="admin-page-title">{tGlobal("navigation.menu.admin")}</CardTitle>
+          <CardTitle data-testid="admin-page-title">
+            {tGlobal("navigation.menu.admin")}
+          </CardTitle>
         </CardHeader>
         <div className="grow overflow-y-auto">
           {mainMenuItems.map((option: MenuOption, index: number) => {
