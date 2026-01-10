@@ -126,7 +126,10 @@ export const DIMENSION_ID_KEYS: Record<string, string> = {
   folder: "folderId",
   session: "sessionId",
   assignedTo: "assignedToId",
-  issueType: "issueTypeId",
+  issueType: "issueTypeName",
+  issueTracker: "integrationId",
+  issueStatus: "status",
+  priority: "priority",
   source: "source",
   date: "date",
 };
@@ -147,7 +150,10 @@ export const DIMENSION_LABEL_KEYS: Record<string, string> = {
   folder: "reports.dimensions.folder",
   session: "reports.dimensions.session",
   assignedTo: "common.fields.assignedTo",
-  issueType: "common.fields.issueTracker",
+  issueType: "reports.dimensions.issueType",
+  issueTracker: "common.fields.issueTracker",
+  issueStatus: "reports.dimensions.issueStatus",
+  priority: "reports.dimensions.priority",
   source: "reports.dimensions.source",
   date: "reports.dimensions.date",
 };
@@ -170,6 +176,9 @@ export const DIMENSION_HELP_KEYS: Record<string, string> = {
   session: "reportDimensions.session",
   assignedTo: "reportDimensions.assignedTo",
   issueType: "reportDimensions.issueType",
+  issueTracker: "reportDimensions.issueTracker",
+  issueStatus: "reportDimensions.issueStatus",
+  priority: "reportDimensions.priority",
   source: "reportDimensions.source",
   date: "reportDimensions.date",
 };

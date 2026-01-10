@@ -15,6 +15,7 @@ import { FlakyTestsBubbleChart } from "./FlakyTestsBubbleChart";
 import { stringToColorCode } from "~/utils/stringToColorCode";
 import { toHumanReadable } from "~/utils/duration";
 import { useLocale, useTranslations } from "next-intl";
+import { useIssueColors } from "~/hooks/useIssueColors";
 
 // Enums for chart types
 export enum ChartType {
@@ -129,6 +130,9 @@ const getChartType = (
           "session",
           "assignedTo",
           "issueType",
+          "issueStatus",
+          "issueTracker",
+          "priority",
           "configuration",
         ].includes(firstDimType)
       ) {
@@ -166,6 +170,9 @@ const getChartType = (
         "session",
         "assignedTo",
         "issueType",
+        "issueStatus",
+        "issueTracker",
+        "priority",
         "configuration",
       ];
       if (dimensions.every((d) => categoricalDims.includes(d.value))) {
@@ -243,9 +250,16 @@ const getMetricValue = (
   );
 };
 
+// Helper type for issue color functions
+type IssueColorFunctions = {
+  getPriorityDotColor: (priority: string | null | undefined) => string;
+  getStatusDotColor: (status: string | null | undefined) => string;
+};
+
 const getColor = (
   row: any,
-  dimension: { value: string; label: string }
+  dimension: { value: string; label: string },
+  issueColorFns?: IssueColorFunctions
 ): string | undefined => {
   const dimValueKey = dimension.value;
   if (dimValueKey === "status") {
@@ -266,6 +280,18 @@ const getColor = (
     }
     const itemName = getDimensionValue(row, dimension);
     return stringToColorCode(itemName).colorCode;
+  }
+  // Handle issue priority dimension
+  if (dimValueKey === "priority" && issueColorFns) {
+    const priorityValue = row[dimension.value];
+    const priorityName = priorityValue?.name || priorityValue;
+    return issueColorFns.getPriorityDotColor(priorityName);
+  }
+  // Handle issue status dimension
+  if (dimValueKey === "issueStatus" && issueColorFns) {
+    const statusValue = row[dimension.value];
+    const statusName = statusValue?.name || statusValue;
+    return issueColorFns.getStatusDotColor(statusName);
   }
   if (
     [
@@ -296,6 +322,13 @@ export const ReportChart: React.FC<ReportChartProps> = ({
 }) => {
   const locale = useLocale();
   const t = useTranslations();
+  const { getPriorityDotColor, getStatusDotColor } = useIssueColors();
+
+  // Create issue color functions object to pass to getColor
+  const issueColorFns: IssueColorFunctions = {
+    getPriorityDotColor,
+    getStatusDotColor,
+  };
 
   // Filter out date metrics for chart rendering (they can still appear in the table)
   const chartMetrics = metrics.filter((metric) => {
@@ -477,7 +510,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       const transformedData: SimpleChartDataPoint[] = results.map((row) => {
         const name = getDimensionValue(row, dimension);
         const value = getMetricValue(row, metric);
-        const color = getColor(row, dimension);
+        const color = getColor(row, dimension, issueColorFns);
         const formattedValue = formatMetricValue(value, metric);
         return { id: name, name, value, color, formattedValue };
       });
@@ -553,7 +586,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
               id: path,
               children: index === dimensions.length - 1 ? undefined : [],
               color:
-                getColor(row, dim) || stringToColorCode(dimValue).colorCode,
+                getColor(row, dim, issueColorFns) || stringToColorCode(dimValue).colorCode,
             };
             hierarchyMap.set(path, node);
             currentLevelChildren.push(node);
@@ -605,7 +638,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         const mainGroup = getDimensionValue(row, mainDimension);
         const subGroup = getDimensionValue(row, subDimension);
         const value = getMetricValue(row, metric);
-        const color = getColor(row, subDimension);
+        const color = getColor(row, subDimension, issueColorFns);
         return {
           mainGroup,
           subGroup,
@@ -674,7 +707,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
 
       results.forEach((row) => {
         const group = getDimensionValue(row, dimension);
-        const color = getColor(row, dimension);
+        const color = getColor(row, dimension, issueColorFns);
         chartMetrics.forEach((metric) => {
           const value = getMetricValue(row, metric);
           const isElapsed = isElapsedTimeMetric(metric);

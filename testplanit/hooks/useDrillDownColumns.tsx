@@ -19,6 +19,8 @@ import { ConfigurationNameDisplay } from "~/components/ConfigurationNameDisplay"
 import { MilestoneIconAndName } from "~/components/MilestoneIconAndName";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { SessionNameDisplay } from "~/components/SessionNameDisplay";
+import { IssuePriorityDisplay } from "~/components/IssuePriorityDisplay";
+import { IssueStatusDisplay } from "~/components/IssueStatusDisplay";
 import { Link } from "~/lib/navigation";
 
 interface UseDrillDownColumnsProps {
@@ -1345,55 +1347,55 @@ export function useDrillDownColumns({
     }
 
     // Issues columns
-    if (metricId === "issues") {
+    if (metricId === "issues" || metricId === "issueCount") {
       return [
-        columnHelper.accessor((row: any) => row.key, {
+        columnHelper.accessor((row: any) => row.externalKey || row.name, {
           id: "key",
           header: () => translations.key,
           cell: (info) => {
             const value = info.getValue();
-            return <span className="font-mono font-medium">{value}</span>;
+            return <span className="font-mono font-medium">{value || "-"}</span>;
           },
           enableSorting: false,
-          size: 120,
-          minSize: 80,
-          maxSize: 180,
+          size: 80,
+          minSize: 60,
+          maxSize: 120,
         }),
-        columnHelper.accessor((row: any) => row.summary, {
+        columnHelper.accessor((row: any) => row.title, {
           id: "summary",
           header: () => translations.summary,
           cell: (info) => {
             const value = info.getValue();
-            return <span className="truncate">{value}</span>;
+            return <span className="truncate block">{value || "-"}</span>;
           },
           enableSorting: false,
-          size: 300,
+          size: 400,
           minSize: 200,
-          maxSize: 600,
+          maxSize: 800,
         }),
-        columnHelper.accessor((row: any) => row.status, {
+        columnHelper.accessor((row: any) => row.externalStatus || row.status, {
           id: "status",
           header: () => translations.status,
           cell: (info) => {
             const value = info.getValue();
-            return <span>{value || "-"}</span>;
+            return <IssueStatusDisplay status={value} />;
           },
           enableSorting: false,
-          size: 120,
-          minSize: 100,
-          maxSize: 200,
+          size: 80,
+          minSize: 60,
+          maxSize: 120,
         }),
         columnHelper.accessor((row: any) => row.priority, {
           id: "priority",
           header: () => translations.priority,
           cell: (info) => {
             const value = info.getValue();
-            return <span>{value || "-"}</span>;
+            return <IssuePriorityDisplay priority={value} />;
           },
           enableSorting: false,
-          size: 100,
-          minSize: 80,
-          maxSize: 150,
+          size: 80,
+          minSize: 60,
+          maxSize: 120,
         }),
         columnHelper.accessor((row: any) => row.createdBy?.name, {
           id: "createdBy",

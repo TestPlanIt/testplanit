@@ -17,6 +17,7 @@ import { useTranslations } from "next-intl";
 import DOMPurify from "dompurify";
 import { useIssueColors } from "@/hooks/useIssueColors";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
+import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 
 interface IssueDisplayProps {
   id: number;
@@ -80,7 +81,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   issueTypeIconUrl,
 }) => {
   const t = useTranslations();
-  const { getPriorityStyle, getStatusStyle } = useIssueColors();
+  const { getPriorityStyle } = useIssueColors();
   const [isOpen, setIsOpen] = useState(false);
   const [jiraDetails, setJiraDetails] = useState<JiraIssueDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -325,13 +326,10 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                       <span className="font-semibold">{jiraDetails.key}</span>
                     )}
                   </div>
-                  <Badge
-                    variant="outline"
+                  <IssueStatusDisplay
+                    status={jiraDetails.status.name}
                     className="text-xs"
-                    style={getStatusStyle(jiraDetails.status.name)}
-                  >
-                    {jiraDetails.status.name}
-                  </Badge>
+                  />
                 </div>
 
                 {/* Summary */}

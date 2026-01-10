@@ -4272,7 +4272,10 @@
       "folder": "## Dimensión de Carpetas\nGrupos resultados por estructura de carpetas del repositorio para análisis organizacional.",
       "session": "## Dimensión de la sesión\nLos grupos resultan probando sesiones para análisis basados en sesión.",
       "assignedTo": "## Asignado a la Dimensión\nResultados de grupos por el usuario asignado para ejecutar o administrar los elementos.",
-      "issueType": "## Dimensión de tipo de asunto\nLos grupos resultan por el tipo de incidencias seguidas (por ejemplo, Bug, Mejora).",
+      "issueType": "## Dimensión de tipo de problema\nAgrupa los resultados según el tipo de problemas rastreados (por ejemplo, error, tarea, historia, mejora).",
+      "issueTracker": "## Dimensión de seguimiento de problemas\nAgrupa los resultados según la integración de seguimiento de problemas utilizada (por ejemplo, Jira, GitHub Issues, Azure DevOps).",
+      "issueStatus": "## Dimensión de estado del problema\nAgrupa los resultados según el estado actual de los problemas (por ejemplo, Abierto, En progreso, Resuelto, Cerrado).",
+      "priority": "## Dimensión de prioridad\nAgrupa los resultados por nivel de prioridad del problema (por ejemplo, Alto, Medio, Bajo).",
       "source": "## Dimensión de Fuente\nLos grupos resultan por el origen de la ejecución de la prueba (por ejemplo, Manual, JUnit, API).",
       "date": "## Dimensión de fecha\nLos grupos resultan por fecha para análisis y tendencias basadas en el tiempo."
     },
@@ -4654,7 +4657,9 @@
       "period": "Período",
       "priority": "Prioridad",
       "automationStatus": "Estado de la automatización",
-      "issueType": "Tipo de problema"
+      "issueType": "Tipo de problema",
+      "issueTracker": "Rastreador de problemas",
+      "issueStatus": "Estado del problema"
     },
     "metrics": {
       "testResults": "Resultados de la prueba",

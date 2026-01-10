@@ -315,16 +315,18 @@ async function handleCrossProjectAggregation({
     )
   );
 
-  // Create lookup maps for dimension values
+  // Create lookup maps for dimension values (CROSS-PROJECT)
   const dimensionLookups = dimensionConfigs.map(
     (config: DimensionConfig, index: number) => {
       const values = dimensionValues[index];
       const lookup = new Map<string, unknown>();
       (values as unknown[]).forEach((value: unknown) => {
         const valueObj = value as Record<string, unknown>;
+        // For dimensions ending in "Id", use the id as key
+        // For other dimensions, try to use the groupBy field, then name, then id as fallback
         const key = config.groupBy.endsWith("Id")
           ? valueObj.id
-          : valueObj[config.groupBy] || valueObj.id;
+          : valueObj[config.groupBy] || valueObj.name || valueObj.id;
         // Ensure consistent types for lookups (convert to string)
         lookup.set(String(key), value);
       });
@@ -639,16 +641,18 @@ async function handleProjectSpecificAggregation({
     )
   );
 
-  // Create lookup maps for dimension values
+  // Create lookup maps for dimension values (PROJECT-SPECIFIC)
   const dimensionLookups = dimensionConfigs.map(
     (config: DimensionConfig, index: number) => {
       const values = dimensionValues[index];
       const lookup = new Map<string, unknown>();
       (values as unknown[]).forEach((value: unknown) => {
         const valueObj = value as Record<string, unknown>;
+        // For dimensions ending in "Id", use the id as key
+        // For other dimensions, try to use the groupBy field, then name, then id as fallback
         const key = config.groupBy.endsWith("Id")
           ? valueObj.id
-          : valueObj[config.groupBy] || valueObj.id;
+          : valueObj[config.groupBy] || valueObj.name || valueObj.id;
         // Ensure consistent types for lookups (convert to string)
         lookup.set(String(key), value);
       });

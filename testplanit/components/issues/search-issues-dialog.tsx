@@ -22,7 +22,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { CreateIssueJiraForm } from "./create-issue-jira-form";
 import { toast } from "sonner";
-import { useIssueColors } from "@/hooks/useIssueColors";
+import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
+import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 
 interface ExternalIssue {
   id: string;
@@ -100,7 +101,6 @@ export function SearchIssuesDialog({
   linkedIssueIds = [],
 }: SearchIssuesDialogProps) {
   const t = useTranslations();
-  const { getPriorityStyle, getStatusStyle } = useIssueColors();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIssues, setSelectedIssues] = useState<IssueItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -480,22 +480,12 @@ export function SearchIssuesDialog({
                               )}
                               <div className="flex items-center gap-2 text-xs flex-wrap">
                                 {issue.priority && (
-                                  <Badge
-                                    variant="outline"
-                                    style={getPriorityStyle(issue.priority)}
-                                  >
-                                    {issue.priority}
-                                  </Badge>
+                                  <IssuePriorityDisplay priority={issue.priority} />
                                 )}
                                 {(issue.externalStatus || issue.status) && (
-                                  <Badge
-                                    variant="outline"
-                                    style={getStatusStyle(
-                                      issue.externalStatus || issue.status || ""
-                                    )}
-                                  >
-                                    {issue.externalStatus || issue.status}
-                                  </Badge>
+                                  <IssueStatusDisplay
+                                    status={issue.externalStatus || issue.status}
+                                  />
                                 )}
                                 {issue.createdBy && (
                                   <span className="text-muted-foreground truncate max-w-[200px]">

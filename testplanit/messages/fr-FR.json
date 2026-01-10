@@ -4272,7 +4272,10 @@
       "folder": "## Dimension de dossier\nRegroupe les résultats par structure de dossier du référentiel pour l'analyse organisationnelle.",
       "session": "## Dimension de session\nRegroupe les résultats par sessions de test pour l'analyse basée sur les sessions.",
       "assignedTo": "## Dimension affectée\nRegroupe les résultats par l'utilisateur chargé d'exécuter ou de gérer les éléments.",
-      "issueType": "## Dimension Type de problème\nRegroupe les résultats par type de problème suivi (par exemple, Bug, Amélioration).",
+      "issueType": "## Dimension Type de problème\nRegroupe les résultats par type de problème suivi (par exemple, Bug, Task, Story, Enhancement).",
+      "issueTracker": "## Dimension de suivi des problèmes\nRegroupe les résultats par l'intégration de suivi des problèmes utilisée (par exemple, Jira, GitHub Issues, Azure DevOps).",
+      "issueStatus": "## Dimension d'état des problèmes\nRegroupe les résultats selon l'état actuel des problèmes (par exemple, Ouvert, En cours, Résolu, Fermé).",
+      "priority": "## Dimension de priorité\nRegroupe les résultats par niveau de priorité du problème (par exemple, élevé, moyen, faible).",
       "source": "## Dimension source\nRegroupe les résultats selon la source d'exécution des tests (par exemple, Manuel, JUnit, API).",
       "date": "## Dimension Date\nRegroupe les résultats par date pour l'analyse temporelle et les tendances."
     },
@@ -4654,7 +4657,9 @@
       "period": "Période",
       "priority": "Priorité",
       "automationStatus": "État de l'automatisation",
-      "issueType": "Type de problème"
+      "issueType": "Type de problème",
+      "issueTracker": "Suivi des problèmes",
+      "issueStatus": "État du problème"
     },
     "metrics": {
       "testResults": "Résultats des tests",

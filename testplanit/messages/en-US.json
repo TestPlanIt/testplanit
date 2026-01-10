@@ -4272,7 +4272,10 @@
       "folder": "## Folder Dimension\nGroups results by repository folder structure for organizational analysis.",
       "session": "## Session Dimension\nGroups results by testing sessions for session-based analysis.",
       "assignedTo": "## Assigned To Dimension\nGroups results by the user assigned to execute or manage the items.",
-      "issueType": "## Issue Type Dimension\nGroups results by the type of issues tracked (e.g., Bug, Enhancement).",
+      "issueType": "## Issue Type Dimension\nGroups results by the type of issues tracked (e.g., Bug, Task, Story, Enhancement).",
+      "issueTracker": "## Issue Tracker Dimension\nGroups results by the issue tracking integration used (e.g., Jira, GitHub Issues, Azure DevOps).",
+      "issueStatus": "## Issue Status Dimension\nGroups results by the current status of issues (e.g., Open, In Progress, Resolved, Closed).",
+      "priority": "## Priority Dimension\nGroups results by issue priority level (e.g., High, Medium, Low).",
       "source": "## Source Dimension\nGroups results by the source of test execution (e.g., Manual, JUnit, API).",
       "date": "## Date Dimension\nGroups results by date for time-based analysis and trends."
     },
@@ -4654,7 +4657,9 @@
       "period": "Period",
       "priority": "Priority",
       "automationStatus": "Automation Status",
-      "issueType": "Issue Type"
+      "issueType": "Issue Type",
+      "issueTracker": "Issue Tracker",
+      "issueStatus": "Issue Status"
     },
     "metrics": {
       "testResults": "Test Results",

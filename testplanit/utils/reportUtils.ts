@@ -4229,68 +4229,303 @@ export function createIssueTrackingDimensionRegistry(
       id: "issueType",
       label: "Issue Type",
       getValues: async (prisma: any, projectId?: number) => {
+        const results: Array<{
+          id: string | null;
+          name: string;
+          iconUrl: string | null;
+        }> = [];
+
         if (isProjectSpecific && projectId) {
-          // Project-specific: Get issue config from the project
-          // Project-specific: Since the current schema doesn't have issueConfig,
-          // we'll check if the project has any issues and return a placeholder config
+          // Project-specific: Get distinct issue types from project's issues
           const project = await prisma.projects.findUnique({
             where: { id: Number(projectId) },
             include: {
               issues: {
                 where: { isDeleted: false },
-                select: { id: true },
-                take: 1,
+                select: {
+                  issueTypeName: true,
+                  issueTypeId: true,
+                  issueTypeIconUrl: true,
+                },
+                distinct: ["issueTypeName"],
               },
             },
           });
 
-          // Return a placeholder issue config if the project has issues
-          return project?.issues && project.issues.length > 0
-            ? [
-                {
-                  id: projectId,
-                  name: "Project Issues",
-                  systemType: "INTERNAL",
-                  configData: {},
-                  isDefault: true,
-                  isActive: true,
-                },
-              ]
-            : [];
+          if (!project?.issues) return results;
+
+          // Check if there are issues without an issue type
+          const hasUnknownType = project.issues.some(
+            (issue: any) => issue.issueTypeName === null
+          );
+          if (hasUnknownType) {
+            results.push({ id: null, name: "Unspecified", iconUrl: null });
+          }
+
+          // Add known issue types
+          project.issues.forEach((issue: any) => {
+            if (issue.issueTypeName) {
+              results.push({
+                id: issue.issueTypeId || issue.issueTypeName,
+                name: issue.issueTypeName,
+                iconUrl: issue.issueTypeIconUrl,
+              });
+            }
+          });
         } else {
-          // Cross-project: Get all active issue configs
-          // Note: issueConfig table doesn't exist in current schema
-          // Return empty array for cross-project queries
-          return [];
-          /*
-          const configs = await prisma.issueConfig.findMany({
+          // Cross-project: Check for issues without issue type
+          const unknownTypeCount = await prisma.issue.count({
             where: {
               isDeleted: false,
-              isActive: true,
+              issueTypeName: null,
+            },
+          });
+          if (unknownTypeCount > 0) {
+            results.push({ id: null, name: "Unspecified", iconUrl: null });
+          }
+
+          // Get all distinct issue types
+          const issues = await prisma.issue.findMany({
+            where: {
+              isDeleted: false,
+              issueTypeName: { not: null },
             },
             select: {
-              id: true,
-              name: true,
-              systemType: true,
-              configData: true,
-              isDefault: true,
-              isActive: true,
+              issueTypeName: true,
+              issueTypeId: true,
+              issueTypeIconUrl: true,
             },
+            distinct: ["issueTypeName"],
+            orderBy: { issueTypeName: "asc" },
+          });
+
+          issues.forEach((issue: any) => {
+            results.push({
+              id: issue.issueTypeId || issue.issueTypeName,
+              name: issue.issueTypeName,
+              iconUrl: issue.issueTypeIconUrl,
+            });
+          });
+        }
+
+        return results;
+      },
+      groupBy: "issueTypeName",
+      join: {},
+      display: (val: any) => ({
+        name: val.name || "Unspecified",
+        id: val.id,
+        iconUrl: val.iconUrl,
+      }),
+    },
+    issueTracker: {
+      id: "issueTracker",
+      label: "Issue Tracker",
+      getValues: async (prisma: any, projectId?: number) => {
+        const results: Array<{
+          id: number | null;
+          name: string;
+          provider: string | null;
+        }> = [];
+
+        if (isProjectSpecific && projectId) {
+          // Project-specific: Get integrations used by project's issues
+          const project = await prisma.projects.findUnique({
+            where: { id: Number(projectId) },
+            include: {
+              issues: {
+                where: { isDeleted: false },
+                include: {
+                  integration: {
+                    select: { id: true, name: true, provider: true },
+                  },
+                },
+                distinct: ["integrationId"],
+              },
+            },
+          });
+
+          if (!project?.issues) return results;
+
+          // Check if there are issues without an integration (internal)
+          const hasInternalIssues = project.issues.some(
+            (issue: any) => issue.integrationId === null
+          );
+          if (hasInternalIssues) {
+            results.push({ id: null, name: "Internal", provider: null });
+          }
+
+          // Add external integrations
+          project.issues.forEach((issue: any) => {
+            if (issue.integration) {
+              results.push(issue.integration);
+            }
+          });
+        } else {
+          // Cross-project: Check for internal issues
+          const internalIssueCount = await prisma.issue.count({
+            where: {
+              isDeleted: false,
+              integrationId: null,
+            },
+          });
+          if (internalIssueCount > 0) {
+            results.push({ id: null, name: "Internal", provider: null });
+          }
+
+          // Get all integrations that have issues
+          const integrations = await prisma.integration.findMany({
+            where: {
+              isDeleted: false,
+              issues: {
+                some: {
+                  isDeleted: false,
+                },
+              },
+            },
+            select: { id: true, name: true, provider: true },
             orderBy: { name: "asc" },
           });
-          return configs;
-          */
+          results.push(...integrations);
         }
+
+        return results;
       },
       groupBy: "integrationId",
       join: { integration: true },
       display: (val: any) => ({
-        name: val.name,
+        name: val.name || "Internal",
         id: val.id,
-        systemType: val.systemType,
-        configData: val.configData,
-        isDefault: val.isDefault,
-        isActive: val.isActive,
+        provider: val.provider,
+      }),
+    },
+    issueStatus: {
+      id: "issueStatus",
+      label: "Issue Status",
+      getValues: async (prisma: any, projectId?: number) => {
+        if (isProjectSpecific && projectId) {
+          // Project-specific: Get distinct statuses from project's issues
+          const project = await prisma.projects.findUnique({
+            where: { id: Number(projectId) },
+            include: {
+              issues: {
+                where: {
+                  isDeleted: false,
+                  status: { not: null },
+                },
+                select: { status: true },
+                distinct: ["status"],
+              },
+            },
+          });
+
+          if (!project?.issues) return [];
+
+          return project.issues.map((issue: any) => ({
+            id: issue.status,
+            name: issue.status,
+          }));
+        } else {
+          // Cross-project: Get all distinct statuses
+          const issues = await prisma.issue.findMany({
+            where: {
+              isDeleted: false,
+              status: { not: null },
+            },
+            select: { status: true },
+            distinct: ["status"],
+            orderBy: { status: "asc" },
+          });
+
+          return issues.map((issue: any) => ({
+            id: issue.status,
+            name: issue.status,
+          }));
+        }
+      },
+      groupBy: "status",
+      join: {},
+      display: (val: any) => ({
+        name: val.name || "Unknown",
+        id: val.id || "unknown",
+      }),
+    },
+    priority: {
+      id: "priority",
+      label: "Priority",
+      getValues: async (prisma: any, projectId?: number) => {
+        // Helper to normalize priority for case-insensitive grouping
+        const normalizePriority = (priority: string) => {
+          const lower = priority.toLowerCase().trim();
+          // Capitalize first letter for display
+          return lower.charAt(0).toUpperCase() + lower.slice(1);
+        };
+
+        if (isProjectSpecific && projectId) {
+          // Project-specific: Get distinct priorities from project's issues
+          const project = await prisma.projects.findUnique({
+            where: { id: Number(projectId) },
+            include: {
+              issues: {
+                where: {
+                  isDeleted: false,
+                  priority: { not: null },
+                },
+                select: { priority: true },
+                distinct: ["priority"],
+              },
+            },
+          });
+
+          if (!project?.issues) return [];
+
+          // Normalize priorities for case-insensitive grouping
+          const uniquePriorities = new Map<string, string>();
+          project.issues.forEach((issue: any) => {
+            const normalized = normalizePriority(issue.priority);
+            const key = normalized.toLowerCase();
+            if (!uniquePriorities.has(key)) {
+              uniquePriorities.set(key, normalized);
+            }
+          });
+
+          return Array.from(uniquePriorities.values()).map((name) => ({
+            id: name.toLowerCase(),
+            name: name,
+          }));
+        } else {
+          // Cross-project: Get all distinct priorities
+          const issues = await prisma.issue.findMany({
+            where: {
+              isDeleted: false,
+              priority: { not: null },
+            },
+            select: { priority: true },
+            distinct: ["priority"],
+            orderBy: { priority: "asc" },
+          });
+
+          // Normalize priorities for case-insensitive grouping
+          const uniquePriorities = new Map<string, string>();
+          issues.forEach((issue: any) => {
+            const normalized = normalizePriority(issue.priority);
+            const key = normalized.toLowerCase();
+            if (!uniquePriorities.has(key)) {
+              uniquePriorities.set(key, normalized);
+            }
+          });
+
+          return Array.from(uniquePriorities.values()).map((name) => ({
+            id: name.toLowerCase(),
+            name: name,
+          }));
+        }
+      },
+      groupBy: "priority",
+      join: {},
+      display: (val: any) => ({
+        name: val.name || "Unknown",
+        id: val.id || "unknown",
       }),
     },
     date: {
@@ -4359,6 +4594,14 @@ export function createIssueTrackingDimensionRegistry(
   };
 }
 
+// Helper to normalize priority for case-insensitive grouping
+function normalizePriority(priority: string | null | undefined): string {
+  if (!priority) return "unknown";
+  const lower = priority.toLowerCase().trim();
+  // Capitalize first letter for display
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
 // Shared issue tracking metric registry factory
 export function createIssueTrackingMetricRegistry(
   isProjectSpecific: boolean = true
@@ -4416,6 +4659,9 @@ export function createIssueTrackingMetricRegistry(
                     const date = new Date(issue.createdAt);
                     date.setUTCHours(0, 0, 0, 0);
                     return date.toISOString();
+                  } else if (field === "priority") {
+                    // Normalize priority for case-insensitive grouping
+                    return normalizePriority(issue[field]);
                   }
                   return issue[field] || "unknown";
                 })
@@ -4432,6 +4678,9 @@ export function createIssueTrackingMetricRegistry(
                     groupData.createdById = issue.createdById;
                   } else if (field === "integrationId") {
                     groupData.integrationId = issue.integrationId;
+                  } else if (field === "priority") {
+                    // Normalize priority for case-insensitive grouping
+                    groupData.priority = normalizePriority(issue.priority);
                   }
                 });
 
@@ -4448,13 +4697,24 @@ export function createIssueTrackingMetricRegistry(
             const grouped = new Map<string, any>();
             issues.forEach((issue: any) => {
               const key = groupBy
-                .map((field) => issue[field] || "unknown")
+                .map((field) => {
+                  // Normalize priority for case-insensitive grouping
+                  if (field === "priority") {
+                    return normalizePriority(issue[field]);
+                  }
+                  return issue[field] || "unknown";
+                })
                 .join("|");
 
               if (!grouped.has(key)) {
                 const groupData: any = {};
                 groupBy.forEach((field) => {
-                  groupData[field] = issue[field];
+                  // Normalize priority for case-insensitive grouping
+                  if (field === "priority") {
+                    groupData[field] = normalizePriority(issue[field]);
+                  } else {
+                    groupData[field] = issue[field];
+                  }
                 });
                 groupData.issueCount = 0;
                 grouped.set(key, groupData);
@@ -4474,7 +4734,13 @@ export function createIssueTrackingMetricRegistry(
                 createdAt: true,
                 createdById: true,
                 integrationId: true,
-                // Get project ID through related entities
+                issueTypeName: true,
+                issueTypeId: true,
+                issueTypeIconUrl: true,
+                status: true,
+                priority: true,
+                projectId: true,
+                // Get project ID through related entities as fallback
                 repositoryCases: {
                   select: { projectId: true },
                   take: 1,
@@ -4491,8 +4757,9 @@ export function createIssueTrackingMetricRegistry(
             });
 
             const groupedResults = results.reduce((acc: any, result: any) => {
-              // Determine project ID from related entities
+              // Determine project ID from direct field or related entities
               const projectId =
+                result.projectId ||
                 result.repositoryCases[0]?.projectId ||
                 result.sessions[0]?.projectId ||
                 result.testRuns[0]?.projectId ||
@@ -4504,14 +4771,13 @@ export function createIssueTrackingMetricRegistry(
                     const date = new Date(result.createdAt);
                     date.setUTCHours(0, 0, 0, 0);
                     return date.toISOString();
-                  } else if (field === "createdById") {
-                    return result.createdById;
-                  } else if (field === "integrationId") {
-                    return result.integrationId;
                   } else if (field === "projectId") {
                     return projectId;
+                  } else if (field === "priority") {
+                    // Normalize priority for case-insensitive grouping
+                    return normalizePriority(result[field]);
                   }
-                  return "unknown";
+                  return result[field] ?? "unknown";
                 })
                 .join("|");
 
@@ -4522,12 +4788,13 @@ export function createIssueTrackingMetricRegistry(
                       const date = new Date(result.createdAt);
                       date.setUTCHours(0, 0, 0, 0);
                       obj[field] = date.toISOString();
-                    } else if (field === "createdById") {
-                      obj[field] = result.createdById;
-                    } else if (field === "integrationId") {
-                      obj[field] = result.integrationId;
                     } else if (field === "projectId") {
                       obj[field] = projectId;
+                    } else if (field === "priority") {
+                      // Normalize priority for case-insensitive grouping
+                      obj[field] = normalizePriority(result[field]);
+                    } else {
+                      obj[field] = result[field];
                     }
                     return obj;
                   }, {}),
@@ -4550,18 +4817,42 @@ export function createIssueTrackingMetricRegistry(
 
           // For simple groupBy without project
           if (!groupBy.includes("projectId")) {
-            return prisma.issue
-              .groupBy({
-                by: groupBy as any[],
-                where: { isDeleted: false },
-                _count: { _all: true },
-              })
-              .then((results: any[]) =>
-                results.map((r: any) => ({
-                  ...r,
-                  issueCount: r._count._all,
-                }))
-              );
+            const rawResults = await prisma.issue.groupBy({
+              by: groupBy as any[],
+              where: { isDeleted: false },
+              _count: { _all: true },
+            });
+
+            // If grouping by priority, we need to merge case-insensitive values
+            if (groupBy.includes("priority")) {
+              const merged = new Map<string, any>();
+              rawResults.forEach((r: any) => {
+                const normalizedPriority = normalizePriority(r.priority);
+                const key = groupBy
+                  .map((field) =>
+                    field === "priority" ? normalizedPriority : r[field]
+                  )
+                  .join("|");
+
+                if (!merged.has(key)) {
+                  merged.set(key, {
+                    ...groupBy.reduce((obj: any, field) => {
+                      obj[field] =
+                        field === "priority" ? normalizedPriority : r[field];
+                      return obj;
+                    }, {}),
+                    issueCount: 0,
+                  });
+                }
+                merged.get(key).issueCount += r._count._all;
+              });
+              return Array.from(merged.values());
+            }
+
+            return rawResults.map((r: any) => ({
+              ...r,
+              issueCount: r._count._all,
+            }));
           }
 
           // For groupBy with project, we need a more complex query
@@ -4570,6 +4861,12 @@ export function createIssueTrackingMetricRegistry(
             select: {
               createdById: true,
               integrationId: true,
+              issueTypeName: true,
+              issueTypeId: true,
+              issueTypeIconUrl: true,
+              status: true,
+              priority: true,
+              projectId: true,
               repositoryCases: {
                 select: { projectId: true },
                 take: 1,
@@ -4587,6 +4884,7 @@ export function createIssueTrackingMetricRegistry(
 
           const groupedResults = results.reduce((acc: any, result: any) => {
             const projectId =
+              result.projectId ||
               result.repositoryCases[0]?.projectId ||
               result.sessions[0]?.projectId ||
               result.testRuns[0]?.projectId ||
@@ -4594,26 +4892,26 @@ export function createIssueTrackingMetricRegistry(
 
             const key = groupBy
               .map((field) => {
-                if (field === "createdById") {
-                  return result.createdById;
-                } else if (field === "integrationId") {
-                  return result.integrationId;
-                } else if (field === "projectId") {
+                if (field === "projectId") {
                   return projectId;
+                } else if (field === "priority") {
+                  // Normalize priority for case-insensitive grouping
+                  return normalizePriority(result[field]);
                 }
-                return "unknown";
+                return result[field] ?? "unknown";
               })
               .join("|");
 
             if (!acc[key]) {
               acc[key] = {
                 ...groupBy.reduce((obj: any, field) => {
-                  if (field === "createdById") {
-                    obj[field] = result.createdById;
-                  } else if (field === "integrationId") {
-                    obj[field] = result.integrationId;
-                  } else if (field === "projectId") {
+                  if (field === "projectId") {
                     obj[field] = projectId;
+                  } else if (field === "priority") {
+                    // Normalize priority for case-insensitive grouping
+                    obj[field] = normalizePriority(result[field]);
+                  } else {
+                    obj[field] = result[field];
                   }
                   return obj;
                 }, {}),

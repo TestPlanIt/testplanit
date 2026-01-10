@@ -241,7 +241,8 @@ export function useIssueColors() {
   };
 
   /**
-   * Get just the color value for priority (useful for dots/indicators)
+   * Get just the color value for priority (useful for dots/indicators and charts)
+   * Colors match getPriorityStyle for visual consistency
    */
   const getPriorityDotColor = (priority: string | null | undefined): string => {
     if (!colorsByFamily) return "#B1B2B3";
@@ -253,21 +254,27 @@ export function useIssueColors() {
       case "urgent":
       case "highest":
       case "critical":
+      case "sanity":
+        // Red - matches getPriorityStyle
         return getColor("Red", 2);
       case "high":
-        return getColor("Orange", 2);
+        // Red (lighter) - matches getPriorityStyle
+        return getColor("Red", 3);
       case "medium":
-        return getColor("Yellow", 2);
+        // Green - matches getPriorityStyle
+        return getColor("Green", 2);
       case "low":
       case "lowest":
-        return getColor("Green", 2);
+        // Blue - matches getPriorityStyle
+        return getColor("Blue", 2);
       default:
         return getColor("Black", 4);
     }
   };
 
   /**
-   * Get just the color value for status (useful for dots/indicators)
+   * Get just the color value for status (useful for dots/indicators and charts)
+   * Colors match getStatusStyle for visual consistency
    */
   const getStatusDotColor = (status: string | null | undefined): string => {
     if (!colorsByFamily) return "#B1B2B3";
@@ -284,28 +291,33 @@ export function useIssueColors() {
       case "todo":
       case "to do":
       case "backlog":
-        return getColor("Blue", 2);
+        // Indigo - matches getStatusStyle
+        return getColor("Indigo", 2);
       case "in progress":
       case "in development":
       case "doing":
       case "working":
       case "active":
+        // Green - matches getStatusStyle
         return getColor("Green", 2);
       case "done":
       case "closed":
       case "resolved":
       case "completed":
       case "fixed":
-        return getColor("Black", 5);
+        // Gray - matches getStatusStyle
+        return getColor("Black", 4);
       case "blocked":
       case "on hold":
       case "paused":
+        // Red - matches getStatusStyle
         return getColor("Red", 2);
       case "review":
       case "in review":
       case "testing":
       case "qa":
-        return getColor("Violet", 2);
+        // Yellow - matches getStatusStyle
+        return getColor("Yellow", 2);
       default:
         return getColor("Black", 4);
     }

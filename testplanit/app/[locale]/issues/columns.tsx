@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/popover";
 import DOMPurify from "dompurify";
 import { DateFormatter } from "@/components/DateFormatter";
-import { useIssueColors } from "@/hooks/useIssueColors";
+import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
+import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 
 // Helper function to strip HTML tags and get plain text
 function stripHtmlTags(html: string | null): string {
@@ -66,8 +67,6 @@ export function useIssueColumns({
   };
   isLoadingCounts?: boolean;
 }): ColumnDef<ExtendedIssues>[] {
-  const { getPriorityStyle, getStatusStyle } = useIssueColors();
-
   return [
     {
       id: "name",
@@ -260,13 +259,7 @@ export function useIssueColumns({
       maxSize: 200,
       cell: ({ row }) => {
         const status = row.original.status;
-        if (!status) return <span className="text-muted-foreground">-</span>;
-        const statusStyle = getStatusStyle(status);
-        return (
-          <Badge variant="outline" className="capitalize" style={statusStyle}>
-            {status}
-          </Badge>
-        );
+        return <IssueStatusDisplay status={status} className="capitalize" />;
       },
     },
     {
@@ -281,13 +274,7 @@ export function useIssueColumns({
       maxSize: 200,
       cell: ({ row }) => {
         const priority = row.original.priority;
-        if (!priority) return <span className="text-muted-foreground">-</span>;
-        const priorityStyle = getPriorityStyle(priority);
-        return (
-          <Badge variant="outline" className="capitalize" style={priorityStyle}>
-            {priority}
-          </Badge>
-        );
+        return <IssuePriorityDisplay priority={priority} className="capitalize" />;
       },
     },
     {

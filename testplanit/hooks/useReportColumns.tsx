@@ -26,6 +26,8 @@ import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
 import { FolderNameDisplay } from "~/components/FolderNameDisplay";
 import { RoleNameDisplay } from "~/components/RoleNameDisplay";
 import { IssueTypeNameDisplay } from "~/components/IssueTypeNameDisplay";
+import { IssuePriorityDisplay } from "~/components/IssuePriorityDisplay";
+import { IssueStatusDisplay } from "~/components/IssueStatusDisplay";
 
 // Generic helper to check if all subrows have the same dimension value
 function getAggregatedDimensionDisplay(
@@ -417,6 +419,27 @@ export function useReportColumns(
                 // Get the full object from the row data
                 const issueTypeData = info.row.original[dimensionId];
                 return <IssueTypeNameDisplay issueType={issueTypeData} />;
+              }
+              case "issueTracker": {
+                // Get the full object from the row data
+                const issueTrackerData = info.row.original[dimensionId];
+                return (
+                  <span>
+                    {issueTrackerData?.name || tCommon("labels.unknown")}
+                  </span>
+                );
+              }
+              case "priority": {
+                // Get the full object from the row data
+                const priorityData = info.row.original[dimensionId];
+                const priorityName = priorityData?.name || priorityData;
+                return <IssuePriorityDisplay priority={priorityName} />;
+              }
+              case "issueStatus": {
+                // For issue tracking reports, issueStatus is the issue status
+                const issueStatusData = info.row.original[dimensionId];
+                const issueStatusName = issueStatusData?.name || issueStatusData;
+                return <IssueStatusDisplay status={issueStatusName} />;
               }
               default:
                 // Generic display for other dimension types

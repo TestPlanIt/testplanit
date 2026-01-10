@@ -1298,9 +1298,11 @@ export function ImportCasesWizard({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <Download className="h-4 w-4" />
-          {t("importWizard.title")}
+        <Button variant="outline" className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2">
+          <Download className="h-4 w-4 shrink-0" />
+          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+            {t("importWizard.title")}
+          </span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">

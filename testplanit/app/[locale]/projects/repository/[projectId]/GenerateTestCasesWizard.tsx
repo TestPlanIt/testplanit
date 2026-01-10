@@ -79,7 +79,8 @@ import {
   useCreateCaseFieldVersionValues,
 } from "~/lib/hooks";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { useIssueColors } from "~/hooks/useIssueColors";
+import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
+import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { ApplicationArea } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { emptyEditorContent } from "~/app/constants";
@@ -185,7 +186,6 @@ export function GenerateTestCasesWizard({
   const params = useParams();
   const projectId = Number(params.projectId);
   const { data: session } = useSession();
-  const { getPriorityStyle, getStatusStyle } = useIssueColors();
 
   const [open, setOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(WizardStep.SELECT_ISSUE);
@@ -2479,9 +2479,11 @@ export function GenerateTestCasesWizard({
         }}
       >
         <DialogTrigger asChild>
-          <Button variant="outline">
-            <Sparkles className="w-4 h-4 " />
-            {t("generateTestCases.buttonText")}
+          <Button variant="outline" className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2">
+            <Sparkles className="w-4 h-4 shrink-0" />
+            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+              {t("generateTestCases.buttonText")}
+            </span>
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[900px] lg:max-w-[1200px] max-h-[90vh] flex flex-col overflow-hidden">
@@ -2713,25 +2715,16 @@ export function GenerateTestCasesWizard({
                                       </Button>
                                     )}
                                     {selectedIssue.priority && (
-                                      <Badge
-                                        variant="outline"
-                                        style={getPriorityStyle(
-                                          selectedIssue.priority
-                                        )}
-                                      >
-                                        {selectedIssue.priority}
-                                      </Badge>
+                                      <IssuePriorityDisplay
+                                        priority={selectedIssue.priority}
+                                      />
                                     )}
-                                    <Badge
-                                      variant="outline"
-                                      style={getStatusStyle(
+                                    <IssueStatusDisplay
+                                      status={
                                         selectedIssue.status ||
-                                          selectedIssue.externalStatus
-                                      )}
-                                    >
-                                      {selectedIssue.status ||
-                                        selectedIssue.externalStatus}
-                                    </Badge>
+                                        selectedIssue.externalStatus
+                                      }
+                                    />
                                   </div>
 
                                   {/* Issue title */}
