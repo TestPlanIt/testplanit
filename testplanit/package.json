@@ -1,6 +1,6 @@
 {
   "name": "testplanit",
-  "version": "0.9.28",
+  "version": "0.9.29",
   "private": true,
   "scripts": {
     "generate": "zenstack generate && prisma db push",

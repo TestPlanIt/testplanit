@@ -1,3 +1,10 @@
+## [0.9.29](https://github.com/TestPlanIt/testplanit/compare/v0.9.28...v0.9.29) (2026-01-10)
+
+
+### Bug Fixes
+
+* **issue-columns:** Update Issue Tracking report dimensions ([0170744](https://github.com/TestPlanIt/testplanit/commit/0170744fbf5e75f4c5c9b48bae99e60abcd945ae))
+
 ## [0.9.28](https://github.com/TestPlanIt/testplanit/compare/v0.9.27...v0.9.28) (2026-01-09)
 
 
