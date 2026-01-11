@@ -206,7 +206,11 @@ export default function ProjectsMenu({
                   <div key={sectionId} id={sectionId} className="menu-section">
                     {section.header && (
                       <div
-                        className={`ml-1 mb-2 uppercase text-xs ${isCollapsed ? "hidden" : "hidden md:inline"}`}
+                        className={`ml-1 uppercase text-xs hidden md:block ${
+                          isCollapsed
+                            ? "md:max-h-0 md:opacity-0 md:overflow-hidden md:mb-0"
+                            : "md:max-h-[100px] md:opacity-100 md:mb-2"
+                        } md:transition-all md:duration-500`}
                       >
                         {section.header.label}
                       </div>
@@ -255,7 +259,11 @@ export default function ProjectsMenu({
                                   <IconComponent className="min-w-6 min-h-6" />
                                 )}
                                 <span
-                                  className={`${isCollapsed ? "hidden" : "hidden md:inline"} ${isActive ? "font-bold" : ""}`}
+                                  className={`hidden md:inline-block ${isActive ? "font-bold" : ""} ${
+                                    isCollapsed
+                                      ? "md:max-w-0 md:opacity-0 md:overflow-hidden"
+                                      : "md:max-w-[200px] md:opacity-100"
+                                  } md:whitespace-nowrap md:transition-all md:duration-500`}
                                 >
                                   {option.label}
                                 </span>
