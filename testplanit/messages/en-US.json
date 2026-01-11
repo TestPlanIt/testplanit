@@ -4688,8 +4688,8 @@
         "charts": {
           "passRateDistribution": "Test Pass Rate Distribution",
           "linkedTestCases": "Number of Linked Test Cases",
-          "passRate": "Pass Rate (%)",
-          "coverageQuality": "Test Coverage vs Quality"
+          "untestedTestCases": "Number of Untested Test Cases",
+          "testCoverageVsExecution": "Test Coverage vs Execution Status"
         }
       },
       "crossProjectReportTypes": {

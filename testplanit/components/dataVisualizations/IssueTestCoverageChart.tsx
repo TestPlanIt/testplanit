@@ -166,11 +166,11 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // Group issues by test count buckets and pass rate buckets for aggregation
-    // This creates a grid where each cell represents issues with similar characteristics
+    // Group issues by linked test count and untested test count for aggregation
+    // This helps identify issues that need test execution
     interface BubblePoint {
-      testCount: number;
-      passRate: number;
+      linkedTests: number;
+      untestedTests: number;
       count: number;
       status: "failed" | "untested" | "passing";
       issues: typeof aggregatedData;
@@ -178,20 +178,27 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
 
     const bubbleMap = new Map<string, BubblePoint>();
 
-    // Create buckets: test count buckets and pass rate buckets
+    // Create buckets: linked test count and untested test count
     aggregatedData.forEach((issue) => {
-      // Bucket test counts (0-5, 6-10, 11-20, 21-50, 51-100, 101+)
-      let testBucket: number;
-      if (issue.linkedTestCases <= 5) testBucket = 2.5;
-      else if (issue.linkedTestCases <= 10) testBucket = 8;
-      else if (issue.linkedTestCases <= 20) testBucket = 15;
-      else if (issue.linkedTestCases <= 50) testBucket = 35;
-      else if (issue.linkedTestCases <= 100) testBucket = 75;
-      else if (issue.linkedTestCases <= 200) testBucket = 150;
-      else testBucket = Math.round(issue.linkedTestCases / 50) * 50;
+      // Bucket linked test counts (0-5, 6-10, 11-20, 21-50, 51-100, 101+)
+      let linkedBucket: number;
+      if (issue.linkedTestCases <= 5) linkedBucket = 2.5;
+      else if (issue.linkedTestCases <= 10) linkedBucket = 8;
+      else if (issue.linkedTestCases <= 20) linkedBucket = 15;
+      else if (issue.linkedTestCases <= 50) linkedBucket = 35;
+      else if (issue.linkedTestCases <= 100) linkedBucket = 75;
+      else if (issue.linkedTestCases <= 200) linkedBucket = 150;
+      else linkedBucket = Math.round(issue.linkedTestCases / 50) * 50;
 
-      // Bucket pass rates (0%, 10%, 20%, ..., 100%)
-      const passRateBucket = Math.round(issue.passRate / 10) * 10;
+      // Bucket untested counts (0-5, 6-10, 11-20, 21-50, 51-100, 101+)
+      let untestedBucket: number;
+      if (issue.untestedTestCases <= 5) untestedBucket = 2.5;
+      else if (issue.untestedTestCases <= 10) untestedBucket = 8;
+      else if (issue.untestedTestCases <= 20) untestedBucket = 15;
+      else if (issue.untestedTestCases <= 50) untestedBucket = 35;
+      else if (issue.untestedTestCases <= 100) untestedBucket = 75;
+      else if (issue.untestedTestCases <= 200) untestedBucket = 150;
+      else untestedBucket = Math.round(issue.untestedTestCases / 50) * 50;
 
       // Determine status
       let status: "failed" | "untested" | "passing";
@@ -203,12 +210,12 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
         status = "passing";
       }
 
-      const key = `${testBucket}-${passRateBucket}-${status}`;
+      const key = `${linkedBucket}-${untestedBucket}-${status}`;
 
       if (!bubbleMap.has(key)) {
         bubbleMap.set(key, {
-          testCount: testBucket,
-          passRate: passRateBucket,
+          linkedTests: linkedBucket,
+          untestedTests: untestedBucket,
           count: 0,
           status,
           issues: [],
@@ -223,10 +230,11 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
     const bubbleData = Array.from(bubbleMap.values());
 
     // Scales
-    const maxTests = Math.max(...aggregatedData.map((d) => d.linkedTestCases), 1);
-    const xScale = d3.scaleLinear().domain([0, maxTests]).range([0, chartWidth]).nice();
+    const maxLinkedTests = Math.max(...aggregatedData.map((d) => d.linkedTestCases), 1);
+    const maxUntestedTests = Math.max(...aggregatedData.map((d) => d.untestedTestCases), 1);
 
-    const yScale = d3.scaleLinear().domain([0, 100]).range([chartHeight, 0]);
+    const xScale = d3.scaleLinear().domain([0, maxLinkedTests]).range([0, chartWidth]).nice();
+    const yScale = d3.scaleLinear().domain([0, maxUntestedTests]).range([chartHeight, 0]).nice();
 
     // Size scale for bubbles (based on number of issues in that bucket)
     const maxCount = Math.max(...bubbleData.map((d) => d.count), 1);
@@ -272,8 +280,8 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
       .data(bubbleData)
       .enter()
       .append("circle")
-      .attr("cx", (d) => xScale(d.testCount))
-      .attr("cy", (d) => yScale(d.passRate))
+      .attr("cx", (d) => xScale(d.linkedTests))
+      .attr("cy", (d) => yScale(d.untestedTests))
       .attr("r", 0)
       .attr("fill", (d) => colorMap[d.status])
       .style("opacity", 0.6)
@@ -292,8 +300,8 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
           tooltipRef.current.style.display = "block";
           tooltipRef.current.innerHTML = `
             <div style="font-weight: 600; margin-bottom: 4px;">${d.count} Issue${d.count > 1 ? "s" : ""}</div>
-            <div style="font-size: 11px; margin-bottom: 2px;">Pass Rate: ~${d.passRate}%</div>
-            <div style="font-size: 11px; margin-bottom: 4px;">Linked Tests: ~${d.testCount}</div>
+            <div style="font-size: 11px; margin-bottom: 2px;">Linked Tests: ~${d.linkedTests}</div>
+            <div style="font-size: 11px; margin-bottom: 4px;">Untested: ~${d.untestedTests}</div>
             <div style="font-size: 11px; color: ${colorMap[d.status]};">${statusLabel}</div>
           `;
         }
@@ -356,7 +364,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
       .attr("text-anchor", "middle")
       .style("fill", "hsl(var(--muted-foreground))")
       .style("font-size", "12px")
-      .text(t("charts.passRate"));
+      .text(t("charts.untestedTestCases"));
 
     // Chart title
     svg
@@ -367,38 +375,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
       .style("fill", "hsl(var(--foreground))")
       .style("font-size", "14px")
       .style("font-weight", "600")
-      .text(t("charts.coverageQuality"));
-
-    // Legend
-    const legend = svg
-      .append("g")
-      .attr("transform", `translate(${width - 150}, 40)`);
-
-    const legendItems = [
-      { label: t("passed"), color: statusColors.passed },
-      { label: t("failed"), color: statusColors.failed },
-      { label: t("untested"), color: statusColors.untested },
-    ];
-
-    legendItems.forEach((item, i) => {
-      const legendRow = legend
-        .append("g")
-        .attr("transform", `translate(0, ${i * 20})`);
-
-      legendRow
-        .append("circle")
-        .attr("r", 5)
-        .attr("fill", item.color)
-        .style("opacity", 0.7);
-
-      legendRow
-        .append("text")
-        .attr("x", 12)
-        .attr("y", 4)
-        .style("fill", "hsl(var(--foreground))")
-        .style("font-size", "11px")
-        .text(item.label);
-    });
+      .text(t("charts.testCoverageVsExecution"));
   }, [aggregatedData, width, height, t]);
 
   if (data.length === 0) {

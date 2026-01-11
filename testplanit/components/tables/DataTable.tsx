@@ -20,6 +20,7 @@ import {
   useReactTable,
   getGroupedRowModel,
   getExpandedRowModel,
+  getSortedRowModel,
   Column,
   ColumnPinningState,
   ColumnSizingState,
@@ -30,6 +31,7 @@ import {
   ExpandedState,
   OnChangeFn,
   Row,
+  SortingState,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -297,6 +299,29 @@ export function DataTable<TData extends DataRow, TValue>({
   const rowSelection = externalRowSelection ?? internalRowSelection;
   const onRowSelectionChange =
     externalOnRowSelectionChange ?? setInternalRowSelection;
+
+  // Convert sortConfig to SortingState for TanStack Table
+  const sorting: SortingState = useMemo(() => {
+    if (!sortConfig) return [];
+    return [{ id: sortConfig.column, desc: sortConfig.direction === "desc" }];
+  }, [sortConfig]);
+
+  const handleSortingChange = useCallback(
+    (updaterOrValue: Updater<SortingState>) => {
+      if (!onSortChange) return;
+
+      const newSorting =
+        typeof updaterOrValue === "function"
+          ? updaterOrValue(sorting)
+          : updaterOrValue;
+
+      if (newSorting.length > 0) {
+        onSortChange(newSorting[0].id);
+      }
+    },
+    [onSortChange, sorting]
+  );
+
   const [isResizing, setIsResizing] = useState(false);
   const clickTimeoutRef = useRef<number | null>(null);
   const initialPinningDone = useRef(false);
@@ -410,6 +435,7 @@ export function DataTable<TData extends DataRow, TValue>({
     data: localData,
     columns: finalColumns,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     getGroupedRowModel:
       grouping && grouping.length > 0 ? getGroupedRowModel() : undefined,
     getExpandedRowModel:
@@ -420,16 +446,19 @@ export function DataTable<TData extends DataRow, TValue>({
     enableColumnPinning: true,
     enableColumnResizing: true,
     enableRowSelection: true,
+    enableSorting: true,
     state: {
       columnPinning,
       columnSizing,
       columnVisibility: effectiveColumnVisibility,
       rowSelection,
+      sorting,
       ...(grouping !== undefined && { grouping: grouping }),
       ...(expanded !== undefined && { expanded: expanded }),
     },
     ...(onGroupingChange !== undefined && { onGroupingChange }),
     ...(onExpandedChange !== undefined && { onExpandedChange }),
+    onSortingChange: handleSortingChange,
     onRowSelectionChange: onRowSelectionChange,
     onColumnSizingChange: handleColumnSizingChange,
     onColumnPinningChange: setColumnPinning,

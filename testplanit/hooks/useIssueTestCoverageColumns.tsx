@@ -196,6 +196,22 @@ export function useIssueTestCoverageSummaryColumns(
           );
         },
         enableSorting: true,
+        sortingFn: (rowA, rowB, columnId) => {
+          // When grouped, rows have subRows - sort by the count of subRows (which equals linkedTestCases)
+          const hasSubRowsA = rowA.subRows && rowA.subRows.length > 0;
+          const hasSubRowsB = rowB.subRows && rowB.subRows.length > 0;
+
+          if (hasSubRowsA || hasSubRowsB) {
+            const aVal = hasSubRowsA ? rowA.subRows.length : 0;
+            const bVal = hasSubRowsB ? rowB.subRows.length : 0;
+            return aVal - bVal;
+          }
+
+          // When not grouped, sort by test case name
+          const aName = rowA.original.testCaseName || "";
+          const bName = rowB.original.testCaseName || "";
+          return aName.localeCompare(bName);
+        },
         size: 250,
         minSize: 150,
         maxSize: 600,

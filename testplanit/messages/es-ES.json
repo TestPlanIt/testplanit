@@ -4674,6 +4674,7 @@
         "lastExecuted": "Último ejecutado",
         "notTested": "No probado",
         "noData": "No se encontraron problemas con los casos de prueba vinculados",
+        "noIssuesNeedingAttention": "Todos los números tienen pruebas aprobadas: ¡gran trabajo!",
         "stats": {
           "totalIssues": "Emisiones totales",
           "issuesWithFailures": "Con fracasos",
@@ -4681,7 +4682,14 @@
           "issuesWithUntested": "Con no probado",
           "issuesWithUntestedTooltip": "Problemas con al menos un caso de prueba que no se ha ejecutado",
           "issuesAllPassing": "Todo pasa",
-          "overallPassRate": "Tasa de aprobación"
+          "overallPassRate": "Tasa de aprobación",
+          "numberOfIssues": "Número de problemas"
+        },
+        "charts": {
+          "passRateDistribution": "Distribución de la tasa de aprobación de la prueba",
+          "linkedTestCases": "Número de casos de prueba vinculados",
+          "untestedTestCases": "Número de casos de prueba no probados",
+          "testCoverageVsExecution": "Cobertura de la prueba vs. Estado de ejecución"
         }
       },
       "crossProjectReportTypes": {
