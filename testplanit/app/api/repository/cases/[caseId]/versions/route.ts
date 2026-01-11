@@ -126,9 +126,10 @@ export async function POST(
       session.user.name ??
       session.user.email ??
       "";
+    // Use provided createdAt (for imports), otherwise use current time (for new versions)
     const createdAt = validatedData.createdAt
       ? new Date(validatedData.createdAt)
-      : testCase.createdAt;
+      : new Date();
 
     // Build version data, applying overrides
     const overrides = validatedData.overrides ?? {};
@@ -189,12 +190,52 @@ export async function POST(
       attachments: overrides.attachments ?? [],
     };
 
-    // Create the version
+    // Create the version with retry logic to handle race conditions
     // Note: We expect the caller to have already updated currentVersion on the test case
     // before calling this endpoint. We simply snapshot the current state.
-    const result = await prisma.repositoryCaseVersions.create({
-      data: versionData,
-    });
+    let result;
+    let retryCount = 0;
+    const maxRetries = 3;
+    const baseDelay = 100; // milliseconds
+
+    while (retryCount <= maxRetries) {
+      try {
+        result = await prisma.repositoryCaseVersions.create({
+          data: versionData,
+        });
+        break; // Success, exit retry loop
+      } catch (error: any) {
+        // Check if it's a unique constraint violation (P2002)
+        if (error.code === "P2002" && retryCount < maxRetries) {
+          retryCount++;
+          const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
+          console.log(
+            `Unique constraint violation on version creation (attempt ${retryCount}/${maxRetries}). Retrying after ${delay}ms...`
+          );
+
+          // Wait before retrying
+          await new Promise((resolve) => setTimeout(resolve, delay));
+
+          // Refetch the test case to get the latest currentVersion
+          const refetchedCase = await prisma.repositoryCases.findUnique({
+            where: { id: caseId },
+            select: { currentVersion: true },
+          });
+
+          if (refetchedCase) {
+            // Update the version number with the refetched value
+            versionData.version = validatedData.version ?? refetchedCase.currentVersion;
+          }
+        } else {
+          // Not a retryable error or max retries reached
+          throw error;
+        }
+      }
+    }
+
+    if (!result) {
+      throw new Error("Failed to create version after retries");
+    }
 
     return NextResponse.json({
       success: true,

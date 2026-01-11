@@ -407,8 +407,9 @@ export default function TestCaseVersions() {
       return (
         <div>
           {previousFieldValue !== undefined && previousFieldValue !== null && (
-            <div className="bg-red-100 p-1">
-              <span className="text-red-600 flex space-x-1 items-center">
+            <div className="relative p-1 rounded">
+              <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
+              <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
                 <div>
                   <Minus className="w-4 h-4" />
                 </div>
@@ -416,8 +417,9 @@ export default function TestCaseVersions() {
               </span>
             </div>
           )}
-          <div className="bg-green-100 p-1">
-            <span className="text-green-600 flex space-x-1 items-center">
+          <div className="relative p-1 rounded">
+            <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
+            <span className="relative text-green-600 dark:text-green-400 flex space-x-1 items-center">
               <div>
                 <Plus className="w-4 h-4" />
               </div>
@@ -485,12 +487,12 @@ export default function TestCaseVersions() {
     switch (type) {
       case "added":
         prefix = <Plus className="w-4 h-4" />;
-        bgColor = "bg-green-100 text-green-600";
+        bgColor = "relative text-green-600 dark:text-green-400";
         paddingClass = "px-2 py-2";
         break;
       case "removed":
         prefix = <Minus className="w-4 h-4" />;
-        bgColor = "bg-red-100 text-red-600";
+        bgColor = "relative text-red-600 dark:text-red-400";
         paddingClass = "px-2 py-2";
         break;
       case "common":
@@ -504,8 +506,13 @@ export default function TestCaseVersions() {
         className={`flex font-extrabold items-center m-1 rounded ${bgColor} ${paddingClass}`}
         key={tag}
       >
-        {prefix && <span className="mr-1">{prefix}</span>}
-        <TagsDisplay id={tag} name={tag} size="large" />
+        {type !== "common" && (
+          <div className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`} />
+        )}
+        {prefix && <span className="relative mr-1">{prefix}</span>}
+        <div className="relative">
+          <TagsDisplay id={tag} name={tag} size="large" />
+        </div>
       </div>
     );
   };
@@ -525,12 +532,12 @@ export default function TestCaseVersions() {
     switch (type) {
       case "added":
         prefix = <Plus className="w-4 h-4" />;
-        bgColor = "bg-green-100 text-green-600";
+        bgColor = "relative text-green-600 dark:text-green-400";
         paddingClass = "px-2 py-2";
         break;
       case "removed":
         prefix = <Minus className="w-4 h-4" />;
-        bgColor = "bg-red-100 text-red-600";
+        bgColor = "relative text-red-600 dark:text-red-400";
         paddingClass = "px-2 py-2";
         break;
       case "common":
@@ -549,8 +556,12 @@ export default function TestCaseVersions() {
         className={`flex font-extrabold items-center m-1 rounded ${bgColor} ${paddingClass}`}
         key={issue.id}
       >
-        {prefix && <span className="mr-1">{prefix}</span>}
-        <IssuesDisplay
+        {type !== "common" && (
+          <div className={`absolute inset-0 ${type === "added" ? "bg-green-500/20" : "bg-red-500/20"} rounded pointer-events-none`} />
+        )}
+        {prefix && <span className="relative mr-1">{prefix}</span>}
+        <div className="relative">
+          <IssuesDisplay
           id={issue.id}
           name={issue.name}
           externalId={issue.externalId || currentIssueData?.externalId}
@@ -566,6 +577,7 @@ export default function TestCaseVersions() {
           issueTypeName={currentIssueData?.issueTypeName}
           issueTypeIconUrl={currentIssueData?.issueTypeIconUrl}
         />
+        </div>
       </div>
     );
   };

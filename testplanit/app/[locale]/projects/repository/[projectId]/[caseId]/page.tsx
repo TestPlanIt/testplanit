@@ -973,6 +973,7 @@ export default function TestCaseDetails() {
       const tagsArray = Array.isArray(data.tags) ? data.tags : [];
       const issuesArray = Array.isArray(data.issues) ? data.issues : [];
 
+      // Update the test case, incrementing currentVersion
       await updateRepositoryCases({
         where: { id: Number(caseId) },
         data: {
@@ -995,6 +996,14 @@ export default function TestCaseDetails() {
           },
         },
       });
+
+      // Refetch to ensure we have the updated currentVersion from the database
+      const refetchResult = await refetch();
+      const updatedTestCase = refetchResult.data;
+
+      if (!updatedTestCase) {
+        throw new Error("Failed to refetch updated test case");
+      }
 
       if (data.steps) {
         const existingSteps = testcase?.steps || [];
@@ -1300,26 +1309,26 @@ export default function TestCaseDetails() {
       }
 
       // Create version snapshot using centralized API endpoint
-      // Note: The test case was already updated with currentVersion + 1 above
+      // Note: The test case was already updated with currentVersion + 1 above and refetched
       const versionResponse = await fetch(
-        `/api/repository/cases/${testcase.id}/versions`,
+        `/api/repository/cases/${updatedTestCase.id}/versions`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            // No version specified - will use currentVersion (already incremented)
+            // No version specified - will use currentVersion (already incremented and refetched)
             // Preserve original creator metadata
-            creatorId: testcase.creatorId,
-            creatorName: testcase.creator.name,
-            createdAt: testcase.createdAt.toISOString(),
+            creatorId: updatedTestCase.creatorId,
+            creatorName: updatedTestCase.creator.name,
+            // Don't pass createdAt - let it default to current time for edits
             overrides: {
               name: data.name as string,
               stateId: data.workflowId as number,
               stateName:
                 workflows?.find((w) => w.id === data.workflowId)?.name ||
-                testcase.state?.name ||
+                updatedTestCase.state?.name ||
                 "Unknown",
               automated: data.automated as boolean,
               estimate: estimateInSeconds,
@@ -1327,7 +1336,7 @@ export default function TestCaseDetails() {
               tags: tagNames,
               issues: issuesDataForVersion,
               attachments: attachmentsJson,
-              order: testcase.order,
+              order: updatedTestCase.order,
             },
           }),
         }

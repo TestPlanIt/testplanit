@@ -163,7 +163,8 @@ export async function createTestCaseVersionInTransaction(
   // Determine creator
   const creatorId = options.creatorId ?? testCase.creatorId;
   const creatorName = options.creatorName ?? testCase.creator.name ?? "";
-  const createdAt = options.createdAt ?? testCase.createdAt;
+  // Use provided createdAt (for imports), otherwise use current time (for new versions)
+  const createdAt = options.createdAt ?? new Date();
 
   // Build version data, applying overrides
   const overrides = options.overrides ?? {};
@@ -224,12 +225,52 @@ export async function createTestCaseVersionInTransaction(
     attachments: overrides.attachments ?? [],
   };
 
-  // Create the version
+  // Create the version with retry logic to handle race conditions
   // Note: We expect the caller to have already updated currentVersion on the test case
   // before calling this function. We simply snapshot the current state.
-  const newVersion = await tx.repositoryCaseVersions.create({
-    data: versionData,
-  });
+  let newVersion;
+  let retryCount = 0;
+  const maxRetries = 3;
+  const baseDelay = 100; // milliseconds
+
+  while (retryCount <= maxRetries) {
+    try {
+      newVersion = await tx.repositoryCaseVersions.create({
+        data: versionData,
+      });
+      break; // Success, exit retry loop
+    } catch (error: any) {
+      // Check if it's a unique constraint violation (P2002)
+      if (error.code === "P2002" && retryCount < maxRetries) {
+        retryCount++;
+        const delay = baseDelay * Math.pow(2, retryCount - 1); // Exponential backoff
+        console.log(
+          `Unique constraint violation on version creation (attempt ${retryCount}/${maxRetries}). Retrying after ${delay}ms...`
+        );
+
+        // Wait before retrying
+        await new Promise((resolve) => setTimeout(resolve, delay));
+
+        // Refetch the test case to get the latest currentVersion
+        const refetchedCase = await tx.repositoryCases.findUnique({
+          where: { id: caseId },
+          select: { currentVersion: true },
+        });
+
+        if (refetchedCase) {
+          // Update the version number with the refetched value
+          versionData.version = options.version ?? refetchedCase.currentVersion;
+        }
+      } else {
+        // Not a retryable error or max retries reached
+        throw error;
+      }
+    }
+  }
+
+  if (!newVersion) {
+    throw new Error(`Failed to create version for case ${caseId} after retries`);
+  }
 
   return newVersion;
 }

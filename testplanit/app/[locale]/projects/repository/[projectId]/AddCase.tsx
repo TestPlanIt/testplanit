@@ -874,6 +874,12 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
           })
           .filter(Boolean);
 
+        // Invalidate and refetch the case to ensure we have the committed data from the database
+        // This prevents race conditions where version creation tries to use stale currentVersion
+        await queryClient.invalidateQueries({
+          queryKey: ["RepositoryCases", "findFirst"],
+        });
+
         // Create version snapshot using centralized API endpoint
         const versionResponse = await fetch(
           `/api/repository/cases/${newCase.id}/versions`,

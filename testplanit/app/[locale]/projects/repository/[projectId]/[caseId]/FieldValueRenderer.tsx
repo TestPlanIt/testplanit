@@ -135,16 +135,18 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
     if (isDifferent) {
       return (
         <div>
-          <div className="bg-red-100 p-1">
-            <span className="text-red-600 flex space-x-1 items-center">
+          <div className="relative p-1 rounded">
+            <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
+            <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
               <div>
                 <Minus className="w-4 h-4" />
               </div>
               {renderer(previous)}
             </span>
           </div>
-          <div className="bg-green-100 p-1">
-            <span className="text-green-600 flex space-x-1 items-center">
+          <div className="relative p-1 rounded">
+            <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
+            <span className="relative text-green-600 dark:text-green-400 flex space-x-1 items-center">
               <div>
                 <Plus className="w-4 h-4" />
               </div>

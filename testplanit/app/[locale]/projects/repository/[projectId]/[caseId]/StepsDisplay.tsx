@@ -225,8 +225,9 @@ const renderFieldValue = (
 
   if (previousFieldValue === undefined) {
     return (
-      <div className="bg-green-100 p-1">
-        <span className="text-green-600 flex space-x-1 items-center">
+      <div className="relative p-1 rounded">
+        <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
+        <span className="relative text-green-600 dark:text-green-400 flex space-x-1 items-center">
           <div>
             <Plus className="w-4 h-4" />
           </div>
@@ -251,8 +252,9 @@ const renderFieldValue = (
   if (areValuesDifferent) {
     return (
       <div>
-        <div className="bg-red-100 p-1">
-          <span className="text-red-600 flex space-x-1 items-center">
+        <div className="relative p-1 rounded">
+          <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
+          <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
             <div>
               <Minus className="w-4 h-4" />
             </div>
@@ -265,8 +267,9 @@ const renderFieldValue = (
             />
           </span>
         </div>
-        <div className="bg-green-100 p-1">
-          <span className="text-green-600 flex space-x-1 items-center">
+        <div className="relative p-1 rounded">
+          <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
+          <span className="relative text-green-600 dark:text-green-400 flex space-x-1 items-center">
             <div>
               <Plus className="w-4 h-4" />
             </div>
@@ -446,8 +449,9 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                     <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
                       {steps.length + index + 1}
                     </div>
-                    <div className="bg-red-100 p-1">
-                      <span className="text-red-600 flex space-x-1">
+                    <div className="relative p-1 rounded">
+                      <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
+                      <span className="relative text-red-600 dark:text-red-400 flex space-x-1">
                         <div>
                           <Minus className="w-4 h-4" />
                         </div>
@@ -463,8 +467,9 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                   </div>
                   <div className="flex gap-1 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-t-none">
                     <SearchCheck className="text-primary h-9 w-9 shrink-0" />
-                    <div className="bg-red-100 p-1">
-                      <span className="text-red-600 flex space-x-1">
+                    <div className="relative p-1 rounded">
+                      <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
+                      <span className="relative text-red-600 dark:text-red-400 flex space-x-1">
                         <div>
                           <Minus className="w-4 h-4" />
                         </div>
