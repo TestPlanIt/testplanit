@@ -820,17 +820,6 @@ export function DataTable<TData extends DataRow, TValue>({
                     let cellContent: React.ReactNode = null;
                     const shouldIndent = cellIndex === 0 && isSubRow;
 
-                    if (cellIndex === 0) {
-                      console.log("[DataTable CELL]", {
-                        rowId: row.id,
-                        columnId: column.id,
-                        isGrouped: cell.getIsGrouped(),
-                        isAggregated: cell.getIsAggregated(),
-                        isPlaceholder: cell.getIsPlaceholder(),
-                        cellType: typeof cell.column.columnDef.cell,
-                      });
-                    }
-
                     if (cell.getIsGrouped()) {
                       // If grouped, show group label and count
                       // Only show count if there's no custom aggregatedCell (which handles its own display)

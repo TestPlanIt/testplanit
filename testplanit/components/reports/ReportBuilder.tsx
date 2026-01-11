@@ -627,12 +627,6 @@ function ReportBuilderContent({
             ? issueTestCoverageSummaryColumns
             : standardColumns;
 
-  // Debug logging
-  if (reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage") {
-    console.log('[ReportBuilder] Selected columns:', columns.length, 'first column:', columns[0]);
-    console.log('[ReportBuilder] First column cell type:', typeof columns[0]?.cell);
-  }
-
   // When lastUsedDimensions change (after running a report), update grouping
   React.useEffect(() => {
     if (lastUsedDimensions.length > 1) {
@@ -662,7 +656,6 @@ function ReportBuilderContent({
         testResults: true,
         passRate: true,
       };
-      console.log('[ReportBuilder] Setting column visibility for issue test coverage:', visibility);
       setColumnVisibility(visibility);
     }
   }, [reportType]);
@@ -671,7 +664,6 @@ function ReportBuilderContent({
   React.useEffect(() => {
     if ((reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage") && allResults && allResults.length > 0) {
       // Group by issueId to show issues with expandable test cases
-      console.log('[ReportBuilder] Setting grouping to [issueId] for issue test coverage');
       setGrouping(["issueId"]);
       // Start with all groups collapsed
       setExpanded({});
@@ -2510,13 +2502,7 @@ function ReportBuilderContent({
                   </CardHeader>
                   <CardContent className="h-[calc(100%-4rem)] overflow-y-auto p-6 pt-0">
                     <DataTable
-                      columns={(() => {
-                        if (reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage") {
-                          console.log('[ReportBuilder] Rendering DataTable with columns:', columns.length, 'data:', results?.length, 'first row:', results?.[0]);
-                          console.log('[ReportBuilder] grouping:', grouping, 'expanded:', expanded);
-                        }
-                        return columns as ColumnDef<any>[];
-                      })()}
+                      columns={columns as ColumnDef<any>[]}
                       data={results || []}
                       columnVisibility={columnVisibility}
                       onColumnVisibilityChange={setColumnVisibility}

@@ -71,9 +71,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
       // Don't add duplicates - the summary metrics are already duplicated across rows
     });
 
-    const result = Array.from(issueMap.values());
-    console.log('Issue Test Coverage Chart - Total issues:', result.length, 'Total rows:', data.length);
-    return result;
+    return Array.from(issueMap.values());
   }, [data]);
 
   // Calculate summary stats
