@@ -10,11 +10,10 @@ import {
 import { format, formatDistanceToNow } from "date-fns";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { RepositoryCaseSource } from "@prisma/client";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "~/utils";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
-import { ExternalLink } from "lucide-react";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 
 // Flat row structure for grouping
 interface IssueTestCoverageRow {
@@ -114,37 +113,20 @@ export function useIssueTestCoverageSummaryColumns(
         header: () => <span>{t("reports.ui.issueTestCoverage.issue")}</span>,
         cell: (info) => {
           const row = info.row.original;
-          const displayName = row.externalKey || row.issueName;
-          const hasExternalUrl = !!row.externalUrl;
+          const parentProjectId = row.project?.id || projectId;
 
           return (
-            <div className="flex flex-col gap-0.5">
-              <div className="flex items-center gap-1.5">
-                {hasExternalUrl ? (
-                  <a
-                    href={row.externalUrl!}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-primary hover:underline flex items-center gap-1"
-                  >
-                    {displayName}
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                ) : (
-                  <span className="font-medium">{displayName}</span>
-                )}
-                {row.issueTypeName && (
-                  <Badge variant="outline" className="text-xs px-1.5 py-0">
-                    {row.issueTypeName}
-                  </Badge>
-                )}
-              </div>
-              {row.issueTitle && (
-                <span className="text-sm text-muted-foreground line-clamp-1">
-                  {row.issueTitle}
-                </span>
-              )}
-            </div>
+            <IssuesDisplay
+              id={row.issueId}
+              name={row.externalKey || row.issueName}
+              externalId={row.externalKey}
+              externalUrl={row.externalUrl}
+              title={row.issueTitle}
+              status={row.issueStatus}
+              size="small"
+              projectIds={parentProjectId ? [Number(parentProjectId)] : []}
+              issueTypeName={row.issueTypeName}
+            />
           );
         },
         aggregationFn: "unique",
@@ -153,37 +135,20 @@ export function useIssueTestCoverageSummaryColumns(
           const firstRow = info.row.subRows[0]?.original;
           if (!firstRow) return null;
 
-          const displayName = firstRow.externalKey || firstRow.issueName;
-          const hasExternalUrl = !!firstRow.externalUrl;
+          const parentProjectId = firstRow.project?.id || projectId;
 
           return (
-            <div className="flex flex-col gap-0.5">
-              <div className="flex items-center gap-1.5">
-                {hasExternalUrl ? (
-                  <a
-                    href={firstRow.externalUrl!}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-primary hover:underline flex items-center gap-1"
-                  >
-                    {displayName}
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                ) : (
-                  <span className="font-medium">{displayName}</span>
-                )}
-                {firstRow.issueTypeName && (
-                  <Badge variant="outline" className="text-xs px-1.5 py-0">
-                    {firstRow.issueTypeName}
-                  </Badge>
-                )}
-              </div>
-              {firstRow.issueTitle && (
-                <span className="text-sm text-muted-foreground line-clamp-1">
-                  {firstRow.issueTitle}
-                </span>
-              )}
-            </div>
+            <IssuesDisplay
+              id={firstRow.issueId}
+              name={firstRow.externalKey || firstRow.issueName}
+              externalId={firstRow.externalKey}
+              externalUrl={firstRow.externalUrl}
+              title={firstRow.issueTitle}
+              status={firstRow.issueStatus}
+              size="small"
+              projectIds={parentProjectId ? [Number(parentProjectId)] : []}
+              issueTypeName={firstRow.issueTypeName}
+            />
           );
         },
         enableSorting: true,
@@ -215,23 +180,25 @@ export function useIssueTestCoverageSummaryColumns(
                   : undefined
               }
               size="small"
-              maxLines={1}
+              maxLines={2}
             />
           );
         },
         aggregationFn: "count",
         aggregatedCell: (info) => {
           // When grouped by issue, show test case count
+          const count = info.row.subRows.length;
           return (
             <span className="text-muted-foreground text-sm">
-              {info.row.subRows.length} {t("reports.ui.issueTestCoverage.testCases")}
+              {count}{" "}
+              {t("reports.ui.issueTestCoverage.testCases", { count })}
             </span>
           );
         },
         enableSorting: true,
-        size: 300,
-        minSize: 200,
-        maxSize: 500,
+        size: 250,
+        minSize: 150,
+        maxSize: 600,
       })
     );
 
@@ -241,7 +208,9 @@ export function useIssueTestCoverageSummaryColumns(
         id: "issueStatus",
         enableHiding: false,
         enableGrouping: false,
-        header: () => <span>{t("reports.ui.issueTestCoverage.issueStatus")}</span>,
+        header: () => (
+          <span>{t("reports.ui.issueTestCoverage.issueStatus")}</span>
+        ),
         cell: (info) => {
           return <IssueStatusDisplay status={info.row.original.issueStatus} />;
         },
@@ -263,7 +232,9 @@ export function useIssueTestCoverageSummaryColumns(
         enableGrouping: false,
         header: () => <span>{t("reports.ui.issueTestCoverage.priority")}</span>,
         cell: (info) => {
-          return <IssuePriorityDisplay priority={info.row.original.issuePriority} />;
+          return (
+            <IssuePriorityDisplay priority={info.row.original.issuePriority} />
+          );
         },
         aggregatedCell: (info) => {
           const firstRow = info.row.subRows[0]?.original;
@@ -281,7 +252,9 @@ export function useIssueTestCoverageSummaryColumns(
         id: "lastStatusName",
         enableHiding: false,
         enableGrouping: false,
-        header: () => <span>{t("reports.ui.issueTestCoverage.lastStatus")}</span>,
+        header: () => (
+          <span>{t("reports.ui.issueTestCoverage.lastStatus")}</span>
+        ),
         cell: (info) => {
           const row = info.row.original;
           const statusName = row.lastStatusName;
@@ -318,7 +291,9 @@ export function useIssueTestCoverageSummaryColumns(
         id: "lastExecutedAt",
         enableHiding: false,
         enableGrouping: false,
-        header: () => <span>{t("reports.ui.issueTestCoverage.lastExecuted")}</span>,
+        header: () => (
+          <span>{t("reports.ui.issueTestCoverage.lastExecuted")}</span>
+        ),
         cell: (info) => {
           const lastExecuted = info.row.original.lastExecutedAt;
 
@@ -353,31 +328,15 @@ export function useIssueTestCoverageSummaryColumns(
       })
     );
 
-    // Column: Linked Test Cases (aggregated metric)
-    columns.push(
-      columnHelper.accessor("linkedTestCases", {
-        id: "linkedTestCases",
-        enableHiding: false,
-        enableGrouping: false,
-        header: () => <span>{t("reports.ui.issueTestCoverage.linkedTests")}</span>,
-        cell: () => null, // Only show for grouped rows
-        aggregatedCell: (info) => {
-          const firstRow = info.row.subRows[0]?.original;
-          return <span className="font-mono">{firstRow?.linkedTestCases}</span>;
-        },
-        enableSorting: true,
-        size: 100,
-        minSize: 80,
-      })
-    );
-
     // Column: Test Results Summary (aggregated metric)
     columns.push(
       columnHelper.accessor("passedTestCases", {
         id: "testResults",
         enableHiding: false,
         enableGrouping: false,
-        header: () => <span>{t("reports.ui.issueTestCoverage.testResults")}</span>,
+        header: () => (
+          <span>{t("reports.ui.issueTestCoverage.testResults")}</span>
+        ),
         cell: () => null, // Only show for grouped rows
         aggregatedCell: (info) => {
           const firstRow = info.row.subRows[0]?.original;
@@ -445,7 +404,8 @@ export function useIssueTestCoverageSummaryColumns(
           if (!firstRow) return null;
 
           const rate = firstRow.passRate;
-          const testedCount = firstRow.passedTestCases + firstRow.failedTestCases;
+          const testedCount =
+            firstRow.passedTestCases + firstRow.failedTestCases;
 
           if (testedCount === 0) {
             return <span className="text-muted-foreground">-</span>;
@@ -459,7 +419,9 @@ export function useIssueTestCoverageSummaryColumns(
           };
 
           return (
-            <span className={cn("font-mono font-semibold", getPassRateColor(rate))}>
+            <span
+              className={cn("font-mono font-semibold", getPassRateColor(rate))}
+            >
               {rate}
               {"%"}
             </span>

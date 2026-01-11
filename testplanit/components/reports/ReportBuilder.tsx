@@ -106,6 +106,20 @@ interface ReportBuilderProps {
   defaultReportType?: string;
 }
 
+// Helper to check if a report type is a pre-built report
+function isPreBuiltReport(reportType: string): boolean {
+  return [
+    "automation-trends",
+    "cross-project-automation-trends",
+    "flaky-tests",
+    "cross-project-flaky-tests",
+    "test-case-health",
+    "cross-project-test-case-health",
+    "issue-test-coverage",
+    "cross-project-issue-test-coverage",
+  ].includes(reportType);
+}
+
 // Form schema for date range
 const dateRangeSchema = z.object({
   dateRange: z
@@ -603,11 +617,11 @@ function ReportBuilderContent({
 
   // Choose which columns to use based on report type
   const columns =
-    reportType === "automation-trends"
+    reportType === "automation-trends" || reportType === "cross-project-automation-trends"
       ? automationTrendsColumns
-      : reportType === "flaky-tests"
+      : reportType === "flaky-tests" || reportType === "cross-project-flaky-tests"
         ? flakyTestsColumns
-        : reportType === "test-case-health"
+        : reportType === "test-case-health" || reportType === "cross-project-test-case-health"
           ? testCaseHealthColumns
           : reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage"
             ? issueTestCoverageSummaryColumns
@@ -1583,7 +1597,9 @@ function ReportBuilderContent({
 
     // For pre-built reports (automation trends, flaky tests, test case health, issue test coverage),
     // we don't need traditional dimensions/metrics as the chart uses specialized data structures
-    const isAutomationTrends = reportType === "automation-trends";
+    const isAutomationTrends =
+      reportType === "automation-trends" ||
+      reportType === "cross-project-automation-trends";
     const isFlakyTests =
       reportType === "flaky-tests" ||
       reportType === "cross-project-flaky-tests";
@@ -1648,9 +1664,9 @@ function ReportBuilderContent({
       ? dataToLimit.slice(0, MAX_CHART_DATA_POINTS)
       : dataToLimit;
 
-    // For Test Case Health, pass all data so the chart can show accurate summary stats
-    // The chart will handle limiting the scatter plot internally if needed
-    const chartResults = isTestCaseHealth ? chartData : limitedChartData;
+    // For Test Case Health and Issue Test Coverage, pass all data so the chart can show accurate summary stats
+    // These charts handle aggregation internally and need the full dataset
+    const chartResults = isTestCaseHealth || isIssueTestCoverage ? chartData : limitedChartData;
 
     return {
       chart: (
@@ -1666,7 +1682,7 @@ function ReportBuilderContent({
           projectId={projectId}
         />
       ),
-      isTruncated: isTestCaseHealth ? false : isTruncated,
+      isTruncated: isTestCaseHealth || isIssueTestCoverage ? false : isTruncated,
       totalDataPoints: chartData.length,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2359,8 +2375,7 @@ function ReportBuilderContent({
                         onClick={handleRunReport}
                         disabled={
                           loading ||
-                          (reportType === "automation-trends" ||
-                          reportType === "flaky-tests"
+                          (isPreBuiltReport(reportType)
                             ? false // No requirements for pre-built reports
                             : dimensions.length === 0 || metrics.length === 0)
                         }

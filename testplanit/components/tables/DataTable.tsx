@@ -379,7 +379,11 @@ export function DataTable<TData extends DataRow, TValue>({
           >
             <span
               className="inline-flex items-center justify-center w-4 transition-transform duration-200"
-              style={{ transform: row.getIsExpanded() ? 'rotate(90deg)' : 'rotate(0deg)' }}
+              style={{
+                transform: row.getIsExpanded()
+                  ? "rotate(90deg)"
+                  : "rotate(0deg)",
+              }}
               aria-label={row.getIsExpanded() ? "Collapse" : "Expand"}
             >
               {"\u25B6"}
@@ -409,7 +413,9 @@ export function DataTable<TData extends DataRow, TValue>({
     getGroupedRowModel:
       grouping && grouping.length > 0 ? getGroupedRowModel() : undefined,
     getExpandedRowModel:
-      grouping && grouping.length > 0 || getSubRows ? getExpandedRowModel() : undefined,
+      (grouping && grouping.length > 0) || getSubRows
+        ? getExpandedRowModel()
+        : undefined,
     getSubRows: getSubRows,
     enableColumnPinning: true,
     enableColumnResizing: true,
@@ -595,7 +601,10 @@ export function DataTable<TData extends DataRow, TValue>({
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
-      <Table className="caption-bottom text-sm w-full border-separate border-spacing-y-0" data-testid="case-table">
+      <Table
+        className="caption-bottom text-sm w-full border-separate border-spacing-y-0"
+        data-testid="case-table"
+      >
         <TableHeader className="[&_tr]:border-b">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow
@@ -812,18 +821,21 @@ export function DataTable<TData extends DataRow, TValue>({
                     const shouldIndent = cellIndex === 0 && isSubRow;
 
                     if (cellIndex === 0) {
-                      console.log('[DataTable CELL]', {
+                      console.log("[DataTable CELL]", {
                         rowId: row.id,
                         columnId: column.id,
                         isGrouped: cell.getIsGrouped(),
                         isAggregated: cell.getIsAggregated(),
                         isPlaceholder: cell.getIsPlaceholder(),
-                        cellType: typeof cell.column.columnDef.cell
+                        cellType: typeof cell.column.columnDef.cell,
                       });
                     }
 
                     if (cell.getIsGrouped()) {
                       // If grouped, show group label and count
+                      // Only show count if there's no custom aggregatedCell (which handles its own display)
+                      const showCount = !cell.column.columnDef.aggregatedCell;
+
                       cellContent = (
                         <div className="flex items-center gap-1">
                           <Button
@@ -836,7 +848,11 @@ export function DataTable<TData extends DataRow, TValue>({
                           >
                             <span
                               className="inline-flex items-center justify-center w-4 transition-transform duration-200"
-                              style={{ transform: row.getIsExpanded() ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                              style={{
+                                transform: row.getIsExpanded()
+                                  ? "rotate(90deg)"
+                                  : "rotate(0deg)",
+                              }}
                             >
                               {"▶"}
                             </span>
@@ -844,10 +860,15 @@ export function DataTable<TData extends DataRow, TValue>({
                           {flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext()
-                          )}{" "}
-                          {"("}
-                          {row.subRows.length}
-                          {")"}
+                          )}
+                          {showCount && (
+                            <>
+                              {" "}
+                              {"("}
+                              {row.subRows.length}
+                              {")"}
+                            </>
+                          )}
                         </div>
                       );
                     } else if (cell.getIsAggregated()) {

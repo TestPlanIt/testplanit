@@ -71,7 +71,9 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
       // Don't add duplicates - the summary metrics are already duplicated across rows
     });
 
-    return Array.from(issueMap.values());
+    const result = Array.from(issueMap.values());
+    console.log('Issue Test Coverage Chart - Total issues:', result.length, 'Total rows:', data.length);
+    return result;
   }, [data]);
 
   // Calculate summary stats
@@ -135,7 +137,7 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
     };
   }, []);
 
-  // Render chart - horizontal stacked bar chart for top issues by test count
+  // Render chart - bubble chart showing aggregated issues by test coverage and pass rate
   useEffect(() => {
     if (!svgRef.current || width === 0 || height === 0) {
       if (svgRef.current) d3.select(svgRef.current).selectAll("*").remove();
@@ -145,207 +147,260 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const margin = { top: 20, right: 60, bottom: 30, left: 180 };
+    if (aggregatedData.length === 0) {
+      svg
+        .append("text")
+        .attr("x", width / 2)
+        .attr("y", height / 2)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .style("fill", "hsl(var(--muted-foreground))")
+        .style("font-size", "14px")
+        .text(t("noData"));
+      return;
+    }
+
+    const margin = { top: 40, right: 40, bottom: 60, left: 70 };
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
-
-    // Get top 50 issues by linked test cases (or failed tests first)
-    const topIssues = [...aggregatedData]
-      .sort((a, b) => {
-        // Primary: more failed tests first
-        if (b.failedTestCases !== a.failedTestCases) {
-          return b.failedTestCases - a.failedTestCases;
-        }
-        // Secondary: lower pass rate first
-        if (a.passRate !== b.passRate) {
-          return a.passRate - b.passRate;
-        }
-        // Tertiary: more linked tests first
-        return b.linkedTestCases - a.linkedTestCases;
-      })
-      .slice(0, 50);
-
-    if (topIssues.length === 0) return;
 
     const g = svg
       .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // Scales
-    const maxTests = Math.max(...topIssues.map((d) => d.linkedTestCases), 1);
-    const xScale = d3.scaleLinear().domain([0, maxTests]).range([0, chartWidth]);
+    // Group issues by test count buckets and pass rate buckets for aggregation
+    // This creates a grid where each cell represents issues with similar characteristics
+    interface BubblePoint {
+      testCount: number;
+      passRate: number;
+      count: number;
+      status: "failed" | "untested" | "passing";
+      issues: typeof aggregatedData;
+    }
 
-    const yScale = d3
-      .scaleBand()
-      .domain(topIssues.map((d) => d.externalKey || d.issueName))
-      .range([0, chartHeight])
-      .padding(0.25);
+    const bubbleMap = new Map<string, BubblePoint>();
 
-    // Draw stacked bars for each issue
-    topIssues.forEach((issue) => {
-      const y = yScale(issue.externalKey || issue.issueName)!;
-      const barHeight = yScale.bandwidth();
-      let xOffset = 0;
+    // Create buckets: test count buckets and pass rate buckets
+    aggregatedData.forEach((issue) => {
+      // Bucket test counts (0-5, 6-10, 11-20, 21-50, 51-100, 101+)
+      let testBucket: number;
+      if (issue.linkedTestCases <= 5) testBucket = 2.5;
+      else if (issue.linkedTestCases <= 10) testBucket = 8;
+      else if (issue.linkedTestCases <= 20) testBucket = 15;
+      else if (issue.linkedTestCases <= 50) testBucket = 35;
+      else if (issue.linkedTestCases <= 100) testBucket = 75;
+      else if (issue.linkedTestCases <= 200) testBucket = 150;
+      else testBucket = Math.round(issue.linkedTestCases / 50) * 50;
 
-      // Issue label
-      g.append("text")
-        .attr("x", -10)
-        .attr("y", y + barHeight / 2)
-        .attr("text-anchor", "end")
-        .attr("dominant-baseline", "middle")
-        .style("fill", "hsl(var(--foreground))")
-        .style("font-size", "11px")
-        .style("font-weight", "500")
-        .text(() => {
-          const name = issue.externalKey || issue.issueName;
-          return name.length > 20 ? name.substring(0, 20) + "..." : name;
-        });
+      // Bucket pass rates (0%, 10%, 20%, ..., 100%)
+      const passRateBucket = Math.round(issue.passRate / 10) * 10;
 
-      // Passed segment
-      if (issue.passedTestCases > 0) {
-        g.append("rect")
-          .attr("x", xOffset)
-          .attr("y", y)
-          .attr("width", 0)
-          .attr("height", barHeight)
-          .attr("fill", statusColors.passed)
-          .style("opacity", 0.85)
-          .on("mouseover", function (event) {
-            d3.select(this).style("opacity", 1);
-            if (tooltipRef.current) {
-              tooltipRef.current.style.display = "block";
-              tooltipRef.current.innerHTML = `
-                <div style="font-weight: 600; margin-bottom: 4px;">${issue.externalKey || issue.issueName}</div>
-                ${issue.issueTitle ? `<div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">${issue.issueTitle}</div>` : ""}
-                <div style="font-size: 11px; color: ${statusColors.passed};">
-                  ${t("passed")}: ${issue.passedTestCases}
-                </div>
-              `;
-            }
-          })
-          .on("mousemove", (event) => {
-            if (tooltipRef.current) {
-              tooltipRef.current.style.left = `${event.pageX + 15}px`;
-              tooltipRef.current.style.top = `${event.pageY - 10}px`;
-            }
-          })
-          .on("mouseout", function () {
-            d3.select(this).style("opacity", 0.85);
-            if (tooltipRef.current) tooltipRef.current.style.display = "none";
-          })
-          .transition()
-          .duration(600)
-          .attr("width", xScale(issue.passedTestCases));
-        xOffset += xScale(issue.passedTestCases);
-      }
-
-      // Failed segment
+      // Determine status
+      let status: "failed" | "untested" | "passing";
       if (issue.failedTestCases > 0) {
-        g.append("rect")
-          .attr("x", xOffset)
-          .attr("y", y)
-          .attr("width", 0)
-          .attr("height", barHeight)
-          .attr("fill", statusColors.failed)
-          .style("opacity", 0.85)
-          .on("mouseover", function (event) {
-            d3.select(this).style("opacity", 1);
-            if (tooltipRef.current) {
-              tooltipRef.current.style.display = "block";
-              tooltipRef.current.innerHTML = `
-                <div style="font-weight: 600; margin-bottom: 4px;">${issue.externalKey || issue.issueName}</div>
-                ${issue.issueTitle ? `<div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">${issue.issueTitle}</div>` : ""}
-                <div style="font-size: 11px; color: ${statusColors.failed};">
-                  ${t("failed")}: ${issue.failedTestCases}
-                </div>
-              `;
-            }
-          })
-          .on("mousemove", (event) => {
-            if (tooltipRef.current) {
-              tooltipRef.current.style.left = `${event.pageX + 15}px`;
-              tooltipRef.current.style.top = `${event.pageY - 10}px`;
-            }
-          })
-          .on("mouseout", function () {
-            d3.select(this).style("opacity", 0.85);
-            if (tooltipRef.current) tooltipRef.current.style.display = "none";
-          })
-          .transition()
-          .duration(600)
-          .delay(100)
-          .attr("width", xScale(issue.failedTestCases));
-        xOffset += xScale(issue.failedTestCases);
+        status = "failed";
+      } else if (issue.untestedTestCases > 0) {
+        status = "untested";
+      } else {
+        status = "passing";
       }
 
-      // Untested segment
-      if (issue.untestedTestCases > 0) {
-        g.append("rect")
-          .attr("x", xOffset)
-          .attr("y", y)
-          .attr("width", 0)
-          .attr("height", barHeight)
-          .attr("fill", statusColors.untested)
-          .style("opacity", 0.85)
-          .on("mouseover", function (event) {
-            d3.select(this).style("opacity", 1);
-            if (tooltipRef.current) {
-              tooltipRef.current.style.display = "block";
-              tooltipRef.current.innerHTML = `
-                <div style="font-weight: 600; margin-bottom: 4px;">${issue.externalKey || issue.issueName}</div>
-                ${issue.issueTitle ? `<div style="font-size: 11px; opacity: 0.8; margin-bottom: 4px;">${issue.issueTitle}</div>` : ""}
-                <div style="font-size: 11px; color: ${statusColors.untested};">
-                  ${t("untested")}: ${issue.untestedTestCases}
-                </div>
-              `;
-            }
-          })
-          .on("mousemove", (event) => {
-            if (tooltipRef.current) {
-              tooltipRef.current.style.left = `${event.pageX + 15}px`;
-              tooltipRef.current.style.top = `${event.pageY - 10}px`;
-            }
-          })
-          .on("mouseout", function () {
-            d3.select(this).style("opacity", 0.85);
-            if (tooltipRef.current) tooltipRef.current.style.display = "none";
-          })
-          .transition()
-          .duration(600)
-          .delay(200)
-          .attr("width", xScale(issue.untestedTestCases));
+      const key = `${testBucket}-${passRateBucket}-${status}`;
+
+      if (!bubbleMap.has(key)) {
+        bubbleMap.set(key, {
+          testCount: testBucket,
+          passRate: passRateBucket,
+          count: 0,
+          status,
+          issues: [],
+        });
       }
 
-      // Total count on right
-      g.append("text")
-        .attr("x", xScale(issue.linkedTestCases) + 8)
-        .attr("y", y + barHeight / 2)
-        .attr("dominant-baseline", "middle")
-        .style("fill", "hsl(var(--foreground))")
-        .style("font-size", "11px")
-        .style("font-weight", "600")
-        .style("opacity", 0)
-        .text(issue.linkedTestCases)
-        .transition()
-        .duration(600)
-        .delay(300)
-        .style("opacity", 1);
+      const bubble = bubbleMap.get(key)!;
+      bubble.count++;
+      bubble.issues.push(issue);
     });
 
+    const bubbleData = Array.from(bubbleMap.values());
+
+    // Scales
+    const maxTests = Math.max(...aggregatedData.map((d) => d.linkedTestCases), 1);
+    const xScale = d3.scaleLinear().domain([0, maxTests]).range([0, chartWidth]).nice();
+
+    const yScale = d3.scaleLinear().domain([0, 100]).range([chartHeight, 0]);
+
+    // Size scale for bubbles (based on number of issues in that bucket)
+    const maxCount = Math.max(...bubbleData.map((d) => d.count), 1);
+    const sizeScale = d3
+      .scaleSqrt()
+      .domain([1, maxCount])
+      .range([5, 40]); // Min and max bubble radius
+
+    // Color mapping
+    const colorMap = {
+      failed: statusColors.failed,
+      untested: statusColors.untested,
+      passing: statusColors.passed,
+    };
+
+    // Draw grid lines
+    g.append("g")
+      .attr("class", "grid")
+      .attr("opacity", 0.1)
+      .call(
+        d3
+          .axisLeft(yScale)
+          .tickSize(-chartWidth)
+          .tickFormat(() => "")
+      )
+      .call((g) => g.select(".domain").remove());
+
+    g.append("g")
+      .attr("class", "grid")
+      .attr("opacity", 0.1)
+      .attr("transform", `translate(0,${chartHeight})`)
+      .call(
+        d3
+          .axisBottom(xScale)
+          .tickSize(-chartHeight)
+          .tickFormat(() => "")
+      )
+      .call((g) => g.select(".domain").remove());
+
+    // Draw bubbles
+    const bubbles = g
+      .selectAll("circle")
+      .data(bubbleData)
+      .enter()
+      .append("circle")
+      .attr("cx", (d) => xScale(d.testCount))
+      .attr("cy", (d) => yScale(d.passRate))
+      .attr("r", 0)
+      .attr("fill", (d) => colorMap[d.status])
+      .style("opacity", 0.6)
+      .style("stroke", "hsl(var(--background))")
+      .style("stroke-width", 2)
+      .on("mouseover", function (event, d) {
+        d3.select(this).style("opacity", 0.9).style("stroke-width", 3);
+        if (tooltipRef.current) {
+          const statusLabel =
+            d.status === "failed"
+              ? "Has Failures"
+              : d.status === "untested"
+                ? "Has Untested"
+                : "All Passing";
+
+          tooltipRef.current.style.display = "block";
+          tooltipRef.current.innerHTML = `
+            <div style="font-weight: 600; margin-bottom: 4px;">${d.count} Issue${d.count > 1 ? "s" : ""}</div>
+            <div style="font-size: 11px; margin-bottom: 2px;">Pass Rate: ~${d.passRate}%</div>
+            <div style="font-size: 11px; margin-bottom: 4px;">Linked Tests: ~${d.testCount}</div>
+            <div style="font-size: 11px; color: ${colorMap[d.status]};">${statusLabel}</div>
+          `;
+        }
+      })
+      .on("mousemove", (event) => {
+        if (tooltipRef.current) {
+          tooltipRef.current.style.left = `${event.pageX + 15}px`;
+          tooltipRef.current.style.top = `${event.pageY - 10}px`;
+        }
+      })
+      .on("mouseout", function () {
+        d3.select(this).style("opacity", 0.6).style("stroke-width", 2);
+        if (tooltipRef.current) tooltipRef.current.style.display = "none";
+      });
+
+    // Animate bubbles
+    bubbles
+      .transition()
+      .duration(800)
+      .delay((d, i) => Math.min(i * 20, 500))
+      .attr("r", (d) => sizeScale(d.count));
+
     // X-axis
-    const xAxis = d3.axisBottom(xScale).ticks(5).tickSize(-chartHeight);
     g.append("g")
       .attr("transform", `translate(0,${chartHeight})`)
-      .call(xAxis)
+      .call(d3.axisBottom(xScale).ticks(8))
       .call((g) => {
-        g.select(".domain").remove();
-        g.selectAll(".tick line")
-          .attr("stroke", "hsl(var(--border))")
-          .attr("stroke-opacity", 0.5);
         g.selectAll(".tick text")
           .style("fill", "hsl(var(--muted-foreground))")
           .style("font-size", "10px");
+        g.select(".domain").attr("stroke", "hsl(var(--border))");
+        g.selectAll(".tick line").attr("stroke", "hsl(var(--border))");
       });
+
+    // X-axis label
+    g.append("text")
+      .attr("x", chartWidth / 2)
+      .attr("y", chartHeight + 45)
+      .attr("text-anchor", "middle")
+      .style("fill", "hsl(var(--muted-foreground))")
+      .style("font-size", "12px")
+      .text(t("charts.linkedTestCases"));
+
+    // Y-axis
+    g.append("g")
+      .call(d3.axisLeft(yScale).ticks(10))
+      .call((g) => {
+        g.selectAll(".tick text")
+          .style("fill", "hsl(var(--muted-foreground))")
+          .style("font-size", "10px");
+        g.select(".domain").attr("stroke", "hsl(var(--border))");
+        g.selectAll(".tick line").attr("stroke", "hsl(var(--border))");
+      });
+
+    // Y-axis label
+    g.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -50)
+      .attr("x", -chartHeight / 2)
+      .attr("text-anchor", "middle")
+      .style("fill", "hsl(var(--muted-foreground))")
+      .style("font-size", "12px")
+      .text(t("charts.passRate"));
+
+    // Chart title
+    svg
+      .append("text")
+      .attr("x", width / 2)
+      .attr("y", 20)
+      .attr("text-anchor", "middle")
+      .style("fill", "hsl(var(--foreground))")
+      .style("font-size", "14px")
+      .style("font-weight", "600")
+      .text(t("charts.coverageQuality"));
+
+    // Legend
+    const legend = svg
+      .append("g")
+      .attr("transform", `translate(${width - 150}, 40)`);
+
+    const legendItems = [
+      { label: t("passed"), color: statusColors.passed },
+      { label: t("failed"), color: statusColors.failed },
+      { label: t("untested"), color: statusColors.untested },
+    ];
+
+    legendItems.forEach((item, i) => {
+      const legendRow = legend
+        .append("g")
+        .attr("transform", `translate(0, ${i * 20})`);
+
+      legendRow
+        .append("circle")
+        .attr("r", 5)
+        .attr("fill", item.color)
+        .style("opacity", 0.7);
+
+      legendRow
+        .append("text")
+        .attr("x", 12)
+        .attr("y", 4)
+        .style("fill", "hsl(var(--foreground))")
+        .style("font-size", "11px")
+        .text(item.label);
+    });
   }, [aggregatedData, width, height, t]);
 
   if (data.length === 0) {

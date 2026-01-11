@@ -4660,6 +4660,8 @@
         "summaryView": "Résumé (par numéro)",
         "detailView": "Détail (par cas de test)",
         "issue": "Problème",
+        "testCase": "Cas de test",
+        "testCases": "{count, plural, =1 {Cas de test} other {Cas de test}}",
         "issueStatus": "Statut",
         "priority": "Priorité",
         "linkedTests": "Tests liés",

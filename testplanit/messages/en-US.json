@@ -4660,6 +4660,8 @@
         "summaryView": "Summary (by Issue)",
         "detailView": "Detail (by Test Case)",
         "issue": "Issue",
+        "testCase": "Test Case",
+        "testCases": "{count, plural, =1 {Test Case} other {Test Cases}}",
         "issueStatus": "Status",
         "priority": "Priority",
         "linkedTests": "Linked Tests",
@@ -4672,6 +4674,7 @@
         "lastExecuted": "Last Executed",
         "notTested": "Not Tested",
         "noData": "No issues with linked test cases found",
+        "noIssuesNeedingAttention": "All issues have passing tests - great work!",
         "stats": {
           "totalIssues": "Total Issues",
           "issuesWithFailures": "With Failures",
@@ -4679,7 +4682,14 @@
           "issuesWithUntested": "With Untested",
           "issuesWithUntestedTooltip": "Issues with at least one test case that has not been executed",
           "issuesAllPassing": "All Passing",
-          "overallPassRate": "Pass Rate"
+          "overallPassRate": "Pass Rate",
+          "numberOfIssues": "Number of Issues"
+        },
+        "charts": {
+          "passRateDistribution": "Test Pass Rate Distribution",
+          "linkedTestCases": "Number of Linked Test Cases",
+          "passRate": "Pass Rate (%)",
+          "coverageQuality": "Test Coverage vs Quality"
         }
       },
       "crossProjectReportTypes": {
