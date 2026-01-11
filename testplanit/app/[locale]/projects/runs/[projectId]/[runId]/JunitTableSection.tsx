@@ -153,6 +153,7 @@ function JunitTableSection({
 
   // --- Right panel state ---
   const [isCollapsedRight, setIsCollapsedRight] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [panelRightWidth, setPanelRightWidth] = useState(20);
   const panelRightRef = useRef<any>(null);
   const [selectedAttachments, setSelectedAttachments] = useState<any[]>([]);
@@ -163,6 +164,7 @@ function JunitTableSection({
     setPanelRightWidth(size);
   }, []);
   const toggleCollapseRight = () => {
+    setIsTransitioning(true);
     if (panelRightRef.current) {
       if (isCollapsedRight) {
         panelRightRef.current.expand();
@@ -171,6 +173,7 @@ function JunitTableSection({
       }
       setIsCollapsedRight(!isCollapsedRight);
     }
+    setTimeout(() => setIsTransitioning(false), 300);
   };
   const handleSelect = (attachments: any[], index: number) => {
     setSelectedAttachments(attachments);
@@ -577,7 +580,9 @@ function JunitTableSection({
                 collapsible
                 onCollapse={() => setIsCollapsedRight(true)}
                 onExpand={() => setIsCollapsedRight(false)}
-                className={`$${isCollapsedRight ? " transition-all duration-300 ease-in-out" : ""} w-[${panelRightWidth}%]`}
+                className={`${
+                  isTransitioning ? "transition-all duration-300 ease-in-out" : ""
+                } w-[${panelRightWidth}%]`}
               >
                 <div className="p-4 space-y-4">
                   {isAutomatedTestRunType(testRunData?.testRunType) && (

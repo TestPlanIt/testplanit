@@ -237,6 +237,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const [isTemplateReady, setIsTemplateReady] = useState(false);
   const panelRef = useRef<React.ComponentRef<typeof ResizablePanel>>(null);
 
@@ -966,6 +967,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
   }
 
   const toggleCollapse = () => {
+    setIsTransitioning(true);
     if (panelRef.current) {
       if (isCollapsed) {
         panelRef.current.expand();
@@ -974,6 +976,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
       }
       setIsCollapsed(!isCollapsed);
     }
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   return (
@@ -1076,7 +1079,9 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
                   collapsedSize={0}
                   minSize={0}
                   collapsible
-                  className="p-0 m-0 mr-4"
+                  className={`p-0 m-0 mr-4 ${
+                    isTransitioning ? "transition-all duration-300 ease-in-out" : ""
+                  }`}
                 >
                   <div className="mb-4 min-w-[300px] mx-1">
                     <FormField

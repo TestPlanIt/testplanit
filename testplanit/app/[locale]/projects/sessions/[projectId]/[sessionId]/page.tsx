@@ -46,6 +46,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   ChevronLeft,
+  ChevronRight,
   Save,
   SquarePen,
   CircleSlash2,
@@ -821,6 +822,8 @@ export default function SessionPage() {
     useState<JSONContent>(emptyEditorContent);
   const [isCollapsedLeft, setIsCollapsedLeft] = useState(false);
   const [isCollapsedRight, setIsCollapsedRight] = useState(false);
+  const [isTransitioningLeft, setIsTransitioningLeft] = useState(false);
+  const [isTransitioningRight, setIsTransitioningRight] = useState(false);
   const [panelRightWidth, setPanelRightWidth] = useState(20);
   const panelRightRef = useRef<ImperativePanelHandle>(null);
   const [contentLoaded, setContentLoaded] = useState(false);
@@ -1245,6 +1248,7 @@ export default function SessionPage() {
 
   // Add these functions
   const toggleCollapseLeft = () => {
+    setIsTransitioningLeft(true);
     if (panelLeftRef.current) {
       if (isCollapsedLeft) {
         panelLeftRef.current.expand();
@@ -1253,9 +1257,11 @@ export default function SessionPage() {
       }
       setIsCollapsedLeft(!isCollapsedLeft);
     }
+    setTimeout(() => setIsTransitioningLeft(false), 300);
   };
 
   const toggleCollapseRight = () => {
+    setIsTransitioningRight(true);
     if (panelRightRef.current) {
       if (isCollapsedRight) {
         panelRightRef.current.expand();
@@ -1264,6 +1270,7 @@ export default function SessionPage() {
       }
       setIsCollapsedRight(!isCollapsedRight);
     }
+    setTimeout(() => setIsTransitioningRight(false), 300);
   };
 
   const handleResize = useCallback((size: number) => {
@@ -1799,6 +1806,9 @@ export default function SessionPage() {
                 collapsedSize={0}
                 onCollapse={() => setIsCollapsedLeft(true)}
                 onExpand={() => setIsCollapsedLeft(false)}
+                className={
+                  isTransitioningLeft ? "transition-all duration-300 ease-in-out" : ""
+                }
               >
                 <div className="flex flex-col h-full p-4">
                   {/* Left panel content */}
@@ -1969,74 +1979,27 @@ export default function SessionPage() {
               </ResizablePanel>
 
               <div>
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Button
-                          type="button"
-                          onClick={toggleCollapseLeft}
-                          variant="ghost"
-                          size="sm"
-                          className={`p-1 h-full border-y ${isCollapsedLeft ? "rounded-l-none" : "rounded-r-none"}`}
-                          aria-label={
-                            isCollapsedLeft
-                              ? tCommon("actions.expandLeftPanel")
-                              : tCommon("actions.collapseLeftPanel")
-                          }
-                        >
-                          <ChevronLeft
-                            className={`h-4 w-4 transition-transform ${isCollapsedLeft ? "rotate-180" : ""}`}
-                          />
-                        </Button>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      <p>
-                        {isCollapsedLeft
-                          ? tCommon("actions.expandLeftPanel")
-                          : tCommon("actions.collapseLeftPanel")}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Button
+                  type="button"
+                  onClick={toggleCollapseLeft}
+                  variant="secondary"
+                  className="p-0 rounded-r-none"
+                >
+                  {isCollapsedLeft ? <ChevronRight /> : <ChevronLeft />}
+                </Button>
               </div>
 
-              <ResizableHandle
-                withHandle
-                className="w-1 bg-border hover:bg-primary transition-colors duration-200"
-              />
+              <ResizableHandle withHandle className="w-1" />
 
               <div>
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Button
-                          type="button"
-                          onClick={toggleCollapseRight}
-                          variant="ghost"
-                          size="sm"
-                          className={`p-1 h-full border-y ${isCollapsedRight ? "rounded-r-none" : "rounded-l-none rotate-180"}`}
-                          aria-label={
-                            isCollapsedRight
-                              ? tCommon("actions.expandRightPanel")
-                              : tCommon("actions.collapseRightPanel")
-                          }
-                        >
-                          <ChevronLeft className="h-4 w-4 transition-transform" />
-                        </Button>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="left">
-                      <p>
-                        {isCollapsedRight
-                          ? tCommon("actions.expandRightPanel")
-                          : tCommon("actions.collapseRightPanel")}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Button
+                  type="button"
+                  onClick={toggleCollapseRight}
+                  variant="secondary"
+                  className={`p-0 transform ${isCollapsedRight ? "rounded-l-none" : "rounded-r-none rotate-180"}`}
+                >
+                  <ChevronLeft />
+                </Button>
               </div>
 
               <ResizablePanel
@@ -2048,6 +2011,9 @@ export default function SessionPage() {
                 collapsible
                 onCollapse={() => setIsCollapsedRight(true)}
                 onExpand={() => setIsCollapsedRight(false)}
+                className={
+                  isTransitioningRight ? "transition-all duration-300 ease-in-out" : ""
+                }
               >
                 <div className="p-4 space-y-4">
                   {sessionData && (

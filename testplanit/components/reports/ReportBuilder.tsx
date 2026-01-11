@@ -182,8 +182,10 @@ function ReportBuilderContent({
   // Panel state
   const panelRef = useRef<any>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const toggleCollapse = () => {
+    setIsTransitioning(true);
     if (panelRef.current) {
       if (isCollapsed) {
         panelRef.current.expand();
@@ -192,6 +194,7 @@ function ReportBuilderContent({
       }
       setIsCollapsed(!isCollapsed);
     }
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   // Split report types into pre-built reports and custom reports
@@ -1703,7 +1706,9 @@ function ReportBuilderContent({
           collapsible
           onCollapse={() => setIsCollapsed(true)}
           onExpand={() => setIsCollapsed(false)}
-          className="p-0 m-0"
+          className={`p-0 m-0 ${
+            isTransitioning ? "transition-all duration-300 ease-in-out" : ""
+          }`}
         >
           <Card
             shadow="none"
