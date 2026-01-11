@@ -351,7 +351,7 @@ export async function POST(
           const issuesData = caseItem.issues.map((i) => ({
             id: i.id,
             name: i.name,
-            externalId: i.externalId,
+            ...(i.externalId && { externalId: i.externalId }),
           }));
           const stepsData = caseItem.steps.map((s) => ({
             step: s.step,

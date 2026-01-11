@@ -999,7 +999,7 @@ export default function TestCaseDetails() {
 
       // Refetch to ensure we have the updated currentVersion from the database
       const refetchResult = await refetch();
-      const updatedTestCase = refetchResult.data;
+      const updatedTestCase = refetchResult.data as ExtendedCases;
 
       if (!updatedTestCase) {
         throw new Error("Failed to refetch updated test case");
