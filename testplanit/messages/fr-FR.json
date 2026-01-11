@@ -4569,6 +4569,10 @@
         "testCaseHealth": {
           "label": "Cas de test Santé",
           "description": "Identifier les cas de test obsolètes, défectueux ou suspects en fonction des modèles d'exécution"
+        },
+        "issueTestCoverage": {
+          "label": "Couverture des tests de problèmes",
+          "description": "Afficher les problèmes avec leurs cas de test associés et leur état d'exécution le plus récent"
         }
       },
       "flakyTests": {
@@ -4651,6 +4655,33 @@
           "lowExecutions": "Peu d'exécutions (<3) : -10"
         }
       },
+      "issueTestCoverage": {
+        "viewMode": "Mode d'affichage",
+        "summaryView": "Résumé (par numéro)",
+        "detailView": "Détail (par cas de test)",
+        "issue": "Problème",
+        "issueStatus": "Statut",
+        "priority": "Priorité",
+        "linkedTests": "Tests liés",
+        "testResults": "Résultats (P/F/U)",
+        "passRate": "Taux de réussite",
+        "passed": "Passé",
+        "failed": "Échoué",
+        "untested": "Non testé",
+        "lastStatus": "Dernier statut",
+        "lastExecuted": "Dernière exécution",
+        "notTested": "Non testé",
+        "noData": "Aucun problème n'a été détecté avec les cas de test liés.",
+        "stats": {
+          "totalIssues": "Numéros totaux",
+          "issuesWithFailures": "Avec des échecs",
+          "issuesWithFailuresTooltip": "Problèmes avec au moins un cas de test défaillant",
+          "issuesWithUntested": "Avec des tests non effectués",
+          "issuesWithUntestedTooltip": "Problèmes avec au moins un cas de test qui n'a pas été exécuté",
+          "issuesAllPassing": "Tout passe",
+          "overallPassRate": "Taux de réussite"
+        }
+      },
       "crossProjectReportTypes": {
         "testExecution": {
           "label": "Exécution de tests inter-projets",
@@ -4679,6 +4710,10 @@
         "testCaseHealth": {
           "label": "Santé des cas de test inter-projets",
           "description": "Identifier les cas de test obsolètes, défectueux ou suspects dans tous les projets"
+        },
+        "issueTestCoverage": {
+          "label": "Couverture des tests de problèmes inter-projets",
+          "description": "Consultez les problèmes, leurs cas de test associés et leur statut d'exécution le plus récent dans tous les projets."
         }
       }
     },

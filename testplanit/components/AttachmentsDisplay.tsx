@@ -185,13 +185,13 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
       {label && <strong>{label}</strong>}
       {previousAttachments && previous !== undefined && current !== previous ? (
         <>
-          <div className="bg-green-100 text-green-700 p-1">
+          <div className="bg-green-500/20 text-green-700 dark:text-green-400 p-1 rounded">
             <strong>
               <Plus className="w-4 h-4" />
             </strong>{" "}
             {current}
           </div>
-          <div className="bg-red-100 text-red-700 p-1">
+          <div className="bg-red-500/20 text-red-700 dark:text-red-400 p-1 rounded">
             <strong>
               <Minus className="w-4 h-4" />
             </strong>{" "}
@@ -266,7 +266,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
 
         return (
           <div
-            className="w-full border-2 mb-4 bg-accent rounded-sm items-start border-primary"
+            className="w-full border-2 mb-4 bg-card text-card-foreground rounded-sm items-start border-primary"
             key={attachment.id}
           >
             <div className="p-2 w-full">
@@ -313,7 +313,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                 },
                               }));
                             }}
-                            className="w-full mt-1 px-2 py-1 text-sm border rounded-md bg-background"
+                            className="w-full mt-1 px-2 py-1 text-sm border rounded-md bg-background text-foreground"
                             aria-label={t("common.name")}
                           />
                         ) : (
@@ -455,11 +455,11 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
           ) {
             return (
               <div
-                className="w-full border-2 mb-4 bg-red-100 rounded-sm border-primary items-start min-w-[260px]"
+                className="w-full border-2 mb-4 bg-red-500/10 dark:bg-red-500/20 rounded-sm border-primary items-start min-w-[260px]"
                 key={prevAttachment.id}
               >
                 <div className="relative">
-                  <div className="absolute top-2 left-2 text-red-700 text-xl">
+                  <div className="absolute top-2 left-2 text-red-700 dark:text-red-400 text-xl">
                     <Minus className="w-4 h-4" />
                   </div>
                 </div>

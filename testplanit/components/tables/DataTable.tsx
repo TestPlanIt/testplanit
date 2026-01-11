@@ -87,6 +87,8 @@ interface DataTableProps<TData extends DataRow, TValue> {
   expanded?: ExpandedState;
   onExpandedChange?: OnChangeFn<ExpandedState>;
   itemType?: string;
+  getSubRows?: (originalRow: TData, index: number) => TData[] | undefined;
+  subRowColumns?: ColumnDef<any, any>[];
 }
 
 interface CustomColumnMeta {
@@ -144,6 +146,8 @@ export function DataTable<TData extends DataRow, TValue>({
   expanded,
   onExpandedChange,
   itemType,
+  getSubRows,
+  subRowColumns,
 }: DataTableProps<TData, TValue>) {
   const t = useTranslations("common.table");
   const searchParams = useSearchParams();
@@ -405,7 +409,8 @@ export function DataTable<TData extends DataRow, TValue>({
     getGroupedRowModel:
       grouping && grouping.length > 0 ? getGroupedRowModel() : undefined,
     getExpandedRowModel:
-      grouping && grouping.length > 0 ? getExpandedRowModel() : undefined,
+      grouping && grouping.length > 0 || getSubRows ? getExpandedRowModel() : undefined,
+    getSubRows: getSubRows,
     enableColumnPinning: true,
     enableColumnResizing: true,
     enableRowSelection: true,
@@ -414,11 +419,11 @@ export function DataTable<TData extends DataRow, TValue>({
       columnSizing,
       columnVisibility: effectiveColumnVisibility,
       rowSelection,
-      grouping: grouping ?? [],
-      expanded: expanded ?? {},
+      ...(grouping !== undefined && { grouping: grouping }),
+      ...(expanded !== undefined && { expanded: expanded }),
     },
-    onGroupingChange,
-    onExpandedChange,
+    ...(onGroupingChange !== undefined && { onGroupingChange }),
+    ...(onExpandedChange !== undefined && { onExpandedChange }),
     onRowSelectionChange: onRowSelectionChange,
     onColumnSizingChange: handleColumnSizingChange,
     onColumnPinningChange: setColumnPinning,
@@ -805,6 +810,17 @@ export function DataTable<TData extends DataRow, TValue>({
                     const { column } = cell;
                     let cellContent: React.ReactNode = null;
                     const shouldIndent = cellIndex === 0 && isSubRow;
+
+                    if (cellIndex === 0) {
+                      console.log('[DataTable CELL]', {
+                        rowId: row.id,
+                        columnId: column.id,
+                        isGrouped: cell.getIsGrouped(),
+                        isAggregated: cell.getIsAggregated(),
+                        isPlaceholder: cell.getIsPlaceholder(),
+                        cellType: typeof cell.column.columnDef.cell
+                      });
+                    }
 
                     if (cell.getIsGrouped()) {
                       // If grouped, show group label and count

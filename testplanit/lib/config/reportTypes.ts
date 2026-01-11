@@ -1,4 +1,4 @@
-import { PlayCircle, ListTree, Users, Heart, Compass, Bug, TrendingUp, Shuffle, Activity } from "lucide-react";
+import { PlayCircle, ListTree, Users, Heart, Compass, Bug, TrendingUp, Shuffle, Activity, Link2 } from "lucide-react";
 
 export interface ReportType {
   id: string;
@@ -78,6 +78,14 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     endpoint: "/api/report-builder/test-case-health",
     isPreBuilt: true,
   },
+  {
+    id: "issue-test-coverage",
+    label: tReports("reportTypes.issueTestCoverage.label"),
+    description: tReports("reportTypes.issueTestCoverage.description"),
+    icon: Link2,
+    endpoint: "/api/report-builder/issue-test-coverage",
+    isPreBuilt: true,
+  },
 ];
 
 // Cross-project report types for admin - using function to access translations
@@ -134,6 +142,14 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("crossProjectReportTypes.testCaseHealth.description"),
     icon: Activity,
     endpoint: "/api/report-builder/cross-project-test-case-health",
+    isPreBuilt: true,
+  },
+  {
+    id: "issue-test-coverage",
+    label: tReports("crossProjectReportTypes.issueTestCoverage.label"),
+    description: tReports("crossProjectReportTypes.issueTestCoverage.description"),
+    icon: Link2,
+    endpoint: "/api/report-builder/cross-project-issue-test-coverage",
     isPreBuilt: true,
   },
 ];

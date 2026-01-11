@@ -4569,6 +4569,10 @@
         "testCaseHealth": {
           "label": "Caso de prueba de salud",
           "description": "Identifique casos de prueba obsoletos, rotos o sospechosos según patrones de ejecución"
+        },
+        "issueTestCoverage": {
+          "label": "Cobertura de la prueba de emisión",
+          "description": "Ver problemas con sus casos de prueba vinculados y el último estado de ejecución"
         }
       },
       "flakyTests": {
@@ -4651,6 +4655,33 @@
           "lowExecutions": "Pocas ejecuciones (<3): -10"
         }
       },
+      "issueTestCoverage": {
+        "viewMode": "Modo de visualización",
+        "summaryView": "Resumen (por tema)",
+        "detailView": "Detalle (por caso de prueba)",
+        "issue": "Asunto",
+        "issueStatus": "Estado",
+        "priority": "Prioridad",
+        "linkedTests": "Pruebas vinculadas",
+        "testResults": "Resultados (P/F/U)",
+        "passRate": "Tasa de aprobación",
+        "passed": "Aprobado",
+        "failed": "Fallido",
+        "untested": "No probado",
+        "lastStatus": "Último estado",
+        "lastExecuted": "Último ejecutado",
+        "notTested": "No probado",
+        "noData": "No se encontraron problemas con los casos de prueba vinculados",
+        "stats": {
+          "totalIssues": "Emisiones totales",
+          "issuesWithFailures": "Con fracasos",
+          "issuesWithFailuresTooltip": "Problemas con al menos un caso de prueba fallido",
+          "issuesWithUntested": "Con no probado",
+          "issuesWithUntestedTooltip": "Problemas con al menos un caso de prueba que no se ha ejecutado",
+          "issuesAllPassing": "Todo pasa",
+          "overallPassRate": "Tasa de aprobación"
+        }
+      },
       "crossProjectReportTypes": {
         "testExecution": {
           "label": "Ejecutar pruebas de proyecto",
@@ -4679,6 +4710,10 @@
         "testCaseHealth": {
           "label": "Estado del caso de prueba entre proyectos",
           "description": "Identificar casos de prueba obsoletos, rotos o sospechosos en todos los proyectos"
+        },
+        "issueTestCoverage": {
+          "label": "Cobertura de pruebas de problemas entre proyectos",
+          "description": "Ver problemas con sus casos de prueba vinculados y el último estado de ejecución en todos los proyectos"
         }
       }
     },

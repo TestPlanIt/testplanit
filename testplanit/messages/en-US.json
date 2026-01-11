@@ -4569,6 +4569,10 @@
         "testCaseHealth": {
           "label": "Test Case Health",
           "description": "Identify stale, broken, or suspicious test cases based on execution patterns"
+        },
+        "issueTestCoverage": {
+          "label": "Issue Test Coverage",
+          "description": "View issues with their linked test cases and latest execution status"
         }
       },
       "flakyTests": {
@@ -4651,6 +4655,33 @@
           "lowExecutions": "Few executions (<3): -10"
         }
       },
+      "issueTestCoverage": {
+        "viewMode": "View Mode",
+        "summaryView": "Summary (by Issue)",
+        "detailView": "Detail (by Test Case)",
+        "issue": "Issue",
+        "issueStatus": "Status",
+        "priority": "Priority",
+        "linkedTests": "Linked Tests",
+        "testResults": "Results (P/F/U)",
+        "passRate": "Pass Rate",
+        "passed": "Passed",
+        "failed": "Failed",
+        "untested": "Untested",
+        "lastStatus": "Last Status",
+        "lastExecuted": "Last Executed",
+        "notTested": "Not Tested",
+        "noData": "No issues with linked test cases found",
+        "stats": {
+          "totalIssues": "Total Issues",
+          "issuesWithFailures": "With Failures",
+          "issuesWithFailuresTooltip": "Issues with at least one failing test case",
+          "issuesWithUntested": "With Untested",
+          "issuesWithUntestedTooltip": "Issues with at least one test case that has not been executed",
+          "issuesAllPassing": "All Passing",
+          "overallPassRate": "Pass Rate"
+        }
+      },
       "crossProjectReportTypes": {
         "testExecution": {
           "label": "Cross-Project Test Execution",
@@ -4679,6 +4710,10 @@
         "testCaseHealth": {
           "label": "Cross-Project Test Case Health",
           "description": "Identify stale, broken, or suspicious test cases across projects"
+        },
+        "issueTestCoverage": {
+          "label": "Cross-Project Issue Test Coverage",
+          "description": "View issues with their linked test cases and latest execution status across projects"
         }
       }
     },

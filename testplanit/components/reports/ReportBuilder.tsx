@@ -78,6 +78,7 @@ import { useReportColumns } from "~/hooks/useReportColumns";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
+import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
 import {
   getProjectReportTypes,
   getCrossProjectReportTypes,
@@ -284,6 +285,7 @@ function ReportBuilderContent({
   const [healthAutomatedFilter, setHealthAutomatedFilter] = useState<
     "all" | "automated" | "manual"
   >("all");
+
   // Track when the report was last generated (for display and future export functionality)
   const [reportGeneratedAt, setReportGeneratedAt] = useState<Date | null>(null);
 
@@ -592,6 +594,13 @@ function ReportBuilderContent({
     mode === "cross-project"
   );
 
+  // Use issue test coverage columns for issue-test-coverage report
+  const issueTestCoverageSummaryColumns = useIssueTestCoverageSummaryColumns(
+    projectId,
+    lastUsedDimensions.map((d) => d.value),
+    mode === "cross-project"
+  );
+
   // Choose which columns to use based on report type
   const columns =
     reportType === "automation-trends"
@@ -600,7 +609,15 @@ function ReportBuilderContent({
         ? flakyTestsColumns
         : reportType === "test-case-health"
           ? testCaseHealthColumns
-          : standardColumns;
+          : reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage"
+            ? issueTestCoverageSummaryColumns
+            : standardColumns;
+
+  // Debug logging
+  if (reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage") {
+    console.log('[ReportBuilder] Selected columns:', columns.length, 'first column:', columns[0]);
+    console.log('[ReportBuilder] First column cell type:', typeof columns[0]?.cell);
+  }
 
   // When lastUsedDimensions change (after running a report), update grouping
   React.useEffect(() => {
@@ -615,6 +632,37 @@ function ReportBuilderContent({
       setGrouping([]);
     }
   }, [lastUsedDimensions]);
+
+  // Initialize column visibility for issue test coverage report
+  React.useEffect(() => {
+    if (reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage") {
+      // Set all columns to visible for this report
+      const visibility: Record<string, boolean> = {
+        issueId: true,
+        testCaseId: true,
+        issueStatus: true,
+        issuePriority: true,
+        lastStatusName: true,
+        lastExecutedAt: true,
+        linkedTestCases: true,
+        testResults: true,
+        passRate: true,
+      };
+      console.log('[ReportBuilder] Setting column visibility for issue test coverage:', visibility);
+      setColumnVisibility(visibility);
+    }
+  }, [reportType]);
+
+  // Set grouping for issue test coverage report when data loads
+  React.useEffect(() => {
+    if ((reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage") && allResults && allResults.length > 0) {
+      // Group by issueId to show issues with expandable test cases
+      console.log('[ReportBuilder] Setting grouping to [issueId] for issue test coverage');
+      setGrouping(["issueId"]);
+      // Start with all groups collapsed
+      setExpanded({});
+    }
+  }, [reportType, allResults]);
 
   // Get the current report configuration
   const currentReport = reportTypes.find((r) => r.id === reportType);
@@ -1026,6 +1074,19 @@ function ReportBuilderContent({
           body.minExecutionsForRate = minExecutionsForRate;
           body.lookbackDays = lookbackDays;
           body.automatedFilter = healthAutomatedFilter;
+          // Always include dimensions for cross-project reports (project should be auto-added)
+          if (mode === "cross-project") {
+            const dimValues = selectedDimensions.map((d) => d.value);
+            // Ensure project is included if it's not already there
+            if (!dimValues.includes("project")) {
+              dimValues.unshift("project");
+            }
+            body.dimensions = dimValues;
+          }
+        }
+
+        // For issue test coverage, add dimensions for cross-project
+        if (reportType === "issue-test-coverage") {
           // Always include dimensions for cross-project reports (project should be auto-added)
           if (mode === "cross-project") {
             const dimValues = selectedDimensions.map((d) => d.value);
@@ -1520,7 +1581,7 @@ function ReportBuilderContent({
   const memoizedChart = useMemo(() => {
     const chartData = chartDataRef.current;
 
-    // For pre-built reports (automation trends, flaky tests, test case health),
+    // For pre-built reports (automation trends, flaky tests, test case health, issue test coverage),
     // we don't need traditional dimensions/metrics as the chart uses specialized data structures
     const isAutomationTrends = reportType === "automation-trends";
     const isFlakyTests =
@@ -1529,12 +1590,16 @@ function ReportBuilderContent({
     const isTestCaseHealth =
       reportType === "test-case-health" ||
       reportType === "cross-project-test-case-health";
+    const isIssueTestCoverage =
+      reportType === "issue-test-coverage" ||
+      reportType === "cross-project-issue-test-coverage";
 
     if (
       !chartData ||
       (!isAutomationTrends &&
         !isFlakyTests &&
         !isTestCaseHealth &&
+        !isIssueTestCoverage &&
         (chartDimensions.length === 0 || chartMetrics.length === 0))
     ) {
       return { chart: null, isTruncated: false, totalDataPoints: 0 };
@@ -2430,7 +2495,13 @@ function ReportBuilderContent({
                   </CardHeader>
                   <CardContent className="h-[calc(100%-4rem)] overflow-y-auto p-6 pt-0">
                     <DataTable
-                      columns={columns as ColumnDef<any>[]}
+                      columns={(() => {
+                        if (reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage") {
+                          console.log('[ReportBuilder] Rendering DataTable with columns:', columns.length, 'data:', results?.length, 'first row:', results?.[0]);
+                          console.log('[ReportBuilder] grouping:', grouping, 'expanded:', expanded);
+                        }
+                        return columns as ColumnDef<any>[];
+                      })()}
                       data={results || []}
                       columnVisibility={columnVisibility}
                       onColumnVisibilityChange={setColumnVisibility}
