@@ -16,6 +16,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
 import bcrypt from "bcrypt";
+import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService.js";
 import {
   isMultiTenantMode,
   disconnectAllTenantClients,
@@ -3912,41 +3913,36 @@ const importRepositoryCases = async (
           const versionCaseName =
             toStringValue(record.name) ?? repositoryCase.name;
 
-          const caseVersion = await tx.repositoryCaseVersions.create({
-            data: {
-              repositoryCase: { connect: { id: repositoryCase.id } },
-              project: { connect: { id: projectId } },
-              staticProjectId: projectId,
-              staticProjectName: projectName,
-              repositoryId: resolvedRepositoryId,
-              folderId: resolvedFolderId,
-              folderName,
-              templateId: resolvedTemplateId,
-              templateName,
-              name: versionCaseName,
-              stateId: resolvedWorkflowId,
-              stateName: workflowName,
-              estimate: repositoryCase.estimate ?? null,
-              forecastManual: repositoryCase.forecastManual ?? null,
-              forecastAutomated: repositoryCase.forecastAutomated ?? null,
-              order,
-              createdAt: repositoryCase.createdAt ?? new Date(),
+          // Create version snapshot using centralized helper
+          const caseVersion = await createTestCaseVersionInTransaction(
+            tx,
+            repositoryCase.id,
+            {
+              // Use repositoryCase.currentVersion (already set on the case)
               creatorId,
               creatorName,
-              automated: repositoryCase.automated,
-              isArchived: repositoryCase.isArchived,
-              isDeleted: repositoryCase.isDeleted,
-              version: repositoryCase.currentVersion,
-              steps:
-                stepsForVersion.length > 0
-                  ? (stepsForVersion as Prisma.InputJsonValue)
-                  : Prisma.JsonNull,
-              tags: [],
-              issues: [],
-              links: [],
-              attachments: [],
-            },
-          });
+              createdAt: repositoryCase.createdAt ?? new Date(),
+              overrides: {
+                name: versionCaseName,
+                stateId: resolvedWorkflowId,
+                stateName: workflowName,
+                estimate: repositoryCase.estimate ?? null,
+                forecastManual: repositoryCase.forecastManual ?? null,
+                forecastAutomated: repositoryCase.forecastAutomated ?? null,
+                automated: repositoryCase.automated,
+                isArchived: repositoryCase.isArchived,
+                order,
+                steps:
+                  stepsForVersion.length > 0
+                    ? (stepsForVersion as Prisma.InputJsonValue)
+                    : null,
+                tags: [],
+                issues: [],
+                links: [],
+                attachments: [],
+              },
+            }
+          );
 
           const caseFieldValuesForVersion = await tx.caseFieldValues.findMany({
             where: { testCaseId: repositoryCase.id },

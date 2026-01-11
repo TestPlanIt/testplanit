@@ -13,6 +13,7 @@ import type {
   ImportContext,
   PersistProgressFn,
 } from "./types";
+import { createTestCaseVersionInTransaction } from "../../lib/services/testCaseVersionService.js";
 
 type AutomationCaseGroup = {
   name: string;
@@ -596,38 +597,33 @@ export const importAutomationCases = async (
               folderNameForVersion ?? (await getFolderName(tx, folderId));
             const creatorName = await getUserName(tx, repositoryCase.creatorId);
 
-            const caseVersion = await tx.repositoryCaseVersions.create({
-              data: {
-                repositoryCase: { connect: { id: repositoryCase.id } },
-                project: { connect: { id: projectId } },
-                staticProjectId: projectId,
-                staticProjectName: projectName,
-                repositoryId,
-                folderId,
-                folderName: resolvedFolderName ?? "",
-                templateId: resolvedTemplateId,
-                templateName,
-                name,
-                stateId: defaultWorkflowId,
-                stateName: workflowName,
-                estimate: repositoryCase.estimate ?? null,
-                forecastManual: null,
-                forecastAutomated: null,
-                order: repositoryCase.order ?? 0,
-                createdAt: repositoryCase.createdAt ?? new Date(),
+            // Create version snapshot using centralized helper
+            const caseVersion = await createTestCaseVersionInTransaction(
+              tx,
+              repositoryCase.id,
+              {
+                // Use repositoryCase.currentVersion (already set on the case)
                 creatorId: repositoryCase.creatorId,
                 creatorName,
-                automated: true,
-                isArchived: repositoryCase.isArchived,
-                isDeleted: repositoryCase.isDeleted,
-                version: repositoryCase.currentVersion,
-                steps: Prisma.JsonNull,
-                tags: [],
-                issues: [],
-                links: [],
-                attachments: [],
-              },
-            });
+                createdAt: repositoryCase.createdAt ?? new Date(),
+                overrides: {
+                  name,
+                  stateId: defaultWorkflowId,
+                  stateName: workflowName,
+                  estimate: repositoryCase.estimate ?? null,
+                  forecastManual: null,
+                  forecastAutomated: null,
+                  automated: true,
+                  isArchived: repositoryCase.isArchived,
+                  order: repositoryCase.order ?? 0,
+                  steps: null,
+                  tags: [],
+                  issues: [],
+                  links: [],
+                  attachments: [],
+                },
+              }
+            );
 
             const caseFieldValues = await tx.caseFieldValues.findMany({
               where: { testCaseId: repositoryCase.id },

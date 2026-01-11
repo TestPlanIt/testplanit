@@ -994,7 +994,9 @@
       "seeAllActiveTestRuns": "{count, plural, =1 {Mira # Active Test Run} other {Mira todas las # Pruebas activas}}",
       "latestTestRuns": "Últimas ejecuciones de prueba",
       "testCaseBreakdown": "Probar Desglose de Casos",
-      "noTestCases": "El repositorio del proyecto está vacío. Añada casos de prueba utilizando el Repositorio."
+      "noTestCases": "El repositorio del proyecto está vacío. Añada casos de prueba utilizando el Repositorio.",
+      "noTestCasesPrefix": "El repositorio del proyecto está vacío. Agregue casos de prueba usando el",
+      "noTestCasesLink": "Repositorio"
     },
     "icon": {
       "upload": {

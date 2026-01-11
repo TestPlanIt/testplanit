@@ -5,6 +5,7 @@ import { prisma } from "~/lib/prisma";
 import { z } from "zod/v4";
 import { ProjectAccessType } from "@prisma/client";
 import { auditBulkUpdate } from "~/lib/services/auditLog";
+import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 
 // Schema for bulk edit request
 const bulkEditSchema = z.object({
@@ -195,55 +196,6 @@ export async function POST(
         stepsUpdated: 0,
       };
 
-      // Batch create versions if requested
-      if (validatedData.createVersions) {
-        const versionData = cases.map((caseItem) => {
-          const tagNames = caseItem.tags.map((t) => t.name);
-          const issuesData = caseItem.issues.map((i) => ({
-            id: i.id,
-            name: i.name,
-            externalId: i.externalId,
-          }));
-          const stepsData = caseItem.steps.map((s) => ({
-            step: s.step,
-            expectedResult: s.expectedResult,
-          }));
-
-          return {
-            repositoryCaseId: caseItem.id,
-            projectId: caseItem.projectId,
-            staticProjectId: caseItem.projectId,
-            staticProjectName: caseItem.project.name,
-            repositoryId: caseItem.projectId,
-            folderId: caseItem.folderId || 0,
-            folderName: caseItem.folder?.name || "",
-            templateId: caseItem.templateId || 0,
-            templateName: caseItem.template?.templateName || "",
-            name: caseItem.name || "",
-            stateId: caseItem.stateId,
-            stateName: caseItem.state?.name || "",
-            automated: caseItem.automated || false,
-            estimate: caseItem.estimate,
-            version: caseItem.currentVersion + 1,
-            creatorId: caseItem.creatorId,
-            creatorName: caseItem.creator?.name || "",
-            isArchived: caseItem.isArchived || false,
-            isDeleted: false,
-            order: 0,
-            tags: tagNames,
-            issues: issuesData as any,
-            steps: stepsData as any,
-            attachments: [] as any,
-          };
-        });
-
-        // Batch create all versions at once
-        await tx.repositoryCaseVersions.createMany({
-          data: versionData,
-        });
-        updateResults.versionsCreated = versionData.length;
-      }
-
       // Process each case for updates
       for (const caseItem of cases) {
         const caseId = caseItem.id;
@@ -390,6 +342,45 @@ export async function POST(
             }
             updateResults.stepsUpdated++;
           }
+        }
+
+        // Create version snapshot if requested
+        // Note: The test case was already updated with currentVersion incremented above
+        if (validatedData.createVersions) {
+          const tagNames = caseItem.tags.map((t) => t.name);
+          const issuesData = caseItem.issues.map((i) => ({
+            id: i.id,
+            name: i.name,
+            externalId: i.externalId,
+          }));
+          const stepsData = caseItem.steps.map((s) => ({
+            step: s.step,
+            expectedResult: s.expectedResult,
+          }));
+
+          await createTestCaseVersionInTransaction(tx, caseId, {
+            // Preserve original creator metadata
+            creatorId: caseItem.creatorId,
+            creatorName: caseItem.creator?.name || "",
+            createdAt: caseItem.createdAt,
+            overrides: {
+              // Apply any changes from the bulk edit
+              name: updateData.name ?? caseItem.name,
+              stateId: updateData.stateId ?? caseItem.stateId,
+              stateName:
+                updateData.stateId !== undefined
+                  ? caseItem.state?.name || ""
+                  : undefined,
+              automated: updateData.automated ?? caseItem.automated,
+              estimate: updateData.estimate ?? caseItem.estimate,
+              steps: stepsData,
+              tags: tagNames,
+              issues: issuesData,
+              isArchived: caseItem.isArchived,
+              order: caseItem.order,
+            },
+          });
+          updateResults.versionsCreated++;
         }
       }
 

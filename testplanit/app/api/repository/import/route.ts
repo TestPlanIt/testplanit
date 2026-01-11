@@ -13,6 +13,7 @@ import {
 } from "@prisma/client";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 import { auditBulkCreate } from "~/lib/services/auditLog";
+import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 
 function parseTags(value: any): string[] {
   if (!value) return [];
@@ -639,68 +640,54 @@ export async function POST(request: NextRequest) {
               }
             }
 
-            // Create or update version
+            // Create or update version using centralized helper
+            // First, ensure currentVersion is set correctly on the case
+            let versionNumber: number;
             if (isUpdate) {
+              // For updates, calculate next version
               const latestVersion =
                 await enhancedDb.repositoryCaseVersions.findFirst({
                   where: { repositoryCaseId: newCase.id },
                   orderBy: { version: "desc" },
                 });
+              versionNumber = caseData.version || (latestVersion?.version || 0) + 1;
 
-              const nextVersion = (latestVersion?.version || 0) + 1;
-
-              await enhancedDb.repositoryCaseVersions.create({
-                data: {
-                  repositoryCaseId: newCase.id,
-                  staticProjectId: project.id,
-                  staticProjectName: project.name,
-                  projectId: project.id,
-                  repositoryId: repository.id,
-                  folderId: caseData.folderId,
-                  folderName,
-                  templateId: template.id,
-                  templateName: template.templateName,
-                  name: caseData.name,
-                  stateId: stateId,
-                  stateName: caseData.workflowStateName || defaultWorkflow.name,
-                  estimate: caseData.estimate,
-                  forecastManual: caseData.forecastManual,
-                  automated: caseData.automated,
-                  creatorId: session.user.id,
-                  creatorName: session.user.name || session.user.email || "",
-                  version: caseData.version || nextVersion,
-                  createdAt: new Date(),
-                },
+              // Update the case's currentVersion
+              await enhancedDb.repositoryCases.update({
+                where: { id: newCase.id },
+                data: { currentVersion: versionNumber },
               });
             } else {
-              await enhancedDb.repositoryCaseVersions.create({
-                data: {
-                  repositoryCaseId: newCase.id,
-                  staticProjectId: project.id,
-                  staticProjectName: project.name,
-                  projectId: project.id,
-                  repositoryId: repository.id,
-                  folderId: caseData.folderId,
-                  folderName,
-                  templateId: template.id,
-                  templateName: template.templateName,
-                  name: caseData.name,
-                  stateId: stateId,
-                  stateName: caseData.workflowStateName || defaultWorkflow.name,
-                  estimate: caseData.estimate,
-                  forecastManual: caseData.forecastManual,
-                  automated: caseData.automated,
-                  creatorId: creatorId,
-                  creatorName:
-                    caseData.createdByName ||
-                    session.user.name ||
-                    session.user.email ||
-                    "",
-                  version: caseData.version || 1,
-                  ...(createdAt && { createdAt }),
-                },
+              // For new cases, use provided version or default to 1
+              versionNumber = caseData.version || 1;
+
+              // Update the case's currentVersion to match
+              await enhancedDb.repositoryCases.update({
+                where: { id: newCase.id },
+                data: { currentVersion: versionNumber },
               });
             }
+
+            // Create version snapshot using centralized helper
+            await createTestCaseVersionInTransaction(enhancedDb, newCase.id, {
+              version: versionNumber,
+              creatorId: isUpdate ? session.user.id : creatorId,
+              creatorName: isUpdate
+                ? (session.user.name || session.user.email || "")
+                : (caseData.createdByName ||
+                    session.user.name ||
+                    session.user.email ||
+                    ""),
+              createdAt: isUpdate ? new Date() : (createdAt || new Date()),
+              overrides: {
+                name: caseData.name,
+                stateId: stateId,
+                stateName: caseData.workflowStateName || defaultWorkflow.name,
+                estimate: caseData.estimate,
+                forecastManual: caseData.forecastManual,
+                automated: caseData.automated,
+              },
+            });
 
             // Handle tags if present
             if (caseData.tags && Array.isArray(caseData.tags)) {
