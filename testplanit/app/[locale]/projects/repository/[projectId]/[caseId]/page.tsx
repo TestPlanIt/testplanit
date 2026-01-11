@@ -15,7 +15,6 @@ import {
   useCreateSteps,
   useUpdateManySteps,
   useCreateCaseFieldVersionValues,
-  useCreateRepositoryCaseVersions,
   useCreateCaseFieldValues,
   useDeleteManyCaseFieldValues,
   useFindManyTags,
@@ -915,8 +914,6 @@ export default function TestCaseDetails() {
   };
 
   const { mutate: updateRepositoryCases } = useUpdateRepositoryCases();
-  const { mutateAsync: createRepositoryCaseVersions } =
-    useCreateRepositoryCaseVersions();
   const { mutateAsync: updateCaseFieldValues } = useUpdateCaseFieldValues();
   const { mutateAsync: createCaseFieldVersionValues } =
     useCreateCaseFieldVersionValues();
@@ -976,6 +973,7 @@ export default function TestCaseDetails() {
       const tagsArray = Array.isArray(data.tags) ? data.tags : [];
       const issuesArray = Array.isArray(data.issues) ? data.issues : [];
 
+      // Update the test case, incrementing currentVersion
       await updateRepositoryCases({
         where: { id: Number(caseId) },
         data: {
@@ -998,6 +996,14 @@ export default function TestCaseDetails() {
           },
         },
       });
+
+      // Refetch to ensure we have the updated currentVersion from the database
+      const refetchResult = await refetch();
+      const updatedTestCase = refetchResult.data;
+
+      if (!updatedTestCase) {
+        throw new Error("Failed to refetch updated test case");
+      }
 
       if (data.steps) {
         const existingSteps = testcase?.steps || [];
@@ -1302,47 +1308,48 @@ export default function TestCaseDetails() {
         }
       }
 
-      const newCaseVersionData = {
-        repositoryCase: { connect: { id: testcase.id } },
-        project: { connect: { id: Number(projectId) } },
-        staticProjectName: testcase.project.name || "",
-        staticProjectId: Number(projectId),
-        repositoryId: testcase.repositoryId || 0,
-        folderId: data.folderId as number,
-        folderName:
-          folders?.find((f) => f.id === data.folderId)?.name ||
-          testcase.folder?.name ||
-          "Unknown",
-        templateId: (data.templateId || 0) as number,
-        templateName:
-          templates?.find((t) => t.id === data.templateId)?.templateName ||
-          testcase.template?.templateName ||
-          "Unknown",
-        name: data.name as string,
-        stateId: data.workflowId as number,
-        stateName:
-          workflows?.find((w) => w.id === data.workflowId)?.name ||
-          testcase.state?.name ||
-          "Unknown",
-        estimate: estimateInSeconds,
-        createdAt: new Date(),
-        creatorId: testcase.creatorId,
-        creatorName: testcase.creator.name,
-        automated: data.automated as boolean,
-        isArchived: false,
-        isDeleted: false,
-        version: testcase.currentVersion + 1,
-        steps: resolvedStepsForVersion,
-        tags: tagNames,
-        issues: issuesDataForVersion,
-        attachments: attachmentsJson,
-      };
+      // Create version snapshot using centralized API endpoint
+      // Note: The test case was already updated with currentVersion + 1 above and refetched
+      const versionResponse = await fetch(
+        `/api/repository/cases/${updatedTestCase.id}/versions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            // No version specified - will use currentVersion (already incremented and refetched)
+            // Preserve original creator metadata
+            creatorId: updatedTestCase.creatorId,
+            creatorName: updatedTestCase.creator.name,
+            // Don't pass createdAt - let it default to current time for edits
+            overrides: {
+              name: data.name as string,
+              stateId: data.workflowId as number,
+              stateName:
+                workflows?.find((w) => w.id === data.workflowId)?.name ||
+                updatedTestCase.state?.name ||
+                "Unknown",
+              automated: data.automated as boolean,
+              estimate: estimateInSeconds,
+              steps: resolvedStepsForVersion,
+              tags: tagNames,
+              issues: issuesDataForVersion,
+              attachments: attachmentsJson,
+              order: updatedTestCase.order,
+            },
+          }),
+        }
+      );
 
-      const newCaseVersion = await createRepositoryCaseVersions({
-        data: newCaseVersionData,
-      });
+      if (!versionResponse.ok) {
+        const errorData = await versionResponse.json();
+        throw new Error(
+          `Failed to create case version: ${errorData.error || "Unknown error"}`
+        );
+      }
 
-      if (!newCaseVersion) throw new Error("Failed to create new case version");
+      const { version: newCaseVersion } = await versionResponse.json();
 
       const formFields = Object.entries(data)
         .filter(

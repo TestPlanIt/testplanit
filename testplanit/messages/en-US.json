@@ -994,7 +994,9 @@
       "seeAllActiveTestRuns": "{count, plural, =1 {See # Active Test Run} other {See all # Active Test Runs}}",
       "latestTestRuns": "Latest Test Runs",
       "testCaseBreakdown": "Test Case Breakdown",
-      "noTestCases": "The project repository is empty. Add test cases using the Repository."
+      "noTestCases": "The project repository is empty. Add test cases using the Repository.",
+      "noTestCasesPrefix": "The project repository is empty. Add test cases using the",
+      "noTestCasesLink": "Repository"
     },
     "icon": {
       "upload": {

@@ -994,7 +994,9 @@
       "seeAllActiveTestRuns": "{count, plural, =1 {Voir # Exécution de test active} other {Voir toutes les # Exécutions de test actives}}",
       "latestTestRuns": "Derniers essais",
       "testCaseBreakdown": "Analyse détaillée des cas de test",
-      "noTestCases": "Le dépôt du projet est vide. Ajoutez des cas de test à l'aide du dépôt."
+      "noTestCases": "Le dépôt du projet est vide. Ajoutez des cas de test à l'aide du dépôt.",
+      "noTestCasesPrefix": "Le dépôt du projet est vide. Ajoutez des cas de test en utilisant",
+      "noTestCasesLink": "Dépôt"
     },
     "icon": {
       "upload": {

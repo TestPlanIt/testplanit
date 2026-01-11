@@ -225,8 +225,9 @@ const renderFieldValue = (
 
   if (previousFieldValue === undefined) {
     return (
-      <div className="bg-green-100 p-1">
-        <span className="text-green-600 flex space-x-1 items-center">
+      <div className="relative p-1 rounded">
+        <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
+        <span className="relative text-green-600 dark:text-green-400 flex space-x-1 items-center">
           <div>
             <Plus className="w-4 h-4" />
           </div>
@@ -251,8 +252,9 @@ const renderFieldValue = (
   if (areValuesDifferent) {
     return (
       <div>
-        <div className="bg-red-100 p-1">
-          <span className="text-red-600 flex space-x-1 items-center">
+        <div className="relative p-1 rounded">
+          <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
+          <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
             <div>
               <Minus className="w-4 h-4" />
             </div>
@@ -265,8 +267,9 @@ const renderFieldValue = (
             />
           </span>
         </div>
-        <div className="bg-green-100 p-1">
-          <span className="text-green-600 flex space-x-1 items-center">
+        <div className="relative p-1 rounded">
+          <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
+          <span className="relative text-green-600 dark:text-green-400 flex space-x-1 items-center">
             <div>
               <Plus className="w-4 h-4" />
             </div>
@@ -440,46 +443,94 @@ export const StepsDisplay: React.FC<StepsProps> = ({
           })}
           {previousSteps && previousSteps.length > steps.length && (
             <li key="deleted-steps" className="mb-4">
-              {previousSteps.slice(steps.length).map((step, index) => (
-                <div key={`deleted-step-${step.id}-${index}`} className="">
-                  <div className="flex gap-2 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
-                    <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
-                      {steps.length + index + 1}
+              {previousSteps.slice(steps.length).map((step, index) => {
+                const ensureValidJsonString = (value: any): string => {
+                  if (!value) return JSON.stringify(emptyEditorContent);
+
+                  try {
+                    if (typeof value === "string") {
+                      JSON.parse(value);
+                      return value;
+                    } else {
+                      return JSON.stringify(value);
+                    }
+                  } catch (error) {
+                    try {
+                      const textContent = String(value);
+                      if (textContent.startsWith('{"type":"doc","content":[')) {
+                        try {
+                          JSON.parse(textContent);
+                          return textContent;
+                        } catch {
+                          return JSON.stringify({
+                            type: "doc",
+                            content: [
+                              {
+                                type: "paragraph",
+                                content: [{ type: "text", text: textContent }],
+                              },
+                            ],
+                          });
+                        }
+                      }
+                      return JSON.stringify({
+                        type: "doc",
+                        content: [
+                          {
+                            type: "paragraph",
+                            content: [{ type: "text", text: textContent }],
+                          },
+                        ],
+                      });
+                    } catch {
+                      return JSON.stringify(emptyEditorContent);
+                    }
+                  }
+                };
+
+                return (
+                  <div key={`deleted-step-${step.id}-${index}`} className="">
+                    <div className="flex gap-2 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
+                      <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
+                        {steps.length + index + 1}
+                      </div>
+                      <div className="relative p-1 rounded">
+                        <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
+                        <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
+                          <div>
+                            <Minus className="w-4 h-4" />
+                          </div>
+                          <TextFromJson
+                            key={"prev" + step.id.toString()}
+                            jsonString={ensureValidJsonString(step.step)}
+                            room={"prev" + step.id.toString()}
+                            format="html"
+                            expand={expandAll}
+                          />
+                        </span>
+                      </div>
                     </div>
-                    <div className="bg-red-100 p-1">
-                      <span className="text-red-600 flex space-x-1">
-                        <div>
-                          <Minus className="w-4 h-4" />
-                        </div>
-                        <TextFromJson
-                          key={"prev" + step.id.toString()}
-                          jsonString={step.step?.toString() || ""}
-                          room={"prev" + step.id.toString()}
-                          format="html"
-                          expand={expandAll}
-                        />
-                      </span>
+                    <div className="flex gap-1 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-t-none">
+                      <SearchCheck className="text-primary h-9 w-9 shrink-0" />
+                      <div className="relative p-1 rounded">
+                        <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
+                        <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
+                          <div>
+                            <Minus className="w-4 h-4" />
+                          </div>
+                          <TextFromJson
+                            key={"prev" + step.id.toString() + "-expected"}
+                            jsonString={ensureValidJsonString(step.expectedResult)}
+                            room={"prev" + step.id.toString() + "-expected"}
+                            format="html"
+                            expand={expandAll}
+                          />
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex gap-1 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-t-none">
-                    <SearchCheck className="text-primary h-9 w-9 shrink-0" />
-                    <div className="bg-red-100 p-1">
-                      <span className="text-red-600 flex space-x-1">
-                        <div>
-                          <Minus className="w-4 h-4" />
-                        </div>
-                        <TextFromJson
-                          key={"prev" + step.id.toString() + "-expected"}
-                          jsonString={step.expectedResult?.toString() || ""}
-                          room={"prev" + step.id.toString() + "-expected"}
-                          format="html"
-                          expand={expandAll}
-                        />
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </li>
           )}
         </ol>
