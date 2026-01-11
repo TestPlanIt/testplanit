@@ -68,6 +68,22 @@ function TagList() {
     column: "name",
     direction: "asc",
   });
+
+  // Valid column IDs for sorting
+  const validColumnIds = useMemo(
+    () => ["name", "cases", "sessions", "runs"],
+    []
+  );
+
+  // Validate and fix sortConfig if it references a non-existent column
+  useEffect(() => {
+    if (!validColumnIds.includes(sortConfig.column)) {
+      console.warn(
+        `Invalid sort column "${sortConfig.column}", resetting to "name"`
+      );
+      setSortConfig({ column: "name", direction: "asc" });
+    }
+  }, [sortConfig.column, validColumnIds]);
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
   const [columnVisibility, setColumnVisibility] = useState<
@@ -291,7 +307,7 @@ function TagList() {
       });
     });
 
-    return tags
+    const filtered = tags
       .filter((tag) => {
         const items = tagItems.get(tag.id);
         const hasItems =
@@ -316,9 +332,72 @@ function TagList() {
           sessions: items.sessions,
           testRuns: items.testRuns,
         };
-      })
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [tags, repositoryCases, sessions, testRuns, debouncedSearchString]);
+      });
+
+    // Apply sorting based on sortConfig
+    return filtered.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortConfig.column) {
+        case "name":
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case "cases":
+          aValue = a.repositoryCases.filter((c) =>
+            Object.prototype.hasOwnProperty.call(activeCaseMap, c.id)
+          ).length;
+          bValue = b.repositoryCases.filter((c) =>
+            Object.prototype.hasOwnProperty.call(activeCaseMap, c.id)
+          ).length;
+          break;
+        case "sessions":
+          aValue = a.sessions.filter((s) =>
+            Object.prototype.hasOwnProperty.call(activeSessionMap, s.id)
+          ).length;
+          bValue = b.sessions.filter((s) =>
+            Object.prototype.hasOwnProperty.call(activeSessionMap, s.id)
+          ).length;
+          break;
+        case "runs":
+          aValue = a.testRuns.filter((r) =>
+            Object.prototype.hasOwnProperty.call(activeRunMap, r.id)
+          ).length;
+          bValue = b.testRuns.filter((r) =>
+            Object.prototype.hasOwnProperty.call(activeRunMap, r.id)
+          ).length;
+          break;
+        default:
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+      }
+
+      // Handle string comparison
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortConfig.direction === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+
+      // Handle numeric comparison
+      if (sortConfig.direction === "asc") {
+        return aValue - bValue;
+      } else {
+        return bValue - aValue;
+      }
+    });
+  }, [
+    tags,
+    repositoryCases,
+    sessions,
+    testRuns,
+    debouncedSearchString,
+    sortConfig,
+    activeCaseMap,
+    activeSessionMap,
+    activeRunMap,
+  ]);
 
   // Update total items in pagination context
   useEffect(() => {

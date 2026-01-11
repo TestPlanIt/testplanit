@@ -55,6 +55,22 @@ function Tags() {
     column: "name",
     direction: "asc",
   });
+
+  // Valid column IDs for sorting
+  const validColumnIds = useMemo(
+    () => ["name", "cases", "testRuns", "sessions", "projects"],
+    []
+  );
+
+  // Validate and fix sortConfig if it references a non-existent column
+  useEffect(() => {
+    if (!validColumnIds.includes(sortConfig.column)) {
+      console.warn(
+        `Invalid sort column "${sortConfig.column}", resetting to "name"`
+      );
+      setSortConfig({ column: "name", direction: "asc" });
+    }
+  }, [sortConfig.column, validColumnIds]);
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
 
@@ -110,18 +126,24 @@ function Tags() {
   }, [accessFilterReady, nameFilter]);
 
   const orderBy = useMemo(() => {
-    if (!sortConfig?.column || sortConfig.column === "name") {
+    // Only apply server-side sorting for name column
+    // Other columns will be sorted client-side after counts are fetched
+    if (sortConfig?.column === "name") {
       return {
         name: sortConfig.direction,
       } as const;
     }
 
+    // For count columns, fetch all tags unsorted (will sort client-side)
     return {
       name: "asc" as const,
     };
   }, [sortConfig]);
 
-  const shouldPaginate = typeof effectivePageSize === "number";
+  // When sorting by count columns, we need to fetch ALL tags to sort properly
+  // Otherwise we can paginate server-side
+  const needsClientSideSorting = sortConfig.column !== "name";
+  const shouldPaginate = !needsClientSideSorting && typeof effectivePageSize === "number";
   const paginationArgs = {
     skip: shouldPaginate ? skip : undefined,
     take: shouldPaginate ? effectivePageSize : undefined,
@@ -231,7 +253,7 @@ function Tags() {
     }
 
     // Map counts and projects from the separate API calls
-    return tags.map((tag) => {
+    const mapped = tags.map((tag) => {
       const counts = tagCounts[tag.id];
       const projects = tagProjects[tag.id] || [];
 
@@ -246,13 +268,58 @@ function Tags() {
         testRunsCount: counts?.testRuns ?? 0,
       };
     });
-  }, [tags, tagCounts, tagProjects]);
+
+    // Apply client-side sorting for count columns (since these aren't in the DB)
+    // Name sorting is already handled server-side via orderBy
+    if (sortConfig.column !== "name") {
+      return mapped.sort((a, b) => {
+        let aValue: number;
+        let bValue: number;
+
+        switch (sortConfig.column) {
+          case "cases":
+            aValue = a.repositoryCasesCount ?? 0;
+            bValue = b.repositoryCasesCount ?? 0;
+            break;
+          case "testRuns":
+            aValue = a.testRunsCount ?? 0;
+            bValue = b.testRunsCount ?? 0;
+            break;
+          case "sessions":
+            aValue = a.sessionsCount ?? 0;
+            bValue = b.sessionsCount ?? 0;
+            break;
+          case "projects":
+            aValue = a.projects?.length ?? 0;
+            bValue = b.projects?.length ?? 0;
+            break;
+          default:
+            return 0;
+        }
+
+        return sortConfig.direction === "asc"
+          ? aValue - bValue
+          : bValue - aValue;
+      });
+    }
+
+    return mapped;
+  }, [tags, tagCounts, tagProjects, sortConfig]);
 
   useEffect(() => {
     setTotalItems(tagsCount ?? 0);
   }, [tagsCount, setTotalItems]);
 
-  const displayedTags = mappedTags;
+  // When sorting by count columns, apply pagination client-side
+  // Otherwise the data is already paginated from the server
+  const displayedTags = useMemo(() => {
+    if (sortConfig.column !== "name") {
+      // Client-side pagination for count column sorting
+      return mappedTags.slice(skip, skip + effectivePageSize);
+    }
+    // Server-side pagination (already applied)
+    return mappedTags;
+  }, [mappedTags, sortConfig.column, skip, effectivePageSize]);
 
   const pageSizeOptions: PageSizeOption[] = useMemo(() => {
     if (totalItems <= 10) {
@@ -279,15 +346,19 @@ function Tags() {
     }
   }, [status, session, router]);
 
-  const columns = getColumns(
-    {
-      name: t("common.name"),
-      testCases: t("common.fields.testCases"),
-      sessions: t("common.fields.sessions"),
-      testRuns: t("common.fields.testRuns"),
-      projects: t("common.fields.projects"),
-    },
-    isLoadingCounts
+  const columns = useMemo(
+    () =>
+      getColumns(
+        {
+          name: t("common.name"),
+          testCases: t("common.fields.testCases"),
+          sessions: t("common.fields.sessions"),
+          testRuns: t("common.fields.testRuns"),
+          projects: t("common.fields.projects"),
+        },
+        isLoadingCounts
+      ),
+    [t, isLoadingCounts]
   );
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>

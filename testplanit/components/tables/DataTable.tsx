@@ -303,8 +303,18 @@ export function DataTable<TData extends DataRow, TValue>({
   // Convert sortConfig to SortingState for TanStack Table
   const sorting: SortingState = useMemo(() => {
     if (!sortConfig) return [];
+
+    // Validate that the column exists in the columns array
+    const columnExists = columns.some((col) => col.id === sortConfig.column);
+    if (!columnExists) {
+      console.warn(
+        `[DataTable] Ignoring sort config for non-existent column: "${sortConfig.column}"`
+      );
+      return [];
+    }
+
     return [{ id: sortConfig.column, desc: sortConfig.direction === "desc" }];
-  }, [sortConfig]);
+  }, [sortConfig, columns]);
 
   const handleSortingChange = useCallback(
     (updaterOrValue: Updater<SortingState>) => {

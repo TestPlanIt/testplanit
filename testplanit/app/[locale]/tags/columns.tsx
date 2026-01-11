@@ -32,8 +32,9 @@ export const getColumns = (
       accessorKey: "name",
       accessorFn: (row) => row.name,
       header: translations.name,
-      enableSorting: false,
+      enableSorting: true,
       enableResizing: true,
+      sortingFn: "alphanumeric",
       enableHiding: false,
       meta: { isPinned: "left" },
       size: 500,
@@ -48,10 +49,11 @@ export const getColumns = (
     {
       id: "cases",
       accessorKey: "repositoryCases",
-      accessorFn: (row) => row.repositoryCases,
+      accessorFn: (row) => row.repositoryCasesCount ?? 0,
       header: translations.testCases,
-      enableSorting: false,
+      enableSorting: true,
       enableResizing: true,
+      sortingFn: "basic",
       size: 75,
       cell: ({ row }) => {
         const count = row.original.repositoryCasesCount;
@@ -75,10 +77,11 @@ export const getColumns = (
     {
       id: "testRuns",
       accessorKey: "testRuns",
-      accessorFn: (row) => row.testRuns,
+      accessorFn: (row) => row.testRunsCount ?? 0,
       header: translations.testRuns,
-      enableSorting: false,
+      enableSorting: true,
       enableResizing: true,
+      sortingFn: "basic",
       size: 75,
       cell: ({ row }) => {
         const count = row.original.testRunsCount;
@@ -102,10 +105,11 @@ export const getColumns = (
     {
       id: "sessions",
       accessorKey: "sessions",
-      accessorFn: (row) => row.sessions,
+      accessorFn: (row) => row.sessionsCount ?? 0,
       header: translations.sessions,
-      enableSorting: false,
+      enableSorting: true,
       enableResizing: true,
+      sortingFn: "basic",
       size: 75,
       cell: ({ row }) => {
         const count = row.original.sessionsCount;
@@ -129,9 +133,11 @@ export const getColumns = (
     {
       id: "projects",
       accessorKey: "projects",
+      accessorFn: (row) => (row.projects || []).length,
       header: translations.projects,
-      enableSorting: false,
+      enableSorting: true,
       enableResizing: true,
+      sortingFn: "basic",
       size: 75,
       cell: ({ row }) => {
         const projects = row.original.projects || [];
