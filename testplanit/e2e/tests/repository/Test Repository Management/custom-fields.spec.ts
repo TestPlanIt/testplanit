@@ -473,13 +473,25 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
 
     await repositoryPage.goto(projectId);
 
-    // Open view selector (scoped to repository-left-panel-header to avoid project selector)
+    // Wait for network to be idle to ensure custom fields are loaded
+    await page.waitForLoadState("networkidle");
+
+    // Define the view selector
     const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
-    await viewSelector.click();
 
-    // Wait for the dropdown to fully load before looking for options
-    await expect(page.locator('[role="option"]').first()).toBeVisible({ timeout: 5000 });
+    // Wait for Priority option to exist in the DOM before opening the menu
+    // This ensures custom fields are fully loaded
+    await page.waitForFunction(
+      () => {
+        const options = Array.from(document.querySelectorAll('[role="option"]'));
+        return options.some(opt => /^Priority$/i.test(opt.textContent?.trim() || ''));
+      },
+      { timeout: 15000 }
+    );
+
+    // Now open the menu - Priority should be available
+    await viewSelector.click();
 
     // Look for Priority as a dynamic field option in the view selector
     // Priority is a seeded case field of type Dropdown assigned to the default template
@@ -487,7 +499,7 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
       .locator('[role="option"]')
       .filter({ hasText: /^Priority$/i });
 
-    // Priority should always be available since it's assigned to the default template
+    // Priority should now be visible
     await expect(priorityOption).toBeVisible({ timeout: 5000 });
 
     // Click Priority view option
