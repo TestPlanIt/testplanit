@@ -18,9 +18,9 @@ export class ApiHelper {
   private createdResultFieldIds: number[] = [];
   private createdTemplateIds: number[] = [];
   private createdFieldOptionIds: number[] = [];
-  private cachedTemplateId: number | null = null;
-  private cachedStateId: number | null = null;
-  private cachedRepositoryId: number | null = null;
+  private cachedTemplateIds: Map<number, number> = new Map(); // projectId -> templateId
+  private cachedStateIds: Map<number, number> = new Map(); // projectId -> stateId
+  private cachedRepositoryIds: Map<number, number> = new Map(); // projectId -> repositoryId
   private cachedStatusIds: Map<string, number> = new Map();
 
   constructor(request: APIRequestContext, baseURL: string) {
@@ -33,7 +33,10 @@ export class ApiHelper {
    * Templates have a many-to-many relationship with projects via TemplateProjectAssignment
    */
   async getTemplateId(projectId: number): Promise<number> {
-    if (this.cachedTemplateId) return this.cachedTemplateId;
+    // Check cache for this specific project
+    if (this.cachedTemplateIds.has(projectId)) {
+      return this.cachedTemplateIds.get(projectId)!;
+    }
 
     const response = await this.request.get(
       `${this.baseURL}/api/model/templates/findMany`,
@@ -61,8 +64,9 @@ export class ApiHelper {
       throw new Error("No templates found for project. Run seed first.");
     }
 
-    this.cachedTemplateId = result.data[0].id;
-    return this.cachedTemplateId as number;
+    const templateId = result.data[0].id;
+    this.cachedTemplateIds.set(projectId, templateId);
+    return templateId;
   }
 
   /**
@@ -70,7 +74,10 @@ export class ApiHelper {
    * Workflows have a many-to-many relationship with projects via ProjectWorkflowAssignment
    */
   async getStateId(projectId: number): Promise<number> {
-    if (this.cachedStateId) return this.cachedStateId;
+    // Check cache for this specific project
+    if (this.cachedStateIds.has(projectId)) {
+      return this.cachedStateIds.get(projectId)!;
+    }
 
     const response = await this.request.get(
       `${this.baseURL}/api/model/workflows/findMany`,
@@ -98,8 +105,9 @@ export class ApiHelper {
       throw new Error("No workflows found for project. Run seed first.");
     }
 
-    this.cachedStateId = result.data[0].id;
-    return this.cachedStateId as number;
+    const stateId = result.data[0].id;
+    this.cachedStateIds.set(projectId, stateId);
+    return stateId;
   }
 
   /**
@@ -198,7 +206,10 @@ export class ApiHelper {
    * Get the repository ID for a project
    */
   async getRepositoryId(projectId: number): Promise<number> {
-    if (this.cachedRepositoryId) return this.cachedRepositoryId;
+    // Check cache for this specific project
+    if (this.cachedRepositoryIds.has(projectId)) {
+      return this.cachedRepositoryIds.get(projectId)!;
+    }
 
     const response = await this.request.get(
       `${this.baseURL}/api/model/repositories/findMany`,
@@ -223,8 +234,9 @@ export class ApiHelper {
       );
     }
 
-    this.cachedRepositoryId = result.data[0].id;
-    return this.cachedRepositoryId as number;
+    const repositoryId = result.data[0].id;
+    this.cachedRepositoryIds.set(projectId, repositoryId);
+    return repositoryId;
   }
 
   /**
@@ -925,10 +937,13 @@ export class ApiHelper {
           },
         }
       );
-      // Template assignment failure is not critical for documentation tests
+      // Template assignment is CRITICAL - test cases cannot be created without it
       if (!templateAssignResponse.ok()) {
-        console.warn(`Failed to assign template to project ${projectId}`);
+        const error = await templateAssignResponse.text();
+        throw new Error(`Failed to assign template to project ${projectId}: ${error}`);
       }
+    } else {
+      throw new Error("No default template found - cannot create project without templates");
     }
 
     // Assign all workflows to project (matching setup-db.ts)

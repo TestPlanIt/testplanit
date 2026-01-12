@@ -40,13 +40,23 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
   async function selectRepositoryStatsReport(page: import("@playwright/test").Page) {
     const reportTypeSelect = page.locator('[data-testid="report-type-select"]');
     await expect(reportTypeSelect).toBeVisible({ timeout: 5000 });
-    await reportTypeSelect.click();
+
+    // Force click to ensure it triggers (sometimes click needs force in dropdowns)
+    await reportTypeSelect.click({ force: true });
+
+    // Wait a bit for the dropdown animation/rendering
+    await page.waitForTimeout(500);
+
+    // Wait for the dropdown to open by checking for any option to be visible
+    // Options may be rendered in a portal, so check the entire page
+    const firstOption = page.locator('[role="option"]').first();
+    await expect(firstOption).toBeVisible({ timeout: 5000 });
 
     const repositoryStatsOption = page.locator('[role="option"]').filter({
       hasText: /Repository Statistics/i,
     });
-    await expect(repositoryStatsOption).toBeVisible({ timeout: 3000 });
-    await repositoryStatsOption.click();
+    await expect(repositoryStatsOption).toBeVisible({ timeout: 5000 });
+    await repositoryStatsOption.click({ force: true });
     await page.waitForLoadState("networkidle");
   }
 

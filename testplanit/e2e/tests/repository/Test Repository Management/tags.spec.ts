@@ -934,7 +934,10 @@ test.describe("Tags", () => {
     await filterInput.clear();
     await filterInput.fill(activeTagName);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator(`text="${activeTagName}"`)).not.toBeVisible({
+
+    // Check that the tag name is not in the table body (not just anywhere on the page)
+    const tableBody = page.locator('table tbody');
+    await expect(tableBody.locator(`text="${activeTagName}"`)).not.toBeVisible({
       timeout: 3000,
     });
   });
