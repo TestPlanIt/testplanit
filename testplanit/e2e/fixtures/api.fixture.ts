@@ -943,7 +943,8 @@ export class ApiHelper {
         throw new Error(`Failed to assign template to project ${projectId}: ${error}`);
       }
     } else {
-      throw new Error("No default template found - cannot create project without templates");
+      // No default template - warn but don't fail (some tests intentionally have no templates)
+      console.warn(`Warning: No default template found for project ${projectId}. Test cases cannot be created without templates.`);
     }
 
     // Assign all workflows to project (matching setup-db.ts)

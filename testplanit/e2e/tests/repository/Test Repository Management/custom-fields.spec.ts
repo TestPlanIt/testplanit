@@ -482,32 +482,24 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
     await expect(page.locator('[role="option"]').first()).toBeVisible({ timeout: 5000 });
 
     // Look for Priority as a dynamic field option in the view selector
-    // Priority is a seeded case field of type Dropdown
-    // Note: Priority view only appears when test cases have Priority values set
+    // Priority is a seeded case field of type Dropdown assigned to the default template
     const priorityOption = page
       .locator('[role="option"]')
       .filter({ hasText: /^Priority$/i });
 
-    // Check if Priority view is available
-    const hasPriorityView = await priorityOption.isVisible();
+    // Priority should always be available since it's assigned to the default template
+    await expect(priorityOption).toBeVisible({ timeout: 5000 });
 
-    if (hasPriorityView) {
-      // Click Priority view option
-      await priorityOption.click();
-      await page.waitForLoadState("networkidle");
+    // Click Priority view option
+    await priorityOption.click();
+    await page.waitForLoadState("networkidle");
 
-      // Verify the view selector now shows Priority
-      await expect(viewSelector).toContainText(/Priority/i);
+    // Verify the view selector now shows Priority
+    await expect(viewSelector).toContainText(/Priority/i);
 
-      // Priority filter options should appear (e.g., "All Priorities" or specific priority values)
-      const priorityFilters = page.locator('[role="button"]');
-      await expect(priorityFilters.first()).toBeVisible({ timeout: 10000 });
-    } else {
-      // Priority view is not available because no test cases have Priority values set
-      // This is expected behavior - dynamic views only appear when relevant data exists
-      await page.keyboard.press("Escape");
-      test.skip();
-    }
+    // Priority filter options should appear (e.g., "All Priorities" or specific priority values)
+    const priorityFilters = page.locator('[role="button"]');
+    await expect(priorityFilters.first()).toBeVisible({ timeout: 10000 });
   });
 
   test("Column visibility toggle shows custom field columns", async ({

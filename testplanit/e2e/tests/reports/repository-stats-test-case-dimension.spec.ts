@@ -23,7 +23,6 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     options?: {
       dimensions?: string[];
       metrics?: string[];
-      autoRun?: boolean;
     }
   ) {
     const params = new URLSearchParams({
@@ -39,16 +38,16 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
       params.set('metrics', options.metrics.join(','));
     }
 
-    // Add autoRun flag to automatically run the report
-    if (options?.autoRun !== false) {
-      params.set('autoRun', 'true');
-    }
-
     await page.goto(`/en-US/projects/reports/${projectId}?${params.toString()}`);
     await page.waitForLoadState("networkidle");
 
-    // Wait a bit for the report to initialize with URL parameters
-    await page.waitForTimeout(1000);
+    // Wait for the report builder to load dimensions/metrics from URL params
+    // The Run Report button should become enabled once dimensions and metrics are loaded
+    const runButton = page.locator('[data-testid="run-report-button"]');
+    await expect(runButton).toBeVisible({ timeout: 5000 });
+
+    // Wait for button to become enabled (means dimensions/metrics loaded from URL)
+    await expect(runButton).toBeEnabled({ timeout: 10000 });
   }
 
   /**
@@ -133,21 +132,13 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
 
   /**
    * Helper to run the report
-   * If the report is already running (button disabled), just wait for results
    */
   async function runReport(page: import("@playwright/test").Page) {
     const runButton = page.locator('[data-testid="run-report-button"]');
     await expect(runButton).toBeVisible({ timeout: 5000 });
-
-    // Check if button is enabled - if not, report might be auto-running
-    const isEnabled = await runButton.isEnabled();
-    if (isEnabled) {
-      await runButton.click();
-      await page.waitForLoadState("networkidle");
-    } else {
-      // Report is auto-running or already ran, just wait for results
-      await page.waitForTimeout(2000);
-    }
+    await expect(runButton).toBeEnabled({ timeout: 5000 });
+    await runButton.click();
+    await page.waitForLoadState("networkidle");
   }
 
   test("Test Case dimension is available in Repository Statistics report @smoke", async ({
@@ -156,9 +147,13 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
   }) => {
     const projectId = await getTestProjectId(api);
 
-    await navigateToReports(page, projectId);
-    await switchToBuilderTab(page);
-    await selectRepositoryStatsReport(page);
+    // Navigate directly to Repository Statistics report (without dimensions to test the UI)
+    const params = new URLSearchParams({
+      tab: 'builder',
+      reportType: 'repository-stats',
+    });
+    await page.goto(`/en-US/projects/reports/${projectId}?${params.toString()}`);
+    await page.waitForLoadState("networkidle");
 
     // Open dimension selector
     await openDimensionSelector(page);
@@ -181,15 +176,11 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     await api.createTestCase(projectId, rootFolderId, `Report Test Case 1 ${Date.now()}`);
     await api.createTestCase(projectId, rootFolderId, `Report Test Case 2 ${Date.now()}`);
 
-    await navigateToReports(page, projectId);
-    await switchToBuilderTab(page);
-    await selectRepositoryStatsReport(page);
-
-    // Select Test Case dimension
-    await selectDimension(page, "Test Case");
-
-    // Select a metric (Test Cases Count)
-    await selectMetric(page, "Test Cases Count");
+    // Navigate directly with dimensions and metrics
+    await navigateToRepositoryStatsReport(page, projectId, {
+      dimensions: ['testCase'],
+      metrics: ['testCaseCount'],
+    });
 
     // Run the report
     await runReport(page);
@@ -217,15 +208,11 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     await api.createTestCase(projectId, rootFolderId, testCaseName1);
     await api.createTestCase(projectId, rootFolderId, testCaseName2);
 
-    await navigateToReports(page, projectId);
-    await switchToBuilderTab(page);
-    await selectRepositoryStatsReport(page);
-
-    // Select Test Case dimension
-    await selectDimension(page, "Test Case");
-
-    // Select Test Cases Count metric
-    await selectMetric(page, "Test Cases Count");
+    // Navigate directly with dimensions and metrics
+    await navigateToRepositoryStatsReport(page, projectId, {
+      dimensions: ['testCase'],
+      metrics: ['testCaseCount'],
+    });
 
     // Run the report
     await runReport(page);
@@ -267,12 +254,13 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     await expect(table).toBeVisible({ timeout: 10000 });
 
     // Table should have both Test Case and Template columns
-    await expect(table.locator('th:has-text("Test Case")')).toBeVisible({
-      timeout: 5000,
-    });
-    await expect(table.locator('th:has-text("Template")')).toBeVisible({
-      timeout: 5000,
-    });
+    // Check that both dimension columns are present
+    const headers = await table.locator('th').allTextContents();
+    const hasTestCaseDimension = headers.some(h => /test\s*case/i.test(h) && !h.toLowerCase().includes('count'));
+    const hasTemplateColumn = headers.some(h => /^template$/i.test(h.trim()));
+
+    expect(hasTestCaseDimension).toBeTruthy();
+    expect(hasTemplateColumn).toBeTruthy();
   });
 
   test("Test Case dimension works with multiple metrics", async ({
@@ -339,15 +327,11 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     const rootFolderId = await api.getRootFolderId(projectId);
     await api.createTestCase(projectId, rootFolderId, `Date Filter TC ${Date.now()}`);
 
-    await navigateToReports(page, projectId);
-    await switchToBuilderTab(page);
-    await selectRepositoryStatsReport(page);
-
-    // Select Test Case dimension
-    await selectDimension(page, "Test Case");
-
-    // Select a metric
-    await selectMetric(page, "Test Cases Count");
+    // Navigate directly with dimensions and metrics
+    await navigateToRepositoryStatsReport(page, projectId, {
+      dimensions: ['testCase'],
+      metrics: ['testCaseCount'],
+    });
 
     // Click on date range picker to select a range
     const dateRangeButton = page.locator('button:has-text("Select date range")');

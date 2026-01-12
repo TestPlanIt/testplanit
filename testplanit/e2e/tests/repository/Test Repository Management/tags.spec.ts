@@ -902,8 +902,12 @@ test.describe("Tags", () => {
     await filterInput.fill(activeTagName);
     await page.waitForLoadState("networkidle");
 
-    // Click the edit button for this tag
-    const editButton = page.locator("button:has(svg.lucide-square-pen)").first();
+    // Find the specific row containing our tag name, then click its edit button
+    const tableBody = page.locator('table tbody');
+    const tagRow = tableBody.locator('tr').filter({ hasText: activeTagName });
+    await expect(tagRow).toBeVisible({ timeout: 5000 });
+
+    const editButton = tagRow.locator("button:has(svg.lucide-square-pen)");
     await expect(editButton).toBeVisible({ timeout: 5000 });
     await editButton.click();
 
@@ -930,8 +934,7 @@ test.describe("Tags", () => {
     await filterInput.fill(deletedTagName);
     await page.waitForLoadState("networkidle");
 
-    // Look specifically in the table body for the renamed tag
-    const tableBody = page.locator('table tbody');
+    // Look specifically in the table body for the renamed tag (reuse tableBody from above)
     await expect(tableBody.locator(`text="${deletedTagName}"`).first()).toBeVisible({
       timeout: 5000,
     });
@@ -941,9 +944,9 @@ test.describe("Tags", () => {
     await filterInput.fill(activeTagName);
     await page.waitForLoadState("networkidle");
 
-    // Check that the old tag name is not in the table body
+    // After renaming, searching for the old tag name should return no results
     await expect(tableBody.locator(`text="${activeTagName}"`)).not.toBeVisible({
-      timeout: 3000,
+      timeout: 5000,
     });
   });
 
