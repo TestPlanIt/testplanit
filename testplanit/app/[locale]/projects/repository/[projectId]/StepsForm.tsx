@@ -234,6 +234,7 @@ const StepItem: React.FC<StepItemProps> = ({
                       type="button"
                       variant="destructive"
                       className="ml-auto"
+                      data-testid={`delete-step-${index}`}
                     >
                       <Trash2 className="h-5 w-5" />
                     </Button>
@@ -411,6 +412,7 @@ const StepItem: React.FC<StepItemProps> = ({
                     type="button"
                     variant="destructive"
                     className="ml-auto"
+                    data-testid={`delete-step-${index}`}
                   >
                     <Trash2 className="h-5 w-5" />
                   </Button>
@@ -841,16 +843,17 @@ const StepsForm: React.FC<StepsFormProps> = ({
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
       modifiers={[restrictToVerticalAxis]}
+      data-testid="steps-form"
     >
       <SortableContext
         items={fields.map((field) => field.id!)} // Added non-null assertion for field.id
         strategy={verticalListSortingStrategy}
       >
-        <div className="space-y-3 mb-4">
+        <div className="space-y-3 mb-4" data-testid="steps-form">
           {fields.map((field, index) => {
             const stepField = field as StepFormField; // Type assertion
             return (
-              <div key={stepField.id}>
+              <div key={stepField.id} data-testid={`step-editor-${index}`}>
                 <StepItem
                   field={stepField}
                   index={index}
@@ -884,6 +887,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
                 }
                 disabled={readOnly}
                 className="flex items-center"
+                data-testid="add-step-button"
               >
                 <PlusCircle className="h-5 w-5" />
                 {tRepoSteps("add")}

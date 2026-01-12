@@ -37,7 +37,9 @@ let _auditLogQueue: Queue | null = null;
 export function getForecastQueue(): Queue | null {
   if (_forecastQueue) return _forecastQueue;
   if (!valkeyConnection) {
-    console.warn(`Valkey connection not available, Queue "${FORECAST_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${FORECAST_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
 
@@ -74,7 +76,9 @@ export function getForecastQueue(): Queue | null {
 export function getNotificationQueue(): Queue | null {
   if (_notificationQueue) return _notificationQueue;
   if (!valkeyConnection) {
-    console.warn(`Valkey connection not available, Queue "${NOTIFICATION_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${NOTIFICATION_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
 
@@ -111,7 +115,9 @@ export function getNotificationQueue(): Queue | null {
 export function getEmailQueue(): Queue | null {
   if (_emailQueue) return _emailQueue;
   if (!valkeyConnection) {
-    console.warn(`Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
 
@@ -148,7 +154,9 @@ export function getEmailQueue(): Queue | null {
 export function getSyncQueue(): Queue | null {
   if (_syncQueue) return _syncQueue;
   if (!valkeyConnection) {
-    console.warn(`Valkey connection not available, Queue "${SYNC_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${SYNC_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
 
@@ -185,7 +193,9 @@ export function getSyncQueue(): Queue | null {
 export function getTestmoImportQueue(): Queue | null {
   if (_testmoImportQueue) return _testmoImportQueue;
   if (!valkeyConnection) {
-    console.warn(`Valkey connection not available, Queue "${TESTMO_IMPORT_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${TESTMO_IMPORT_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
 
@@ -218,7 +228,9 @@ export function getTestmoImportQueue(): Queue | null {
 export function getElasticsearchReindexQueue(): Queue | null {
   if (_elasticsearchReindexQueue) return _elasticsearchReindexQueue;
   if (!valkeyConnection) {
-    console.warn(`Valkey connection not available, Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
 
@@ -252,7 +264,9 @@ export function getElasticsearchReindexQueue(): Queue | null {
 export function getAuditLogQueue(): Queue | null {
   if (_auditLogQueue) return _auditLogQueue;
   if (!valkeyConnection) {
-    console.warn(`Valkey connection not available, Queue "${AUDIT_LOG_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${AUDIT_LOG_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
 

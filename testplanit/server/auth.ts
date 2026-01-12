@@ -831,7 +831,7 @@ function authorize(prisma: PrismaClient) {
         // Verify TOTP token - dynamic import to avoid circular deps
         const { verifyTOTP, decryptSecret, verifyBackupCode } = await import("~/lib/two-factor");
         const secret = decryptSecret(user.twoFactorSecret);
-        let verified = verifyTOTP(credentials.twoFactorToken, secret);
+        let verified = await verifyTOTP(credentials.twoFactorToken, secret);
 
         // Try backup code if TOTP failed
         if (!verified && user.twoFactorBackupCodes) {

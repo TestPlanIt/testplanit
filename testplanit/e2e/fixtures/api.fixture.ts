@@ -2148,6 +2148,181 @@ export class ApiHelper {
   }
 
   /**
+   * Add steps to a test case
+   * Steps contain TipTap JSON content for step and expected result
+   */
+  async addStepsToTestCase(
+    testCaseId: number,
+    steps: Array<{
+      step: Record<string, unknown>;
+      expectedResult: Record<string, unknown>;
+      order: number;
+      sharedStepGroupId?: number | null;
+    }>
+  ): Promise<number[]> {
+    const stepIds: number[] = [];
+
+    for (const stepData of steps) {
+      const data: Record<string, unknown> = {
+        testCase: { connect: { id: testCaseId } },
+        step: stepData.step,
+        expectedResult: stepData.expectedResult,
+        order: stepData.order,
+        isDeleted: false,
+      };
+
+      if (stepData.sharedStepGroupId) {
+        data.sharedStepGroup = { connect: { id: stepData.sharedStepGroupId } };
+      }
+
+      const response = await this.request.post(
+        `${this.baseURL}/api/model/step/create`,
+        {
+          data: { data },
+        }
+      );
+
+      if (!response.ok()) {
+        const error = await response.text();
+        throw new Error(`Failed to create step: ${error}`);
+      }
+
+      const result = await response.json();
+      stepIds.push(result.data.id);
+    }
+
+    return stepIds;
+  }
+
+  /**
+   * Update test case steps (creates a new version)
+   * This deletes existing steps and creates new ones
+   */
+  async updateTestCaseSteps(
+    testCaseId: number,
+    steps: Array<{
+      step: Record<string, unknown>;
+      expectedResult: Record<string, unknown>;
+      order: number;
+    }>
+  ): Promise<void> {
+    // Delete existing steps
+    await this.request.post(
+      `${this.baseURL}/api/model/step/deleteMany`,
+      {
+        data: {
+          where: { testCaseId },
+        },
+      }
+    );
+
+    // Add new steps
+    await this.addStepsToTestCase(testCaseId, steps);
+
+    // Update test case to increment version
+    await this.request.patch(
+      `${this.baseURL}/api/model/repositoryCases/update`,
+      {
+        data: {
+          where: { id: testCaseId },
+          data: {
+            currentVersion: { increment: 1 },
+          },
+        },
+      }
+    );
+  }
+
+  /**
+   * Create a shared step group with items
+   */
+  async createSharedStepGroup(
+    projectId: number,
+    name: string,
+    items: Array<{
+      step: Record<string, unknown>;
+      expectedResult: Record<string, unknown>;
+      order: number;
+    }>
+  ): Promise<number> {
+    const userId = await this.getCurrentUserId();
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/sharedStepGroup/create`,
+      {
+        data: {
+          data: {
+            name,
+            project: { connect: { id: projectId } },
+            createdBy: { connect: { id: userId } },
+            isDeleted: false,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create shared step group: ${error}`);
+    }
+
+    const result = await response.json();
+    const groupId = result.data.id;
+
+    // Add items to the shared step group
+    for (const item of items) {
+      await this.request.post(
+        `${this.baseURL}/api/model/sharedStepItem/create`,
+        {
+          data: {
+            data: {
+              sharedStepGroup: { connect: { id: groupId } },
+              step: item.step,
+              expectedResult: item.expectedResult,
+              order: item.order,
+            },
+          },
+        }
+      );
+    }
+
+    return groupId;
+  }
+
+  /**
+   * Add a shared step group reference to a test case
+   */
+  async addSharedStepGroupToTestCase(
+    testCaseId: number,
+    sharedStepGroupId: number,
+    order: number
+  ): Promise<number> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/steps/create`,
+      {
+        data: {
+          data: {
+            testCase: { connect: { id: testCaseId } },
+            sharedStepGroup: { connect: { id: sharedStepGroupId } },
+            step: null,
+            expectedResult: null,
+            order,
+            isDeleted: false,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to add shared step group to test case: ${error}`);
+    }
+
+    const result = await response.json();
+    return result.data.id;
+  }
+
+  /**
    * Clean up all test data created during tests
    */
   async cleanup(): Promise<void> {

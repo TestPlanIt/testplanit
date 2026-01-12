@@ -1,19 +1,15 @@
-import { authenticator } from "otplib";
+import { generateSecret, generateURI, verify } from "otplib";
 import QRCode from "qrcode";
 import { randomBytes, createHash } from "crypto";
 
-// Configure authenticator
-authenticator.options = {
-  window: 1, // Allow 1 step before/after for clock drift
-};
-
 const APP_NAME = "TestPlanIt";
+const EPOCH_TOLERANCE = 30; // ±30 seconds (equivalent to window: 1 with 30-second steps)
 
 /**
  * Generate a new TOTP secret for a user
  */
 export function generateTOTPSecret(): string {
-  return authenticator.generateSecret();
+  return generateSecret();
 }
 
 /**
@@ -23,16 +19,25 @@ export async function generateQRCodeDataURL(
   secret: string,
   userEmail: string
 ): Promise<string> {
-  const otpauthUrl = authenticator.keyuri(userEmail, APP_NAME, secret);
+  const otpauthUrl = generateURI({
+    secret,
+    issuer: APP_NAME,
+    label: userEmail,
+  });
   return QRCode.toDataURL(otpauthUrl);
 }
 
 /**
  * Verify a TOTP token against a secret
  */
-export function verifyTOTP(token: string, secret: string): boolean {
+export async function verifyTOTP(token: string, secret: string): Promise<boolean> {
   try {
-    return authenticator.verify({ token, secret });
+    const result = await verify({
+      token,
+      secret,
+      epochTolerance: EPOCH_TOLERANCE,
+    });
+    return result.valid;
   } catch {
     return false;
   }

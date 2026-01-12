@@ -199,7 +199,9 @@ var _elasticsearchReindexQueue = null;
 function getElasticsearchReindexQueue() {
   if (_elasticsearchReindexQueue) return _elasticsearchReindexQueue;
   if (!valkey_default) {
-    console.warn(`Valkey connection not available, Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
   _elasticsearchReindexQueue = new import_bullmq.Queue(ELASTICSEARCH_REINDEX_QUEUE_NAME, {

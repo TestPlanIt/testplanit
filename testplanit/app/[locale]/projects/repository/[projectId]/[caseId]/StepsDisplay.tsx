@@ -315,7 +315,7 @@ export const StepsDisplay: React.FC<StepsProps> = ({
   const showDiff = !!previousSteps;
 
   return (
-    <div>
+    <div data-testid="steps-display">
       <div className="flex items-center">
         <div className="font-bold">{tGlobal("common.fields.steps")}</div>
         <TooltipProvider>
@@ -374,11 +374,18 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                 <li
                   key={`shared-${step.sharedStepGroupId}-${index}`}
                   className="mb-4"
+                  data-testid={`step-container-${index}`}
                 >
-                  <div className="flex flex-col items-start min-w-[200px] bg-muted/60 p-2 rounded-lg mb-2 border-2 border-primary/20">
+                  <div
+                    className="flex flex-col items-start min-w-[200px] bg-muted/60 p-2 rounded-lg mb-2 border-2 border-primary/20"
+                    data-testid="shared-step-group"
+                  >
                     <div className="flex items-center justify-between pb-2 space-x-2 cursor-default w-full">
                       <div className="flex items-center font-bold">
-                        <div className="mr-2 font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
+                        <div
+                          className="mr-2 font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8"
+                          data-testid={`step-badge-${index}`}
+                        >
                           {index + 1}
                         </div>
                         <Layers className="h-5 w-5 ml-1 mr-2 text-primary" />
@@ -390,15 +397,17 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                         })}
                       </div>
                     </div>
-                    <RenderSharedGroupItems
-                      sharedStepGroupId={step.sharedStepGroupId}
-                      sharedStepGroupName={
-                        step.sharedStepGroup?.name ||
-                        step.sharedStepGroupName ||
-                        "Shared Steps"
-                      }
-                      expandAll={expandAll}
-                    />
+                    <div data-testid="expand-shared-steps">
+                      <RenderSharedGroupItems
+                        sharedStepGroupId={step.sharedStepGroupId}
+                        sharedStepGroupName={
+                          step.sharedStepGroup?.name ||
+                          step.sharedStepGroupName ||
+                          "Shared Steps"
+                        }
+                        expandAll={expandAll}
+                      />
+                    </div>
                   </div>
                 </li>
               );
@@ -409,10 +418,17 @@ export const StepsDisplay: React.FC<StepsProps> = ({
             // Regular step rendering (existing logic)
             // console.log("Rendering regular step:", { step, index });
             return (
-              <li key={`step-${step.id}-${index}`} className="mb-4">
+              <li
+                key={`step-${step.id}-${index}`}
+                className="mb-4"
+                data-testid={`step-container-${index}`}
+              >
                 <div className="">
                   <div className="flex gap-2 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
-                    <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
+                    <div
+                      className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8"
+                      data-testid={`step-badge-${index}`}
+                    >
                       {index + 1}
                     </div>
                     <div>
@@ -425,7 +441,10 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-1 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-t-none">
+                  <div
+                    className="flex gap-1 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-t-none"
+                    data-testid={`expected-result-${index}`}
+                  >
                     <SearchCheck className="text-primary h-9 w-9 shrink-0" />
                     {renderFieldValue(
                       step.expectedResult || "",
