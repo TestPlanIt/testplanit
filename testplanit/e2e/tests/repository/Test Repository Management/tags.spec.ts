@@ -922,11 +922,17 @@ test.describe("Tags", () => {
     // Dialog should close successfully (deleted tag was renamed to allow this)
     await expect(dialog).not.toBeVisible({ timeout: 10000 });
 
-    // Verify the tag now has the new name
+    // Wait for any updates to complete
+    await page.waitForTimeout(500);
+
+    // Verify the tag now has the new name by searching for it in the table
     await filterInput.clear();
     await filterInput.fill(deletedTagName);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator(`text="${deletedTagName}"`).first()).toBeVisible({
+
+    // Look specifically in the table body for the renamed tag
+    const tableBody = page.locator('table tbody');
+    await expect(tableBody.locator(`text="${deletedTagName}"`).first()).toBeVisible({
       timeout: 5000,
     });
 
@@ -935,8 +941,7 @@ test.describe("Tags", () => {
     await filterInput.fill(activeTagName);
     await page.waitForLoadState("networkidle");
 
-    // Check that the tag name is not in the table body (not just anywhere on the page)
-    const tableBody = page.locator('table tbody');
+    // Check that the old tag name is not in the table body
     await expect(tableBody.locator(`text="${activeTagName}"`)).not.toBeVisible({
       timeout: 3000,
     });
