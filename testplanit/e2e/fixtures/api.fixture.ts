@@ -1819,6 +1819,127 @@ export class ApiHelper {
   }
 
   /**
+   * Verify a template exists and return its isDefault status
+   */
+  async verifyTemplate(templateId: number): Promise<{ exists: boolean; isDefault: boolean }> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/templates/findUnique`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { id: templateId },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      return { exists: false, isDefault: false };
+    }
+
+    const result = await response.json();
+    const template = result.data;
+
+    if (!template) {
+      return { exists: false, isDefault: false };
+    }
+
+    return {
+      exists: true,
+      isDefault: template.isDefault ?? false,
+    };
+  }
+
+  /**
+   * Get case field ID by display name
+   */
+  async getCaseFieldId(displayName: string): Promise<number | null> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/caseFields/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { displayName, isDeleted: false },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      return null;
+    }
+
+    const result = await response.json();
+    return result.data?.id || null;
+  }
+
+  /**
+   * Assign a case field to a template
+   */
+  async assignFieldToTemplate(templateId: number, caseFieldId: number): Promise<boolean> {
+    // Check if already assigned
+    const existingResponse = await this.request.get(
+      `${this.baseURL}/api/model/templateCaseAssignment/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: {
+              templateId,
+              caseFieldId,
+            },
+          }),
+        },
+      }
+    );
+
+    if (existingResponse.ok()) {
+      const result = await existingResponse.json();
+      if (result.data) {
+        // Already assigned
+        return true;
+      }
+    }
+
+    // Get the highest order number for this template
+    const assignmentsResponse = await this.request.get(
+      `${this.baseURL}/api/model/templateCaseAssignment/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { templateId },
+            orderBy: { order: 'desc' },
+            take: 1,
+          }),
+        },
+      }
+    );
+
+    let nextOrder = 1;
+    if (assignmentsResponse.ok()) {
+      const assignments = await assignmentsResponse.json();
+      if (assignments.data && assignments.data.length > 0) {
+        nextOrder = assignments.data[0].order + 1;
+      }
+    }
+
+    // Create the assignment using connect for relations
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/templateCaseAssignment/create`,
+      {
+        data: {
+          data: {
+            caseField: { connect: { id: caseFieldId } },
+            template: { connect: { id: templateId } },
+            order: nextOrder,
+          },
+        },
+      }
+    );
+
+    return response.ok();
+  }
+
+  /**
    * Get field options for a case field
    */
   async getCaseFieldOptions(caseFieldId: number): Promise<Array<{ id: number; name: string; isDefault: boolean }>> {

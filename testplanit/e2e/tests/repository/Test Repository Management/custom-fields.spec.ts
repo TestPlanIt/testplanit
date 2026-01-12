@@ -463,6 +463,22 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
   }) => {
     const projectId = await getTestProjectId(api);
 
+    // Ensure Priority field is assigned to the project's template
+    // Priority is a seeded case field that should be in the default template
+    // But other tests may have changed the default template, so we need to verify
+    const templateId = await api.getTemplateId(projectId);
+    const priorityFieldId = await api.getCaseFieldId("Priority");
+
+    if (!priorityFieldId) {
+      throw new Error("Priority case field not found - it should be seeded in the database");
+    }
+
+    // Assign Priority field to the template to ensure test isolation
+    const assigned = await api.assignFieldToTemplate(templateId, priorityFieldId);
+    if (!assigned) {
+      console.warn("Failed to assign Priority field to template - it may already be assigned");
+    }
+
     // Create a test case to ensure there's data in the repository
     const rootFolderId = await api.getRootFolderId(projectId);
     await api.createTestCase(
@@ -471,27 +487,29 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
       `E2E Priority View Test ${Date.now()}`
     );
 
+    // Set up response listener before navigation to catch the view-options API call
+    const viewOptionsPromise = page.waitForResponse(
+      response => response.url().includes('/api/repository-cases/view-options') && response.status() === 200,
+      { timeout: 15000 }
+    );
+
     await repositoryPage.goto(projectId);
 
-    // Wait for network to be idle to ensure custom fields are loaded
+    // Wait for the view-options API call to complete
+    await viewOptionsPromise;
+
+    // Wait for React Query to process the response and update the component state
     await page.waitForLoadState("networkidle");
 
     // Define the view selector
     const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
 
-    // Wait for Priority option to exist in the DOM before opening the menu
-    // This ensures custom fields are fully loaded
-    await page.waitForFunction(
-      () => {
-        const options = Array.from(document.querySelectorAll('[role="option"]'));
-        return options.some(opt => /^Priority$/i.test(opt.textContent?.trim() || ''));
-      },
-      { timeout: 15000 }
-    );
-
-    // Now open the menu - Priority should be available
+    // Open the menu - options are rendered dynamically when the dropdown opens
     await viewSelector.click();
+
+    // Wait for the first option to appear (dropdown is now open and rendering options)
+    await expect(page.locator('[role="option"]').first()).toBeVisible({ timeout: 5000 });
 
     // Look for Priority as a dynamic field option in the view selector
     // Priority is a seeded case field of type Dropdown assigned to the default template
@@ -499,7 +517,7 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
       .locator('[role="option"]')
       .filter({ hasText: /^Priority$/i });
 
-    // Priority should now be visible
+    // Priority should now be visible in the opened dropdown
     await expect(priorityOption).toBeVisible({ timeout: 5000 });
 
     // Click Priority view option

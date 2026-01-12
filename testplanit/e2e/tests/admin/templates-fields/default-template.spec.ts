@@ -115,15 +115,27 @@ test.describe("Default Template - Protection Rules", () => {
     await templatesPage.cancelTemplate();
   });
 
-  test("Cannot delete default template", async ({ api }) => {
+  test("Cannot delete default template", async ({ api, page }) => {
     // Create a default template
     const templateName = `E2E No Delete ${Date.now()}`;
-    await api.createTemplate({
+    const templateId = await api.createTemplate({
       name: templateName,
       isDefault: true,
     });
 
+    // Verify via API that the template is actually marked as default
+    const verification = await api.verifyTemplate(templateId);
+    if (!verification.exists) {
+      throw new Error(`Template ${templateId} does not exist in the database`);
+    }
+    if (!verification.isDefault) {
+      throw new Error(`Template ${templateId} was not marked as default in the database (isDefault=${verification.isDefault})`);
+    }
+
     await templatesPage.goto();
+
+    // Wait for the page to load and show the correct data
+    await page.waitForLoadState("networkidle");
 
     // For default templates, the delete button should either be:
     // 1. Not present (with the testid - meaning it's disabled/placeholder)
@@ -131,6 +143,10 @@ test.describe("Default Template - Protection Rules", () => {
     // 3. Show an error when clicked
     const row = templatesPage.templatesTable.locator("tr").filter({ hasText: templateName }).first();
     await expect(row).toBeVisible({ timeout: 5000 });
+
+    // Verify the "Default" switch is checked and disabled in the row
+    const defaultSwitch = row.locator('button[role="switch"]').last();
+    await expect(defaultSwitch).toHaveAttribute("data-state", "checked");
 
     // The delete button with testid should NOT be present for default templates
     // (The UI renders a disabled placeholder button without the testid)
