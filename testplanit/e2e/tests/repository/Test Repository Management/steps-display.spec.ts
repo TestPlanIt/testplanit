@@ -292,7 +292,7 @@ test.describe("Steps Display", () => {
     await expect(page.locator("text=Expected result 2")).toBeVisible();
   });
 
-  test.skip("Steps Diff Display in Version Comparison", async ({ api, page }) => {
+  test("Steps Diff Display in Version Comparison", async ({ api, page }) => {
     const projectId = getTestProjectId();
     const templateId = getTestTemplateId();
     const uniqueId = Date.now();
@@ -431,43 +431,36 @@ test.describe("Steps Display", () => {
     await expect(editButton).toBeVisible({ timeout: 15000 });
 
     // Wait for version dropdown to show v3
-    await expect(page.locator('[role="combobox"]:has-text("v3")')).toBeVisible({ timeout: 10000 });
+    const versionDropdown = page.locator('[data-testid="version-select-trigger"]');
+    await expect(versionDropdown).toBeVisible({ timeout: 10000 });
+    await expect(versionDropdown).toContainText("v3");
 
-    // Verify version 3 content is visible
+    // Verify version 3 content is visible on the current page
     await expect(page.locator("text=Step 1 EDITED")).toBeVisible({ timeout: 10000 });
     await expect(page.locator("text=Result 2 EDITED")).toBeVisible();
     await expect(page.locator("text=Step 3 unchanged")).toBeVisible();
     await expect(page.locator("text=New step 5 added")).toBeVisible();
     await expect(page.locator("text=New step 6 added")).toBeVisible();
 
-    // Navigate to version 3 page to see the diff from version 2
-    await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}/3`);
+    // Use the version dropdown to navigate to version 2
+    await versionDropdown.click();
+    await page.waitForTimeout(500);
+
+    // Click on v2 in the dropdown
+    const v2Option = page.locator('[role="option"]:has-text("v2")').first();
+    await expect(v2Option).toBeVisible({ timeout: 5000 });
+    await v2Option.click();
+
+    // Wait for navigation to complete
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
 
-    // Check that we're on version 3
-    await expect(page.locator('text=v3')).toBeVisible({ timeout: 10000 });
-
-    // Verify version 3 shows the changes (diff indicators should show):
-    // - Step 1 EDITED (modified)
-    // - Result 2 EDITED (modified)
-    // - Step 3 unchanged (no change)
-    // - Step 4 deleted (removed)
-    // - New step 5 added (added)
-    // - New step 6 added (added)
-    await expect(page.locator("text=Step 1 EDITED")).toBeVisible({ timeout: 10000 });
-    await expect(page.locator("text=Result 2 EDITED")).toBeVisible();
-    await expect(page.locator("text=Step 3 unchanged")).toBeVisible();
-    await expect(page.locator("text=New step 5 added")).toBeVisible();
-    await expect(page.locator("text=New step 6 added")).toBeVisible();
-
-    // Verify version 2 still shows the original content (before v3 edits)
-    await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}/2`);
-    await page.waitForLoadState("networkidle");
-
-    await expect(page.locator('text=v2')).toBeVisible({ timeout: 10000 });
+    // Verify we're now viewing version 2 content
     await expect(page.locator("text=Step 1 original")).toBeVisible({ timeout: 10000 });
     await expect(page.locator("text=Result 2 original")).toBeVisible();
     await expect(page.locator("text=Step 4 will be deleted")).toBeVisible();
+
+    // Verify version 3 content is NOT visible
     await expect(page.locator("text=Step 1 EDITED")).not.toBeVisible();
     await expect(page.locator("text=New step 5 added")).not.toBeVisible();
   });

@@ -218,8 +218,12 @@ test.describe("Default Template - Project Assignment", () => {
   });
 
   test("Default template available for new projects", async ({ api }) => {
-    // Ensure there's a default template
-    const defaultTemplate = await api.getDefaultTemplate();
+    // Create a default template for this test
+    const templateName = `E2E New Proj Template ${Date.now()}`;
+    await api.createTemplate({
+      name: templateName,
+      isDefault: true,
+    });
 
     // Create a new project after the default template exists
     const projectName = `E2E New Proj ${Date.now()}`;
@@ -228,9 +232,7 @@ test.describe("Default Template - Project Assignment", () => {
     await templatesPage.goto();
 
     // Default template should be available for the new project
-    if (defaultTemplate) {
-      await templatesPage.expectTemplateInTable(defaultTemplate.templateName);
-    }
+    await templatesPage.expectTemplateInTable(templateName);
   });
 });
 
