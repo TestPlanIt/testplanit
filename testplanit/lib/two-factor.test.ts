@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { authenticator } from "otplib";
+import { generateSecret, generate } from "otplib";
 import {
   generateTOTPSecret,
   generateQRCodeDataURL,
@@ -93,49 +93,49 @@ describe("Two-Factor Authentication", () => {
   });
 
   describe("verifyTOTP", () => {
-    it("should return true for valid token", () => {
-      const secret = authenticator.generateSecret();
-      const token = authenticator.generate(secret);
+    it("should return true for valid token", async () => {
+      const secret = generateSecret();
+      const token = await generate({ secret });
 
-      const result = verifyTOTP(token, secret);
+      const result = await verifyTOTP(token, secret);
 
       expect(result).toBe(true);
     });
 
-    it("should return false for invalid token", () => {
-      const secret = authenticator.generateSecret();
+    it("should return false for invalid token", async () => {
+      const secret = generateSecret();
 
-      const result = verifyTOTP("000000", secret);
-
-      expect(result).toBe(false);
-    });
-
-    it("should return false for empty token", () => {
-      const secret = authenticator.generateSecret();
-
-      const result = verifyTOTP("", secret);
+      const result = await verifyTOTP("000000", secret);
 
       expect(result).toBe(false);
     });
 
-    it("should return false for null/undefined token", () => {
-      const secret = authenticator.generateSecret();
+    it("should return false for empty token", async () => {
+      const secret = generateSecret();
 
-      const result = verifyTOTP(undefined as any, secret);
-
-      expect(result).toBe(false);
-    });
-
-    it("should handle malformed token gracefully", () => {
-      const secret = authenticator.generateSecret();
-
-      const result = verifyTOTP("not-a-number", secret);
+      const result = await verifyTOTP("", secret);
 
       expect(result).toBe(false);
     });
 
-    it("should handle invalid secret gracefully", () => {
-      const result = verifyTOTP("123456", "invalid-secret");
+    it("should return false for null/undefined token", async () => {
+      const secret = generateSecret();
+
+      const result = await verifyTOTP(undefined as any, secret);
+
+      expect(result).toBe(false);
+    });
+
+    it("should handle malformed token gracefully", async () => {
+      const secret = generateSecret();
+
+      const result = await verifyTOTP("not-a-number", secret);
+
+      expect(result).toBe(false);
+    });
+
+    it("should handle invalid secret gracefully", async () => {
+      const result = await verifyTOTP("123456", "invalid-secret");
 
       expect(result).toBe(false);
     });
@@ -401,8 +401,8 @@ describe("Two-Factor Authentication", () => {
       expect(decryptedSecret).toBe(secret);
 
       // 5. Generate and verify token
-      const token = authenticator.generate(decryptedSecret);
-      const isValid = verifyTOTP(token, decryptedSecret);
+      const token = await generate({ secret: decryptedSecret });
+      const isValid = await verifyTOTP(token, decryptedSecret);
       expect(isValid).toBe(true);
     });
 

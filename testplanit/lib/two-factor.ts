@@ -1,19 +1,19 @@
-import { authenticator } from "otplib";
+import { generateSecret, generate, verify, generateURI } from "otplib";
 import QRCode from "qrcode";
 import { randomBytes, createHash } from "crypto";
 
-// Configure authenticator
-authenticator.options = {
+const APP_NAME = "TestPlanIt";
+
+// Configuration options for TOTP
+const TOTP_OPTIONS = {
   window: 1, // Allow 1 step before/after for clock drift
 };
-
-const APP_NAME = "TestPlanIt";
 
 /**
  * Generate a new TOTP secret for a user
  */
 export function generateTOTPSecret(): string {
-  return authenticator.generateSecret();
+  return generateSecret();
 }
 
 /**
@@ -23,16 +23,25 @@ export async function generateQRCodeDataURL(
   secret: string,
   userEmail: string
 ): Promise<string> {
-  const otpauthUrl = authenticator.keyuri(userEmail, APP_NAME, secret);
+  const otpauthUrl = generateURI({
+    secret,
+    issuer: APP_NAME,
+    label: userEmail,
+  });
   return QRCode.toDataURL(otpauthUrl);
 }
 
 /**
  * Verify a TOTP token against a secret
  */
-export function verifyTOTP(token: string, secret: string): boolean {
+export async function verifyTOTP(token: string, secret: string): Promise<boolean> {
   try {
-    return authenticator.verify({ token, secret });
+    const result = await verify({
+      token,
+      secret,
+      ...TOTP_OPTIONS,
+    });
+    return result.valid;
   } catch {
     return false;
   }

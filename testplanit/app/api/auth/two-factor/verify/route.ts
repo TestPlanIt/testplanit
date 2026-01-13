@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     // Try TOTP verification first
     if (token) {
       const secret = decryptSecret(user.twoFactorSecret);
-      verified = verifyTOTP(token, secret);
+      verified = await verifyTOTP(token, secret);
     }
 
     // Try backup code if TOTP failed

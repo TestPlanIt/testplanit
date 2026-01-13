@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     // Verify the current token
     const secret = decryptSecret(user.twoFactorSecret);
-    const isValid = verifyTOTP(token, secret);
+    const isValid = await verifyTOTP(token, secret);
 
     if (!isValid) {
       return NextResponse.json(
