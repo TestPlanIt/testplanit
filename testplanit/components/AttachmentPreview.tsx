@@ -130,7 +130,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
           <h3 className="text-base font-semibold mt-2 mb-1 text-primary" {...props} />
         ),
         p: ({ node, ...props }) => (
-          <p className="mb-3 text-sm text-foreground" {...props} />
+          <div className="mb-3 text-sm text-foreground" {...props} />
         ),
         ul: ({ node, ...props }) => (
           <ul className="list-disc pl-5 mb-3 text-foreground marker:text-foreground" {...props} />
