@@ -52,7 +52,7 @@ interface FlakyTestsBubbleChartProps {
  * Uses exponential decay - more recent failures weight more heavily.
  */
 function calculateRecencyScore(executions: ExecutionStatus[]): number {
-  if (executions.length === 0) return 0;
+  if (!executions || executions.length === 0) return 0;
 
   let score = 0;
   let weight = 1;
@@ -76,7 +76,7 @@ function calculateRecencyScore(executions: ExecutionStatus[]): number {
  * Calculate failure rate as percentage of non-success executions
  */
 function calculateFailureRate(executions: ExecutionStatus[]): number {
-  if (executions.length === 0) return 0;
+  if (!executions || executions.length === 0) return 0;
   const failures = executions.filter((e) => !e.isSuccess).length;
   return failures / executions.length;
 }
@@ -85,6 +85,7 @@ function calculateFailureRate(executions: ExecutionStatus[]): number {
  * Find the most recent failure date
  */
 function getMostRecentFailure(executions: ExecutionStatus[]): Date | null {
+  if (!executions) return null;
   for (const execution of executions) {
     if (!execution.isSuccess) {
       return new Date(execution.executedAt);
@@ -110,27 +111,29 @@ export const FlakyTestsBubbleChart: React.FC<FlakyTestsBubbleChartProps> = ({
 
   // Transform flaky test data into bubble chart data points
   const bubbleData = useMemo((): BubbleDataPoint[] => {
-    return data.map((test) => {
-      const recencyScore = calculateRecencyScore(test.executions);
-      const failureRate = calculateFailureRate(test.executions);
-      const mostRecentFailure = getMostRecentFailure(test.executions);
+    return data
+      .filter((test) => test.executions && Array.isArray(test.executions))
+      .map((test) => {
+        const recencyScore = calculateRecencyScore(test.executions);
+        const failureRate = calculateFailureRate(test.executions);
+        const mostRecentFailure = getMostRecentFailure(test.executions);
 
-      // Priority score combines flip count (instability) with recency
-      // Both are important - a highly flaky test with recent failures is highest priority
-      const normalizedFlipCount = test.flipCount / (consecutiveRuns - 1); // Normalize to 0-1
-      const priorityScore = normalizedFlipCount * 0.5 + recencyScore * 0.5;
+        // Priority score combines flip count (instability) with recency
+        // Both are important - a highly flaky test with recent failures is highest priority
+        const normalizedFlipCount = test.flipCount / (consecutiveRuns - 1); // Normalize to 0-1
+        const priorityScore = normalizedFlipCount * 0.5 + recencyScore * 0.5;
 
-      return {
-        id: test.testCaseId,
-        name: test.testCaseName,
-        flipCount: test.flipCount,
-        recencyScore,
-        failureRate,
-        priorityScore,
-        mostRecentFailure,
-        totalExecutions: test.executions.length,
-      };
-    });
+        return {
+          id: test.testCaseId,
+          name: test.testCaseName,
+          flipCount: test.flipCount,
+          recencyScore,
+          failureRate,
+          priorityScore,
+          mostRecentFailure,
+          totalExecutions: test.executions.length,
+        };
+      });
   }, [data, consecutiveRuns]);
 
   // Calculate date range from all executions
@@ -139,6 +142,7 @@ export const FlakyTestsBubbleChart: React.FC<FlakyTestsBubbleChartProps> = ({
     let maxDate: Date | null = null;
 
     for (const test of data) {
+      if (!test.executions || !Array.isArray(test.executions)) continue;
       for (const execution of test.executions) {
         const execDate = new Date(execution.executedAt);
         if (!minDate || execDate < minDate) minDate = execDate;
