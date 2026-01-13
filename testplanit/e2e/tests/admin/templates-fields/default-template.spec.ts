@@ -46,29 +46,31 @@ test.describe("Default Template - Basic Behavior", () => {
     await templatesPage.toggleTemplateDefault(true);
     await templatesPage.submitTemplate();
 
-    // Wait for the cascade update to complete
+    // Wait for the dialog to close and cascade update to complete
     await page.waitForLoadState("networkidle");
 
-    // Poll the API to verify the cascade update completed (retry up to 5 seconds)
-    let template1Verification;
-    let template2Verification;
-    let retries = 10;
-    let success = false;
+    // Reload the page to ensure we see the updated state
+    await templatesPage.goto();
+    await page.waitForLoadState("networkidle");
 
-    while (retries > 0 && !success) {
-      await page.waitForTimeout(500);
-      template1Verification = await api.verifyTemplate(template1Id);
-      template2Verification = await api.verifyTemplate(template2Id);
-
-      if (!template1Verification.isDefault && template2Verification.isDefault) {
-        success = true;
-        break;
+    // Wait for the cascade update to complete by polling the API
+    await expect.poll(
+      async () => {
+        const template1Verification = await api.verifyTemplate(template1Id);
+        const template2Verification = await api.verifyTemplate(template2Id);
+        return !template1Verification.isDefault && template2Verification.isDefault;
+      },
+      {
+        message: 'Expected template2 to be default and template1 to not be default',
+        timeout: 10000,
       }
-      retries--;
-    }
+    ).toBe(true);
 
-    expect(template1Verification!.isDefault).toBe(false);
-    expect(template2Verification!.isDefault).toBe(true);
+    // Final verification
+    const template1Verification = await api.verifyTemplate(template1Id);
+    const template2Verification = await api.verifyTemplate(template2Id);
+    expect(template1Verification.isDefault).toBe(false);
+    expect(template2Verification.isDefault).toBe(true);
   });
 
   test("Setting default auto-enables template", async ({ api }) => {
@@ -278,29 +280,31 @@ test.describe("Default Template - Cascade Behaviors", () => {
     await templatesPage.toggleTemplateDefault(true);
     await templatesPage.submitTemplate();
 
-    // Wait for the cascade update to complete
+    // Wait for the dialog to close and cascade update to complete
     await page.waitForLoadState("networkidle");
 
-    // Poll the API to verify the cascade update completed (retry up to 5 seconds)
-    let template1Verification;
-    let template2Verification;
-    let retries = 10;
-    let success = false;
+    // Reload the page to ensure we see the updated state
+    await templatesPage.goto();
+    await page.waitForLoadState("networkidle");
 
-    while (retries > 0 && !success) {
-      await page.waitForTimeout(500);
-      template1Verification = await api.verifyTemplate(template1Id);
-      template2Verification = await api.verifyTemplate(template2Id);
-
-      if (!template1Verification.isDefault && template2Verification.isDefault) {
-        success = true;
-        break;
+    // Wait for the cascade update to complete by polling the API
+    await expect.poll(
+      async () => {
+        const template1Verification = await api.verifyTemplate(template1Id);
+        const template2Verification = await api.verifyTemplate(template2Id);
+        return !template1Verification.isDefault && template2Verification.isDefault;
+      },
+      {
+        message: 'Expected template2 to be default and template1 to not be default',
+        timeout: 10000,
       }
-      retries--;
-    }
+    ).toBe(true);
 
-    expect(template1Verification!.isDefault).toBe(false);
-    expect(template2Verification!.isDefault).toBe(true);
+    // Final verification
+    const template1Verification = await api.verifyTemplate(template1Id);
+    const template2Verification = await api.verifyTemplate(template2Id);
+    expect(template1Verification.isDefault).toBe(false);
+    expect(template2Verification.isDefault).toBe(true);
   });
 
   test("Deleting non-default template preserves default", async ({ api, page }) => {
@@ -324,10 +328,12 @@ test.describe("Default Template - Cascade Behaviors", () => {
     await templatesPage.confirmDelete();
 
     // Wait for deletion to complete and table to update
-    await page.waitForTimeout(500);
+    await page.waitForLoadState("networkidle");
+
+    // Verify the deleted template is no longer in the table
+    await templatesPage.expectTemplateNotInTable(otherTemplateName);
 
     // Default template should still exist and be default
     await templatesPage.expectTemplateInTable(defaultTemplateName);
-    await templatesPage.expectTemplateNotInTable(otherTemplateName);
   });
 });
