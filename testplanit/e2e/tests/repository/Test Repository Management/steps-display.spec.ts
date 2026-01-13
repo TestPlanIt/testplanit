@@ -141,8 +141,12 @@ test.describe("Steps Display", () => {
   // Skip - Test run step display requires investigating the side panel/modal interaction
   // Steps ARE created and associated with test runs correctly
   // May need to wait for side panel to open or use different selector
-  test.skip("Steps Display in Test Run Execution View", async ({ api, page }) => {
+  test("Steps Display in Test Run Execution View", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+
+    // Assign statuses to the project (needed for test run sidebar to work)
+    await api.assignStatusesToProject(projectId);
+
     const uniqueId = Date.now();
 
     const folderName = `Run Steps Folder ${uniqueId}`;
@@ -154,7 +158,7 @@ test.describe("Steps Display", () => {
       testCaseName
     );
 
-    // Add steps to the test case
+    // Add steps to the test case via API
     await api.addStepsToTestCase(testCaseId, [
       {
         step: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Test run step 1" }] }] },
@@ -173,20 +177,27 @@ test.describe("Steps Display", () => {
     const testRunId = await api.createTestRun(projectId, testRunName);
     await api.addTestCaseToTestRun(testRunId, testCaseId);
 
-    // Navigate to test run execution page (correct URL is /projects/runs/ not /projects/test-runs/)
+    // Navigate to test run execution page
     await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}`);
     await page.waitForLoadState("networkidle");
 
-    // Click on the test case row to open details panel
-    const testCaseRow = page.locator(`[data-row-id="${testCaseId}"]`).first();
-    await expect(testCaseRow).toBeVisible({ timeout: 10000 });
-    await testCaseRow.click();
-    await page.waitForTimeout(1000);
+    // Click on the test case name in the table to open sidebar
+    const testCaseLink = page.locator(`text=${testCaseName}`).first();
+    await expect(testCaseLink).toBeVisible({ timeout: 10000 });
+    await testCaseLink.click();
 
-    // Verify step content is displayed in run view
-    await expect(page.locator("text=Test run step 1")).toBeVisible({ timeout: 10000 });
+    // Wait for sidebar to fully load (look for the Steps section header or similar)
+    await page.waitForLoadState("networkidle");
+
+    // Wait for the sidebar sheet to be visible
+    const sidebar = page.locator('[role="dialog"]');
+    await expect(sidebar).toBeVisible({ timeout: 10000 });
+
+    // Wait for steps to be visible in sidebar
+    await expect(page.locator("text=Test run step 1")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("text=Expected result 1")).toBeVisible();
     await expect(page.locator("text=Test run step 2")).toBeVisible();
+    await expect(page.locator("text=Expected result 2")).toBeVisible();
   });
 
   test("Steps Diff Display in Version Comparison", async ({ api, page }) => {
@@ -385,8 +396,12 @@ test.describe("Steps Display", () => {
   // Skip this test - Add Result modal is accessed from test run status cells, not from test case details page
   // The workflow requires: Test Run → Click status cell → Add Result modal opens
   // This is tested elsewhere in test run E2E tests
-  test.skip("Steps Display in Add Result Modal", async ({ api, page }) => {
+  test("Steps Display in Add Result Modal", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
+
+    // Assign statuses to the project (needed for test run sidebar to work)
+    await api.assignStatusesToProject(projectId);
+
     const uniqueId = Date.now();
 
     const folderName = `Result Modal Folder ${uniqueId}`;
@@ -398,7 +413,7 @@ test.describe("Steps Display", () => {
       testCaseName
     );
 
-    // Add steps to the test case
+    // Add steps to the test case via API
     await api.addStepsToTestCase(testCaseId, [
       {
         step: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Result step 1" }] }] },
@@ -412,32 +427,37 @@ test.describe("Steps Display", () => {
       },
     ]);
 
-    // Navigate to test case details page
-    await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
+    // Create a test run with this case
+    const testRunName = `E2E Result Modal Run ${uniqueId}`;
+    const testRunId = await api.createTestRun(projectId, testRunName);
+    await api.addTestCaseToTestRun(testRunId, testCaseId);
+
+    // Navigate to test run execution page
+    await page.goto(`/en-US/projects/runs/${projectId}/${testRunId}`);
     await page.waitForLoadState("networkidle");
 
-    // Wait for page to load
-    const editButton = page.locator('button:has-text("Edit")').first();
-    await expect(editButton).toBeVisible({ timeout: 15000 });
+    // Click on the test case name in the table to open sidebar
+    const testCaseLink = page.locator(`text=${testCaseName}`).first();
+    await expect(testCaseLink).toBeVisible({ timeout: 10000 });
+    await testCaseLink.click();
 
-    // Find and click "Add Result" button
-    const addResultButton = page
-      .locator('button:has-text("Add Result")')
-      .first();
-    await expect(addResultButton).toBeVisible({ timeout: 5000 });
+    // Wait for sidebar to fully load
+    await page.waitForLoadState("networkidle");
+
+    // Wait for sidebar to open and find Add Result button
+    const addResultButton = page.locator('button:has-text("Add Result")').first();
+    await expect(addResultButton).toBeVisible({ timeout: 15000 });
     await addResultButton.click();
-    await page.waitForLoadState("networkidle");
 
-    // Wait for Add Result modal to open
-    const modal = page.locator('[role="dialog"]');
-    await expect(modal).toBeVisible({ timeout: 5000 });
+    // Wait for Add Result modal to open (there are 2 dialogs: sidebar and modal, so be specific)
+    const modal = page.getByRole('dialog', { name: 'Add Result' });
+    await expect(modal).toBeVisible({ timeout: 10000 });
 
-    // Verify steps are displayed in the modal with step-by-step result entry
-    await expect(page.locator("text=Result step 1")).toBeVisible({
-      timeout: 10000,
-    });
+    // Verify steps are displayed in the Add Result modal
+    await expect(page.locator("text=Result step 1")).toBeVisible({ timeout: 10000 });
     await expect(page.locator("text=Result expected 1")).toBeVisible();
     await expect(page.locator("text=Result step 2")).toBeVisible();
+    await expect(page.locator("text=Result expected 2")).toBeVisible();
   });
 
   test("Shared Step Group Display", async ({ api, page }) => {

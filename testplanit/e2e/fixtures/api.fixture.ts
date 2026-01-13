@@ -2195,6 +2195,77 @@ export class ApiHelper {
   }
 
   /**
+   * Assign all statuses to a project
+   * This is needed for test runs to work properly
+   */
+  async assignStatusesToProject(projectId: number): Promise<void> {
+    // Get all statuses
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/status/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: {
+              isDeleted: false,
+              isEnabled: true,
+            },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      throw new Error("Failed to fetch statuses");
+    }
+
+    const result = await response.json();
+    const statuses = result.data;
+
+    // Assign each status to the project
+    for (const status of statuses) {
+      try {
+        await this.request.post(
+          `${this.baseURL}/api/model/projectStatusAssignment/create`,
+          {
+            data: {
+              data: {
+                project: { connect: { id: projectId } },
+                status: { connect: { id: status.id } },
+              },
+            },
+          }
+        );
+      } catch (error) {
+        // Ignore errors (status might already be assigned)
+        console.warn(`Failed to assign status ${status.id} to project ${projectId}`);
+      }
+    }
+  }
+
+  /**
+   * Get a test case with its steps (for debugging)
+   */
+  async getTestCaseWithSteps(testCaseId: number): Promise<any> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/repositoryCases/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { id: testCaseId },
+            include: { steps: true },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      return null;
+    }
+
+    return await response.json();
+  }
+
+  /**
    * Update test case steps (creates a new version)
    * This deletes existing steps and creates new ones
    */
