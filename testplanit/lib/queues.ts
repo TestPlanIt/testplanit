@@ -1,5 +1,6 @@
 import { Queue } from "bullmq";
 import valkeyConnection from "./valkey";
+import type IORedis from "ioredis";
 import {
   FORECAST_QUEUE_NAME,
   NOTIFICATION_QUEUE_NAME,
@@ -44,7 +45,7 @@ export function getForecastQueue(): Queue | null {
   }
 
   _forecastQueue = new Queue(FORECAST_QUEUE_NAME, {
-    connection: valkeyConnection,
+    connection: valkeyConnection as IORedis,
     defaultJobOptions: {
       attempts: 3,
       backoff: {
@@ -83,7 +84,7 @@ export function getNotificationQueue(): Queue | null {
   }
 
   _notificationQueue = new Queue(NOTIFICATION_QUEUE_NAME, {
-    connection: valkeyConnection,
+    connection: valkeyConnection as IORedis,
     defaultJobOptions: {
       attempts: 3,
       backoff: {
@@ -122,7 +123,7 @@ export function getEmailQueue(): Queue | null {
   }
 
   _emailQueue = new Queue(EMAIL_QUEUE_NAME, {
-    connection: valkeyConnection,
+    connection: valkeyConnection as IORedis,
     defaultJobOptions: {
       attempts: 5,
       backoff: {
@@ -161,7 +162,7 @@ export function getSyncQueue(): Queue | null {
   }
 
   _syncQueue = new Queue(SYNC_QUEUE_NAME, {
-    connection: valkeyConnection,
+    connection: valkeyConnection as IORedis,
     defaultJobOptions: {
       attempts: 3,
       backoff: {
@@ -200,7 +201,7 @@ export function getTestmoImportQueue(): Queue | null {
   }
 
   _testmoImportQueue = new Queue(TESTMO_IMPORT_QUEUE_NAME, {
-    connection: valkeyConnection,
+    connection: valkeyConnection as IORedis,
     defaultJobOptions: {
       attempts: 1,
       removeOnComplete: {
@@ -235,7 +236,7 @@ export function getElasticsearchReindexQueue(): Queue | null {
   }
 
   _elasticsearchReindexQueue = new Queue(ELASTICSEARCH_REINDEX_QUEUE_NAME, {
-    connection: valkeyConnection,
+    connection: valkeyConnection as IORedis,
     defaultJobOptions: {
       attempts: 1,
       removeOnComplete: {
@@ -271,7 +272,7 @@ export function getAuditLogQueue(): Queue | null {
   }
 
   _auditLogQueue = new Queue(AUDIT_LOG_QUEUE_NAME, {
-    connection: valkeyConnection,
+    connection: valkeyConnection as IORedis,
     defaultJobOptions: {
       attempts: 3,
       backoff: {

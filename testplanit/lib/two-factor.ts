@@ -1,9 +1,13 @@
-import { generateSecret, generateURI, verify } from "otplib";
+import { generateSecret, generate, verify, generateURI } from "otplib";
 import QRCode from "qrcode";
 import { randomBytes, createHash } from "crypto";
 
 const APP_NAME = "TestPlanIt";
-const EPOCH_TOLERANCE = 30; // ±30 seconds (equivalent to window: 1 with 30-second steps)
+
+// Configuration options for TOTP
+const TOTP_OPTIONS = {
+  window: 1, // Allow 1 step before/after for clock drift
+};
 
 /**
  * Generate a new TOTP secret for a user
@@ -35,7 +39,7 @@ export async function verifyTOTP(token: string, secret: string): Promise<boolean
     const result = await verify({
       token,
       secret,
-      epochTolerance: EPOCH_TOLERANCE,
+      ...TOTP_OPTIONS,
     });
     return result.valid;
   } catch {
