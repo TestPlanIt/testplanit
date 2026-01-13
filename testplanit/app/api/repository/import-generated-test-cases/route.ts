@@ -273,8 +273,23 @@ export async function POST(request: NextRequest) {
                 break;
 
               case "Dropdown":
+                // Try to map option name to ID (single value)
+                if (typeof fieldValue === "string") {
+                  const option = caseField.caseField.fieldOptions?.find(
+                    fo => fo.fieldOption.name === fieldValue
+                  );
+                  processedValue = option ? option.fieldOption.id : fieldValue;
+                } else if (Array.isArray(fieldValue) && fieldValue.length > 0) {
+                  // Take first value if array is provided for dropdown
+                  const option = caseField.caseField.fieldOptions?.find(
+                    fo => fo.fieldOption.name === fieldValue[0]
+                  );
+                  processedValue = option ? option.fieldOption.id : fieldValue[0];
+                }
+                break;
+
               case "Multi-Select":
-                // Try to map option names to IDs
+                // Try to map option names to IDs (always return array)
                 if (Array.isArray(fieldValue)) {
                   processedValue = fieldValue.map(optionName => {
                     const option = caseField.caseField.fieldOptions?.find(
@@ -283,10 +298,11 @@ export async function POST(request: NextRequest) {
                     return option ? option.fieldOption.id : optionName;
                   });
                 } else if (typeof fieldValue === "string") {
+                  // Single string value - wrap in array
                   const option = caseField.caseField.fieldOptions?.find(
                     fo => fo.fieldOption.name === fieldValue
                   );
-                  processedValue = option ? option.fieldOption.id : fieldValue;
+                  processedValue = option ? [option.fieldOption.id] : [fieldValue];
                 }
                 break;
 

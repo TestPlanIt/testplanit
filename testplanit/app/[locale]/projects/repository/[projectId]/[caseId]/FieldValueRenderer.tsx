@@ -174,85 +174,95 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
       }
 
       if (fieldType === "Multi-Select") {
-        const renderMultiSelect = (value: any) => (
-          <div className="flex gap-2 whitespace-nowrap">
-            {value.map((val: number) => {
-              const option = caseField.caseField.fieldOptions.find(
-                (fo: any) => fo.fieldOption.id === val
-              );
-              return option ? (
-                <div key={val} className="flex items-center space-x-1">
-                  <DynamicIcon
-                    className="w-5 h-5 min-w-5 min-h-5"
-                    name={option.fieldOption.icon?.name as IconName}
-                    color={option.fieldOption.iconColor?.value}
-                  />
-                  <span className="pr-1">{option.fieldOption.name}</span>
-                </div>
-              ) : (
-                <div key={val} className="text-gray-500">
-                  {t("repository.fields.optionNotFound")}
-                </div>
-              );
-            })}
-          </div>
-        );
+        const renderMultiSelect = (value: any) => {
+          // Ensure value is an array before rendering
+          const values = Array.isArray(value) ? value : [];
+
+          return (
+            <div className="flex gap-2 whitespace-nowrap">
+              {values.map((val: number) => {
+                const option = caseField.caseField.fieldOptions.find(
+                  (fo: any) => fo.fieldOption.id === val
+                );
+                return option ? (
+                  <div key={val} className="flex items-center space-x-1">
+                    <DynamicIcon
+                      className="w-5 h-5 min-w-5 min-h-5"
+                      name={option.fieldOption.icon?.name as IconName}
+                      color={option.fieldOption.iconColor?.value}
+                    />
+                    <span className="pr-1">{option.fieldOption.name}</span>
+                  </div>
+                ) : (
+                  <div key={val} className="text-gray-500">
+                    {t("repository.fields.optionNotFound")}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        };
 
         return isEditMode && !isEffectivelyReadOnly ? (
           <Controller
             control={control}
             name={fieldId.toString()}
             defaultValue={fieldValue}
-            render={({ field: { onChange, value } }) => (
-              <MultiSelect
-                className="ml-1"
-                value={caseField.caseField.fieldOptions
-                  .filter(
-                    (option: any) =>
-                      value && value.includes(option.fieldOption.id)
-                  )
-                  .map((option: any) => ({
-                    value: option.fieldOption.id,
-                    label: (
-                      <div className="flex items-center">
-                        <DynamicIcon
-                          className="h-4 w-4 mr-1"
-                          name={option.fieldOption.icon.name}
-                          color={option.fieldOption.iconColor.value}
-                        />
-                        {option.fieldOption.name}
-                      </div>
-                    ),
-                  }))}
-                onChange={(selected: any) => {
-                  const selectedValues = selected
-                    ? selected.map((option: any) => option.value)
-                    : [];
-                  onChange(selectedValues);
-                }}
-                options={caseField.caseField.fieldOptions
-                  .sort(
-                    (a: any, b: any) =>
-                      a.fieldOption.order - b.fieldOption.order
-                  )
-                  .map((option: any) => ({
-                    value: option.fieldOption.id,
-                    label: (
-                      <div className="flex items-center">
-                        <DynamicIcon
-                          className="h-4 w-4 mr-1"
-                          name={option.fieldOption.icon.name}
-                          color={option.fieldOption.iconColor.value}
-                        />
-                        {option.fieldOption.name}
-                      </div>
-                    ),
-                  }))}
-                isMulti
-                isDisabled={isSubmitting}
-                styles={customStyles}
-              />
-            )}
+            render={({ field: { onChange, value } }) => {
+              // Ensure value is an array for edit mode
+              const valueArray = Array.isArray(value) ? value : (value != null ? [value] : []);
+
+              return (
+                <MultiSelect
+                  className="ml-1"
+                  value={caseField.caseField.fieldOptions
+                    .filter(
+                      (option: any) =>
+                        valueArray.includes(option.fieldOption.id)
+                    )
+                    .map((option: any) => ({
+                      value: option.fieldOption.id,
+                      label: (
+                        <div className="flex items-center">
+                          <DynamicIcon
+                            className="h-4 w-4 mr-1"
+                            name={option.fieldOption.icon.name}
+                            color={option.fieldOption.iconColor.value}
+                          />
+                          {option.fieldOption.name}
+                        </div>
+                      ),
+                    }))}
+                  onChange={(selected: any) => {
+                    const selectedValues = selected
+                      ? selected.map((option: any) => option.value)
+                      : [];
+                    onChange(selectedValues);
+                  }}
+                  options={caseField.caseField.fieldOptions
+                    .sort(
+                      (a: any, b: any) =>
+                        a.fieldOption.order - b.fieldOption.order
+                    )
+                    .map((option: any) => ({
+                      value: option.fieldOption.id,
+                      label: (
+                        <div className="flex items-center">
+                          <DynamicIcon
+                            className="h-4 w-4 mr-1"
+                            name={option.fieldOption.icon.name}
+                            color={option.fieldOption.iconColor.value}
+                          />
+                          {option.fieldOption.name}
+                        </div>
+                      ),
+                    }))}
+                  isMulti
+                  isDisabled={isSubmitting}
+                  styles={customStyles}
+                />
+              );
+            }}
           />
         ) : showDiff ? (
           renderDiffWrapper(fieldValue, previousFieldValue, renderMultiSelect)

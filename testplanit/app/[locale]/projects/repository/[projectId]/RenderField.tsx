@@ -81,12 +81,15 @@ const RenderField: React.FC<RenderFieldProps> = ({
             disabled={isDisabled}
           />
         );
-      case "Multi-Select":
+      case "Multi-Select": {
+        // Ensure value is an array for Multi-Select
+        const valueArray = Array.isArray(value) ? value : (value != null ? [value] : []);
+
         return (
           <MultiSelect
             value={field.caseField.fieldOptions
               .filter(
-                (option: any) => value && value.includes(option.fieldOption.id)
+                (option: any) => valueArray.includes(option.fieldOption.id)
               )
               .map((option: any) => ({
                 value: option.fieldOption.id,
@@ -129,6 +132,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
             styles={customStyles}
           />
         );
+      }
       case "Dropdown":
         const initialValue = defaultOption
           ? defaultOption.fieldOption.id
