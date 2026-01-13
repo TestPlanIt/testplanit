@@ -843,7 +843,6 @@ const StepsForm: React.FC<StepsFormProps> = ({
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
       modifiers={[restrictToVerticalAxis]}
-      data-testid="steps-form"
     >
       <SortableContext
         items={fields.map((field) => field.id!)} // Added non-null assertion for field.id

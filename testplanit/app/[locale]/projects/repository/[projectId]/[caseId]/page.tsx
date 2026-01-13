@@ -1685,6 +1685,7 @@ export default function TestCaseDetails() {
                         variant="secondary"
                         onClick={handleEditModeToggle}
                         disabled={isLoadingSharedStepGroups}
+                        data-testid="edit-test-case-button"
                       >
                         <div className="flex items-center">
                           <SquarePen className="w-5 h-5 mr-2" />

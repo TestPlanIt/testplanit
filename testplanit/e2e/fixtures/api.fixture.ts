@@ -2165,8 +2165,8 @@ export class ApiHelper {
     for (const stepData of steps) {
       const data: Record<string, unknown> = {
         testCase: { connect: { id: testCaseId } },
-        step: stepData.step,
-        expectedResult: stepData.expectedResult,
+        step: JSON.stringify(stepData.step),
+        expectedResult: JSON.stringify(stepData.expectedResult),
         order: stepData.order,
         isDeleted: false,
       };
@@ -2176,7 +2176,7 @@ export class ApiHelper {
       }
 
       const response = await this.request.post(
-        `${this.baseURL}/api/model/step/create`,
+        `${this.baseURL}/api/model/steps/create`,
         {
           data: { data },
         }
@@ -2208,7 +2208,7 @@ export class ApiHelper {
   ): Promise<void> {
     // Delete existing steps
     await this.request.post(
-      `${this.baseURL}/api/model/step/deleteMany`,
+      `${this.baseURL}/api/model/steps/deleteMany`,
       {
         data: {
           where: { testCaseId },
