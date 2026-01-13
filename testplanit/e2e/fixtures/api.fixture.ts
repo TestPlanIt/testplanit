@@ -294,11 +294,12 @@ export class ApiHelper {
   async createTestCase(
     projectId: number,
     folderId: number,
-    name: string
+    name: string,
+    templateIdOverride?: number
   ): Promise<number> {
     const [repositoryId, templateId, stateId] = await Promise.all([
       this.getRepositoryId(projectId),
-      this.getTemplateId(projectId),
+      templateIdOverride ? Promise.resolve(templateIdOverride) : this.getTemplateId(projectId),
       this.getStateId(projectId),
     ]);
 
@@ -1693,6 +1694,56 @@ export class ApiHelper {
         },
       })
       .catch(() => {});
+  }
+
+  /**
+   * Get standard case field IDs (Priority, Description, Steps, Expected)
+   * These are the core fields typically needed for test cases
+   */
+  async getStandardCaseFieldIds(): Promise<number[]> {
+    const standardFieldNames = ["Priority", "Description", "Steps", "Expected"];
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/caseFields/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: {
+              displayName: { in: standardFieldNames },
+              isDeleted: false,
+            },
+            select: { id: true },
+          }),
+        },
+      }
+    );
+
+    const result = await response.json();
+    return result.data.map((field: { id: number }) => field.id);
+  }
+
+  /**
+   * Get standard result field IDs (Notes)
+   * These are the core fields typically needed for test results
+   */
+  async getStandardResultFieldIds(): Promise<number[]> {
+    const standardFieldNames = ["Notes"];
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/resultFields/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: {
+              displayName: { in: standardFieldNames },
+              isDeleted: false,
+            },
+            select: { id: true },
+          }),
+        },
+      }
+    );
+
+    const result = await response.json();
+    return result.data.map((field: { id: number }) => field.id);
   }
 
   /**

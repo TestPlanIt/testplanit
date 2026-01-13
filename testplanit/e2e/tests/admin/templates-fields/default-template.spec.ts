@@ -21,16 +21,16 @@ test.describe("Default Template - Basic Behavior", () => {
     await templatesPage.goto();
   });
 
-  test("Only one default template at a time", async ({ api }) => {
+  test("Only one default template at a time", async ({ api, page }) => {
     // Create two templates
     const template1Name = `E2E Default 1 ${Date.now()}`;
     const template2Name = `E2E Default 2 ${Date.now()}`;
 
-    await api.createTemplate({
+    const template1Id = await api.createTemplate({
       name: template1Name,
       isDefault: true,
     });
-    await api.createTemplate({
+    const template2Id = await api.createTemplate({
       name: template2Name,
       isDefault: false,
     });
@@ -46,9 +46,16 @@ test.describe("Default Template - Basic Behavior", () => {
     await templatesPage.toggleTemplateDefault(true);
     await templatesPage.submitTemplate();
 
-    // Verify template2 is now default
-    // The first template should no longer be default
-    // This verification depends on UI indicators
+    // Wait for the cascade update to complete
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
+
+    // Verify via API that only template2 is default
+    const template1Verification = await api.verifyTemplate(template1Id);
+    const template2Verification = await api.verifyTemplate(template2Id);
+
+    expect(template1Verification.isDefault).toBe(false);
+    expect(template2Verification.isDefault).toBe(true);
   });
 
   test("Setting default auto-enables template", async ({ api }) => {
@@ -235,7 +242,7 @@ test.describe("Default Template - Cascade Behaviors", () => {
     await templatesPage.goto();
   });
 
-  test("Changing default unsets previous default", async ({ api }) => {
+  test("Changing default unsets previous default", async ({ api, page }) => {
     // Create two templates
     const template1Name = `E2E Cascade A ${Date.now()}`;
     const template2Name = `E2E Cascade B ${Date.now()}`;
@@ -256,12 +263,16 @@ test.describe("Default Template - Cascade Behaviors", () => {
     await templatesPage.toggleTemplateDefault(true);
     await templatesPage.submitTemplate();
 
-    // Reload and verify
-    await templatesPage.goto();
+    // Wait for the cascade update to complete
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000);
 
-    // template1 should no longer be default
-    // template2 should now be default
-    // Verification depends on UI implementation
+    // Verify via API that only template2 is default
+    const template1Verification = await api.verifyTemplate(template1Id);
+    const template2Verification = await api.verifyTemplate(template2Id);
+
+    expect(template1Verification.isDefault).toBe(false);
+    expect(template2Verification.isDefault).toBe(true);
   });
 
   test("Deleting non-default template preserves default", async ({ api, page }) => {
