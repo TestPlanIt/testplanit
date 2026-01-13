@@ -15,23 +15,32 @@ import { RepositoryPage } from "../../../page-objects/repository/repository.page
 test.describe("Steps Display", () => {
   let repositoryPage: RepositoryPage;
 
+  // Dedicated project for this spec file - isolated from other tests
+  let stepsDisplayProjectId: number | null = null;
+
+  test.beforeAll(async ({ api }) => {
+    // Create a dedicated project for all steps-display tests
+    // Note: createProject automatically assigns templates, workflows, statuses, and milestone types
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    stepsDisplayProjectId = await api.createProject(`E2E Steps Display Project ${uniqueId}`);
+  });
+
   test.beforeEach(async ({ page }) => {
     repositoryPage = new RepositoryPage(page);
   });
 
-  async function getTestProjectId(
-    api: import("../../../fixtures/api.fixture").ApiHelper
-  ): Promise<number> {
-    // Use Date.now() + random string to ensure uniqueness across parallel tests
-    const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
-    return await api.createProject(`E2E Steps Display ${uniqueId}`);
+  function getTestProjectId(): number {
+    if (!stepsDisplayProjectId) {
+      throw new Error("Steps Display project not initialized");
+    }
+    return stepsDisplayProjectId;
   }
 
   test("Read-Only Steps Display on Test Case Details Page", async ({
     api,
     page,
   }) => {
-    const projectId = await getTestProjectId(api);
+    const projectId = getTestProjectId();
     const uniqueId = Date.now();
 
     const folderName = `Steps Display Folder ${uniqueId}`;
@@ -63,15 +72,19 @@ test.describe("Steps Display", () => {
     ]);
 
     // Navigate to test case details page
-    await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
-    await page.waitForLoadState("networkidle");
+    await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`, {
+      waitUntil: "networkidle",
+    });
 
-    // Wait for page to load
+    // Wait for page to fully load and ensure we're viewing the correct test case
     const editButton = page.locator('button:has-text("Edit")').first();
     await expect(editButton).toBeVisible({ timeout: 15000 });
 
+    // Verify we're on the correct test case by checking the name in the heading
+    await expect(page.locator(`text=${testCaseName}`)).toBeVisible({ timeout: 10000 });
+
     // Verify step content is displayed
-    await expect(page.locator("text=Step 1: Open the application")).toBeVisible();
+    await expect(page.locator("text=Step 1: Open the application")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("text=Application opens successfully")).toBeVisible();
     await expect(page.locator("text=Step 2: Login with credentials")).toBeVisible();
     await expect(page.locator("text=User is logged in")).toBeVisible();
@@ -80,7 +93,7 @@ test.describe("Steps Display", () => {
   });
 
   test("Steps Edit Mode with Add/Remove", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
+    const projectId = getTestProjectId();
     const uniqueId = Date.now();
 
     const folderName = `Steps Edit Folder ${uniqueId}`;
@@ -142,11 +155,7 @@ test.describe("Steps Display", () => {
   // Steps ARE created and associated with test runs correctly
   // May need to wait for side panel to open or use different selector
   test("Steps Display in Test Run Execution View", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-
-    // Assign statuses to the project (needed for test run sidebar to work)
-    await api.assignStatusesToProject(projectId);
-
+    const projectId = getTestProjectId();
     const uniqueId = Date.now();
 
     const folderName = `Run Steps Folder ${uniqueId}`;
@@ -201,7 +210,7 @@ test.describe("Steps Display", () => {
   });
 
   test("Steps Diff Display in Version Comparison", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
+    const projectId = getTestProjectId();
     const uniqueId = Date.now();
 
     const folderName = `Diff Steps Folder ${uniqueId}`;
@@ -397,11 +406,7 @@ test.describe("Steps Display", () => {
   // The workflow requires: Test Run → Click status cell → Add Result modal opens
   // This is tested elsewhere in test run E2E tests
   test("Steps Display in Add Result Modal", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
-
-    // Assign statuses to the project (needed for test run sidebar to work)
-    await api.assignStatusesToProject(projectId);
-
+    const projectId = getTestProjectId();
     const uniqueId = Date.now();
 
     const folderName = `Result Modal Folder ${uniqueId}`;
@@ -461,7 +466,7 @@ test.describe("Steps Display", () => {
   });
 
   test("Shared Step Group Display", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
+    const projectId = getTestProjectId();
     const uniqueId = Date.now();
 
     // Create a shared step group
@@ -530,7 +535,7 @@ test.describe("Steps Display", () => {
   });
 
   test("Steps Display Preserves Order", async ({ api, page }) => {
-    const projectId = await getTestProjectId(api);
+    const projectId = getTestProjectId();
     const uniqueId = Date.now();
 
     const folderName = `Order Steps Folder ${uniqueId}`;

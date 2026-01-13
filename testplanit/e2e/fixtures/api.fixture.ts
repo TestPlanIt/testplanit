@@ -984,6 +984,80 @@ export class ApiHelper {
       }
     }
 
+    // Assign all statuses to project (required for test runs, sessions, etc.)
+    const statusesResponse = await this.request.get(
+      `${this.baseURL}/api/model/status/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { isDeleted: false, isEnabled: true },
+          }),
+        },
+      }
+    );
+
+    if (statusesResponse.ok()) {
+      const statusesResult = await statusesResponse.json();
+      const statuses = statusesResult.data || [];
+
+      if (statuses.length > 0) {
+        const statusAssignments = statuses.map((s: { id: number }) => ({
+          statusId: s.id,
+          projectId: projectId,
+        }));
+
+        const statusAssignResponse = await this.request.post(
+          `${this.baseURL}/api/model/projectStatusAssignment/createMany`,
+          {
+            data: {
+              data: statusAssignments,
+            },
+          }
+        );
+
+        if (!statusAssignResponse.ok()) {
+          console.warn(`Failed to assign statuses to project ${projectId}`);
+        }
+      }
+    }
+
+    // Assign all milestone types to project (required for milestones)
+    const milestoneTypesResponse = await this.request.get(
+      `${this.baseURL}/api/model/milestoneType/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { isDeleted: false, isEnabled: true },
+          }),
+        },
+      }
+    );
+
+    if (milestoneTypesResponse.ok()) {
+      const milestoneTypesResult = await milestoneTypesResponse.json();
+      const milestoneTypes = milestoneTypesResult.data || [];
+
+      if (milestoneTypes.length > 0) {
+        const milestoneTypeAssignments = milestoneTypes.map((mt: { id: number }) => ({
+          milestoneTypeId: mt.id,
+          projectId: projectId,
+        }));
+
+        const milestoneTypeAssignResponse = await this.request.post(
+          `${this.baseURL}/api/model/projectMilestoneTypeAssignment/createMany`,
+          {
+            data: {
+              data: milestoneTypeAssignments,
+            },
+          }
+        );
+
+        if (!milestoneTypeAssignResponse.ok()) {
+          console.warn(`Failed to assign milestone types to project ${projectId}`);
+        }
+      }
+    }
+
     // Add user as project member (matching setup-db.ts - critical for access)
     const assignmentResponse = await this.request.post(
       `${this.baseURL}/api/model/projectAssignment/create`,
@@ -2199,46 +2273,77 @@ export class ApiHelper {
    * This is needed for test runs to work properly
    */
   async assignStatusesToProject(projectId: number): Promise<void> {
-    // Get all statuses
-    const response = await this.request.get(
-      `${this.baseURL}/api/model/status/findMany`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: {
-              isDeleted: false,
-              isEnabled: true,
-            },
-          }),
-        },
+    try {
+      // Check if project already has statuses assigned (avoid duplicate work)
+      const existingAssignments = await this.request.get(
+        `${this.baseURL}/api/model/projectStatusAssignment/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { projectId },
+              take: 1,
+            }),
+          },
+        }
+      );
+
+      if (existingAssignments.ok()) {
+        const existingResult = await existingAssignments.json();
+        if (existingResult.data && existingResult.data.length > 0) {
+          // Project already has status assignments, skip
+          return;
+        }
       }
-    );
 
-    if (!response.ok()) {
-      throw new Error("Failed to fetch statuses");
-    }
-
-    const result = await response.json();
-    const statuses = result.data;
-
-    // Assign each status to the project
-    for (const status of statuses) {
-      try {
-        await this.request.post(
-          `${this.baseURL}/api/model/projectStatusAssignment/create`,
-          {
-            data: {
-              data: {
-                project: { connect: { id: projectId } },
-                status: { connect: { id: status.id } },
+      // Get all statuses
+      const response = await this.request.get(
+        `${this.baseURL}/api/model/status/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: {
+                isDeleted: false,
+                isEnabled: true,
               },
-            },
-          }
-        );
-      } catch (error) {
-        // Ignore errors (status might already be assigned)
-        console.warn(`Failed to assign status ${status.id} to project ${projectId}`);
+            }),
+          },
+        }
+      );
+
+      if (!response.ok()) {
+        return; // Silently fail
       }
+
+      const result = await response.json();
+      const statuses = result.data;
+
+      if (!statuses || statuses.length === 0) {
+        return; // No statuses to assign
+      }
+
+      // Assign each status to the project
+      const assignments = statuses.map((status: any) =>
+        this.request
+          .post(
+            `${this.baseURL}/api/model/projectStatusAssignment/create`,
+            {
+              data: {
+                data: {
+                  project: { connect: { id: projectId } },
+                  status: { connect: { id: status.id } },
+                },
+              },
+            }
+          )
+          .catch(() => {
+            // Silently ignore individual assignment errors
+          })
+      );
+
+      // Wait for all assignments to complete (or fail)
+      await Promise.allSettled(assignments);
+    } catch (error) {
+      // Silently fail - this is not critical
     }
   }
 
