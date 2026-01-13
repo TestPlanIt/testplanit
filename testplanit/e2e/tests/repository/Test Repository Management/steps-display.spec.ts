@@ -36,6 +36,42 @@ test.describe("Steps Display", () => {
     return stepsDisplayProjectId;
   }
 
+  /**
+   * Helper to expand the left panel if it's collapsed
+   * This is needed to make the test case details (including steps) visible
+   */
+  async function expandLeftPanelIfCollapsed(page: any) {
+    // Wait a moment for the page to settle after navigation
+    await page.waitForTimeout(500);
+
+    // Look for the toggle button using the data-testid
+    const toggleButton = page.locator('[data-testid="toggle-left-panel-button"]');
+
+    try {
+      // Wait for the button to be visible
+      await toggleButton.waitFor({ state: 'visible', timeout: 3000 });
+
+      // Check if the button has the "rotate-180" class, which indicates the panel is collapsed
+      const buttonClasses = await toggleButton.getAttribute('class');
+      const isPanelCollapsed = buttonClasses?.includes('rotate-180');
+
+      if (isPanelCollapsed) {
+        // Click to expand
+        await toggleButton.click();
+
+        // Wait for panel animation to complete
+        await page.waitForTimeout(800);
+
+        console.log('Left panel expanded successfully');
+      } else {
+        console.log('Left panel is already expanded');
+      }
+    } catch (error) {
+      // Button not found - this is unexpected but log it
+      console.log('Toggle button not found - this may indicate a problem with the page load');
+    }
+  }
+
   test("Read-Only Steps Display on Test Case Details Page", async ({
     api,
     page,
@@ -83,6 +119,9 @@ test.describe("Steps Display", () => {
     // Verify we're on the correct test case by checking the name in the heading
     await expect(page.locator(`text=${testCaseName}`)).toBeVisible({ timeout: 10000 });
 
+    // Expand the left panel if it's collapsed (to make steps visible)
+    await expandLeftPanelIfCollapsed(page);
+
     // Verify step content is displayed
     await expect(page.locator("text=Step 1: Open the application")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("text=Application opens successfully")).toBeVisible();
@@ -120,6 +159,9 @@ test.describe("Steps Display", () => {
 
     // Verify we're on the test case detail page by checking for the test case name in the header
     await expect(page.locator(`text="${testCaseName}"`).first()).toBeVisible({ timeout: 10000 });
+
+    // Expand the left panel if it's collapsed (to make steps visible)
+    await expandLeftPanelIfCollapsed(page);
 
     // Click Edit button to enter edit mode using the specific test ID
     const editButton = page.locator('[data-testid="edit-test-case-button"]');
@@ -225,6 +267,9 @@ test.describe("Steps Display", () => {
     // Navigate to the newly created test case (version 1 with no steps)
     await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
     await page.waitForLoadState("networkidle");
+
+    // Expand the left panel if it's collapsed (to make steps visible)
+    await expandLeftPanelIfCollapsed(page);
 
     const editButton = page.locator('[data-testid="edit-test-case-button"]');
     await expect(editButton).toBeVisible({ timeout: 15000 });
@@ -517,6 +562,9 @@ test.describe("Steps Display", () => {
     const editButton = page.locator('button:has-text("Edit")').first();
     await expect(editButton).toBeVisible({ timeout: 15000 });
 
+    // Expand the left panel if it's collapsed (to make steps visible)
+    await expandLeftPanelIfCollapsed(page);
+
     // Verify regular step is displayed
     await expect(page.locator("text=Regular step")).toBeVisible();
 
@@ -573,6 +621,9 @@ test.describe("Steps Display", () => {
     // Wait for page to load
     const editButton = page.locator('button:has-text("Edit")').first();
     await expect(editButton).toBeVisible({ timeout: 15000 });
+
+    // Expand the left panel if it's collapsed (to make steps visible)
+    await expandLeftPanelIfCollapsed(page);
 
     // Verify steps appear in correct order by checking their text content
     await expect(page.locator("text=First step")).toBeVisible();
