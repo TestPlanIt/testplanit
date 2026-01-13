@@ -1,3 +1,10 @@
+## [0.9.30](https://github.com/TestPlanIt/testplanit/compare/v0.9.29...v0.9.30) (2026-01-13)
+
+
+### Bug Fixes
+
+* **dependencies:** update package versions and improve two-factor authentication handling ([63e178f](https://github.com/TestPlanIt/testplanit/commit/63e178f37bc15f2b362330f8d8cea99de93f3ee8))
+
 ## [0.9.29](https://github.com/TestPlanIt/testplanit/compare/v0.9.28...v0.9.29) (2026-01-10)
 
 
