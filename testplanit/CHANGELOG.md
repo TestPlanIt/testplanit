@@ -1,3 +1,10 @@
+## [0.10.1](https://github.com/TestPlanIt/testplanit/compare/v0.10.0...v0.10.1) (2026-01-13)
+
+
+### Bug Fixes
+
+* **FlakyTestsBubbleChart:** enhance execution checks and data handling ([ee9097c](https://github.com/TestPlanIt/testplanit/commit/ee9097c82c5f6d24a65f6f0d68a308c3c6a35436))
+
 # [0.10.0](https://github.com/TestPlanIt/testplanit/compare/v0.9.30...v0.10.0) (2026-01-13)
 
 
