@@ -39,20 +39,32 @@ const TextFromJson: React.FC<TextFromJsonProps> = ({
   }, [jsonString, format]);
 
   useEffect(() => {
-    const observer = new MutationObserver(() => {
+    const checkHeight = () => {
       if (contentRef.current) {
-        const contentHeight = contentRef.current.scrollHeight;
-        const containerHeight = 75;
-        setShowButton(expandable && contentHeight > containerHeight);
+        // Check if there's actual overflow by comparing scrollHeight with clientHeight
+        const hasOverflow = contentRef.current.scrollHeight > contentRef.current.clientHeight;
+        setShowButton(expandable && hasOverflow);
       }
-    });
+    };
+
+    // Check immediately after render
+    const timeoutId = setTimeout(checkHeight, 0);
+
+    // Watch for content changes (DOM mutations)
+    const mutationObserver = new MutationObserver(checkHeight);
+
+    // Watch for size changes (container width/height changes)
+    const resizeObserver = new ResizeObserver(checkHeight);
 
     if (contentRef.current) {
-      observer.observe(contentRef.current, { childList: true, subtree: true });
+      mutationObserver.observe(contentRef.current, { childList: true, subtree: true });
+      resizeObserver.observe(contentRef.current);
     }
 
     return () => {
-      observer.disconnect();
+      clearTimeout(timeoutId);
+      mutationObserver.disconnect();
+      resizeObserver.disconnect();
     };
   }, [plainText, expandable]);
 
