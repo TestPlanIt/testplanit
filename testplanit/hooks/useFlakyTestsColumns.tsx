@@ -149,6 +149,7 @@ export function useFlakyTestsColumns(
           </span>
         ),
         cell: (info) => {
+          if (!info.row.original) return null;
           const executions = info.row.original.executions || [];
           const totalSlots = Math.max(executions.length, consecutiveRuns);
 

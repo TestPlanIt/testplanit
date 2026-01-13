@@ -17,9 +17,7 @@ import {
   useFindFirstProjects,
   useFindManyJUnitTestSuite,
   useFindFirstStatusScope,
-  useFindManyTestRunResults,
   useFindUniqueTestRuns,
-  useFindManyTestRuns,
 } from "~/lib/hooks";
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -287,6 +285,8 @@ export default function TestRunPage() {
     useState<JSONContent>(emptyEditorContent);
   const [isCollapsedLeft, setIsCollapsedLeft] = useState(false);
   const [isCollapsedRight, setIsCollapsedRight] = useState(false);
+  const [isTransitioningLeft, setIsTransitioningLeft] = useState(false);
+  const [isTransitioningRight, setIsTransitioningRight] = useState(false);
   const [panelRightWidth, setPanelRightWidth] = useState(20);
   const panelRightRef = useRef<ImperativePanelHandle>(null);
   const [contentLoaded, setContentLoaded] = useState(false);
@@ -688,6 +688,7 @@ export default function TestRunPage() {
 
   // Panel controls
   const toggleCollapseLeft = () => {
+    setIsTransitioningLeft(true);
     if (panelLeftRef.current) {
       if (isCollapsedLeft) {
         panelLeftRef.current.expand();
@@ -696,9 +697,11 @@ export default function TestRunPage() {
       }
       setIsCollapsedLeft(!isCollapsedLeft);
     }
+    setTimeout(() => setIsTransitioningLeft(false), 300);
   };
 
   const toggleCollapseRight = () => {
+    setIsTransitioningRight(true);
     if (panelRightRef.current) {
       if (isCollapsedRight) {
         panelRightRef.current.expand();
@@ -707,6 +710,7 @@ export default function TestRunPage() {
       }
       setIsCollapsedRight(!isCollapsedRight);
     }
+    setTimeout(() => setIsTransitioningRight(false), 300);
   };
 
   const handleResize = useCallback((size: number) => {
@@ -1651,6 +1655,11 @@ export default function TestRunPage() {
                 collapsedSize={0}
                 onCollapse={() => setIsCollapsedLeft(true)}
                 onExpand={() => setIsCollapsedLeft(false)}
+                className={
+                  isTransitioningLeft
+                    ? "transition-all duration-300 ease-in-out"
+                    : ""
+                }
               >
                 <div className="flex flex-col h-full p-4">
                   <div className="space-y-4">
@@ -1825,7 +1834,7 @@ export default function TestRunPage() {
                 onCollapse={() => setIsCollapsedRight(true)}
                 onExpand={() => setIsCollapsedRight(false)}
                 className={`${
-                  isTransitioning
+                  isTransitioningRight
                     ? "transition-all duration-300 ease-in-out"
                     : ""
                 } w-["${panelRightWidth}%"]`}
@@ -2050,7 +2059,9 @@ export default function TestRunPage() {
             initialSelectedCaseIds={
               addRunModalInitPropsForDuplicate.initialSelectedCaseIds
             }
-            duplicationPreset={addRunModalInitPropsForDuplicate.duplicationPreset}
+            duplicationPreset={
+              addRunModalInitPropsForDuplicate.duplicationPreset
+            }
             defaultMilestoneId={
               addRunModalInitPropsForDuplicate.defaultMilestoneId
             }

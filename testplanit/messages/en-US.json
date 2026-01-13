@@ -994,7 +994,9 @@
       "seeAllActiveTestRuns": "{count, plural, =1 {See # Active Test Run} other {See all # Active Test Runs}}",
       "latestTestRuns": "Latest Test Runs",
       "testCaseBreakdown": "Test Case Breakdown",
-      "noTestCases": "The project repository is empty. Add test cases using the Repository."
+      "noTestCases": "The project repository is empty. Add test cases using the Repository.",
+      "noTestCasesPrefix": "The project repository is empty. Add test cases using the",
+      "noTestCasesLink": "Repository"
     },
     "icon": {
       "upload": {
@@ -2186,7 +2188,7 @@
       "groups": "Groups",
       "roles": "Roles",
       "tags": "Tags",
-      "issueTracker": "Issue Tracker",
+      "issues": "Issues",
       "appConfig": "Application Configuration",
       "notifications": "Notifications",
       "systemHeader": "System",
@@ -4565,6 +4567,14 @@
         "flakyTests": {
           "label": "Flaky Tests",
           "description": "Identify tests with inconsistent pass/fail results"
+        },
+        "testCaseHealth": {
+          "label": "Test Case Health",
+          "description": "Identify stale, broken, or suspicious test cases based on execution patterns"
+        },
+        "issueTestCoverage": {
+          "label": "Issue Test Coverage",
+          "description": "View issues with their linked test cases and latest execution status"
         }
       },
       "flakyTests": {
@@ -4592,6 +4602,98 @@
           "backlogDescription": "{count} additional flaky tests not shown"
         }
       },
+      "testCaseHealth": {
+        "staleDaysThreshold": "Stale After (days)",
+        "staleDaysThresholdHelp": "Number of days without execution before a test is considered stale (7-90).",
+        "minExecutions": "Min Executions for Rate",
+        "minExecutionsHelp": "Minimum number of executions required to calculate meaningful pass rate statistics (3-20).",
+        "lookbackDays": "Lookback Period",
+        "lookbackDaysHelp": "Number of days to analyze execution history (30-365).",
+        "includeFilter": "Include",
+        "status": "Health Status",
+        "healthScore": "Score",
+        "lastExecuted": "Last Executed",
+        "executions": "Executions",
+        "passRate": "Pass Rate",
+        "passCount": "Passes",
+        "failCount": "Failures",
+        "never": "Never",
+        "daysSince": "Days since execution",
+        "count": "Count",
+        "totalTests": "test cases",
+        "noData": "No test cases found",
+        "noExecutedTests": "No executed tests to display",
+        "healthStatus": {
+          "healthy": "Healthy",
+          "stale": "Stale",
+          "neverExecuted": "Never Executed",
+          "alwaysPassing": "Always Passing",
+          "alwaysFailing": "Always Failing"
+        },
+        "chart": {
+          "distribution": "Status Distribution",
+          "healthyRecent": "Healthy & Recent",
+          "unhealthyStale": "Needs attention",
+          "daysAxis": "Days Since Last Execution",
+          "healthScoreAxis": "Health Score"
+        },
+        "stats": {
+          "totalTests": "Total Tests",
+          "needsAttention": "Needs Attention",
+          "needsAttentionTooltip": "Always Failing + Never Executed + Stale tests",
+          "healthy": "Healthy",
+          "healthyTooltip": "Healthy + Always Passing tests",
+          "avgScore": "Avg Health Score"
+        },
+        "healthScoreTooltip": {
+          "title": "Score starts at 100, deductions:",
+          "neverExecuted": "Never executed: -50",
+          "stale90": "Not run in 90+ days: -40",
+          "stale60": "Not run in 60+ days: -25",
+          "stale30": "Not run in 30+ days: -10",
+          "alwaysPassing": "Always passing (100%): -5",
+          "alwaysFailing": "Always failing (0%): -30",
+          "lowPassRate": "Low pass rate (<50%): -20",
+          "lowExecutions": "Few executions (<3): -10"
+        }
+      },
+      "issueTestCoverage": {
+        "viewMode": "View Mode",
+        "summaryView": "Summary (by Issue)",
+        "detailView": "Detail (by Test Case)",
+        "issue": "Issue",
+        "testCase": "Test Case",
+        "testCases": "{count, plural, =1 {Test Case} other {Test Cases}}",
+        "issueStatus": "Status",
+        "priority": "Priority",
+        "linkedTests": "Linked Tests",
+        "testResults": "Results (P/F/U)",
+        "passRate": "Pass Rate",
+        "passed": "Passed",
+        "failed": "Failed",
+        "untested": "Untested",
+        "lastStatus": "Last Status",
+        "lastExecuted": "Last Executed",
+        "notTested": "Not Tested",
+        "noData": "No issues with linked test cases found",
+        "noIssuesNeedingAttention": "All issues have passing tests - great work!",
+        "stats": {
+          "totalIssues": "Total Issues",
+          "issuesWithFailures": "With Failures",
+          "issuesWithFailuresTooltip": "Issues with at least one failing test case",
+          "issuesWithUntested": "With Untested",
+          "issuesWithUntestedTooltip": "Issues with at least one test case that has not been executed",
+          "issuesAllPassing": "All Passing",
+          "overallPassRate": "Pass Rate",
+          "numberOfIssues": "Number of Issues"
+        },
+        "charts": {
+          "passRateDistribution": "Test Pass Rate Distribution",
+          "linkedTestCases": "Number of Linked Test Cases",
+          "untestedTestCases": "Number of Untested Test Cases",
+          "testCoverageVsExecution": "Test Coverage vs Execution Status"
+        }
+      },
       "crossProjectReportTypes": {
         "testExecution": {
           "label": "Cross-Project Test Execution",
@@ -4616,6 +4718,14 @@
         "flakyTests": {
           "label": "Cross-Project Flaky Tests",
           "description": "Identify tests with inconsistent pass/fail results across projects"
+        },
+        "testCaseHealth": {
+          "label": "Cross-Project Test Case Health",
+          "description": "Identify stale, broken, or suspicious test cases across projects"
+        },
+        "issueTestCoverage": {
+          "label": "Cross-Project Issue Test Coverage",
+          "description": "View issues with their linked test cases and latest execution status across projects"
         }
       }
     },

@@ -110,7 +110,7 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
             className="border-2 border-primary/20 rounded-lg p-2"
           >
             <div className="font-semibold mb-1 text-foreground/80 flex items-start w-full">
-              <div className="mr-2 font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
+              <div className="mr-2 font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 shrink-0 mt-2">
                 {item.order + 1}
               </div>
               <div className="w-full">
@@ -124,7 +124,7 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
               </div>
             </div>
             <div className="font-semibold mb-1 text-foreground/80 flex items-start">
-              <SearchCheck className="mr-2 text-primary h-9 w-9 shrink-0" />
+              <SearchCheck className="mr-2 text-primary h-6 w-6 shrink-0 mt-2" />
               <div className="w-full">
                 {renderFieldValue(
                   item.expectedResult,
@@ -225,8 +225,9 @@ const renderFieldValue = (
 
   if (previousFieldValue === undefined) {
     return (
-      <div className="bg-green-100 p-1">
-        <span className="text-green-600 flex space-x-1 items-center">
+      <div className="relative p-1 rounded">
+        <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
+        <span className="relative text-green-600 dark:text-green-400 flex space-x-1 items-center">
           <div>
             <Plus className="w-4 h-4" />
           </div>
@@ -251,8 +252,9 @@ const renderFieldValue = (
   if (areValuesDifferent) {
     return (
       <div>
-        <div className="bg-red-100 p-1">
-          <span className="text-red-600 flex space-x-1 items-center">
+        <div className="relative p-1 rounded">
+          <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
+          <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
             <div>
               <Minus className="w-4 h-4" />
             </div>
@@ -265,8 +267,9 @@ const renderFieldValue = (
             />
           </span>
         </div>
-        <div className="bg-green-100 p-1">
-          <span className="text-green-600 flex space-x-1 items-center">
+        <div className="relative p-1 rounded">
+          <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
+          <span className="relative text-green-600 dark:text-green-400 flex space-x-1 items-center">
             <div>
               <Plus className="w-4 h-4" />
             </div>
@@ -312,7 +315,7 @@ export const StepsDisplay: React.FC<StepsProps> = ({
   const showDiff = !!previousSteps;
 
   return (
-    <div>
+    <div data-testid="steps-display">
       <div className="flex items-center">
         <div className="font-bold">{tGlobal("common.fields.steps")}</div>
         <TooltipProvider>
@@ -371,11 +374,18 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                 <li
                   key={`shared-${step.sharedStepGroupId}-${index}`}
                   className="mb-4"
+                  data-testid={`step-container-${index}`}
                 >
-                  <div className="flex flex-col items-start min-w-[200px] bg-muted/60 p-2 rounded-lg mb-2 border-2 border-primary/20">
+                  <div
+                    className="flex flex-col items-start min-w-[200px] bg-muted/60 p-2 rounded-lg mb-2 border-2 border-primary/20"
+                    data-testid="shared-step-group"
+                  >
                     <div className="flex items-center justify-between pb-2 space-x-2 cursor-default w-full">
                       <div className="flex items-center font-bold">
-                        <div className="mr-2 font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
+                        <div
+                          className="mr-2 font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 shrink-0 mt-2"
+                          data-testid={`step-badge-${index}`}
+                        >
                           {index + 1}
                         </div>
                         <Layers className="h-5 w-5 ml-1 mr-2 text-primary" />
@@ -387,15 +397,17 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                         })}
                       </div>
                     </div>
-                    <RenderSharedGroupItems
-                      sharedStepGroupId={step.sharedStepGroupId}
-                      sharedStepGroupName={
-                        step.sharedStepGroup?.name ||
-                        step.sharedStepGroupName ||
-                        "Shared Steps"
-                      }
-                      expandAll={expandAll}
-                    />
+                    <div data-testid="expand-shared-steps">
+                      <RenderSharedGroupItems
+                        sharedStepGroupId={step.sharedStepGroupId}
+                        sharedStepGroupName={
+                          step.sharedStepGroup?.name ||
+                          step.sharedStepGroupName ||
+                          "Shared Steps"
+                        }
+                        expandAll={expandAll}
+                      />
+                    </div>
                   </div>
                 </li>
               );
@@ -406,13 +418,20 @@ export const StepsDisplay: React.FC<StepsProps> = ({
             // Regular step rendering (existing logic)
             // console.log("Rendering regular step:", { step, index });
             return (
-              <li key={`step-${step.id}-${index}`} className="mb-4">
+              <li
+                key={`step-${step.id}-${index}`}
+                className="mb-4"
+                data-testid={`step-container-${index}`}
+              >
                 <div className="">
-                  <div className="flex gap-2 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
-                    <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
+                  <div className="flex gap-2 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
+                    <div
+                      className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 shrink-0 mt-2"
+                      data-testid={`step-badge-${index}`}
+                    >
                       {index + 1}
                     </div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       {renderFieldValue(
                         step.step || "",
                         previousStep ? previousStep.step || "" : undefined,
@@ -422,17 +441,22 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-1 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-t-none">
-                    <SearchCheck className="text-primary h-9 w-9 shrink-0" />
-                    {renderFieldValue(
-                      step.expectedResult || "",
-                      previousStep
-                        ? previousStep.expectedResult || ""
-                        : undefined,
-                      step.id.toString() + "-expected",
-                      expandAll,
-                      showDiff
-                    )}
+                  <div
+                    className="flex gap-1 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-t-none"
+                    data-testid={`expected-result-${index}`}
+                  >
+                    <SearchCheck className="text-primary h-6 w-6 shrink-0 mt-2" />
+                    <div className="flex-1 min-w-0">
+                      {renderFieldValue(
+                        step.expectedResult || "",
+                        previousStep
+                          ? previousStep.expectedResult || ""
+                          : undefined,
+                        step.id.toString() + "-expected",
+                        expandAll,
+                        showDiff
+                      )}
+                    </div>
                   </div>
                 </div>
               </li>
@@ -440,46 +464,96 @@ export const StepsDisplay: React.FC<StepsProps> = ({
           })}
           {previousSteps && previousSteps.length > steps.length && (
             <li key="deleted-steps" className="mb-4">
-              {previousSteps.slice(steps.length).map((step, index) => (
-                <div key={`deleted-step-${step.id}-${index}`} className="">
-                  <div className="flex gap-2 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
-                    <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">
-                      {steps.length + index + 1}
+              {previousSteps.slice(steps.length).map((step, index) => {
+                const ensureValidJsonString = (value: any): string => {
+                  if (!value) return JSON.stringify(emptyEditorContent);
+
+                  try {
+                    if (typeof value === "string") {
+                      JSON.parse(value);
+                      return value;
+                    } else {
+                      return JSON.stringify(value);
+                    }
+                  } catch (error) {
+                    try {
+                      const textContent = String(value);
+                      if (textContent.startsWith('{"type":"doc","content":[')) {
+                        try {
+                          JSON.parse(textContent);
+                          return textContent;
+                        } catch {
+                          return JSON.stringify({
+                            type: "doc",
+                            content: [
+                              {
+                                type: "paragraph",
+                                content: [{ type: "text", text: textContent }],
+                              },
+                            ],
+                          });
+                        }
+                      }
+                      return JSON.stringify({
+                        type: "doc",
+                        content: [
+                          {
+                            type: "paragraph",
+                            content: [{ type: "text", text: textContent }],
+                          },
+                        ],
+                      });
+                    } catch {
+                      return JSON.stringify(emptyEditorContent);
+                    }
+                  }
+                };
+
+                return (
+                  <div key={`deleted-step-${step.id}-${index}`} className="">
+                    <div className="flex gap-2 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
+                      <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 shrink-0 mt-2">
+                        {steps.length + index + 1}
+                      </div>
+                      <div className="flex-1 min-w-0 relative p-1 rounded">
+                        <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
+                        <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
+                          <div>
+                            <Minus className="w-4 h-4" />
+                          </div>
+                          <TextFromJson
+                            key={"prev" + step.id.toString()}
+                            jsonString={ensureValidJsonString(step.step)}
+                            room={"prev" + step.id.toString()}
+                            format="html"
+                            expand={expandAll}
+                          />
+                        </span>
+                      </div>
                     </div>
-                    <div className="bg-red-100 p-1">
-                      <span className="text-red-600 flex space-x-1">
-                        <div>
-                          <Minus className="w-4 h-4" />
-                        </div>
-                        <TextFromJson
-                          key={"prev" + step.id.toString()}
-                          jsonString={step.step?.toString() || ""}
-                          room={"prev" + step.id.toString()}
-                          format="html"
-                          expand={expandAll}
-                        />
-                      </span>
+                    <div className="flex gap-1 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-t-none">
+                      <SearchCheck className="text-primary h-6 w-6 shrink-0 mt-2" />
+                      <div className="flex-1 min-w-0 relative p-1 rounded">
+                        <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
+                        <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
+                          <div>
+                            <Minus className="w-4 h-4" />
+                          </div>
+                          <TextFromJson
+                            key={"prev" + step.id.toString() + "-expected"}
+                            jsonString={ensureValidJsonString(
+                              step.expectedResult
+                            )}
+                            room={"prev" + step.id.toString() + "-expected"}
+                            format="html"
+                            expand={expandAll}
+                          />
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex gap-1 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-t-none">
-                    <SearchCheck className="text-primary h-9 w-9 shrink-0" />
-                    <div className="bg-red-100 p-1">
-                      <span className="text-red-600 flex space-x-1">
-                        <div>
-                          <Minus className="w-4 h-4" />
-                        </div>
-                        <TextFromJson
-                          key={"prev" + step.id.toString() + "-expected"}
-                          jsonString={step.expectedResult?.toString() || ""}
-                          room={"prev" + step.id.toString() + "-expected"}
-                          format="html"
-                          expand={expandAll}
-                        />
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </li>
           )}
         </ol>

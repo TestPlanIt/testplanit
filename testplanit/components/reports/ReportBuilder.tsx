@@ -77,6 +77,8 @@ import {
 import { useReportColumns } from "~/hooks/useReportColumns";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
+import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
+import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
 import {
   getProjectReportTypes,
   getCrossProjectReportTypes,
@@ -102,6 +104,20 @@ interface ReportBuilderProps {
   mode: "project" | "cross-project";
   projectId?: number;
   defaultReportType?: string;
+}
+
+// Helper to check if a report type is a pre-built report
+function isPreBuiltReport(reportType: string): boolean {
+  return [
+    "automation-trends",
+    "cross-project-automation-trends",
+    "flaky-tests",
+    "cross-project-flaky-tests",
+    "test-case-health",
+    "cross-project-test-case-health",
+    "issue-test-coverage",
+    "cross-project-issue-test-coverage",
+  ].includes(reportType);
 }
 
 // Form schema for date range
@@ -166,8 +182,10 @@ function ReportBuilderContent({
   // Panel state
   const panelRef = useRef<any>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const toggleCollapse = () => {
+    setIsTransitioning(true);
     if (panelRef.current) {
       if (isCollapsed) {
         panelRef.current.expand();
@@ -176,6 +194,7 @@ function ReportBuilderContent({
       }
       setIsCollapsed(!isCollapsed);
     }
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   // Split report types into pre-built reports and custom reports
@@ -275,6 +294,15 @@ function ReportBuilderContent({
   >("all");
   // Track the consecutiveRuns value used when report was last run (for stable chart/table rendering)
   const [lastUsedConsecutiveRuns, setLastUsedConsecutiveRuns] = useState(10);
+
+  // Test case health state
+  const [staleDaysThreshold, setStaleDaysThreshold] = useState(30);
+  const [minExecutionsForRate, setMinExecutionsForRate] = useState(5);
+  const [lookbackDays, setLookbackDays] = useState(90);
+  const [healthAutomatedFilter, setHealthAutomatedFilter] = useState<
+    "all" | "automated" | "manual"
+  >("all");
+
   // Track when the report was last generated (for display and future export functionality)
   const [reportGeneratedAt, setReportGeneratedAt] = useState<Date | null>(null);
 
@@ -576,13 +604,31 @@ function ReportBuilderContent({
     mode === "cross-project"
   );
 
+  // Use test case health columns for test-case-health report
+  const testCaseHealthColumns = useTestCaseHealthColumns(
+    projectId,
+    lastUsedDimensions.map((d) => d.value),
+    mode === "cross-project"
+  );
+
+  // Use issue test coverage columns for issue-test-coverage report
+  const issueTestCoverageSummaryColumns = useIssueTestCoverageSummaryColumns(
+    projectId,
+    lastUsedDimensions.map((d) => d.value),
+    mode === "cross-project"
+  );
+
   // Choose which columns to use based on report type
   const columns =
-    reportType === "automation-trends"
+    reportType === "automation-trends" || reportType === "cross-project-automation-trends"
       ? automationTrendsColumns
-      : reportType === "flaky-tests"
+      : reportType === "flaky-tests" || reportType === "cross-project-flaky-tests"
         ? flakyTestsColumns
-        : standardColumns;
+        : reportType === "test-case-health" || reportType === "cross-project-test-case-health"
+          ? testCaseHealthColumns
+          : reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage"
+            ? issueTestCoverageSummaryColumns
+            : standardColumns;
 
   // When lastUsedDimensions change (after running a report), update grouping
   React.useEffect(() => {
@@ -597,6 +643,35 @@ function ReportBuilderContent({
       setGrouping([]);
     }
   }, [lastUsedDimensions]);
+
+  // Initialize column visibility for issue test coverage report
+  React.useEffect(() => {
+    if (reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage") {
+      // Set all columns to visible for this report
+      const visibility: Record<string, boolean> = {
+        issueId: true,
+        testCaseId: true,
+        issueStatus: true,
+        issuePriority: true,
+        lastStatusName: true,
+        lastExecutedAt: true,
+        linkedTestCases: true,
+        testResults: true,
+        passRate: true,
+      };
+      setColumnVisibility(visibility);
+    }
+  }, [reportType]);
+
+  // Set grouping for issue test coverage report when data loads
+  React.useEffect(() => {
+    if ((reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage") && allResults && allResults.length > 0) {
+      // Group by issueId to show issues with expandable test cases
+      setGrouping(["issueId"]);
+      // Start with all groups collapsed
+      setExpanded({});
+    }
+  }, [reportType, allResults]);
 
   // Get the current report configuration
   const currentReport = reportTypes.find((r) => r.id === reportType);
@@ -1002,6 +1077,36 @@ function ReportBuilderContent({
           }
         }
 
+        // For test case health, add health parameters and dimensions
+        if (reportType === "test-case-health") {
+          body.staleDaysThreshold = staleDaysThreshold;
+          body.minExecutionsForRate = minExecutionsForRate;
+          body.lookbackDays = lookbackDays;
+          body.automatedFilter = healthAutomatedFilter;
+          // Always include dimensions for cross-project reports (project should be auto-added)
+          if (mode === "cross-project") {
+            const dimValues = selectedDimensions.map((d) => d.value);
+            // Ensure project is included if it's not already there
+            if (!dimValues.includes("project")) {
+              dimValues.unshift("project");
+            }
+            body.dimensions = dimValues;
+          }
+        }
+
+        // For issue test coverage, add dimensions for cross-project
+        if (reportType === "issue-test-coverage") {
+          // Always include dimensions for cross-project reports (project should be auto-added)
+          if (mode === "cross-project") {
+            const dimValues = selectedDimensions.map((d) => d.value);
+            // Ensure project is included if it's not already there
+            if (!dimValues.includes("project")) {
+              dimValues.unshift("project");
+            }
+            body.dimensions = dimValues;
+          }
+        }
+
         // Add sorting parameters if configured
         if (sortConfig) {
           // Map frontend column IDs to backend metric IDs
@@ -1238,6 +1343,10 @@ function ReportBuilderContent({
       consecutiveRuns,
       flipThreshold,
       flakyAutomatedFilter,
+      staleDaysThreshold,
+      minExecutionsForRate,
+      lookbackDays,
+      healthAutomatedFilter,
     ]
   );
 
@@ -1481,17 +1590,27 @@ function ReportBuilderContent({
   const memoizedChart = useMemo(() => {
     const chartData = chartDataRef.current;
 
-    // For automation trends and flaky tests, we don't need traditional dimensions/metrics
-    // as the chart uses specialized data structures
-    const isAutomationTrends = reportType === "automation-trends";
+    // For pre-built reports (automation trends, flaky tests, test case health, issue test coverage),
+    // we don't need traditional dimensions/metrics as the chart uses specialized data structures
+    const isAutomationTrends =
+      reportType === "automation-trends" ||
+      reportType === "cross-project-automation-trends";
     const isFlakyTests =
       reportType === "flaky-tests" ||
       reportType === "cross-project-flaky-tests";
+    const isTestCaseHealth =
+      reportType === "test-case-health" ||
+      reportType === "cross-project-test-case-health";
+    const isIssueTestCoverage =
+      reportType === "issue-test-coverage" ||
+      reportType === "cross-project-issue-test-coverage";
 
     if (
       !chartData ||
       (!isAutomationTrends &&
         !isFlakyTests &&
+        !isTestCaseHealth &&
+        !isIssueTestCoverage &&
         (chartDimensions.length === 0 || chartMetrics.length === 0))
     ) {
       return { chart: null, isTruncated: false, totalDataPoints: 0 };
@@ -1540,11 +1659,15 @@ function ReportBuilderContent({
       ? dataToLimit.slice(0, MAX_CHART_DATA_POINTS)
       : dataToLimit;
 
+    // For Test Case Health and Issue Test Coverage, pass all data so the chart can show accurate summary stats
+    // These charts handle aggregation internally and need the full dataset
+    const chartResults = isTestCaseHealth || isIssueTestCoverage ? chartData : limitedChartData;
+
     return {
       chart: (
         <ReportChart
           key={chartKey}
-          results={limitedChartData}
+          results={chartResults}
           dimensions={chartDimensions}
           metrics={chartMetrics}
           reportType={reportType}
@@ -1554,7 +1677,7 @@ function ReportBuilderContent({
           projectId={projectId}
         />
       ),
-      isTruncated,
+      isTruncated: isTestCaseHealth || isIssueTestCoverage ? false : isTruncated,
       totalDataPoints: chartData.length,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1583,7 +1706,9 @@ function ReportBuilderContent({
           collapsible
           onCollapse={() => setIsCollapsed(true)}
           onExpand={() => setIsCollapsed(false)}
-          className="p-0 m-0"
+          className={`p-0 m-0 ${
+            isTransitioning ? "transition-all duration-300 ease-in-out" : ""
+          }`}
         >
           <Card
             shadow="none"
@@ -1850,6 +1975,171 @@ function ReportBuilderContent({
                         </div>
                       )}
 
+                      {/* Test Case Health Parameters */}
+                      {(reportType === "test-case-health" ||
+                        reportType === "cross-project-test-case-health") && (
+                        <div className="grid gap-4">
+                          {/* Stale Days Threshold */}
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tReports("testCaseHealth.staleDaysThreshold")}
+                              </label>
+                              <HelpPopover
+                                helpKey={`## ${tReports("testCaseHealth.staleDaysThreshold")}\n${tReports("testCaseHealth.staleDaysThresholdHelp")}`}
+                              />
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="range"
+                                min={7}
+                                max={90}
+                                step={1}
+                                value={staleDaysThreshold}
+                                onChange={(e) =>
+                                  setStaleDaysThreshold(Number(e.target.value))
+                                }
+                                className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                              />
+                              <span className="w-8 text-sm font-mono text-center">
+                                {staleDaysThreshold}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Min Executions for Rate */}
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tReports("testCaseHealth.minExecutions")}
+                              </label>
+                              <HelpPopover
+                                helpKey={`## ${tReports("testCaseHealth.minExecutions")}\n${tReports("testCaseHealth.minExecutionsHelp")}`}
+                              />
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="range"
+                                min={3}
+                                max={20}
+                                step={1}
+                                value={minExecutionsForRate}
+                                onChange={(e) =>
+                                  setMinExecutionsForRate(Number(e.target.value))
+                                }
+                                className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                              />
+                              <span className="w-8 text-sm font-mono text-center">
+                                {minExecutionsForRate}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Lookback Days */}
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm font-medium">
+                                {tReports("testCaseHealth.lookbackDays")}
+                              </label>
+                              <HelpPopover
+                                helpKey={`## ${tReports("testCaseHealth.lookbackDays")}\n${tReports("testCaseHealth.lookbackDaysHelp")}`}
+                              />
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full justify-between"
+                                >
+                                  {lookbackDays === 0
+                                    ? tReports("dateRange.allTime")
+                                    : lookbackDays === 30
+                                      ? tReports("dateRange.last30Days")
+                                      : lookbackDays === 90
+                                        ? tReports("dateRange.last3Months")
+                                        : tReports("dateRange.last12Months")}
+                                  <ChevronDown className="ml-2 h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start">
+                                <DropdownMenuItem
+                                  onClick={() => setLookbackDays(30)}
+                                >
+                                  {tReports("dateRange.last30Days")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setLookbackDays(90)}
+                                >
+                                  {tReports("dateRange.last3Months")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setLookbackDays(365)}
+                                >
+                                  {tReports("dateRange.last12Months")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => setLookbackDays(0)}
+                                >
+                                  {tReports("dateRange.allTime")}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+
+                          {/* Test Case Type Filter */}
+                          <div className="grid gap-2">
+                            <label className="text-sm font-medium">
+                              {tReports("testCaseHealth.includeFilter")}
+                            </label>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full justify-between"
+                                >
+                                  {healthAutomatedFilter === "all"
+                                    ? tRuns("typeFilter.both")
+                                    : healthAutomatedFilter === "manual"
+                                      ? tCommon("fields.manual")
+                                      : tCommon("fields.automated")}
+                                  <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="start"
+                                className="w-full"
+                              >
+                                <DropdownMenuGroup>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setHealthAutomatedFilter("all")
+                                    }
+                                  >
+                                    {tRuns("typeFilter.both")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setHealthAutomatedFilter("manual")
+                                    }
+                                  >
+                                    {tCommon("fields.manual")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setHealthAutomatedFilter("automated")
+                                    }
+                                  >
+                                    {tCommon("fields.automated")}
+                                  </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Run Report Button */}
                       <Button
                         onClick={handleRunReport}
@@ -2082,8 +2372,7 @@ function ReportBuilderContent({
                         onClick={handleRunReport}
                         disabled={
                           loading ||
-                          (reportType === "automation-trends" ||
-                          reportType === "flaky-tests"
+                          (isPreBuiltReport(reportType)
                             ? false // No requirements for pre-built reports
                             : dimensions.length === 0 || metrics.length === 0)
                         }

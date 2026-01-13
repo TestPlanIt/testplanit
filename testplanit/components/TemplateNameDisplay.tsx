@@ -11,7 +11,7 @@ export const TemplateNameDisplay: React.FC<TemplateNameProps> = ({ name }) => {
 
   return (
     <span className="flex items-center space-x-1 shrink-0 overflow-hidden">
-      <LayoutTemplate className="text-primary" />
+      <LayoutTemplate className="shrink-0" />
       <span className="truncate">{name}</span>
     </span>
   );

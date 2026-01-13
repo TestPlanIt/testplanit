@@ -463,6 +463,22 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
   }) => {
     const projectId = await getTestProjectId(api);
 
+    // Ensure Priority field is assigned to the project's template
+    // Priority is a seeded case field that should be in the default template
+    // But other tests may have changed the default template, so we need to verify
+    const templateId = await api.getTemplateId(projectId);
+    const priorityFieldId = await api.getCaseFieldId("Priority");
+
+    if (!priorityFieldId) {
+      throw new Error("Priority case field not found - it should be seeded in the database");
+    }
+
+    // Assign Priority field to the template to ensure test isolation
+    const assigned = await api.assignFieldToTemplate(templateId, priorityFieldId);
+    if (!assigned) {
+      console.warn("Failed to assign Priority field to template - it may already be assigned");
+    }
+
     // Create a test case to ensure there's data in the repository
     const rootFolderId = await api.getRootFolderId(projectId);
     await api.createTestCase(
@@ -471,37 +487,49 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
       `E2E Priority View Test ${Date.now()}`
     );
 
+    // Set up response listener before navigation to catch the view-options API call
+    const viewOptionsPromise = page.waitForResponse(
+      response => response.url().includes('/api/repository-cases/view-options') && response.status() === 200,
+      { timeout: 15000 }
+    );
+
     await repositoryPage.goto(projectId);
 
-    // Open view selector (scoped to repository-left-panel-header to avoid project selector)
+    // Wait for the view-options API call to complete
+    await viewOptionsPromise;
+
+    // Wait for React Query to process the response and update the component state
+    await page.waitForLoadState("networkidle");
+
+    // Define the view selector
     const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
+
+    // Open the menu - options are rendered dynamically when the dropdown opens
     await viewSelector.click();
 
+    // Wait for the first option to appear (dropdown is now open and rendering options)
+    await expect(page.locator('[role="option"]').first()).toBeVisible({ timeout: 5000 });
+
     // Look for Priority as a dynamic field option in the view selector
-    // Priority is a seeded case field of type Dropdown
+    // Priority is a seeded case field of type Dropdown assigned to the default template
     const priorityOption = page
       .locator('[role="option"]')
       .filter({ hasText: /^Priority$/i });
 
-    const hasPriorityView = await priorityOption.isVisible();
+    // Priority should now be visible in the opened dropdown
+    await expect(priorityOption).toBeVisible({ timeout: 5000 });
 
-    if (hasPriorityView) {
-      // Click Priority view option
-      await priorityOption.click();
-      await page.waitForLoadState("networkidle");
+    // Click Priority view option
+    await priorityOption.click();
+    await page.waitForLoadState("networkidle");
 
-      // Verify the view selector now shows Priority
-      await expect(viewSelector).toContainText(/Priority/i);
+    // Verify the view selector now shows Priority
+    await expect(viewSelector).toContainText(/Priority/i);
 
-      // Priority filter options should appear (e.g., "All Priorities" or specific priority values)
-      const priorityFilters = page.locator('[role="button"]');
-      await expect(priorityFilters.first()).toBeVisible({ timeout: 10000 });
-    } else {
-      // Priority view might not be available if case field is not assigned to project
-      await page.keyboard.press("Escape");
-      test.skip();
-    }
+    // Priority filter options should appear (e.g., "All Priorities" or specific priority values)
+    const priorityFilters = page.locator('[role="button"]');
+    await expect(priorityFilters.first()).toBeVisible({ timeout: 10000 });
   });
 
   test("Column visibility toggle shows custom field columns", async ({

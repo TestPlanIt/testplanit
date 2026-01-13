@@ -12,6 +12,8 @@ import {
 } from "./ReportSmallMultiplesGroupedBar";
 import RecentResultsDonut from "./RecentResultsDonut";
 import { FlakyTestsBubbleChart } from "./FlakyTestsBubbleChart";
+import { TestCaseHealthChart } from "./TestCaseHealthChart";
+import { IssueTestCoverageChart } from "./IssueTestCoverageChart";
 import { stringToColorCode } from "~/utils/stringToColorCode";
 import { toHumanReadable } from "~/utils/duration";
 import { useLocale, useTranslations } from "next-intl";
@@ -426,6 +428,24 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         projectId={projectId}
       />
     );
+  }
+
+  // Special handling for test case health report - use combined donut + scatter chart
+  // Shows health status distribution and health score vs days since execution
+  if (
+    reportType === "test-case-health" ||
+    reportType === "cross-project-test-case-health"
+  ) {
+    return <TestCaseHealthChart data={results} projectId={projectId} />;
+  }
+
+  // Special handling for issue test coverage report - use stacked bar chart
+  // Shows issues with their linked test cases and pass/fail/untested breakdown
+  if (
+    reportType === "issue-test-coverage" ||
+    reportType === "cross-project-issue-test-coverage"
+  ) {
+    return <IssueTestCoverageChart data={results} projectId={projectId} />;
   }
 
   const chartType = getChartType(dimensions, chartMetrics);

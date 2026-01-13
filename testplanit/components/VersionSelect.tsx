@@ -52,7 +52,7 @@ export function VersionSelect({
         }
       }}
     >
-      <SelectTrigger className="w-fit">
+      <SelectTrigger className="w-fit" data-testid="version-select-trigger">
         <SelectValue placeholder="Select Version" />
       </SelectTrigger>
       <SelectContent>

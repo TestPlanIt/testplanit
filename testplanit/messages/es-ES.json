@@ -994,7 +994,9 @@
       "seeAllActiveTestRuns": "{count, plural, =1 {Mira # Active Test Run} other {Mira todas las # Pruebas activas}}",
       "latestTestRuns": "Últimas ejecuciones de prueba",
       "testCaseBreakdown": "Probar Desglose de Casos",
-      "noTestCases": "El repositorio del proyecto está vacío. Añada casos de prueba utilizando el Repositorio."
+      "noTestCases": "El repositorio del proyecto está vacío. Añada casos de prueba utilizando el Repositorio.",
+      "noTestCasesPrefix": "El repositorio del proyecto está vacío. Agregue casos de prueba usando el",
+      "noTestCasesLink": "Repositorio"
     },
     "icon": {
       "upload": {
@@ -2186,7 +2188,7 @@
       "groups": "Grupos",
       "roles": "Roles",
       "tags": "Etiquetas",
-      "issueTracker": "Rastreador de problemas",
+      "issues": "Asuntos",
       "appConfig": "Configuración de la aplicación",
       "notifications": "Notificaciones",
       "systemHeader": "Sistema",
@@ -4565,6 +4567,14 @@
         "flakyTests": {
           "label": "Pruebas inestables",
           "description": "Identificar pruebas con resultados inconsistentes de aprobado/reprobado"
+        },
+        "testCaseHealth": {
+          "label": "Caso de prueba de salud",
+          "description": "Identifique casos de prueba obsoletos, rotos o sospechosos según patrones de ejecución"
+        },
+        "issueTestCoverage": {
+          "label": "Cobertura de la prueba de emisión",
+          "description": "Ver problemas con sus casos de prueba vinculados y el último estado de ejecución"
         }
       },
       "flakyTests": {
@@ -4592,6 +4602,98 @@
           "backlogDescription": "{count} No se muestran pruebas adicionales"
         }
       },
+      "testCaseHealth": {
+        "staleDaysThreshold": "Rancio Después de (días)",
+        "staleDaysThresholdHelp": "Número de días sin ejecución antes de que una prueba se considere obsoleta (7-90).",
+        "minExecutions": "Ejecuciones mínimas por tasa",
+        "minExecutionsHelp": "Número mínimo de ejecuciones necesarias para calcular estadísticas de tasa de aprobación significativas (3-20).",
+        "lookbackDays": "Período de retrospección",
+        "lookbackDaysHelp": "Número de días para analizar el historial de ejecución (30-365).",
+        "includeFilter": "Incluir",
+        "status": "Estado de salud",
+        "healthScore": "Puntaje",
+        "lastExecuted": "Último ejecutado",
+        "executions": "Ejecuciones",
+        "passRate": "Tasa de aprobación",
+        "passCount": "Pases",
+        "failCount": "Fallos",
+        "never": "Nunca",
+        "daysSince": "Días desde la ejecución",
+        "count": "Contar",
+        "totalTests": "casos de prueba",
+        "noData": "No se encontraron casos de prueba",
+        "noExecutedTests": "No hay pruebas ejecutadas para mostrar",
+        "healthStatus": {
+          "healthy": "Saludable",
+          "stale": "Duro",
+          "neverExecuted": "Nunca ejecutado",
+          "alwaysPassing": "Siempre pasando",
+          "alwaysFailing": "Siempre fallando"
+        },
+        "chart": {
+          "distribution": "Distribución de estados",
+          "healthyRecent": "Saludable y reciente",
+          "unhealthyStale": "Necesita atención",
+          "daysAxis": "Días desde la última ejecución",
+          "healthScoreAxis": "Puntuación de salud"
+        },
+        "stats": {
+          "totalTests": "Pruebas totales",
+          "needsAttention": "Necesita atención",
+          "needsAttentionTooltip": "Siempre fallando + Nunca ejecutado + Pruebas obsoletas",
+          "healthy": "Saludable",
+          "healthyTooltip": "Saludable + Siempre aprobando pruebas",
+          "avgScore": "Puntuación de salud promedio"
+        },
+        "healthScoreTooltip": {
+          "title": "La puntuación comienza en 100, deducciones:",
+          "neverExecuted": "Nunca ejecutado: -50",
+          "stale90": "No se ejecutará en 90+ días: -40",
+          "stale60": "No se ejecutará en 60+ días: -25",
+          "stale30": "No se ejecutará en 30+ días: -10",
+          "alwaysPassing": "Siempre pasando (100%): -5",
+          "alwaysFailing": "Siempre fallando (0%): -30",
+          "lowPassRate": "Tasa de aprobación baja (<50%): -20",
+          "lowExecutions": "Pocas ejecuciones (<3): -10"
+        }
+      },
+      "issueTestCoverage": {
+        "viewMode": "Modo de visualización",
+        "summaryView": "Resumen (por tema)",
+        "detailView": "Detalle (por caso de prueba)",
+        "issue": "Asunto",
+        "testCase": "Caso de prueba",
+        "testCases": "{count, plural, =1 {Caso de prueba} other {Casos de prueba}}",
+        "issueStatus": "Estado",
+        "priority": "Prioridad",
+        "linkedTests": "Pruebas vinculadas",
+        "testResults": "Resultados (P/F/U)",
+        "passRate": "Tasa de aprobación",
+        "passed": "Aprobado",
+        "failed": "Fallido",
+        "untested": "No probado",
+        "lastStatus": "Último estado",
+        "lastExecuted": "Último ejecutado",
+        "notTested": "No probado",
+        "noData": "No se encontraron problemas con los casos de prueba vinculados",
+        "noIssuesNeedingAttention": "Todos los números tienen pruebas aprobadas: ¡gran trabajo!",
+        "stats": {
+          "totalIssues": "Emisiones totales",
+          "issuesWithFailures": "Con fracasos",
+          "issuesWithFailuresTooltip": "Problemas con al menos un caso de prueba fallido",
+          "issuesWithUntested": "Con no probado",
+          "issuesWithUntestedTooltip": "Problemas con al menos un caso de prueba que no se ha ejecutado",
+          "issuesAllPassing": "Todo pasa",
+          "overallPassRate": "Tasa de aprobación",
+          "numberOfIssues": "Número de problemas"
+        },
+        "charts": {
+          "passRateDistribution": "Distribución de la tasa de aprobación de la prueba",
+          "linkedTestCases": "Número de casos de prueba vinculados",
+          "untestedTestCases": "Número de casos de prueba no probados",
+          "testCoverageVsExecution": "Cobertura de la prueba vs. Estado de ejecución"
+        }
+      },
       "crossProjectReportTypes": {
         "testExecution": {
           "label": "Ejecutar pruebas de proyecto",
@@ -4616,6 +4718,14 @@
         "flakyTests": {
           "label": "Pruebas inestables entre proyectos",
           "description": "Identificar pruebas con resultados inconsistentes de aprobado/reprobado en los distintos proyectos"
+        },
+        "testCaseHealth": {
+          "label": "Estado del caso de prueba entre proyectos",
+          "description": "Identificar casos de prueba obsoletos, rotos o sospechosos en todos los proyectos"
+        },
+        "issueTestCoverage": {
+          "label": "Cobertura de pruebas de problemas entre proyectos",
+          "description": "Ver problemas con sus casos de prueba vinculados y el último estado de ejecución en todos los proyectos"
         }
       }
     },

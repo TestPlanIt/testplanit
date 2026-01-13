@@ -266,6 +266,8 @@ function Issues() {
   }, [accessFilterReady, searchFilter, statusFilter, priorityFilter]);
 
   const orderBy = useMemo(() => {
+    // Only apply server-side sorting for database columns
+    // Count columns (cases, testRuns, sessions, projects) will be sorted client-side
     if (!sortConfig?.column) {
       return {
         name: "asc" as const,
@@ -302,12 +304,17 @@ function Issues() {
       } as const;
     }
 
+    // For count columns, return default sort (will sort client-side)
     return {
       name: "asc" as const,
     };
   }, [sortConfig]);
 
-  const shouldPaginate = typeof effectivePageSize === "number";
+  // When sorting by count columns, we need to fetch ALL issues to sort properly
+  const needsClientSideSorting = ["cases", "testRuns", "sessions", "projects"].includes(
+    sortConfig.column
+  );
+  const shouldPaginate = !needsClientSideSorting && typeof effectivePageSize === "number";
   const paginationArgs = {
     skip: shouldPaginate ? skip : undefined,
     take: shouldPaginate ? effectivePageSize : undefined,
@@ -418,7 +425,7 @@ function Issues() {
       return [];
     }
 
-    return issues.map((issue): ExtendedIssues => {
+    const mapped = issues.map((issue): ExtendedIssues => {
       const counts = issueCounts[issue.id];
       const projects = issueProjects[issue.id] || [];
       const projectIds = projects.map((p) => p.id);
@@ -440,13 +447,54 @@ function Issues() {
         testRunsCount: counts?.testRuns ?? 0,
       };
     });
-  }, [issues, issueCounts, issueProjects]);
+
+    // Apply client-side sorting for count columns (since these aren't in the DB)
+    if (needsClientSideSorting) {
+      return mapped.sort((a, b) => {
+        let aValue: number;
+        let bValue: number;
+
+        switch (sortConfig.column) {
+          case "cases":
+            aValue = a.repositoryCasesCount ?? 0;
+            bValue = b.repositoryCasesCount ?? 0;
+            break;
+          case "testRuns":
+            aValue = a.testRunsCount ?? 0;
+            bValue = b.testRunsCount ?? 0;
+            break;
+          case "sessions":
+            aValue = a.sessionsCount ?? 0;
+            bValue = b.sessionsCount ?? 0;
+            break;
+          case "projects":
+            aValue = a.projects?.length ?? 0;
+            bValue = b.projects?.length ?? 0;
+            break;
+          default:
+            return 0;
+        }
+
+        return sortConfig.direction === "asc"
+          ? aValue - bValue
+          : bValue - aValue;
+      });
+    }
+
+    return mapped;
+  }, [issues, issueCounts, issueProjects, sortConfig, needsClientSideSorting]);
 
   useEffect(() => {
     setTotalItems(issuesCount ?? 0);
   }, [issuesCount, setTotalItems]);
 
-  const displayedIssues = mappedIssues;
+  // When sorting by count columns, apply pagination client-side
+  const displayedIssues = useMemo(() => {
+    if (needsClientSideSorting) {
+      return mappedIssues.slice(skip, skip + effectivePageSize);
+    }
+    return mappedIssues;
+  }, [mappedIssues, needsClientSideSorting, skip, effectivePageSize]);
 
   const pageSizeOptions: PageSizeOption[] = useMemo(() => {
     if (totalItems <= 10) {

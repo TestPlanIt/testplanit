@@ -994,7 +994,9 @@
       "seeAllActiveTestRuns": "{count, plural, =1 {Voir # Exécution de test active} other {Voir toutes les # Exécutions de test actives}}",
       "latestTestRuns": "Derniers essais",
       "testCaseBreakdown": "Analyse détaillée des cas de test",
-      "noTestCases": "Le dépôt du projet est vide. Ajoutez des cas de test à l'aide du dépôt."
+      "noTestCases": "Le dépôt du projet est vide. Ajoutez des cas de test à l'aide du dépôt.",
+      "noTestCasesPrefix": "Le dépôt du projet est vide. Ajoutez des cas de test en utilisant",
+      "noTestCasesLink": "Dépôt"
     },
     "icon": {
       "upload": {
@@ -2186,7 +2188,7 @@
       "groups": "Groupes",
       "roles": "Rôles",
       "tags": "Étiquettes",
-      "issueTracker": "Suivi des problèmes",
+      "issues": "Problèmes",
       "appConfig": "Configuration de l'application",
       "notifications": "Notifications",
       "systemHeader": "Système",
@@ -4565,6 +4567,14 @@
         "flakyTests": {
           "label": "Tests peu fiables",
           "description": "Identifier les tests présentant des résultats réussite/échec incohérents."
+        },
+        "testCaseHealth": {
+          "label": "Cas de test Santé",
+          "description": "Identifier les cas de test obsolètes, défectueux ou suspects en fonction des modèles d'exécution"
+        },
+        "issueTestCoverage": {
+          "label": "Couverture des tests de problèmes",
+          "description": "Afficher les problèmes avec leurs cas de test associés et leur état d'exécution le plus récent"
         }
       },
       "flakyTests": {
@@ -4592,6 +4602,98 @@
           "backlogDescription": "{count} tests supplémentaires instables non affichés"
         }
       },
+      "testCaseHealth": {
+        "staleDaysThreshold": "Rassis après (jours)",
+        "staleDaysThresholdHelp": "Nombre de jours sans exécution avant qu'un test ne soit considéré comme obsolète (7-90).",
+        "minExecutions": "Exécutions minimales pour le taux",
+        "minExecutionsHelp": "Nombre minimal d'exécutions requis pour calculer des statistiques de taux de réussite significatives (3-20).",
+        "lookbackDays": "Période de référence",
+        "lookbackDaysHelp": "Nombre de jours pour analyser l'historique d'exécution (30-365).",
+        "includeFilter": "Inclure",
+        "status": "État de santé",
+        "healthScore": "Score",
+        "lastExecuted": "Dernière exécution",
+        "executions": "Exécutions",
+        "passRate": "Taux de réussite",
+        "passCount": "laissez-passer",
+        "failCount": "Échecs",
+        "never": "Jamais",
+        "daysSince": "Jours depuis l'exécution",
+        "count": "Compter",
+        "totalTests": "cas de test",
+        "noData": "Aucun cas de test trouvé",
+        "noExecutedTests": "Aucun test exécuté à afficher",
+        "healthStatus": {
+          "healthy": "En bonne santé",
+          "stale": "Vicié",
+          "neverExecuted": "Jamais exécuté",
+          "alwaysPassing": "Toujours en train de passer",
+          "alwaysFailing": "Toujours en échec"
+        },
+        "chart": {
+          "distribution": "Répartition des statuts",
+          "healthyRecent": "Sain et récent",
+          "unhealthyStale": "Nécessite une attention particulière",
+          "daysAxis": "Jours écoulés depuis la dernière exécution",
+          "healthScoreAxis": "Score de santé"
+        },
+        "stats": {
+          "totalTests": "Tests totaux",
+          "needsAttention": "Nécessite une attention particulière",
+          "needsAttentionTooltip": "Échecs systématiques + Jamais exécutés + Tests obsolètes",
+          "healthy": "En bonne santé",
+          "healthyTooltip": "En bonne santé et toujours en réussite aux tests",
+          "avgScore": "Score de santé moyen"
+        },
+        "healthScoreTooltip": {
+          "title": "Le score initial est de 100, déductions :",
+          "neverExecuted": "Jamais exécuté : -50",
+          "stale90": "Non exécuté depuis plus de 90 jours : -40",
+          "stale60": "Non exécuté depuis plus de 60 jours : -25",
+          "stale30": "Non exécuté depuis plus de 30 jours : -10",
+          "alwaysPassing": "Réussite systématique (100 %) : -5",
+          "alwaysFailing": "Toujours en échec (0 %) : -30",
+          "lowPassRate": "Taux de réussite faible (<50%) : -20",
+          "lowExecutions": "Peu d'exécutions (<3) : -10"
+        }
+      },
+      "issueTestCoverage": {
+        "viewMode": "Mode d'affichage",
+        "summaryView": "Résumé (par numéro)",
+        "detailView": "Détail (par cas de test)",
+        "issue": "Problème",
+        "testCase": "Cas de test",
+        "testCases": "{count, plural, =1 {Cas de test} other {Cas de test}}",
+        "issueStatus": "Statut",
+        "priority": "Priorité",
+        "linkedTests": "Tests liés",
+        "testResults": "Résultats (P/F/U)",
+        "passRate": "Taux de réussite",
+        "passed": "Passé",
+        "failed": "Échoué",
+        "untested": "Non testé",
+        "lastStatus": "Dernier statut",
+        "lastExecuted": "Dernière exécution",
+        "notTested": "Non testé",
+        "noData": "Aucun problème n'a été détecté avec les cas de test liés.",
+        "noIssuesNeedingAttention": "Tous les problèmes ont été testés avec succès - excellent travail !",
+        "stats": {
+          "totalIssues": "Numéros totaux",
+          "issuesWithFailures": "Avec des échecs",
+          "issuesWithFailuresTooltip": "Problèmes avec au moins un cas de test défaillant",
+          "issuesWithUntested": "Avec des tests non effectués",
+          "issuesWithUntestedTooltip": "Problèmes avec au moins un cas de test qui n'a pas été exécuté",
+          "issuesAllPassing": "Tout passe",
+          "overallPassRate": "Taux de réussite",
+          "numberOfIssues": "Nombre de problèmes"
+        },
+        "charts": {
+          "passRateDistribution": "Répartition du taux de réussite aux tests",
+          "linkedTestCases": "Nombre de cas de test liés",
+          "untestedTestCases": "Nombre de cas de test non testés",
+          "testCoverageVsExecution": "Couverture des tests vs état d'exécution"
+        }
+      },
       "crossProjectReportTypes": {
         "testExecution": {
           "label": "Exécution de tests inter-projets",
@@ -4616,6 +4718,14 @@
         "flakyTests": {
           "label": "Tests instables inter-projets",
           "description": "Identifier les tests présentant des résultats de réussite/échec incohérents d'un projet à l'autre"
+        },
+        "testCaseHealth": {
+          "label": "Santé des cas de test inter-projets",
+          "description": "Identifier les cas de test obsolètes, défectueux ou suspects dans tous les projets"
+        },
+        "issueTestCoverage": {
+          "label": "Couverture des tests de problèmes inter-projets",
+          "description": "Consultez les problèmes, leurs cas de test associés et leur statut d'exécution le plus récent dans tous les projets."
         }
       }
     },

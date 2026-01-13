@@ -123,7 +123,7 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
   }
 
   return (
-    <div className="mt-2">
+    <div className="mt-2" data-testid="steps-results">
       <ol className="ml-1 mr-6 min-w-[200px]">
         {steps.map((step, index) => {
           if (step.sharedStepGroupId) {
@@ -131,10 +131,14 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
               <li
                 key={`shared-result-${step.sharedStepGroupId}-${index}`}
                 className="mb-4"
+                data-testid={`step-container-${index}`}
               >
                 <div className="flex flex-col items-start min-w-[200px] bg-muted/50 p-2 rounded-lg mb-1">
                   <div className="flex items-center font-bold pb-1 w-full">
-                    <div className="mt-2 font-bold flex items-center justify-center p-1 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 text-sm">
+                    <div
+                      className="mt-2 font-bold flex items-center justify-center p-1 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 text-sm"
+                      data-testid={`step-badge-${index}`}
+                    >
                       {index + 1}
                     </div>
                     <div className="ml-4 flex items-center mt-2">
@@ -177,9 +181,16 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
           }
 
           return (
-            <li key={`step-result-${step.id}-${index}`} className="mb-4">
+            <li
+              key={`step-result-${step.id}-${index}`}
+              className="mb-4"
+              data-testid={`step-container-${index}`}
+            >
               <div className="flex gap-2 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
-                <div className="mt-2 font-bold flex items-center justify-center p-1 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 text-sm">
+                <div
+                  className="mt-2 font-bold flex items-center justify-center p-1 text-primary-foreground bg-primary border-2 border-primary rounded-full w-6 h-6 text-sm"
+                  data-testid={`step-badge-${index}`}
+                >
                   {index + 1}
                 </div>
                 <div className="flex-1">

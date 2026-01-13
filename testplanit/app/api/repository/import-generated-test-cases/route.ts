@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { emptyEditorContent } from "~/app/constants/backend";
 import { ProjectAccessType } from "@prisma/client";
 import { auditBulkCreate } from "~/lib/services/auditLog";
+import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 
 interface GeneratedTestCase {
   id: string;
@@ -272,8 +273,23 @@ export async function POST(request: NextRequest) {
                 break;
 
               case "Dropdown":
+                // Try to map option name to ID (single value)
+                if (typeof fieldValue === "string") {
+                  const option = caseField.caseField.fieldOptions?.find(
+                    fo => fo.fieldOption.name === fieldValue
+                  );
+                  processedValue = option ? option.fieldOption.id : fieldValue;
+                } else if (Array.isArray(fieldValue) && fieldValue.length > 0) {
+                  // Take first value if array is provided for dropdown
+                  const option = caseField.caseField.fieldOptions?.find(
+                    fo => fo.fieldOption.name === fieldValue[0]
+                  );
+                  processedValue = option ? option.fieldOption.id : fieldValue[0];
+                }
+                break;
+
               case "Multi-Select":
-                // Try to map option names to IDs
+                // Try to map option names to IDs (always return array)
                 if (Array.isArray(fieldValue)) {
                   processedValue = fieldValue.map(optionName => {
                     const option = caseField.caseField.fieldOptions?.find(
@@ -282,10 +298,11 @@ export async function POST(request: NextRequest) {
                     return option ? option.fieldOption.id : optionName;
                   });
                 } else if (typeof fieldValue === "string") {
+                  // Single string value - wrap in array
                   const option = caseField.caseField.fieldOptions?.find(
                     fo => fo.fieldOption.name === fieldValue
                   );
-                  processedValue = option ? option.fieldOption.id : fieldValue;
+                  processedValue = option ? [option.fieldOption.id] : [fieldValue];
                 }
                 break;
 
@@ -402,7 +419,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        // Create the initial version record
+        // Create the initial version record using centralized helper
         const resolvedSteps = testCase.steps?.map(step => ({
           step: {
             type: "doc",
@@ -424,27 +441,18 @@ export async function POST(request: NextRequest) {
           },
         })) || [];
 
-        const newVersion = await prisma.repositoryCaseVersions.create({
-          data: {
-            repositoryCase: { connect: { id: newCase.id } },
-            project: { connect: { id: projectId } },
-            staticProjectName: folder.project?.name || "",
-            staticProjectId: projectId,
-            repositoryId: folder.repositoryId,
-            folderId: folderId,
-            folderName: folder.name || "",
-            templateId: templateId,
-            templateName: template.templateName,
+        // Note: newCase was created with currentVersion: 1 (default)
+        // Now create version 1 snapshot
+        const newVersion = await createTestCaseVersionInTransaction(prisma, newCase.id, {
+          version: 1, // Explicit version 1 for new generated case
+          creatorId: session.user.id,
+          creatorName: session.user.name || "",
+          createdAt: new Date(),
+          overrides: {
             name: testCase.name.slice(0, 255),
             stateId: defaultWorkflow.id,
             stateName: defaultWorkflow.name || "",
-            createdAt: new Date(),
-            creatorId: session.user.id,
-            creatorName: session.user.name || "",
             automated: testCase.automated,
-            isArchived: false,
-            isDeleted: false,
-            version: 1,
             steps: resolvedSteps,
             attachments: [], // No attachments for generated cases
             tags: [], // No tags for generated cases initially

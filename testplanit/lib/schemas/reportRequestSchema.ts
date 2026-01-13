@@ -1,5 +1,27 @@
 import { z } from "zod/v4";
 
+/**
+ * Pre-built report types that don't require dimension/metric selection.
+ * Add new pre-built reports here - no need to update validation rules elsewhere.
+ */
+const PRE_BUILT_REPORT_TYPES = [
+  "automation-trends",
+  "cross-project-automation-trends",
+  "flaky-tests",
+  "cross-project-flaky-tests",
+  "test-case-health",
+  "cross-project-test-case-health",
+  "issue-test-coverage",
+  "cross-project-issue-test-coverage",
+] as const;
+
+/**
+ * Check if a report type is pre-built (doesn't require dimensions/metrics)
+ */
+function isPreBuiltReport(reportType: string): boolean {
+  return PRE_BUILT_REPORT_TYPES.includes(reportType as any);
+}
+
 export const reportRequestSchema = z
   .object({
     reportType: z.string(),
@@ -39,8 +61,10 @@ export const reportRequestSchema = z
       }
     }
     // Rule: At least one dimension is required for most reports, unless only one metric is requested (for totals)
+    // Pre-built reports are exempt from this rule
     if (
       data.reportType !== "issue-tracking" &&
+      !isPreBuiltReport(data.reportType) &&
       data.dimensions.length === 0 &&
       data.metrics.length > 1
     ) {
@@ -52,14 +76,8 @@ export const reportRequestSchema = z
       });
     }
 
-    // Rule: At least one metric is always required (except for pre-built reports like automation-trends and flaky-tests)
-    if (
-      data.metrics.length === 0 &&
-      data.reportType !== "automation-trends" &&
-      data.reportType !== "cross-project-automation-trends" &&
-      data.reportType !== "flaky-tests" &&
-      data.reportType !== "cross-project-flaky-tests"
-    ) {
+    // Rule: At least one metric is always required (except for pre-built reports)
+    if (data.metrics.length === 0 && !isPreBuiltReport(data.reportType)) {
       ctx.addIssue({
         code: "custom",
         path: ["metrics"],

@@ -20,21 +20,48 @@ The reporting system offers:
 
 ## Report Types
 
+### Pre-Built Reports
+
+TestPlanIt includes specialized pre-built reports that provide immediate insights without configuration:
+
+#### Automation Trends
+
+Tracks test automation coverage and adoption over time. Monitor your automation initiative progress and identify areas needing automation investment.
+
+#### Flaky Tests
+
+Identifies tests with inconsistent pass/fail results. Helps improve test reliability and CI/CD stability by highlighting tests that may need maintenance.
+
+#### Test Case Health
+
+Analyzes test case execution frequency and recency. Identifies stale or abandoned tests to help maintain a clean and effective test repository.
+
+#### Issue Test Coverage
+
+Shows test coverage for issues tracked in integrated systems (Jira, GitHub, Azure DevOps). Track testing progress for issues and ensure critical items have adequate test coverage.
+
+### Custom Reports
+
+You can build custom reports using the Report Builder for specific analytical needs beyond the pre-built reports.
+
 ### Test Execution Reports
 
 **Test Run Progress:**
+
 - Execution status distribution (Passed, Failed, Blocked, Skipped)
 - Completion rates over time
 - Average execution time trends
 - Test case failure patterns
 
 **Test Case Analytics:**
+
 - Test case creation and modification trends
 - Automation coverage analysis
 - Test case complexity metrics
 - Repository growth patterns
 
 **Quality Metrics:**
+
 - Defect detection rates
 - Test effectiveness measurements
 - Coverage analysis by feature/module
@@ -43,18 +70,21 @@ The reporting system offers:
 ### Project Management Reports
 
 **Milestone Progress:**
+
 - Milestone completion tracking
 - Schedule adherence analysis
 - Resource allocation effectiveness
 - Project timeline visualization
 
 **Team Performance:**
+
 - Individual and team productivity metrics
 - Test execution velocity
 - Issue resolution rates
 - Collaboration patterns
 
 **Resource Utilization:**
+
 - Testing effort distribution
 - Capacity planning insights
 - Skill utilization analysis
@@ -63,12 +93,14 @@ The reporting system offers:
 ### Business Intelligence
 
 **Executive Dashboards:**
+
 - High-level KPI summaries
 - Cross-project comparisons
 - Trend analysis and forecasting
 - ROI and efficiency metrics
 
 **Compliance Reports:**
+
 - Audit trail documentation
 - Regulatory requirement tracking
 - Process adherence monitoring
@@ -87,6 +119,7 @@ The reporting system offers:
 #### 1. Data Source Selection
 
 Choose your primary data source:
+
 - **Test Cases**: Repository data and metadata
 - **Test Runs**: Execution results and performance
 - **Sessions**: Exploratory testing data
@@ -99,17 +132,20 @@ Choose your primary data source:
 Select dimensions for data analysis:
 
 **Time Dimensions:**
+
 - Created Date, Updated Date, Completed Date
 - Week, Month, Quarter, Year groupings
 - Custom date ranges and periods
 
 **Categorical Dimensions:**
+
 - Project, Folder, Template
 - Tags, Priority, Severity
 - Assigned User, Created By
 - Status, State, Configuration
 
 **Custom Dimensions:**
+
 - Custom field values
 - Calculated fields
 - Derived metrics
@@ -119,17 +155,20 @@ Select dimensions for data analysis:
 Choose metrics to measure:
 
 **Count Metrics:**
+
 - Total count, Unique count
 - Running totals, Cumulative sums
 - Percentage distributions
 
 **Time Metrics:**
+
 - Average duration, Total time
 - Time to completion
 - Average elapsed time (test execution)
 - Total elapsed time (test execution)
 
 **Quality Metrics:**
+
 - Pass/fail rates, Success ratios
 - Defect density, Error rates
 - Coverage percentages
@@ -139,26 +178,31 @@ Choose metrics to measure:
 Select appropriate chart types:
 
 **Bar Charts:**
+
 - Horizontal and vertical bars
 - Stacked and grouped bars
 - Comparison and trend analysis
 
 **Line Charts:**
+
 - Trend lines over time
 - Multiple series comparison
 - Forecast projections
 
 **Pie Charts:**
+
 - Distribution analysis
 - Category breakdowns
 - Proportion visualization
 
 **Tables:**
+
 - Detailed data views
 - Sortable columns
 - Summary statistics
 
 **Advanced Charts:**
+
 - Scatter plots for correlation
 - Heat maps for intensity
 - Gantt charts for timelines
@@ -178,27 +222,32 @@ The drill-down feature transforms reports from static summaries into interactive
 ### What You Can Drill Into
 
 **Test Execution Metrics:**
+
 - Test Results count - View individual test executions with details
 - Pass Rate - See pass/fail breakdown with status distribution
 - Average Elapsed Time - View test executions with their durations
 - Total Elapsed Time - See all executions contributing to the total
 
 **Test Case Metrics:**
+
 - Test Case Count - View repository cases with metadata
 - Automated/Manual Counts - See breakdown by automation status
 - Average Steps - View test cases with step counts
 - Automation Rate - See which cases are automated vs manual
 
 **Test Run Metrics:**
+
 - Test Run Count - View runs with status and progress
 - Milestone Test Cases - See cases included in milestone runs
 
 **Session Metrics:**
+
 - Session Count - View exploratory testing sessions
 - Session Duration - See sessions with time spent
 - Session Results - View findings and outcomes
 
 **Other Metrics:**
+
 - User activity metrics
 - Milestone progress details
 - Issue counts and details
@@ -209,6 +258,7 @@ The drill-down feature transforms reports from static summaries into interactive
 When you click a metric, a drawer slides in from the right showing:
 
 **Header:**
+
 - Metric name being explored
 - Applied filters summary (dimension values, dates)
 - Total record count
@@ -216,6 +266,7 @@ When you click a metric, a drawer slides in from the right showing:
 - Export to CSV button
 
 **Content:**
+
 - Table with relevant columns for the metric type
 - Clickable links to view individual records in detail
 - Formatted dates, times, and statuses
@@ -223,6 +274,7 @@ When you click a metric, a drawer slides in from the right showing:
 - Infinite scroll for large result sets
 
 **Navigation:**
+
 - Scroll to load more records (50 at a time)
 - Click record links to open in new context
 - Close drawer to return to report
@@ -240,16 +292,19 @@ When you click a metric, a drawer slides in from the right showing:
 #### Filters and Parameters
 
 **Static Filters:**
+
 - Fixed criteria applied to all report views
 - Date ranges, project selections
 - Status and category filters
 
 **Dynamic Parameters:**
+
 - User-configurable options
 - Interactive filtering
 - Drill-down to detailed records (see [Interactive Drill-Down](#interactive-drill-down))
 
 **Conditional Logic:**
+
 - IF/THEN statements for complex filtering
 - Multi-condition expressions
 - Dynamic field calculations
@@ -257,16 +312,19 @@ When you click a metric, a drawer slides in from the right showing:
 #### Formatting Options
 
 **Visual Styling:**
+
 - Colors and themes
 - Font sizes and styles
 - Layout and spacing
 
 **Data Formatting:**
+
 - Number formats and precision
 - Date format preferences
 - Currency and percentage displays
 
 **Responsive Design:**
+
 - Mobile-friendly layouts
 - Adaptive chart sizing
 - Print-optimized formatting
@@ -276,24 +334,28 @@ When you click a metric, a drawer slides in from the right showing:
 ### Pre-built Dashboards
 
 **Executive Dashboard:**
+
 - Key performance indicators
 - Project health summaries
 - Resource utilization overview
 - Trend analysis widgets
 
 **Project Manager Dashboard:**
+
 - Project-specific metrics
 - Team performance indicators
 - Milestone progress tracking
 - Risk and issue monitoring
 
 **Test Manager Dashboard:**
+
 - Test execution status
 - Quality metrics overview
 - Automation coverage
 - Defect trend analysis
 
 **Team Lead Dashboard:**
+
 - Individual performance metrics
 - Workload distribution
 - Productivity indicators
@@ -321,11 +383,13 @@ When you click a metric, a drawer slides in from the right showing:
 #### Dashboard Sharing
 
 **Access Control:**
+
 - Role-based permissions
 - User-specific views
 - Project-level restrictions
 
 **Distribution:**
+
 - Direct URL sharing
 - Email subscriptions
 - Embedded displays
@@ -333,11 +397,13 @@ When you click a metric, a drawer slides in from the right showing:
 ### Real-time Updates
 
 **Live Data Refresh:**
+
 - Automatic data updates
 - Configurable refresh intervals
 - Real-time notifications
 
 **Push Notifications:**
+
 - Threshold-based alerts
 - Significant change notifications
 - Critical issue warnings
@@ -347,16 +413,19 @@ When you click a metric, a drawer slides in from the right showing:
 ### Report Automation
 
 **Schedule Configuration:**
+
 - Daily, weekly, monthly schedules
 - Custom cron expressions
 - Time zone handling
 
 **Delivery Options:**
+
 - Email distribution lists
 - Shared folder exports
 - API endpoint delivery
 
 **Format Selection:**
+
 - PDF reports for presentations
 - Excel files for analysis
 - CSV data for import
@@ -364,16 +433,19 @@ When you click a metric, a drawer slides in from the right showing:
 ### Email Reports
 
 **Template Customization:**
+
 - Report layout and styling
 - Company branding
 - Custom messaging
 
 **Recipient Management:**
+
 - Distribution lists
 - Role-based recipients
 - Conditional delivery
 
 **Content Options:**
+
 - Summary highlights
 - Full report attachments
 - Dashboard screenshots
@@ -383,12 +455,14 @@ When you click a metric, a drawer slides in from the right showing:
 ### Trend Analysis
 
 **Statistical Analysis:**
+
 - Moving averages
 - Regression analysis
 - Correlation studies
 - Variance analysis
 
 **Forecasting:**
+
 - Predictive modeling
 - Trend extrapolation
 - Confidence intervals
@@ -397,12 +471,14 @@ When you click a metric, a drawer slides in from the right showing:
 ### Comparative Analysis
 
 **Benchmarking:**
+
 - Project comparisons
 - Team performance analysis
 - Historical comparisons
 - Industry benchmarks
 
 **Cohort Analysis:**
+
 - User behavior tracking
 - Feature adoption rates
 - Performance cohorts
@@ -411,12 +487,14 @@ When you click a metric, a drawer slides in from the right showing:
 ### Advanced Analytics
 
 **Machine Learning Integration:**
+
 - Anomaly detection
 - Pattern recognition
 - Predictive analytics
 - Risk assessment
 
 **Statistical Functions:**
+
 - Standard deviation
 - Percentile calculations
 - Z-score analysis
@@ -427,24 +505,28 @@ When you click a metric, a drawer slides in from the right showing:
 ### Export Formats
 
 **PDF Export:**
+
 - Print-ready layouts
 - Professional formatting
 - Embedded charts and images
 - Multi-page reports
 
 **Excel Export:**
+
 - Raw data access
 - Pivot table creation
 - Chart preservation
 - Formula compatibility
 
 **CSV Export:**
+
 - Data analysis integration
 - Import into other tools
 - Bulk data processing
 - Custom formatting
 
 **Image Export:**
+
 - Chart and dashboard screenshots
 - High-resolution images
 - Multiple format options
@@ -453,12 +535,14 @@ When you click a metric, a drawer slides in from the right showing:
 ### API Integration
 
 **Report API:**
+
 - Programmatic report generation
 - Data extraction endpoints
 - Custom integrations
 - Automated workflows
 
 **Webhook Integration:**
+
 - Real-time data delivery
 - Event-driven reporting
 - External system updates
@@ -469,12 +553,14 @@ When you click a metric, a drawer slides in from the right showing:
 ### Query Optimization
 
 **Data Indexing:**
+
 - Optimized database queries
 - Cached results
 - Incremental updates
 - Parallel processing
 
 **Aggregation Strategies:**
+
 - Pre-calculated summaries
 - Materialized views
 - Efficient grouping
@@ -483,12 +569,14 @@ When you click a metric, a drawer slides in from the right showing:
 ### Caching and Storage
 
 **Report Caching:**
+
 - Temporary result storage
 - Configurable cache duration
 - Automatic cache invalidation
 - Memory management
 
 **Data Warehousing:**
+
 - Historical data preservation
 - Aggregated data storage
 - ETL processes
@@ -525,18 +613,21 @@ When you click a metric, a drawer slides in from the right showing:
 ### Common Issues
 
 **Slow Report Performance:**
+
 - Check data volume and complexity
 - Optimize filters and queries
 - Consider data aggregation
 - Review database indexing
 
 **Incorrect Data:**
+
 - Verify data source configuration
 - Check filter settings
 - Validate calculation logic
 - Review data refresh status
 
 **Formatting Problems:**
+
 - Check browser compatibility
 - Verify responsive design
 - Test print layouts

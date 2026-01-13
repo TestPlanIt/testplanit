@@ -8,7 +8,6 @@ import {
   useFindManyTemplates,
   useFindManyWorkflows,
   useCreateRepositoryCases,
-  useCreateRepositoryCaseVersions,
   useCreateCaseFieldValues,
   useCreateCaseFieldVersionValues,
   useCreateAttachments,
@@ -238,6 +237,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const [isTemplateReady, setIsTemplateReady] = useState(false);
   const panelRef = useRef<React.ComponentRef<typeof ResizablePanel>>(null);
 
@@ -271,8 +271,6 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
     );
 
   const { mutateAsync: createRepositoryCases } = useCreateRepositoryCases();
-  const { mutateAsync: createRepositoryCaseVersions } =
-    useCreateRepositoryCaseVersions();
   const { mutateAsync: createCaseFieldValues } = useCreateCaseFieldValues();
   const { mutateAsync: createCaseFieldVersionValues } =
     useCreateCaseFieldVersionValues();
@@ -399,7 +397,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
       name: "",
       templateId: defaultTemplateId ?? 0,
       workflowId: defaultWorkflowId ?? 0,
-      estimate: undefined,
+      estimate: "",
       automated: false,
     },
   });
@@ -517,7 +515,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
         name: "",
         templateId: selectedTemplateId ?? 0,
         workflowId: defaultWorkflowId ?? 0,
-        estimate: undefined,
+        estimate: "",
         automated: false,
       };
       selectedTemplate.caseFields.forEach((caseField: any) => {
@@ -553,7 +551,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
         name: "",
         templateId: initialTemplateId ?? 0,
         workflowId: defaultWorkflowId ?? 0,
-        estimate: undefined,
+        estimate: "",
         automated: false,
       };
 
@@ -600,7 +598,13 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
 
     const selectedTemplate = templates?.find((template) => template.id === val);
     if (selectedTemplate) {
-      const defaultValues: Partial<FormValues> = {};
+      const defaultValues: Partial<FormValues> = {
+        name: "",
+        templateId: val,
+        workflowId: defaultWorkflowId ?? 0,
+        estimate: "",
+        automated: false,
+      };
       selectedTemplate.caseFields.forEach((caseField: any) => {
         if (
           caseField.caseField.type.type === "Dropdown" &&
@@ -613,6 +617,8 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
             defaultValues[caseField.caseField.id.toString()] =
               defaultOption.fieldOption.id;
           }
+        } else if (caseField.caseField.type.type === "Steps") {
+          defaultValues[caseField.caseField.id.toString()] = [];
         }
       });
       reset(defaultValues as FormValues);
@@ -869,41 +875,47 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
           })
           .filter(Boolean);
 
-        const newCaseVersion = await createRepositoryCaseVersions({
-          data: {
-            repositoryCase: { connect: { id: newCase.id } },
-            project: { connect: { id: Number(projectId) } },
-            staticProjectName: folder?.project?.name || "",
-            staticProjectId: Number(projectId),
-            repositoryId: folder?.repositoryId || 0,
-            folderId: folderId,
-            folderName: folder?.name || "",
-            templateId: convertedData.templateId,
-            templateName:
-              templates?.find((t) => t.id === convertedData.templateId)
-                ?.templateName || "",
-            name: convertedData.name,
-            stateId: convertedData.workflowId,
-            stateName:
-              workflows?.find((w) => w.id === convertedData.workflowId)?.name ||
-              "",
-            estimate: estimateInSeconds,
-            createdAt: new Date(),
-            creatorId: session.user.id,
-            creatorName: session.user.name || "",
-            automated: convertedData.automated,
-            isArchived: false,
-            isDeleted: false,
-            version: 1,
-            steps: resolvedStepsForVersion,
-            attachments: attachmentsJson,
-            tags: tagNamesForVersion,
-            issues: issuesDataForVersion,
-          },
+        // Invalidate and refetch the case to ensure we have the committed data from the database
+        // This prevents race conditions where version creation tries to use stale currentVersion
+        await queryClient.invalidateQueries({
+          queryKey: ["RepositoryCases", "findFirst"],
         });
 
-        if (!newCaseVersion)
-          throw new Error("Failed to create new case version");
+        // Create version snapshot using centralized API endpoint
+        const versionResponse = await fetch(
+          `/api/repository/cases/${newCase.id}/versions`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              // No version specified - will use currentVersion (1) from the newly created case
+              overrides: {
+                name: convertedData.name,
+                stateId: convertedData.workflowId,
+                stateName:
+                  workflows?.find((w) => w.id === convertedData.workflowId)
+                    ?.name || "",
+                automated: convertedData.automated,
+                estimate: estimateInSeconds,
+                steps: resolvedStepsForVersion,
+                attachments: attachmentsJson,
+                tags: tagNamesForVersion,
+                issues: issuesDataForVersion,
+              },
+            }),
+          }
+        );
+
+        if (!versionResponse.ok) {
+          const errorData = await versionResponse.json();
+          throw new Error(
+            `Failed to create case version: ${errorData.error || "Unknown error"}`
+          );
+        }
+
+        const { version: newCaseVersion } = await versionResponse.json();
 
         const createCaseFieldVersionValuesPromises = dynamicFields
           .filter(({ displayName }) => displayName !== "Steps")
@@ -955,6 +967,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
   }
 
   const toggleCollapse = () => {
+    setIsTransitioning(true);
     if (panelRef.current) {
       if (isCollapsed) {
         panelRef.current.expand();
@@ -963,6 +976,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
       }
       setIsCollapsed(!isCollapsed);
     }
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   return (
@@ -1065,7 +1079,9 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
                   collapsedSize={0}
                   minSize={0}
                   collapsible
-                  className="p-0 m-0 mr-4"
+                  className={`p-0 m-0 mr-4 ${
+                    isTransitioning ? "transition-all duration-300 ease-in-out" : ""
+                  }`}
                 >
                   <div className="mb-4 min-w-[300px] mx-1">
                     <FormField

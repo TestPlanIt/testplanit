@@ -655,7 +655,9 @@ var _emailQueue = null;
 function getNotificationQueue() {
   if (_notificationQueue) return _notificationQueue;
   if (!valkey_default) {
-    console.warn(`Valkey connection not available, Queue "${NOTIFICATION_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${NOTIFICATION_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
   _notificationQueue = new import_bullmq.Queue(NOTIFICATION_QUEUE_NAME, {
@@ -684,7 +686,9 @@ function getNotificationQueue() {
 function getEmailQueue() {
   if (_emailQueue) return _emailQueue;
   if (!valkey_default) {
-    console.warn(`Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
   _emailQueue = new import_bullmq.Queue(EMAIL_QUEUE_NAME, {

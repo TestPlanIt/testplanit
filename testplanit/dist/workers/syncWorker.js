@@ -99,7 +99,9 @@ var _syncQueue = null;
 function getSyncQueue() {
   if (_syncQueue) return _syncQueue;
   if (!valkey_default) {
-    console.warn(`Valkey connection not available, Queue "${SYNC_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${SYNC_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
   _syncQueue = new import_bullmq.Queue(SYNC_QUEUE_NAME, {

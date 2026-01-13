@@ -902,8 +902,12 @@ test.describe("Tags", () => {
     await filterInput.fill(activeTagName);
     await page.waitForLoadState("networkidle");
 
-    // Click the edit button for this tag
-    const editButton = page.locator("button:has(svg.lucide-square-pen)").first();
+    // Find the specific row containing our tag name, then click its edit button
+    const tableBody = page.locator('table tbody');
+    const tagRow = tableBody.locator('tr').filter({ hasText: activeTagName });
+    await expect(tagRow).toBeVisible({ timeout: 5000 });
+
+    const editButton = tagRow.locator("button:has(svg.lucide-square-pen)");
     await expect(editButton).toBeVisible({ timeout: 5000 });
     await editButton.click();
 
@@ -922,11 +926,16 @@ test.describe("Tags", () => {
     // Dialog should close successfully (deleted tag was renamed to allow this)
     await expect(dialog).not.toBeVisible({ timeout: 10000 });
 
-    // Verify the tag now has the new name
+    // Wait for any updates to complete
+    await page.waitForTimeout(500);
+
+    // Verify the tag now has the new name by searching for it in the table
     await filterInput.clear();
     await filterInput.fill(deletedTagName);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator(`text="${deletedTagName}"`).first()).toBeVisible({
+
+    // Look specifically in the table body for the renamed tag (reuse tableBody from above)
+    await expect(tableBody.locator(`text="${deletedTagName}"`).first()).toBeVisible({
       timeout: 5000,
     });
 
@@ -934,8 +943,10 @@ test.describe("Tags", () => {
     await filterInput.clear();
     await filterInput.fill(activeTagName);
     await page.waitForLoadState("networkidle");
-    await expect(page.locator(`text="${activeTagName}"`)).not.toBeVisible({
-      timeout: 3000,
+
+    // After renaming, searching for the old tag name should return no results
+    await expect(tableBody.locator(`text="${activeTagName}"`)).not.toBeVisible({
+      timeout: 5000,
     });
   });
 

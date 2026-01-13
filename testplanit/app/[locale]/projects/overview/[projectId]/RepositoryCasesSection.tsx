@@ -1,5 +1,5 @@
 import React from "react";
-import { ListTree, LinkIcon } from "lucide-react";
+import { LinkIcon } from "lucide-react";
 import { Link } from "~/lib/navigation";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
@@ -232,7 +232,16 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
   if (!repositoryCasesLatestFive?.length) {
     return (
       <div className="flex justify-center items-center py-8">
-        <div className="text-muted-foreground">{t("noTestCases")}</div>
+        <div className="text-muted-foreground">
+          {t("noTestCasesPrefix")}{" "}
+          <Link
+            href={`/projects/repository/${projectId}`}
+            className="text-primary hover:underline"
+          >
+            {t("noTestCasesLink")}
+          </Link>
+          .
+        </div>
       </div>
     );
   }

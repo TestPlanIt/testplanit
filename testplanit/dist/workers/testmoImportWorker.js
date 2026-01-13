@@ -33,6 +33,112 @@ var import_starter_kit2 = __toESM(require("@tiptap/starter-kit"));
 var import_node_url2 = require("node:url");
 var import_bcrypt = __toESM(require("bcrypt"));
 
+// lib/services/testCaseVersionService.ts
+async function createTestCaseVersionInTransaction(tx, caseId, options) {
+  const testCase = await tx.repositoryCases.findUnique({
+    where: { id: caseId },
+    include: {
+      project: true,
+      folder: true,
+      template: true,
+      state: true,
+      creator: true,
+      tags: { select: { name: true } },
+      issues: {
+        select: { id: true, name: true, externalId: true }
+      },
+      steps: {
+        orderBy: { order: "asc" },
+        select: { step: true, expectedResult: true }
+      }
+    }
+  });
+  if (!testCase) {
+    throw new Error(`Test case ${caseId} not found`);
+  }
+  const versionNumber = options.version ?? testCase.currentVersion;
+  const creatorId = options.creatorId ?? testCase.creatorId;
+  const creatorName = options.creatorName ?? testCase.creator.name ?? "";
+  const createdAt = options.createdAt ?? /* @__PURE__ */ new Date();
+  const overrides = options.overrides ?? {};
+  let stepsJson = null;
+  if (overrides.steps !== void 0) {
+    stepsJson = overrides.steps;
+  } else if (testCase.steps && testCase.steps.length > 0) {
+    stepsJson = testCase.steps.map((step) => ({
+      step: step.step,
+      expectedResult: step.expectedResult
+    }));
+  }
+  const tagsArray = overrides.tags ?? testCase.tags.map((tag) => tag.name);
+  const issuesArray = overrides.issues ?? testCase.issues;
+  const versionData = {
+    repositoryCaseId: testCase.id,
+    staticProjectId: testCase.projectId,
+    staticProjectName: testCase.project.name,
+    projectId: testCase.projectId,
+    repositoryId: testCase.repositoryId,
+    folderId: testCase.folderId,
+    folderName: testCase.folder.name,
+    templateId: testCase.templateId,
+    templateName: testCase.template.templateName,
+    name: overrides.name ?? testCase.name,
+    stateId: overrides.stateId ?? testCase.stateId,
+    stateName: overrides.stateName ?? testCase.state.name,
+    estimate: overrides.estimate !== void 0 ? overrides.estimate : testCase.estimate,
+    forecastManual: overrides.forecastManual !== void 0 ? overrides.forecastManual : testCase.forecastManual,
+    forecastAutomated: overrides.forecastAutomated !== void 0 ? overrides.forecastAutomated : testCase.forecastAutomated,
+    order: overrides.order ?? testCase.order,
+    createdAt,
+    creatorId,
+    creatorName,
+    automated: overrides.automated ?? testCase.automated,
+    isArchived: overrides.isArchived ?? testCase.isArchived,
+    isDeleted: false,
+    // Versions should never be marked as deleted
+    version: versionNumber,
+    steps: stepsJson,
+    tags: tagsArray,
+    issues: issuesArray,
+    links: overrides.links ?? [],
+    attachments: overrides.attachments ?? []
+  };
+  let newVersion;
+  let retryCount = 0;
+  const maxRetries = 3;
+  const baseDelay = 100;
+  while (retryCount <= maxRetries) {
+    try {
+      newVersion = await tx.repositoryCaseVersions.create({
+        data: versionData
+      });
+      break;
+    } catch (error) {
+      if (error.code === "P2002" && retryCount < maxRetries) {
+        retryCount++;
+        const delay = baseDelay * Math.pow(2, retryCount - 1);
+        console.log(
+          `Unique constraint violation on version creation (attempt ${retryCount}/${maxRetries}). Retrying after ${delay}ms...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        const refetchedCase = await tx.repositoryCases.findUnique({
+          where: { id: caseId },
+          select: { currentVersion: true }
+        });
+        if (refetchedCase) {
+          versionData.version = options.version ?? refetchedCase.currentVersion;
+        }
+      } else {
+        throw error;
+      }
+    }
+  }
+  if (!newVersion) {
+    throw new Error(`Failed to create version for case ${caseId} after retries`);
+  }
+  return newVersion;
+}
+
 // lib/multiTenantPrisma.ts
 var import_client = require("@prisma/client");
 function isMultiTenantMode() {
@@ -93,7 +199,9 @@ var _elasticsearchReindexQueue = null;
 function getElasticsearchReindexQueue() {
   if (_elasticsearchReindexQueue) return _elasticsearchReindexQueue;
   if (!valkey_default) {
-    console.warn(`Valkey connection not available, Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" not initialized.`);
+    console.warn(
+      `Valkey connection not available, Queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}" not initialized.`
+    );
     return null;
   }
   _elasticsearchReindexQueue = new import_bullmq.Queue(ELASTICSEARCH_REINDEX_QUEUE_NAME, {
@@ -3120,38 +3228,32 @@ var importAutomationCases = async (prisma2, configuration, datasetRows, projectI
             const workflowName = await getWorkflowName(tx, defaultWorkflowId);
             const resolvedFolderName = folderNameForVersion ?? await getFolderName(tx, folderId);
             const creatorName = await getUserName(tx, repositoryCase.creatorId);
-            const caseVersion = await tx.repositoryCaseVersions.create({
-              data: {
-                repositoryCase: { connect: { id: repositoryCase.id } },
-                project: { connect: { id: projectId } },
-                staticProjectId: projectId,
-                staticProjectName: projectName,
-                repositoryId,
-                folderId,
-                folderName: resolvedFolderName ?? "",
-                templateId: resolvedTemplateId,
-                templateName,
-                name,
-                stateId: defaultWorkflowId,
-                stateName: workflowName,
-                estimate: repositoryCase.estimate ?? null,
-                forecastManual: null,
-                forecastAutomated: null,
-                order: repositoryCase.order ?? 0,
-                createdAt: repositoryCase.createdAt ?? /* @__PURE__ */ new Date(),
+            const caseVersion = await createTestCaseVersionInTransaction(
+              tx,
+              repositoryCase.id,
+              {
+                // Use repositoryCase.currentVersion (already set on the case)
                 creatorId: repositoryCase.creatorId,
                 creatorName,
-                automated: true,
-                isArchived: repositoryCase.isArchived,
-                isDeleted: repositoryCase.isDeleted,
-                version: repositoryCase.currentVersion,
-                steps: import_client2.Prisma.JsonNull,
-                tags: [],
-                issues: [],
-                links: [],
-                attachments: []
+                createdAt: repositoryCase.createdAt ?? /* @__PURE__ */ new Date(),
+                overrides: {
+                  name,
+                  stateId: defaultWorkflowId,
+                  stateName: workflowName,
+                  estimate: repositoryCase.estimate ?? null,
+                  forecastManual: null,
+                  forecastAutomated: null,
+                  automated: true,
+                  isArchived: repositoryCase.isArchived,
+                  order: repositoryCase.order ?? 0,
+                  steps: null,
+                  tags: [],
+                  issues: [],
+                  links: [],
+                  attachments: []
+                }
               }
-            });
+            );
             const caseFieldValues = await tx.caseFieldValues.findMany({
               where: { testCaseId: repositoryCase.id },
               include: {
@@ -8687,38 +8789,32 @@ var importRepositoryCases = async (datasetRows, projectIdMap, repositoryIdMap, c
           const folderName = await getFolderName2(tx, resolvedFolderId);
           const creatorName = await getUserName2(tx, creatorId);
           const versionCaseName = toStringValue2(record.name) ?? repositoryCase.name;
-          const caseVersion = await tx.repositoryCaseVersions.create({
-            data: {
-              repositoryCase: { connect: { id: repositoryCase.id } },
-              project: { connect: { id: projectId } },
-              staticProjectId: projectId,
-              staticProjectName: projectName,
-              repositoryId: resolvedRepositoryId,
-              folderId: resolvedFolderId,
-              folderName,
-              templateId: resolvedTemplateId,
-              templateName,
-              name: versionCaseName,
-              stateId: resolvedWorkflowId,
-              stateName: workflowName,
-              estimate: repositoryCase.estimate ?? null,
-              forecastManual: repositoryCase.forecastManual ?? null,
-              forecastAutomated: repositoryCase.forecastAutomated ?? null,
-              order,
-              createdAt: repositoryCase.createdAt ?? /* @__PURE__ */ new Date(),
+          const caseVersion = await createTestCaseVersionInTransaction(
+            tx,
+            repositoryCase.id,
+            {
+              // Use repositoryCase.currentVersion (already set on the case)
               creatorId,
               creatorName,
-              automated: repositoryCase.automated,
-              isArchived: repositoryCase.isArchived,
-              isDeleted: repositoryCase.isDeleted,
-              version: repositoryCase.currentVersion,
-              steps: stepsForVersion.length > 0 ? stepsForVersion : import_client5.Prisma.JsonNull,
-              tags: [],
-              issues: [],
-              links: [],
-              attachments: []
+              createdAt: repositoryCase.createdAt ?? /* @__PURE__ */ new Date(),
+              overrides: {
+                name: versionCaseName,
+                stateId: resolvedWorkflowId,
+                stateName: workflowName,
+                estimate: repositoryCase.estimate ?? null,
+                forecastManual: repositoryCase.forecastManual ?? null,
+                forecastAutomated: repositoryCase.forecastAutomated ?? null,
+                automated: repositoryCase.automated,
+                isArchived: repositoryCase.isArchived,
+                order,
+                steps: stepsForVersion.length > 0 ? stepsForVersion : null,
+                tags: [],
+                issues: [],
+                links: [],
+                attachments: []
+              }
             }
-          });
+          );
           const caseFieldValuesForVersion = await tx.caseFieldValues.findMany({
             where: { testCaseId: repositoryCase.id },
             include: {

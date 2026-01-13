@@ -18,9 +18,9 @@ export class ApiHelper {
   private createdResultFieldIds: number[] = [];
   private createdTemplateIds: number[] = [];
   private createdFieldOptionIds: number[] = [];
-  private cachedTemplateId: number | null = null;
-  private cachedStateId: number | null = null;
-  private cachedRepositoryId: number | null = null;
+  private cachedTemplateIds: Map<number, number> = new Map(); // projectId -> templateId
+  private cachedStateIds: Map<number, number> = new Map(); // projectId -> stateId
+  private cachedRepositoryIds: Map<number, number> = new Map(); // projectId -> repositoryId
   private cachedStatusIds: Map<string, number> = new Map();
 
   constructor(request: APIRequestContext, baseURL: string) {
@@ -33,7 +33,10 @@ export class ApiHelper {
    * Templates have a many-to-many relationship with projects via TemplateProjectAssignment
    */
   async getTemplateId(projectId: number): Promise<number> {
-    if (this.cachedTemplateId) return this.cachedTemplateId;
+    // Check cache for this specific project
+    if (this.cachedTemplateIds.has(projectId)) {
+      return this.cachedTemplateIds.get(projectId)!;
+    }
 
     const response = await this.request.get(
       `${this.baseURL}/api/model/templates/findMany`,
@@ -61,8 +64,9 @@ export class ApiHelper {
       throw new Error("No templates found for project. Run seed first.");
     }
 
-    this.cachedTemplateId = result.data[0].id;
-    return this.cachedTemplateId as number;
+    const templateId = result.data[0].id;
+    this.cachedTemplateIds.set(projectId, templateId);
+    return templateId;
   }
 
   /**
@@ -70,7 +74,10 @@ export class ApiHelper {
    * Workflows have a many-to-many relationship with projects via ProjectWorkflowAssignment
    */
   async getStateId(projectId: number): Promise<number> {
-    if (this.cachedStateId) return this.cachedStateId;
+    // Check cache for this specific project
+    if (this.cachedStateIds.has(projectId)) {
+      return this.cachedStateIds.get(projectId)!;
+    }
 
     const response = await this.request.get(
       `${this.baseURL}/api/model/workflows/findMany`,
@@ -98,8 +105,9 @@ export class ApiHelper {
       throw new Error("No workflows found for project. Run seed first.");
     }
 
-    this.cachedStateId = result.data[0].id;
-    return this.cachedStateId as number;
+    const stateId = result.data[0].id;
+    this.cachedStateIds.set(projectId, stateId);
+    return stateId;
   }
 
   /**
@@ -198,7 +206,10 @@ export class ApiHelper {
    * Get the repository ID for a project
    */
   async getRepositoryId(projectId: number): Promise<number> {
-    if (this.cachedRepositoryId) return this.cachedRepositoryId;
+    // Check cache for this specific project
+    if (this.cachedRepositoryIds.has(projectId)) {
+      return this.cachedRepositoryIds.get(projectId)!;
+    }
 
     const response = await this.request.get(
       `${this.baseURL}/api/model/repositories/findMany`,
@@ -223,8 +234,9 @@ export class ApiHelper {
       );
     }
 
-    this.cachedRepositoryId = result.data[0].id;
-    return this.cachedRepositoryId as number;
+    const repositoryId = result.data[0].id;
+    this.cachedRepositoryIds.set(projectId, repositoryId);
+    return repositoryId;
   }
 
   /**
@@ -282,11 +294,12 @@ export class ApiHelper {
   async createTestCase(
     projectId: number,
     folderId: number,
-    name: string
+    name: string,
+    templateIdOverride?: number
   ): Promise<number> {
     const [repositoryId, templateId, stateId] = await Promise.all([
       this.getRepositoryId(projectId),
-      this.getTemplateId(projectId),
+      templateIdOverride ? Promise.resolve(templateIdOverride) : this.getTemplateId(projectId),
       this.getStateId(projectId),
     ]);
 
@@ -925,10 +938,14 @@ export class ApiHelper {
           },
         }
       );
-      // Template assignment failure is not critical for documentation tests
+      // Template assignment is CRITICAL - test cases cannot be created without it
       if (!templateAssignResponse.ok()) {
-        console.warn(`Failed to assign template to project ${projectId}`);
+        const error = await templateAssignResponse.text();
+        throw new Error(`Failed to assign template to project ${projectId}: ${error}`);
       }
+    } else {
+      // No default template - this is CRITICAL since test cases cannot be created
+      throw new Error(`No default template found for project ${projectId}. Test cases cannot be created without templates. Run seed first.`);
     }
 
     // Assign all workflows to project (matching setup-db.ts)
@@ -964,6 +981,80 @@ export class ApiHelper {
         // Workflow assignment failure is not critical for documentation tests
         if (!workflowAssignResponse.ok()) {
           console.warn(`Failed to assign workflows to project ${projectId}`);
+        }
+      }
+    }
+
+    // Assign all statuses to project (required for test runs, sessions, etc.)
+    const statusesResponse = await this.request.get(
+      `${this.baseURL}/api/model/status/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { isDeleted: false, isEnabled: true },
+          }),
+        },
+      }
+    );
+
+    if (statusesResponse.ok()) {
+      const statusesResult = await statusesResponse.json();
+      const statuses = statusesResult.data || [];
+
+      if (statuses.length > 0) {
+        const statusAssignments = statuses.map((s: { id: number }) => ({
+          statusId: s.id,
+          projectId: projectId,
+        }));
+
+        const statusAssignResponse = await this.request.post(
+          `${this.baseURL}/api/model/projectStatusAssignment/createMany`,
+          {
+            data: {
+              data: statusAssignments,
+            },
+          }
+        );
+
+        if (!statusAssignResponse.ok()) {
+          console.warn(`Failed to assign statuses to project ${projectId}`);
+        }
+      }
+    }
+
+    // Assign all milestone types to project (required for milestones)
+    const milestoneTypesResponse = await this.request.get(
+      `${this.baseURL}/api/model/milestoneType/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { isDeleted: false, isEnabled: true },
+          }),
+        },
+      }
+    );
+
+    if (milestoneTypesResponse.ok()) {
+      const milestoneTypesResult = await milestoneTypesResponse.json();
+      const milestoneTypes = milestoneTypesResult.data || [];
+
+      if (milestoneTypes.length > 0) {
+        const milestoneTypeAssignments = milestoneTypes.map((mt: { id: number }) => ({
+          milestoneTypeId: mt.id,
+          projectId: projectId,
+        }));
+
+        const milestoneTypeAssignResponse = await this.request.post(
+          `${this.baseURL}/api/model/projectMilestoneTypeAssignment/createMany`,
+          {
+            data: {
+              data: milestoneTypeAssignments,
+            },
+          }
+        );
+
+        if (!milestoneTypeAssignResponse.ok()) {
+          console.warn(`Failed to assign milestone types to project ${projectId}`);
         }
       }
     }
@@ -1606,6 +1697,56 @@ export class ApiHelper {
   }
 
   /**
+   * Get standard case field IDs (Priority, Description, Steps, Expected)
+   * These are the core fields typically needed for test cases
+   */
+  async getStandardCaseFieldIds(): Promise<number[]> {
+    const standardFieldNames = ["Priority", "Description", "Steps", "Expected"];
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/caseFields/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: {
+              displayName: { in: standardFieldNames },
+              isDeleted: false,
+            },
+            select: { id: true },
+          }),
+        },
+      }
+    );
+
+    const result = await response.json();
+    return result.data.map((field: { id: number }) => field.id);
+  }
+
+  /**
+   * Get standard result field IDs (Notes)
+   * These are the core fields typically needed for test results
+   */
+  async getStandardResultFieldIds(): Promise<number[]> {
+    const standardFieldNames = ["Notes"];
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/resultFields/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: {
+              displayName: { in: standardFieldNames },
+              isDeleted: false,
+            },
+            select: { id: true },
+          }),
+        },
+      }
+    );
+
+    const result = await response.json();
+    return result.data.map((field: { id: number }) => field.id);
+  }
+
+  /**
    * Create a template via API
    */
   async createTemplate(options: {
@@ -1800,6 +1941,127 @@ export class ApiHelper {
         },
       })
       .catch(() => {});
+  }
+
+  /**
+   * Verify a template exists and return its isDefault status
+   */
+  async verifyTemplate(templateId: number): Promise<{ exists: boolean; isDefault: boolean }> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/templates/findUnique`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { id: templateId },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      return { exists: false, isDefault: false };
+    }
+
+    const result = await response.json();
+    const template = result.data;
+
+    if (!template) {
+      return { exists: false, isDefault: false };
+    }
+
+    return {
+      exists: true,
+      isDefault: template.isDefault ?? false,
+    };
+  }
+
+  /**
+   * Get case field ID by display name
+   */
+  async getCaseFieldId(displayName: string): Promise<number | null> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/caseFields/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { displayName, isDeleted: false },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      return null;
+    }
+
+    const result = await response.json();
+    return result.data?.id || null;
+  }
+
+  /**
+   * Assign a case field to a template
+   */
+  async assignFieldToTemplate(templateId: number, caseFieldId: number): Promise<boolean> {
+    // Check if already assigned
+    const existingResponse = await this.request.get(
+      `${this.baseURL}/api/model/templateCaseAssignment/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: {
+              templateId,
+              caseFieldId,
+            },
+          }),
+        },
+      }
+    );
+
+    if (existingResponse.ok()) {
+      const result = await existingResponse.json();
+      if (result.data) {
+        // Already assigned
+        return true;
+      }
+    }
+
+    // Get the highest order number for this template
+    const assignmentsResponse = await this.request.get(
+      `${this.baseURL}/api/model/templateCaseAssignment/findMany`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { templateId },
+            orderBy: { order: 'desc' },
+            take: 1,
+          }),
+        },
+      }
+    );
+
+    let nextOrder = 1;
+    if (assignmentsResponse.ok()) {
+      const assignments = await assignmentsResponse.json();
+      if (assignments.data && assignments.data.length > 0) {
+        nextOrder = assignments.data[0].order + 1;
+      }
+    }
+
+    // Create the assignment using connect for relations
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/templateCaseAssignment/create`,
+      {
+        data: {
+          data: {
+            caseField: { connect: { id: caseFieldId } },
+            template: { connect: { id: templateId } },
+            order: nextOrder,
+          },
+        },
+      }
+    );
+
+    return response.ok();
   }
 
   /**
@@ -2008,6 +2270,283 @@ export class ApiHelper {
 
     const result = await response.json();
     return result.data;
+  }
+
+  /**
+   * Add steps to a test case
+   * Steps contain TipTap JSON content for step and expected result
+   */
+  async addStepsToTestCase(
+    testCaseId: number,
+    steps: Array<{
+      step: Record<string, unknown>;
+      expectedResult: Record<string, unknown>;
+      order: number;
+      sharedStepGroupId?: number | null;
+    }>
+  ): Promise<number[]> {
+    const stepIds: number[] = [];
+
+    for (const stepData of steps) {
+      const data: Record<string, unknown> = {
+        testCase: { connect: { id: testCaseId } },
+        step: JSON.stringify(stepData.step),
+        expectedResult: JSON.stringify(stepData.expectedResult),
+        order: stepData.order,
+        isDeleted: false,
+      };
+
+      if (stepData.sharedStepGroupId) {
+        data.sharedStepGroup = { connect: { id: stepData.sharedStepGroupId } };
+      }
+
+      const response = await this.request.post(
+        `${this.baseURL}/api/model/steps/create`,
+        {
+          data: { data },
+        }
+      );
+
+      if (!response.ok()) {
+        const error = await response.text();
+        throw new Error(`Failed to create step: ${error}`);
+      }
+
+      const result = await response.json();
+      stepIds.push(result.data.id);
+    }
+
+    return stepIds;
+  }
+
+  /**
+   * Assign all statuses to a project
+   * This is needed for test runs to work properly
+   */
+  async assignStatusesToProject(projectId: number): Promise<void> {
+    try {
+      // Check if project already has statuses assigned (avoid duplicate work)
+      const existingAssignments = await this.request.get(
+        `${this.baseURL}/api/model/projectStatusAssignment/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: { projectId },
+              take: 1,
+            }),
+          },
+        }
+      );
+
+      if (existingAssignments.ok()) {
+        const existingResult = await existingAssignments.json();
+        if (existingResult.data && existingResult.data.length > 0) {
+          // Project already has status assignments, skip
+          return;
+        }
+      }
+
+      // Get all statuses
+      const response = await this.request.get(
+        `${this.baseURL}/api/model/status/findMany`,
+        {
+          params: {
+            q: JSON.stringify({
+              where: {
+                isDeleted: false,
+                isEnabled: true,
+              },
+            }),
+          },
+        }
+      );
+
+      if (!response.ok()) {
+        return; // Silently fail
+      }
+
+      const result = await response.json();
+      const statuses = result.data;
+
+      if (!statuses || statuses.length === 0) {
+        return; // No statuses to assign
+      }
+
+      // Assign each status to the project
+      const assignments = statuses.map((status: any) =>
+        this.request
+          .post(
+            `${this.baseURL}/api/model/projectStatusAssignment/create`,
+            {
+              data: {
+                data: {
+                  project: { connect: { id: projectId } },
+                  status: { connect: { id: status.id } },
+                },
+              },
+            }
+          )
+          .catch(() => {
+            // Silently ignore individual assignment errors
+          })
+      );
+
+      // Wait for all assignments to complete (or fail)
+      await Promise.allSettled(assignments);
+    } catch (error) {
+      // Silently fail - this is not critical
+    }
+  }
+
+  /**
+   * Get a test case with its steps (for debugging)
+   */
+  async getTestCaseWithSteps(testCaseId: number): Promise<any> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/repositoryCases/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { id: testCaseId },
+            include: { steps: true },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      return null;
+    }
+
+    return await response.json();
+  }
+
+  /**
+   * Update test case steps (creates a new version)
+   * This deletes existing steps and creates new ones
+   */
+  async updateTestCaseSteps(
+    testCaseId: number,
+    steps: Array<{
+      step: Record<string, unknown>;
+      expectedResult: Record<string, unknown>;
+      order: number;
+    }>
+  ): Promise<void> {
+    // Delete existing steps
+    await this.request.post(
+      `${this.baseURL}/api/model/steps/deleteMany`,
+      {
+        data: {
+          where: { testCaseId },
+        },
+      }
+    );
+
+    // Add new steps
+    await this.addStepsToTestCase(testCaseId, steps);
+
+    // Update test case to increment version
+    await this.request.patch(
+      `${this.baseURL}/api/model/repositoryCases/update`,
+      {
+        data: {
+          where: { id: testCaseId },
+          data: {
+            currentVersion: { increment: 1 },
+          },
+        },
+      }
+    );
+  }
+
+  /**
+   * Create a shared step group with items
+   */
+  async createSharedStepGroup(
+    projectId: number,
+    name: string,
+    items: Array<{
+      step: Record<string, unknown>;
+      expectedResult: Record<string, unknown>;
+      order: number;
+    }>
+  ): Promise<number> {
+    const userId = await this.getCurrentUserId();
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/sharedStepGroup/create`,
+      {
+        data: {
+          data: {
+            name,
+            project: { connect: { id: projectId } },
+            createdBy: { connect: { id: userId } },
+            isDeleted: false,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create shared step group: ${error}`);
+    }
+
+    const result = await response.json();
+    const groupId = result.data.id;
+
+    // Add items to the shared step group
+    for (const item of items) {
+      await this.request.post(
+        `${this.baseURL}/api/model/sharedStepItem/create`,
+        {
+          data: {
+            data: {
+              sharedStepGroup: { connect: { id: groupId } },
+              step: item.step,
+              expectedResult: item.expectedResult,
+              order: item.order,
+            },
+          },
+        }
+      );
+    }
+
+    return groupId;
+  }
+
+  /**
+   * Add a shared step group reference to a test case
+   */
+  async addSharedStepGroupToTestCase(
+    testCaseId: number,
+    sharedStepGroupId: number,
+    order: number
+  ): Promise<number> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/steps/create`,
+      {
+        data: {
+          data: {
+            testCase: { connect: { id: testCaseId } },
+            sharedStepGroup: { connect: { id: sharedStepGroupId } },
+            step: null,
+            expectedResult: null,
+            order,
+            isDeleted: false,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to add shared step group to test case: ${error}`);
+    }
+
+    const result = await response.json();
+    return result.data.id;
   }
 
   /**

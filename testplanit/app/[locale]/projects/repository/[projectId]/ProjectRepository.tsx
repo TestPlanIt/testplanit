@@ -389,6 +389,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const [panelWidth, setPanelWidth] = useState<number>(100);
   const [folderHierarchy, setFolderHierarchy] = useState<FolderNode[]>([]);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const panelRef = useRef<ImperativePanelHandle>(null);
   const refetchFoldersRef = useRef<(() => Promise<unknown>) | null>(null);
   // Ref for scoping DnD events when used in portaled contexts (modals)
@@ -934,6 +935,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   );
 
   const toggleCollapse = () => {
+    setIsTransitioning(true);
     if (panelRef.current) {
       if (isCollapsed) {
         panelRef.current.expand();
@@ -942,6 +944,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       }
       setIsCollapsed(!isCollapsed);
     }
+    setTimeout(() => setIsTransitioning(false), 300);
   };
 
   const handleViewChange = useCallback(
@@ -1162,7 +1165,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                     collapsible
                     onCollapse={() => setIsCollapsed(true)}
                     onExpand={() => setIsCollapsed(false)}
-                    className="p-0 m-0"
+                    className={`p-0 m-0 ${
+                      isTransitioning ? "transition-all duration-300 ease-in-out" : ""
+                    }`}
                     data-testid="repository-left-panel"
                   >
                     <div className="flex flex-col h-full">

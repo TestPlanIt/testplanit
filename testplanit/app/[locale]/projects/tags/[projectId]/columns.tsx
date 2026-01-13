@@ -31,8 +31,9 @@ export const getColumns = (
       accessorKey: "name",
       accessorFn: (row) => row.name,
       header: t("common.name"),
-      enableSorting: false,
+      enableSorting: true,
       enableResizing: true,
+      sortingFn: "alphanumeric",
       meta: { isPinned: "left" },
       enableHiding: false,
       size: 500,
@@ -47,10 +48,16 @@ export const getColumns = (
     {
       id: "cases",
       accessorKey: "repositoryCases",
-      accessorFn: (row) => row.repositoryCases,
+      accessorFn: (row) => {
+        // Return the filtered count for sorting
+        return row.repositoryCases.filter((c) =>
+          Object.prototype.hasOwnProperty.call(activeCaseMap, c.id)
+        ).length;
+      },
       header: t("common.fields.testCases"),
-      enableSorting: false,
+      enableSorting: true,
       enableResizing: true,
+      sortingFn: "basic",
       size: 75,
       cell: ({ row }) => {
         const repositoryCaseIds = row.original.repositoryCases
@@ -83,10 +90,16 @@ export const getColumns = (
     {
       id: "sessions",
       accessorKey: "sessions",
-      accessorFn: (row) => row.sessions,
+      accessorFn: (row) => {
+        // Return the filtered count for sorting
+        return row.sessions.filter((s) =>
+          Object.prototype.hasOwnProperty.call(activeSessionMap, s.id)
+        ).length;
+      },
       header: t("common.fields.sessions"),
-      enableSorting: false,
+      enableSorting: true,
       enableResizing: true,
+      sortingFn: "basic",
       size: 75,
       cell: ({ row }) => {
         const filteredSessions = row.original.sessions.filter((s) =>
@@ -121,10 +134,16 @@ export const getColumns = (
     {
       id: "runs",
       accessorKey: "testRuns",
-      accessorFn: (row) => row.testRuns,
+      accessorFn: (row) => {
+        // Return the filtered count for sorting
+        return row.testRuns.filter((r) =>
+          Object.prototype.hasOwnProperty.call(activeRunMap, r.id)
+        ).length;
+      },
       header: t("common.fields.testRuns"),
-      enableSorting: false,
+      enableSorting: true,
       enableResizing: true,
+      sortingFn: "basic",
       size: 75,
       cell: ({ row }) => {
         const filteredRuns = row.original.testRuns.filter((r) =>

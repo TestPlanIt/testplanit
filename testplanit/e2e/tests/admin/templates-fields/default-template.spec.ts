@@ -21,19 +21,22 @@ test.describe("Default Template - Basic Behavior", () => {
     await templatesPage.goto();
   });
 
-  test("Only one default template at a time", async ({ api }) => {
+  test("Only one default template at a time", async ({ api, page }) => {
     // Create two templates
     const template1Name = `E2E Default 1 ${Date.now()}`;
     const template2Name = `E2E Default 2 ${Date.now()}`;
 
-    await api.createTemplate({
+    const template1Id = await api.createTemplate({
       name: template1Name,
       isDefault: true,
     });
-    await api.createTemplate({
+    const template2Id = await api.createTemplate({
       name: template2Name,
       isDefault: false,
     });
+
+    console.log(`Created template1: ${template1Name} (ID: ${template1Id})`);
+    console.log(`Created template2: ${template2Name} (ID: ${template2Id})`);
 
     await templatesPage.goto();
 
@@ -42,13 +45,39 @@ test.describe("Default Template - Basic Behavior", () => {
     await templatesPage.expectTemplateInTable(template2Name);
 
     // Set template2 as default via edit
+    console.log(`Setting ${template2Name} as default via UI`);
     await templatesPage.clickEditTemplate(template2Name);
     await templatesPage.toggleTemplateDefault(true);
     await templatesPage.submitTemplate();
 
-    // Verify template2 is now default
-    // The first template should no longer be default
-    // This verification depends on UI indicators
+    // Wait for the dialog to close and mutations to complete
+    await page.waitForLoadState("networkidle");
+    console.log('Dialog closed, network idle');
+
+    // Poll the API to wait for the cascade update to complete
+    // The UI mutations happen asynchronously, so we poll until both conditions are met
+    await expect.poll(
+      async () => {
+        const template1Verification = await api.verifyTemplate(template1Id);
+        const template2Verification = await api.verifyTemplate(template2Id);
+        console.log(`Poll: ${template1Name} isDefault=${template1Verification.isDefault}, ${template2Name} isDefault=${template2Verification.isDefault}`);
+        return !template1Verification.isDefault && template2Verification.isDefault;
+      },
+      {
+        message: `Expected ${template2Name} to be default and ${template1Name} to not be default`,
+        timeout: 20000,
+        intervals: [100, 250, 500, 1000],
+      }
+    ).toBe(true);
+
+    console.log('Cascade complete');
+
+    // Final verification
+    const template1Verification = await api.verifyTemplate(template1Id);
+    const template2Verification = await api.verifyTemplate(template2Id);
+    console.log(`Final: ${template1Name} isDefault=${template1Verification.isDefault}, ${template2Name} isDefault=${template2Verification.isDefault}`);
+    expect(template1Verification.isDefault).toBe(false);
+    expect(template2Verification.isDefault).toBe(true);
   });
 
   test("Setting default auto-enables template", async ({ api }) => {
@@ -115,15 +144,27 @@ test.describe("Default Template - Protection Rules", () => {
     await templatesPage.cancelTemplate();
   });
 
-  test("Cannot delete default template", async ({ api }) => {
+  test("Cannot delete default template", async ({ api, page }) => {
     // Create a default template
     const templateName = `E2E No Delete ${Date.now()}`;
-    await api.createTemplate({
+    const templateId = await api.createTemplate({
       name: templateName,
       isDefault: true,
     });
 
+    // Verify via API that the template is actually marked as default
+    const verification = await api.verifyTemplate(templateId);
+    if (!verification.exists) {
+      throw new Error(`Template ${templateId} does not exist in the database`);
+    }
+    if (!verification.isDefault) {
+      throw new Error(`Template ${templateId} was not marked as default in the database (isDefault=${verification.isDefault})`);
+    }
+
     await templatesPage.goto();
+
+    // Wait for the page to load and show the correct data
+    await page.waitForLoadState("networkidle");
 
     // For default templates, the delete button should either be:
     // 1. Not present (with the testid - meaning it's disabled/placeholder)
@@ -131,6 +172,10 @@ test.describe("Default Template - Protection Rules", () => {
     // 3. Show an error when clicked
     const row = templatesPage.templatesTable.locator("tr").filter({ hasText: templateName }).first();
     await expect(row).toBeVisible({ timeout: 5000 });
+
+    // Verify the "Default" switch is checked and disabled in the row
+    const defaultSwitch = row.locator('button[role="switch"]').last();
+    await expect(defaultSwitch).toHaveAttribute("data-state", "checked");
 
     // The delete button with testid should NOT be present for default templates
     // (The UI renders a disabled placeholder button without the testid)
@@ -195,8 +240,12 @@ test.describe("Default Template - Project Assignment", () => {
   });
 
   test("Default template available for new projects", async ({ api }) => {
-    // Ensure there's a default template
-    const defaultTemplate = await api.getDefaultTemplate();
+    // Create a default template for this test
+    const templateName = `E2E New Proj Template ${Date.now()}`;
+    await api.createTemplate({
+      name: templateName,
+      isDefault: true,
+    });
 
     // Create a new project after the default template exists
     const projectName = `E2E New Proj ${Date.now()}`;
@@ -205,9 +254,7 @@ test.describe("Default Template - Project Assignment", () => {
     await templatesPage.goto();
 
     // Default template should be available for the new project
-    if (defaultTemplate) {
-      await templatesPage.expectTemplateInTable(defaultTemplate.templateName);
-    }
+    await templatesPage.expectTemplateInTable(templateName);
   });
 });
 
@@ -219,7 +266,7 @@ test.describe("Default Template - Cascade Behaviors", () => {
     await templatesPage.goto();
   });
 
-  test("Changing default unsets previous default", async ({ api }) => {
+  test("Changing default unsets previous default", async ({ api, page }) => {
     // Create two templates
     const template1Name = `E2E Cascade A ${Date.now()}`;
     const template2Name = `E2E Cascade B ${Date.now()}`;
@@ -240,12 +287,28 @@ test.describe("Default Template - Cascade Behaviors", () => {
     await templatesPage.toggleTemplateDefault(true);
     await templatesPage.submitTemplate();
 
-    // Reload and verify
-    await templatesPage.goto();
+    // Wait for the dialog to close and mutations to complete
+    await page.waitForLoadState("networkidle");
 
-    // template1 should no longer be default
-    // template2 should now be default
-    // Verification depends on UI implementation
+    // Poll the API to wait for the cascade update to complete
+    await expect.poll(
+      async () => {
+        const template1Verification = await api.verifyTemplate(template1Id);
+        const template2Verification = await api.verifyTemplate(template2Id);
+        return !template1Verification.isDefault && template2Verification.isDefault;
+      },
+      {
+        message: 'Expected template2 to be default and template1 to not be default',
+        timeout: 20000,
+        intervals: [100, 250, 500, 1000],
+      }
+    ).toBe(true);
+
+    // Final verification
+    const template1Verification = await api.verifyTemplate(template1Id);
+    const template2Verification = await api.verifyTemplate(template2Id);
+    expect(template1Verification.isDefault).toBe(false);
+    expect(template2Verification.isDefault).toBe(true);
   });
 
   test("Deleting non-default template preserves default", async ({ api, page }) => {
@@ -269,10 +332,12 @@ test.describe("Default Template - Cascade Behaviors", () => {
     await templatesPage.confirmDelete();
 
     // Wait for deletion to complete and table to update
-    await page.waitForTimeout(500);
+    await page.waitForLoadState("networkidle");
+
+    // Verify the deleted template is no longer in the table
+    await templatesPage.expectTemplateNotInTable(otherTemplateName);
 
     // Default template should still exist and be default
     await templatesPage.expectTemplateInTable(defaultTemplateName);
-    await templatesPage.expectTemplateNotInTable(otherTemplateName);
   });
 });

@@ -1857,7 +1857,7 @@ export function AddResultModal({
                       return (
                         <li
                           key={`shared-group-${step.sharedStepGroupId}-${index}`}
-                          className="space-y-2 border-2 border-primary/20 rounded-lg bg-secondary/50 p-2"
+                          className="space-y-2 border-2 border-primary/20 rounded-lg bg-muted/60 p-2"
                         >
                           <div className="flex items-center font-bold text-primary mb-2">
                             <Layers className="mr-2 h-5 w-5 shrink-0" />
@@ -1919,7 +1919,7 @@ export function AddResultModal({
                     return (
                       <li
                         key={step.id}
-                        className="space-y-2 border-2 border-primary/20 rounded-lg bg-secondary/50 p-2"
+                        className="space-y-2 border-2 border-primary/20 rounded-lg p-2"
                       >
                         <div className="flex gap-2 shrink-0 w-full ring-2 ring-primary/50 p-2 rounded-lg bg-primary-foreground rounded-b-none">
                           <div className="font-bold flex items-center justify-center p-2 text-primary-foreground bg-primary border-2 border-primary rounded-full w-8 h-8">

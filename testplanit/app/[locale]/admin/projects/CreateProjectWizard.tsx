@@ -124,7 +124,7 @@ enum WizardStep {
 
 const stepTitles = [
   "admin.projects.wizard.steps.details",
-  "admin.projects.wizard.steps.templates",
+  "common.fields.templates",
   "admin.projects.wizard.steps.workflows",
   "admin.projects.wizard.steps.integrations",
   "admin.projects.wizard.steps.permissions",
@@ -414,9 +414,10 @@ export function CreateProjectWizard({
   // Initialize default values
   const defaultValues = useMemo(() => {
     const defaultTemplate = templates?.find((t) => t.isDefault);
-    const defaultMilestoneType = milestoneTypes?.find((mt) => mt.isDefault);
     // Select ALL workflows by default, not just the ones marked as default
     const allWorkflowIds = workflows?.map((w) => w.id) || [];
+    // Select ALL milestone types by default
+    const allMilestoneTypeIds = milestoneTypes?.map((mt) => mt.id) || [];
 
     const initialUserPermissions: Record<string, UserPermissionFormState> = {};
     if (defaultUserId) {
@@ -447,9 +448,7 @@ export function CreateProjectWizard({
       selectedWorkflows: allWorkflowIds, // Select ALL workflows
       selectedStatuses:
         statuses?.filter((s) => s.isEnabled)?.map((s) => s.id) || [],
-      selectedMilestoneTypes: defaultMilestoneType
-        ? [defaultMilestoneType.id]
-        : [],
+      selectedMilestoneTypes: allMilestoneTypeIds, // Select ALL milestone types
       selectedIntegrations: [],
       selectedLlmIntegrations: [],
       assignedUsers: defaultUserId ? [defaultUserId] : [],
@@ -1011,7 +1010,7 @@ export function CreateProjectWizard({
     switch (currentStep) {
       case WizardStep.PROJECT_DETAILS:
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
             {/* Left Column */}
             <div className="space-y-4">
               <FormField
@@ -1150,13 +1149,13 @@ export function CreateProjectWizard({
                     // Determine which hint to show based on current access type
                     const getAccessHintKey = () => {
                       if (currentAccessType === ProjectAccessType.NO_ACCESS) {
-                        return "admin.projects.wizard.labels.accessHints.noAccess";
+                        return "admin.projects.edit.labels.accessHints.noAccess";
                       } else if (
                         currentAccessType === ProjectAccessType.GLOBAL_ROLE
                       ) {
-                        return "admin.projects.wizard.labels.accessHints.globalRole";
+                        return "admin.projects.edit.labels.accessHints.globalRole";
                       } else {
-                        return "admin.projects.wizard.labels.accessHints.specificRole";
+                        return "admin.projects.edit.labels.accessHints.specificRole";
                       }
                     };
 
@@ -1833,7 +1832,7 @@ export function CreateProjectWizard({
             }}
             className="flex flex-col flex-1 min-h-0 mt-4"
           >
-            <DialogHeader>
+            <DialogHeader className="mb-4">
               <DialogTitle className="flex items-center gap-2">
                 <CirclePlus className="h-5 w-5" />
                 {t("admin.projects.wizard.title")}
@@ -1847,15 +1846,19 @@ export function CreateProjectWizard({
             <div className="flex items-center gap-2 mb-4">
               {stepTitles.map((_, index) => {
                 const Icon = stepIcons[index];
+                const isClickable = index <= currentStep;
                 return (
                   <div key={index} className="flex items-center">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    <button
+                      type="button"
+                      onClick={() => isClickable && setCurrentStep(index)}
+                      disabled={!isClickable}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                         index < currentStep
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-primary text-primary-foreground cursor-pointer hover:bg-primary/90"
                           : index === currentStep
-                            ? "bg-primary/10 text-primary border-2 border-primary"
-                            : "bg-muted text-muted-foreground"
+                            ? "bg-primary/10 text-primary border-2 border-primary cursor-pointer"
+                            : "bg-muted text-muted-foreground cursor-not-allowed"
                       }`}
                     >
                       {index < currentStep ? (
@@ -1863,7 +1866,7 @@ export function CreateProjectWizard({
                       ) : (
                         <Icon className="w-5 h-5" />
                       )}
-                    </div>
+                    </button>
                     {index < stepTitles.length - 1 && (
                       <div
                         className={`w-12 h-0.5 mx-2 ${
@@ -1893,7 +1896,7 @@ export function CreateProjectWizard({
                     onClick={handleBack}
                     disabled={isSubmitting}
                   >
-                    <ChevronLeft className="h-4 w-4 mr-2" />
+                    <ChevronLeft className="h-4 w-4" />
                     {tCommon("actions.previous")}
                   </Button>
                 )}
@@ -1933,7 +1936,7 @@ export function CreateProjectWizard({
                       t("admin.projects.wizard.actions.creating")
                     ) : (
                       <>
-                        <Check className="h-4 w-4 mr-2" />
+                        <Check className="h-4 w-4" />
                         {t("admin.projects.wizard.actions.create")}
                       </>
                     )}
@@ -1945,7 +1948,7 @@ export function CreateProjectWizard({
                     disabled={isLoading || !canProceed()}
                   >
                     {tCommon("actions.next")}
-                    <ChevronRight className="h-4 w-4 ml-2" />
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 )}
               </div>

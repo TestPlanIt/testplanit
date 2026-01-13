@@ -15,7 +15,6 @@ import {
   useCreateSteps,
   useUpdateManySteps,
   useCreateCaseFieldVersionValues,
-  useCreateRepositoryCaseVersions,
   useCreateCaseFieldValues,
   useDeleteManyCaseFieldValues,
   useFindManyTags,
@@ -915,8 +914,6 @@ export default function TestCaseDetails() {
   };
 
   const { mutate: updateRepositoryCases } = useUpdateRepositoryCases();
-  const { mutateAsync: createRepositoryCaseVersions } =
-    useCreateRepositoryCaseVersions();
   const { mutateAsync: updateCaseFieldValues } = useUpdateCaseFieldValues();
   const { mutateAsync: createCaseFieldVersionValues } =
     useCreateCaseFieldVersionValues();
@@ -976,6 +973,7 @@ export default function TestCaseDetails() {
       const tagsArray = Array.isArray(data.tags) ? data.tags : [];
       const issuesArray = Array.isArray(data.issues) ? data.issues : [];
 
+      // Update the test case, incrementing currentVersion
       await updateRepositoryCases({
         where: { id: Number(caseId) },
         data: {
@@ -998,6 +996,14 @@ export default function TestCaseDetails() {
           },
         },
       });
+
+      // Refetch to ensure we have the updated currentVersion from the database
+      const refetchResult = await refetch();
+      const updatedTestCase = refetchResult.data as ExtendedCases;
+
+      if (!updatedTestCase) {
+        throw new Error("Failed to refetch updated test case");
+      }
 
       if (data.steps) {
         const existingSteps = testcase?.steps || [];
@@ -1302,47 +1308,48 @@ export default function TestCaseDetails() {
         }
       }
 
-      const newCaseVersionData = {
-        repositoryCase: { connect: { id: testcase.id } },
-        project: { connect: { id: Number(projectId) } },
-        staticProjectName: testcase.project.name || "",
-        staticProjectId: Number(projectId),
-        repositoryId: testcase.repositoryId || 0,
-        folderId: data.folderId as number,
-        folderName:
-          folders?.find((f) => f.id === data.folderId)?.name ||
-          testcase.folder?.name ||
-          "Unknown",
-        templateId: (data.templateId || 0) as number,
-        templateName:
-          templates?.find((t) => t.id === data.templateId)?.templateName ||
-          testcase.template?.templateName ||
-          "Unknown",
-        name: data.name as string,
-        stateId: data.workflowId as number,
-        stateName:
-          workflows?.find((w) => w.id === data.workflowId)?.name ||
-          testcase.state?.name ||
-          "Unknown",
-        estimate: estimateInSeconds,
-        createdAt: new Date(),
-        creatorId: testcase.creatorId,
-        creatorName: testcase.creator.name,
-        automated: data.automated as boolean,
-        isArchived: false,
-        isDeleted: false,
-        version: testcase.currentVersion + 1,
-        steps: resolvedStepsForVersion,
-        tags: tagNames,
-        issues: issuesDataForVersion,
-        attachments: attachmentsJson,
-      };
+      // Create version snapshot using centralized API endpoint
+      // Note: The test case was already updated with currentVersion + 1 above and refetched
+      const versionResponse = await fetch(
+        `/api/repository/cases/${updatedTestCase.id}/versions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            // No version specified - will use currentVersion (already incremented and refetched)
+            // Preserve original creator metadata
+            creatorId: updatedTestCase.creatorId,
+            creatorName: updatedTestCase.creator.name,
+            // Don't pass createdAt - let it default to current time for edits
+            overrides: {
+              name: data.name as string,
+              stateId: data.workflowId as number,
+              stateName:
+                workflows?.find((w) => w.id === data.workflowId)?.name ||
+                updatedTestCase.state?.name ||
+                "Unknown",
+              automated: data.automated as boolean,
+              estimate: estimateInSeconds,
+              steps: resolvedStepsForVersion,
+              tags: tagNames,
+              issues: issuesDataForVersion,
+              attachments: attachmentsJson,
+              order: updatedTestCase.order,
+            },
+          }),
+        }
+      );
 
-      const newCaseVersion = await createRepositoryCaseVersions({
-        data: newCaseVersionData,
-      });
+      if (!versionResponse.ok) {
+        const errorData = await versionResponse.json();
+        throw new Error(
+          `Failed to create case version: ${errorData.error || "Unknown error"}`
+        );
+      }
 
-      if (!newCaseVersion) throw new Error("Failed to create new case version");
+      const { version: newCaseVersion } = await versionResponse.json();
 
       const formFields = Object.entries(data)
         .filter(
@@ -1678,6 +1685,7 @@ export default function TestCaseDetails() {
                         variant="secondary"
                         onClick={handleEditModeToggle}
                         disabled={isLoadingSharedStepGroups}
+                        data-testid="edit-test-case-button"
                       >
                         <div className="flex items-center">
                           <SquarePen className="w-5 h-5 mr-2" />
@@ -1825,79 +1833,85 @@ export default function TestCaseDetails() {
               >
                 <div className="mb-4">
                   <ul>
-                    {(testcase?.template?.caseFields || []).map((field, fieldIndex) => {
-                      let fieldValue = testcase.caseFieldValues.find(
-                        (value) => value.fieldId === field.caseField.id
-                      )?.value;
-                      if (field.caseField.type.type === "Steps") {
-                        fieldValue = testcase.steps || [];
+                    {(testcase?.template?.caseFields || []).map(
+                      (field, fieldIndex) => {
+                        let fieldValue = testcase.caseFieldValues.find(
+                          (value) => value.fieldId === field.caseField.id
+                        )?.value;
+                        if (field.caseField.type.type === "Steps") {
+                          fieldValue = testcase.steps || [];
+                        }
+                        if (
+                          !isEditMode &&
+                          (!fieldValue || fieldValue === emptyEditorContent)
+                        )
+                          return null;
+                        return (
+                          <li
+                            key={`case-field-${field.caseField.id}-${fieldIndex}`}
+                            className="mb-2 mr-6"
+                          >
+                            {field.caseField.type.type !== "Steps" && (
+                              <div className="font-bold flex items-center">
+                                {field.caseField.displayName}
+                                {isEditMode && field.caseField.isRequired && (
+                                  <sup>
+                                    <Asterisk className="w-3 h-3 text-destructive" />
+                                  </sup>
+                                )}
+                                {field.caseField.isRestricted && (
+                                  <span
+                                    title="Restricted Field"
+                                    className="ml-1 text-muted-foreground"
+                                  >
+                                    <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            <FieldValueRenderer
+                              fieldValue={fieldValue}
+                              fieldType={field.caseField.type.type}
+                              caseId={caseId?.toString() || ""}
+                              stepsForDisplay={
+                                field.caseField.type.type === "Steps"
+                                  ? testcase.steps?.map((s: any) => ({
+                                      ...s,
+                                      sharedStepGroupName:
+                                        s.sharedStepGroup?.name,
+                                    })) || []
+                                  : undefined
+                              }
+                              template={{
+                                caseFields:
+                                  testcase?.template?.caseFields || [],
+                              }}
+                              fieldId={field.caseField.id}
+                              fieldIsRestricted={field.caseField.isRestricted}
+                              session={session}
+                              isEditMode={isEditMode}
+                              isSubmitting={isSubmitting}
+                              control={control}
+                              errors={errors}
+                              canEditRestricted={canEditRestrictedPerm}
+                              explicitFieldNameForSteps={
+                                field.caseField.type.type === "Steps"
+                                  ? "steps"
+                                  : undefined
+                              }
+                              {...(field.caseField.type.type === "Steps" && {
+                                projectId: Number(projectIdParam),
+                                onSharedStepCreated: refetch,
+                              })}
+                            />
+                            <Separator
+                              orientation="horizontal"
+                              className="mt-2 bg-primary/30"
+                            />
+                          </li>
+                        );
                       }
-                      if (
-                        !isEditMode &&
-                        (!fieldValue || fieldValue === emptyEditorContent)
-                      )
-                        return null;
-                      return (
-                        <li key={`case-field-${field.caseField.id}-${fieldIndex}`} className="mb-2 mr-6">
-                          {field.caseField.type.type !== "Steps" && (
-                            <div className="font-bold flex items-center">
-                              {field.caseField.displayName}
-                              {isEditMode && field.caseField.isRequired && (
-                                <sup>
-                                  <Asterisk className="w-3 h-3 text-destructive" />
-                                </sup>
-                              )}
-                              {field.caseField.isRestricted && (
-                                <span
-                                  title="Restricted Field"
-                                  className="ml-1 text-muted-foreground"
-                                >
-                                  <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
-                                </span>
-                              )}
-                            </div>
-                          )}
-<FieldValueRenderer
-                            fieldValue={fieldValue}
-                            fieldType={field.caseField.type.type}
-                            caseId={caseId?.toString() || ""}
-                            stepsForDisplay={
-                              field.caseField.type.type === "Steps"
-                                ? testcase.steps?.map((s: any) => ({
-                                    ...s,
-                                    sharedStepGroupName:
-                                      s.sharedStepGroup?.name,
-                                  })) || []
-                                : undefined
-                            }
-                            template={{
-                              caseFields: testcase?.template?.caseFields || [],
-                            }}
-                            fieldId={field.caseField.id}
-                            fieldIsRestricted={field.caseField.isRestricted}
-                            session={session}
-                            isEditMode={isEditMode}
-                            isSubmitting={isSubmitting}
-                            control={control}
-                            errors={errors}
-                            canEditRestricted={canEditRestrictedPerm}
-                            explicitFieldNameForSteps={
-                              field.caseField.type.type === "Steps"
-                                ? "steps"
-                                : undefined
-                            }
-                            {...(field.caseField.type.type === "Steps" && {
-                              projectId: Number(projectIdParam),
-                              onSharedStepCreated: refetch,
-                            })}
-                          />
-                          <Separator
-                            orientation="horizontal"
-                            className="mt-2 bg-primary/30"
-                          />
-                        </li>
-                      );
-                    })}
+                    )}
                   </ul>
                   {/* JUnit-specific info in left panel */}
                   {isJUnitCase && (
@@ -1962,6 +1976,7 @@ export default function TestCaseDetails() {
                           onClick={toggleCollapseLeft}
                           variant="secondary"
                           size="sm"
+                          data-testid="toggle-left-panel-button"
                           className={`p-0 transform ${
                             isCollapsedLeft
                               ? "rounded-l-none rotate-180"
@@ -1993,6 +2008,7 @@ export default function TestCaseDetails() {
                           onClick={toggleCollapseRight}
                           variant="secondary"
                           size="sm"
+                          data-testid="toggle-right-panel-button"
                           className={`p-0 transform ${
                             isCollapsedRight
                               ? "rounded-l-none"
