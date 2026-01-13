@@ -1,3 +1,10 @@
+# [0.10.0](https://github.com/TestPlanIt/testplanit/compare/v0.9.30...v0.10.0) (2026-01-13)
+
+
+### Features
+
+* release v0.10.0 - reporting enhancements and version management improvements ([#46](https://github.com/TestPlanIt/testplanit/issues/46)) ([9e73faf](https://github.com/TestPlanIt/testplanit/commit/9e73faf62efbd7eca26ab9f1020a048a83fe00d3))
+
 ## [0.9.30](https://github.com/TestPlanIt/testplanit/compare/v0.9.29...v0.9.30) (2026-01-13)
 
 
