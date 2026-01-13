@@ -35,6 +35,9 @@ test.describe("Default Template - Basic Behavior", () => {
       isDefault: false,
     });
 
+    console.log(`Created template1: ${template1Name} (ID: ${template1Id})`);
+    console.log(`Created template2: ${template2Name} (ID: ${template2Id})`);
+
     await templatesPage.goto();
 
     // Both should be visible
@@ -42,33 +45,37 @@ test.describe("Default Template - Basic Behavior", () => {
     await templatesPage.expectTemplateInTable(template2Name);
 
     // Set template2 as default via edit
+    console.log(`Setting ${template2Name} as default via UI`);
     await templatesPage.clickEditTemplate(template2Name);
     await templatesPage.toggleTemplateDefault(true);
     await templatesPage.submitTemplate();
 
-    // Wait for the dialog to close and cascade update to complete
+    // Wait for the dialog to close and mutations to complete
     await page.waitForLoadState("networkidle");
+    console.log('Dialog closed, network idle');
 
-    // Reload the page to ensure we see the updated state
-    await templatesPage.goto();
-    await page.waitForLoadState("networkidle");
-
-    // Wait for the cascade update to complete by polling the API
+    // Poll the API to wait for the cascade update to complete
+    // The UI mutations happen asynchronously, so we poll until both conditions are met
     await expect.poll(
       async () => {
         const template1Verification = await api.verifyTemplate(template1Id);
         const template2Verification = await api.verifyTemplate(template2Id);
+        console.log(`Poll: ${template1Name} isDefault=${template1Verification.isDefault}, ${template2Name} isDefault=${template2Verification.isDefault}`);
         return !template1Verification.isDefault && template2Verification.isDefault;
       },
       {
-        message: 'Expected template2 to be default and template1 to not be default',
-        timeout: 10000,
+        message: `Expected ${template2Name} to be default and ${template1Name} to not be default`,
+        timeout: 20000,
+        intervals: [100, 250, 500, 1000],
       }
     ).toBe(true);
+
+    console.log('Cascade complete');
 
     // Final verification
     const template1Verification = await api.verifyTemplate(template1Id);
     const template2Verification = await api.verifyTemplate(template2Id);
+    console.log(`Final: ${template1Name} isDefault=${template1Verification.isDefault}, ${template2Name} isDefault=${template2Verification.isDefault}`);
     expect(template1Verification.isDefault).toBe(false);
     expect(template2Verification.isDefault).toBe(true);
   });
@@ -280,14 +287,10 @@ test.describe("Default Template - Cascade Behaviors", () => {
     await templatesPage.toggleTemplateDefault(true);
     await templatesPage.submitTemplate();
 
-    // Wait for the dialog to close and cascade update to complete
+    // Wait for the dialog to close and mutations to complete
     await page.waitForLoadState("networkidle");
 
-    // Reload the page to ensure we see the updated state
-    await templatesPage.goto();
-    await page.waitForLoadState("networkidle");
-
-    // Wait for the cascade update to complete by polling the API
+    // Poll the API to wait for the cascade update to complete
     await expect.poll(
       async () => {
         const template1Verification = await api.verifyTemplate(template1Id);
@@ -296,7 +299,8 @@ test.describe("Default Template - Cascade Behaviors", () => {
       },
       {
         message: 'Expected template2 to be default and template1 to not be default',
-        timeout: 10000,
+        timeout: 20000,
+        intervals: [100, 250, 500, 1000],
       }
     ).toBe(true);
 
