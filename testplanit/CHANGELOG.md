@@ -1,3 +1,10 @@
+## [0.10.2](https://github.com/TestPlanIt/testplanit/compare/v0.10.1...v0.10.2) (2026-01-14)
+
+
+### Bug Fixes
+
+* add validation checks for data integrity in various charts ([8861224](https://github.com/TestPlanIt/testplanit/commit/886122471a869a37bfe1c0c8f8991a6c6eeac959))
+
 ## [0.10.1](https://github.com/TestPlanIt/testplanit/compare/v0.10.0...v0.10.1) (2026-01-13)
 
 
