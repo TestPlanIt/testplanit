@@ -98,7 +98,9 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
     };
 
     for (const test of data) {
-      counts[test.healthStatus]++;
+      if (test && test.healthStatus && counts[test.healthStatus] !== undefined) {
+        counts[test.healthStatus]++;
+      }
     }
 
     return counts;
@@ -311,16 +313,18 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
 
   // Calculate additional summary metrics
   const summaryMetrics = useMemo(() => {
+    // Filter to only valid test data entries
+    const validData = data.filter((d) => d && typeof d.healthScore === "number");
     // Count stale tests separately (isStale is now a boolean flag)
-    const staleCount = data.filter((d) => d.isStale).length;
+    const staleCount = validData.filter((d) => d.isStale).length;
     const needsAttention =
       summaryStats.always_failing +
       summaryStats.never_executed +
       staleCount;
     const healthyCount = summaryStats.healthy + summaryStats.always_passing;
     const avgHealthScore =
-      data.length > 0
-        ? Math.round(data.reduce((sum, d) => sum + d.healthScore, 0) / data.length)
+      validData.length > 0
+        ? Math.round(validData.reduce((sum, d) => sum + d.healthScore, 0) / validData.length)
         : 0;
 
     const needsAttentionPct = data.length > 0 ? Math.round((needsAttention / data.length) * 100) : 0;

@@ -326,6 +326,11 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   const t = useTranslations();
   const { getPriorityDotColor, getStatusDotColor } = useIssueColors();
 
+  // Early return if results is not a valid array
+  if (!results || !Array.isArray(results)) {
+    return null;
+  }
+
   // Create issue color functions object to pass to getColor
   const issueColorFns: IssueColorFunctions = {
     getPriorityDotColor,

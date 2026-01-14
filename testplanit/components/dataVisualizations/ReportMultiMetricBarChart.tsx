@@ -48,7 +48,7 @@ export const ReportMultiMetricBarChart: React.FC<
   }, []);
 
   useEffect(() => {
-    if (!svgRef.current || data.length === 0 || width === 0 || height === 0) {
+    if (!svgRef.current || !data || data.length === 0 || width === 0 || height === 0) {
       if (svgRef.current) d3.select(svgRef.current).selectAll("*").remove();
       return;
     }

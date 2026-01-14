@@ -64,6 +64,8 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
     const issueMap = new Map<number, IssueTestCoverageData>();
 
     data.forEach((row) => {
+      // Skip invalid rows
+      if (!row || typeof row.issueId !== "number") return;
       if (!issueMap.has(row.issueId)) {
         // First time seeing this issue - add it with all its data
         issueMap.set(row.issueId, { ...row });
@@ -77,19 +79,19 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
   // Calculate summary stats
   const summaryStats = useMemo(() => {
     const totalIssues = aggregatedData.length;
-    const totalLinkedTests = aggregatedData.reduce((sum, d) => sum + d.linkedTestCases, 0);
-    const totalPassed = aggregatedData.reduce((sum, d) => sum + d.passedTestCases, 0);
-    const totalFailed = aggregatedData.reduce((sum, d) => sum + d.failedTestCases, 0);
-    const totalUntested = aggregatedData.reduce((sum, d) => sum + d.untestedTestCases, 0);
+    const totalLinkedTests = aggregatedData.reduce((sum, d) => sum + (d.linkedTestCases || 0), 0);
+    const totalPassed = aggregatedData.reduce((sum, d) => sum + (d.passedTestCases || 0), 0);
+    const totalFailed = aggregatedData.reduce((sum, d) => sum + (d.failedTestCases || 0), 0);
+    const totalUntested = aggregatedData.reduce((sum, d) => sum + (d.untestedTestCases || 0), 0);
 
     // Issues with at least one failing test
-    const issuesWithFailures = aggregatedData.filter((d) => d.failedTestCases > 0).length;
+    const issuesWithFailures = aggregatedData.filter((d) => (d.failedTestCases || 0) > 0).length;
     // Issues with all tests passing
     const issuesAllPassing = aggregatedData.filter(
-      (d) => d.passedTestCases > 0 && d.failedTestCases === 0 && d.untestedTestCases === 0
+      (d) => (d.passedTestCases || 0) > 0 && (d.failedTestCases || 0) === 0 && (d.untestedTestCases || 0) === 0
     ).length;
     // Issues with untested cases
-    const issuesWithUntested = aggregatedData.filter((d) => d.untestedTestCases > 0).length;
+    const issuesWithUntested = aggregatedData.filter((d) => (d.untestedTestCases || 0) > 0).length;
 
     const overallPassRate =
       totalPassed + totalFailed > 0
@@ -180,31 +182,35 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
 
     // Create buckets: linked test count and untested test count
     aggregatedData.forEach((issue) => {
+      const linkedTestCases = issue.linkedTestCases || 0;
+      const untestedTestCases = issue.untestedTestCases || 0;
+      const failedTestCases = issue.failedTestCases || 0;
+
       // Bucket linked test counts (0-5, 6-10, 11-20, 21-50, 51-100, 101+)
       let linkedBucket: number;
-      if (issue.linkedTestCases <= 5) linkedBucket = 2.5;
-      else if (issue.linkedTestCases <= 10) linkedBucket = 8;
-      else if (issue.linkedTestCases <= 20) linkedBucket = 15;
-      else if (issue.linkedTestCases <= 50) linkedBucket = 35;
-      else if (issue.linkedTestCases <= 100) linkedBucket = 75;
-      else if (issue.linkedTestCases <= 200) linkedBucket = 150;
-      else linkedBucket = Math.round(issue.linkedTestCases / 50) * 50;
+      if (linkedTestCases <= 5) linkedBucket = 2.5;
+      else if (linkedTestCases <= 10) linkedBucket = 8;
+      else if (linkedTestCases <= 20) linkedBucket = 15;
+      else if (linkedTestCases <= 50) linkedBucket = 35;
+      else if (linkedTestCases <= 100) linkedBucket = 75;
+      else if (linkedTestCases <= 200) linkedBucket = 150;
+      else linkedBucket = Math.round(linkedTestCases / 50) * 50;
 
       // Bucket untested counts (0-5, 6-10, 11-20, 21-50, 51-100, 101+)
       let untestedBucket: number;
-      if (issue.untestedTestCases <= 5) untestedBucket = 2.5;
-      else if (issue.untestedTestCases <= 10) untestedBucket = 8;
-      else if (issue.untestedTestCases <= 20) untestedBucket = 15;
-      else if (issue.untestedTestCases <= 50) untestedBucket = 35;
-      else if (issue.untestedTestCases <= 100) untestedBucket = 75;
-      else if (issue.untestedTestCases <= 200) untestedBucket = 150;
-      else untestedBucket = Math.round(issue.untestedTestCases / 50) * 50;
+      if (untestedTestCases <= 5) untestedBucket = 2.5;
+      else if (untestedTestCases <= 10) untestedBucket = 8;
+      else if (untestedTestCases <= 20) untestedBucket = 15;
+      else if (untestedTestCases <= 50) untestedBucket = 35;
+      else if (untestedTestCases <= 100) untestedBucket = 75;
+      else if (untestedTestCases <= 200) untestedBucket = 150;
+      else untestedBucket = Math.round(untestedTestCases / 50) * 50;
 
       // Determine status
       let status: "failed" | "untested" | "passing";
-      if (issue.failedTestCases > 0) {
+      if (failedTestCases > 0) {
         status = "failed";
-      } else if (issue.untestedTestCases > 0) {
+      } else if (untestedTestCases > 0) {
         status = "untested";
       } else {
         status = "passing";
@@ -230,8 +236,8 @@ export const IssueTestCoverageChart: React.FC<IssueTestCoverageChartProps> = ({
     const bubbleData = Array.from(bubbleMap.values());
 
     // Scales
-    const maxLinkedTests = Math.max(...aggregatedData.map((d) => d.linkedTestCases), 1);
-    const maxUntestedTests = Math.max(...aggregatedData.map((d) => d.untestedTestCases), 1);
+    const maxLinkedTests = Math.max(...aggregatedData.map((d) => d.linkedTestCases || 0), 1);
+    const maxUntestedTests = Math.max(...aggregatedData.map((d) => d.untestedTestCases || 0), 1);
 
     const xScale = d3.scaleLinear().domain([0, maxLinkedTests]).range([0, chartWidth]).nice();
     const yScale = d3.scaleLinear().domain([0, maxUntestedTests]).range([chartHeight, 0]).nice();
