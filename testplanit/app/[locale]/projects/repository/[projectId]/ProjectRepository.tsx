@@ -38,6 +38,9 @@ import {
   UserCog,
   Tags,
   Bug,
+  Hash,
+  Calendar,
+  Type,
 } from "lucide-react";
 import {
   Card,
@@ -748,7 +751,12 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
           field.type === "Multi-Select" ||
           field.type === "Link" ||
           field.type === "Steps" ||
-          field.type === "Checkbox"
+          field.type === "Checkbox" ||
+          field.type === "Integer" ||
+          field.type === "Number" ||
+          field.type === "Date" ||
+          field.type === "Text Long" ||
+          field.type === "Text String"
       )
       .map(([displayName, field]: [string, DynamicField]) => ({
         id: `dynamic_${field.fieldId}_${field.type}`,
@@ -762,7 +770,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                 ? Link
                 : field.type === "Steps"
                   ? ListOrdered
-                  : SquareCheckBig,
+                  : field.type === "Checkbox"
+                    ? SquareCheckBig
+                    : field.type === "Integer" || field.type === "Number"
+                      ? Hash
+                      : field.type === "Date"
+                        ? Calendar
+                        : Type,
         field,
       }));
 

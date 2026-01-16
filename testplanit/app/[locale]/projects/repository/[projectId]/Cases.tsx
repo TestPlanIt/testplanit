@@ -614,6 +614,96 @@ export default function Cases({
                   },
                 },
               });
+            } else if (fieldType === "Integer" || fieldType === "Number") {
+              // singleFilterId 1 = Has Value, singleFilterId 2 = No Value
+              if ((singleFilterId as number) === 1) {
+                // Has value
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      value: { not: Prisma.JsonNull },
+                    },
+                  },
+                });
+              } else if ((singleFilterId as number) === 2) {
+                // No value
+                filterConditions.push({
+                  OR: [
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          value: { equals: Prisma.JsonNull },
+                        },
+                      },
+                    },
+                  ],
+                });
+              }
+            } else if (fieldType === "Date") {
+              // singleFilterId 1 = Has Date, singleFilterId 2 = No Date
+              if ((singleFilterId as number) === 1) {
+                // Has date
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      value: { not: Prisma.JsonNull },
+                    },
+                  },
+                });
+              } else if ((singleFilterId as number) === 2) {
+                // No date
+                filterConditions.push({
+                  OR: [
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          value: { equals: Prisma.JsonNull },
+                        },
+                      },
+                    },
+                  ],
+                });
+              }
+            } else if (fieldType === "Text Long" || fieldType === "Text String") {
+              // singleFilterId 1 = Has Text, singleFilterId 2 = No Text
+              if ((singleFilterId as number) === 1) {
+                // Has text - filter for non-null, non-empty values
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      AND: [
+                        { value: { not: Prisma.JsonNull } },
+                        { value: { not: { equals: "" } } },
+                      ],
+                    },
+                  },
+                });
+              } else if ((singleFilterId as number) === 2) {
+                // No text - filter for null, empty, or non-existent
+                filterConditions.push({
+                  OR: [
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { equals: Prisma.JsonNull } },
+                            { value: { equals: "" } },
+                          ],
+                        },
+                      },
+                    },
+                  ],
+                });
+              }
             }
           } else {
             // Apply specific filter for standard views (using switch)
