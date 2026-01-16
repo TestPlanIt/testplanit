@@ -96,15 +96,12 @@ export function DateFilterInput({
   const handleApply = () => {
     // Relative date filters don't need date inputs
     if (["last7", "last30", "last90", "thisYear"].includes(operator)) {
-      console.log("[DateFilterInput] Applying relative filter:", operator);
       onFilterApply(operator);
       return;
     }
 
     // Other operators require at least one date
     if (!date1) return;
-
-    console.log("[DateFilterInput] Applying filter:", { operator, date1, date2 });
 
     if (operator === "between") {
       if (!date2) return;
