@@ -26,6 +26,7 @@ import { useTranslations } from "next-intl";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { NumericFilterInput } from "@/components/NumericFilterInput";
 
 interface ViewItem {
   id: string;
@@ -648,8 +649,10 @@ export function ViewSelector({
               </span>
             </div>
             {(() => {
-              const [_, fieldKey] = selectedItem.split("_");
-              const [fieldId, fieldType] = fieldKey.split("_");
+              // Parse the dynamic field ID format: "dynamic_{fieldId}_{fieldType}"
+              const parts = selectedItem.split("_");
+              const fieldId = parts[1]; // Get the field ID part
+              const fieldType = parts.slice(2).join("_"); // Get the field type (handles types with underscores like "Text Long")
               const numericFieldId = parseInt(fieldId);
               const field = Object.values(
                 viewOptions?.dynamicFields || {}
@@ -785,10 +788,74 @@ export function ViewSelector({
                 ];
               }
 
-              // Handle Integer, Number, Date, Text Long, Text String fields
+              // Handle Integer, Number fields with operator-based filtering
               if (
-                field?.type === "Integer" ||
-                field?.type === "Number" ||
+                field?.type === "Integer" || field?.type === "Number"
+              ) {
+                const noValueCount = (field as any).counts?.noValue || 0;
+                const hasValueCount = (field as any).counts?.hasValue || 0;
+
+                return [
+                  // Add "No Value" option first
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="no-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("none", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate opacity-40">No Value</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {noValueCount}
+                    </span>
+                  </div>,
+                  // Add "Has Value" option
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="has-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("hasValue", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">Has Value</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {hasValueCount}
+                    </span>
+                  </div>,
+                  // Divider
+                  <div key="divider-1" className="h-px bg-border my-1" />,
+                  // Operator-based filter options with input
+                  <NumericFilterInput
+                    key="filter-input"
+                    fieldId={field.fieldId}
+                    fieldType={field.type}
+                    onFilterApply={(operator, value1, value2) => {
+                      const filterValue = value2 !== undefined
+                        ? `${operator}:${value1}:${value2}`
+                        : `${operator}:${value1}`;
+                      handleFilterClick(filterValue, undefined);
+                    }}
+                    currentFilter={
+                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                        ? String(selectedFilter[0])
+                        : null
+                    }
+                  />,
+                ];
+              }
+
+              // Handle Date, Text Long, Text String fields (simple has/no value)
+              if (
                 field?.type === "Date" ||
                 field?.type === "Text Long" ||
                 field?.type === "Text String"
@@ -806,9 +873,6 @@ export function ViewSelector({
                 } else if (field.type === "Text Long" || field.type === "Text String") {
                   hasLabel = "Has Text";
                   noLabel = "No Text";
-                } else if (field.type === "Integer" || field.type === "Number") {
-                  hasLabel = "Has Number";
-                  noLabel = "No Number";
                 }
 
                 return [

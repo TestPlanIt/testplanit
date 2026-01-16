@@ -615,19 +615,8 @@ export default function Cases({
                 },
               });
             } else if (fieldType === "Integer" || fieldType === "Number") {
-              // singleFilterId 1 = Has Value, singleFilterId 2 = No Value
-              if ((singleFilterId as number) === 1) {
-                // Has value
-                filterConditions.push({
-                  caseFieldValues: {
-                    some: {
-                      fieldId: numericFieldId,
-                      value: { not: Prisma.JsonNull },
-                    },
-                  },
-                });
-              } else if ((singleFilterId as number) === 2) {
-                // No value
+              // Handle special "none" value for cases without this field
+              if (singleFilterId === "none") {
                 filterConditions.push({
                   OR: [
                     { caseFieldValues: { none: { fieldId: numericFieldId } } },
@@ -640,6 +629,161 @@ export default function Cases({
                       },
                     },
                   ],
+                });
+              } else if (singleFilterId === "hasValue") {
+                // Has any value (not null)
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      value: { not: Prisma.JsonNull },
+                    },
+                  },
+                });
+              } else if (typeof singleFilterId === "string" && singleFilterId.includes(":")) {
+                // Operator-based filter: format is "operator:value1" or "operator:value1:value2"
+                const parts = singleFilterId.split(":");
+                const operator = parts[0];
+                const value1 = parseFloat(parts[1]);
+
+                if (!isNaN(value1)) {
+                  if (operator === "eq") {
+                    // Equals
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { equals: value1 } },
+                            { value: { equals: value1.toString() } },
+                          ],
+                        },
+                      },
+                    });
+                  } else if (operator === "ne") {
+                    // Not equals
+                    filterConditions.push({
+                      OR: [
+                        { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                        {
+                          caseFieldValues: {
+                            some: {
+                              fieldId: numericFieldId,
+                              value: { equals: Prisma.JsonNull },
+                            },
+                          },
+                        },
+                        {
+                          caseFieldValues: {
+                            some: {
+                              fieldId: numericFieldId,
+                              AND: [
+                                { value: { not: { equals: value1 } } },
+                                { value: { not: { equals: value1.toString() } } },
+                              ],
+                            },
+                          },
+                        },
+                      ],
+                    });
+                  } else if (operator === "lt") {
+                    // Less than
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { lt: value1 } },
+                            { value: { lt: value1.toString() } },
+                          ],
+                        },
+                      },
+                    });
+                  } else if (operator === "lte") {
+                    // Less than or equal
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { lte: value1 } },
+                            { value: { lte: value1.toString() } },
+                          ],
+                        },
+                      },
+                    });
+                  } else if (operator === "gt") {
+                    // Greater than
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { gt: value1 } },
+                            { value: { gt: value1.toString() } },
+                          ],
+                        },
+                      },
+                    });
+                  } else if (operator === "gte") {
+                    // Greater than or equal
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { gte: value1 } },
+                            { value: { gte: value1.toString() } },
+                          ],
+                        },
+                      },
+                    });
+                  } else if (operator === "between" && parts.length === 3) {
+                    // Between two values
+                    const value2 = parseFloat(parts[2]);
+                    if (!isNaN(value2)) {
+                      filterConditions.push({
+                        caseFieldValues: {
+                          some: {
+                            fieldId: numericFieldId,
+                            OR: [
+                              {
+                                AND: [
+                                  { value: { gte: value1 } },
+                                  { value: { lte: value2 } },
+                                ],
+                              },
+                              {
+                                AND: [
+                                  { value: { gte: value1.toString() } },
+                                  { value: { lte: value2.toString() } },
+                                ],
+                              },
+                            ],
+                          },
+                        },
+                      });
+                    }
+                  }
+                }
+              } else {
+                // Filter by specific numeric value (legacy support)
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      OR: [
+                        {
+                          value: {
+                            equals: (singleFilterId as string | number).toString(),
+                          },
+                        },
+                        {
+                          value: { equals: singleFilterId as string | number },
+                        },
+                      ],
+                    },
+                  },
                 });
               }
             } else if (fieldType === "Date") {

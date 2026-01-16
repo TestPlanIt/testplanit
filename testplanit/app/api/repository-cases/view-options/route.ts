@@ -1012,8 +1012,8 @@ export async function POST(request: Request) {
           },
         } as any;
       } else if (fieldInfo.type === "Integer" || fieldInfo.type === "Number") {
-        // For Integer/Number fields, count cases with/without values
-        const withValueCount = await prisma.caseFieldValues.count({
+        // For Integer/Number fields, get all distinct values and their counts
+        const fieldValues = await prisma.caseFieldValues.findMany({
           where: {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
@@ -1021,11 +1021,36 @@ export async function POST(request: Request) {
               not: Prisma.DbNull,
             },
           },
+          select: {
+            value: true,
+          },
         });
+
+        // Count occurrences of each value
+        const valueCounts = new Map<number, number>();
+        fieldValues.forEach((fv) => {
+          if (fv.value !== null && fv.value !== undefined) {
+            const numValue = typeof fv.value === 'number' ? fv.value : parseFloat(fv.value as string);
+            if (!isNaN(numValue)) {
+              valueCounts.set(numValue, (valueCounts.get(numValue) || 0) + 1);
+            }
+          }
+        });
+
+        // Sort values numerically and create options array
+        const sortedValues = Array.from(valueCounts.keys()).sort((a, b) => a - b);
+        const options = sortedValues.map((value) => ({
+          id: value,
+          name: value.toString(),
+          count: valueCounts.get(value) || 0,
+        }));
+
+        const withValueCount = fieldValues.length;
 
         dynamicFields[fieldInfo.displayName] = {
           type: fieldInfo.type,
           fieldId: fieldInfo.fieldId,
+          options: options,
           counts: {
             hasValue: withValueCount,
             noValue: totalCount - withValueCount,
