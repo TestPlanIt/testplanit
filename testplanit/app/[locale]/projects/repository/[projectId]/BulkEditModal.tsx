@@ -1053,6 +1053,18 @@ export function BulkEditModal({
       const fieldDef = allFieldDefinitions.find((f) => f.key === fieldKey);
       if (!fieldDef) continue; // Should not happen if data is consistent
 
+      // Skip Zod validation for Date fields entirely due to Zod v4 bug with null dates
+      // Perform manual validation for required Date fields instead
+      if (fieldDef.isCustom && fieldDef.field?.type?.type === "Date") {
+        const isRequired = fieldDef.field?.isRequired ?? false;
+        if (isRequired) {
+          if (!value || !(value instanceof Date) || isNaN(value.getTime())) {
+            errors[fieldKey] = [`${fieldDef.label} is required`];
+          }
+        }
+        continue; // Skip normal Zod validation for Date fields
+      }
+
       let schema: z.ZodTypeAny = z.any(); // Initialize schema
       const isRequired = fieldDef.isCustom
         ? (fieldDef.field?.isRequired ?? false)
@@ -1123,8 +1135,8 @@ export function BulkEditModal({
             // Required for checkbox doesn't make much sense unless it must be true
             break;
           case "Date":
-            const dateSchema = z.date();
-            schema = isRequired ? dateSchema : dateSchema.nullable().optional();
+            // Use z.any() to skip Zod validation - we'll handle nulls via resolver transformation
+            schema = z.any();
             break;
           case "Multi-Select":
             let multiSchema = z.array(z.number());

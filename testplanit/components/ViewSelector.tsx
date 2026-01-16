@@ -27,6 +27,7 @@ import { UserNameCell } from "@/components/tables/UserNameCell";
 import { useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { NumericFilterInput } from "@/components/NumericFilterInput";
+import { DateFilterInput } from "@/components/DateFilterInput";
 
 interface ViewItem {
   id: string;
@@ -855,26 +856,89 @@ export function ViewSelector({
                 ];
               }
 
-              // Handle Date, Text Long, Text String fields (simple has/no value)
+              // Handle Date fields with operator-based filtering
+              if (field?.type === "Date") {
+                const noValueCount = (field as any).counts?.noValue || 0;
+                const hasValueCount = (field as any).counts?.hasValue || 0;
+
+                return [
+                  // Add "No Date" option first
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="no-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("none", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate opacity-40">No Date</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {noValueCount}
+                    </span>
+                  </div>,
+                  // Add "Has Date" option
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="has-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("hasValue", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">Has Date</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {hasValueCount}
+                    </span>
+                  </div>,
+                  // Divider
+                  <div key="divider-1" className="h-px bg-border my-1" />,
+                  // Operator-based filter options with date picker
+                  <DateFilterInput
+                    key="filter-input"
+                    fieldId={field.fieldId}
+                    onFilterApply={(operator, value1, value2) => {
+                      let filterValue: string;
+                      if (value1 && value2) {
+                        // Between operator with two dates - use pipe separator
+                        filterValue = `${operator}|${value1.toISOString()}|${value2.toISOString()}`;
+                      } else if (value1) {
+                        // Single date operator (on, before, after) - use pipe separator
+                        filterValue = `${operator}|${value1.toISOString()}`;
+                      } else {
+                        // Relative date operators (last7, last30, last90, thisYear)
+                        filterValue = operator;
+                      }
+                      handleFilterClick(filterValue, undefined);
+                    }}
+                    onClearFilter={() => handleFilterClick(null, undefined)}
+                    currentFilter={
+                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                        ? (() => {
+                            const filter = String(selectedFilter[0]);
+                            // Only pass date operator filters, not hasValue/none
+                            return filter === "hasValue" || filter === "none" ? null : filter;
+                          })()
+                        : null
+                    }
+                  />,
+                ];
+              }
+
+              // Handle Text Long, Text String fields (simple has/no value)
               if (
-                field?.type === "Date" ||
                 field?.type === "Text Long" ||
                 field?.type === "Text String"
               ) {
                 const hasValueCount = (field as any).counts?.hasValue || 0;
                 const noValueCount = (field as any).counts?.noValue || 0;
-
-                // Determine labels based on field type
-                let hasLabel = "Has Value";
-                let noLabel = "No Value";
-
-                if (field.type === "Date") {
-                  hasLabel = "Has Date";
-                  noLabel = "No Date";
-                } else if (field.type === "Text Long" || field.type === "Text String") {
-                  hasLabel = "Has Text";
-                  noLabel = "No Text";
-                }
 
                 return [
                   <div
@@ -888,7 +952,7 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick(1, e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate">{hasLabel}</span>
+                      <span className="truncate">Has Text</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {hasValueCount}
@@ -905,7 +969,7 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick(2, e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate opacity-40">{noLabel}</span>
+                      <span className="truncate opacity-40">No Text</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {noValueCount}

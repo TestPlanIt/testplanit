@@ -787,9 +787,188 @@ export default function Cases({
                 });
               }
             } else if (fieldType === "Date") {
-              // singleFilterId 1 = Has Date, singleFilterId 2 = No Date
-              if ((singleFilterId as number) === 1) {
-                // Has date
+              // Handle special "none" value for cases without this field
+              if (singleFilterId === "none") {
+                filterConditions.push({
+                  OR: [
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          value: { equals: Prisma.JsonNull },
+                        },
+                      },
+                    },
+                  ],
+                });
+              } else if (singleFilterId === "hasValue") {
+                // Has any date (not null, not JSON null, and not empty string)
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      AND: [
+                        { value: { not: Prisma.JsonNull } },
+                        { NOT: { value: { equals: Prisma.JsonNull } } },
+                        { NOT: { value: { equals: "" } } },
+                        { NOT: { value: { equals: null } } },
+                      ],
+                    },
+                  },
+                });
+              } else if (singleFilterId === "last7") {
+                // Last 7 days
+                const now = new Date();
+                const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      OR: [
+                        { value: { gte: sevenDaysAgoStr } },
+                        { value: { gte: sevenDaysAgo.toISOString() } },
+                      ],
+                    },
+                  },
+                });
+              } else if (singleFilterId === "last30") {
+                // Last 30 days
+                const now = new Date();
+                const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      OR: [
+                        { value: { gte: thirtyDaysAgoStr } },
+                        { value: { gte: thirtyDaysAgo.toISOString() } },
+                      ],
+                    },
+                  },
+                });
+              } else if (singleFilterId === "last90") {
+                // Last 90 days
+                const now = new Date();
+                const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                const ninetyDaysAgoStr = ninetyDaysAgo.toISOString().split("T")[0];
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      OR: [
+                        { value: { gte: ninetyDaysAgoStr } },
+                        { value: { gte: ninetyDaysAgo.toISOString() } },
+                      ],
+                    },
+                  },
+                });
+              } else if (singleFilterId === "thisYear") {
+                // This year
+                const now = new Date();
+                const startOfYear = new Date(now.getFullYear(), 0, 1);
+                const startOfYearStr = startOfYear.toISOString().split("T")[0];
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      OR: [
+                        { value: { gte: startOfYearStr } },
+                        { value: { gte: startOfYear.toISOString() } },
+                      ],
+                    },
+                  },
+                });
+              } else if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+                // Operator-based filter: format is "operator|date1" or "operator|date1|date2"
+                const parts = singleFilterId.split("|");
+                const operator = parts[0];
+
+                if (operator === "on" && parts.length >= 2) {
+                  // On date (exact match)
+                  const date = new Date(parts[1]);
+                  if (!isNaN(date.getTime())) {
+                    const dateStr = date.toISOString().split("T")[0];
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { equals: dateStr } },
+                            { value: { equals: date.toISOString() } },
+                          ],
+                        },
+                      },
+                    });
+                  }
+                } else if (operator === "before" && parts.length >= 2) {
+                  // Before date
+                  const date = new Date(parts[1]);
+                  if (!isNaN(date.getTime())) {
+                    const dateStr = date.toISOString().split("T")[0];
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { lt: dateStr } },
+                            { value: { lt: date.toISOString() } },
+                          ],
+                        },
+                      },
+                    });
+                  }
+                } else if (operator === "after" && parts.length >= 2) {
+                  // After date
+                  const date = new Date(parts[1]);
+                  if (!isNaN(date.getTime())) {
+                    const dateStr = date.toISOString().split("T")[0];
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { gt: dateStr } },
+                            { value: { gt: date.toISOString() } },
+                          ],
+                        },
+                      },
+                    });
+                  }
+                } else if (operator === "between" && parts.length === 3) {
+                  // Between two dates
+                  const date1 = new Date(parts[1]);
+                  const date2 = new Date(parts[2]);
+                  if (!isNaN(date1.getTime()) && !isNaN(date2.getTime())) {
+                    const dateStr1 = date1.toISOString().split("T")[0];
+                    const dateStr2 = date2.toISOString().split("T")[0];
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            {
+                              AND: [
+                                { value: { gte: dateStr1 } },
+                                { value: { lte: dateStr2 } },
+                              ],
+                            },
+                            {
+                              AND: [
+                                { value: { gte: date1.toISOString() } },
+                                { value: { lte: date2.toISOString() } },
+                              ],
+                            },
+                          ],
+                        },
+                      },
+                    });
+                  }
+                }
+              } else if ((singleFilterId as number) === 1) {
+                // Legacy: Has date
                 filterConditions.push({
                   caseFieldValues: {
                     some: {
@@ -799,7 +978,7 @@ export default function Cases({
                   },
                 });
               } else if ((singleFilterId as number) === 2) {
-                // No date
+                // Legacy: No date
                 filterConditions.push({
                   OR: [
                     { caseFieldValues: { none: { fieldId: numericFieldId } } },

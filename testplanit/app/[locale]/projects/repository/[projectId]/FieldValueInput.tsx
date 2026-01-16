@@ -376,7 +376,7 @@ export function FieldValueInput({
               mode="single"
               selected={safeDateValue}
               onSelect={(date) => {
-                onChange(date ?? null); // Pass the selected date or null
+                onChange(date ?? undefined); // Pass the selected date or undefined
                 setIsDatePickerOpen(false); // Close popover on selection
               }}
               autoFocus

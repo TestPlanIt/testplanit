@@ -18,7 +18,7 @@ import {
 } from "~/lib/hooks";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller, Resolver } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,7 +103,8 @@ const mapFieldToZodType = (field: any) => {
         ? z.boolean().prefault(field.caseField.isChecked)
         : z.boolean().prefault(field.caseField.isChecked).optional();
     case "Date":
-      return isRequired ? z.date() : z.date().nullable().optional();
+      // Use z.any() to skip Zod validation - we'll handle nulls via resolver transformation
+      return z.any();
     case "Multi-Select":
       return isRequired ? z.number().array() : z.number().array().optional();
     case "Dropdown":
@@ -244,7 +245,10 @@ const createFormSchema = (fields: any[]) => {
   const dynamicSchema = fields.reduce(
     (schema, field) => {
       const fieldName = field.caseField.id.toString();
-      schema[fieldName] = mapFieldToZodType(field);
+      // Skip Date fields entirely - we'll handle them manually without validation
+      if (field.caseField.type.type !== "Date") {
+        schema[fieldName] = mapFieldToZodType(field);
+      }
       return schema;
     },
     {} as Record<string, z.ZodTypeAny>
@@ -434,7 +438,8 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
       ),
     })) || [];
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema) as unknown as Resolver<FormValues>,
+    resolver: zodResolver(formSchema),
+    mode: 'onSubmit',
     defaultValues: {
       name: "",
       templateId: defaultTemplateId ?? 0,
@@ -587,7 +592,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
             defaultValues[fieldIdStr] = "";
             break;
           case "Date":
-            defaultValues[fieldIdStr] = null;
+            defaultValues[fieldIdStr] = undefined;
             break;
           case "Checkbox":
             defaultValues[fieldIdStr] = caseField.caseField.isChecked ?? false;
@@ -643,7 +648,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
           } else if (fieldType === "Integer" || fieldType === "Number") {
             defaultValues[fieldIdStr] = "";
           } else if (fieldType === "Date") {
-            defaultValues[fieldIdStr] = null;
+            defaultValues[fieldIdStr] = undefined;
           }
         });
         // Enable the name field since we have a template selected and loaded
@@ -704,7 +709,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
             defaultValues[fieldIdStr] = "";
             break;
           case "Date":
-            defaultValues[fieldIdStr] = null;
+            defaultValues[fieldIdStr] = undefined;
             break;
           case "Checkbox":
             defaultValues[fieldIdStr] = caseField.caseField.isChecked ?? false;
@@ -728,6 +733,25 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
 
   async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
+
+    // Manual validation for required date fields (since we excluded them from Zod schema)
+    const selectedTemplate = templates?.find(t => t.id === selectedTemplateId);
+    if (selectedTemplate) {
+      for (const fieldMeta of selectedTemplate.caseFields) {
+        if (fieldMeta.caseField.type.type === "Date" && fieldMeta.caseField.isRequired) {
+          const fieldIdStr = fieldMeta.caseField.id.toString();
+          const value = data[fieldIdStr];
+          if (!value || !(value instanceof Date) || isNaN(value.getTime())) {
+            form.setError(fieldIdStr, {
+              type: 'manual',
+              message: `${fieldMeta.caseField.displayName} is required`,
+            });
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      }
+    }
 
     try {
       if (session) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "~/lib/navigation";
 import { useParams } from "next/navigation";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
@@ -193,8 +193,9 @@ const mapFieldToZodType = (field: any) => {
       // But adding it for consistency with how null might be stored/retrieved
       return makeOptional(z.boolean().nullable());
     case "Date":
-      // Date already correctly handles nullable when optional
-      return isRequired ? z.date() : z.date().optional().nullable();
+      // Use passthrough to skip all Zod validation for date fields
+      // This avoids the Zod v4 bug where it calls .getTime() on null values
+      return z.any();
     case "Multi-Select":
       return makeOptional(z.array(z.number()));
     case "Dropdown":
@@ -313,7 +314,8 @@ const createFormSchema = (fields: any[]) => {
   const dynamicSchema = fields.reduce(
     (schema, field) => {
       const fieldName = field.caseField.id.toString();
-      if (field.caseField.displayName !== "Steps") {
+      // Skip Date fields entirely - we'll handle them manually without validation
+      if (field.caseField.displayName !== "Steps" && field.caseField.type.type !== "Date") {
         schema[fieldName] = mapFieldToZodType(field);
       }
       return schema;
@@ -780,8 +782,8 @@ export default function TestCaseDetails() {
     testcase?.template.id
   );
 
-  const methods = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const methods = useForm<any>({
+    mode: 'onSubmit',
   });
 
   const {
@@ -855,9 +857,10 @@ export default function TestCaseDetails() {
       );
       if (originalValueForField) {
         if (fieldMeta.caseField.type.type === "Date") {
+          // For date fields, use undefined instead of null for empty values
           defaultValues[fieldIdStr] = originalValueForField.value
             ? new Date(originalValueForField.value as string)
-            : null;
+            : undefined;
         } else {
           defaultValues[fieldIdStr] =
             originalValueForField.value === null
@@ -941,11 +944,121 @@ export default function TestCaseDetails() {
     // Form will be reset through the template change effect
   };
 
-  const handleSave = async (data: z.infer<typeof formSchema>) => {
+  const handleSave = async (data: any) => {
     setIsSubmitting(true);
 
+    // Manual validation for all fields (no resolver, so we validate manually)
+    let hasErrors = false;
+
+    // Validate required base fields
+    if (!data.name || (typeof data.name === 'string' && data.name.trim().length < 2)) {
+      methods.setError('name', {
+        type: 'manual',
+        message: 'Please enter a name for the Test Case',
+      });
+      hasErrors = true;
+    }
+
+    if (!data.workflowId) {
+      methods.setError('workflowId', {
+        type: 'manual',
+        message: 'Please select a State',
+      });
+      hasErrors = true;
+    }
+
+    if (!data.folderId) {
+      methods.setError('folderId', {
+        type: 'manual',
+        message: 'Please select a Folder',
+      });
+      hasErrors = true;
+    }
+
+    // Validate estimate if provided
+    if (data.estimate) {
+      const durationInMilliseconds = parseDuration(data.estimate);
+      if (durationInMilliseconds === null) {
+        methods.setError('estimate', {
+          type: 'manual',
+          message: 'Invalid duration format. Try something like 30m, 1 week or 1h 25m',
+        });
+        hasErrors = true;
+      } else {
+        const durationInSeconds = Math.round(durationInMilliseconds / 1000);
+        if (durationInSeconds > MAX_DURATION) {
+          methods.setError('estimate', {
+            type: 'manual',
+            message: 'Estimate is too large',
+          });
+          hasErrors = true;
+        }
+      }
+    }
+
+    // Validate custom fields
+    const template = templates?.find(t => t.id === selectedTemplateId);
+    if (template) {
+      for (const fieldMeta of template.caseFields) {
+        const fieldIdStr = fieldMeta.caseField.id.toString();
+        const value = data[fieldIdStr];
+        const fieldType = fieldMeta.caseField.type.type;
+        const isRequired = fieldMeta.caseField.isRequired;
+
+        if (isRequired) {
+          // Validate required fields based on type
+          if (fieldType === "Date") {
+            if (!value || !(value instanceof Date) || isNaN(value.getTime())) {
+              methods.setError(fieldIdStr, {
+                type: 'manual',
+                message: `${fieldMeta.caseField.displayName} is required`,
+              });
+              hasErrors = true;
+            }
+          } else if (fieldType === "Text String" || fieldType === "Link") {
+            if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+              methods.setError(fieldIdStr, {
+                type: 'manual',
+                message: `${fieldMeta.caseField.displayName} is required`,
+              });
+              hasErrors = true;
+            }
+          } else if (fieldType === "Multi-Select") {
+            if (!Array.isArray(value) || value.length === 0) {
+              methods.setError(fieldIdStr, {
+                type: 'manual',
+                message: `${fieldMeta.caseField.displayName} is required`,
+              });
+              hasErrors = true;
+            }
+          } else if (fieldType === "Dropdown" || fieldType === "Integer" || fieldType === "Number") {
+            if (value === null || value === undefined || value === '') {
+              methods.setError(fieldIdStr, {
+                type: 'manual',
+                message: `${fieldMeta.caseField.displayName} is required`,
+              });
+              hasErrors = true;
+            }
+          }
+        }
+      }
+    }
+
+    if (hasErrors) {
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Transform null date values to undefined
+    const cleanedData = { ...data };
+    Object.keys(cleanedData).forEach(key => {
+      if (cleanedData[key] === null) {
+        cleanedData[key] = undefined;
+      }
+    });
+
     // Ensure data.steps is an array
-    const steps = Array.isArray(data.steps) ? data.steps : [];
+    const steps = Array.isArray(cleanedData.steps) ? cleanedData.steps : [];
 
     if (isLoadingSharedStepGroups && steps.some((s: any) => s.isShared)) {
       console.error(

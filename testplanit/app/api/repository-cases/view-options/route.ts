@@ -1057,8 +1057,8 @@ export async function POST(request: Request) {
           },
         } as any;
       } else if (fieldInfo.type === "Date") {
-        // For Date fields, count cases with/without dates
-        const withDateCount = await prisma.caseFieldValues.count({
+        // For Date fields, count cases with valid date values (not null or empty)
+        const fieldValues = await prisma.caseFieldValues.findMany({
           where: {
             fieldId: fieldId,
             testCaseId: { in: allMatchingCaseIds },
@@ -1066,7 +1066,20 @@ export async function POST(request: Request) {
               not: Prisma.DbNull,
             },
           },
+          select: {
+            value: true,
+          },
         });
+
+        // Count non-null, non-empty date values
+        const withDateCount = fieldValues.filter((fv) => {
+          if (fv.value === null || fv.value === undefined) return false;
+          // Check if it's a non-empty string
+          if (typeof fv.value === 'string') {
+            return fv.value.trim() !== '';
+          }
+          return true;
+        }).length;
 
         dynamicFields[fieldInfo.displayName] = {
           type: fieldInfo.type,
