@@ -1756,12 +1756,7 @@ export default function Cases({
     }
   }, [allCaseIdsData, selectAllAction, isSelectionMode, onSelectionChange, t]);
 
-  const {
-    data,
-    isLoading,
-    totalCount: filteredTotalCount,
-    refetch: refetchData,
-  } = useFindManyRepositoryCasesFiltered(
+  const result = useFindManyRepositoryCasesFiltered(
     {
       orderBy: orderBy,
       where: repositoryCaseWhereClause,
@@ -2200,8 +2195,16 @@ export default function Cases({
         }>[]
       | undefined;
     isLoading: boolean;
+    totalCount: number;
     refetch: any;
   };
+
+  const {
+    data,
+    isLoading,
+    totalCount: filteredTotalCount,
+    refetch: refetchData,
+  } = result;
 
   // Calculate total count based on mode
   const totalRepositoryCases = useMemo(() => {
