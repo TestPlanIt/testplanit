@@ -1520,6 +1520,12 @@
     },
     "fields": {
       "optionNotFound": "Option introuvable",
+      "hasValue": "A de la valeur",
+      "noValue": "Aucune valeur",
+      "hasDate": "A une date",
+      "noDate": "Sans date",
+      "hasText": "Contient du texte",
+      "noText": "Aucun texte",
       "hasLink": "A un lien",
       "noLink": "Aucun lien",
       "hasSteps": "Comporte des marches",
@@ -4977,7 +4983,16 @@
       "hours": "heures",
       "days": "jours",
       "searchingIn": "Recherche dans",
-      "includeDeleted": "Inclure les éléments supprimés"
+      "includeDeleted": "Inclure les éléments supprimés",
+      "filterActive": "Filtre actif :",
+      "applyFilter": "Appliquer le filtre",
+      "validation": {
+        "firstValueMustBeLessThanSecond": "La première valeur doit être inférieure à la seconde valeur",
+        "firstDateMustBeBeforeSecond": "Le premier rendez-vous doit avoir lieu avant le second."
+      },
+      "link": {
+        "domainHelp": "Saisissez uniquement le domaine (par exemple, « github.com » ou « example.org »)"
+      }
     }
   },
   "email": {

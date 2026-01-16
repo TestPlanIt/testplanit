@@ -17,7 +17,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { getDateFnsLocale } from "~/utils/locales";
 import { cn } from "~/utils";
 
@@ -58,6 +58,7 @@ export function DateFilterInput({
   onClearFilter,
   currentFilter,
 }: DateFilterInputProps) {
+  const t = useTranslations();
   const locale = useLocale();
   const [operator, setOperator] = useState<DateOperator>("on");
   const [date1, setDate1] = useState<Date | undefined>(undefined);
@@ -181,7 +182,7 @@ export function DateFilterInput({
       {hasActiveFilter && (
         <div className="flex items-center justify-between text-xs bg-primary/10 p-1.5 rounded">
           <span className="text-primary font-medium">
-            Filter active: {formatFilterDisplay(currentFilter)}
+            {t("search.filters.filterActive")} {formatFilterDisplay(currentFilter)}
           </span>
           <Button
             size="sm"
@@ -228,7 +229,7 @@ export function DateFilterInput({
                 {date1 ? (
                   format(date1, "PP", { locale: getDateFnsLocale(locale) })
                 ) : (
-                  <span>Select date</span>
+                  <span>{t("search.selectDate")}</span>
                 )}
                 <CalendarDays className="ml-auto h-3 w-3 opacity-50" />
               </Button>
@@ -250,7 +251,7 @@ export function DateFilterInput({
 
           {operator === "between" && (
             <>
-              <span className="text-xs text-muted-foreground">and</span>
+              <span className="text-xs text-muted-foreground">{t("common.and")}</span>
               <Popover open={popover2Open} onOpenChange={setPopover2Open}>
                 <PopoverTrigger asChild>
                   <Button
@@ -263,7 +264,7 @@ export function DateFilterInput({
                     {date2 ? (
                       format(date2, "PP", { locale: getDateFnsLocale(locale) })
                     ) : (
-                      <span>Select date</span>
+                      <span>{t("search.selectDate")}</span>
                     )}
                     <CalendarDays className="ml-auto h-3 w-3 opacity-50" />
                   </Button>
@@ -302,12 +303,12 @@ export function DateFilterInput({
           onClick={handleApply}
           className="h-8 w-full text-xs"
         >
-          Apply Filter
+          {t("search.filters.applyFilter")}
         </Button>
       )}
 
       {operator === "between" && date1 && date2 && date1 >= date2 && (
-        <p className="text-xs text-destructive">First date must be before second date</p>
+        <p className="text-xs text-destructive">{t("search.filters.validation.firstDateMustBeBeforeSecond")}</p>
       )}
     </div>
   );

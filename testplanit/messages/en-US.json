@@ -1520,6 +1520,12 @@
     },
     "fields": {
       "optionNotFound": "Option not found",
+      "hasValue": "Has Value",
+      "noValue": "No Value",
+      "hasDate": "Has Date",
+      "noDate": "No Date",
+      "hasText": "Has Text",
+      "noText": "No Text",
       "hasLink": "Has Link",
       "noLink": "No Link",
       "hasSteps": "Has Steps",
@@ -4977,7 +4983,16 @@
       "hours": "hours",
       "days": "days",
       "searchingIn": "Searching in",
-      "includeDeleted": "Include deleted items"
+      "includeDeleted": "Include deleted items",
+      "filterActive": "Filter active:",
+      "applyFilter": "Apply Filter",
+      "validation": {
+        "firstValueMustBeLessThanSecond": "First value must be less than second value",
+        "firstDateMustBeBeforeSecond": "First date must be before second date"
+      },
+      "link": {
+        "domainHelp": "Enter domain only (e.g., \"github.com\" or \"example.org\")"
+      }
     }
   },
   "email": {

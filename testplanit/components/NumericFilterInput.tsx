@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type NumericOperator = "eq" | "ne" | "lt" | "lte" | "gt" | "gte" | "between";
 
@@ -49,6 +50,7 @@ export function NumericFilterInput({
   onClearFilter,
   currentFilter,
 }: NumericFilterInputProps) {
+  const t = useTranslations();
   const [operator, setOperator] = useState<NumericOperator>("eq");
   const [value1, setValue1] = useState<string>("");
   const [value2, setValue2] = useState<string>("");
@@ -119,7 +121,7 @@ export function NumericFilterInput({
       {hasActiveFilter && (
         <div className="flex items-center justify-between text-xs bg-primary/10 p-1.5 rounded">
           <span className="text-primary font-medium">
-            Filter active: {formatFilterDisplay(currentFilter)}
+            {t("search.filters.filterActive")} {formatFilterDisplay(currentFilter)}
           </span>
           <Button
             size="sm"
@@ -165,7 +167,7 @@ export function NumericFilterInput({
 
         {operator === "between" && (
           <>
-            <span className="text-xs text-muted-foreground">and</span>
+            <span className="text-xs text-muted-foreground">{t("common.and")}</span>
             <Input
               type="number"
               step={fieldType === "Integer" ? "1" : "any"}
@@ -189,7 +191,7 @@ export function NumericFilterInput({
       </div>
 
       {operator === "between" && value1 && value2 && parseFloat(value1) >= parseFloat(value2) && (
-        <p className="text-xs text-destructive">First value must be less than second value</p>
+        <p className="text-xs text-destructive">{t("search.filters.validation.firstValueMustBeLessThanSecond")}</p>
       )}
     </div>
   );

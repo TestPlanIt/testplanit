@@ -725,7 +725,7 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick("none", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate opacity-40">No Value</span>
+                      <span className="truncate opacity-40">{t("fields.noValue")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {noValueCount}
@@ -743,7 +743,7 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick("hasValue", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate">Has Value</span>
+                      <span className="truncate">{t("fields.hasValue")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {hasValueCount}
@@ -790,7 +790,7 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick("none", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate opacity-40">No Date</span>
+                      <span className="truncate opacity-40">{t("fields.noDate")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {noValueCount}
@@ -808,7 +808,7 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick("hasValue", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate">Has Date</span>
+                      <span className="truncate">{t("fields.hasDate")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {hasValueCount}
@@ -868,7 +868,7 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick("hasValue", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate">Has Text</span>
+                      <span className="truncate">{t("fields.hasText")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {hasValueCount}
@@ -885,7 +885,7 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick("none", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate opacity-40">No Text</span>
+                      <span className="truncate opacity-40">{t("fields.noText")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {noValueCount}
@@ -932,7 +932,7 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick("hasValue", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate">Has Link</span>
+                      <span className="truncate">{t("fields.hasLink")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {hasValueCount}
@@ -949,7 +949,7 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick("none", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate opacity-40">No Link</span>
+                      <span className="truncate opacity-40">{t("fields.noLink")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {noValueCount}
@@ -996,7 +996,7 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick("hasValue", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate">Has Steps</span>
+                      <span className="truncate">{t("fields.hasSteps")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {hasValueCount}
@@ -1013,7 +1013,7 @@ export function ViewSelector({
                     onClick={(e) => handleFilterClick("none", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className="truncate opacity-40">No Steps</span>
+                      <span className="truncate opacity-40">{t("fields.noSteps")}</span>
                     </div>
                     <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
                       {noValueCount}

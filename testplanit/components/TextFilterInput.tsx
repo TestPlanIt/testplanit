@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type TextOperator = "contains" | "startsWith" | "endsWith" | "equals" | "notContains";
 
@@ -43,6 +44,7 @@ export function TextFilterInput({
   onClearFilter,
   currentFilter,
 }: TextFilterInputProps) {
+  const t = useTranslations();
   const [operator, setOperator] = useState<TextOperator>("contains");
   const [value, setValue] = useState<string>("");
 
@@ -89,7 +91,7 @@ export function TextFilterInput({
       {hasActiveFilter && (
         <div className="flex items-center justify-between text-xs bg-primary/10 p-1.5 rounded">
           <span className="text-primary font-medium">
-            Filter active: {formatFilterDisplay(currentFilter)}
+            {t("search.filters.filterActive")} {formatFilterDisplay(currentFilter)}
           </span>
           <Button
             size="sm"

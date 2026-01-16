@@ -1520,6 +1520,12 @@
     },
     "fields": {
       "optionNotFound": "Opción no encontrada",
+      "hasValue": "Tiene valor",
+      "noValue": "Sin valor",
+      "hasDate": "Tiene fecha",
+      "noDate": "Sin fecha",
+      "hasText": "Tiene texto",
+      "noText": "Sin texto",
       "hasLink": "Tiene enlace",
       "noLink": "Sin enlace",
       "hasSteps": "Tiene pasos",
@@ -4977,7 +4983,16 @@
       "hours": "horas",
       "days": "días",
       "searchingIn": "Buscando",
-      "includeDeleted": "Incluye elementos eliminados"
+      "includeDeleted": "Incluye elementos eliminados",
+      "filterActive": "Filtro activo:",
+      "applyFilter": "Aplicar filtro",
+      "validation": {
+        "firstValueMustBeLessThanSecond": "El primer valor debe ser menor que el segundo valor",
+        "firstDateMustBeBeforeSecond": "La primera cita debe ser anterior a la segunda."
+      },
+      "link": {
+        "domainHelp": "Ingrese solo el dominio (por ejemplo, \"github.com\" o \"example.org\")"
+      }
     }
   },
   "email": {

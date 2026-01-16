@@ -33,7 +33,7 @@ export function filterOrphanedFieldValues<T extends { template?: any; caseFieldV
 /**
  * Apply text operator filter to a string value
  */
-function matchesTextOperator(value: any, operator: string, searchValue: string): boolean {
+export function matchesTextOperator(value: any, operator: string, searchValue: string): boolean {
   if (!value) return false;
 
   // Handle TipTap JSON documents (Text Long fields) and plain strings (Text String fields)
@@ -69,7 +69,7 @@ function matchesTextOperator(value: any, operator: string, searchValue: string):
 /**
  * Apply link operator filter to a URL string
  */
-function matchesLinkOperator(value: any, operator: string, searchValue: string): boolean {
+export function matchesLinkOperator(value: any, operator: string, searchValue: string): boolean {
   if (!value || typeof value !== 'string') return false;
   const lowerValue = value.toLowerCase();
   const lowerSearch = searchValue.toLowerCase();
@@ -102,7 +102,7 @@ function matchesLinkOperator(value: any, operator: string, searchValue: string):
  * For built-in Steps, the testCase object has a `steps` relation array
  * For custom Steps fields, the value would be in caseFieldValues
  */
-function matchesStepsOperator(testCase: any, operator: string, count1: number, count2?: number): boolean {
+export function matchesStepsOperator(testCase: any, operator: string, count1: number, count2?: number): boolean {
   // Check if testCase has the built-in steps relation
   const steps = testCase?.steps;
   if (!Array.isArray(steps)) return false;

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type LinkOperator = "contains" | "startsWith" | "endsWith" | "equals" | "domain";
 
@@ -43,6 +44,7 @@ export function LinkFilterInput({
   onClearFilter,
   currentFilter,
 }: LinkFilterInputProps) {
+  const t = useTranslations();
   const [operator, setOperator] = useState<LinkOperator>("contains");
   const [value, setValue] = useState<string>("");
 
@@ -89,7 +91,7 @@ export function LinkFilterInput({
       {hasActiveFilter && (
         <div className="flex items-center justify-between text-xs bg-primary/10 p-1.5 rounded">
           <span className="text-primary font-medium">
-            Filter active: {formatFilterDisplay(currentFilter)}
+            {t("search.filters.filterActive")} {formatFilterDisplay(currentFilter)}
           </span>
           <Button
             size="sm"
@@ -143,7 +145,7 @@ export function LinkFilterInput({
 
       {operator === "domain" && (
         <p className="text-xs text-muted-foreground">
-          Enter domain only (e.g., "github.com" or "example.org")
+          {t("search.filters.link.domainHelp")}
         </p>
       )}
     </div>
