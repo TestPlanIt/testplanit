@@ -27,7 +27,27 @@ The Docker Compose setup starts these containerized services:
 
 - [Docker](https://www.docker.com/products/docker-desktop/) with Compose plugin
 - Git
-- 8GB+ RAM available for containers (16GB recommended to run all services)
+- **RAM Requirements:**
+
+  | Phase                    | Minimum | Recommended | Notes                                      |
+  |--------------------------|---------|-------------|--------------------------------------------|
+  | **Building**             | 16GB    | 16GB+       | Required during initial build and updates  |
+  | **Running (Full Stack)** | 7GB     | 11GB        | All services combined                      |
+
+  **Memory-constrained systems:** Allocate 16GB to Docker for building, then reduce to 7-11GB for running after build completes.
+
+  **Per-service breakdown (running):**
+
+  | Service                | Minimum  | Recommended |
+  |------------------------|----------|-------------|
+  | TestPlanIt Application | 3GB      | 4GB         |
+  | Background Workers     | 512MB    | 1GB         |
+  | PostgreSQL             | 1GB      | 2GB         |
+  | Elasticsearch          | 2GB      | 3GB         |
+  | MinIO                  | 512MB    | 1GB         |
+  | Valkey (Redis)         | 32MB     | 64MB        |
+  | **Total**              | **~7GB** | **~11GB**   |
+
 - 25GB+ disk space for data and images
 
 ## Installation & Setup Steps
