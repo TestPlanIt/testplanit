@@ -240,8 +240,8 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
           docs: docsContent,
           isStarted: data.isStarted,
           isCompleted: data.isCompleted,
-          startedAt: data.startedAt,
-          completedAt: data.completedAt,
+          startedAt: data.startedAt ?? undefined,
+          completedAt: data.completedAt ?? undefined,
           automaticCompletion: data.completedAt
             ? data.automaticCompletion
             : false,

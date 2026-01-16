@@ -438,7 +438,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
       ),
     })) || [];
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     mode: 'onSubmit',
     defaultValues: {
       name: "",

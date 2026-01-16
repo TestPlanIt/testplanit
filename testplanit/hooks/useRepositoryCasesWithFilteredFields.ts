@@ -148,10 +148,13 @@ export function useFindManyRepositoryCasesFiltered(
 ) {
   const result = useFindManyRepositoryCases(queryOptions, options);
 
+  // Extract totalCount from result for dependency tracking
+  const resultTotalCount = (result as any).totalCount;
+
   // First apply filtering (without pagination)
   const { filteredCases, totalFilteredCount } = useMemo(() => {
     if (!result.data || !Array.isArray(result.data)) {
-      return { filteredCases: result.data, totalFilteredCount: (result as any).totalCount ?? 0 };
+      return { filteredCases: result.data, totalFilteredCount: resultTotalCount ?? 0 };
     }
 
     // First filter orphaned field values
@@ -196,10 +199,10 @@ export function useFindManyRepositoryCasesFiltered(
     // Return filtered cases and the total count (before pagination)
     const totalCount = postFetchFilters && postFetchFilters.length > 0
       ? cases.length
-      : (result as any).totalCount ?? 0;
+      : resultTotalCount ?? 0;
 
     return { filteredCases: cases, totalFilteredCount: totalCount };
-  }, [result.data, (result as any).totalCount, postFetchFilters]);
+  }, [result.data, resultTotalCount, postFetchFilters]);
 
   // Then apply client-side pagination if provided
   const paginatedData = useMemo(() => {

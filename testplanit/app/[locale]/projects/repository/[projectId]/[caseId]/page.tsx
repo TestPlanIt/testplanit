@@ -1353,7 +1353,7 @@ export default function TestCaseDetails() {
             tags?.find((tag: { id: number; name: string }) => tag.id === tagId)
               ?.name
         )
-        .filter((name): name is string => !!name);
+        .filter((name: string | undefined): name is string => !!name);
       const issuesDataForVersion = issuesArray
         .filter((id: any) => id != null)
         .map((issueId: number) => {
