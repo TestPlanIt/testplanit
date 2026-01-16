@@ -10,15 +10,25 @@ This guide explains how to set up TestPlanIt for local development manually, wit
 
 Before you begin, ensure you have the following installed:
 
-- [Node.js](https://nodejs.org/) (v20.18.3 recommended)
+- [Node.js](https://nodejs.org/) v20.9.0 minimum (v24.x LTS recommended)
 - [pnpm](https://pnpm.io/) (version 10+ recommended)
-- A running [PostgreSQL](https://www.postgresql.org/) database instance
 - Git
-- A running [Valkey](https://valkey.io/) instance (Redis-compatible, for background job processing)
 
-:::warning Use Node v20.18.3
-zenstack sometimes gives an error ```⨯ Error: Generated "enhance" function not found. Please run `zenstack generate` first.``` with some versions of node using turbopack. You can either use dev mode without turbopack or stick to a known good node version like v20.18.3.
-:::
+**Required Services:**
+
+- **[PostgreSQL](https://www.postgresql.org/)** - Main database
+- **[Valkey](https://valkey.io/)** or Redis - Job queue and caching (Redis-compatible)
+
+**Optional Services:**
+
+The application will run without these services, but certain features will be disabled:
+
+- **[Elasticsearch](https://www.elastic.co/elasticsearch/)** - Search and indexing
+  - *Without it:* Search functionality will be unavailable, but the application will function normally otherwise
+- **[MinIO](https://min.io/)** or AWS S3 - File storage for attachments
+  - *Without it:* File uploads (attachments, avatars, project icons) will fail with an error message
+- **SMTP Email Server** - Email notifications and Magic Link authentication
+  - *Without it:* In-app notifications will still work, but email delivery will fail; Magic Link authentication will be unavailable (use password authentication instead)
 
 ## Installation & Setup Steps
 
