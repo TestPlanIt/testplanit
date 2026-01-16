@@ -21,7 +21,7 @@ import {
   useFindManyRepositoryFolders,
   useFindFirstTestRuns,
 } from "~/lib/hooks";
-import { useFindManyRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
+import { useFindManyRepositoryCasesFiltered, PostFetchFilter } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { DataTable } from "@/components/tables/DataTable";
 import { getColumns } from "./columns";
 import { useDebounce } from "@/components/Debounce";
@@ -994,8 +994,8 @@ export default function Cases({
                 });
               }
             } else if (fieldType === "Text Long" || fieldType === "Text String") {
-              // singleFilterId 1 = Has Text, singleFilterId 2 = No Text
-              if ((singleFilterId as number) === 1) {
+              // Handle hasValue/none special filters
+              if (singleFilterId === "hasValue") {
                 // Has text - filter for non-null, non-empty values
                 filterConditions.push({
                   caseFieldValues: {
@@ -1008,7 +1008,7 @@ export default function Cases({
                     },
                   },
                 });
-              } else if ((singleFilterId as number) === 2) {
+              } else if (singleFilterId === "none") {
                 // No text - filter for null, empty, or non-existent
                 filterConditions.push({
                   OR: [
@@ -1026,6 +1026,128 @@ export default function Cases({
                     },
                   ],
                 });
+              } else if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+                // Operator-based text filtering
+                const parts = singleFilterId.split("|");
+                const operator = parts[0];
+                const searchValue = parts[1];
+
+                if (searchValue) {
+                  // For text operators, we fetch all non-null values and filter in application logic
+                  // This is necessary because Prisma doesn't support advanced string operations on JSON fields
+                  filterConditions.push({
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        value: { not: Prisma.JsonNull },
+                      },
+                    },
+                  });
+                  // Note: Actual text filtering will happen after fetch in application logic
+                }
+              }
+            } else if (fieldType === "Link") {
+              // Handle hasValue/none special filters
+              if (singleFilterId === "hasValue") {
+                // Has link - filter for non-null, non-empty string values
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      AND: [
+                        { value: { not: Prisma.JsonNull } },
+                        { value: { not: { equals: "" } } },
+                      ],
+                    },
+                  },
+                });
+              } else if (singleFilterId === "none") {
+                // No link - filter for null, empty, or non-existent
+                filterConditions.push({
+                  OR: [
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { equals: Prisma.JsonNull } },
+                            { value: { equals: "" } },
+                          ],
+                        },
+                      },
+                    },
+                  ],
+                });
+              } else if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+                // Operator-based link filtering
+                const parts = singleFilterId.split("|");
+                const operator = parts[0];
+                const searchValue = parts[1];
+
+                if (searchValue) {
+                  // For link operators, we fetch all non-null values and filter in application logic
+                  filterConditions.push({
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        value: { not: Prisma.JsonNull },
+                      },
+                    },
+                  });
+                  // Note: Actual URL filtering will happen after fetch in application logic
+                }
+              }
+            } else if (fieldType === "Steps") {
+              // Handle hasValue/none special filters
+              if (singleFilterId === "hasValue") {
+                // Has steps - filter for non-null, non-empty array values
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      AND: [
+                        { value: { not: Prisma.JsonNull } },
+                        // Steps are stored as JSON arrays, so we need to check for non-empty arrays
+                        // This will match any non-null value; empty array filtering happens in application logic
+                      ],
+                    },
+                  },
+                });
+              } else if (singleFilterId === "none") {
+                // No steps - filter for null or non-existent
+                filterConditions.push({
+                  OR: [
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          value: { equals: Prisma.JsonNull },
+                        },
+                      },
+                    },
+                  ],
+                });
+              } else if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+                // Operator-based steps count filtering
+                const parts = singleFilterId.split("|");
+                const operator = parts[0];
+                const count1 = parseInt(parts[1]);
+                const count2 = parts[2] ? parseInt(parts[2]) : undefined;
+
+                if (!isNaN(count1)) {
+                  // For steps count operators, we fetch all non-null values and filter in application logic
+                  filterConditions.push({
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        value: { not: Prisma.JsonNull },
+                      },
+                    },
+                  });
+                  // Note: Actual step count filtering will happen after fetch in application logic
+                }
               }
             }
           } else {
@@ -1100,6 +1222,59 @@ export default function Cases({
       };
       return finalWhereClause;
     }, [deferredSearchString, projectId, viewType, folderId, filterId]);
+
+  // Build post-fetch filters for text/link/steps operators
+  const postFetchFilters: PostFetchFilter[] = useMemo(() => {
+    const filters: PostFetchFilter[] = [];
+
+    if (!filterId || !viewType || !viewType.startsWith("dynamic_")) {
+      return filters;
+    }
+
+    const filterArray = Array.isArray(filterId) ? filterId : [filterId];
+
+    for (const singleFilterId of filterArray) {
+      if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+        // Extract field info from viewType
+        const parts = viewType.split("_");
+        const fieldId = parseInt(parts[1]);
+        const fieldType = parts.slice(2).join("_");
+
+        if (fieldType === "Text Long" || fieldType === "Text String") {
+          const filterParts = singleFilterId.split("|");
+          filters.push({
+            fieldId,
+            type: 'text',
+            operator: filterParts[0],
+            value1: filterParts[1],
+          });
+        } else if (fieldType === "Link") {
+          const filterParts = singleFilterId.split("|");
+          filters.push({
+            fieldId,
+            type: 'link',
+            operator: filterParts[0],
+            value1: filterParts[1],
+          });
+        } else if (fieldType === "Steps") {
+          const filterParts = singleFilterId.split("|");
+          const count1 = parseInt(filterParts[1]);
+          const count2 = filterParts[2] ? parseInt(filterParts[2]) : undefined;
+          if (!isNaN(count1)) {
+            filters.push({
+              fieldId,
+              type: 'steps',
+              operator: filterParts[0],
+              value1: count1,
+              value2: count2,
+            });
+          }
+        }
+      }
+    }
+
+    return filters;
+  }, [filterId, viewType]);
 
   // Build test run case where clause (used for filtering by assignedTo and status)
   const testRunCaseWhereClause: Prisma.TestRunCasesWhereInput = useMemo(() => {
@@ -1547,6 +1722,7 @@ export default function Cases({
         isDeleted: true,
       },
     },
+    postFetchFilters.length > 0 ? postFetchFilters : undefined,
     {
       enabled: fetchAllIdsForSelection && !isRunMode, // Don't run in run mode
       refetchOnWindowFocus: false,
@@ -1849,10 +2025,12 @@ export default function Cases({
           },
         },
       },
-      // Apply server-side pagination for repository mode
-      skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
-      take: pageSize === "All" ? undefined : pageSize,
+      // When post-fetch filtering is active, fetch all data (no pagination)
+      // Otherwise apply server-side pagination for repository mode
+      skip: postFetchFilters.length > 0 ? undefined : (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
+      take: postFetchFilters.length > 0 ? undefined : (pageSize === "All" ? undefined : pageSize),
     },
+    postFetchFilters.length > 0 ? postFetchFilters : undefined,
     {
       enabled: Boolean(
         // Skip query if we know the selected folder has 0 cases
@@ -1863,7 +2041,14 @@ export default function Cases({
                 deferredSearchString.length > 0)
       ),
       refetchOnWindowFocus: false,
-    }
+    },
+    // When post-fetch filtering is active, apply client-side pagination
+    postFetchFilters.length > 0
+      ? {
+          skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
+          take: pageSize === "All" ? undefined : pageSize,
+        }
+      : undefined
   ) as {
     data:
       | Prisma.RepositoryCasesGetPayload<{

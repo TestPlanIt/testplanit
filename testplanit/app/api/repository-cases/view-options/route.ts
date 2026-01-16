@@ -1136,6 +1136,72 @@ export async function POST(request: Request) {
             noValue: totalCount - withTextCount,
           },
         } as any;
+      } else if (fieldInfo.type === "Link") {
+        // For Link fields, count cases with/without links (excluding empty strings)
+        const fieldValues = await prisma.caseFieldValues.findMany({
+          where: {
+            fieldId: fieldId,
+            testCaseId: { in: allMatchingCaseIds },
+            value: {
+              not: Prisma.DbNull,
+            },
+          },
+          select: {
+            value: true,
+          },
+        });
+
+        // Count non-empty link values
+        const withLinkCount = fieldValues.filter((fv) => {
+          if (fv.value === null || fv.value === undefined) return false;
+          // Check if it's a non-empty string
+          if (typeof fv.value === 'string') {
+            return fv.value.trim() !== '';
+          }
+          return true;
+        }).length;
+
+        dynamicFields[fieldInfo.displayName] = {
+          type: fieldInfo.type,
+          fieldId: fieldInfo.fieldId,
+          counts: {
+            hasValue: withLinkCount,
+            noValue: totalCount - withLinkCount,
+          },
+        } as any;
+      } else if (fieldInfo.type === "Steps") {
+        // For Steps fields, count cases with/without steps (non-empty arrays)
+        const fieldValues = await prisma.caseFieldValues.findMany({
+          where: {
+            fieldId: fieldId,
+            testCaseId: { in: allMatchingCaseIds },
+            value: {
+              not: Prisma.DbNull,
+            },
+          },
+          select: {
+            value: true,
+          },
+        });
+
+        // Count non-empty steps arrays
+        const withStepsCount = fieldValues.filter((fv) => {
+          if (fv.value === null || fv.value === undefined) return false;
+          // Steps are stored as JSON arrays
+          if (Array.isArray(fv.value)) {
+            return fv.value.length > 0;
+          }
+          return false;
+        }).length;
+
+        dynamicFields[fieldInfo.displayName] = {
+          type: fieldInfo.type,
+          fieldId: fieldInfo.fieldId,
+          counts: {
+            hasValue: withStepsCount,
+            noValue: totalCount - withStepsCount,
+          },
+        } as any;
       } else {
         // For other field types, just include the field info
         dynamicFields[fieldInfo.displayName] = {

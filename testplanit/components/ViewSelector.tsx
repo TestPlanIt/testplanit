@@ -28,6 +28,9 @@ import { useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { NumericFilterInput } from "@/components/NumericFilterInput";
 import { DateFilterInput } from "@/components/DateFilterInput";
+import { TextFilterInput } from "@/components/TextFilterInput";
+import { LinkFilterInput } from "@/components/LinkFilterInput";
+import { StepsFilterInput } from "@/components/StepsFilterInput";
 
 interface ViewItem {
   id: string;
@@ -932,7 +935,7 @@ export function ViewSelector({
                 ];
               }
 
-              // Handle Text Long, Text String fields (simple has/no value)
+              // Handle Text Long, Text String fields with operator-based filtering
               if (
                 field?.type === "Text Long" ||
                 field?.type === "Text String"
@@ -947,9 +950,9 @@ export function ViewSelector({
                     key="has-value"
                     className={cn(
                       "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected(1) && "bg-primary/20 hover:bg-primary/30"
+                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
                     )}
-                    onClick={(e) => handleFilterClick(1, e)}
+                    onClick={(e) => handleFilterClick("hasValue", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className="truncate">Has Text</span>
@@ -964,9 +967,9 @@ export function ViewSelector({
                     key="no-value"
                     className={cn(
                       "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected(2) && "bg-primary/20 hover:bg-primary/30"
+                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
                     )}
-                    onClick={(e) => handleFilterClick(2, e)}
+                    onClick={(e) => handleFilterClick("none", e)}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <span className="truncate opacity-40">No Text</span>
@@ -975,6 +978,162 @@ export function ViewSelector({
                       {noValueCount}
                     </span>
                   </div>,
+                  // Divider
+                  <div key="divider-1" className="h-px bg-border my-1" />,
+                  // Operator-based text filter
+                  <TextFilterInput
+                    key="filter-input"
+                    fieldId={field.fieldId}
+                    onFilterApply={(operator, value) => {
+                      const filterValue = `${operator}|${value}`;
+                      handleFilterClick(filterValue, undefined);
+                    }}
+                    onClearFilter={() => handleFilterClick(null, undefined)}
+                    currentFilter={
+                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                        ? (() => {
+                            const filter = String(selectedFilter[0]);
+                            // Only pass text operator filters, not hasValue/none
+                            return filter === "hasValue" || filter === "none" ? null : filter;
+                          })()
+                        : null
+                    }
+                  />,
+                ];
+              }
+
+              // Handle Link fields with operator-based filtering
+              if (field?.type === "Link") {
+                const hasValueCount = (field as any).counts?.hasValue || 0;
+                const noValueCount = (field as any).counts?.noValue || 0;
+
+                return [
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="has-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("hasValue", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">Has Link</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {hasValueCount}
+                    </span>
+                  </div>,
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="no-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("none", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate opacity-40">No Link</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {noValueCount}
+                    </span>
+                  </div>,
+                  // Divider
+                  <div key="divider-1" className="h-px bg-border my-1" />,
+                  // Operator-based link filter
+                  <LinkFilterInput
+                    key="filter-input"
+                    fieldId={field.fieldId}
+                    onFilterApply={(operator, value) => {
+                      const filterValue = `${operator}|${value}`;
+                      handleFilterClick(filterValue, undefined);
+                    }}
+                    onClearFilter={() => handleFilterClick(null, undefined)}
+                    currentFilter={
+                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                        ? (() => {
+                            const filter = String(selectedFilter[0]);
+                            // Only pass link operator filters, not hasValue/none
+                            return filter === "hasValue" || filter === "none" ? null : filter;
+                          })()
+                        : null
+                    }
+                  />,
+                ];
+              }
+
+              // Handle Steps fields with operator-based filtering
+              if (field?.type === "Steps") {
+                const hasValueCount = (field as any).counts?.hasValue || 0;
+                const noValueCount = (field as any).counts?.noValue || 0;
+
+                return [
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="has-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("hasValue", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">Has Steps</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {hasValueCount}
+                    </span>
+                  </div>,
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="no-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("none", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate opacity-40">No Steps</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {noValueCount}
+                    </span>
+                  </div>,
+                  // Divider
+                  <div key="divider-1" className="h-px bg-border my-1" />,
+                  // Operator-based steps filter
+                  <StepsFilterInput
+                    key="filter-input"
+                    fieldId={field.fieldId}
+                    onFilterApply={(operator, value1, value2) => {
+                      let filterValue: string;
+                      if (value2 !== undefined) {
+                        // Between operator with two values
+                        filterValue = `${operator}|${value1}|${value2}`;
+                      } else {
+                        // Single value operator
+                        filterValue = `${operator}|${value1}`;
+                      }
+                      handleFilterClick(filterValue, undefined);
+                    }}
+                    onClearFilter={() => handleFilterClick(null, undefined)}
+                    currentFilter={
+                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                        ? (() => {
+                            const filter = String(selectedFilter[0]);
+                            // Only pass steps operator filters, not hasValue/none
+                            return filter === "hasValue" || filter === "none" ? null : filter;
+                          })()
+                        : null
+                    }
+                  />,
                 ];
               }
 
