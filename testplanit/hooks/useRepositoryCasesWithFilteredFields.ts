@@ -99,10 +99,16 @@ function matchesLinkOperator(value: any, operator: string, searchValue: string):
 
 /**
  * Apply steps count operator filter to a steps array
+ * For built-in Steps, the testCase object has a `steps` relation array
+ * For custom Steps fields, the value would be in caseFieldValues
  */
-function matchesStepsOperator(value: any, operator: string, count1: number, count2?: number): boolean {
-  if (!Array.isArray(value)) return false;
-  const stepsCount = value.length;
+function matchesStepsOperator(testCase: any, operator: string, count1: number, count2?: number): boolean {
+  // Check if testCase has the built-in steps relation
+  const steps = testCase?.steps;
+  if (!Array.isArray(steps)) return false;
+
+  // Count steps (already filtered for non-deleted in the query)
+  const stepsCount = steps.length;
 
   switch (operator) {
     case 'eq':
@@ -168,8 +174,9 @@ export function useFindManyRepositoryCasesFiltered(
           } else if (filter.type === 'link' && typeof filter.value1 === 'string') {
             matches = matchesLinkOperator(fieldValue?.value, filter.operator, filter.value1);
           } else if (filter.type === 'steps' && typeof filter.value1 === 'number') {
+            // Pass the entire testCase for built-in steps relation
             matches = matchesStepsOperator(
-              fieldValue?.value,
+              testCase,
               filter.operator,
               filter.value1,
               filter.value2

@@ -487,8 +487,8 @@ export default function Cases({
 
             // Add the dynamic filtering logic here (Link, Dropdown, etc.)
             if (fieldType === "Link") {
-              // singleFilterId 1 = Has Link, singleFilterId 2 = No Link
-              if ((singleFilterId as number) === 1) {
+              // Support both numeric IDs (legacy) and string IDs (new)
+              if ((singleFilterId as number) === 1 || singleFilterId === "hasValue") {
                 // Has link
                 filterConditions.push({
                   caseFieldValues: {
@@ -501,7 +501,7 @@ export default function Cases({
                     },
                   },
                 });
-              } else if ((singleFilterId as number) === 2) {
+              } else if ((singleFilterId as number) === 2 || singleFilterId === "none") {
                 // No link
                 filterConditions.push({
                   OR: [
@@ -590,13 +590,13 @@ export default function Cases({
                 });
               }
             } else if (fieldType === "Steps") {
-              // singleFilterId 1 = Has Steps, singleFilterId 2 = No Steps
-              if ((singleFilterId as number) === 1) {
+              // Support both numeric IDs (legacy) and string IDs (new)
+              if ((singleFilterId as number) === 1 || singleFilterId === "hasValue") {
                 // Has steps
                 filterConditions.push({
                   steps: { some: { isDeleted: false } },
                 });
-              } else if ((singleFilterId as number) === 2) {
+              } else if ((singleFilterId as number) === 2 || singleFilterId === "none") {
                 // No steps
                 filterConditions.push({
                   steps: { none: { isDeleted: false } },
@@ -1131,23 +1131,8 @@ export default function Cases({
                 });
               } else if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
                 // Operator-based steps count filtering
-                const parts = singleFilterId.split("|");
-                const operator = parts[0];
-                const count1 = parseInt(parts[1]);
-                const count2 = parts[2] ? parseInt(parts[2]) : undefined;
-
-                if (!isNaN(count1)) {
-                  // For steps count operators, we fetch all non-null values and filter in application logic
-                  filterConditions.push({
-                    caseFieldValues: {
-                      some: {
-                        fieldId: numericFieldId,
-                        value: { not: Prisma.JsonNull },
-                      },
-                    },
-                  });
-                  // Note: Actual step count filtering will happen after fetch in application logic
-                }
+                // Note: Actual step count filtering will happen after fetch in application logic
+                // We don't filter at database level, just ensure we fetch cases with steps
               }
             }
           } else {
@@ -1227,7 +1212,11 @@ export default function Cases({
   const postFetchFilters: PostFetchFilter[] = useMemo(() => {
     const filters: PostFetchFilter[] = [];
 
-    if (!filterId || !viewType || !viewType.startsWith("dynamic_")) {
+    if (!filterId || !viewType) {
+      return filters;
+    }
+
+    if (!viewType.startsWith("dynamic_")) {
       return filters;
     }
 
@@ -1731,31 +1720,6 @@ export default function Cases({
 
   const isTotalLoading = false;
 
-  // Calculate total count based on mode
-  const totalRepositoryCases = useMemo(() => {
-    // If we know the selected folder has 0 cases, return 0 immediately
-    if (viewType === "folders" && selectedFolderCaseCount === 0) {
-      return 0;
-    }
-    if (isRunMode) {
-      // In run mode, use the test run cases count
-      return testRunCasesCountData || 0;
-    }
-    // In repository mode, use the repository cases count
-    return filteredCountData || 0;
-  }, [
-    isRunMode,
-    testRunCasesCountData,
-    filteredCountData,
-    viewType,
-    selectedFolderCaseCount,
-  ]);
-
-  // Update total items in pagination context
-  useEffect(() => {
-    setTotalItems(totalRepositoryCases);
-  }, [totalRepositoryCases, setTotalItems]);
-
   // Handle Shift+Click Select All/Deselect All across all pages
   useEffect(() => {
     if (allCaseIdsData && Array.isArray(allCaseIdsData) && selectAllAction) {
@@ -1795,6 +1759,7 @@ export default function Cases({
   const {
     data,
     isLoading,
+    totalCount: filteredTotalCount,
     refetch: refetchData,
   } = useFindManyRepositoryCasesFiltered(
     {
@@ -2237,6 +2202,36 @@ export default function Cases({
     isLoading: boolean;
     refetch: any;
   };
+
+  // Calculate total count based on mode
+  const totalRepositoryCases = useMemo(() => {
+    // If we know the selected folder has 0 cases, return 0 immediately
+    if (viewType === "folders" && selectedFolderCaseCount === 0) {
+      return 0;
+    }
+    if (isRunMode) {
+      // In run mode, use the test run cases count
+      return testRunCasesCountData || 0;
+    }
+    // In repository mode, use post-fetch filtered count if available, otherwise use database count
+    if (postFetchFilters.length > 0 && filteredTotalCount !== undefined) {
+      return filteredTotalCount;
+    }
+    return filteredCountData || 0;
+  }, [
+    isRunMode,
+    testRunCasesCountData,
+    filteredCountData,
+    filteredTotalCount,
+    postFetchFilters,
+    viewType,
+    selectedFolderCaseCount,
+  ]);
+
+  // Update total items in pagination context
+  useEffect(() => {
+    setTotalItems(totalRepositoryCases);
+  }, [totalRepositoryCases, setTotalItems]);
 
   // Refetch all repository cases data (both list and count)
   const refetchRepositoryCases = useCallback(() => {
