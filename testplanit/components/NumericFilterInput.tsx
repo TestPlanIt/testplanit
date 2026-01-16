@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 type NumericOperator = "eq" | "ne" | "lt" | "lte" | "gt" | "gte" | "between";
 
@@ -18,6 +18,7 @@ interface NumericFilterInputProps {
   fieldId: number;
   fieldType: string;
   onFilterApply: (operator: NumericOperator, value1: number, value2?: number) => void;
+  onClearFilter?: () => void;
   currentFilter: string | null;
 }
 
@@ -31,10 +32,21 @@ const operatorLabels: Record<NumericOperator, string> = {
   between: "Between",
 };
 
+const operatorSymbols: Record<NumericOperator, string> = {
+  eq: "=",
+  ne: "≠",
+  lt: "<",
+  lte: "≤",
+  gt: ">",
+  gte: "≥",
+  between: "between",
+};
+
 export function NumericFilterInput({
   fieldId,
   fieldType,
   onFilterApply,
+  onClearFilter,
   currentFilter,
 }: NumericFilterInputProps) {
   const [operator, setOperator] = useState<NumericOperator>("eq");
@@ -87,8 +99,46 @@ export function NumericFilterInput({
     return true;
   };
 
+  const hasActiveFilter = currentFilter && currentFilter.includes(":");
+
+  // Format the current filter for display with symbols
+  const formatFilterDisplay = (filter: string) => {
+    if (!filter || !filter.includes(":")) return filter;
+    const parts = filter.split(":");
+    const op = parts[0] as NumericOperator;
+    const symbol = operatorSymbols[op] || op;
+
+    if (op === "between" && parts.length === 3) {
+      return `${symbol} ${parts[1]} and ${parts[2]}`;
+    }
+    return `${symbol} ${parts[1]}`;
+  };
+
   return (
     <div className="p-2 space-y-2 bg-muted/30 rounded-md">
+      {hasActiveFilter && (
+        <div className="flex items-center justify-between text-xs bg-primary/10 p-1.5 rounded">
+          <span className="text-primary font-medium">
+            Filter active: {formatFilterDisplay(currentFilter)}
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setValue1("");
+              setValue2("");
+              if (onClearFilter) {
+                onClearFilter();
+              }
+            }}
+            className="h-5 w-5 p-0"
+            title="Clear filter"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+
       <Select value={operator} onValueChange={(val) => setOperator(val as NumericOperator)}>
         <SelectTrigger className="w-full h-8 text-xs">
           <SelectValue placeholder="Select operator" />

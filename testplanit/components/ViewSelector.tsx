@@ -845,6 +845,7 @@ export function ViewSelector({
                         : `${operator}:${value1}`;
                       handleFilterClick(filterValue, undefined);
                     }}
+                    onClearFilter={() => handleFilterClick(null, undefined)}
                     currentFilter={
                       selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
                         ? String(selectedFilter[0])
