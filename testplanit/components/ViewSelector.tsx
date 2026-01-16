@@ -785,6 +785,70 @@ export function ViewSelector({
                 ];
               }
 
+              // Handle Integer, Number, Date, Text Long, Text String fields
+              if (
+                field?.type === "Integer" ||
+                field?.type === "Number" ||
+                field?.type === "Date" ||
+                field?.type === "Text Long" ||
+                field?.type === "Text String"
+              ) {
+                const hasValueCount = (field as any).counts?.hasValue || 0;
+                const noValueCount = (field as any).counts?.noValue || 0;
+
+                // Determine labels based on field type
+                let hasLabel = "Has Value";
+                let noLabel = "No Value";
+
+                if (field.type === "Date") {
+                  hasLabel = "Has Date";
+                  noLabel = "No Date";
+                } else if (field.type === "Text Long" || field.type === "Text String") {
+                  hasLabel = "Has Text";
+                  noLabel = "No Text";
+                } else if (field.type === "Integer" || field.type === "Number") {
+                  hasLabel = "Has Number";
+                  noLabel = "No Number";
+                }
+
+                return [
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="has-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected(1) && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick(1, e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">{hasLabel}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {hasValueCount}
+                    </span>
+                  </div>,
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="no-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected(2) && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick(2, e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate opacity-40">{noLabel}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {noValueCount}
+                    </span>
+                  </div>,
+                ];
+              }
+
               if (field?.options) {
                 const options = field.options;
                 // Counts are already provided by the API

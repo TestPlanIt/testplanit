@@ -107,8 +107,8 @@ const DateRangePickerWithForm = (props: any) => {
   const formSchema = z.object({
     dateRange: z
       .object({
-        from: z.date().optional(),
-        to: z.date().optional(),
+        from: z.date().nullable().optional(),
+        to: z.date().nullable().optional(),
       })
       .optional(),
   });

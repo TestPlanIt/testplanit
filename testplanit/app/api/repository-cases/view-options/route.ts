@@ -849,6 +849,9 @@ export async function POST(request: Request) {
             "Number",
             "Link",
             "Steps",
+            "Date",
+            "Text Long",
+            "Text String",
           ].includes(fieldType)
         ) {
           if (!dynamicFieldsMap.has(field.id)) {
@@ -887,7 +890,7 @@ export async function POST(request: Request) {
           iconColor?: { value: string } | null;
           count?: number;
         }>;
-        values?: Set<any>;
+        values?: any[];
       }
     > = {};
 
@@ -1008,12 +1011,99 @@ export async function POST(request: Request) {
             noValue: totalCount - checkedCount,
           },
         } as any;
+      } else if (fieldInfo.type === "Integer" || fieldInfo.type === "Number") {
+        // For Integer/Number fields, count cases with/without values
+        const withValueCount = await prisma.caseFieldValues.count({
+          where: {
+            fieldId: fieldId,
+            testCaseId: { in: allMatchingCaseIds },
+            value: {
+              not: Prisma.DbNull,
+            },
+          },
+        });
+
+        dynamicFields[fieldInfo.displayName] = {
+          type: fieldInfo.type,
+          fieldId: fieldInfo.fieldId,
+          counts: {
+            hasValue: withValueCount,
+            noValue: totalCount - withValueCount,
+          },
+        } as any;
+      } else if (fieldInfo.type === "Date") {
+        // For Date fields, count cases with/without dates
+        const withDateCount = await prisma.caseFieldValues.count({
+          where: {
+            fieldId: fieldId,
+            testCaseId: { in: allMatchingCaseIds },
+            value: {
+              not: Prisma.DbNull,
+            },
+          },
+        });
+
+        dynamicFields[fieldInfo.displayName] = {
+          type: fieldInfo.type,
+          fieldId: fieldInfo.fieldId,
+          counts: {
+            hasValue: withDateCount,
+            noValue: totalCount - withDateCount,
+          },
+        } as any;
+      } else if (fieldInfo.type === "Text Long" || fieldInfo.type === "Text String") {
+        // For Text fields, count cases with/without text (excluding empty strings and empty TipTap docs)
+        const fieldValues = await prisma.caseFieldValues.findMany({
+          where: {
+            fieldId: fieldId,
+            testCaseId: { in: allMatchingCaseIds },
+            value: {
+              not: Prisma.DbNull,
+            },
+          },
+          select: {
+            value: true,
+          },
+        });
+
+        // Count non-empty text values
+        let withTextCount = 0;
+        fieldValues.forEach((fv) => {
+          if (fv.value !== null && fv.value !== undefined) {
+            // Check if it's a non-empty string or non-empty TipTap document
+            if (typeof fv.value === 'string') {
+              if (fv.value.trim() !== '') {
+                withTextCount++;
+              }
+            } else if (typeof fv.value === 'object') {
+              // TipTap JSON format - check if it has content
+              const doc = fv.value as any;
+              if (doc.content && Array.isArray(doc.content)) {
+                const hasContent = doc.content.some((node: any) =>
+                  node.content && Array.isArray(node.content) && node.content.length > 0
+                );
+                if (hasContent) {
+                  withTextCount++;
+                }
+              }
+            }
+          }
+        });
+
+        dynamicFields[fieldInfo.displayName] = {
+          type: fieldInfo.type,
+          fieldId: fieldInfo.fieldId,
+          counts: {
+            hasValue: withTextCount,
+            noValue: totalCount - withTextCount,
+          },
+        } as any;
       } else {
         // For other field types, just include the field info
         dynamicFields[fieldInfo.displayName] = {
           type: fieldInfo.type,
           fieldId: fieldInfo.fieldId,
-          values: new Set(),
+          values: [],
         };
       }
     }

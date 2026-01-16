@@ -630,7 +630,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
           type: field.type,
           fieldId: field.fieldId,
           options: field.options,
-          values: field.values ? new Set(field.values) : new Set(),
+          values: field.values && Array.isArray(field.values) ? new Set(field.values) : new Set(),
           counts: field.counts,
         };
       }

@@ -1124,7 +1124,7 @@ export function BulkEditModal({
             break;
           case "Date":
             const dateSchema = z.date();
-            schema = isRequired ? dateSchema : dateSchema.nullable();
+            schema = isRequired ? dateSchema : dateSchema.nullable().optional();
             break;
           case "Multi-Select":
             let multiSchema = z.array(z.number());

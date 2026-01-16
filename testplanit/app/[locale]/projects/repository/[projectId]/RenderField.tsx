@@ -180,10 +180,13 @@ const RenderField: React.FC<RenderFieldProps> = ({
           <Input
             type="number"
             placeholder={field.caseField.hint ? field.caseField.hint : ""}
-            value={value}
+            value={value ?? ""}
             min={field.caseField.minValue ? field.caseField.minValue : ""}
             max={field.caseField.maxValue ? field.caseField.maxValue : ""}
-            onChange={(e) => onChange(parseInt(e.target.value, 10))}
+            onChange={(e) => {
+              const val = e.target.value;
+              onChange(val === "" ? "" : parseInt(val, 10));
+            }}
             step={1}
             disabled={isDisabled}
           />
@@ -193,11 +196,14 @@ const RenderField: React.FC<RenderFieldProps> = ({
           <Input
             type="number"
             placeholder={field.caseField.hint ? field.caseField.hint : ""}
-            value={value}
+            value={value ?? ""}
             min={field.caseField.minValue ? field.caseField.minValue : ""}
             max={field.caseField.maxValue ? field.caseField.maxValue : ""}
             step="any"
-            onChange={(e) => onChange(parseFloat(e.target.value))}
+            onChange={(e) => {
+              const val = e.target.value;
+              onChange(val === "" ? "" : parseFloat(val));
+            }}
             disabled={isDisabled}
           />
         );
@@ -206,7 +212,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
           <Input
             type="url"
             placeholder={field.caseField.hint}
-            value={value}
+            value={value ?? ""}
             onChange={(e) => onChange(e.target.value)}
             disabled={isDisabled}
           />
@@ -215,11 +221,8 @@ const RenderField: React.FC<RenderFieldProps> = ({
         return (
           <Input
             placeholder={field.caseField.hint}
-            value={value}
+            value={value ?? ""}
             onChange={(e) => onChange(e.target.value)}
-            defaultValue={
-              field.caseField.defaultValue ? field.caseField.defaultValue : ""
-            }
             disabled={isDisabled}
           />
         );
