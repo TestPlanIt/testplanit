@@ -334,6 +334,54 @@ export function NotificationContent({
     );
   }
 
+  // Handle share link accessed notifications
+  if (notification.type === "SHARE_LINK_ACCESSED") {
+    if (data.shareLinkId && data.projectId) {
+      const viewerName = data.viewerName || data.viewerEmail || "An anonymous user";
+      const viewedAt = data.viewedAt
+        ? new Date(data.viewedAt).toLocaleDateString(locale, {
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          })
+        : "";
+
+      return (
+        <div className="space-y-2">
+          <h4 className="font-medium text-sm">{t("shareLinkAccessedTitle", { defaultValue: "Share Link Accessed" })}</h4>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className="font-medium">{viewerName}</span>
+              <span>{t("viewedYourSharedLink", { defaultValue: "viewed your shared link" })}</span>
+            </div>
+            {viewedAt && (
+              <p className="text-xs">
+                {t("viewedAt", { defaultValue: "Viewed at" })}: {viewedAt}
+              </p>
+            )}
+            <div className="flex items-center gap-1 flex-wrap">
+              <span>{t("inProject")}</span>
+              <ProjectNameCell
+                projectId={data.projectId}
+                value=""
+                size="sm"
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback for notifications without complete data
+    return (
+      <div className="space-y-1">
+        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <p className="text-sm text-muted-foreground">{notification.message}</p>
+      </div>
+    );
+  }
+
   // Handle system announcements
   if (notification.type === "SYSTEM_ANNOUNCEMENT") {
     const hasRichContent = notification.data?.richContent;

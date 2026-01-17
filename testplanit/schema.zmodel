@@ -127,6 +127,8 @@ model User {
     createdComments         Comment[]               @relation("CommentCreator")
     commentMentions         CommentMention[]        @relation("CommentMentions")
     apiTokens               ApiToken[]
+    createdShareLinks       ShareLink[]             @relation("ShareLinkCreator")
+    shareLinkAccessLogs     ShareLinkAccessLog[]    @relation("ShareLinkAccessor")
 
     // Two-factor authentication
     twoFactorEnabled        Boolean                 @default(false)
@@ -277,6 +279,7 @@ enum NotificationType {
     USER_REGISTERED
     COMMENT_MENTION
     MILESTONE_DUE_REMINDER
+    SHARE_LINK_ACCESSED
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')
@@ -366,6 +369,7 @@ model Projects {
     llmResponseCaches      LlmResponseCache[]
     comments               Comment[]
     auditLogs              AuditLog[]
+    shareLinks             ShareLink[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -2844,6 +2848,107 @@ model Notification {
     @@allow('create', auth().access != null)
     @@allow('delete', auth().access == 'ADMIN')
 }
+
+enum ShareLinkMode {
+    AUTHENTICATED       // Requires login + project access
+    PUBLIC             // No auth required
+    PASSWORD_PROTECTED // Public but requires password
+
+    @@deny('all', !auth())
+    @@allow('read', true)
+}
+
+enum ShareLinkEntityType {
+    REPORT
+    TEST_CASE
+    TEST_RUN
+    SESSION
+    DASHBOARD
+
+    @@deny('all', !auth())
+    @@allow('read', true)
+}
+
+model ShareLink {
+    id                String              @id @default(cuid())
+    shareKey          String              @unique @length(32, 64)
+
+    // Polymorphic entity reference
+    entityType        ShareLinkEntityType
+    entityId          String?             // For direct entities (test cases, runs, etc.)
+    entityConfig      Json?               // For reports (dimensions, metrics, dates)
+
+    // Ownership
+    projectId         Int
+    project           Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    createdById       String
+    createdBy         User                @relation("ShareLinkCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+    // Settings
+    mode              ShareLinkMode       @default(PUBLIC)
+    passwordHash      String?             @omit
+    expiresAt         DateTime?           @db.Timestamptz(6)
+    notifyOnView      Boolean             @default(false)
+
+    // Metadata
+    title             String?
+    description       String?
+    isRevoked         Boolean             @default(false)
+    viewCount         Int                 @default(0)
+    lastViewedAt      DateTime?           @db.Timestamptz(6)
+    createdAt         DateTime            @default(now()) @db.Timestamptz(6)
+    updatedAt         DateTime            @updatedAt
+
+    // Relations
+    accessLogs        ShareLinkAccessLog[]
+
+    @@index([shareKey])
+    @@index([projectId, createdById])
+    @@index([entityType, entityId])
+    @@index([isRevoked, expiresAt])
+    @@index([createdById])
+
+    // Access control
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('all', project.creator == auth())
+    @@allow('read,update,delete', createdBy == auth())
+    @@allow('create',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType != 'NO_ACCESS'] ||
+        project.assignedUsers?[user == auth()] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE')
+    )
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType != 'NO_ACCESS'] ||
+        project.assignedUsers?[user == auth()]
+    )
+}
+
+model ShareLinkAccessLog {
+    id                String    @id @default(cuid())
+    shareLinkId       String
+    shareLink         ShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+
+    // Access details
+    accessedById      String?
+    accessedBy        User?     @relation("ShareLinkAccessor", fields: [accessedById], references: [id], onDelete: SetNull)
+    ipAddress         String?
+    userAgent         String?
+    wasAuthenticated  Boolean   @default(false)
+    accessedAt        DateTime  @default(now()) @db.Timestamptz(6)
+
+    @@index([shareLinkId, accessedAt])
+    @@index([accessedById])
+
+    // Access control
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', shareLink.createdBy == auth())
+    @@allow('create', true)
+}
+
 model ProjectIntegration {
     id            String      @id @default(cuid())
     projectId     Int
@@ -3512,6 +3617,9 @@ enum AuditAction {
     DATA_EXPORTED
     SSO_CONFIG_CHANGED
     SYSTEM_CONFIG_CHANGED
+    SHARE_LINK_CREATED
+    SHARE_LINK_ACCESSED
+    SHARE_LINK_REVOKED
 }
 
 model AuditLog {

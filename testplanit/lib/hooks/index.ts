@@ -76,6 +76,8 @@ export * from './j-unit-test-step';
 export * from './shared-step-group';
 export * from './shared-step-item';
 export * from './notification';
+export * from './share-link';
+export * from './share-link-access-log';
 export * from './project-integration';
 export * from './llm-provider-config';
 export * from './ollama-model-registry';

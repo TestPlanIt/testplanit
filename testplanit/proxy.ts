@@ -154,6 +154,7 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     "/trial-expired",
     "/auth/two-factor-setup",
     "/auth/two-factor-verify",
+    "/share",
   ];
 
   // Extract the route path without locale (e.g., /en-US/signin -> /signin)

@@ -419,6 +419,18 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'user',
+                }, createdShareLinks: {
+                    name: "createdShareLinks",
+                    type: "ShareLink",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'createdBy',
+                }, shareLinkAccessLogs: {
+                    name: "shareLinkAccessLogs",
+                    type: "ShareLinkAccessLog",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'accessedBy',
                 }, twoFactorEnabled: {
                     name: "twoFactorEnabled",
                     type: "Boolean",
@@ -940,6 +952,12 @@ const metadata: ModelMeta = {
                 }, auditLogs: {
                     name: "auditLogs",
                     type: "AuditLog",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'project',
+                }, shareLinks: {
+                    name: "shareLinks",
+                    type: "ShareLink",
                     isDataModel: true,
                     isArray: true,
                     backLink: 'project',
@@ -5732,6 +5750,173 @@ const metadata: ModelMeta = {
                 },
             },
         },
+        shareLink: {
+            name: 'ShareLink', fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, shareKey: {
+                    name: "shareKey",
+                    type: "String",
+                }, entityType: {
+                    name: "entityType",
+                    type: "ShareLinkEntityType",
+                }, entityId: {
+                    name: "entityId",
+                    type: "String",
+                    isOptional: true,
+                }, entityConfig: {
+                    name: "entityConfig",
+                    type: "Json",
+                    isOptional: true,
+                }, projectId: {
+                    name: "projectId",
+                    type: "Int",
+                    isForeignKey: true,
+                    relationField: 'project',
+                }, project: {
+                    name: "project",
+                    type: "Projects",
+                    isDataModel: true,
+                    backLink: 'shareLinks',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "projectId" },
+                }, createdById: {
+                    name: "createdById",
+                    type: "String",
+                    isForeignKey: true,
+                    relationField: 'createdBy',
+                }, createdBy: {
+                    name: "createdBy",
+                    type: "User",
+                    isDataModel: true,
+                    backLink: 'createdShareLinks',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "createdById" },
+                }, mode: {
+                    name: "mode",
+                    type: "ShareLinkMode",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, passwordHash: {
+                    name: "passwordHash",
+                    type: "String",
+                    isOptional: true,
+                }, expiresAt: {
+                    name: "expiresAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, notifyOnView: {
+                    name: "notifyOnView",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, title: {
+                    name: "title",
+                    type: "String",
+                    isOptional: true,
+                }, description: {
+                    name: "description",
+                    type: "String",
+                    isOptional: true,
+                }, isRevoked: {
+                    name: "isRevoked",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, viewCount: {
+                    name: "viewCount",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 0 }] }],
+                }, lastViewedAt: {
+                    name: "lastViewedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, updatedAt: {
+                    name: "updatedAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@updatedAt", "args": [] }],
+                }, accessLogs: {
+                    name: "accessLogs",
+                    type: "ShareLinkAccessLog",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'shareLink',
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, shareKey: {
+                    name: "shareKey",
+                    fields: ["shareKey"]
+                },
+            },
+        },
+        shareLinkAccessLog: {
+            name: 'ShareLinkAccessLog', fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, shareLinkId: {
+                    name: "shareLinkId",
+                    type: "String",
+                    isForeignKey: true,
+                    relationField: 'shareLink',
+                }, shareLink: {
+                    name: "shareLink",
+                    type: "ShareLink",
+                    isDataModel: true,
+                    backLink: 'accessLogs',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "shareLinkId" },
+                }, accessedById: {
+                    name: "accessedById",
+                    type: "String",
+                    isOptional: true,
+                    isForeignKey: true,
+                    relationField: 'accessedBy',
+                }, accessedBy: {
+                    name: "accessedBy",
+                    type: "User",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'shareLinkAccessLogs',
+                    isRelationOwner: true,
+                    onDeleteAction: 'SetNull',
+                    foreignKeyMapping: { "id": "accessedById" },
+                }, ipAddress: {
+                    name: "ipAddress",
+                    type: "String",
+                    isOptional: true,
+                }, userAgent: {
+                    name: "userAgent",
+                    type: "String",
+                    isOptional: true,
+                }, wasAuthenticated: {
+                    name: "wasAuthenticated",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, accessedAt: {
+                    name: "accessedAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                },
+            },
+        },
         projectIntegration: {
             name: 'ProjectIntegration', fields: {
                 id: {
@@ -7254,10 +7439,10 @@ const metadata: ModelMeta = {
 
     },
     deleteCascade: {
-        user: ['Account', 'UserPreferences', 'ApiToken', 'GroupAssignment', 'UserIntegrationAuth', 'UserProjectPermission', 'Notification', 'CommentMention'],
+        user: ['Account', 'UserPreferences', 'ApiToken', 'GroupAssignment', 'UserIntegrationAuth', 'UserProjectPermission', 'Notification', 'ShareLink', 'CommentMention'],
         groups: ['GroupAssignment', 'GroupProjectPermission'],
         roles: ['RolePermission'],
-        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'ProjectIntegration', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
+        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'ShareLink', 'ProjectIntegration', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
         milestones: ['Comment'],
         caseFields: ['TemplateCaseAssignment', 'CaseFieldAssignment', 'CaseFieldValues', 'SessionFieldValues'],
         resultFields: ['TemplateResultAssignment', 'ResultFieldAssignment', 'ResultFieldValues'],
@@ -7282,6 +7467,7 @@ const metadata: ModelMeta = {
         jUnitTestSuite: ['JUnitTestResult', 'JUnitProperty'],
         jUnitTestResult: ['Attachments'],
         sharedStepGroup: ['SharedStepItem'],
+        shareLink: ['ShareLinkAccessLog'],
         ssoProvider: ['SamlConfiguration'],
         testmoImportJob: ['TestmoImportDataset'],
         comment: ['CommentMention'],

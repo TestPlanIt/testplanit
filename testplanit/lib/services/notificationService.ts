@@ -186,4 +186,36 @@ export class NotificationService {
       // Don't throw error as this is a non-critical operation
     }
   }
+
+  /**
+   * Create a share link accessed notification
+   */
+  static async createShareLinkAccessedNotification(
+    shareLinkOwnerId: string,
+    shareTitle: string,
+    viewerName: string | null,
+    viewerEmail: string | null,
+    shareLinkId: string,
+    projectId: number
+  ) {
+    const title = "Share Link Accessed";
+    const viewer = viewerName || viewerEmail || "An anonymous user";
+    const message = `${viewer} viewed your shared link: "${shareTitle}"`;
+
+    return this.createNotification({
+      userId: shareLinkOwnerId,
+      type: NotificationType.SHARE_LINK_ACCESSED,
+      title,
+      message,
+      relatedEntityId: shareLinkId,
+      relatedEntityType: "ShareLink",
+      data: {
+        shareLinkId,
+        projectId,
+        viewerName,
+        viewerEmail,
+        viewedAt: new Date().toISOString(),
+      },
+    });
+  }
 }
