@@ -1,3 +1,10 @@
+## [0.10.4](https://github.com/TestPlanIt/testplanit/compare/v0.10.3...v0.10.4) (2026-01-17)
+
+
+### Bug Fixes
+
+* ensure db-init-prod service builds correctly in Docker production ([#48](https://github.com/TestPlanIt/testplanit/issues/48)) ([558c735](https://github.com/TestPlanIt/testplanit/commit/558c735b7ce8aa4ebaa43795bd8c00a541d7ea9f))
+
 ## [0.10.3](https://github.com/TestPlanIt/testplanit/compare/v0.10.2...v0.10.3) (2026-01-16)
 
 ## [0.10.2](https://github.com/TestPlanIt/testplanit/compare/v0.10.1...v0.10.2) (2026-01-14)
