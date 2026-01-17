@@ -1601,7 +1601,7 @@
       "filter": "Boîtiers de filtre...",
       "selectFolder": "Sélectionnez un dossier pour ajouter ou afficher des cas de test.",
       "selectCases": "Sélectionner les cas de test",
-      "noTestCases": "Aucun cas de test dans ce dossier.",
+      "noTestCases": "Aucun cas de test à afficher.",
       "addCase": "Ajouter un cas",
       "notFound": "Cas de test introuvable.",
       "selectFilter": "Sélectionner un filtre",

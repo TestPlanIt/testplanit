@@ -24,10 +24,10 @@ interface LinkFilterInputProps {
 
 const operatorLabels: Record<LinkOperator, string> = {
   contains: "URL contains",
+  domain: "Domain contains",
   startsWith: "URL starts with",
   endsWith: "URL ends with",
   equals: "Exact URL match",
-  domain: "Domain matches",
 };
 
 const operatorSymbols: Record<LinkOperator, string> = {

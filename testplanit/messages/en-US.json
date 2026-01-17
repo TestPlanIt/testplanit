@@ -1601,7 +1601,7 @@
       "filter": "Filter cases...",
       "selectFolder": "Select a folder to add or display test cases.",
       "selectCases": "Select Test Cases",
-      "noTestCases": "No test cases in this folder.",
+      "noTestCases": "No test cases to display.",
       "addCase": "Add Case",
       "notFound": "Test case not found.",
       "selectFilter": "Select Filter",

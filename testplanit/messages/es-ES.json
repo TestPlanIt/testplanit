@@ -1601,7 +1601,7 @@
       "filter": "Filtrar casos...",
       "selectFolder": "Seleccione una carpeta para agregar o mostrar casos de prueba.",
       "selectCases": "Seleccionar Casos de Prueba",
-      "noTestCases": "No hay casos de prueba en esta carpeta.",
+      "noTestCases": "No hay casos de prueba para mostrar.",
       "addCase": "Añadir Caso",
       "notFound": "Caso de prueba no encontrado.",
       "selectFilter": "Seleccionar filtro",
