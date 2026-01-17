@@ -1945,10 +1945,12 @@ export default function TestCaseDetails() {
             </CardDescription>
           </CardHeader>
           {/* Template not assigned to project warning */}
-          {testcase?.template?.projects &&
-            !testcase.template.projects.some(
-              (p: any) => p.projectId === Number(projectId)
-            ) && (
+          {testcase?.template &&
+            'projects' in testcase.template &&
+            testcase.template.projects &&
+            !(testcase.template.projects as Array<{ projectId: number }>).some(
+              (p) => p.projectId === Number(projectId)
+            ) ? (
               <div className="px-6 pb-4">
                 <Alert className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
                   <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
@@ -1960,7 +1962,7 @@ export default function TestCaseDetails() {
                   </AlertDescription>
                 </Alert>
               </div>
-            )}
+            ) : null}
           <CardContent>
             <ResizablePanelGroup
               direction="horizontal"

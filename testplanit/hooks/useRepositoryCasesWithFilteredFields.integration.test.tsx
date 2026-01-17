@@ -167,7 +167,7 @@ describe('useFindManyRepositoryCasesFiltered - Integration Tests', () => {
       });
 
       // Expected: Cases 1, 2, 4, 6 contain "test" in text field
-      const filteredData = result.current.data;
+      const filteredData = result.current.data as any[];
       expect(filteredData).toHaveLength(4);
 
       const ids = filteredData.map((c: any) => c.id).sort();
@@ -240,7 +240,7 @@ describe('useFindManyRepositoryCasesFiltered - Integration Tests', () => {
       });
 
       // Expected: Cases 2, 4, 6 start with "Test"
-      const filteredData = result.current.data;
+      const filteredData = result.current.data as any[];
       expect(filteredData).toHaveLength(3);
 
       const ids = filteredData.map((c: any) => c.id).sort();
@@ -275,7 +275,7 @@ describe('useFindManyRepositoryCasesFiltered - Integration Tests', () => {
       });
 
       // Expected: Only case 3 doesn't contain "test" (case 5 has null text so it doesn't match)
-      const filteredData = result.current.data;
+      const filteredData = result.current.data as any[];
       expect(filteredData).toHaveLength(1);
 
       const ids = filteredData.map((c: any) => c.id).sort();
@@ -312,7 +312,7 @@ describe('useFindManyRepositoryCasesFiltered - Integration Tests', () => {
       });
 
       // Expected: Cases 1, 2, 4 have github.com domain
-      const filteredData = result.current.data;
+      const filteredData = result.current.data as any[];
       expect(filteredData).toHaveLength(3);
 
       const ids = filteredData.map((c: any) => c.id).sort();
@@ -347,7 +347,7 @@ describe('useFindManyRepositoryCasesFiltered - Integration Tests', () => {
       });
 
       // Expected: Only case 2 has "api" in URL
-      const filteredData = result.current.data;
+      const filteredData = result.current.data as any[];
       expect(filteredData).toHaveLength(1);
       expect(filteredData[0].id).toBe(2);
       expect(result.current.totalCount).toBe(1);
@@ -412,7 +412,7 @@ describe('useFindManyRepositoryCasesFiltered - Integration Tests', () => {
       });
 
       // Expected: Cases 1, 2, 5, 6 have exactly 3 steps
-      const filteredData = result.current.data;
+      const filteredData = result.current.data as any[];
       expect(filteredData).toHaveLength(4);
 
       const ids = filteredData.map((c: any) => c.id).sort();
@@ -447,7 +447,7 @@ describe('useFindManyRepositoryCasesFiltered - Integration Tests', () => {
       });
 
       // Expected: Cases 3, 4 have > 3 steps (5 and 7 steps)
-      const filteredData = result.current.data;
+      const filteredData = result.current.data as any[];
       expect(filteredData).toHaveLength(2);
 
       const ids = filteredData.map((c: any) => c.id).sort();
@@ -483,7 +483,7 @@ describe('useFindManyRepositoryCasesFiltered - Integration Tests', () => {
       });
 
       // Expected: Cases 1, 2, 3, 5, 6 have steps in range [3, 5]
-      const filteredData = result.current.data;
+      const filteredData = result.current.data as any[];
       expect(filteredData).toHaveLength(5);
 
       const ids = filteredData.map((c: any) => c.id).sort();
@@ -526,7 +526,7 @@ describe('useFindManyRepositoryCasesFiltered - Integration Tests', () => {
       });
 
       // Expected: Cases 1, 2, 6 have BOTH "test" AND 3 steps
-      const filteredData = result.current.data;
+      const filteredData = result.current.data as any[];
       expect(filteredData).toHaveLength(3);
 
       const ids = filteredData.map((c: any) => c.id).sort();
@@ -573,7 +573,7 @@ describe('useFindManyRepositoryCasesFiltered - Integration Tests', () => {
       });
 
       // Expected: Cases 1, 2 have "test" AND 3 steps AND github.com domain
-      const filteredData = result.current.data;
+      const filteredData = result.current.data as any[];
       expect(filteredData).toHaveLength(2);
 
       const ids = filteredData.map((c: any) => c.id).sort();
@@ -615,7 +615,7 @@ describe('useFindManyRepositoryCasesFiltered - Integration Tests', () => {
 
       // Actually case 4 should match this (has "test" and 7 steps)
       expect(result.current.data).toHaveLength(1);
-      expect(result.current.data[0].id).toBe(4);
+      expect((result.current.data as any[])[0].id).toBe(4);
     });
   });
 
@@ -679,8 +679,8 @@ describe('useFindManyRepositoryCasesFiltered - Integration Tests', () => {
       expect(page2Result.current.totalCount).toBe(4);
 
       // Verify pages don't overlap
-      const page1Ids = page1Result.current.data.map((c: any) => c.id);
-      const page2Ids = page2Result.current.data.map((c: any) => c.id);
+      const page1Ids = (page1Result.current.data as any[]).map((c: any) => c.id);
+      const page2Ids = (page2Result.current.data as any[]).map((c: any) => c.id);
       const overlap = page1Ids.filter((id: number) => page2Ids.includes(id));
       expect(overlap).toHaveLength(0);
     });
