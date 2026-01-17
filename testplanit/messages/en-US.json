@@ -1574,6 +1574,7 @@
       "editAttachmentsIndividually": "Edit attachments individually.",
       "automatedStatus": "Automated testing is {status}"
     },
+    "orphanedStepsWarning": "This test case has Steps, but the current template \"{templateName}\" does not include the Steps field. The steps can not be edited until the Test Case has a template with a Steps field.",
     "title": "Test Case Repository",
     "folders": "Folders",
     "addFolder": "Add Folder",

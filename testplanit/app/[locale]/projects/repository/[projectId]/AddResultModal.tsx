@@ -2160,7 +2160,10 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
   const t = useTranslations();
   const tCommon = useTranslations("common");
   const { data: items, isLoading } = useFindManySharedStepItem({
-    where: { sharedStepGroupId },
+    where: {
+      sharedStepGroupId,
+      sharedStepGroup: { isDeleted: false },
+    },
     orderBy: { order: "asc" },
   });
   const queryClient = useQueryClient(); // Added for use in useEffect to setQueryData

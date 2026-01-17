@@ -29,7 +29,10 @@ const RenderSharedGroupItemsForResults: React.FC<
   const t = useTranslations("repository.steps");
   const { data: items, isLoading } = useFindManySharedStepItem(
     {
-      where: { sharedStepGroupId },
+      where: {
+        sharedStepGroupId,
+        sharedStepGroup: { isDeleted: false },
+      },
       orderBy: { order: "asc" },
     },
     { enabled: !!sharedStepGroupId }

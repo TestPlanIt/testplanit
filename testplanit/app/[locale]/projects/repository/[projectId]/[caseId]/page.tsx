@@ -62,6 +62,7 @@ import {
   ArrowLeft,
   LockIcon,
   Asterisk,
+  AlertCircle,
 } from "lucide-react";
 import {
   Tooltip,
@@ -108,6 +109,8 @@ import {
 } from "@/components/forms/FolderSelect";
 import LinkedCasesPanel from "@/components/LinkedCasesPanel";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import { StepsDisplay } from "./StepsDisplay";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Type Definitions (ensure these are present and correct)
 interface SharedStepItemDetail {
@@ -491,7 +494,18 @@ export default function TestCaseDetails() {
             where: { isDeleted: false },
           },
           steps: {
-            where: { isDeleted: false },
+            where: {
+              isDeleted: false,
+              OR: [
+                { sharedStepGroupId: null },
+                {
+                  AND: [
+                    { sharedStepGroupId: { not: null } },
+                    { sharedStepGroup: { isDeleted: false } },
+                  ],
+                },
+              ],
+            },
             orderBy: { order: "asc" },
             include: {
               sharedStepGroup: true,
@@ -2026,6 +2040,33 @@ export default function TestCaseDetails() {
                       }
                     )}
                   </ul>
+                  {/* Orphaned Steps - steps exist but field not in current template */}
+                  {testcase?.steps &&
+                    testcase.steps.length > 0 &&
+                    !testcase.template?.caseFields?.some(
+                      (f) => f.caseField.type.type === "Steps"
+                    ) && (
+                      <div className="mb-4 mr-6">
+                        <Alert className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 mb-2">
+                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                          <AlertDescription className="text-sm text-amber-800 dark:text-amber-400">
+                            {t("repository.orphanedStepsWarning", {
+                              templateName: testcase.template?.templateName || "",
+                            })}
+                          </AlertDescription>
+                        </Alert>
+                        <StepsDisplay
+                          steps={testcase.steps.map((s: any) => ({
+                            ...s,
+                            sharedStepGroupName: s.sharedStepGroup?.name,
+                          }))}
+                        />
+                        <Separator
+                          orientation="horizontal"
+                          className="mt-2 bg-primary/30"
+                        />
+                      </div>
+                    )}
                   {/* JUnit-specific info in left panel */}
                   {isJUnitCase && (
                     <div className="space-y-4">

@@ -1574,6 +1574,7 @@
       "editAttachmentsIndividually": "Editar archivos adjuntos individualmente.",
       "automatedStatus": "La prueba automática es {status}"
     },
+    "orphanedStepsWarning": "Este caso de prueba tiene pasos, pero la plantilla actual \"{templateName}\" no incluye el campo \"Pasos\". Los pasos no se pueden editar hasta que el caso de prueba tenga una plantilla con dicho campo.",
     "title": "Repositorio de Casos de Prueba",
     "folders": "Carpetas",
     "addFolder": "Añadir carpeta",

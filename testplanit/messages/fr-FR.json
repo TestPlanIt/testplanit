@@ -1574,6 +1574,7 @@
       "editAttachmentsIndividually": "Modifier les pièces jointes individuellement.",
       "automatedStatus": "Les tests automatisés sont {status}"
     },
+    "orphanedStepsWarning": "Ce cas de test comporte des étapes, mais le modèle actuel «{templateName}» ne contient pas le champ Étapes. Les étapes ne peuvent être modifiées que lorsque le cas de test dispose d'un modèle avec un champ Étapes.",
     "title": "Référentiel de cas de test",
     "folders": "Dossiers",
     "addFolder": "Ajouter un dossier",

@@ -163,7 +163,10 @@ const StepItem: React.FC<StepItemProps> = ({
     // error: sharedItemsError, // TODO: Handle error display
   } = useFindManySharedStepItem(
     {
-      where: { sharedStepGroupId: field.sharedStepGroupId },
+      where: {
+        sharedStepGroupId: field.sharedStepGroupId,
+        sharedStepGroup: { isDeleted: false },
+      },
       orderBy: { order: "asc" },
     },
     { enabled: !!field.isShared && !!field.sharedStepGroupId }
@@ -532,7 +535,10 @@ const StepsForm: React.FC<StepsFormProps> = ({
     // error: errorItemsOfSelectedSharedGroup, // TODO: Handle error
   } = useFindManySharedStepItem(
     {
-      where: { sharedStepGroupId: selectedSharedGroupInDialog?.id },
+      where: {
+        sharedStepGroupId: selectedSharedGroupInDialog?.id,
+        sharedStepGroup: { isDeleted: false },
+      },
       orderBy: { order: "asc" },
     },
     { enabled: !!selectedSharedGroupInDialog?.id } // Only fetch if a group is selected
