@@ -7,7 +7,8 @@
       {
         "preset": "angular",
         "releaseRules": [
-          { "type": "enhance", "release": "patch" }
+          { "type": "enhance", "release": "patch" },
+          { "type": "enhancement", "release": "patch" }
         ]
       }
     ],
@@ -20,6 +21,7 @@
             { "type": "feat", "section": "Features" },
             { "type": "fix", "section": "Bug Fixes" },
             { "type": "enhance", "section": "Enhancements" },
+            { "type": "enhancement", "section": "Enhancements" },
             { "type": "perf", "section": "Performance Improvements" },
             { "type": "refactor", "section": "Code Refactoring", "hidden": true },
             { "type": "docs", "section": "Documentation", "hidden": true },
