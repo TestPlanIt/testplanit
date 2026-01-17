@@ -1,4 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// Mock the React Query hooks to avoid import errors
+vi.mock('~/lib/hooks/repository-cases', () => ({
+  useFindManyRepositoryCases: vi.fn(),
+  useFindFirstRepositoryCases: vi.fn(),
+}));
+
 import {
   filterOrphanedFieldValues,
   matchesTextOperator,
