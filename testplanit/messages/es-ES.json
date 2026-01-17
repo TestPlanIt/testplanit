@@ -1574,7 +1574,9 @@
       "editAttachmentsIndividually": "Editar archivos adjuntos individualmente.",
       "automatedStatus": "La prueba automática es {status}"
     },
+    "templateNotAssignedWarning": "Este caso de prueba utiliza la plantilla \"{templateName}\", que actualmente no está asignada al proyecto \"{projectName}\". Es posible que deba asignar esta plantilla al proyecto o modificar el caso de prueba para usar una plantilla diferente.",
     "orphanedStepsWarning": "Este caso de prueba tiene pasos, pero la plantilla actual \"{templateName}\" no incluye el campo \"Pasos\". Los pasos no se pueden editar hasta que el caso de prueba tenga una plantilla con dicho campo.",
+    "orphanedFieldsWarning": "This test case has {count, plural, =1 {# field value} other {# field values}} that {count, plural, =1 {is} other {are}} not included in the current template \"{templateName}\". {count, plural, =1 {This field is} other {These fields are}} shown below but may not be editable until added to the template.",
     "title": "Repositorio de Casos de Prueba",
     "folders": "Carpetas",
     "addFolder": "Añadir carpeta",

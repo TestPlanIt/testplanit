@@ -442,6 +442,11 @@ export default function TestCaseDetails() {
             select: {
               id: true,
               templateName: true,
+              projects: {
+                select: {
+                  projectId: true,
+                },
+              },
               caseFields: {
                 select: {
                   caseFieldId: true,
@@ -1939,6 +1944,23 @@ export default function TestCaseDetails() {
               </div>
             </CardDescription>
           </CardHeader>
+          {/* Template not assigned to project warning */}
+          {testcase?.template?.projects &&
+            !testcase.template.projects.some(
+              (p: any) => p.projectId === Number(projectId)
+            ) && (
+              <div className="px-6 pb-4">
+                <Alert className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                  <AlertDescription className="text-sm text-amber-800 dark:text-amber-400">
+                    {t("repository.templateNotAssignedWarning", {
+                      templateName: testcase.template?.templateName || "",
+                      projectName: testcase.project?.name || "",
+                    })}
+                  </AlertDescription>
+                </Alert>
+              </div>
+            )}
           <CardContent>
             <ResizablePanelGroup
               direction="horizontal"
@@ -2067,6 +2089,60 @@ export default function TestCaseDetails() {
                         />
                       </div>
                     )}
+                  {/* Orphaned Custom Field Values - field values exist but not in current template */}
+                  {(() => {
+                    const templateFieldIds = new Set(
+                      testcase?.template?.caseFields?.map((f) => f.caseField.id) || []
+                    );
+                    const orphanedFieldValues = testcase?.caseFieldValues?.filter(
+                      (cfv: any) => !templateFieldIds.has(cfv.fieldId) && cfv.value
+                    ) || [];
+
+                    if (orphanedFieldValues.length === 0) return null;
+
+                    return (
+                      <div className="mb-4 mr-6">
+                        <Alert className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 mb-2">
+                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                          <AlertDescription className="text-sm text-amber-800 dark:text-amber-400">
+                            {t("repository.orphanedFieldsWarning", {
+                              count: orphanedFieldValues.length,
+                              templateName: testcase.template?.templateName || "",
+                            })}
+                          </AlertDescription>
+                        </Alert>
+                        <ul>
+                          {orphanedFieldValues.map((cfv: any, index: number) => (
+                            <li key={`orphaned-field-${cfv.id}-${index}`} className="mb-2">
+                              <div className="font-bold flex items-center">
+                                {cfv.field?.displayName || "Unknown Field"}
+                              </div>
+                              <FieldValueRenderer
+                                fieldValue={cfv.value}
+                                fieldType={cfv.field?.type?.type || "Text String"}
+                                caseId={caseId?.toString() || ""}
+                                template={{
+                                  caseFields: testcase?.template?.caseFields || [],
+                                }}
+                                fieldId={cfv.fieldId}
+                                fieldIsRestricted={false}
+                                session={session}
+                                isEditMode={false}
+                                isSubmitting={false}
+                                control={control}
+                                errors={errors}
+                                canEditRestricted={false}
+                              />
+                              <Separator
+                                orientation="horizontal"
+                                className="mt-2 bg-primary/30"
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })()}
                   {/* JUnit-specific info in left panel */}
                   {isJUnitCase && (
                     <div className="space-y-4">

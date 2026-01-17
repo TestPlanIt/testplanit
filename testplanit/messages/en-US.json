@@ -1574,7 +1574,9 @@
       "editAttachmentsIndividually": "Edit attachments individually.",
       "automatedStatus": "Automated testing is {status}"
     },
+    "templateNotAssignedWarning": "This test case uses the template \"{templateName}\" which is not currently assigned to the project \"{projectName}\". You may need to assign this template to the project or change the test case to use a different template.",
     "orphanedStepsWarning": "This test case has Steps, but the current template \"{templateName}\" does not include the Steps field. The steps can not be edited until the Test Case has a template with a Steps field.",
+    "orphanedFieldsWarning": "This test case has {count, plural, =1 {# field value} other {# field values}} that {count, plural, =1 {is} other {are}} not included in the current template \"{templateName}\". {count, plural, =1 {This field is} other {These fields are}} shown below but may not be editable until added to the template.",
     "title": "Test Case Repository",
     "folders": "Folders",
     "addFolder": "Add Folder",
