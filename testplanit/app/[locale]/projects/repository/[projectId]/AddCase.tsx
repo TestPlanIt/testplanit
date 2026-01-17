@@ -18,7 +18,7 @@ import {
 } from "~/lib/hooks";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller, Resolver } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,23 +103,66 @@ const mapFieldToZodType = (field: any) => {
         ? z.boolean().prefault(field.caseField.isChecked)
         : z.boolean().prefault(field.caseField.isChecked).optional();
     case "Date":
-      return isRequired ? z.date() : z.date().optional();
+      // Use z.any() to skip Zod validation - we'll handle nulls via resolver transformation
+      return z.any();
     case "Multi-Select":
       return isRequired ? z.number().array() : z.number().array().optional();
     case "Dropdown":
       return isRequired ? z.number() : z.number().optional();
     case "Integer":
-      const integerSchema = z.int();
-      return isRequired
-        ? addMinMax(integerSchema)
-        : addMinMax(integerSchema).optional();
+      let integerBaseSchema = z.union([
+        z.number().int(),
+        z.string().transform((val) => (val === "" ? undefined : parseInt(val, 10))),
+      ]);
+
+      // Apply min/max constraints using refine
+      if (field.caseField.minValue !== undefined && field.caseField.minValue !== null) {
+        const minValue = field.caseField.minValue;
+        integerBaseSchema = integerBaseSchema.refine(
+          (val) => val === undefined || (typeof val === 'number' && val >= minValue),
+          { message: `Value must be at least ${minValue}` }
+        ) as any;
+      }
+      if (field.caseField.maxValue !== undefined && field.caseField.maxValue !== null) {
+        const maxValue = field.caseField.maxValue;
+        integerBaseSchema = integerBaseSchema.refine(
+          (val) => val === undefined || (typeof val === 'number' && val <= maxValue),
+          { message: `Value must be at most ${maxValue}` }
+        ) as any;
+      }
+
+      return isRequired ? integerBaseSchema : integerBaseSchema.optional();
+
     case "Number":
-      const numberSchema = z.number();
-      return isRequired
-        ? addMinMax(numberSchema)
-        : addMinMax(numberSchema).optional();
+      let numberBaseSchema = z.union([
+        z.number(),
+        z.string().transform((val) => (val === "" ? undefined : parseFloat(val))),
+      ]);
+
+      // Apply min/max constraints using refine
+      if (field.caseField.minValue !== undefined && field.caseField.minValue !== null) {
+        const minValue = field.caseField.minValue;
+        numberBaseSchema = numberBaseSchema.refine(
+          (val) => val === undefined || (typeof val === 'number' && val >= minValue),
+          { message: `Value must be at least ${minValue}` }
+        ) as any;
+      }
+      if (field.caseField.maxValue !== undefined && field.caseField.maxValue !== null) {
+        const maxValue = field.caseField.maxValue;
+        numberBaseSchema = numberBaseSchema.refine(
+          (val) => val === undefined || (typeof val === 'number' && val <= maxValue),
+          { message: `Value must be at most ${maxValue}` }
+        ) as any;
+      }
+
+      return isRequired ? numberBaseSchema : numberBaseSchema.optional();
     case "Link":
-      return isRequired ? z.url() : z.url().optional();
+      return isRequired
+        ? z.string().url()
+        : z.union([
+            z.string().url(),
+            z.literal(""),
+          ]).optional();
     case "Text String":
       return isRequired ? z.string() : z.string().optional();
     case "Text Long":
@@ -202,7 +245,10 @@ const createFormSchema = (fields: any[]) => {
   const dynamicSchema = fields.reduce(
     (schema, field) => {
       const fieldName = field.caseField.id.toString();
-      schema[fieldName] = mapFieldToZodType(field);
+      // Skip Date fields entirely - we'll handle them manually without validation
+      if (field.caseField.type.type !== "Date") {
+        schema[fieldName] = mapFieldToZodType(field);
+      }
       return schema;
     },
     {} as Record<string, z.ZodTypeAny>
@@ -392,7 +438,8 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
       ),
     })) || [];
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema) as unknown as Resolver<FormValues>,
+    resolver: zodResolver(formSchema) as any,
+    mode: 'onSubmit',
     defaultValues: {
       name: "",
       templateId: defaultTemplateId ?? 0,
@@ -520,18 +567,43 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
       };
       selectedTemplate.caseFields.forEach((caseField: any) => {
         const fieldIdStr = caseField.caseField.id.toString();
-        if (
-          caseField.caseField.type.type === "Dropdown" &&
-          caseField.caseField.fieldOptions
-        ) {
-          const defaultOption = caseField.caseField.fieldOptions.find(
-            (option: any) => option.fieldOption.isDefault
-          );
-          if (defaultOption) {
-            defaultValues[fieldIdStr] = defaultOption.fieldOption.id;
-          }
-        } else if (caseField.caseField.type.type === "Steps") {
-          defaultValues[fieldIdStr] = [];
+        const fieldType = caseField.caseField.type.type;
+
+        // Initialize all field types with appropriate defaults
+        switch (fieldType) {
+          case "Dropdown":
+            if (caseField.caseField.fieldOptions) {
+              const defaultOption = caseField.caseField.fieldOptions.find(
+                (option: any) => option.fieldOption.isDefault
+              );
+              if (defaultOption) {
+                defaultValues[fieldIdStr] = defaultOption.fieldOption.id;
+              }
+            }
+            break;
+          case "Multi-Select":
+            defaultValues[fieldIdStr] = [];
+            break;
+          case "Steps":
+            defaultValues[fieldIdStr] = [];
+            break;
+          case "Integer":
+          case "Number":
+            defaultValues[fieldIdStr] = "";
+            break;
+          case "Date":
+            defaultValues[fieldIdStr] = undefined;
+            break;
+          case "Checkbox":
+            defaultValues[fieldIdStr] = caseField.caseField.isChecked ?? false;
+            break;
+          case "Link":
+          case "Text String":
+            defaultValues[fieldIdStr] = "";
+            break;
+          case "Text Long":
+            defaultValues[fieldIdStr] = JSON.stringify(emptyEditorContent);
+            break;
         }
       });
       reset(defaultValues as FormValues);
@@ -561,17 +633,22 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
 
       if (selectedTemplate) {
         selectedTemplate.caseFields.forEach((caseField: any) => {
-          if (
-            caseField.caseField.type.type === "Dropdown" &&
-            caseField.caseField.fieldOptions
-          ) {
+          const fieldIdStr = caseField.caseField.id.toString();
+          const fieldType = caseField.caseField.type.type;
+
+          if (fieldType === "Dropdown" && caseField.caseField.fieldOptions) {
             const defaultOption = caseField.caseField.fieldOptions.find(
               (option: any) => option.fieldOption.isDefault
             );
             if (defaultOption) {
-              defaultValues[caseField.caseField.id.toString()] =
-                defaultOption.fieldOption.id;
+              defaultValues[fieldIdStr] = defaultOption.fieldOption.id;
             }
+          } else if (fieldType === "Steps") {
+            defaultValues[fieldIdStr] = [];
+          } else if (fieldType === "Integer" || fieldType === "Number") {
+            defaultValues[fieldIdStr] = "";
+          } else if (fieldType === "Date") {
+            defaultValues[fieldIdStr] = undefined;
           }
         });
         // Enable the name field since we have a template selected and loaded
@@ -606,19 +683,44 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
         automated: false,
       };
       selectedTemplate.caseFields.forEach((caseField: any) => {
-        if (
-          caseField.caseField.type.type === "Dropdown" &&
-          caseField.caseField.fieldOptions
-        ) {
-          const defaultOption = caseField.caseField.fieldOptions.find(
-            (option: any) => option.fieldOption.isDefault
-          );
-          if (defaultOption) {
-            defaultValues[caseField.caseField.id.toString()] =
-              defaultOption.fieldOption.id;
-          }
-        } else if (caseField.caseField.type.type === "Steps") {
-          defaultValues[caseField.caseField.id.toString()] = [];
+        const fieldIdStr = caseField.caseField.id.toString();
+        const fieldType = caseField.caseField.type.type;
+
+        // Initialize all field types with appropriate defaults
+        switch (fieldType) {
+          case "Dropdown":
+            if (caseField.caseField.fieldOptions) {
+              const defaultOption = caseField.caseField.fieldOptions.find(
+                (option: any) => option.fieldOption.isDefault
+              );
+              if (defaultOption) {
+                defaultValues[fieldIdStr] = defaultOption.fieldOption.id;
+              }
+            }
+            break;
+          case "Multi-Select":
+            defaultValues[fieldIdStr] = [];
+            break;
+          case "Steps":
+            defaultValues[fieldIdStr] = [];
+            break;
+          case "Integer":
+          case "Number":
+            defaultValues[fieldIdStr] = "";
+            break;
+          case "Date":
+            defaultValues[fieldIdStr] = undefined;
+            break;
+          case "Checkbox":
+            defaultValues[fieldIdStr] = caseField.caseField.isChecked ?? false;
+            break;
+          case "Link":
+          case "Text String":
+            defaultValues[fieldIdStr] = "";
+            break;
+          case "Text Long":
+            defaultValues[fieldIdStr] = JSON.stringify(emptyEditorContent);
+            break;
         }
       });
       reset(defaultValues as FormValues);
@@ -631,6 +733,25 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
 
   async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
+
+    // Manual validation for required date fields (since we excluded them from Zod schema)
+    const selectedTemplate = templates?.find(t => t.id === selectedTemplateId);
+    if (selectedTemplate) {
+      for (const fieldMeta of selectedTemplate.caseFields) {
+        if (fieldMeta.caseField.type.type === "Date" && fieldMeta.caseField.isRequired) {
+          const fieldIdStr = fieldMeta.caseField.id.toString();
+          const value = data[fieldIdStr];
+          if (!value || !(value instanceof Date) || isNaN(value.getTime())) {
+            form.setError(fieldIdStr, {
+              type: 'manual',
+              message: `${fieldMeta.caseField.displayName} is required`,
+            });
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      }
+    }
 
     try {
       if (session) {

@@ -124,8 +124,8 @@ function isPreBuiltReport(reportType: string): boolean {
 const dateRangeSchema = z.object({
   dateRange: z
     .object({
-      from: z.date().optional(),
-      to: z.date().optional(),
+      from: z.date().nullable().optional(),
+      to: z.date().nullable().optional(),
     })
     .optional(),
 });

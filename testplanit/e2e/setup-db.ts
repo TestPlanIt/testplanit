@@ -21,6 +21,24 @@ const prisma = new PrismaClient();
 const E2E_ADMIN_EMAIL = "admin@example.com";
 const E2E_ADMIN_PASSWORD = "admin";
 
+async function ensureSchema() {
+  console.log("🔧 Ensuring database schema is up to date...");
+
+  const { execSync } = await import("child_process");
+
+  try {
+    execSync("pnpm prisma db push --skip-generate", {
+      cwd: process.cwd(),
+      stdio: "inherit",
+      env: process.env,
+    });
+    console.log("   Schema is ready");
+  } catch (error) {
+    console.error("   Failed to push schema:", error);
+    throw error;
+  }
+}
+
 async function resetDatabase() {
   console.log("🗑️  Resetting database...");
 
@@ -153,6 +171,9 @@ async function main() {
   console.log("=" + "=".repeat(50) + "\n");
 
   try {
+    // Step 0: Ensure schema exists (handles fresh databases)
+    await ensureSchema();
+
     // Step 1: Reset database
     await resetDatabase();
 

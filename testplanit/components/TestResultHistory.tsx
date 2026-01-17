@@ -570,7 +570,10 @@ const RenderSharedGroupInHistoryList: React.FC<{
 
   const { data: items, isLoading } = useFindManySharedStepItem(
     {
-      where: { sharedStepGroupId },
+      where: {
+        sharedStepGroupId,
+        sharedStepGroup: { isDeleted: false },
+      },
       orderBy: { order: "asc" },
     },
     { enabled: !!sharedStepGroupId }

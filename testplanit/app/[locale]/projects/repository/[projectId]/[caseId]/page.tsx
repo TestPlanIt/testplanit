@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "~/lib/navigation";
 import { useParams } from "next/navigation";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
@@ -62,6 +62,7 @@ import {
   ArrowLeft,
   LockIcon,
   Asterisk,
+  AlertCircle,
 } from "lucide-react";
 import {
   Tooltip,
@@ -108,6 +109,8 @@ import {
 } from "@/components/forms/FolderSelect";
 import LinkedCasesPanel from "@/components/LinkedCasesPanel";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import { StepsDisplay } from "./StepsDisplay";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Type Definitions (ensure these are present and correct)
 interface SharedStepItemDetail {
@@ -193,8 +196,9 @@ const mapFieldToZodType = (field: any) => {
       // But adding it for consistency with how null might be stored/retrieved
       return makeOptional(z.boolean().nullable());
     case "Date":
-      // Date already correctly handles nullable when optional
-      return isRequired ? z.date() : z.date().optional().nullable();
+      // Use passthrough to skip all Zod validation for date fields
+      // This avoids the Zod v4 bug where it calls .getTime() on null values
+      return z.any();
     case "Multi-Select":
       return makeOptional(z.array(z.number()));
     case "Dropdown":
@@ -313,7 +317,8 @@ const createFormSchema = (fields: any[]) => {
   const dynamicSchema = fields.reduce(
     (schema, field) => {
       const fieldName = field.caseField.id.toString();
-      if (field.caseField.displayName !== "Steps") {
+      // Skip Date fields entirely - we'll handle them manually without validation
+      if (field.caseField.displayName !== "Steps" && field.caseField.type.type !== "Date") {
         schema[fieldName] = mapFieldToZodType(field);
       }
       return schema;
@@ -437,6 +442,11 @@ export default function TestCaseDetails() {
             select: {
               id: true,
               templateName: true,
+              projects: {
+                select: {
+                  projectId: true,
+                },
+              },
               caseFields: {
                 select: {
                   caseFieldId: true,
@@ -489,7 +499,18 @@ export default function TestCaseDetails() {
             where: { isDeleted: false },
           },
           steps: {
-            where: { isDeleted: false },
+            where: {
+              isDeleted: false,
+              OR: [
+                { sharedStepGroupId: null },
+                {
+                  AND: [
+                    { sharedStepGroupId: { not: null } },
+                    { sharedStepGroup: { isDeleted: false } },
+                  ],
+                },
+              ],
+            },
             orderBy: { order: "asc" },
             include: {
               sharedStepGroup: true,
@@ -780,8 +801,8 @@ export default function TestCaseDetails() {
     testcase?.template.id
   );
 
-  const methods = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const methods = useForm<any>({
+    mode: 'onSubmit',
   });
 
   const {
@@ -855,9 +876,10 @@ export default function TestCaseDetails() {
       );
       if (originalValueForField) {
         if (fieldMeta.caseField.type.type === "Date") {
+          // For date fields, use undefined instead of null for empty values
           defaultValues[fieldIdStr] = originalValueForField.value
             ? new Date(originalValueForField.value as string)
-            : null;
+            : undefined;
         } else {
           defaultValues[fieldIdStr] =
             originalValueForField.value === null
@@ -941,11 +963,121 @@ export default function TestCaseDetails() {
     // Form will be reset through the template change effect
   };
 
-  const handleSave = async (data: z.infer<typeof formSchema>) => {
+  const handleSave = async (data: any) => {
     setIsSubmitting(true);
 
+    // Manual validation for all fields (no resolver, so we validate manually)
+    let hasErrors = false;
+
+    // Validate required base fields
+    if (!data.name || (typeof data.name === 'string' && data.name.trim().length < 2)) {
+      methods.setError('name', {
+        type: 'manual',
+        message: 'Please enter a name for the Test Case',
+      });
+      hasErrors = true;
+    }
+
+    if (!data.workflowId) {
+      methods.setError('workflowId', {
+        type: 'manual',
+        message: 'Please select a State',
+      });
+      hasErrors = true;
+    }
+
+    if (!data.folderId) {
+      methods.setError('folderId', {
+        type: 'manual',
+        message: 'Please select a Folder',
+      });
+      hasErrors = true;
+    }
+
+    // Validate estimate if provided
+    if (data.estimate) {
+      const durationInMilliseconds = parseDuration(data.estimate);
+      if (durationInMilliseconds === null) {
+        methods.setError('estimate', {
+          type: 'manual',
+          message: 'Invalid duration format. Try something like 30m, 1 week or 1h 25m',
+        });
+        hasErrors = true;
+      } else {
+        const durationInSeconds = Math.round(durationInMilliseconds / 1000);
+        if (durationInSeconds > MAX_DURATION) {
+          methods.setError('estimate', {
+            type: 'manual',
+            message: 'Estimate is too large',
+          });
+          hasErrors = true;
+        }
+      }
+    }
+
+    // Validate custom fields
+    const template = templates?.find(t => t.id === selectedTemplateId);
+    if (template) {
+      for (const fieldMeta of template.caseFields) {
+        const fieldIdStr = fieldMeta.caseField.id.toString();
+        const value = data[fieldIdStr];
+        const fieldType = fieldMeta.caseField.type.type;
+        const isRequired = fieldMeta.caseField.isRequired;
+
+        if (isRequired) {
+          // Validate required fields based on type
+          if (fieldType === "Date") {
+            if (!value || !(value instanceof Date) || isNaN(value.getTime())) {
+              methods.setError(fieldIdStr, {
+                type: 'manual',
+                message: `${fieldMeta.caseField.displayName} is required`,
+              });
+              hasErrors = true;
+            }
+          } else if (fieldType === "Text String" || fieldType === "Link") {
+            if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+              methods.setError(fieldIdStr, {
+                type: 'manual',
+                message: `${fieldMeta.caseField.displayName} is required`,
+              });
+              hasErrors = true;
+            }
+          } else if (fieldType === "Multi-Select") {
+            if (!Array.isArray(value) || value.length === 0) {
+              methods.setError(fieldIdStr, {
+                type: 'manual',
+                message: `${fieldMeta.caseField.displayName} is required`,
+              });
+              hasErrors = true;
+            }
+          } else if (fieldType === "Dropdown" || fieldType === "Integer" || fieldType === "Number") {
+            if (value === null || value === undefined || value === '') {
+              methods.setError(fieldIdStr, {
+                type: 'manual',
+                message: `${fieldMeta.caseField.displayName} is required`,
+              });
+              hasErrors = true;
+            }
+          }
+        }
+      }
+    }
+
+    if (hasErrors) {
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Transform null date values to undefined
+    const cleanedData = { ...data };
+    Object.keys(cleanedData).forEach(key => {
+      if (cleanedData[key] === null) {
+        cleanedData[key] = undefined;
+      }
+    });
+
     // Ensure data.steps is an array
-    const steps = Array.isArray(data.steps) ? data.steps : [];
+    const steps = Array.isArray(cleanedData.steps) ? cleanedData.steps : [];
 
     if (isLoadingSharedStepGroups && steps.some((s: any) => s.isShared)) {
       console.error(
@@ -1240,7 +1372,7 @@ export default function TestCaseDetails() {
             tags?.find((tag: { id: number; name: string }) => tag.id === tagId)
               ?.name
         )
-        .filter((name): name is string => !!name);
+        .filter((name: string | undefined): name is string => !!name);
       const issuesDataForVersion = issuesArray
         .filter((id: any) => id != null)
         .map((issueId: number) => {
@@ -1812,6 +1944,25 @@ export default function TestCaseDetails() {
               </div>
             </CardDescription>
           </CardHeader>
+          {/* Template not assigned to project warning */}
+          {testcase?.template &&
+            'projects' in testcase.template &&
+            testcase.template.projects &&
+            !(testcase.template.projects as Array<{ projectId: number }>).some(
+              (p) => p.projectId === Number(projectId)
+            ) ? (
+              <div className="px-6 pb-4">
+                <Alert className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                  <AlertDescription className="text-sm text-amber-800 dark:text-amber-400">
+                    {t("repository.templateNotAssignedWarning", {
+                      templateName: testcase.template?.templateName || "",
+                      projectName: testcase.project?.name || "",
+                    })}
+                  </AlertDescription>
+                </Alert>
+              </div>
+            ) : null}
           <CardContent>
             <ResizablePanelGroup
               direction="horizontal"
@@ -1913,6 +2064,87 @@ export default function TestCaseDetails() {
                       }
                     )}
                   </ul>
+                  {/* Orphaned Steps - steps exist but field not in current template */}
+                  {testcase?.steps &&
+                    testcase.steps.length > 0 &&
+                    !testcase.template?.caseFields?.some(
+                      (f) => f.caseField.type.type === "Steps"
+                    ) && (
+                      <div className="mb-4 mr-6">
+                        <Alert className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 mb-2">
+                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                          <AlertDescription className="text-sm text-amber-800 dark:text-amber-400">
+                            {t("repository.orphanedStepsWarning", {
+                              templateName: testcase.template?.templateName || "",
+                            })}
+                          </AlertDescription>
+                        </Alert>
+                        <StepsDisplay
+                          steps={testcase.steps.map((s: any) => ({
+                            ...s,
+                            sharedStepGroupName: s.sharedStepGroup?.name,
+                          }))}
+                        />
+                        <Separator
+                          orientation="horizontal"
+                          className="mt-2 bg-primary/30"
+                        />
+                      </div>
+                    )}
+                  {/* Orphaned Custom Field Values - field values exist but not in current template */}
+                  {(() => {
+                    const templateFieldIds = new Set(
+                      testcase?.template?.caseFields?.map((f) => f.caseField.id) || []
+                    );
+                    const orphanedFieldValues = testcase?.caseFieldValues?.filter(
+                      (cfv: any) => !templateFieldIds.has(cfv.fieldId) && cfv.value
+                    ) || [];
+
+                    if (orphanedFieldValues.length === 0) return null;
+
+                    return (
+                      <div className="mb-4 mr-6">
+                        <Alert className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 mb-2">
+                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                          <AlertDescription className="text-sm text-amber-800 dark:text-amber-400">
+                            {t("repository.orphanedFieldsWarning", {
+                              count: orphanedFieldValues.length,
+                              templateName: testcase.template?.templateName || "",
+                            })}
+                          </AlertDescription>
+                        </Alert>
+                        <ul>
+                          {orphanedFieldValues.map((cfv: any, index: number) => (
+                            <li key={`orphaned-field-${cfv.id}-${index}`} className="mb-2">
+                              <div className="font-bold flex items-center">
+                                {cfv.field?.displayName || "Unknown Field"}
+                              </div>
+                              <FieldValueRenderer
+                                fieldValue={cfv.value}
+                                fieldType={cfv.field?.type?.type || "Text String"}
+                                caseId={caseId?.toString() || ""}
+                                template={{
+                                  caseFields: testcase?.template?.caseFields || [],
+                                }}
+                                fieldId={cfv.fieldId}
+                                fieldIsRestricted={false}
+                                session={session}
+                                isEditMode={false}
+                                isSubmitting={false}
+                                control={control}
+                                errors={errors}
+                                canEditRestricted={false}
+                              />
+                              <Separator
+                                orientation="horizontal"
+                                className="mt-2 bg-primary/30"
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })()}
                   {/* JUnit-specific info in left panel */}
                   {isJUnitCase && (
                     <div className="space-y-4">

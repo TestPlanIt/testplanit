@@ -1520,6 +1520,12 @@
     },
     "fields": {
       "optionNotFound": "Opción no encontrada",
+      "hasValue": "Tiene valor",
+      "noValue": "Sin valor",
+      "hasDate": "Tiene fecha",
+      "noDate": "Sin fecha",
+      "hasText": "Tiene texto",
+      "noText": "Sin texto",
       "hasLink": "Tiene enlace",
       "noLink": "Sin enlace",
       "hasSteps": "Tiene pasos",
@@ -1568,6 +1574,9 @@
       "editAttachmentsIndividually": "Editar archivos adjuntos individualmente.",
       "automatedStatus": "La prueba automática es {status}"
     },
+    "templateNotAssignedWarning": "Este caso de prueba utiliza la plantilla \"{templateName}\", que actualmente no está asignada al proyecto \"{projectName}\". Es posible que deba asignar esta plantilla al proyecto o modificar el caso de prueba para usar una plantilla diferente.",
+    "orphanedStepsWarning": "Este caso de prueba tiene pasos, pero la plantilla actual \"{templateName}\" no incluye el campo \"Pasos\". Los pasos no se pueden editar hasta que el caso de prueba tenga una plantilla con dicho campo.",
+    "orphanedFieldsWarning": "This test case has {count, plural, =1 {# field value} other {# field values}} that {count, plural, =1 {is} other {are}} not included in the current template \"{templateName}\". {count, plural, =1 {This field is} other {These fields are}} shown below but may not be editable until added to the template.",
     "title": "Repositorio de Casos de Prueba",
     "folders": "Carpetas",
     "addFolder": "Añadir carpeta",
@@ -1592,7 +1601,7 @@
       "filter": "Filtrar casos...",
       "selectFolder": "Seleccione una carpeta para agregar o mostrar casos de prueba.",
       "selectCases": "Seleccionar Casos de Prueba",
-      "noTestCases": "No hay casos de prueba en esta carpeta.",
+      "noTestCases": "No hay casos de prueba para mostrar.",
       "addCase": "Añadir Caso",
       "notFound": "Caso de prueba no encontrado.",
       "selectFilter": "Seleccionar filtro",
@@ -4977,7 +4986,16 @@
       "hours": "horas",
       "days": "días",
       "searchingIn": "Buscando",
-      "includeDeleted": "Incluye elementos eliminados"
+      "includeDeleted": "Incluye elementos eliminados",
+      "filterActive": "Filtro activo:",
+      "applyFilter": "Aplicar filtro",
+      "validation": {
+        "firstValueMustBeLessThanSecond": "El primer valor debe ser menor que el segundo valor",
+        "firstDateMustBeBeforeSecond": "La primera cita debe ser anterior a la segunda."
+      },
+      "link": {
+        "domainHelp": "Ingrese solo el dominio (por ejemplo, \"github.com\" o \"example.org\")"
+      }
     }
   },
   "email": {

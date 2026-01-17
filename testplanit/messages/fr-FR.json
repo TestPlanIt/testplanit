@@ -1520,6 +1520,12 @@
     },
     "fields": {
       "optionNotFound": "Option introuvable",
+      "hasValue": "A de la valeur",
+      "noValue": "Aucune valeur",
+      "hasDate": "A une date",
+      "noDate": "Sans date",
+      "hasText": "Contient du texte",
+      "noText": "Aucun texte",
       "hasLink": "A un lien",
       "noLink": "Aucun lien",
       "hasSteps": "Comporte des marches",
@@ -1568,6 +1574,9 @@
       "editAttachmentsIndividually": "Modifier les pièces jointes individuellement.",
       "automatedStatus": "Les tests automatisés sont {status}"
     },
+    "templateNotAssignedWarning": "Ce cas de test utilise le modèle «{templateName}» qui n'est actuellement pas associé au projet «{projectName}». Vous devrez peut-être l'associer au projet ou modifier le cas de test pour utiliser un autre modèle.",
+    "orphanedStepsWarning": "Ce cas de test comporte des étapes, mais le modèle actuel «{templateName}» ne contient pas le champ Étapes. Les étapes ne peuvent être modifiées que lorsque le cas de test dispose d'un modèle avec un champ Étapes.",
+    "orphanedFieldsWarning": "This test case has {count, plural, =1 {# field value} other {# field values}} that {count, plural, =1 {is} other {are}} not included in the current template \"{templateName}\". {count, plural, =1 {This field is} other {These fields are}} shown below but may not be editable until added to the template.",
     "title": "Référentiel de cas de test",
     "folders": "Dossiers",
     "addFolder": "Ajouter un dossier",
@@ -1592,7 +1601,7 @@
       "filter": "Boîtiers de filtre...",
       "selectFolder": "Sélectionnez un dossier pour ajouter ou afficher des cas de test.",
       "selectCases": "Sélectionner les cas de test",
-      "noTestCases": "Aucun cas de test dans ce dossier.",
+      "noTestCases": "Aucun cas de test à afficher.",
       "addCase": "Ajouter un cas",
       "notFound": "Cas de test introuvable.",
       "selectFilter": "Sélectionner un filtre",
@@ -4977,7 +4986,16 @@
       "hours": "heures",
       "days": "jours",
       "searchingIn": "Recherche dans",
-      "includeDeleted": "Inclure les éléments supprimés"
+      "includeDeleted": "Inclure les éléments supprimés",
+      "filterActive": "Filtre actif :",
+      "applyFilter": "Appliquer le filtre",
+      "validation": {
+        "firstValueMustBeLessThanSecond": "La première valeur doit être inférieure à la seconde valeur",
+        "firstDateMustBeBeforeSecond": "Le premier rendez-vous doit avoir lieu avant le second."
+      },
+      "link": {
+        "domainHelp": "Saisissez uniquement le domaine (par exemple, « github.com » ou « example.org »)"
+      }
     }
   },
   "email": {

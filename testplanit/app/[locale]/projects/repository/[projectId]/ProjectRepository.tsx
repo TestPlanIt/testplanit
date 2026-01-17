@@ -38,6 +38,9 @@ import {
   UserCog,
   Tags,
   Bug,
+  Hash,
+  Calendar,
+  Type,
 } from "lucide-react";
 import {
   Card,
@@ -630,7 +633,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
           type: field.type,
           fieldId: field.fieldId,
           options: field.options,
-          values: field.values ? new Set(field.values) : new Set(),
+          values: field.values && Array.isArray(field.values) ? new Set(field.values) : new Set(),
           counts: field.counts,
         };
       }
@@ -748,7 +751,12 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
           field.type === "Multi-Select" ||
           field.type === "Link" ||
           field.type === "Steps" ||
-          field.type === "Checkbox"
+          field.type === "Checkbox" ||
+          field.type === "Integer" ||
+          field.type === "Number" ||
+          field.type === "Date" ||
+          field.type === "Text Long" ||
+          field.type === "Text String"
       )
       .map(([displayName, field]: [string, DynamicField]) => ({
         id: `dynamic_${field.fieldId}_${field.type}`,
@@ -762,7 +770,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                 ? Link
                 : field.type === "Steps"
                   ? ListOrdered
-                  : SquareCheckBig,
+                  : field.type === "Checkbox"
+                    ? SquareCheckBig
+                    : field.type === "Integer" || field.type === "Number"
+                      ? Hash
+                      : field.type === "Date"
+                        ? Calendar
+                        : Type,
         field,
       }));
 
@@ -857,6 +871,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
 
       if (validViewTypes.includes(viewParam)) {
         setSelectedItem(viewParam);
+        // Clear filters when switching to non-dynamic views (filters will be set by handleViewChange if needed)
+        setSelectedFilter(null);
       } else if (viewParam.startsWith("dynamic_") && viewOptions) {
         const [_, fieldKey] = viewParam.split("_");
         const [fieldId, fieldType] = fieldKey.split("_");
@@ -875,6 +891,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
             setSelectedFilter([1]);
           } else if (field.options && field.options.length > 0) {
             setSelectedFilter([field.options[0].id]);
+          } else {
+            // Clear filters for field types that use custom operators
+            setSelectedFilter(null);
           }
         }
       }
@@ -953,6 +972,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       params.set("view", value);
       setSelectedItem(value);
 
+      // Always clear filters first when switching views
+      setSelectedFilter(null);
+
       if (value === "templates" && viewOptions.templates.length > 0) {
         setSelectedFilter([viewOptions.templates[0].id]);
       } else if (value === "states" && viewOptions.states.length > 0) {
@@ -961,8 +983,6 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         setSelectedFilter([viewOptions.creators[0].id]);
       } else if (value === "automated") {
         setSelectedFilter([1]);
-      } else if (value === "status") {
-        setSelectedFilter(null);
       } else if (value === "assignedTo") {
         const assignedToView = viewItems.find(
           (item) => item.id === "assignedTo"
@@ -1004,8 +1024,10 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
           } else if (field.options && field.options.length > 0) {
             setSelectedFilter([field.options[0].id]);
           }
+          // For other field types (Integer, Number, Date, Text, etc.), keep filter cleared
         }
       }
+      // For all other views (folders, status, etc.), filter remains cleared
 
       if (value === "folders") {
         handleSelectFolder(null);

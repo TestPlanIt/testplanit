@@ -52,8 +52,8 @@ const FormSchema = z.object({
   docs: z.any().nullable(),
   isStarted: z.boolean(),
   isCompleted: z.boolean(),
-  startedAt: z.date().optional(),
-  completedAt: z.date().optional(),
+  startedAt: z.date().nullable().optional(),
+  completedAt: z.date().nullable().optional(),
   automaticCompletion: z.boolean(),
   enableNotifications: z.boolean(),
   notifyDaysBefore: z.number().min(0),
@@ -240,8 +240,8 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
           docs: docsContent,
           isStarted: data.isStarted,
           isCompleted: data.isCompleted,
-          startedAt: data.startedAt,
-          completedAt: data.completedAt,
+          startedAt: data.startedAt ?? undefined,
+          completedAt: data.completedAt ?? undefined,
           automaticCompletion: data.completedAt
             ? data.automaticCompletion
             : false,

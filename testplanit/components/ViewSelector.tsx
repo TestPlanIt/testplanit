@@ -26,6 +26,11 @@ import { useTranslations } from "next-intl";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { NumericFilterInput } from "@/components/NumericFilterInput";
+import { DateFilterInput } from "@/components/DateFilterInput";
+import { TextFilterInput } from "@/components/TextFilterInput";
+import { LinkFilterInput } from "@/components/LinkFilterInput";
+import { StepsFilterInput } from "@/components/StepsFilterInput";
 
 interface ViewItem {
   id: string;
@@ -648,99 +653,14 @@ export function ViewSelector({
               </span>
             </div>
             {(() => {
-              const [_, fieldKey] = selectedItem.split("_");
-              const [fieldId, fieldType] = fieldKey.split("_");
+              // Parse the dynamic field ID format: "dynamic_{fieldId}_{fieldType}"
+              const parts = selectedItem.split("_");
+              const fieldId = parts[1]; // Get the field ID part
+              const fieldType = parts.slice(2).join("_"); // Get the field type (handles types with underscores like "Text Long")
               const numericFieldId = parseInt(fieldId);
               const field = Object.values(
                 viewOptions?.dynamicFields || {}
               ).find((f) => f.fieldId === numericFieldId);
-
-              if (field?.type === "Link") {
-                const hasLinkCount = (field as any).counts?.hasValue || 0;
-                const noLinkCount = (field as any).counts?.noValue || 0;
-                return [
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="has-link"
-                    className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected(1) && "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick(1, e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <LinkIcon className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{t("fields.hasLink")}</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
-                      {hasLinkCount}
-                    </span>
-                  </div>,
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="no-link"
-                    className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected(2) && "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick(2, e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <Link2Off className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{t("fields.noLink")}</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
-                      {noLinkCount}
-                    </span>
-                  </div>,
-                ];
-              }
-
-              if (field?.type === "Steps") {
-                const hasStepsCount = (field as any).counts?.hasValue || 0;
-                const noStepsCount = (field as any).counts?.noValue || 0;
-
-                return [
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="has-steps"
-                    className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected(1) && "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick(1, e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <ListOrdered className="w-4 h-4 shrink-0" />
-                      <span className="truncate">{t("fields.hasSteps")}</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
-                      {hasStepsCount}
-                    </span>
-                  </div>,
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    key="no-steps"
-                    className={cn(
-                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
-                      isValueSelected(2) && "bg-primary/20 hover:bg-primary/30"
-                    )}
-                    onClick={(e) => handleFilterClick(2, e)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <ListOrdered className="w-4 h-4 shrink-0 opacity-40" />
-                      <span className="truncate">{t("fields.noSteps")}</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
-                      {noStepsCount}
-                    </span>
-                  </div>,
-                ];
-              }
 
               if (field?.type === "Checkbox") {
                 const checkedCount = (field as any).counts?.hasValue || 0;
@@ -782,6 +702,351 @@ export function ViewSelector({
                       {uncheckedCount}
                     </span>
                   </div>,
+                ];
+              }
+
+              // Handle Integer, Number fields with operator-based filtering
+              if (
+                field?.type === "Integer" || field?.type === "Number"
+              ) {
+                const noValueCount = (field as any).counts?.noValue || 0;
+                const hasValueCount = (field as any).counts?.hasValue || 0;
+
+                return [
+                  // Add "No Value" option first
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="no-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("none", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate opacity-40">{t("fields.noValue")}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {noValueCount}
+                    </span>
+                  </div>,
+                  // Add "Has Value" option
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="has-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("hasValue", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">{t("fields.hasValue")}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {hasValueCount}
+                    </span>
+                  </div>,
+                  // Divider
+                  <div key="divider-1" className="h-px bg-border my-1" />,
+                  // Operator-based filter options with input
+                  <NumericFilterInput
+                    key="filter-input"
+                    fieldId={field.fieldId}
+                    fieldType={field.type}
+                    onFilterApply={(operator, value1, value2) => {
+                      const filterValue = value2 !== undefined
+                        ? `${operator}:${value1}:${value2}`
+                        : `${operator}:${value1}`;
+                      handleFilterClick(filterValue, undefined);
+                    }}
+                    onClearFilter={() => handleFilterClick(null, undefined)}
+                    currentFilter={
+                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                        ? String(selectedFilter[0])
+                        : null
+                    }
+                  />,
+                ];
+              }
+
+              // Handle Date fields with operator-based filtering
+              if (field?.type === "Date") {
+                const noValueCount = (field as any).counts?.noValue || 0;
+                const hasValueCount = (field as any).counts?.hasValue || 0;
+
+                return [
+                  // Add "No Date" option first
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="no-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("none", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate opacity-40">{t("fields.noDate")}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {noValueCount}
+                    </span>
+                  </div>,
+                  // Add "Has Date" option
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="has-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("hasValue", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">{t("fields.hasDate")}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {hasValueCount}
+                    </span>
+                  </div>,
+                  // Divider
+                  <div key="divider-1" className="h-px bg-border my-1" />,
+                  // Operator-based filter options with date picker
+                  <DateFilterInput
+                    key="filter-input"
+                    fieldId={field.fieldId}
+                    onFilterApply={(operator, value1, value2) => {
+                      let filterValue: string;
+                      if (value1 && value2) {
+                        // Between operator with two dates - use pipe separator
+                        filterValue = `${operator}|${value1.toISOString()}|${value2.toISOString()}`;
+                      } else if (value1) {
+                        // Single date operator (on, before, after) - use pipe separator
+                        filterValue = `${operator}|${value1.toISOString()}`;
+                      } else {
+                        // Relative date operators (last7, last30, last90, thisYear)
+                        filterValue = operator;
+                      }
+                      handleFilterClick(filterValue, undefined);
+                    }}
+                    onClearFilter={() => handleFilterClick(null, undefined)}
+                    currentFilter={
+                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                        ? (() => {
+                            const filter = String(selectedFilter[0]);
+                            // Only pass date operator filters, not hasValue/none
+                            return filter === "hasValue" || filter === "none" ? null : filter;
+                          })()
+                        : null
+                    }
+                  />,
+                ];
+              }
+
+              // Handle Text Long, Text String fields with operator-based filtering
+              if (
+                field?.type === "Text Long" ||
+                field?.type === "Text String"
+              ) {
+                const hasValueCount = (field as any).counts?.hasValue || 0;
+                const noValueCount = (field as any).counts?.noValue || 0;
+
+                return [
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="has-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("hasValue", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">{t("fields.hasText")}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {hasValueCount}
+                    </span>
+                  </div>,
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="no-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("none", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate opacity-40">{t("fields.noText")}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {noValueCount}
+                    </span>
+                  </div>,
+                  // Divider
+                  <div key="divider-1" className="h-px bg-border my-1" />,
+                  // Operator-based text filter
+                  <TextFilterInput
+                    key="filter-input"
+                    fieldId={field.fieldId}
+                    onFilterApply={(operator, value) => {
+                      const filterValue = `${operator}|${value}`;
+                      handleFilterClick(filterValue, undefined);
+                    }}
+                    onClearFilter={() => handleFilterClick(null, undefined)}
+                    currentFilter={
+                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                        ? (() => {
+                            const filter = String(selectedFilter[0]);
+                            // Only pass text operator filters, not hasValue/none
+                            return filter === "hasValue" || filter === "none" ? null : filter;
+                          })()
+                        : null
+                    }
+                  />,
+                ];
+              }
+
+              // Handle Link fields with operator-based filtering
+              if (field?.type === "Link") {
+                const hasValueCount = (field as any).counts?.hasValue || 0;
+                const noValueCount = (field as any).counts?.noValue || 0;
+
+                return [
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="has-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("hasValue", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">{t("fields.hasLink")}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {hasValueCount}
+                    </span>
+                  </div>,
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="no-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("none", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate opacity-40">{t("fields.noLink")}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {noValueCount}
+                    </span>
+                  </div>,
+                  // Divider
+                  <div key="divider-1" className="h-px bg-border my-1" />,
+                  // Operator-based link filter
+                  <LinkFilterInput
+                    key="filter-input"
+                    fieldId={field.fieldId}
+                    onFilterApply={(operator, value) => {
+                      const filterValue = `${operator}|${value}`;
+                      handleFilterClick(filterValue, undefined);
+                    }}
+                    onClearFilter={() => handleFilterClick(null, undefined)}
+                    currentFilter={
+                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                        ? (() => {
+                            const filter = String(selectedFilter[0]);
+                            // Only pass link operator filters, not hasValue/none
+                            return filter === "hasValue" || filter === "none" ? null : filter;
+                          })()
+                        : null
+                    }
+                  />,
+                ];
+              }
+
+              // Handle Steps fields with operator-based filtering
+              if (field?.type === "Steps") {
+                const hasValueCount = (field as any).counts?.hasValue || 0;
+                const noValueCount = (field as any).counts?.noValue || 0;
+
+                return [
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="has-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("hasValue") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("hasValue", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate">{t("fields.hasSteps")}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {hasValueCount}
+                    </span>
+                  </div>,
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    key="no-value"
+                    className={cn(
+                      "w-full flex items-center justify-between text-left font-normal cursor-pointer hover:bg-accent hover:text-accent-foreground p-2 rounded-md",
+                      isValueSelected("none") && "bg-primary/20 hover:bg-primary/30"
+                    )}
+                    onClick={(e) => handleFilterClick("none", e)}
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate opacity-40">{t("fields.noSteps")}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground shrink-0 ml-2 whitespace-nowrap">
+                      {noValueCount}
+                    </span>
+                  </div>,
+                  // Divider
+                  <div key="divider-1" className="h-px bg-border my-1" />,
+                  // Operator-based steps filter
+                  <StepsFilterInput
+                    key="filter-input"
+                    fieldId={field.fieldId}
+                    onFilterApply={(operator, value1, value2) => {
+                      let filterValue: string;
+                      if (value2 !== undefined) {
+                        // Between operator with two values
+                        filterValue = `${operator}|${value1}|${value2}`;
+                      } else {
+                        // Single value operator
+                        filterValue = `${operator}|${value1}`;
+                      }
+                      handleFilterClick(filterValue, undefined);
+                    }}
+                    onClearFilter={() => handleFilterClick(null, undefined)}
+                    currentFilter={
+                      selectedFilter && Array.isArray(selectedFilter) && selectedFilter.length > 0
+                        ? (() => {
+                            const filter = String(selectedFilter[0]);
+                            // Only pass steps operator filters, not hasValue/none
+                            return filter === "hasValue" || filter === "none" ? null : filter;
+                          })()
+                        : null
+                    }
+                  />,
                 ];
               }
 

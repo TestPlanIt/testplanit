@@ -21,7 +21,7 @@ import {
   useFindManyRepositoryFolders,
   useFindFirstTestRuns,
 } from "~/lib/hooks";
-import { useFindManyRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
+import { useFindManyRepositoryCasesFiltered, PostFetchFilter } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { DataTable } from "@/components/tables/DataTable";
 import { getColumns } from "./columns";
 import { useDebounce } from "@/components/Debounce";
@@ -487,8 +487,8 @@ export default function Cases({
 
             // Add the dynamic filtering logic here (Link, Dropdown, etc.)
             if (fieldType === "Link") {
-              // singleFilterId 1 = Has Link, singleFilterId 2 = No Link
-              if ((singleFilterId as number) === 1) {
+              // Support both numeric IDs (legacy) and string IDs (new)
+              if ((singleFilterId as number) === 1 || singleFilterId === "hasValue") {
                 // Has link
                 filterConditions.push({
                   caseFieldValues: {
@@ -501,7 +501,7 @@ export default function Cases({
                     },
                   },
                 });
-              } else if ((singleFilterId as number) === 2) {
+              } else if ((singleFilterId as number) === 2 || singleFilterId === "none") {
                 // No link
                 filterConditions.push({
                   OR: [
@@ -590,13 +590,13 @@ export default function Cases({
                 });
               }
             } else if (fieldType === "Steps") {
-              // singleFilterId 1 = Has Steps, singleFilterId 2 = No Steps
-              if ((singleFilterId as number) === 1) {
+              // Support both numeric IDs (legacy) and string IDs (new)
+              if ((singleFilterId as number) === 1 || singleFilterId === "hasValue") {
                 // Has steps
                 filterConditions.push({
                   steps: { some: { isDeleted: false } },
                 });
-              } else if ((singleFilterId as number) === 2) {
+              } else if ((singleFilterId as number) === 2 || singleFilterId === "none") {
                 // No steps
                 filterConditions.push({
                   steps: { none: { isDeleted: false } },
@@ -614,6 +614,526 @@ export default function Cases({
                   },
                 },
               });
+            } else if (fieldType === "Integer" || fieldType === "Number") {
+              // Handle special "none" value for cases without this field
+              if (singleFilterId === "none") {
+                filterConditions.push({
+                  OR: [
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          value: { equals: Prisma.JsonNull },
+                        },
+                      },
+                    },
+                  ],
+                });
+              } else if (singleFilterId === "hasValue") {
+                // Has any value (not null)
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      value: { not: Prisma.JsonNull },
+                    },
+                  },
+                });
+              } else if (typeof singleFilterId === "string" && singleFilterId.includes(":")) {
+                // Operator-based filter: format is "operator:value1" or "operator:value1:value2"
+                const parts = singleFilterId.split(":");
+                const operator = parts[0];
+                const value1 = parseFloat(parts[1]);
+
+                if (!isNaN(value1)) {
+                  if (operator === "eq") {
+                    // Equals
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { equals: value1 } },
+                            { value: { equals: value1.toString() } },
+                          ],
+                        },
+                      },
+                    });
+                  } else if (operator === "ne") {
+                    // Not equals
+                    filterConditions.push({
+                      OR: [
+                        { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                        {
+                          caseFieldValues: {
+                            some: {
+                              fieldId: numericFieldId,
+                              value: { equals: Prisma.JsonNull },
+                            },
+                          },
+                        },
+                        {
+                          caseFieldValues: {
+                            some: {
+                              fieldId: numericFieldId,
+                              AND: [
+                                { value: { not: { equals: value1 } } },
+                                { value: { not: { equals: value1.toString() } } },
+                              ],
+                            },
+                          },
+                        },
+                      ],
+                    });
+                  } else if (operator === "lt") {
+                    // Less than
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { lt: value1 } },
+                            { value: { lt: value1.toString() } },
+                          ],
+                        },
+                      },
+                    });
+                  } else if (operator === "lte") {
+                    // Less than or equal
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { lte: value1 } },
+                            { value: { lte: value1.toString() } },
+                          ],
+                        },
+                      },
+                    });
+                  } else if (operator === "gt") {
+                    // Greater than
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { gt: value1 } },
+                            { value: { gt: value1.toString() } },
+                          ],
+                        },
+                      },
+                    });
+                  } else if (operator === "gte") {
+                    // Greater than or equal
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { gte: value1 } },
+                            { value: { gte: value1.toString() } },
+                          ],
+                        },
+                      },
+                    });
+                  } else if (operator === "between" && parts.length === 3) {
+                    // Between two values
+                    const value2 = parseFloat(parts[2]);
+                    if (!isNaN(value2)) {
+                      filterConditions.push({
+                        caseFieldValues: {
+                          some: {
+                            fieldId: numericFieldId,
+                            OR: [
+                              {
+                                AND: [
+                                  { value: { gte: value1 } },
+                                  { value: { lte: value2 } },
+                                ],
+                              },
+                              {
+                                AND: [
+                                  { value: { gte: value1.toString() } },
+                                  { value: { lte: value2.toString() } },
+                                ],
+                              },
+                            ],
+                          },
+                        },
+                      });
+                    }
+                  }
+                }
+              } else {
+                // Filter by specific numeric value (legacy support)
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      OR: [
+                        {
+                          value: {
+                            equals: (singleFilterId as string | number).toString(),
+                          },
+                        },
+                        {
+                          value: { equals: singleFilterId as string | number },
+                        },
+                      ],
+                    },
+                  },
+                });
+              }
+            } else if (fieldType === "Date") {
+              // Handle special "none" value for cases without this field
+              if (singleFilterId === "none") {
+                filterConditions.push({
+                  OR: [
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          value: { equals: Prisma.JsonNull },
+                        },
+                      },
+                    },
+                  ],
+                });
+              } else if (singleFilterId === "hasValue") {
+                // Has any date (not null, not JSON null, and not empty string)
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      AND: [
+                        { value: { not: Prisma.JsonNull } },
+                        { NOT: { value: { equals: Prisma.JsonNull } } },
+                        { NOT: { value: { equals: "" } } },
+                        { NOT: { value: { equals: null } } },
+                      ],
+                    },
+                  },
+                });
+              } else if (singleFilterId === "last7") {
+                // Last 7 days
+                const now = new Date();
+                const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      OR: [
+                        { value: { gte: sevenDaysAgoStr } },
+                        { value: { gte: sevenDaysAgo.toISOString() } },
+                      ],
+                    },
+                  },
+                });
+              } else if (singleFilterId === "last30") {
+                // Last 30 days
+                const now = new Date();
+                const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      OR: [
+                        { value: { gte: thirtyDaysAgoStr } },
+                        { value: { gte: thirtyDaysAgo.toISOString() } },
+                      ],
+                    },
+                  },
+                });
+              } else if (singleFilterId === "last90") {
+                // Last 90 days
+                const now = new Date();
+                const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                const ninetyDaysAgoStr = ninetyDaysAgo.toISOString().split("T")[0];
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      OR: [
+                        { value: { gte: ninetyDaysAgoStr } },
+                        { value: { gte: ninetyDaysAgo.toISOString() } },
+                      ],
+                    },
+                  },
+                });
+              } else if (singleFilterId === "thisYear") {
+                // This year
+                const now = new Date();
+                const startOfYear = new Date(now.getFullYear(), 0, 1);
+                const startOfYearStr = startOfYear.toISOString().split("T")[0];
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      OR: [
+                        { value: { gte: startOfYearStr } },
+                        { value: { gte: startOfYear.toISOString() } },
+                      ],
+                    },
+                  },
+                });
+              } else if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+                // Operator-based filter: format is "operator|date1" or "operator|date1|date2"
+                const parts = singleFilterId.split("|");
+                const operator = parts[0];
+
+                if (operator === "on" && parts.length >= 2) {
+                  // On date (exact match)
+                  const date = new Date(parts[1]);
+                  if (!isNaN(date.getTime())) {
+                    const dateStr = date.toISOString().split("T")[0];
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { equals: dateStr } },
+                            { value: { equals: date.toISOString() } },
+                          ],
+                        },
+                      },
+                    });
+                  }
+                } else if (operator === "before" && parts.length >= 2) {
+                  // Before date
+                  const date = new Date(parts[1]);
+                  if (!isNaN(date.getTime())) {
+                    const dateStr = date.toISOString().split("T")[0];
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { lt: dateStr } },
+                            { value: { lt: date.toISOString() } },
+                          ],
+                        },
+                      },
+                    });
+                  }
+                } else if (operator === "after" && parts.length >= 2) {
+                  // After date
+                  const date = new Date(parts[1]);
+                  if (!isNaN(date.getTime())) {
+                    const dateStr = date.toISOString().split("T")[0];
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { gt: dateStr } },
+                            { value: { gt: date.toISOString() } },
+                          ],
+                        },
+                      },
+                    });
+                  }
+                } else if (operator === "between" && parts.length === 3) {
+                  // Between two dates
+                  const date1 = new Date(parts[1]);
+                  const date2 = new Date(parts[2]);
+                  if (!isNaN(date1.getTime()) && !isNaN(date2.getTime())) {
+                    const dateStr1 = date1.toISOString().split("T")[0];
+                    const dateStr2 = date2.toISOString().split("T")[0];
+                    filterConditions.push({
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            {
+                              AND: [
+                                { value: { gte: dateStr1 } },
+                                { value: { lte: dateStr2 } },
+                              ],
+                            },
+                            {
+                              AND: [
+                                { value: { gte: date1.toISOString() } },
+                                { value: { lte: date2.toISOString() } },
+                              ],
+                            },
+                          ],
+                        },
+                      },
+                    });
+                  }
+                }
+              } else if ((singleFilterId as number) === 1) {
+                // Legacy: Has date
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      value: { not: Prisma.JsonNull },
+                    },
+                  },
+                });
+              } else if ((singleFilterId as number) === 2) {
+                // Legacy: No date
+                filterConditions.push({
+                  OR: [
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          value: { equals: Prisma.JsonNull },
+                        },
+                      },
+                    },
+                  ],
+                });
+              }
+            } else if (fieldType === "Text Long" || fieldType === "Text String") {
+              // Handle hasValue/none special filters
+              if (singleFilterId === "hasValue") {
+                // Has text - filter for non-null, non-empty values
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      AND: [
+                        { value: { not: Prisma.JsonNull } },
+                        { value: { not: { equals: "" } } },
+                      ],
+                    },
+                  },
+                });
+              } else if (singleFilterId === "none") {
+                // No text - filter for null, empty, or non-existent
+                filterConditions.push({
+                  OR: [
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { equals: Prisma.JsonNull } },
+                            { value: { equals: "" } },
+                          ],
+                        },
+                      },
+                    },
+                  ],
+                });
+              } else if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+                // Operator-based text filtering
+                const parts = singleFilterId.split("|");
+                const operator = parts[0];
+                const searchValue = parts[1];
+
+                if (searchValue) {
+                  // For text operators, we fetch all non-null values and filter in application logic
+                  // This is necessary because Prisma doesn't support advanced string operations on JSON fields
+                  filterConditions.push({
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        value: { not: Prisma.JsonNull },
+                      },
+                    },
+                  });
+                  // Note: Actual text filtering will happen after fetch in application logic
+                }
+              }
+            } else if (fieldType === "Link") {
+              // Handle hasValue/none special filters
+              if (singleFilterId === "hasValue") {
+                // Has link - filter for non-null, non-empty string values
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      AND: [
+                        { value: { not: Prisma.JsonNull } },
+                        { value: { not: { equals: "" } } },
+                      ],
+                    },
+                  },
+                });
+              } else if (singleFilterId === "none") {
+                // No link - filter for null, empty, or non-existent
+                filterConditions.push({
+                  OR: [
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          OR: [
+                            { value: { equals: Prisma.JsonNull } },
+                            { value: { equals: "" } },
+                          ],
+                        },
+                      },
+                    },
+                  ],
+                });
+              } else if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+                // Operator-based link filtering
+                const parts = singleFilterId.split("|");
+                const operator = parts[0];
+                const searchValue = parts[1];
+
+                if (searchValue) {
+                  // For link operators, we fetch all non-null values and filter in application logic
+                  filterConditions.push({
+                    caseFieldValues: {
+                      some: {
+                        fieldId: numericFieldId,
+                        value: { not: Prisma.JsonNull },
+                      },
+                    },
+                  });
+                  // Note: Actual URL filtering will happen after fetch in application logic
+                }
+              }
+            } else if (fieldType === "Steps") {
+              // Handle hasValue/none special filters
+              if (singleFilterId === "hasValue") {
+                // Has steps - filter for non-null, non-empty array values
+                filterConditions.push({
+                  caseFieldValues: {
+                    some: {
+                      fieldId: numericFieldId,
+                      AND: [
+                        { value: { not: Prisma.JsonNull } },
+                        // Steps are stored as JSON arrays, so we need to check for non-empty arrays
+                        // This will match any non-null value; empty array filtering happens in application logic
+                      ],
+                    },
+                  },
+                });
+              } else if (singleFilterId === "none") {
+                // No steps - filter for null or non-existent
+                filterConditions.push({
+                  OR: [
+                    { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                    {
+                      caseFieldValues: {
+                        some: {
+                          fieldId: numericFieldId,
+                          value: { equals: Prisma.JsonNull },
+                        },
+                      },
+                    },
+                  ],
+                });
+              } else if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+                // Operator-based steps count filtering
+                // Note: Actual step count filtering will happen after fetch in application logic
+                // We don't filter at database level, just ensure we fetch cases with steps
+              }
             }
           } else {
             // Apply specific filter for standard views (using switch)
@@ -687,6 +1207,63 @@ export default function Cases({
       };
       return finalWhereClause;
     }, [deferredSearchString, projectId, viewType, folderId, filterId]);
+
+  // Build post-fetch filters for text/link/steps operators
+  const postFetchFilters: PostFetchFilter[] = useMemo(() => {
+    const filters: PostFetchFilter[] = [];
+
+    if (!filterId || !viewType) {
+      return filters;
+    }
+
+    if (!viewType.startsWith("dynamic_")) {
+      return filters;
+    }
+
+    const filterArray = Array.isArray(filterId) ? filterId : [filterId];
+
+    for (const singleFilterId of filterArray) {
+      if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+        // Extract field info from viewType
+        const parts = viewType.split("_");
+        const fieldId = parseInt(parts[1]);
+        const fieldType = parts.slice(2).join("_");
+
+        if (fieldType === "Text Long" || fieldType === "Text String") {
+          const filterParts = singleFilterId.split("|");
+          filters.push({
+            fieldId,
+            type: 'text',
+            operator: filterParts[0],
+            value1: filterParts[1],
+          });
+        } else if (fieldType === "Link") {
+          const filterParts = singleFilterId.split("|");
+          filters.push({
+            fieldId,
+            type: 'link',
+            operator: filterParts[0],
+            value1: filterParts[1],
+          });
+        } else if (fieldType === "Steps") {
+          const filterParts = singleFilterId.split("|");
+          const count1 = parseInt(filterParts[1]);
+          const count2 = filterParts[2] ? parseInt(filterParts[2]) : undefined;
+          if (!isNaN(count1)) {
+            filters.push({
+              fieldId,
+              type: 'steps',
+              operator: filterParts[0],
+              value1: count1,
+              value2: count2,
+            });
+          }
+        }
+      }
+    }
+
+    return filters;
+  }, [filterId, viewType]);
 
   // Build test run case where clause (used for filtering by assignedTo and status)
   const testRunCaseWhereClause: Prisma.TestRunCasesWhereInput = useMemo(() => {
@@ -1134,6 +1711,7 @@ export default function Cases({
         isDeleted: true,
       },
     },
+    postFetchFilters.length > 0 ? postFetchFilters : undefined,
     {
       enabled: fetchAllIdsForSelection && !isRunMode, // Don't run in run mode
       refetchOnWindowFocus: false,
@@ -1141,31 +1719,6 @@ export default function Cases({
   );
 
   const isTotalLoading = false;
-
-  // Calculate total count based on mode
-  const totalRepositoryCases = useMemo(() => {
-    // If we know the selected folder has 0 cases, return 0 immediately
-    if (viewType === "folders" && selectedFolderCaseCount === 0) {
-      return 0;
-    }
-    if (isRunMode) {
-      // In run mode, use the test run cases count
-      return testRunCasesCountData || 0;
-    }
-    // In repository mode, use the repository cases count
-    return filteredCountData || 0;
-  }, [
-    isRunMode,
-    testRunCasesCountData,
-    filteredCountData,
-    viewType,
-    selectedFolderCaseCount,
-  ]);
-
-  // Update total items in pagination context
-  useEffect(() => {
-    setTotalItems(totalRepositoryCases);
-  }, [totalRepositoryCases, setTotalItems]);
 
   // Handle Shift+Click Select All/Deselect All across all pages
   useEffect(() => {
@@ -1203,11 +1756,7 @@ export default function Cases({
     }
   }, [allCaseIdsData, selectAllAction, isSelectionMode, onSelectionChange, t]);
 
-  const {
-    data,
-    isLoading,
-    refetch: refetchData,
-  } = useFindManyRepositoryCasesFiltered(
+  const result = useFindManyRepositoryCasesFiltered(
     {
       orderBy: orderBy,
       where: repositoryCaseWhereClause,
@@ -1436,10 +1985,12 @@ export default function Cases({
           },
         },
       },
-      // Apply server-side pagination for repository mode
-      skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
-      take: pageSize === "All" ? undefined : pageSize,
+      // When post-fetch filtering is active, fetch all data (no pagination)
+      // Otherwise apply server-side pagination for repository mode
+      skip: postFetchFilters.length > 0 ? undefined : (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
+      take: postFetchFilters.length > 0 ? undefined : (pageSize === "All" ? undefined : pageSize),
     },
+    postFetchFilters.length > 0 ? postFetchFilters : undefined,
     {
       enabled: Boolean(
         // Skip query if we know the selected folder has 0 cases
@@ -1450,7 +2001,14 @@ export default function Cases({
                 deferredSearchString.length > 0)
       ),
       refetchOnWindowFocus: false,
-    }
+    },
+    // When post-fetch filtering is active, apply client-side pagination
+    postFetchFilters.length > 0
+      ? {
+          skip: (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
+          take: pageSize === "All" ? undefined : pageSize,
+        }
+      : undefined
   ) as {
     data:
       | Prisma.RepositoryCasesGetPayload<{
@@ -1637,8 +2195,46 @@ export default function Cases({
         }>[]
       | undefined;
     isLoading: boolean;
+    totalCount: number;
     refetch: any;
   };
+
+  const {
+    data,
+    isLoading,
+    totalCount: filteredTotalCount,
+    refetch: refetchData,
+  } = result;
+
+  // Calculate total count based on mode
+  const totalRepositoryCases = useMemo(() => {
+    // If we know the selected folder has 0 cases, return 0 immediately
+    if (viewType === "folders" && selectedFolderCaseCount === 0) {
+      return 0;
+    }
+    if (isRunMode) {
+      // In run mode, use the test run cases count
+      return testRunCasesCountData || 0;
+    }
+    // In repository mode, use post-fetch filtered count if available, otherwise use database count
+    if (postFetchFilters.length > 0 && filteredTotalCount !== undefined) {
+      return filteredTotalCount;
+    }
+    return filteredCountData || 0;
+  }, [
+    isRunMode,
+    testRunCasesCountData,
+    filteredCountData,
+    filteredTotalCount,
+    postFetchFilters,
+    viewType,
+    selectedFolderCaseCount,
+  ]);
+
+  // Update total items in pagination context
+  useEffect(() => {
+    setTotalItems(totalRepositoryCases);
+  }, [totalRepositoryCases, setTotalItems]);
 
   // Refetch all repository cases data (both list and count)
   const refetchRepositoryCases = useCallback(() => {

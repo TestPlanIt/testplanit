@@ -1520,6 +1520,12 @@
     },
     "fields": {
       "optionNotFound": "Option not found",
+      "hasValue": "Has Value",
+      "noValue": "No Value",
+      "hasDate": "Has Date",
+      "noDate": "No Date",
+      "hasText": "Has Text",
+      "noText": "No Text",
       "hasLink": "Has Link",
       "noLink": "No Link",
       "hasSteps": "Has Steps",
@@ -1568,6 +1574,9 @@
       "editAttachmentsIndividually": "Edit attachments individually.",
       "automatedStatus": "Automated testing is {status}"
     },
+    "templateNotAssignedWarning": "This test case uses the template \"{templateName}\" which is not currently assigned to the project \"{projectName}\". You may need to assign this template to the project or change the test case to use a different template.",
+    "orphanedStepsWarning": "This test case has Steps, but the current template \"{templateName}\" does not include the Steps field. The steps can not be edited until the Test Case has a template with a Steps field.",
+    "orphanedFieldsWarning": "This test case has {count, plural, =1 {# field value} other {# field values}} that {count, plural, =1 {is} other {are}} not included in the current template \"{templateName}\". {count, plural, =1 {This field is} other {These fields are}} shown below but may not be editable until added to the template.",
     "title": "Test Case Repository",
     "folders": "Folders",
     "addFolder": "Add Folder",
@@ -1592,7 +1601,7 @@
       "filter": "Filter cases...",
       "selectFolder": "Select a folder to add or display test cases.",
       "selectCases": "Select Test Cases",
-      "noTestCases": "No test cases in this folder.",
+      "noTestCases": "No test cases to display.",
       "addCase": "Add Case",
       "notFound": "Test case not found.",
       "selectFilter": "Select Filter",
@@ -4977,7 +4986,16 @@
       "hours": "hours",
       "days": "days",
       "searchingIn": "Searching in",
-      "includeDeleted": "Include deleted items"
+      "includeDeleted": "Include deleted items",
+      "filterActive": "Filter active:",
+      "applyFilter": "Apply Filter",
+      "validation": {
+        "firstValueMustBeLessThanSecond": "First value must be less than second value",
+        "firstDateMustBeBeforeSecond": "First date must be before second date"
+      },
+      "link": {
+        "domainHelp": "Enter domain only (e.g., \"github.com\" or \"example.org\")"
+      }
     }
   },
   "email": {
