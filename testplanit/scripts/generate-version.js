@@ -72,16 +72,24 @@ if (environment === 'development') {
 }
 
 const envPath = path.join(__dirname, '..', envFileName);
-fs.writeFileSync(envPath, envContent);
+try {
+  fs.writeFileSync(envPath, envContent);
+} catch (error) {
+  console.warn(`Could not write to ${envFileName}, skipping (this is normal in Docker builds):`, error.message);
+}
 
 // Also write a version.json file for reference
 const versionJsonPath = path.join(__dirname, '..', 'public', 'version.json');
 // Ensure public directory exists
 const publicDir = path.join(__dirname, '..', 'public');
-if (!fs.existsSync(publicDir)) {
-  fs.mkdirSync(publicDir, { recursive: true });
+try {
+  if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir, { recursive: true });
+  }
+  fs.writeFileSync(versionJsonPath, JSON.stringify(versionInfo, null, 2));
+} catch (error) {
+  console.warn(`Could not write version.json, skipping (this is normal in Docker builds):`, error.message);
 }
-fs.writeFileSync(versionJsonPath, JSON.stringify(versionInfo, null, 2));
 
 console.log('Version information generated:');
 console.log(`  Version: ${version}`);
