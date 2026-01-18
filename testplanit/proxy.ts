@@ -74,6 +74,47 @@ export default async function middlewareWithPreferences(request: NextRequest) {
   const url = new URL(request.url);
   const pathname = url.pathname;
 
+  // Handle /share routes - redirect to localized version
+  // Share links should work without locale, but we redirect to localized version
+  // based on user preference or browser Accept-Language header
+  if (pathname.startsWith("/share/")) {
+    // Get user's session to check their preferred locale
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    let targetLocale: string = defaultLocale;
+
+    if (token?.locale && typeof token.locale === "string") {
+      // Use authenticated user's preferred locale
+      targetLocale = token.locale;
+    } else {
+      // For anonymous users, detect from Accept-Language header
+      const acceptLanguage = request.headers.get("accept-language");
+      if (acceptLanguage) {
+        // Parse the Accept-Language header (e.g., "en-US,en;q=0.9,es;q=0.8")
+        const preferredLang = acceptLanguage.split(",")[0]?.split(";")[0]?.trim();
+        // Check if the preferred language is in our supported locales
+        if (preferredLang && locales.includes(preferredLang as any)) {
+          targetLocale = preferredLang;
+        } else if (preferredLang) {
+          // Try to match just the language code (e.g., "en" from "en-GB")
+          const langCode = preferredLang.split("-")[0];
+          const matchingLocale = locales.find((loc) => loc.startsWith(langCode));
+          if (matchingLocale) {
+            targetLocale = matchingLocale;
+          }
+        }
+      }
+    }
+
+    // Redirect to localized share URL
+    const redirectUrl = new URL(request.url);
+    redirectUrl.pathname = `/${targetLocale}${pathname}`;
+    return NextResponse.redirect(redirectUrl);
+  }
+
   // Check if this is an API route (excluding auth routes which need to remain accessible)
   const isApiRoute = pathname.startsWith("/api/");
   const isAuthRoute = pathname.startsWith("/api/auth/");

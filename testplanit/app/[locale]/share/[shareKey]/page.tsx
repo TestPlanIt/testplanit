@@ -6,9 +6,9 @@ import { ShareContent } from "@/components/share/ShareContent";
 import { Loader2 } from "lucide-react";
 
 interface SharePageProps {
-  params: {
+  params: Promise<{
     shareKey: string;
-  };
+  }>;
 }
 
 export const dynamic = "force-dynamic";
@@ -34,7 +34,7 @@ async function fetchShareMetadata(shareKey: string) {
 }
 
 export default async function SharePage({ params }: SharePageProps) {
-  const { shareKey } = params;
+  const { shareKey } = await params;
   const session = await getServerSession(authOptions);
 
   // Fetch share link metadata

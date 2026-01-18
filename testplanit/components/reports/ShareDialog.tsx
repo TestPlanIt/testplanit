@@ -132,7 +132,7 @@ export function ShareDialog({
         passwordHash: shareLink.passwordHash,
       });
 
-      // Generate share URL
+      // Generate share URL (without locale - middleware will redirect based on user preference/browser language)
       const protocol = window.location.protocol;
       const host = window.location.host;
       const shareUrl = `${protocol}//${host}/share/${shareKey}`;
