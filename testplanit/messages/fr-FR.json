@@ -4831,6 +4831,57 @@
     },
     "defaultValues": {
       "noData": "-"
+    },
+    "shareDialog": {
+      "shareButton": "Partager",
+      "dialogTitle": "Partager le rapport",
+      "dialogDescription": "Créez un lien partageable ou gérez les partages existants pour ce rapport.",
+      "tabs": {
+        "create": "Créer un partage",
+        "list": "Mes actions"
+      },
+      "shareMode": {
+        "label": "Mode de partage",
+        "authenticated": {
+          "title": "Authentifié (connexion requise)",
+          "description": "Seuls les utilisateurs connectés ayant accès à ce projet peuvent le consulter."
+        },
+        "passwordProtected": {
+          "title": "Protégé par mot de passe",
+          "description": "Toute personne possédant le lien et le mot de passe peut consulter le document. Les utilisateurs connectés ayant accès au projet n'ont pas besoin de mot de passe."
+        },
+        "public": {
+          "title": "Public (toute personne ayant le lien)",
+          "description": "Toute personne disposant du lien peut consulter ce rapport sans se connecter."
+        }
+      },
+      "expiration": {
+        "label": "Expiration",
+        "noExpiration": "Aucune date d'expiration",
+        "expiresAtMidnight": "Le lien expirera à minuit à la date sélectionnée.",
+        "clear": "Clair"
+      },
+      "notifyOnView": {
+        "label": "Prévenez-moi quand quelqu'un consultera ce lien",
+        "description": "Vous recevrez une notification lorsque le lien de partage sera consulté, conformément à vos préférences de notification."
+      },
+      "title": {
+        "label": "Titre",
+        "placeholder": "par exemple, rapport d'exécution des tests"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Ajoutez une description à ce rapport partagé..."
+      },
+      "actions": {
+        "createShareLink": "Créer un lien de partage",
+        "creating": "Création..."
+      },
+      "errors": {
+        "loginRequired": "Vous devez être connecté pour créer un lien de partage",
+        "createFailed": "Impossible de créer le lien de partage",
+        "genericError": "Une erreur inconnue s'est produite."
+      }
     }
   },
   "sharedSteps": {

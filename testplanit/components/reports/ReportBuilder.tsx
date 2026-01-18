@@ -2437,28 +2437,48 @@ function ReportBuilderContent({
               >
                 <Card className="h-full rounded-none border-0 overflow-hidden">
                   <CardHeader className="pt-2 pb-2">
-                    <CardTitle>{t("common.visualization")}</CardTitle>
-                    {enhancedReportSummary && (
-                      <CardDescription>{enhancedReportSummary}</CardDescription>
-                    )}
-                    {reportGeneratedAt && (
-                      <p className="text-xs text-muted-foreground">
-                        {tReports("generatedAt")}{" "}
-                        <DateFormatter
-                          date={reportGeneratedAt}
-                          formatString="PPp"
-                          timezone={session?.user?.preferences?.timezone}
-                        />
-                      </p>
-                    )}
-                    {memoizedChart.isTruncated && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {tReports("chartDataTruncated.message", {
-                          shown: MAX_CHART_DATA_POINTS.toLocaleString(),
-                          total: memoizedChart.totalDataPoints.toLocaleString(),
-                        })}
-                      </p>
-                    )}
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle>{t("common.visualization")}</CardTitle>
+                        {enhancedReportSummary && (
+                          <CardDescription>{enhancedReportSummary}</CardDescription>
+                        )}
+                        {reportGeneratedAt && (
+                          <p className="text-xs text-muted-foreground">
+                            {tReports("generatedAt")}{" "}
+                            <DateFormatter
+                              date={reportGeneratedAt}
+                              formatString="PPp"
+                              timezone={session?.user?.preferences?.timezone}
+                            />
+                          </p>
+                        )}
+                        {memoizedChart.isTruncated && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {tReports("chartDataTruncated.message", {
+                              shown: MAX_CHART_DATA_POINTS.toLocaleString(),
+                              total: memoizedChart.totalDataPoints.toLocaleString(),
+                            })}
+                          </p>
+                        )}
+                      </div>
+                      <ShareButton
+                        projectId={mode === "project" ? projectId : undefined}
+                        reportConfig={{
+                          reportType,
+                          dimensions: lastUsedDimensions.map((d) => d.value),
+                          metrics: lastUsedMetrics.map((m) => m.value),
+                          startDate: form.getValues("dateRange")?.from,
+                          endDate: form.getValues("dateRange")?.to,
+                          page: currentPage,
+                          pageSize,
+                          ...(mode === "project" && projectId && { projectId }),
+                        }}
+                        reportTitle={
+                          reportTypes.find((r) => r.id === reportType)?.label
+                        }
+                      />
+                    </div>
                   </CardHeader>
                   <CardContent className="h-[calc(100%-4rem)] p-6 flex flex-col">
                     <div className="flex-1 min-h-0 w-full">
@@ -2480,25 +2500,7 @@ function ReportBuilderContent({
                 <Card className="h-full rounded-none border-0 overflow-hidden">
                   <CardHeader className="pt-2 pb-2">
                     <div className="flex flex-row items-end justify-between">
-                      <div className="flex items-center gap-2">
-                        <CardTitle>{t("common.results")}</CardTitle>
-                        <ShareButton
-                          projectId={mode === "project" ? projectId : undefined}
-                          reportConfig={{
-                            reportType,
-                            dimensions: lastUsedDimensions.map((d) => d.value),
-                            metrics: lastUsedMetrics.map((m) => m.value),
-                            startDate: form.getValues("dateRange")?.from,
-                            endDate: form.getValues("dateRange")?.to,
-                            page: currentPage,
-                            pageSize,
-                            ...(mode === "project" && projectId && { projectId }),
-                          }}
-                          reportTitle={
-                            reportTypes.find((r) => r.id === reportType)?.label
-                          }
-                        />
-                      </div>
+                      <CardTitle>{t("common.results")}</CardTitle>
                       {totalCount > 0 && (
                         <div className="flex flex-col items-end">
                           <div className="justify-end">

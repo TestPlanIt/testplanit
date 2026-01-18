@@ -4831,6 +4831,59 @@
     },
     "defaultValues": {
       "noData": "-"
+    },
+    "shareDialog": {
+      "shareButton": "Share",
+      "dialogTitle": "Share Report",
+      "dialogDescription": "Create a shareable link or manage existing shared report links.",
+      "tabs": {
+        "create": "Create Share",
+        "list": "My Shares"
+      },
+      "shareMode": {
+        "label": "Share Mode",
+        "authenticated": {
+          "title": "Authenticated (requires login)",
+          "description": "Only logged-in users with access to this project can view.",
+          "descriptionCrossProject": "Only logged-in users with Admin access can view."
+        },
+        "passwordProtected": {
+          "title": "Password Protected",
+          "description": "Anyone with the link and password can view. Logged-in users with project access skip password.",
+          "descriptionCrossProject": "Anyone with the link and password can view. Logged-in users with Admin access skip password."
+        },
+        "public": {
+          "title": "Public (anyone with link)",
+          "description": "Anyone with the link can view this report without logging in."
+        }
+      },
+      "expiration": {
+        "label": "Expiration",
+        "noExpiration": "No expiration",
+        "expiresAtMidnight": "Link will expire at the end of the selected day (your local time)",
+        "clear": "Clear"
+      },
+      "notifyOnView": {
+        "label": "Notify me when someone views this link",
+        "description": "You'll receive a notification when the share link is accessed, according to your notification preferences."
+      },
+      "title": {
+        "label": "Title",
+        "placeholder": "e.g., Test Execution Report"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Add a description for this shared report..."
+      },
+      "actions": {
+        "createShareLink": "Create Share Link",
+        "creating": "Creating..."
+      },
+      "errors": {
+        "loginRequired": "You must be logged in to create a share link",
+        "createFailed": "Failed to create share link",
+        "genericError": "An unknown error occurred"
+      }
     }
   },
   "sharedSteps": {

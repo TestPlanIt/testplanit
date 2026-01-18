@@ -4831,6 +4831,57 @@
     },
     "defaultValues": {
       "noData": "-"
+    },
+    "shareDialog": {
+      "shareButton": "Compartir",
+      "dialogTitle": "Compartir informe",
+      "dialogDescription": "Cree un enlace para compartir o administre las publicaciones compartidas existentes para este informe.",
+      "tabs": {
+        "create": "Crear Compartir",
+        "list": "Mis acciones"
+      },
+      "shareMode": {
+        "label": "Modo compartir",
+        "authenticated": {
+          "title": "Autenticado (requiere iniciar sesión)",
+          "description": "Sólo los usuarios registrados con acceso a este proyecto pueden verlo."
+        },
+        "passwordProtected": {
+          "title": "Protegido con contraseña",
+          "description": "Cualquier persona con el enlace y la contraseña puede ver. Los usuarios registrados con acceso al proyecto omiten la contraseña."
+        },
+        "public": {
+          "title": "Público (cualquiera con enlace)",
+          "description": "Cualquier persona con el enlace puede ver este informe sin iniciar sesión."
+        }
+      },
+      "expiration": {
+        "label": "Vencimiento",
+        "noExpiration": "Sin vencimiento",
+        "expiresAtMidnight": "El enlace expirará a la medianoche de la fecha seleccionada.",
+        "clear": "Claro"
+      },
+      "notifyOnView": {
+        "label": "Notificarme cuando alguien vea este enlace",
+        "description": "Recibirás una notificación cuando se acceda al enlace para compartir, según tus preferencias de notificación."
+      },
+      "title": {
+        "label": "Título",
+        "placeholder": "p. ej., Informe de ejecución de pruebas"
+      },
+      "description": {
+        "label": "Descripción",
+        "placeholder": "Agregue una descripción para este informe compartido..."
+      },
+      "actions": {
+        "createShareLink": "Crear enlace para compartir",
+        "creating": "Creando..."
+      },
+      "errors": {
+        "loginRequired": "Debes iniciar sesión para crear un enlace para compartir",
+        "createFailed": "No se pudo crear el enlace para compartir",
+        "genericError": "Se produjo un error desconocido"
+      }
     }
   },
   "sharedSteps": {

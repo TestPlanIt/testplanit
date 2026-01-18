@@ -139,8 +139,8 @@ export function ShareLinkCreated({
       {shareData.expiresAt && (
         <Alert>
           <AlertDescription>
-            This link will expire on{" "}
-            <strong>{format(new Date(shareData.expiresAt), "PPP")}</strong> at midnight.
+            This link will expire at the end of{" "}
+            <strong>{format(new Date(shareData.expiresAt), "PPP")}</strong>.
           </AlertDescription>
         </Alert>
       )}
