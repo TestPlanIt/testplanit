@@ -5774,12 +5774,14 @@ const metadata: ModelMeta = {
                 }, projectId: {
                     name: "projectId",
                     type: "Int",
+                    isOptional: true,
                     isForeignKey: true,
                     relationField: 'project',
                 }, project: {
                     name: "project",
                     type: "Projects",
                     isDataModel: true,
+                    isOptional: true,
                     backLink: 'shareLinks',
                     isRelationOwner: true,
                     onDeleteAction: 'Cascade',

@@ -2879,8 +2879,8 @@ model ShareLink {
     entityConfig      Json?               // For reports (dimensions, metrics, dates)
 
     // Ownership
-    projectId         Int
-    project           Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    projectId         Int?                // Optional for cross-project reports
+    project           Projects?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
     createdById       String
     createdBy         User                @relation("ShareLinkCreator", fields: [createdById], references: [id], onDelete: Cascade)
 
@@ -2911,19 +2911,29 @@ model ShareLink {
     // Access control
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')
-    @@allow('all', project.creator == auth())
+
+    // Project-scoped shares
+    @@allow('all', projectId != null && project.creator == auth())
     @@allow('read,update,delete', createdBy == auth())
     @@allow('create',
-        project.creator == auth() ||
-        project.userPermissions?[user == auth() && accessType != 'NO_ACCESS'] ||
-        project.assignedUsers?[user == auth()] ||
-        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE')
+        projectId != null && (
+            project.creator == auth() ||
+            project.userPermissions?[user == auth() && accessType != 'NO_ACCESS'] ||
+            project.assignedUsers?[user == auth()] ||
+            (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE')
+        )
     )
     @@allow('read',
-        project.creator == auth() ||
-        project.userPermissions?[user == auth() && accessType != 'NO_ACCESS'] ||
-        project.assignedUsers?[user == auth()]
+        projectId != null && (
+            project.creator == auth() ||
+            project.userPermissions?[user == auth() && accessType != 'NO_ACCESS'] ||
+            project.assignedUsers?[user == auth()]
+        )
     )
+
+    // Cross-project shares (projectId == null) - only creator or admin can manage
+    @@allow('create', projectId == null && auth().access != 'NONE')
+    @@allow('read', projectId == null && createdBy == auth())
 }
 
 model ShareLinkAccessLog {

@@ -196,7 +196,7 @@ export class NotificationService {
     viewerName: string | null,
     viewerEmail: string | null,
     shareLinkId: string,
-    projectId: number
+    projectId?: number
   ) {
     const title = "Share Link Accessed";
     const viewer = viewerName || viewerEmail || "An anonymous user";
@@ -211,7 +211,7 @@ export class NotificationService {
       relatedEntityType: "ShareLink",
       data: {
         shareLinkId,
-        projectId,
+        ...(projectId !== undefined && { projectId }),
         viewerName,
         viewerEmail,
         viewedAt: new Date().toISOString(),

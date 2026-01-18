@@ -1583,8 +1583,8 @@ model ShareLink {
   entityType   ShareLinkEntityType
   entityId     String?
   entityConfig Json?
-  projectId    Int
-  project      Projects             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId    Int?
+  project      Projects?            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdById  String
   createdBy    User                 @relation("ShareLinkCreator", fields: [createdById], references: [id], onDelete: Cascade)
   mode         ShareLinkMode        @default(PUBLIC)

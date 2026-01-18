@@ -374,7 +374,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           seriesMap.set(automatedSeriesName, {
             name: automatedSeriesName,
             values: [],
-            color: stringToColorCode(automatedSeriesName).colorCode,
+            color: "hsl(142, 76%, 36%)", // Green for automated
           });
         }
         seriesMap.get(automatedSeriesName)!.values.push({
@@ -389,7 +389,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           seriesMap.set(manualSeriesName, {
             name: manualSeriesName,
             values: [],
-            color: stringToColorCode(manualSeriesName).colorCode,
+            color: "hsl(221, 83%, 53%)", // Blue for manual
           });
         }
         seriesMap.get(manualSeriesName)!.values.push({
@@ -404,7 +404,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           seriesMap.set(totalSeriesName, {
             name: totalSeriesName,
             values: [],
-            color: stringToColorCode(totalSeriesName).colorCode,
+            color: "hsl(262, 83%, 58%)", // Purple for total
           });
         }
         seriesMap.get(totalSeriesName)!.values.push({

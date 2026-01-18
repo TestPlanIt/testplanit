@@ -3781,7 +3781,10 @@
         "milestoneDueSoon": "Milestone \"{milestoneName}\" in project \"{projectName}\" is due on {dueDate}.",
         "milestoneOverdue": "Milestone \"{milestoneName}\" in project \"{projectName}\" was due on {dueDate} and is now overdue.",
         "milestoneNotificationReason": "You are receiving this notification because you have participated in work associated with this milestone (test runs, sessions, or as the milestone creator).",
-        "milestoneNotificationContinue": "You will continue to receive daily reminders until this milestone is marked as complete."
+        "milestoneNotificationContinue": "You will continue to receive daily reminders until this milestone is marked as complete.",
+        "shareLinkAccessedTitle": "Share Link Accessed",
+        "viewedYourSharedLink": "viewed your shared link",
+        "viewedAt": "Viewed at"
       }
     },
     "issues": {

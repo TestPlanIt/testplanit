@@ -37,7 +37,7 @@ export async function auditShareLinkCreation(shareLink: {
   entityType: string;
   mode: string;
   title: string | null;
-  projectId: number;
+  projectId?: number;
   expiresAt: Date | null;
   notifyOnView: boolean;
   passwordHash: string | null;
@@ -65,7 +65,7 @@ export async function auditShareLinkCreation(shareLink: {
         expiresAt: shareLink.expiresAt?.toISOString() || null,
         notifyOnView: shareLink.notifyOnView,
       },
-      projectId: shareLink.projectId,
+      projectId: shareLink.projectId ?? null,
     },
   });
 }
@@ -90,14 +90,16 @@ export async function revokeShareLink(shareLinkId: string) {
   }
 
   // Check permissions
-  const project = await prisma.projects.findUnique({
-    where: { id: shareLink.projectId },
-  });
+  const project = shareLink.projectId
+    ? await prisma.projects.findUnique({
+        where: { id: shareLink.projectId },
+      })
+    : null;
 
   const canRevoke =
     session.user.access === "ADMIN" ||
     shareLink.createdById === session.user.id ||
-    project?.createdBy === session.user.id;
+    (project && project.createdBy === session.user.id);
 
   if (!canRevoke) {
     throw new Error("You do not have permission to revoke this share link");

@@ -16,10 +16,10 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { shareKey: string } }
+  { params }: { params: Promise<{ shareKey: string }> }
 ) {
   try {
-    const { shareKey } = params;
+    const { shareKey } = await params;
     const body = await req.json();
     const { password } = body;
 

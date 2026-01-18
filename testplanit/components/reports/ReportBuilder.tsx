@@ -95,6 +95,7 @@ import { useDrillDown } from "~/hooks/useDrillDown";
 import { DrillDownDrawer } from "~/components/reports/DrillDownDrawer";
 import { ReportFilters } from "~/components/reports/ReportFilters";
 import { ReportFilterChips } from "~/components/reports/ReportFilterChips";
+import { ShareButton } from "~/components/reports/ShareButton";
 import type {
   DrillDownContext,
   DimensionFilters,
@@ -2381,7 +2382,7 @@ function ReportBuilderContent({
                       >
                         {loading ? (
                           <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                             {tCommon("loading")}
                           </>
                         ) : (
@@ -2422,7 +2423,11 @@ function ReportBuilderContent({
         >
           {/* Results Display */}
           {results && results.length > 0 ? (
-            <ResizablePanelGroup direction="vertical" className="h-full">
+            <ResizablePanelGroup
+              direction="vertical"
+              className="h-full"
+              autoSaveId="report-builder-results-panels"
+            >
               {/* Visualization Panel */}
               <ResizablePanel
                 defaultSize={50}
@@ -2475,7 +2480,25 @@ function ReportBuilderContent({
                 <Card className="h-full rounded-none border-0 overflow-hidden">
                   <CardHeader className="pt-2 pb-2">
                     <div className="flex flex-row items-end justify-between">
-                      <CardTitle>{t("common.results")}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <CardTitle>{t("common.results")}</CardTitle>
+                        <ShareButton
+                          projectId={mode === "project" ? projectId : undefined}
+                          reportConfig={{
+                            reportType,
+                            dimensions: lastUsedDimensions.map((d) => d.value),
+                            metrics: lastUsedMetrics.map((m) => m.value),
+                            startDate: form.getValues("dateRange")?.from,
+                            endDate: form.getValues("dateRange")?.to,
+                            page: currentPage,
+                            pageSize,
+                            ...(mode === "project" && projectId && { projectId }),
+                          }}
+                          reportTitle={
+                            reportTypes.find((r) => r.id === reportType)?.label
+                          }
+                        />
+                      </div>
                       {totalCount > 0 && (
                         <div className="flex flex-col items-end">
                           <div className="justify-end">

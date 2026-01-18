@@ -16,10 +16,10 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { shareKey: string } }
+  { params }: { params: Promise<{ shareKey: string }> }
 ) {
   try {
-    const { shareKey } = params;
+    const { shareKey } = await params;
 
     // Fetch share link with project info (no auth required)
     const shareLink = await prisma.shareLink.findUnique({
@@ -71,7 +71,7 @@ export async function GET(
       title: shareLink.title,
       description: shareLink.description,
       projectId: shareLink.projectId,
-      projectName: shareLink.project.name,
+      projectName: shareLink.project?.name || null,
       createdBy: shareLink.createdBy.name,
       viewCount: shareLink.viewCount,
       requiresPassword: shareLink.mode === "PASSWORD_PROTECTED",
@@ -92,10 +92,10 @@ export async function GET(
  */
 export async function POST(
   req: NextRequest,
-  { params }: { params: { shareKey: string } }
+  { params }: { params: Promise<{ shareKey: string }> }
 ) {
   try {
-    const { shareKey } = params;
+    const { shareKey } = await params;
     const session = await getServerSession(authOptions);
     const body = await req.json();
     const { password } = body;
@@ -158,9 +158,10 @@ export async function POST(
         );
       }
 
-      // Check if user has project access
+      // Check if user has project access (or if it's a cross-project report)
       const hasProjectAccess =
         session.user.access === "ADMIN" ||
+        !shareLink.project || // Cross-project reports accessible to all authenticated users
         shareLink.project.createdBy === session.user.id ||
         shareLink.project.userPermissions.length > 0;
 
@@ -178,6 +179,7 @@ export async function POST(
       if (session) {
         const hasProjectAccess =
           session.user.access === "ADMIN" ||
+          !shareLink.project || // Cross-project reports accessible to all authenticated users
           shareLink.project.createdBy === session.user.id ||
           shareLink.project.userPermissions.length > 0;
 
@@ -276,7 +278,7 @@ export async function POST(
           session?.user?.name || null,
           session?.user?.email || null,
           shareLink.id,
-          shareLink.projectId
+          shareLink.projectId ?? undefined
         );
       } catch (error) {
         console.error("Failed to send share access notification:", error);
@@ -294,7 +296,7 @@ export async function POST(
       title: shareLink.title,
       description: shareLink.description,
       projectId: shareLink.projectId,
-      projectName: shareLink.project.name,
+      projectName: shareLink.project?.name || null,
       viewCount: shareLink.viewCount + 1,
       accessed: true,
     });

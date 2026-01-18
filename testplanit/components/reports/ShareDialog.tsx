@@ -31,7 +31,7 @@ import { prepareShareLinkData, auditShareLinkCreation } from "@/actions/share-li
 interface ShareDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projectId: number;
+  projectId?: number; // Optional for cross-project reports
   reportConfig: any;
   reportTitle?: string;
 }
@@ -65,6 +65,12 @@ export function ShareDialog({
     setError(null);
 
     try {
+      // Validate session
+      if (!session?.user?.id) {
+        setError("You must be logged in to create a share link");
+        return;
+      }
+
       // Validate password for PASSWORD_PROTECTED mode
       if (mode === "PASSWORD_PROTECTED" && !password) {
         setError("Password is required for password-protected shares");
@@ -87,8 +93,13 @@ export function ShareDialog({
           shareKey,
           entityType: "REPORT",
           entityConfig: reportConfig,
-          project: {
-            connect: { id: projectId },
+          ...(projectId && {
+            project: {
+              connect: { id: projectId },
+            },
+          }),
+          createdBy: {
+            connect: { id: session?.user?.id },
           },
           mode,
           passwordHash,
@@ -110,7 +121,7 @@ export function ShareDialog({
         entityType: shareLink.entityType,
         mode: shareLink.mode,
         title: shareLink.title,
-        projectId: shareLink.projectId,
+        projectId: shareLink.projectId ?? undefined,
         expiresAt: shareLink.expiresAt,
         notifyOnView: shareLink.notifyOnView,
         passwordHash: shareLink.passwordHash,

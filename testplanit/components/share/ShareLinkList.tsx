@@ -35,7 +35,7 @@ import { ShareLinkEntityType } from "@prisma/client";
 import { revokeShareLink } from "@/actions/share-links";
 
 interface ShareLinkListProps {
-  projectId: number;
+  projectId?: number; // Optional for cross-project reports
   entityType?: ShareLinkEntityType;
 }
 
@@ -48,7 +48,7 @@ export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
   // Fetch shares
   const { data: shares, isLoading, refetch } = useFindManyShareLink({
     where: {
-      projectId,
+      ...(projectId !== undefined && { projectId }),
       ...(entityType && { entityType }),
     },
     orderBy: {

@@ -3781,7 +3781,10 @@
         "milestoneDueSoon": "L'étape \"{milestoneName}\" du projet \"{projectName}\" est prévue pour le {dueDate}.",
         "milestoneOverdue": "L'étape «{milestoneName}» du projet «{projectName}» était prévue pour le {dueDate} et est maintenant en retard.",
         "milestoneNotificationReason": "Vous recevez cette notification car vous avez participé aux travaux liés à cette étape importante (tests, sessions ou en tant que créateur de l'étape).",
-        "milestoneNotificationContinue": "Vous continuerez à recevoir des rappels quotidiens jusqu'à ce que cette étape soit franchie."
+        "milestoneNotificationContinue": "Vous continuerez à recevoir des rappels quotidiens jusqu'à ce que cette étape soit franchie.",
+        "shareLinkAccessedTitle": "Lien de partage consulté",
+        "viewedYourSharedLink": "J'ai consulté votre lien partagé",
+        "viewedAt": "Consulté à"
       }
     },
     "issues": {

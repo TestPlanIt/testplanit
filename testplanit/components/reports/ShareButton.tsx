@@ -6,7 +6,7 @@ import { Share2 } from "lucide-react";
 import { ShareDialog } from "./ShareDialog";
 
 interface ShareButtonProps {
-  projectId: number;
+  projectId?: number; // Optional for cross-project reports
   reportConfig: any; // Report configuration (reportType, dimensions, metrics, etc.)
   reportTitle?: string;
   disabled?: boolean;

@@ -3781,7 +3781,10 @@
         "milestoneDueSoon": "El hito \"{milestoneName}\" en el proyecto \"{projectName}\" vence el {dueDate}.",
         "milestoneOverdue": "El hito \"{milestoneName}\" en el proyecto \"{projectName}\" debía cumplirse el {dueDate} y ahora está vencido.",
         "milestoneNotificationReason": "Recibe esta notificación porque ha participado en el trabajo asociado con este hito (ejecuciones de prueba, sesiones o como creador del hito).",
-        "milestoneNotificationContinue": "Continuará recibiendo recordatorios diarios hasta que este hito se marque como completado."
+        "milestoneNotificationContinue": "Continuará recibiendo recordatorios diarios hasta que este hito se marque como completado.",
+        "shareLinkAccessedTitle": "Enlace compartido accedido",
+        "viewedYourSharedLink": "vi tu enlace compartido",
+        "viewedAt": "Visto en"
       }
     },
     "issues": {
