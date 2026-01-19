@@ -279,9 +279,28 @@ export async function POST(
     // Trigger notification if enabled
     if (shareLink.notifyOnView) {
       try {
+        // Build a descriptive title for the notification
+        let notificationTitle = shareLink.title;
+
+        if (!notificationTitle) {
+          // Generate title from entity type and project
+          if (shareLink.entityType === "REPORT" && shareLink.entityConfig) {
+            const config = shareLink.entityConfig as any;
+            const reportType = config.reportType ? config.reportType.replace(/-/g, " ") : "report";
+            notificationTitle = shareLink.project?.name
+              ? `${reportType} for ${shareLink.project.name}`
+              : reportType;
+          } else {
+            const entityType = shareLink.entityType.toLowerCase().replace(/_/g, " ");
+            notificationTitle = shareLink.project?.name
+              ? `${entityType} for ${shareLink.project.name}`
+              : entityType;
+          }
+        }
+
         await NotificationService.createShareLinkAccessedNotification(
           shareLink.createdById,
-          shareLink.title || `${shareLink.entityType} share`,
+          notificationTitle,
           session?.user?.name || null,
           session?.user?.email || null,
           shareLink.id,

@@ -839,8 +839,11 @@ export function useReportColumns(
                 );
               }
 
-              // averageElapsed is returned in seconds, not milliseconds
-              const isSecondsFormat = metricId === "averageElapsed";
+              // avgElapsedTime and totalElapsedTime metrics return values in seconds
+              const isSecondsFormat = metricId === "avgElapsedTime" ||
+                                     metricId === "avgElapsed" ||
+                                     metricId === "totalElapsedTime" ||
+                                     metricId === "averageElapsed";
 
               const humanReadableDuration = toHumanReadable(value, {
                 isSeconds: isSecondsFormat,
@@ -935,11 +938,9 @@ export function useReportColumns(
                 );
               }
 
-              // averageElapsed is returned in seconds, not milliseconds
-              const isSecondsFormat = metricId === "averageElapsed";
-
+              // avgElapsedTime and totalElapsedTime metrics return values in milliseconds
               const humanReadableDuration = toHumanReadable(timeValue, {
-                isSeconds: isSecondsFormat,
+                isSeconds: false,
                 locale: locale,
                 largest: 2,
                 round: true,

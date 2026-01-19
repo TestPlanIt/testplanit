@@ -517,7 +517,8 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       if (value === 0) {
         return "-";
       }
-      return toHumanReadable(value, { isSeconds: true, locale });
+      // avgElapsedTime metric returns values in milliseconds
+      return toHumanReadable(value, { isSeconds: false, locale });
     }
     if (isPercentageMetric(metric)) {
       return `${value.toFixed(2)}%`;
@@ -534,9 +535,12 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       const isElapsed = isElapsedTimeMetric(metric);
       const transformedData: SimpleChartDataPoint[] = results.map((row) => {
         const name = getDimensionValue(row, dimension);
-        const value = getMetricValue(row, metric);
+        const rawValue = getMetricValue(row, metric);
+        // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
+        const value = isElapsed ? rawValue / 1000 : rawValue;
         const color = getColor(row, dimension, issueColorFns);
-        const formattedValue = formatMetricValue(value, metric);
+        const formattedValue = formatMetricValue(rawValue, metric);
+
         return { id: name, name, value, color, formattedValue };
       });
 
@@ -621,9 +625,13 @@ export const ReportChart: React.FC<ReportChartProps> = ({
             currentLevelChildren = node.children!;
           } else {
             // Leaf node
-            const value = getMetricValue(row, metric);
+            const rawValue = getMetricValue(row, metric);
+            // Convert elapsed time from milliseconds to seconds for proper scaling
+            const value = isElapsed ? rawValue / 1000 : rawValue;
             node.value = (node.value || 0) + value;
-            node.formattedValue = formatMetricValue(node.value, metric);
+            // Use raw value for formatting to maintain milliseconds for humanize-duration
+            const totalRaw = isElapsed ? node.value * 1000 : node.value;
+            node.formattedValue = formatMetricValue(totalRaw, metric);
           }
         });
       });
@@ -662,14 +670,16 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       const groupedData: GroupedChartDataPoint[] = results.map((row) => {
         const mainGroup = getDimensionValue(row, mainDimension);
         const subGroup = getDimensionValue(row, subDimension);
-        const value = getMetricValue(row, metric);
+        const rawValue = getMetricValue(row, metric);
+        // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
+        const value = isElapsed ? rawValue / 1000 : rawValue;
         const color = getColor(row, subDimension, issueColorFns);
         return {
           mainGroup,
           subGroup,
           value,
           color,
-          formattedValue: formatMetricValue(value, metric),
+          formattedValue: formatMetricValue(rawValue, metric),
         };
       });
       return (
@@ -734,9 +744,11 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         const group = getDimensionValue(row, dimension);
         const color = getColor(row, dimension, issueColorFns);
         chartMetrics.forEach((metric) => {
-          const value = getMetricValue(row, metric);
+          const rawValue = getMetricValue(row, metric);
           const isElapsed = isElapsedTimeMetric(metric);
-          const formattedValue = formatMetricValue(value, metric);
+          // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
+          const value = isElapsed ? rawValue / 1000 : rawValue;
+          const formattedValue = formatMetricValue(rawValue, metric);
 
           transformedData.push({
             group,
@@ -765,8 +777,10 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           const seriesName = otherDimensions
             .map((dim) => getDimensionValue(row, dim))
             .join(" - ");
-          const value = getMetricValue(row, metric);
+          const rawValue = getMetricValue(row, metric);
           const isElapsed = isElapsedTimeMetric(metric);
+          // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
+          const value = isElapsed ? rawValue / 1000 : rawValue;
 
           if (!seriesMap.has(seriesName)) {
             seriesMap.set(seriesName, { name: seriesName, values: [] });
@@ -774,14 +788,16 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           seriesMap.get(seriesName)!.values.push({
             date,
             value,
-            formattedValue: formatMetricValue(value, metric),
+            formattedValue: formatMetricValue(rawValue, metric),
           });
         } else {
           // Group by metric name
           chartMetrics.forEach((metric) => {
             const seriesName = metric.label;
-            const value = getMetricValue(row, metric);
+            const rawValue = getMetricValue(row, metric);
             const isElapsed = isElapsedTimeMetric(metric);
+            // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
+            const value = isElapsed ? rawValue / 1000 : rawValue;
 
             if (!seriesMap.has(seriesName)) {
               seriesMap.set(seriesName, { name: seriesName, values: [] });
@@ -789,7 +805,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
             seriesMap.get(seriesName)!.values.push({
               date,
               value,
-              formattedValue: formatMetricValue(value, metric),
+              formattedValue: formatMetricValue(rawValue, metric),
             });
           });
         }

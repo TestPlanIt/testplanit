@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import {
   Dialog,
@@ -56,7 +56,7 @@ export function ShareDialog({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [expiresAt, setExpiresAt] = useState<Date | undefined>(undefined);
   const [notifyOnView, setNotifyOnView] = useState(false);
-  const [title, setTitle] = useState(reportTitle || "");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
   // UI state
@@ -66,6 +66,11 @@ export function ShareDialog({
 
   // Use ZenStack hook for creating share links
   const { mutateAsync: createShareLink, isPending: isCreating } = useCreateShareLink();
+
+  // Generate default title with timestamp
+  const defaultTitle = useMemo(() => {
+    return `${reportTitle || "Report"} - ${format(new Date(), "MMM d, yyyy h:mm a")}`;
+  }, [reportTitle]);
 
   const handleCreateShare = async () => {
     setError(null);
@@ -94,6 +99,9 @@ export function ShareDialog({
         password: mode === "PASSWORD_PROTECTED" ? password : null,
       });
 
+      // Use provided title or default title with timestamp
+      const finalTitle = title || defaultTitle;
+
       // Create share link using ZenStack hook
       const shareLink = await createShareLink({
         data: {
@@ -106,7 +114,7 @@ export function ShareDialog({
           passwordHash,
           expiresAt: expiresAt || null,
           notifyOnView,
-          title: title || null,
+          title: finalTitle,
           description: description || null,
         },
       });
@@ -363,8 +371,11 @@ export function ShareDialog({
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={t("title.placeholder")}
+                placeholder={defaultTitle}
               />
+              <p className="text-xs text-muted-foreground">
+                Leave empty to use: {defaultTitle}
+              </p>
             </div>
 
             {/* Description */}

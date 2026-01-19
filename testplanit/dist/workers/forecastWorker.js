@@ -1034,9 +1034,9 @@ var NotificationService = class {
    * Create a share link accessed notification
    */
   static async createShareLinkAccessedNotification(shareLinkOwnerId, shareTitle, viewerName, viewerEmail, shareLinkId, projectId) {
-    const title = "Share Link Accessed";
-    const viewer = viewerName || viewerEmail || "An anonymous user";
-    const message = `${viewer} viewed your shared link: "${shareTitle}"`;
+    const title = "Shared Report Viewed";
+    const viewer = viewerName || viewerEmail || "Someone";
+    const message = `${viewer} viewed your shared report: "${shareTitle}"`;
     return this.createNotification({
       userId: shareLinkOwnerId,
       type: import_client4.NotificationType.SHARE_LINK_ACCESSED,

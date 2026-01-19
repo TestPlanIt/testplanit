@@ -1254,20 +1254,110 @@ function ReportBuilderContent({
           }
         } else {
           // Standard server-side pagination for other reports
-          setResults(data.data || data.results); // Support both formats
+          const tableData = data.data || data.results;
+          const chartData = data.allResults || data.data || data.results;
+
+          console.log('=== TABLE DATA ===', tableData);
+          console.log('=== CHART DATA ===', chartData);
+
+          setResults(tableData); // Support both formats
 
           // Store projects for automation trends report
           if (reportType === "automation-trends" && data.projects) {
             setAutomationTrendsProjects(data.projects);
           }
 
-          // Only update allResults and chartDataRef when running a new report (not for pagination/sorting)
-          if (updateUrl) {
-            const newAllResults = data.allResults || data.data || data.results;
-            setAllResults(newAllResults);
-            chartDataRef.current = newAllResults; // Update ref with stable reference
-            setChartDataVersion((prev) => prev + 1); // Increment version to trigger chart update
+          // Update allResults and chartDataRef with the full dataset
+          // For pagination/sorting changes, we still need the full dataset for the chart
+          const newAllResults = chartData;
+
+          // Debug: Log if allResults and results have different lengths or values (potential bug indicator)
+          if (data.allResults && data.results) {
+            if (data.allResults.length !== data.results.length) {
+              console.warn('Report data length mismatch:', {
+                allResultsLength: data.allResults.length,
+                resultsLength: data.results.length,
+                page: data.page,
+                pageSize: data.pageSize
+              });
+            }
+
+            // Check if any rows in results have different values than corresponding rows in allResults
+            // This helps detect data inconsistencies even when lengths match
+            if (data.results.length > 0 && data.allResults.length > 0) {
+              const firstResult = data.results[0];
+              const firstAllResult = data.allResults[0];
+              const metricsToCheck = selectedMetrics.map(m => m.label || m.value);
+
+              let mismatchFound = false;
+              for (const metric of metricsToCheck) {
+                if (firstResult[metric] !== firstAllResult[metric]) {
+                  mismatchFound = true;
+                  console.warn('Report data VALUE mismatch found:', {
+                    metric,
+                    resultsValue: firstResult[metric],
+                    allResultsValue: firstAllResult[metric],
+                    resultRow: firstResult,
+                    allResultRow: firstAllResult
+                  });
+                }
+              }
+
+              if (!mismatchFound && data.results.length < data.allResults.length) {
+                console.log('Report data OK: allResults contains full dataset, results is paginated subset');
+              }
+            }
           }
+
+          // Only update chart data when running a new report (not pagination)
+          // Chart should always show the full dataset, not update on pagination
+          if (updateUrl) {
+            console.log('Updating chart with new data:', {
+              dataLength: newAllResults.length,
+              firstRow: newAllResults[0],
+              updateUrl
+            });
+
+            // Debug: Compare ALL rows between allResults and results to find mismatches
+            const metricsToCheck = selectedMetrics.map(m => m.label || m.value);
+            console.log('Checking for data mismatches in metrics:', metricsToCheck);
+
+            newAllResults.forEach((allRow: any) => {
+              const dateKey = allRow.date?.executedAt || allRow.date?.createdAt;
+              if (!dateKey) return;
+
+              // Find matching row in results (paginated data)
+              const resultRow = (data.results || []).find((r: any) =>
+                (r.date?.executedAt === dateKey) || (r.date?.createdAt === dateKey)
+              );
+
+              if (resultRow) {
+                // Compare metric values
+                for (const metric of metricsToCheck) {
+                  if (allRow[metric] !== resultRow[metric]) {
+                    console.error(`VALUE MISMATCH for ${dateKey}:`, {
+                      metric,
+                      chartValue: allRow[metric],
+                      tableValue: resultRow[metric],
+                      chartRow: allRow,
+                      tableRow: resultRow
+                    });
+                  }
+                }
+              }
+            });
+
+            setAllResults(newAllResults);
+            chartDataRef.current = newAllResults;
+            setChartDataVersion((prev) => prev + 1);
+          } else {
+            console.log('Skipping chart update (pagination/sort):', {
+              chartDataLength: chartDataRef.current?.length,
+              newResultsLength: (data.results || []).length,
+              updateUrl
+            });
+          }
+
           setTotalCount(
             data.total || data.totalCount || (data.data || data.results).length
           );

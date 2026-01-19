@@ -856,13 +856,41 @@ async function handleProjectSpecificAggregation({
         return (aTime - bTime) * multiplier;
       }
 
-      // Handle numbers
+      // Handle numbers with stable secondary sort by date
       if (typeof aVal === "number" && typeof bVal === "number") {
-        return (aVal - bVal) * multiplier;
+        const numComparison = (aVal - bVal) * multiplier;
+
+        // If values are equal, use date as secondary sort for stable sorting
+        if (numComparison === 0 && dimensions.includes("date") && sortColumn !== "date") {
+          const dateA = a.date as DimensionDisplayValue | undefined;
+          const dateB = b.date as DimensionDisplayValue | undefined;
+          const dateAValue = dateA?.executedAt || dateA?.createdAt;
+          const dateBValue = dateB?.executedAt || dateB?.createdAt;
+
+          if (dateAValue && dateBValue) {
+            return new Date(dateAValue as string).getTime() - new Date(dateBValue as string).getTime();
+          }
+        }
+
+        return numComparison;
       }
 
       // Handle strings
-      return String(aVal).localeCompare(String(bVal)) * multiplier;
+      const stringComparison = String(aVal).localeCompare(String(bVal)) * multiplier;
+
+      // If values are equal, use date as secondary sort for stable sorting
+      if (stringComparison === 0 && dimensions.includes("date") && sortColumn !== "date") {
+        const dateA = a.date as DimensionDisplayValue | undefined;
+        const dateB = b.date as DimensionDisplayValue | undefined;
+        const dateAValue = dateA?.executedAt || dateA?.createdAt;
+        const dateBValue = dateB?.executedAt || dateB?.createdAt;
+
+        if (dateAValue && dateBValue) {
+          return new Date(dateAValue as string).getTime() - new Date(dateBValue as string).getTime();
+        }
+      }
+
+      return stringComparison;
     });
   } else if (dimensions.includes("date") && !(sortColumn && sortDirection)) {
     // Default sort by date if date dimension is used (for backward compatibility)

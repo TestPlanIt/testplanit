@@ -177,6 +177,7 @@ export async function GET(
     const metadata = await metadataResponse.json();
 
     // Then, call the report builder POST endpoint to get data
+    // Always fetch ALL results for shared reports (ignore saved pagination settings)
     const reportBuilderUrl = new URL(endpoint, baseUrl);
     const reportResponse = await fetch(reportBuilderUrl.toString(), {
       method: "POST",
@@ -193,8 +194,8 @@ export async function GET(
         metrics: config.metrics || [],
         startDate: config.startDate,
         endDate: config.endDate,
-        page: config.page || 1,
-        pageSize: config.pageSize || 10,
+        page: 1,
+        pageSize: "All",
       }),
     });
 

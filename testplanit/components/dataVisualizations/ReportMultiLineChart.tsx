@@ -152,9 +152,14 @@ export const ReportMultiLineChart: React.FC<ReportMultiLineChartProps> = ({
       .on("mouseover", (event, d) => {
         if (tooltipRef.current) {
           tooltipRef.current.style.display = "block";
+          // Format date in UTC to match the backend data grouping
+          const year = d.date.getUTCFullYear();
+          const month = d.date.getUTCMonth() + 1;
+          const day = d.date.getUTCDate();
+          const formattedDate = `${month}/${day}/${year}`;
           tooltipRef.current.innerHTML = `<strong>${
             d.seriesName
-          }</strong><br/>${d.date.toLocaleDateString()}<br/>Value: ${
+          }</strong><br/>${formattedDate}<br/>Value: ${
             d.formattedValue
           }`;
         }
