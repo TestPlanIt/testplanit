@@ -4835,7 +4835,7 @@
     "shareDialog": {
       "shareButton": "Partager",
       "dialogTitle": "Partager le rapport",
-      "dialogDescription": "Créez un lien partageable ou gérez les partages existants pour ce rapport.",
+      "dialogDescription": "Créez un lien partageable ou gérez les liens de rapports partagés existants.",
       "tabs": {
         "create": "Créer un partage",
         "list": "Mes actions"
@@ -4844,11 +4844,13 @@
         "label": "Mode de partage",
         "authenticated": {
           "title": "Authentifié (connexion requise)",
-          "description": "Seuls les utilisateurs connectés ayant accès à ce projet peuvent le consulter."
+          "description": "Seuls les utilisateurs connectés ayant accès à ce projet peuvent le consulter.",
+          "descriptionCrossProject": "Seuls les utilisateurs connectés disposant d'un accès administrateur peuvent consulter ces informations."
         },
         "passwordProtected": {
           "title": "Protégé par mot de passe",
-          "description": "Toute personne possédant le lien et le mot de passe peut consulter le document. Les utilisateurs connectés ayant accès au projet n'ont pas besoin de mot de passe."
+          "description": "Toute personne possédant le lien et le mot de passe peut consulter le document. Les utilisateurs connectés ayant accès au projet n'ont pas besoin de mot de passe.",
+          "descriptionCrossProject": "Toute personne possédant le lien et le mot de passe peut consulter le contenu. Les utilisateurs connectés disposant d'un accès administrateur n'ont pas besoin de saisir de mot de passe."
         },
         "public": {
           "title": "Public (toute personne ayant le lien)",
@@ -4858,7 +4860,7 @@
       "expiration": {
         "label": "Expiration",
         "noExpiration": "Aucune date d'expiration",
-        "expiresAtMidnight": "Le lien expirera à minuit à la date sélectionnée.",
+        "expiresAtMidnight": "Le lien expirera à la fin de la journée sélectionnée (heure locale).",
         "clear": "Clair"
       },
       "notifyOnView": {
@@ -4881,6 +4883,19 @@
         "loginRequired": "Vous devez être connecté pour créer un lien de partage",
         "createFailed": "Impossible de créer le lien de partage",
         "genericError": "Une erreur inconnue s'est produite."
+      },
+      "status": {
+        "revoked": {
+          "title": "Lien de partage révoqué",
+          "description": "Ce lien de partage a été révoqué et n'est plus accessible."
+        },
+        "expired": {
+          "title": "Lien de partage expiré",
+          "description": "Ce lien de partage a expiré et n'est plus accessible."
+        }
+      },
+      "footer": {
+        "poweredBy": "Alimenté par"
       }
     }
   },

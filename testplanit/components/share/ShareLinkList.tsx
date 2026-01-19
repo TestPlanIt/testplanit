@@ -33,14 +33,17 @@ import { format, isPast } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { ShareLinkEntityType } from "@prisma/client";
 import { revokeShareLink } from "@/actions/share-links";
+import { useTranslations } from "next-intl";
 
 interface ShareLinkListProps {
   projectId?: number; // Optional for cross-project reports
   entityType?: ShareLinkEntityType;
+  showProjectColumn?: boolean;
 }
 
-export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
+export function ShareLinkList({ projectId, entityType, showProjectColumn = false }: ShareLinkListProps) {
   const { toast } = useToast();
+  const t = useTranslations("reports.shareDialog.shareList");
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [selectedShareId, setSelectedShareId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -67,14 +70,14 @@ export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
       await navigator.clipboard.writeText(shareUrl);
       setCopiedId(shareId);
       toast({
-        title: "Link copied!",
-        description: "The share link has been copied to your clipboard.",
+        title: t("toast.linkCopied"),
+        description: t("toast.linkCopiedDescription"),
       });
       setTimeout(() => setCopiedId(null), 2000);
     } catch (error) {
       toast({
-        title: "Failed to copy",
-        description: "Please copy the link manually.",
+        title: t("toast.copyFailed"),
+        description: t("toast.copyFailedDescription"),
         variant: "destructive",
       });
     }
@@ -94,8 +97,8 @@ export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
       await revokeShareLink(selectedShareId);
 
       toast({
-        title: "Share link revoked",
-        description: "The share link has been revoked and is no longer accessible.",
+        title: t("toast.linkRevoked"),
+        description: t("toast.linkRevokedDescription"),
       });
 
       refetch();
@@ -103,8 +106,8 @@ export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
       setSelectedShareId(null);
     } catch (error) {
       toast({
-        title: "Failed to revoke",
-        description: "An error occurred while revoking the share link.",
+        title: t("toast.revokeFailed"),
+        description: t("toast.revokeFailedDescription"),
         variant: "destructive",
       });
     }
@@ -121,8 +124,8 @@ export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
   if (!shares || shares.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        <p>No share links created yet.</p>
-        <p className="text-sm mt-1">Create your first share link to get started.</p>
+        <p>{t("empty.title")}</p>
+        <p className="text-sm mt-1">{t("empty.description")}</p>
       </div>
     );
   }
@@ -133,12 +136,13 @@ export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Mode</TableHead>
-              <TableHead>Views</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Expires</TableHead>
-              <TableHead>Status</TableHead>
+              {showProjectColumn && <TableHead>{t("columns.project")}</TableHead>}
+              <TableHead>{t("columns.title")}</TableHead>
+              <TableHead>{t("columns.mode")}</TableHead>
+              <TableHead>{t("columns.views")}</TableHead>
+              <TableHead>{t("columns.created")}</TableHead>
+              <TableHead>{t("columns.expires")}</TableHead>
+              <TableHead>{t("columns.status")}</TableHead>
               <TableHead className="w-[70px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -152,7 +156,7 @@ export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
                   <TableCell>
                     <div>
                       <p className="font-medium">
-                        {share.title || `${share.entityType} share`}
+                        {share.title || t("defaultTitle", { entityType: share.entityType })}
                       </p>
                       {share.description && (
                         <p className="text-sm text-muted-foreground line-clamp-1">
@@ -181,17 +185,17 @@ export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
                         {format(new Date(share.expiresAt), "MMM d, yyyy")}
                       </span>
                     ) : (
-                      <span className="text-muted-foreground">Never</span>
+                      <span className="text-muted-foreground">{t("expires.never")}</span>
                     )}
                   </TableCell>
                   <TableCell>
                     {share.isRevoked ? (
-                      <Badge variant="destructive">Revoked</Badge>
+                      <Badge variant="destructive">{t("status.revoked")}</Badge>
                     ) : isExpired ? (
-                      <Badge variant="secondary">Expired</Badge>
+                      <Badge variant="secondary">{t("status.expired")}</Badge>
                     ) : (
                       <Badge variant="default" className="bg-green-500">
-                        Active
+                        {t("status.active")}
                       </Badge>
                     )}
                   </TableCell>
@@ -200,7 +204,7 @@ export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                           <MoreVertical className="h-4 w-4" />
-                          <span className="sr-only">Actions</span>
+                          <span className="sr-only">{t("actions.label")}</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -209,13 +213,13 @@ export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
                         >
                           {copiedId === share.id ? (
                             <>
-                              <CheckCircle2 className="mr-2 h-4 w-4" />
-                              Copied!
+                              <CheckCircle2 className="h-4 w-4" />
+                              {t("actions.copied")}
                             </>
                           ) : (
                             <>
-                              <Copy className="mr-2 h-4 w-4" />
-                              Copy Link
+                              <Copy className="mr-1 h-4 w-4" />
+                              {t("actions.copyLink")}
                             </>
                           )}
                         </DropdownMenuItem>
@@ -227,8 +231,8 @@ export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
                             }}
                             className="text-destructive"
                           >
-                            <Ban className="mr-2 h-4 w-4" />
-                            Revoke
+                            <Ban className="mr-1 h-4 w-4" />
+                            {t("actions.revoke")}
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
@@ -245,14 +249,13 @@ export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
       <AlertDialog open={revokeDialogOpen} onOpenChange={setRevokeDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Revoke share link?</AlertDialogTitle>
+            <AlertDialogTitle>{t("revokeDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will immediately revoke the share link. Anyone attempting to access it
-              will see an error message. This action cannot be undone.
+              {t("revokeDialog.description")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("revokeDialog.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRevoke}
               disabled={isRevoking}
@@ -260,11 +263,11 @@ export function ShareLinkList({ projectId, entityType }: ShareLinkListProps) {
             >
               {isRevoking ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Revoking...
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("revokeDialog.revoking")}
                 </>
               ) : (
-                "Revoke Link"
+                t("revokeDialog.confirm")
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

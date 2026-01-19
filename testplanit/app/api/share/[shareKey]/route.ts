@@ -67,6 +67,8 @@ export async function GET(
     return NextResponse.json({
       id: shareLink.id,
       entityType: shareLink.entityType,
+      entityId: shareLink.entityId,
+      entityConfig: shareLink.entityConfig,
       mode: shareLink.mode,
       title: shareLink.title,
       description: shareLink.description,
@@ -98,7 +100,7 @@ export async function POST(
     const { shareKey } = await params;
     const session = await getServerSession(authOptions);
     const body = await req.json();
-    const { password } = body;
+    const { password, token } = body;
 
     // Fetch share link with full details
     const shareLink = await prisma.shareLink.findUnique({
@@ -203,21 +205,26 @@ export async function POST(
         }
         // User has project access, bypass password
       } else {
-        // Not logged in, require password
-        if (!password || !shareLink.passwordHash) {
-          return NextResponse.json(
-            { error: "Password required", requiresPassword: true },
-            { status: 401 }
-          );
-        }
+        // Not logged in, require password or valid token
+        // Token is provided after successful password verification
+        const hasValidToken = token === shareKey;
 
-        // Verify password
-        const isValid = await bcrypt.compare(password, shareLink.passwordHash);
-        if (!isValid) {
-          return NextResponse.json(
-            { error: "Invalid password" },
-            { status: 401 }
-          );
+        if (!hasValidToken) {
+          if (!password || !shareLink.passwordHash) {
+            return NextResponse.json(
+              { error: "Password required", requiresPassword: true },
+              { status: 401 }
+            );
+          }
+
+          // Verify password
+          const isValid = await bcrypt.compare(password, shareLink.passwordHash);
+          if (!isValid) {
+            return NextResponse.json(
+              { error: "Invalid password" },
+              { status: 401 }
+            );
+          }
         }
       }
     }

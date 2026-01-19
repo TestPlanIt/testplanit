@@ -1114,6 +1114,10 @@
           "dollar": "$",
           "perMonth": "/mo"
         }
+      },
+      "shares": {
+        "title": "Manage Shares",
+        "description": "View and manage all share links for this project"
       }
     }
   },
@@ -2207,6 +2211,7 @@
       "sso": "Authentication",
       "trash": "Trash",
       "reports": "Reports",
+      "shares": "Manage Shares",
       "elasticsearch": "Search Engine",
       "queues": "Job Queues",
       "auditLogs": "Audit Logs",
@@ -4883,6 +4888,114 @@
         "loginRequired": "You must be logged in to create a share link",
         "createFailed": "Failed to create share link",
         "genericError": "An unknown error occurred"
+      },
+      "status": {
+        "revoked": {
+          "title": "Share Link Revoked",
+          "description": "This share link has been revoked and is no longer accessible."
+        },
+        "expired": {
+          "title": "Share Link Expired",
+          "description": "This share link has expired and is no longer accessible."
+        }
+      },
+      "footer": {
+        "poweredBy": "Powered by"
+      },
+      "manageShares": {
+        "title": "Manage Shares",
+        "description": "View and manage all share links for this project",
+        "adminTitle": "Manage All Shares",
+        "adminDescription": "View and manage share links across all projects"
+      },
+      "shareList": {
+        "columns": {
+          "title": "Title",
+          "project": "Project",
+          "mode": "Mode",
+          "views": "Views",
+          "created": "Created",
+          "expires": "Expires",
+          "status": "Status"
+        },
+        "status": {
+          "active": "Active",
+          "revoked": "Revoked",
+          "expired": "Expired"
+        },
+        "expires": {
+          "never": "Never"
+        },
+        "empty": {
+          "title": "No share links created yet.",
+          "description": "Create your first share link to get started."
+        },
+        "defaultTitle": "{entityType} share",
+        "actions": {
+          "label": "Actions",
+          "copyLink": "Copy Link",
+          "copied": "Copied!",
+          "revoke": "Revoke"
+        },
+        "revokeDialog": {
+          "title": "Revoke share link?",
+          "description": "This will immediately revoke the share link. Anyone attempting to access it will see an error message. This action cannot be undone.",
+          "cancel": "Cancel",
+          "confirm": "Revoke Link",
+          "revoking": "Revoking..."
+        },
+        "toast": {
+          "linkCopied": "Link copied!",
+          "linkCopiedDescription": "The share link has been copied to your clipboard.",
+          "copyFailed": "Failed to copy",
+          "copyFailedDescription": "Please copy the link manually.",
+          "linkRevoked": "Share link revoked",
+          "linkRevokedDescription": "The share link has been revoked and is no longer accessible.",
+          "revokeFailed": "Failed to revoke",
+          "revokeFailedDescription": "An error occurred while revoking the share link."
+        }
+      },
+      "created": {
+        "title": "Share Link Created!",
+        "description": "Your share link is ready to use. Copy and share it with others.",
+        "shareLink": "Share Link",
+        "copy": "Copy",
+        "copied": "Copied!",
+        "openInNewTab": "Open in new tab",
+        "metadata": {
+          "mode": "Mode",
+          "expires": "Expires",
+          "notifications": "Notifications",
+          "views": "Views",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
+        },
+        "warnings": {
+          "publicLink": "Public link:",
+          "publicLinkDescription": "Anyone with this link can access the report without authentication.",
+          "expiresSoon": "This link will expire at the end of"
+        },
+        "actions": {
+          "createAnother": "Create Another",
+          "done": "Done"
+        }
+      }
+    },
+    "passwordDialog": {
+      "title": "Password Required",
+      "description": "This shared content from <strong>{projectName}</strong> is password protected. Please enter the password to continue.",
+      "passwordPlaceholder": "Enter password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "verifying": "Verifying...",
+      "errors": {
+        "emptyPassword": "Please enter a password",
+        "tooManyAttempts": "Too many failed attempts. Please try again later{resetAt, select, null {} other { at {resetAt}}}.",
+        "genericError": "An error occurred. Please try again."
+      },
+      "attempts": {
+        "noAttemptsRemaining": "No attempts remaining. Please try again later.",
+        "attemptsRemaining": "{count, plural, =1 {1 attempt} other {# attempts}} remaining."
       }
     }
   },

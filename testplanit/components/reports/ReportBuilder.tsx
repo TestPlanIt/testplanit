@@ -1721,11 +1721,11 @@ function ReportBuilderContent({
                 onValueChange={handleTabChange}
                 className="h-full flex flex-col"
               >
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="reports">
+                <TabsList className="grid w-full grid-cols-2 mb-4 min-w-60">
+                  <TabsTrigger value="reports" className="min-w-0 truncate">
                     {tAdminMenu("reports")}
                   </TabsTrigger>
-                  <TabsTrigger value="builder">{tReports("title")}</TabsTrigger>
+                  <TabsTrigger value="builder" className="min-w-0 truncate">{tReports("title")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent

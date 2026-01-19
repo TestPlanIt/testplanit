@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Eye, EyeOff, Lock, Loader2, AlertCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface PasswordDialogProps {
   shareKey: string;
@@ -32,11 +33,14 @@ export function PasswordDialog({
   const [error, setError] = useState<string | null>(null);
   const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
 
+  const t = useTranslations("reports.passwordDialog");
+  const tCommon = useTranslations("common");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!password) {
-      setError("Please enter a password");
+      setError(t("errors.emptyPassword"));
       return;
     }
 
@@ -54,11 +58,12 @@ export function PasswordDialog({
 
       if (!response.ok) {
         if (response.status === 429) {
+          const resetAt = data.resetAt ? new Date(data.resetAt).toLocaleTimeString() : null;
           setError(
-            `Too many failed attempts. Please try again later${data.resetAt ? ` at ${new Date(data.resetAt).toLocaleTimeString()}` : ""}.`
+            t("errors.tooManyAttempts", { resetAt: resetAt || "" })
           );
         } else {
-          setError(data.error || "Invalid password");
+          setError(data.error || tCommon("errors.invalidCredentials"));
           if (data.remainingAttempts !== undefined) {
             setRemainingAttempts(data.remainingAttempts);
           }
@@ -71,7 +76,7 @@ export function PasswordDialog({
       onSuccess(data.token, data.expiresIn);
     } catch (error) {
       console.error("Error verifying password:", error);
-      setError("An error occurred. Please try again.");
+      setError(t("errors.genericError"));
     } finally {
       setIsLoading(false);
     }
@@ -84,10 +89,14 @@ export function PasswordDialog({
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <Lock className="h-6 w-6 text-primary" />
           </div>
-          <CardTitle>Password Required</CardTitle>
+          <CardTitle>{t("title")}</CardTitle>
           <CardDescription>
-            This shared content from <strong>{projectName}</strong> is password
-            protected. Please enter the password to continue.
+            {t.rich("description", {
+              projectName,
+              strong: (chunks: React.ReactNode) => (
+                <strong className="font-semibold">{chunks}</strong>
+              ),
+            })}
           </CardDescription>
         </CardHeader>
 
@@ -105,21 +114,21 @@ export function PasswordDialog({
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   {remainingAttempts === 0
-                    ? "No attempts remaining. Please try again later."
-                    : `${remainingAttempts} attempt${remainingAttempts === 1 ? "" : "s"} remaining.`}
+                    ? t("attempts.noAttemptsRemaining")
+                    : t("attempts.attemptsRemaining", { count: remainingAttempts })}
                 </AlertDescription>
               </Alert>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{tCommon("fields.password")}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
+                  placeholder={t("passwordPlaceholder")}
                   disabled={isLoading}
                   className="pr-10"
                   autoFocus
@@ -138,7 +147,7 @@ export function PasswordDialog({
                     <Eye className="h-4 w-4 text-muted-foreground" />
                   )}
                   <span className="sr-only">
-                    {showPassword ? "Hide password" : "Show password"}
+                    {showPassword ? t("hidePassword") : t("showPassword")}
                   </span>
                 </Button>
               </div>
@@ -149,11 +158,11 @@ export function PasswordDialog({
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Verifying...
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("verifying")}
                 </>
               ) : (
-                "Submit"
+                tCommon("actions.submit")
               )}
             </Button>
           </CardFooter>

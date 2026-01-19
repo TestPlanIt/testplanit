@@ -4,6 +4,9 @@ import { ThemeProvider } from "~/components/theme-provider";
 import { Session } from "next-auth";
 import { useFindUniqueUserPreferences } from "~/lib/hooks";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import Image from "next/image";
+import { Link } from "~/lib/navigation";
 
 interface ShareLayoutContentProps {
   session: Session | null;
@@ -12,14 +15,14 @@ interface ShareLayoutContentProps {
 
 export function ShareLayoutContent({ session, children }: ShareLayoutContentProps) {
   const [mounted, setMounted] = useState(false);
+  const t = useTranslations("reports.shareDialog.footer");
+  const tBranding = useTranslations("common.branding");
 
   // Fetch user preferences if authenticated
   const { data: userPreferences } = useFindUniqueUserPreferences(
-    session?.user?.id
-      ? {
-          where: { userId: session.user.id },
-        }
-      : undefined,
+    {
+      where: { userId: session?.user?.id || "" },
+    },
     {
       enabled: !!session?.user?.id,
     }
@@ -63,16 +66,19 @@ export function ShareLayoutContent({ session, children }: ShareLayoutContentProp
         {children}
 
         {/* Branding footer */}
-        <footer className="fixed bottom-4 right-4 z-50">
-          <a
+        <footer className="fixed bottom-4 right-4 z-50 flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{t("poweredBy")}</span>
+          <Link
             href="/"
             className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <span>Powered by</span>
-            <span className="font-semibold">TestPlanIt</span>
-          </a>
+            <span className="font-semibold flex items-center">
+              <Image src="/tpi_logo.svg" alt={tBranding("logoAlt")} width={16} height={16} />
+              {tBranding("name")}
+            </span>
+          </Link>
         </footer>
       </div>
     </ThemeProvider>

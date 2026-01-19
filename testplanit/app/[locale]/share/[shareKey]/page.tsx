@@ -1,13 +1,16 @@
 import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "~/server/auth";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { redirect } from "~/lib/navigation";
 import { ShareContent } from "@/components/share/ShareContent";
 import { Loader2 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 interface SharePageProps {
   params: Promise<{
     shareKey: string;
+    locale: string;
   }>;
 }
 
@@ -36,6 +39,7 @@ async function fetchShareMetadata(shareKey: string) {
 export default async function SharePage({ params }: SharePageProps) {
   const { shareKey } = await params;
   const session = await getServerSession(authOptions);
+  const t = await getTranslations("reports.shareDialog.status");
 
   // Fetch share link metadata
   const shareData = await fetchShareMetadata(shareKey);
@@ -49,10 +53,8 @@ export default async function SharePage({ params }: SharePageProps) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="max-w-md text-center">
-          <h1 className="text-2xl font-bold mb-2">Share Link Revoked</h1>
-          <p className="text-muted-foreground">
-            This share link has been revoked and is no longer accessible.
-          </p>
+          <h1 className="text-2xl font-bold mb-2">{t("revoked.title")}</h1>
+          <p className="text-muted-foreground">{t("revoked.description")}</p>
         </div>
       </div>
     );
@@ -63,10 +65,8 @@ export default async function SharePage({ params }: SharePageProps) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="max-w-md text-center">
-          <h1 className="text-2xl font-bold mb-2">Share Link Expired</h1>
-          <p className="text-muted-foreground">
-            This share link has expired and is no longer accessible.
-          </p>
+          <h1 className="text-2xl font-bold mb-2">{t("expired.title")}</h1>
+          <p className="text-muted-foreground">{t("expired.description")}</p>
         </div>
       </div>
     );
@@ -76,7 +76,10 @@ export default async function SharePage({ params }: SharePageProps) {
   if (shareData.mode === "AUTHENTICATED") {
     if (!session) {
       // Redirect to signin with callback
-      redirect(`/en-US/signin?callbackUrl=/share/${shareKey}`);
+      redirect({
+        href: `/signin?callbackUrl=/share/${shareKey}`,
+        locale: "en-US",
+      });
     }
 
     // User is authenticated, ShareContent will handle project access check

@@ -110,6 +110,60 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
     if (hasInitializedRef.current) return;
     hasInitializedRef.current = true;
 
+    // Handle AUTHENTICATED mode - redirect to Reports page with config
+    if (shareData.mode === "AUTHENTICATED" && session) {
+      // Build URL params from entityConfig
+      const config = shareData.entityConfig;
+      const projectId = shareData.projectId;
+
+      if (!config || typeof config !== "object") {
+        console.error("Invalid share configuration:", config);
+        setError(`Invalid share configuration. entityConfig is ${config === null ? "null" : typeof config}`);
+        return;
+      }
+
+      // Construct URL with report configuration
+      const params = new URLSearchParams();
+
+      if (config.reportType) params.set("reportType", config.reportType);
+      if (config.startDate) params.set("startDate", config.startDate);
+      if (config.endDate) params.set("endDate", config.endDate);
+      if (config.dimensions) params.set("dimensions", Array.isArray(config.dimensions) ? config.dimensions.join(",") : config.dimensions);
+      if (config.metrics) params.set("metrics", Array.isArray(config.metrics) ? config.metrics.join(",") : config.metrics);
+      if (config.page) params.set("page", config.page.toString());
+      if (config.pageSize) params.set("pageSize", config.pageSize.toString());
+
+      // Redirect to appropriate Reports page
+      const reportsUrl = projectId
+        ? `/projects/reports/${projectId}?${params.toString()}`
+        : `/reports?${params.toString()}`;
+
+      // Increment view count before redirecting (only if not already counted)
+      if (!hasViewedInSession()) {
+        fetch(`/api/share/${shareKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        })
+          .then(() => {
+            markViewedInSession();
+            console.log("Redirecting to:", reportsUrl);
+            window.location.href = reportsUrl;
+          })
+          .catch((error) => {
+            console.error("Error counting view:", error);
+            // Redirect anyway even if view counting fails
+            console.log("Redirecting to:", reportsUrl);
+            window.location.href = reportsUrl;
+          });
+      } else {
+        // Already counted, just redirect
+        console.log("Redirecting to:", reportsUrl);
+        window.location.href = reportsUrl;
+      }
+      return;
+    }
+
     // If already viewed in this session, just fetch data without counting
     if (hasViewedInSession()) {
       fetchShareDataWithoutCounting();
@@ -121,9 +175,6 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
     } else if (shareData.mode === "PASSWORD_PROTECTED" && session) {
       // Check if user has project access (bypass password)
       checkProjectAccess();
-    } else if (shareData.mode === "AUTHENTICATED" && session) {
-      // User is authenticated, grant access
-      handlePasswordVerified();
     }
   }, []);
 
@@ -139,10 +190,24 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
     setError(null);
 
     try {
+      // Get the verified token from sessionStorage
+      const tokenKey = `share_token_${shareKey}`;
+      const stored = sessionStorage.getItem(tokenKey);
+      let token = null;
+
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          token = parsed.token;
+        } catch (e) {
+          // Invalid token, ignore
+        }
+      }
+
       const response = await fetch(`/api/share/${shareKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ token }),
       });
 
       if (!response.ok) {

@@ -256,7 +256,9 @@ const Signin: NextPage = () => {
         document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
       }
 
-      router.push("/");
+      // Redirect to callback URL if present, otherwise home
+      const callbackUrl = searchParams.get("callbackUrl") || "/";
+      router.push(callbackUrl);
     } else if (result?.error?.startsWith("2FA_REQUIRED:")) {
       // Extract pending auth token and show 2FA input
       const token = result.error.replace("2FA_REQUIRED:", "");
@@ -296,7 +298,9 @@ const Signin: NextPage = () => {
         document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
       }
 
-      router.push("/");
+      // Redirect to callback URL if present, otherwise home
+      const callbackUrl = searchParams.get("callbackUrl") || "/";
+      router.push(callbackUrl);
     } else {
       setSubmissionError(
         t("auth.errors.invalid2FACode") || "Invalid verification code"
@@ -326,10 +330,13 @@ const Signin: NextPage = () => {
       // Small delay to ensure cookies are fully cleared before making API calls
       await new Promise((resolve) => setTimeout(resolve, 100));
 
+      // Get callback URL from search params, default to "/"
+      const callbackUrl = searchParams.get("callbackUrl") || "/";
+
       if (provider.type === SsoProviderType.GOOGLE) {
-        await signIn("google", { callbackUrl: "/" });
+        await signIn("google", { callbackUrl });
       } else if (provider.type === SsoProviderType.APPLE) {
-        await signIn("apple", { callbackUrl: "/" });
+        await signIn("apple", { callbackUrl });
       } else if (provider.type === SsoProviderType.SAML) {
         // Redirect to SAML login endpoint
         window.location.href = `/api/auth/saml/login/${provider.id}`;
@@ -350,10 +357,13 @@ const Signin: NextPage = () => {
       // Small delay to ensure cookies are fully cleared before making API calls
       await new Promise((resolve) => setTimeout(resolve, 100));
 
+      // Get callback URL from search params, default to "/"
+      const callbackUrl = searchParams.get("callbackUrl") || "/";
+
       const result = await signIn("email", {
         email: data.email,
         redirect: false,
-        callbackUrl: "/",
+        callbackUrl,
       });
 
       // Always show success message regardless of result

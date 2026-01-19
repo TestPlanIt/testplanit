@@ -4835,7 +4835,7 @@
     "shareDialog": {
       "shareButton": "Compartir",
       "dialogTitle": "Compartir informe",
-      "dialogDescription": "Cree un enlace para compartir o administre las publicaciones compartidas existentes para este informe.",
+      "dialogDescription": "Cree un enlace para compartir o administre enlaces de informes compartidos existentes.",
       "tabs": {
         "create": "Crear Compartir",
         "list": "Mis acciones"
@@ -4844,11 +4844,13 @@
         "label": "Modo compartir",
         "authenticated": {
           "title": "Autenticado (requiere iniciar sesión)",
-          "description": "Sólo los usuarios registrados con acceso a este proyecto pueden verlo."
+          "description": "Sólo los usuarios registrados con acceso a este proyecto pueden verlo.",
+          "descriptionCrossProject": "Sólo los usuarios que hayan iniciado sesión y tengan acceso de administrador pueden verlo."
         },
         "passwordProtected": {
           "title": "Protegido con contraseña",
-          "description": "Cualquier persona con el enlace y la contraseña puede ver. Los usuarios registrados con acceso al proyecto omiten la contraseña."
+          "description": "Cualquier persona con el enlace y la contraseña puede ver. Los usuarios registrados con acceso al proyecto omiten la contraseña.",
+          "descriptionCrossProject": "Cualquier persona con el enlace y la contraseña puede ver. Los usuarios registrados con acceso de administrador omiten la contraseña."
         },
         "public": {
           "title": "Público (cualquiera con enlace)",
@@ -4858,7 +4860,7 @@
       "expiration": {
         "label": "Vencimiento",
         "noExpiration": "Sin vencimiento",
-        "expiresAtMidnight": "El enlace expirará a la medianoche de la fecha seleccionada.",
+        "expiresAtMidnight": "El enlace expirará al final del día seleccionado (su hora local)",
         "clear": "Claro"
       },
       "notifyOnView": {
@@ -4881,6 +4883,19 @@
         "loginRequired": "Debes iniciar sesión para crear un enlace para compartir",
         "createFailed": "No se pudo crear el enlace para compartir",
         "genericError": "Se produjo un error desconocido"
+      },
+      "status": {
+        "revoked": {
+          "title": "Enlace compartido revocado",
+          "description": "Este enlace para compartir ha sido revocado y ya no es accesible."
+        },
+        "expired": {
+          "title": "Enlace para compartir expirado",
+          "description": "Este enlace para compartir ha expirado y ya no es accesible."
+        }
+      },
+      "footer": {
+        "poweredBy": "Desarrollado por"
       }
     }
   },

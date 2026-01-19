@@ -61,6 +61,7 @@ export function ShareDialog({
 
   // UI state
   const [error, setError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [createdShare, setCreatedShare] = useState<any>(null);
 
   // Use ZenStack hook for creating share links
@@ -68,6 +69,7 @@ export function ShareDialog({
 
   const handleCreateShare = async () => {
     setError(null);
+    setPasswordError(null);
 
     try {
       // Validate session
@@ -77,18 +79,13 @@ export function ShareDialog({
       }
 
       // Validate password for PASSWORD_PROTECTED mode
-      if (mode === "PASSWORD_PROTECTED" && !password) {
-        setError(tAuth("passwordRequired"));
-        return;
-      }
-
-      if (mode === "PASSWORD_PROTECTED" && password.length < 4) {
-        setError(tAuth("passwordRequired"));
+      if (mode === "PASSWORD_PROTECTED" && (!password || password.length < 4)) {
+        setPasswordError(tAuth("passwordRequired"));
         return;
       }
 
       if (mode === "PASSWORD_PROTECTED" && password !== confirmPassword) {
-        setError(tAuth("passwordsDoNotMatch"));
+        setPasswordError(tAuth("passwordsDoNotMatch"));
         return;
       }
 
@@ -98,13 +95,12 @@ export function ShareDialog({
       });
 
       // Create share link using ZenStack hook
-      // Use unchecked input to support optional projectId
       const shareLink = await createShareLink({
         data: {
           shareKey,
           entityType: "REPORT",
           entityConfig: reportConfig,
-          projectId: projectId ?? null,
+          projectId,
           createdById: session.user.id,
           mode,
           passwordHash,
@@ -205,7 +201,10 @@ export function ShareDialog({
             {/* Share Mode */}
             <div className="space-y-3">
               <Label>{t("shareMode.label")}</Label>
-              <RadioGroup value={mode} onValueChange={(v) => setMode(v as ShareLinkMode)}>
+              <RadioGroup value={mode} onValueChange={(v) => {
+                setMode(v as ShareLinkMode);
+                setPasswordError(null);
+              }}>
                 <div className="flex items-start space-x-2 rounded-lg border p-4">
                   <RadioGroupItem value="AUTHENTICATED" id="authenticated" className="mt-1" />
                   <div className="flex-1">
@@ -262,10 +261,17 @@ export function ShareDialog({
                     id="password-input"
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setPasswordError(null);
+                    }}
                     placeholder="••••••••"
                     required
+                    className={passwordError ? "border-destructive" : ""}
                   />
+                  {passwordError && (
+                    <p className="text-sm text-destructive">{passwordError}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirm-password-input" className="flex items-center">
@@ -278,9 +284,13 @@ export function ShareDialog({
                     id="confirm-password-input"
                     type="password"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={(e) => {
+                      setConfirmPassword(e.target.value);
+                      setPasswordError(null);
+                    }}
                     placeholder="••••••••"
                     required
+                    className={passwordError ? "border-destructive" : ""}
                   />
                 </div>
               </div>
