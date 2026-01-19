@@ -4914,6 +4914,7 @@
           "project": "Project",
           "mode": "Mode",
           "views": "Views",
+          "notifications": "Notifications",
           "created": "Created",
           "expires": "Expires",
           "status": "Status"
@@ -4926,11 +4927,16 @@
         "expires": {
           "never": "Never"
         },
+        "notifications": {
+          "enabled": "On",
+          "disabled": "Off"
+        },
         "empty": {
           "title": "No share links created yet.",
           "description": "Create your first share link to get started."
         },
         "defaultTitle": "{entityType} share",
+        "noProject": "Cross-project",
         "actions": {
           "label": "Actions",
           "copyLink": "Copy Link",
@@ -4952,7 +4958,13 @@
           "linkRevoked": "Share link revoked",
           "linkRevokedDescription": "The share link has been revoked and is no longer accessible.",
           "revokeFailed": "Failed to revoke",
-          "revokeFailedDescription": "An error occurred while revoking the share link."
+          "revokeFailedDescription": "An error occurred while revoking the share link.",
+          "notificationsEnabled": "Notifications enabled",
+          "notificationsEnabledDescription": "You'll receive notifications when someone views this share link.",
+          "notificationsDisabled": "Notifications disabled",
+          "notificationsDisabledDescription": "You won't receive notifications when someone views this share link.",
+          "notificationUpdateFailed": "Failed to update notifications",
+          "notificationUpdateFailedDescription": "An error occurred while updating notification settings."
         }
       },
       "created": {

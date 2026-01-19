@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Eye, Loader2, AlertCircle } from "lucide-react";
+import { BarChart3, Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReportChart } from "@/components/dataVisualizations/ReportChart";
@@ -40,18 +40,12 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
   // Extract dimension and metric IDs from reportData for column generation
   const dimensionIds = useMemo(() => {
     if (!reportData?.dimensions) return [];
-    const ids = reportData.dimensions.map((d: any) => d.value || d.id);
-    console.log("[StaticReportViewer] dimensionIds:", ids);
-    console.log("[StaticReportViewer] dimensions full:", reportData.dimensions);
-    return ids;
+    return reportData.dimensions.map((d: any) => d.value || d.id);
   }, [reportData?.dimensions]);
 
   const metricIds = useMemo(() => {
     if (!reportData?.metrics) return [];
-    const ids = reportData.metrics.map((m: any) => m.value || m.id);
-    console.log("[StaticReportViewer] metricIds:", ids);
-    console.log("[StaticReportViewer] metrics full:", reportData.metrics);
-    return ids;
+    return reportData.metrics.map((m: any) => m.value || m.id);
   }, [reportData?.metrics]);
 
   // Generate columns using the useReportColumns hook
@@ -258,10 +252,6 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
               <div className="flex items-center gap-2 mb-2">
                 <BarChart3 className="h-5 w-5 text-muted-foreground" />
                 <Badge variant="outline">{shareData.entityType}</Badge>
-                <Badge variant="secondary">
-                  <Eye className="h-3 w-3 mr-1" />
-                  {t("viewCount", { count: shareData.viewCount })}
-                </Badge>
               </div>
               <h1 className="text-2xl font-bold mb-1">
                 {shareData.title || t("defaultTitle")}

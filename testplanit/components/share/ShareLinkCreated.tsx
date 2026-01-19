@@ -81,12 +81,12 @@ export function ShareLinkCreated({
             >
               {copied ? (
                 <>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  <CheckCircle2 className="h-4 w-4" />
                   {t("copied")}
                 </>
               ) : (
                 <>
-                  <Copy className="h-4 w-4 mr-2" />
+                  <Copy className="h-4 w-4" />
                   {t("copy")}
                 </>
               )}

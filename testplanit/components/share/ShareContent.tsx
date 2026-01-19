@@ -7,6 +7,7 @@ import { SharedReportViewer } from "./SharedReportViewer";
 import { AuthBypassPrompt } from "./AuthBypassPrompt";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useTranslations } from "next-intl";
 
 interface ShareContentProps {
   shareKey: string;
@@ -15,6 +16,9 @@ interface ShareContentProps {
 }
 
 export function ShareContent({ shareKey, shareData, session }: ShareContentProps) {
+  const t = useTranslations("reports.sharedReport");
+  const tCommon = useTranslations("common");
+  const tErrors = useTranslations("common.errors");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessGranted, setAccessGranted] = useState(false);
@@ -112,7 +116,7 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
           return;
         }
 
-        throw new Error(errorData.error || "Failed to access share link");
+        throw new Error(errorData.error || tErrors("fetchFailed"));
       }
 
       const data = await response.json();
@@ -120,7 +124,7 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
       setAccessGranted(true);
     } catch (error) {
       console.error("Error accessing share:", error);
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : tErrors("unknown"));
     } finally {
       setIsLoading(false);
     }
@@ -140,7 +144,7 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
 
       if (!config || typeof config !== "object") {
         console.error("Invalid share configuration:", config);
-        setError(`Invalid share configuration. entityConfig is ${config === null ? "null" : typeof config}`);
+        setError(tErrors("somethingWentWrong"));
         return;
       }
 
@@ -248,7 +252,7 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
           return;
         }
 
-        throw new Error(errorData.error || "Failed to access share link");
+        throw new Error(errorData.error || tErrors("fetchFailed"));
       }
 
       const data = await response.json();
@@ -256,7 +260,7 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
       setAccessGranted(true);
     } catch (error) {
       console.error("Error accessing share:", error);
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : tErrors("unknown"));
       // Reset the flags on error so user can retry
       viewCountedRef.current = false;
       sessionStorage.removeItem(getSessionViewKey());
@@ -271,7 +275,7 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading shared content...</p>
+          <p className="text-muted-foreground">{tCommon("loading")}</p>
         </div>
       </div>
     );
@@ -283,7 +287,7 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
       <div className="flex min-h-screen items-center justify-center p-4">
         <Alert variant="destructive" className="max-w-md">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>{tErrors("error")}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       </div>

@@ -4914,6 +4914,7 @@
           "project": "Projet",
           "mode": "Mode",
           "views": "Vues",
+          "notifications": "Notifications",
           "created": "Créé",
           "expires": "Expire",
           "status": "Statut"
@@ -4926,11 +4927,16 @@
         "expires": {
           "never": "Jamais"
         },
+        "notifications": {
+          "enabled": "Sur",
+          "disabled": "Désactivé"
+        },
         "empty": {
           "title": "Aucun lien de partage n'a encore été créé.",
           "description": "Créez votre premier lien de partage pour commencer."
         },
         "defaultTitle": "{entityType} partager",
+        "noProject": "Projet transversal",
         "actions": {
           "label": "Actes",
           "copyLink": "Copier le lien",
@@ -4952,7 +4958,13 @@
           "linkRevoked": "Lien de partage révoqué",
           "linkRevokedDescription": "Le lien de partage a été révoqué et n'est plus accessible.",
           "revokeFailed": "Échec de la révocation",
-          "revokeFailedDescription": "Une erreur s'est produite lors de la révocation du lien de partage."
+          "revokeFailedDescription": "Une erreur s'est produite lors de la révocation du lien de partage.",
+          "notificationsEnabled": "Notifications activées",
+          "notificationsEnabledDescription": "Vous recevrez des notifications lorsqu'une personne consultera ce lien de partage.",
+          "notificationsDisabled": "Notifications désactivées",
+          "notificationsDisabledDescription": "Vous ne recevrez pas de notification lorsqu'une personne consultera ce lien de partage.",
+          "notificationUpdateFailed": "Échec de la mise à jour des notifications",
+          "notificationUpdateFailedDescription": "Une erreur s'est produite lors de la mise à jour des paramètres de notification."
         }
       },
       "created": {

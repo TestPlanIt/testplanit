@@ -4914,6 +4914,7 @@
           "project": "Proyecto",
           "mode": "Modo",
           "views": "Vistas",
+          "notifications": "Notificaciones",
           "created": "Creado",
           "expires": "Caduca",
           "status": "Estado"
@@ -4926,11 +4927,16 @@
         "expires": {
           "never": "Nunca"
         },
+        "notifications": {
+          "enabled": "En",
+          "disabled": "Apagado"
+        },
         "empty": {
           "title": "Aún no se han creado enlaces para compartir.",
           "description": "Crea tu primer enlace para compartir y comenzar."
         },
         "defaultTitle": "{entityType} compartir",
+        "noProject": "Proyecto cruzado",
         "actions": {
           "label": "Comportamiento",
           "copyLink": "Copiar enlace",
@@ -4952,7 +4958,13 @@
           "linkRevoked": "Enlace compartido revocado",
           "linkRevokedDescription": "El enlace para compartir ha sido revocado y ya no es accesible.",
           "revokeFailed": "No se pudo revocar",
-          "revokeFailedDescription": "Se produjo un error al revocar el enlace para compartir."
+          "revokeFailedDescription": "Se produjo un error al revocar el enlace para compartir.",
+          "notificationsEnabled": "Notificaciones habilitadas",
+          "notificationsEnabledDescription": "Recibirás notificaciones cuando alguien vea este enlace para compartir.",
+          "notificationsDisabled": "Notificaciones deshabilitadas",
+          "notificationsDisabledDescription": "No recibirás notificaciones cuando alguien vea este enlace para compartir.",
+          "notificationUpdateFailed": "No se pudieron actualizar las notificaciones",
+          "notificationUpdateFailedDescription": "Se produjo un error al actualizar la configuración de notificaciones."
         }
       },
       "created": {

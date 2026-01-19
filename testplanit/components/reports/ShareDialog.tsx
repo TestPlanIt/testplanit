@@ -100,7 +100,7 @@ export function ShareDialog({
           shareKey,
           entityType: "REPORT",
           entityConfig: reportConfig,
-          projectId,
+          ...(projectId !== undefined && { projectId }),
           createdById: session.user.id,
           mode,
           passwordHash,
@@ -164,7 +164,7 @@ export function ShareDialog({
   if (createdShare) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl">
           <ShareLinkCreated
             shareData={createdShare}
             onClose={handleCloseCreated}
@@ -177,7 +177,7 @@ export function ShareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t("dialogTitle")}</DialogTitle>
           <DialogDescription>

@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Copy, MoreVertical, Ban, Trash2, Eye, Loader2, CheckCircle2 } from "lucide-react";
+import { Copy, MoreVertical, Ban, Trash2, Eye, Loader2, CheckCircle2, Bell, BellOff } from "lucide-react";
 import { format, isPast } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { ShareLinkEntityType } from "@prisma/client";
@@ -53,6 +53,13 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
     where: {
       ...(projectId !== undefined && { projectId }),
       ...(entityType && { entityType }),
+    },
+    include: {
+      project: {
+        select: {
+          name: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -113,6 +120,30 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
     }
   };
 
+  const handleToggleNotifications = async (shareId: string, currentValue: boolean) => {
+    try {
+      await updateShareLink({
+        where: { id: shareId },
+        data: { notifyOnView: !currentValue },
+      });
+
+      toast({
+        title: currentValue ? t("toast.notificationsDisabled") : t("toast.notificationsEnabled"),
+        description: currentValue
+          ? t("toast.notificationsDisabledDescription")
+          : t("toast.notificationsEnabledDescription"),
+      });
+
+      refetch();
+    } catch (error) {
+      toast({
+        title: t("toast.notificationUpdateFailed"),
+        description: t("toast.notificationUpdateFailedDescription"),
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -140,6 +171,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
               <TableHead>{t("columns.title")}</TableHead>
               <TableHead>{t("columns.mode")}</TableHead>
               <TableHead>{t("columns.views")}</TableHead>
+              <TableHead>{t("columns.notifications")}</TableHead>
               <TableHead>{t("columns.created")}</TableHead>
               <TableHead>{t("columns.expires")}</TableHead>
               <TableHead>{t("columns.status")}</TableHead>
@@ -153,6 +185,11 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
 
               return (
                 <TableRow key={share.id}>
+                  {showProjectColumn && (
+                    <TableCell className="text-sm">
+                      {share.project?.name || t("noProject")}
+                    </TableCell>
+                  )}
                   <TableCell>
                     <div>
                       <p className="font-medium">
@@ -175,6 +212,27 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                       <Eye className="h-3 w-3 text-muted-foreground" />
                       <span>{share.viewCount}</span>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleNotifications(share.id, share.notifyOnView)}
+                      disabled={!isActive}
+                      className="h-8 gap-2"
+                    >
+                      {share.notifyOnView ? (
+                        <>
+                          <Bell className="h-4 w-4 text-primary" />
+                          <span className="text-xs">{t("notifications.enabled")}</span>
+                        </>
+                      ) : (
+                        <>
+                          <BellOff className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">{t("notifications.disabled")}</span>
+                        </>
+                      )}
+                    </Button>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {format(new Date(share.createdAt), "MMM d, yyyy")}
