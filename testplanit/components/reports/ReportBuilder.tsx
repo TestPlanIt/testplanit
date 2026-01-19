@@ -307,6 +307,9 @@ function ReportBuilderContent({
   // Track when the report was last generated (for display and future export functionality)
   const [reportGeneratedAt, setReportGeneratedAt] = useState<Date | null>(null);
 
+  // Store the last request body used to run the report (for sharing)
+  const [lastRequestBody, setLastRequestBody] = useState<any>(null);
+
   // Table state
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [sortConfig, setSortConfig] = useState<{
@@ -318,6 +321,8 @@ function ReportBuilderContent({
 
   // Track if this is the initial mount
   const isInitialMount = useRef(true);
+  // Track the last report type that was run
+  const lastRunReportType = useRef<string | null>(null);
 
   // Track if we're on the client side (for SSR compatibility)
   const [isClient, setIsClient] = useState(false);
@@ -682,6 +687,17 @@ function ReportBuilderContent({
     setIsClient(true);
   }, []);
 
+  // Sync reportType from URL when it changes
+  useEffect(() => {
+    const urlReportType = searchParams.get("reportType");
+    if (urlReportType) {
+      // Only update if the URL reportType is valid
+      if (reportTypes.some((r) => r.id === urlReportType)) {
+        setReportType(urlReportType);
+      }
+    }
+  }, [searchParams, reportTypes]);
+
   // Fetch filter options when report type changes to automation-trends or when filters change
   useEffect(() => {
     if (
@@ -788,9 +804,13 @@ function ReportBuilderContent({
     const newTab = isPreBuilt ? "reports" : "builder";
     setActiveTab(newTab);
 
+    // Clear URL parameters when changing report type (report-specific params don't apply)
     const newParams = new URLSearchParams();
     newParams.set("reportType", newReportType);
     newParams.set("tab", newTab);
+    // Reset pagination when changing reports
+    newParams.set("page", "1");
+    newParams.set("pageSize", String(pageSize !== "All" ? pageSize : 10));
     router.replace(`${pathname}?${newParams.toString()}`);
   };
 
@@ -820,6 +840,11 @@ function ReportBuilderContent({
       return;
     }
 
+    // Reset the last run report type to allow auto-run
+    lastRunReportType.current = null;
+
+    // Reset loading state to allow auto-run to trigger
+    setLoading(false);
     setDimensions([]);
     setMetrics([]);
     setResults(null);
@@ -881,14 +906,6 @@ function ReportBuilderContent({
         setFilteredMetricOptions(metOpts);
 
         // Load from URL parameters if present
-        const reportTypeParam = searchParams.get("reportType");
-        if (
-          reportTypeParam &&
-          reportTypes.some((r) => r.id === reportTypeParam)
-        ) {
-          setReportType(reportTypeParam);
-        }
-
         const dimensionsParam = searchParams.get("dimensions");
         const metricsParam = searchParams.get("metrics");
         const startDateParam = searchParams.get("startDate");
@@ -1373,15 +1390,19 @@ function ReportBuilderContent({
             dateRange?.from ? (dateRange as DateRange) : undefined
           );
           // Update last used date grouping for automation trends
-          if (reportType === "automation-trends") {
+          if (reportType === "automation-trends" || reportType === "cross-project-automation-trends") {
             setLastUsedDateGrouping(dateGrouping);
           }
           // Update last used consecutive runs for flaky tests
-          if (reportType === "flaky-tests") {
+          if (reportType === "flaky-tests" || reportType === "cross-project-flaky-tests") {
             setLastUsedConsecutiveRuns(consecutiveRuns);
           }
           // Record when the report was generated
           setReportGeneratedAt(new Date());
+
+          // Store the request body for sharing (exclude page/pageSize as shares should show all data)
+          const { page, pageSize, sortColumn, sortDirection, ...shareableBody } = body;
+          setLastRequestBody(shareableBody);
 
           // Update URL with selections
           const newParams = new URLSearchParams();
@@ -1457,16 +1478,23 @@ function ReportBuilderContent({
 
   // Auto-run report if we have stored selections
   useEffect(() => {
-    if (
-      lastUsedDimensions.length > 0 &&
-      lastUsedMetrics.length > 0 &&
-      !results &&
-      !loading &&
-      !error
-    ) {
+    // Check if we need to run report for current reportType
+    const hasRunForCurrentType = lastRunReportType.current === reportType;
+
+    // For pre-built reports, auto-run even without dimensions/metrics
+    const shouldAutoRun = currentReport?.isPreBuilt
+      ? !hasRunForCurrentType && !loading && !error
+      : lastUsedDimensions.length > 0 &&
+        lastUsedMetrics.length > 0 &&
+        !hasRunForCurrentType &&
+        !loading &&
+        !error;
+
+    if (shouldAutoRun) {
+      lastRunReportType.current = reportType;
       runReport(lastUsedDimensions, lastUsedMetrics);
     }
-  }, [lastUsedDimensions, lastUsedMetrics, results, loading, error, runReport]);
+  }, [reportType, lastUsedDimensions, lastUsedMetrics, results, loading, error, runReport, currentReport]);
 
   // Re-fetch data when pagination changes (without full loading state)
   useEffect(() => {
@@ -1519,7 +1547,7 @@ function ReportBuilderContent({
       fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize, sortConfig, reportType]);
+  }, [currentPage, pageSize, sortConfig, reportType, allResults]);
 
   // Re-fetch data when sort changes for non-prebuilt reports (without full loading state)
   useEffect(() => {
@@ -2556,13 +2584,8 @@ function ReportBuilderContent({
                         projectId={mode === "project" ? projectId : undefined}
                         reportConfig={{
                           reportType,
-                          dimensions: lastUsedDimensions.map((d) => d.value),
-                          metrics: lastUsedMetrics.map((m) => m.value),
-                          startDate: form.getValues("dateRange")?.from,
-                          endDate: form.getValues("dateRange")?.to,
-                          page: currentPage,
-                          pageSize,
-                          ...(mode === "project" && projectId && { projectId }),
+                          // Use the last request body which contains ALL parameters
+                          ...(lastRequestBody || {}),
                         }}
                         reportTitle={
                           reportTypes.find((r) => r.id === reportType)?.label

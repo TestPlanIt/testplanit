@@ -9,6 +9,7 @@ import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DataTable } from "@/components/tables/DataTable";
 import { useTranslations } from "next-intl";
 import { useReportColumns } from "~/hooks/useReportColumns";
+import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
 import { PaginationComponent } from "~/components/tables/Pagination";
 import { PaginationInfo } from "~/components/tables/PaginationControls";
 import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
@@ -37,6 +38,9 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
   const t = useTranslations("reports.sharedReport");
   const tCommon = useTranslations("common");
 
+  // Extract config from shareData
+  const config = shareData.entityConfig;
+
   // Extract dimension and metric IDs from reportData for column generation
   const dimensionIds = useMemo(() => {
     if (!reportData?.dimensions) return [];
@@ -48,8 +52,48 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
     return reportData.metrics.map((m: any) => m.value || m.id);
   }, [reportData?.metrics]);
 
-  // Generate columns using the useReportColumns hook
-  const columns = useReportColumns(
+  // Check if this is a pre-built report
+  // Pre-built reports have empty dimensions/metrics in the saved config (not in the returned data)
+  // The share API generates dimension/metric metadata from the data structure, so we check the config instead
+  const isPreBuiltReport = (!shareData.entityConfig.dimensions || shareData.entityConfig.dimensions.length === 0) &&
+                           (!shareData.entityConfig.metrics || shareData.entityConfig.metrics.length === 0);
+
+  // For pre-built reports, generate simple columns from data keys
+  const preBuiltColumns = useMemo(() => {
+    if (!isPreBuiltReport || !reportData?.results || reportData.results.length === 0) {
+      return [];
+    }
+
+    const sampleRow = reportData.results[0];
+    return Object.keys(sampleRow)
+      .filter((key) => !key.endsWith('Id') && key !== 'project') // Skip internal fields
+      .map((key) => ({
+        accessorKey: key,
+        header: key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase()).trim(),
+        cell: ({ row }: any) => {
+          const value = row.original[key];
+
+          // Handle different value types
+          if (value === null || value === undefined) return '-';
+          if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+          if (typeof value === 'number') return value.toLocaleString();
+          if (typeof value === 'object' && value.name) return value.name;
+          if (typeof value === 'object' && value.title) return value.title;
+          if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}T/)) {
+            // ISO date string
+            try {
+              return new Date(value).toLocaleDateString();
+            } catch {
+              return value;
+            }
+          }
+          return String(value);
+        },
+      }));
+  }, [isPreBuiltReport, reportData?.results]);
+
+  // Generate columns using the useReportColumns hook for standard reports
+  const standardColumns = useReportColumns(
     dimensionIds,
     metricIds,
     reportData?.dimensions,
@@ -57,6 +101,29 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
     undefined, // No drill-down for shared reports
     shareData.projectId // Pass project ID for link generation
   );
+
+  // Generate columns for automation-trends using specialized hook
+  const automationTrendsColumns = useAutomationTrendsColumns(
+    reportData?.projects || [],
+    reportData?.dateGrouping || "weekly"
+  );
+
+  // Pre-built reports with visualizations: automation-trends, flaky-tests
+  // Pre-built reports without visualizations: test-case-health, issue-test-coverage
+  const preBuiltReportsWithVisualization = ['automation-trends', 'flaky-tests'];
+  const hasVisualization = isPreBuiltReport
+    ? preBuiltReportsWithVisualization.includes(config.reportType)
+    : (reportData?.dimensions && reportData.dimensions.length > 0) ||
+      (reportData?.metrics && reportData.metrics.length > 0);
+
+  // Choose which columns to use based on report type
+  const columns =
+    config.reportType === "automation-trends" || config.reportType === "cross-project-automation-trends"
+      ? automationTrendsColumns
+      : isPreBuiltReport && !hasVisualization
+        ? preBuiltColumns
+        : standardColumns;
+
 
   // Apply client-side sorting and pagination to results
   const { sortedAndPaginatedResults, totalResults, totalPages, startIndex, endIndex } = useMemo(() => {
@@ -167,7 +234,6 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
     }
 
     try {
-      const config = shareData.entityConfig;
       if (!config) {
         throw new Error(t("errors.failedToLoad"));
       }
@@ -208,7 +274,7 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
     } finally {
       setIsLoading(false);
     }
-  }, [shareData, t]);
+  }, [shareData, t, config]);
 
   useEffect(() => {
     fetchReportData();
@@ -239,8 +305,6 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
   if (!reportData) {
     return null;
   }
-
-  const config = shareData.entityConfig;
 
   return (
     <div className="min-h-screen">
@@ -288,77 +352,127 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
       {/* Report content */}
       <div className="container mx-auto px-4 py-6">
         {reportData.results && columns.length > 0 ? (
-          <ResizablePanelGroup
-            direction="vertical"
-            className="min-h-[calc(100vh-20rem)]"
-            autoSaveId="shared-report-panels"
-          >
-            {/* Visualization Panel */}
-            <ResizablePanel defaultSize={50} minSize={20} collapsedSize={0} collapsible>
-              <Card className="h-full rounded-none border-0 overflow-hidden">
-                <CardHeader className="pt-2 pb-2">
-                  <CardTitle>{tCommon("visualization")}</CardTitle>
-                </CardHeader>
-                <CardContent className="h-[calc(100%-4rem)] p-6 flex flex-col">
-                  <div className="flex-1 min-h-0 w-full">
-                    <ReportChart
-                      results={reportData.chartData}
-                      dimensions={reportData.dimensions}
-                      metrics={reportData.metrics}
-                      reportType={config.reportType}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </ResizablePanel>
-
-            <ResizableHandle withHandle />
-
-            {/* Results Table Panel */}
-            <ResizablePanel defaultSize={50} minSize={20} collapsedSize={0} collapsible>
-              <Card className="h-full rounded-none border-0 overflow-hidden">
-                <CardHeader className="pt-2 pb-2">
-                  <div className="flex flex-row items-end justify-between">
-                    <CardTitle>{tCommon("results")}</CardTitle>
-                    {totalResults > 0 && (
-                      <div className="flex flex-col items-end">
-                        <div className="justify-end">
-                          <PaginationInfo
-                            startIndex={startIndex}
-                            endIndex={endIndex}
-                            totalRows={totalResults}
-                            searchString=""
-                            pageSize={pageSize}
-                            pageSizeOptions={defaultPageSizeOptions}
-                            handlePageSizeChange={handlePageSizeChange}
+          !hasVisualization ? (
+            // Table-only reports (no visualization support)
+            <Card className="h-full overflow-hidden">
+              <CardHeader className="pt-2 pb-2">
+                <div className="flex flex-row items-end justify-between">
+                  <CardTitle>{tCommon("results")}</CardTitle>
+                  {totalResults > 0 && (
+                    <div className="flex flex-col items-end">
+                      <div className="justify-end">
+                        <PaginationInfo
+                          startIndex={startIndex}
+                          endIndex={endIndex}
+                          totalRows={totalResults}
+                          searchString=""
+                          pageSize={pageSize}
+                          pageSizeOptions={defaultPageSizeOptions}
+                          handlePageSizeChange={handlePageSizeChange}
+                        />
+                      </div>
+                      {pageSize !== "All" && totalPages > 1 && (
+                        <div className="justify-end -mx-4">
+                          <PaginationComponent
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
                           />
                         </div>
-                        {pageSize !== "All" && totalPages > 1 && (
-                          <div className="justify-end -mx-4">
-                            <PaginationComponent
-                              currentPage={currentPage}
-                              totalPages={totalPages}
-                              onPageChange={setCurrentPage}
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="overflow-y-auto p-6 pt-0">
+                <DataTable
+                  data={sortedAndPaginatedResults}
+                  columns={columns}
+                  columnVisibility={{}}
+                  onColumnVisibilityChange={() => {}}
+                  sortConfig={sortConfig || undefined}
+                  onSortChange={handleSortChange}
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            // Standard reports: visualization + table in resizable panels
+            <ResizablePanelGroup
+              direction="vertical"
+              className="min-h-[calc(100vh-20rem)]"
+              autoSaveId="shared-report-panels"
+            >
+              {/* Visualization Panel */}
+              <ResizablePanel defaultSize={50} minSize={20} collapsedSize={0} collapsible>
+                <Card className="h-full rounded-none border-0 overflow-hidden">
+                  <CardHeader className="pt-2 pb-2">
+                    <CardTitle>{tCommon("visualization")}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-[calc(100%-4rem)] p-6 flex flex-col">
+                    <div className="flex-1 min-h-0 w-full">
+                      <ReportChart
+                        results={reportData.chartData}
+                        dimensions={reportData.dimensions}
+                        metrics={reportData.metrics}
+                        reportType={config.reportType}
+                        projects={reportData.projects}
+                        consecutiveRuns={reportData.consecutiveRuns}
+                        totalFlakyTests={reportData.totalFlakyTests}
+                        projectId={shareData.projectId}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              </ResizablePanel>
+
+              <ResizableHandle withHandle />
+
+              {/* Results Table Panel */}
+              <ResizablePanel defaultSize={50} minSize={20} collapsedSize={0} collapsible>
+                <Card className="h-full rounded-none border-0 overflow-hidden">
+                  <CardHeader className="pt-2 pb-2">
+                    <div className="flex flex-row items-end justify-between">
+                      <CardTitle>{tCommon("results")}</CardTitle>
+                      {totalResults > 0 && (
+                        <div className="flex flex-col items-end">
+                          <div className="justify-end">
+                            <PaginationInfo
+                              startIndex={startIndex}
+                              endIndex={endIndex}
+                              totalRows={totalResults}
+                              searchString=""
+                              pageSize={pageSize}
+                              pageSizeOptions={defaultPageSizeOptions}
+                              handlePageSizeChange={handlePageSizeChange}
                             />
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="h-[calc(100%-4rem)] overflow-y-auto p-6 pt-0">
-                  <DataTable
-                    data={sortedAndPaginatedResults}
-                    columns={columns}
-                    columnVisibility={{}}
-                    onColumnVisibilityChange={() => {}}
-                    sortConfig={sortConfig || undefined}
-                    onSortChange={handleSortChange}
-                  />
-                </CardContent>
-              </Card>
-            </ResizablePanel>
-          </ResizablePanelGroup>
+                          {pageSize !== "All" && totalPages > 1 && (
+                            <div className="justify-end -mx-4">
+                              <PaginationComponent
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPageChange={setCurrentPage}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="h-[calc(100%-4rem)] overflow-y-auto p-6 pt-0">
+                    <DataTable
+                      data={sortedAndPaginatedResults}
+                      columns={columns}
+                      columnVisibility={{}}
+                      onColumnVisibilityChange={() => {}}
+                      sortConfig={sortConfig || undefined}
+                      onSortChange={handleSortChange}
+                    />
+                  </CardContent>
+                </Card>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          )
         ) : null}
 
         {/* Read-only notice */}
