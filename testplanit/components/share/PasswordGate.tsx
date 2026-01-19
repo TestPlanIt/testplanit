@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PasswordDialog } from "./PasswordDialog";
 
 interface PasswordGateProps {
@@ -11,8 +11,12 @@ interface PasswordGateProps {
 
 export function PasswordGate({ shareKey, onVerified, projectName }: PasswordGateProps) {
   const [hasValidToken, setHasValidToken] = useState(false);
+  const hasCalledOnVerified = useRef(false);
 
   useEffect(() => {
+    // Prevent duplicate calls (React Strict Mode protection)
+    if (hasCalledOnVerified.current) return;
+
     // Check if we have a valid token in sessionStorage
     const tokenKey = `share_token_${shareKey}`;
     const stored = sessionStorage.getItem(tokenKey);
@@ -22,6 +26,7 @@ export function PasswordGate({ shareKey, onVerified, projectName }: PasswordGate
         const { token, expiresAt } = JSON.parse(stored);
         if (new Date(expiresAt) > new Date()) {
           // Token is still valid
+          hasCalledOnVerified.current = true;
           setHasValidToken(true);
           onVerified();
           return;
@@ -33,9 +38,12 @@ export function PasswordGate({ shareKey, onVerified, projectName }: PasswordGate
         sessionStorage.removeItem(tokenKey);
       }
     }
-  }, [shareKey]);
+  }, [shareKey, onVerified]);
 
   const handlePasswordSuccess = (token: string, expiresIn: number) => {
+    // Prevent duplicate calls
+    if (hasCalledOnVerified.current) return;
+
     // Store token in sessionStorage
     const tokenKey = `share_token_${shareKey}`;
     const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
@@ -45,6 +53,7 @@ export function PasswordGate({ shareKey, onVerified, projectName }: PasswordGate
       JSON.stringify({ token, expiresAt })
     );
 
+    hasCalledOnVerified.current = true;
     setHasValidToken(true);
     onVerified();
   };

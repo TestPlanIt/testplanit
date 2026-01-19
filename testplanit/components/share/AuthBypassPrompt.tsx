@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, X } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 interface AuthBypassPromptProps {
   userName: string;
@@ -18,6 +19,7 @@ export function AuthBypassPrompt({
   shareData,
 }: AuthBypassPromptProps) {
   const [isVisible, setIsVisible] = useState(true);
+  const t = useTranslations("reports.authBypass");
 
   useEffect(() => {
     // Auto-dismiss after 5 seconds
@@ -39,15 +41,20 @@ export function AuthBypassPrompt({
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <AlertDescription className="space-y-2">
-              <p className="font-medium">You have access to this project</p>
+              <p className="font-medium">{t("title")}</p>
               <p className="text-sm text-muted-foreground">
-                Viewing as <strong>{userName}</strong> with access to{" "}
-                <strong>{projectName}</strong>.
+                {t.rich("description", {
+                  userName,
+                  projectName,
+                  strong: (chunks: React.ReactNode) => (
+                    <strong>{chunks}</strong>
+                  ),
+                })}
               </p>
               {shareData.entityType === "REPORT" && shareData.projectId && (
                 <Link href={`/en-US/projects/reports/${shareData.projectId}`}>
                   <Button variant="outline" size="sm" className="mt-2">
-                    View in full app
+                    {t("viewInApp")}
                   </Button>
                 </Link>
               )}
@@ -60,7 +67,7 @@ export function AuthBypassPrompt({
             onClick={() => setIsVisible(false)}
           >
             <X className="h-4 w-4" />
-            <span className="sr-only">Dismiss</span>
+            <span className="sr-only">{t("dismiss")}</span>
           </Button>
         </div>
       </Alert>

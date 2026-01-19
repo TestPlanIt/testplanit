@@ -4997,6 +4997,29 @@
         "noAttemptsRemaining": "No attempts remaining. Please try again later.",
         "attemptsRemaining": "{count, plural, =1 {1 attempt} other {# attempts}} remaining."
       }
+    },
+    "sharedReport": {
+      "loading": "Loading report...",
+      "errors": {
+        "onlyReportSharing": "Only report sharing is currently implemented",
+        "failedToLoad": "Failed to load report data"
+      },
+      "defaultTitle": "Shared Report",
+      "fromProject": "From project:",
+      "dateRange": "Date range:",
+      "readOnlyNotice": "This is a read-only shared view",
+      "viewCount": "{count, plural, =1 {1 view} other {# views}}",
+      "pagination": {
+        "showing": "Showing",
+        "of": "of",
+        "results": "results"
+      }
+    },
+    "authBypass": {
+      "title": "You have access to this project",
+      "description": "Viewing as <strong>{userName}</strong> with access to <strong>{projectName}</strong>.",
+      "viewInApp": "View in full app",
+      "dismiss": "Dismiss"
     }
   },
   "sharedSteps": {

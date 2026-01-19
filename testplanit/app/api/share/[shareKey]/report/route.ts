@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "~/server/auth";
+import { getProjectReportTypes, getCrossProjectReportTypes } from "~/lib/config/reportTypes";
 
 export const dynamic = "force-dynamic";
 
@@ -130,23 +131,109 @@ export async function GET(
       );
     }
 
-    // Import the report builder function
-    const { buildReport } = await import("~/lib/services/reportBuilder");
+    // Get all available report types
+    const projectReportTypes = getProjectReportTypes((key: string) => key);
+    const crossProjectReportTypes = getCrossProjectReportTypes((key: string) => key);
+    const allReportTypes = [...projectReportTypes, ...crossProjectReportTypes];
 
-    // Build the report
-    const reportData = await buildReport({
-      reportType: config.reportType,
-      dimensions: config.dimensions || [],
-      metrics: config.metrics || [],
-      startDate: config.startDate ? new Date(config.startDate) : undefined,
-      endDate: config.endDate ? new Date(config.endDate) : undefined,
-      page: config.page || 1,
-      pageSize: config.pageSize || 10,
-      projectId: shareLink.projectId ?? undefined,
-      userId: session?.user?.id,
+    // Find the report type configuration
+    const reportType = allReportTypes.find((rt) => rt.id === config.reportType);
+    if (!reportType) {
+      return NextResponse.json(
+        { error: "Unsupported report type" },
+        { status: 400 }
+      );
+    }
+
+    const endpoint = reportType.endpoint;
+
+    // Use localhost for internal server-to-server communication to avoid SSL issues
+    const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+
+    // First, fetch metadata (dimensions and metrics with labels) from GET endpoint
+    const metadataUrl = new URL(endpoint, baseUrl);
+    if (shareLink.projectId) {
+      metadataUrl.searchParams.set("projectId", shareLink.projectId.toString());
+    }
+
+    const metadataResponse = await fetch(metadataUrl.toString(), {
+      method: "GET",
+      headers: {
+        // Forward cookies for authentication if user is logged in
+        ...(req.headers.get("cookie")
+          ? { Cookie: req.headers.get("cookie")! }
+          : {}),
+      },
     });
 
-    return NextResponse.json(reportData);
+    if (!metadataResponse.ok) {
+      const errorData = await metadataResponse.json();
+      return NextResponse.json(
+        { error: errorData.error || "Failed to fetch report metadata" },
+        { status: metadataResponse.status }
+      );
+    }
+
+    const metadata = await metadataResponse.json();
+
+    // Then, call the report builder POST endpoint to get data
+    const reportBuilderUrl = new URL(endpoint, baseUrl);
+    const reportResponse = await fetch(reportBuilderUrl.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // Forward cookies for authentication if user is logged in
+        ...(req.headers.get("cookie")
+          ? { Cookie: req.headers.get("cookie")! }
+          : {}),
+      },
+      body: JSON.stringify({
+        projectId: shareLink.projectId,
+        dimensions: config.dimensions || [],
+        metrics: config.metrics || [],
+        startDate: config.startDate,
+        endDate: config.endDate,
+        page: config.page || 1,
+        pageSize: config.pageSize || 10,
+      }),
+    });
+
+    if (!reportResponse.ok) {
+      const errorData = await reportResponse.json();
+      return NextResponse.json(
+        { error: errorData.error || "Failed to build report" },
+        { status: reportResponse.status }
+      );
+    }
+
+    const reportData = await reportResponse.json();
+
+    // Map dimension and metric IDs to their full metadata objects
+    const dimensionsWithLabels = config.dimensions.map((dimId: string) => {
+      const metadataDim = metadata.dimensions.find((d: any) => d.id === dimId);
+      // ReportChart expects { value, label } format
+      return metadataDim ? { value: metadataDim.id, label: metadataDim.label } : { value: dimId, label: dimId };
+    });
+
+    const metricsWithLabels = config.metrics.map((metricId: string) => {
+      const metadataMetric = metadata.metrics.find((m: any) => m.id === metricId);
+      // ReportChart expects { value, label } format
+      return metadataMetric ? { value: metadataMetric.id, label: metadataMetric.label } : { value: metricId, label: metricId };
+    });
+
+    // Format the response to match what StaticReportViewer expects
+    // Note: columns are generated client-side using useReportColumns hook
+    return NextResponse.json({
+      results: reportData.results,
+      chartData: reportData.allResults || reportData.results,
+      dimensions: dimensionsWithLabels,
+      metrics: metricsWithLabels,
+      pagination: {
+        totalCount: reportData.totalCount,
+        page: reportData.page,
+        pageSize: reportData.pageSize,
+      },
+    });
   } catch (error) {
     console.error("Error fetching report data for share:", error);
     return NextResponse.json(

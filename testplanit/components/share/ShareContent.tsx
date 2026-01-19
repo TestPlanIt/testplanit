@@ -45,6 +45,10 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
     // Prevent duplicate view counting
     if (viewCountedRef.current || hasViewedInSession()) return false;
 
+    // Mark as counted BEFORE making the request to prevent race conditions
+    viewCountedRef.current = true;
+    markViewedInSession();
+
     // Call the share API to check if user has access
     try {
       const response = await fetch(`/api/share/${shareKey}`, {
@@ -54,8 +58,6 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
       });
 
       if (response.ok) {
-        viewCountedRef.current = true;
-        markViewedInSession();
         const data = await response.json();
         setFullShareData(data);
         setAccessGranted(true);
@@ -63,8 +65,14 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
         return true;
       }
 
+      // Reset flags on failure
+      viewCountedRef.current = false;
+      sessionStorage.removeItem(getSessionViewKey());
       return false;
     } catch (error) {
+      // Reset flags on error
+      viewCountedRef.current = false;
+      sessionStorage.removeItem(getSessionViewKey());
       return false;
     }
   };
@@ -75,10 +83,24 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
     setError(null);
 
     try {
+      // Get the verified token from sessionStorage (for password-protected shares)
+      const tokenKey = `share_token_${shareKey}`;
+      const stored = sessionStorage.getItem(tokenKey);
+      let token = null;
+
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          token = parsed.token;
+        } catch (e) {
+          // Invalid token, ignore
+        }
+      }
+
       const response = await fetch(`/api/share/${shareKey}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ token }),
       });
 
       if (!response.ok) {
@@ -140,13 +162,15 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
 
       // Increment view count before redirecting (only if not already counted)
       if (!hasViewedInSession()) {
+        // Mark as counted BEFORE making the request to prevent race conditions
+        markViewedInSession();
+
         fetch(`/api/share/${shareKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({}),
         })
           .then(() => {
-            markViewedInSession();
             console.log("Redirecting to:", reportsUrl);
             window.location.href = reportsUrl;
           })
@@ -181,10 +205,15 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
   const handlePasswordVerified = async () => {
     // Prevent duplicate view counting
     if (viewCountedRef.current || hasViewedInSession()) {
-      // Already counted, just fetch the data
-      await fetchShareDataWithoutCounting();
+      // Already counted, use initial shareData and grant access without making another API call
+      setFullShareData(shareData);
+      setAccessGranted(true);
       return;
     }
+
+    // Mark as counted BEFORE making the request to prevent race conditions
+    viewCountedRef.current = true;
+    markViewedInSession();
 
     setIsLoading(true);
     setError(null);
@@ -222,14 +251,15 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
         throw new Error(errorData.error || "Failed to access share link");
       }
 
-      viewCountedRef.current = true;
-      markViewedInSession();
       const data = await response.json();
       setFullShareData(data);
       setAccessGranted(true);
     } catch (error) {
       console.error("Error accessing share:", error);
       setError(error instanceof Error ? error.message : "An error occurred");
+      // Reset the flags on error so user can retry
+      viewCountedRef.current = false;
+      sessionStorage.removeItem(getSessionViewKey());
     } finally {
       setIsLoading(false);
     }
