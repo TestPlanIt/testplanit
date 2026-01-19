@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import {
   useCreateUser,
+  useCreateUserPreferences,
   useFindManyRoles,
   useCreateManyProjectAssignment,
   useFindManyProjects,
@@ -59,6 +60,7 @@ export function AddUserModal() {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: createUser } = useCreateUser();
+  const { mutateAsync: createUserPreferences } = useCreateUserPreferences();
   const { mutateAsync: createManyProjectAssignment } =
     useCreateManyProjectAssignment();
   const { mutateAsync: createManyGroupAssignment } =
@@ -215,17 +217,18 @@ export function AddUserModal() {
       // UserCreateSchema.parse(apiPayload);
 
       const newUser = await createUser({
+        data: apiPayload,
+      });
+
+      // Create default user preferences
+      await createUserPreferences({
         data: {
-          ...apiPayload,
-          userPreferences: {
-            create: {
-              itemsPerPage: "P10",
-              dateFormat: "MM_DD_YYYY_DASH",
-              timeFormat: "HH_MM_A",
-              theme: "Light",
-              locale: "en_US",
-            },
-          },
+          userId: newUser!.id,
+          itemsPerPage: "P10",
+          dateFormat: "MM_DD_YYYY_DASH",
+          timeFormat: "HH_MM_A",
+          theme: "Light",
+          locale: "en_US",
         },
       });
 
