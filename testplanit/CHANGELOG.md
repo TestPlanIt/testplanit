@@ -1,3 +1,10 @@
+## [0.10.7](https://github.com/TestPlanIt/testplanit/compare/v0.10.6...v0.10.7) (2026-01-20)
+
+
+### Bug Fixes
+
+* update Redis connection type in queue initialization ([76bc417](https://github.com/TestPlanIt/testplanit/commit/76bc4178841d9fb2ce03edcc58a4ba2743cb60f4))
+
 ## [0.10.6](https://github.com/TestPlanIt/testplanit/compare/v0.10.5...v0.10.6) (2026-01-19)
 
 
