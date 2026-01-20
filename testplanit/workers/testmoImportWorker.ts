@@ -7501,7 +7501,7 @@ async function startWorker() {
   }
 
   const worker = new Worker(TESTMO_IMPORT_QUEUE_NAME, processor, {
-    connection: valkeyConnection,
+    connection: valkeyConnection as any,
     concurrency: 1,
   });
 

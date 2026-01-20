@@ -419,7 +419,7 @@ const startWorker = async () => {
 
   if (valkeyConnection) {
     worker = new Worker(EMAIL_QUEUE_NAME, processor, {
-      connection: valkeyConnection,
+      connection: valkeyConnection as any,
       concurrency: 3,
     });
 
