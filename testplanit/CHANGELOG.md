@@ -1,3 +1,10 @@
+## [0.10.8](https://github.com/TestPlanIt/testplanit/compare/v0.10.7...v0.10.8) (2026-01-20)
+
+
+### Bug Fixes
+
+* apply Redis connection type fix to workers and scripts ([65d843d](https://github.com/TestPlanIt/testplanit/commit/65d843d5963eec0bc5f4c8435f274bc556a65d66))
+
 ## [0.10.7](https://github.com/TestPlanIt/testplanit/compare/v0.10.6...v0.10.7) (2026-01-20)
 
 
