@@ -98,6 +98,7 @@ export const getColumns = (
     cell: ({ row }) => (
       <div className="text-center">
         <Switch
+          data-testid={`user-active-toggle-${row.original.id}`}
           checked={row.original.isActive}
           disabled={row.original.id === session.user.id}
           onCheckedChange={(checked) =>

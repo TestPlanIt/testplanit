@@ -2,7 +2,7 @@ import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "~/lib/navigation";
 import { useTheme } from "next-themes";
 import { Theme, Locale } from "@prisma/client";
-import { useUpdateUser, useFindUniqueUser } from "~/lib/hooks";
+import { useFindUniqueUser } from "~/lib/hooks";
 import { languageNames } from "~/lib/navigation";
 import { cn } from "~/utils";
 import { useRef, useState } from "react";
@@ -38,7 +38,6 @@ export function UserDropdownMenu() {
   const router = useRouter();
   const { data: session, update } = useSession();
   const { theme, setTheme } = useTheme();
-  const { mutateAsync: updateUser } = useUpdateUser();
   const { refetch: refetchUser } = useFindUniqueUser(
     { where: { id: session?.user?.id || "" } },
     { enabled: !!session?.user?.id }
@@ -192,17 +191,22 @@ export function UserDropdownMenu() {
     }, ANIMATION_DURATION);
 
     try {
-      await updateUser({
-        where: { id: session.user.id },
-        data: {
+      // Use dedicated update API endpoint instead of ZenStack
+      // (ZenStack 2.21+ has issues with nested update operations)
+      const response = await fetch(`/api/users/${session.user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           userPreferences: {
-            upsert: {
-              create: { theme: newTheme },
-              update: { theme: newTheme },
-            },
+            theme: newTheme,
           },
-        },
+        }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update theme");
+      }
 
       // Refresh the session to get updated preferences
       await update();
@@ -221,17 +225,22 @@ export function UserDropdownMenu() {
     }
 
     try {
-      await updateUser({
-        where: { id: session.user.id },
-        data: {
+      // Use dedicated update API endpoint instead of ZenStack
+      // (ZenStack 2.21+ has issues with nested update operations)
+      const response = await fetch(`/api/users/${session.user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           userPreferences: {
-            upsert: {
-              create: { locale: newLocale },
-              update: { locale: newLocale },
-            },
+            locale: newLocale,
           },
-        },
+        }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update locale");
+      }
 
       const urlLocale = newLocale.replace("_", "-");
       document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;

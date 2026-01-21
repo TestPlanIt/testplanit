@@ -5,9 +5,9 @@ import { useEffect, useState, use, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useFindFirstUser,
-  useUpdateUser,
   useFindUniqueAppConfig,
 } from "~/lib/hooks";
 import {
@@ -90,6 +90,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
   const { userId } = use(params);
 
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,7 +102,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
   const tNotifications = useTranslations("users.profile.notifications");
   const tNotificationModes = useTranslations("admin.notifications.defaultMode");
   const tUserMenu = useTranslations("userMenu");
-  const { mutateAsync: updateUser } = useUpdateUser();
   const { data: globalSettings } = useFindUniqueAppConfig({
     where: { key: "notificationSettings" },
   });
@@ -211,22 +211,20 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
       // Build update data with only changed fields
       const updateData: any = {
         userPreferences: {
-          update: {
-            theme: data.theme,
-            locale: data.locale,
-            itemsPerPage: data.itemsPerPage,
-            dateFormat: data.dateFormat,
-            timeFormat: data.timeFormat,
-            timezone: data.timezone,
-            notificationMode: data.notificationMode,
-            emailNotifications:
-              data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
-              data.notificationMode === "IN_APP_EMAIL_DAILY",
-            inAppNotifications:
-              data.notificationMode === "IN_APP" ||
-              data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
-              data.notificationMode === "IN_APP_EMAIL_DAILY",
-          },
+          theme: data.theme,
+          locale: data.locale,
+          itemsPerPage: data.itemsPerPage,
+          dateFormat: data.dateFormat,
+          timeFormat: data.timeFormat,
+          timezone: data.timezone,
+          notificationMode: data.notificationMode,
+          emailNotifications:
+            data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
+            data.notificationMode === "IN_APP_EMAIL_DAILY",
+          inAppNotifications:
+            data.notificationMode === "IN_APP" ||
+            data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
+            data.notificationMode === "IN_APP_EMAIL_DAILY",
         },
       };
 
@@ -241,50 +239,35 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
         updateData.email = data.email;
       }
 
-      await updateUser({
-        where: { id: userId },
-        data: updateData,
+      // Use dedicated update API endpoint instead of ZenStack
+      // (ZenStack 2.21+ has issues with nested update operations)
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updateData),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update user");
+      }
+
+      // Refetch all queries to refresh UI with updated profile data
+      await queryClient.refetchQueries();
+
       setIsEditing(false);
-      window.location.reload();
     } catch (err: any) {
-      // Check for Prisma errors in different possible locations
-      const isPrismaError =
-        err.info?.prisma ||
-        err.code === "P2002" ||
-        err.message?.includes("Unique constraint");
-      const errorCode = err.info?.code || err.code;
-
-      if (isPrismaError && errorCode === "P2002") {
-        // Check which field caused the unique constraint violation
-        const target = err.info?.meta?.target || err.meta?.target;
-        // Check both the wrapper error message and the info.message
-        const prismaMessage = err.info?.message || "";
-
-        // The target might be an array or string, and might be the field name or a constraint name
-        const targetStr = Array.isArray(target)
-          ? target.join(",")
-          : String(target || "");
-
-        // Check for field names in the Prisma error message
-        // The message format is: "Unique constraint failed on the fields: (`fieldname`)"
-        if (
-          targetStr.includes("email") ||
-          targetStr.includes("User_email_key") ||
-          prismaMessage.includes("(`email`)") ||
-          prismaMessage.includes("fields: (`email`)")
-        ) {
-          form.setError("email", {
-            type: "custom",
-            message: tCommon("errors.emailExists"),
-          });
-        } else {
-          // Generic unique constraint error
-          form.setError("root", {
-            type: "custom",
-            message: tCommon("errors.duplicateValue"),
-          });
-        }
+      // Handle errors from the new API endpoint
+      if (err.message?.includes("Email already exists")) {
+        form.setError("email", {
+          type: "custom",
+          message: tCommon("errors.emailExists"),
+        });
+      } else if (err.message?.includes("Forbidden") || err.message?.includes("Unauthorized")) {
+        form.setError("root", {
+          type: "custom",
+          message: tCommon("errors.unknown"),
+        });
       } else {
         form.setError("root", {
           type: "custom",
@@ -552,6 +535,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                             {tCommon("cancel")}
                           </Button>
                           <Button
+                            data-testid="profile-submit-button"
                             onClick={form.handleSubmit(onSubmit)}
                             disabled={isSubmitting}
                           >

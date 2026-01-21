@@ -4,12 +4,13 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   usePagination,
   PaginationProvider,
 } from "~/lib/contexts/PaginationContext";
 
-import { useFindManyUser, useUpdateUser } from "~/lib/hooks";
+import { useFindManyUser } from "~/lib/hooks";
 import { DataTable } from "@/components/tables/DataTable";
 import { ExtendedUser, getColumns } from "./columns";
 import { useDebounce } from "@/components/Debounce";
@@ -40,6 +41,7 @@ function UserList() {
   const tCommon = useTranslations("common");
   const { data: session, status } = useSession();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const {
     currentPage,
     setCurrentPage,
@@ -67,20 +69,29 @@ function UserList() {
     typeof pageSize === "number" ? pageSize : totalItems;
   const skip = (currentPage - 1) * effectivePageSize;
 
-  const { mutateAsync: updateUser } = useUpdateUser();
-
   const handleToggle = useCallback(
     async (id: string, key: keyof ExtendedUser, value: boolean) => {
       try {
-        await updateUser({
-          where: { id },
-          data: { [key]: value },
+        // Use dedicated update API endpoint instead of ZenStack
+        // (ZenStack 2.21+ has issues with nested update operations)
+        const response = await fetch(`/api/users/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ [key]: value }),
         });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to update user");
+        }
+
+        // Refetch all queries to refresh the table data immediately
+        await queryClient.refetchQueries();
       } catch (error) {
         console.error(`Failed to update ${key} for User ${id}`, error);
       }
     },
-    [updateUser]
+    [queryClient]
   );
 
   const { data: totalFilteredUsers, isLoading: isTotalLoading } =
