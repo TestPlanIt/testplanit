@@ -2705,14 +2705,14 @@ export class ApiHelper {
 
   /**
    * Delete a user via API (soft delete)
+   * Uses dedicated update API endpoint instead of ZenStack
+   * (ZenStack 2.21+ has issues with nested update operations)
    */
   async deleteUser(userId: string): Promise<void> {
     await this.request
-      .patch(`${this.baseURL}/api/model/user/update`, {
-        data: {
-          where: { id: userId },
-          data: { isDeleted: true },
-        },
+      .patch(`${this.baseURL}/api/users/${userId}`, {
+        headers: { "Content-Type": "application/json" },
+        data: { isDeleted: true },
       })
       .catch(() => {});
   }

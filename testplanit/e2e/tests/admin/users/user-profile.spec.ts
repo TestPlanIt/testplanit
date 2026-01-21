@@ -16,12 +16,10 @@ test.describe("User Profile Management", () => {
     await page.goto("/en-US/admin/users");
     await page.waitForLoadState("networkidle");
 
-    // Find admin user in the list
-    const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
-    await expect(adminRow).toBeVisible();
-
-    // Click to view profile
-    await adminRow.click();
+    // Find and click the profile link for admin user
+    const profileLink = page.getByRole("link", { name: /Profile of Administrator Account/i });
+    await expect(profileLink).toBeVisible();
+    await profileLink.click();
 
     // Should navigate to profile page
     await page.waitForURL(/\/users\/profile\//);
@@ -34,9 +32,9 @@ test.describe("User Profile Management", () => {
     await page.goto("/en-US/admin/users");
     await page.waitForLoadState("networkidle");
 
-    // Find and click on admin user
-    const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
-    await adminRow.click();
+    // Find and click the profile link for admin user
+    const profileLink = page.getByRole("link", { name: /Profile of Administrator Account/i });
+    await profileLink.click();
 
     await page.waitForURL(/\/users\/profile\//);
 
@@ -77,8 +75,8 @@ test.describe("User Profile Management", () => {
     await page.goto("/en-US/admin/users");
     await page.waitForLoadState("networkidle");
 
-    const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
-    await adminRow.click();
+    const profileLink = page.getByRole("link", { name: /Profile of Administrator Account/i });
+    await profileLink.click();
     await page.waitForURL(/\/users\/profile\//);
 
     // Enter edit mode
@@ -113,8 +111,8 @@ test.describe("User Profile Management", () => {
     await page.goto("/en-US/admin/users");
     await page.waitForLoadState("networkidle");
 
-    const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
-    await adminRow.click();
+    const profileLink = page.getByRole("link", { name: /Profile of Administrator Account/i });
+    await profileLink.click();
     await page.waitForURL(/\/users\/profile\//);
 
     // Enter edit mode
@@ -161,12 +159,10 @@ test.describe("User Profile Management", () => {
       await page.goto("/en-US/admin/users");
       await page.waitForLoadState("networkidle");
 
-      // Find the test user
-      const userRow = page.locator('tr').filter({ hasText: testEmail });
-      await expect(userRow).toBeVisible();
-
-      // Click to view profile
-      await userRow.click();
+      // Find and click the test user's profile link
+      const profileLink = page.getByRole("link", { name: /Profile of Test User To Delete/i });
+      await expect(profileLink).toBeVisible();
+      await profileLink.click();
       await page.waitForURL(/\/users\/profile\//);
 
       // Look for delete button (might be in a dropdown or modal)
@@ -201,8 +197,8 @@ test.describe("User Profile Management", () => {
     await page.goto("/en-US/admin/users");
     await page.waitForLoadState("networkidle");
 
-    const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
-    await adminRow.click();
+    const profileLink = page.getByRole("link", { name: /Profile of Administrator Account/i });
+    await profileLink.click();
     await page.waitForURL(/\/users\/profile\//);
 
     // Enter edit mode
@@ -228,8 +224,8 @@ test.describe("User Profile Management", () => {
     await page.goto("/en-US/admin/users");
     await page.waitForLoadState("networkidle");
 
-    const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
-    await adminRow.click();
+    const profileLink = page.getByRole("link", { name: /Profile of Administrator Account/i });
+    await profileLink.click();
     await page.waitForURL(/\/users\/profile\//);
 
     // Enter edit mode
@@ -276,8 +272,8 @@ test.describe("User Profile Management", () => {
       await page.waitForLoadState("networkidle");
 
       // Find and view the test user
-      const userRow = page.locator('tr').filter({ hasText: testEmail });
-      await userRow.click();
+      const profileLink = page.getByRole("link", { name: /Profile of Persistence Test User/i });
+      await profileLink.click();
       await page.waitForURL(/\/users\/profile\//);
 
       // Enter edit mode to verify preferences
