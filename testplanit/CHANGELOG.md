@@ -1,3 +1,10 @@
+## [0.10.10](https://github.com/TestPlanIt/testplanit/compare/v0.10.9...v0.10.10) (2026-01-21)
+
+
+### Bug Fixes
+
+* enhance user profile link accessibility and update API usage ([fc01faf](https://github.com/TestPlanIt/testplanit/commit/fc01faf2992e7bdf994fb2dcb339bcbb80d68253))
+
 ## [0.10.9](https://github.com/TestPlanIt/testplanit/compare/v0.10.8...v0.10.9) (2026-01-21)
 
 
