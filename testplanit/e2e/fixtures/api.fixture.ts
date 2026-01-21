@@ -2619,4 +2619,135 @@ export class ApiHelper {
     }
     this.createdResultFieldIds = [];
   }
+
+  /**
+   * Create a user via API (for testing user management features)
+   * Note: Matches the structure used by the signup page
+   */
+  async createUser(options: {
+    name: string;
+    email: string;
+    password: string;
+    access?: string;
+    roleId?: number;
+    isActive?: boolean;
+  }): Promise<{ data: { id: string; name: string; email: string; access: string } }> {
+    // Use dedicated signup API endpoint instead of ZenStack
+    // (ZenStack 2.21+ has issues with unauthenticated nested creates)
+    const payload = {
+      name: options.name,
+      email: options.email,
+      password: options.password,
+      emailVerifToken: crypto.randomUUID(),
+      access: options.access || "USER",
+      roleId: options.roleId || 1,
+    };
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/auth/signup`,
+      {
+        data: payload,
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create user: ${error}`);
+    }
+
+    const result = await response.json();
+    return result;
+  }
+
+  /**
+   * Update a user via the dedicated update API endpoint
+   * (bypasses ZenStack to avoid nested operation issues)
+   */
+  async updateUser(options: {
+    userId: string;
+    data: {
+      name?: string;
+      email?: string;
+      isActive?: boolean;
+      isApi?: boolean;
+      isDeleted?: boolean;
+      image?: string | null;
+      access?: string;
+      roleId?: number;
+      userPreferences?: {
+        theme?: string;
+        locale?: string;
+        itemsPerPage?: string;
+        dateFormat?: string;
+        timeFormat?: string;
+        timezone?: string;
+        notificationMode?: string;
+        emailNotifications?: boolean;
+        inAppNotifications?: boolean;
+      };
+    };
+  }): Promise<{ data: any }> {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/users/${options.userId}`,
+      {
+        data: options.data,
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to update user: ${error}`);
+    }
+
+    const result = await response.json();
+    return result;
+  }
+
+  /**
+   * Delete a user via API (soft delete)
+   */
+  async deleteUser(userId: string): Promise<void> {
+    await this.request
+      .patch(`${this.baseURL}/api/model/user/update`, {
+        data: {
+          where: { id: userId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Create user preferences separately (for testing scenarios where user already exists)
+   */
+  async createUserPreferences(options: {
+    userId: string;
+    theme?: string;
+    locale?: string;
+    itemsPerPage?: string;
+  }): Promise<string> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/userPreferences/create`,
+      {
+        data: {
+          data: {
+            userId: options.userId,
+            theme: options.theme || "Light",
+            locale: options.locale || "en_US",
+            itemsPerPage: options.itemsPerPage || "P10",
+            dateFormat: "MM_DD_YYYY_DASH",
+            timeFormat: "HH_MM_A",
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create user preferences: ${error}`);
+    }
+
+    const result = await response.json();
+    return result.data.id;
+  }
 }

@@ -1579,9 +1579,10 @@ async function main() {
     await seedCoreData();
 
     // Always create magic link SSO provider for production environments
+    // But keep it disabled by default to prevent unwanted email sending
     if (process.env.NODE_ENV === "production") {
       console.log("Seeding production SSO provider...");
-      // Create Magic Link provider (enabled by default for production)
+      // Create Magic Link provider (disabled by default to prevent unwanted emails)
       const magicLinkProvider = await prisma.ssoProvider.upsert({
         where: {
           id: "magic-link-provider",
@@ -1589,21 +1590,21 @@ async function main() {
         update: {
           name: "Magic Link",
           type: "MAGIC_LINK",
-          enabled: true,
-          forceSso: true, // Force SSO-only authentication (magic link only)
+          enabled: false, // Disabled by default - must be manually enabled
+          forceSso: false, // Allow both SSO and regular signup
           config: {},
         },
         create: {
           id: "magic-link-provider",
           name: "Magic Link",
           type: "MAGIC_LINK",
-          enabled: true,
-          forceSso: true, // Force SSO-only authentication (magic link only)
+          enabled: false, // Disabled by default - must be manually enabled
+          forceSso: false, // Allow both SSO and regular signup
           config: {},
         },
       });
       console.log(
-        `✓ Created Magic Link provider with forceSso=true (magic link only authentication)`
+        `✓ Created Magic Link provider (disabled by default - must be manually enabled in admin settings)`
       );
     }
 

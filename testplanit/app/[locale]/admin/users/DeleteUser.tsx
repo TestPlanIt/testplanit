@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useUpdateUser } from "~/lib/hooks";
 import { User } from "@prisma/client";
 import { useForm } from "react-hook-form";
 
@@ -27,7 +26,6 @@ export function DeleteUserModal({ user }: DeleteUserModalProps) {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { mutateAsync: updateUser } = useUpdateUser();
 
   const handleCancel = () => setOpen(false);
 
@@ -39,7 +37,19 @@ export function DeleteUserModal({ user }: DeleteUserModalProps) {
   async function onSubmit() {
     setIsSubmitting(true);
     try {
-      await updateUser({ where: { id: user.id }, data: { isDeleted: true } });
+      // Use dedicated update API endpoint instead of ZenStack
+      // (ZenStack 2.21+ has issues with nested update operations)
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isDeleted: true }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete user");
+      }
+
       setOpen(false);
       setIsSubmitting(false);
     } catch (err: any) {

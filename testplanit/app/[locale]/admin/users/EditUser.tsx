@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  useUpdateUser,
   useCreateManyProjectAssignment,
   useFindManyProjects,
   useDeleteManyProjectAssignment,
@@ -69,6 +69,7 @@ export function EditUserModal({ user }: EditUserModalProps) {
   const t = useTranslations("admin.users.edit");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -98,7 +99,6 @@ export function EditUserModal({ user }: EditUserModalProps) {
   >;
 
   // Hooks for API calls
-  const { mutateAsync: updateUser } = useUpdateUser();
   const { mutateAsync: createManyProjectAssignment } =
     useCreateManyProjectAssignment();
   const { mutateAsync: deleteManyProjectAssignment } =
@@ -210,10 +210,18 @@ export function EditUserModal({ user }: EditUserModalProps) {
       };
 
       // Update user core data
-      await updateUser({
-        where: { id: user.id },
-        data: apiPayload,
+      // Use dedicated update API endpoint instead of ZenStack
+      // (ZenStack 2.21+ has issues with nested update operations)
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(apiPayload),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update user");
+      }
 
       // --- Handle Project Assignments ---  (No change needed here, logic seems correct)
       const initialProjectIds = new Set(user.projects.map((p) => p.projectId));
@@ -272,6 +280,8 @@ export function EditUserModal({ user }: EditUserModalProps) {
       }
 
       setOpen(false);
+      // Refetch all user queries to refresh the table data immediately
+      await queryClient.refetchQueries();
       setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
@@ -602,7 +612,7 @@ export function EditUserModal({ user }: EditUserModalProps) {
               <Button variant="outline" type="button" onClick={handleCancel}>
                 {tCommon("cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} data-testid="edit-user-submit-button">
                 {isSubmitting
                   ? tCommon("actions.submitting")
                   : tCommon("actions.submit")}
