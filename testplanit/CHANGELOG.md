@@ -1,3 +1,10 @@
+## [0.10.9](https://github.com/TestPlanIt/testplanit/compare/v0.10.8...v0.10.9) (2026-01-21)
+
+
+### Bug Fixes
+
+* streamline query refetching in user management components ([e859352](https://github.com/TestPlanIt/testplanit/commit/e859352759901394429f54b666816d55d775c27f))
+
 ## [0.10.8](https://github.com/TestPlanIt/testplanit/compare/v0.10.7...v0.10.8) (2026-01-20)
 
 
