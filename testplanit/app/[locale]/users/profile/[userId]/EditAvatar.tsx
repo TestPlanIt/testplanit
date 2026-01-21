@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { User } from "@prisma/client";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -33,6 +34,7 @@ export function EditAvatarModal({ user }: EditAvatarModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const t = useTranslations("users.avatar");
   const tCommon = useTranslations("common");
   const handleCancel = () => setOpen(false);
@@ -66,6 +68,9 @@ export function EditAvatarModal({ user }: EditAvatarModalProps) {
         const error = await response.json();
         throw new Error(error.error || "Failed to update avatar");
       }
+
+      // Refetch all queries to refresh UI with new avatar
+      await queryClient.refetchQueries();
 
       setOpen(false);
       setIsSubmitting(false);

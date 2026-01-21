@@ -85,7 +85,7 @@ function UserList() {
           throw new Error(error.error || "Failed to update user");
         }
 
-        // Refetch all user queries to refresh the table data immediately
+        // Refetch all queries to refresh the table data immediately
         await queryClient.refetchQueries();
       } catch (error) {
         console.error(`Failed to update ${key} for User ${id}`, error);

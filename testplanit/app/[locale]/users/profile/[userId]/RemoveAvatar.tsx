@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { User } from "@prisma/client";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ interface RemoveAvatarProps {
 export function RemoveAvatar({ user }: RemoveAvatarProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [openPopover, setOpenPopover] = useState(false);
+  const queryClient = useQueryClient();
   const t = useTranslations("users.avatar");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -38,6 +40,9 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
         const error = await response.json();
         throw new Error(error.error || "Failed to remove avatar");
       }
+
+      // Refetch all queries to refresh UI with removed avatar
+      await queryClient.refetchQueries();
     } catch (err: any) {
       console.error(err);
     } finally {

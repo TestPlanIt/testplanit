@@ -280,7 +280,7 @@ export function EditUserModal({ user }: EditUserModalProps) {
       }
 
       setOpen(false);
-      // Refetch all user queries to refresh the table data immediately
+      // Refetch all queries to refresh the table data immediately
       await queryClient.refetchQueries();
       setIsSubmitting(false);
     } catch (err: any) {

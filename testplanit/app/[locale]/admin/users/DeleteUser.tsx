@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { User } from "@prisma/client";
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ interface DeleteUserModalProps {
 
 export function DeleteUserModal({ user }: DeleteUserModalProps) {
   const t = useTranslations();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,6 +51,9 @@ export function DeleteUserModal({ user }: DeleteUserModalProps) {
         const error = await response.json();
         throw new Error(error.error || "Failed to delete user");
       }
+
+      // Refetch all queries to refresh the table with soft-deleted user removed
+      await queryClient.refetchQueries();
 
       setOpen(false);
       setIsSubmitting(false);

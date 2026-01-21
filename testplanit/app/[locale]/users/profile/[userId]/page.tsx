@@ -5,6 +5,7 @@ import { useEffect, useState, use, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useFindFirstUser,
   useFindUniqueAppConfig,
@@ -89,6 +90,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
   const { userId } = use(params);
 
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -250,8 +252,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
         throw new Error(error.error || "Failed to update user");
       }
 
+      // Refetch all queries to refresh UI with updated profile data
+      await queryClient.refetchQueries();
+
       setIsEditing(false);
-      window.location.reload();
     } catch (err: any) {
       // Handle errors from the new API endpoint
       if (err.message?.includes("Email already exists")) {
