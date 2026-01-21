@@ -69,11 +69,11 @@ export function EditAvatarModal({ user }: EditAvatarModalProps) {
         throw new Error(error.error || "Failed to update avatar");
       }
 
-      // Refetch all queries to refresh UI with new avatar
-      await queryClient.refetchQueries();
-
       setOpen(false);
       setIsSubmitting(false);
+
+      // Refetch all queries to refresh UI with new avatar
+      queryClient.refetchQueries();
     } catch (err: any) {
       form.setError("root", {
         type: "custom",

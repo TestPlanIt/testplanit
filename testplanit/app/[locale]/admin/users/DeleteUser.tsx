@@ -52,11 +52,11 @@ export function DeleteUserModal({ user }: DeleteUserModalProps) {
         throw new Error(error.error || "Failed to delete user");
       }
 
-      // Refetch all queries to refresh the table with soft-deleted user removed
-      await queryClient.refetchQueries();
-
       setOpen(false);
       setIsSubmitting(false);
+
+      // Refetch all queries to refresh the table with soft-deleted user removed
+      queryClient.refetchQueries();
     } catch (err: any) {
       form.setError("root", {
         type: "custom",

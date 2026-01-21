@@ -252,10 +252,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
         throw new Error(error.error || "Failed to update user");
       }
 
-      // Refetch all queries to refresh UI with updated profile data
-      await queryClient.refetchQueries();
-
       setIsEditing(false);
+
+      // Refetch all queries to refresh UI with updated profile data
+      // Run this after closing the edit mode so the UI doesn't stay in submitting state
+      queryClient.refetchQueries();
     } catch (err: any) {
       // Handle errors from the new API endpoint
       if (err.message?.includes("Email already exists")) {

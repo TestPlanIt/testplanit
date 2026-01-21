@@ -42,7 +42,7 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
       }
 
       // Refetch all queries to refresh UI with removed avatar
-      await queryClient.refetchQueries();
+      queryClient.refetchQueries();
     } catch (err: any) {
       console.error(err);
     } finally {

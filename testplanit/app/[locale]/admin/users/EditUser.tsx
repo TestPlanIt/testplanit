@@ -280,9 +280,10 @@ export function EditUserModal({ user }: EditUserModalProps) {
       }
 
       setOpen(false);
-      // Refetch all queries to refresh the table data immediately
-      await queryClient.refetchQueries();
       setIsSubmitting(false);
+
+      // Refetch all queries to refresh the table data immediately
+      queryClient.refetchQueries();
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
