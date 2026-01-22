@@ -1,3 +1,10 @@
+## [0.10.11](https://github.com/TestPlanIt/testplanit/compare/v0.10.10...v0.10.11) (2026-01-22)
+
+
+### Bug Fixes
+
+* resolve Dependabot security vulnerabilities ([9a17d3f](https://github.com/TestPlanIt/testplanit/commit/9a17d3f8a6926014d7796365d2fed74432a472e2)), closes [#96](https://github.com/TestPlanIt/testplanit/issues/96) [#94](https://github.com/TestPlanIt/testplanit/issues/94) [#99](https://github.com/TestPlanIt/testplanit/issues/99) [#98](https://github.com/TestPlanIt/testplanit/issues/98) [#102-107](https://github.com/TestPlanIt/testplanit/issues/102-107)
+
 ## [0.10.10](https://github.com/TestPlanIt/testplanit/compare/v0.10.9...v0.10.10) (2026-01-21)
 
 
