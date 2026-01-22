@@ -676,9 +676,10 @@ test.describe("View Selector - Repository Views", () => {
       });
       await page.waitForLoadState("networkidle");
 
-      // Both options should now be selected
-      await expect(firstOption).toHaveClass(/bg-primary/);
-      await expect(secondOption).toHaveClass(/bg-primary/);
+      // Both options should now be selected - check by aria-selected or presence of check icon
+      // The selected state is now shown via an icon, not bg-primary class
+      await expect(firstOption).toHaveAttribute("aria-selected", "true");
+      await expect(secondOption).toHaveAttribute("aria-selected", "true");
     } else {
       test.skip();
     }

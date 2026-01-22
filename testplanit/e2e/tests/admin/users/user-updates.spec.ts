@@ -25,7 +25,7 @@ test.describe("User Update Operations", () => {
       await page.waitForLoadState("networkidle");
 
       // Find admin user row by email and click profile link
-      const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
+      const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
       await expect(adminRow).toBeVisible();
       const adminProfileLink = adminRow.locator('a').first();
       await adminProfileLink.click();
@@ -88,7 +88,7 @@ test.describe("User Update Operations", () => {
       await page.waitForLoadState("networkidle");
 
       // Find admin user row by email and click profile link
-      const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
+      const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
       await expect(adminRow).toBeVisible();
       const adminProfileLink = adminRow.locator('a').first();
       await adminProfileLink.click();
@@ -176,7 +176,7 @@ test.describe("User Update Operations", () => {
       await page.waitForLoadState("networkidle");
 
       // Find admin user row by email and click profile link
-      const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
+      const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
       await expect(adminRow).toBeVisible();
       const adminProfileLink = adminRow.locator('a').first();
       await adminProfileLink.click();

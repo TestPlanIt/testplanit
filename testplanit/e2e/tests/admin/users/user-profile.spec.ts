@@ -12,37 +12,21 @@ import { test, expect } from "../../../fixtures";
  */
 
 test.describe("User Profile Management", () => {
-  test("Admin can view user profile", async ({ page }) => {
-    await page.goto("/en-US/admin/users");
+  test("Admin can view user profile", async ({ page, adminUserId }) => {
+    // Navigate directly to admin user's profile page (faster and more reliable)
+    await page.goto(`/en-US/users/profile/${adminUserId}`);
     await page.waitForLoadState("networkidle");
 
-    // Find the admin user row by name (Administrator Account with star icon)
-    const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
-    await expect(adminRow).toBeVisible();
-
-    // Click the profile link within that row
-    const profileLink = adminRow.locator('a').first();
-    await profileLink.click();
-
-    // Should navigate to profile page
-    await page.waitForURL(/\/users\/profile\//);
     // Verify we're on the profile page by checking for the Edit Profile button
     await expect(page.getByRole("button", { name: /edit profile|edit/i })).toBeVisible();
   });
 
-  test("User can edit their own email address", async ({ page }) => {
+  test("User can edit their own email address", async ({ page, adminUserId }) => {
     const newEmail = `updated-${Date.now()}@example.com`;
 
-    await page.goto("/en-US/admin/users");
+    // Navigate directly to admin user's profile page (faster and more reliable)
+    await page.goto(`/en-US/users/profile/${adminUserId}`);
     await page.waitForLoadState("networkidle");
-
-    // Find and click the profile link for admin user
-    // Find the admin user row by name (Administrator Account)
-    const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
-    const profileLink = adminRow.locator('a').first();
-    await profileLink.click();
-
-    await page.waitForURL(/\/users\/profile\//);
 
     // Click edit button
     const editButton = page.getByRole("button", { name: /edit/i });
@@ -73,6 +57,7 @@ test.describe("User Profile Management", () => {
 
     // Revert email back for cleanup
     await editButton.click();
+
     const submitButtonRevert = page.getByTestId("profile-submit-button");
     await expect(submitButtonRevert).toBeVisible();
     const emailInputRevert = page.getByTestId("profile-email-input");
@@ -94,17 +79,12 @@ test.describe("User Profile Management", () => {
     await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test("User can update their display name", async ({ page }) => {
+  test("User can update their display name", async ({ page, adminUserId }) => {
     const newName = `Updated Name ${Date.now()}`;
 
-    await page.goto("/en-US/admin/users");
+    // Navigate directly to admin user's profile page (faster and more reliable)
+    await page.goto(`/en-US/users/profile/${adminUserId}`);
     await page.waitForLoadState("networkidle");
-
-    // Find the admin user row by name (Administrator Account)
-    const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
-    const profileLink = adminRow.locator('a').first();
-    await profileLink.click();
-    await page.waitForURL(/\/users\/profile\//);
 
     // Enter edit mode
     const editButton = page.getByRole("button", { name: /edit/i });
@@ -132,6 +112,7 @@ test.describe("User Profile Management", () => {
 
     // Revert name
     await editButton.click();
+
     submitButton = page.getByTestId("profile-submit-button");
     await expect(submitButton).toBeVisible();
     const nameInputRevert = page.getByTestId("profile-name-input");
@@ -153,15 +134,10 @@ test.describe("User Profile Management", () => {
     await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
   });
 
-  test("User can change theme preference", async ({ page }) => {
-    await page.goto("/en-US/admin/users");
+  test("User can change theme preference", async ({ page, adminUserId }) => {
+    // Navigate directly to admin user's profile page (faster and more reliable)
+    await page.goto(`/en-US/users/profile/${adminUserId}`);
     await page.waitForLoadState("networkidle");
-
-    // Find the admin user row by star icon
-    const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
-    const profileLink = adminRow.locator('a').first();
-    await profileLink.click();
-    await page.waitForURL(/\/users\/profile\//);
 
     // Enter edit mode
     const editButton = page.getByRole("button", { name: /edit/i });
@@ -174,7 +150,7 @@ test.describe("User Profile Management", () => {
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
     // Find and click the Theme field trigger button
-    const themeButton = page.getByRole("button", { name: /purple|theme/i }).first();
+    const themeButton = page.getByTestId("profile-theme-select");
     await expect(themeButton).toBeVisible({ timeout: 5000 });
     await themeButton.click();
 
@@ -252,15 +228,10 @@ test.describe("User Profile Management", () => {
     }
   });
 
-  test("User can change items per page preference", async ({ page }) => {
-    await page.goto("/en-US/admin/users");
+  test("User can change items per page preference", async ({ page, adminUserId }) => {
+    // Navigate directly to admin user's profile page (faster and more reliable)
+    await page.goto(`/en-US/users/profile/${adminUserId}`);
     await page.waitForLoadState("networkidle");
-
-    // Find the admin user row by email
-    const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
-    const profileLink = adminRow.locator('a').first();
-    await profileLink.click();
-    await page.waitForURL(/\/users\/profile\//);
 
     // Enter edit mode
     const editButton = page.getByRole("button", { name: /edit/i });
@@ -282,15 +253,10 @@ test.describe("User Profile Management", () => {
     }
   });
 
-  test("Cannot save profile with invalid email", async ({ page }) => {
-    await page.goto("/en-US/admin/users");
+  test("Cannot save profile with invalid email", async ({ page, adminUserId }) => {
+    // Navigate directly to admin user's profile page (faster and more reliable)
+    await page.goto(`/en-US/users/profile/${adminUserId}`);
     await page.waitForLoadState("networkidle");
-
-    // Find the admin user row by email
-    const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
-    const profileLink = adminRow.locator('a').first();
-    await profileLink.click();
-    await page.waitForURL(/\/users\/profile\//);
 
     // Enter edit mode
     const editButton = page.getByRole("button", { name: /edit/i });

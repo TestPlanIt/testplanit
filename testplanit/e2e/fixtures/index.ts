@@ -9,6 +9,8 @@ export interface TestFixtures {
   api: ApiHelper;
   /** Default project ID to use for tests */
   projectId: number;
+  /** Admin user ID for tests that need to navigate to admin profile */
+  adminUserId: string;
 }
 
 /**
@@ -28,6 +30,32 @@ export const test = base.extend<TestFixtures>({
 
     // Cleanup after test
     await api.cleanup();
+  },
+
+  // Admin user ID fixture - fetches the admin user's ID from the API
+  adminUserId: async ({ request, baseURL }, use) => {
+    const response = await request.get(
+      `${baseURL || "http://localhost:3000"}/api/model/user/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { email: "admin@example.com" },
+            select: { id: true },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      throw new Error("Failed to fetch admin user ID");
+    }
+
+    const result = await response.json();
+    if (!result.data) {
+      throw new Error("Admin user not found");
+    }
+
+    await use(result.data.id);
   },
 });
 

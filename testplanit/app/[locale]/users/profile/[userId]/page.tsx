@@ -275,6 +275,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
           message: tCommon("errors.unknown"),
         });
       }
+    } finally {
+      // Always reset submitting state, whether success or error
       setIsSubmitting(false);
     }
   }
@@ -887,7 +889,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                         }}
                                         value={field.value}
                                       >
-                                        <SelectTrigger>
+                                        <SelectTrigger data-testid="profile-theme-select">
                                           <SelectValue
                                             placeholder={tCommon(
                                               "fields.theme"
