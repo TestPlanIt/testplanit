@@ -2631,6 +2631,7 @@ export class ApiHelper {
     access?: string;
     roleId?: number;
     isActive?: boolean;
+    emailVerified?: boolean; // Set to false only when testing email verification
   }): Promise<{ data: { id: string; name: string; email: string; access: string } }> {
     // Use dedicated signup API endpoint instead of ZenStack
     // (ZenStack 2.21+ has issues with unauthenticated nested creates)
@@ -2656,6 +2657,17 @@ export class ApiHelper {
     }
 
     const result = await response.json();
+
+    // Verify email by default for test users (unless explicitly set to false)
+    if (options.emailVerified !== false) {
+      await this.updateUser({
+        userId: result.data.id,
+        data: {
+          emailVerified: new Date(),
+        },
+      });
+    }
+
     return result;
   }
 
@@ -2668,6 +2680,7 @@ export class ApiHelper {
     data: {
       name?: string;
       email?: string;
+      emailVerified?: Date;
       isActive?: boolean;
       isApi?: boolean;
       isDeleted?: boolean;
