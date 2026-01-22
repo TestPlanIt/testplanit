@@ -457,6 +457,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 <FormControl>
                                   <Input
                                     {...field}
+                                    data-testid="profile-name-input"
                                     className="text-2xl font-bold"
                                   />
                                 </FormControl>
@@ -477,6 +478,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                   <Input
                                     {...field}
                                     type="email"
+                                    data-testid="profile-email-input"
                                     disabled={user?.authMethod === "SSO"}
                                     className={
                                       user?.authMethod === "SSO"

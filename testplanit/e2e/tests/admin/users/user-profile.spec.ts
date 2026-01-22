@@ -16,14 +16,18 @@ test.describe("User Profile Management", () => {
     await page.goto("/en-US/admin/users");
     await page.waitForLoadState("networkidle");
 
-    // Find and click the profile link for admin user
-    const profileLink = page.getByRole("link", { name: /Profile of Administrator Account/i });
-    await expect(profileLink).toBeVisible();
+    // Find the admin user row by name (Administrator Account with star icon)
+    const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
+    await expect(adminRow).toBeVisible();
+
+    // Click the profile link within that row
+    const profileLink = adminRow.locator('a').first();
     await profileLink.click();
 
     // Should navigate to profile page
     await page.waitForURL(/\/users\/profile\//);
-    await expect(page.getByRole("heading", { name: /profile/i })).toBeVisible();
+    // Verify we're on the profile page by checking for the Edit Profile button
+    await expect(page.getByRole("button", { name: /edit profile|edit/i })).toBeVisible();
   });
 
   test("User can edit their own email address", async ({ page }) => {
@@ -33,7 +37,9 @@ test.describe("User Profile Management", () => {
     await page.waitForLoadState("networkidle");
 
     // Find and click the profile link for admin user
-    const profileLink = page.getByRole("link", { name: /Profile of Administrator Account/i });
+    // Find the admin user row by name (Administrator Account)
+    const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
+    const profileLink = adminRow.locator('a').first();
     await profileLink.click();
 
     await page.waitForURL(/\/users\/profile\//);
@@ -42,16 +48,22 @@ test.describe("User Profile Management", () => {
     const editButton = page.getByRole("button", { name: /edit/i });
     await editButton.click();
 
-    // Wait for edit mode
-    await expect(page.getByRole("button", { name: /save|update/i })).toBeVisible();
+    // Wait for edit mode - use test ID for submit button
+    const submitButton = page.getByTestId("profile-submit-button");
+    await expect(submitButton).toBeVisible();
 
-    // Update email
-    const emailInput = page.getByLabel(/email/i);
+    // Update email using test ID
+    const emailInput = page.getByTestId("profile-email-input");
+    const originalEmail = await emailInput.inputValue();
     await emailInput.clear();
     await emailInput.fill(newEmail);
 
+    // Wait for form validation to pass
+    await page.waitForTimeout(500);
+
     // Save changes
-    await page.getByRole("button", { name: /save|update/i }).click();
+    await expect(submitButton).toBeEnabled();
+    await submitButton.click();
 
     // Wait for save to complete
     await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
@@ -61,11 +73,24 @@ test.describe("User Profile Management", () => {
 
     // Revert email back for cleanup
     await editButton.click();
-    await expect(page.getByRole("button", { name: /save|update/i })).toBeVisible();
-    const emailInputRevert = page.getByLabel(/email/i);
+    const submitButtonRevert = page.getByTestId("profile-submit-button");
+    await expect(submitButtonRevert).toBeVisible();
+    const emailInputRevert = page.getByTestId("profile-email-input");
+
+    // Clear and fill with a different value first to ensure form sees a change
     await emailInputRevert.clear();
-    await emailInputRevert.fill("admin@example.com");
-    await page.getByRole("button", { name: /save|update/i }).click();
+    await emailInputRevert.fill("temp@example.com");
+    await page.waitForTimeout(300);
+
+    // Now fill with the original value
+    await emailInputRevert.clear();
+    await emailInputRevert.fill(originalEmail);
+
+    // Wait for form validation to pass
+    await page.waitForTimeout(500);
+
+    await expect(submitButtonRevert).toBeEnabled({ timeout: 5000 });
+    await submitButtonRevert.click();
     await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
   });
 
@@ -75,35 +100,56 @@ test.describe("User Profile Management", () => {
     await page.goto("/en-US/admin/users");
     await page.waitForLoadState("networkidle");
 
-    const profileLink = page.getByRole("link", { name: /Profile of Administrator Account/i });
+    // Find the admin user row by name (Administrator Account)
+    const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
+    const profileLink = adminRow.locator('a').first();
     await profileLink.click();
     await page.waitForURL(/\/users\/profile\//);
 
     // Enter edit mode
     const editButton = page.getByRole("button", { name: /edit/i });
     await editButton.click();
-    await expect(page.getByRole("button", { name: /save|update/i })).toBeVisible();
 
-    // Update name
-    const nameInput = page.getByLabel(/^name/i);
+    let submitButton = page.getByTestId("profile-submit-button");
+    await expect(submitButton).toBeVisible();
+
+    // Update name using test ID
+    const nameInput = page.getByTestId("profile-name-input");
     const originalName = await nameInput.inputValue();
     await nameInput.clear();
     await nameInput.fill(newName);
 
+    // Wait for form validation to pass
+    await page.waitForTimeout(500);
+
     // Save
-    await page.getByRole("button", { name: /save|update/i }).click();
+    await expect(submitButton).toBeEnabled();
+    await submitButton.click();
     await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
 
-    // Verify name was updated
-    await expect(page.getByText(newName)).toBeVisible();
+    // Verify name was updated - use .first() to handle multiple occurrences
+    await expect(page.getByText(newName).first()).toBeVisible();
 
     // Revert name
     await editButton.click();
-    await expect(page.getByRole("button", { name: /save|update/i })).toBeVisible();
-    const nameInputRevert = page.getByLabel(/^name/i);
+    submitButton = page.getByTestId("profile-submit-button");
+    await expect(submitButton).toBeVisible();
+    const nameInputRevert = page.getByTestId("profile-name-input");
+
+    // Clear and fill with a different value first to ensure form sees a change
+    await nameInputRevert.clear();
+    await nameInputRevert.fill("Temp Name");
+    await page.waitForTimeout(300);
+
+    // Now fill with the original value
     await nameInputRevert.clear();
     await nameInputRevert.fill(originalName);
-    await page.getByRole("button", { name: /save|update/i }).click();
+
+    // Wait for form validation to pass
+    await page.waitForTimeout(500);
+
+    await expect(submitButton).toBeEnabled({ timeout: 5000 });
+    await submitButton.click();
     await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
   });
 
@@ -111,29 +157,42 @@ test.describe("User Profile Management", () => {
     await page.goto("/en-US/admin/users");
     await page.waitForLoadState("networkidle");
 
-    const profileLink = page.getByRole("link", { name: /Profile of Administrator Account/i });
+    // Find the admin user row by star icon
+    const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
+    const profileLink = adminRow.locator('a').first();
     await profileLink.click();
     await page.waitForURL(/\/users\/profile\//);
 
     // Enter edit mode
     const editButton = page.getByRole("button", { name: /edit/i });
     await editButton.click();
-    await expect(page.getByRole("button", { name: /save|update/i })).toBeVisible();
 
-    // Find theme selector
-    const themeSelect = page.getByLabel(/theme/i);
-    await themeSelect.click();
+    let submitButton = page.getByTestId("profile-submit-button");
+    await expect(submitButton).toBeVisible();
 
-    // Select Dark theme
+    // Scroll down to preferences section
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+    // Find and click the Theme field trigger button
+    const themeButton = page.getByRole("button", { name: /purple|theme/i }).first();
+    await expect(themeButton).toBeVisible({ timeout: 5000 });
+    await themeButton.click();
+
+    // Select Dark theme from dropdown
     await page.getByRole("option", { name: /dark/i }).click();
 
+    // Wait for selection
+    await page.waitForTimeout(300);
+
     // Save
-    await page.getByRole("button", { name: /save|update/i }).click();
+    await expect(submitButton).toBeEnabled({ timeout: 5000 });
+    await submitButton.click();
     await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
 
-    // Verify preference was saved by checking if we can re-enter edit mode and see the value
+    // Verify preference was saved by checking if we can re-enter edit mode
     await editButton.click();
-    await expect(page.getByRole("button", { name: /save|update/i })).toBeVisible();
+    submitButton = page.getByTestId("profile-submit-button");
+    await expect(submitButton).toBeVisible();
 
     // Cancel without saving
     const cancelButton = page.getByRole("button", { name: /cancel/i });
@@ -197,14 +256,17 @@ test.describe("User Profile Management", () => {
     await page.goto("/en-US/admin/users");
     await page.waitForLoadState("networkidle");
 
-    const profileLink = page.getByRole("link", { name: /Profile of Administrator Account/i });
+    // Find the admin user row by email
+    const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
+    const profileLink = adminRow.locator('a').first();
     await profileLink.click();
     await page.waitForURL(/\/users\/profile\//);
 
     // Enter edit mode
     const editButton = page.getByRole("button", { name: /edit/i });
     await editButton.click();
-    await expect(page.getByRole("button", { name: /save|update/i })).toBeVisible();
+    const submitButton = page.getByTestId("profile-submit-button");
+    await expect(submitButton).toBeVisible();
 
     // Find items per page selector
     const itemsSelect = page.getByLabel(/items.*per.*page|page.*size/i);
@@ -215,7 +277,7 @@ test.describe("User Profile Management", () => {
       await page.getByRole("option", { name: /25|50/i }).first().click();
 
       // Save
-      await page.getByRole("button", { name: /save|update/i }).click();
+      await submitButton.click();
       await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
     }
   });
@@ -224,22 +286,25 @@ test.describe("User Profile Management", () => {
     await page.goto("/en-US/admin/users");
     await page.waitForLoadState("networkidle");
 
-    const profileLink = page.getByRole("link", { name: /Profile of Administrator Account/i });
+    // Find the admin user row by email
+    const adminRow = page.locator('tr').filter({ hasText: 'Administrator Account' });
+    const profileLink = adminRow.locator('a').first();
     await profileLink.click();
     await page.waitForURL(/\/users\/profile\//);
 
     // Enter edit mode
     const editButton = page.getByRole("button", { name: /edit/i });
     await editButton.click();
-    await expect(page.getByRole("button", { name: /save|update/i })).toBeVisible();
+    const submitButton = page.getByTestId("profile-submit-button");
+    await expect(submitButton).toBeVisible();
 
-    // Enter invalid email
-    const emailInput = page.getByLabel(/email/i);
+    // Enter invalid email using test ID
+    const emailInput = page.getByTestId("profile-email-input");
     await emailInput.clear();
     await emailInput.fill("invalid-email");
 
     // Try to save
-    await page.getByRole("button", { name: /save|update/i }).click();
+    await submitButton.click();
 
     // Should show validation error
     await expect(
@@ -260,11 +325,16 @@ test.describe("User Profile Management", () => {
     });
     const userId = userResult.data.id;
 
-    await api.createUserPreferences({
+    // Update user preferences (user already has default preferences from signup)
+    await api.updateUser({
       userId: userId,
-      theme: "Dark",
-      locale: "en_US",
-      itemsPerPage: "P25",
+      data: {
+        userPreferences: {
+          theme: "Dark",
+          locale: "en_US",
+          itemsPerPage: "P25",
+        },
+      },
     });
 
     try {
@@ -279,7 +349,8 @@ test.describe("User Profile Management", () => {
       // Enter edit mode to verify preferences
       const editButton = page.getByRole("button", { name: /edit/i });
       await editButton.click();
-      await expect(page.getByRole("button", { name: /save|update/i })).toBeVisible();
+      const submitButton = page.getByTestId("profile-submit-button");
+    await expect(submitButton).toBeVisible();
 
       // Verify theme preference is Dark
       const themeValue = page.getByLabel(/theme/i);

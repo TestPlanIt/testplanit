@@ -282,12 +282,16 @@ test.describe("Issues", () => {
       (el as HTMLElement).click();
     });
 
+    // Wait for the column to be hidden (UI should update immediately)
+    await page.waitForTimeout(500);
+
     // Close the popover by clicking outside
     await page.keyboard.press('Escape');
     await page.waitForLoadState('networkidle');
 
-    // Verify Issues column is now hidden
-    await expect(issuesColumnHeader).not.toBeVisible({ timeout: 5000 });
+    // Verify Issues column is now hidden - need to create new locator since table may have re-rendered
+    const hiddenIssuesColumn = page.locator("table").first().locator('th').filter({ hasText: 'Issues' });
+    await expect(hiddenIssuesColumn).not.toBeVisible({ timeout: 5000 });
   });
 
   test("Issues Section Shows Loading State", async ({ api, page }) => {

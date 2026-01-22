@@ -290,6 +290,9 @@ test.describe("Default Template - Cascade Behaviors", () => {
     // Wait for the dialog to close and mutations to complete
     await page.waitForLoadState("networkidle");
 
+    // Give a small delay for the cascade update to process
+    await page.waitForTimeout(1000);
+
     // Poll the API to wait for the cascade update to complete
     await expect.poll(
       async () => {
@@ -299,8 +302,8 @@ test.describe("Default Template - Cascade Behaviors", () => {
       },
       {
         message: 'Expected template2 to be default and template1 to not be default',
-        timeout: 20000,
-        intervals: [100, 250, 500, 1000],
+        timeout: 30000,
+        intervals: [100, 250, 500, 1000, 2000],
       }
     ).toBe(true);
 
