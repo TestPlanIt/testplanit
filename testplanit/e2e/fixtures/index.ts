@@ -39,23 +39,32 @@ export const test = base.extend<TestFixtures>({
       {
         params: {
           q: JSON.stringify({
-            where: { email: "admin@example.com" },
+            where: {
+              access: "ADMIN",
+              isDeleted: false,
+            },
             select: { id: true },
+            orderBy: { createdAt: "asc" }, // Get the first admin user created
           }),
         },
       }
     );
 
     if (!response.ok()) {
-      throw new Error("Failed to fetch admin user ID");
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch admin user ID: ${response.status} - ${errorText}`);
     }
 
     const result = await response.json();
-    if (!result.data) {
-      throw new Error("Admin user not found");
+
+    // The API may return { data: {...} } or { data: null } or just the data directly
+    const userId = result.data?.id || result.id;
+
+    if (!userId) {
+      throw new Error(`No admin user found in database. Response: ${JSON.stringify(result)}`);
     }
 
-    await use(result.data.id);
+    await use(userId);
   },
 });
 

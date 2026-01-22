@@ -278,50 +278,104 @@ test.describe("User Profile Management", () => {
     ).toBeVisible({ timeout: 5000 });
   });
 
-  test("User preferences are persisted across sessions", async ({ page, api }) => {
+  test("User preferences are persisted across sessions", async ({ page, api, context }) => {
     const timestamp = Date.now();
     const testEmail = `persist-test-${timestamp}@example.com`;
+    const testPassword = "Password123!";
 
-    // Create user with preferences
+    // Create test user
     const userResult = await api.createUser({
       name: "Persistence Test User",
       email: testEmail,
-      password: "Password123!",
+      password: testPassword,
       access: "USER",
     });
     const userId = userResult.data.id;
 
-    // Update user preferences (user already has default preferences from signup)
-    await api.updateUser({
-      userId: userId,
-      data: {
-        userPreferences: {
-          theme: "Dark",
-          locale: "en_US",
-          itemsPerPage: "P25",
-        },
-      },
-    });
-
     try {
-      await page.goto("/en-US/admin/users");
+      // Logout admin and login as the test user
+      await context.clearCookies();
+      await page.goto("/en-US/signin");
       await page.waitForLoadState("networkidle");
 
-      // Find and view the test user
-      const profileLink = page.getByRole("link", { name: /Profile of Persistence Test User/i });
-      await profileLink.click();
-      await page.waitForURL(/\/users\/profile\//);
+      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
+      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
+      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
 
-      // Enter edit mode to verify preferences
+      await emailInput.fill(testEmail);
+      await passwordInput.fill(testPassword);
+      await submitButton.click();
+      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+
+      // Navigate to own profile
+      await page.goto(`/en-US/users/profile/${userId}`);
+      await page.waitForLoadState("networkidle");
+
+      // Enter edit mode
       const editButton = page.getByRole("button", { name: /edit/i });
       await editButton.click();
-      const submitButton = page.getByTestId("profile-submit-button");
-    await expect(submitButton).toBeVisible();
 
-      // Verify theme preference is Dark
-      const themeValue = page.getByLabel(/theme/i);
-      await expect(themeValue).toHaveValue(/Dark/i);
+      const profileSubmitButton = page.getByTestId("profile-submit-button");
+      await expect(profileSubmitButton).toBeVisible();
+
+      // Scroll down to preferences section
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+      // Change theme to Dark
+      const themeSelect = page.getByTestId("profile-theme-select");
+      await expect(themeSelect).toBeVisible({ timeout: 5000 });
+      await themeSelect.click();
+      await page.getByRole("option", { name: /dark/i }).click();
+      await page.waitForTimeout(300);
+
+      // Save changes
+      await expect(profileSubmitButton).toBeEnabled({ timeout: 5000 });
+      await profileSubmitButton.click();
+      await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
+
+      // Logout
+      await context.clearCookies();
+
+      // Login again as the same user
+      await page.goto("/en-US/signin");
+      await page.waitForLoadState("networkidle");
+
+      await emailInput.fill(testEmail);
+      await passwordInput.fill(testPassword);
+      await submitButton.click();
+      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+
+      // Navigate to profile again
+      await page.goto(`/en-US/users/profile/${userId}`);
+      await page.waitForLoadState("networkidle");
+
+      // Enter edit mode to verify preference persisted
+      await page.getByRole("button", { name: /edit/i }).click();
+      await expect(page.getByTestId("profile-submit-button")).toBeVisible();
+
+      // Scroll to preferences
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+      // Verify theme is still Dark after re-login
+      const themeSelectAfterLogin = page.getByTestId("profile-theme-select");
+      await expect(themeSelectAfterLogin).toBeVisible({ timeout: 5000 });
+      await expect(themeSelectAfterLogin).toContainText("Dark");
     } finally {
+      // Cleanup - need to re-authenticate as admin to delete the user
+      await context.clearCookies();
+      await page.goto("/en-US/signin");
+      await page.waitForLoadState("networkidle");
+
+      // Use the same selectors that worked for the first login
+      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
+      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
+      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
+
+      await emailInput.fill("admin@example.com");
+      await passwordInput.fill("admin");
+      await submitButton.click();
+      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+
       await api.deleteUser(userId);
     }
   });
