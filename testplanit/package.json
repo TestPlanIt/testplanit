@@ -187,7 +187,7 @@
     "ioredis": "5.9.2",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.0.0",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "lowlight": "^3.3.0",
     "motion": "^12.26.2",
     "multer": "^2.0.2",
