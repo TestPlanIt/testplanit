@@ -2660,12 +2660,22 @@ export class ApiHelper {
 
     // Verify email by default for test users (unless explicitly set to false)
     if (options.emailVerified !== false) {
-      await this.updateUser({
-        userId: result.data.id,
-        data: {
-          emailVerified: new Date(),
-        },
-      });
+      // Use ZenStack model API to update emailVerified
+      // (authenticated as admin via test fixtures)
+      const updateResponse = await this.request.patch(
+        `${this.baseURL}/api/model/user/update`,
+        {
+          data: {
+            where: { id: result.data.id },
+            data: { emailVerified: new Date() },
+          },
+        }
+      );
+
+      if (!updateResponse.ok()) {
+        const error = await updateResponse.text();
+        throw new Error(`Failed to verify user email: ${error}`);
+      }
     }
 
     return result;
