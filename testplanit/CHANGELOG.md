@@ -1,3 +1,11 @@
+## [0.10.12](https://github.com/TestPlanIt/testplanit/compare/v0.10.11...v0.10.12) (2026-01-22)
+
+
+### Bug Fixes
+
+* add pnpm overrides for security vulnerabilities ([87d845a](https://github.com/TestPlanIt/testplanit/commit/87d845a397f49dbf5f9414802eadd0fcc6f1830b))
+* Fix/e2e test fixes ([#52](https://github.com/TestPlanIt/testplanit/issues/52)) ([df8cc36](https://github.com/TestPlanIt/testplanit/commit/df8cc369d07b01e85f54eebb4eca22a5a9a3afb9)), closes [#96](https://github.com/TestPlanIt/testplanit/issues/96) [#94](https://github.com/TestPlanIt/testplanit/issues/94) [#99](https://github.com/TestPlanIt/testplanit/issues/99) [#98](https://github.com/TestPlanIt/testplanit/issues/98) [#102-107](https://github.com/TestPlanIt/testplanit/issues/102-107)
+
 ## [0.10.11](https://github.com/TestPlanIt/testplanit/compare/v0.10.10...v0.10.11) (2026-01-22)
 
 
