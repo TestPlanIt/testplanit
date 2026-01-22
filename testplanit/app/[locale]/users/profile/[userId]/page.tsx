@@ -94,7 +94,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const t = useTranslations("users.profile");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -149,22 +149,22 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
     () => ({
       name: user?.name || "",
       email: user?.email || "",
-      theme: session?.user?.preferences?.theme ?? Theme.Purple,
-      locale: session?.user?.preferences?.locale ?? Locale.en_US,
+      theme: user?.userPreferences?.theme ?? session?.user?.preferences?.theme ?? Theme.Purple,
+      locale: user?.userPreferences?.locale ?? session?.user?.preferences?.locale ?? Locale.en_US,
       itemsPerPage:
-        session?.user?.preferences?.itemsPerPage ?? ItemsPerPage.P10,
+        user?.userPreferences?.itemsPerPage ?? session?.user?.preferences?.itemsPerPage ?? ItemsPerPage.P10,
       dateFormat:
-        session?.user?.preferences?.dateFormat ?? DateFormat.MM_DD_YYYY_DASH,
-      timeFormat: session?.user?.preferences?.timeFormat ?? TimeFormat.HH_MM_A,
-      timezone: session?.user?.preferences?.timezone ?? "Etc/UTC",
+        user?.userPreferences?.dateFormat ?? session?.user?.preferences?.dateFormat ?? DateFormat.MM_DD_YYYY_DASH,
+      timeFormat: user?.userPreferences?.timeFormat ?? session?.user?.preferences?.timeFormat ?? TimeFormat.HH_MM_A,
+      timezone: user?.userPreferences?.timezone ?? session?.user?.preferences?.timezone ?? "Etc/UTC",
       notificationMode:
         user?.userPreferences?.notificationMode ?? NotificationMode.USE_GLOBAL,
     }),
     [
       user?.name,
       user?.email,
+      user?.userPreferences,
       session?.user?.preferences,
-      user?.userPreferences?.notificationMode,
     ]
   );
 
@@ -254,6 +254,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
 
       setIsEditing(false);
 
+      // Update the session to reflect new preferences (theme, locale, etc.)
+      // This ensures the app immediately applies the new settings
+      await updateSession();
+
       // Refetch all queries to refresh UI with updated profile data
       // Run this after closing the edit mode so the UI doesn't stay in submitting state
       queryClient.refetchQueries();
@@ -275,6 +279,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
           message: tCommon("errors.unknown"),
         });
       }
+    } finally {
+      // Always reset submitting state, whether success or error
       setIsSubmitting(false);
     }
   }
@@ -457,6 +463,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 <FormControl>
                                   <Input
                                     {...field}
+                                    data-testid="profile-name-input"
                                     className="text-2xl font-bold"
                                   />
                                 </FormControl>
@@ -477,6 +484,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                   <Input
                                     {...field}
                                     type="email"
+                                    data-testid="profile-email-input"
                                     disabled={user?.authMethod === "SSO"}
                                     className={
                                       user?.authMethod === "SSO"
@@ -864,7 +872,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                           </div>
                         ) : (
                           <Form {...form}>
-                            <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="grid gap-4 sm:grid-cols-2 px-0.5">
                               <FormField
                                 control={form.control}
                                 name="theme"
@@ -885,7 +893,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                         }}
                                         value={field.value}
                                       >
-                                        <SelectTrigger>
+                                        <SelectTrigger data-testid="profile-theme-select">
                                           <SelectValue
                                             placeholder={tCommon(
                                               "fields.theme"

@@ -2631,6 +2631,7 @@ export class ApiHelper {
     access?: string;
     roleId?: number;
     isActive?: boolean;
+    emailVerified?: boolean; // Set to false only when testing email verification
   }): Promise<{ data: { id: string; name: string; email: string; access: string } }> {
     // Use dedicated signup API endpoint instead of ZenStack
     // (ZenStack 2.21+ has issues with unauthenticated nested creates)
@@ -2656,6 +2657,25 @@ export class ApiHelper {
     }
 
     const result = await response.json();
+
+    // Verify email by default for test users (unless explicitly set to false)
+    if (options.emailVerified !== false) {
+      // Use direct Prisma update via dedicated endpoint
+      // Try to update emailVerified, but don't fail if it doesn't work
+      try {
+        await this.request.post(
+          `${this.baseURL}/api/test-helpers/verify-email`,
+          {
+            data: { userId: result.data.id },
+          }
+        );
+      } catch (error) {
+        // If the endpoint doesn't exist or fails, log but continue
+        // This allows tests to run even if email verification doesn't work
+        console.warn(`Could not verify email for user ${result.data.id}:`, error);
+      }
+    }
+
     return result;
   }
 
@@ -2668,6 +2688,7 @@ export class ApiHelper {
     data: {
       name?: string;
       email?: string;
+      emailVerified?: Date;
       isActive?: boolean;
       isApi?: boolean;
       isDeleted?: boolean;

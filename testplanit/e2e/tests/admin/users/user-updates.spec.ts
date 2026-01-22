@@ -24,9 +24,10 @@ test.describe("User Update Operations", () => {
       await page.goto("/en-US/admin/users");
       await page.waitForLoadState("networkidle");
 
-      // Find and click the admin user's profile link
-      const adminProfileLink = page.locator('a').filter({ hasText: 'Administrator Account' }).first();
-      await expect(adminProfileLink).toBeVisible();
+      // Find admin user row by email and click profile link
+      const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
+      await expect(adminRow).toBeVisible();
+      const adminProfileLink = adminRow.locator('a').first();
       await adminProfileLink.click();
 
       // Wait for profile page
@@ -54,13 +55,29 @@ test.describe("User Update Operations", () => {
       // Verify name was updated (page should reload)
       await expect(page.getByText(newName).first()).toBeVisible({ timeout: 10000 });
 
+      // Wait for edit button to be visible before reverting (ensures form is not in submitting state)
+      const editButtonAfterSave = page.getByRole("button", { name: /edit/i });
+      await expect(editButtonAfterSave).toBeVisible({ timeout: 10000 });
+
       // Revert name back
-      await page.getByRole("button", { name: /edit/i }).click();
+      await editButtonAfterSave.click();
       const submitButtonRevert = page.getByTestId("profile-submit-button");
       await expect(submitButtonRevert).toBeVisible();
       const nameInputRevert = page.getByLabel(/^name/i);
+
+      // Clear and fill with a different value first to ensure form sees a change
+      await nameInputRevert.clear();
+      await nameInputRevert.fill("Temp Name");
+      await page.waitForTimeout(300);
+
+      // Now fill with the original value
       await nameInputRevert.clear();
       await nameInputRevert.fill(originalName);
+
+      // Wait for form validation to pass
+      await page.waitForTimeout(500);
+
+      await expect(submitButtonRevert).toBeEnabled({ timeout: 5000 });
       await submitButtonRevert.click();
       await page.waitForLoadState("networkidle");
     });
@@ -70,9 +87,10 @@ test.describe("User Update Operations", () => {
       await page.goto("/en-US/admin/users");
       await page.waitForLoadState("networkidle");
 
-      // Find and click the admin user's profile link
-      const adminProfileLink = page.locator('a').filter({ hasText: 'Administrator Account' }).first();
-      await expect(adminProfileLink).toBeVisible();
+      // Find admin user row by email and click profile link
+      const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
+      await expect(adminRow).toBeVisible();
+      const adminProfileLink = adminRow.locator('a').first();
       await adminProfileLink.click();
 
       await page.waitForURL(/\/users\/profile\//);
@@ -129,11 +147,25 @@ test.describe("User Update Operations", () => {
       await expect(themeComboboxRevert).toBeVisible();
       await themeComboboxRevert.click();
 
-      // Wait for dropdown and click the original theme option
+      // First select a different theme to trigger form dirty state
+      const tempTheme = originalTheme === "Light" ? "Dark" : "Light";
+      const tempThemeOption = page.getByRole("option", { name: tempTheme, exact: true });
+      await expect(tempThemeOption).toBeVisible({ timeout: 5000 });
+      await tempThemeOption.click();
+      await page.waitForTimeout(300);
+
+      // Reopen combobox to select original theme
+      await themeComboboxRevert.click();
+
+      // Now select the original theme
       const themeOptionRevert = page.getByRole("option", { name: originalTheme, exact: true });
       await expect(themeOptionRevert).toBeVisible({ timeout: 5000 });
       await themeOptionRevert.click();
 
+      // Wait for form validation
+      await page.waitForTimeout(500);
+
+      await expect(submitButtonRevert).toBeEnabled({ timeout: 5000 });
       await submitButtonRevert.click();
       await page.waitForLoadState("networkidle");
     });
@@ -143,9 +175,10 @@ test.describe("User Update Operations", () => {
       await page.goto("/en-US/admin/users");
       await page.waitForLoadState("networkidle");
 
-      // Find and click the admin user's profile link
-      const adminProfileLink = page.locator('a').filter({ hasText: 'Administrator Account' }).first();
-      await expect(adminProfileLink).toBeVisible();
+      // Find admin user row by email and click profile link
+      const adminRow = page.locator('tr').filter({ hasText: 'admin@example.com' });
+      await expect(adminRow).toBeVisible();
+      const adminProfileLink = adminRow.locator('a').first();
       await adminProfileLink.click();
 
       await page.waitForURL(/\/users\/profile\//);
@@ -307,9 +340,13 @@ test.describe("User Update Operations", () => {
         await nameInput.clear();
         await nameInput.fill("Updated Edit Test User");
 
+        // Wait for form validation
+        await page.waitForTimeout(500);
+
         // Save - use test ID for submit button
         const saveButton = dialog.getByTestId("edit-user-submit-button");
         await expect(saveButton).toBeVisible();
+        await expect(saveButton).toBeEnabled({ timeout: 5000 });
         await saveButton.click();
 
         // Wait for modal to close
@@ -318,10 +355,14 @@ test.describe("User Update Operations", () => {
         // Wait for network requests to complete after refetch
         await page.waitForLoadState("networkidle");
 
+        // Reload the page to force a fresh fetch
+        await page.reload();
+        await page.waitForLoadState("networkidle");
+
         // Verify update - the updated name should appear in the table
         await expect(
           page.locator("tr").filter({ hasText: "Updated Edit Test User" })
-        ).toBeVisible({ timeout: 15000 });
+        ).toBeVisible({ timeout: 10000 });
       } finally {
         // Cleanup: soft delete the test user
         await api.updateUser({

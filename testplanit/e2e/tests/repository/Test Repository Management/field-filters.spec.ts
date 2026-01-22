@@ -147,6 +147,9 @@ test.describe("Field-Based Filtering", () => {
       await repositoryPage.selectFolder(folderId);
       await page.waitForLoadState("networkidle");
 
+      // Wait for test cases to load - look for actual case names
+      await expect(page.locator('text="Login test case"')).toBeVisible({ timeout: 10000 });
+
       // Count initial test cases
       const initialRows = page.locator('tbody tr, [role="row"]').filter({
         has: page.locator('td, [role="cell"]'),
