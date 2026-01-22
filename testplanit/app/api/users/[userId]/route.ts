@@ -94,7 +94,14 @@ export async function PATCH(
     if (validatedData.email !== undefined) {
       userUpdate.email = validatedData.email;
     }
+    // Only admins can update emailVerified - regular users must use the email verification flow
     if (validatedData.emailVerified !== undefined) {
+      if (session.user.access !== "ADMIN") {
+        return NextResponse.json(
+          { error: "Only admins can update email verification status" },
+          { status: 403 }
+        );
+      }
       userUpdate.emailVerified = validatedData.emailVerified instanceof Date
         ? validatedData.emailVerified
         : new Date(validatedData.emailVerified);

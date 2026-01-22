@@ -64,6 +64,7 @@ export const test = base.extend<TestFixtures>({
       throw new Error(`No admin user found in database. Response: ${JSON.stringify(result)}`);
     }
 
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(userId);
   },
 });
