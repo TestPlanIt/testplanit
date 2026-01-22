@@ -149,22 +149,22 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
     () => ({
       name: user?.name || "",
       email: user?.email || "",
-      theme: session?.user?.preferences?.theme ?? Theme.Purple,
-      locale: session?.user?.preferences?.locale ?? Locale.en_US,
+      theme: user?.userPreferences?.theme ?? session?.user?.preferences?.theme ?? Theme.Purple,
+      locale: user?.userPreferences?.locale ?? session?.user?.preferences?.locale ?? Locale.en_US,
       itemsPerPage:
-        session?.user?.preferences?.itemsPerPage ?? ItemsPerPage.P10,
+        user?.userPreferences?.itemsPerPage ?? session?.user?.preferences?.itemsPerPage ?? ItemsPerPage.P10,
       dateFormat:
-        session?.user?.preferences?.dateFormat ?? DateFormat.MM_DD_YYYY_DASH,
-      timeFormat: session?.user?.preferences?.timeFormat ?? TimeFormat.HH_MM_A,
-      timezone: session?.user?.preferences?.timezone ?? "Etc/UTC",
+        user?.userPreferences?.dateFormat ?? session?.user?.preferences?.dateFormat ?? DateFormat.MM_DD_YYYY_DASH,
+      timeFormat: user?.userPreferences?.timeFormat ?? session?.user?.preferences?.timeFormat ?? TimeFormat.HH_MM_A,
+      timezone: user?.userPreferences?.timezone ?? session?.user?.preferences?.timezone ?? "Etc/UTC",
       notificationMode:
         user?.userPreferences?.notificationMode ?? NotificationMode.USE_GLOBAL,
     }),
     [
       user?.name,
       user?.email,
+      user?.userPreferences,
       session?.user?.preferences,
-      user?.userPreferences?.notificationMode,
     ]
   );
 
