@@ -94,7 +94,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const t = useTranslations("users.profile");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -253,6 +253,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
       }
 
       setIsEditing(false);
+
+      // Update the session to reflect new preferences (theme, locale, etc.)
+      // This ensures the app immediately applies the new settings
+      await updateSession();
 
       // Refetch all queries to refresh UI with updated profile data
       // Run this after closing the edit mode so the UI doesn't stay in submitting state
@@ -868,7 +872,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                           </div>
                         ) : (
                           <Form {...form}>
-                            <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="grid gap-4 sm:grid-cols-2 px-0.5">
                               <FormField
                                 control={form.control}
                                 name="theme"

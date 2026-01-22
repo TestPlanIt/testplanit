@@ -304,12 +304,32 @@ test.describe("User Profile Management", () => {
     const newTheme = originalTheme?.includes("Dark") ? "Light" : "Dark";
     await themeSelect.click();
     await page.getByRole("option", { name: new RegExp(newTheme, "i") }).click();
-    await page.waitForTimeout(300);
 
-    // Save changes
+    // Wait for the form to update and verify the theme selection changed
+    await expect(themeSelect).toContainText(newTheme);
+    // Give React Hook Form sufficient time to process the change
+    // This is critical - the form state update is async and must complete before submit
+    await page.waitForTimeout(2000);
+
+    // Save changes - wait for the API call to complete
     await expect(profileSubmitButton).toBeEnabled({ timeout: 5000 });
+
+    // Wait for the PATCH request to the user API
+    const updatePromise = page.waitForResponse(
+      (response) => response.url().includes(`/api/users/${adminUserId}`) && response.request().method() === 'PATCH',
+      { timeout: 10000 }
+    );
+
     await profileSubmitButton.click();
+
+    // Wait for the API response
+    const response = await updatePromise;
+    expect(response.ok()).toBeTruthy();
+
     await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
+
+    // Wait for the session update and database transaction to fully complete
+    await page.waitForTimeout(1000);
 
     // Logout
     await context.clearCookies();
