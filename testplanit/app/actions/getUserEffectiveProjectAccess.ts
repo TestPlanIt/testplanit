@@ -1,8 +1,7 @@
 "use server";
 
-import { PrismaClient, ProjectAccessType } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { ProjectAccessType } from "@prisma/client";
+import { prisma } from "~/lib/prisma";
 
 export interface UserEffectiveAccess {
   userId: string;

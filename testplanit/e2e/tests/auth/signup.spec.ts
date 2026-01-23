@@ -12,12 +12,15 @@ import { test, expect } from "../../fixtures";
  * - Default access level assignment
  */
 
+// Get test email domain from environment or default to example.com
+const TEST_EMAIL_DOMAIN = process.env.TEST_EMAIL_DOMAIN || "example.com";
+
 test.describe("User Signup", () => {
   test.use({ storageState: { cookies: [], origins: [] } }); // No auth for signup tests
 
   test("User can sign up with valid credentials @smoke", async ({ page }) => {
     const timestamp = Date.now();
-    const testEmail = `test-user-${timestamp}@example.com`;
+    const testEmail = `test-user-${timestamp}@${TEST_EMAIL_DOMAIN}`;
     const testName = `Test User ${timestamp}`;
     const testPassword = "SecurePassword123!";
 
@@ -44,7 +47,7 @@ test.describe("User Signup", () => {
     await page.goto("/en-US/signup");
 
     await page.getByLabel(/^name/i).fill("Test User");
-    await page.getByLabel(/^email/i).fill(`test-${Date.now()}@example.com`);
+    await page.getByLabel(/^email/i).fill(`test-${Date.now()}@${TEST_EMAIL_DOMAIN}`);
     await page.getByLabel(/^password$/i).fill("Password123!");
     await page.getByLabel(/confirm.*password/i).fill("DifferentPassword123!");
 
@@ -74,7 +77,7 @@ test.describe("User Signup", () => {
 
   test("Shows error when signing up with existing email", async ({ page, api }) => {
     // Create an existing user
-    const existingEmail = `existing-${Date.now()}@example.com`;
+    const existingEmail = `existing-${Date.now()}@${TEST_EMAIL_DOMAIN}`;
     const userResult = await api.createUser({
       name: "Existing User",
       email: existingEmail,
@@ -105,7 +108,7 @@ test.describe("User Signup", () => {
     await page.goto("/en-US/signup");
 
     await page.getByLabel(/^name/i).fill("Test User");
-    await page.getByLabel(/^email/i).fill(`test-${Date.now()}@example.com`);
+    await page.getByLabel(/^email/i).fill(`test-${Date.now()}@${TEST_EMAIL_DOMAIN}`);
     await page.getByLabel(/^password$/i).fill("123"); // Too short
     await page.getByLabel(/confirm.*password/i).fill("123");
 
@@ -121,7 +124,7 @@ test.describe("User Signup", () => {
     await page.goto("/en-US/signup");
 
     // Leave name empty
-    await page.getByLabel(/^email/i).fill(`test-${Date.now()}@example.com`);
+    await page.getByLabel(/^email/i).fill(`test-${Date.now()}@${TEST_EMAIL_DOMAIN}`);
     await page.getByLabel(/^password$/i).fill("Password123!");
     await page.getByLabel(/confirm.*password/i).fill("Password123!");
 
@@ -135,7 +138,7 @@ test.describe("User Signup", () => {
 
   test("Created user has default preferences set", async ({ page }) => {
     const timestamp = Date.now();
-    const testEmail = `test-prefs-${timestamp}@example.com`;
+    const testEmail = `test-prefs-${timestamp}@${TEST_EMAIL_DOMAIN}`;
     const testPassword = "SecurePassword123!";
 
     await page.goto("/en-US/signup");

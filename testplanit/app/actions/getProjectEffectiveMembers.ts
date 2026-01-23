@@ -1,8 +1,7 @@
 "use server";
 
-import { PrismaClient, ProjectAccessType } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { ProjectAccessType } from "@prisma/client";
+import { prisma } from "~/lib/prisma";
 
 /**
  * Get all users who should be displayed as "members" of a project

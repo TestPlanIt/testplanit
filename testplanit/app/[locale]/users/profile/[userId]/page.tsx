@@ -239,6 +239,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
         updateData.email = data.email;
       }
 
+      // Track if locale changed to know if we need to reload
+      const localeChanged = data.locale !== user?.userPreferences?.locale;
+
       // Use dedicated update API endpoint instead of ZenStack
       // (ZenStack 2.21+ has issues with nested update operations)
       const response = await fetch(`/api/users/${userId}`, {
@@ -254,7 +257,15 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
 
       setIsEditing(false);
 
-      // Update the session to reflect new preferences (theme, locale, etc.)
+      // If locale changed, update cookie and reload the page
+      if (localeChanged) {
+        const urlLocale = data.locale.replace("_", "-");
+        document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+        window.location.reload();
+        return; // Exit early since page will reload
+      }
+
+      // Update the session to reflect new preferences (theme, etc.)
       // This ensures the app immediately applies the new settings
       await updateSession();
 
@@ -328,6 +339,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
         return "English (US)";
       case "es_ES":
         return "Español (ES)";
+      case "fr_FR":
+        return "Français (France)";
       default:
         return locale;
     }
@@ -807,7 +820,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
 
                                 <Separator className="opacity-50" />
 
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between" data-testid="user-locale-display">
                                   <span className="text-sm">
                                     {tCommon("fields.locale")}
                                   </span>
@@ -930,7 +943,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 control={form.control}
                                 name="locale"
                                 render={({ field }) => (
-                                  <FormItem>
+                                  <FormItem data-testid="user-locale-edit">
                                     <FormLabel className="flex items-center">
                                       {tCommon("fields.locale")}
                                       <HelpPopover helpKey="user.locale" />
@@ -946,7 +959,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                         }}
                                         value={field.value}
                                       >
-                                        <SelectTrigger>
+                                        <SelectTrigger data-testid="user-locale-select">
                                           <SelectValue
                                             placeholder={tCommon(
                                               "fields.locale"
@@ -960,11 +973,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                                 key={locale}
                                                 value={locale}
                                               >
-                                                {locale === "en_US"
-                                                  ? "English (US)"
-                                                  : locale === "es_ES"
-                                                    ? "Español (ES)"
-                                                    : locale}
+                                                {getLocaleLabel(locale)}
                                               </SelectItem>
                                             )
                                           )}

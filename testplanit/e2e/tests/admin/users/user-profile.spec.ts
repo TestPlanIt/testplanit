@@ -397,4 +397,264 @@ test.describe("User Profile Management", () => {
       await api.deleteUser(userId);
     }
   });
+
+  test("All language options are displayed with correct labels", async ({ page, adminUserId }) => {
+    // This test ensures all supported languages show proper labels, not raw enum values
+
+    await page.goto(`/en-US/users/profile/${adminUserId}`);
+    await page.waitForLoadState("networkidle");
+
+    // Enter edit mode
+    const editButton = page.getByRole("button", { name: /edit profile|edit/i });
+    await editButton.click();
+
+    const submitButton = page.getByTestId("profile-submit-button");
+    await expect(submitButton).toBeVisible();
+
+    // Scroll down to preferences section
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+    // Find the locale selector
+    const localeCombobox = page.locator('[role="combobox"]').filter({ hasText: /English|Español|Français/i }).first();
+    await expect(localeCombobox).toBeVisible();
+
+    // Open the dropdown
+    await localeCombobox.click();
+
+    // Verify all three languages are displayed with proper labels
+    const englishOption = page.getByRole("option", { name: "English (US)", exact: true });
+    await expect(englishOption).toBeVisible({ timeout: 5000 });
+
+    const spanishOption = page.getByRole("option", { name: "Español (ES)", exact: true });
+    await expect(spanishOption).toBeVisible();
+
+    const frenchOption = page.getByRole("option", { name: "Français (France)", exact: true });
+    await expect(frenchOption).toBeVisible();
+
+    // Verify raw enum values are NOT displayed
+    await expect(page.getByRole("option", { name: "fr_FR", exact: true })).not.toBeVisible();
+    await expect(page.getByRole("option", { name: "en_US", exact: true })).not.toBeVisible();
+    await expect(page.getByRole("option", { name: "es_ES", exact: true })).not.toBeVisible();
+
+    // Close dropdown by pressing Escape
+    await page.keyboard.press("Escape");
+
+    // Cancel edit mode
+    const cancelButton = page.getByRole("button", { name: /cancel/i });
+    await cancelButton.click();
+
+    // Verify the read-only view also shows proper label (not raw enum)
+    const localeDisplay = page.getByTestId("user-locale-display");
+    await expect(localeDisplay).toBeVisible();
+
+    // The displayed language should be one of the proper labels, not raw enum
+    await expect(localeDisplay.locator("text=/English \\(US\\)|Español \\(ES\\)|Français \\(France\\)/")).toBeVisible();
+  });
+
+  test("User can change language and it persists with page reload", async ({ page, adminUserId, context }) => {
+    // This test verifies the bug fix where changing language from profile page
+    // now properly updates the session, cookie, and reloads the page
+
+    // Start on English profile page
+    await page.goto(`/en-US/users/profile/${adminUserId}`);
+    await page.waitForLoadState("networkidle");
+
+    // Verify we're on English page by checking URL
+    expect(page.url()).toContain("/en-US/");
+
+    // Enter edit mode
+    const editButton = page.getByRole("button", { name: /edit profile|edit/i });
+    await editButton.click();
+
+    const submitButton = page.getByTestId("profile-submit-button");
+    await expect(submitButton).toBeVisible();
+
+    // Scroll down to preferences section where language selector is
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+    // Find the language selector using test ID
+    const localeSelect = page.getByTestId("user-locale-select");
+    await expect(localeSelect).toBeVisible({ timeout: 5000 });
+
+    // Click to open the dropdown
+    await localeSelect.click();
+
+    // Select Spanish (Español) to test the language change
+    const spanishOption = page.getByRole("option", { name: /español/i });
+    await expect(spanishOption).toBeVisible({ timeout: 5000 });
+
+    // Wait for the PATCH request to complete and page reload
+    const updatePromise = page.waitForResponse(
+      (response) => response.url().includes(`/api/users/${adminUserId}`) && response.request().method() === 'PATCH',
+      { timeout: 10000 }
+    );
+
+    // Also wait for navigation/reload that should happen after locale change
+    const navigationPromise = page.waitForURL(/\/es-ES\//, { timeout: 15000 });
+
+    await spanishOption.click();
+
+    // Wait a moment for form to register the change
+    await page.waitForTimeout(500);
+
+    // Save the changes
+    await expect(submitButton).toBeEnabled({ timeout: 5000 });
+    await submitButton.click();
+
+    // Wait for API update
+    const response = await updatePromise;
+    expect(response.ok()).toBeTruthy();
+
+    // Wait for page to reload and redirect to Spanish locale
+    await navigationPromise;
+
+    // Verify we're now on Spanish page
+    expect(page.url()).toContain("/es-ES/");
+
+    // Verify the NEXT_LOCALE cookie was set correctly
+    const cookies = await context.cookies();
+    const localeCookie = cookies.find(c => c.name === "NEXT_LOCALE");
+    expect(localeCookie).toBeDefined();
+    expect(localeCookie?.value).toBe("es-ES");
+
+    // Verify Spanish content is displayed (check for Spanish text in the page)
+    // The word "Perfil" is "Profile" in Spanish
+    await expect(page.getByText(/perfil|editar perfil/i).first()).toBeVisible({ timeout: 10000 });
+
+    // Revert back to English for cleanup
+    const editButtonSpanish = page.getByRole("button", { name: /editar|edit/i });
+    await editButtonSpanish.click();
+
+    const submitButtonSpanish = page.getByTestId("profile-submit-button");
+    await expect(submitButtonSpanish).toBeVisible();
+
+    // Scroll to preferences
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+    // Find and open locale combobox again (now in Spanish)
+    const localeComboboxSpanish = page.locator('[role="combobox"]').filter({ hasText: /English|Español/i }).first();
+    await expect(localeComboboxSpanish).toBeVisible();
+    await localeComboboxSpanish.click();
+
+    // Select English to revert
+    const englishOption = page.getByRole("option", { name: /english/i });
+    await expect(englishOption).toBeVisible({ timeout: 5000 });
+
+    const revertUpdatePromise = page.waitForResponse(
+      (response) => response.url().includes(`/api/users/${adminUserId}`) && response.request().method() === 'PATCH',
+      { timeout: 10000 }
+    );
+
+    const revertNavigationPromise = page.waitForURL(/\/en-US\//, { timeout: 15000 });
+
+    await englishOption.click();
+    await page.waitForTimeout(500);
+
+    await expect(submitButtonSpanish).toBeEnabled({ timeout: 5000 });
+    await submitButtonSpanish.click();
+
+    // Wait for revert
+    const revertResponse = await revertUpdatePromise;
+    expect(revertResponse.ok()).toBeTruthy();
+
+    await revertNavigationPromise;
+
+    // Verify we're back on English
+    expect(page.url()).toContain("/en-US/");
+
+    // Verify cookie is back to en-US
+    const cookiesAfterRevert = await context.cookies();
+    const localeCookieAfterRevert = cookiesAfterRevert.find(c => c.name === "NEXT_LOCALE");
+    expect(localeCookieAfterRevert?.value).toBe("en-US");
+  });
+
+  test("User can change to French language and it displays correctly", async ({ page, api, context }) => {
+    // This test verifies that French language works end-to-end with proper labels
+    // Use a dedicated test user to avoid conflicts with other tests running in parallel
+    const timestamp = Date.now();
+    const testEmail = `french-test-${timestamp}@example.com`;
+    const testPassword = "Password123!";
+
+    const userResult = await api.createUser({
+      name: "French Language Test User",
+      email: testEmail,
+      password: testPassword,
+      access: "ADMIN",
+    });
+    const userId = userResult.data.id;
+
+    try {
+      // Login as test user
+      await context.clearCookies();
+      await page.goto("/en-US/signin");
+      await page.waitForLoadState("networkidle");
+
+      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
+      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
+      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
+
+      await emailInput.fill(testEmail);
+      await passwordInput.fill(testPassword);
+      await submitButton.click();
+      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+
+      // Start on English profile page
+      await page.goto(`/en-US/users/profile/${userId}`);
+      await page.waitForLoadState("networkidle");
+
+      // Enter edit mode
+      const editButton = page.getByRole("button", { name: /edit profile|edit/i });
+      await editButton.click();
+
+      const profileSubmitButton = page.getByTestId("profile-submit-button");
+      await expect(profileSubmitButton).toBeVisible();
+
+      // Scroll to preferences
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+      // Find locale selector
+      const localeCombobox = page.locator('[role="combobox"]').filter({ hasText: /English|Español|Français/i }).first();
+      await expect(localeCombobox).toBeVisible();
+      await localeCombobox.click();
+
+      // Select French (Français)
+      const frenchOption = page.getByRole("option", { name: "Français (France)", exact: true });
+      await expect(frenchOption).toBeVisible({ timeout: 5000 });
+
+      // Wait for API update and navigation
+      const updatePromise = page.waitForResponse(
+        (response) => response.url().includes(`/api/users/${userId}`) && response.request().method() === 'PATCH',
+        { timeout: 10000 }
+      );
+
+      const navigationPromise = page.waitForURL(/\/fr-FR\//, { timeout: 15000 });
+
+      await frenchOption.click();
+      await page.waitForTimeout(500);
+
+      await expect(profileSubmitButton).toBeEnabled({ timeout: 5000 });
+      await profileSubmitButton.click();
+
+      // Wait for update
+      const response = await updatePromise;
+      expect(response.ok()).toBeTruthy();
+
+      // Wait for page to reload to French
+      await navigationPromise;
+
+      // Verify we're on French page
+      expect(page.url()).toContain("/fr-FR/");
+
+      // Verify cookie
+      const cookies = await context.cookies();
+      const localeCookie = cookies.find(c => c.name === "NEXT_LOCALE");
+      expect(localeCookie?.value).toBe("fr-FR");
+
+      // Verify French content (Profile = "Profil" in French)
+      await expect(page.getByText(/profil/i).first()).toBeVisible({ timeout: 10000 });
+    } finally {
+      // Cleanup - delete test user
+      await api.deleteUser(userId);
+    }
+  });
 });

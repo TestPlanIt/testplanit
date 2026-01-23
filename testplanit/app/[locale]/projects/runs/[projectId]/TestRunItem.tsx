@@ -252,7 +252,16 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                       className="min-w-6 min-h-6 text-primary"
                     />
                   )}
-                  <span className="truncate inline-block">{testRun.name}</span>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="truncate inline-block">{testRun.name}</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-sm">{testRun.name}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                   {testRun.configurationGroupId && (
                     <TooltipProvider>
                       <Tooltip>
@@ -344,21 +353,27 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
 
         {/* Right Column - MemberList & Actions */}
         <div className="flex items-center justify-end space-x-2 min-w-0">
-          <div className="flex flex-col items-start gap-1.5 w-full min-w-0 max-w-xs truncate">
+          <div className="flex flex-col items-start gap-1.5 w-full min-w-0 max-w-xs overflow-hidden">
             {testRun.isCompleted && showMilestone && testRun.milestone && (
-              <MilestoneIconAndName milestone={testRun.milestone} />
+              <div className="truncate w-full min-w-0">
+                <MilestoneIconAndName milestone={testRun.milestone} />
+              </div>
             )}
             {testRun.isCompleted && testRun.completedAt && (
-              <DateTextDisplay
-                endDate={new Date(testRun.completedAt)}
-                isCompleted={true}
-              />
+              <div className="w-full min-w-0">
+                <DateTextDisplay
+                  endDate={new Date(testRun.completedAt)}
+                  isCompleted={true}
+                />
+              </div>
             )}
 
             {/* MemberList */}
             {!testRun.isCompleted && (
               <div className="w-full flex justify-end pr-1">
-                <MemberList users={users} />
+                <div className="ml-2">
+                  <MemberList users={users} />
+                </div>
               </div>
             )}
           </div>

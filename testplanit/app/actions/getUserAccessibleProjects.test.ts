@@ -8,16 +8,15 @@ const { mockUser, mockProjects, mockUserProjectPermission, mockProjectAssignment
   mockProjectAssignment: { findMany: vi.fn() },
 }));
 
-vi.mock("@prisma/client", () => {
-  return {
-    PrismaClient: class MockPrismaClient {
-      user = mockUser;
-      projects = mockProjects;
-      userProjectPermission = mockUserProjectPermission;
-      projectAssignment = mockProjectAssignment;
-    },
-  };
-});
+// Mock the prisma singleton
+vi.mock("~/lib/prisma", () => ({
+  prisma: {
+    user: mockUser,
+    projects: mockProjects,
+    userProjectPermission: mockUserProjectPermission,
+    projectAssignment: mockProjectAssignment,
+  },
+}));
 
 // Import after mocking
 import { getUserAccessibleProjects } from "./getUserAccessibleProjects";
