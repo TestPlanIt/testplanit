@@ -20,20 +20,15 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
-import { DataTable } from "@/components/tables/DataTable";
 import {
   VisibilityState,
   ColumnDef,
   ExpandedState,
 } from "@tanstack/react-table";
-import { PaginationInfo } from "~/components/tables/PaginationControls";
 import {
   PaginationProvider,
   usePagination,
-  defaultPageSizeOptions,
 } from "~/lib/contexts/PaginationContext";
-import { PaginationComponent } from "~/components/tables/Pagination";
-import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DraggableList } from "@/components/DraggableCaseFields";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
@@ -46,13 +41,7 @@ import {
   ChevronDown,
   Loader2,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -96,6 +85,7 @@ import { DrillDownDrawer } from "~/components/reports/DrillDownDrawer";
 import { ReportFilters } from "~/components/reports/ReportFilters";
 import { ReportFilterChips } from "~/components/reports/ReportFilterChips";
 import { ShareButton } from "~/components/reports/ShareButton";
+import { ReportRenderer } from "~/components/reports/ReportRenderer";
 import type {
   DrillDownContext,
   DimensionFilters,
@@ -1274,9 +1264,6 @@ function ReportBuilderContent({
           const tableData = data.data || data.results;
           const chartData = data.allResults || data.data || data.results;
 
-          console.log('=== TABLE DATA ===', tableData);
-          console.log('=== CHART DATA ===', chartData);
-
           setResults(tableData); // Support both formats
 
           // Store projects for automation trends report
@@ -1287,44 +1274,6 @@ function ReportBuilderContent({
           // Update allResults and chartDataRef with the full dataset
           // For pagination/sorting changes, we still need the full dataset for the chart
           const newAllResults = chartData;
-
-          // Debug: Log if allResults and results have different lengths or values (potential bug indicator)
-          if (data.allResults && data.results) {
-            if (data.allResults.length !== data.results.length) {
-              console.warn('Report data length mismatch:', {
-                allResultsLength: data.allResults.length,
-                resultsLength: data.results.length,
-                page: data.page,
-                pageSize: data.pageSize
-              });
-            }
-
-            // Check if any rows in results have different values than corresponding rows in allResults
-            // This helps detect data inconsistencies even when lengths match
-            if (data.results.length > 0 && data.allResults.length > 0) {
-              const firstResult = data.results[0];
-              const firstAllResult = data.allResults[0];
-              const metricsToCheck = selectedMetrics.map(m => m.label || m.value);
-
-              let mismatchFound = false;
-              for (const metric of metricsToCheck) {
-                if (firstResult[metric] !== firstAllResult[metric]) {
-                  mismatchFound = true;
-                  console.warn('Report data VALUE mismatch found:', {
-                    metric,
-                    resultsValue: firstResult[metric],
-                    allResultsValue: firstAllResult[metric],
-                    resultRow: firstResult,
-                    allResultRow: firstAllResult
-                  });
-                }
-              }
-
-              if (!mismatchFound && data.results.length < data.allResults.length) {
-                console.log('Report data OK: allResults contains full dataset, results is paginated subset');
-              }
-            }
-          }
 
           // Only update chart data when running a new report (not pagination)
           // Chart should always show the full dataset, not update on pagination
@@ -1699,116 +1648,6 @@ function ReportBuilderContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [chartDataVersion, allResults] // Only recompute when chart data version changes
   );
-
-  // Maximum number of data points to render in charts
-  // Keep this low enough for charts to remain readable and useful
-  const MAX_CHART_DATA_POINTS = 50;
-
-  // Memoize the chart component to prevent re-renders when parent re-renders
-  // Use chartDataRef.current for stable reference that doesn't change on pagination
-  const memoizedChart = useMemo(() => {
-    const chartData = chartDataRef.current;
-
-    // For pre-built reports (automation trends, flaky tests, test case health, issue test coverage),
-    // we don't need traditional dimensions/metrics as the chart uses specialized data structures
-    const isAutomationTrends =
-      reportType === "automation-trends" ||
-      reportType === "cross-project-automation-trends";
-    const isFlakyTests =
-      reportType === "flaky-tests" ||
-      reportType === "cross-project-flaky-tests";
-    const isTestCaseHealth =
-      reportType === "test-case-health" ||
-      reportType === "cross-project-test-case-health";
-    const isIssueTestCoverage =
-      reportType === "issue-test-coverage" ||
-      reportType === "cross-project-issue-test-coverage";
-
-    if (
-      !chartData ||
-      (!isAutomationTrends &&
-        !isFlakyTests &&
-        !isTestCaseHealth &&
-        !isIssueTestCoverage &&
-        (chartDimensions.length === 0 || chartMetrics.length === 0))
-    ) {
-      return { chart: null, isTruncated: false, totalDataPoints: 0 };
-    }
-
-    // Limit the number of data points to prevent browser crashes
-    // For flaky tests, prioritize tests with highest attention score (flip count + recency)
-    let dataToLimit = chartData;
-    if (isFlakyTests && chartData.length > MAX_CHART_DATA_POINTS) {
-      // Calculate priority score for each test and sort by it
-      dataToLimit = [...chartData]
-        .map((test: any) => {
-          // Calculate recency score using exponential decay
-          let recencyScore = 0;
-          let weight = 1;
-          const decayFactor = 0.7;
-          const executions = test.executions || [];
-
-          for (const execution of executions) {
-            if (!execution.isSuccess) {
-              recencyScore += weight;
-            }
-            weight *= decayFactor;
-          }
-
-          // Normalize recency score
-          const maxScore =
-            executions.length > 0
-              ? (1 - Math.pow(decayFactor, executions.length)) /
-                (1 - decayFactor)
-              : 1;
-          const normalizedRecency = maxScore > 0 ? recencyScore / maxScore : 0;
-
-          // Priority combines flip count and recency
-          const normalizedFlips =
-            test.flipCount / (lastUsedConsecutiveRuns - 1 || 1);
-          const priorityScore = normalizedFlips * 0.5 + normalizedRecency * 0.5;
-
-          return { ...test, _priorityScore: priorityScore };
-        })
-        .sort((a: any, b: any) => b._priorityScore - a._priorityScore);
-    }
-
-    const isTruncated = dataToLimit.length > MAX_CHART_DATA_POINTS;
-    const limitedChartData = isTruncated
-      ? dataToLimit.slice(0, MAX_CHART_DATA_POINTS)
-      : dataToLimit;
-
-    // For Test Case Health and Issue Test Coverage, pass all data so the chart can show accurate summary stats
-    // These charts handle aggregation internally and need the full dataset
-    const chartResults = isTestCaseHealth || isIssueTestCoverage ? chartData : limitedChartData;
-
-    return {
-      chart: (
-        <ReportChart
-          key={chartKey}
-          results={chartResults}
-          dimensions={chartDimensions}
-          metrics={chartMetrics}
-          reportType={reportType}
-          projects={automationTrendsProjects}
-          consecutiveRuns={lastUsedConsecutiveRuns}
-          totalFlakyTests={isFlakyTests ? chartData.length : undefined}
-          projectId={projectId}
-        />
-      ),
-      isTruncated: isTestCaseHealth || isIssueTestCoverage ? false : isTruncated,
-      totalDataPoints: chartData.length,
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    chartKey,
-    chartDimensions,
-    chartMetrics,
-    chartDataVersion,
-    reportType,
-    automationTrendsProjects,
-    lastUsedConsecutiveRuns,
-  ]); // Depend on version instead of array lengths
 
   return (
     <div>
@@ -2540,153 +2379,63 @@ function ReportBuilderContent({
           className="min-h-[calc(100vh-14rem)]"
         >
           {/* Results Display */}
-          {results && results.length > 0 ? (
-            <ResizablePanelGroup
-              direction="vertical"
-              className="h-full"
-              autoSaveId="report-builder-results-panels"
-            >
-              {/* Visualization Panel */}
-              <ResizablePanel
-                defaultSize={50}
-                minSize={20}
-                collapsedSize={0}
-                collapsible
-              >
-                <Card className="h-full rounded-none border-0 overflow-hidden">
-                  <CardHeader className="pt-2 pb-2">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle>{t("common.visualization")}</CardTitle>
-                        {enhancedReportSummary && (
-                          <CardDescription>{enhancedReportSummary}</CardDescription>
-                        )}
-                        {reportGeneratedAt && (
-                          <p className="text-xs text-muted-foreground">
-                            {tReports("generatedAt")}{" "}
-                            <DateFormatter
-                              date={reportGeneratedAt}
-                              formatString="PPp"
-                              timezone={session?.user?.preferences?.timezone}
-                            />
-                          </p>
-                        )}
-                        {memoizedChart.isTruncated && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {tReports("chartDataTruncated.message", {
-                              shown: MAX_CHART_DATA_POINTS.toLocaleString(),
-                              total: memoizedChart.totalDataPoints.toLocaleString(),
-                            })}
-                          </p>
-                        )}
-                      </div>
-                      <ShareButton
-                        projectId={mode === "project" ? projectId : undefined}
-                        reportConfig={{
-                          reportType,
-                          // Use the last request body which contains ALL parameters
-                          ...(lastRequestBody || {}),
-                        }}
-                        reportTitle={
-                          reportTypes.find((r) => r.id === reportType)?.label
-                        }
-                      />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="h-[calc(100%-4rem)] p-6 flex flex-col">
-                    <div className="flex-1 min-h-0 w-full">
-                      {memoizedChart.chart}
-                    </div>
-                  </CardContent>
-                </Card>
-              </ResizablePanel>
-
-              <ResizableHandle withHandle />
-
-              {/* Results Table Panel */}
-              <ResizablePanel
-                defaultSize={50}
-                minSize={20}
-                collapsedSize={0}
-                collapsible
-              >
-                <Card className="h-full rounded-none border-0 overflow-hidden">
-                  <CardHeader className="pt-2 pb-2">
-                    <div className="flex flex-row items-end justify-between">
-                      <CardTitle>{t("common.results")}</CardTitle>
-                      {totalCount > 0 && (
-                        <div className="flex flex-col items-end">
-                          <div className="justify-end">
-                            <PaginationInfo
-                              startIndex={startIndex}
-                              endIndex={endIndex}
-                              totalRows={totalCount}
-                              searchString=""
-                              pageSize={pageSize}
-                              pageSizeOptions={defaultPageSizeOptions}
-                              handlePageSizeChange={setPageSize}
-                            />
-                          </div>
-                          {pageSize !== "All" &&
-                            totalCount > (pageSize as number) && (
-                              <div className="justify-end -mx-4">
-                                <PaginationComponent
-                                  currentPage={currentPage}
-                                  totalPages={Math.ceil(
-                                    totalCount / (pageSize as number)
-                                  )}
-                                  onPageChange={setCurrentPage}
-                                />
-                              </div>
-                            )}
-                        </div>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="h-[calc(100%-4rem)] overflow-y-auto p-6 pt-0">
-                    <DataTable
-                      columns={columns as ColumnDef<any>[]}
-                      data={results || []}
-                      columnVisibility={columnVisibility}
-                      onColumnVisibilityChange={setColumnVisibility}
-                      sortConfig={sortConfig || undefined}
-                      onSortChange={(columnId: string) => {
-                        setSortConfig((prev) => ({
-                          column: columnId,
-                          direction:
-                            prev?.column === columnId &&
-                            prev.direction === "asc"
-                              ? "desc"
-                              : "asc",
-                        }));
-                      }}
-                      grouping={grouping}
-                      onGroupingChange={setGrouping}
-                      expanded={expanded}
-                      onExpandedChange={setExpanded}
-                    />
-                  </CardContent>
-                </Card>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <Card className="max-w-md">
-                <CardHeader>
-                  <CardTitle>{tReports("noResultsFound")}</CardTitle>
-                  <CardDescription>
-                    {lastUsedDimensions.length > 0 && lastUsedMetrics.length > 0
-                      ? lastUsedDateRange?.from
-                        ? tReports("noDataMatchingCriteriaWithDateFilter")
-                        : tReports("noDataMatchingCriteria")
-                      : currentReport?.isPreBuilt
-                        ? tReports("noDataAvailable")
-                        : tReports("selectAtLeastOneDimensionAndMetric")}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            </div>
-          )}
+          <ReportRenderer
+            results={results || []}
+            chartData={allResults}
+            reportType={reportType}
+            dimensions={lastUsedDimensions}
+            metrics={lastUsedMetrics}
+            preGeneratedColumns={columns as ColumnDef<any>[]}
+            projectId={projectId}
+            mode={mode}
+            projects={automationTrendsProjects}
+            consecutiveRuns={lastUsedConsecutiveRuns}
+            staleDaysThreshold={staleDaysThreshold}
+            minExecutionsForRate={minExecutionsForRate}
+            lookbackDays={lookbackDays}
+            dateGrouping={lastUsedDateGrouping}
+            totalFlakyTests={
+              (reportType === "flaky-tests" || reportType === "cross-project-flaky-tests") && allResults
+                ? allResults.length
+                : undefined
+            }
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            sortConfig={sortConfig}
+            onSortChange={(columnId: string) => {
+              setSortConfig((prev) => ({
+                column: columnId,
+                direction:
+                  prev?.column === columnId && prev.direction === "asc"
+                    ? "desc"
+                    : "asc",
+              }));
+            }}
+            columnVisibility={columnVisibility}
+            onColumnVisibilityChange={setColumnVisibility}
+            grouping={grouping}
+            onGroupingChange={setGrouping}
+            expanded={expanded}
+            onExpandedChange={setExpanded}
+            reportSummary={enhancedReportSummary || undefined}
+            reportGeneratedAt={reportGeneratedAt || undefined}
+            userTimezone={session?.user?.preferences?.timezone}
+            readOnly={false}
+            headerActions={
+              <ShareButton
+                projectId={mode === "project" ? projectId : undefined}
+                reportConfig={{
+                  reportType,
+                  // Use the last request body which contains ALL parameters
+                  ...(lastRequestBody || {}),
+                }}
+                reportTitle={reportTypes.find((r) => r.id === reportType)?.label}
+              />
+            }
+          />
         </ResizablePanel>
       </ResizablePanelGroup>
       {/* Drill-down drawer */}

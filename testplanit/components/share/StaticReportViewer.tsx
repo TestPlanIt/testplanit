@@ -4,20 +4,9 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { BarChart3, Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ReportChart } from "@/components/dataVisualizations/ReportChart";
-import { DataTable } from "@/components/tables/DataTable";
 import { useTranslations } from "next-intl";
-import { useReportColumns } from "~/hooks/useReportColumns";
-import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
-import { PaginationComponent } from "~/components/tables/Pagination";
-import { PaginationInfo } from "~/components/tables/PaginationControls";
-import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
+import { ReportRenderer } from "@/components/reports/ReportRenderer";
+import { VisibilityState, ExpandedState } from "@tanstack/react-table";
 
 interface StaticReportViewerProps {
   shareData: any;
@@ -28,186 +17,53 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
   const [isLoading, setIsLoading] = useState(true);
   const [reportData, setReportData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // UI state for ReportRenderer
   const [sortConfig, setSortConfig] = useState<{
     column: string;
     direction: "asc" | "desc";
   } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number | "All">(10);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [grouping, setGrouping] = useState<string[]>([]);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
 
   const t = useTranslations("reports.sharedReport");
-  const tCommon = useTranslations("common");
 
   // Extract config from shareData
   const config = shareData.entityConfig;
 
-  // Extract dimension and metric IDs from reportData for column generation
-  const dimensionIds = useMemo(() => {
-    if (!reportData?.dimensions) return [];
-    return reportData.dimensions.map((d: any) => d.value || d.id);
-  }, [reportData?.dimensions]);
+  // Client-side pagination and sorting
+  const paginatedResults = useMemo(() => {
+    if (!reportData?.results) return [];
 
-  const metricIds = useMemo(() => {
-    if (!reportData?.metrics) return [];
-    return reportData.metrics.map((m: any) => m.value || m.id);
-  }, [reportData?.metrics]);
+    let processed = [...reportData.results];
 
-  // Check if this is a pre-built report
-  // Pre-built reports have empty dimensions/metrics in the saved config (not in the returned data)
-  // The share API generates dimension/metric metadata from the data structure, so we check the config instead
-  const isPreBuiltReport = (!shareData.entityConfig.dimensions || shareData.entityConfig.dimensions.length === 0) &&
-                           (!shareData.entityConfig.metrics || shareData.entityConfig.metrics.length === 0);
-
-  // For pre-built reports, generate simple columns from data keys
-  const preBuiltColumns = useMemo(() => {
-    if (!isPreBuiltReport || !reportData?.results || reportData.results.length === 0) {
-      return [];
-    }
-
-    const sampleRow = reportData.results[0];
-    return Object.keys(sampleRow)
-      .filter((key) => !key.endsWith('Id') && key !== 'project') // Skip internal fields
-      .map((key) => ({
-        accessorKey: key,
-        header: key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase()).trim(),
-        cell: ({ row }: any) => {
-          const value = row.original[key];
-
-          // Handle different value types
-          if (value === null || value === undefined) return '-';
-          if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-          if (typeof value === 'number') return value.toLocaleString();
-          if (typeof value === 'object' && value.name) return value.name;
-          if (typeof value === 'object' && value.title) return value.title;
-          if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}T/)) {
-            // ISO date string
-            try {
-              return new Date(value).toLocaleDateString();
-            } catch {
-              return value;
-            }
-          }
-          return String(value);
-        },
-      }));
-  }, [isPreBuiltReport, reportData?.results]);
-
-  // Generate columns using the useReportColumns hook for standard reports
-  const standardColumns = useReportColumns(
-    dimensionIds,
-    metricIds,
-    reportData?.dimensions,
-    reportData?.metrics,
-    undefined, // No drill-down for shared reports
-    shareData.projectId // Pass project ID for link generation
-  );
-
-  // Generate columns for automation-trends using specialized hook
-  const automationTrendsColumns = useAutomationTrendsColumns(
-    reportData?.projects || [],
-    reportData?.dateGrouping || "weekly"
-  );
-
-  // Pre-built reports with visualizations: automation-trends, flaky-tests
-  // Pre-built reports without visualizations: test-case-health, issue-test-coverage
-  const preBuiltReportsWithVisualization = ['automation-trends', 'flaky-tests'];
-  const hasVisualization = isPreBuiltReport
-    ? preBuiltReportsWithVisualization.includes(config.reportType)
-    : (reportData?.dimensions && reportData.dimensions.length > 0) ||
-      (reportData?.metrics && reportData.metrics.length > 0);
-
-  // Choose which columns to use based on report type
-  const columns =
-    config.reportType === "automation-trends" || config.reportType === "cross-project-automation-trends"
-      ? automationTrendsColumns
-      : isPreBuiltReport && !hasVisualization
-        ? preBuiltColumns
-        : standardColumns;
-
-
-  // Apply client-side sorting and pagination to results
-  const { sortedAndPaginatedResults, totalResults, totalPages, startIndex, endIndex } = useMemo(() => {
-    // Use chartData for full dataset (all results) instead of paginated results
-    const allResults = reportData?.chartData || reportData?.results || [];
-
-    // Apply sorting
-    let sorted = [...allResults];
+    // Apply sorting if configured
     if (sortConfig) {
-      sorted.sort((a, b) => {
-        // Check if it's a dimension or metric
-        const isDimension = dimensionIds.includes(sortConfig.column);
-        let aVal, bVal;
+      processed.sort((a, b) => {
+        const aValue = a[sortConfig.column];
+        const bValue = b[sortConfig.column];
 
-        if (isDimension) {
-          // For dimensions, the value is usually an object with name/id properties
-          const aDim = a[sortConfig.column];
-          const bDim = b[sortConfig.column];
+        if (aValue === bValue) return 0;
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
 
-          // Handle date dimension specially
-          if (sortConfig.column === "date") {
-            aVal = aDim?.executedAt || aDim?.createdAt || aDim;
-            bVal = bDim?.executedAt || bDim?.createdAt || bDim;
-          } else {
-            // For other dimensions, sort by name or id
-            aVal = aDim?.name || aDim?.title || aDim?.id || aDim;
-            bVal = bDim?.name || bDim?.title || bDim?.id || bDim;
-          }
-        } else {
-          // For metrics, need to find the metric label
-          const metric = reportData?.metrics?.find((m: any) => m.value === sortConfig.column);
-          if (metric) {
-            aVal = a[metric.label];
-            bVal = b[metric.label];
-          } else {
-            // Fallback to direct access
-            aVal = a[sortConfig.column];
-            bVal = b[sortConfig.column];
-          }
-        }
-
-        // Handle null/undefined values
-        if (aVal === null || aVal === undefined) return 1;
-        if (bVal === null || bVal === undefined) return -1;
-
-        // Handle different value types
-        if (typeof aVal === "number" && typeof bVal === "number") {
-          return sortConfig.direction === "asc" ? aVal - bVal : bVal - aVal;
-        }
-
-        if (aVal instanceof Date || bVal instanceof Date) {
-          const aTime = new Date(aVal).getTime();
-          const bTime = new Date(bVal).getTime();
-          return sortConfig.direction === "asc" ? aTime - bTime : bTime - aTime;
-        }
-
-        // String comparison
-        const comparison = String(aVal).localeCompare(String(bVal));
+        const comparison = aValue < bValue ? -1 : 1;
         return sortConfig.direction === "asc" ? comparison : -comparison;
       });
     }
 
     // Apply pagination
-    let paginated = sorted;
-    let calculatedStartIndex = 1;
-    let calculatedEndIndex = sorted.length;
-    let calculatedTotalPages = 1;
-
-    if (pageSize !== "All") {
-      const numericPageSize = pageSize as number;
-      calculatedStartIndex = (currentPage - 1) * numericPageSize + 1;
-      calculatedEndIndex = Math.min(currentPage * numericPageSize, sorted.length);
-      paginated = sorted.slice(calculatedStartIndex - 1, calculatedEndIndex);
-      calculatedTotalPages = Math.ceil(sorted.length / numericPageSize);
+    if (pageSize === "All") {
+      return processed;
     }
 
-    return {
-      sortedAndPaginatedResults: paginated,
-      totalResults: sorted.length,
-      totalPages: calculatedTotalPages,
-      startIndex: calculatedStartIndex,
-      endIndex: calculatedEndIndex,
-    };
-  }, [reportData, sortConfig, dimensionIds, currentPage, pageSize]);
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return processed.slice(startIndex, endIndex);
+  }, [reportData?.results, sortConfig, currentPage, pageSize]);
 
   // Handle sort changes
   const handleSortChange = useCallback((columnId: string) => {
@@ -215,14 +71,12 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
       column: columnId,
       direction: prev?.column === columnId && prev.direction === "asc" ? "desc" : "asc",
     }));
-    // Reset to page 1 when sorting changes
     setCurrentPage(1);
   }, []);
 
   // Handle page size changes
   const handlePageSizeChange = useCallback((newPageSize: number | "All") => {
     setPageSize(newPageSize);
-    // Reset to page 1 when page size changes
     setCurrentPage(1);
   }, []);
 
@@ -328,157 +182,60 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
 
           {/* Project info */}
           {shareData.projectName && (
-            <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-              <span>{t("fromProject")}</span>
+            <div className="mt-4 flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">{t("fromProject")}:</span>
               <span className="font-medium">{shareData.projectName}</span>
             </div>
           )}
 
-          {/* Report config info */}
-          <div className="mt-4 flex flex-wrap gap-4 text-sm">
-            {config.startDate && config.endDate && (
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">{t("dateRange")}</span>
-                <span className="font-medium">
-                  {new Date(config.startDate).toLocaleDateString()} -{" "}
-                  {new Date(config.endDate).toLocaleDateString()}
-                </span>
-              </div>
-            )}
-          </div>
+          {/* Date range if applicable */}
+          {config.startDate && config.endDate && (
+            <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+              <span>{t("dateRange")}:</span>
+              <span>
+                {new Date(config.startDate).toLocaleDateString()} -{" "}
+                {new Date(config.endDate).toLocaleDateString()}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Report content */}
       <div className="container mx-auto px-4 py-6">
-        {reportData.results && columns.length > 0 ? (
-          !hasVisualization ? (
-            // Table-only reports (no visualization support)
-            <Card className="h-full overflow-hidden">
-              <CardHeader className="pt-2 pb-2">
-                <div className="flex flex-row items-end justify-between">
-                  <CardTitle>{tCommon("results")}</CardTitle>
-                  {totalResults > 0 && (
-                    <div className="flex flex-col items-end">
-                      <div className="justify-end">
-                        <PaginationInfo
-                          startIndex={startIndex}
-                          endIndex={endIndex}
-                          totalRows={totalResults}
-                          searchString=""
-                          pageSize={pageSize}
-                          pageSizeOptions={defaultPageSizeOptions}
-                          handlePageSizeChange={handlePageSizeChange}
-                        />
-                      </div>
-                      {pageSize !== "All" && totalPages > 1 && (
-                        <div className="justify-end -mx-4">
-                          <PaginationComponent
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={setCurrentPage}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="overflow-y-auto p-6 pt-0">
-                <DataTable
-                  data={sortedAndPaginatedResults}
-                  columns={columns}
-                  columnVisibility={{}}
-                  onColumnVisibilityChange={() => {}}
-                  sortConfig={sortConfig || undefined}
-                  onSortChange={handleSortChange}
-                />
-              </CardContent>
-            </Card>
-          ) : (
-            // Standard reports: visualization + table in resizable panels
-            <ResizablePanelGroup
-              direction="vertical"
-              className="min-h-[calc(100vh-20rem)]"
-              autoSaveId="shared-report-panels"
-            >
-              {/* Visualization Panel */}
-              <ResizablePanel defaultSize={50} minSize={20} collapsedSize={0} collapsible>
-                <Card className="h-full rounded-none border-0 overflow-hidden">
-                  <CardHeader className="pt-2 pb-2">
-                    <CardTitle>{tCommon("visualization")}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-[calc(100%-4rem)] p-6 flex flex-col">
-                    <div className="flex-1 min-h-0 w-full">
-                      <ReportChart
-                        results={reportData.chartData}
-                        dimensions={reportData.dimensions}
-                        metrics={reportData.metrics}
-                        reportType={config.reportType}
-                        projects={reportData.projects}
-                        consecutiveRuns={reportData.consecutiveRuns}
-                        totalFlakyTests={reportData.totalFlakyTests}
-                        projectId={shareData.projectId}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </ResizablePanel>
-
-              <ResizableHandle withHandle />
-
-              {/* Results Table Panel */}
-              <ResizablePanel defaultSize={50} minSize={20} collapsedSize={0} collapsible>
-                <Card className="h-full rounded-none border-0 overflow-hidden">
-                  <CardHeader className="pt-2 pb-2">
-                    <div className="flex flex-row items-end justify-between">
-                      <CardTitle>{tCommon("results")}</CardTitle>
-                      {totalResults > 0 && (
-                        <div className="flex flex-col items-end">
-                          <div className="justify-end">
-                            <PaginationInfo
-                              startIndex={startIndex}
-                              endIndex={endIndex}
-                              totalRows={totalResults}
-                              searchString=""
-                              pageSize={pageSize}
-                              pageSizeOptions={defaultPageSizeOptions}
-                              handlePageSizeChange={handlePageSizeChange}
-                            />
-                          </div>
-                          {pageSize !== "All" && totalPages > 1 && (
-                            <div className="justify-end -mx-4">
-                              <PaginationComponent
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                onPageChange={setCurrentPage}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="h-[calc(100%-4rem)] overflow-y-auto p-6 pt-0">
-                    <DataTable
-                      data={sortedAndPaginatedResults}
-                      columns={columns}
-                      columnVisibility={{}}
-                      onColumnVisibilityChange={() => {}}
-                      sortConfig={sortConfig || undefined}
-                      onSortChange={handleSortChange}
-                    />
-                  </CardContent>
-                </Card>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          )
-        ) : null}
-
-        {/* Read-only notice */}
-        <div className="text-center text-sm text-muted-foreground py-4 mt-6">
-          <p>{t("readOnlyNotice")}</p>
-        </div>
+        <ReportRenderer
+          results={paginatedResults}
+          chartData={reportData.chartData || reportData.results}
+          reportType={config.reportType}
+          dimensions={reportData.dimensions || []}
+          metrics={reportData.metrics || []}
+          projectId={shareData.projectId}
+          mode={config.mode}
+          projects={reportData.projects || []}
+          consecutiveRuns={reportData.consecutiveRuns || config.consecutiveRuns || 5}
+          staleDaysThreshold={config.staleDaysThreshold}
+          minExecutionsForRate={config.minExecutionsForRate}
+          lookbackDays={config.lookbackDays}
+          dateGrouping={reportData.dateGrouping || config.dateGrouping || "weekly"}
+          totalFlakyTests={reportData.totalFlakyTests}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalCount={reportData.pagination?.totalCount || reportData.results?.length || 0}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={handlePageSizeChange}
+          sortConfig={sortConfig}
+          onSortChange={handleSortChange}
+          columnVisibility={columnVisibility}
+          onColumnVisibilityChange={setColumnVisibility}
+          grouping={grouping}
+          onGroupingChange={setGrouping}
+          expanded={expanded}
+          onExpandedChange={setExpanded}
+          readOnly={true}
+        />
+        <p className="text-center text-sm text-muted-foreground mt-6">
+          {t("readOnlyNotice")}
+        </p>
       </div>
     </div>
   );
