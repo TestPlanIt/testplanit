@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useUpdateUser } from "~/lib/hooks";
 import { User } from "@prisma/client";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,21 +17,32 @@ interface RemoveAvatarProps {
 }
 
 export function RemoveAvatar({ user }: RemoveAvatarProps) {
-  const { mutateAsync: updateUser } = useUpdateUser();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [openPopover, setOpenPopover] = useState(false);
+  const queryClient = useQueryClient();
   const t = useTranslations("users.avatar");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   async function onRemove() {
     setIsLoading(true);
     try {
-      await updateUser({
-        where: { id: user.id },
-        data: {
+      // Use dedicated update API endpoint instead of ZenStack
+      // (ZenStack 2.21+ has issues with nested update operations)
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           image: null,
-        },
+        }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to remove avatar");
+      }
+
+      // Refetch all queries to refresh UI with removed avatar
+      queryClient.refetchQueries();
     } catch (err: any) {
       console.error(err);
     } finally {

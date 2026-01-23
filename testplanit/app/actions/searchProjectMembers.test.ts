@@ -11,17 +11,15 @@ vi.mock("./getProjectEffectiveMembers", () => ({
 const mockFindMany = vi.fn();
 const mockCount = vi.fn();
 
-// Mock @prisma/client with a proper class constructor
-vi.mock("@prisma/client", () => {
-  return {
-    PrismaClient: class MockPrismaClient {
-      user = {
-        findMany: (...args: any[]) => mockFindMany(...args),
-        count: (...args: any[]) => mockCount(...args),
-      };
+// Mock the prisma singleton
+vi.mock("~/lib/prisma", () => ({
+  prisma: {
+    user: {
+      findMany: (...args: any[]) => mockFindMany(...args),
+      count: (...args: any[]) => mockCount(...args),
     },
-  };
-});
+  },
+}));
 
 // Import after mocks are set up
 import { searchProjectMembers } from "./searchProjectMembers";

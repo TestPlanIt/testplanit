@@ -1,5 +1,6 @@
 import { PrismaClient, WorkflowScope, ApplicationArea } from "@prisma/client";
 import { seedFieldIcons } from "./seedFieldIcons";
+import { seedTestData } from "./seedTestData";
 import bcrypt from "bcrypt";
 
 export const prisma = new PrismaClient();
@@ -51,29 +52,25 @@ async function seedCoreData() {
   console.log("Seeding core data...");
 
   // --- Roles ---
-  const adminRole = await prisma.roles.upsert({
-    where: { name: "admin" },
-    update: { isDefault: false }, // Ensure only one default later
-    create: {
-      name: "admin",
-      isDefault: false,
-    },
-  });
+  // Use upsert with explicit IDs to ensure consistent role IDs
   const userRole = await prisma.roles.upsert({
-    where: { name: "user" },
-    update: { isDefault: true }, // Make user the default
+    where: { id: 1 },
+    update: { name: "user", isDefault: true },
     create: {
+      id: 1,
       name: "user",
       isDefault: true,
     },
   });
-  // Ensure admin role is NOT default if user role was just created/updated as default
-  if (userRole.isDefault) {
-    await prisma.roles.update({
-      where: { id: adminRole.id },
-      data: { isDefault: false },
-    });
-  }
+  const adminRole = await prisma.roles.upsert({
+    where: { id: 2 },
+    update: { name: "admin", isDefault: false },
+    create: {
+      id: 2,
+      name: "admin",
+      isDefault: false,
+    },
+  });
 
   console.log(
     `Upserted roles: admin (ID: ${adminRole.id}), user (ID: ${userRole.id}) - Default: ${userRole.isDefault ? "user" : "admin"}`
@@ -1583,9 +1580,10 @@ async function main() {
     await seedCoreData();
 
     // Always create magic link SSO provider for production environments
+    // But keep it disabled by default to prevent unwanted email sending
     if (process.env.NODE_ENV === "production") {
       console.log("Seeding production SSO provider...");
-      // Create Magic Link provider (enabled by default for production)
+      // Create Magic Link provider (disabled by default to prevent unwanted emails)
       const magicLinkProvider = await prisma.ssoProvider.upsert({
         where: {
           id: "magic-link-provider",
@@ -1593,26 +1591,32 @@ async function main() {
         update: {
           name: "Magic Link",
           type: "MAGIC_LINK",
-          enabled: true,
-          forceSso: true, // Force SSO-only authentication (magic link only)
+          enabled: false, // Disabled by default - must be manually enabled
+          forceSso: false, // Allow both SSO and regular signup
           config: {},
         },
         create: {
           id: "magic-link-provider",
           name: "Magic Link",
           type: "MAGIC_LINK",
-          enabled: true,
-          forceSso: true, // Force SSO-only authentication (magic link only)
+          enabled: false, // Disabled by default - must be manually enabled
+          forceSso: false, // Allow both SSO and regular signup
           config: {},
         },
       });
       console.log(
-        `✓ Created Magic Link provider with forceSso=true (magic link only authentication)`
+        `✓ Created Magic Link provider (disabled by default - must be manually enabled in admin settings)`
       );
     }
 
     // Assign workflows to all projects
     await assignWorkflowsToAllProjects();
+
+    // Seed test data for E2E tests (development and test environments only)
+    if (process.env.NODE_ENV !== "production") {
+      console.log("\n--- Seeding E2E Test Data ---");
+      await seedTestData();
+    }
   } catch (error) {
     console.error("Error in main execution:", error);
   } finally {

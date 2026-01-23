@@ -10,7 +10,7 @@ async function main() {
   }
 
   const queue = new Queue(TESTMO_IMPORT_QUEUE_NAME, {
-    connection: valkeyConnection,
+    connection: valkeyConnection as any,
   });
 
   console.log(`Clearing queue "${TESTMO_IMPORT_QUEUE_NAME}"...`);

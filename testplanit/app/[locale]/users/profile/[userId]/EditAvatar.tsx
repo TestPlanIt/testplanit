@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { useUpdateUser } from "~/lib/hooks";
 import { User } from "@prisma/client";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -33,8 +33,8 @@ export function EditAvatarModal({ user }: EditAvatarModalProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const { mutateAsync: updateUser } = useUpdateUser();
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const t = useTranslations("users.avatar");
   const tCommon = useTranslations("common");
   const handleCancel = () => setOpen(false);
@@ -54,14 +54,26 @@ export function EditAvatarModal({ user }: EditAvatarModalProps) {
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
     try {
-      await updateUser({
-        where: { id: user.id },
-        data: {
+      // Use dedicated update API endpoint instead of ZenStack
+      // (ZenStack 2.21+ has issues with nested update operations)
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           ...(avatarUrl && { image: avatarUrl }),
-        },
+        }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update avatar");
+      }
+
       setOpen(false);
       setIsSubmitting(false);
+
+      // Refetch all queries to refresh UI with new avatar
+      queryClient.refetchQueries();
     } catch (err: any) {
       form.setError("root", {
         type: "custom",

@@ -416,7 +416,7 @@ async function startWorker() {
   // Initialize the worker only if Valkey connection exists
   if (valkeyConnection) {
     const worker = new Worker(FORECAST_QUEUE_NAME, processor, {
-      connection: valkeyConnection,
+      connection: valkeyConnection as any,
       concurrency: 5,
       limiter: {
         max: 100,

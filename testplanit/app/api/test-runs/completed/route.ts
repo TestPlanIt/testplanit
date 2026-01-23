@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { authOptions } from "~/server/auth";
 import { AUTOMATED_TEST_RUN_TYPES } from "~/utils/testResultTypes";
-
-const prisma = new PrismaClient();
+import { prisma } from "~/lib/prisma";
 
 export type CompletedTestRunsResponse = {
   runs: Array<{

@@ -890,6 +890,7 @@ function authorize(prisma: PrismaClient) {
         twoFactorEnabled: true,
       },
     });
+
     if (!maybeUser?.password) {
       // Audit failed login - user not found (don't reveal this to user)
       auditAuthEvent("LOGIN_FAILED", null, credentials.email, {

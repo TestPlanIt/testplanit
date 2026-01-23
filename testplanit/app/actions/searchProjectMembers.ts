@@ -1,9 +1,7 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
 import { getProjectEffectiveMembers } from "./getProjectEffectiveMembers";
-
-const prisma = new PrismaClient();
+import { prisma } from "~/lib/prisma";
 
 /**
  * Search and paginate users who have access to a project.

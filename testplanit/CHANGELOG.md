@@ -1,3 +1,68 @@
+## [0.10.14](https://github.com/TestPlanIt/testplanit/compare/v0.10.13...v0.10.14) (2026-01-23)
+
+
+### Bug Fixes
+
+* update dependencies and enhance user profile features ([180b34b](https://github.com/TestPlanIt/testplanit/commit/180b34bf6450bb01edc54839978feecc396c8586))
+* update dependency specifiers in pnpm-lock.yaml ([2265e4c](https://github.com/TestPlanIt/testplanit/commit/2265e4c408dec19bca57d992a907091b774dfba1))
+
+## [0.10.13](https://github.com/TestPlanIt/testplanit/compare/v0.10.12...v0.10.13) (2026-01-23)
+
+
+### Bug Fixes
+
+* Fix/minor bug fixes ([#53](https://github.com/TestPlanIt/testplanit/issues/53)) ([932fce9](https://github.com/TestPlanIt/testplanit/commit/932fce96c9cbccedb90b87b74f410e2ff5b93f5f))
+
+## [0.10.12](https://github.com/TestPlanIt/testplanit/compare/v0.10.11...v0.10.12) (2026-01-22)
+
+
+### Bug Fixes
+
+* add pnpm overrides for security vulnerabilities ([87d845a](https://github.com/TestPlanIt/testplanit/commit/87d845a397f49dbf5f9414802eadd0fcc6f1830b))
+* Fix/e2e test fixes ([#52](https://github.com/TestPlanIt/testplanit/issues/52)) ([df8cc36](https://github.com/TestPlanIt/testplanit/commit/df8cc369d07b01e85f54eebb4eca22a5a9a3afb9)), closes [#96](https://github.com/TestPlanIt/testplanit/issues/96) [#94](https://github.com/TestPlanIt/testplanit/issues/94) [#99](https://github.com/TestPlanIt/testplanit/issues/99) [#98](https://github.com/TestPlanIt/testplanit/issues/98) [#102-107](https://github.com/TestPlanIt/testplanit/issues/102-107)
+
+## [0.10.11](https://github.com/TestPlanIt/testplanit/compare/v0.10.10...v0.10.11) (2026-01-22)
+
+
+### Bug Fixes
+
+* resolve Dependabot security vulnerabilities ([9a17d3f](https://github.com/TestPlanIt/testplanit/commit/9a17d3f8a6926014d7796365d2fed74432a472e2)), closes [#96](https://github.com/TestPlanIt/testplanit/issues/96) [#94](https://github.com/TestPlanIt/testplanit/issues/94) [#99](https://github.com/TestPlanIt/testplanit/issues/99) [#98](https://github.com/TestPlanIt/testplanit/issues/98) [#102-107](https://github.com/TestPlanIt/testplanit/issues/102-107)
+
+## [0.10.10](https://github.com/TestPlanIt/testplanit/compare/v0.10.9...v0.10.10) (2026-01-21)
+
+
+### Bug Fixes
+
+* enhance user profile link accessibility and update API usage ([fc01faf](https://github.com/TestPlanIt/testplanit/commit/fc01faf2992e7bdf994fb2dcb339bcbb80d68253))
+
+## [0.10.9](https://github.com/TestPlanIt/testplanit/compare/v0.10.8...v0.10.9) (2026-01-21)
+
+
+### Bug Fixes
+
+* streamline query refetching in user management components ([e859352](https://github.com/TestPlanIt/testplanit/commit/e859352759901394429f54b666816d55d775c27f))
+
+## [0.10.8](https://github.com/TestPlanIt/testplanit/compare/v0.10.7...v0.10.8) (2026-01-20)
+
+
+### Bug Fixes
+
+* apply Redis connection type fix to workers and scripts ([65d843d](https://github.com/TestPlanIt/testplanit/commit/65d843d5963eec0bc5f4c8435f274bc556a65d66))
+
+## [0.10.7](https://github.com/TestPlanIt/testplanit/compare/v0.10.6...v0.10.7) (2026-01-20)
+
+
+### Bug Fixes
+
+* update Redis connection type in queue initialization ([76bc417](https://github.com/TestPlanIt/testplanit/commit/76bc4178841d9fb2ce03edcc58a4ba2743cb60f4))
+
+## [0.10.6](https://github.com/TestPlanIt/testplanit/compare/v0.10.5...v0.10.6) (2026-01-19)
+
+
+### Bug Fixes
+
+* prevent race condition when trying to add new user preferences before the user is created ([d8586e5](https://github.com/TestPlanIt/testplanit/commit/d8586e5b67ee12d88850d48b1744ed9d57ff6178))
+
 ## [0.10.5](https://github.com/TestPlanIt/testplanit/compare/v0.10.4...v0.10.5) (2026-01-17)
 
 ## [0.10.4](https://github.com/TestPlanIt/testplanit/compare/v0.10.3...v0.10.4) (2026-01-17)

@@ -5,7 +5,6 @@ import type { NextPage } from "next";
 import { signIn } from "next-auth/react";
 import { useRouter } from "~/lib/navigation";
 import {
-  useCreateUser,
   useFindManySsoProvider,
   useFindFirstRegistrationSettings,
 } from "~/lib/hooks";
@@ -69,7 +68,6 @@ function clearSessionCookies() {
 }
 
 const Signup: NextPage = () => {
-  const { mutateAsync: signup } = useCreateUser();
   const [submissionError, setSubmissionError] = useState("");
   const [sessionCleared, setSessionCleared] = useState(false);
   const router = useRouter();
@@ -177,30 +175,31 @@ const Signup: NextPage = () => {
 
     let newUser;
     try {
-      newUser = await signup({
-        data: {
+      // Use dedicated signup API endpoint instead of ZenStack
+      // (ZenStack 2.21+ has issues with unauthenticated nested creates)
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           name: data.name,
           email: data.email,
           password: data.password,
           emailVerifToken: await generateEmailVerificationToken(),
-          // Apply the configured default access level from registration settings
-          // Falls back to NONE if no settings exist (matches schema default)
           access: registrationSettings?.defaultAccess || "NONE",
-          userPreferences: {
-            create: {
-              itemsPerPage: "P10",
-              dateFormat: "MM_DD_YYYY_DASH",
-              timeFormat: "HH_MM_A",
-              theme: "Light",
-              locale: "en_US",
-            },
-          },
-        },
+        }),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create user");
+      }
+
+      newUser = await response.json().then((r) => r.data);
       await resendVerificationEmail(data.email);
     } catch (err: any) {
-      if (err.info?.prisma && err.info?.code === "P2002") {
-        setSubmissionError(t("common.errors.emailExists"));
+      // Handle user-friendly error messages
+      if (err.message?.includes("already exists")) {
+        setSubmissionError(t("common.errors.userExists"));
       } else {
         setSubmissionError(t("common.errors.unknown"));
       }
@@ -223,12 +222,18 @@ const Signup: NextPage = () => {
     }
 
     // signin to create a session
-    await signIn("credentials", {
+    const signInResult = await signIn("credentials", {
       redirect: false,
       name: data.name,
       email: data.email,
       password: data.password,
     });
+
+    if (signInResult?.error) {
+      setSubmissionError(t("common.errors.unknown"));
+      return;
+    }
+
     router.push("/");
   }
 
@@ -286,10 +291,10 @@ const Signup: NextPage = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("common.name")}
-                        <HelpPopover helpKey="user.name" />
+                        <HelpPopover helpKey="user.name" tabIndex={5} />
                       </FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} tabIndex={1} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -302,10 +307,10 @@ const Signup: NextPage = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("common.fields.email")}
-                        <HelpPopover helpKey="user.email" />
+                        <HelpPopover helpKey="user.email" tabIndex={6} />
                       </FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} tabIndex={2} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -318,10 +323,10 @@ const Signup: NextPage = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("common.fields.password")}
-                        <HelpPopover helpKey="user.password" />
+                        <HelpPopover helpKey="user.password" tabIndex={7} />
                       </FormLabel>
                       <FormControl>
-                        <Input {...field} type="password" />
+                        <Input {...field} type="password" tabIndex={3} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -334,16 +339,16 @@ const Signup: NextPage = () => {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         {t("common.fields.confirmPassword")}
-                        <HelpPopover helpKey="user.confirmPassword" />
+                        <HelpPopover helpKey="user.confirmPassword" tabIndex={8} />
                       </FormLabel>
                       <FormControl>
-                        <Input {...field} type="password" />
+                        <Input {...field} type="password" tabIndex={4} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <Button type="submit">{t("common.actions.signUp")}</Button>
+                <Button type="submit" tabIndex={9}>{t("common.actions.signUp")}</Button>
                 {submissionError && (
                   <div className="text-destructive">{submissionError}</div>
                 )}

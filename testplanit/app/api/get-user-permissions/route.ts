@@ -3,16 +3,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 import {
-  PrismaClient,
   ApplicationArea,
   ProjectAccessType,
   Roles,
 } from "@prisma/client";
-import { getServerSession } from "next-auth/next"; // Or your auth provider
-// Assuming authOptions is configured elsewhere
-// import { authOptions } from 'pages/api/auth/[...nextauth]';
-
-const prisma = new PrismaClient();
+import { getServerSession } from "next-auth/next";
+import { prisma } from "~/lib/prisma";
 
 // Define the input schema using Zod
 const PermissionCheckSchema = z.object({

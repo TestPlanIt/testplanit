@@ -67,7 +67,11 @@
             "hono": "4.11.4",
             "@hono/node-server": "1.19.9",
             "cheerio": ">=1.0.0",
-            "ioredis": "5.9.2"
+            "ioredis": "5.9.2",
+            "lodash": ">=4.17.23",
+            "lodash-es": ">=4.17.23",
+            "undici": ">=6.23.0",
+            "diff": ">=8.0.3"
         }
     }
 }

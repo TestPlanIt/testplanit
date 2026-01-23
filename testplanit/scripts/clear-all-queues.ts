@@ -26,7 +26,7 @@ async function clearQueue(queueName: string) {
 
   try {
     const queue = new Queue(queueName, {
-      connection: valkeyConnection,
+      connection: valkeyConnection as any,
     });
 
     console.log(`Clearing queue "${queueName}"...`);

@@ -5,9 +5,9 @@ import { useEffect, useState, use, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useFindFirstUser,
-  useUpdateUser,
   useFindUniqueAppConfig,
 } from "~/lib/hooks";
 import {
@@ -90,10 +90,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
   const { userId } = use(params);
 
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const t = useTranslations("users.profile");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -101,7 +102,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
   const tNotifications = useTranslations("users.profile.notifications");
   const tNotificationModes = useTranslations("admin.notifications.defaultMode");
   const tUserMenu = useTranslations("userMenu");
-  const { mutateAsync: updateUser } = useUpdateUser();
   const { data: globalSettings } = useFindUniqueAppConfig({
     where: { key: "notificationSettings" },
   });
@@ -149,22 +149,22 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
     () => ({
       name: user?.name || "",
       email: user?.email || "",
-      theme: session?.user?.preferences?.theme ?? Theme.Purple,
-      locale: session?.user?.preferences?.locale ?? Locale.en_US,
+      theme: user?.userPreferences?.theme ?? session?.user?.preferences?.theme ?? Theme.Purple,
+      locale: user?.userPreferences?.locale ?? session?.user?.preferences?.locale ?? Locale.en_US,
       itemsPerPage:
-        session?.user?.preferences?.itemsPerPage ?? ItemsPerPage.P10,
+        user?.userPreferences?.itemsPerPage ?? session?.user?.preferences?.itemsPerPage ?? ItemsPerPage.P10,
       dateFormat:
-        session?.user?.preferences?.dateFormat ?? DateFormat.MM_DD_YYYY_DASH,
-      timeFormat: session?.user?.preferences?.timeFormat ?? TimeFormat.HH_MM_A,
-      timezone: session?.user?.preferences?.timezone ?? "Etc/UTC",
+        user?.userPreferences?.dateFormat ?? session?.user?.preferences?.dateFormat ?? DateFormat.MM_DD_YYYY_DASH,
+      timeFormat: user?.userPreferences?.timeFormat ?? session?.user?.preferences?.timeFormat ?? TimeFormat.HH_MM_A,
+      timezone: user?.userPreferences?.timezone ?? session?.user?.preferences?.timezone ?? "Etc/UTC",
       notificationMode:
         user?.userPreferences?.notificationMode ?? NotificationMode.USE_GLOBAL,
     }),
     [
       user?.name,
       user?.email,
+      user?.userPreferences,
       session?.user?.preferences,
-      user?.userPreferences?.notificationMode,
     ]
   );
 
@@ -211,22 +211,20 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
       // Build update data with only changed fields
       const updateData: any = {
         userPreferences: {
-          update: {
-            theme: data.theme,
-            locale: data.locale,
-            itemsPerPage: data.itemsPerPage,
-            dateFormat: data.dateFormat,
-            timeFormat: data.timeFormat,
-            timezone: data.timezone,
-            notificationMode: data.notificationMode,
-            emailNotifications:
-              data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
-              data.notificationMode === "IN_APP_EMAIL_DAILY",
-            inAppNotifications:
-              data.notificationMode === "IN_APP" ||
-              data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
-              data.notificationMode === "IN_APP_EMAIL_DAILY",
-          },
+          theme: data.theme,
+          locale: data.locale,
+          itemsPerPage: data.itemsPerPage,
+          dateFormat: data.dateFormat,
+          timeFormat: data.timeFormat,
+          timezone: data.timezone,
+          notificationMode: data.notificationMode,
+          emailNotifications:
+            data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
+            data.notificationMode === "IN_APP_EMAIL_DAILY",
+          inAppNotifications:
+            data.notificationMode === "IN_APP" ||
+            data.notificationMode === "IN_APP_EMAIL_IMMEDIATE" ||
+            data.notificationMode === "IN_APP_EMAIL_DAILY",
         },
       };
 
@@ -241,56 +239,59 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
         updateData.email = data.email;
       }
 
-      await updateUser({
-        where: { id: userId },
-        data: updateData,
+      // Track if locale changed to know if we need to reload
+      const localeChanged = data.locale !== user?.userPreferences?.locale;
+
+      // Use dedicated update API endpoint instead of ZenStack
+      // (ZenStack 2.21+ has issues with nested update operations)
+      const response = await fetch(`/api/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updateData),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update user");
+      }
+
       setIsEditing(false);
-      window.location.reload();
+
+      // If locale changed, update cookie and reload the page
+      if (localeChanged) {
+        const urlLocale = data.locale.replace("_", "-");
+        document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+        window.location.reload();
+        return; // Exit early since page will reload
+      }
+
+      // Update the session to reflect new preferences (theme, etc.)
+      // This ensures the app immediately applies the new settings
+      await updateSession();
+
+      // Refetch all queries to refresh UI with updated profile data
+      // Run this after closing the edit mode so the UI doesn't stay in submitting state
+      queryClient.refetchQueries();
     } catch (err: any) {
-      // Check for Prisma errors in different possible locations
-      const isPrismaError =
-        err.info?.prisma ||
-        err.code === "P2002" ||
-        err.message?.includes("Unique constraint");
-      const errorCode = err.info?.code || err.code;
-
-      if (isPrismaError && errorCode === "P2002") {
-        // Check which field caused the unique constraint violation
-        const target = err.info?.meta?.target || err.meta?.target;
-        // Check both the wrapper error message and the info.message
-        const prismaMessage = err.info?.message || "";
-
-        // The target might be an array or string, and might be the field name or a constraint name
-        const targetStr = Array.isArray(target)
-          ? target.join(",")
-          : String(target || "");
-
-        // Check for field names in the Prisma error message
-        // The message format is: "Unique constraint failed on the fields: (`fieldname`)"
-        if (
-          targetStr.includes("email") ||
-          targetStr.includes("User_email_key") ||
-          prismaMessage.includes("(`email`)") ||
-          prismaMessage.includes("fields: (`email`)")
-        ) {
-          form.setError("email", {
-            type: "custom",
-            message: tCommon("errors.emailExists"),
-          });
-        } else {
-          // Generic unique constraint error
-          form.setError("root", {
-            type: "custom",
-            message: tCommon("errors.duplicateValue"),
-          });
-        }
+      // Handle errors from the new API endpoint
+      if (err.message?.includes("Email already exists")) {
+        form.setError("email", {
+          type: "custom",
+          message: tCommon("errors.emailExists"),
+        });
+      } else if (err.message?.includes("Forbidden") || err.message?.includes("Unauthorized")) {
+        form.setError("root", {
+          type: "custom",
+          message: tCommon("errors.unknown"),
+        });
       } else {
         form.setError("root", {
           type: "custom",
           message: tCommon("errors.unknown"),
         });
       }
+    } finally {
+      // Always reset submitting state, whether success or error
       setIsSubmitting(false);
     }
   }
@@ -338,6 +339,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
         return "English (US)";
       case "es_ES":
         return "Español (ES)";
+      case "fr_FR":
+        return "Français (France)";
       default:
         return locale;
     }
@@ -473,6 +476,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 <FormControl>
                                   <Input
                                     {...field}
+                                    data-testid="profile-name-input"
                                     className="text-2xl font-bold"
                                   />
                                 </FormControl>
@@ -493,6 +497,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                   <Input
                                     {...field}
                                     type="email"
+                                    data-testid="profile-email-input"
                                     disabled={user?.authMethod === "SSO"}
                                     className={
                                       user?.authMethod === "SSO"
@@ -552,6 +557,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                             {tCommon("cancel")}
                           </Button>
                           <Button
+                            data-testid="profile-submit-button"
                             onClick={form.handleSubmit(onSubmit)}
                             disabled={isSubmitting}
                           >
@@ -814,7 +820,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
 
                                 <Separator className="opacity-50" />
 
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between" data-testid="user-locale-display">
                                   <span className="text-sm">
                                     {tCommon("fields.locale")}
                                   </span>
@@ -879,7 +885,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                           </div>
                         ) : (
                           <Form {...form}>
-                            <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="grid gap-4 sm:grid-cols-2 px-0.5">
                               <FormField
                                 control={form.control}
                                 name="theme"
@@ -900,7 +906,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                         }}
                                         value={field.value}
                                       >
-                                        <SelectTrigger>
+                                        <SelectTrigger data-testid="profile-theme-select">
                                           <SelectValue
                                             placeholder={tCommon(
                                               "fields.theme"
@@ -937,7 +943,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 control={form.control}
                                 name="locale"
                                 render={({ field }) => (
-                                  <FormItem>
+                                  <FormItem data-testid="user-locale-edit">
                                     <FormLabel className="flex items-center">
                                       {tCommon("fields.locale")}
                                       <HelpPopover helpKey="user.locale" />
@@ -953,7 +959,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                         }}
                                         value={field.value}
                                       >
-                                        <SelectTrigger>
+                                        <SelectTrigger data-testid="user-locale-select">
                                           <SelectValue
                                             placeholder={tCommon(
                                               "fields.locale"
@@ -967,11 +973,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                                 key={locale}
                                                 value={locale}
                                               >
-                                                {locale === "en_US"
-                                                  ? "English (US)"
-                                                  : locale === "es_ES"
-                                                    ? "Español (ES)"
-                                                    : locale}
+                                                {getLocaleLabel(locale)}
                                               </SelectItem>
                                             )
                                           )}

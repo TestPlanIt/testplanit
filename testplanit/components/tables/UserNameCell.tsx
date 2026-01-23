@@ -102,6 +102,7 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
           href={`/users/profile/${userId}`}
           className="flex items-center truncate group min-w-0"
           aria-label={`Profile of ${user?.name}`}
+          data-testid={`user-profile-link-${userId}`}
         >
           {content}
           {!shrinkLink && (

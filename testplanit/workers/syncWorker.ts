@@ -151,7 +151,7 @@ const startWorker = async () => {
 
   if (valkeyConnection) {
     worker = new Worker(SYNC_QUEUE_NAME, processor, {
-      connection: valkeyConnection,
+      connection: valkeyConnection as any,
       concurrency: 1, // Process 1 sync job at a time to manage memory usage
       lockDuration: 21600000, // 6 hours - allows for very large issue syncs
       maxStalledCount: 1, // Reduce automatic stalled job retries

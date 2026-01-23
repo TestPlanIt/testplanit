@@ -269,7 +269,7 @@ const startWorker = async () => {
 
   if (valkeyConnection) {
     worker = new Worker(ELASTICSEARCH_REINDEX_QUEUE_NAME, processor, {
-      connection: valkeyConnection,
+      connection: valkeyConnection as any,
       concurrency: 2, // Process 2 reindex jobs at a time
       lockDuration: 3600000, // 1 hour - allows for very large reindex operations
       maxStalledCount: 1, // Reduce automatic stalled job retries
