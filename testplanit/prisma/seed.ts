@@ -1,5 +1,6 @@
 import { PrismaClient, WorkflowScope, ApplicationArea } from "@prisma/client";
 import { seedFieldIcons } from "./seedFieldIcons";
+import { seedTestData } from "./seedTestData";
 import bcrypt from "bcrypt";
 
 export const prisma = new PrismaClient();
@@ -1610,6 +1611,12 @@ async function main() {
 
     // Assign workflows to all projects
     await assignWorkflowsToAllProjects();
+
+    // Seed test data for E2E tests (development and test environments only)
+    if (process.env.NODE_ENV !== "production") {
+      console.log("\n--- Seeding E2E Test Data ---");
+      await seedTestData();
+    }
   } catch (error) {
     console.error("Error in main execution:", error);
   } finally {

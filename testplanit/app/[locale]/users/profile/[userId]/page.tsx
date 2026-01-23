@@ -820,7 +820,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
 
                                 <Separator className="opacity-50" />
 
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between" data-testid="user-locale-display">
                                   <span className="text-sm">
                                     {tCommon("fields.locale")}
                                   </span>
@@ -943,7 +943,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                 control={form.control}
                                 name="locale"
                                 render={({ field }) => (
-                                  <FormItem>
+                                  <FormItem data-testid="user-locale-edit">
                                     <FormLabel className="flex items-center">
                                       {tCommon("fields.locale")}
                                       <HelpPopover helpKey="user.locale" />
@@ -959,7 +959,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
                                         }}
                                         value={field.value}
                                       >
-                                        <SelectTrigger>
+                                        <SelectTrigger data-testid="user-locale-select">
                                           <SelectValue
                                             placeholder={tCommon(
                                               "fields.locale"
