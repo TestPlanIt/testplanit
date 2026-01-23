@@ -1,3 +1,10 @@
+## [0.10.13](https://github.com/TestPlanIt/testplanit/compare/v0.10.12...v0.10.13) (2026-01-23)
+
+
+### Bug Fixes
+
+* Fix/minor bug fixes ([#53](https://github.com/TestPlanIt/testplanit/issues/53)) ([932fce9](https://github.com/TestPlanIt/testplanit/commit/932fce96c9cbccedb90b87b74f410e2ff5b93f5f))
+
 ## [0.10.12](https://github.com/TestPlanIt/testplanit/compare/v0.10.11...v0.10.12) (2026-01-22)
 
 
