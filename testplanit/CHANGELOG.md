@@ -1,3 +1,11 @@
+## [0.10.14](https://github.com/TestPlanIt/testplanit/compare/v0.10.13...v0.10.14) (2026-01-23)
+
+
+### Bug Fixes
+
+* update dependencies and enhance user profile features ([180b34b](https://github.com/TestPlanIt/testplanit/commit/180b34bf6450bb01edc54839978feecc396c8586))
+* update dependency specifiers in pnpm-lock.yaml ([2265e4c](https://github.com/TestPlanIt/testplanit/commit/2265e4c408dec19bca57d992a907091b774dfba1))
+
 ## [0.10.13](https://github.com/TestPlanIt/testplanit/compare/v0.10.12...v0.10.13) (2026-01-23)
 
 
