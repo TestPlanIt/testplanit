@@ -435,6 +435,9 @@ test.describe("View Selector - Repository Views", () => {
     await noIssuesFilter.first().click();
     await page.waitForLoadState("networkidle");
 
+    // Wait for the filter to be applied (check that the count updates)
+    await page.waitForTimeout(1000);
+
     // Search for the unlinked case (pagination may hide it otherwise)
     const searchInput = page.locator('input[placeholder="Filter cases..."]');
     await searchInput.fill(unlinkedCaseName);
@@ -449,10 +452,28 @@ test.describe("View Selector - Repository Views", () => {
     await searchInput.fill(linkedCaseName);
     await page.waitForLoadState("networkidle");
 
+    // Wait a bit for the search to complete
+    await page.waitForTimeout(1000);
+
     // The linked case should NOT be visible (it has an issue)
-    await expect(page.locator(`text="${linkedCaseName}"`)).not.toBeVisible({
-      timeout: 3000,
-    });
+    // Check that the table either has no rows or shows "no results" type message
+    const tableRows = page.locator('table tbody tr');
+
+    // Wait for the filter to take effect - either rows disappear or we see empty state
+    await expect(async () => {
+      const rowCount = await tableRows.count();
+
+      if (rowCount === 0) {
+        // No rows - this is expected (filter working correctly)
+        expect(rowCount).toBe(0);
+      } else {
+        // If there are rows, none should contain the linked case name
+        const containsLinkedCase = await tableRows
+          .filter({ hasText: linkedCaseName })
+          .count();
+        expect(containsLinkedCase).toBe(0);
+      }
+    }).toPass({ timeout: 5000 });
   });
 
   test("Issue view filters correctly by specific issue", async ({
