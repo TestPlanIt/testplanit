@@ -49,6 +49,28 @@ The example file includes sensible defaults for:
 - MinIO/S3 storage
 - Default admin credentials for tests
 
+#### Optional: Email Server Configuration
+
+Some E2E tests (particularly signup tests) send verification emails. To prevent undeliverable email alerts, you can configure a test email server:
+
+```bash
+# Add to .env.e2e or create .env.test.local (gitignored)
+EMAIL_SERVER_HOST=your-smtp-server.com
+EMAIL_SERVER_PORT=587
+EMAIL_SERVER_USER=your-username
+EMAIL_SERVER_PASSWORD=your-password
+EMAIL_FROM=noreply@your-test-domain.com
+TEST_EMAIL_DOMAIN=your-test-domain.com
+```
+
+**Alternatives for email testing:**
+
+- **Ethereal Email**: Free fake SMTP service at [ethereal.email](https://ethereal.email) - catches emails without actually sending them
+- **MailHog**: Local SMTP test server (`docker run -p 1025:1025 -p 8025:8025 mailhog/mailhog`)
+- **Your own test server**: Configure `TEST_EMAIL_DOMAIN` to match your test email domain
+
+If not configured, tests will use `@example.com` addresses (which will fail delivery).
+
 ### 3. Install Playwright Browsers
 
 ```bash
@@ -152,6 +174,7 @@ The Playwright configuration is in `testplanit/e2e/playwright.config.ts`.
 | `E2E_BASE_URL` | Override the base URL for tests |
 | `E2E_VIDEO` | Set to `on` to always record video |
 | `E2E_PROD` | Set to `on` to run against production build |
+| `TEST_EMAIL_DOMAIN` | Email domain for test users (default: `example.com`). Configure with your test email server domain to receive verification emails during signup tests. |
 
 ## Project Structure
 

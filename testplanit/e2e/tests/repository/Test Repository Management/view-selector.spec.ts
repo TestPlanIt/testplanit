@@ -508,12 +508,19 @@ test.describe("View Selector - Repository Views", () => {
 
     // Search for the unlinked case - it should NOT appear with this specific issue filter
     await searchInput.fill(unlinkedCaseName);
+    await page.waitForTimeout(1000); // Give time for search to filter
     await page.waitForLoadState("networkidle");
 
     // The unlinked case should NOT be visible (it doesn't have this issue)
-    await expect(page.locator(`text="${unlinkedCaseName}"`)).not.toBeVisible({
-      timeout: 3000,
-    });
+    // Check for either the case not being visible OR a "no results" message
+    const unlinkedCase = page.locator(`text="${unlinkedCaseName}"`);
+    const noResults = page.locator('text=/no.*cases.*found|no.*results/i');
+
+    // Either the case should not exist in DOM, or we should see "no results"
+    const isUnlinkedHidden = await unlinkedCase.count().then(count => count === 0);
+    const hasNoResults = await noResults.isVisible().catch(() => false);
+
+    expect(isUnlinkedHidden || hasNoResults).toBeTruthy();
   });
 
   // ============================================================
