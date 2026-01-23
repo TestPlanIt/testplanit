@@ -112,10 +112,8 @@ export function CompleteSessionDialog({
 
   useEffect(() => {
     if (workflows && workflows.length > 0) {
-      const lastWorkflow = workflows.reduce((prev, curr) =>
-        curr.order > prev.order ? curr : prev
-      );
-      setSelectedStateId(lastWorkflow?.id ?? session?.stateId);
+      // workflows are already sorted by order ascending, so first item is the lowest order
+      setSelectedStateId(workflows[0].id ?? session?.stateId);
     } else {
       // If no workflows available, keep the current state
       setSelectedStateId(session?.stateId || 0);

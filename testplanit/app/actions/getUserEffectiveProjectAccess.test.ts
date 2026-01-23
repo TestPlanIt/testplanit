@@ -9,23 +9,26 @@ const { mockProjects, mockUser, mockUserProjectPermission, mockGroupProjectPermi
   mockProjectAssignment: { findUnique: vi.fn(), findMany: vi.fn() },
 }));
 
-vi.mock("@prisma/client", () => {
-  return {
-    PrismaClient: class MockPrismaClient {
-      projects = mockProjects;
-      user = mockUser;
-      userProjectPermission = mockUserProjectPermission;
-      groupProjectPermission = mockGroupProjectPermission;
-      projectAssignment = mockProjectAssignment;
-    },
-    ProjectAccessType: {
-      NO_ACCESS: "NO_ACCESS",
-      GLOBAL_ROLE: "GLOBAL_ROLE",
-      SPECIFIC_ROLE: "SPECIFIC_ROLE",
-      DEFAULT: "DEFAULT",
-    },
-  };
-});
+// Mock the prisma singleton
+vi.mock("~/lib/prisma", () => ({
+  prisma: {
+    projects: mockProjects,
+    user: mockUser,
+    userProjectPermission: mockUserProjectPermission,
+    groupProjectPermission: mockGroupProjectPermission,
+    projectAssignment: mockProjectAssignment,
+  },
+}));
+
+// Mock ProjectAccessType enum from @prisma/client
+vi.mock("@prisma/client", () => ({
+  ProjectAccessType: {
+    NO_ACCESS: "NO_ACCESS",
+    GLOBAL_ROLE: "GLOBAL_ROLE",
+    SPECIFIC_ROLE: "SPECIFIC_ROLE",
+    DEFAULT: "DEFAULT",
+  },
+}));
 
 // Import after mocking
 import { ProjectAccessType } from "@prisma/client";
