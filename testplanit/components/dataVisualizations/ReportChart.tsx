@@ -363,7 +363,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   });
 
   // Special handling for automation trends report
-  if (matchesReportType(reportType, "automation-trends") && projects && projects.length > 0) {
+  if (reportType && matchesReportType(reportType, "automation-trends") && projects && projects.length > 0) {
     // Transform automation trends data into multi-line series
     const seriesMap = new Map<string, MultiLineSeries>();
     const isMultiProject = projects.length > 1;
@@ -436,7 +436,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
 
   // Special handling for flaky tests report - use bubble chart
   // Shows flip count vs recency of failures - tests in top-right need most attention
-  if (matchesReportType(reportType, "flaky-tests")) {
+  if (reportType && matchesReportType(reportType, "flaky-tests")) {
     return (
       <FlakyTestsBubbleChart
         data={results}
@@ -449,13 +449,13 @@ export const ReportChart: React.FC<ReportChartProps> = ({
 
   // Special handling for test case health report - use combined donut + scatter chart
   // Shows health status distribution and health score vs days since execution
-  if (matchesReportType(reportType, "test-case-health")) {
+  if (reportType && matchesReportType(reportType, "test-case-health")) {
     return <TestCaseHealthChart data={results} projectId={projectId} />;
   }
 
   // Special handling for issue test coverage report - use stacked bar chart
   // Shows issues with their linked test cases and pass/fail/untested breakdown
-  if (matchesReportType(reportType, "issue-test-coverage")) {
+  if (reportType && matchesReportType(reportType, "issue-test-coverage")) {
     return <IssueTestCoverageChart data={results} projectId={projectId} />;
   }
 
