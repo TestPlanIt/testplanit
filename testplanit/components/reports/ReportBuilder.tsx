@@ -823,6 +823,13 @@ function ReportBuilderContent({
     // Update activeTab state immediately to prevent race conditions
     setActiveTab(newTab);
 
+    // Clear all report data and pagination to prevent displaying stale values
+    setTotalCount(0);
+    setResults(null);
+    setAllResults(null);
+    setError(null);
+    setCompatWarning(null);
+
     // When switching tabs, select a default report from that tab
     const targetReports =
       newTab === "reports" ? preBuiltReports : customReports;
