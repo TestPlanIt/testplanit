@@ -328,7 +328,7 @@ export function useSuspenseCountShareLink<TArgs extends Prisma.ShareLinkCountArg
 }
 import type { ShareLinkEntityType, ShareLinkMode } from '@prisma/client';
 
-export function useCheckShareLink<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; shareKey?: string; entityType?: ShareLinkEntityType; entityId?: string; projectId?: number; createdById?: string; mode?: ShareLinkMode; passwordHash?: string; notifyOnView?: boolean; title?: string; description?: string; isRevoked?: boolean; viewCount?: number }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckShareLink<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; shareKey?: string; entityType?: ShareLinkEntityType; entityId?: string; projectId?: number; createdById?: string; mode?: ShareLinkMode; passwordHash?: string; notifyOnView?: boolean; title?: string; description?: string; isRevoked?: boolean; isDeleted?: boolean; viewCount?: number }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('ShareLink', `${endpoint}/shareLink/check`, args, options, fetch);
 }

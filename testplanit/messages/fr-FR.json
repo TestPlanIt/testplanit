@@ -4941,7 +4941,9 @@
           "label": "Actes",
           "copyLink": "Copier le lien",
           "copied": "Copié !",
-          "revoke": "Révoquer"
+          "edit": "Modifier",
+          "revoke": "Révoquer",
+          "delete": "Supprimer"
         },
         "revokeDialog": {
           "title": "Révoquer le lien de partage ?",
@@ -4949,6 +4951,13 @@
           "cancel": "Annuler",
           "confirm": "Révoquer le lien",
           "revoking": "Révocation..."
+        },
+        "deleteDialog": {
+          "title": "Supprimer le lien de partage ?",
+          "description": "Cette action supprimera définitivement le lien de partage. S'il est actuellement actif, il expirera immédiatement et deviendra inaccessible. Cette action est irréversible.",
+          "cancel": "Annuler",
+          "confirm": "Supprimer le lien",
+          "deleting": "Suppression en cours..."
         },
         "toast": {
           "linkCopied": "Lien copié !",
@@ -4964,7 +4973,11 @@
           "notificationsDisabled": "Notifications désactivées",
           "notificationsDisabledDescription": "Vous ne recevrez pas de notification lorsqu'une personne consultera ce lien de partage.",
           "notificationUpdateFailed": "Échec de la mise à jour des notifications",
-          "notificationUpdateFailedDescription": "Une erreur s'est produite lors de la mise à jour des paramètres de notification."
+          "notificationUpdateFailedDescription": "Une erreur s'est produite lors de la mise à jour des paramètres de notification.",
+          "linkDeleted": "Lien de partage supprimé",
+          "linkDeletedDescription": "Le lien de partage a été supprimé et n'apparaîtra plus dans votre liste.",
+          "deleteFailed": "Échec de la suppression",
+          "deleteFailedDescription": "Une erreur s'est produite lors de la suppression du lien de partage."
         }
       },
       "created": {
@@ -4991,6 +5004,14 @@
           "createAnother": "Créer un autre",
           "done": "Fait"
         }
+      },
+      "editDialog": {
+        "title": "Modifier le lien de partage",
+        "description": "Mettez à jour les paramètres de ce lien de partage.",
+        "passwordExists": "Ce lien de partage est déjà protégé par un mot de passe. Laissez le champ du mot de passe vide pour conserver le mot de passe existant.",
+        "passwordPlaceholder": "Laisser vide pour conserver le mot de passe existant",
+        "saving": "Économie...",
+        "save": "Enregistrer les modifications"
       }
     },
     "passwordDialog": {
@@ -5021,6 +5042,7 @@
       "dateRange": "Période :",
       "readOnlyNotice": "Il s'agit d'une vue partagée en lecture seule",
       "viewCount": "{count, plural, =1 {1 vue} other {# vues}}",
+      "viewInFullApp": "Afficher dans l'application complète",
       "pagination": {
         "showing": "Affichage",
         "of": "de",
@@ -5029,7 +5051,7 @@
     },
     "authBypass": {
       "title": "Vous avez accès à ce projet",
-      "description": "Affichage comme <strong>{userName}</strong> avec accès à <strong>{projectName}</strong>.",
+      "description": "Affichage en tant que {userName} avec accès à {projectName}.",
       "viewInApp": "Voir dans l'application complète",
       "dismiss": "Rejeter"
     }

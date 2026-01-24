@@ -2,18 +2,21 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Loader2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BarChart3, Loader2, AlertCircle, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useTranslations } from "next-intl";
 import { ReportRenderer } from "@/components/reports/ReportRenderer";
 import { VisibilityState, ExpandedState } from "@tanstack/react-table";
+import { Link } from "~/lib/navigation";
 
 interface StaticReportViewerProps {
   shareData: any;
   shareMode: string;
+  isAuthenticatedUser?: boolean;
 }
 
-export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerProps) {
+export function StaticReportViewer({ shareData, shareMode, isAuthenticatedUser = false }: StaticReportViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [reportData, setReportData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +36,22 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
 
   // Extract config from shareData
   const config = shareData.entityConfig;
+
+  // Build full report URL with configuration for "View in Full App" button
+  const fullReportUrl = useMemo(() => {
+    if (!shareData.projectId || !config) return null;
+
+    const params = new URLSearchParams();
+    if (config.reportType) params.set("reportType", config.reportType);
+    if (config.startDate) params.set("startDate", config.startDate);
+    if (config.endDate) params.set("endDate", config.endDate);
+    if (config.dimensions) params.set("dimensions", Array.isArray(config.dimensions) ? config.dimensions.join(",") : config.dimensions);
+    if (config.metrics) params.set("metrics", Array.isArray(config.metrics) ? config.metrics.join(",") : config.metrics);
+    if (config.page) params.set("page", config.page.toString());
+    if (config.pageSize) params.set("pageSize", config.pageSize.toString());
+
+    return `/projects/reports/${shareData.projectId}?${params.toString()}`;
+  }, [shareData.projectId, config]);
 
   // Client-side pagination and sorting
   const paginatedResults = useMemo(() => {
@@ -178,6 +197,16 @@ export function StaticReportViewer({ shareData, shareMode }: StaticReportViewerP
                 <p className="text-sm text-muted-foreground">{shareData.description}</p>
               )}
             </div>
+            {isAuthenticatedUser && fullReportUrl && (
+              <div>
+                <Link href={fullReportUrl}>
+                  <Button variant="outline" size="sm">
+                    <ExternalLink className="h-4 w-4" />
+                    {t("viewInFullApp")}
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Project info */}

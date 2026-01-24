@@ -4941,7 +4941,9 @@
           "label": "Actions",
           "copyLink": "Copy Link",
           "copied": "Copied!",
-          "revoke": "Revoke"
+          "edit": "Edit",
+          "revoke": "Revoke",
+          "delete": "Delete"
         },
         "revokeDialog": {
           "title": "Revoke share link?",
@@ -4949,6 +4951,13 @@
           "cancel": "Cancel",
           "confirm": "Revoke Link",
           "revoking": "Revoking..."
+        },
+        "deleteDialog": {
+          "title": "Delete share link?",
+          "description": "This will permanently delete the share link. If the link is currently active, it will be immediately expired and no longer accessible. This action cannot be undone.",
+          "cancel": "Cancel",
+          "confirm": "Delete Link",
+          "deleting": "Deleting..."
         },
         "toast": {
           "linkCopied": "Link copied!",
@@ -4964,7 +4973,11 @@
           "notificationsDisabled": "Notifications disabled",
           "notificationsDisabledDescription": "You won't receive notifications when someone views this share link.",
           "notificationUpdateFailed": "Failed to update notifications",
-          "notificationUpdateFailedDescription": "An error occurred while updating notification settings."
+          "notificationUpdateFailedDescription": "An error occurred while updating notification settings.",
+          "linkDeleted": "Share link deleted",
+          "linkDeletedDescription": "The share link has been deleted and will no longer appear in your list.",
+          "deleteFailed": "Failed to delete",
+          "deleteFailedDescription": "An error occurred while deleting the share link."
         }
       },
       "created": {
@@ -4991,6 +5004,14 @@
           "createAnother": "Create Another",
           "done": "Done"
         }
+      },
+      "editDialog": {
+        "title": "Edit Share Link",
+        "description": "Update the settings for this share link.",
+        "passwordExists": "This share link already has a password. Leave the password field empty to keep the existing password.",
+        "passwordPlaceholder": "Leave empty to keep existing password",
+        "saving": "Saving...",
+        "save": "Save Changes"
       }
     },
     "passwordDialog": {
@@ -5021,6 +5042,7 @@
       "dateRange": "Date range:",
       "readOnlyNotice": "This is a read-only shared view",
       "viewCount": "{count, plural, =1 {1 view} other {# views}}",
+      "viewInFullApp": "View in Full App",
       "pagination": {
         "showing": "Showing",
         "of": "of",
@@ -5029,7 +5051,7 @@
     },
     "authBypass": {
       "title": "You have access to this project",
-      "description": "Viewing as <strong>{userName}</strong> with access to <strong>{projectName}</strong>.",
+      "description": "Viewing as {userName} with access to {projectName}.",
       "viewInApp": "View in full app",
       "dismiss": "Dismiss"
     }

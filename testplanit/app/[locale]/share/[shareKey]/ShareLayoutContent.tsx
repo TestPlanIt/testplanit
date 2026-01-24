@@ -1,6 +1,7 @@
 "use client";
 
 import { ThemeProvider } from "~/components/theme-provider";
+import { Toaster } from "sonner";
 import { Session } from "next-auth";
 import { useFindUniqueUserPreferences } from "~/lib/hooks";
 import { useEffect, useState } from "react";
@@ -64,6 +65,7 @@ export function ShareLayoutContent({ session, children }: ShareLayoutContentProp
     >
       <div className="min-h-screen bg-background" suppressHydrationWarning>
         {children}
+        <Toaster richColors toastOptions={{ className: "!z-[9999]" }} />
 
         {/* Branding footer */}
         <footer className="fixed bottom-4 right-4 z-50 flex items-center gap-2">

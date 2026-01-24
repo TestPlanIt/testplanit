@@ -1594,6 +1594,7 @@ model ShareLink {
   title        String?
   description  String?
   isRevoked    Boolean              @default(false)
+  isDeleted    Boolean              @default(false)
   viewCount    Int                  @default(0)
   lastViewedAt DateTime?            @db.Timestamptz(6)
   createdAt    DateTime             @default(now()) @db.Timestamptz(6)
@@ -1604,6 +1605,7 @@ model ShareLink {
   @@index([projectId, createdById])
   @@index([entityType, entityId])
   @@index([isRevoked, expiresAt])
+  @@index([isDeleted])
   @@index([createdById])
 }
 

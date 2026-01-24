@@ -4,10 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import { Session } from "next-auth";
 import { PasswordGate } from "./PasswordGate";
 import { SharedReportViewer } from "./SharedReportViewer";
-import { AuthBypassPrompt } from "./AuthBypassPrompt";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 interface ShareContentProps {
   shareKey: string;
@@ -19,11 +19,11 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
   const t = useTranslations("reports.sharedReport");
   const tCommon = useTranslations("common");
   const tErrors = useTranslations("common.errors");
+  const tAuthBypass = useTranslations("reports.authBypass");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessGranted, setAccessGranted] = useState(false);
   const [fullShareData, setFullShareData] = useState<any>(null);
-  const [showAuthBypass, setShowAuthBypass] = useState(false);
 
   // Track if view has been counted to prevent double-counting
   const viewCountedRef = useRef(false);
@@ -65,7 +65,43 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
         const data = await response.json();
         setFullShareData(data);
         setAccessGranted(true);
-        setShowAuthBypass(true);
+
+        // Show toast notification for auth bypass
+        if (session && shareData.projectName) {
+          const userName = session.user.name || session.user.email || "User";
+
+          // Build full report URL with configuration
+          let reportUrl: string | undefined;
+          if (data.entityType === "REPORT" && data.projectId) {
+            const config = shareData.entityConfig;
+            const params = new URLSearchParams();
+
+            if (config.reportType) params.set("reportType", config.reportType);
+            if (config.startDate) params.set("startDate", config.startDate);
+            if (config.endDate) params.set("endDate", config.endDate);
+            if (config.dimensions) params.set("dimensions", Array.isArray(config.dimensions) ? config.dimensions.join(",") : config.dimensions);
+            if (config.metrics) params.set("metrics", Array.isArray(config.metrics) ? config.metrics.join(",") : config.metrics);
+            if (config.page) params.set("page", config.page.toString());
+            if (config.pageSize) params.set("pageSize", config.pageSize.toString());
+
+            reportUrl = `/projects/reports/${data.projectId}?${params.toString()}`;
+          }
+
+          toast.success(tAuthBypass("title"), {
+            description: tAuthBypass("description", {
+              userName,
+              projectName: shareData.projectName
+            }),
+            duration: 5000,
+            action: reportUrl ? {
+              label: tAuthBypass("viewInApp"),
+              onClick: () => {
+                window.location.href = reportUrl;
+              },
+            } : undefined,
+          });
+        }
+
         return true;
       }
 
@@ -122,6 +158,42 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
       const data = await response.json();
       setFullShareData(data);
       setAccessGranted(true);
+
+      // Show toast notification for auth bypass (same as in checkProjectAccess)
+      if (session && shareData.projectName && shareData.mode === "PASSWORD_PROTECTED") {
+        const userName = session.user.name || session.user.email || "User";
+
+        // Build full report URL with configuration
+        let reportUrl: string | undefined;
+        if (data.entityType === "REPORT" && data.projectId) {
+          const config = shareData.entityConfig;
+          const params = new URLSearchParams();
+
+          if (config.reportType) params.set("reportType", config.reportType);
+          if (config.startDate) params.set("startDate", config.startDate);
+          if (config.endDate) params.set("endDate", config.endDate);
+          if (config.dimensions) params.set("dimensions", Array.isArray(config.dimensions) ? config.dimensions.join(",") : config.dimensions);
+          if (config.metrics) params.set("metrics", Array.isArray(config.metrics) ? config.metrics.join(",") : config.metrics);
+          if (config.page) params.set("page", config.page.toString());
+          if (config.pageSize) params.set("pageSize", config.pageSize.toString());
+
+          reportUrl = `/projects/reports/${data.projectId}?${params.toString()}`;
+        }
+
+        toast.success(tAuthBypass("title"), {
+          description: tAuthBypass("description", {
+            userName,
+            projectName: shareData.projectName
+          }),
+          duration: 5000,
+          action: reportUrl ? {
+            label: tAuthBypass("viewInApp"),
+            onClick: () => {
+              window.location.href = reportUrl;
+            },
+          } : undefined,
+        });
+      }
     } catch (error) {
       console.error("Error accessing share:", error);
       setError(error instanceof Error ? error.message : tErrors("unknown"));
@@ -312,19 +384,11 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
   // Show content if access is granted
   if (accessGranted && fullShareData) {
     return (
-      <>
-        {showAuthBypass && session && (
-          <AuthBypassPrompt
-            userName={session.user.name || session.user.email || "User"}
-            projectName={shareData.projectName}
-            shareData={fullShareData}
-          />
-        )}
-        <SharedReportViewer
-          shareData={fullShareData}
-          shareMode={shareData.mode}
-        />
-      </>
+      <SharedReportViewer
+        shareData={fullShareData}
+        shareMode={shareData.mode}
+        isAuthenticatedUser={!!session}
+      />
     );
   }
 

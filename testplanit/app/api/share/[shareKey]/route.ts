@@ -47,6 +47,14 @@ export async function GET(
       );
     }
 
+    // Check if deleted
+    if (shareLink.isDeleted) {
+      return NextResponse.json(
+        { error: "This share link has been deleted", deleted: true },
+        { status: 404 }
+      );
+    }
+
     // Check if revoked
     if (shareLink.isRevoked) {
       return NextResponse.json(
@@ -131,6 +139,14 @@ export async function POST(
     if (!shareLink) {
       return NextResponse.json(
         { error: "Share link not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check if deleted
+    if (shareLink.isDeleted) {
+      return NextResponse.json(
+        { error: "This share link has been deleted" },
         { status: 404 }
       );
     }

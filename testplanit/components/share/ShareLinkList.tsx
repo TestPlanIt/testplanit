@@ -28,12 +28,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Copy, MoreVertical, Ban, Trash2, Eye, Loader2, CheckCircle2, Bell, BellOff } from "lucide-react";
+import { Copy, MoreVertical, Ban, Trash2, Eye, Loader2, CheckCircle2, Bell, BellOff, Pencil } from "lucide-react";
 import { format, isPast } from "date-fns";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { ShareLinkEntityType } from "@prisma/client";
 import { revokeShareLink } from "@/actions/share-links";
 import { useTranslations } from "next-intl";
+import { EditShareLinkDialog } from "@/components/share/EditShareLinkDialog";
+import { Link } from "~/lib/navigation";
 
 interface ShareLinkListProps {
   projectId?: number; // Optional for cross-project reports
@@ -42,17 +44,20 @@ interface ShareLinkListProps {
 }
 
 export function ShareLinkList({ projectId, entityType, showProjectColumn = false }: ShareLinkListProps) {
-  const { toast } = useToast();
   const t = useTranslations("reports.shareDialog.shareList");
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedShareId, setSelectedShareId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedShare, setSelectedShare] = useState<any>(null);
 
-  // Fetch shares
+  // Fetch shares (exclude deleted)
   const { data: shares, isLoading, refetch } = useFindManyShareLink({
     where: {
       ...(projectId !== undefined && { projectId }),
       ...(entityType && { entityType }),
+      isDeleted: false, // Exclude soft-deleted shares
     },
     include: {
       project: {
@@ -76,16 +81,13 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopiedId(shareId);
-      toast({
-        title: t("toast.linkCopied"),
+      toast.success(t("toast.linkCopied"), {
         description: t("toast.linkCopiedDescription"),
       });
       setTimeout(() => setCopiedId(null), 2000);
     } catch (error) {
-      toast({
-        title: t("toast.copyFailed"),
+      toast.error(t("toast.copyFailed"), {
         description: t("toast.copyFailedDescription"),
-        variant: "destructive",
       });
     }
   };
@@ -103,8 +105,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
       // Create audit log via server action
       await revokeShareLink(selectedShareId);
 
-      toast({
-        title: t("toast.linkRevoked"),
+      toast.success(t("toast.linkRevoked"), {
         description: t("toast.linkRevokedDescription"),
       });
 
@@ -112,10 +113,32 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
       setRevokeDialogOpen(false);
       setSelectedShareId(null);
     } catch (error) {
-      toast({
-        title: t("toast.revokeFailed"),
+      toast.error(t("toast.revokeFailed"), {
         description: t("toast.revokeFailedDescription"),
-        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedShareId) return;
+
+    try {
+      // Soft delete share link using ZenStack hook
+      await updateShareLink({
+        where: { id: selectedShareId },
+        data: { isDeleted: true },
+      });
+
+      toast.success(t("toast.linkDeleted"), {
+        description: t("toast.linkDeletedDescription"),
+      });
+
+      refetch();
+      setDeleteDialogOpen(false);
+      setSelectedShareId(null);
+    } catch (error) {
+      toast.error(t("toast.deleteFailed"), {
+        description: t("toast.deleteFailedDescription"),
       });
     }
   };
@@ -127,19 +150,19 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
         data: { notifyOnView: !currentValue },
       });
 
-      toast({
-        title: currentValue ? t("toast.notificationsDisabled") : t("toast.notificationsEnabled"),
-        description: currentValue
-          ? t("toast.notificationsDisabledDescription")
-          : t("toast.notificationsEnabledDescription"),
-      });
+      toast.success(
+        currentValue ? t("toast.notificationsDisabled") : t("toast.notificationsEnabled"),
+        {
+          description: currentValue
+            ? t("toast.notificationsDisabledDescription")
+            : t("toast.notificationsEnabledDescription"),
+        }
+      );
 
       refetch();
     } catch (error) {
-      toast({
-        title: t("toast.notificationUpdateFailed"),
+      toast.error(t("toast.notificationUpdateFailed"), {
         description: t("toast.notificationUpdateFailedDescription"),
-        variant: "destructive",
       });
     }
   };
@@ -170,7 +193,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
               {showProjectColumn && <TableHead>{t("columns.project")}</TableHead>}
               <TableHead>{t("columns.title")}</TableHead>
               <TableHead>{t("columns.mode")}</TableHead>
-              <TableHead>{t("columns.views")}</TableHead>
+              <TableHead className="text-right">{t("columns.views")}</TableHead>
               <TableHead>{t("columns.notifications")}</TableHead>
               <TableHead>{t("columns.created")}</TableHead>
               <TableHead>{t("columns.expires")}</TableHead>
@@ -192,9 +215,14 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                   )}
                   <TableCell>
                     <div>
-                      <p className="font-medium">
+                      <Link
+                        href={`/share/${share.shareKey}`}
+                        className="font-medium hover:underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         {share.title || t("defaultTitle", { entityType: share.entityType })}
-                      </p>
+                      </Link>
                       {share.description && (
                         <p className="text-sm text-muted-foreground line-clamp-1">
                           {share.description}
@@ -203,12 +231,12 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-xs w-fit whitespace-nowrap">
                       {share.mode.replace("_", " ")}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
+                  <TableCell className="text-right">
+                    <div className="flex items-center gap-1 justify-end">
                       <Eye className="h-3 w-3 text-muted-foreground" />
                       <span>{share.viewCount}</span>
                     </div>
@@ -281,16 +309,48 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                             </>
                           )}
                         </DropdownMenuItem>
-                        {isActive && (
+                        {isActive ? (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedShare(share);
+                                setEditDialogOpen(true);
+                              }}
+                            >
+                              <Pencil className="mr-1 h-4 w-4" />
+                              {t("actions.edit")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedShareId(share.id);
+                                setRevokeDialogOpen(true);
+                              }}
+                              className="text-destructive"
+                            >
+                              <Ban className="mr-1 h-4 w-4" />
+                              {t("actions.revoke")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedShareId(share.id);
+                                setDeleteDialogOpen(true);
+                              }}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="mr-1 h-4 w-4" />
+                              {t("actions.delete")}
+                            </DropdownMenuItem>
+                          </>
+                        ) : (
                           <DropdownMenuItem
                             onClick={() => {
                               setSelectedShareId(share.id);
-                              setRevokeDialogOpen(true);
+                              setDeleteDialogOpen(true);
                             }}
                             className="text-destructive"
                           >
-                            <Ban className="mr-1 h-4 w-4" />
-                            {t("actions.revoke")}
+                            <Trash2 className="mr-1 h-4 w-4" />
+                            {t("actions.delete")}
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
@@ -331,6 +391,49 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteDialog.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("deleteDialog.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("deleteDialog.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isRevoking}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isRevoking ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("deleteDialog.deleting")}
+                </>
+              ) : (
+                t("deleteDialog.confirm")
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit share link dialog */}
+      {selectedShare && (
+        <EditShareLinkDialog
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          shareLink={selectedShare}
+          onSuccess={() => {
+            refetch();
+            setEditDialogOpen(false);
+            setSelectedShare(null);
+          }}
+        />
+      )}
     </>
   );
 }

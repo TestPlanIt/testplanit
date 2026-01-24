@@ -5827,6 +5827,10 @@ const metadata: ModelMeta = {
                     name: "isRevoked",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, isDeleted: {
+                    name: "isDeleted",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 }, viewCount: {
                     name: "viewCount",
                     type: "Int",

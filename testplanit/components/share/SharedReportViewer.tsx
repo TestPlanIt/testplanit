@@ -5,6 +5,7 @@ import { StaticReportViewer } from "./StaticReportViewer";
 interface SharedReportViewerProps {
   shareData: any;
   shareMode: string;
+  isAuthenticatedUser?: boolean;
 }
 
 /**
@@ -12,6 +13,6 @@ interface SharedReportViewerProps {
  * This is only used for PUBLIC and PASSWORD_PROTECTED shares
  * AUTHENTICATED shares redirect to the full Reports page
  */
-export function SharedReportViewer({ shareData, shareMode }: SharedReportViewerProps) {
-  return <StaticReportViewer shareData={shareData} shareMode={shareMode} />;
+export function SharedReportViewer({ shareData, shareMode, isAuthenticatedUser = false }: SharedReportViewerProps) {
+  return <StaticReportViewer shareData={shareData} shareMode={shareMode} isAuthenticatedUser={isAuthenticatedUser} />;
 }

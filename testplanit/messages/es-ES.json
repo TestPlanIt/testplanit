@@ -4941,7 +4941,9 @@
           "label": "Comportamiento",
           "copyLink": "Copiar enlace",
           "copied": "Copiado!",
-          "revoke": "Revocar"
+          "edit": "Editar",
+          "revoke": "Revocar",
+          "delete": "Borrar"
         },
         "revokeDialog": {
           "title": "¿Revocar enlace para compartir?",
@@ -4949,6 +4951,13 @@
           "cancel": "Cancelar",
           "confirm": "Revocar enlace",
           "revoking": "Revocando..."
+        },
+        "deleteDialog": {
+          "title": "¿Borrar enlace para compartir?",
+          "description": "Esto eliminará permanentemente el enlace para compartir. Si el enlace está activo, caducará inmediatamente y dejará de ser accesible. Esta acción no se puede deshacer.",
+          "cancel": "Cancelar",
+          "confirm": "Eliminar enlace",
+          "deleting": "Borrando..."
         },
         "toast": {
           "linkCopied": "¡Enlace copiado!",
@@ -4964,7 +4973,11 @@
           "notificationsDisabled": "Notificaciones deshabilitadas",
           "notificationsDisabledDescription": "No recibirás notificaciones cuando alguien vea este enlace para compartir.",
           "notificationUpdateFailed": "No se pudieron actualizar las notificaciones",
-          "notificationUpdateFailedDescription": "Se produjo un error al actualizar la configuración de notificaciones."
+          "notificationUpdateFailedDescription": "Se produjo un error al actualizar la configuración de notificaciones.",
+          "linkDeleted": "Enlace compartido eliminado",
+          "linkDeletedDescription": "El enlace para compartir se ha eliminado y ya no aparecerá en tu lista.",
+          "deleteFailed": "No se pudo eliminar",
+          "deleteFailedDescription": "Se produjo un error al eliminar el enlace para compartir."
         }
       },
       "created": {
@@ -4991,6 +5004,14 @@
           "createAnother": "Crea otro",
           "done": "Hecho"
         }
+      },
+      "editDialog": {
+        "title": "Editar enlace para compartir",
+        "description": "Actualice la configuración de este enlace para compartir.",
+        "passwordExists": "Este enlace para compartir ya tiene contraseña. Deje el campo de contraseña vacío para conservar la contraseña actual.",
+        "passwordPlaceholder": "Déjelo en blanco para conservar la contraseña existente",
+        "saving": "Ahorro...",
+        "save": "Guardar cambios"
       }
     },
     "passwordDialog": {
@@ -5021,6 +5042,7 @@
       "dateRange": "Rango de fechas:",
       "readOnlyNotice": "Esta es una vista compartida de solo lectura",
       "viewCount": "{count, plural, =1 {1 vista} other {# vistas}}",
+      "viewInFullApp": "Ver en la aplicación completa",
       "pagination": {
         "showing": "Demostración",
         "of": "de",
@@ -5029,7 +5051,7 @@
     },
     "authBypass": {
       "title": "Tienes acceso a este proyecto",
-      "description": "Visualización como <strong>{userName}</strong> con acceso a <strong>{projectName}</strong>.",
+      "description": "Visualización como {userName} con acceso a {projectName}.",
       "viewInApp": "Ver en la aplicación completa",
       "dismiss": "Despedir"
     }
