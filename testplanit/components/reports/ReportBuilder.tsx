@@ -2381,7 +2381,7 @@ function ReportBuilderContent({
           {/* Results Display */}
           <ReportRenderer
             results={results || []}
-            chartData={allResults}
+            chartData={allResults ?? undefined}
             reportType={reportType}
             dimensions={lastUsedDimensions}
             metrics={lastUsedMetrics}
@@ -2420,7 +2420,7 @@ function ReportBuilderContent({
             onGroupingChange={setGrouping}
             expanded={expanded}
             onExpandedChange={setExpanded}
-            reportSummary={enhancedReportSummary || undefined}
+            reportSummary={typeof enhancedReportSummary === "string" ? enhancedReportSummary : reportSummary ?? undefined}
             reportGeneratedAt={reportGeneratedAt || undefined}
             userTimezone={session?.user?.preferences?.timezone}
             readOnly={false}

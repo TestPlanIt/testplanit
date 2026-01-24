@@ -300,7 +300,7 @@ export async function POST(
 
         await NotificationService.createShareLinkAccessedNotification(
           shareLink.createdById,
-          notificationTitle,
+          notificationTitle || "Shared content",
           session?.user?.name || null,
           session?.user?.email || null,
           shareLink.id,

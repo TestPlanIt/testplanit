@@ -19,7 +19,7 @@ import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
-import { ColumnDef, VisibilityState, ExpandedState } from "@tanstack/react-table";
+import { ColumnDef, VisibilityState, ExpandedState, OnChangeFn } from "@tanstack/react-table";
 
 interface ReportRendererProps {
   // Data
@@ -65,9 +65,9 @@ interface ReportRendererProps {
 
   // Grouping/Expansion (for hierarchical data)
   grouping?: string[];
-  onGroupingChange?: (grouping: string[]) => void;
+  onGroupingChange?: OnChangeFn<string[]>;
   expanded?: ExpandedState;
-  onExpandedChange?: (expanded: ExpandedState) => void;
+  onExpandedChange?: OnChangeFn<ExpandedState>;
 
   // Display options
   reportSummary?: string;
@@ -118,7 +118,7 @@ export function ReportRenderer({
 }: ReportRendererProps) {
   const t = useTranslations();
   const tCommon = useTranslations("common");
-  const tReports = useTranslations("reports");
+  const tReports = useTranslations("reports.ui");
 
   // Extract dimension and metric IDs for useReportColumns
   const dimensionIds = useMemo(() => dimensions.map((d) => d.value), [dimensions]);
