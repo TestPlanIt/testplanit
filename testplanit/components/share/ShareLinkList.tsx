@@ -207,7 +207,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
               const isActive = !share.isRevoked && !isExpired;
 
               return (
-                <TableRow key={share.id}>
+                <TableRow key={share.id} data-testid={`share-row-${share.id}`}>
                   {showProjectColumn && (
                     <TableCell className="text-sm">
                       {share.project?.name || t("noProject")}
@@ -288,13 +288,19 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <Button
+                          data-testid={`share-actions-${share.id}`}
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                        >
                           <MoreVertical className="h-4 w-4" />
                           <span className="sr-only">{t("actions.label")}</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
+                          data-testid={`share-copy-${share.id}`}
                           onClick={() => handleCopyLink(share.shareKey, share.id)}
                         >
                           {copiedId === share.id ? (
@@ -312,6 +318,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                         {isActive ? (
                           <>
                             <DropdownMenuItem
+                              data-testid={`share-edit-${share.id}`}
                               onClick={() => {
                                 setSelectedShare(share);
                                 setEditDialogOpen(true);
@@ -321,6 +328,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                               {t("actions.edit")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
+                              data-testid={`share-revoke-${share.id}`}
                               onClick={() => {
                                 setSelectedShareId(share.id);
                                 setRevokeDialogOpen(true);
@@ -331,6 +339,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                               {t("actions.revoke")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
+                              data-testid={`share-delete-${share.id}`}
                               onClick={() => {
                                 setSelectedShareId(share.id);
                                 setDeleteDialogOpen(true);
@@ -343,6 +352,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                           </>
                         ) : (
                           <DropdownMenuItem
+                            data-testid={`share-delete-${share.id}`}
                             onClick={() => {
                               setSelectedShareId(share.id);
                               setDeleteDialogOpen(true);

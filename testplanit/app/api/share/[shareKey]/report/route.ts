@@ -163,6 +163,8 @@ export async function GET(
         ...(req.headers.get("cookie")
           ? { Cookie: req.headers.get("cookie")! }
           : {}),
+        // Add bypass header for shared reports to allow access without admin permissions
+        "x-shared-report-bypass": "true",
       },
     });
 
@@ -197,6 +199,8 @@ export async function GET(
         ...(req.headers.get("cookie")
           ? { Cookie: req.headers.get("cookie")! }
           : {}),
+        // Add bypass header for shared reports to allow access without admin permissions
+        "x-shared-report-bypass": "true",
       },
       body: JSON.stringify(requestBody),
     });

@@ -91,14 +91,14 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
 // Cross-project report types for admin - using function to access translations
 export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
   {
-    id: "test-execution",
+    id: "cross-project-test-execution",
     label: tReports("crossProjectReportTypes.testExecution.label"),
     description: tReports("crossProjectReportTypes.testExecution.description"),
     icon: PlayCircle,
     endpoint: "/api/report-builder/cross-project-test-execution",
   },
   {
-    id: "repository-stats",
+    id: "cross-project-repository-stats",
     label: tReports("crossProjectReportTypes.repositoryStats.label"),
     description: tReports(
       "crossProjectReportTypes.repositoryStats.description"
@@ -107,21 +107,21 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     endpoint: "/api/report-builder/cross-project-repository-stats",
   },
   {
-    id: "user-engagement",
+    id: "cross-project-user-engagement",
     label: tReports("crossProjectReportTypes.userEngagement.label"),
     description: tReports("crossProjectReportTypes.userEngagement.description"),
     icon: Users,
     endpoint: "/api/report-builder/cross-project-user-engagement",
   },
   {
-    id: "issue-tracking",
+    id: "cross-project-issue-tracking",
     label: tReports("crossProjectReportTypes.issueTracking.label"),
     description: tReports("crossProjectReportTypes.issueTracking.description"),
     icon: Bug,
     endpoint: "/api/report-builder/cross-project-issue-tracking",
   },
   {
-    id: "automation-trends",
+    id: "cross-project-automation-trends",
     label: tReports("crossProjectReportTypes.automationTrends.label"),
     description: tReports("crossProjectReportTypes.automationTrends.description"),
     icon: TrendingUp,
@@ -129,7 +129,7 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     isPreBuilt: true,
   },
   {
-    id: "flaky-tests",
+    id: "cross-project-flaky-tests",
     label: tReports("crossProjectReportTypes.flakyTests.label"),
     description: tReports("crossProjectReportTypes.flakyTests.description"),
     icon: Shuffle,
@@ -137,7 +137,7 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     isPreBuilt: true,
   },
   {
-    id: "test-case-health",
+    id: "cross-project-test-case-health",
     label: tReports("crossProjectReportTypes.testCaseHealth.label"),
     description: tReports("crossProjectReportTypes.testCaseHealth.description"),
     icon: Activity,
@@ -145,7 +145,7 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     isPreBuilt: true,
   },
   {
-    id: "issue-test-coverage",
+    id: "cross-project-issue-test-coverage",
     label: tReports("crossProjectReportTypes.issueTestCoverage.label"),
     description: tReports("crossProjectReportTypes.issueTestCoverage.description"),
     icon: Link2,

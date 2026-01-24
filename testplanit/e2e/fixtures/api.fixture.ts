@@ -1547,7 +1547,10 @@ export class ApiHelper {
       {
         params: {
           q: JSON.stringify({
-            where: { shareKey },
+            where: {
+              shareKey,
+              isDeleted: false, // Exclude soft-deleted shares
+            },
             select: {
               id: true,
               shareKey: true,

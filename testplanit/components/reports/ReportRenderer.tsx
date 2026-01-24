@@ -21,6 +21,29 @@ import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
 import { ColumnDef, VisibilityState, ExpandedState, OnChangeFn } from "@tanstack/react-table";
 
+// Helper functions for report type matching
+// These helpers allow us to write code that works with both project-level and cross-project variants
+// without having to explicitly check for both (e.g., "automation-trends" and "cross-project-automation-trends")
+
+/**
+ * Strips the "cross-project-" prefix from a report type ID
+ * @example getBaseReportType("cross-project-automation-trends") => "automation-trends"
+ * @example getBaseReportType("automation-trends") => "automation-trends"
+ */
+function getBaseReportType(reportType: string): string {
+  return reportType.replace(/^cross-project-/, '');
+}
+
+/**
+ * Checks if a report type matches a base type (handles both project and cross-project variants)
+ * @example matchesReportType("automation-trends", "automation-trends") => true
+ * @example matchesReportType("cross-project-automation-trends", "automation-trends") => true
+ * @example matchesReportType("flaky-tests", "automation-trends") => false
+ */
+function matchesReportType(reportType: string, baseType: string): boolean {
+  return getBaseReportType(reportType) === baseType;
+}
+
 interface ReportRendererProps {
   // Data
   results: any[];
@@ -161,13 +184,13 @@ export function ReportRenderer({
   // Choose which columns to use based on report type (same logic as ReportBuilder)
   // If preGeneratedColumns are provided (e.g., from ReportBuilder with drill-down handlers), use those
   const generatedColumns =
-    reportType === "automation-trends" || reportType === "cross-project-automation-trends"
+    matchesReportType(reportType, "automation-trends")
       ? automationTrendsColumns
-      : reportType === "flaky-tests" || reportType === "cross-project-flaky-tests"
+      : matchesReportType(reportType, "flaky-tests")
         ? flakyTestsColumns
-        : reportType === "test-case-health" || reportType === "cross-project-test-case-health"
+        : matchesReportType(reportType, "test-case-health")
           ? testCaseHealthColumns
-          : reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage"
+          : matchesReportType(reportType, "issue-test-coverage")
             ? issueTestCoverageColumns
             : standardColumns;
 
@@ -175,13 +198,13 @@ export function ReportRenderer({
 
   // Determine which reports are pre-built
   const isAutomationTrends =
-    reportType === "automation-trends" || reportType === "cross-project-automation-trends";
+    matchesReportType(reportType, "automation-trends");
   const isFlakyTests =
-    reportType === "flaky-tests" || reportType === "cross-project-flaky-tests";
+    matchesReportType(reportType, "flaky-tests");
   const isTestCaseHealth =
-    reportType === "test-case-health" || reportType === "cross-project-test-case-health";
+    matchesReportType(reportType, "test-case-health");
   const isIssueTestCoverage =
-    reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage";
+    matchesReportType(reportType, "issue-test-coverage");
 
   // Calculate pagination
   const startIndex =

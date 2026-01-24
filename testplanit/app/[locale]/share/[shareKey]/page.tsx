@@ -25,11 +25,15 @@ async function fetchShareMetadata(shareKey: string) {
       cache: "no-store",
     });
 
+    // Parse response body even for error status codes (403 for revoked/expired, 404 for not found)
+    const data = await response.json().catch(() => null);
+
     if (!response.ok) {
-      return null;
+      // Return error data with status flags (revoked, expired, deleted)
+      return data;
     }
 
-    return response.json();
+    return data;
   } catch (error) {
     console.error("Error fetching share metadata:", error);
     return null;

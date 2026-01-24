@@ -97,18 +97,50 @@ interface ReportBuilderProps {
   defaultReportType?: string;
 }
 
-// Helper to check if a report type is a pre-built report
+// Helper functions for report type matching
+// These helpers allow us to write code that works with both project-level and cross-project variants
+// without having to explicitly check for both (e.g., "automation-trends" and "cross-project-automation-trends")
+
+/**
+ * Strips the "cross-project-" prefix from a report type ID
+ * @example getBaseReportType("cross-project-automation-trends") => "automation-trends"
+ * @example getBaseReportType("automation-trends") => "automation-trends"
+ */
+function getBaseReportType(reportType: string): string {
+  return reportType.replace(/^cross-project-/, '');
+}
+
+/**
+ * Checks if a report type matches a base type (handles both project and cross-project variants)
+ * @example matchesReportType("automation-trends", "automation-trends") => true
+ * @example matchesReportType("cross-project-automation-trends", "automation-trends") => true
+ * @example matchesReportType("flaky-tests", "automation-trends") => false
+ */
+function matchesReportType(reportType: string, baseType: string): boolean {
+  return getBaseReportType(reportType) === baseType;
+}
+
+/**
+ * Checks if a report type is a cross-project variant
+ * @example isCrossProjectReport("cross-project-automation-trends") => true
+ * @example isCrossProjectReport("automation-trends") => false
+ */
+function isCrossProjectReport(reportType: string): boolean {
+  return reportType.startsWith('cross-project-');
+}
+
+/**
+ * Checks if a report type is a pre-built report (automation-trends, flaky-tests, test-case-health, issue-test-coverage)
+ * Pre-built reports have fixed configurations and don't require dimension/metric selection
+ */
 function isPreBuiltReport(reportType: string): boolean {
+  const baseType = getBaseReportType(reportType);
   return [
     "automation-trends",
-    "cross-project-automation-trends",
     "flaky-tests",
-    "cross-project-flaky-tests",
     "test-case-health",
-    "cross-project-test-case-health",
     "issue-test-coverage",
-    "cross-project-issue-test-coverage",
-  ].includes(reportType);
+  ].includes(baseType);
 }
 
 // Form schema for date range
@@ -618,13 +650,13 @@ function ReportBuilderContent({
 
   // Choose which columns to use based on report type
   const columns =
-    reportType === "automation-trends" || reportType === "cross-project-automation-trends"
+    matchesReportType(reportType, "automation-trends")
       ? automationTrendsColumns
-      : reportType === "flaky-tests" || reportType === "cross-project-flaky-tests"
+      : matchesReportType(reportType, "flaky-tests")
         ? flakyTestsColumns
-        : reportType === "test-case-health" || reportType === "cross-project-test-case-health"
+        : matchesReportType(reportType, "test-case-health")
           ? testCaseHealthColumns
-          : reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage"
+          : matchesReportType(reportType, "issue-test-coverage")
             ? issueTestCoverageSummaryColumns
             : standardColumns;
 
@@ -644,7 +676,7 @@ function ReportBuilderContent({
 
   // Initialize column visibility for issue test coverage report
   React.useEffect(() => {
-    if (reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage") {
+    if (matchesReportType(reportType, "issue-test-coverage")) {
       // Set all columns to visible for this report
       const visibility: Record<string, boolean> = {
         issueId: true,
@@ -663,7 +695,7 @@ function ReportBuilderContent({
 
   // Set grouping for issue test coverage report when data loads
   React.useEffect(() => {
-    if ((reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage") && allResults && allResults.length > 0) {
+    if ((matchesReportType(reportType, "issue-test-coverage")) && allResults && allResults.length > 0) {
       // Group by issueId to show issues with expandable test cases
       setGrouping(["issueId"]);
       // Start with all groups collapsed
@@ -694,7 +726,7 @@ function ReportBuilderContent({
   useEffect(() => {
     if (
       reportType === "automation-trends" ||
-      reportType === "cross-project-automation-trends"
+      isCrossProjectReport(reportType) && matchesReportType(reportType, "automation-trends")
     ) {
       // Build filter payload to send to view-options API
       const filterPayload: any = {};
@@ -955,7 +987,7 @@ function ReportBuilderContent({
             .filter(Boolean);
 
           // For cross-project flaky tests, ensure "project" is the first dimension
-          if (mode === "cross-project" && reportType === "flaky-tests") {
+          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) {
             const projectDim = dimOpts.find((d: any) => d.value === "project");
             if (projectDim) {
               // Remove project if it exists, then add it as first
@@ -970,8 +1002,7 @@ function ReportBuilderContent({
             setDimensions(selectedDims);
           }
         } else if (
-          mode === "cross-project" &&
-          reportType === "flaky-tests" &&
+          isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests") &&
           dimOpts.length > 0
         ) {
           // Automatically add "project" as the first dimension for cross-project flaky tests
@@ -1000,7 +1031,7 @@ function ReportBuilderContent({
             .filter(Boolean);
 
           // For cross-project flaky tests, ensure "project" is the first dimension
-          if (mode === "cross-project" && reportType === "flaky-tests") {
+          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) {
             const projectDim = dimOpts.find((d: any) => d.value === "project");
             if (projectDim) {
               // Remove project if it exists, then add it as first
@@ -1061,6 +1092,12 @@ function ReportBuilderContent({
       updateUrl: boolean = false
     ) => {
       try {
+        // Don't attempt to run report if metrics are empty (except for pre-built reports)
+        if (selectedMetrics.length === 0 && !currentReport?.isPreBuilt) {
+          // Silently return - this is expected when first loading the report builder
+          return;
+        }
+
         const dateRange = form.getValues("dateRange");
         const body: any = {
           dimensions: selectedDimensions.map((d) => d.value),
@@ -1074,7 +1111,7 @@ function ReportBuilderContent({
         }
 
         // For automation trends, add selected filter values and date grouping
-        if (reportType === "automation-trends") {
+        if (matchesReportType(reportType, "automation-trends")) {
           // Build filters object from selectedFilterValues
           const dynamicFieldFilters: Record<number, (string | number)[]> = {};
 
@@ -1107,12 +1144,12 @@ function ReportBuilderContent({
         }
 
         // For flaky tests, add consecutive runs, flip threshold, automated filter, and dimensions
-        if (reportType === "flaky-tests") {
+        if (matchesReportType(reportType, "flaky-tests")) {
           body.consecutiveRuns = consecutiveRuns;
           body.flipThreshold = flipThreshold;
           body.automatedFilter = flakyAutomatedFilter;
           // Always include dimensions for cross-project reports (project should be auto-added)
-          if (mode === "cross-project") {
+          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) {
             const dimValues = selectedDimensions.map((d) => d.value);
             // Ensure project is included if it's not already there
             if (!dimValues.includes("project")) {
@@ -1123,13 +1160,13 @@ function ReportBuilderContent({
         }
 
         // For test case health, add health parameters and dimensions
-        if (reportType === "test-case-health") {
+        if (matchesReportType(reportType, "test-case-health")) {
           body.staleDaysThreshold = staleDaysThreshold;
           body.minExecutionsForRate = minExecutionsForRate;
           body.lookbackDays = lookbackDays;
           body.automatedFilter = healthAutomatedFilter;
           // Always include dimensions for cross-project reports (project should be auto-added)
-          if (mode === "cross-project") {
+          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "test-case-health")) {
             const dimValues = selectedDimensions.map((d) => d.value);
             // Ensure project is included if it's not already there
             if (!dimValues.includes("project")) {
@@ -1140,9 +1177,9 @@ function ReportBuilderContent({
         }
 
         // For issue test coverage, add dimensions for cross-project
-        if (reportType === "issue-test-coverage") {
+        if (matchesReportType(reportType, "issue-test-coverage")) {
           // Always include dimensions for cross-project reports (project should be auto-added)
-          if (mode === "cross-project") {
+          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "issue-test-coverage")) {
             const dimValues = selectedDimensions.map((d) => d.value);
             // Ensure project is included if it's not already there
             if (!dimValues.includes("project")) {
@@ -1190,10 +1227,11 @@ function ReportBuilderContent({
         }
 
         // Validate request
+        // Note: reportType IDs now include the "cross-project-" prefix for cross-project reports,
+        // so we don't need to add it here anymore
         const validation = reportRequestSchema.safeParse({
           ...body,
-          reportType:
-            mode === "project" ? reportType : `cross-project-${reportType}`,
+          reportType: reportType,
         });
 
         if (!validation.success) {
@@ -1239,7 +1277,7 @@ function ReportBuilderContent({
             // Set initial sort order for flaky tests: Flips Desc
             if (
               (reportType === "flaky-tests" ||
-                reportType === "cross-project-flaky-tests") &&
+                isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) &&
               !sortConfig
             ) {
               setSortConfig({ column: "flipCount", direction: "desc" });
@@ -1251,7 +1289,7 @@ function ReportBuilderContent({
           const effectiveSortConfig =
             updateUrl &&
             (reportType === "flaky-tests" ||
-              reportType === "cross-project-flaky-tests") &&
+              isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) &&
             !sortConfig
               ? { column: "flipCount", direction: "desc" as const }
               : sortConfig;
@@ -1304,7 +1342,7 @@ function ReportBuilderContent({
           setResults(tableData); // Support both formats
 
           // Store projects for automation trends report
-          if (reportType === "automation-trends" && data.projects) {
+          if ((matchesReportType(reportType, "automation-trends")) && data.projects) {
             setAutomationTrendsProjects(data.projects);
           }
 
@@ -1376,11 +1414,11 @@ function ReportBuilderContent({
             dateRange?.from ? (dateRange as DateRange) : undefined
           );
           // Update last used date grouping for automation trends
-          if (reportType === "automation-trends" || reportType === "cross-project-automation-trends") {
+          if (matchesReportType(reportType, "automation-trends")) {
             setLastUsedDateGrouping(dateGrouping);
           }
           // Update last used consecutive runs for flaky tests
-          if (reportType === "flaky-tests" || reportType === "cross-project-flaky-tests") {
+          if (matchesReportType(reportType, "flaky-tests")) {
             setLastUsedConsecutiveRuns(consecutiveRuns);
           }
           // Record when the report was generated
@@ -1557,7 +1595,7 @@ function ReportBuilderContent({
   // Re-fetch data when filters or date grouping change for automation trends
   useEffect(() => {
     if (
-      reportType === "automation-trends" &&
+      (matchesReportType(reportType, "automation-trends")) &&
       lastUsedDimensions.length > 0 &&
       lastUsedMetrics.length > 0 &&
       results
@@ -1579,8 +1617,7 @@ function ReportBuilderContent({
   // Automatically add "project" as first dimension for cross-project flaky tests
   useEffect(() => {
     if (
-      mode === "cross-project" &&
-      reportType === "flaky-tests" &&
+      isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests") &&
       dimensionOptions.length > 0
     ) {
       const projectDim = dimensionOptions.find(
@@ -1786,7 +1823,7 @@ function ReportBuilderContent({
 
                       {/* Date Grouping Selection for Automation Trends */}
                       {(reportType === "automation-trends" ||
-                        reportType === "cross-project-automation-trends") && (
+                        isCrossProjectReport(reportType) && matchesReportType(reportType, "automation-trends")) && (
                         <div className="grid gap-2">
                           <label className="text-sm font-medium">
                             {tReports("dateGrouping.label")}
@@ -1823,7 +1860,7 @@ function ReportBuilderContent({
 
                       {/* Filters Section for Automation Trends */}
                       {(reportType === "automation-trends" ||
-                        reportType === "cross-project-automation-trends") &&
+                        isCrossProjectReport(reportType) && matchesReportType(reportType, "automation-trends")) &&
                         filterItems.length > 0 && (
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
@@ -1860,7 +1897,7 @@ function ReportBuilderContent({
 
                       {/* Flaky Tests Parameters */}
                       {(reportType === "flaky-tests" ||
-                        reportType === "cross-project-flaky-tests") && (
+                        isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) && (
                         <div className="grid gap-4">
                           {/* Consecutive Runs */}
                           <div className="grid gap-2">
@@ -1978,7 +2015,7 @@ function ReportBuilderContent({
 
                       {/* Test Case Health Parameters */}
                       {(reportType === "test-case-health" ||
-                        reportType === "cross-project-test-case-health") && (
+                        isCrossProjectReport(reportType) && matchesReportType(reportType, "test-case-health")) && (
                         <div className="grid gap-4">
                           {/* Stale Days Threshold */}
                           <div className="grid gap-2">
@@ -2275,7 +2312,7 @@ function ReportBuilderContent({
                       </div>
 
                       {/* Priority Filter for Automation Trends */}
-                      {reportType === "automation-trends" &&
+                      {(matchesReportType(reportType, "automation-trends")) &&
                         dimensions.some((d) => d.value === "priority") && (
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
@@ -2438,7 +2475,7 @@ function ReportBuilderContent({
             lookbackDays={lookbackDays}
             dateGrouping={lastUsedDateGrouping}
             totalFlakyTests={
-              (reportType === "flaky-tests" || reportType === "cross-project-flaky-tests") && allResults
+              (matchesReportType(reportType, "flaky-tests")) && allResults
                 ? allResults.length
                 : undefined
             }

@@ -19,6 +19,21 @@ import { toHumanReadable } from "~/utils/duration";
 import { useLocale, useTranslations } from "next-intl";
 import { useIssueColors } from "~/hooks/useIssueColors";
 
+// Helper functions for report type matching
+/**
+ * Strips the "cross-project-" prefix from a report type ID
+ */
+function getBaseReportType(reportType: string): string {
+  return reportType.replace(/^cross-project-/, '');
+}
+
+/**
+ * Checks if a report type matches a base type (handles both project and cross-project variants)
+ */
+function matchesReportType(reportType: string, baseType: string): boolean {
+  return getBaseReportType(reportType) === baseType;
+}
+
 // Enums for chart types
 export enum ChartType {
   Bar = "Bar",
@@ -348,7 +363,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   });
 
   // Special handling for automation trends report
-  if (reportType === "automation-trends" && projects && projects.length > 0) {
+  if (matchesReportType(reportType, "automation-trends") && projects && projects.length > 0) {
     // Transform automation trends data into multi-line series
     const seriesMap = new Map<string, MultiLineSeries>();
     const isMultiProject = projects.length > 1;
@@ -421,10 +436,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
 
   // Special handling for flaky tests report - use bubble chart
   // Shows flip count vs recency of failures - tests in top-right need most attention
-  if (
-    reportType === "flaky-tests" ||
-    reportType === "cross-project-flaky-tests"
-  ) {
+  if (matchesReportType(reportType, "flaky-tests")) {
     return (
       <FlakyTestsBubbleChart
         data={results}
@@ -437,19 +449,13 @@ export const ReportChart: React.FC<ReportChartProps> = ({
 
   // Special handling for test case health report - use combined donut + scatter chart
   // Shows health status distribution and health score vs days since execution
-  if (
-    reportType === "test-case-health" ||
-    reportType === "cross-project-test-case-health"
-  ) {
+  if (matchesReportType(reportType, "test-case-health")) {
     return <TestCaseHealthChart data={results} projectId={projectId} />;
   }
 
   // Special handling for issue test coverage report - use stacked bar chart
   // Shows issues with their linked test cases and pass/fail/untested breakdown
-  if (
-    reportType === "issue-test-coverage" ||
-    reportType === "cross-project-issue-test-coverage"
-  ) {
+  if (matchesReportType(reportType, "issue-test-coverage")) {
     return <IssueTestCoverageChart data={results} projectId={projectId} />;
   }
 
