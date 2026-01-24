@@ -39,6 +39,7 @@ export default async function ProjectSharesPage({ params }: PageProps) {
       id: true,
       name: true,
       createdBy: true,
+      defaultAccessType: true,
     },
   });
 
