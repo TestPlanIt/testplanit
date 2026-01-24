@@ -231,3 +231,67 @@ Use the default setting combined with user and group overrides for granular cont
 - Permission changes take effect immediately
 - When `SPECIFIC_ROLE` is selected, you must choose a valid role from the dropdown
 - User-specific `NO_ACCESS` overrides all other permissions (except for system admins)
+
+## Share Management
+
+View and manage all Share Links created for reports and other content within the project.
+
+### Accessing Share Management
+
+**From Project Settings:**
+
+1. Navigate to your project
+2. Click **Settings** in the project menu
+3. Click **Shares** in the settings navigation
+4. View all active, expired, and revoked shares
+
+### Features
+
+**Share Overview:**
+
+- See all share links for the project
+- View access mode (Authenticated, Public, Password-Protected)
+- Monitor view counts and last accessed timestamps
+- Track notification settings for each share
+- Check expiration dates and status (Active, Expired, Revoked)
+
+**Share Actions:**
+
+- **Copy Link**: Copy share URL to clipboard for distribution
+- **Edit**: Modify title, description, expiration date, and settings
+- **Toggle Notifications**: Enable/disable view notifications
+- **Revoke**: Immediately disable access (link shows "Link revoked")
+- **Delete**: Permanently remove share (link shows 404)
+
+**Access Analytics:**
+
+- View count per share link
+- Last accessed timestamp
+- Detailed access logs with viewer information
+- IP addresses and user agents
+- Authentication status for each access
+
+### Share Management Best Practices
+
+**Regular Review:**
+
+- Review active shares monthly
+- Delete unused or outdated shares
+- Update expiration dates for ongoing shares
+- Monitor access patterns for anomalies
+
+**Security:**
+
+- Revoke shares when no longer needed
+- Use expiration dates for temporary access
+- Enable notifications for sensitive shares
+- Review access logs periodically
+
+**Organization:**
+
+- Use descriptive titles for easy identification
+- Add descriptions explaining share purpose
+- Tag or categorize shares by stakeholder type
+- Document password distribution for protected shares
+
+[Learn more about Share Links →](./share-links.md)
