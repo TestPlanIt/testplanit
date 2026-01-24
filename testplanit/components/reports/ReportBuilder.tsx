@@ -313,6 +313,8 @@ function ReportBuilderContent({
   const isInitialMount = useRef(true);
   // Track the last report type that was run
   const lastRunReportType = useRef<string | null>(null);
+  // Track the last tab change to prevent duplicate calls
+  const lastTabChangeRef = useRef<{ tab: string; timestamp: number } | null>(null);
 
   // Track if we're on the client side (for SSR compatibility)
   const [isClient, setIsClient] = useState(false);
@@ -809,19 +811,36 @@ function ReportBuilderContent({
 
   // Handle tab change
   const handleTabChange = (newTab: string) => {
+    // Prevent duplicate calls within 100ms (React Strict Mode workaround)
+    const now = Date.now();
+    if (lastTabChangeRef.current &&
+        lastTabChangeRef.current.tab === newTab &&
+        now - lastTabChangeRef.current.timestamp < 100) {
+      return;
+    }
+    lastTabChangeRef.current = { tab: newTab, timestamp: now };
+
+    // Update activeTab state immediately to prevent race conditions
+    setActiveTab(newTab);
+
     // When switching tabs, select a default report from that tab
     const targetReports =
       newTab === "reports" ? preBuiltReports : customReports;
 
-    // Determine the default report - use first from target list with valid ID, or fall back to "test-execution"
+    // Determine the default report - use first from target list with valid ID
+    // Fallback: "automation-trends" for reports tab, "test-execution" for builder tab
+    const fallbackReport = newTab === "reports" ? "automation-trends" : "test-execution";
     let defaultReport = targetReports.length > 0 && targetReports[0]?.id
       ? targetReports[0].id
-      : "test-execution";
+      : fallbackReport;
 
     // Safety check: ensure defaultReport is never empty
     if (!defaultReport || defaultReport.trim() === "") {
-      defaultReport = "test-execution";
+      defaultReport = fallbackReport;
     }
+
+    // Mark the new report as already run to prevent auto-run from interfering
+    lastRunReportType.current = defaultReport;
 
     // ALWAYS update URL to ensure tab switches properly
     const newParams = new URLSearchParams(searchParams.toString());
@@ -829,6 +848,7 @@ function ReportBuilderContent({
     newParams.set("tab", newTab);
     newParams.set("page", "1");
     newParams.set("pageSize", "10");
+
     router.replace(`${pathname}?${newParams.toString()}`);
   };
 
