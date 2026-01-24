@@ -786,17 +786,20 @@ function ReportBuilderContent({
 
   // Handle report type change
   const handleReportTypeChange = (newReportType: string) => {
+    // Safety check: ensure reportType is never empty
+    const safeReportType = (newReportType && newReportType.trim() !== "") ? newReportType : "test-execution";
+
     // Update state immediately for responsive UI
-    setReportType(newReportType);
+    setReportType(safeReportType);
 
     // Determine which tab this report belongs to
-    const isPreBuilt = preBuiltReports.some((r) => r.id === newReportType);
+    const isPreBuilt = preBuiltReports.some((r) => r.id === safeReportType);
     const newTab = isPreBuilt ? "reports" : "builder";
     setActiveTab(newTab);
 
     // Clear URL parameters when changing report type (report-specific params don't apply)
     const newParams = new URLSearchParams();
-    newParams.set("reportType", newReportType);
+    newParams.set("reportType", safeReportType);
     newParams.set("tab", newTab);
     // Reset pagination when changing reports
     newParams.set("page", "1");
@@ -809,17 +812,24 @@ function ReportBuilderContent({
     // When switching tabs, select a default report from that tab
     const targetReports =
       newTab === "reports" ? preBuiltReports : customReports;
-    if (targetReports.length > 0) {
-      const defaultReport = targetReports[0].id;
 
-      // Update URL - this will trigger useEffect to sync state
-      const newParams = new URLSearchParams(searchParams.toString());
-      newParams.set("reportType", defaultReport);
-      newParams.set("tab", newTab);
-      newParams.set("page", "1");
-      newParams.set("pageSize", "10");
-      router.replace(`${pathname}?${newParams.toString()}`);
+    // Determine the default report - use first from target list with valid ID, or fall back to "test-execution"
+    let defaultReport = targetReports.length > 0 && targetReports[0]?.id
+      ? targetReports[0].id
+      : "test-execution";
+
+    // Safety check: ensure defaultReport is never empty
+    if (!defaultReport || defaultReport.trim() === "") {
+      defaultReport = "test-execution";
     }
+
+    // ALWAYS update URL to ensure tab switches properly
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set("reportType", defaultReport);
+    newParams.set("tab", newTab);
+    newParams.set("page", "1");
+    newParams.set("pageSize", "10");
+    router.replace(`${pathname}?${newParams.toString()}`);
   };
 
   // When report type changes, clear all selections and results
@@ -1353,33 +1363,38 @@ function ReportBuilderContent({
           const { page, pageSize, sortColumn, sortDirection, ...shareableBody } = body;
           setLastRequestBody(shareableBody);
 
-          // Update URL with selections
-          const newParams = new URLSearchParams();
-          newParams.set("reportType", reportType);
-          newParams.set(
-            "dimensions",
-            selectedDimensions.map((d) => d.value).join(",")
-          );
-          newParams.set(
-            "metrics",
-            selectedMetrics.map((m) => m.value).join(",")
-          );
+          // Only update URL for custom reports (pre-built reports don't use dimensions/metrics)
+          if (!currentReport?.isPreBuilt) {
+            // Update URL with selections - start with existing params to preserve tab parameter
+            const newParams = new URLSearchParams(searchParams.toString());
+            // Safety check: ensure reportType is never empty
+            const safeReportType = (reportType && reportType.trim() !== "") ? reportType : "test-execution";
+            newParams.set("reportType", safeReportType);
+            newParams.set(
+              "dimensions",
+              selectedDimensions.map((d) => d.value).join(",")
+            );
+            newParams.set(
+              "metrics",
+              selectedMetrics.map((m) => m.value).join(",")
+            );
 
-          // Add date range to URL if specified, or remove if cleared
-          if (dateRange?.from) {
-            newParams.set("startDate", dateRange.from.toISOString());
-            if (dateRange.to) {
-              newParams.set("endDate", dateRange.to.toISOString());
+            // Add date range to URL if specified, or remove if cleared
+            if (dateRange?.from) {
+              newParams.set("startDate", dateRange.from.toISOString());
+              if (dateRange.to) {
+                newParams.set("endDate", dateRange.to.toISOString());
+              } else {
+                newParams.delete("endDate");
+              }
             } else {
+              // Remove date parameters when cleared
+              newParams.delete("startDate");
               newParams.delete("endDate");
             }
-          } else {
-            // Remove date parameters when cleared
-            newParams.delete("startDate");
-            newParams.delete("endDate");
-          }
 
-          router.replace(`${pathname}?${newParams.toString()}`);
+            router.replace(`${pathname}?${newParams.toString()}`);
+          }
         }
       } catch (err: any) {
         console.error("Report error:", err);
@@ -1398,6 +1413,7 @@ function ReportBuilderContent({
       setTotalCount,
       router,
       pathname,
+      searchParams,
       tReports,
       dateGrouping,
       selectedFilterValues,
