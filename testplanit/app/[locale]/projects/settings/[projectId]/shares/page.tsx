@@ -48,11 +48,23 @@ export default async function ProjectSharesPage({ params }: PageProps) {
 
   // Check access to settings:
   // 1. System ADMIN users always have access
-  // 2. Project creator has access
-  // 3. Users with Settings area permissions through their project role
+  // 2. System PROJECTADMIN users assigned to this project have access
+  // 3. Project creator has access
+  // 4. Users with Settings area permissions through their project role
+  // 5. Users with Settings permissions through their global role (for GLOBAL_ROLE projects)
 
   const isCreator = project.createdBy === session.user.id;
   const isAdmin = session.user.access === "ADMIN";
+
+  // Check if user is PROJECTADMIN and assigned to this project
+  const isProjectAdmin =
+    session.user.access === "PROJECTADMIN" &&
+    !!(await db.projectAssignment.findFirst({
+      where: {
+        userId: session.user.id,
+        projectId: projectId,
+      },
+    }));
 
   // Check if user has Settings area permissions through their project role
   const { ApplicationArea } = await import("@prisma/client");
@@ -61,32 +73,58 @@ export default async function ProjectSharesPage({ params }: PageProps) {
     where: {
       userId: session.user.id,
       projectId: projectId,
-    },
-    include: {
-      role: {
-        include: {
-          rolePermissions: true,
-        },
+      accessType: {
+        not: "NO_ACCESS",
       },
     },
   });
 
-  const hasSettingsPermission = userProjectPerm?.role?.rolePermissions?.some(
-    (perm) => perm.area === ApplicationArea.Settings
-  );
-
-  // Also check default role if user has no explicit permission
-  const hasDefaultAccess =
-    !userProjectPerm &&
-    project &&
-    (await db.projects.findFirst({
+  // If user has a role assigned, check if it has Settings permissions
+  let hasSettingsPermission = false;
+  if (userProjectPerm?.roleId) {
+    const settingsPermission = await db.rolePermission.findFirst({
       where: {
-        id: projectId,
-        defaultAccessType: "GLOBAL_ROLE",
+        roleId: userProjectPerm.roleId,
+        area: ApplicationArea.Settings,
+        canAddEdit: true,
       },
-    }));
+    });
+    hasSettingsPermission = !!settingsPermission;
+  }
 
-  if (!isAdmin && !isCreator && !hasSettingsPermission && !hasDefaultAccess) {
+  // Also check if user has Settings permissions through their global role with GLOBAL_ROLE projects
+  let hasGlobalRoleSettingsPermission = false;
+  if (project.defaultAccessType === "GLOBAL_ROLE") {
+    // Get the user's global role
+    const user = await db.user.findFirst({
+      where: {
+        id: session.user.id,
+      },
+      select: {
+        roleId: true,
+      },
+    });
+
+    if (user?.roleId) {
+      const globalRoleSettingsPermission = await db.rolePermission.findFirst({
+        where: {
+          roleId: user.roleId,
+          area: ApplicationArea.Settings,
+          canAddEdit: true,
+        },
+      });
+      hasGlobalRoleSettingsPermission = !!globalRoleSettingsPermission;
+    }
+  }
+
+  const hasSettingsAccess =
+    isAdmin ||
+    isProjectAdmin ||
+    isCreator ||
+    hasSettingsPermission ||
+    hasGlobalRoleSettingsPermission;
+
+  if (!hasSettingsAccess) {
     notFound();
   }
 

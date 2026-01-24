@@ -25,6 +25,7 @@ export function ShareButton({
   return (
     <>
       <Button
+        data-testid="share-report-button"
         variant="ghost"
         size="sm"
         onClick={() => setIsDialogOpen(true)}

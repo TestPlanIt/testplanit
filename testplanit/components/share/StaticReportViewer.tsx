@@ -180,7 +180,7 @@ export function StaticReportViewer({ shareData, shareMode, isAuthenticatedUser =
   }
 
   return (
-    <div className="min-h-screen">
+    <div data-testid="shared-report-viewer" className="min-h-screen">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="container mx-auto px-4 py-6">
@@ -190,7 +190,7 @@ export function StaticReportViewer({ shareData, shareMode, isAuthenticatedUser =
                 <BarChart3 className="h-5 w-5 text-muted-foreground" />
                 <Badge variant="outline">{shareData.entityType}</Badge>
               </div>
-              <h1 className="text-2xl font-bold mb-1">
+              <h1 data-testid="shared-report-title" className="text-2xl font-bold mb-1">
                 {shareData.title || t("defaultTitle")}
               </h1>
               {shareData.description && (

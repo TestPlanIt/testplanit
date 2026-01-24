@@ -17,11 +17,11 @@ interface SharePageProps {
 export const dynamic = "force-dynamic";
 
 async function fetchShareMetadata(shareKey: string) {
-  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-  const host = process.env.NEXTAUTH_URL?.replace(/^https?:\/\//, "") || "localhost:3000";
+  // Use NEXTAUTH_URL directly to preserve the correct protocol (http/https)
+  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
   try {
-    const response = await fetch(`${protocol}://${host}/api/share/${shareKey}`, {
+    const response = await fetch(`${baseUrl}/api/share/${shareKey}`, {
       cache: "no-store",
     });
 

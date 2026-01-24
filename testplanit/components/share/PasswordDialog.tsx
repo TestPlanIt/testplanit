@@ -124,6 +124,7 @@ export function PasswordDialog({
               <Label htmlFor="password">{tCommon("fields.password")}</Label>
               <div className="relative">
                 <Input
+                  data-testid="password-gate-input"
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
@@ -155,7 +156,7 @@ export function PasswordDialog({
           </CardContent>
 
           <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button data-testid="password-gate-submit" type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />

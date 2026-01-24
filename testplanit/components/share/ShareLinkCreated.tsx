@@ -69,12 +69,14 @@ export function ShareLinkCreated({
           <label className="text-sm font-medium mb-2 block">{t("shareLink")}</label>
           <div className="flex gap-2">
             <Input
+              data-testid="share-url-input"
               value={shareData.shareUrl}
               readOnly
               className="font-mono text-sm"
               onClick={(e) => e.currentTarget.select()}
             />
             <Button
+              data-testid="share-copy-button"
               onClick={handleCopy}
               variant="outline"
               className="shrink-0"
@@ -92,6 +94,7 @@ export function ShareLinkCreated({
               )}
             </Button>
             <Button
+              data-testid="share-open-button"
               onClick={handleOpenLink}
               variant="outline"
               className="shrink-0"

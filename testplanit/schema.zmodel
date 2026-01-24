@@ -2870,38 +2870,38 @@ enum ShareLinkEntityType {
 }
 
 model ShareLink {
-    id                String              @id @default(cuid())
-    shareKey          String              @unique @length(32, 64)
+    id           String               @id @default(cuid())
+    shareKey     String               @unique @length(32, 64)
 
     // Polymorphic entity reference
-    entityType        ShareLinkEntityType
-    entityId          String?             // For direct entities (test cases, runs, etc.)
-    entityConfig      Json?               // For reports (dimensions, metrics, dates)
+    entityType   ShareLinkEntityType
+    entityId     String?             // For direct entities (test cases, runs, etc.)
+    entityConfig Json?               // For reports (dimensions, metrics, dates)
 
     // Ownership
-    projectId         Int?                // Optional for cross-project reports
-    project           Projects?           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    createdById       String
-    createdBy         User                @relation("ShareLinkCreator", fields: [createdById], references: [id], onDelete: Cascade)
+    projectId    Int?                // Optional for cross-project reports
+    project      Projects?            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    createdById  String
+    createdBy    User                 @relation("ShareLinkCreator", fields: [createdById], references: [id], onDelete: Cascade)
 
     // Settings
-    mode              ShareLinkMode       @default(PUBLIC)
-    passwordHash      String?             @omit
-    expiresAt         DateTime?           @db.Timestamptz(6)
-    notifyOnView      Boolean             @default(false)
+    mode         ShareLinkMode        @default(PUBLIC)
+    passwordHash String?              @omit
+    expiresAt    DateTime?            @db.Timestamptz(6)
+    notifyOnView Boolean              @default(false)
 
     // Metadata
-    title             String?
-    description       String?
-    isRevoked         Boolean             @default(false)
-    isDeleted         Boolean             @default(false)
-    viewCount         Int                 @default(0)
-    lastViewedAt      DateTime?           @db.Timestamptz(6)
-    createdAt         DateTime            @default(now()) @db.Timestamptz(6)
-    updatedAt         DateTime            @updatedAt
+    title        String?
+    description  String?
+    isRevoked    Boolean              @default(false)
+    isDeleted    Boolean              @default(false)
+    viewCount    Int                  @default(0)
+    lastViewedAt DateTime?            @db.Timestamptz(6)
+    createdAt    DateTime             @default(now()) @db.Timestamptz(6)
+    updatedAt    DateTime             @updatedAt
 
     // Relations
-    accessLogs        ShareLinkAccessLog[]
+    accessLogs   ShareLinkAccessLog[]
 
     @@index([shareKey])
     @@index([projectId, createdById])
@@ -2913,6 +2913,9 @@ model ShareLink {
     // Access control
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')
+
+    // PROJECTADMIN users can manage shares in projects they're assigned to
+    @@allow('all', projectId != null && project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'])
 
     // Project-scoped shares
     @@allow('all', projectId != null && project.creator == auth())
@@ -2939,17 +2942,17 @@ model ShareLink {
 }
 
 model ShareLinkAccessLog {
-    id                String    @id @default(cuid())
-    shareLinkId       String
-    shareLink         ShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+    id               String    @id @default(cuid())
+    shareLinkId      String
+    shareLink        ShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
 
     // Access details
-    accessedById      String?
-    accessedBy        User?     @relation("ShareLinkAccessor", fields: [accessedById], references: [id], onDelete: SetNull)
-    ipAddress         String?
-    userAgent         String?
-    wasAuthenticated  Boolean   @default(false)
-    accessedAt        DateTime  @default(now()) @db.Timestamptz(6)
+    accessedById     String?
+    accessedBy       User?     @relation("ShareLinkAccessor", fields: [accessedById], references: [id], onDelete: SetNull)
+    ipAddress        String?
+    userAgent        String?
+    wasAuthenticated Boolean   @default(false)
+    accessedAt       DateTime  @default(now()) @db.Timestamptz(6)
 
     @@index([shareLinkId, accessedAt])
     @@index([accessedById])

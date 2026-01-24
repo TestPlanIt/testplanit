@@ -195,8 +195,8 @@ export function ShareDialog({
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "create" | "list")}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="create">{t("tabs.create")}</TabsTrigger>
-            <TabsTrigger value="list">{t("tabs.list")}</TabsTrigger>
+            <TabsTrigger data-testid="share-tab-create" value="create">{t("tabs.create")}</TabsTrigger>
+            <TabsTrigger data-testid="share-tab-list" value="list">{t("tabs.list")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="create" className="space-y-4 mt-4">
@@ -214,7 +214,7 @@ export function ShareDialog({
                 setPasswordError(null);
               }}>
                 <div className="flex items-start space-x-2 rounded-lg border p-4">
-                  <RadioGroupItem value="AUTHENTICATED" id="authenticated" className="mt-1" />
+                  <RadioGroupItem data-testid="share-mode-authenticated" value="AUTHENTICATED" id="authenticated" className="mt-1" />
                   <div className="flex-1">
                     <Label htmlFor="authenticated" className="font-medium cursor-pointer">
                       {t("shareMode.authenticated.title")}
@@ -228,7 +228,7 @@ export function ShareDialog({
                 </div>
 
                 <div className="flex items-start space-x-2 rounded-lg border p-4">
-                  <RadioGroupItem value="PASSWORD_PROTECTED" id="password" className="mt-1" />
+                  <RadioGroupItem data-testid="share-mode-password" value="PASSWORD_PROTECTED" id="password" className="mt-1" />
                   <div className="flex-1">
                     <Label htmlFor="password" className="font-medium cursor-pointer">
                       {t("shareMode.passwordProtected.title")}
@@ -242,7 +242,7 @@ export function ShareDialog({
                 </div>
 
                 <div className="flex items-start space-x-2 rounded-lg border p-4">
-                  <RadioGroupItem value="PUBLIC" id="public" className="mt-1" />
+                  <RadioGroupItem data-testid="share-mode-public" value="PUBLIC" id="public" className="mt-1" />
                   <div className="flex-1">
                     <Label htmlFor="public" className="font-medium cursor-pointer">
                       {t("shareMode.public.title")}
@@ -266,6 +266,7 @@ export function ShareDialog({
                     </sup>
                   </Label>
                   <Input
+                    data-testid="share-password-input"
                     id="password-input"
                     type="password"
                     value={password}
@@ -289,6 +290,7 @@ export function ShareDialog({
                     </sup>
                   </Label>
                   <Input
+                    data-testid="share-confirm-password-input"
                     id="confirm-password-input"
                     type="password"
                     value={confirmPassword}
@@ -350,6 +352,7 @@ export function ShareDialog({
             {/* Notify on view */}
             <div className="flex items-start space-x-2">
               <Checkbox
+                data-testid="share-notify-checkbox"
                 id="notify"
                 checked={notifyOnView}
                 onCheckedChange={(checked) => setNotifyOnView(checked === true)}
@@ -368,6 +371,7 @@ export function ShareDialog({
             <div className="space-y-2">
               <Label htmlFor="title">{t("title.label")}</Label>
               <Input
+                data-testid="share-title-input"
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -382,6 +386,7 @@ export function ShareDialog({
             <div className="space-y-2">
               <Label htmlFor="description">{t("description.label")}</Label>
               <Textarea
+                data-testid="share-description-input"
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -395,7 +400,7 @@ export function ShareDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 {tCommon("cancel")}
               </Button>
-              <Button onClick={handleCreateShare} disabled={isCreating}>
+              <Button data-testid="share-create-button" onClick={handleCreateShare} disabled={isCreating}>
                 {isCreating ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
