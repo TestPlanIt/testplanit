@@ -223,7 +223,8 @@ describe("share-links server actions", () => {
       });
 
       const call = vi.mocked(prisma.auditLog.create).mock.calls[0][0];
-      expect(call.data.metadata.hasPassword).toBe(true);
+      expect(call.data.metadata).toBeDefined();
+      expect((call.data.metadata as any).hasPassword).toBe(true);
     });
 
     it("should handle null expiresAt", async () => {
@@ -241,7 +242,8 @@ describe("share-links server actions", () => {
       });
 
       const call = vi.mocked(prisma.auditLog.create).mock.calls[0][0];
-      expect(call.data.metadata.expiresAt).toBeNull();
+      expect(call.data.metadata).toBeDefined();
+      expect((call.data.metadata as any).expiresAt).toBeNull();
     });
 
     it("should handle undefined projectId", async () => {
