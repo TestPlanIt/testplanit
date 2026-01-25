@@ -1,3 +1,10 @@
+# [0.11.0](https://github.com/TestPlanIt/testplanit/compare/v0.10.14...v0.11.0) (2026-01-25)
+
+
+### Features
+
+* add Share Links feature for secure report and content sharing ([#54](https://github.com/TestPlanIt/testplanit/issues/54)) ([78ad1f7](https://github.com/TestPlanIt/testplanit/commit/78ad1f7038035dc2f26aec1d01a50dc8db9a8337))
+
 ## [0.10.14](https://github.com/TestPlanIt/testplanit/compare/v0.10.13...v0.10.14) (2026-01-23)
 
 
