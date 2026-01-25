@@ -26,8 +26,11 @@ async function clearSessionCookies() {
 }
 
 // Create handlers dynamically to load providers from database
-// Note: context is passed through to NextAuth which handles it internally
-export async function GET(req: Request, context: any) {
+// Note: In Next.js 15+, params is a Promise that must be awaited
+export async function GET(
+  req: Request,
+  context: { params: Promise<{ nextauth: string[] }> }
+) {
   const url = new URL(req.url);
 
   // Check if this is an email callback (magic link)
@@ -41,11 +44,26 @@ export async function GET(req: Request, context: any) {
 
   const authOptions = await getAuthOptions();
   const handler = NextAuth(authOptions);
-  return handler(req, context);
+
+  // Await params before passing to NextAuth (Next.js 15+ requirement)
+  const resolvedContext = {
+    params: await context.params,
+  };
+
+  return handler(req, resolvedContext);
 }
 
-export async function POST(req: Request, context: any) {
+export async function POST(
+  req: Request,
+  context: { params: Promise<{ nextauth: string[] }> }
+) {
   const authOptions = await getAuthOptions();
   const handler = NextAuth(authOptions);
-  return handler(req, context);
+
+  // Await params before passing to NextAuth (Next.js 15+ requirement)
+  const resolvedContext = {
+    params: await context.params,
+  };
+
+  return handler(req, resolvedContext);
 }
