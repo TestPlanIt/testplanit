@@ -2623,6 +2623,200 @@ export class ApiHelper {
   }
 
   /**
+   * Create a milestone via API
+   */
+  async createMilestone(
+    projectId: number,
+    name: string,
+    options?: {
+      typeId?: number;
+      isCompleted?: boolean;
+      completedAt?: Date;
+      parentId?: number;
+    }
+  ): Promise<number> {
+    const userId = await this.getCurrentUserId();
+
+    const data: Record<string, unknown> = {
+      name,
+      projectId: projectId,
+      milestoneTypesId: options?.typeId ?? 1, // Default to type 1 (Version)
+      createdBy: userId,
+      isCompleted: options?.isCompleted ?? false,
+      isDeleted: false,
+    };
+
+    if (options?.completedAt) {
+      data.completedAt = options.completedAt.toISOString();
+    }
+
+    if (options?.parentId) {
+      data.parentId = options.parentId;
+    }
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/milestones/create`,
+      {
+        data: { data },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create milestone: ${error}`);
+    }
+
+    const result = await response.json();
+    return result.data.id;
+  }
+
+  /**
+   * Create a session via API
+   */
+  async createSession(
+    projectId: number,
+    name: string,
+    options?: {
+      stateId?: number;
+      milestoneId?: number;
+      isCompleted?: boolean;
+      completedAt?: Date;
+    }
+  ): Promise<number> {
+    const userId = await this.getCurrentUserId();
+    const stateId = options?.stateId || await this.getStateId(projectId);
+
+    const data: Record<string, unknown> = {
+      name,
+      project: { connect: { id: projectId } },
+      state: { connect: { id: stateId } },
+      createdBy: { connect: { id: userId } },
+      isCompleted: options?.isCompleted ?? false,
+      isDeleted: false,
+    };
+
+    if (options?.milestoneId) {
+      data.milestone = { connect: { id: options.milestoneId } };
+    }
+
+    if (options?.completedAt) {
+      data.completedAt = options.completedAt.toISOString();
+    }
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/sessions/create`,
+      {
+        data: { data },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create session: ${error}`);
+    }
+
+    const result = await response.json();
+    return result.data.id;
+  }
+
+  /**
+   * Delete a milestone via API (soft delete)
+   */
+  async deleteMilestone(milestoneId: number): Promise<void> {
+    this.request
+      .patch(`${this.baseURL}/api/model/milestones/update`, {
+        data: {
+          where: { id: milestoneId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Delete a session via API (soft delete)
+   */
+  async deleteSession(sessionId: number): Promise<void> {
+    this.request
+      .patch(`${this.baseURL}/api/model/sessions/update`, {
+        data: {
+          where: { id: sessionId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
+  }
+
+  /**
+   * Get a milestone by ID
+   */
+  async getMilestone(milestoneId: number): Promise<any> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/milestones/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { id: milestoneId },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      return null;
+    }
+
+    const result = await response.json();
+    return result.data;
+  }
+
+  /**
+   * Get a session by ID
+   */
+  async getSession(sessionId: number): Promise<any> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/sessions/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { id: sessionId },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      return null;
+    }
+
+    const result = await response.json();
+    return result.data;
+  }
+
+  /**
+   * Get a test run by ID
+   */
+  async getTestRun(testRunId: number): Promise<any> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/testRuns/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { id: testRunId },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      return null;
+    }
+
+    const result = await response.json();
+    return result.data;
+  }
+
+  /**
    * Clean up all test data created during tests
    */
   async cleanup(): Promise<void> {

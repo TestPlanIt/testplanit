@@ -1203,6 +1203,11 @@
       "impactActiveTestRuns": "{count, plural, one {# prueba activa ejecutada} other {# prueba activa se ejecuta}}",
       "impactActiveSessions": "{count, plural, one {# sesión activa} other {# sesiones activas}}",
       "impactDescendantMilestones": "{count, plural, one {# hito descendiente} other {# hitos descendentes}}",
+      "completeTestRunsLabel": "Ejecuciones de pruebas asociadas completas ({count, plural, one {# activas} other {# activas}})",
+      "completeSessionsLabel": "Sesiones asociadas completas ({count, plural, one {# activas} other {# activas}})",
+      "testRunStateLabel": "Estado de finalización de la ejecución de prueba",
+      "sessionStateLabel": "Estado de finalización de la sesión",
+      "itemsRemaining": "Los siguientes elementos permanecerán activos:",
       "processing": "Procesando...",
       "confirmAndCompleteAll": "Confirmar y completar todo"
     },

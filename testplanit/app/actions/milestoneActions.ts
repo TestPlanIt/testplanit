@@ -11,6 +11,11 @@ const CompleteMilestoneSchema = z.object({
   completionDate: z.date(),
   isPreview: z.boolean().optional(), // To check for dependencies without completing
   forceCompleteDependencies: z.boolean().optional(), // To force completion after user confirmation
+  // NEW FIELDS - optional, defaults handled in destructuring
+  completeTestRuns: z.boolean().optional(),
+  completeSessions: z.boolean().optional(),
+  testRunStateId: z.number().nullable().optional(),
+  sessionStateId: z.number().nullable().optional(),
 });
 
 interface CompletionImpact {
@@ -42,8 +47,16 @@ export async function completeMilestoneCascade(
     return { status: "error", message: "Invalid input." };
   }
 
-  const { milestoneId, completionDate, isPreview, forceCompleteDependencies } =
-    parseResult.data;
+  const {
+    milestoneId,
+    completionDate,
+    isPreview,
+    forceCompleteDependencies,
+    completeTestRuns = true,
+    completeSessions = true,
+    testRunStateId,
+    sessionStateId,
+  } = parseResult.data;
 
   // Helper function to get all descendant milestone IDs
   async function getAllDescendantMilestoneIds(
@@ -101,45 +114,62 @@ export async function completeMilestoneCascade(
     };
   }
 
-  // --- Determine target completed stateId for Test Runs and Sessions ---
+  // --- Determine target completed stateId for Test Runs ---
   let completedTestRunStateId: number | undefined = undefined;
-  const doneRunWorkflow = await prisma.workflows.findFirst({
-    where: {
-      scope: "RUNS",
-      workflowType: "DONE",
-      isEnabled: true,
-      isDeleted: false,
-      projects: { some: { projectId: projectId } },
-    },
-    orderBy: { order: "desc" }, // Get the one with the highest order
-    select: { id: true },
-  });
-  if (doneRunWorkflow) {
-    completedTestRunStateId = doneRunWorkflow.id;
-  } else {
-    console.warn(
-      `No 'DONE' workflow found for RUNS in project ${projectId}. Test Run states will not be updated, only isCompleted flag.`
-    );
+  if (completeTestRuns) {
+    if (testRunStateId !== null && testRunStateId !== undefined) {
+      // User explicitly selected a state
+      completedTestRunStateId = testRunStateId;
+    } else {
+      // Fallback to highest order DONE workflow (existing behavior)
+      const doneRunWorkflow = await prisma.workflows.findFirst({
+        where: {
+          scope: "RUNS",
+          workflowType: "DONE",
+          isEnabled: true,
+          isDeleted: false,
+          projects: { some: { projectId: projectId } },
+        },
+        orderBy: { order: "desc" }, // Get the one with the highest order
+        select: { id: true },
+      });
+      if (doneRunWorkflow) {
+        completedTestRunStateId = doneRunWorkflow.id;
+      } else {
+        console.warn(
+          `No 'DONE' workflow found for RUNS in project ${projectId}. Test Run states will not be updated, only isCompleted flag.`
+        );
+      }
+    }
   }
 
+  // --- Determine target completed stateId for Sessions ---
   let completedSessionStateId: number | undefined = undefined;
-  const doneSessionWorkflow = await prisma.workflows.findFirst({
-    where: {
-      scope: "SESSIONS",
-      workflowType: "DONE",
-      isEnabled: true,
-      isDeleted: false,
-      projects: { some: { projectId: projectId } },
-    },
-    orderBy: { order: "desc" }, // Get the one with the highest order
-    select: { id: true },
-  });
-  if (doneSessionWorkflow) {
-    completedSessionStateId = doneSessionWorkflow.id;
-  } else {
-    console.warn(
-      `No 'DONE' workflow found for SESSIONS in project ${projectId}. Session states will not be updated, only isCompleted flag.`
-    );
+  if (completeSessions) {
+    if (sessionStateId !== null && sessionStateId !== undefined) {
+      // User explicitly selected a state
+      completedSessionStateId = sessionStateId;
+    } else {
+      // Fallback to highest order DONE workflow (existing behavior)
+      const doneSessionWorkflow = await prisma.workflows.findFirst({
+        where: {
+          scope: "SESSIONS",
+          workflowType: "DONE",
+          isEnabled: true,
+          isDeleted: false,
+          projects: { some: { projectId: projectId } },
+        },
+        orderBy: { order: "desc" }, // Get the one with the highest order
+        select: { id: true },
+      });
+      if (doneSessionWorkflow) {
+        completedSessionStateId = doneSessionWorkflow.id;
+      } else {
+        console.warn(
+          `No 'DONE' workflow found for SESSIONS in project ${projectId}. Session states will not be updated, only isCompleted flag.`
+        );
+      }
+    }
   }
 
   // --- Database Logic ---
@@ -227,8 +257,8 @@ export async function completeMilestoneCascade(
         });
       }
 
-      // Complete active test runs
-      if (activeTestRuns.length > 0) {
+      // Complete active test runs - only if user opted in
+      if (completeTestRuns && activeTestRuns.length > 0) {
         const testRunUpdateData: {
           isCompleted: boolean;
           completedAt: Date;
@@ -248,8 +278,8 @@ export async function completeMilestoneCascade(
         });
       }
 
-      // Complete active sessions
-      if (activeSessions.length > 0) {
+      // Complete active sessions - only if user opted in
+      if (completeSessions && activeSessions.length > 0) {
         const sessionUpdateData: {
           isCompleted: boolean;
           completedAt: Date;

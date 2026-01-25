@@ -682,5 +682,361 @@ describe("milestoneActions", () => {
         );
       });
     });
+
+    describe("optional test run completion", () => {
+      it("should NOT complete test runs when completeTestRuns is false", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }, { id: 11 }] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
+
+        const mockTestRunsUpdateMany = vi.fn();
+        vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+          return callback({
+            milestones: { update: vi.fn(), updateMany: vi.fn() },
+            testRuns: { updateMany: mockTestRunsUpdateMany },
+            sessions: { updateMany: vi.fn() },
+          } as any);
+        });
+
+        await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date("2024-06-15"),
+          forceCompleteDependencies: true,
+          completeTestRuns: false, // NEW: Don't complete test runs
+        });
+
+        // Test runs should NOT be updated
+        expect(mockTestRunsUpdateMany).not.toHaveBeenCalled();
+      });
+
+      it("should complete test runs when completeTestRuns is true (default)", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }, { id: 11 }] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
+
+        const mockTestRunsUpdateMany = vi.fn();
+        vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+          return callback({
+            milestones: { update: vi.fn(), updateMany: vi.fn() },
+            testRuns: { updateMany: mockTestRunsUpdateMany },
+            sessions: { updateMany: vi.fn() },
+          } as any);
+        });
+
+        await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date("2024-06-15"),
+          forceCompleteDependencies: true,
+          completeTestRuns: true, // Explicitly true
+        });
+
+        // Test runs should be updated
+        expect(mockTestRunsUpdateMany).toHaveBeenCalled();
+      });
+
+      it("should complete test runs by default when flag is not provided", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
+
+        const mockTestRunsUpdateMany = vi.fn();
+        vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+          return callback({
+            milestones: { update: vi.fn(), updateMany: vi.fn() },
+            testRuns: { updateMany: mockTestRunsUpdateMany },
+            sessions: { updateMany: vi.fn() },
+          } as any);
+        });
+
+        await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date("2024-06-15"),
+          forceCompleteDependencies: true,
+          // completeTestRuns not provided - should default to true
+        });
+
+        // Test runs should be updated by default
+        expect(mockTestRunsUpdateMany).toHaveBeenCalled();
+      });
+    });
+
+    describe("optional session completion", () => {
+      it("should NOT complete sessions when completeSessions is false", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }, { id: 21 }] as any);
+
+        const mockSessionsUpdateMany = vi.fn();
+        vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+          return callback({
+            milestones: { update: vi.fn(), updateMany: vi.fn() },
+            testRuns: { updateMany: vi.fn() },
+            sessions: { updateMany: mockSessionsUpdateMany },
+          } as any);
+        });
+
+        await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date("2024-06-15"),
+          forceCompleteDependencies: true,
+          completeSessions: false, // NEW: Don't complete sessions
+        });
+
+        // Sessions should NOT be updated
+        expect(mockSessionsUpdateMany).not.toHaveBeenCalled();
+      });
+
+      it("should complete sessions when completeSessions is true (default)", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }, { id: 21 }] as any);
+
+        const mockSessionsUpdateMany = vi.fn();
+        vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+          return callback({
+            milestones: { update: vi.fn(), updateMany: vi.fn() },
+            testRuns: { updateMany: vi.fn() },
+            sessions: { updateMany: mockSessionsUpdateMany },
+          } as any);
+        });
+
+        await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date("2024-06-15"),
+          forceCompleteDependencies: true,
+          completeSessions: true, // Explicitly true
+        });
+
+        // Sessions should be updated
+        expect(mockSessionsUpdateMany).toHaveBeenCalled();
+      });
+
+      it("should complete sessions by default when flag is not provided", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }] as any);
+
+        const mockSessionsUpdateMany = vi.fn();
+        vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+          return callback({
+            milestones: { update: vi.fn(), updateMany: vi.fn() },
+            testRuns: { updateMany: vi.fn() },
+            sessions: { updateMany: mockSessionsUpdateMany },
+          } as any);
+        });
+
+        await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date("2024-06-15"),
+          forceCompleteDependencies: true,
+          // completeSessions not provided - should default to true
+        });
+
+        // Sessions should be updated by default
+        expect(mockSessionsUpdateMany).toHaveBeenCalled();
+      });
+    });
+
+    describe("custom workflow state IDs", () => {
+      it("should use provided testRunStateId instead of default workflow", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
+
+        const mockTestRunsUpdateMany = vi.fn();
+        vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+          return callback({
+            milestones: { update: vi.fn(), updateMany: vi.fn() },
+            testRuns: { updateMany: mockTestRunsUpdateMany },
+            sessions: { updateMany: vi.fn() },
+          } as any);
+        });
+
+        const customStateId = 99;
+        await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date("2024-06-15"),
+          forceCompleteDependencies: true,
+          testRunStateId: customStateId, // Custom state ID
+        });
+
+        // Should use custom state ID, not default workflow ID
+        expect(mockTestRunsUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              stateId: customStateId, // Should be 99, not mockDoneRunWorkflow.id (10)
+            }),
+          })
+        );
+      });
+
+      it("should use provided sessionStateId instead of default workflow", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }] as any);
+
+        const mockSessionsUpdateMany = vi.fn();
+        vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+          return callback({
+            milestones: { update: vi.fn(), updateMany: vi.fn() },
+            testRuns: { updateMany: vi.fn() },
+            sessions: { updateMany: mockSessionsUpdateMany },
+          } as any);
+        });
+
+        const customStateId = 88;
+        await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date("2024-06-15"),
+          forceCompleteDependencies: true,
+          sessionStateId: customStateId, // Custom state ID
+        });
+
+        // Should use custom state ID, not default workflow ID
+        expect(mockSessionsUpdateMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              stateId: customStateId, // Should be 88, not mockDoneSessionWorkflow.id (20)
+            }),
+          })
+        );
+      });
+
+      it("should not set stateId when completeTestRuns is false even if testRunStateId is provided", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
+
+        const mockTestRunsUpdateMany = vi.fn();
+        vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+          return callback({
+            milestones: { update: vi.fn(), updateMany: vi.fn() },
+            testRuns: { updateMany: mockTestRunsUpdateMany },
+            sessions: { updateMany: vi.fn() },
+          } as any);
+        });
+
+        await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date("2024-06-15"),
+          forceCompleteDependencies: true,
+          completeTestRuns: false, // Don't complete test runs
+          testRunStateId: 99, // Provided but should be ignored
+        });
+
+        // Test runs should NOT be updated at all
+        expect(mockTestRunsUpdateMany).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("combined optional completion scenarios", () => {
+      it("should complete only milestone when both test runs and sessions are disabled", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }] as any);
+
+        const mockMilestoneUpdate = vi.fn();
+        const mockTestRunsUpdateMany = vi.fn();
+        const mockSessionsUpdateMany = vi.fn();
+        vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+          return callback({
+            milestones: { update: mockMilestoneUpdate, updateMany: vi.fn() },
+            testRuns: { updateMany: mockTestRunsUpdateMany },
+            sessions: { updateMany: mockSessionsUpdateMany },
+          } as any);
+        });
+
+        await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date("2024-06-15"),
+          forceCompleteDependencies: true,
+          completeTestRuns: false, // Don't complete test runs
+          completeSessions: false, // Don't complete sessions
+        });
+
+        // Milestone should be updated
+        expect(mockMilestoneUpdate).toHaveBeenCalled();
+        // But test runs and sessions should NOT be updated
+        expect(mockTestRunsUpdateMany).not.toHaveBeenCalled();
+        expect(mockSessionsUpdateMany).not.toHaveBeenCalled();
+      });
+
+      it("should return impact data even when completion flags are false", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(mockMilestone as any);
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }, { id: 11 }] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }] as any);
+
+        const result = await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date(),
+          isPreview: true, // Preview mode
+          completeTestRuns: false,
+          completeSessions: false,
+        });
+
+        // Should still return impact data showing what would remain active
+        expect(result.status).toBe("confirmation_required");
+        expect(result.impact).toEqual({
+          activeTestRuns: 2,
+          activeSessions: 1,
+          descendantMilestonesToComplete: 0,
+        });
+      });
+    });
   });
 });
