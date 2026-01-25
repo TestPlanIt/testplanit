@@ -1,3 +1,10 @@
+## [0.11.2](https://github.com/TestPlanIt/testplanit/compare/v0.11.1...v0.11.2) (2026-01-25)
+
+
+### Bug Fixes
+
+* **auth:** update GET and POST handlers to await context.params in Next.js 15+ ([35aef69](https://github.com/TestPlanIt/testplanit/commit/35aef6975896b5e721e86a7f3be74c7fbc70f455))
+
 ## [0.11.1](https://github.com/TestPlanIt/testplanit/compare/v0.11.0...v0.11.1) (2026-01-25)
 
 # [0.11.0](https://github.com/TestPlanIt/testplanit/compare/v0.10.14...v0.11.0) (2026-01-25)
