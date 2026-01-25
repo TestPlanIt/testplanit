@@ -1114,6 +1114,10 @@
           "dollar": "$",
           "perMonth": "/mes"
         }
+      },
+      "shares": {
+        "title": "Administrar acciones",
+        "description": "Ver y administrar todos los enlaces para compartir este proyecto"
       }
     }
   },
@@ -2207,6 +2211,7 @@
       "sso": "Autenticación",
       "trash": "Basura",
       "reports": "Informes",
+      "shares": "Administrar acciones",
       "elasticsearch": "Motor de búsqueda",
       "queues": "Colas de trabajos",
       "auditLogs": "Registros de auditoría",
@@ -3781,7 +3786,10 @@
         "milestoneDueSoon": "El hito \"{milestoneName}\" en el proyecto \"{projectName}\" vence el {dueDate}.",
         "milestoneOverdue": "El hito \"{milestoneName}\" en el proyecto \"{projectName}\" debía cumplirse el {dueDate} y ahora está vencido.",
         "milestoneNotificationReason": "Recibe esta notificación porque ha participado en el trabajo asociado con este hito (ejecuciones de prueba, sesiones o como creador del hito).",
-        "milestoneNotificationContinue": "Continuará recibiendo recordatorios diarios hasta que este hito se marque como completado."
+        "milestoneNotificationContinue": "Continuará recibiendo recordatorios diarios hasta que este hito se marque como completado.",
+        "shareLinkAccessedTitle": "Enlace compartido accedido",
+        "viewedYourSharedLink": "vi tu enlace compartido",
+        "viewedAt": "Visto en"
       }
     },
     "issues": {
@@ -4828,6 +4836,227 @@
     },
     "defaultValues": {
       "noData": "-"
+    },
+    "shareDialog": {
+      "shareButton": "Compartir",
+      "dialogTitle": "Compartir informe",
+      "dialogDescription": "Cree un enlace para compartir o administre enlaces de informes compartidos existentes.",
+      "tabs": {
+        "create": "Crear Compartir",
+        "list": "Mis acciones"
+      },
+      "shareMode": {
+        "label": "Modo compartir",
+        "authenticated": {
+          "title": "Autenticado (requiere iniciar sesión)",
+          "description": "Sólo los usuarios registrados con acceso a este proyecto pueden verlo.",
+          "descriptionCrossProject": "Sólo los usuarios que hayan iniciado sesión y tengan acceso de administrador pueden verlo."
+        },
+        "passwordProtected": {
+          "title": "Protegido con contraseña",
+          "description": "Cualquier persona con el enlace y la contraseña puede ver. Los usuarios registrados con acceso al proyecto omiten la contraseña.",
+          "descriptionCrossProject": "Cualquier persona con el enlace y la contraseña puede ver. Los usuarios registrados con acceso de administrador omiten la contraseña."
+        },
+        "public": {
+          "title": "Público (cualquiera con enlace)",
+          "description": "Cualquier persona con el enlace puede ver este informe sin iniciar sesión."
+        }
+      },
+      "expiration": {
+        "label": "Vencimiento",
+        "noExpiration": "Sin vencimiento",
+        "expiresAtMidnight": "El enlace expirará al final del día seleccionado (su hora local)",
+        "clear": "Claro"
+      },
+      "notifyOnView": {
+        "label": "Notificarme cuando alguien vea este enlace",
+        "description": "Recibirás una notificación cuando se acceda al enlace para compartir, según tus preferencias de notificación."
+      },
+      "title": {
+        "label": "Título",
+        "placeholder": "p. ej., Informe de ejecución de pruebas",
+        "leaveEmptyToUse": "Déjelo vacío para utilizar:"
+      },
+      "description": {
+        "label": "Descripción",
+        "placeholder": "Agregue una descripción para este informe compartido..."
+      },
+      "actions": {
+        "createShareLink": "Crear enlace para compartir",
+        "creating": "Creando..."
+      },
+      "errors": {
+        "loginRequired": "Debes iniciar sesión para crear un enlace para compartir",
+        "createFailed": "No se pudo crear el enlace para compartir",
+        "genericError": "Se produjo un error desconocido"
+      },
+      "status": {
+        "revoked": {
+          "title": "Enlace compartido revocado",
+          "description": "Este enlace para compartir ha sido revocado y ya no es accesible."
+        },
+        "expired": {
+          "title": "Enlace para compartir expirado",
+          "description": "Este enlace para compartir ha expirado y ya no es accesible."
+        }
+      },
+      "footer": {
+        "poweredBy": "Desarrollado por"
+      },
+      "manageShares": {
+        "title": "Administrar acciones",
+        "description": "Ver y administrar todos los enlaces para compartir este proyecto",
+        "adminTitle": "Administrar todas las acciones",
+        "adminDescription": "Ver y administrar enlaces para compartir en todos los proyectos"
+      },
+      "shareList": {
+        "columns": {
+          "title": "Título",
+          "project": "Proyecto",
+          "mode": "Modo",
+          "views": "Vistas",
+          "notifications": "Notificaciones",
+          "created": "Creado",
+          "expires": "Caduca",
+          "status": "Estado"
+        },
+        "status": {
+          "active": "Activo",
+          "revoked": "Revocado",
+          "expired": "Venció"
+        },
+        "expires": {
+          "never": "Nunca"
+        },
+        "notifications": {
+          "enabled": "En",
+          "disabled": "Apagado"
+        },
+        "empty": {
+          "title": "Aún no se han creado enlaces para compartir.",
+          "description": "Crea tu primer enlace para compartir y comenzar."
+        },
+        "defaultTitle": "{entityType} compartir",
+        "noProject": "Proyecto cruzado",
+        "actions": {
+          "label": "Comportamiento",
+          "copyLink": "Copiar enlace",
+          "copied": "Copiado!",
+          "edit": "Editar",
+          "revoke": "Revocar",
+          "delete": "Borrar"
+        },
+        "revokeDialog": {
+          "title": "¿Revocar enlace para compartir?",
+          "description": "Esto revocará inmediatamente el enlace para compartir. Cualquiera que intente acceder verá un mensaje de error. Esta acción no se puede deshacer.",
+          "cancel": "Cancelar",
+          "confirm": "Revocar enlace",
+          "revoking": "Revocando..."
+        },
+        "deleteDialog": {
+          "title": "¿Borrar enlace para compartir?",
+          "description": "Esto eliminará permanentemente el enlace para compartir. Si el enlace está activo, caducará inmediatamente y dejará de ser accesible. Esta acción no se puede deshacer.",
+          "cancel": "Cancelar",
+          "confirm": "Eliminar enlace",
+          "deleting": "Borrando..."
+        },
+        "toast": {
+          "linkCopied": "¡Enlace copiado!",
+          "linkCopiedDescription": "El enlace para compartir se ha copiado a su portapapeles.",
+          "copyFailed": "No se pudo copiar",
+          "copyFailedDescription": "Por favor copie el enlace manualmente.",
+          "linkRevoked": "Enlace compartido revocado",
+          "linkRevokedDescription": "El enlace para compartir ha sido revocado y ya no es accesible.",
+          "revokeFailed": "No se pudo revocar",
+          "revokeFailedDescription": "Se produjo un error al revocar el enlace para compartir.",
+          "notificationsEnabled": "Notificaciones habilitadas",
+          "notificationsEnabledDescription": "Recibirás notificaciones cuando alguien vea este enlace para compartir.",
+          "notificationsDisabled": "Notificaciones deshabilitadas",
+          "notificationsDisabledDescription": "No recibirás notificaciones cuando alguien vea este enlace para compartir.",
+          "notificationUpdateFailed": "No se pudieron actualizar las notificaciones",
+          "notificationUpdateFailedDescription": "Se produjo un error al actualizar la configuración de notificaciones.",
+          "linkDeleted": "Enlace compartido eliminado",
+          "linkDeletedDescription": "El enlace para compartir se ha eliminado y ya no aparecerá en tu lista.",
+          "deleteFailed": "No se pudo eliminar",
+          "deleteFailedDescription": "Se produjo un error al eliminar el enlace para compartir."
+        }
+      },
+      "created": {
+        "title": "¡Enlace para compartir creado!",
+        "description": "Tu enlace para compartir está listo. Cópialo y compártelo.",
+        "shareLink": "Compartir enlace",
+        "copy": "Copiar",
+        "copied": "Copiado!",
+        "openInNewTab": "Abrir en nueva pestaña",
+        "metadata": {
+          "mode": "Modo",
+          "expires": "Caduca",
+          "notifications": "Notificaciones",
+          "views": "Vistas",
+          "enabled": "Activado",
+          "disabled": "Desactivado"
+        },
+        "warnings": {
+          "publicLink": "Enlace público:",
+          "publicLinkDescription": "Cualquier persona con este enlace puede acceder al informe sin autenticación.",
+          "expiresSoon": "Este enlace expirará al final de"
+        },
+        "actions": {
+          "createAnother": "Crea otro",
+          "done": "Hecho"
+        }
+      },
+      "editDialog": {
+        "title": "Editar enlace para compartir",
+        "description": "Actualice la configuración de este enlace para compartir.",
+        "passwordExists": "Este enlace para compartir ya tiene contraseña. Deje el campo de contraseña vacío para conservar la contraseña actual.",
+        "passwordPlaceholder": "Déjelo en blanco para conservar la contraseña existente",
+        "confirmPassword": "confirmar Contraseña",
+        "cancel": "Cancelar",
+        "saving": "Ahorro...",
+        "save": "Guardar cambios"
+      }
+    },
+    "passwordDialog": {
+      "title": "Se requiere contraseña",
+      "description": "Este contenido compartido de <strong>{projectName}</strong> está protegido con contraseña. Introdúcela para continuar.",
+      "passwordPlaceholder": "Introducir contraseña",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
+      "verifying": "Verificando...",
+      "errors": {
+        "emptyPassword": "Por favor, introduzca una contraseña",
+        "tooManyAttempts": "Demasiados intentos fallidos. Inténtalo de nuevo más tarde{resetAt, select, null {} other { a las {resetAt}}}.",
+        "genericError": "Se ha producido un error. Inténtalo de nuevo."
+      },
+      "attempts": {
+        "noAttemptsRemaining": "No quedan intentos. Inténtalo de nuevo más tarde.",
+        "attemptsRemaining": "{count, plural, =1 {1 intento} other {# intentos}} restantes."
+      }
+    },
+    "sharedReport": {
+      "loading": "Cargando informe...",
+      "errors": {
+        "onlyReportSharing": "Actualmente solo se implementa el intercambio de informes",
+        "failedToLoad": "No se pudieron cargar los datos del informe"
+      },
+      "defaultTitle": "Informe compartido",
+      "fromProject": "Del proyecto:",
+      "dateRange": "Rango de fechas:",
+      "readOnlyNotice": "Esta es una vista compartida de solo lectura",
+      "viewCount": "{count, plural, =1 {1 vista} other {# vistas}}",
+      "viewInFullApp": "Ver en la aplicación completa",
+      "pagination": {
+        "showing": "Demostración",
+        "of": "de",
+        "results": "resultados"
+      }
+    },
+    "authBypass": {
+      "title": "Tienes acceso a este proyecto",
+      "description": "Visualización como {userName} con acceso a {projectName}.",
+      "viewInApp": "Ver en la aplicación completa",
+      "dismiss": "Despedir"
     }
   },
   "sharedSteps": {

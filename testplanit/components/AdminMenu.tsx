@@ -26,6 +26,7 @@ import {
   Bug,
   Activity,
   KeyRound,
+  Share2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
@@ -102,6 +103,12 @@ const menuOptions: MenuOption[] = [
     icon: ChartNoAxesCombined,
     translationKey: "reports",
     path: "reports",
+    section: "main",
+  },
+  {
+    icon: Share2,
+    translationKey: "shares",
+    path: "shares",
     section: "main",
   },
   {

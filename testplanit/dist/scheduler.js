@@ -1060,6 +1060,29 @@ var NotificationService = class {
       console.error("Failed to create user registration notifications:", error);
     }
   }
+  /**
+   * Create a share link accessed notification
+   */
+  static async createShareLinkAccessedNotification(shareLinkOwnerId, shareTitle, viewerName, viewerEmail, shareLinkId, projectId) {
+    const title = "Shared Report Viewed";
+    const viewer = viewerName || viewerEmail || "Someone";
+    const message = `${viewer} viewed your shared report: "${shareTitle}"`;
+    return this.createNotification({
+      userId: shareLinkOwnerId,
+      type: import_client4.NotificationType.SHARE_LINK_ACCESSED,
+      title,
+      message,
+      relatedEntityId: shareLinkId,
+      relatedEntityType: "ShareLink",
+      data: {
+        shareLinkId,
+        ...projectId !== void 0 && { projectId },
+        viewerName,
+        viewerEmail,
+        viewedAt: (/* @__PURE__ */ new Date()).toISOString()
+      }
+    });
+  }
 };
 
 // workers/forecastWorker.ts

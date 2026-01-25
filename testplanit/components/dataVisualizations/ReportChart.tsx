@@ -19,6 +19,21 @@ import { toHumanReadable } from "~/utils/duration";
 import { useLocale, useTranslations } from "next-intl";
 import { useIssueColors } from "~/hooks/useIssueColors";
 
+// Helper functions for report type matching
+/**
+ * Strips the "cross-project-" prefix from a report type ID
+ */
+function getBaseReportType(reportType: string): string {
+  return reportType.replace(/^cross-project-/, '');
+}
+
+/**
+ * Checks if a report type matches a base type (handles both project and cross-project variants)
+ */
+function matchesReportType(reportType: string, baseType: string): boolean {
+  return getBaseReportType(reportType) === baseType;
+}
+
 // Enums for chart types
 export enum ChartType {
   Bar = "Bar",
@@ -348,7 +363,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   });
 
   // Special handling for automation trends report
-  if (reportType === "automation-trends" && projects && projects.length > 0) {
+  if (reportType && matchesReportType(reportType, "automation-trends") && projects && projects.length > 0) {
     // Transform automation trends data into multi-line series
     const seriesMap = new Map<string, MultiLineSeries>();
     const isMultiProject = projects.length > 1;
@@ -374,7 +389,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           seriesMap.set(automatedSeriesName, {
             name: automatedSeriesName,
             values: [],
-            color: stringToColorCode(automatedSeriesName).colorCode,
+            color: "hsl(142, 76%, 36%)", // Green for automated
           });
         }
         seriesMap.get(automatedSeriesName)!.values.push({
@@ -389,7 +404,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           seriesMap.set(manualSeriesName, {
             name: manualSeriesName,
             values: [],
-            color: stringToColorCode(manualSeriesName).colorCode,
+            color: "hsl(221, 83%, 53%)", // Blue for manual
           });
         }
         seriesMap.get(manualSeriesName)!.values.push({
@@ -404,7 +419,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           seriesMap.set(totalSeriesName, {
             name: totalSeriesName,
             values: [],
-            color: stringToColorCode(totalSeriesName).colorCode,
+            color: "hsl(262, 83%, 58%)", // Purple for total
           });
         }
         seriesMap.get(totalSeriesName)!.values.push({
@@ -421,10 +436,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
 
   // Special handling for flaky tests report - use bubble chart
   // Shows flip count vs recency of failures - tests in top-right need most attention
-  if (
-    reportType === "flaky-tests" ||
-    reportType === "cross-project-flaky-tests"
-  ) {
+  if (reportType && matchesReportType(reportType, "flaky-tests")) {
     return (
       <FlakyTestsBubbleChart
         data={results}
@@ -437,19 +449,13 @@ export const ReportChart: React.FC<ReportChartProps> = ({
 
   // Special handling for test case health report - use combined donut + scatter chart
   // Shows health status distribution and health score vs days since execution
-  if (
-    reportType === "test-case-health" ||
-    reportType === "cross-project-test-case-health"
-  ) {
+  if (reportType && matchesReportType(reportType, "test-case-health")) {
     return <TestCaseHealthChart data={results} projectId={projectId} />;
   }
 
   // Special handling for issue test coverage report - use stacked bar chart
   // Shows issues with their linked test cases and pass/fail/untested breakdown
-  if (
-    reportType === "issue-test-coverage" ||
-    reportType === "cross-project-issue-test-coverage"
-  ) {
+  if (reportType && matchesReportType(reportType, "issue-test-coverage")) {
     return <IssueTestCoverageChart data={results} projectId={projectId} />;
   }
 
@@ -517,7 +523,8 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       if (value === 0) {
         return "-";
       }
-      return toHumanReadable(value, { isSeconds: true, locale });
+      // avgElapsedTime metric returns values in milliseconds
+      return toHumanReadable(value, { isSeconds: false, locale });
     }
     if (isPercentageMetric(metric)) {
       return `${value.toFixed(2)}%`;
@@ -534,9 +541,12 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       const isElapsed = isElapsedTimeMetric(metric);
       const transformedData: SimpleChartDataPoint[] = results.map((row) => {
         const name = getDimensionValue(row, dimension);
-        const value = getMetricValue(row, metric);
+        const rawValue = getMetricValue(row, metric);
+        // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
+        const value = isElapsed ? rawValue / 1000 : rawValue;
         const color = getColor(row, dimension, issueColorFns);
-        const formattedValue = formatMetricValue(value, metric);
+        const formattedValue = formatMetricValue(rawValue, metric);
+
         return { id: name, name, value, color, formattedValue };
       });
 
@@ -621,9 +631,13 @@ export const ReportChart: React.FC<ReportChartProps> = ({
             currentLevelChildren = node.children!;
           } else {
             // Leaf node
-            const value = getMetricValue(row, metric);
+            const rawValue = getMetricValue(row, metric);
+            // Convert elapsed time from milliseconds to seconds for proper scaling
+            const value = isElapsed ? rawValue / 1000 : rawValue;
             node.value = (node.value || 0) + value;
-            node.formattedValue = formatMetricValue(node.value, metric);
+            // Use raw value for formatting to maintain milliseconds for humanize-duration
+            const totalRaw = isElapsed ? node.value * 1000 : node.value;
+            node.formattedValue = formatMetricValue(totalRaw, metric);
           }
         });
       });
@@ -662,14 +676,16 @@ export const ReportChart: React.FC<ReportChartProps> = ({
       const groupedData: GroupedChartDataPoint[] = results.map((row) => {
         const mainGroup = getDimensionValue(row, mainDimension);
         const subGroup = getDimensionValue(row, subDimension);
-        const value = getMetricValue(row, metric);
+        const rawValue = getMetricValue(row, metric);
+        // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
+        const value = isElapsed ? rawValue / 1000 : rawValue;
         const color = getColor(row, subDimension, issueColorFns);
         return {
           mainGroup,
           subGroup,
           value,
           color,
-          formattedValue: formatMetricValue(value, metric),
+          formattedValue: formatMetricValue(rawValue, metric),
         };
       });
       return (
@@ -734,9 +750,11 @@ export const ReportChart: React.FC<ReportChartProps> = ({
         const group = getDimensionValue(row, dimension);
         const color = getColor(row, dimension, issueColorFns);
         chartMetrics.forEach((metric) => {
-          const value = getMetricValue(row, metric);
+          const rawValue = getMetricValue(row, metric);
           const isElapsed = isElapsedTimeMetric(metric);
-          const formattedValue = formatMetricValue(value, metric);
+          // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
+          const value = isElapsed ? rawValue / 1000 : rawValue;
+          const formattedValue = formatMetricValue(rawValue, metric);
 
           transformedData.push({
             group,
@@ -765,8 +783,10 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           const seriesName = otherDimensions
             .map((dim) => getDimensionValue(row, dim))
             .join(" - ");
-          const value = getMetricValue(row, metric);
+          const rawValue = getMetricValue(row, metric);
           const isElapsed = isElapsedTimeMetric(metric);
+          // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
+          const value = isElapsed ? rawValue / 1000 : rawValue;
 
           if (!seriesMap.has(seriesName)) {
             seriesMap.set(seriesName, { name: seriesName, values: [] });
@@ -774,14 +794,16 @@ export const ReportChart: React.FC<ReportChartProps> = ({
           seriesMap.get(seriesName)!.values.push({
             date,
             value,
-            formattedValue: formatMetricValue(value, metric),
+            formattedValue: formatMetricValue(rawValue, metric),
           });
         } else {
           // Group by metric name
           chartMetrics.forEach((metric) => {
             const seriesName = metric.label;
-            const value = getMetricValue(row, metric);
+            const rawValue = getMetricValue(row, metric);
             const isElapsed = isElapsedTimeMetric(metric);
+            // Convert elapsed time from milliseconds to seconds for proper Y-axis scaling
+            const value = isElapsed ? rawValue / 1000 : rawValue;
 
             if (!seriesMap.has(seriesName)) {
               seriesMap.set(seriesName, { name: seriesName, values: [] });
@@ -789,7 +811,7 @@ export const ReportChart: React.FC<ReportChartProps> = ({
             seriesMap.get(seriesName)!.values.push({
               date,
               value,
-              formattedValue: formatMetricValue(value, metric),
+              formattedValue: formatMetricValue(rawValue, metric),
             });
           });
         }

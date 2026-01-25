@@ -71,6 +71,7 @@ const sidebars: SidebarsConfig = {
             'user-guide/roles', // Corresponds to roles.md
             'user-guide/tags', // Corresponds to tags.md
             'user-guide/reporting', // Add reporting.md
+            'user-guide/share-links', // Share Links documentation
             // Convert Notifications to a category with children
             {
               type: 'category',

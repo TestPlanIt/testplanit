@@ -74,6 +74,7 @@ enum NotificationType {
   USER_REGISTERED
   COMMENT_MENTION
   MILESTONE_DUE_REMINDER
+  SHARE_LINK_ACCESSED
 }
 
 enum WorkflowType {
@@ -187,6 +188,20 @@ enum JUnitAttachmentType {
   INLINE
 }
 
+enum ShareLinkMode {
+  AUTHENTICATED
+  PUBLIC
+  PASSWORD_PROTECTED
+}
+
+enum ShareLinkEntityType {
+  REPORT
+  TEST_CASE
+  TEST_RUN
+  SESSION
+  DASHBOARD
+}
+
 enum SsoProviderType {
   GOOGLE
   SAML
@@ -240,6 +255,9 @@ enum AuditAction {
   DATA_EXPORTED
   SSO_CONFIG_CHANGED
   SYSTEM_CONFIG_CHANGED
+  SHARE_LINK_CREATED
+  SHARE_LINK_ACCESSED
+  SHARE_LINK_REVOKED
 }
 
 model AppConfig {
@@ -331,6 +349,8 @@ model User {
   createdComments         Comment[]               @relation("CommentCreator")
   commentMentions         CommentMention[]        @relation("CommentMentions")
   apiTokens               ApiToken[]
+  createdShareLinks       ShareLink[]             @relation("ShareLinkCreator")
+  shareLinkAccessLogs     ShareLinkAccessLog[]    @relation("ShareLinkAccessor")
   twoFactorEnabled        Boolean                 @default(false)
   twoFactorSecret         String?
   twoFactorBackupCodes    String?
@@ -446,6 +466,7 @@ model Projects {
   llmResponseCaches      LlmResponseCache[]
   comments               Comment[]
   auditLogs              AuditLog[]
+  shareLinks             ShareLink[]
 
   @@index([isDeleted, isCompleted])
   @@index([createdBy])
@@ -1554,6 +1575,53 @@ model Notification {
   @@index([userId, isRead, isDeleted])
   @@index([createdAt])
   @@index([type])
+}
+
+model ShareLink {
+  id           String               @id() @default(cuid())
+  shareKey     String               @unique()
+  entityType   ShareLinkEntityType
+  entityId     String?
+  entityConfig Json?
+  projectId    Int?
+  project      Projects?            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdById  String
+  createdBy    User                 @relation("ShareLinkCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  mode         ShareLinkMode        @default(PUBLIC)
+  passwordHash String?
+  expiresAt    DateTime?            @db.Timestamptz(6)
+  notifyOnView Boolean              @default(false)
+  title        String?
+  description  String?
+  isRevoked    Boolean              @default(false)
+  isDeleted    Boolean              @default(false)
+  viewCount    Int                  @default(0)
+  lastViewedAt DateTime?            @db.Timestamptz(6)
+  createdAt    DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime             @updatedAt()
+  accessLogs   ShareLinkAccessLog[]
+
+  @@index([shareKey])
+  @@index([projectId, createdById])
+  @@index([entityType, entityId])
+  @@index([isRevoked, expiresAt])
+  @@index([isDeleted])
+  @@index([createdById])
+}
+
+model ShareLinkAccessLog {
+  id               String    @id() @default(cuid())
+  shareLinkId      String
+  shareLink        ShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+  accessedById     String?
+  accessedBy       User?     @relation("ShareLinkAccessor", fields: [accessedById], references: [id], onDelete: SetNull)
+  ipAddress        String?
+  userAgent        String?
+  wasAuthenticated Boolean   @default(false)
+  accessedAt       DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([shareLinkId, accessedAt])
+  @@index([accessedById])
 }
 
 model ProjectIntegration {

@@ -1114,6 +1114,10 @@
           "dollar": "$",
           "perMonth": "/mo"
         }
+      },
+      "shares": {
+        "title": "Gérer les actions",
+        "description": "Consultez et gérez tous les liens de partage de ce projet."
       }
     }
   },
@@ -2207,6 +2211,7 @@
       "sso": "Authentification",
       "trash": "Poubelle",
       "reports": "Rapports",
+      "shares": "Gérer les actions",
       "elasticsearch": "Moteur de recherche",
       "queues": "Files d'attente pour les tâches",
       "auditLogs": "Journaux d'audit",
@@ -3781,7 +3786,10 @@
         "milestoneDueSoon": "L'étape \"{milestoneName}\" du projet \"{projectName}\" est prévue pour le {dueDate}.",
         "milestoneOverdue": "L'étape «{milestoneName}» du projet «{projectName}» était prévue pour le {dueDate} et est maintenant en retard.",
         "milestoneNotificationReason": "Vous recevez cette notification car vous avez participé aux travaux liés à cette étape importante (tests, sessions ou en tant que créateur de l'étape).",
-        "milestoneNotificationContinue": "Vous continuerez à recevoir des rappels quotidiens jusqu'à ce que cette étape soit franchie."
+        "milestoneNotificationContinue": "Vous continuerez à recevoir des rappels quotidiens jusqu'à ce que cette étape soit franchie.",
+        "shareLinkAccessedTitle": "Lien de partage consulté",
+        "viewedYourSharedLink": "J'ai consulté votre lien partagé",
+        "viewedAt": "Consulté à"
       }
     },
     "issues": {
@@ -4828,6 +4836,227 @@
     },
     "defaultValues": {
       "noData": "-"
+    },
+    "shareDialog": {
+      "shareButton": "Partager",
+      "dialogTitle": "Partager le rapport",
+      "dialogDescription": "Créez un lien partageable ou gérez les liens de rapports partagés existants.",
+      "tabs": {
+        "create": "Créer un partage",
+        "list": "Mes actions"
+      },
+      "shareMode": {
+        "label": "Mode de partage",
+        "authenticated": {
+          "title": "Authentifié (connexion requise)",
+          "description": "Seuls les utilisateurs connectés ayant accès à ce projet peuvent le consulter.",
+          "descriptionCrossProject": "Seuls les utilisateurs connectés disposant d'un accès administrateur peuvent consulter ces informations."
+        },
+        "passwordProtected": {
+          "title": "Protégé par mot de passe",
+          "description": "Toute personne possédant le lien et le mot de passe peut consulter le document. Les utilisateurs connectés ayant accès au projet n'ont pas besoin de mot de passe.",
+          "descriptionCrossProject": "Toute personne possédant le lien et le mot de passe peut consulter le contenu. Les utilisateurs connectés disposant d'un accès administrateur n'ont pas besoin de saisir de mot de passe."
+        },
+        "public": {
+          "title": "Public (toute personne ayant le lien)",
+          "description": "Toute personne disposant du lien peut consulter ce rapport sans se connecter."
+        }
+      },
+      "expiration": {
+        "label": "Expiration",
+        "noExpiration": "Aucune date d'expiration",
+        "expiresAtMidnight": "Le lien expirera à la fin de la journée sélectionnée (heure locale).",
+        "clear": "Clair"
+      },
+      "notifyOnView": {
+        "label": "Prévenez-moi quand quelqu'un consultera ce lien",
+        "description": "Vous recevrez une notification lorsque le lien de partage sera consulté, conformément à vos préférences de notification."
+      },
+      "title": {
+        "label": "Titre",
+        "placeholder": "par exemple, rapport d'exécution des tests",
+        "leaveEmptyToUse": "Laisser vide pour utilisation :"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Ajoutez une description à ce rapport partagé..."
+      },
+      "actions": {
+        "createShareLink": "Créer un lien de partage",
+        "creating": "Création..."
+      },
+      "errors": {
+        "loginRequired": "Vous devez être connecté pour créer un lien de partage",
+        "createFailed": "Impossible de créer le lien de partage",
+        "genericError": "Une erreur inconnue s'est produite."
+      },
+      "status": {
+        "revoked": {
+          "title": "Lien de partage révoqué",
+          "description": "Ce lien de partage a été révoqué et n'est plus accessible."
+        },
+        "expired": {
+          "title": "Lien de partage expiré",
+          "description": "Ce lien de partage a expiré et n'est plus accessible."
+        }
+      },
+      "footer": {
+        "poweredBy": "Alimenté par"
+      },
+      "manageShares": {
+        "title": "Gérer les actions",
+        "description": "Consultez et gérez tous les liens de partage de ce projet.",
+        "adminTitle": "Gérer toutes les actions",
+        "adminDescription": "Afficher et gérer les liens de partage de tous les projets"
+      },
+      "shareList": {
+        "columns": {
+          "title": "Titre",
+          "project": "Projet",
+          "mode": "Mode",
+          "views": "Vues",
+          "notifications": "Notifications",
+          "created": "Créé",
+          "expires": "Expire",
+          "status": "Statut"
+        },
+        "status": {
+          "active": "Actif",
+          "revoked": "Révoqué",
+          "expired": "Expiré"
+        },
+        "expires": {
+          "never": "Jamais"
+        },
+        "notifications": {
+          "enabled": "Sur",
+          "disabled": "Désactivé"
+        },
+        "empty": {
+          "title": "Aucun lien de partage n'a encore été créé.",
+          "description": "Créez votre premier lien de partage pour commencer."
+        },
+        "defaultTitle": "{entityType} partager",
+        "noProject": "Projet transversal",
+        "actions": {
+          "label": "Actes",
+          "copyLink": "Copier le lien",
+          "copied": "Copié !",
+          "edit": "Modifier",
+          "revoke": "Révoquer",
+          "delete": "Supprimer"
+        },
+        "revokeDialog": {
+          "title": "Révoquer le lien de partage ?",
+          "description": "Cette action révoquera immédiatement le lien de partage. Toute personne tentant d'y accéder verra un message d'erreur. Cette action est irréversible.",
+          "cancel": "Annuler",
+          "confirm": "Révoquer le lien",
+          "revoking": "Révocation..."
+        },
+        "deleteDialog": {
+          "title": "Supprimer le lien de partage ?",
+          "description": "Cette action supprimera définitivement le lien de partage. S'il est actuellement actif, il expirera immédiatement et deviendra inaccessible. Cette action est irréversible.",
+          "cancel": "Annuler",
+          "confirm": "Supprimer le lien",
+          "deleting": "Suppression en cours..."
+        },
+        "toast": {
+          "linkCopied": "Lien copié !",
+          "linkCopiedDescription": "Le lien de partage a été copié dans votre presse-papiers.",
+          "copyFailed": "Échec de la copie",
+          "copyFailedDescription": "Veuillez copier le lien manuellement.",
+          "linkRevoked": "Lien de partage révoqué",
+          "linkRevokedDescription": "Le lien de partage a été révoqué et n'est plus accessible.",
+          "revokeFailed": "Échec de la révocation",
+          "revokeFailedDescription": "Une erreur s'est produite lors de la révocation du lien de partage.",
+          "notificationsEnabled": "Notifications activées",
+          "notificationsEnabledDescription": "Vous recevrez des notifications lorsqu'une personne consultera ce lien de partage.",
+          "notificationsDisabled": "Notifications désactivées",
+          "notificationsDisabledDescription": "Vous ne recevrez pas de notification lorsqu'une personne consultera ce lien de partage.",
+          "notificationUpdateFailed": "Échec de la mise à jour des notifications",
+          "notificationUpdateFailedDescription": "Une erreur s'est produite lors de la mise à jour des paramètres de notification.",
+          "linkDeleted": "Lien de partage supprimé",
+          "linkDeletedDescription": "Le lien de partage a été supprimé et n'apparaîtra plus dans votre liste.",
+          "deleteFailed": "Échec de la suppression",
+          "deleteFailedDescription": "Une erreur s'est produite lors de la suppression du lien de partage."
+        }
+      },
+      "created": {
+        "title": "Lien de partage créé !",
+        "description": "Votre lien de partage est prêt à être utilisé. Copiez-le et partagez-le avec d'autres personnes.",
+        "shareLink": "Partager le lien",
+        "copy": "Copie",
+        "copied": "Copié !",
+        "openInNewTab": "Ouvrir dans un nouvel onglet",
+        "metadata": {
+          "mode": "Mode",
+          "expires": "Expire",
+          "notifications": "Notifications",
+          "views": "Vues",
+          "enabled": "Activé",
+          "disabled": "Désactivé"
+        },
+        "warnings": {
+          "publicLink": "Lien public :",
+          "publicLinkDescription": "Toute personne disposant de ce lien peut accéder au rapport sans authentification.",
+          "expiresSoon": "Ce lien expirera à la fin de"
+        },
+        "actions": {
+          "createAnother": "Créer un autre",
+          "done": "Fait"
+        }
+      },
+      "editDialog": {
+        "title": "Modifier le lien de partage",
+        "description": "Mettez à jour les paramètres de ce lien de partage.",
+        "passwordExists": "Ce lien de partage est déjà protégé par un mot de passe. Laissez le champ du mot de passe vide pour conserver le mot de passe existant.",
+        "passwordPlaceholder": "Laisser vide pour conserver le mot de passe existant",
+        "confirmPassword": "Confirmez le mot de passe",
+        "cancel": "Annuler",
+        "saving": "Économie...",
+        "save": "Enregistrer les modifications"
+      }
+    },
+    "passwordDialog": {
+      "title": "Mot de passe requis",
+      "description": "Ce contenu partagé par <strong>{projectName}</strong> est protégé par un mot de passe. Veuillez saisir le mot de passe pour continuer.",
+      "passwordPlaceholder": "Saisissez le mot de passe",
+      "showPassword": "Afficher le mot de passe",
+      "hidePassword": "Masquer le mot de passe",
+      "verifying": "Vérification en cours...",
+      "errors": {
+        "emptyPassword": "Veuillez saisir un mot de passe",
+        "tooManyAttempts": "Trop de tentatives infructueuses. Veuillez réessayer plus tard{resetAt, select, null {} other { à {resetAt}}}.",
+        "genericError": "Une erreur s'est produite. Veuillez réessayer."
+      },
+      "attempts": {
+        "noAttemptsRemaining": "Aucune tentative restante. Veuillez réessayer plus tard.",
+        "attemptsRemaining": "{count, plural, =1 {1 tentative} other {# tentatives}} restantes."
+      }
+    },
+    "sharedReport": {
+      "loading": "Chargement du rapport...",
+      "errors": {
+        "onlyReportSharing": "Seul le partage de rapports est actuellement mis en œuvre.",
+        "failedToLoad": "Échec du chargement des données du rapport"
+      },
+      "defaultTitle": "Rapport partagé",
+      "fromProject": "Du projet :",
+      "dateRange": "Période :",
+      "readOnlyNotice": "Il s'agit d'une vue partagée en lecture seule",
+      "viewCount": "{count, plural, =1 {1 vue} other {# vues}}",
+      "viewInFullApp": "Afficher dans l'application complète",
+      "pagination": {
+        "showing": "Affichage",
+        "of": "de",
+        "results": "résultats"
+      }
+    },
+    "authBypass": {
+      "title": "Vous avez accès à ce projet",
+      "description": "Affichage en tant que {userName} avec accès à {projectName}.",
+      "viewInApp": "Voir dans l'application complète",
+      "dismiss": "Rejeter"
     }
   },
   "sharedSteps": {

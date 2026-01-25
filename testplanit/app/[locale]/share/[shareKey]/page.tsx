@@ -1,0 +1,104 @@
+import { Suspense } from "react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "~/server/auth";
+import { notFound } from "next/navigation";
+import { redirect } from "~/lib/navigation";
+import { ShareContent } from "@/components/share/ShareContent";
+import { Loader2 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
+
+interface SharePageProps {
+  params: Promise<{
+    shareKey: string;
+    locale: string;
+  }>;
+}
+
+export const dynamic = "force-dynamic";
+
+async function fetchShareMetadata(shareKey: string) {
+  // Use NEXTAUTH_URL directly to preserve the correct protocol (http/https)
+  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+
+  try {
+    const response = await fetch(`${baseUrl}/api/share/${shareKey}`, {
+      cache: "no-store",
+    });
+
+    // Parse response body even for error status codes (403 for revoked/expired, 404 for not found)
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      // Return error data with status flags (revoked, expired, deleted)
+      return data;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error fetching share metadata:", error);
+    return null;
+  }
+}
+
+export default async function SharePage({ params }: SharePageProps) {
+  const { shareKey } = await params;
+  const session = await getServerSession(authOptions);
+  const t = await getTranslations("reports.shareDialog.status");
+
+  // Fetch share link metadata
+  const shareData = await fetchShareMetadata(shareKey);
+
+  if (!shareData) {
+    notFound();
+  }
+
+  // Check if revoked
+  if (shareData.revoked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="max-w-md text-center">
+          <h1 className="text-2xl font-bold mb-2">{t("revoked.title")}</h1>
+          <p className="text-muted-foreground">{t("revoked.description")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if expired
+  if (shareData.expired) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="max-w-md text-center">
+          <h1 className="text-2xl font-bold mb-2">{t("expired.title")}</h1>
+          <p className="text-muted-foreground">{t("expired.description")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle AUTHENTICATED mode
+  if (shareData.mode === "AUTHENTICATED") {
+    if (!session) {
+      // Redirect to signin with callback
+      redirect({
+        href: `/signin?callbackUrl=/share/${shareKey}`,
+        locale: "en-US",
+      });
+    }
+
+    // User is authenticated, ShareContent will handle project access check
+  }
+
+  // For PUBLIC and PASSWORD_PROTECTED modes, ShareContent will handle the logic
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <ShareContent shareKey={shareKey} shareData={shareData} session={session} />
+    </Suspense>
+  );
+}

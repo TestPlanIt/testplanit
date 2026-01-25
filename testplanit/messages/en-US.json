@@ -1114,6 +1114,10 @@
           "dollar": "$",
           "perMonth": "/mo"
         }
+      },
+      "shares": {
+        "title": "Manage Shares",
+        "description": "View and manage all share links for this project"
       }
     }
   },
@@ -2207,6 +2211,7 @@
       "sso": "Authentication",
       "trash": "Trash",
       "reports": "Reports",
+      "shares": "Manage Shares",
       "elasticsearch": "Search Engine",
       "queues": "Job Queues",
       "auditLogs": "Audit Logs",
@@ -3781,7 +3786,10 @@
         "milestoneDueSoon": "Milestone \"{milestoneName}\" in project \"{projectName}\" is due on {dueDate}.",
         "milestoneOverdue": "Milestone \"{milestoneName}\" in project \"{projectName}\" was due on {dueDate} and is now overdue.",
         "milestoneNotificationReason": "You are receiving this notification because you have participated in work associated with this milestone (test runs, sessions, or as the milestone creator).",
-        "milestoneNotificationContinue": "You will continue to receive daily reminders until this milestone is marked as complete."
+        "milestoneNotificationContinue": "You will continue to receive daily reminders until this milestone is marked as complete.",
+        "shareLinkAccessedTitle": "Share Link Accessed",
+        "viewedYourSharedLink": "viewed your shared link",
+        "viewedAt": "Viewed at"
       }
     },
     "issues": {
@@ -4828,6 +4836,227 @@
     },
     "defaultValues": {
       "noData": "-"
+    },
+    "shareDialog": {
+      "shareButton": "Share",
+      "dialogTitle": "Share Report",
+      "dialogDescription": "Create a shareable link or manage existing shared report links.",
+      "tabs": {
+        "create": "Create Share",
+        "list": "My Shares"
+      },
+      "shareMode": {
+        "label": "Share Mode",
+        "authenticated": {
+          "title": "Authenticated (requires login)",
+          "description": "Only logged-in users with access to this project can view.",
+          "descriptionCrossProject": "Only logged-in users with Admin access can view."
+        },
+        "passwordProtected": {
+          "title": "Password Protected",
+          "description": "Anyone with the link and password can view. Logged-in users with project access skip password.",
+          "descriptionCrossProject": "Anyone with the link and password can view. Logged-in users with Admin access skip password."
+        },
+        "public": {
+          "title": "Public (anyone with link)",
+          "description": "Anyone with the link can view this report without logging in."
+        }
+      },
+      "expiration": {
+        "label": "Expiration",
+        "noExpiration": "No expiration",
+        "expiresAtMidnight": "Link will expire at the end of the selected day (your local time)",
+        "clear": "Clear"
+      },
+      "notifyOnView": {
+        "label": "Notify me when someone views this link",
+        "description": "You'll receive a notification when the share link is accessed, according to your notification preferences."
+      },
+      "title": {
+        "label": "Title",
+        "placeholder": "e.g., Test Execution Report",
+        "leaveEmptyToUse": "Leave empty to use:"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Add a description for this shared report..."
+      },
+      "actions": {
+        "createShareLink": "Create Share Link",
+        "creating": "Creating..."
+      },
+      "errors": {
+        "loginRequired": "You must be logged in to create a share link",
+        "createFailed": "Failed to create share link",
+        "genericError": "An unknown error occurred"
+      },
+      "status": {
+        "revoked": {
+          "title": "Share Link Revoked",
+          "description": "This share link has been revoked and is no longer accessible."
+        },
+        "expired": {
+          "title": "Share Link Expired",
+          "description": "This share link has expired and is no longer accessible."
+        }
+      },
+      "footer": {
+        "poweredBy": "Powered by"
+      },
+      "manageShares": {
+        "title": "Manage Shares",
+        "description": "View and manage all share links for this project",
+        "adminTitle": "Manage All Shares",
+        "adminDescription": "View and manage share links across all projects"
+      },
+      "shareList": {
+        "columns": {
+          "title": "Title",
+          "project": "Project",
+          "mode": "Mode",
+          "views": "Views",
+          "notifications": "Notifications",
+          "created": "Created",
+          "expires": "Expires",
+          "status": "Status"
+        },
+        "status": {
+          "active": "Active",
+          "revoked": "Revoked",
+          "expired": "Expired"
+        },
+        "expires": {
+          "never": "Never"
+        },
+        "notifications": {
+          "enabled": "On",
+          "disabled": "Off"
+        },
+        "empty": {
+          "title": "No share links created yet.",
+          "description": "Create your first share link to get started."
+        },
+        "defaultTitle": "{entityType} share",
+        "noProject": "Cross-project",
+        "actions": {
+          "label": "Actions",
+          "copyLink": "Copy Link",
+          "copied": "Copied!",
+          "edit": "Edit",
+          "revoke": "Revoke",
+          "delete": "Delete"
+        },
+        "revokeDialog": {
+          "title": "Revoke share link?",
+          "description": "This will immediately revoke the share link. Anyone attempting to access it will see an error message. This action cannot be undone.",
+          "cancel": "Cancel",
+          "confirm": "Revoke Link",
+          "revoking": "Revoking..."
+        },
+        "deleteDialog": {
+          "title": "Delete share link?",
+          "description": "This will permanently delete the share link. If the link is currently active, it will be immediately expired and no longer accessible. This action cannot be undone.",
+          "cancel": "Cancel",
+          "confirm": "Delete Link",
+          "deleting": "Deleting..."
+        },
+        "toast": {
+          "linkCopied": "Link copied!",
+          "linkCopiedDescription": "The share link has been copied to your clipboard.",
+          "copyFailed": "Failed to copy",
+          "copyFailedDescription": "Please copy the link manually.",
+          "linkRevoked": "Share link revoked",
+          "linkRevokedDescription": "The share link has been revoked and is no longer accessible.",
+          "revokeFailed": "Failed to revoke",
+          "revokeFailedDescription": "An error occurred while revoking the share link.",
+          "notificationsEnabled": "Notifications enabled",
+          "notificationsEnabledDescription": "You'll receive notifications when someone views this share link.",
+          "notificationsDisabled": "Notifications disabled",
+          "notificationsDisabledDescription": "You won't receive notifications when someone views this share link.",
+          "notificationUpdateFailed": "Failed to update notifications",
+          "notificationUpdateFailedDescription": "An error occurred while updating notification settings.",
+          "linkDeleted": "Share link deleted",
+          "linkDeletedDescription": "The share link has been deleted and will no longer appear in your list.",
+          "deleteFailed": "Failed to delete",
+          "deleteFailedDescription": "An error occurred while deleting the share link."
+        }
+      },
+      "created": {
+        "title": "Share Link Created!",
+        "description": "Your share link is ready to use. Copy and share it with others.",
+        "shareLink": "Share Link",
+        "copy": "Copy",
+        "copied": "Copied!",
+        "openInNewTab": "Open in new tab",
+        "metadata": {
+          "mode": "Mode",
+          "expires": "Expires",
+          "notifications": "Notifications",
+          "views": "Views",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
+        },
+        "warnings": {
+          "publicLink": "Public link:",
+          "publicLinkDescription": "Anyone with this link can access the report without authentication.",
+          "expiresSoon": "This link will expire at the end of"
+        },
+        "actions": {
+          "createAnother": "Create Another",
+          "done": "Done"
+        }
+      },
+      "editDialog": {
+        "title": "Edit Share Link",
+        "description": "Update the settings for this share link.",
+        "passwordExists": "This share link already has a password. Leave the password field empty to keep the existing password.",
+        "passwordPlaceholder": "Leave empty to keep existing password",
+        "confirmPassword": "Confirm Password",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "save": "Save Changes"
+      }
+    },
+    "passwordDialog": {
+      "title": "Password Required",
+      "description": "This shared content from <strong>{projectName}</strong> is password protected. Please enter the password to continue.",
+      "passwordPlaceholder": "Enter password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "verifying": "Verifying...",
+      "errors": {
+        "emptyPassword": "Please enter a password",
+        "tooManyAttempts": "Too many failed attempts. Please try again later{resetAt, select, null {} other { at {resetAt}}}.",
+        "genericError": "An error occurred. Please try again."
+      },
+      "attempts": {
+        "noAttemptsRemaining": "No attempts remaining. Please try again later.",
+        "attemptsRemaining": "{count, plural, =1 {1 attempt} other {# attempts}} remaining."
+      }
+    },
+    "sharedReport": {
+      "loading": "Loading report...",
+      "errors": {
+        "onlyReportSharing": "Only report sharing is currently implemented",
+        "failedToLoad": "Failed to load report data"
+      },
+      "defaultTitle": "Shared Report",
+      "fromProject": "From project:",
+      "dateRange": "Date range:",
+      "readOnlyNotice": "This is a read-only shared view",
+      "viewCount": "{count, plural, =1 {1 view} other {# views}}",
+      "viewInFullApp": "View in Full App",
+      "pagination": {
+        "showing": "Showing",
+        "of": "of",
+        "results": "results"
+      }
+    },
+    "authBypass": {
+      "title": "You have access to this project",
+      "description": "Viewing as {userName} with access to {projectName}.",
+      "viewInApp": "View in full app",
+      "dismiss": "Dismiss"
     }
   },
   "sharedSteps": {

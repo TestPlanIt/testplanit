@@ -144,6 +144,16 @@ export function useTestCaseHealthColumns(
           };
 
           const config = statusConfig[status];
+
+          // Handle undefined or unknown status gracefully
+          if (!config) {
+            return (
+              <Badge variant="secondary" className="font-medium">
+                {tCommon("labels.unknown")}
+              </Badge>
+            );
+          }
+
           return (
             <Badge variant={config.variant} className={cn("font-medium", config.className)}>
               {config.label}

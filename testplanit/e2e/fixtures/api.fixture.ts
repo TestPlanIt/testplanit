@@ -18,6 +18,7 @@ export class ApiHelper {
   private createdResultFieldIds: number[] = [];
   private createdTemplateIds: number[] = [];
   private createdFieldOptionIds: number[] = [];
+  private createdShareLinkIds: string[] = [];
   private cachedTemplateIds: Map<number, number> = new Map(); // projectId -> templateId
   private cachedStateIds: Map<number, number> = new Map(); // projectId -> stateId
   private cachedRepositoryIds: Map<number, number> = new Map(); // projectId -> repositoryId
@@ -1516,6 +1517,78 @@ export class ApiHelper {
   }
 
   // ============================================
+  // Share Link Methods
+  // ============================================
+
+  /**
+   * Track a share link ID for cleanup
+   * Share links are typically created via UI in E2E tests
+   * This method allows tests to register share link IDs for automatic cleanup
+   */
+  trackShareLink(shareLinkId: string): void {
+    this.createdShareLinkIds.push(shareLinkId);
+  }
+
+  /**
+   * Get share link by share key via API
+   * Useful for verifying share link creation in tests
+   */
+  async getShareLinkByKey(shareKey: string): Promise<{
+    id: string;
+    shareKey: string;
+    entityType: string;
+    mode: string;
+    title: string | null;
+    isRevoked: boolean;
+    viewCount: number;
+  } | null> {
+    const response = await this.request.get(
+      `${this.baseURL}/api/model/shareLink/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: {
+              shareKey,
+              isDeleted: false, // Exclude soft-deleted shares
+            },
+            select: {
+              id: true,
+              shareKey: true,
+              entityType: true,
+              mode: true,
+              title: true,
+              isRevoked: true,
+              viewCount: true,
+            },
+          }),
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      return null;
+    }
+
+    const result = await response.json();
+    return result.data || null;
+  }
+
+  /**
+   * Delete a share link via API (soft delete)
+   * Silently ignores failures - item may already be deleted by the test
+   */
+  async deleteShareLink(shareLinkId: string): Promise<void> {
+    this.request
+      .patch(`${this.baseURL}/api/model/shareLink/update`, {
+        data: {
+          where: { id: shareLinkId },
+          data: { isDeleted: true },
+        },
+      })
+      .catch(() => {});
+  }
+
+  // ============================================
   // Templates & Fields Methods
   // ============================================
 
@@ -2588,6 +2661,12 @@ export class ApiHelper {
       await this.deleteIssue(issueId);
     }
     this.createdIssueIds = [];
+
+    // Delete share links (they reference projects)
+    for (const shareLinkId of this.createdShareLinkIds) {
+      await this.deleteShareLink(shareLinkId);
+    }
+    this.createdShareLinkIds = [];
 
     // Finally delete projects (they reference everything else)
     for (const projectId of this.createdProjectIds) {

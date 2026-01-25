@@ -20,20 +20,15 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from "@/components/ui/resizable";
-import { DataTable } from "@/components/tables/DataTable";
 import {
   VisibilityState,
   ColumnDef,
   ExpandedState,
 } from "@tanstack/react-table";
-import { PaginationInfo } from "~/components/tables/PaginationControls";
 import {
   PaginationProvider,
   usePagination,
-  defaultPageSizeOptions,
 } from "~/lib/contexts/PaginationContext";
-import { PaginationComponent } from "~/components/tables/Pagination";
-import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DraggableList } from "@/components/DraggableCaseFields";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
@@ -46,13 +41,7 @@ import {
   ChevronDown,
   Loader2,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -95,6 +84,8 @@ import { useDrillDown } from "~/hooks/useDrillDown";
 import { DrillDownDrawer } from "~/components/reports/DrillDownDrawer";
 import { ReportFilters } from "~/components/reports/ReportFilters";
 import { ReportFilterChips } from "~/components/reports/ReportFilterChips";
+import { ShareButton } from "~/components/reports/ShareButton";
+import { ReportRenderer } from "~/components/reports/ReportRenderer";
 import type {
   DrillDownContext,
   DimensionFilters,
@@ -106,18 +97,50 @@ interface ReportBuilderProps {
   defaultReportType?: string;
 }
 
-// Helper to check if a report type is a pre-built report
+// Helper functions for report type matching
+// These helpers allow us to write code that works with both project-level and cross-project variants
+// without having to explicitly check for both (e.g., "automation-trends" and "cross-project-automation-trends")
+
+/**
+ * Strips the "cross-project-" prefix from a report type ID
+ * @example getBaseReportType("cross-project-automation-trends") => "automation-trends"
+ * @example getBaseReportType("automation-trends") => "automation-trends"
+ */
+function getBaseReportType(reportType: string): string {
+  return reportType.replace(/^cross-project-/, '');
+}
+
+/**
+ * Checks if a report type matches a base type (handles both project and cross-project variants)
+ * @example matchesReportType("automation-trends", "automation-trends") => true
+ * @example matchesReportType("cross-project-automation-trends", "automation-trends") => true
+ * @example matchesReportType("flaky-tests", "automation-trends") => false
+ */
+function matchesReportType(reportType: string, baseType: string): boolean {
+  return getBaseReportType(reportType) === baseType;
+}
+
+/**
+ * Checks if a report type is a cross-project variant
+ * @example isCrossProjectReport("cross-project-automation-trends") => true
+ * @example isCrossProjectReport("automation-trends") => false
+ */
+function isCrossProjectReport(reportType: string): boolean {
+  return reportType.startsWith('cross-project-');
+}
+
+/**
+ * Checks if a report type is a pre-built report (automation-trends, flaky-tests, test-case-health, issue-test-coverage)
+ * Pre-built reports have fixed configurations and don't require dimension/metric selection
+ */
 function isPreBuiltReport(reportType: string): boolean {
+  const baseType = getBaseReportType(reportType);
   return [
     "automation-trends",
-    "cross-project-automation-trends",
     "flaky-tests",
-    "cross-project-flaky-tests",
     "test-case-health",
-    "cross-project-test-case-health",
     "issue-test-coverage",
-    "cross-project-issue-test-coverage",
-  ].includes(reportType);
+  ].includes(baseType);
 }
 
 // Form schema for date range
@@ -306,6 +329,9 @@ function ReportBuilderContent({
   // Track when the report was last generated (for display and future export functionality)
   const [reportGeneratedAt, setReportGeneratedAt] = useState<Date | null>(null);
 
+  // Store the last request body used to run the report (for sharing)
+  const [lastRequestBody, setLastRequestBody] = useState<any>(null);
+
   // Table state
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [sortConfig, setSortConfig] = useState<{
@@ -317,6 +343,10 @@ function ReportBuilderContent({
 
   // Track if this is the initial mount
   const isInitialMount = useRef(true);
+  // Track the last report type that was run
+  const lastRunReportType = useRef<string | null>(null);
+  // Track the last tab change to prevent duplicate calls
+  const lastTabChangeRef = useRef<{ tab: string; timestamp: number } | null>(null);
 
   // Track if we're on the client side (for SSR compatibility)
   const [isClient, setIsClient] = useState(false);
@@ -620,13 +650,13 @@ function ReportBuilderContent({
 
   // Choose which columns to use based on report type
   const columns =
-    reportType === "automation-trends" || reportType === "cross-project-automation-trends"
+    matchesReportType(reportType, "automation-trends")
       ? automationTrendsColumns
-      : reportType === "flaky-tests" || reportType === "cross-project-flaky-tests"
+      : matchesReportType(reportType, "flaky-tests")
         ? flakyTestsColumns
-        : reportType === "test-case-health" || reportType === "cross-project-test-case-health"
+        : matchesReportType(reportType, "test-case-health")
           ? testCaseHealthColumns
-          : reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage"
+          : matchesReportType(reportType, "issue-test-coverage")
             ? issueTestCoverageSummaryColumns
             : standardColumns;
 
@@ -646,7 +676,7 @@ function ReportBuilderContent({
 
   // Initialize column visibility for issue test coverage report
   React.useEffect(() => {
-    if (reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage") {
+    if (matchesReportType(reportType, "issue-test-coverage")) {
       // Set all columns to visible for this report
       const visibility: Record<string, boolean> = {
         issueId: true,
@@ -665,7 +695,7 @@ function ReportBuilderContent({
 
   // Set grouping for issue test coverage report when data loads
   React.useEffect(() => {
-    if ((reportType === "issue-test-coverage" || reportType === "cross-project-issue-test-coverage") && allResults && allResults.length > 0) {
+    if ((matchesReportType(reportType, "issue-test-coverage")) && allResults && allResults.length > 0) {
       // Group by issueId to show issues with expandable test cases
       setGrouping(["issueId"]);
       // Start with all groups collapsed
@@ -681,11 +711,22 @@ function ReportBuilderContent({
     setIsClient(true);
   }, []);
 
+  // Sync reportType from URL when it changes
+  useEffect(() => {
+    const urlReportType = searchParams.get("reportType");
+    if (urlReportType) {
+      // Only update if the URL reportType is valid
+      if (reportTypes.some((r) => r.id === urlReportType)) {
+        setReportType(urlReportType);
+      }
+    }
+  }, [searchParams, reportTypes]);
+
   // Fetch filter options when report type changes to automation-trends or when filters change
   useEffect(() => {
     if (
       reportType === "automation-trends" ||
-      reportType === "cross-project-automation-trends"
+      isCrossProjectReport(reportType) && matchesReportType(reportType, "automation-trends")
     ) {
       // Build filter payload to send to view-options API
       const filterPayload: any = {};
@@ -779,36 +820,75 @@ function ReportBuilderContent({
 
   // Handle report type change
   const handleReportTypeChange = (newReportType: string) => {
+    // Safety check: ensure reportType is never empty
+    const safeReportType = (newReportType && newReportType.trim() !== "") ? newReportType : "test-execution";
+
     // Update state immediately for responsive UI
-    setReportType(newReportType);
+    setReportType(safeReportType);
 
     // Determine which tab this report belongs to
-    const isPreBuilt = preBuiltReports.some((r) => r.id === newReportType);
+    const isPreBuilt = preBuiltReports.some((r) => r.id === safeReportType);
     const newTab = isPreBuilt ? "reports" : "builder";
     setActiveTab(newTab);
 
+    // Clear URL parameters when changing report type (report-specific params don't apply)
     const newParams = new URLSearchParams();
-    newParams.set("reportType", newReportType);
+    newParams.set("reportType", safeReportType);
     newParams.set("tab", newTab);
+    // Reset pagination when changing reports
+    newParams.set("page", "1");
+    newParams.set("pageSize", String(pageSize !== "All" ? pageSize : 10));
     router.replace(`${pathname}?${newParams.toString()}`);
   };
 
   // Handle tab change
   const handleTabChange = (newTab: string) => {
+    // Prevent duplicate calls within 100ms (React Strict Mode workaround)
+    const now = Date.now();
+    if (lastTabChangeRef.current &&
+        lastTabChangeRef.current.tab === newTab &&
+        now - lastTabChangeRef.current.timestamp < 100) {
+      return;
+    }
+    lastTabChangeRef.current = { tab: newTab, timestamp: now };
+
+    // Update activeTab state immediately to prevent race conditions
+    setActiveTab(newTab);
+
+    // Clear all report data and pagination to prevent displaying stale values
+    setTotalCount(0);
+    setResults(null);
+    setAllResults(null);
+    setError(null);
+    setCompatWarning(null);
+
     // When switching tabs, select a default report from that tab
     const targetReports =
       newTab === "reports" ? preBuiltReports : customReports;
-    if (targetReports.length > 0) {
-      const defaultReport = targetReports[0].id;
 
-      // Update URL - this will trigger useEffect to sync state
-      const newParams = new URLSearchParams(searchParams.toString());
-      newParams.set("reportType", defaultReport);
-      newParams.set("tab", newTab);
-      newParams.set("page", "1");
-      newParams.set("pageSize", "10");
-      router.replace(`${pathname}?${newParams.toString()}`);
+    // Determine the default report - use first from target list with valid ID
+    // Fallback: "automation-trends" for reports tab, "test-execution" for builder tab
+    const fallbackReport = newTab === "reports" ? "automation-trends" : "test-execution";
+    let defaultReport = targetReports.length > 0 && targetReports[0]?.id
+      ? targetReports[0].id
+      : fallbackReport;
+
+    // Safety check: ensure defaultReport is never empty
+    if (!defaultReport || defaultReport.trim() === "") {
+      defaultReport = fallbackReport;
     }
+
+    // Mark the new report as already run to prevent auto-run from interfering
+    lastRunReportType.current = defaultReport;
+
+    // ALWAYS update URL to ensure tab switches properly
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set("reportType", defaultReport);
+    newParams.set("tab", newTab);
+    newParams.set("page", "1");
+    newParams.set("pageSize", "10");
+
+    router.replace(`${pathname}?${newParams.toString()}`);
   };
 
   // When report type changes, clear all selections and results
@@ -819,6 +899,11 @@ function ReportBuilderContent({
       return;
     }
 
+    // Reset the last run report type to allow auto-run
+    lastRunReportType.current = null;
+
+    // Reset loading state to allow auto-run to trigger
+    setLoading(false);
     setDimensions([]);
     setMetrics([]);
     setResults(null);
@@ -880,14 +965,6 @@ function ReportBuilderContent({
         setFilteredMetricOptions(metOpts);
 
         // Load from URL parameters if present
-        const reportTypeParam = searchParams.get("reportType");
-        if (
-          reportTypeParam &&
-          reportTypes.some((r) => r.id === reportTypeParam)
-        ) {
-          setReportType(reportTypeParam);
-        }
-
         const dimensionsParam = searchParams.get("dimensions");
         const metricsParam = searchParams.get("metrics");
         const startDateParam = searchParams.get("startDate");
@@ -910,7 +987,7 @@ function ReportBuilderContent({
             .filter(Boolean);
 
           // For cross-project flaky tests, ensure "project" is the first dimension
-          if (mode === "cross-project" && reportType === "flaky-tests") {
+          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) {
             const projectDim = dimOpts.find((d: any) => d.value === "project");
             if (projectDim) {
               // Remove project if it exists, then add it as first
@@ -925,8 +1002,7 @@ function ReportBuilderContent({
             setDimensions(selectedDims);
           }
         } else if (
-          mode === "cross-project" &&
-          reportType === "flaky-tests" &&
+          isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests") &&
           dimOpts.length > 0
         ) {
           // Automatically add "project" as the first dimension for cross-project flaky tests
@@ -955,7 +1031,7 @@ function ReportBuilderContent({
             .filter(Boolean);
 
           // For cross-project flaky tests, ensure "project" is the first dimension
-          if (mode === "cross-project" && reportType === "flaky-tests") {
+          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) {
             const projectDim = dimOpts.find((d: any) => d.value === "project");
             if (projectDim) {
               // Remove project if it exists, then add it as first
@@ -1016,6 +1092,12 @@ function ReportBuilderContent({
       updateUrl: boolean = false
     ) => {
       try {
+        // Don't attempt to run report if metrics are empty (except for pre-built reports)
+        if (selectedMetrics.length === 0 && !currentReport?.isPreBuilt) {
+          // Silently return - this is expected when first loading the report builder
+          return;
+        }
+
         const dateRange = form.getValues("dateRange");
         const body: any = {
           dimensions: selectedDimensions.map((d) => d.value),
@@ -1029,7 +1111,7 @@ function ReportBuilderContent({
         }
 
         // For automation trends, add selected filter values and date grouping
-        if (reportType === "automation-trends") {
+        if (matchesReportType(reportType, "automation-trends")) {
           // Build filters object from selectedFilterValues
           const dynamicFieldFilters: Record<number, (string | number)[]> = {};
 
@@ -1062,12 +1144,12 @@ function ReportBuilderContent({
         }
 
         // For flaky tests, add consecutive runs, flip threshold, automated filter, and dimensions
-        if (reportType === "flaky-tests") {
+        if (matchesReportType(reportType, "flaky-tests")) {
           body.consecutiveRuns = consecutiveRuns;
           body.flipThreshold = flipThreshold;
           body.automatedFilter = flakyAutomatedFilter;
           // Always include dimensions for cross-project reports (project should be auto-added)
-          if (mode === "cross-project") {
+          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) {
             const dimValues = selectedDimensions.map((d) => d.value);
             // Ensure project is included if it's not already there
             if (!dimValues.includes("project")) {
@@ -1078,13 +1160,13 @@ function ReportBuilderContent({
         }
 
         // For test case health, add health parameters and dimensions
-        if (reportType === "test-case-health") {
+        if (matchesReportType(reportType, "test-case-health")) {
           body.staleDaysThreshold = staleDaysThreshold;
           body.minExecutionsForRate = minExecutionsForRate;
           body.lookbackDays = lookbackDays;
           body.automatedFilter = healthAutomatedFilter;
           // Always include dimensions for cross-project reports (project should be auto-added)
-          if (mode === "cross-project") {
+          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "test-case-health")) {
             const dimValues = selectedDimensions.map((d) => d.value);
             // Ensure project is included if it's not already there
             if (!dimValues.includes("project")) {
@@ -1095,9 +1177,9 @@ function ReportBuilderContent({
         }
 
         // For issue test coverage, add dimensions for cross-project
-        if (reportType === "issue-test-coverage") {
+        if (matchesReportType(reportType, "issue-test-coverage")) {
           // Always include dimensions for cross-project reports (project should be auto-added)
-          if (mode === "cross-project") {
+          if (isCrossProjectReport(reportType) && matchesReportType(reportType, "issue-test-coverage")) {
             const dimValues = selectedDimensions.map((d) => d.value);
             // Ensure project is included if it's not already there
             if (!dimValues.includes("project")) {
@@ -1145,10 +1227,11 @@ function ReportBuilderContent({
         }
 
         // Validate request
+        // Note: reportType IDs now include the "cross-project-" prefix for cross-project reports,
+        // so we don't need to add it here anymore
         const validation = reportRequestSchema.safeParse({
           ...body,
-          reportType:
-            mode === "project" ? reportType : `cross-project-${reportType}`,
+          reportType: reportType,
         });
 
         if (!validation.success) {
@@ -1194,7 +1277,7 @@ function ReportBuilderContent({
             // Set initial sort order for flaky tests: Flips Desc
             if (
               (reportType === "flaky-tests" ||
-                reportType === "cross-project-flaky-tests") &&
+                isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) &&
               !sortConfig
             ) {
               setSortConfig({ column: "flipCount", direction: "desc" });
@@ -1206,7 +1289,7 @@ function ReportBuilderContent({
           const effectiveSortConfig =
             updateUrl &&
             (reportType === "flaky-tests" ||
-              reportType === "cross-project-flaky-tests") &&
+              isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) &&
             !sortConfig
               ? { column: "flipCount", direction: "desc" as const }
               : sortConfig;
@@ -1253,20 +1336,69 @@ function ReportBuilderContent({
           }
         } else {
           // Standard server-side pagination for other reports
-          setResults(data.data || data.results); // Support both formats
+          const tableData = data.data || data.results;
+          const chartData = data.allResults || data.data || data.results;
+
+          setResults(tableData); // Support both formats
 
           // Store projects for automation trends report
-          if (reportType === "automation-trends" && data.projects) {
+          if ((matchesReportType(reportType, "automation-trends")) && data.projects) {
             setAutomationTrendsProjects(data.projects);
           }
 
-          // Only update allResults and chartDataRef when running a new report (not for pagination/sorting)
+          // Update allResults and chartDataRef with the full dataset
+          // For pagination/sorting changes, we still need the full dataset for the chart
+          const newAllResults = chartData;
+
+          // Only update chart data when running a new report (not pagination)
+          // Chart should always show the full dataset, not update on pagination
           if (updateUrl) {
-            const newAllResults = data.allResults || data.data || data.results;
+            console.log('Updating chart with new data:', {
+              dataLength: newAllResults.length,
+              firstRow: newAllResults[0],
+              updateUrl
+            });
+
+            // Debug: Compare ALL rows between allResults and results to find mismatches
+            const metricsToCheck = selectedMetrics.map(m => m.label || m.value);
+            console.log('Checking for data mismatches in metrics:', metricsToCheck);
+
+            newAllResults.forEach((allRow: any) => {
+              const dateKey = allRow.date?.executedAt || allRow.date?.createdAt;
+              if (!dateKey) return;
+
+              // Find matching row in results (paginated data)
+              const resultRow = (data.results || []).find((r: any) =>
+                (r.date?.executedAt === dateKey) || (r.date?.createdAt === dateKey)
+              );
+
+              if (resultRow) {
+                // Compare metric values
+                for (const metric of metricsToCheck) {
+                  if (allRow[metric] !== resultRow[metric]) {
+                    console.error(`VALUE MISMATCH for ${dateKey}:`, {
+                      metric,
+                      chartValue: allRow[metric],
+                      tableValue: resultRow[metric],
+                      chartRow: allRow,
+                      tableRow: resultRow
+                    });
+                  }
+                }
+              }
+            });
+
             setAllResults(newAllResults);
-            chartDataRef.current = newAllResults; // Update ref with stable reference
-            setChartDataVersion((prev) => prev + 1); // Increment version to trigger chart update
+            chartDataRef.current = newAllResults;
+            setChartDataVersion((prev) => prev + 1);
+          } else {
+            console.log('Skipping chart update (pagination/sort):', {
+              chartDataLength: chartDataRef.current?.length,
+              newResultsLength: (data.results || []).length,
+              updateUrl
+            });
           }
+
           setTotalCount(
             data.total || data.totalCount || (data.data || data.results).length
           );
@@ -1282,43 +1414,52 @@ function ReportBuilderContent({
             dateRange?.from ? (dateRange as DateRange) : undefined
           );
           // Update last used date grouping for automation trends
-          if (reportType === "automation-trends") {
+          if (matchesReportType(reportType, "automation-trends")) {
             setLastUsedDateGrouping(dateGrouping);
           }
           // Update last used consecutive runs for flaky tests
-          if (reportType === "flaky-tests") {
+          if (matchesReportType(reportType, "flaky-tests")) {
             setLastUsedConsecutiveRuns(consecutiveRuns);
           }
           // Record when the report was generated
           setReportGeneratedAt(new Date());
 
-          // Update URL with selections
-          const newParams = new URLSearchParams();
-          newParams.set("reportType", reportType);
-          newParams.set(
-            "dimensions",
-            selectedDimensions.map((d) => d.value).join(",")
-          );
-          newParams.set(
-            "metrics",
-            selectedMetrics.map((m) => m.value).join(",")
-          );
+          // Store the request body for sharing (exclude page/pageSize as shares should show all data)
+          const { page, pageSize, sortColumn, sortDirection, ...shareableBody } = body;
+          setLastRequestBody(shareableBody);
 
-          // Add date range to URL if specified, or remove if cleared
-          if (dateRange?.from) {
-            newParams.set("startDate", dateRange.from.toISOString());
-            if (dateRange.to) {
-              newParams.set("endDate", dateRange.to.toISOString());
+          // Only update URL for custom reports (pre-built reports don't use dimensions/metrics)
+          if (!currentReport?.isPreBuilt) {
+            // Update URL with selections - start with existing params to preserve tab parameter
+            const newParams = new URLSearchParams(searchParams.toString());
+            // Safety check: ensure reportType is never empty
+            const safeReportType = (reportType && reportType.trim() !== "") ? reportType : "test-execution";
+            newParams.set("reportType", safeReportType);
+            newParams.set(
+              "dimensions",
+              selectedDimensions.map((d) => d.value).join(",")
+            );
+            newParams.set(
+              "metrics",
+              selectedMetrics.map((m) => m.value).join(",")
+            );
+
+            // Add date range to URL if specified, or remove if cleared
+            if (dateRange?.from) {
+              newParams.set("startDate", dateRange.from.toISOString());
+              if (dateRange.to) {
+                newParams.set("endDate", dateRange.to.toISOString());
+              } else {
+                newParams.delete("endDate");
+              }
             } else {
+              // Remove date parameters when cleared
+              newParams.delete("startDate");
               newParams.delete("endDate");
             }
-          } else {
-            // Remove date parameters when cleared
-            newParams.delete("startDate");
-            newParams.delete("endDate");
-          }
 
-          router.replace(`${pathname}?${newParams.toString()}`);
+            router.replace(`${pathname}?${newParams.toString()}`);
+          }
         }
       } catch (err: any) {
         console.error("Report error:", err);
@@ -1337,6 +1478,7 @@ function ReportBuilderContent({
       setTotalCount,
       router,
       pathname,
+      searchParams,
       tReports,
       dateGrouping,
       selectedFilterValues,
@@ -1366,16 +1508,23 @@ function ReportBuilderContent({
 
   // Auto-run report if we have stored selections
   useEffect(() => {
-    if (
-      lastUsedDimensions.length > 0 &&
-      lastUsedMetrics.length > 0 &&
-      !results &&
-      !loading &&
-      !error
-    ) {
+    // Check if we need to run report for current reportType
+    const hasRunForCurrentType = lastRunReportType.current === reportType;
+
+    // For pre-built reports, auto-run even without dimensions/metrics
+    const shouldAutoRun = currentReport?.isPreBuilt
+      ? !hasRunForCurrentType && !loading && !error
+      : lastUsedDimensions.length > 0 &&
+        lastUsedMetrics.length > 0 &&
+        !hasRunForCurrentType &&
+        !loading &&
+        !error;
+
+    if (shouldAutoRun) {
+      lastRunReportType.current = reportType;
       runReport(lastUsedDimensions, lastUsedMetrics);
     }
-  }, [lastUsedDimensions, lastUsedMetrics, results, loading, error, runReport]);
+  }, [reportType, lastUsedDimensions, lastUsedMetrics, results, loading, error, runReport, currentReport]);
 
   // Re-fetch data when pagination changes (without full loading state)
   useEffect(() => {
@@ -1428,7 +1577,7 @@ function ReportBuilderContent({
       fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize, sortConfig, reportType]);
+  }, [currentPage, pageSize, sortConfig, reportType, allResults]);
 
   // Re-fetch data when sort changes for non-prebuilt reports (without full loading state)
   useEffect(() => {
@@ -1446,7 +1595,7 @@ function ReportBuilderContent({
   // Re-fetch data when filters or date grouping change for automation trends
   useEffect(() => {
     if (
-      reportType === "automation-trends" &&
+      (matchesReportType(reportType, "automation-trends")) &&
       lastUsedDimensions.length > 0 &&
       lastUsedMetrics.length > 0 &&
       results
@@ -1468,8 +1617,7 @@ function ReportBuilderContent({
   // Automatically add "project" as first dimension for cross-project flaky tests
   useEffect(() => {
     if (
-      mode === "cross-project" &&
-      reportType === "flaky-tests" &&
+      isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests") &&
       dimensionOptions.length > 0
     ) {
       const projectDim = dimensionOptions.find(
@@ -1581,116 +1729,6 @@ function ReportBuilderContent({
     [chartDataVersion, allResults] // Only recompute when chart data version changes
   );
 
-  // Maximum number of data points to render in charts
-  // Keep this low enough for charts to remain readable and useful
-  const MAX_CHART_DATA_POINTS = 50;
-
-  // Memoize the chart component to prevent re-renders when parent re-renders
-  // Use chartDataRef.current for stable reference that doesn't change on pagination
-  const memoizedChart = useMemo(() => {
-    const chartData = chartDataRef.current;
-
-    // For pre-built reports (automation trends, flaky tests, test case health, issue test coverage),
-    // we don't need traditional dimensions/metrics as the chart uses specialized data structures
-    const isAutomationTrends =
-      reportType === "automation-trends" ||
-      reportType === "cross-project-automation-trends";
-    const isFlakyTests =
-      reportType === "flaky-tests" ||
-      reportType === "cross-project-flaky-tests";
-    const isTestCaseHealth =
-      reportType === "test-case-health" ||
-      reportType === "cross-project-test-case-health";
-    const isIssueTestCoverage =
-      reportType === "issue-test-coverage" ||
-      reportType === "cross-project-issue-test-coverage";
-
-    if (
-      !chartData ||
-      (!isAutomationTrends &&
-        !isFlakyTests &&
-        !isTestCaseHealth &&
-        !isIssueTestCoverage &&
-        (chartDimensions.length === 0 || chartMetrics.length === 0))
-    ) {
-      return { chart: null, isTruncated: false, totalDataPoints: 0 };
-    }
-
-    // Limit the number of data points to prevent browser crashes
-    // For flaky tests, prioritize tests with highest attention score (flip count + recency)
-    let dataToLimit = chartData;
-    if (isFlakyTests && chartData.length > MAX_CHART_DATA_POINTS) {
-      // Calculate priority score for each test and sort by it
-      dataToLimit = [...chartData]
-        .map((test: any) => {
-          // Calculate recency score using exponential decay
-          let recencyScore = 0;
-          let weight = 1;
-          const decayFactor = 0.7;
-          const executions = test.executions || [];
-
-          for (const execution of executions) {
-            if (!execution.isSuccess) {
-              recencyScore += weight;
-            }
-            weight *= decayFactor;
-          }
-
-          // Normalize recency score
-          const maxScore =
-            executions.length > 0
-              ? (1 - Math.pow(decayFactor, executions.length)) /
-                (1 - decayFactor)
-              : 1;
-          const normalizedRecency = maxScore > 0 ? recencyScore / maxScore : 0;
-
-          // Priority combines flip count and recency
-          const normalizedFlips =
-            test.flipCount / (lastUsedConsecutiveRuns - 1 || 1);
-          const priorityScore = normalizedFlips * 0.5 + normalizedRecency * 0.5;
-
-          return { ...test, _priorityScore: priorityScore };
-        })
-        .sort((a: any, b: any) => b._priorityScore - a._priorityScore);
-    }
-
-    const isTruncated = dataToLimit.length > MAX_CHART_DATA_POINTS;
-    const limitedChartData = isTruncated
-      ? dataToLimit.slice(0, MAX_CHART_DATA_POINTS)
-      : dataToLimit;
-
-    // For Test Case Health and Issue Test Coverage, pass all data so the chart can show accurate summary stats
-    // These charts handle aggregation internally and need the full dataset
-    const chartResults = isTestCaseHealth || isIssueTestCoverage ? chartData : limitedChartData;
-
-    return {
-      chart: (
-        <ReportChart
-          key={chartKey}
-          results={chartResults}
-          dimensions={chartDimensions}
-          metrics={chartMetrics}
-          reportType={reportType}
-          projects={automationTrendsProjects}
-          consecutiveRuns={lastUsedConsecutiveRuns}
-          totalFlakyTests={isFlakyTests ? chartData.length : undefined}
-          projectId={projectId}
-        />
-      ),
-      isTruncated: isTestCaseHealth || isIssueTestCoverage ? false : isTruncated,
-      totalDataPoints: chartData.length,
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    chartKey,
-    chartDimensions,
-    chartMetrics,
-    chartDataVersion,
-    reportType,
-    automationTrendsProjects,
-    lastUsedConsecutiveRuns,
-  ]); // Depend on version instead of array lengths
-
   return (
     <div>
       <ResizablePanelGroup
@@ -1720,11 +1758,11 @@ function ReportBuilderContent({
                 onValueChange={handleTabChange}
                 className="h-full flex flex-col"
               >
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="reports">
+                <TabsList className="grid w-full grid-cols-2 mb-4 min-w-60">
+                  <TabsTrigger value="reports" className="min-w-0 truncate">
                     {tAdminMenu("reports")}
                   </TabsTrigger>
-                  <TabsTrigger value="builder">{tReports("title")}</TabsTrigger>
+                  <TabsTrigger value="builder" className="min-w-0 truncate">{tReports("title")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent
@@ -1785,7 +1823,7 @@ function ReportBuilderContent({
 
                       {/* Date Grouping Selection for Automation Trends */}
                       {(reportType === "automation-trends" ||
-                        reportType === "cross-project-automation-trends") && (
+                        isCrossProjectReport(reportType) && matchesReportType(reportType, "automation-trends")) && (
                         <div className="grid gap-2">
                           <label className="text-sm font-medium">
                             {tReports("dateGrouping.label")}
@@ -1822,7 +1860,7 @@ function ReportBuilderContent({
 
                       {/* Filters Section for Automation Trends */}
                       {(reportType === "automation-trends" ||
-                        reportType === "cross-project-automation-trends") &&
+                        isCrossProjectReport(reportType) && matchesReportType(reportType, "automation-trends")) &&
                         filterItems.length > 0 && (
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
@@ -1859,7 +1897,7 @@ function ReportBuilderContent({
 
                       {/* Flaky Tests Parameters */}
                       {(reportType === "flaky-tests" ||
-                        reportType === "cross-project-flaky-tests") && (
+                        isCrossProjectReport(reportType) && matchesReportType(reportType, "flaky-tests")) && (
                         <div className="grid gap-4">
                           {/* Consecutive Runs */}
                           <div className="grid gap-2">
@@ -1977,7 +2015,7 @@ function ReportBuilderContent({
 
                       {/* Test Case Health Parameters */}
                       {(reportType === "test-case-health" ||
-                        reportType === "cross-project-test-case-health") && (
+                        isCrossProjectReport(reportType) && matchesReportType(reportType, "test-case-health")) && (
                         <div className="grid gap-4">
                           {/* Stale Days Threshold */}
                           <div className="grid gap-2">
@@ -2274,7 +2312,7 @@ function ReportBuilderContent({
                       </div>
 
                       {/* Priority Filter for Automation Trends */}
-                      {reportType === "automation-trends" &&
+                      {(matchesReportType(reportType, "automation-trends")) &&
                         dimensions.some((d) => d.value === "priority") && (
                           <div className="grid gap-2">
                             <div className="flex items-center gap-2">
@@ -2381,7 +2419,7 @@ function ReportBuilderContent({
                       >
                         {loading ? (
                           <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                             {tCommon("loading")}
                           </>
                         ) : (
@@ -2421,134 +2459,63 @@ function ReportBuilderContent({
           className="min-h-[calc(100vh-14rem)]"
         >
           {/* Results Display */}
-          {results && results.length > 0 ? (
-            <ResizablePanelGroup direction="vertical" className="h-full">
-              {/* Visualization Panel */}
-              <ResizablePanel
-                defaultSize={50}
-                minSize={20}
-                collapsedSize={0}
-                collapsible
-              >
-                <Card className="h-full rounded-none border-0 overflow-hidden">
-                  <CardHeader className="pt-2 pb-2">
-                    <CardTitle>{t("common.visualization")}</CardTitle>
-                    {enhancedReportSummary && (
-                      <CardDescription>{enhancedReportSummary}</CardDescription>
-                    )}
-                    {reportGeneratedAt && (
-                      <p className="text-xs text-muted-foreground">
-                        {tReports("generatedAt")}{" "}
-                        <DateFormatter
-                          date={reportGeneratedAt}
-                          formatString="PPp"
-                          timezone={session?.user?.preferences?.timezone}
-                        />
-                      </p>
-                    )}
-                    {memoizedChart.isTruncated && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {tReports("chartDataTruncated.message", {
-                          shown: MAX_CHART_DATA_POINTS.toLocaleString(),
-                          total: memoizedChart.totalDataPoints.toLocaleString(),
-                        })}
-                      </p>
-                    )}
-                  </CardHeader>
-                  <CardContent className="h-[calc(100%-4rem)] p-6 flex flex-col">
-                    <div className="flex-1 min-h-0 w-full">
-                      {memoizedChart.chart}
-                    </div>
-                  </CardContent>
-                </Card>
-              </ResizablePanel>
-
-              <ResizableHandle withHandle />
-
-              {/* Results Table Panel */}
-              <ResizablePanel
-                defaultSize={50}
-                minSize={20}
-                collapsedSize={0}
-                collapsible
-              >
-                <Card className="h-full rounded-none border-0 overflow-hidden">
-                  <CardHeader className="pt-2 pb-2">
-                    <div className="flex flex-row items-end justify-between">
-                      <CardTitle>{t("common.results")}</CardTitle>
-                      {totalCount > 0 && (
-                        <div className="flex flex-col items-end">
-                          <div className="justify-end">
-                            <PaginationInfo
-                              startIndex={startIndex}
-                              endIndex={endIndex}
-                              totalRows={totalCount}
-                              searchString=""
-                              pageSize={pageSize}
-                              pageSizeOptions={defaultPageSizeOptions}
-                              handlePageSizeChange={setPageSize}
-                            />
-                          </div>
-                          {pageSize !== "All" &&
-                            totalCount > (pageSize as number) && (
-                              <div className="justify-end -mx-4">
-                                <PaginationComponent
-                                  currentPage={currentPage}
-                                  totalPages={Math.ceil(
-                                    totalCount / (pageSize as number)
-                                  )}
-                                  onPageChange={setCurrentPage}
-                                />
-                              </div>
-                            )}
-                        </div>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="h-[calc(100%-4rem)] overflow-y-auto p-6 pt-0">
-                    <DataTable
-                      columns={columns as ColumnDef<any>[]}
-                      data={results || []}
-                      columnVisibility={columnVisibility}
-                      onColumnVisibilityChange={setColumnVisibility}
-                      sortConfig={sortConfig || undefined}
-                      onSortChange={(columnId: string) => {
-                        setSortConfig((prev) => ({
-                          column: columnId,
-                          direction:
-                            prev?.column === columnId &&
-                            prev.direction === "asc"
-                              ? "desc"
-                              : "asc",
-                        }));
-                      }}
-                      grouping={grouping}
-                      onGroupingChange={setGrouping}
-                      expanded={expanded}
-                      onExpandedChange={setExpanded}
-                    />
-                  </CardContent>
-                </Card>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <Card className="max-w-md">
-                <CardHeader>
-                  <CardTitle>{tReports("noResultsFound")}</CardTitle>
-                  <CardDescription>
-                    {lastUsedDimensions.length > 0 && lastUsedMetrics.length > 0
-                      ? lastUsedDateRange?.from
-                        ? tReports("noDataMatchingCriteriaWithDateFilter")
-                        : tReports("noDataMatchingCriteria")
-                      : currentReport?.isPreBuilt
-                        ? tReports("noDataAvailable")
-                        : tReports("selectAtLeastOneDimensionAndMetric")}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            </div>
-          )}
+          <ReportRenderer
+            results={results || []}
+            chartData={allResults ?? undefined}
+            reportType={reportType}
+            dimensions={lastUsedDimensions}
+            metrics={lastUsedMetrics}
+            preGeneratedColumns={columns as ColumnDef<any>[]}
+            projectId={projectId}
+            mode={mode}
+            projects={automationTrendsProjects}
+            consecutiveRuns={lastUsedConsecutiveRuns}
+            staleDaysThreshold={staleDaysThreshold}
+            minExecutionsForRate={minExecutionsForRate}
+            lookbackDays={lookbackDays}
+            dateGrouping={lastUsedDateGrouping}
+            totalFlakyTests={
+              (matchesReportType(reportType, "flaky-tests")) && allResults
+                ? allResults.length
+                : undefined
+            }
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            sortConfig={sortConfig}
+            onSortChange={(columnId: string) => {
+              setSortConfig((prev) => ({
+                column: columnId,
+                direction:
+                  prev?.column === columnId && prev.direction === "asc"
+                    ? "desc"
+                    : "asc",
+              }));
+            }}
+            columnVisibility={columnVisibility}
+            onColumnVisibilityChange={setColumnVisibility}
+            grouping={grouping}
+            onGroupingChange={setGrouping}
+            expanded={expanded}
+            onExpandedChange={setExpanded}
+            reportSummary={typeof enhancedReportSummary === "string" ? enhancedReportSummary : reportSummary ?? undefined}
+            reportGeneratedAt={reportGeneratedAt || undefined}
+            userTimezone={session?.user?.preferences?.timezone}
+            readOnly={false}
+            headerActions={
+              <ShareButton
+                projectId={mode === "project" ? projectId : undefined}
+                reportConfig={{
+                  reportType,
+                  // Use the last request body which contains ALL parameters
+                  ...(lastRequestBody || {}),
+                }}
+                reportTitle={reportTypes.find((r) => r.id === reportType)?.label}
+              />
+            }
+          />
         </ResizablePanel>
       </ResizablePanelGroup>
       {/* Drill-down drawer */}

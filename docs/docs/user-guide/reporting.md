@@ -44,6 +44,52 @@ Shows test coverage for issues tracked in integrated systems (Jira, GitHub, Azur
 
 You can build custom reports using the Report Builder for specific analytical needs beyond the pre-built reports.
 
+## Sharing Reports
+
+Share your reports with team members, clients, and stakeholders using Share Links - secure, customizable URLs with flexible access control.
+
+### Quick Start
+
+1. **Configure your report** in Report Builder
+2. Click the **Share** button in the toolbar
+3. Choose an **access mode** (Public, Password-Protected, or Authenticated)
+4. Configure share settings (title, expiration, password, notifications)
+5. **Copy the link** and share via email or other channels
+
+### Share Modes
+
+**Public**: No authentication required - accessible to anyone with the link
+
+- Use for: Public dashboards, marketing reports, non-sensitive data
+
+**Password-Protected**: Public access with password requirement
+
+- Use for: Client reports, partner collaboration, confidential sharing
+
+**Authenticated**: Requires login with project access
+
+- Use for: Team members, internal reports, sensitive data
+
+### Common Use Cases
+
+- **Client Reporting**: Share test results with clients using password-protected links
+- **Stakeholder Updates**: Distribute weekly/monthly reports with expiration dates
+- **Public Dashboards**: Share metrics openly for transparency
+- **Team Collaboration**: Share reports with team members who have project access
+
+### Features
+
+- Three access modes for different security needs
+- Customizable expiration dates for time-limited access
+- Password protection with rate limiting
+- View notifications when links are accessed
+- Access analytics with detailed logs
+- Link management to revoke or modify shares
+- Minimal public UI (no navigation for external viewers)
+- Read-only report views optimized for sharing
+
+[Learn more about Share Links →](./share-links.md)
+
 ### Test Execution Reports
 
 **Test Run Progress:**

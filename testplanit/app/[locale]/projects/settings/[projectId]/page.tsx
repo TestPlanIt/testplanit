@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plug, Sparkles } from "lucide-react";
+import { Plug, Sparkles, Share2 } from "lucide-react";
 import { ProjectIcon } from "@/components/ProjectIcon";
 
 interface PageProps {
@@ -174,6 +174,18 @@ export default async function ProjectSettingsPage({ params }: PageProps) {
                     <CardTitle>{tGlobal("admin.menu.llm")}</CardTitle>
                   </div>
                   <CardDescription>{t("aiModels.description")}</CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+
+            <Link href={`/projects/settings/${projectId}/shares`}>
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Share2 className="h-6 w-6 text-primary" />
+                    <CardTitle>{t("shares.title")}</CardTitle>
+                  </div>
+                  <CardDescription>{t("shares.description")}</CardDescription>
                 </CardHeader>
               </Card>
             </Link>
