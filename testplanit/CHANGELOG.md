@@ -1,3 +1,10 @@
+## [0.11.3](https://github.com/TestPlanIt/testplanit/compare/v0.11.2...v0.11.3) (2026-01-25)
+
+
+### Bug Fixes
+
+* **proxy:** improve language preference handling and preserve error parameters in redirects ([197e339](https://github.com/TestPlanIt/testplanit/commit/197e339701e188e5b798cef3ec14afdfaca5cb13))
+
 ## [0.11.2](https://github.com/TestPlanIt/testplanit/compare/v0.11.1...v0.11.2) (2026-01-25)
 
 
