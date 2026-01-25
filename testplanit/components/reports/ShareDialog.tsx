@@ -378,7 +378,7 @@ export function ShareDialog({
                 placeholder={defaultTitle}
               />
               <p className="text-xs text-muted-foreground">
-                Leave empty to use: {defaultTitle}
+                {t("title.leaveEmptyToUse")} {defaultTitle}
               </p>
             </div>
 

@@ -260,7 +260,7 @@ export function EditShareLinkDialog({
               {password && (
                 <div className="space-y-2">
                   <Label htmlFor="edit-confirm-password-input" className="flex items-center">
-                    Confirm Password
+                    {t("editDialog.confirmPassword")}
                     <sup>
                       <Asterisk className="w-3 h-3 text-destructive" />
                     </sup>
@@ -345,7 +345,7 @@ export function EditShareLinkDialog({
           {/* Actions */}
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t("editDialog.cancel")}
             </Button>
             <Button onClick={handleSave} disabled={isUpdating}>
               {isUpdating ? (

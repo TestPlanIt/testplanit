@@ -4874,7 +4874,8 @@
       },
       "title": {
         "label": "Título",
-        "placeholder": "p. ej., Informe de ejecución de pruebas"
+        "placeholder": "p. ej., Informe de ejecución de pruebas",
+        "leaveEmptyToUse": "Déjelo vacío para utilizar:"
       },
       "description": {
         "label": "Descripción",
@@ -5010,6 +5011,8 @@
         "description": "Actualice la configuración de este enlace para compartir.",
         "passwordExists": "Este enlace para compartir ya tiene contraseña. Deje el campo de contraseña vacío para conservar la contraseña actual.",
         "passwordPlaceholder": "Déjelo en blanco para conservar la contraseña existente",
+        "confirmPassword": "confirmar Contraseña",
+        "cancel": "Cancelar",
         "saving": "Ahorro...",
         "save": "Guardar cambios"
       }

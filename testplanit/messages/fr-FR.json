@@ -4874,7 +4874,8 @@
       },
       "title": {
         "label": "Titre",
-        "placeholder": "par exemple, rapport d'exécution des tests"
+        "placeholder": "par exemple, rapport d'exécution des tests",
+        "leaveEmptyToUse": "Laisser vide pour utilisation :"
       },
       "description": {
         "label": "Description",
@@ -5010,6 +5011,8 @@
         "description": "Mettez à jour les paramètres de ce lien de partage.",
         "passwordExists": "Ce lien de partage est déjà protégé par un mot de passe. Laissez le champ du mot de passe vide pour conserver le mot de passe existant.",
         "passwordPlaceholder": "Laisser vide pour conserver le mot de passe existant",
+        "confirmPassword": "Confirmez le mot de passe",
+        "cancel": "Annuler",
         "saving": "Économie...",
         "save": "Enregistrer les modifications"
       }

@@ -4874,7 +4874,8 @@
       },
       "title": {
         "label": "Title",
-        "placeholder": "e.g., Test Execution Report"
+        "placeholder": "e.g., Test Execution Report",
+        "leaveEmptyToUse": "Leave empty to use:"
       },
       "description": {
         "label": "Description",
@@ -5010,6 +5011,8 @@
         "description": "Update the settings for this share link.",
         "passwordExists": "This share link already has a password. Leave the password field empty to keep the existing password.",
         "passwordPlaceholder": "Leave empty to keep existing password",
+        "confirmPassword": "Confirm Password",
+        "cancel": "Cancel",
         "saving": "Saving...",
         "save": "Save Changes"
       }

@@ -202,6 +202,69 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
     }
   };
 
+  const handlePasswordVerified = async () => {
+    // Prevent duplicate view counting
+    if (viewCountedRef.current || hasViewedInSession()) {
+      // Already counted, use initial shareData and grant access without making another API call
+      setFullShareData(shareData);
+      setAccessGranted(true);
+      return;
+    }
+
+    // Mark as counted BEFORE making the request to prevent race conditions
+    viewCountedRef.current = true;
+    markViewedInSession();
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Get the verified token from sessionStorage
+      const tokenKey = `share_token_${shareKey}`;
+      const stored = sessionStorage.getItem(tokenKey);
+      let token = null;
+
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          token = parsed.token;
+        } catch (e) {
+          // Invalid token, ignore
+        }
+      }
+
+      const response = await fetch(`/api/share/${shareKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+
+        // Handle authentication required
+        if (errorData.requiresAuth) {
+          window.location.href = `/en-US/signin?callbackUrl=/share/${shareKey}`;
+          return;
+        }
+
+        throw new Error(errorData.error || tErrors("fetchFailed"));
+      }
+
+      const data = await response.json();
+      setFullShareData(data);
+      setAccessGranted(true);
+    } catch (error) {
+      console.error("Error accessing share:", error);
+      setError(error instanceof Error ? error.message : tErrors("unknown"));
+      // Reset the flags on error so user can retry
+      viewCountedRef.current = false;
+      sessionStorage.removeItem(getSessionViewKey());
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // For PUBLIC mode, grant access immediately
   useEffect(() => {
     // Prevent duplicate execution (React Strict Mode can call this twice)
@@ -276,70 +339,8 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
       // Check if user has project access (bypass password)
       checkProjectAccess();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handlePasswordVerified = async () => {
-    // Prevent duplicate view counting
-    if (viewCountedRef.current || hasViewedInSession()) {
-      // Already counted, use initial shareData and grant access without making another API call
-      setFullShareData(shareData);
-      setAccessGranted(true);
-      return;
-    }
-
-    // Mark as counted BEFORE making the request to prevent race conditions
-    viewCountedRef.current = true;
-    markViewedInSession();
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Get the verified token from sessionStorage
-      const tokenKey = `share_token_${shareKey}`;
-      const stored = sessionStorage.getItem(tokenKey);
-      let token = null;
-
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          token = parsed.token;
-        } catch (e) {
-          // Invalid token, ignore
-        }
-      }
-
-      const response = await fetch(`/api/share/${shareKey}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-
-        // Handle authentication required
-        if (errorData.requiresAuth) {
-          window.location.href = `/en-US/signin?callbackUrl=/share/${shareKey}`;
-          return;
-        }
-
-        throw new Error(errorData.error || tErrors("fetchFailed"));
-      }
-
-      const data = await response.json();
-      setFullShareData(data);
-      setAccessGranted(true);
-    } catch (error) {
-      console.error("Error accessing share:", error);
-      setError(error instanceof Error ? error.message : tErrors("unknown"));
-      // Reset the flags on error so user can retry
-      viewCountedRef.current = false;
-      sessionStorage.removeItem(getSessionViewKey());
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // Show loading state
   if (isLoading) {

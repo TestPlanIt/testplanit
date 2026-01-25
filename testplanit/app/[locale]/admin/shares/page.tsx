@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { authOptions } from "~/server/auth";
 import { getServerSession } from "next-auth/next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ShareLinkList } from "@/components/share/ShareLinkList";
 
 interface PageProps {
@@ -18,15 +18,11 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function AdminSharesPage({ params }: PageProps) {
+  const { locale } = await params;
   const session = await getServerSession(authOptions);
 
   // Only ADMIN users can access this page
-  if (!session?.user) {
-    const { locale } = await params;
-    redirect(`/${locale}/signin`);
-  }
-
-  if (session.user.access !== "ADMIN") {
+  if (!session?.user || session.user.access !== "ADMIN") {
     notFound();
   }
 
