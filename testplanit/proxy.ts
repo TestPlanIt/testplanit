@@ -213,7 +213,11 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     const correctRoute = pathSegments[1]; // Get the first route segment
     const redirectUrl = new URL(request.url);
     redirectUrl.pathname = `/${locale}/${correctRoute}`;
-    redirectUrl.search = ""; // Clear any query params
+    // Preserve error parameter from NextAuth (e.g., expired magic link)
+    const errorParam = url.searchParams.get("error");
+    if (errorParam) {
+      redirectUrl.searchParams.set("error", errorParam);
+    }
     redirectUrl.hash = ""; // Clear any hash
     return NextResponse.redirect(redirectUrl);
   }
@@ -239,7 +243,11 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       const locale = pathSegments[0] || defaultLocale;
       const redirectUrl = new URL(request.url);
       redirectUrl.pathname = `/${locale}/signin`;
-      redirectUrl.search = ""; // Clear any query params
+      // Preserve error parameter from NextAuth (e.g., expired magic link)
+      const errorParam = url.searchParams.get("error");
+      if (errorParam) {
+        redirectUrl.searchParams.set("error", errorParam);
+      }
       redirectUrl.hash = ""; // Clear any hash
       return NextResponse.redirect(redirectUrl);
     }
