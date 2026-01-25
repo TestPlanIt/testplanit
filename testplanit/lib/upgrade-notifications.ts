@@ -125,6 +125,25 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       </ul>
     `,
   },
+  "0.11.0": {
+    title: "New Feature: Share Links",
+    message: `
+      <p>Share reports securely with team members, clients, and stakeholders through customizable URLs without requiring a TestPlanIt account.</p>
+      <h4>Three Access Modes</h4>
+      <ul>
+        <li><strong>Authenticated</strong> - Requires login with project access for full interactive experience</li>
+        <li><strong>Public</strong> - No authentication required, read-only view with filtered data</li>
+        <li><strong>Password-Protected</strong> - Requires password with rate limiting and auth bypass for team members</li>
+      </ul>
+      <h4>Key Features</h4>
+      <ul>
+        <li>Customizable titles, descriptions, and expiration dates</li>
+        <li>Access analytics with view tracking and detailed logs</li>
+        <li>Notifications when links are accessed</li>
+      </ul>
+      <p>Click the <strong>Share</strong> button in Report Builder to create your first share link. See the <a href="https://docs.testplanit.io/user-guide/share-links" target="_blank">documentation</a> for details.</p>
+    `,
+  },
 };
 
 /**
