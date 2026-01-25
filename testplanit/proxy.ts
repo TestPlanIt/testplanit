@@ -94,14 +94,19 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       const acceptLanguage = request.headers.get("accept-language");
       if (acceptLanguage) {
         // Parse the Accept-Language header (e.g., "en-US,en;q=0.9,es;q=0.8")
-        const preferredLang = acceptLanguage.split(",")[0]?.split(";")[0]?.trim();
+        const preferredLang = acceptLanguage
+          .split(",")[0]
+          ?.split(";")[0]
+          ?.trim();
         // Check if the preferred language is in our supported locales
         if (preferredLang && locales.includes(preferredLang as any)) {
           targetLocale = preferredLang;
         } else if (preferredLang) {
           // Try to match just the language code (e.g., "en" from "en-GB")
           const langCode = preferredLang.split("-")[0];
-          const matchingLocale = locales.find((loc) => loc.startsWith(langCode));
+          const matchingLocale = locales.find((loc) =>
+            loc.startsWith(langCode)
+          );
           if (matchingLocale) {
             targetLocale = matchingLocale;
           }
@@ -213,7 +218,11 @@ export default async function middlewareWithPreferences(request: NextRequest) {
     const correctRoute = pathSegments[1]; // Get the first route segment
     const redirectUrl = new URL(request.url);
     redirectUrl.pathname = `/${locale}/${correctRoute}`;
-    redirectUrl.search = ""; // Clear any query params
+    // Preserve error parameter from NextAuth (e.g., expired magic link)
+    const errorParam = url.searchParams.get("error");
+    if (errorParam) {
+      redirectUrl.searchParams.set("error", errorParam);
+    }
     redirectUrl.hash = ""; // Clear any hash
     return NextResponse.redirect(redirectUrl);
   }
@@ -239,7 +248,11 @@ export default async function middlewareWithPreferences(request: NextRequest) {
       const locale = pathSegments[0] || defaultLocale;
       const redirectUrl = new URL(request.url);
       redirectUrl.pathname = `/${locale}/signin`;
-      redirectUrl.search = ""; // Clear any query params
+      // Preserve error parameter from NextAuth (e.g., expired magic link)
+      const errorParam = url.searchParams.get("error");
+      if (errorParam) {
+        redirectUrl.searchParams.set("error", errorParam);
+      }
       redirectUrl.hash = ""; // Clear any hash
       return NextResponse.redirect(redirectUrl);
     }
