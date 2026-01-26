@@ -164,7 +164,9 @@ export function CompleteMilestoneDialog({
         isPreview: true,
       });
 
-      if (result.status === "success" && result.impact) {
+      // Handle the preview result
+      if (result.impact) {
+        // If there are dependencies to complete, show confirmation
         if (
           result.impact.activeTestRuns > 0 ||
           result.impact.activeSessions > 0 ||
@@ -173,6 +175,7 @@ export function CompleteMilestoneDialog({
           setImpactData(result.impact);
           setShowConfirmation(true);
         } else {
+          // No dependencies, complete directly
           await handleForceComplete(data.completionDate);
         }
       } else if (result.status === "error") {
@@ -253,13 +256,13 @@ export function CompleteMilestoneDialog({
                     : t("milestones.dates.pickCompletionDate")}
                 </DialogTitle>
                 {showConfirmation && impactData && (
-                  <DialogDescription className="pt-2">
+                  <div className="pt-2 text-sm text-muted-foreground">
                     {/* Items being completed */}
                     {((completeTestRuns && impactData.activeTestRuns > 0) ||
                       (completeSessions && impactData.activeSessions > 0) ||
                       impactData.descendantMilestonesToComplete > 0) && (
                       <>
-                        {t("milestones.completeDialog.confirmDescription")}
+                        <p>{t("milestones.completeDialog.confirmDescription")}</p>
                         <ul className="list-disc pl-5 mt-2 text-sm">
                           {completeTestRuns && impactData.activeTestRuns > 0 && (
                             <li>
@@ -310,7 +313,7 @@ export function CompleteMilestoneDialog({
                         </ul>
                       </>
                     )}
-                  </DialogDescription>
+                  </div>
                 )}
               </DialogHeader>
 
