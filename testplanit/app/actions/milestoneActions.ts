@@ -121,7 +121,7 @@ export async function completeMilestoneCascade(
       // User explicitly selected a state
       completedTestRunStateId = testRunStateId;
     } else {
-      // Fallback to highest order DONE workflow (existing behavior)
+      // Fallback to lowest order DONE workflow (existing behavior)
       const doneRunWorkflow = await prisma.workflows.findFirst({
         where: {
           scope: "RUNS",
@@ -130,7 +130,7 @@ export async function completeMilestoneCascade(
           isDeleted: false,
           projects: { some: { projectId: projectId } },
         },
-        orderBy: { order: "desc" }, // Get the one with the highest order
+        orderBy: { order: "asc" }, // Get the one with the lowest order
         select: { id: true },
       });
       if (doneRunWorkflow) {
@@ -150,7 +150,7 @@ export async function completeMilestoneCascade(
       // User explicitly selected a state
       completedSessionStateId = sessionStateId;
     } else {
-      // Fallback to highest order DONE workflow (existing behavior)
+      // Fallback to lowest order DONE workflow (existing behavior)
       const doneSessionWorkflow = await prisma.workflows.findFirst({
         where: {
           scope: "SESSIONS",
@@ -159,7 +159,7 @@ export async function completeMilestoneCascade(
           isDeleted: false,
           projects: { some: { projectId: projectId } },
         },
-        orderBy: { order: "desc" }, // Get the one with the highest order
+        orderBy: { order: "asc" }, // Get the one with the lowest order
         select: { id: true },
       });
       if (doneSessionWorkflow) {

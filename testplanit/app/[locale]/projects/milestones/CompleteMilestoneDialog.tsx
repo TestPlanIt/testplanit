@@ -109,12 +109,16 @@ export function CompleteMilestoneDialog({
   useEffect(() => {
     if (runWorkflows && runWorkflows.length > 0) {
       setSelectedTestRunStateId(runWorkflows[0].id);
+    } else {
+      setSelectedTestRunStateId(null);
     }
   }, [runWorkflows]);
 
   useEffect(() => {
     if (sessionWorkflows && sessionWorkflows.length > 0) {
       setSelectedSessionStateId(sessionWorkflows[0].id);
+    } else {
+      setSelectedSessionStateId(null);
     }
   }, [sessionWorkflows]);
 
@@ -127,6 +131,10 @@ export function CompleteMilestoneDialog({
       });
       setShowConfirmation(false);
       setImpactData(null);
+      // Reset checkbox and state selection to defaults
+      setCompleteTestRuns(true);
+      setCompleteSessions(true);
+      // State IDs will be set by the workflow useEffects above
 
       // Fetch impact data when dialog opens to show checkboxes
       const fetchImpactData = async () => {
@@ -149,8 +157,13 @@ export function CompleteMilestoneDialog({
 
       fetchImpactData();
     } else if (!open) {
+      // Reset all state when dialog closes
       setShowConfirmation(false);
       setImpactData(null);
+      setCompleteTestRuns(true);
+      setCompleteSessions(true);
+      setSelectedTestRunStateId(null);
+      setSelectedSessionStateId(null);
     }
   }, [milestoneToComplete, form, open]);
 
