@@ -1,7 +1,7 @@
 import React from "react";
 import { SessionsWithDetails } from "./SessionDisplay";
 import { Button } from "@/components/ui/button";
-import { MoreVertical, CheckCircle, LinkIcon } from "lucide-react";
+import { MoreVertical, CheckCircle, LinkIcon, Pencil } from "lucide-react";
 import type { IconName } from "~/types/globals";
 import {
   DropdownMenu,
@@ -15,19 +15,22 @@ import TextFromJson from "@/components/TextFromJson";
 import { MemberList } from "@/components/MemberList";
 import { Link } from "~/lib/navigation";
 import { useParams } from "next/navigation";
+import { useRouter } from "~/lib/navigation";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { cn } from "~/utils";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
 import { useTranslations } from "next-intl";
 import { SessionResultsSummary } from "~/components/SessionResultsSummary";
-import { useFindManySessionResults } from "~/lib/hooks";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { ApplicationArea } from "@prisma/client";
 
 interface SessionItemProps {
   testSession: SessionsWithDetails;
   isCompleted: boolean;
   onComplete: (testSession: SessionsWithDetails) => void;
   canComplete: boolean;
+  canEdit?: boolean;
   isNew?: boolean;
   showMilestone?: boolean;
 }
@@ -37,21 +40,25 @@ const SessionItem: React.FC<SessionItemProps> = ({
   isCompleted,
   onComplete,
   canComplete,
+  canEdit,
   isNew,
   showMilestone = true,
 }) => {
   const { projectId } = useParams();
+  const router = useRouter();
   const t = useTranslations();
 
-  // Check if session has results to determine whether to display the summary
-  const { data: sessionResults } = useFindManySessionResults({
-    where: {
-      sessionId: testSession.id,
-      isDeleted: false,
-    },
-  });
+  // Fetch permissions
+  const numericProjectId = parseInt(projectId as string, 10);
+  const { permissions: sessionPermissions, isLoading: isLoadingPermissions } =
+    useProjectPermissions(numericProjectId, ApplicationArea.Sessions);
+  const canEditSession = canEdit ?? sessionPermissions?.canAddEdit ?? false;
 
-  const hasResults = sessionResults && sessionResults.length > 0;
+  // Determine if menu items should be shown
+  const showEditItem =
+    canEditSession && !testSession.isCompleted && !isLoadingPermissions;
+  const showCompleteItem = !testSession.isCompleted && canComplete;
+  const showMoreMenu = showEditItem || showCompleteItem;
 
   // Transform state data to match WorkflowStateDisplay expectations
   const workflowState = {
@@ -164,21 +171,35 @@ const SessionItem: React.FC<SessionItemProps> = ({
             </div>
           )}
         </div>
-        {!testSession.isCompleted && canComplete && (
+        {showMoreMenu && (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-7 w-7">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuGroup>
-                <DropdownMenuItem onSelect={() => onComplete(testSession)}>
-                  <div className="flex items-center">
-                    <CheckCircle className="w-5 h-5 mr-2" />
+                {showEditItem && (
+                  <DropdownMenuItem
+                    onClick={() =>
+                      router.push(
+                        `/projects/sessions/${projectId}/${testSession.id}?edit=true`
+                      )
+                    }
+                    data-testid={`session-edit-${testSession.id}`}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    {t("common.actions.edit")}
+                  </DropdownMenuItem>
+                )}
+
+                {showCompleteItem && (
+                  <DropdownMenuItem onSelect={() => onComplete(testSession)}>
+                    <CheckCircle className="mr-2 h-4 w-4" />
                     {t("sessions.actions.complete")}
-                  </div>
-                </DropdownMenuItem>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuGroup>
             </DropdownMenuContent>
           </DropdownMenu>
