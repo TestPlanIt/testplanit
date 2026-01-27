@@ -27,3 +27,18 @@ integration:
   label: Integration
   description: Posts about integrations with testing tools and frameworks
   permalink: /integration
+
+best-practices:
+  label: Best Practices
+  description: Testing best practices and proven methodologies
+  permalink: /best-practices
+
+thought-leadership:
+  label: Thought Leadership
+  description: Industry insights and perspectives on test management
+  permalink: /thought-leadership
+
+test-management:
+  label: Test Management
+  description: Posts about test case management strategies and approaches
+  permalink: /test-management
