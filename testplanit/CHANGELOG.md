@@ -1,3 +1,10 @@
+## [0.11.6](https://github.com/TestPlanIt/testplanit/compare/v0.11.5...v0.11.6) (2026-01-27)
+
+
+### Bug Fixes
+
+* add manual index sync for when the ehnahnced prisma client is bypassed ([b8e4354](https://github.com/TestPlanIt/testplanit/commit/b8e43543d316ffc8d1f7cd9a7139fb15980cc1db))
+
 ## [0.11.5](https://github.com/TestPlanIt/testplanit/compare/v0.11.4...v0.11.5) (2026-01-26)
 
 ## [0.11.4](https://github.com/TestPlanIt/testplanit/compare/v0.11.3...v0.11.4) (2026-01-26)
