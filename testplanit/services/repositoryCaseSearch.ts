@@ -173,6 +173,10 @@ function buildQuery(options: SearchOptions): any {
     }
   }
 
+  // Always exclude soft-deleted cases from search results
+  // (unless explicitly requested via filters)
+  filter.push({ term: { isDeleted: false } });
+
   // Build final query
   const query = {
     bool: {

@@ -56,6 +56,7 @@ export async function buildRepositoryCaseDocument(
       creator: true,
       tags: true,
       steps: {
+        where: { isDeleted: false },
         orderBy: { order: "asc" },
         include: {
           sharedStepGroup: {
@@ -148,15 +149,10 @@ export async function buildRepositoryCaseDocument(
         value: cfv.value,
       }))
     )
+      // Filter out empty values but preserve all field metadata
       .filter(
         (cf) => cf.value !== null && cf.value !== undefined && cf.value !== ""
-      )
-      .map((cf) => ({
-        fieldId: cf.fieldId,
-        fieldName: cf.fieldName,
-        fieldType: cf.fieldType,
-        value: cf.value || "", // Ensure value is always present
-      })),
+      ),
     steps: repoCase.steps.flatMap((step): any[] => {
       // If this is a shared step, expand all items from the group
       if (step.sharedStepGroupId && step.sharedStepGroup) {

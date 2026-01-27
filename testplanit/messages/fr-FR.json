@@ -2881,6 +2881,11 @@
       },
       "delete": {
         "title": "Supprimer l'utilisateur"
+      },
+      "restore": {
+        "title": "Restaurer un utilisateur supprimé",
+        "description": "Un utilisateur supprimé dont l'adresse e-mail est {email} a été trouvé. Souhaitez-vous restaurer cet utilisateur ?",
+        "confirm": "Restaurer l'utilisateur"
       }
     },
     "apiTokens": {

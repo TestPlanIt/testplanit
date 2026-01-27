@@ -33,7 +33,7 @@ export function EditAvatarModal({ user }: EditAvatarModalProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const queryClient = useQueryClient();
   const t = useTranslations("users.avatar");
   const tCommon = useTranslations("common");
@@ -71,6 +71,9 @@ export function EditAvatarModal({ user }: EditAvatarModalProps) {
 
       setOpen(false);
       setIsSubmitting(false);
+
+      // Update the session to reflect the new avatar
+      await updateSession();
 
       // Refetch all queries to refresh UI with new avatar
       queryClient.refetchQueries();

@@ -7,10 +7,10 @@ const createPrismaClient = () => {
     log:
       env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   });
-  
+
   // Note: Middleware functionality has been moved to client extensions
   // or should be handled at the application layer
-  
+
   return client;
 };
 

@@ -2881,6 +2881,11 @@
       },
       "delete": {
         "title": "Eliminar usuario"
+      },
+      "restore": {
+        "title": "Restaurar usuario eliminado",
+        "description": "Se encontró un usuario eliminado con la dirección de correo electrónico {email} . ¿Desea restaurarlo?",
+        "confirm": "Restaurar usuario"
       }
     },
     "apiTokens": {

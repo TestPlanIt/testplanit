@@ -134,6 +134,135 @@ test.describe("User Profile Management", () => {
     await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
   });
 
+  test("Name and avatar updates appear immediately in Header and UserDropdownMenu", async ({ page, adminUserId }) => {
+    /**
+     * This test verifies the bug fix where updating a user's name or avatar
+     * should immediately reflect in session-dependent components like:
+     * - The Header's UserDropdownMenu
+     * - Avatar component showing initials
+     *
+     * This ensures the session is properly refreshed after updates.
+     */
+    const newName = `Test User ${Date.now()}`;
+
+    // Navigate to profile page
+    await page.goto(`/en-US/users/profile/${adminUserId}`);
+    await page.waitForLoadState("networkidle");
+
+    // Get the original name from the user menu BEFORE making changes
+    const userMenuTrigger = page.getByTestId("user-menu-trigger");
+    await userMenuTrigger.click();
+
+    const userMenuContent = page.getByTestId("user-menu-content");
+    await expect(userMenuContent).toBeVisible();
+
+    // Close the menu
+    await page.keyboard.press("Escape");
+    await expect(userMenuContent).not.toBeVisible();
+
+    // Enter edit mode
+    const editButton = page.getByRole("button", { name: /edit/i });
+    await editButton.click();
+
+    const submitButton = page.getByTestId("profile-submit-button");
+    await expect(submitButton).toBeVisible();
+
+    // Update name
+    const nameInput = page.getByTestId("profile-name-input");
+    const originalName = await nameInput.inputValue();
+    await nameInput.clear();
+    await nameInput.fill(newName);
+
+    // Wait for form validation
+    await page.waitForTimeout(500);
+
+    // Save changes
+    await expect(submitButton).toBeEnabled();
+    await submitButton.click();
+    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
+
+    // CRITICAL: Verify name updated in the Header's UserDropdownMenu
+    // This is the key test that would have caught the original bug
+    await userMenuTrigger.click();
+    await expect(userMenuContent).toBeVisible();
+
+    // Verify the updated name appears in the user menu
+    await expect(userMenuContent.getByText(newName)).toBeVisible({ timeout: 5000 });
+
+    // Close the menu
+    await page.keyboard.press("Escape");
+    await expect(userMenuContent).not.toBeVisible();
+
+    // Verify name also updated on the profile page itself
+    await expect(page.getByText(newName).first()).toBeVisible();
+
+    // Revert the name back to original
+    await editButton.click();
+    const submitButtonRevert = page.getByTestId("profile-submit-button");
+    await expect(submitButtonRevert).toBeVisible();
+
+    const nameInputRevert = page.getByTestId("profile-name-input");
+    await nameInputRevert.clear();
+    await nameInputRevert.fill(originalName);
+    await page.waitForTimeout(500);
+
+    await expect(submitButtonRevert).toBeEnabled({ timeout: 5000 });
+    await submitButtonRevert.click();
+    await expect(page.getByRole("button", { name: /edit/i })).toBeVisible({ timeout: 10000 });
+
+    // Verify reverted name appears in user menu
+    await userMenuTrigger.click();
+    await expect(userMenuContent).toBeVisible();
+    await expect(userMenuContent.getByText(originalName)).toBeVisible({ timeout: 5000 });
+    await page.keyboard.press("Escape");
+  });
+
+  test("Avatar removal updates immediately in Header", async ({ page, adminUserId, api }) => {
+    /**
+     * This test verifies that removing a user's avatar immediately updates
+     * the Header's UserDropdownMenu to show initials instead of the image.
+     *
+     * This ensures updateSession() is called after avatar removal.
+     */
+
+    // First, ensure the user has an avatar by uploading one
+    // We'll use a simple data URL for a 1x1 transparent PNG
+    const testAvatarUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
+    // Update user with an avatar via API
+    await api.updateUser({ userId: adminUserId, data: { image: testAvatarUrl } });
+
+    // Navigate to profile page
+    await page.goto(`/en-US/users/profile/${adminUserId}`);
+    await page.waitForLoadState("networkidle");
+
+    // Verify avatar image exists in the header (before removal)
+    const userMenuTrigger = page.getByTestId("user-menu-trigger");
+    const avatarImage = userMenuTrigger.locator('img');
+    await expect(avatarImage).toBeVisible();
+
+    // Find and click the remove avatar button (X button on the avatar)
+    const removeAvatarButton = page.locator('#remove-avatar');
+    if (await removeAvatarButton.isVisible()) {
+      await removeAvatarButton.click();
+
+      // Confirm removal in the popover
+      const deleteButton = page.getByRole("button", { name: /delete/i });
+      await expect(deleteButton).toBeVisible({ timeout: 5000 });
+      await deleteButton.click();
+
+      // Wait for the removal to complete
+      await page.waitForTimeout(1000);
+
+      // CRITICAL: Verify the avatar in the Header now shows initials (no image)
+      // When there's no image, the Avatar component renders a div with initials instead of an img
+      await expect(avatarImage).not.toBeVisible({ timeout: 5000 });
+
+      // Verify initials are shown instead (the avatar should still be clickable)
+      await expect(userMenuTrigger).toBeVisible();
+    }
+  });
+
   test("User can change theme preference", async ({ page, adminUserId }) => {
     // Navigate directly to admin user's profile page (faster and more reliable)
     await page.goto(`/en-US/users/profile/${adminUserId}`);
@@ -652,6 +781,224 @@ test.describe("User Profile Management", () => {
 
       // Verify French content (Profile = "Profil" in French)
       await expect(page.getByText(/profil/i).first()).toBeVisible({ timeout: 10000 });
+    } finally {
+      // Cleanup - delete test user
+      await api.deleteUser(userId);
+    }
+  });
+});
+
+test.describe("User Profile Access Control", () => {
+  /**
+   * These tests verify the bug fix where users with NONE access
+   * should be able to view their own profile but not other users' profiles.
+   * When attempting to view a profile they don't have access to, they should
+   * be redirected to a 404 page instead of seeing a blank page.
+   */
+
+  test("User with NONE access can view their own profile", async ({ page, api, context }) => {
+    // Create a test user with NONE access
+    const timestamp = Date.now();
+    const testEmail = `none-access-test-${timestamp}@example.com`;
+    const testPassword = "Password123!";
+
+    const userResult = await api.createUser({
+      name: "None Access Test User",
+      email: testEmail,
+      password: testPassword,
+      access: "NONE",
+    });
+    const userId = userResult.data.id;
+
+    try {
+      // Login as test user with NONE access
+      await context.clearCookies();
+      await page.goto("/en-US/signin");
+      await page.waitForLoadState("networkidle");
+
+      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
+      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
+      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
+
+      await emailInput.fill(testEmail);
+      await passwordInput.fill(testPassword);
+      await submitButton.click();
+      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+
+      // Navigate to own profile
+      await page.goto(`/en-US/users/profile/${userId}`);
+      await page.waitForLoadState("networkidle");
+
+      // Verify we can see the profile page (not a blank page or 404)
+      // Check for the Edit button which appears on the user's own profile
+      await expect(page.getByRole("button", { name: /edit profile|edit/i })).toBeVisible({ timeout: 5000 });
+
+      // Verify we can see the user's name
+      await expect(page.getByText("None Access Test User").first()).toBeVisible();
+
+      // Verify we can see the email
+      await expect(page.getByText(testEmail)).toBeVisible();
+    } finally {
+      // Cleanup - delete test user
+      await api.deleteUser(userId);
+    }
+  });
+
+  test("User with NONE access cannot view other users' profiles and gets 404", async ({ page, api, context, adminUserId }) => {
+    // Create a test user with NONE access
+    const timestamp = Date.now();
+    const testEmail = `none-access-other-${timestamp}@example.com`;
+    const testPassword = "Password123!";
+
+    const userResult = await api.createUser({
+      name: "None Access Other Test User",
+      email: testEmail,
+      password: testPassword,
+      access: "NONE",
+    });
+    const userId = userResult.data.id;
+
+    try {
+      // Login as test user with NONE access
+      await context.clearCookies();
+      await page.goto("/en-US/signin");
+      await page.waitForLoadState("networkidle");
+
+      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
+      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
+      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
+
+      await emailInput.fill(testEmail);
+      await passwordInput.fill(testPassword);
+      await submitButton.click();
+      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+
+      // Attempt to navigate to admin user's profile (a different user)
+      await page.goto(`/en-US/users/profile/${adminUserId}`);
+      await page.waitForLoadState("networkidle");
+
+      // Verify we're redirected to 404 page
+      await expect(page).toHaveURL(/\/404/, { timeout: 5000 });
+
+      // Verify 404 content is displayed - use heading role to avoid matching multiple elements
+      await expect(page.getByRole("heading", { name: "404" })).toBeVisible({ timeout: 5000 });
+
+      // Verify we DON'T see the admin profile content
+      await expect(page.getByRole("button", { name: /edit profile|edit/i })).not.toBeVisible();
+    } finally {
+      // Cleanup - delete test user
+      await api.deleteUser(userId);
+    }
+  });
+
+  test("User with NONE access can edit their own profile", async ({ page, api, context }) => {
+    // Create a test user with NONE access
+    const timestamp = Date.now();
+    const testEmail = `none-edit-test-${timestamp}@example.com`;
+    const testPassword = "Password123!";
+
+    const userResult = await api.createUser({
+      name: "None Edit Test User",
+      email: testEmail,
+      password: testPassword,
+      access: "NONE",
+    });
+    const userId = userResult.data.id;
+
+    try {
+      // Login as test user with NONE access
+      await context.clearCookies();
+      await page.goto("/en-US/signin");
+      await page.waitForLoadState("networkidle");
+
+      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
+      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
+      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
+
+      await emailInput.fill(testEmail);
+      await passwordInput.fill(testPassword);
+      await submitButton.click();
+      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+
+      // Navigate to own profile
+      await page.goto(`/en-US/users/profile/${userId}`);
+      await page.waitForLoadState("networkidle");
+
+      // Click edit button - use more specific selector to avoid matching user menu buttons
+      const editButton = page.getByRole("button", { name: "Edit Profile" });
+      await expect(editButton).toBeVisible();
+      await editButton.click();
+
+      // Verify we can see the edit form
+      const profileSubmitButton = page.getByTestId("profile-submit-button");
+      await expect(profileSubmitButton).toBeVisible();
+
+      // Update name
+      const newName = `Updated None User ${timestamp}`;
+      const nameInput = page.getByTestId("profile-name-input");
+      await nameInput.clear();
+      await nameInput.fill(newName);
+
+      // Wait for form validation
+      await page.waitForTimeout(500);
+
+      // Save changes
+      await expect(profileSubmitButton).toBeEnabled();
+      await profileSubmitButton.click();
+
+      // Wait for save to complete
+      await expect(page.getByRole("button", { name: /edit profile|edit/i })).toBeVisible({ timeout: 10000 });
+
+      // Verify name was updated
+      await expect(page.getByText(newName).first()).toBeVisible();
+    } finally {
+      // Cleanup - delete test user
+      await api.deleteUser(userId);
+    }
+  });
+
+  test("User with USER access can view other users' profiles", async ({ page, api, context, adminUserId }) => {
+    // Create a test user with USER access (to verify non-NONE users can still view other profiles)
+    const timestamp = Date.now();
+    const testEmail = `user-access-test-${timestamp}@example.com`;
+    const testPassword = "Password123!";
+
+    const userResult = await api.createUser({
+      name: "User Access Test User",
+      email: testEmail,
+      password: testPassword,
+      access: "USER",
+    });
+    const userId = userResult.data.id;
+
+    try {
+      // Login as test user with USER access
+      await context.clearCookies();
+      await page.goto("/en-US/signin");
+      await page.waitForLoadState("networkidle");
+
+      const emailInput = page.locator('input[type="email"], [data-testid="email-input"]').first();
+      const passwordInput = page.locator('input[type="password"], [data-testid="password-input"]').first();
+      const submitButton = page.locator('button[type="submit"], [data-testid="signin-button"]').first();
+
+      await emailInput.fill(testEmail);
+      await passwordInput.fill(testPassword);
+      await submitButton.click();
+      await page.waitForURL(/\/en-US\/?$/, { timeout: 10000 });
+
+      // Navigate to admin user's profile (a different user)
+      await page.goto(`/en-US/users/profile/${adminUserId}`);
+      await page.waitForLoadState("networkidle");
+
+      // Verify we can see the admin's profile (NOT redirected to 404)
+      await expect(page).toHaveURL(new RegExp(`/en-US/users/profile/${adminUserId}`), { timeout: 5000 });
+
+      // Verify we see profile content (user's info)
+      // We should see something - not a blank page or 404
+      await expect(page.locator('body')).not.toBeEmpty();
+
+      // We shouldn't see 404 heading - use specific heading selector
+      await expect(page.getByRole("heading", { name: "404" })).not.toBeVisible();
     } finally {
       // Cleanup - delete test user
       await api.deleteUser(userId);

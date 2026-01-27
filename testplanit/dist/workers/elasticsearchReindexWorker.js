@@ -302,6 +302,44 @@ async function createRepositoryCaseIndex(prismaClient2, tenantId) {
 }
 
 // services/elasticsearchIndexing.ts
+function buildCustomFieldSearchableText(customFields) {
+  if (!customFields || customFields.length === 0) return "";
+  return customFields.map((cf) => {
+    switch (cf.fieldType) {
+      case "Select":
+      case "Dropdown":
+        return cf.fieldOption?.name || "";
+      case "Multi-Select":
+        if (cf.valueArray && cf.fieldOptions) {
+          return cf.fieldOptions.filter((opt) => cf.valueArray?.includes(opt.id.toString()) || cf.valueArray?.includes(opt.id)).map((opt) => opt.name).join(" ");
+        }
+        return "";
+      case "Checkbox":
+        return cf.valueBoolean ? cf.fieldName : "";
+      case "Number":
+      case "Integer":
+        return cf.valueNumeric !== null && cf.valueNumeric !== void 0 ? cf.valueNumeric.toString() : "";
+      case "Text String":
+      case "Text Long":
+      case "Link":
+        return cf.value || cf.valueKeyword || "";
+      case "Date":
+        return cf.valueDate || "";
+      default:
+        return typeof cf.value === "string" ? cf.value : "";
+    }
+  }).filter(Boolean).join(" ");
+}
+function buildStepsSearchableText(steps) {
+  if (!steps || steps.length === 0) return "";
+  return steps.map((step) => {
+    return [
+      step.step,
+      step.expectedResult,
+      step.sharedStepGroupName
+    ].filter(Boolean).join(" ");
+  }).filter(Boolean).join(" ");
+}
 async function bulkIndexRepositoryCases(cases, tenantId) {
   const client = getElasticsearchClient();
   if (!client || cases.length === 0) return false;
@@ -312,11 +350,8 @@ async function bulkIndexRepositoryCases(cases, tenantId) {
         caseData.name,
         caseData.className,
         caseData.tags?.map((t) => t.name).join(" "),
-        caseData.steps?.map((s) => {
-          const stepContent = `${s.step} ${s.expectedResult}`;
-          return s.isSharedStep && s.sharedStepGroupName ? `${stepContent} ${s.sharedStepGroupName}` : stepContent;
-        }).join(" "),
-        caseData.customFields?.map((cf) => cf.value).join(" ")
+        buildCustomFieldSearchableText(caseData.customFields),
+        buildStepsSearchableText(caseData.steps)
       ].filter(Boolean).join(" ");
       return [
         {
@@ -906,6 +941,7 @@ async function buildRepositoryCaseDocument(caseId, prismaClient2) {
       creator: true,
       tags: true,
       steps: {
+        where: { isDeleted: false },
         orderBy: { order: "asc" },
         include: {
           sharedStepGroup: {
@@ -991,13 +1027,7 @@ async function buildRepositoryCaseDocument(caseId, prismaClient2) {
       }))
     ).filter(
       (cf) => cf.value !== null && cf.value !== void 0 && cf.value !== ""
-    ).map((cf) => ({
-      fieldId: cf.fieldId,
-      fieldName: cf.fieldName,
-      fieldType: cf.fieldType,
-      value: cf.value || ""
-      // Ensure value is always present
-    })),
+    ),
     steps: repoCase.steps.flatMap((step) => {
       if (step.sharedStepGroupId && step.sharedStepGroup) {
         return step.sharedStepGroup.items.map((item, index) => ({

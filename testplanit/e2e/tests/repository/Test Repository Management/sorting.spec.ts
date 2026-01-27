@@ -22,7 +22,9 @@ test.describe("Sorting", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}`);
+    // Add random suffix to prevent name collisions in parallel execution
+    const random = Math.random().toString(36).substring(7);
+    return await api.createProject(`E2E Test Project ${Date.now()}-${random}`);
   }
 
   /**
@@ -199,15 +201,19 @@ test.describe("Sorting", () => {
     const projectId = await getTestProjectId(api);
 
     // Create a folder with test cases in specific order
-    const folderName = `Maintain Order Folder ${Date.now()}`;
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+    const folderName = `Maintain Order Folder ${timestamp}-${random}`;
     const folderId = await api.createFolder(projectId, folderName);
-    await api.createTestCase(projectId, folderId, `First Case ${Date.now()}`);
-    await api.createTestCase(projectId, folderId, `Second Case ${Date.now()}`);
-    await api.createTestCase(projectId, folderId, `Third Case ${Date.now()}`);
+    await api.createTestCase(projectId, folderId, `First Case ${timestamp}-${random}`);
+    await api.createTestCase(projectId, folderId, `Second Case ${timestamp}-${random}`);
+    await api.createTestCase(projectId, folderId, `Third Case ${timestamp}-${random}`);
 
     await repositoryPage.goto(projectId);
 
     await repositoryPage.selectFolder(folderId);
+    // Wait for URL to reflect folder selection to ensure we're viewing the right folder
+    await expect(page).toHaveURL(new RegExp(`node=${folderId}`), { timeout: 10000 });
     await page.waitForLoadState("networkidle");
 
     // Verify the table is visible
@@ -224,6 +230,8 @@ test.describe("Sorting", () => {
     await page.reload();
     await repositoryPage.waitForRepositoryLoad();
     await repositoryPage.selectFolder(folderId);
+    // Wait for URL to reflect folder selection again
+    await expect(page).toHaveURL(new RegExp(`node=${folderId}`), { timeout: 10000 });
     await page.waitForLoadState("networkidle");
 
     // Verify order is maintained (same number of rows)
@@ -910,7 +918,9 @@ test.describe("Sorting with ViewSelector Filters", () => {
   async function getTestProjectId(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    return await api.createProject(`E2E ViewSort Project ${Date.now()}`);
+    // Add random suffix to prevent name collisions in parallel execution
+    const random = Math.random().toString(36).substring(7);
+    return await api.createProject(`E2E ViewSort Project ${Date.now()}-${random}`);
   }
 
   async function waitForTableStable(page: import("@playwright/test").Page) {
@@ -1261,14 +1271,17 @@ test.describe("Run Mode Sorting", () => {
   async function createTestProjectWithTestRun(
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<{ projectId: number; testRunId: number; folderId: number; caseIds: number[] }> {
-    const projectId = await api.createProject(`E2E Run Mode Project ${Date.now()}`);
+    // Add random suffix to prevent name collisions in parallel execution
+    const random = Math.random().toString(36).substring(7);
+    const projectId = await api.createProject(`E2E Run Mode Project ${Date.now()}-${random}`);
     const folderId = await api.getRootFolderId(projectId);
 
     // Create test cases with alphabetically sortable names
     const caseIds: number[] = [];
+    const timestamp = Date.now();
     const names = ["Charlie Case", "Alpha Case", "Bravo Case"];
     for (const name of names) {
-      const caseId = await api.createTestCase(projectId, folderId, `${name} ${Date.now()}`);
+      const caseId = await api.createTestCase(projectId, folderId, `${name} ${timestamp}-${random}`);
       caseIds.push(caseId);
     }
 
@@ -1399,13 +1412,15 @@ test.describe("Run Mode Sorting", () => {
   });
 
   test("Sort with Status Set on Test Run Cases", async ({ api, page }) => {
-    const projectId = await api.createProject(`E2E Run Mode Status Project ${Date.now()}`);
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+    const projectId = await api.createProject(`E2E Run Mode Status Project ${timestamp}-${random}`);
     const folderId = await api.getRootFolderId(projectId);
 
     // Create test cases
-    const caseId1 = await api.createTestCase(projectId, folderId, `Alpha Case ${Date.now()}`);
-    const caseId2 = await api.createTestCase(projectId, folderId, `Beta Case ${Date.now()}`);
-    const caseId3 = await api.createTestCase(projectId, folderId, `Charlie Case ${Date.now()}`);
+    const caseId1 = await api.createTestCase(projectId, folderId, `Alpha Case ${timestamp}-${random}`);
+    const caseId2 = await api.createTestCase(projectId, folderId, `Beta Case ${timestamp}-${random}`);
+    const caseId3 = await api.createTestCase(projectId, folderId, `Charlie Case ${timestamp}-${random}`);
 
     // Create a test run
     const testRunId = await api.createTestRun(projectId, `Status Test Run ${Date.now()}`);

@@ -630,6 +630,7 @@ export function UnifiedSearch({
                   key={`${hit.entityType}-${hit.id}`}
                   hit={hit}
                   onClick={() => onResultClick?.(hit)}
+                  searchQuery={query}
                 />
               ))
             )}
@@ -645,6 +646,7 @@ export function UnifiedSearch({
               key={`${hit.entityType}-${hit.id}`}
               hit={hit}
               onClick={() => onResultClick?.(hit)}
+              searchQuery={query}
             />
           ))}
         </div>
@@ -693,16 +695,10 @@ export function UnifiedSearch({
               <SheetContent side="right" className="w-[320px]">
                 <SheetHeader>
                   <SheetTitle>
-                    {t("search.entityTypes.repositoryCase").replace(
-                      "Repository Cases",
-                      "Select Entity Types"
-                    )}
+                    {t("search.title")}
                   </SheetTitle>
                   <SheetDescription className="sr-only">
-                    {t("search.entityTypes.repositoryCase").replace(
-                      "Repository Cases",
-                      "Select Entity Types"
-                    )}
+                    {t("search.title")}
                   </SheetDescription>
                 </SheetHeader>
                 <div className="mt-6">
@@ -916,9 +912,11 @@ export function UnifiedSearch({
 function SearchResultCard({
   hit,
   onClick,
+  searchQuery,
 }: {
   hit: SearchHit;
   onClick?: () => void;
+  searchQuery?: string;
 }) {
   const t = useTranslations();
   const Icon = getEntityIcon(hit.entityType);
@@ -1011,7 +1009,88 @@ function SearchResultCard({
               ]}
             />
             {hit.source.customFields && hit.source.customFields.length > 0 && (
-              <CustomFieldDisplay customFields={hit.source.customFields} />
+              <div className="mt-2">
+                <CustomFieldDisplay customFields={hit.source.customFields} />
+              </div>
+            )}
+            {hit.source.steps && hit.source.steps.length > 0 && (
+              <div className="mt-3">
+                <div className="text-xs font-medium text-muted-foreground mb-1.5">
+                  {t("common.fields.steps")}
+                  {":"}
+                </div>
+                <div className="space-y-1.5 text-sm text-muted-foreground">
+                  {(() => {
+                    // Check if there are step highlights from Elasticsearch
+                    const hasStepHighlights = (hit.highlights?.['steps.step']?.length || 0) > 0 ||
+                                             (hit.highlights?.['steps.expectedResult']?.length || 0) > 0;
+
+                    // Helper function to highlight search terms in text
+                    const highlightText = (text: string): string => {
+                      if (!text || !searchQuery || !hasStepHighlights) return text;
+
+                      // Escape special regex characters in the query
+                      const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                      // Create a case-insensitive regex
+                      const regex = new RegExp(`(${escapedQuery})`, 'gi');
+                      // Replace matches with <mark> tags
+                      return text.replace(regex, '<mark>$1</mark>');
+                    };
+
+                    return hit.source.steps.slice(0, 3).map((step: any, index: number) => {
+                      // Check if this step contains the search term
+                      const stepText = step.step?.toLowerCase() || '';
+                      const expectedResultText = step.expectedResult?.toLowerCase() || '';
+                      const searchTerm = searchQuery?.toLowerCase() || '';
+                      const isMatchingStep = hasStepHighlights && (
+                        stepText.includes(searchTerm) ||
+                        expectedResultText.includes(searchTerm)
+                      );
+
+                      return (
+                        <div
+                          key={step.id || index}
+                          className={cn(
+                            "flex gap-2 rounded px-2 py-1",
+                            isMatchingStep && "bg-yellow-50 dark:bg-yellow-900/20 border-l-2 border-yellow-400"
+                          )}
+                        >
+                          <span className="font-medium shrink-0">
+                            {index + 1}
+                            {"."}
+                          </span>
+                          <div className="min-w-0">
+                            {step.step && (
+                              <div className="truncate">
+                                {hasStepHighlights ? (
+                                  <span dangerouslySetInnerHTML={{ __html: highlightText(step.step) }} />
+                                ) : (
+                                  step.step
+                                )}
+                              </div>
+                            )}
+                            {step.expectedResult && (
+                              <div className="text-xs italic truncate">
+                                {"→ "}{hasStepHighlights ? (
+                                  <span dangerouslySetInnerHTML={{ __html: highlightText(step.expectedResult) }} />
+                                ) : (
+                                  step.expectedResult
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                  {hit.source.steps.length > 3 && (
+                    <div className="text-xs">
+                      {"+"}
+                      {hit.source.steps.length - 3} {t("common.ui.breadcrumb.more")}
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </>
         );
@@ -1232,7 +1311,9 @@ function SearchResultCard({
                 ),
                 hit.source.parentName && (
                   <MetadataItem>
-                    {t("common.ui.search.parent")}: {hit.source.parentName}
+                    {t("common.ui.search.parent")}
+                    {": "}
+                    {hit.source.parentName}
                   </MetadataItem>
                 ),
               ]}
@@ -1247,7 +1328,7 @@ function SearchResultCard({
                   />
                 ),
                 hit.source.dueDate && (
-                  <DateDisplay date={hit.source.dueDate} label="Due" />
+                  <DateDisplay date={hit.source.dueDate} label={t("milestones.fields.dueDate")} />
                 ),
               ]}
             />
@@ -1354,10 +1435,13 @@ function SearchResultCard({
 
           {renderEntitySpecificInfo()}
 
-          <SearchHighlight
-            highlights={hit.highlights}
-            field="searchableContent"
-          />
+          {/* Only show searchableContent highlights if there are no step-specific matches to avoid redundancy */}
+          {!hit.highlights?.['steps.step'] && !hit.highlights?.['steps.expectedResult'] && (
+            <SearchHighlight
+              highlights={hit.highlights}
+              field="searchableContent"
+            />
+          )}
         </div>
       </div>
     </Card>

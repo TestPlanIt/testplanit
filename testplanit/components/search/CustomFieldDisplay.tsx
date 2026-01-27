@@ -43,26 +43,40 @@ export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({
     switch (field.fieldType) {
       case "Checkbox":
         return field.valueBoolean ? (
-          <Badge variant="secondary" className="text-xs">
-            {field.fieldName}
-            {": ✓"}
-          </Badge>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground">
+              {field.fieldName}:
+            </span>
+            <Badge variant="secondary" className="text-xs">
+              {"✓"}
+            </Badge>
+          </div>
         ) : null;
 
       case "Date":
         return field.valueDate ? (
-          <Badge variant="outline" className="text-xs">
-            {field.fieldName}: <DateFormatter date={field.valueDate} />
-          </Badge>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground">
+              {field.fieldName}:
+            </span>
+            <Badge variant="outline" className="text-xs">
+              <DateFormatter date={field.valueDate} />
+            </Badge>
+          </div>
         ) : null;
 
       case "Number":
       case "Integer":
         return field.valueNumeric !== null &&
           field.valueNumeric !== undefined ? (
-          <Badge variant="outline" className="text-xs">
-            {field.fieldName}: {field.valueNumeric}
-          </Badge>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground">
+              {field.fieldName}:
+            </span>
+            <Badge variant="outline" className="text-xs">
+              {field.valueNumeric}
+            </Badge>
+          </div>
         ) : null;
 
       case "Multi-Select":
@@ -102,36 +116,42 @@ export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({
       case "Dropdown":
         if (field.fieldOption) {
           return (
-            <Badge variant="secondary" className="text-xs">
-              <span className="text-muted-foreground mr-1">
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground">
                 {field.fieldName}:
               </span>
-              {field.fieldOption.icon && (
-                <DynamicIcon
-                  name={field.fieldOption.icon.name as IconName}
-                  className="h-3 w-3 mr-1"
-                  color={field.fieldOption.iconColor?.value}
-                />
-              )}
-              {field.fieldOption.name}
-            </Badge>
+              <Badge variant="secondary" className="text-xs">
+                {field.fieldOption.icon && (
+                  <DynamicIcon
+                    name={field.fieldOption.icon.name as IconName}
+                    className="h-3 w-3 mr-1"
+                    color={field.fieldOption.iconColor?.value}
+                  />
+                )}
+                {field.fieldOption.name}
+              </Badge>
+            </div>
           );
         }
         return null;
 
       case "Link":
         return field.value ? (
-          <Badge variant="outline" className="text-xs">
-            {field.fieldName}:{" "}
-            <a
-              href={field.value}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline"
-            >
-              {field.value}
-            </a>
-          </Badge>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground">
+              {field.fieldName}:
+            </span>
+            <Badge variant="outline" className="text-xs">
+              <a
+                href={field.value}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+              >
+                {field.value}
+              </a>
+            </Badge>
+          </div>
         ) : null;
 
       case "Text String":
@@ -142,9 +162,14 @@ export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({
 
       default:
         return field.value ? (
-          <Badge variant="outline" className="text-xs">
-            {field.fieldName}: {field.value}
-          </Badge>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground">
+              {field.fieldName}:
+            </span>
+            <Badge variant="outline" className="text-xs">
+              {field.value}
+            </Badge>
+          </div>
         ) : null;
     }
   };
@@ -159,7 +184,7 @@ export const CustomFieldDisplay: React.FC<CustomFieldDisplayProps> = ({
   }
 
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex flex-wrap gap-4">
       {validFields.map(({ field, element, index }) => (
         <React.Fragment key={field.fieldId || index}>{element}</React.Fragment>
       ))}

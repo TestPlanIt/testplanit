@@ -50,7 +50,8 @@ describe("CustomFieldDisplay Component", () => {
     ];
 
     render(<CustomFieldDisplay customFields={customFields} />);
-    expect(screen.getByText("Is Automated: ✓")).toBeInTheDocument();
+    expect(screen.getByText("Is Automated:")).toBeInTheDocument();
+    expect(screen.getByText("✓")).toBeInTheDocument();
   });
 
   it("should not render checkbox field when false", () => {
@@ -95,7 +96,8 @@ describe("CustomFieldDisplay Component", () => {
     ];
 
     render(<CustomFieldDisplay customFields={customFields} />);
-    expect(screen.getByText("Priority: 5")).toBeInTheDocument();
+    expect(screen.getByText("Priority:")).toBeInTheDocument();
+    expect(screen.getByText("5")).toBeInTheDocument();
   });
 
   it("should render integer field", () => {
@@ -109,7 +111,8 @@ describe("CustomFieldDisplay Component", () => {
     ];
 
     render(<CustomFieldDisplay customFields={customFields} />);
-    expect(screen.getByText("Count: 10")).toBeInTheDocument();
+    expect(screen.getByText("Count:")).toBeInTheDocument();
+    expect(screen.getByText("10")).toBeInTheDocument();
   });
 
   it("should render multi-select field with options", () => {
@@ -223,7 +226,8 @@ describe("CustomFieldDisplay Component", () => {
     ];
 
     render(<CustomFieldDisplay customFields={customFields} />);
-    expect(screen.getByText("Custom Type: Custom Value")).toBeInTheDocument();
+    expect(screen.getByText("Custom Type:")).toBeInTheDocument();
+    expect(screen.getByText("Custom Value")).toBeInTheDocument();
   });
 
   it("should skip fields with null or empty values", () => {
@@ -258,7 +262,8 @@ describe("CustomFieldDisplay Component", () => {
     expect(screen.queryByText("Field1:")).not.toBeInTheDocument();
     expect(screen.queryByText("Field2:")).not.toBeInTheDocument();
     expect(screen.queryByText("Field3:")).not.toBeInTheDocument();
-    expect(screen.getByText("Field4: Valid Value")).toBeInTheDocument();
+    expect(screen.getByText("Field4:")).toBeInTheDocument();
+    expect(screen.getByText("Valid Value")).toBeInTheDocument();
   });
 
   it("should respect maxItems limit", () => {
@@ -290,10 +295,14 @@ describe("CustomFieldDisplay Component", () => {
     ];
 
     render(<CustomFieldDisplay customFields={customFields} maxItems={2} />);
-    expect(screen.getByText("Field1: Value1")).toBeInTheDocument();
-    expect(screen.getByText("Field2: Value2")).toBeInTheDocument();
-    expect(screen.queryByText("Field3: Value3")).not.toBeInTheDocument();
-    expect(screen.queryByText("Field4: Value4")).not.toBeInTheDocument();
+    expect(screen.getByText("Field1:")).toBeInTheDocument();
+    expect(screen.getByText("Value1")).toBeInTheDocument();
+    expect(screen.getByText("Field2:")).toBeInTheDocument();
+    expect(screen.getByText("Value2")).toBeInTheDocument();
+    expect(screen.queryByText("Field3:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Value3")).not.toBeInTheDocument();
+    expect(screen.queryByText("Field4:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Value4")).not.toBeInTheDocument();
   });
 
   it("should handle multi-select with no matching options", () => {
@@ -351,6 +360,7 @@ describe("CustomFieldDisplay Component", () => {
     ];
 
     render(<CustomFieldDisplay customFields={customFields} />);
-    expect(screen.getByText("Count: 0")).toBeInTheDocument();
+    expect(screen.getByText("Count:")).toBeInTheDocument();
+    expect(screen.getByText("0")).toBeInTheDocument();
   });
 });

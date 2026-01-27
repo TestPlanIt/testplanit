@@ -17,7 +17,9 @@ test.describe("Permissions", () => {
     api: import("../../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
     // Create a project for this test - tests should be self-contained
-    return await api.createProject(`E2E Test Project ${Date.now()}`);
+    // Add random suffix to prevent name collisions in parallel execution
+    const random = Math.random().toString(36).substring(7);
+    return await api.createProject(`E2E Test Project ${Date.now()}-${random}`);
   }
 
   test("Add Folder Button Visible with Permission", async ({ api, page }) => {

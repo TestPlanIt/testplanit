@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useCreateUser,
   useCreateUserPreferences,
@@ -9,6 +10,7 @@ import {
   useFindManyProjects,
   useCreateManyGroupAssignment,
   useFindManyGroups,
+  useUpdateUser,
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -57,14 +59,18 @@ export function AddUserModal() {
   const t = useTranslations("admin.users.add");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletedUser, setDeletedUser] = useState<any | null>(null);
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const { mutateAsync: createUser } = useCreateUser();
   const { mutateAsync: createUserPreferences } = useCreateUserPreferences();
   const { mutateAsync: createManyProjectAssignment } =
     useCreateManyProjectAssignment();
   const { mutateAsync: createManyGroupAssignment } =
     useCreateManyGroupAssignment();
+  const { mutateAsync: updateUser } = useUpdateUser();
 
   // Theme the MultiSelect component
   const { theme } = useTheme();
@@ -197,6 +203,60 @@ export function AddUserModal() {
     }
   }, [roles, setValue, form]);
 
+  // Function to restore deleted user
+  async function handleRestoreUser(userId: string, formData: z.infer<typeof AddUserFormValidationSchema>) {
+    try {
+      setIsSubmitting(true);
+
+      // Restore the user by marking isDeleted as false
+      // Note: We only restore the user, not update their info. Admin can edit after restoration.
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isDeleted: false,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to restore user');
+      }
+
+      // Handle project and group assignments
+      if (Array.isArray(formData.projects) && formData.projects.length > 0) {
+        await createManyProjectAssignment({
+          data: formData.projects.map((projectId: number) => ({
+            userId: userId,
+            projectId: projectId,
+          })),
+        });
+      }
+      if (Array.isArray(formData.groups) && formData.groups.length > 0) {
+        await createManyGroupAssignment({
+          data: formData.groups.map((groupId: number) => ({
+            userId: userId,
+            groupId: groupId,
+          })),
+        });
+      }
+
+      // Refetch all queries to update the user list immediately (optimistic update)
+      queryClient.refetchQueries();
+
+      setShowRestoreDialog(false);
+      setDeletedUser(null);
+      setOpen(false);
+      setIsSubmitting(false);
+    } catch (err) {
+      form.setError("root", {
+        type: "custom",
+        message: tCommon("errors.unknown"),
+      });
+      setIsSubmitting(false);
+    }
+  }
+
   // Update onSubmit to use the form validation schema type and construct API payload
   async function onSubmit(data: z.infer<typeof AddUserFormValidationSchema>) {
     setIsSubmitting(true);
@@ -249,10 +309,40 @@ export function AddUserModal() {
           })),
         });
       }
+
+      // Refetch all queries to update the user list immediately (optimistic update)
+      queryClient.refetchQueries();
+
       setOpen(false);
       setIsSubmitting(false);
     } catch (err: any) {
       if (err.info?.prisma && err.info?.code === "P2002") {
+        // Check if there's a soft-deleted user with this email using the API endpoint
+        try {
+          const response = await fetch(`/api/model/user/findFirst?q=${encodeURIComponent(JSON.stringify({
+            where: { email: data.email, isDeleted: true },
+            select: { id: true, email: true, name: true }
+          }))}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+
+            if (result.data && result.data.id) {
+              // Found a deleted user, show restore dialog
+              setDeletedUser(result.data);
+              setShowRestoreDialog(true);
+              setIsSubmitting(false);
+              return;
+            }
+          }
+        } catch (checkErr) {
+          console.error("Error checking for deleted user:", checkErr);
+        }
+
+        // No deleted user found or error checking, show regular error
         form.setError("root", {
           type: "custom",
           message: tGlobal("common.errors.emailExists"),
@@ -269,14 +359,15 @@ export function AddUserModal() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <CirclePlus className="w-4" />
-          <span className="hidden md:inline">{t("button")}</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button>
+            <CirclePlus className="w-4" />
+            <span className="hidden md:inline">{t("button")}</span>
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
@@ -621,5 +712,47 @@ export function AddUserModal() {
         </Form>
       </DialogContent>
     </Dialog>
+
+    {/* Restore Deleted User Dialog */}
+    <Dialog open={showRestoreDialog} onOpenChange={(isOpen) => {
+      setShowRestoreDialog(isOpen);
+      if (!isOpen) {
+        setDeletedUser(null);
+      }
+    }}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>{tGlobal("admin.users.restore.title")}</DialogTitle>
+          <DialogDescription>
+            {tGlobal("admin.users.restore.description", { email: deletedUser?.email })}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => {
+              setShowRestoreDialog(false);
+              setDeletedUser(null);
+              setIsSubmitting(false);
+            }}
+            disabled={isSubmitting}
+          >
+            {tCommon("cancel")}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => {
+              const formData = form.getValues();
+              handleRestoreUser(deletedUser.id, formData);
+            }}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? tCommon("actions.submitting") : tGlobal("admin.users.restore.confirm")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

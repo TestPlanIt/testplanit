@@ -289,6 +289,11 @@ svg[class*="plot-"] .gantt-task-label text {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
   }
+
+  /* Search result highlighting */
+  mark {
+    @apply bg-yellow-200 dark:bg-yellow-800 px-1 rounded-sm text-inherit;
+  }
 }
 
 /* Tooltip specific styles using CSS variables */

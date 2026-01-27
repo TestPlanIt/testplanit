@@ -425,6 +425,83 @@ test.describe("User Update Operations", () => {
         throw error;
       }
     });
+
+    test("Admin can restore soft-deleted user when adding user with same email", async ({ page, api }) => {
+      // Create and delete a test user
+      const testEmail = `restore-test-${Date.now()}@example.com`;
+      const testUser = await api.createUser({
+        name: "Restore Test User",
+        email: testEmail,
+        password: "password123",
+        roleId: 1,
+        access: "USER",
+      });
+
+      // Soft delete the user
+      await api.updateUser({
+        userId: testUser.data.id,
+        data: { isDeleted: true },
+      });
+
+      try {
+        await page.goto("/en-US/admin/users");
+        await page.waitForLoadState("networkidle");
+
+        // Click Add User button
+        const addUserButton = page.getByRole("button", { name: /add user/i });
+        await addUserButton.click();
+
+        // Wait for add user dialog
+        const dialog = page.locator('[role="dialog"]').filter({ hasText: /add new user/i });
+        await expect(dialog).toBeVisible({ timeout: 5000 });
+
+        // Fill in the form with the deleted user's email
+        const nameInput = dialog.locator('input[name="name"]');
+        await nameInput.fill("Restored User");
+
+        const emailInput = dialog.locator('input[name="email"]');
+        await emailInput.fill(testEmail);
+
+        const passwordInput = dialog.locator('input[name="password"]');
+        await passwordInput.fill("newpassword123");
+
+        const confirmPasswordInput = dialog.locator('input[name="confirmPassword"]');
+        await confirmPasswordInput.fill("newpassword123");
+
+        // Submit the form
+        const submitButton = dialog.getByRole("button", { name: /submit/i });
+        await submitButton.click();
+
+        // Wait for restore dialog to appear
+        const restoreDialog = page.locator('[role="dialog"]').filter({ hasText: /restore deleted user/i });
+        await expect(restoreDialog).toBeVisible({ timeout: 5000 });
+
+        // Verify the restore dialog message contains the email
+        await expect(restoreDialog.getByText(testEmail)).toBeVisible();
+
+        // Click the restore button
+        const restoreButton = restoreDialog.getByRole("button", { name: /restore user/i });
+        await restoreButton.click();
+
+        // Wait for both dialogs to close
+        await expect(restoreDialog).not.toBeVisible({ timeout: 5000 });
+        await expect(dialog).not.toBeVisible({ timeout: 5000 });
+
+        // Reload page to see restored user
+        await page.reload();
+        await page.waitForLoadState("networkidle");
+
+        // Verify the user is now visible in the table (not deleted)
+        const userRow = page.locator("tr").filter({ hasText: testEmail });
+        await expect(userRow).toBeVisible({ timeout: 10000 });
+      } finally {
+        // Cleanup
+        await api.updateUser({
+          userId: testUser.data.id,
+          data: { isDeleted: true },
+        });
+      }
+    });
   });
 
   test.describe("User Menu Operations", () => {

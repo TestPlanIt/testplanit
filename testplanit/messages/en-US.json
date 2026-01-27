@@ -2881,6 +2881,11 @@
       },
       "delete": {
         "title": "Delete User"
+      },
+      "restore": {
+        "title": "Restore Deleted User",
+        "description": "A deleted user with the email address {email} was found. Would you like to restore this user?",
+        "confirm": "Restore User"
       }
     },
     "apiTokens": {

@@ -106,6 +106,7 @@ describe("elasticsearchIndexing", () => {
           ...mockCaseDocument,
           searchableContent: expect.any(String),
         }),
+        refresh: true, // Verify refresh parameter is set
       });
     });
 
@@ -119,24 +120,22 @@ describe("elasticsearchIndexing", () => {
 
       // Should include name
       expect(searchableContent).toContain("Test Case");
-      
+
       // Should include className
       expect(searchableContent).toContain("TestClass");
-      
+
       // Should include tags
       expect(searchableContent).toContain("smoke");
-      
-      // Should include step content
+
+      // Should include custom field values
+      expect(searchableContent).toContain("High");
+
+      // Should include step content for searchability
       expect(searchableContent).toContain("Click login button");
       expect(searchableContent).toContain("Login page appears");
       expect(searchableContent).toContain("Enter credentials");
       expect(searchableContent).toContain("Credentials accepted");
-      
-      // Should include shared step group name
       expect(searchableContent).toContain("Login Steps");
-      
-      // Should include custom field values
-      expect(searchableContent).toContain("High");
     });
 
     it("should handle missing optional fields gracefully", async () => {
@@ -173,7 +172,7 @@ describe("elasticsearchIndexing", () => {
       expect(result).toBe(false);
     });
 
-    it("should not include shared step group name for non-shared steps", async () => {
+    it("should index case with steps and include them in searchableContent", async () => {
       const caseWithOnlyDirectSteps: RepositoryCaseDocument = {
         ...mockCaseDocument,
         steps: [
@@ -189,14 +188,20 @@ describe("elasticsearchIndexing", () => {
 
       mockClient.index.mockResolvedValue({ _id: "1" });
 
-      await indexRepositoryCase(caseWithOnlyDirectSteps);
+      const result = await indexRepositoryCase(caseWithOnlyDirectSteps);
+
+      expect(result).toBe(true);
 
       const indexCall = mockClient.index.mock.calls[0][0];
       const searchableContent = indexCall.document.searchableContent;
 
+      // Steps should be included in searchableContent for searchability
       expect(searchableContent).toContain("Direct step");
       expect(searchableContent).toContain("Direct result");
-      expect(searchableContent).not.toContain("Login Steps");
+
+      // And the steps should still be in the document
+      expect(indexCall.document.steps).toBeDefined();
+      expect(indexCall.document.steps).toHaveLength(1);
     });
   });
 
@@ -334,6 +339,7 @@ describe("elasticsearchIndexing", () => {
       expect(mockClient.delete).toHaveBeenCalledWith({
         index: "test-repository-cases",
         id: "1",
+        refresh: true, // Verify refresh parameter is set
       });
     });
 

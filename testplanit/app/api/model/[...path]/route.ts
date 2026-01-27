@@ -3,16 +3,19 @@ import { NextRequestHandler } from "@zenstackhq/server/next";
 import { getServerAuthSession } from "~/server/auth";
 import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
-import {
-  setAuditContext,
-  getAuditContext,
-  extractIpAddress,
-} from "~/lib/auditContext";
+import { setAuditContext, extractIpAddress } from "~/lib/auditContext";
 import { captureAuditEvent, type AuditEvent } from "~/lib/services/auditLog";
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import type { AuditAction } from "@prisma/client";
 import { AsyncLocalStorage } from "async_hooks";
+import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
+import { syncTestRunToElasticsearch } from "~/services/testRunSearch";
+import { syncSessionToElasticsearch } from "~/services/sessionSearch";
+import { syncSharedStepToElasticsearch } from "~/services/sharedStepSearch";
+import { syncIssueToElasticsearch } from "~/services/issueSearch";
+import { syncMilestoneToElasticsearch } from "~/services/milestoneSearch";
+import { syncProjectToElasticsearch } from "~/services/projectSearch";
 
 // Use AsyncLocalStorage for request-scoped API token auth (thread-safe)
 type ApiAuthContext = { userId: string; email?: string; name?: string } | null;
@@ -325,6 +328,252 @@ async function handler(
       statusText: response.statusText,
       headers: response.headers,
     });
+
+    // Manually trigger Elasticsearch sync for repositoryCases mutations
+    // ZenStack's enhance() doesn't preserve Prisma client extensions
+    if (
+      response.ok &&
+      parsedPath &&
+      parsedPath.model === "repositoryCases" &&
+      isMutation
+    ) {
+      try {
+        const result = responseBody ? JSON.parse(responseBody) : null;
+        const data = result?.data;
+
+        if (data?.id) {
+          syncRepositoryCaseToElasticsearch(data.id).catch((error: any) => {
+            console.error(
+              `Failed to sync repository case ${data.id} to Elasticsearch:`,
+              error
+            );
+          });
+        }
+      } catch (e) {
+        console.error(
+          "[ZenStack] Error parsing response for Elasticsearch sync:",
+          e
+        );
+      }
+    }
+
+    // Manually trigger Elasticsearch sync for testRuns mutations
+    if (
+      response.ok &&
+      parsedPath &&
+      parsedPath.model === "testRuns" &&
+      isMutation
+    ) {
+      try {
+        const result = responseBody ? JSON.parse(responseBody) : null;
+        const data = result?.data;
+
+        if (data?.id) {
+          syncTestRunToElasticsearch(data.id).catch((error: any) => {
+            console.error(
+              `Failed to sync test run ${data.id} to Elasticsearch:`,
+              error
+            );
+          });
+        }
+      } catch (e) {
+        console.error(
+          "[ZenStack] Error parsing response for Elasticsearch sync:",
+          e
+        );
+      }
+    }
+
+    // Manually trigger Elasticsearch sync for sessions mutations
+    if (
+      response.ok &&
+      parsedPath &&
+      parsedPath.model === "sessions" &&
+      isMutation
+    ) {
+      try {
+        const result = responseBody ? JSON.parse(responseBody) : null;
+        const data = result?.data;
+
+        if (data?.id) {
+          syncSessionToElasticsearch(data.id).catch((error: any) => {
+            console.error(
+              `Failed to sync session ${data.id} to Elasticsearch:`,
+              error
+            );
+          });
+        }
+      } catch (e) {
+        console.error(
+          "[ZenStack] Error parsing response for Elasticsearch sync:",
+          e
+        );
+      }
+    }
+
+    // Manually trigger Elasticsearch sync for sharedStepGroups mutations
+    if (
+      response.ok &&
+      parsedPath &&
+      parsedPath.model === "sharedStepGroups" &&
+      isMutation
+    ) {
+      try {
+        const result = responseBody ? JSON.parse(responseBody) : null;
+        const data = result?.data;
+
+        if (data?.id) {
+          syncSharedStepToElasticsearch(data.id).catch((error: any) => {
+            console.error(
+              `Failed to sync shared step ${data.id} to Elasticsearch:`,
+              error
+            );
+          });
+        }
+      } catch (e) {
+        console.error(
+          "[ZenStack] Error parsing response for Elasticsearch sync:",
+          e
+        );
+      }
+    }
+
+    // Manually trigger Elasticsearch sync for issues mutations
+    if (
+      response.ok &&
+      parsedPath &&
+      parsedPath.model === "issues" &&
+      isMutation
+    ) {
+      try {
+        const result = responseBody ? JSON.parse(responseBody) : null;
+        const data = result?.data;
+
+        if (data?.id) {
+          syncIssueToElasticsearch(data.id).catch((error: any) => {
+            console.error(
+              `Failed to sync issue ${data.id} to Elasticsearch:`,
+              error
+            );
+          });
+        }
+      } catch (e) {
+        console.error(
+          "[ZenStack] Error parsing response for Elasticsearch sync:",
+          e
+        );
+      }
+    }
+
+    // Manually trigger Elasticsearch sync for milestones mutations
+    if (
+      response.ok &&
+      parsedPath &&
+      parsedPath.model === "milestones" &&
+      isMutation
+    ) {
+      try {
+        const result = responseBody ? JSON.parse(responseBody) : null;
+        const data = result?.data;
+
+        if (data?.id) {
+          syncMilestoneToElasticsearch(data.id).catch((error: any) => {
+            console.error(
+              `Failed to sync milestone ${data.id} to Elasticsearch:`,
+              error
+            );
+          });
+        }
+      } catch (e) {
+        console.error(
+          "[ZenStack] Error parsing response for Elasticsearch sync:",
+          e
+        );
+      }
+    }
+
+    // Manually trigger Elasticsearch sync for projects mutations
+    if (
+      response.ok &&
+      parsedPath &&
+      parsedPath.model === "projects" &&
+      isMutation
+    ) {
+      try {
+        const result = responseBody ? JSON.parse(responseBody) : null;
+        const data = result?.data;
+
+        if (data?.id) {
+          syncProjectToElasticsearch(data.id).catch((error: any) => {
+            console.error(
+              `Failed to sync project ${data.id} to Elasticsearch:`,
+              error
+            );
+          });
+        }
+      } catch (e) {
+        console.error(
+          "[ZenStack] Error parsing response for Elasticsearch sync:",
+          e
+        );
+      }
+    }
+
+    // Manually trigger Elasticsearch sync for steps mutations
+    // When a step is updated, we need to resync the parent repository case
+    if (
+      response.ok &&
+      parsedPath &&
+      parsedPath.model === "steps" &&
+      isMutation
+    ) {
+      try {
+        const result = responseBody ? JSON.parse(responseBody) : null;
+        const data = result?.data;
+
+        if (data?.repositoryCaseId) {
+          syncRepositoryCaseToElasticsearch(data.repositoryCaseId).catch((error: any) => {
+            console.error(
+              `Failed to sync repository case ${data.repositoryCaseId} after step update to Elasticsearch:`,
+              error
+            );
+          });
+        }
+      } catch (e) {
+        console.error(
+          "[ZenStack] Error parsing response for Elasticsearch sync after step update:",
+          e
+        );
+      }
+    }
+
+    // Manually trigger Elasticsearch sync for caseFieldValues mutations
+    // When a custom field is updated, we need to resync the parent repository case
+    if (
+      response.ok &&
+      parsedPath &&
+      parsedPath.model === "caseFieldValues" &&
+      isMutation
+    ) {
+      try {
+        const result = responseBody ? JSON.parse(responseBody) : null;
+        const data = result?.data;
+
+        if (data?.repositoryCaseId) {
+          syncRepositoryCaseToElasticsearch(data.repositoryCaseId).catch((error: any) => {
+            console.error(
+              `Failed to sync repository case ${data.repositoryCaseId} after custom field update to Elasticsearch:`,
+              error
+            );
+          });
+        }
+      } catch (e) {
+        console.error(
+          "[ZenStack] Error parsing response for Elasticsearch sync after custom field update:",
+          e
+        );
+      }
+    }
 
     // Prevent caching of API responses - this is critical to avoid stale 410/error responses
     newResponse.headers.set(

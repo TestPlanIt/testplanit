@@ -298,6 +298,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           const user = await db.user.findUnique({
             where: { id: session.user.id },
             select: {
+              name: true,
               access: true,
               image: true,
               emailVerified: true,
@@ -308,6 +309,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           });
 
           if (user) {
+            session.user.name = user.name || undefined;
             session.user.access = user.access || undefined;
             session.user.image = user.image || undefined;
             session.user.emailVerified = user.emailVerified || undefined;

@@ -19,6 +19,7 @@ interface RemoveAvatarProps {
 export function RemoveAvatar({ user }: RemoveAvatarProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [openPopover, setOpenPopover] = useState(false);
+  const { update: updateSession } = useSession();
   const queryClient = useQueryClient();
   const t = useTranslations("users.avatar");
   const tGlobal = useTranslations();
@@ -40,6 +41,9 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
         const error = await response.json();
         throw new Error(error.error || "Failed to remove avatar");
       }
+
+      // Update the session to reflect the removed avatar
+      await updateSession();
 
       // Refetch all queries to refresh UI with removed avatar
       queryClient.refetchQueries();

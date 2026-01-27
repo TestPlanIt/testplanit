@@ -248,7 +248,24 @@ export interface RepositoryCaseDocument {
     fieldId: number;
     fieldName: string;
     fieldType: string;
-    value: any;
+    value?: any;
+    valueKeyword?: string;
+    valueNumeric?: number;
+    valueBoolean?: boolean;
+    valueDate?: string;
+    valueArray?: (string | number)[];
+    fieldOption?: {
+      id: number;
+      name: string;
+      icon?: { name: string };
+      iconColor?: { value: string };
+    };
+    fieldOptions?: Array<{
+      id: number;
+      name: string;
+      icon?: { name: string };
+      iconColor?: { value: string };
+    }>;
   }>;
   steps?: Array<{
     id: number;
