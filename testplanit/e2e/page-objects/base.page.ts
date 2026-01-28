@@ -98,4 +98,11 @@ export abstract class BasePage {
     // Remove locale prefix
     return path.replace(new RegExp(`^/${this.locale}`), "") || "/";
   }
+
+  /**
+   * Get the Playwright page instance for direct access when needed
+   */
+  getPage(): Page {
+    return this.page;
+  }
 }

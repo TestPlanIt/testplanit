@@ -433,6 +433,72 @@ export class RepositoryPage extends BasePage {
   }
 
   /**
+   * Submit the add case form
+   */
+  async submitAddCase(): Promise<void> {
+    const submitButton = this.page.getByTestId("case-submit-button");
+    await expect(submitButton).toBeEnabled({ timeout: 5000 });
+    await submitButton.click();
+    // Wait for network activity to settle
+    await this.page.waitForLoadState("networkidle");
+  }
+
+  /**
+   * Cancel the add case form
+   */
+  async cancelAddCase(): Promise<void> {
+    const cancelButton = this.page.getByTestId("case-cancel-button");
+    await cancelButton.click();
+    // Wait for dialog to close
+    await expect(this.page.getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 5000 });
+  }
+
+  /**
+   * Expect add case dialog to be visible
+   */
+  async expectAddCaseDialogVisible(): Promise<void> {
+    const dialog = this.page.getByTestId("add-case-dialog");
+    await expect(dialog).toBeVisible({ timeout: 10000 });
+  }
+
+  /**
+   * Fill a field in the add case form by system name
+   */
+  async fillCaseField(systemName: string, value: string): Promise<void> {
+    const fieldInput = this.page.getByTestId(`field-${systemName}-input`).locator('input, textarea').first();
+    await fieldInput.fill(value);
+  }
+
+  /**
+   * Select a template in the add case dialog
+   */
+  async selectTemplate(templateName: string): Promise<void> {
+    // The template selector is in the dialog header
+    const dialog = this.page.getByTestId("add-case-dialog");
+    const templateSelect = dialog.locator('[role="combobox"]').first();
+
+    await templateSelect.click();
+    await this.page.waitForTimeout(500);
+
+    const option = this.page.locator(`[role="option"]:has-text("${templateName}")`);
+    await option.click();
+
+    // Wait for network to settle and fields to load
+    await this.page.waitForLoadState("networkidle");
+    // Give React Query time to fetch template data and React to re-render with new template fields
+    // This is necessary because template data might be cached and needs to be refetched
+    await this.page.waitForTimeout(3000);
+  }
+
+  /**
+   * Wait for a specific field to appear after template selection
+   */
+  async waitForFieldToLoad(systemName: string, timeout: number = 10000): Promise<void> {
+    const fieldContainer = this.page.getByTestId(`field-${systemName}`);
+    await expect(fieldContainer).toBeVisible({ timeout });
+  }
+
+  /**
    * Get the count of test cases displayed
    */
   async getDisplayedCaseCount(): Promise<number> {

@@ -323,8 +323,8 @@ const RenderField: React.FC<RenderFieldProps> = ({
       control={control}
       name={field.caseField.id.toString()}
       render={({ field: { onChange, value } }) => (
-        <FormItem className="min-w-[300px] mx-1">
-          <FormLabel className="flex items-center">
+        <FormItem className="min-w-[300px] mx-1" data-testid={`field-${field.caseField.systemName}`}>
+          <FormLabel className="flex items-center" data-testid={`field-${field.caseField.systemName}-label`}>
             {field.caseField.displayName}
             {field.caseField.isRequired && (
               <sup>
@@ -345,7 +345,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
               />
             )}
           </FormLabel>
-          <FormControl>{renderFieldControl(onChange, value)}</FormControl>
+          <FormControl data-testid={`field-${field.caseField.systemName}-input`}>{renderFieldControl(onChange, value)}</FormControl>
           <FormMessage />
         </FormItem>
       )}

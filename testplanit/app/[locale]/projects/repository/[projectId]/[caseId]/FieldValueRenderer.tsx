@@ -601,10 +601,18 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
     }
   };
 
+  // Extract systemName for test IDs
+  const caseFieldDefinition = template.caseFields.find(
+    (cf: any) => cf.caseField.id === fieldId
+  )?.caseField;
+  const systemName = caseFieldDefinition?.systemName || `field-${fieldId}`;
+
   return (
-    <div>
-      {(!isRunMode || !isEmptyValue(fieldValue)) && renderField()}
-      {error && <p className="text-destructive">{error}</p>}
+    <div data-testid={`field-value-${systemName}`}>
+      <div data-testid={`field-display-${systemName}`}>
+        {(!isRunMode || !isEmptyValue(fieldValue)) && renderField()}
+      </div>
+      {error && <p className="text-destructive" data-testid={`field-error-${systemName}`}>{error}</p>}
     </div>
   );
 };

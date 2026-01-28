@@ -390,6 +390,44 @@ export class ApiHelper {
   }
 
   /**
+   * Create a test case with field values via API
+   */
+  async createTestCaseWithFieldValues(
+    projectId: number,
+    folderId: number,
+    name: string,
+    fieldValues: Record<string, any>
+  ): Promise<number> {
+    // First create the test case
+    const caseId = await this.createTestCase(projectId, folderId, name);
+
+    // Then create field values for each field
+    for (const [fieldIdStr, value] of Object.entries(fieldValues)) {
+      const fieldId = parseInt(fieldIdStr, 10);
+
+      const valueResponse = await this.request.post(
+        `${this.baseURL}/api/model/caseFieldValues/create`,
+        {
+          data: {
+            data: {
+              repositoryCase: { connect: { id: caseId } },
+              caseField: { connect: { id: fieldId } },
+              project: { connect: { id: projectId } },
+              value: typeof value === "string" ? value : JSON.stringify(value),
+            },
+          },
+        }
+      );
+
+      if (!valueResponse.ok()) {
+        console.warn(`Failed to create field value for field ${fieldId} on case ${caseId}`);
+      }
+    }
+
+    return caseId;
+  }
+
+  /**
    * Helper: Get folder info
    */
   private async getFolderInfo(
