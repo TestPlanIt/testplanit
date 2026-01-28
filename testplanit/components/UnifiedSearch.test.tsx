@@ -613,7 +613,7 @@ describe("UnifiedSearch Component", () => {
     });
 
     render(<UnifiedSearch />);
-    
+
     const searchInput = screen.getByPlaceholderText(/search/i);
     fireEvent.change(searchInput, { target: { value: "test" } });
 
@@ -621,6 +621,437 @@ describe("UnifiedSearch Component", () => {
       expect(screen.getByText("Deleted Test Case")).toBeInTheDocument();
       // The badge text comes from translation key in tests
       expect(screen.getByText("common.status.deleted")).toBeInTheDocument();
+    });
+  });
+
+  describe("Advanced Search Operators and Highlighting", () => {
+    it("should render ES-generated highlights for regular fields", async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total: 1,
+          hits: [
+            {
+              id: 1,
+              entityType: SearchableEntityType.REPOSITORY_CASE,
+              score: 1.0,
+              source: {
+                id: 1,
+                name: "Test Case with Authentication",
+                projectName: "Test Project",
+                projectId: 1,
+                description: "This is a test case for authentication flow",
+              },
+              highlights: {
+                name: ['Test Case with <mark class="search-highlight">Authentication</mark>'],
+                description: ['This is a test case for <mark class="search-highlight">authentication</mark> flow'],
+              },
+            },
+          ],
+          took: 100,
+        }),
+      });
+
+      render(<UnifiedSearch />);
+
+      const searchInput = screen.getByPlaceholderText(/search/i);
+      fireEvent.change(searchInput, { target: { value: "authentication" } });
+
+      await waitFor(() => {
+        expect(screen.getByText("Test Case with Authentication")).toBeInTheDocument();
+      });
+
+      // Verify that the result is rendered with highlights
+      // In the testing environment, dangerouslySetInnerHTML doesn't create actual DOM elements,
+      // but we can verify that the highlight component receives the correct data
+      expect(screen.getByTestId("search-highlight")).toBeInTheDocument();
+    });
+
+    it("should render ES-generated highlights for step fields", async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total: 1,
+          hits: [
+            {
+              id: 1,
+              entityType: SearchableEntityType.REPOSITORY_CASE,
+              score: 1.0,
+              source: {
+                id: 1,
+                name: "Login Test",
+                projectName: "Test Project",
+                projectId: 1,
+                steps: [
+                  {
+                    id: 1,
+                    step: "Navigate to login page",
+                    expectedResult: "Login page is displayed",
+                  },
+                  {
+                    id: 2,
+                    step: "Enter valid credentials",
+                    expectedResult: "Credentials are accepted",
+                  },
+                ],
+              },
+              highlights: {
+                "steps.step": [
+                  'Navigate to <mark class="search-highlight">login</mark> page',
+                ],
+                "steps.expectedResult": [
+                  '<mark class="search-highlight">Login</mark> page is displayed',
+                ],
+              },
+            },
+          ],
+          took: 100,
+        }),
+      });
+
+      render(<UnifiedSearch />);
+
+      const searchInput = screen.getByPlaceholderText(/search/i);
+      fireEvent.change(searchInput, { target: { value: "login" } });
+
+      await waitFor(() => {
+        expect(screen.getByText("Login Test")).toBeInTheDocument();
+      });
+
+      // Verify that step highlights are present
+      const highlightedElements = document.querySelectorAll('.search-highlight');
+      expect(highlightedElements.length).toBeGreaterThan(0);
+    });
+
+    it("should render wildcard search highlights correctly", async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total: 1,
+          hits: [
+            {
+              id: 1,
+              entityType: SearchableEntityType.REPOSITORY_CASE,
+              score: 1.0,
+              source: {
+                id: 1,
+                name: "Test Case for Alpha Testing",
+                projectName: "Test Project",
+                projectId: 1,
+                steps: [
+                  {
+                    id: 1,
+                    step: "As a Project Manager, create Project Alpha",
+                    expectedResult: "Project Alpha is created",
+                  },
+                ],
+              },
+              highlights: {
+                name: ['Test Case for <mark class="search-highlight">Alpha</mark> Testing'],
+                "steps.step": [
+                  'As a Project Manager, create Project <mark class="search-highlight">Alpha</mark>',
+                ],
+                "steps.expectedResult": [
+                  'Project <mark class="search-highlight">Alpha</mark> is created',
+                ],
+              },
+            },
+          ],
+          took: 100,
+        }),
+      });
+
+      render(<UnifiedSearch />);
+
+      const searchInput = screen.getByPlaceholderText(/search/i);
+      // Simulate wildcard search "alph*"
+      fireEvent.change(searchInput, { target: { value: "alph*" } });
+
+      await waitFor(() => {
+        expect(screen.getByText("Test Case for Alpha Testing")).toBeInTheDocument();
+      });
+
+      // Verify wildcard highlights are rendered
+      const highlightedElements = document.querySelectorAll('.search-highlight');
+      expect(highlightedElements.length).toBeGreaterThan(0);
+    });
+
+    it("should render exact phrase search highlights correctly", async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total: 1,
+          hits: [
+            {
+              id: 1,
+              entityType: SearchableEntityType.REPOSITORY_CASE,
+              score: 1.0,
+              source: {
+                id: 1,
+                name: "Test Case for Login Flow",
+                projectName: "Test Project",
+                projectId: 1,
+                description: "This test verifies the login flow works correctly",
+              },
+              highlights: {
+                description: [
+                  'This test verifies the <mark class="search-highlight">login flow</mark> works correctly',
+                ],
+              },
+            },
+          ],
+          took: 100,
+        }),
+      });
+
+      render(<UnifiedSearch />);
+
+      const searchInput = screen.getByPlaceholderText(/search/i);
+      // Simulate exact phrase search
+      fireEvent.change(searchInput, { target: { value: '"login flow"' } });
+
+      await waitFor(() => {
+        expect(screen.getByText("Test Case for Login Flow")).toBeInTheDocument();
+      });
+
+      // Verify the search query was sent to the API with quotes (escaped in JSON)
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/search",
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining('\\"login flow\\"'),
+        })
+      );
+    });
+
+    it("should highlight steps with yellow background when they contain matches", async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total: 1,
+          hits: [
+            {
+              id: 1,
+              entityType: SearchableEntityType.REPOSITORY_CASE,
+              score: 1.0,
+              source: {
+                id: 1,
+                name: "Login Test",
+                projectName: "Test Project",
+                projectId: 1,
+                steps: [
+                  {
+                    id: 1,
+                    step: "Navigate to login page",
+                    expectedResult: "Login page is displayed",
+                  },
+                  {
+                    id: 2,
+                    step: "Click the submit button",
+                    expectedResult: "Form is submitted",
+                  },
+                ],
+              },
+              highlights: {
+                "steps.step": [
+                  'Navigate to <mark class="search-highlight">login</mark> page',
+                ],
+                "steps.expectedResult": [
+                  '<mark class="search-highlight">Login</mark> page is displayed',
+                ],
+              },
+            },
+          ],
+          took: 100,
+        }),
+      });
+
+      render(<UnifiedSearch />);
+
+      const searchInput = screen.getByPlaceholderText(/search/i);
+      fireEvent.change(searchInput, { target: { value: "login" } });
+
+      await waitFor(() => {
+        expect(screen.getByText("Login Test")).toBeInTheDocument();
+      });
+
+      // Verify that the step with highlights has yellow background
+      const stepWithHighlight = document.querySelector('.bg-yellow-50');
+      expect(stepWithHighlight).toBeInTheDocument();
+    });
+
+    it("should handle field-specific search queries", async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total: 1,
+          hits: [
+            {
+              id: 1,
+              entityType: SearchableEntityType.REPOSITORY_CASE,
+              score: 1.0,
+              source: {
+                id: 1,
+                name: "Dashboard Login Test",
+                projectName: "Test Project",
+                projectId: 1,
+                description: "Test for other features",
+              },
+              highlights: {
+                name: ['<mark class="search-highlight">Dashboard</mark> Login Test'],
+              },
+            },
+          ],
+          took: 100,
+        }),
+      });
+
+      render(<UnifiedSearch />);
+
+      const searchInput = screen.getByPlaceholderText(/search/i);
+      // Simulate field-specific search
+      fireEvent.change(searchInput, { target: { value: "name:dashboard" } });
+
+      await waitFor(() => {
+        expect(screen.getByText("Dashboard Login Test")).toBeInTheDocument();
+        expect(global.fetch).toHaveBeenCalledWith(
+          "/api/search",
+          expect.objectContaining({
+            method: "POST",
+            body: expect.stringContaining("name:dashboard"),
+          })
+        );
+      });
+    });
+
+    it("should handle required terms (+) search operator", async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total: 1,
+          hits: [
+            {
+              id: 1,
+              entityType: SearchableEntityType.REPOSITORY_CASE,
+              score: 1.0,
+              source: {
+                id: 1,
+                name: "Login with Password Test",
+                projectName: "Test Project",
+                projectId: 1,
+              },
+              highlights: {
+                name: [
+                  '<mark class="search-highlight">Login</mark> with <mark class="search-highlight">Password</mark> Test',
+                ],
+              },
+            },
+          ],
+          took: 100,
+        }),
+      });
+
+      render(<UnifiedSearch />);
+
+      const searchInput = screen.getByPlaceholderText(/search/i);
+      fireEvent.change(searchInput, { target: { value: "+login +password" } });
+
+      await waitFor(() => {
+        expect(screen.getByText("Login with Password Test")).toBeInTheDocument();
+        expect(global.fetch).toHaveBeenCalledWith(
+          "/api/search",
+          expect.objectContaining({
+            method: "POST",
+            body: expect.stringContaining("+login +password"),
+          })
+        );
+      });
+    });
+
+    it("should handle excluded terms (-) search operator", async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total: 1,
+          hits: [
+            {
+              id: 1,
+              entityType: SearchableEntityType.REPOSITORY_CASE,
+              score: 1.0,
+              source: {
+                id: 1,
+                name: "Manual Login Test",
+                projectName: "Test Project",
+                projectId: 1,
+              },
+              highlights: {
+                name: ['Manual <mark class="search-highlight">Login</mark> Test'],
+              },
+            },
+          ],
+          took: 100,
+        }),
+      });
+
+      render(<UnifiedSearch />);
+
+      const searchInput = screen.getByPlaceholderText(/search/i);
+      fireEvent.change(searchInput, { target: { value: "login -automated" } });
+
+      await waitFor(() => {
+        expect(screen.getByText("Manual Login Test")).toBeInTheDocument();
+        expect(global.fetch).toHaveBeenCalledWith(
+          "/api/search",
+          expect.objectContaining({
+            method: "POST",
+            body: expect.stringContaining("login -automated"),
+          })
+        );
+      });
+    });
+
+    it("should handle boolean AND/OR operators", async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total: 1,
+          hits: [
+            {
+              id: 1,
+              entityType: SearchableEntityType.REPOSITORY_CASE,
+              score: 1.0,
+              source: {
+                id: 1,
+                name: "Login and Authentication Test",
+                projectName: "Test Project",
+                projectId: 1,
+              },
+              highlights: {
+                name: [
+                  '<mark class="search-highlight">Login</mark> and <mark class="search-highlight">Authentication</mark> Test',
+                ],
+              },
+            },
+          ],
+          took: 100,
+        }),
+      });
+
+      render(<UnifiedSearch />);
+
+      const searchInput = screen.getByPlaceholderText(/search/i);
+      fireEvent.change(searchInput, { target: { value: "login AND authentication" } });
+
+      await waitFor(() => {
+        expect(screen.getByText("Login and Authentication Test")).toBeInTheDocument();
+        expect(global.fetch).toHaveBeenCalledWith(
+          "/api/search",
+          expect.objectContaining({
+            method: "POST",
+            body: expect.stringContaining("login AND authentication"),
+          })
+        );
+      });
     });
   });
 });
