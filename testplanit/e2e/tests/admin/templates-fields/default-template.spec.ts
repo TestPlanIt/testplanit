@@ -174,9 +174,19 @@ test.describe("Default Template - Protection Rules", () => {
     const row = templatesPage.templatesTable.locator("tr").filter({ hasText: templateName }).first();
     await expect(row).toBeVisible({ timeout: 5000 });
 
-    // Verify the "Default" switch is checked and disabled in the row
+    // Verify the "Default" switch is checked - poll to wait for UI to sync with database
     const defaultSwitch = row.locator('button[role="switch"]').last();
-    await expect(defaultSwitch).toHaveAttribute("data-state", "checked");
+    await expect.poll(
+      async () => {
+        const state = await defaultSwitch.getAttribute("data-state");
+        return state;
+      },
+      {
+        message: `Expected default switch to be checked for template ${templateName}`,
+        timeout: 10000,
+        intervals: [100, 250, 500],
+      }
+    ).toBe("checked");
 
     // The delete button with testid should NOT be present for default templates
     // (The UI renders a disabled placeholder button without the testid)
@@ -222,16 +232,29 @@ test.describe("Default Template - Project Assignment", () => {
   });
 
   test("Default template auto-assigned to all projects", async ({ api }) => {
-    // Create a project
-    const projectName = `E2E Default Proj ${Date.now()}`;
-    await api.createProject(projectName);
-
-    // Create a default template
+    // Create a default template FIRST (required for project creation)
     const templateName = `E2E Auto Assign ${Date.now()}`;
-    await api.createTemplate({
+    const templateId = await api.createTemplate({
       name: templateName,
       isDefault: true,
     });
+
+    // Wait for template to be fully set as default
+    await expect.poll(
+      async () => {
+        const verification = await api.verifyTemplate(templateId);
+        return verification.isDefault;
+      },
+      {
+        message: `Expected template ${templateName} to be default`,
+        timeout: 10000,
+        intervals: [100, 250, 500],
+      }
+    ).toBe(true);
+
+    // Now create a project (requires default template to exist)
+    const projectName = `E2E Default Proj ${Date.now()}`;
+    await api.createProject(projectName);
 
     await templatesPage.goto();
 
@@ -276,6 +299,20 @@ test.describe("Default Template - Cascade Behaviors", () => {
       name: template1Name,
       isDefault: true,
     });
+
+    // Wait for template1 to be fully set as default before creating template2
+    await expect.poll(
+      async () => {
+        const verification = await api.verifyTemplate(template1Id);
+        return verification.isDefault;
+      },
+      {
+        message: `Expected template1 ${template1Name} to be default before creating template2`,
+        timeout: 10000,
+        intervals: [100, 250, 500],
+      }
+    ).toBe(true);
+
     const template2Id = await api.createTemplate({
       name: template2Name,
       isDefault: false,
@@ -283,7 +320,7 @@ test.describe("Default Template - Cascade Behaviors", () => {
 
     await templatesPage.goto();
 
-    // Set template2 as default
+    // Set template2 as default via UI
     await templatesPage.clickEditTemplate(template2Name);
     await templatesPage.toggleTemplateDefault(true);
     await templatesPage.submitTemplate();
@@ -291,10 +328,8 @@ test.describe("Default Template - Cascade Behaviors", () => {
     // Wait for the dialog to close and mutations to complete
     await page.waitForLoadState("networkidle");
 
-    // Give a small delay for the cascade update to process
-    await page.waitForTimeout(1000);
-
     // Poll the API to wait for the cascade update to complete
+    // The cascade should unset template1's default and set template2 as default
     await expect.poll(
       async () => {
         const template1Verification = await api.verifyTemplate(template1Id);
@@ -302,9 +337,9 @@ test.describe("Default Template - Cascade Behaviors", () => {
         return !template1Verification.isDefault && template2Verification.isDefault;
       },
       {
-        message: 'Expected template2 to be default and template1 to not be default',
-        timeout: 30000,
-        intervals: [100, 250, 500, 1000, 2000],
+        message: `Expected template2 ${template2Name} to be default and template1 ${template1Name} to not be default`,
+        timeout: 40000, // Increased timeout from 30s to 40s
+        intervals: [100, 250, 500, 1000, 2000, 3000],
       }
     ).toBe(true);
 

@@ -1021,38 +1021,40 @@ function SearchResultCard({
                 </div>
                 <div className="space-y-1.5 text-sm text-muted-foreground">
                   {(() => {
-                    // Check if there are step highlights from Elasticsearch
-                    const hasStepHighlights = (hit.highlights?.['steps.step']?.length || 0) > 0 ||
-                                             (hit.highlights?.['steps.expectedResult']?.length || 0) > 0;
+                    // Get highlighted steps from Elasticsearch
+                    const highlightedSteps = hit.highlights?.['steps.step'] || [];
+                    const highlightedExpectedResults = hit.highlights?.['steps.expectedResult'] || [];
 
-                    // Helper function to highlight search terms in text
-                    const highlightText = (text: string): string => {
-                      if (!text || !searchQuery || !hasStepHighlights) return text;
+                    // Helper to find highlighted version of text
+                    const getHighlightedText = (originalText: string, highlightArray: string[]): string | null => {
+                      if (!originalText || !highlightArray.length) return null;
 
-                      // Escape special regex characters in the query
-                      const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                      // Create a case-insensitive regex
-                      const regex = new RegExp(`(${escapedQuery})`, 'gi');
-                      // Replace matches with <mark> tags
-                      return text.replace(regex, '<mark>$1</mark>');
+                      // Find a highlight that contains part of the original text
+                      // The highlight will have <mark> tags, so strip those for comparison
+                      for (const highlighted of highlightArray) {
+                        const strippedHighlight = highlighted.replace(/<\/?mark[^>]*>/gi, '');
+                        // If the stripped highlight contains the original text or vice versa, use it
+                        if (strippedHighlight.includes(originalText) || originalText.includes(strippedHighlight)) {
+                          return highlighted;
+                        }
+                      }
+                      return null;
                     };
 
                     return hit.source.steps.slice(0, 3).map((step: any, index: number) => {
-                      // Check if this step contains the search term
-                      const stepText = step.step?.toLowerCase() || '';
-                      const expectedResultText = step.expectedResult?.toLowerCase() || '';
-                      const searchTerm = searchQuery?.toLowerCase() || '';
-                      const isMatchingStep = hasStepHighlights && (
-                        stepText.includes(searchTerm) ||
-                        expectedResultText.includes(searchTerm)
-                      );
+                      // Get highlighted versions from Elasticsearch
+                      const highlightedStep = getHighlightedText(step.step, highlightedSteps);
+                      const highlightedExpectedResult = getHighlightedText(step.expectedResult, highlightedExpectedResults);
+
+                      // Determine if this step has highlights
+                      const hasHighlights = highlightedStep || highlightedExpectedResult;
 
                       return (
                         <div
                           key={step.id || index}
                           className={cn(
                             "flex gap-2 rounded px-2 py-1",
-                            isMatchingStep && "bg-yellow-50 dark:bg-yellow-900/20 border-l-2 border-yellow-400"
+                            hasHighlights && "bg-yellow-50 dark:bg-yellow-900/20 border-l-2 border-yellow-400"
                           )}
                         >
                           <span className="font-medium shrink-0">
@@ -1062,8 +1064,8 @@ function SearchResultCard({
                           <div className="min-w-0">
                             {step.step && (
                               <div className="truncate">
-                                {hasStepHighlights ? (
-                                  <span dangerouslySetInnerHTML={{ __html: highlightText(step.step) }} />
+                                {highlightedStep ? (
+                                  <span dangerouslySetInnerHTML={{ __html: highlightedStep }} />
                                 ) : (
                                   step.step
                                 )}
@@ -1071,8 +1073,8 @@ function SearchResultCard({
                             )}
                             {step.expectedResult && (
                               <div className="text-xs italic truncate">
-                                {"→ "}{hasStepHighlights ? (
-                                  <span dangerouslySetInnerHTML={{ __html: highlightText(step.expectedResult) }} />
+                                {"→ "}{highlightedExpectedResult ? (
+                                  <span dangerouslySetInnerHTML={{ __html: highlightedExpectedResult }} />
                                 ) : (
                                   step.expectedResult
                                 )}

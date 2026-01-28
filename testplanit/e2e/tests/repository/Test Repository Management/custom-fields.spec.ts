@@ -40,7 +40,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
     // The view selector is within the repository-left-panel-header container
     // We need to scope it to avoid clicking the project selector
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
 
     // Click to open the selector
@@ -55,7 +57,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
       selectContent.locator('[role="option"]').filter({ hasText: /^Folders$/i })
     ).toBeVisible();
     await expect(
-      selectContent.locator('[role="option"]').filter({ hasText: /^Template$/i })
+      selectContent
+        .locator('[role="option"]')
+        .filter({ hasText: /^Template$/i })
     ).toBeVisible();
     await expect(
       selectContent.locator('[role="option"]').filter({ hasText: /^State$/i })
@@ -81,7 +85,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     await repositoryPage.goto(projectId);
 
     // Open view selector (scoped to repository-left-panel-header to avoid project selector)
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await viewSelector.click();
 
@@ -108,7 +114,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     await repositoryPage.goto(projectId);
 
     // Open view selector (scoped to repository-left-panel-header to avoid project selector)
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await viewSelector.click();
 
@@ -132,7 +140,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     await repositoryPage.goto(projectId);
 
     // Open view selector (scoped to repository-left-panel-header to avoid project selector)
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await viewSelector.click();
 
@@ -148,7 +158,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
     // Automation filter options should appear - at minimum "All Cases" filter
     // "Automated" and "Not Automated" only appear if there are test cases in those categories
-    const allCasesFilter = page.locator('[role="button"]:has-text("All Cases")');
+    const allCasesFilter = page.locator(
+      '[role="button"]:has-text("All Cases")'
+    );
     await expect(allCasesFilter.first()).toBeVisible({ timeout: 10000 });
 
     // Verify the view selector now shows Automation
@@ -160,7 +172,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     await repositoryPage.goto(projectId);
 
     // Open view selector (scoped to repository-left-panel-header to avoid project selector)
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await viewSelector.click();
 
@@ -186,12 +200,16 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     await repositoryPage.goto(projectId);
 
     // Open view selector (scoped to repository-left-panel-header to avoid project selector)
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await viewSelector.click();
 
     // Select Tag view
-    const tagsOption = page.locator('[role="option"]').filter({ hasText: /^Tag$/i });
+    const tagsOption = page
+      .locator('[role="option"]')
+      .filter({ hasText: /^Tag$/i });
 
     const hasTagsView = await tagsOption.isVisible();
     if (hasTagsView) {
@@ -200,15 +218,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
 
       // Tag filter options should appear
       // Tag view shows tag options
-      await expect(
-        page
-          .locator('[role="button"]')
-          .first()
-      ).toBeVisible({ timeout: 10000 });
-    } else {
-      // Tag view might not be available if no tags exist
-      await page.keyboard.press("Escape");
-      test.skip();
+      await expect(page.locator('[role="button"]').first()).toBeVisible({
+        timeout: 10000,
+      });
     }
   });
 
@@ -220,7 +232,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     await repositoryPage.goto(projectId);
 
     // Open view selector (scoped to repository-left-panel-header to avoid project selector)
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await viewSelector.click();
 
@@ -252,11 +266,6 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     }
 
     await page.keyboard.press("Escape");
-
-    // If there are dynamic fields, test passes; otherwise skip
-    if (!hasDynamicField) {
-      test.skip();
-    }
   });
 
   test("Switching view updates URL and shows filter options", async ({
@@ -267,7 +276,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     await repositoryPage.goto(projectId);
 
     // Start in Template view (scoped to repository-left-panel-header to avoid project selector)
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await viewSelector.click();
 
@@ -304,11 +315,6 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     const rootFolderId = await api.getRootFolderId(projectId);
     const stateIds = await api.getStateIds(projectId, 2);
 
-    if (stateIds.length < 2) {
-      test.skip();
-      return;
-    }
-
     // Create test cases in different states
     await api.createTestCaseWithState(
       projectId,
@@ -326,7 +332,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     await repositoryPage.goto(projectId);
 
     // Start in State view (scoped to repository-left-panel-header to avoid project selector)
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await viewSelector.click();
 
@@ -382,8 +390,6 @@ test.describe("Custom Fields - Repository View and Filter", () => {
       // The UI shows selected state via check icons, not bg-primary class
       // Just verify the functionality works by waiting for content to load
       await page.waitForTimeout(500);
-    } else {
-      test.skip();
     }
   });
 
@@ -398,7 +404,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify view selector shows Template (scoped to repository-left-panel-header)
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await expect(viewSelector).toContainText(/Template/i);
   });
@@ -411,7 +419,9 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     await page.waitForLoadState("networkidle");
 
     // View selector should show Folders by default (scoped to repository-left-panel-header)
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await expect(viewSelector).toContainText(/Folders/i);
   });
@@ -437,9 +447,6 @@ test.describe("Custom Fields - Repository View and Filter", () => {
       await searchInput.first().fill("test");
       // Wait for debounce and API response
       await page.waitForLoadState("networkidle");
-    } else {
-      // Search might not be visible in all views
-      test.skip();
     }
   });
 });
@@ -471,13 +478,20 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
     const priorityFieldId = await api.getCaseFieldId("Priority");
 
     if (!priorityFieldId) {
-      throw new Error("Priority case field not found - it should be seeded in the database");
+      throw new Error(
+        "Priority case field not found - it should be seeded in the database"
+      );
     }
 
     // Assign Priority field to the template to ensure test isolation
-    const assigned = await api.assignFieldToTemplate(templateId, priorityFieldId);
+    const assigned = await api.assignFieldToTemplate(
+      templateId,
+      priorityFieldId
+    );
     if (!assigned) {
-      console.warn("Failed to assign Priority field to template - it may already be assigned");
+      console.warn(
+        "Failed to assign Priority field to template - it may already be assigned"
+      );
     }
 
     // Create a test case to ensure there's data in the repository
@@ -490,7 +504,9 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
 
     // Set up response listener before navigation to catch the view-options API call
     const viewOptionsPromise = page.waitForResponse(
-      response => response.url().includes('/api/repository-cases/view-options') && response.status() === 200,
+      (response) =>
+        response.url().includes("/api/repository-cases/view-options") &&
+        response.status() === 200,
       { timeout: 15000 }
     );
 
@@ -503,14 +519,18 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
     await page.waitForLoadState("networkidle");
 
     // Define the view selector
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
 
     // Open the menu - options are rendered dynamically when the dropdown opens
     await viewSelector.click();
 
     // Wait for the first option to appear (dropdown is now open and rendering options)
-    await expect(page.locator('[role="option"]').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('[role="option"]').first()).toBeVisible({
+      timeout: 5000,
+    });
 
     // Look for Priority as a dynamic field option in the view selector
     // Priority is a seeded case field of type Dropdown assigned to the default template
@@ -568,9 +588,6 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
 
       // Close the menu
       await page.keyboard.press("Escape");
-    } else {
-      // Column toggle might not exist in current view
-      test.skip();
     }
   });
 
@@ -588,7 +605,9 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
     await repositoryPage.goto(projectId);
 
     // Switch to a view with filters (scoped to repository-left-panel-header)
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await viewSelector.click();
 
@@ -628,8 +647,6 @@ test.describe("Custom Fields - Advanced Search Filters", () => {
         // All Templates should now be selected
         await expect(allTemplates.first()).toHaveClass(/bg-primary/);
       }
-    } else {
-      test.skip();
     }
   });
 });
@@ -656,7 +673,9 @@ test.describe("Custom Fields - Filter Count Display", () => {
     await repositoryPage.goto(projectId);
 
     // Switch to Template view (scoped to repository-left-panel-header)
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await viewSelector.click();
 
@@ -692,7 +711,9 @@ test.describe("Custom Fields - Filter Count Display", () => {
     await repositoryPage.goto(projectId);
 
     // Switch to State view (scoped to repository-left-panel-header)
-    const viewSelector = page.locator('[data-testid="repository-left-panel-header"] [role="combobox"]');
+    const viewSelector = page.locator(
+      '[data-testid="repository-left-panel-header"] [role="combobox"]'
+    );
     await expect(viewSelector).toBeVisible({ timeout: 10000 });
     await viewSelector.click();
 
