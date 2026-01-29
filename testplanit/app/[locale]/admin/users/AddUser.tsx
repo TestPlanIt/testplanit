@@ -11,6 +11,7 @@ import {
   useCreateManyGroupAssignment,
   useFindManyGroups,
   useUpdateUser,
+  useFindFirstRegistrationSettings,
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -107,9 +108,13 @@ export function AddUserModal() {
       }
     });
 
-  // Fetch roles, projects, groups...
+  // Fetch roles, projects, groups, and registration settings...
   const { data: roles, isLoading: isLoadingRoles } = useFindManyRoles();
   const defaultRoleId = roles?.find((role) => role.isDefault)?.id;
+  const { data: registrationSettings } = useFindFirstRegistrationSettings();
+
+  // Email server configuration status
+  const [isEmailServerConfigured, setIsEmailServerConfigured] = useState(true);
 
   // Add roleOptions mapping here
   const roleOptions =
@@ -203,6 +208,23 @@ export function AddUserModal() {
     }
   }, [roles, setValue, form]);
 
+  // Check if email server is configured
+  useEffect(() => {
+    const checkEmailServerConfig = async () => {
+      try {
+        const response = await fetch("/api/admin/sso/magic-link-status");
+        if (response.ok) {
+          const data = await response.json();
+          setIsEmailServerConfigured(data.configured);
+        }
+      } catch (error) {
+        console.error("Failed to check email server configuration:", error);
+      }
+    };
+
+    checkEmailServerConfig();
+  }, []);
+
   // Function to restore deleted user
   async function handleRestoreUser(userId: string, formData: z.infer<typeof AddUserFormValidationSchema>) {
     try {
@@ -261,6 +283,10 @@ export function AddUserModal() {
   async function onSubmit(data: z.infer<typeof AddUserFormValidationSchema>) {
     setIsSubmitting(true);
     try {
+      // Check if email verification is required
+      // Email verification is automatically disabled if no email server is configured
+      const requireEmailVerification = isEmailServerConfigured && (registrationSettings?.requireEmailVerification ?? true);
+
       // Construct payload matching UserCreateInput for the API
       const apiPayload = {
         name: data.name,
@@ -270,6 +296,7 @@ export function AddUserModal() {
         roleId: parseInt(data.roleId), // Convert string roleId to number
         isActive: data.isActive,
         isApi: data.isApi,
+        emailVerified: requireEmailVerification ? null : new Date(),
         // createdById is typically set by the server/hook
       };
 

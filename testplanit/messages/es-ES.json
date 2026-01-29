@@ -2624,7 +2624,10 @@
         "domainDeleted": "Dominio eliminado exitosamente",
         "domainDeleteFailed": "No se pudo eliminar el dominio",
         "defaultAccessUpdated": "Nivel de acceso predeterminado actualizado",
-        "defaultAccessUpdateFailed": "No se pudo actualizar el nivel de acceso predeterminado"
+        "defaultAccessUpdateFailed": "No se pudo actualizar el nivel de acceso predeterminado",
+        "emailVerificationEnabled": "Ahora se requiere verificación de correo electrónico para nuevos usuarios",
+        "emailVerificationDisabled": "La verificación de correo electrónico ya no es necesaria para los nuevos usuarios",
+        "emailVerificationUpdateFailed": "No se pudo actualizar la configuración de verificación de correo electrónico"
       },
       "dialogs": {
         "googleOAuth": {
@@ -2694,6 +2697,10 @@
             "PROJECTADMIN": "Administrador del proyecto: puede administrar los proyectos a los que está asignado.",
             "ADMIN": "Admin - Acceso completo a la administración del sistema"
           }
+        },
+        "requireEmailVerification": {
+          "title": "Requerir verificación de correo electrónico",
+          "description": "Los usuarios deben verificar su dirección de correo electrónico antes de acceder al sistema"
         }
       },
       "errors": {

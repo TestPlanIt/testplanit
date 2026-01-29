@@ -2624,7 +2624,12 @@
         "domainDeleted": "Domain removed successfully",
         "domainDeleteFailed": "Failed to remove domain",
         "defaultAccessUpdated": "Default access level updated",
-        "defaultAccessUpdateFailed": "Failed to update default access level"
+        "defaultAccessUpdateFailed": "Failed to update default access level",
+        "emailVerificationEnabled": "Email verification is now required for new users",
+        "emailVerificationDisabled": "Email verification is no longer required for new users",
+        "emailVerificationDisabledAndVerified": "Email verification disabled and {count} user account(s) verified",
+        "emailVerificationUpdateFailed": "Failed to update email verification setting",
+        "emailServerNotConfigured": "Cannot enable email verification: Email server is not configured"
       },
       "dialogs": {
         "googleOAuth": {
@@ -2666,6 +2671,16 @@
           "validation": {
             "allRequired": "Entry Point, Issuer, Certificate, and Callback URL are required"
           }
+        },
+        "disableEmailVerification": {
+          "title": "Disable Email Verification?",
+          "description": "This will disable email verification for new user sign-ups and verify all existing unverified accounts.",
+          "warning": "⚠️ Security Warning",
+          "warningPoint1": "Only recommended for secured installs (private networks, VPNs, or trusted environments)",
+          "warningPoint2": "All existing unverified accounts will be instantly verified and granted system access",
+          "confirmation": "Are you sure you want to disable email verification and verify all accounts?",
+          "confirm": "Disable and Verify All",
+          "verifying": "Verifying accounts..."
         }
       },
       "status": {
@@ -2694,6 +2709,11 @@
             "PROJECTADMIN": "Project Admin - Can manage projects they are assigned to",
             "ADMIN": "Admin - Full system administration access"
           }
+        },
+        "requireEmailVerification": {
+          "title": "Require Email Verification",
+          "description": "Users must verify their email address before accessing the system",
+          "noEmailServerWarning": "Email server is not configured. Email verification is automatically disabled until an email server is set up."
         }
       },
       "errors": {

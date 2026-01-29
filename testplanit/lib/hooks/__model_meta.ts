@@ -6791,6 +6791,10 @@ const metadata: ModelMeta = {
                     name: "force2FAAllLogins",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, requireEmailVerification: {
+                    name: "requireEmailVerification",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": true }] }],
                 }, createdAt: {
                     name: "createdAt",
                     type: "DateTime",

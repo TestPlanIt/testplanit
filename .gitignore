@@ -64,3 +64,4 @@ testplanit/test-data/tpi*test*
 
 *cases/*
 .*-mcp/**
+testplanit/backups/testplanit_backup_20260129_063801.sql
