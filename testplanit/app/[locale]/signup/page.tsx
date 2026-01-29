@@ -237,6 +237,16 @@ const Signup: NextPage = () => {
     });
 
     if (signInResult?.error) {
+      // Check if 2FA setup is required
+      if (signInResult.error.startsWith("2FA_SETUP_REQUIRED:")) {
+        // Extract the setup token from the error message
+        const token = signInResult.error.replace("2FA_SETUP_REQUIRED:", "");
+        // Redirect to 2FA setup page with the token
+        router.push(`/auth/two-factor-setup?token=${encodeURIComponent(token)}`);
+        return;
+      }
+
+      // For other errors, show generic error message
       setSubmissionError(t("common.errors.unknown"));
       return;
     }
