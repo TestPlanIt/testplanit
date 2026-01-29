@@ -27,13 +27,13 @@ overrides:
   '@modelcontextprotocol/sdk': '>=1.25.2'
   preact: '>=10.28.2'
   '@remix-run/router': '>=1.23.2'
-  hono: 4.11.4
+  hono: '>=4.11.7'
   '@hono/node-server': 1.19.9
   cheerio: '>=1.0.0'
   ioredis: 5.9.2
   lodash: '>=4.17.23'
   lodash-es: '>=4.17.23'
-  undici: '>=6.23.0'
+  undici: '>=7.18.2'
   diff: '>=8.0.3'
 
 importers:
@@ -677,6 +677,9 @@ importers:
       happy-dom:
         specifier: ^20.4.0
         version: 20.4.0
+      hono:
+        specifier: '>=4.11.7'
+        version: 4.11.7
       html-to-adf-converter:
         specifier: ^1.0.2
         version: 1.0.2
@@ -1085,7 +1088,7 @@ importers:
         version: 25.0.2(typescript@5.9.3)
       shadcn:
         specifier: ^3.7.0
-        version: 3.7.0(@types/node@25.1.0)(babel-plugin-macros@3.1.0)(hono@4.11.4)(typescript@5.9.3)
+        version: 3.7.0(@types/node@25.1.0)(babel-plugin-macros@3.1.0)(hono@4.11.7)(typescript@5.9.3)
       sharp:
         specifier: ^0.34.5
         version: 0.34.5
@@ -5033,7 +5036,7 @@ packages:
     resolution: {integrity: sha512-vHL6w3ecZsky+8P5MD+eFfaGTyCeOHUIFYMGpQGbrBTSmNNoxv0if69rEZ5giu36weC5saFuznL411gRX7bJDw==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
-      hono: 4.11.4
+      hono: '>=4.11.7'
 
   '@hookform/resolvers@5.2.2':
     resolution: {integrity: sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA==}
@@ -12195,8 +12198,8 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
-  hono@4.11.4:
-    resolution: {integrity: sha512-U7tt8JsyrxSRKspfhtLET79pU8K+tInj5QZXs1jSugO1Vq5dFj3kmZsRldo29mTBfcjDRVRXrEZ6LS63Cog9ZA==}
+  hono@4.11.7:
+    resolution: {integrity: sha512-l7qMiNee7t82bH3SeyUCt9UF15EVmaBvsppY2zQtrbIhl/yzBTny+YUxsVjSjQ6gaqaeVtZmGocom8TzBlA4Yw==}
     engines: {node: '>=16.9.0'}
 
   hook-std@4.0.0:
@@ -32242,9 +32245,9 @@ snapshots:
     dependencies:
       '@hapi/hoek': 9.3.0
 
-  '@hono/node-server@1.19.9(hono@4.11.4)':
+  '@hono/node-server@1.19.9(hono@4.11.7)':
     dependencies:
-      hono: 4.11.4
+      hono: 4.11.7
 
   '@hookform/resolvers@5.2.2(react-hook-form@7.71.1(react@19.2.4))':
     dependencies:
@@ -32622,9 +32625,9 @@ snapshots:
       '@types/react': 19.2.10
       react: 19.2.3
 
-  '@modelcontextprotocol/sdk@1.25.3(hono@4.11.4)(zod@3.25.76)':
+  '@modelcontextprotocol/sdk@1.25.3(hono@4.11.7)(zod@3.25.76)':
     dependencies:
-      '@hono/node-server': 1.19.9(hono@4.11.4)
+      '@hono/node-server': 1.19.9(hono@4.11.7)
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
       content-type: 1.0.5
@@ -40723,7 +40726,7 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
-  hono@4.11.4: {}
+  hono@4.11.7: {}
 
   hook-std@4.0.0: {}
 
@@ -46008,7 +46011,7 @@ snapshots:
       safe-buffer: 5.2.1
       to-buffer: 1.2.2
 
-  shadcn@3.7.0(@types/node@25.1.0)(babel-plugin-macros@3.1.0)(hono@4.11.4)(typescript@5.9.3):
+  shadcn@3.7.0(@types/node@25.1.0)(babel-plugin-macros@3.1.0)(hono@4.11.7)(typescript@5.9.3):
     dependencies:
       '@antfu/ni': 25.0.0
       '@babel/core': 7.28.6
@@ -46016,7 +46019,7 @@ snapshots:
       '@babel/plugin-transform-typescript': 7.28.6(@babel/core@7.28.6)
       '@babel/preset-typescript': 7.28.5(@babel/core@7.28.6)
       '@dotenvx/dotenvx': 1.52.0
-      '@modelcontextprotocol/sdk': 1.25.3(hono@4.11.4)(zod@3.25.76)
+      '@modelcontextprotocol/sdk': 1.25.3(hono@4.11.7)(zod@3.25.76)
       '@types/validate-npm-package-name': 4.0.2
       browserslist: 4.28.1
       commander: 14.0.2
