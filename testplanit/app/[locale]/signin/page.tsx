@@ -10,7 +10,7 @@ import { useTranslations } from "next-intl";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
-import { useFindManySsoProvider } from "~/lib/hooks";
+import { useFindManySsoProvider } from "~/lib/hooks/sso-provider";
 import { SsoProviderType } from "@prisma/client";
 
 import Image from "next/image";

@@ -3324,15 +3324,17 @@ model AllowedEmailDomain {
 }
 
 model RegistrationSettings {
-    id                    String   @id @default(cuid())
-    restrictEmailDomains  Boolean  @default(false) // Enable/disable domain restrictions
-    allowOpenRegistration Boolean  @default(true)  // Allow any user to register
-    defaultAccess         Access   @default(NONE)  // Default system access for new users
+    id                       String   @id @default(cuid())
+    restrictEmailDomains     Boolean  @default(false) // Enable/disable domain restrictions
+    allowOpenRegistration    Boolean  @default(true)  // Allow any user to register
+    defaultAccess            Access   @default(NONE)  // Default system access for new users
     // Two-factor authentication settings
-    force2FANonSSO        Boolean  @default(false) // Force 2FA for email/password logins
-    force2FAAllLogins     Boolean  @default(false) // Force 2FA for all logins including SSO
-    createdAt             DateTime @default(now())
-    updatedAt             DateTime @updatedAt
+    force2FANonSSO           Boolean  @default(false) // Force 2FA for email/password logins
+    force2FAAllLogins        Boolean  @default(false) // Force 2FA for all logins including SSO
+    // Email verification settings
+    requireEmailVerification Boolean  @default(true)  // Require email verification for email/password sign-ups
+    createdAt                DateTime @default(now())
+    updatedAt                DateTime @updatedAt
 
     // Allow everyone to read registration settings (needed for sign-up page)
     @@allow('read', true)

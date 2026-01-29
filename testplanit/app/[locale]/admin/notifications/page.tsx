@@ -78,6 +78,7 @@ function NotificationSettingsContent() {
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
+  const [isEmailServerConfigured, setIsEmailServerConfigured] = useState(true);
 
   const columns = useMemo(() => getColumns(session, t, tCommon), [session, t, tCommon]);
 
@@ -122,6 +123,29 @@ function NotificationSettingsContent() {
       }
     }
   }, [settings]);
+
+  // Check if email server is configured
+  useEffect(() => {
+    const checkEmailServerConfig = async () => {
+      try {
+        const response = await fetch("/api/admin/sso/magic-link-status");
+        if (response.ok) {
+          const data = await response.json();
+          setIsEmailServerConfigured(data.configured);
+
+          // If email server is not configured and default mode is email-based,
+          // fall back to IN_APP mode
+          if (!data.configured && (defaultMode === "IN_APP_EMAIL_IMMEDIATE" || defaultMode === "IN_APP_EMAIL_DAILY")) {
+            setDefaultMode("IN_APP");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to check email server configuration:", error);
+      }
+    };
+
+    checkEmailServerConfig();
+  }, [defaultMode]);
 
   const loadNotificationHistory = useCallback(
     async (page: number, size: number) => {
@@ -293,24 +317,28 @@ function NotificationSettingsContent() {
                   <RadioGroupItem value="IN_APP" id="in-app" />
                   <Label htmlFor="in-app">{t("defaultMode.inApp")}</Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem
-                    value="IN_APP_EMAIL_IMMEDIATE"
-                    id="in-app-email-immediate"
-                  />
-                  <Label htmlFor="in-app-email-immediate">
-                    {t("defaultMode.inAppEmailImmediate")}
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem
-                    value="IN_APP_EMAIL_DAILY"
-                    id="in-app-email-daily"
-                  />
-                  <Label htmlFor="in-app-email-daily">
-                    {t("defaultMode.inAppEmailDaily")}
-                  </Label>
-                </div>
+                {isEmailServerConfigured && (
+                  <>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        value="IN_APP_EMAIL_IMMEDIATE"
+                        id="in-app-email-immediate"
+                      />
+                      <Label htmlFor="in-app-email-immediate">
+                        {t("defaultMode.inAppEmailImmediate")}
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        value="IN_APP_EMAIL_DAILY"
+                        id="in-app-email-daily"
+                      />
+                      <Label htmlFor="in-app-email-daily">
+                        {t("defaultMode.inAppEmailDaily")}
+                      </Label>
+                    </div>
+                  </>
+                )}
               </RadioGroup>
             </div>
           </div>

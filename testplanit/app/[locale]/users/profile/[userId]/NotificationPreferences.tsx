@@ -34,6 +34,7 @@ export function NotificationPreferences({
   const { toast } = useToast();
   const [notificationMode, setNotificationMode] =
     useState<NotificationMode>("USE_GLOBAL");
+  const [isEmailServerConfigured, setIsEmailServerConfigured] = useState(true);
 
   const { data: globalSettings } = useFindUniqueAppConfig({
     where: { key: "notificationSettings" },
@@ -45,6 +46,29 @@ export function NotificationPreferences({
       setNotificationMode(userPreferences.notificationMode || "USE_GLOBAL");
     }
   }, [userPreferences]);
+
+  // Check if email server is configured
+  useEffect(() => {
+    const checkEmailServerConfig = async () => {
+      try {
+        const response = await fetch("/api/admin/sso/magic-link-status");
+        if (response.ok) {
+          const data = await response.json();
+          setIsEmailServerConfigured(data.configured);
+
+          // If email server is not configured and user has an email-based notification mode,
+          // fall back to IN_APP mode
+          if (!data.configured && (notificationMode === "IN_APP_EMAIL_IMMEDIATE" || notificationMode === "IN_APP_EMAIL_DAILY")) {
+            setNotificationMode("IN_APP");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to check email server configuration:", error);
+      }
+    };
+
+    checkEmailServerConfig();
+  }, [notificationMode]);
 
   const handleSave = () => {
     if (!userPreferences?.id) return;
@@ -142,24 +166,28 @@ export function NotificationPreferences({
                 {tGlobal("admin.notifications.defaultMode.inApp")}
               </Label>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem
-                value="IN_APP_EMAIL_IMMEDIATE"
-                id="in-app-email-immediate"
-              />
-              <Label htmlFor="in-app-email-immediate">
-                {tGlobal("admin.notifications.defaultMode.inAppEmailImmediate")}
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem
-                value="IN_APP_EMAIL_DAILY"
-                id="in-app-email-daily"
-              />
-              <Label htmlFor="in-app-email-daily">
-                {tGlobal("admin.notifications.defaultMode.inAppEmailDaily")}
-              </Label>
-            </div>
+            {isEmailServerConfigured && (
+              <>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem
+                    value="IN_APP_EMAIL_IMMEDIATE"
+                    id="in-app-email-immediate"
+                  />
+                  <Label htmlFor="in-app-email-immediate">
+                    {tGlobal("admin.notifications.defaultMode.inAppEmailImmediate")}
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem
+                    value="IN_APP_EMAIL_DAILY"
+                    id="in-app-email-daily"
+                  />
+                  <Label htmlFor="in-app-email-daily">
+                    {tGlobal("admin.notifications.defaultMode.inAppEmailDaily")}
+                  </Label>
+                </div>
+              </>
+            )}
           </RadioGroup>
         </div>
 

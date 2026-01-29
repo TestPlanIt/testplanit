@@ -103,6 +103,13 @@ export default function SSOAdminPage() {
   // Magic Link state
   const [magicLinkConfigured, setMagicLinkConfigured] = useState(false);
 
+  // Email server configuration status
+  const [isEmailServerConfigured, setIsEmailServerConfigured] = useState(true);
+
+  // Email verification confirmation dialog state
+  const [showEmailVerificationConfirm, setShowEmailVerificationConfirm] = useState(false);
+  const [isVerifyingAllUsers, setIsVerifyingAllUsers] = useState(false);
+
   // Check if Google OAuth is configured based on SSO providers data
   useEffect(() => {
     const googleProvider = ssoProviders?.find(
@@ -171,6 +178,8 @@ export default function SSOAdminPage() {
         if (response.ok) {
           const data = await response.json();
           setMagicLinkConfigured(data.configured);
+          // Email server configuration status is the same as magic link status
+          setIsEmailServerConfigured(data.configured);
         }
       } catch (error) {
         console.error("Failed to check Magic Link configuration:", error);
@@ -689,6 +698,80 @@ export default function SSOAdminPage() {
     }
   };
 
+  const handleToggleRequireEmailVerification = async (enabled: boolean) => {
+    // Prevent enabling email verification when no email server is configured
+    if (enabled && !isEmailServerConfigured) {
+      toast.error(t("admin.sso.messages.emailServerNotConfigured"));
+      return;
+    }
+
+    // If disabling email verification, show confirmation dialog
+    if (!enabled && (registrationSettings?.requireEmailVerification ?? true)) {
+      setShowEmailVerificationConfirm(true);
+      return;
+    }
+
+    // If enabling, proceed directly
+    try {
+      await upsertSettings({
+        where: {
+          id: registrationSettings?.id ?? "default-registration-settings",
+        },
+        create: {
+          id: "default-registration-settings",
+          requireEmailVerification: enabled,
+        },
+        update: { requireEmailVerification: enabled },
+      });
+      toast.success(t("admin.sso.messages.emailVerificationEnabled"));
+      refetchSettings();
+    } catch (error) {
+      toast.error(t("admin.sso.messages.emailVerificationUpdateFailed"));
+    }
+  };
+
+  const confirmDisableEmailVerification = async () => {
+    setIsVerifyingAllUsers(true);
+    try {
+      // First, verify all existing users
+      const response = await fetch("/api/admin/users/verify-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to verify all users");
+      }
+
+      const result = await response.json();
+
+      // Then, update the setting
+      await upsertSettings({
+        where: {
+          id: registrationSettings?.id ?? "default-registration-settings",
+        },
+        create: {
+          id: "default-registration-settings",
+          requireEmailVerification: false,
+        },
+        update: { requireEmailVerification: false },
+      });
+
+      toast.success(
+        t("admin.sso.messages.emailVerificationDisabledAndVerified", {
+          count: result.verifiedCount || 0,
+        })
+      );
+      refetchSettings();
+      setShowEmailVerificationConfirm(false);
+    } catch (error) {
+      console.error("Error disabling email verification:", error);
+      toast.error(t("admin.sso.messages.emailVerificationUpdateFailed"));
+    } finally {
+      setIsVerifyingAllUsers(false);
+    }
+  };
+
   const googleProvider = ssoProviders?.find(
     (p) => p.type === SsoProviderType.GOOGLE
   );
@@ -1002,6 +1085,28 @@ export default function SSOAdminPage() {
                 </SelectGroup>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Email Verification Requirement */}
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <Label className="text-base font-medium">
+                {t("admin.sso.registration.requireEmailVerification.title")}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t("admin.sso.registration.requireEmailVerification.description")}
+              </p>
+              {!isEmailServerConfigured && (
+                <p className="text-sm text-amber-600 dark:text-amber-500 mt-2">
+                  {t("admin.sso.registration.requireEmailVerification.noEmailServerWarning")}
+                </p>
+              )}
+            </div>
+            <Switch
+              checked={isEmailServerConfigured && (registrationSettings?.requireEmailVerification ?? true)}
+              onCheckedChange={handleToggleRequireEmailVerification}
+              disabled={!isEmailServerConfigured}
+            />
           </div>
 
           <div className="flex items-center justify-between">
@@ -1411,6 +1516,50 @@ export default function SSOAdminPage() {
               {isSavingAppleConfig
                 ? t("common.actions.saving")
                 : t("admin.imports.testmo.mappingSaveConfiguration")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Verification Disable Confirmation Dialog */}
+      <Dialog open={showEmailVerificationConfirm} onOpenChange={setShowEmailVerificationConfirm}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{t("admin.sso.dialogs.disableEmailVerification.title")}</DialogTitle>
+            <DialogDescription>
+              {t("admin.sso.dialogs.disableEmailVerification.description")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200 font-semibold mb-2">
+                {t("admin.sso.dialogs.disableEmailVerification.warning")}
+              </p>
+              <ul className="text-sm text-yellow-700 dark:text-yellow-300 list-disc list-inside space-y-1">
+                <li>{t("admin.sso.dialogs.disableEmailVerification.warningPoint1")}</li>
+                <li>{t("admin.sso.dialogs.disableEmailVerification.warningPoint2")}</li>
+              </ul>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t("admin.sso.dialogs.disableEmailVerification.confirmation")}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowEmailVerificationConfirm(false)}
+              disabled={isVerifyingAllUsers}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDisableEmailVerification}
+              disabled={isVerifyingAllUsers}
+            >
+              {isVerifyingAllUsers
+                ? t("admin.sso.dialogs.disableEmailVerification.verifying")
+                : t("admin.sso.dialogs.disableEmailVerification.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

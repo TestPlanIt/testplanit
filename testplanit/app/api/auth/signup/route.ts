@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
+import { db } from "~/server/db";
 import { hash } from "bcrypt";
 import { z } from "zod/v4";
+import { isEmailServerConfigured } from "~/lib/email/emailConfig";
 
 /**
  * Dedicated signup API endpoint that bypasses ZenStack access control.
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await hash(validatedData.password, 10);
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await db.user.findUnique({
       where: { email: validatedData.email },
     });
 
@@ -48,14 +49,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Check if email verification is required
+    // Email verification is automatically disabled if no email server is configured
+    const registrationSettings = await db.registrationSettings.findFirst();
+    const requireEmailVerification = isEmailServerConfigured() && (registrationSettings?.requireEmailVerification ?? true);
+
     // Create user with preferences in a transaction
-    const user = await prisma.$transaction(async (tx) => {
+    const user = await db.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
           name: validatedData.name,
           email: validatedData.email,
           password: hashedPassword,
-          emailVerifToken: validatedData.emailVerifToken,
+          emailVerifToken: requireEmailVerification ? validatedData.emailVerifToken : null,
+          emailVerified: requireEmailVerification ? null : new Date(),
           access: validatedData.access,
           roleId: validatedData.roleId,
           isActive: true,
