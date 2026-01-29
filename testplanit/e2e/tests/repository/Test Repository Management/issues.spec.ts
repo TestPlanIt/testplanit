@@ -282,16 +282,25 @@ test.describe("Issues", () => {
       (el as HTMLElement).click();
     });
 
-    // Wait for the column to be hidden (UI should update immediately)
-    await page.waitForTimeout(500);
-
-    // Close the popover by clicking outside
+    // Close the popover by clicking Escape
     await page.keyboard.press('Escape');
-    await page.waitForLoadState('networkidle');
 
-    // Verify Issues column is now hidden - need to create new locator since table may have re-rendered
-    const hiddenIssuesColumn = page.locator("table").first().locator('th').filter({ hasText: 'Issues' });
-    await expect(hiddenIssuesColumn).not.toBeVisible({ timeout: 5000 });
+    // Wait for the popover to close
+    await expect(issuesCheckbox).not.toBeVisible({ timeout: 5000 });
+
+    // Poll to wait for the column to be hidden (table may re-render)
+    await expect.poll(
+      async () => {
+        const hiddenIssuesColumn = page.locator("table").first().locator('th').filter({ hasText: 'Issues' });
+        const isVisible = await hiddenIssuesColumn.isVisible().catch(() => false);
+        return isVisible;
+      },
+      {
+        message: 'Expected Issues column to be hidden after unchecking it in column selector',
+        timeout: 10000,
+        intervals: [100, 250, 500, 1000],
+      }
+    ).toBe(false);
   });
 
   test("Issues Section Shows Loading State", async ({ api, page }) => {

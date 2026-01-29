@@ -92,19 +92,17 @@ export async function POST(request: NextRequest) {
         }),
         ...(highlight && {
           highlight: {
+            type: "plain", // Use plain highlighter for better wildcard support
             fields: {
               name: { number_of_fragments: 1 },
               searchableContent: { number_of_fragments: 3 },
-              "steps.step": { number_of_fragments: 2 },
-              "steps.expectedResult": { number_of_fragments: 2 },
-              "items.step": { number_of_fragments: 2 },
-              "items.expectedResult": { number_of_fragments: 2 },
               note: { number_of_fragments: 2 },
               mission: { number_of_fragments: 2 },
               docs: { number_of_fragments: 2 },
             },
             pre_tags: ['<mark class="search-highlight">'],
             post_tags: ["</mark>"],
+            require_field_match: false,
           },
         }),
       });
@@ -124,13 +122,68 @@ export async function POST(request: NextRequest) {
     }
 
     // Process results
-    const hits: SearchHit[] = searchResponse.hits.hits.map((hit: any) => ({
-      id: hit._source.id,
-      entityType: getEntityTypeFromIndex(hit._index),
-      score: hit._score,
-      source: hit._source,
-      highlights: hit.highlight,
-    }));
+    const hits: SearchHit[] = searchResponse.hits.hits.map((hit: any) => {
+      const highlights: any = { ...hit.highlight };
+
+      // Merge nested field highlights from inner_hits
+      if (hit.inner_hits) {
+        // Extract highlights from nested steps - collect from ALL matching nested docs
+        if (hit.inner_hits.steps?.hits?.hits?.length > 0) {
+          const allStepHighlights: string[] = [];
+          const allExpectedResultHighlights: string[] = [];
+
+          hit.inner_hits.steps.hits.hits.forEach((nestedHit: any) => {
+            if (nestedHit.highlight) {
+              if (nestedHit.highlight["steps.step"]) {
+                allStepHighlights.push(...nestedHit.highlight["steps.step"]);
+              }
+              if (nestedHit.highlight["steps.expectedResult"]) {
+                allExpectedResultHighlights.push(...nestedHit.highlight["steps.expectedResult"]);
+              }
+            }
+          });
+
+          if (allStepHighlights.length > 0) {
+            highlights["steps.step"] = allStepHighlights;
+          }
+          if (allExpectedResultHighlights.length > 0) {
+            highlights["steps.expectedResult"] = allExpectedResultHighlights;
+          }
+        }
+
+        // Extract highlights from nested items - collect from ALL matching nested docs
+        if (hit.inner_hits.items?.hits?.hits?.length > 0) {
+          const allItemStepHighlights: string[] = [];
+          const allItemExpectedResultHighlights: string[] = [];
+
+          hit.inner_hits.items.hits.hits.forEach((nestedHit: any) => {
+            if (nestedHit.highlight) {
+              if (nestedHit.highlight["items.step"]) {
+                allItemStepHighlights.push(...nestedHit.highlight["items.step"]);
+              }
+              if (nestedHit.highlight["items.expectedResult"]) {
+                allItemExpectedResultHighlights.push(...nestedHit.highlight["items.expectedResult"]);
+              }
+            }
+          });
+
+          if (allItemStepHighlights.length > 0) {
+            highlights["items.step"] = allItemStepHighlights;
+          }
+          if (allItemExpectedResultHighlights.length > 0) {
+            highlights["items.expectedResult"] = allItemExpectedResultHighlights;
+          }
+        }
+      }
+
+      return {
+        id: hit._source.id,
+        entityType: getEntityTypeFromIndex(hit._index),
+        score: hit._score,
+        source: hit._source,
+        highlights,
+      };
+    });
 
     // Get entity type counts
     const entityTypeCounts =
@@ -166,10 +219,21 @@ async function buildElasticsearchQuery(filters: any, user: any): Promise<any> {
   const must: any[] = [];
   const filter: any[] = [];
 
-  // Add query string search
+  // Add query string search with support for operators
   if (filters.query) {
-    must.push({
-      multi_match: {
+    // Determine which entity types are being searched
+    const entityTypes = filters.entityTypes || [];
+    const hasRepositoryCases = entityTypes.length === 0 || entityTypes.includes(SearchableEntityType.REPOSITORY_CASE);
+    const hasSharedSteps = entityTypes.length === 0 || entityTypes.includes(SearchableEntityType.SHARED_STEP);
+    const hasTestRuns = entityTypes.length === 0 || entityTypes.includes(SearchableEntityType.TEST_RUN);
+    const hasSessions = entityTypes.length === 0 || entityTypes.includes(SearchableEntityType.SESSION);
+
+    // Use bool query with should clauses to search both regular and nested fields
+    const searchQueries: any[] = [];
+
+    // Search regular (non-nested) fields
+    searchQueries.push({
+      query_string: {
         query: filters.query,
         fields: [
           "name^3",
@@ -177,19 +241,134 @@ async function buildElasticsearchQuery(filters: any, user: any): Promise<any> {
           "description",
           "searchableContent",
           "className",
-          "steps.step",
-          "steps.expectedResult",
-          "items.step",
-          "items.expectedResult",
           "note",
           "mission",
           "docs",
-          "customFields.value",
           "externalId",
         ],
-        type: "best_fields",
-        operator: "or",
-        fuzziness: "AUTO",
+        default_operator: "or",
+        fuzzy_transpositions: true,
+        fuzzy_max_expansions: 50,
+        lenient: true, // Don't fail on malformed queries
+        analyze_wildcard: true, // Enable wildcard analysis
+      },
+    });
+
+    // Search nested steps fields (for repository cases)
+    if (hasRepositoryCases) {
+      searchQueries.push({
+        nested: {
+          path: "steps",
+          query: {
+            query_string: {
+              query: filters.query,
+              fields: ["steps.step", "steps.expectedResult"],
+              default_operator: "or",
+              lenient: true,
+              analyze_wildcard: true,
+            },
+          },
+          inner_hits: {
+            size: 100, // Return more nested hits to capture all matches
+            highlight: {
+              type: "plain", // Use plain highlighter for better wildcard support
+              fields: {
+                "steps.step": {
+                  number_of_fragments: 0, // Return entire field content
+                  fragment_size: 0,
+                },
+                "steps.expectedResult": {
+                  number_of_fragments: 0, // Return entire field content
+                  fragment_size: 0,
+                },
+              },
+              pre_tags: ['<mark class="search-highlight">'],
+              post_tags: ["</mark>"],
+              require_field_match: false,
+              highlight_query: {
+                query_string: {
+                  query: filters.query,
+                  fields: ["steps.step", "steps.expectedResult"],
+                  default_operator: "or",
+                  lenient: true,
+                  analyze_wildcard: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    // Search nested items fields (for shared steps only)
+    if (hasSharedSteps) {
+      searchQueries.push({
+        nested: {
+          path: "items",
+          query: {
+            query_string: {
+              query: filters.query,
+              fields: ["items.step", "items.expectedResult"],
+              default_operator: "or",
+              lenient: true,
+              analyze_wildcard: true,
+            },
+          },
+          inner_hits: {
+            size: 100, // Return more nested hits to capture all matches
+            highlight: {
+              type: "plain", // Use plain highlighter for better wildcard support
+              fields: {
+                "items.step": {
+                  number_of_fragments: 0, // Return entire field content
+                  fragment_size: 0,
+                },
+                "items.expectedResult": {
+                  number_of_fragments: 0, // Return entire field content
+                  fragment_size: 0,
+                },
+              },
+              pre_tags: ['<mark class="search-highlight">'],
+              post_tags: ["</mark>"],
+              require_field_match: false,
+              highlight_query: {
+                query_string: {
+                  query: filters.query,
+                  fields: ["items.step", "items.expectedResult"],
+                  default_operator: "or",
+                  lenient: true,
+                  analyze_wildcard: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    // Search nested custom fields (for repository cases, test runs, sessions)
+    if (hasRepositoryCases || hasTestRuns || hasSessions) {
+      searchQueries.push({
+        nested: {
+          path: "customFields",
+          query: {
+            query_string: {
+              query: filters.query,
+              fields: ["customFields.value"],
+              default_operator: "or",
+              lenient: true,
+              analyze_wildcard: true,
+            },
+          },
+        },
+      });
+    }
+
+    // Combine all queries with should (OR)
+    must.push({
+      bool: {
+        should: searchQueries,
+        minimum_should_match: 1,
       },
     });
   }

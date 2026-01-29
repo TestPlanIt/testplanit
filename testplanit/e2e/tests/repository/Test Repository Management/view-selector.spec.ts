@@ -235,8 +235,16 @@ test.describe("View Selector - Repository Views", () => {
     const case1Name = `E2E Case With Tag1 ${uniqueId}`;
     const case2Name = `E2E Case With Tag2 ${uniqueId}`;
 
-    const case1Id = await api.createTestCase(projectId, rootFolderId, case1Name);
-    const case2Id = await api.createTestCase(projectId, rootFolderId, case2Name);
+    const case1Id = await api.createTestCase(
+      projectId,
+      rootFolderId,
+      case1Name
+    );
+    const case2Id = await api.createTestCase(
+      projectId,
+      rootFolderId,
+      case2Name
+    );
 
     await api.addTagToTestCase(case1Id, tag1Id);
     await api.addTagToTestCase(case2Id, tag2Id);
@@ -253,7 +261,9 @@ test.describe("View Selector - Repository Views", () => {
     });
 
     // Click on Tag1 filter
-    const tag1Filter = page.locator('[role="button"]').filter({ hasText: tag1Name });
+    const tag1Filter = page
+      .locator('[role="button"]')
+      .filter({ hasText: tag1Name });
     await expect(tag1Filter).toBeVisible({ timeout: 10000 });
     await tag1Filter.click();
 
@@ -345,11 +355,15 @@ test.describe("View Selector - Repository Views", () => {
     await selectView(page, "Issue");
 
     // Should show "Any Issue" option
-    const anyIssueOption = page.locator('[role="button"]:has-text("Any Issue")');
+    const anyIssueOption = page.locator(
+      '[role="button"]:has-text("Any Issue")'
+    );
     await expect(anyIssueOption.first()).toBeVisible({ timeout: 10000 });
 
     // Should show "No Issues" option
-    const noIssuesOption = page.locator('[role="button"]:has-text("No Issues")');
+    const noIssuesOption = page.locator(
+      '[role="button"]:has-text("No Issues")'
+    );
     await expect(noIssuesOption.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -383,12 +397,16 @@ test.describe("View Selector - Repository Views", () => {
     await expect(page.locator(`text="${linkedCaseName}"`).first()).toBeVisible({
       timeout: 10000,
     });
-    await expect(page.locator(`text="${unlinkedCaseName}"`).first()).toBeVisible({
+    await expect(
+      page.locator(`text="${unlinkedCaseName}"`).first()
+    ).toBeVisible({
       timeout: 10000,
     });
 
     // Click on "Any Issue" filter
-    const anyIssueFilter = page.locator('[role="button"]:has-text("Any Issue")');
+    const anyIssueFilter = page.locator(
+      '[role="button"]:has-text("Any Issue")'
+    );
     await expect(anyIssueFilter.first()).toBeVisible({ timeout: 10000 });
     await anyIssueFilter.first().click();
 
@@ -430,7 +448,9 @@ test.describe("View Selector - Repository Views", () => {
     await selectView(page, "Issue");
 
     // Click on "No Issues" filter
-    const noIssuesFilter = page.locator('[role="button"]:has-text("No Issues")');
+    const noIssuesFilter = page.locator(
+      '[role="button"]:has-text("No Issues")'
+    );
     await expect(noIssuesFilter.first()).toBeVisible({ timeout: 10000 });
     await noIssuesFilter.first().click();
     await page.waitForLoadState("networkidle");
@@ -457,7 +477,7 @@ test.describe("View Selector - Repository Views", () => {
 
     // The linked case should NOT be visible (it has an issue)
     // Check that the table either has no rows or shows "no results" type message
-    const tableRows = page.locator('table tbody tr');
+    const tableRows = page.locator("table tbody tr");
 
     // Wait for the filter to take effect - either rows disappear or we see empty state
     await expect(async () => {
@@ -535,10 +555,12 @@ test.describe("View Selector - Repository Views", () => {
     // The unlinked case should NOT be visible (it doesn't have this issue)
     // Check for either the case not being visible OR a "no results" message
     const unlinkedCase = page.locator(`text="${unlinkedCaseName}"`);
-    const noResults = page.locator('text=/no.*cases.*found|no.*results/i');
+    const noResults = page.locator("text=/no.*cases.*found|no.*results/i");
 
     // Either the case should not exist in DOM, or we should see "no results"
-    const isUnlinkedHidden = await unlinkedCase.count().then(count => count === 0);
+    const isUnlinkedHidden = await unlinkedCase
+      .count()
+      .then((count) => count === 0);
     const hasNoResults = await noResults.isVisible().catch(() => false);
 
     expect(isUnlinkedHidden || hasNoResults).toBeTruthy();
@@ -644,11 +666,6 @@ test.describe("View Selector - Repository Views", () => {
     const rootFolderId = await api.getRootFolderId(projectId);
     const stateIds = await api.getStateIds(projectId, 2);
 
-    if (stateIds.length < 2) {
-      test.skip();
-      return;
-    }
-
     await api.createTestCaseWithState(
       projectId,
       rootFolderId,
@@ -708,8 +725,6 @@ test.describe("View Selector - Repository Views", () => {
       // The UI shows selected state via check icons in the filter options
       // Just verify the functionality works by waiting for content to load
       await page.waitForTimeout(500);
-    } else {
-      test.skip();
     }
   });
 
@@ -722,11 +737,6 @@ test.describe("View Selector - Repository Views", () => {
     // Create test cases with different states
     const rootFolderId = await api.getRootFolderId(projectId);
     const stateIds = await api.getStateIds(projectId, 2);
-
-    if (stateIds.length < 2) {
-      test.skip();
-      return;
-    }
 
     const uniqueId = Date.now();
     const case1Name = `E2E Reset Case1 ${uniqueId}`;
@@ -772,8 +782,6 @@ test.describe("View Selector - Repository Views", () => {
 
       // All States should be selected
       await expect(allStates.first()).toHaveClass(/bg-primary/);
-    } else {
-      test.skip();
     }
   });
 
@@ -863,11 +871,6 @@ test.describe("View Selector - Filter Persistence", () => {
     const rootFolderId = await api.getRootFolderId(projectId);
     const stateIds = await api.getStateIds(projectId, 1);
 
-    if (stateIds.length < 1) {
-      test.skip();
-      return;
-    }
-
     await api.createTestCaseWithState(
       projectId,
       rootFolderId,
@@ -909,8 +912,6 @@ test.describe("View Selector - Filter Persistence", () => {
     // Verify the clicked button is now selected (has selected styling)
     if (clickedButton) {
       await expect(clickedButton).toHaveClass(/bg-primary/);
-    } else {
-      test.skip();
     }
   });
 

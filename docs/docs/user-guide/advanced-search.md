@@ -129,9 +129,136 @@ When searching multiple entity types, results are organized into tabs:
 
 ### Text Search
 
-- Search is performed across multiple fields including names, descriptions, and content
-- Search terms are highlighted in yellow in the results
-- Use quotes for exact phrase matching: `"test scenario"`
+Search is performed across multiple fields including names, descriptions, and content. Search terms are highlighted in yellow in the results.
+
+### Advanced Search Operators
+
+TestPlanIt supports powerful search operators that allow you to create precise queries:
+
+#### Exact Phrase Matching
+
+Use double quotes to search for an exact phrase:
+
+```text
+"test scenario"
+"user authentication flow"
+```
+
+This will only match documents containing those exact words in that exact order.
+
+#### Required Terms (+)
+
+Use the `+` prefix to require a term must be present:
+
+```text
++login +password
++api +authentication
+```
+
+Both terms must appear in the results.
+
+#### Excluded Terms (-)
+
+Use the `-` prefix to exclude documents containing a term:
+
+```text
+testing -automated
+login -forgot
+```
+
+This searches for "testing" but excludes any results containing "automated".
+
+#### Wildcards
+
+Use `*` for multiple character wildcards or `?` for single character wildcards:
+
+```text
+test*           # Matches: test, testing, tester, tests
+te?t            # Matches: test, text
+user*name       # Matches: username, user_name, userfullname
+```
+
+#### Boolean Operators
+
+Use `AND`, `OR`, and `NOT` for complex logical queries:
+
+```text
+login AND password
+signin OR login
+authentication NOT oauth
+```
+
+#### Grouping with Parentheses
+
+Combine operators using parentheses for complex queries:
+
+```text
+(login OR signin) AND password
+(test OR check) AND -automated
+```
+
+#### Field-Specific Search
+
+Search within specific fields using the `field:value` syntax:
+
+```text
+name:dashboard
+description:"api endpoint"
+name:user* AND description:authentication
+```
+
+Available fields: `name`, `title`, `description`, `searchableContent`, `className`, `note`, `mission`, `docs`, `externalId`
+
+#### Fuzzy Matching
+
+Use `~` to allow for typos and variations:
+
+```text
+test~           # Matches: test, rest, best (with typos)
+authentication~ # Matches similar words with minor differences
+```
+
+#### Combining Operators
+
+You can combine multiple operators for powerful searches:
+
+```text
++"test case" -automated name:login*
+(api OR endpoint) +documentation -deprecated
+"user login" AND (password OR oauth) -forgot
+```
+
+### Search Operator Examples
+
+**Find exact phrase excluding automated tests:**
+
+```text
+"login flow" -automated
+```
+
+**Find all test cases with "api" in the name:**
+
+```text
+name:api*
+```
+
+**Find items with either "test" or "check" but must have "authentication":**
+
+```text
+(test OR check) +authentication
+```
+
+**Find items starting with "user" but not "username":**
+
+```text
+user* -username
+```
+
+**Find items in descriptions with typo tolerance:**
+
+```text
+description:athentication~
+```
 
 ### Common Search Scenarios
 

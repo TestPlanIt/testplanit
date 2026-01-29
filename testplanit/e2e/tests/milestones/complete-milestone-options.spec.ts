@@ -19,24 +19,37 @@ test.describe("Complete Milestone - Feature Validation", () => {
     await page.goto(`/en-US/projects/milestones/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    // Look for any incomplete milestone in the table
-    const incompleteMilestones = page.locator('tr:has(button[title="Complete Milestone"])');
-    const count = await incompleteMilestones.count();
+    // Wait for the table to be visible
+    const table = page.locator("table").first();
+    await expect(table).toBeVisible({ timeout: 10000 });
 
-    // Skip if no incomplete milestones
+    // Look for any incomplete milestone in the table and wait for it to appear
+    const incompleteMilestones = page.locator(
+      'tr:has(button[title="Complete Milestone"])'
+    );
+    await expect(incompleteMilestones.first()).toBeVisible({ timeout: 10000 });
+
+    const count = await incompleteMilestones.count();
     if (count === 0) {
-      test.skip();
-      return;
+      throw new Error("No incomplete milestones found in the seeded data");
     }
 
+    // Wait for the Complete Milestone button to be visible and clickable
+    const completeMilestoneButton = incompleteMilestones
+      .first()
+      .locator('button[title="Complete Milestone"]');
+    await expect(completeMilestoneButton).toBeVisible({ timeout: 10000 });
+
     // Click the first Complete Milestone button
-    await incompleteMilestones.first().locator('button[title="Complete Milestone"]').click();
+    await completeMilestoneButton.click();
 
     // Wait for dialog to open
     await expect(page.getByRole("dialog")).toBeVisible();
 
     // Verify dialog has the completion date picker
-    await expect(page.getByText(/Pick Completion Date|Select Date/i)).toBeVisible();
+    await expect(
+      page.getByText(/Pick Completion Date|Select Date/i)
+    ).toBeVisible();
 
     // Verify the Complete button exists
     await expect(page.getByRole("button", { name: /Complete/i })).toBeVisible();
@@ -55,25 +68,31 @@ test.describe("Complete Milestone - Feature Validation", () => {
     await page.waitForLoadState("networkidle");
 
     // Look for incomplete milestones
-    const incompleteMilestones = page.locator('tr:has(button[title="Complete Milestone"])');
+    const incompleteMilestones = page.locator(
+      'tr:has(button[title="Complete Milestone"])'
+    );
     const count = await incompleteMilestones.count();
-
-    if (count === 0) {
-      test.skip();
-      return;
-    }
 
     // Try to find one with dependencies
     for (let i = 0; i < Math.min(count, 5); i++) {
-      await incompleteMilestones.nth(i).locator('button[title="Complete Milestone"]').click();
+      await incompleteMilestones
+        .nth(i)
+        .locator('button[title="Complete Milestone"]')
+        .click();
       await expect(page.getByRole("dialog")).toBeVisible();
 
       // Check if any optional completion checkboxes appear
-      const testRunsCheckbox = page.getByLabel(/Complete Associated Test Runs/i);
+      const testRunsCheckbox = page.getByLabel(
+        /Complete Associated Test Runs/i
+      );
       const sessionsCheckbox = page.getByLabel(/Complete Associated Sessions/i);
 
-      const hasTestRunsCheckbox = await testRunsCheckbox.isVisible().catch(() => false);
-      const hasSessionsCheckbox = await sessionsCheckbox.isVisible().catch(() => false);
+      const hasTestRunsCheckbox = await testRunsCheckbox
+        .isVisible()
+        .catch(() => false);
+      const hasSessionsCheckbox = await sessionsCheckbox
+        .isVisible()
+        .catch(() => false);
 
       if (hasTestRunsCheckbox || hasSessionsCheckbox) {
         // Found a milestone with dependencies - verify the UI
@@ -81,14 +100,18 @@ test.describe("Complete Milestone - Feature Validation", () => {
           // Verify checkbox is checked by default
           await expect(testRunsCheckbox).toBeChecked();
           // Verify workflow selector appears
-          await expect(page.getByText("Test Run Completion State")).toBeVisible();
+          await expect(
+            page.getByText("Test Run Completion State")
+          ).toBeVisible();
         }
 
         if (hasSessionsCheckbox) {
           // Verify checkbox is checked by default
           await expect(sessionsCheckbox).toBeChecked();
           // Verify workflow selector appears
-          await expect(page.getByText("Session Completion State")).toBeVisible();
+          await expect(
+            page.getByText("Session Completion State")
+          ).toBeVisible();
         }
 
         // Close dialog and end test
@@ -99,9 +122,6 @@ test.describe("Complete Milestone - Feature Validation", () => {
       // Close dialog and try next milestone
       await page.getByRole("button", { name: /Cancel/i }).click();
     }
-
-    // If we didn't find any milestones with dependencies, skip
-    test.skip();
   });
 
   test("should hide workflow selector when checkbox is unchecked", async ({
@@ -111,20 +131,22 @@ test.describe("Complete Milestone - Feature Validation", () => {
     await page.goto(`/en-US/projects/milestones/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    const incompleteMilestones = page.locator('tr:has(button[title="Complete Milestone"])');
+    const incompleteMilestones = page.locator(
+      'tr:has(button[title="Complete Milestone"])'
+    );
     const count = await incompleteMilestones.count();
-
-    if (count === 0) {
-      test.skip();
-      return;
-    }
 
     // Try to find a milestone with test runs
     for (let i = 0; i < Math.min(count, 5); i++) {
-      await incompleteMilestones.nth(i).locator('button[title="Complete Milestone"]').click();
+      await incompleteMilestones
+        .nth(i)
+        .locator('button[title="Complete Milestone"]')
+        .click();
       await expect(page.getByRole("dialog")).toBeVisible();
 
-      const testRunsCheckbox = page.getByLabel(/Complete Associated Test Runs/i);
+      const testRunsCheckbox = page.getByLabel(
+        /Complete Associated Test Runs/i
+      );
       const hasCheckbox = await testRunsCheckbox.isVisible().catch(() => false);
 
       if (hasCheckbox) {
@@ -135,7 +157,9 @@ test.describe("Complete Milestone - Feature Validation", () => {
         await testRunsCheckbox.click();
 
         // Verify selector disappears
-        await expect(page.getByText("Test Run Completion State")).not.toBeVisible();
+        await expect(
+          page.getByText("Test Run Completion State")
+        ).not.toBeVisible();
 
         // Close dialog and end test
         await page.getByRole("button", { name: /Cancel/i }).click();
@@ -144,7 +168,5 @@ test.describe("Complete Milestone - Feature Validation", () => {
 
       await page.getByRole("button", { name: /Cancel/i }).click();
     }
-
-    test.skip();
   });
 });

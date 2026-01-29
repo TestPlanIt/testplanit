@@ -175,6 +175,9 @@ const Signup: NextPage = () => {
 
     let newUser;
     try {
+      // Check if email verification is required
+      const requireEmailVerification = registrationSettings?.requireEmailVerification ?? true;
+
       // Use dedicated signup API endpoint instead of ZenStack
       // (ZenStack 2.21+ has issues with unauthenticated nested creates)
       const response = await fetch("/api/auth/signup", {
@@ -184,7 +187,7 @@ const Signup: NextPage = () => {
           name: data.name,
           email: data.email,
           password: data.password,
-          emailVerifToken: await generateEmailVerificationToken(),
+          emailVerifToken: requireEmailVerification ? await generateEmailVerificationToken() : undefined,
           access: registrationSettings?.defaultAccess || "NONE",
         }),
       });
@@ -195,7 +198,11 @@ const Signup: NextPage = () => {
       }
 
       newUser = await response.json().then((r) => r.data);
-      await resendVerificationEmail(data.email);
+
+      // Only send verification email if verification is required
+      if (requireEmailVerification) {
+        await resendVerificationEmail(data.email);
+      }
     } catch (err: any) {
       // Handle user-friendly error messages
       if (err.message?.includes("already exists")) {
@@ -230,6 +237,16 @@ const Signup: NextPage = () => {
     });
 
     if (signInResult?.error) {
+      // Check if 2FA setup is required
+      if (signInResult.error.startsWith("2FA_SETUP_REQUIRED:")) {
+        // Extract the setup token from the error message
+        const token = signInResult.error.replace("2FA_SETUP_REQUIRED:", "");
+        // Redirect to 2FA setup page with the token
+        router.push(`/auth/two-factor-setup?token=${encodeURIComponent(token)}`);
+        return;
+      }
+
+      // For other errors, show generic error message
       setSubmissionError(t("common.errors.unknown"));
       return;
     }

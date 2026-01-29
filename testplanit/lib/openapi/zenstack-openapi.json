@@ -1891,6 +1891,7 @@
           "defaultAccess",
           "force2FANonSSO",
           "force2FAAllLogins",
+          "requireEmailVerification",
           "createdAt",
           "updatedAt"
         ]
@@ -9381,6 +9382,9 @@
           "force2FAAllLogins": {
             "type": "boolean"
           },
+          "requireEmailVerification": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -9397,6 +9401,7 @@
           "defaultAccess",
           "force2FANonSSO",
           "force2FAAllLogins",
+          "requireEmailVerification",
           "createdAt",
           "updatedAt"
         ]
@@ -53659,6 +53664,16 @@
               }
             ]
           },
+          "requireEmailVerification": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -53702,6 +53717,9 @@
             "$ref": "#/components/schemas/SortOrder"
           },
           "force2FAAllLogins": {
+            "$ref": "#/components/schemas/SortOrder"
+          },
+          "requireEmailVerification": {
             "$ref": "#/components/schemas/SortOrder"
           },
           "createdAt": {
@@ -53791,6 +53809,16 @@
             ]
           },
           "force2FAAllLogins": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "requireEmailVerification": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/BoolFilter"
@@ -53910,6 +53938,16 @@
             ]
           },
           "force2FAAllLogins": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolWithAggregatesFilter"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "requireEmailVerification": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/BoolWithAggregatesFilter"
@@ -83278,6 +83316,9 @@
           "force2FAAllLogins": {
             "type": "boolean"
           },
+          "requireEmailVerification": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -83351,6 +83392,16 @@
               }
             ]
           },
+          "requireEmailVerification": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -83394,6 +83445,9 @@
             "type": "boolean"
           },
           "force2FAAllLogins": {
+            "type": "boolean"
+          },
+          "requireEmailVerification": {
             "type": "boolean"
           },
           "createdAt": {
@@ -83460,6 +83514,16 @@
             ]
           },
           "force2FAAllLogins": {
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "$ref": "#/components/schemas/BoolFieldUpdateOperationsInput"
+              }
+            ]
+          },
+          "requireEmailVerification": {
             "oneOf": [
               {
                 "type": "boolean"
@@ -468496,6 +468560,9 @@
           "force2FAAllLogins": {
             "type": "boolean"
           },
+          "requireEmailVerification": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "boolean"
           },
@@ -479682,6 +479749,9 @@
           "force2FAAllLogins": {
             "type": "boolean"
           },
+          "requireEmailVerification": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "boolean"
           },
@@ -479714,6 +479784,9 @@
           "force2FAAllLogins": {
             "type": "boolean"
           },
+          "requireEmailVerification": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "boolean"
           },
@@ -479741,6 +479814,9 @@
             "type": "boolean"
           },
           "force2FAAllLogins": {
+            "type": "boolean"
+          },
+          "requireEmailVerification": {
             "type": "boolean"
           },
           "createdAt": {
@@ -494714,6 +494790,9 @@
           "force2FAAllLogins": {
             "type": "boolean"
           },
+          "requireEmailVerification": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -494760,6 +494839,7 @@
           "defaultAccess",
           "force2FANonSSO",
           "force2FAAllLogins",
+          "requireEmailVerification",
           "createdAt",
           "updatedAt"
         ]
@@ -522274,6 +522354,9 @@
           "force2FAAllLogins": {
             "type": "integer"
           },
+          "requireEmailVerification": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "integer"
           },
@@ -522291,6 +522374,7 @@
           "defaultAccess",
           "force2FANonSSO",
           "force2FAAllLogins",
+          "requireEmailVerification",
           "createdAt",
           "updatedAt",
           "_all"
@@ -522350,6 +522434,16 @@
             ]
           },
           "force2FAAllLogins": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "requireEmailVerification": {
             "oneOf": [
               {
                 "type": "null"
@@ -522437,6 +522531,16 @@
             ]
           },
           "force2FAAllLogins": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "requireEmailVerification": {
             "oneOf": [
               {
                 "type": "null"

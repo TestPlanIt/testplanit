@@ -87,11 +87,6 @@ test.describe("Documentation", () => {
       .isVisible({ timeout: 3000 })
       .catch(() => false);
 
-    if (!canEdit) {
-      test.skip(true, "User does not have edit permissions for documentation");
-      return;
-    }
-
     await editButton.click();
     await page.waitForLoadState("networkidle");
 
@@ -130,11 +125,6 @@ test.describe("Documentation", () => {
     const canEdit = await editButton
       .isVisible({ timeout: 3000 })
       .catch(() => false);
-
-    if (!canEdit) {
-      test.skip(true, "User does not have edit permissions for documentation");
-      return;
-    }
 
     await editButton.click();
     await page.waitForLoadState("networkidle");
@@ -193,11 +183,6 @@ test.describe("Documentation", () => {
       .isVisible({ timeout: 3000 })
       .catch(() => false);
 
-    if (!canEdit) {
-      test.skip(true, "User does not have edit permissions for documentation");
-      return;
-    }
-
     await editButton.click();
     await page.waitForLoadState("networkidle");
 
@@ -224,10 +209,14 @@ test.describe("Documentation", () => {
     await expect(editor).toBeVisible({ timeout: 5000 });
 
     // Wait for the canceled content to be replaced (editor should no longer contain "This should be canceled")
-    await expect(editor).not.toContainText("This should be canceled", { timeout: 5000 });
+    await expect(editor).not.toContainText("This should be canceled", {
+      timeout: 5000,
+    });
 
     // Verify content was reverted (normalize whitespace for comparison)
-    const finalContent = ((await editor.textContent()) || "").trim().replace(/\s+/g, " ");
+    const finalContent = ((await editor.textContent()) || "")
+      .trim()
+      .replace(/\s+/g, " ");
     const normalizedInitial = initialContent.replace(/\s+/g, " ");
     // Content should match (allowing for minor whitespace differences)
     expect(finalContent).toBe(normalizedInitial);
@@ -245,11 +234,6 @@ test.describe("Documentation", () => {
     const canEdit = await editButton
       .isVisible({ timeout: 3000 })
       .catch(() => false);
-
-    if (!canEdit) {
-      test.skip(true, "User does not have edit permissions for documentation");
-      return;
-    }
 
     await editButton.click();
     await page.waitForLoadState("networkidle");
@@ -352,11 +336,6 @@ test.describe("Documentation", () => {
       .isVisible({ timeout: 3000 })
       .catch(() => false);
 
-    if (!canEdit) {
-      test.skip(true, "User does not have edit permissions for documentation");
-      return;
-    }
-
     await editButton.click();
     await page.waitForLoadState("networkidle");
 
@@ -397,11 +376,6 @@ test.describe("Documentation", () => {
       .isVisible({ timeout: 3000 })
       .catch(() => false);
 
-    if (!canEdit) {
-      test.skip(true, "User does not have edit permissions for documentation");
-      return;
-    }
-
     await editButton.click();
     await page.waitForLoadState("networkidle");
 
@@ -412,9 +386,15 @@ test.describe("Documentation", () => {
     await page.keyboard.type("/code");
 
     // Wait for slash command menu to appear and select code block
-    const codeOption = page.locator('[role="option"]:has-text("Code"), [data-suggestion]:has-text("Code")').first();
+    const codeOption = page
+      .locator(
+        '[role="option"]:has-text("Code"), [data-suggestion]:has-text("Code")'
+      )
+      .first();
     // If slash command menu appears, click the option; otherwise press Enter
-    const hasCodeOption = await codeOption.isVisible({ timeout: 1000 }).catch(() => false);
+    const hasCodeOption = await codeOption
+      .isVisible({ timeout: 1000 })
+      .catch(() => false);
     if (hasCodeOption) {
       await codeOption.click();
     } else {
@@ -465,11 +445,6 @@ test.describe("Documentation", () => {
     const canEdit = await editButton
       .isVisible({ timeout: 3000 })
       .catch(() => false);
-
-    if (!canEdit) {
-      test.skip(true, "User does not have edit permissions for documentation");
-      return;
-    }
 
     await editButton.click();
     await page.waitForLoadState("networkidle");
