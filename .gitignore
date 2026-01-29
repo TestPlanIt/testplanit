@@ -61,7 +61,7 @@ testplanit/docker-data/**
 
 testplanit/test/test-data/Testmo Exports/*
 testplanit/test-data/tpi*test*
+testplanit/backups/*
 
 *cases/*
 .*-mcp/**
-testplanit/backups/testplanit_backup_20260129_063801.sql
