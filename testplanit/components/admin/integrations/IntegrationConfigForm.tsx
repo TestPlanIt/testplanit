@@ -41,7 +41,7 @@ const authTypeFields: Record<string, FieldConfig[]> = {
   [`${IntegrationProvider.JIRA}_${IntegrationAuthType.API_KEY}`]: [
     {
       name: "email",
-      label: "config.email",
+      label: "common.fields.email",
       placeholder: "config.emailPlaceholder",
       help: "config.emailHelp",
       isCredential: true,
@@ -159,12 +159,13 @@ export function IntegrationConfigForm({
   isEdit,
 }: IntegrationConfigFormProps) {
   const t = useTranslations("admin.integrations");
+  const tCommon = useTranslations();
 
   // Get fields based on provider and authType combination, or fall back to provider-only fields
   const authKey = authType ? `${provider}_${authType}` : '';
   const authFields = authTypeFields[authKey] || [];
   const baseFields = providerFields[provider] || [];
-  
+
   // Merge auth-specific fields with base provider fields
   // Use a Set to avoid duplicate fields by name
   const fieldMap = new Map<string, FieldConfig>();
@@ -172,6 +173,15 @@ export function IntegrationConfigForm({
     fieldMap.set(field.name, field);
   });
   const fields = Array.from(fieldMap.values());
+
+  const getFieldLabel = (label: string): string => {
+    if (label.startsWith('common.')) {
+      // Type assertion needed for dynamic keys - validated at runtime by startsWith check
+      return tCommon(label as Parameters<typeof tCommon>[0]);
+    }
+    // Type assertion needed for dynamic keys - all non-common keys are in admin.integrations namespace
+    return t(label as Parameters<typeof t>[0]);
+  };
 
   const handleFieldChange = (field: FieldConfig, value: string) => {
     if (field.isCredential) {
@@ -218,7 +228,7 @@ export function IntegrationConfigForm({
         return (
           <FormItem key={field.name}>
             <FormLabel className="flex items-center">
-              {t(field.label as any)}
+              {getFieldLabel(field.label)}
               {field.required && (
                 <span className="text-destructive ml-1">{"*"}</span>
               )}
@@ -229,7 +239,7 @@ export function IntegrationConfigForm({
                 <Input
                   type={field.type || "text"}
                   placeholder={
-                    isEncrypted ? "••••••••••••" : t(field.placeholder as any)
+                    isEncrypted ? "••••••••••••" : t(field.placeholder as Parameters<typeof t>[0])
                   }
                   value={value}
                   onChange={(e) => handleFieldChange(field, e.target.value)}

@@ -2627,7 +2627,9 @@
         "defaultAccessUpdateFailed": "Échec de la mise à jour du niveau d'accès par défaut",
         "emailVerificationEnabled": "La vérification de l'adresse électronique est désormais requise pour les nouveaux utilisateurs.",
         "emailVerificationDisabled": "La vérification par e-mail n'est plus requise pour les nouveaux utilisateurs.",
-        "emailVerificationUpdateFailed": "Échec de la mise à jour des paramètres de vérification de l'e-mail"
+        "emailVerificationDisabledAndVerified": "La vérification par e-mail est désactivée et {count} compte(s) utilisateur(s) vérifié(s)",
+        "emailVerificationUpdateFailed": "Échec de la mise à jour des paramètres de vérification de l'e-mail",
+        "emailServerNotConfigured": "Impossible d'activer la vérification des e-mails : le serveur de messagerie n'est pas configuré."
       },
       "dialogs": {
         "googleOAuth": {
@@ -2669,6 +2671,16 @@
           "validation": {
             "allRequired": "Le point d'entrée, l'émetteur, le certificat et l'URL de rappel sont obligatoires."
           }
+        },
+        "disableEmailVerification": {
+          "title": "Désactiver la vérification de l'adresse e-mail ?",
+          "description": "Cela désactivera la vérification par e-mail pour les nouvelles inscriptions et vérifiera tous les comptes existants non vérifiés.",
+          "warning": "⚠️ Alerte de sécurité",
+          "warningPoint1": "Recommandé uniquement pour les installations sécurisées (réseaux privés, VPN ou environnements de confiance).",
+          "warningPoint2": "Tous les comptes non vérifiés existants seront instantanément vérifiés et bénéficieront d'un accès au système.",
+          "confirmation": "Êtes-vous sûr de vouloir désactiver la vérification par e-mail et vérifier tous les comptes ?",
+          "confirm": "Désactiver et vérifier tout",
+          "verifying": "Vérification des comptes..."
         }
       },
       "status": {
@@ -2700,7 +2712,8 @@
         },
         "requireEmailVerification": {
           "title": "Exiger une vérification de l'adresse électronique",
-          "description": "Les utilisateurs doivent vérifier leur adresse électronique avant d'accéder au système."
+          "description": "Les utilisateurs doivent vérifier leur adresse électronique avant d'accéder au système.",
+          "noEmailServerWarning": "Le serveur de messagerie n'est pas configuré. La vérification des adresses e-mail est automatiquement désactivée jusqu'à ce qu'un serveur de messagerie soit configuré."
         }
       },
       "errors": {
