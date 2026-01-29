@@ -1,3 +1,10 @@
+## [0.11.9](https://github.com/TestPlanIt/testplanit/compare/v0.11.8...v0.11.9) (2026-01-29)
+
+
+### Bug Fixes
+
+* update field labels and improve translation handling in IntegrationConfigForm ([0dea63b](https://github.com/TestPlanIt/testplanit/commit/0dea63bb8b06ab52c886a04affae086772695040))
+
 ## [0.11.8](https://github.com/TestPlanIt/testplanit/compare/v0.11.7...v0.11.8) (2026-01-29)
 
 ## [0.11.7](https://github.com/TestPlanIt/testplanit/compare/v0.11.6...v0.11.7) (2026-01-28)
