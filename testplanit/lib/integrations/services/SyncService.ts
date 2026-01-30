@@ -505,14 +505,38 @@ export class SyncService {
           },
         });
 
-        if (storedIssue?.data) {
-          const data = storedIssue.data as Record<string, any>;
-          const customFields = data.customFields as Record<string, any> | undefined;
-          if (customFields?._github_owner && customFields?._github_repo) {
-            // Construct compound ID for GitHub: owner/repo#number
-            const issueNumber = externalIssueId.replace(/^#/, "");
-            issueIdForSync = `${customFields._github_owner}/${customFields._github_repo}#${issueNumber}`;
+        let owner: string | undefined;
+        let repo: string | undefined;
+
+        // Try to get owner/repo from externalData first
+        if (storedIssue?.externalData) {
+          const externalData = storedIssue.externalData as Record<string, any>;
+          if (externalData._github_owner && externalData._github_repo) {
+            owner = externalData._github_owner;
+            repo = externalData._github_repo;
           }
+        }
+
+        // Fallback: Extract owner/repo from externalUrl if not in customFields
+        if ((!owner || !repo) && storedIssue?.externalUrl) {
+          const urlMatch = storedIssue.externalUrl.match(
+            /github\.com\/([^/]+)\/([^/]+)\/issues/
+          );
+          if (urlMatch) {
+            owner = urlMatch[1];
+            repo = urlMatch[2];
+          }
+        }
+
+        // Construct compound ID if we have owner/repo
+        if (owner && repo) {
+          const issueNumber = externalIssueId.replace(/^#/, "");
+          issueIdForSync = `${owner}/${repo}#${issueNumber}`;
+        } else {
+          throw new Error(
+            `Cannot determine GitHub repository for issue ${externalIssueId}. ` +
+            `Issue data is missing repository context.`
+          );
         }
       }
 

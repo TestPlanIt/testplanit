@@ -26,6 +26,9 @@ export abstract class BaseAdapter implements IssueAdapter {
   protected maxRetries: number = 3;
   protected retryDelay: number = 1000;
 
+  // Request timeout configuration (in milliseconds)
+  protected requestTimeout: number = 30000; // 30 seconds default
+
   constructor(config: any) {
     this.config = config;
   }
@@ -226,19 +229,37 @@ export abstract class BaseAdapter implements IssueAdapter {
         break;
     }
 
-    const response = await this.executeWithRetry(() =>
-      fetch(url, {
-        ...options,
-        headers,
-      })
-    );
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    try {
+      const response = await this.executeWithRetry(() =>
+        fetch(url, {
+          ...options,
+          headers,
+          signal: controller.signal,
+        })
+      );
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      return response.json();
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+
+      // Provide a clear error message for timeout
+      if (error.name === "AbortError") {
+        throw new Error(`Request timeout after ${this.requestTimeout}ms: ${url}`);
+      }
+
+      throw error;
     }
-
-    return response.json();
   }
 
   /**
