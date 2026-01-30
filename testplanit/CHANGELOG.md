@@ -1,3 +1,10 @@
+## [0.11.10](https://github.com/TestPlanIt/testplanit/compare/v0.11.9...v0.11.10) (2026-01-30)
+
+
+### Bug Fixes
+
+* add request timeout handling and improve GitHub issue ID construction ([cc95702](https://github.com/TestPlanIt/testplanit/commit/cc957021a678abd8a61b57fe629977a6b91c0bce))
+
 ## [0.11.9](https://github.com/TestPlanIt/testplanit/compare/v0.11.8...v0.11.9) (2026-01-29)
 
 
