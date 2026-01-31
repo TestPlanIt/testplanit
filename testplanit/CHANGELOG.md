@@ -1,3 +1,10 @@
+## [0.11.12](https://github.com/TestPlanIt/testplanit/compare/v0.11.11...v0.11.12) (2026-01-31)
+
+
+### Bug Fixes
+
+* add CORS headers to health endpoint for cross-origin requests ([5bdd471](https://github.com/TestPlanIt/testplanit/commit/5bdd471120799cf8e3df891a8b1c45f724fb749f))
+
 ## [0.11.11](https://github.com/TestPlanIt/testplanit/compare/v0.11.10...v0.11.11) (2026-01-31)
 
 ## [0.11.10](https://github.com/TestPlanIt/testplanit/compare/v0.11.9...v0.11.10) (2026-01-30)
