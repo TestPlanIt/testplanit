@@ -84,7 +84,28 @@ export async function GET() {
   // Return appropriate HTTP status code based on health
   const httpStatus = status === "healthy" ? 200 : status === "degraded" ? 200 : 503;
 
-  return NextResponse.json(response, { status: httpStatus });
+  // Add CORS headers to allow cross-origin requests
+  // Health check is public information, so we allow all origins
+  return NextResponse.json(response, {
+    status: httpStatus,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
+}
+
+// Handle preflight OPTIONS request for CORS
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
 }
 
 async function checkDatabase(): Promise<ServiceCheck> {
