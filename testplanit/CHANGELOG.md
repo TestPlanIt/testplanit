@@ -1,3 +1,10 @@
+## [0.11.13](https://github.com/TestPlanIt/testplanit/compare/v0.11.12...v0.11.13) (2026-01-31)
+
+
+### Performance Improvements
+
+* Performance/optimize test run summary page queries ([#58](https://github.com/TestPlanIt/testplanit/issues/58)) ([64b78a7](https://github.com/TestPlanIt/testplanit/commit/64b78a78ce134cac21834c5e1cbd3ceb86f4d3f6))
+
 ## [0.11.12](https://github.com/TestPlanIt/testplanit/compare/v0.11.11...v0.11.12) (2026-01-31)
 
 
