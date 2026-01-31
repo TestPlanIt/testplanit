@@ -41,6 +41,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
 
 export interface TestRunItemProps {
   testRun: {
@@ -92,6 +93,7 @@ export interface TestRunItemProps {
   onDuplicate?: (run: { id: number; name: string }) => void;
   onComplete?: (testRun: any) => void;
   isAdmin?: boolean;
+  summaryData?: TestRunSummaryData; // Pre-fetched summary data for batch mode
 }
 
 const TestRunItem: React.FC<TestRunItemProps> = ({
@@ -99,6 +101,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   isNew,
   showMilestone = true,
   onDuplicate,
+  summaryData,
 }) => {
   const tCommon = useTranslations("common");
   const { projectId } = useParams();
@@ -348,6 +351,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
             projectId={testRun.projectId}
             testRunType={testRun.testRunType}
             className="w-full"
+            summaryData={summaryData}
           />
         </div>
 
