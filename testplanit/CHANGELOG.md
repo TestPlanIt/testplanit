@@ -1,3 +1,5 @@
+## [0.11.11](https://github.com/TestPlanIt/testplanit/compare/v0.11.10...v0.11.11) (2026-01-31)
+
 ## [0.11.10](https://github.com/TestPlanIt/testplanit/compare/v0.11.9...v0.11.10) (2026-01-30)
 
 
