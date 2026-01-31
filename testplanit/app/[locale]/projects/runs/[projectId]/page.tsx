@@ -566,37 +566,50 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   }, []);
 
   // --- Fetch Completed Test Runs in the Last 6 Months ---
+  // Optimized: Only select minimal fields needed for the chart
   const {
     data: completedRunsLast6Months,
     isLoading: isLoadingCompletedRunsData,
-  } = useFindManyTestRuns({
-    where: {
-      projectId: numericProjectId ?? undefined,
-      isCompleted: true,
-      completedAt: { gte: sixMonthsAgo }, // Filter by date
+  } = useFindManyTestRuns(
+    {
+      where: {
+        projectId: numericProjectId ?? undefined,
+        isCompleted: true,
+        completedAt: { gte: sixMonthsAgo }, // Filter by date
+      },
+      select: {
+        completedAt: true,
+        testRunType: true, // Need type to separate manual vs automated
+      },
+      orderBy: { completedAt: "asc" }, // Order for easier processing
     },
-    select: {
-      completedAt: true,
-      testRunType: true, // Need type to separate manual vs automated
-    },
-    orderBy: { completedAt: "asc" }, // Order for easier processing
-  }) ?? { data: [], isLoading: false };
+    {
+      enabled: activeTab === "active", // Only fetch when viewing active tab (for the chart)
+      staleTime: 60000, // Cache for 1 minute
+    }
+  ) ?? { data: [], isLoading: false };
 
   // --- Fetch Recent Manual Test Run Results (two-query approach) ---
   // Query 1: Get the most recent result to determine the date range
   const { data: latestManualResult, isLoading: isLoadingLatestManualResult } =
-    useFindFirstTestRunResults({
-      where: {
-        testRun: { projectId: numericProjectId ?? undefined },
-        status: {
-          systemName: { not: "untested" },
+    useFindFirstTestRunResults(
+      {
+        where: {
+          testRun: { projectId: numericProjectId ?? undefined },
+          status: {
+            systemName: { not: "untested" },
+          },
+        },
+        orderBy: { executedAt: "desc" },
+        select: {
+          executedAt: true,
         },
       },
-      orderBy: { executedAt: "desc" },
-      select: {
-        executedAt: true,
-      },
-    });
+      {
+        enabled: !!numericProjectId,
+        staleTime: 30000, // Cache for 30 seconds
+      }
+    );
 
   // Calculate 7 days before the latest result
   const sevenDaysBeforeLatestManual = useMemo(() => {
@@ -633,6 +646,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
       },
       {
         enabled: !!sevenDaysBeforeLatestManual,
+        staleTime: 30000, // Cache for 30 seconds
       }
     );
 
@@ -705,18 +719,24 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   const {
     data: latestAutomatedResult,
     isLoading: isLoadingLatestAutomatedResult,
-  } = useFindFirstJUnitTestResult({
-    where: {
-      testSuite: {
-        testRun: { projectId: numericProjectId ?? undefined },
+  } = useFindFirstJUnitTestResult(
+    {
+      where: {
+        testSuite: {
+          testRun: { projectId: numericProjectId ?? undefined },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        executedAt: true,
+        createdAt: true,
       },
     },
-    orderBy: { createdAt: "desc" },
-    select: {
-      executedAt: true,
-      createdAt: true,
-    },
-  });
+    {
+      enabled: !!numericProjectId,
+      staleTime: 30000, // Cache for 30 seconds
+    }
+  );
 
   // Calculate 7 days before the latest automated result
   const sevenDaysBeforeLatestAutomated = useMemo(() => {
@@ -755,6 +775,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
       },
       {
         enabled: !!sevenDaysBeforeLatestAutomated,
+        staleTime: 30000, // Cache for 30 seconds
       }
     );
 
@@ -957,22 +978,8 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     );
   }
 
-  // Combine loading states
-  const isSummaryLoading =
-    isLoading ||
-    isLoadingIncompleteRuns ||
-    isLoadingLatestManualResult ||
-    isLoadingRecentResults ||
-    isLoadingLatestAutomatedResult ||
-    isLoadingAutomatedResults ||
-    isLoadingPermissions ||
-    isProjectLoading ||
-    isLoadingCompletedRunsData;
-
-  // Early returns for loading or missing project
-  if (isSummaryLoading) {
-    return <LoadingSpinner />;
-  }
+  // Remove blocking summary loading - allow progressive rendering
+  // Each card will show its own loading state
 
   if (session && session.user.access !== "NONE") {
     const canAddEdit = permissions?.canAddEdit ?? false;
