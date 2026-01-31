@@ -28,7 +28,8 @@ import { useFindManyTestRunCases } from "~/lib/hooks/test-run-cases";
 import { useDrag, useDrop } from "react-dnd";
 import { ItemTypes } from "~/types/dndTypes";
 import { cn } from "~/utils";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
 
 const testRunPropSelect = {
   id: true,
@@ -60,42 +61,7 @@ const testRunPropSelect = {
       },
     },
   },
-  // The following are in page.tsx's querySelect but TestRunDisplay fetches testRunCases itself.
-  // If TestRunDisplay and TestRunItem do not use testCases, tags, issues, results directly from this prop,
-  // they could be omitted here for a leaner prop type.
-  // For now, including them to strictly match a likely querySelect from page.tsx.
-  testCases: {
-    select: {
-      id: true,
-      repositoryCaseId: true,
-      assignedTo: { select: { id: true, name: true, image: true } },
-      status: { select: { isCompleted: true } },
-      repositoryCase: { select: { estimate: true } },
-    },
-  },
-  tags: { select: { id: true, name: true } },
-  issues: {
-    select: {
-      id: true,
-      name: true,
-      externalId: true,
-      externalUrl: true,
-      title: true,
-      externalStatus: true,
-      issueTypeName: true,
-      issueTypeIconUrl: true,
-      integrationId: true,
-      lastSyncedAt: true,
-      integration: {
-        select: {
-          id: true,
-          provider: true,
-          name: true,
-        },
-      },
-    },
-  },
-  results: { select: { id: true } },
+  // testCases, tags, issues, and results are fetched separately to avoid N+1 queries
 } as const;
 
 export type TestRunsWithDetails = Prisma.TestRunsGetPayload<{
@@ -402,6 +368,26 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
   >([]);
 
   const testRunIds = useMemo(() => testRuns.map((run) => run.id), [testRuns]);
+
+  // Batch-fetch test run summaries for all test runs
+  const { data: batchSummaries } = useQuery<BatchTestRunSummaryResponse>({
+    queryKey: ["batchTestRunSummaries", testRunIds],
+    queryFn: async () => {
+      if (testRunIds.length === 0) {
+        return { summaries: {} };
+      }
+      const response = await fetch(
+        `/api/test-runs/summaries?testRunIds=${testRunIds.join(",")}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch batch test run summaries");
+      }
+      return response.json();
+    },
+    enabled: testRunIds.length > 0,
+    staleTime: 30000, // Cache for 30 seconds
+  });
+
   const { data: testRunCases } = useFindManyTestRunCases(
     {
       where: { testRunId: { in: testRunIds } },
@@ -558,6 +544,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
               }}
               milestonePath={testRun.milestone?.name}
               onDuplicate={onDuplicateTestRun}
+              summaryData={batchSummaries?.summaries[testRun.id]}
             />
           ))}
         </div>
@@ -583,7 +570,8 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
     currentMilestoneTree: MilestonesWithTypes[],
     handleOpenDialogParam: (testRun: TestRunsWithDetails) => void,
     isAdminParam: boolean,
-    onDuplicateTestRunParam?: (run: { id: number; name: string }) => void
+    onDuplicateTestRunParam?: (run: { id: number; name: string }) => void,
+    summariesData?: BatchTestRunSummaryResponse
   ) => {
     const hasTestRuns = (milestone: MilestonesWithTypes): boolean => {
       if (currentGroupedRuns.milestones[milestone.id]?.testRuns.length > 0) {
@@ -750,6 +738,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                         isAdmin={isAdminParam}
                         isNew={false}
                         onDuplicate={onDuplicateTestRunParam}
+                        summaryData={summariesData?.summaries[testRun.id]}
                       />
                     </DraggableTestRunWrapper>
                   </div>
@@ -862,6 +851,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                     isAdmin={isAdminParam}
                     isNew={false}
                     onDuplicate={onDuplicateTestRunParam}
+                    summaryData={summariesData?.summaries[testRun.id]}
                   />
                 </DraggableTestRunWrapper>
               </div>
@@ -886,7 +876,8 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
             sortedMilestoneTree,
             handleOpenDialog,
             isAdmin,
-            onDuplicateTestRun
+            onDuplicateTestRun,
+            batchSummaries
           )}
         </div>
       </div>

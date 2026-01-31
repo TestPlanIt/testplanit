@@ -35,6 +35,8 @@ interface TestRunCasesSummaryProps {
   projectId?: string | number;
   className?: string;
   testRunType?: string;
+  // Support for pre-fetched data (batch mode)
+  summaryData?: TestRunSummaryData;
 }
 
 export function TestRunCasesSummary({
@@ -43,6 +45,7 @@ export function TestRunCasesSummary({
   projectId: propProjectId,
   className,
   testRunType,
+  summaryData: preFetchedSummaryData,
 }: TestRunCasesSummaryProps) {
   const tCommon = useTranslations("common");
   const tGlobal = useTranslations();
@@ -59,7 +62,8 @@ export function TestRunCasesSummary({
   const isMultiConfig = effectiveTestRunIds.length > 1;
 
   // Fetch summary data from API - for multi-config, fetch all and aggregate
-  const { data: summaryData, isLoading } = useQuery<TestRunSummaryData>({
+  // If pre-fetched data is provided, skip the API call
+  const { data: fetchedSummaryData, isLoading } = useQuery<TestRunSummaryData>({
     queryKey: ["testRunSummary", ...effectiveTestRunIds],
     queryFn: async () => {
       if (!isMultiConfig) {
@@ -85,7 +89,10 @@ export function TestRunCasesSummary({
       // Aggregate the summaries
       return aggregateSummaries(summaries);
     },
-    enabled: effectiveTestRunIds.length > 0 && effectiveTestRunIds[0] > 0,
+    enabled:
+      !preFetchedSummaryData &&
+      effectiveTestRunIds.length > 0 &&
+      effectiveTestRunIds[0] > 0,
     staleTime: 30000, // Cache for 30 seconds
     // Refetch every 30 seconds when workflow is IN_PROGRESS (for automated test runs still adding cases)
     refetchInterval: (query) => {
@@ -96,6 +103,9 @@ export function TestRunCasesSummary({
       return false; // No automatic refetching
     },
   });
+
+  // Use pre-fetched data if available, otherwise use fetched data
+  const summaryData = preFetchedSummaryData || fetchedSummaryData;
 
   // Helper function to aggregate multiple summaries
   function aggregateSummaries(
@@ -207,7 +217,8 @@ export function TestRunCasesSummary({
     ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat || "HH:mm"}`
     : undefined;
 
-  if (isLoading) {
+  // Only show loading skeleton if we're actually loading (not using pre-fetched data)
+  if (isLoading && !preFetchedSummaryData) {
     return (
       <div className={cn("flex flex-col space-y-1 w-full", className)}>
         <Skeleton className="h-2.5 w-full rounded-full" />
@@ -568,7 +579,7 @@ export function TestRunCasesSummary({
                             isSeconds: true,
                             locale,
                           })}
-                          {item.resultCount > 1 && (
+                          {item.resultCount && item.resultCount > 1 && (
                             <span className="ml-1">
                               {`(${item.resultCount} ${tGlobal("common.results")})`}
                             </span>

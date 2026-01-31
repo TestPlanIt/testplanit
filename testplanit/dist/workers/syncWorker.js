@@ -343,6 +343,9 @@ var BaseAdapter = class {
   // Retry configuration
   maxRetries = 3;
   retryDelay = 1e3;
+  // Request timeout configuration (in milliseconds)
+  requestTimeout = 3e4;
+  // 30 seconds default
   constructor(config) {
     this.config = config;
   }
@@ -466,17 +469,29 @@ var BaseAdapter = class {
         headers["Authorization"] = `Basic ${credentials}`;
         break;
     }
-    const response = await this.executeWithRetry(
-      () => fetch(url, {
-        ...options,
-        headers
-      })
-    );
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.requestTimeout);
+    try {
+      const response = await this.executeWithRetry(
+        () => fetch(url, {
+          ...options,
+          headers,
+          signal: controller.signal
+        })
+      );
+      clearTimeout(timeoutId);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      return response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === "AbortError") {
+        throw new Error(`Request timeout after ${this.requestTimeout}ms: ${url}`);
+      }
+      throw error;
     }
-    return response.json();
   }
   /**
    * Build full URL from base URL and path
@@ -3895,13 +3910,31 @@ var SyncService = class {
             ]
           }
         });
-        if (storedIssue?.data) {
-          const data = storedIssue.data;
-          const customFields = data.customFields;
-          if (customFields?._github_owner && customFields?._github_repo) {
-            const issueNumber = externalIssueId.replace(/^#/, "");
-            issueIdForSync = `${customFields._github_owner}/${customFields._github_repo}#${issueNumber}`;
+        let owner;
+        let repo;
+        if (storedIssue?.externalData) {
+          const externalData = storedIssue.externalData;
+          if (externalData._github_owner && externalData._github_repo) {
+            owner = externalData._github_owner;
+            repo = externalData._github_repo;
           }
+        }
+        if ((!owner || !repo) && storedIssue?.externalUrl) {
+          const urlMatch = storedIssue.externalUrl.match(
+            /github\.com\/([^/]+)\/([^/]+)\/issues/
+          );
+          if (urlMatch) {
+            owner = urlMatch[1];
+            repo = urlMatch[2];
+          }
+        }
+        if (owner && repo) {
+          const issueNumber = externalIssueId.replace(/^#/, "");
+          issueIdForSync = `${owner}/${repo}#${issueNumber}`;
+        } else {
+          throw new Error(
+            `Cannot determine GitHub repository for issue ${externalIssueId}. Issue data is missing repository context.`
+          );
         }
       }
       const issueData = await adapter.syncIssue(issueIdForSync);
