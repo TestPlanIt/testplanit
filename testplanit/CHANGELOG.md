@@ -1,3 +1,10 @@
+## [0.11.14](https://github.com/TestPlanIt/testplanit/compare/v0.11.13...v0.11.14) (2026-02-02)
+
+
+### Bug Fixes
+
+* implement batch fetching of test run summaries to optimize performance ([672915b](https://github.com/TestPlanIt/testplanit/commit/672915b12392436ef74cc7c374a4e2b5421b2830))
+
 ## [0.11.13](https://github.com/TestPlanIt/testplanit/compare/v0.11.12...v0.11.13) (2026-01-31)
 
 
