@@ -111,11 +111,9 @@ test.describe("Admin Notifications - Email Server Configuration", () => {
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(1000);
 
-    // Check for email-based notification options
-    const immediateEmailOption = page.locator(
-      'input[value="IN_APP_EMAIL_IMMEDIATE"]'
-    );
-    const dailyEmailOption = page.locator('input[value="IN_APP_EMAIL_DAILY"]');
+    // Check for email-based notification options by their IDs
+    const immediateEmailOption = page.locator('#in-app-email-immediate');
+    const dailyEmailOption = page.locator('#in-app-email-daily');
 
     // These should be hidden when no email server is configured
     const isImmediateVisible = await immediateEmailOption.isVisible().catch(() => false);
@@ -124,10 +122,10 @@ test.describe("Admin Notifications - Email Server Configuration", () => {
     // If they're hidden, that's correct behavior
     if (!isImmediateVisible && !isDailyVisible) {
       // Verify that non-email options are still visible
-      const inAppOption = page.locator('input[value="IN_APP"]');
+      const inAppOption = page.locator('#in-app');
       await expect(inAppOption).toBeVisible();
 
-      const noneOption = page.locator('input[value="NONE"]');
+      const noneOption = page.locator('#none');
       await expect(noneOption).toBeVisible();
     }
   });
@@ -140,16 +138,14 @@ test.describe("Admin Notifications - Email Server Configuration", () => {
     await page.waitForTimeout(1000);
 
     // Check if email options are hidden
-    const immediateEmailOption = page.locator(
-      'input[value="IN_APP_EMAIL_IMMEDIATE"]'
-    );
+    const immediateEmailOption = page.locator('#in-app-email-immediate');
     const isEmailVisible = await immediateEmailOption.isVisible().catch(() => false);
 
     if (!isEmailVisible) {
       // Email server not configured
       // Verify IN_APP or NONE is selected, not email modes
-      const inAppOption = page.locator('input[value="IN_APP"]');
-      const noneOption = page.locator('input[value="NONE"]');
+      const inAppOption = page.locator('#in-app');
+      const noneOption = page.locator('#none');
 
       const isInAppChecked = await inAppOption.isChecked().catch(() => false);
       const isNoneChecked = await noneOption.isChecked().catch(() => false);
@@ -169,23 +165,25 @@ test.describe("User Notification Preferences - Email Server Configuration", () =
     await page.waitForTimeout(1000);
 
     // Look for notification preferences section
-    // Scroll down to find it
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    // Wait for the notification preferences card to be visible
+    const notificationCard = page.getByRole("heading", { name: /Notification Preferences/i }).locator("..");
+    await expect(notificationCard).toBeVisible({ timeout: 10000 });
+
+    // Scroll the card into view
+    await notificationCard.scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
 
-    // Check for email-based notification options
-    const immediateEmailOption = page.locator(
-      'input[value="IN_APP_EMAIL_IMMEDIATE"]'
-    );
-    const dailyEmailOption = page.locator('input[value="IN_APP_EMAIL_DAILY"]');
+    // Check for email-based notification options by their IDs
+    const immediateEmailOption = page.locator('#in-app-email-immediate');
+    const dailyEmailOption = page.locator('#in-app-email-daily');
 
     const isImmediateVisible = await immediateEmailOption.isVisible().catch(() => false);
     const isDailyVisible = await dailyEmailOption.isVisible().catch(() => false);
 
     // If they're hidden, verify non-email options are visible
     if (!isImmediateVisible && !isDailyVisible) {
-      const inAppOption = page.locator('input[value="IN_APP"]');
-      const noneOption = page.locator('input[value="NONE"]');
+      const inAppOption = page.locator('#in-app');
+      const noneOption = page.locator('#none');
 
       // At least one of these should be visible
       const isInAppVisible = await inAppOption.isVisible().catch(() => false);
@@ -203,21 +201,23 @@ test.describe("User Notification Preferences - Email Server Configuration", () =
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(1000);
 
-    // Scroll to notification preferences
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    // Wait for the notification preferences card to be visible
+    const notificationCard = page.getByRole("heading", { name: /Notification Preferences/i }).locator("..");
+    await expect(notificationCard).toBeVisible({ timeout: 10000 });
+
+    // Scroll the card into view
+    await notificationCard.scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
 
     // Check if email options are hidden
-    const immediateEmailOption = page.locator(
-      'input[value="IN_APP_EMAIL_IMMEDIATE"]'
-    );
+    const immediateEmailOption = page.locator('#in-app-email-immediate');
     const isEmailVisible = await immediateEmailOption.isVisible().catch(() => false);
 
     if (!isEmailVisible) {
       // Verify a non-email mode is selected
-      const inAppOption = page.locator('input[value="IN_APP"]');
-      const noneOption = page.locator('input[value="NONE"]');
-      const globalOption = page.locator('input[value="USE_GLOBAL"]');
+      const inAppOption = page.locator('#in-app');
+      const noneOption = page.locator('#none');
+      const globalOption = page.locator('#use-global');
 
       const isInAppChecked = await inAppOption.isChecked().catch(() => false);
       const isNoneChecked = await noneOption.isChecked().catch(() => false);

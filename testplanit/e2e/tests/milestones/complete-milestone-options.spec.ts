@@ -13,31 +13,25 @@ import { test, expect } from "../../fixtures";
 test.describe("Complete Milestone - Feature Validation", () => {
   test("should show Complete Milestone dialog with proper UI elements", async ({
     page,
-    projectId,
+    api,
   }) => {
+    // Create a test project and milestone
+    const projectId = await api.createProject(`E2E Milestone Test ${Date.now()}`);
+    await api.createMilestone(projectId, `Test Milestone ${Date.now()}`, {
+      isCompleted: false,
+    });
+
     // Navigate to milestones page
     await page.goto(`/en-US/projects/milestones/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    // Wait for the table to be visible
-    const table = page.locator("table").first();
-    await expect(table).toBeVisible({ timeout: 10000 });
+    // Wait for milestone content to be visible (uses card layout, not table)
+    // Look for the "Active" tab which indicates milestones are loaded
+    const activeTab = page.getByRole("tab", { name: /Active/i });
+    await expect(activeTab).toBeVisible({ timeout: 10000 });
 
-    // Look for any incomplete milestone in the table and wait for it to appear
-    const incompleteMilestones = page.locator(
-      'tr:has(button[title="Complete Milestone"])'
-    );
-    await expect(incompleteMilestones.first()).toBeVisible({ timeout: 10000 });
-
-    const count = await incompleteMilestones.count();
-    if (count === 0) {
-      throw new Error("No incomplete milestones found in the seeded data");
-    }
-
-    // Wait for the Complete Milestone button to be visible and clickable
-    const completeMilestoneButton = incompleteMilestones
-      .first()
-      .locator('button[title="Complete Milestone"]');
+    // Look for any incomplete milestone card with a Complete Milestone button
+    const completeMilestoneButton = page.getByTitle("Complete Milestone").first();
     await expect(completeMilestoneButton).toBeVisible({ timeout: 10000 });
 
     // Click the first Complete Milestone button
@@ -60,8 +54,11 @@ test.describe("Complete Milestone - Feature Validation", () => {
 
   test("should show checkboxes when milestone has incomplete dependencies", async ({
     page,
-    projectId,
+    api,
   }) => {
+    // Create a test project
+    const projectId = await api.createProject(`E2E Milestone Test ${Date.now()}`);
+
     // This test verifies the checkbox functionality exists
     // It will only run if there's a milestone with dependencies in the seeded data
     await page.goto(`/en-US/projects/milestones/${projectId}`);
@@ -126,8 +123,11 @@ test.describe("Complete Milestone - Feature Validation", () => {
 
   test("should hide workflow selector when checkbox is unchecked", async ({
     page,
-    projectId,
+    api,
   }) => {
+    // Create a test project
+    const projectId = await api.createProject(`E2E Milestone Test ${Date.now()}`);
+
     await page.goto(`/en-US/projects/milestones/${projectId}`);
     await page.waitForLoadState("networkidle");
 

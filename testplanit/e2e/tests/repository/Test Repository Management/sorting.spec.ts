@@ -479,6 +479,14 @@ test.describe("Sorting", () => {
 
     // Sort by Name ascending
     await clickSortButton(page, "Name");
+    await waitForTableStable(page);
+
+    // Wait for the table to have content (not empty rows)
+    await expect(async () => {
+      const firstPageNames = await getColumnValues(page, "Name");
+      expect(firstPageNames.length).toBeGreaterThan(0);
+      expect(firstPageNames[0]).toBeTruthy(); // Not empty
+    }).toPass({ timeout: 5000 });
 
     // Verify first item is "Alfa" (first alphabetically)
     const firstPageNames = await getColumnValues(page, "Name");

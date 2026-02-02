@@ -375,6 +375,13 @@ export class RepositoryPage extends BasePage {
     await expect(
       this.page.locator('[role="dialog"]')
     ).toBeVisible({ timeout: 5000 });
+
+    // Wait for templates to load - the template combobox should be visible and enabled
+    const templateCombobox = this.page.getByTestId("add-case-dialog").locator('[role="combobox"]').first();
+    await expect(templateCombobox).toBeVisible({ timeout: 10000 });
+
+    // Small delay to ensure React has finished initial render
+    await this.page.waitForTimeout(500);
   }
 
   /**
@@ -465,7 +472,16 @@ export class RepositoryPage extends BasePage {
    * Fill a field in the add case form by system name
    */
   async fillCaseField(systemName: string, value: string): Promise<void> {
-    const fieldInput = this.page.getByTestId(`field-${systemName}-input`).locator('input, textarea').first();
+    // Wait for the field to be fully rendered
+    await this.page.waitForTimeout(1000);
+
+    // Get the field label to find the associated input
+    const fieldLabel = this.page.getByTestId(`field-${systemName}-label`);
+    const labelText = await fieldLabel.textContent();
+
+    // Use getByLabel to find the input - this is more reliable than navigating the DOM
+    const fieldInput = this.page.getByLabel(labelText?.trim() || '', { exact: false });
+
     await fieldInput.fill(value);
   }
 
@@ -485,6 +501,8 @@ export class RepositoryPage extends BasePage {
 
     // Wait for network to settle and fields to load
     await this.page.waitForLoadState("networkidle");
+    // Additional wait for React to re-render form with new fields
+    await this.page.waitForTimeout(1000);
     // Give React Query time to fetch template data and React to re-render with new template fields
     // This is necessary because template data might be cached and needs to be refetched
     await this.page.waitForTimeout(3000);

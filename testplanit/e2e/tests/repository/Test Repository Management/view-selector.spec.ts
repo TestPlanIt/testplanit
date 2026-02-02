@@ -444,6 +444,9 @@ test.describe("View Selector - Repository Views", () => {
     await api.createTestCase(projectId, rootFolderId, unlinkedCaseName);
     await api.linkIssueToTestCase(issueId, linkedCaseId);
 
+    // Wait for search index to update (Elasticsearch needs time to index the issue link)
+    await page.waitForTimeout(2000);
+
     await repositoryPage.goto(projectId);
     await selectView(page, "Issue");
 
@@ -493,7 +496,7 @@ test.describe("View Selector - Repository Views", () => {
           .count();
         expect(containsLinkedCase).toBe(0);
       }
-    }).toPass({ timeout: 5000 });
+    }).toPass({ timeout: 10000 });
   });
 
   test("Issue view filters correctly by specific issue", async ({
