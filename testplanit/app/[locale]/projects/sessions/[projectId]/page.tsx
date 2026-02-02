@@ -258,20 +258,26 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   }, []);
 
   const { data: completedSessionsForChart, isLoading: isLoadingChartData } =
-    useFindManySessions({
-      where: {
-        AND: [
-          { projectId: numericProjectId ?? undefined },
-          { isCompleted: true },
-          { isDeleted: false },
-          { completedAt: { gte: sixMonthsAgo } },
-        ],
+    useFindManySessions(
+      {
+        where: {
+          AND: [
+            { projectId: numericProjectId ?? undefined },
+            { isCompleted: true },
+            { isDeleted: false },
+            { completedAt: { gte: sixMonthsAgo } },
+          ],
+        },
+        select: {
+          id: true,
+          completedAt: true,
+        },
       },
-      select: {
-        id: true,
-        completedAt: true,
-      },
-    }) ?? { data: [], isLoading: false };
+      {
+        enabled: activeTab === "active", // Only fetch when viewing active tab (for the chart)
+        staleTime: 60000, // Cache for 1 minute
+      }
+    ) ?? { data: [], isLoading: false };
 
   // Determine if we need to filter
   const hasFilter = debouncedCompletedSessionsSearchString.trim().length > 0;
@@ -521,19 +527,25 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
 
   // Query 1: Get the most recent session result to determine the date range
   const { data: latestSessionResult, isLoading: isLoadingLatestSessionResult } =
-    useFindFirstSessionResults({
-      where: {
-        session: { projectId: numericProjectId ?? undefined },
-        isDeleted: false,
-        status: {
-          systemName: { not: "untested" },
+    useFindFirstSessionResults(
+      {
+        where: {
+          session: { projectId: numericProjectId ?? undefined },
+          isDeleted: false,
+          status: {
+            systemName: { not: "untested" },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        select: {
+          createdAt: true,
         },
       },
-      orderBy: { createdAt: "desc" },
-      select: {
-        createdAt: true,
-      },
-    });
+      {
+        enabled: !!numericProjectId,
+        staleTime: 30000, // Cache for 30 seconds
+      }
+    );
 
   // Calculate 90 days before the latest result
   const ninetyDaysBeforeLatest = useMemo(() => {
@@ -571,6 +583,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     },
     {
       enabled: !!ninetyDaysBeforeLatest, // Only run when we have the date
+      staleTime: 30000, // Cache for 30 seconds
     }
   );
 
@@ -661,18 +674,11 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     );
   }, [completedSessionsForChart]);
 
-  // Add overall loading state check for clarity
-  const isOverallLoading =
-    isAuthLoading ||
-    isLoading ||
-    isLoadingLatestSessionResult ||
-    isLoadingRecentSessionResults ||
-    isLoadingIncomplete ||
-    isLoadingCompleted;
+  // Remove blocking summary loading - allow progressive rendering
+  // Each card will show its own loading state
 
-  // Wait for session to load
-  // Wait for all data to load - this prevents the flash
-  if (isOverallLoading) {
+  // Wait for essential auth/project data before rendering
+  if (isAuthLoading || isLoading) {
     return <LoadingSpinner />;
   }
 

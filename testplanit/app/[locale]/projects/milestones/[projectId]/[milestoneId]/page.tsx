@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "~/lib/navigation";
@@ -77,6 +77,8 @@ import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
 import { MilestoneSummary } from "@/components/MilestoneSummary";
 import { CommentsSection } from "~/components/comments/CommentsSection";
+import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
+import { useQuery } from "@tanstack/react-query";
 
 interface MilestoneForecastData {
   manualEstimate: number;
@@ -278,13 +280,38 @@ export default function MilestoneDetailsPage() {
           },
         },
       },
-      testCases: true,
+      // testCases removed - fetched separately via batch summary API to avoid N+1 queries
       createdBy: true,
     },
     orderBy: [
       { isCompleted: "asc" },
       { createdAt: "desc" },
     ],
+  });
+
+  // Extract test run IDs for batch summary fetch
+  const testRunIds = useMemo(
+    () => milestoneTestRuns?.map((run) => run.id) ?? [],
+    [milestoneTestRuns]
+  );
+
+  // Batch-fetch test run summaries for all test runs
+  const { data: batchSummaries } = useQuery<BatchTestRunSummaryResponse>({
+    queryKey: ["batchTestRunSummaries", testRunIds],
+    queryFn: async () => {
+      if (testRunIds.length === 0) {
+        return { summaries: {} };
+      }
+      const response = await fetch(
+        `/api/test-runs/summaries?testRunIds=${testRunIds.join(",")}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch batch test run summaries");
+      }
+      return response.json();
+    },
+    enabled: testRunIds.length > 0,
+    staleTime: 30000, // Cache for 30 seconds
   });
 
   useEffect(() => {
@@ -828,7 +855,6 @@ export default function MilestoneDetailsPage() {
                                       }
                                     : undefined,
                                   projectId: testRun.projectId,
-                                  testCases: testRun.testCases,
                                   createdBy: testRun.createdBy,
                                   forecastManual: testRun.forecastManual,
                                   forecastAutomated: testRun.forecastAutomated,
@@ -838,6 +864,7 @@ export default function MilestoneDetailsPage() {
                                   key={testRun.id}
                                   testRun={transformedTestRun}
                                   showMilestone={false}
+                                  summaryData={batchSummaries?.summaries[testRun.id]}
                                 />
                               );
                             })}

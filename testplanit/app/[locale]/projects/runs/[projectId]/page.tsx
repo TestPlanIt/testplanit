@@ -370,61 +370,8 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     },
     createdBy: true,
     project: true,
-    testCases: {
-      select: {
-        id: true,
-        repositoryCaseId: true,
-        assignedTo: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          },
-        },
-        status: {
-          select: {
-            isCompleted: true,
-          },
-        },
-        repositoryCase: {
-          select: {
-            estimate: true,
-          },
-        },
-      },
-    },
-    tags: {
-      select: {
-        id: true,
-        name: true,
-      },
-    },
-    issues: {
-      select: {
-        id: true,
-        name: true,
-        externalId: true,
-        externalUrl: true,
-        title: true,
-        externalStatus: true,
-        issueTypeName: true,
-        issueTypeIconUrl: true,
-        integrationId: true,
-        lastSyncedAt: true,
-        integration: {
-          select: {
-            id: true,
-            provider: true,
-            name: true,
-          },
-        },
-      },
-    },
-    results: {
-      select: {
-        id: true,
-      },
-    },
+    // Removed testCases, tags, issues, results - these are fetched separately
+    // by TestRunDisplay and TestRunCasesSummary to avoid N+1 queries
   };
 
   const {
@@ -483,6 +430,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   );
 
   // Prepare data for Sunburst Chart
+  // NOTE: Disabled due to performance optimization - testCases data is no longer fetched in the main query
   const sunburstChartData: SunburstHierarchyNode = useMemo(() => {
     const root: SunburstHierarchyNode = {
       id: "root",
@@ -490,68 +438,8 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
       itemType: "root",
       children: [],
     };
-
-    const activeRuns = incompleteTestRuns || [];
-
-    root.children = activeRuns
-      .map((run) => {
-        let remainingEstimateForRun = 0;
-        const pendingCasesForRun: Array<(typeof run.testCases)[0]> = [];
-        run.testCases?.forEach((tc) => {
-          if (!tc.status?.isCompleted) {
-            remainingEstimateForRun += tc.repositoryCase?.estimate || 0;
-            pendingCasesForRun.push(tc);
-          }
-        });
-
-        if (remainingEstimateForRun === 0) {
-          return null; // No pending estimate for this run, skip it
-        }
-
-        const runNode: SunburstHierarchyNode = {
-          id: `run-${run.id}`,
-          name: run.name,
-          originalValue: remainingEstimateForRun,
-          itemType: "testRun",
-          children: [],
-        };
-
-        const assignedUsersToPending = new Map<
-          string,
-          { id: string; name: string; image: string | null }
-        >();
-        pendingCasesForRun.forEach((tc) => {
-          if (tc.assignedTo) {
-            assignedUsersToPending.set(tc.assignedTo.id, {
-              id: tc.assignedTo.id,
-              name: tc.assignedTo.name,
-              image: tc.assignedTo.image,
-            });
-          }
-        });
-
-        const uniqueUsersArray = Array.from(assignedUsersToPending.values());
-
-        if (uniqueUsersArray.length > 0) {
-          const forecastPerUser =
-            remainingEstimateForRun / uniqueUsersArray.length;
-          runNode.children = uniqueUsersArray.map((user) => ({
-            id: `user-${run.id}-${user.id}`,
-            name: user.name,
-            value: forecastPerUser,
-            originalValue: forecastPerUser,
-            itemType: "user",
-            imageUrl: user.image ?? undefined,
-          }));
-        } else {
-          runNode.value = remainingEstimateForRun; // Run itself is a leaf if no users on pending tasks
-        }
-        return runNode;
-      })
-      .filter(Boolean) as SunburstHierarchyNode[]; // Filter out nulls and assert type
-
     return root;
-  }, [incompleteTestRuns, t]);
+  }, [t]);
 
   const { permissions, isLoading: isLoadingPermissions } =
     useProjectPermissions(numericProjectId ?? -1, ApplicationArea.TestRuns);
@@ -576,22 +464,11 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   const createTestRun = useCreateTestRuns();
 
-  const numNotStartedActiveTestRuns =
-    incompleteTestRuns?.filter((run) => run.results?.length === 0).length || 0;
+  // NOTE: Disabled due to performance optimization - results data is no longer fetched in the main query
+  const numNotStartedActiveTestRuns = 0;
 
-  // Updated: Calculate total estimated time remaining for the *first card* (stacked bar summary)
-  // This sums estimates of individual PENDING repository cases across ALL active runs.
-  const totalEstimatedTimeRemainingFirstCard = useMemo(() => {
-    let total = 0;
-    incompleteTestRuns?.forEach((run) => {
-      run.testCases?.forEach((tc) => {
-        if (!tc.status?.isCompleted) {
-          total += tc.repositoryCase?.estimate || 0;
-        }
-      });
-    });
-    return total;
-  }, [incompleteTestRuns]);
+  // NOTE: Disabled due to performance optimization - testCases data is no longer fetched in the main query
+  const totalEstimatedTimeRemainingFirstCard = 0;
 
   const totalEstimatedTime =
     incompleteTestRuns?.reduce(
@@ -599,14 +476,8 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
       0
     ) || 0;
 
+  // NOTE: Disabled due to performance optimization - testCases data is no longer fetched in the main query
   const responsibleUsers = new Set<string>();
-  incompleteTestRuns?.forEach((run) => {
-    run.testCases?.forEach((tc) => {
-      if (tc.assignedTo?.name) {
-        responsibleUsers.add(tc.assignedTo.name);
-      }
-    });
-  });
 
   // Query for completed test runs with server-side pagination and filtering
   const {
@@ -695,37 +566,50 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   }, []);
 
   // --- Fetch Completed Test Runs in the Last 6 Months ---
+  // Optimized: Only select minimal fields needed for the chart
   const {
     data: completedRunsLast6Months,
     isLoading: isLoadingCompletedRunsData,
-  } = useFindManyTestRuns({
-    where: {
-      projectId: numericProjectId ?? undefined,
-      isCompleted: true,
-      completedAt: { gte: sixMonthsAgo }, // Filter by date
+  } = useFindManyTestRuns(
+    {
+      where: {
+        projectId: numericProjectId ?? undefined,
+        isCompleted: true,
+        completedAt: { gte: sixMonthsAgo }, // Filter by date
+      },
+      select: {
+        completedAt: true,
+        testRunType: true, // Need type to separate manual vs automated
+      },
+      orderBy: { completedAt: "asc" }, // Order for easier processing
     },
-    select: {
-      completedAt: true,
-      testRunType: true, // Need type to separate manual vs automated
-    },
-    orderBy: { completedAt: "asc" }, // Order for easier processing
-  }) ?? { data: [], isLoading: false };
+    {
+      enabled: activeTab === "active", // Only fetch when viewing active tab (for the chart)
+      staleTime: 60000, // Cache for 1 minute
+    }
+  ) ?? { data: [], isLoading: false };
 
   // --- Fetch Recent Manual Test Run Results (two-query approach) ---
   // Query 1: Get the most recent result to determine the date range
   const { data: latestManualResult, isLoading: isLoadingLatestManualResult } =
-    useFindFirstTestRunResults({
-      where: {
-        testRun: { projectId: numericProjectId ?? undefined },
-        status: {
-          systemName: { not: "untested" },
+    useFindFirstTestRunResults(
+      {
+        where: {
+          testRun: { projectId: numericProjectId ?? undefined },
+          status: {
+            systemName: { not: "untested" },
+          },
+        },
+        orderBy: { executedAt: "desc" },
+        select: {
+          executedAt: true,
         },
       },
-      orderBy: { executedAt: "desc" },
-      select: {
-        executedAt: true,
-      },
-    });
+      {
+        enabled: !!numericProjectId,
+        staleTime: 30000, // Cache for 30 seconds
+      }
+    );
 
   // Calculate 7 days before the latest result
   const sevenDaysBeforeLatestManual = useMemo(() => {
@@ -762,6 +646,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
       },
       {
         enabled: !!sevenDaysBeforeLatestManual,
+        staleTime: 30000, // Cache for 30 seconds
       }
     );
 
@@ -834,18 +719,24 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   const {
     data: latestAutomatedResult,
     isLoading: isLoadingLatestAutomatedResult,
-  } = useFindFirstJUnitTestResult({
-    where: {
-      testSuite: {
-        testRun: { projectId: numericProjectId ?? undefined },
+  } = useFindFirstJUnitTestResult(
+    {
+      where: {
+        testSuite: {
+          testRun: { projectId: numericProjectId ?? undefined },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        executedAt: true,
+        createdAt: true,
       },
     },
-    orderBy: { createdAt: "desc" },
-    select: {
-      executedAt: true,
-      createdAt: true,
-    },
-  });
+    {
+      enabled: !!numericProjectId,
+      staleTime: 30000, // Cache for 30 seconds
+    }
+  );
 
   // Calculate 7 days before the latest automated result
   const sevenDaysBeforeLatestAutomated = useMemo(() => {
@@ -884,6 +775,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
       },
       {
         enabled: !!sevenDaysBeforeLatestAutomated,
+        staleTime: 30000, // Cache for 30 seconds
       }
     );
 
@@ -1086,22 +978,8 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
     );
   }
 
-  // Combine loading states
-  const isSummaryLoading =
-    isLoading ||
-    isLoadingIncompleteRuns ||
-    isLoadingLatestManualResult ||
-    isLoadingRecentResults ||
-    isLoadingLatestAutomatedResult ||
-    isLoadingAutomatedResults ||
-    isLoadingPermissions ||
-    isProjectLoading ||
-    isLoadingCompletedRunsData;
-
-  // Early returns for loading or missing project
-  if (isSummaryLoading) {
-    return <LoadingSpinner />;
-  }
+  // Remove blocking summary loading - allow progressive rendering
+  // Each card will show its own loading state
 
   if (session && session.user.access !== "NONE") {
     const canAddEdit = permissions?.canAddEdit ?? false;

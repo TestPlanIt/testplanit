@@ -65,12 +65,12 @@ export type TestRunSummaryData = {
     statusId: number | null;
     statusName: string;
     colorValue: string;
-    executedAt: Date | null;
-    executedByName: string | null;
-    elapsed: number | null;
+    executedAt?: Date | null;
+    executedByName?: string | null;
+    elapsed?: number | null;
     estimate: number | null;
     isPending: boolean;
-    resultCount: number;
+    resultCount?: number;
   }>;
 };
 
@@ -84,6 +84,10 @@ export async function GET(
   if (isNaN(testRunId)) {
     return NextResponse.json({ error: "Invalid test run ID" }, { status: 400 });
   }
+
+  // Check if case details should be included (for detail views with color bars)
+  const searchParams = req.nextUrl.searchParams;
+  const includeCaseDetails = searchParams.get("includeCaseDetails") === "true";
 
   try {
     const session = await getServerSession(authOptions);
@@ -166,7 +170,8 @@ export async function GET(
       // Handle regular test runs with optimized queries
       const summary = await getRegularRunSummary(
         testRunId,
-        testRun.forecastManual
+        testRun.forecastManual,
+        includeCaseDetails
       );
       return NextResponse.json({
         ...summary,
@@ -190,7 +195,8 @@ export async function GET(
 
 async function getRegularRunSummary(
   testRunId: number,
-  forecastManual: number | null
+  forecastManual: number | null,
+  includeCaseDetails: boolean = false
 ): Promise<
   Omit<TestRunSummaryData, "testRunType" | "issues" | "commentsCount">
 > {
@@ -250,69 +256,71 @@ async function getRegularRunSummary(
       AND trr.id IS NULL
   `;
 
-  // Get minimal case details for tooltips (limit to reasonable amount)
-  const caseDetails = await prisma.$queryRaw<
-    Array<{
-      id: number;
-      repositoryCaseId: number;
-      testRunId: number;
-      configurationName: string | null;
-      caseName: string;
-      statusId: number | null;
-      statusName: string;
-      colorValue: string;
-      executedAt: Date | null;
-      executedByName: string | null;
-      elapsed: number | null;
-      estimate: number | null;
-      isPending: boolean;
-      resultCount: bigint;
-    }>
-  >`
-    SELECT
-      trc.id,
-      trc."repositoryCaseId",
-      trc."testRunId",
-      conf.name as "configurationName",
-      rc.name as "caseName",
-      trc."statusId",
-      COALESCE(s.name, 'Pending') as "statusName",
-      COALESCE(c.value, '#9ca3af') as "colorValue",
-      latest_result."executedAt",
-      u.name as "executedByName",
-      latest_result.elapsed,
-      rc.estimate,
-      CASE WHEN latest_result.id IS NULL THEN true ELSE false END as "isPending",
-      COALESCE(result_count.count, 0) as "resultCount"
-    FROM "TestRunCases" trc
-    JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
-    JOIN "TestRuns" tr ON trc."testRunId" = tr.id
-    LEFT JOIN "Configurations" conf ON tr."configId" = conf.id
-    LEFT JOIN "Status" s ON trc."statusId" = s.id
-    LEFT JOIN "Color" c ON s."colorId" = c.id
-    LEFT JOIN LATERAL (
+  // Case details are only fetched when explicitly requested (e.g., for detail views with color bars)
+  let caseDetails: Array<{
+    id: number;
+    repositoryCaseId: number;
+    testRunId: number;
+    configurationName: string | null;
+    caseName: string;
+    statusId: number | null;
+    statusName: string;
+    colorValue: string;
+    executedAt: Date | null;
+    executedByName: string | null;
+    elapsed: number | null;
+    estimate: number | null;
+    isPending: boolean;
+    resultCount: bigint;
+  }> = [];
+
+  if (includeCaseDetails) {
+    caseDetails = await prisma.$queryRaw<typeof caseDetails>`
       SELECT
-        trr.id,
-        trr."executedAt",
-        trr.elapsed,
-        trr."executedById"
-      FROM "TestRunResults" trr
-      WHERE trr."testRunCaseId" = trc.id
-        AND trr."isDeleted" = false
-      ORDER BY trr."executedAt" DESC
-      LIMIT 1
-    ) latest_result ON true
-    LEFT JOIN "User" u ON latest_result."executedById" = u.id
-    LEFT JOIN LATERAL (
-      SELECT COUNT(*) as count
-      FROM "TestRunResults" trr
-      WHERE trr."testRunCaseId" = trc.id
-        AND trr."isDeleted" = false
-    ) result_count ON true
-    WHERE trc."testRunId" = ${testRunId}
-    ORDER BY trc."order" ASC
-    LIMIT 1000
-  `;
+        trc.id,
+        trc."repositoryCaseId",
+        trc."testRunId",
+        conf.name as "configurationName",
+        rc.name as "caseName",
+        trc."statusId",
+        COALESCE(s.name, 'Pending') as "statusName",
+        COALESCE(c.value, '#9ca3af') as "colorValue",
+        latest_result."executedAt",
+        u.name as "executedByName",
+        latest_result.elapsed,
+        rc.estimate,
+        CASE WHEN latest_result.id IS NULL THEN true ELSE false END as "isPending",
+        COALESCE(result_count.count, 0) as "resultCount"
+      FROM "TestRunCases" trc
+      JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
+      JOIN "TestRuns" tr ON trc."testRunId" = tr.id
+      LEFT JOIN "Configurations" conf ON tr."configId" = conf.id
+      LEFT JOIN "Status" s ON trc."statusId" = s.id
+      LEFT JOIN "Color" c ON s."colorId" = c.id
+      LEFT JOIN LATERAL (
+        SELECT
+          trr.id,
+          trr."executedAt",
+          trr.elapsed,
+          trr."executedById"
+        FROM "TestRunResults" trr
+        WHERE trr."testRunCaseId" = trc.id
+          AND trr."isDeleted" = false
+        ORDER BY trr."executedAt" DESC
+        LIMIT 1
+      ) latest_result ON true
+      LEFT JOIN "User" u ON latest_result."executedById" = u.id
+      LEFT JOIN LATERAL (
+        SELECT COUNT(*) as count
+        FROM "TestRunResults" trr
+        WHERE trr."testRunCaseId" = trc.id
+          AND trr."isDeleted" = false
+      ) result_count ON true
+      WHERE trc."testRunId" = ${testRunId}
+      ORDER BY trc."order" ASC
+      LIMIT 1000
+    `;
+  }
 
   const totalCases = statusCounts.reduce(
     (sum, item) => sum + Number(item.count),
@@ -332,7 +340,10 @@ async function getRegularRunSummary(
       ? forecastManual
       : Number(estimateResult[0]?.totalEstimate || 0);
 
-  return {
+  const result: Omit<
+    TestRunSummaryData,
+    "testRunType" | "issues" | "commentsCount"
+  > = {
     totalCases,
     statusCounts: statusCounts.map((item) => ({
       statusId: item.statusId,
@@ -344,11 +355,16 @@ async function getRegularRunSummary(
     completionRate,
     totalElapsed,
     totalEstimate,
-    caseDetails: caseDetails.map((item) => ({
+  };
+
+  if (includeCaseDetails) {
+    result.caseDetails = caseDetails.map((item) => ({
       ...item,
       resultCount: Number(item.resultCount),
-    })),
-  };
+    }));
+  }
+
+  return result;
 }
 
 async function getJUnitRunSummary(
