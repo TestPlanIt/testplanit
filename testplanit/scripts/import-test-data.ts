@@ -21,7 +21,16 @@ const TEST_USER_ID = 'csv-test-user';
 class CSVTestDataImporter {
   async setup(): Promise<void> {
     console.log('🔧 Setting up test environment...');
-    
+
+    // Get default user role
+    const userRole = await prisma.roles.findFirst({
+      where: { name: 'user' },
+    });
+
+    if (!userRole) {
+      throw new Error('Default user role not found. Please run: pnpm prisma db seed');
+    }
+
     // Create test user
     await prisma.user.upsert({
       where: { id: TEST_USER_ID },
@@ -30,6 +39,7 @@ class CSVTestDataImporter {
         email: 'csv-test@example.com',
         name: 'CSV Test User',
         password: 'test-password',
+        roleId: userRole.id,
       },
       update: {},
     });
