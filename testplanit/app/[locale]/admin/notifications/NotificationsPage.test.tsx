@@ -35,13 +35,13 @@ vi.mock("sonner", () => ({
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string, values?: any) => {
     const translations: Record<string, string> = {
-      "title": "Notification Settings",
-      "description": "Configure default notification settings",
+      title: "Notification Settings",
+      description: "Configure default notification settings",
       "defaultMode.label": "Default Notification Mode",
       "defaultMode.inApp": "In-App Only",
       "defaultMode.inAppEmailImmediate": "In-App + Immediate Email",
       "defaultMode.inAppEmailDaily": "In-App + Daily Digest",
-      "save": "Save",
+      save: "Save",
       "success.title": "Success",
       "success.description": "Settings saved successfully",
       "error.description": "Failed to save settings",
@@ -53,7 +53,8 @@ vi.mock("next-intl", () => ({
       "systemNotification.history.title": "History",
       "systemNotification.history.empty": "No history",
       "systemNotification.success.title": "Sent",
-      "systemNotification.success.description": "Notification sent to {count} users",
+      "systemNotification.success.description":
+        "Notification sent to {count} users",
       "systemNotification.error.description": "Failed to send notification",
       "systemNotification.error.emptyFields": "Please fill in all fields",
       "components.notifications.empty": "None",
@@ -86,10 +87,10 @@ vi.mock("@/components/tables/DataTable", () => ({
   ),
 }));
 vi.mock("@/components/tables/Pagination", () => ({
-  PaginationComponent: () => <div>Pagination</div>,
+  PaginationComponent: () => <div>{"Pagination"}</div>,
 }));
 vi.mock("@/components/tables/PaginationControls", () => ({
-  PaginationInfo: () => <div>Pagination Info</div>,
+  PaginationInfo: () => <div>{"Pagination Info"}</div>,
 }));
 vi.mock("~/lib/contexts/PaginationContext", () => ({
   PaginationProvider: ({ children }: any) => <div>{children}</div>,
@@ -158,7 +159,9 @@ describe("Admin Notifications Page - Email Server Configuration", () => {
 
     // Wait for the email server check to complete
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/admin/sso/magic-link-status");
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/admin/sso/magic-link-status"
+      );
     });
 
     // Wait for component to render
@@ -186,7 +189,9 @@ describe("Admin Notifications Page - Email Server Configuration", () => {
 
     // Wait for the email server check to complete
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/admin/sso/magic-link-status");
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/admin/sso/magic-link-status"
+      );
     });
 
     // Wait for component to render
@@ -221,7 +226,9 @@ describe("Admin Notifications Page - Email Server Configuration", () => {
 
     // Wait for the email server check and fallback to complete
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith("/api/admin/sso/magic-link-status");
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/admin/sso/magic-link-status"
+      );
     });
 
     // The IN_APP radio should be selected after fallback
