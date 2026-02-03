@@ -602,7 +602,9 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
             defaultValues[fieldIdStr] = caseField.caseField.defaultValue || "";
             break;
           case "Text Long":
-            defaultValues[fieldIdStr] = JSON.stringify(emptyEditorContent);
+            defaultValues[fieldIdStr] =
+              caseField.caseField.defaultValue ||
+              JSON.stringify(emptyEditorContent);
             break;
         }
       });
@@ -719,7 +721,9 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
             defaultValues[fieldIdStr] = caseField.caseField.defaultValue || "";
             break;
           case "Text Long":
-            defaultValues[fieldIdStr] = JSON.stringify(emptyEditorContent);
+            defaultValues[fieldIdStr] =
+              caseField.caseField.defaultValue ||
+              JSON.stringify(emptyEditorContent);
             break;
         }
       });

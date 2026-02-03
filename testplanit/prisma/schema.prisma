@@ -305,7 +305,7 @@ model User {
   authMethod              AuthMethod              @default(INTERNAL)
   externalId              String?
   access                  Access                  @default(NONE)
-  roleId                  Int                     @default(1)
+  roleId                  Int
   role                    Roles                   @relation(fields: [roleId], references: [id])
   isActive                Boolean                 @default(true)
   isDeleted               Boolean                 @default(false)

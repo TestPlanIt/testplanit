@@ -87,7 +87,7 @@ async function seedCoreData() {
     execSync("pnpm prisma db seed", {
       cwd: process.cwd(),
       stdio: "inherit",
-      env: process.env,
+      env: { ...process.env, SEED_TEST_DATA: "true" },
     });
   } catch {
     console.error("   Failed to run prisma db seed, continuing...");

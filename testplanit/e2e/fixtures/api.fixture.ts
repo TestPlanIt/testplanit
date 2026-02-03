@@ -2954,7 +2954,7 @@ export class ApiHelper {
       password: options.password,
       emailVerifToken: crypto.randomUUID(),
       access: options.access || "USER",
-      roleId: options.roleId || 1,
+      ...(options.roleId ? { roleId: options.roleId } : {}),
     };
 
     const response = await this.request.post(

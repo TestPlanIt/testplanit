@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DraggableList } from "@/components/DraggableFieldOptions";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { emptyEditorContent } from "~/app/constants";
 
 import { CirclePlus, Ellipsis } from "lucide-react";
 
@@ -532,10 +534,32 @@ export function AddCaseFieldModal({
                           />
                         </div>
                       </div>
+                    ) : option.key === "defaultValue" &&
+                      selectedTypeName === "Text Long" ? (
+                      <div
+                        className="ring-2 ring-muted rounded-lg min-h-[200px]"
+                        data-testid={`case-field-${option.key}`}
+                      >
+                        <TipTapEditor
+                          content={(() => {
+                            try {
+                              return field.value
+                                ? JSON.parse(field.value as string)
+                                : emptyEditorContent;
+                            } catch {
+                              return emptyEditorContent;
+                            }
+                          })()}
+                          onUpdate={(content) => {
+                            field.onChange(JSON.stringify(content));
+                          }}
+                          className="min-h-[200px]"
+                        />
+                      </div>
                     ) : option.key === "defaultValue" ? (
                       <Input
                         {...field}
-                        type="text"
+                        type={selectedTypeName === "Link" ? "url" : "text"}
                         onChange={field.onChange}
                         value={(field.value ?? "") as string}
                         data-testid={`case-field-${option.key}`}

@@ -210,15 +210,18 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
             defaultValue={fieldValue}
             render={({ field: { onChange, value } }) => {
               // Ensure value is an array for edit mode
-              const valueArray = Array.isArray(value) ? value : (value != null ? [value] : []);
+              const valueArray = Array.isArray(value)
+                ? value
+                : value != null
+                  ? [value]
+                  : [];
 
               return (
                 <MultiSelect
                   className="ml-1"
                   value={caseField.caseField.fieldOptions
-                    .filter(
-                      (option: any) =>
-                        valueArray.includes(option.fieldOption.id)
+                    .filter((option: any) =>
+                      valueArray.includes(option.fieldOption.id)
                     )
                     .map((option: any) => ({
                       value: option.fieldOption.id,
@@ -601,18 +604,31 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
     }
   };
 
-  // Extract systemName for test IDs
-  const caseFieldDefinition = template.caseFields.find(
+  // Extract systemName for test IDs (supports both case fields and result fields)
+  const caseFieldDefinition = template.caseFields?.find(
     (cf: any) => cf.caseField.id === fieldId
   )?.caseField;
-  const systemName = caseFieldDefinition?.systemName || `field-${fieldId}`;
+  const resultFieldDefinition = template.resultFields?.find(
+    (rf: any) => rf.resultFieldId === fieldId || rf.resultField?.id === fieldId
+  )?.resultField;
+  const systemName =
+    caseFieldDefinition?.systemName ??
+    resultFieldDefinition?.systemName ??
+    `field-${fieldId}`;
 
   return (
     <div data-testid={`field-value-${systemName}`}>
       <div data-testid={`field-display-${systemName}`}>
         {(!isRunMode || !isEmptyValue(fieldValue)) && renderField()}
       </div>
-      {error && <p className="text-destructive" data-testid={`field-error-${systemName}`}>{error}</p>}
+      {error && (
+        <p
+          className="text-destructive"
+          data-testid={`field-error-${systemName}`}
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 };

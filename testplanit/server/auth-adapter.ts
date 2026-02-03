@@ -52,7 +52,13 @@ export function createCustomPrismaAdapter(prisma: PrismaClient): Adapter {
       // Get the default role from database
       const defaultRole = await prisma.roles.findFirst({
         where: { isDefault: true, isDeleted: false },
+      }) ?? await prisma.roles.findFirst({
+        where: { name: "user", isDeleted: false },
       });
+
+      if (!defaultRole) {
+        throw new Error("No default role found. Please ensure a default role exists.");
+      }
 
       // Create user with default preferences
       const newUser = await prisma.user.create({
@@ -64,7 +70,7 @@ export function createCustomPrismaAdapter(prisma: PrismaClient): Adapter {
           password: randomPassword, // Required field, but won't be used for OAuth
           authMethod: "SSO", // Mark OAuth users as SSO
           access: defaultAccess, // Use system default access from registration settings
-          roleId: defaultRole?.id || 1, // Use default role
+          roleId: defaultRole.id,
           userPreferences: {
             create: {
               // Default preferences matching the schema

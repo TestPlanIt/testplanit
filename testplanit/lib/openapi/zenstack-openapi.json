@@ -60035,7 +60035,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUpdateInput": {
@@ -60550,7 +60551,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserUpdateManyMutationInput": {
@@ -187325,7 +187327,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutAccountsInput": {
@@ -187584,7 +187587,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutAccountsInput": {
@@ -188957,7 +188961,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutCreatedUsersInput": {
@@ -189216,7 +189221,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutCreatedUsersInput": {
@@ -189594,7 +189600,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutCreatedByInput": {
@@ -189846,7 +189853,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutCreatedByInput": {
@@ -206817,7 +206825,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutUserPreferencesInput": {
@@ -207076,7 +207085,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutUserPreferencesInput": {
@@ -208136,7 +208146,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutApiTokensInput": {
@@ -208395,7 +208406,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutApiTokensInput": {
@@ -209844,7 +209856,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutGroupsInput": {
@@ -210103,7 +210116,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutGroupsInput": {
@@ -213095,7 +213109,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutCreatedProjectsInput": {
@@ -213354,7 +213369,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutCreatedProjectsInput": {
@@ -223416,7 +223432,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutProjectsInput": {
@@ -223675,7 +223692,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutProjectsInput": {
@@ -229288,7 +229306,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutCreatedMilestonesInput": {
@@ -229547,7 +229566,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutCreatedMilestonesInput": {
@@ -256617,7 +256637,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutRepositoryFoldersInput": {
@@ -256876,7 +256897,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutRepositoryFoldersInput": {
@@ -259859,7 +259881,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutCreatedCaseLinksInput": {
@@ -260118,7 +260141,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutCreatedCaseLinksInput": {
@@ -262909,7 +262933,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutRepositoryCasesInput": {
@@ -263168,7 +263193,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutRepositoryCasesInput": {
@@ -276126,7 +276152,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutAttachmentsInput": {
@@ -276385,7 +276412,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutAttachmentsInput": {
@@ -283617,7 +283645,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutAssignedSessionsInput": {
@@ -283876,7 +283905,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutAssignedSessionsInput": {
@@ -284150,7 +284180,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutCreatedSessionsInput": {
@@ -284409,7 +284440,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutCreatedSessionsInput": {
@@ -290106,7 +290138,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutSessionResultsInput": {
@@ -290365,7 +290398,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutSessionResultsInput": {
@@ -297047,7 +297081,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutTestRunCreatedByInput": {
@@ -297306,7 +297341,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutTestRunCreatedByInput": {
@@ -302527,7 +302563,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutTestRunCasesAssignedInput": {
@@ -302786,7 +302823,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutTestRunCasesAssignedInput": {
@@ -306051,7 +306089,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutTestRunResultsInput": {
@@ -306310,7 +306349,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutTestRunResultsInput": {
@@ -306584,7 +306624,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutEditedTestRunResultsInput": {
@@ -306843,7 +306884,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutEditedTestRunResultsInput": {
@@ -313300,7 +313342,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutCreatedIssuesInput": {
@@ -313559,7 +313602,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutCreatedIssuesInput": {
@@ -323380,7 +323424,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutUserIntegrationAuthsInput": {
@@ -323639,7 +323684,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutUserIntegrationAuthsInput": {
@@ -325387,7 +325433,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutProjectPermissionsInput": {
@@ -325646,7 +325693,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutProjectPermissionsInput": {
@@ -330372,7 +330420,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutJunitTestSuitesInput": {
@@ -330631,7 +330680,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutJunitTestSuitesInput": {
@@ -333400,7 +333450,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutJunitTestResultsInput": {
@@ -333659,7 +333710,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutJunitTestResultsInput": {
@@ -337027,7 +337079,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutJunitPropertiesInput": {
@@ -337286,7 +337339,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutJunitPropertiesInput": {
@@ -339581,7 +339635,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutJunitAttachmentsInput": {
@@ -339840,7 +339895,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutJunitAttachmentsInput": {
@@ -341873,7 +341929,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutJunitTestStepsInput": {
@@ -342132,7 +342189,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutJunitTestStepsInput": {
@@ -344327,7 +344385,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutCreatedSharedStepGroupsInput": {
@@ -344586,7 +344645,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutCreatedSharedStepGroupsInput": {
@@ -347171,7 +347231,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutNotificationsInput": {
@@ -347430,7 +347491,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutNotificationsInput": {
@@ -348810,7 +348872,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutCreatedShareLinksInput": {
@@ -349069,7 +349132,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutCreatedShareLinksInput": {
@@ -351054,7 +351118,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutShareLinkAccessLogsInput": {
@@ -351313,7 +351378,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutShareLinkAccessLogsInput": {
@@ -355406,7 +355472,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutLlmUsagesInput": {
@@ -355665,7 +355732,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutLlmUsagesInput": {
@@ -362191,7 +362259,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutCreatedEmailDomainsInput": {
@@ -362450,7 +362519,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutCreatedEmailDomainsInput": {
@@ -363835,7 +363905,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutTestmoImportJobsInput": {
@@ -364094,7 +364165,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutTestmoImportJobsInput": {
@@ -368350,7 +368422,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutCreatedCommentsInput": {
@@ -368609,7 +368682,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutCreatedCommentsInput": {
@@ -372258,7 +372332,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "role"
         ]
       },
       "UserUncheckedCreateWithoutCommentMentionsInput": {
@@ -372517,7 +372592,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "UserCreateOrConnectWithoutCommentMentionsInput": {
@@ -374608,7 +374684,8 @@
         "required": [
           "name",
           "email",
-          "password"
+          "password",
+          "roleId"
         ]
       },
       "ProjectAssignmentCreateManyUserInput": {

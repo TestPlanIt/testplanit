@@ -52,21 +52,18 @@ async function seedCoreData() {
   console.log("Seeding core data...");
 
   // --- Roles ---
-  // Use upsert with explicit IDs to ensure consistent role IDs
   const userRole = await prisma.roles.upsert({
-    where: { id: 1 },
-    update: { name: "user", isDefault: true },
+    where: { name: "user" },
+    update: { isDefault: true },
     create: {
-      id: 1,
       name: "user",
       isDefault: true,
     },
   });
   const adminRole = await prisma.roles.upsert({
-    where: { id: 2 },
-    update: { name: "admin", isDefault: false },
+    where: { name: "admin" },
+    update: { isDefault: false },
     create: {
-      id: 2,
       name: "admin",
       isDefault: false,
     },
@@ -895,7 +892,9 @@ async function seedCaseFieldTypes() {
           { key: "isRequired", displayName: "Is Required" },
           { key: "isRestricted", displayName: "Is Restricted" },
         ],
-        specificOptions: [],
+        specificOptions: [
+          { key: "defaultValue", displayName: "Default Value" },
+        ],
       },
     },
     {
@@ -1612,8 +1611,8 @@ async function main() {
     // Assign workflows to all projects
     await assignWorkflowsToAllProjects();
 
-    // Seed test data for E2E tests (development and test environments only)
-    if (process.env.NODE_ENV !== "production") {
+    // Seed test data only when explicitly requested (e.g., E2E test setup)
+    if (process.env.SEED_TEST_DATA === "true") {
       console.log("\n--- Seeding E2E Test Data ---");
       await seedTestData();
     }

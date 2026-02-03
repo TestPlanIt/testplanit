@@ -159,7 +159,16 @@ export async function POST(request: NextRequest) {
       // Get the default role from database
       const defaultRole = await db.roles.findFirst({
         where: { isDefault: true, isDeleted: false },
+      }) ?? await db.roles.findFirst({
+        where: { name: "user", isDeleted: false },
       });
+
+      if (!defaultRole) {
+        return NextResponse.json(
+          { error: "No default role found. Please ensure a default role exists." },
+          { status: 500 }
+        );
+      }
 
       // Auto-provision new user
       user = await db.user.create({
@@ -171,7 +180,7 @@ export async function POST(request: NextRequest) {
           authMethod: "SSO",
           externalId: externalId || null,
           access: samlConfig.defaultAccess || "USER",
-          roleId: defaultRole?.id || 1,
+          roleId: defaultRole.id,
           userPreferences: {
             create: {
               theme: "Purple",

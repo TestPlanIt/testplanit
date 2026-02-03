@@ -24,7 +24,7 @@ const signupSchema = z.object({
   password: z.string().min(4),
   emailVerifToken: z.string().optional(),
   access: z.enum(["NONE", "USER", "ADMIN"]).default("NONE"),
-  roleId: z.number().int().default(1),
+  roleId: z.number().int().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -54,6 +54,24 @@ export async function POST(req: NextRequest) {
     const registrationSettings = await db.registrationSettings.findFirst();
     const requireEmailVerification = isEmailServerConfigured() && (registrationSettings?.requireEmailVerification ?? true);
 
+    // Resolve roleId: use provided value, or look up default role by isDefault flag / name
+    let roleId = validatedData.roleId;
+    if (!roleId) {
+      const defaultRole = await db.roles.findFirst({
+        where: { isDefault: true, isDeleted: false },
+      }) ?? await db.roles.findFirst({
+        where: { name: "user", isDeleted: false },
+      });
+
+      if (!defaultRole) {
+        return NextResponse.json(
+          { error: "No default role found. Please ensure a default role exists." },
+          { status: 500 }
+        );
+      }
+      roleId = defaultRole.id;
+    }
+
     // Create user with preferences in a transaction
     const user = await db.$transaction(async (tx) => {
       const newUser = await tx.user.create({
@@ -64,7 +82,7 @@ export async function POST(req: NextRequest) {
           emailVerifToken: requireEmailVerification ? validatedData.emailVerifToken : null,
           emailVerified: requireEmailVerification ? null : new Date(),
           access: validatedData.access,
-          roleId: validatedData.roleId,
+          roleId,
           isActive: true,
           isDeleted: false,
           authMethod: "INTERNAL",

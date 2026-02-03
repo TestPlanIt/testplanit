@@ -169,7 +169,6 @@ const metadata: ModelMeta = {
                 }, roleId: {
                     name: "roleId",
                     type: "Int",
-                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 1 }] }],
                     isForeignKey: true,
                     relationField: 'role',
                 }, role: {
