@@ -123,7 +123,7 @@ test.describe("Case Creation - Text String Fields", () => {
     await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
   });
 
-  test.skip("Default value auto-applied for text string", async ({ api }) => {
+  test("Default value auto-applied for text string", async ({ api }) => {
     const systemName = `text_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const defaultValue = "Default text value";
 
@@ -207,7 +207,7 @@ test.describe("Case Creation - Text String Fields", () => {
     await repositoryPage.getPage().waitForTimeout(500);
   });
 
-  test.skip("Hint text displays in field", async ({ api }) => {
+  test("Hint text displays in field", async ({ api }) => {
     const systemName = `text_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     const hintText = "This is a helpful hint";
 
@@ -245,9 +245,9 @@ test.describe("Case Creation - Text String Fields", () => {
     const fieldLabel = repositoryPage.getPage().getByTestId(`field-${systemName}-label`);
     await expect(fieldLabel).toBeVisible();
 
-    // HelpPopover should be present
-    const helpIcon = fieldLabel.locator('button[class*="help"], svg[class*="help"]');
-    await expect(helpIcon.first()).toBeVisible();
+    // HelpPopover button should be present (has aria-label="Help")
+    const helpButton = fieldLabel.getByRole('button', { name: 'Help' });
+    await expect(helpButton).toBeVisible();
   });
 });
 
@@ -560,12 +560,12 @@ test.describe("Case Creation - Dropdown Fields", () => {
     const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
     await nameInput.fill(`Test Case ${Date.now()}`);
 
-    // Select dropdown option
-    const selectTrigger = repositoryPage.getPage().getByTestId(`field-${systemName}-input`).locator('[role="combobox"]');
+    // Select dropdown option - find the combobox within the field element
+    const selectTrigger = fieldElement.getByRole('combobox');
     await selectTrigger.click();
     await repositoryPage.getPage().waitForTimeout(500);
 
-    const option = repositoryPage.getPage().locator('[role="option"]:has-text("High")');
+    const option = repositoryPage.getPage().getByRole('option', { name: 'High' });
     await option.click();
 
     await repositoryPage.submitAddCase();
@@ -582,11 +582,12 @@ test.describe("Case Creation - Restricted Fields", () => {
     projectId = await api.createProject(`E2E Case Creation ${Date.now()}`);
   });
 
-  test("Restricted field appears but is disabled without permission", async ({ api }) => {
-    const systemName = `restricted_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+  test("Restricted result field appears but is disabled without permission", async ({ api, browser, baseURL }) => {
+    const systemName = `restricted_result_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
-    const fieldId = await api.createCaseField({
-      displayName: `Restricted Field ${Date.now()}`,
+    // Create restricted RESULT field (not case field)
+    const resultFieldId = await api.createResultField({
+      displayName: `Restricted Result ${Date.now()}`,
       systemName: systemName,
       typeName: "Text String",
       isRequired: false,
@@ -600,30 +601,97 @@ test.describe("Case Creation - Restricted Fields", () => {
       projectIds: [projectId],
     });
 
-    await api.assignFieldToTemplate(templateId, fieldId);
+    // Assign result field to template
+    await api.assignResultFieldToTemplate(templateId, resultFieldId);
 
-    await repositoryPage.goto(projectId);
-    // Reload page to ensure fresh template/field data (React Query cache invalidation)
-    await repositoryPage.getPage().reload({ waitUntil: "networkidle" });
-    await repositoryPage.openAddCaseModal();
-    await repositoryPage.expectAddCaseDialogVisible();
+    // Create a test case with this template
+    const caseName = `Test Case ${Date.now()}`;
+    const folderId = await api.getRootFolderId(projectId);
+    const caseId = await api.createTestCase(projectId, folderId, caseName, templateId);
 
-    // Select the template
-    await repositoryPage.selectTemplate(templateName);
+    // Create a test run
+    const testRunId = await api.createTestRun(projectId, `Test Run ${Date.now()}`);
 
-    // Wait for the specific field to appear after template selection
-    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
-    await expect(fieldElement).toBeVisible({ timeout: 10000 });
+    // Add the test case to the test run
+    const testRunCaseId = await api.addTestCaseToTestRun(testRunId, caseId);
 
-    // Field should be visible but disabled
-    const fieldLabel = repositoryPage.getPage().getByTestId(`field-${systemName}-label`);
-    const labelText = await fieldLabel.textContent();
-    const fieldInput = repositoryPage.getPage().getByLabel(labelText?.trim() || '', { exact: false });
-    await expect(fieldInput).toBeVisible();
-    await expect(fieldInput).toBeDisabled();
+    // Create a regular user (non-admin) with default "user" role (roleId: 1)
+    // The default "user" role does NOT have TestRunResultRestrictedFields permission
+    const regularUserEmail = `user-${Date.now()}@example.com`;
+    const regularUserPassword = "testpassword123";
+    const userResult = await api.createUser({
+      name: "Regular User",
+      email: regularUserEmail,
+      password: regularUserPassword,
+      access: "USER",
+      roleId: 1,
+    });
+    const regularUserId = userResult.data.id;
 
-    // Lock icon should be present in label
-    const lockIcon = fieldLabel.locator('svg[class*="lock"]');
-    await expect(lockIcon).toBeVisible();
+    // Give the regular user access to the project (EDIT_ALL permission)
+    await api.request.post(`${baseURL}/api/model/userProjectPermissions/create`, {
+      data: {
+        data: {
+          user: { connect: { id: regularUserId } },
+          project: { connect: { id: projectId } },
+          accessType: "EDIT_ALL",
+        },
+      },
+    });
+
+    // Mark the welcome tour as completed for the regular user (via UserPreferences)
+    await api.request.patch(`${baseURL}/api/model/userPreferences/update`, {
+      data: {
+        where: { userId: regularUserId },
+        data: { hasCompletedWelcomeTour: true },
+      },
+    });
+
+    // Create a new browser context and authenticate as the regular user
+    const userContext = await browser.newContext();
+    const userPage = await userContext.newPage();
+
+    try {
+      // Login as regular user
+      await userPage.goto(`${baseURL}/en-US/signin`);
+      await userPage.waitForLoadState("networkidle");
+
+      const emailInput = userPage.getByTestId("email-input");
+      const passwordInput = userPage.getByTestId("password-input");
+      const submitButton = userPage.getByTestId("signin-button");
+
+      await emailInput.fill(regularUserEmail);
+      await passwordInput.fill(regularUserPassword);
+      await submitButton.click();
+
+      // Wait for redirect after login
+      await userPage.waitForURL(/\/en-US\/?$/, { timeout: 30000 });
+
+      // Navigate to the test run as regular user
+      await userPage.goto(`${baseURL}/en-US/projects/runs/${projectId}/${testRunId}`);
+      await userPage.waitForLoadState("networkidle");
+
+      // Click on the test case to open add result modal
+      const testCaseRow = userPage.locator(`tr:has-text("${caseName}")`).first();
+      await testCaseRow.click();
+
+      // Wait for result modal to open
+      await expect(userPage.locator('[role="dialog"]')).toBeVisible({ timeout: 10000 });
+
+      // Wait for the restricted result field to appear
+      await userPage.waitForTimeout(1000);
+      const resultFieldElement = userPage.locator(`[data-testid*="${systemName}"]`).first();
+      await expect(resultFieldElement).toBeVisible({ timeout: 10000 });
+
+      // Field should be visible but disabled for regular user
+      const fieldInput = resultFieldElement.locator('input').first();
+      await expect(fieldInput).toBeDisabled();
+
+      // Lock icon should be present
+      const lockIcon = userPage.locator(`[title="Restricted Field"]`).first();
+      await expect(lockIcon).toBeVisible();
+    } finally {
+      await userContext.close();
+    }
   });
 });

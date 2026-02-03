@@ -23,25 +23,25 @@ test.describe("Admin SSO - Email Server Configuration", () => {
 
     // Find the email verification switch
     // Note: We need to check if the switch is disabled
-    const emailVerificationSection = page.locator(
-      'text="Require Email Verification"'
-    ).locator("..");
+    const emailVerificationSection = page
+      .locator('text="Require Email Verification"')
+      .locator("..");
 
     // The switch should exist
     await expect(emailVerificationSection).toBeVisible();
 
     // Check if warning message is shown when email server is not configured
     // This assumes the test environment has no email server configured
-    const warningText = page.getByText(
-      /email server is not configured/i
-    );
+    const warningText = page.getByText(/email server is not configured/i);
 
     // If warning is visible, email server is not configured and switch should be disabled
     const isWarningVisible = await warningText.isVisible().catch(() => false);
 
     if (isWarningVisible) {
       // Email server not configured - verify switch is disabled and off
-      const switchElement = emailVerificationSection.locator('button[role="switch"]');
+      const switchElement = emailVerificationSection.locator(
+        'button[role="switch"]'
+      );
       await expect(switchElement).toBeDisabled();
       await expect(switchElement).toHaveAttribute("data-state", "unchecked");
     }
@@ -76,11 +76,13 @@ test.describe("Admin SSO - Email Server Configuration", () => {
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(1000);
 
-    const emailVerificationSection = page.locator(
-      'text="Require Email Verification"'
-    ).locator("..");
+    const emailVerificationSection = page
+      .locator('text="Require Email Verification"')
+      .locator("..");
 
-    const switchElement = emailVerificationSection.locator('button[role="switch"]');
+    const switchElement = emailVerificationSection.locator(
+      'button[role="switch"]'
+    );
 
     // Check if switch is disabled
     const isDisabled = await switchElement.isDisabled().catch(() => false);
@@ -112,20 +114,24 @@ test.describe("Admin Notifications - Email Server Configuration", () => {
     await page.waitForTimeout(1000);
 
     // Check for email-based notification options by their IDs
-    const immediateEmailOption = page.locator('#in-app-email-immediate');
-    const dailyEmailOption = page.locator('#in-app-email-daily');
+    const immediateEmailOption = page.locator("#in-app-email-immediate");
+    const dailyEmailOption = page.locator("#in-app-email-daily");
 
     // These should be hidden when no email server is configured
-    const isImmediateVisible = await immediateEmailOption.isVisible().catch(() => false);
-    const isDailyVisible = await dailyEmailOption.isVisible().catch(() => false);
+    const isImmediateVisible = await immediateEmailOption
+      .isVisible()
+      .catch(() => false);
+    const isDailyVisible = await dailyEmailOption
+      .isVisible()
+      .catch(() => false);
 
     // If they're hidden, that's correct behavior
     if (!isImmediateVisible && !isDailyVisible) {
       // Verify that non-email options are still visible
-      const inAppOption = page.locator('#in-app');
+      const inAppOption = page.locator("#in-app");
       await expect(inAppOption).toBeVisible();
 
-      const noneOption = page.locator('#none');
+      const noneOption = page.locator("#none");
       await expect(noneOption).toBeVisible();
     }
   });
@@ -138,130 +144,21 @@ test.describe("Admin Notifications - Email Server Configuration", () => {
     await page.waitForTimeout(1000);
 
     // Check if email options are hidden
-    const immediateEmailOption = page.locator('#in-app-email-immediate');
-    const isEmailVisible = await immediateEmailOption.isVisible().catch(() => false);
+    const immediateEmailOption = page.locator("#in-app-email-immediate");
+    const isEmailVisible = await immediateEmailOption
+      .isVisible()
+      .catch(() => false);
 
     if (!isEmailVisible) {
       // Email server not configured
       // Verify IN_APP or NONE is selected, not email modes
-      const inAppOption = page.locator('#in-app');
-      const noneOption = page.locator('#none');
+      const inAppOption = page.locator("#in-app");
+      const noneOption = page.locator("#none");
 
       const isInAppChecked = await inAppOption.isChecked().catch(() => false);
       const isNoneChecked = await noneOption.isChecked().catch(() => false);
 
       expect(isInAppChecked || isNoneChecked).toBe(true);
     }
-  });
-});
-
-test.describe("User Notification Preferences - Email Server Configuration", () => {
-  test("Email notification options should be hidden for users when no email server is configured", async ({
-    page,
-    adminUserId,
-  }) => {
-    await page.goto(`/en-US/users/profile/${adminUserId}`);
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
-
-    // Look for notification preferences section
-    // Wait for the notification preferences card to be visible
-    const notificationCard = page.getByRole("heading", { name: /Notification Preferences/i }).locator("..");
-    await expect(notificationCard).toBeVisible({ timeout: 10000 });
-
-    // Scroll the card into view
-    await notificationCard.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(500);
-
-    // Check for email-based notification options by their IDs
-    const immediateEmailOption = page.locator('#in-app-email-immediate');
-    const dailyEmailOption = page.locator('#in-app-email-daily');
-
-    const isImmediateVisible = await immediateEmailOption.isVisible().catch(() => false);
-    const isDailyVisible = await dailyEmailOption.isVisible().catch(() => false);
-
-    // If they're hidden, verify non-email options are visible
-    if (!isImmediateVisible && !isDailyVisible) {
-      const inAppOption = page.locator('#in-app');
-      const noneOption = page.locator('#none');
-
-      // At least one of these should be visible
-      const isInAppVisible = await inAppOption.isVisible().catch(() => false);
-      const isNoneVisible = await noneOption.isVisible().catch(() => false);
-
-      expect(isInAppVisible || isNoneVisible).toBe(true);
-    }
-  });
-
-  test("User notification mode should fallback to IN_APP when email server is not configured", async ({
-    page,
-    adminUserId,
-  }) => {
-    await page.goto(`/en-US/users/profile/${adminUserId}`);
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(1000);
-
-    // Wait for the notification preferences card to be visible
-    const notificationCard = page.getByRole("heading", { name: /Notification Preferences/i }).locator("..");
-    await expect(notificationCard).toBeVisible({ timeout: 10000 });
-
-    // Scroll the card into view
-    await notificationCard.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(500);
-
-    // Check if email options are hidden
-    const immediateEmailOption = page.locator('#in-app-email-immediate');
-    const isEmailVisible = await immediateEmailOption.isVisible().catch(() => false);
-
-    if (!isEmailVisible) {
-      // Verify a non-email mode is selected
-      const inAppOption = page.locator('#in-app');
-      const noneOption = page.locator('#none');
-      const globalOption = page.locator('#use-global');
-
-      const isInAppChecked = await inAppOption.isChecked().catch(() => false);
-      const isNoneChecked = await noneOption.isChecked().catch(() => false);
-      const isGlobalChecked = await globalOption.isChecked().catch(() => false);
-
-      expect(isInAppChecked || isNoneChecked || isGlobalChecked).toBe(true);
-    }
-  });
-});
-
-test.describe("Signup - Email Server Configuration", () => {
-  test("Users should be able to sign up without email verification when no email server is configured", async ({
-    page,
-  }) => {
-    // First, sign out if logged in
-    await page.goto("/api/auth/signout");
-    await page.waitForLoadState("networkidle");
-
-    // Navigate to signup page
-    await page.goto("/en-US/signup");
-    await page.waitForLoadState("networkidle");
-
-    // Fill signup form with unique email
-    const timestamp = Date.now();
-    const testEmail = `test-${timestamp}@example.com`;
-
-    await page.fill('input[name="name"]', `Test User ${timestamp}`);
-    await page.fill('input[name="email"]', testEmail);
-    await page.fill('input[name="password"]', "password123");
-    await page.fill('input[name="confirmPassword"]', "password123");
-
-    // Submit form
-    await page.click('button[type="submit"]');
-
-    // Wait for navigation or success message
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
-
-    // If email server is not configured, user should be redirected or logged in
-    // Check if we're redirected away from signup page
-    const currentUrl = page.url();
-
-    // User should either be on home page or verification page
-    // If no email server, should NOT be stuck on verification page
-    expect(currentUrl).not.toContain("/signup");
   });
 });

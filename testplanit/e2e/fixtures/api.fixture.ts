@@ -2668,6 +2668,7 @@ export class ApiHelper {
     name: string,
     options?: {
       typeId?: number;
+      isStarted?: boolean;
       isCompleted?: boolean;
       completedAt?: Date;
       parentId?: number;
@@ -2680,6 +2681,7 @@ export class ApiHelper {
       projectId: projectId,
       milestoneTypesId: options?.typeId ?? 1, // Default to type 1 (Version)
       createdBy: userId,
+      isStarted: options?.isStarted ?? false,
       isCompleted: options?.isCompleted ?? false,
       isDeleted: false,
     };

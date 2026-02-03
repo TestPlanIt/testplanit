@@ -65,7 +65,7 @@ The Case Fields table lists all defined fields with columns for:
 - **Templates:** A count or list of templates using this field.
 - **Enabled:** A switch indicating if the field is active and available for use.
 - **Required:** A switch indicating if the field must be filled out.
-- **Restricted:** A switch indicating if the field is restricted (meaning may vary, e.g., admin-only edits).
+- **Restricted:** A switch indicating if the field is restricted – when enabled, only users with restricted field access may change the value when entering test case results.
 - **Actions:** Buttons to edit or delete the field.
 
 ### Adding a New Case Field

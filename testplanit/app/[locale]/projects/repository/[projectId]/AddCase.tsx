@@ -599,7 +599,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
             break;
           case "Link":
           case "Text String":
-            defaultValues[fieldIdStr] = "";
+            defaultValues[fieldIdStr] = caseField.caseField.defaultValue || "";
             break;
           case "Text Long":
             defaultValues[fieldIdStr] = JSON.stringify(emptyEditorContent);
@@ -716,7 +716,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
             break;
           case "Link":
           case "Text String":
-            defaultValues[fieldIdStr] = "";
+            defaultValues[fieldIdStr] = caseField.caseField.defaultValue || "";
             break;
           case "Text Long":
             defaultValues[fieldIdStr] = JSON.stringify(emptyEditorContent);

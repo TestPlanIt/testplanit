@@ -44,7 +44,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
   canEditRestricted = true,
   projectId,
 }) => {
-  const defaultOption = field.caseField.fieldOptions.find(
+  const defaultOption = field.caseField.fieldOptions?.find(
     (option: any) => option.fieldOption.isDefault
   );
 
@@ -88,22 +88,24 @@ const RenderField: React.FC<RenderFieldProps> = ({
         return (
           <MultiSelect
             value={field.caseField.fieldOptions
-              .filter(
+              ?.filter(
                 (option: any) => valueArray.includes(option.fieldOption.id)
               )
               .map((option: any) => ({
                 value: option.fieldOption.id,
                 label: (
                   <div className="flex items-center">
-                    <DynamicIcon
-                      className="h-4 w-4 mr-1"
-                      name={option.fieldOption.icon.name}
-                      color={option.fieldOption.iconColor.value}
-                    />
+                    {option.fieldOption.icon && option.fieldOption.iconColor && (
+                      <DynamicIcon
+                        className="h-4 w-4 mr-1"
+                        name={option.fieldOption.icon.name}
+                        color={option.fieldOption.iconColor.value}
+                      />
+                    )}
                     {option.fieldOption.name}
                   </div>
                 ),
-              }))}
+              })) || []}
             onChange={(selected: any) => {
               const selectedValues = selected
                 ? selected.map((option: any) => option.value)
@@ -111,22 +113,24 @@ const RenderField: React.FC<RenderFieldProps> = ({
               onChange(selectedValues);
             }}
             options={field.caseField.fieldOptions
-              .sort(
+              ?.sort(
                 (a: any, b: any) => a.fieldOption.order - b.fieldOption.order
               )
               .map((option: any) => ({
                 value: option.fieldOption.id,
                 label: (
                   <div className="flex items-center">
-                    <DynamicIcon
-                      className="h-4 w-4 mr-1"
-                      name={option.fieldOption.icon.name}
-                      color={option.fieldOption.iconColor.value}
-                    />
+                    {option.fieldOption.icon && option.fieldOption.iconColor && (
+                      <DynamicIcon
+                        className="h-4 w-4 mr-1"
+                        name={option.fieldOption.icon.name}
+                        color={option.fieldOption.iconColor.value}
+                      />
+                    )}
                     {option.fieldOption.name}
                   </div>
                 ),
-              }))}
+              })) || []}
             isMulti
             isDisabled={isDisabled}
             styles={customStyles}
@@ -144,7 +148,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
               onValueChange={(val) => {
                 onChange(Number(val)); // Convert value to number
               }}
-              value={value ? value.toString() : initialValue.toString()}
+              value={value ? value.toString() : initialValue?.toString() || ""}
               disabled={isDisabled}
             >
               <SelectTrigger className="w-fit">
@@ -152,7 +156,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
               </SelectTrigger>
               <SelectContent>
                 {field.caseField.fieldOptions
-                  .sort(
+                  ?.sort(
                     (a: any, b: any) =>
                       a.fieldOption.order - b.fieldOption.order
                   )
@@ -162,15 +166,17 @@ const RenderField: React.FC<RenderFieldProps> = ({
                       value={option.fieldOption.id.toString()}
                     >
                       <div className="flex items-center">
-                        <DynamicIcon
-                          className="h-4 w-4 mr-1"
-                          name={option.fieldOption.icon.name}
-                          color={option.fieldOption.iconColor.value}
-                        />
+                        {option.fieldOption.icon && option.fieldOption.iconColor && (
+                          <DynamicIcon
+                            className="h-4 w-4 mr-1"
+                            name={option.fieldOption.icon.name}
+                            color={option.fieldOption.iconColor.value}
+                          />
+                        )}
                         {option.fieldOption.name}
                       </div>
                     </SelectItem>
-                  ))}
+                  )) || []}
               </SelectContent>
             </Select>
           </FormControl>
