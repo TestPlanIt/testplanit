@@ -3084,4 +3084,118 @@ export class ApiHelper {
     const result = await response.json();
     return result.data.id;
   }
+
+  /**
+   * Update user preferences
+   */
+  async updateUserPreferences(options: {
+    userId: string;
+    hasCompletedWelcomeTour?: boolean;
+    theme?: string;
+    locale?: string;
+    itemsPerPage?: string;
+  }): Promise<void> {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/userPreferences/update`,
+      {
+        data: {
+          where: { userId: options.userId },
+          data: {
+            hasCompletedWelcomeTour: options.hasCompletedWelcomeTour,
+            theme: options.theme,
+            locale: options.locale,
+            itemsPerPage: options.itemsPerPage,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to update user preferences: ${error}`);
+    }
+  }
+
+  /**
+   * Give a user access to a project
+   */
+  async giveUserProjectAccess(options: {
+    userId: string;
+    projectId: number;
+    accessType?: "DEFAULT" | "NO_ACCESS" | "GLOBAL_ROLE" | "SPECIFIC_ROLE";
+  }): Promise<void> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/userProjectPermission/create`,
+      {
+        data: {
+          data: {
+            user: { connect: { id: options.userId } },
+            project: { connect: { id: options.projectId } },
+            accessType: options.accessType || "DEFAULT",
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to give user project access: ${error}`);
+    }
+  }
+
+  /**
+   * Create a role
+   */
+  async createRole(name: string): Promise<number> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/roles/create`,
+      {
+        data: {
+          data: {
+            name,
+            isDefault: false,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create role: ${error}`);
+    }
+
+    const result = await response.json();
+    return result.data.id;
+  }
+
+  /**
+   * Set a role permission for a specific application area
+   */
+  async setRolePermission(options: {
+    roleId: number;
+    area: string;
+    canAddEdit?: boolean;
+    canDelete?: boolean;
+    canClose?: boolean;
+  }): Promise<void> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/rolePermission/create`,
+      {
+        data: {
+          data: {
+            roleId: options.roleId,
+            area: options.area,
+            canAddEdit: options.canAddEdit ?? false,
+            canDelete: options.canDelete ?? false,
+            canClose: options.canClose ?? false,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to set role permission: ${error}`);
+    }
+  }
 }

@@ -586,8 +586,9 @@ test.describe("Case Creation - Restricted Fields", () => {
     const systemName = `restricted_result_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
     // Create restricted RESULT field (not case field)
+    const displayName = `Restricted Result ${Date.now()}`;
     const resultFieldId = await api.createResultField({
-      displayName: `Restricted Result ${Date.now()}`,
+      displayName,
       systemName: systemName,
       typeName: "Text String",
       isRequired: false,
@@ -615,8 +616,25 @@ test.describe("Case Creation - Restricted Fields", () => {
     // Add the test case to the test run
     const testRunCaseId = await api.addTestCaseToTestRun(testRunId, caseId);
 
-    // Create a regular user (non-admin) with default "user" role (roleId: 1)
-    // The default "user" role does NOT have TestRunResultRestrictedFields permission
+    // Create a custom role WITHOUT TestRunResultRestrictedFields permission
+    const restrictedRoleName = `restricted_role_${Date.now()}`;
+    const restrictedRoleId = await api.createRole(restrictedRoleName);
+
+    // Grant base permissions but NOT TestRunResultRestrictedFields
+    const areasToGrant = [
+      "TestCaseRepository",
+      "TestRuns",
+      "TestRunResults",
+    ];
+    for (const area of areasToGrant) {
+      await api.setRolePermission({
+        roleId: restrictedRoleId,
+        area,
+        canAddEdit: true,
+      });
+    }
+
+    // Create a regular user with the custom restricted role
     const regularUserEmail = `user-${Date.now()}@example.com`;
     const regularUserPassword = "testpassword123";
     const userResult = await api.createUser({
@@ -624,27 +642,22 @@ test.describe("Case Creation - Restricted Fields", () => {
       email: regularUserEmail,
       password: regularUserPassword,
       access: "USER",
-      roleId: 1,
+      roleId: restrictedRoleId,
     });
     const regularUserId = userResult.data.id;
 
-    // Give the regular user access to the project (EDIT_ALL permission)
-    await api.request.post(`${baseURL}/api/model/userProjectPermissions/create`, {
-      data: {
-        data: {
-          user: { connect: { id: regularUserId } },
-          project: { connect: { id: projectId } },
-          accessType: "EDIT_ALL",
-        },
-      },
+    // Give the regular user access to the project using GLOBAL_ROLE
+    // so the system resolves permissions from the user's global role (our restricted role)
+    await api.giveUserProjectAccess({
+      userId: regularUserId,
+      projectId: projectId,
+      accessType: "GLOBAL_ROLE",
     });
 
     // Mark the welcome tour as completed for the regular user (via UserPreferences)
-    await api.request.patch(`${baseURL}/api/model/userPreferences/update`, {
-      data: {
-        where: { userId: regularUserId },
-        data: { hasCompletedWelcomeTour: true },
-      },
+    await api.updateUserPreferences({
+      userId: regularUserId,
+      hasCompletedWelcomeTour: true,
     });
 
     // Create a new browser context and authenticate as the regular user
@@ -671,24 +684,35 @@ test.describe("Case Creation - Restricted Fields", () => {
       await userPage.goto(`${baseURL}/en-US/projects/runs/${projectId}/${testRunId}`);
       await userPage.waitForLoadState("networkidle");
 
-      // Click on the test case to open add result modal
-      const testCaseRow = userPage.locator(`tr:has-text("${caseName}")`).first();
-      await testCaseRow.click();
+      // Click on the test case name to open sidebar
+      const testCaseLink = userPage.locator(`text=${caseName}`).first();
+      await expect(testCaseLink).toBeVisible({ timeout: 10000 });
+      await testCaseLink.click();
 
-      // Wait for result modal to open
-      await expect(userPage.locator('[role="dialog"]')).toBeVisible({ timeout: 10000 });
+      // Wait for sidebar to load
+      await userPage.waitForLoadState("networkidle");
 
-      // Wait for the restricted result field to appear
-      await userPage.waitForTimeout(1000);
-      const resultFieldElement = userPage.locator(`[data-testid*="${systemName}"]`).first();
-      await expect(resultFieldElement).toBeVisible({ timeout: 10000 });
+      // Find and click the "Add Result" button in the sidebar
+      const addResultButton = userPage.locator('button:has-text("Add Result")').first();
+      await expect(addResultButton).toBeVisible({ timeout: 15000 });
+      await addResultButton.click();
 
-      // Field should be visible but disabled for regular user
-      const fieldInput = resultFieldElement.locator('input').first();
+      // Wait for Add Result modal to open
+      const modal = userPage.getByRole('dialog', { name: 'Add Result' });
+      await expect(modal).toBeVisible({ timeout: 10000 });
+
+      // Find the restricted result field by its label text within the modal
+      const fieldLabel = modal.getByText(displayName).first();
+      await expect(fieldLabel).toBeVisible({ timeout: 10000 });
+
+      // The label is inside a FormItem div — go up to it to scope the input search
+      const formItem = fieldLabel.locator('..');
+      const fieldInput = formItem.locator('input').first();
+      await expect(fieldInput).toBeVisible();
       await expect(fieldInput).toBeDisabled();
 
-      // Lock icon should be present
-      const lockIcon = userPage.locator(`[title="Restricted Field"]`).first();
+      // Lock icon should be present next to the label
+      const lockIcon = formItem.locator('[title="Restricted Field"]').first();
       await expect(lockIcon).toBeVisible();
     } finally {
       await userContext.close();
