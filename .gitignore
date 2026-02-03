@@ -55,6 +55,8 @@ testplanit/playwright-report/**
 CLAUDE.md
 .cursorrules
 **/.cursorrules
+.*-mcp/**
+**/.claude/**
 
 testplanit/zenstack-output/**
 testplanit/docker-data/**
@@ -64,4 +66,3 @@ testplanit/test-data/tpi*test*
 testplanit/backups/*
 
 *cases/*
-.*-mcp/**
