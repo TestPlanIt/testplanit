@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   useCreateCaseFields,
   useFindManyCaseFieldTypes,
@@ -164,6 +164,7 @@ export function AddCaseFieldModal({
   const [lastId, setLastId] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [defaultItem, setDefaultItem] = useState<number | null>(null);
+  const previousTypeNameRef = useRef<string | undefined | null>(undefined);
 
   const applyOptionOrder = (options: FieldOptions[]): FieldOptions[] =>
     options.map((option, index) => ({ ...option, order: index }));
@@ -439,7 +440,20 @@ export function AddCaseFieldModal({
 
   useEffect(() => {
     const foundType = types?.find((type) => type.id.toString() === typeId);
-    setSelectedTypeName(foundType?.type);
+    const newTypeName = foundType?.type;
+
+    // Clear defaultValue when switching field types
+    if (
+      previousTypeNameRef.current &&
+      newTypeName &&
+      previousTypeNameRef.current !== newTypeName
+    ) {
+      setValue("defaultValue", "");
+    }
+
+    previousTypeNameRef.current = newTypeName;
+    setSelectedTypeName(newTypeName);
+
     if (foundType && foundType.options) {
       try {
         const parsedOptions =
@@ -454,7 +468,7 @@ export function AddCaseFieldModal({
     } else {
       setSelectedTypeOptions(null);
     }
-  }, [types, typeId]);
+  }, [types, typeId, setValue]);
 
   const renderOptions = (options: any) => {
     const currentType = types?.find(
