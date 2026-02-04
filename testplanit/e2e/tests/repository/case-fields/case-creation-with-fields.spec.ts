@@ -573,6 +573,533 @@ test.describe("Case Creation - Dropdown Fields", () => {
   });
 });
 
+test.describe("Case Creation - Text Long Fields", () => {
+  let repositoryPage: RepositoryPage;
+  let projectId: number;
+
+  test.beforeEach(async ({ page, api }) => {
+    repositoryPage = new RepositoryPage(page);
+    projectId = await api.createProject(`E2E Case Creation ${Date.now()}`);
+  });
+
+  test("Create case with text long field renders TipTap editor", async ({ api }) => {
+    const systemName = `textlong_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const fieldId = await api.createCaseField({
+      displayName: `Text Long Field ${Date.now()}`,
+      systemName: systemName,
+      typeName: "Text Long",
+      isRequired: false,
+    });
+
+    const templateName = `Template ${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const templateId = await api.createTemplate({
+      name: templateName,
+      projectIds: [projectId],
+    });
+
+    await api.assignFieldToTemplate(templateId, fieldId);
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.getPage().reload({ waitUntil: "networkidle" });
+    await repositoryPage.openAddCaseModal();
+    await repositoryPage.expectAddCaseDialogVisible();
+
+    await repositoryPage.selectTemplate(templateName);
+
+    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    await expect(fieldElement).toBeVisible({ timeout: 10000 });
+
+    // TipTap editor should be present within the field
+    const editor = fieldElement.locator('.tiptap');
+    await expect(editor).toBeVisible({ timeout: 5000 });
+
+    // Type into the TipTap editor
+    await editor.click();
+    await repositoryPage.getPage().keyboard.type("Rich text content for test case");
+
+    const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
+    await nameInput.fill(`Test Case ${Date.now()}`);
+
+    await repositoryPage.submitAddCase();
+    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+  });
+
+  test("Create case with empty text long field (optional)", async ({ api }) => {
+    const systemName = `textlong_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const fieldId = await api.createCaseField({
+      displayName: `Text Long Field ${Date.now()}`,
+      systemName: systemName,
+      typeName: "Text Long",
+      isRequired: false,
+    });
+
+    const templateName = `Template ${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const templateId = await api.createTemplate({
+      name: templateName,
+      projectIds: [projectId],
+    });
+
+    await api.assignFieldToTemplate(templateId, fieldId);
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.getPage().reload({ waitUntil: "networkidle" });
+    await repositoryPage.openAddCaseModal();
+    await repositoryPage.expectAddCaseDialogVisible();
+
+    await repositoryPage.selectTemplate(templateName);
+
+    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    await expect(fieldElement).toBeVisible({ timeout: 10000 });
+
+    const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
+    await nameInput.fill(`Test Case ${Date.now()}`);
+
+    // Leave text long field empty and submit
+    await repositoryPage.submitAddCase();
+    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+  });
+});
+
+test.describe("Case Creation - Integer Fields", () => {
+  let repositoryPage: RepositoryPage;
+  let projectId: number;
+
+  test.beforeEach(async ({ page, api }) => {
+    repositoryPage = new RepositoryPage(page);
+    projectId = await api.createProject(`E2E Case Creation ${Date.now()}`);
+  });
+
+  test("Create case with integer value", async ({ api }) => {
+    const systemName = `integer_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const fieldId = await api.createCaseField({
+      displayName: `Integer Field ${Date.now()}`,
+      systemName: systemName,
+      typeName: "Integer",
+      isRequired: false,
+    });
+
+    const templateName = `Template ${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const templateId = await api.createTemplate({
+      name: templateName,
+      projectIds: [projectId],
+    });
+
+    await api.assignFieldToTemplate(templateId, fieldId);
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.getPage().reload({ waitUntil: "networkidle" });
+    await repositoryPage.openAddCaseModal();
+    await repositoryPage.expectAddCaseDialogVisible();
+
+    await repositoryPage.selectTemplate(templateName);
+
+    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    await expect(fieldElement).toBeVisible({ timeout: 10000 });
+
+    const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
+    await nameInput.fill(`Test Case ${Date.now()}`);
+
+    await repositoryPage.fillCaseField(systemName, "42");
+
+    await repositoryPage.submitAddCase();
+    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+  });
+
+  test("Integer min/max validation enforced", async ({ api }) => {
+    const systemName = `integer_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const fieldId = await api.createCaseField({
+      displayName: `Integer Field ${Date.now()}`,
+      systemName: systemName,
+      typeName: "Integer",
+      isRequired: false,
+      minValue: 1,
+      maxValue: 10,
+    });
+
+    const templateName = `Template ${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const templateId = await api.createTemplate({
+      name: templateName,
+      projectIds: [projectId],
+    });
+
+    await api.assignFieldToTemplate(templateId, fieldId);
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.getPage().reload({ waitUntil: "networkidle" });
+    await repositoryPage.openAddCaseModal();
+    await repositoryPage.expectAddCaseDialogVisible();
+
+    await repositoryPage.selectTemplate(templateName);
+
+    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    await expect(fieldElement).toBeVisible({ timeout: 10000 });
+
+    const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
+    await nameInput.fill(`Test Case ${Date.now()}`);
+
+    // Enter value outside range
+    await repositoryPage.fillCaseField(systemName, "99");
+
+    const submitButton = repositoryPage.getPage().getByTestId("case-submit-button");
+    await submitButton.click();
+
+    // Dialog should remain open due to validation error
+    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).toBeVisible();
+  });
+});
+
+test.describe("Case Creation - Date Fields", () => {
+  let repositoryPage: RepositoryPage;
+  let projectId: number;
+
+  test.beforeEach(async ({ page, api }) => {
+    repositoryPage = new RepositoryPage(page);
+    projectId = await api.createProject(`E2E Case Creation ${Date.now()}`);
+  });
+
+  test("Create case with date field selection", async ({ api }) => {
+    const systemName = `date_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const fieldId = await api.createCaseField({
+      displayName: `Date Field ${Date.now()}`,
+      systemName: systemName,
+      typeName: "Date",
+      isRequired: false,
+    });
+
+    const templateName = `Template ${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const templateId = await api.createTemplate({
+      name: templateName,
+      projectIds: [projectId],
+    });
+
+    await api.assignFieldToTemplate(templateId, fieldId);
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.getPage().reload({ waitUntil: "networkidle" });
+    await repositoryPage.openAddCaseModal();
+    await repositoryPage.expectAddCaseDialogVisible();
+
+    await repositoryPage.selectTemplate(templateName);
+
+    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    await expect(fieldElement).toBeVisible({ timeout: 10000 });
+
+    const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
+    await nameInput.fill(`Test Case ${Date.now()}`);
+
+    // Click the date picker button to open the calendar popover
+    const dateButton = fieldElement.getByRole('button').first();
+    await dateButton.click();
+
+    // Select today's date from the calendar
+    const today = new Date();
+    const dayNumber = today.getDate().toString();
+    // Click the day button in the calendar - today should be available
+    const calendarDay = repositoryPage.getPage().locator('[role="gridcell"] button').filter({ hasText: new RegExp(`^${dayNumber}$`) }).first();
+    await calendarDay.click();
+
+    await repositoryPage.submitAddCase();
+    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+  });
+
+  test("Create case with empty date field (optional)", async ({ api }) => {
+    const systemName = `date_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const fieldId = await api.createCaseField({
+      displayName: `Date Field ${Date.now()}`,
+      systemName: systemName,
+      typeName: "Date",
+      isRequired: false,
+    });
+
+    const templateName = `Template ${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const templateId = await api.createTemplate({
+      name: templateName,
+      projectIds: [projectId],
+    });
+
+    await api.assignFieldToTemplate(templateId, fieldId);
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.getPage().reload({ waitUntil: "networkidle" });
+    await repositoryPage.openAddCaseModal();
+    await repositoryPage.expectAddCaseDialogVisible();
+
+    await repositoryPage.selectTemplate(templateName);
+
+    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    await expect(fieldElement).toBeVisible({ timeout: 10000 });
+
+    const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
+    await nameInput.fill(`Test Case ${Date.now()}`);
+
+    // Leave date field empty and submit
+    await repositoryPage.submitAddCase();
+    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+  });
+});
+
+test.describe("Case Creation - Link Fields", () => {
+  let repositoryPage: RepositoryPage;
+  let projectId: number;
+
+  test.beforeEach(async ({ page, api }) => {
+    repositoryPage = new RepositoryPage(page);
+    projectId = await api.createProject(`E2E Case Creation ${Date.now()}`);
+  });
+
+  test("Create case with link value", async ({ api }) => {
+    const systemName = `link_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const fieldId = await api.createCaseField({
+      displayName: `Link Field ${Date.now()}`,
+      systemName: systemName,
+      typeName: "Link",
+      isRequired: false,
+    });
+
+    const templateName = `Template ${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const templateId = await api.createTemplate({
+      name: templateName,
+      projectIds: [projectId],
+    });
+
+    await api.assignFieldToTemplate(templateId, fieldId);
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.getPage().reload({ waitUntil: "networkidle" });
+    await repositoryPage.openAddCaseModal();
+    await repositoryPage.expectAddCaseDialogVisible();
+
+    await repositoryPage.selectTemplate(templateName);
+
+    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    await expect(fieldElement).toBeVisible({ timeout: 10000 });
+
+    const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
+    await nameInput.fill(`Test Case ${Date.now()}`);
+
+    await repositoryPage.fillCaseField(systemName, "https://example.com/test");
+
+    await repositoryPage.submitAddCase();
+    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+  });
+
+  test("Create case with empty link field (optional)", async ({ api }) => {
+    const systemName = `link_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const fieldId = await api.createCaseField({
+      displayName: `Link Field ${Date.now()}`,
+      systemName: systemName,
+      typeName: "Link",
+      isRequired: false,
+    });
+
+    const templateName = `Template ${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const templateId = await api.createTemplate({
+      name: templateName,
+      projectIds: [projectId],
+    });
+
+    await api.assignFieldToTemplate(templateId, fieldId);
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.getPage().reload({ waitUntil: "networkidle" });
+    await repositoryPage.openAddCaseModal();
+    await repositoryPage.expectAddCaseDialogVisible();
+
+    await repositoryPage.selectTemplate(templateName);
+
+    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    await expect(fieldElement).toBeVisible({ timeout: 10000 });
+
+    const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
+    await nameInput.fill(`Test Case ${Date.now()}`);
+
+    // Leave link field empty and submit
+    await repositoryPage.submitAddCase();
+    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+  });
+});
+
+test.describe("Case Creation - Multi-Select Fields", () => {
+  let repositoryPage: RepositoryPage;
+  let projectId: number;
+
+  test.beforeEach(async ({ page, api }) => {
+    repositoryPage = new RepositoryPage(page);
+    projectId = await api.createProject(`E2E Case Creation ${Date.now()}`);
+  });
+
+  test("Create case with multi-select selection", async ({ api }) => {
+    const systemName = `multiselect_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const fieldId = await api.createCaseField({
+      displayName: `Multi-Select Field ${Date.now()}`,
+      systemName: systemName,
+      typeName: "Multi-Select",
+      isRequired: false,
+    });
+
+    // Create field options
+    await api.createFieldOption({
+      name: "Option A",
+      caseFieldId: fieldId,
+      isDefault: false,
+      order: 0,
+    });
+    await api.createFieldOption({
+      name: "Option B",
+      caseFieldId: fieldId,
+      isDefault: false,
+      order: 1,
+    });
+    await api.createFieldOption({
+      name: "Option C",
+      caseFieldId: fieldId,
+      isDefault: false,
+      order: 2,
+    });
+
+    const templateName = `Template ${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const templateId = await api.createTemplate({
+      name: templateName,
+      projectIds: [projectId],
+    });
+
+    await api.assignFieldToTemplate(templateId, fieldId);
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.getPage().reload({ waitUntil: "networkidle" });
+    await repositoryPage.openAddCaseModal();
+    await repositoryPage.expectAddCaseDialogVisible();
+
+    await repositoryPage.selectTemplate(templateName);
+
+    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    await expect(fieldElement).toBeVisible({ timeout: 10000 });
+
+    const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
+    await nameInput.fill(`Test Case ${Date.now()}`);
+
+    // Click the react-select input within the field to open dropdown
+    const selectInput = fieldElement.locator('input').first();
+    await selectInput.click();
+
+    // Select "Option A" from the dropdown menu
+    const optionA = repositoryPage.getPage().locator('[class*="option"]').filter({ hasText: 'Option A' }).first();
+    await optionA.click();
+
+    // Click again to select a second option
+    await selectInput.click();
+    const optionB = repositoryPage.getPage().locator('[class*="option"]').filter({ hasText: 'Option B' }).first();
+    await optionB.click();
+
+    await repositoryPage.submitAddCase();
+    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+  });
+});
+
+test.describe("Case Creation - Steps Fields", () => {
+  let repositoryPage: RepositoryPage;
+  let projectId: number;
+
+  test.beforeEach(async ({ page, api }) => {
+    repositoryPage = new RepositoryPage(page);
+    projectId = await api.createProject(`E2E Case Creation ${Date.now()}`);
+  });
+
+  test("Create case with steps field - add a step", async ({ api }) => {
+    const systemName = `steps_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const fieldId = await api.createCaseField({
+      displayName: `Steps Field ${Date.now()}`,
+      systemName: systemName,
+      typeName: "Steps",
+      isRequired: false,
+    });
+
+    const templateName = `Template ${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const templateId = await api.createTemplate({
+      name: templateName,
+      projectIds: [projectId],
+    });
+
+    await api.assignFieldToTemplate(templateId, fieldId);
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.getPage().reload({ waitUntil: "networkidle" });
+    await repositoryPage.openAddCaseModal();
+    await repositoryPage.expectAddCaseDialogVisible();
+
+    await repositoryPage.selectTemplate(templateName);
+
+    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    await expect(fieldElement).toBeVisible({ timeout: 10000 });
+
+    // Click "Add Step" button to add a step
+    const addStepButton = repositoryPage.getPage().getByTestId("add-step-button");
+    await expect(addStepButton).toBeVisible({ timeout: 5000 });
+    await addStepButton.click();
+
+    // Verify the step editor appeared
+    const stepEditor = repositoryPage.getPage().getByTestId("step-editor-0");
+    await expect(stepEditor).toBeVisible({ timeout: 5000 });
+
+    // Type into the step's TipTap editor
+    const stepTipTap = stepEditor.locator('.tiptap').first();
+    await stepTipTap.click();
+    await repositoryPage.getPage().keyboard.type("Step 1: Navigate to login page");
+
+    const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
+    await nameInput.fill(`Test Case ${Date.now()}`);
+
+    await repositoryPage.submitAddCase();
+    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+  });
+
+  test("Create case with empty steps field (optional)", async ({ api }) => {
+    const systemName = `steps_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const fieldId = await api.createCaseField({
+      displayName: `Steps Field ${Date.now()}`,
+      systemName: systemName,
+      typeName: "Steps",
+      isRequired: false,
+    });
+
+    const templateName = `Template ${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const templateId = await api.createTemplate({
+      name: templateName,
+      projectIds: [projectId],
+    });
+
+    await api.assignFieldToTemplate(templateId, fieldId);
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.getPage().reload({ waitUntil: "networkidle" });
+    await repositoryPage.openAddCaseModal();
+    await repositoryPage.expectAddCaseDialogVisible();
+
+    await repositoryPage.selectTemplate(templateName);
+
+    const fieldElement = repositoryPage.getPage().getByTestId(`field-${systemName}`);
+    await expect(fieldElement).toBeVisible({ timeout: 10000 });
+
+    const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
+    await nameInput.fill(`Test Case ${Date.now()}`);
+
+    // Leave steps field empty and submit
+    await repositoryPage.submitAddCase();
+    await expect(repositoryPage.getPage().getByTestId("add-case-dialog")).not.toBeVisible({ timeout: 10000 });
+  });
+});
+
 test.describe("Case Creation - Restricted Fields", () => {
   let repositoryPage: RepositoryPage;
   let projectId: number;

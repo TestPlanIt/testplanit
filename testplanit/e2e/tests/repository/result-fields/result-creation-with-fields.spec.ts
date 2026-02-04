@@ -5,8 +5,9 @@ import type { ApiHelper } from "../../../fixtures/api.fixture";
 /**
  * Result Creation with Custom Fields E2E Tests
  *
- * Tests result field types in the Add Result modal:
- * - Text String, Number, Dropdown, Checkbox
+ * Tests all 9 result field types in the Add Result modal:
+ * - Text String, Text Long, Number, Integer, Checkbox
+ * - Date, Link, Dropdown, Multi-Select
  *
  * Verifies:
  * - Field rendering in the Add Result form
@@ -248,6 +249,67 @@ test.describe("Result Creation - Text String Fields", () => {
 });
 
 // ──────────────────────────────────────────────────────────────
+// Text Long Fields
+// ──────────────────────────────────────────────────────────────
+
+test.describe("Result Creation - Text Long Fields", () => {
+  let projectId: number;
+
+  test.beforeEach(async ({ api }) => {
+    projectId = await api.createProject(`E2E Result Creation ${Date.now()}`);
+  });
+
+  test("Submit result with Text Long field", async ({ page, api }) => {
+    const displayName = `Long Text ${Date.now()}`;
+    const systemName = `result_long_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+      displayName,
+      systemName,
+      typeName: "Text Long",
+      isRequired: false,
+    });
+
+    // Text Long renders as a TipTapEditor, not a plain input
+    const fieldLabel = modal.getByText(displayName).first();
+    await expect(fieldLabel).toBeVisible({ timeout: 5000 });
+
+    // The TipTapEditor renders a contenteditable div with class "tiptap"
+    const formItem = fieldLabel.locator("..");
+    const editor = formItem.locator(".tiptap");
+    await expect(editor).toBeVisible({ timeout: 5000 });
+
+    // Type into the editor
+    await editor.click();
+    await page.keyboard.type("Rich text content for result");
+
+    await submitAndExpectSuccess(modal);
+  });
+
+  test("Text Long field with default value", async ({ page, api }) => {
+    const displayName = `Long Default ${Date.now()}`;
+    const systemName = `result_long_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+      displayName,
+      systemName,
+      typeName: "Text Long",
+      isRequired: false,
+      defaultValue: "Default long text content",
+    });
+
+    // Verify the editor renders with default content
+    const fieldLabel = modal.getByText(displayName).first();
+    await expect(fieldLabel).toBeVisible({ timeout: 5000 });
+
+    const formItem = fieldLabel.locator("..");
+    const editor = formItem.locator(".tiptap");
+    await expect(editor).toBeVisible({ timeout: 5000 });
+    await expect(editor).toContainText("Default long text content");
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
 // Number Fields
 // ──────────────────────────────────────────────────────────────
 
@@ -306,6 +368,99 @@ test.describe("Result Creation - Number Fields", () => {
 });
 
 // ──────────────────────────────────────────────────────────────
+// Integer Fields
+// ──────────────────────────────────────────────────────────────
+
+test.describe("Result Creation - Integer Fields", () => {
+  let projectId: number;
+
+  test.beforeEach(async ({ api }) => {
+    projectId = await api.createProject(`E2E Result Creation ${Date.now()}`);
+  });
+
+  test("Submit result with integer value", async ({ page, api }) => {
+    const displayName = `Integer Field ${Date.now()}`;
+    const systemName = `result_int_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+      displayName,
+      systemName,
+      typeName: "Integer",
+      isRequired: false,
+    });
+
+    // Integer falls through to the default case and renders as a plain input
+    const fieldInput = getFieldInput(modal, displayName);
+    await expect(fieldInput).toBeVisible({ timeout: 5000 });
+    await fieldInput.fill("42");
+
+    await submitAndExpectSuccess(modal);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
+// Date Fields
+// ──────────────────────────────────────────────────────────────
+
+test.describe("Result Creation - Date Fields", () => {
+  let projectId: number;
+
+  test.beforeEach(async ({ api }) => {
+    projectId = await api.createProject(`E2E Result Creation ${Date.now()}`);
+  });
+
+  test("Submit result with date value", async ({ page, api }) => {
+    const displayName = `Date Field ${Date.now()}`;
+    const systemName = `result_date_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+      displayName,
+      systemName,
+      typeName: "Date",
+      isRequired: false,
+    });
+
+    // Date falls through to the default case and renders as a plain input
+    const fieldInput = getFieldInput(modal, displayName);
+    await expect(fieldInput).toBeVisible({ timeout: 5000 });
+    await fieldInput.fill("2025-01-15");
+
+    await submitAndExpectSuccess(modal);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
+// Link Fields
+// ──────────────────────────────────────────────────────────────
+
+test.describe("Result Creation - Link Fields", () => {
+  let projectId: number;
+
+  test.beforeEach(async ({ api }) => {
+    projectId = await api.createProject(`E2E Result Creation ${Date.now()}`);
+  });
+
+  test("Submit result with link value", async ({ page, api }) => {
+    const displayName = `Link Field ${Date.now()}`;
+    const systemName = `result_link_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const { modal } = await setupAndOpenAddResultModal(page, api, projectId, {
+      displayName,
+      systemName,
+      typeName: "Link",
+      isRequired: false,
+    });
+
+    // Link falls through to the default case and renders as a plain input
+    const fieldInput = getFieldInput(modal, displayName);
+    await expect(fieldInput).toBeVisible({ timeout: 5000 });
+    await fieldInput.fill("https://example.com/result");
+
+    await submitAndExpectSuccess(modal);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
 // Dropdown Fields
 // ──────────────────────────────────────────────────────────────
 
@@ -358,6 +513,61 @@ test.describe("Result Creation - Dropdown Fields", () => {
     await page.waitForTimeout(500);
     const option = page.getByRole("option", { name: "High" });
     await option.click();
+
+    await submitAndExpectSuccess(modal);
+  });
+});
+
+// ──────────────────────────────────────────────────────────────
+// Multi-Select Fields
+// ──────────────────────────────────────────────────────────────
+
+test.describe("Result Creation - Multi-Select Fields", () => {
+  let projectId: number;
+
+  test.beforeEach(async ({ api }) => {
+    projectId = await api.createProject(`E2E Result Creation ${Date.now()}`);
+  });
+
+  test("Multi-Select field renders in result form", async ({ page, api }) => {
+    const displayName = `MultiSelect ${Date.now()}`;
+    const systemName = `result_ms_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const { modal } = await setupAndOpenAddResultModal(
+      page,
+      api,
+      projectId,
+      {
+        displayName,
+        systemName,
+        typeName: "Multi-Select",
+        isRequired: false,
+      },
+      async ({ resultFieldId }) => {
+        await api.createFieldOption({
+          name: "Browser",
+          resultFieldId,
+          isDefault: false,
+          order: 0,
+        });
+        await api.createFieldOption({
+          name: "Mobile",
+          resultFieldId,
+          isDefault: false,
+          order: 1,
+        });
+        await api.createFieldOption({
+          name: "API",
+          resultFieldId,
+          isDefault: false,
+          order: 2,
+        });
+      }
+    );
+
+    // Multi-Select falls through to the default case and renders as a plain input
+    const fieldLabel = modal.getByText(displayName, { exact: false }).first();
+    await expect(fieldLabel).toBeVisible({ timeout: 5000 });
 
     await submitAndExpectSuccess(modal);
   });

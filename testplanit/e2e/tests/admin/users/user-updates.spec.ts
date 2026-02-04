@@ -252,7 +252,6 @@ test.describe("User Update Operations", () => {
         name: "Toggle Test User",
         email: testEmail,
         password: "password123",
-        roleId: 1,
         access: "USER",
       });
 
@@ -312,7 +311,6 @@ test.describe("User Update Operations", () => {
         name: "Edit Test User",
         email: testEmail,
         password: "password123",
-        roleId: 1,
         access: "USER",
       });
 
@@ -379,7 +377,6 @@ test.describe("User Update Operations", () => {
         name: "Delete Test User",
         email: testEmail,
         password: "password123",
-        roleId: 1,
         access: "USER",
       });
 
@@ -433,7 +430,6 @@ test.describe("User Update Operations", () => {
         name: "Restore Test User",
         email: testEmail,
         password: "password123",
-        roleId: 1,
         access: "USER",
       });
 
@@ -554,7 +550,6 @@ test.describe("User Update Operations", () => {
         name: "API Test User",
         email: testEmail,
         password: "password123",
-        roleId: 1,
         access: "USER",
       });
 
@@ -586,7 +581,6 @@ test.describe("User Update Operations", () => {
         name: "API Pref Test User",
         email: testEmail,
         password: "password123",
-        roleId: 1,
         access: "USER",
       });
 
@@ -620,7 +614,6 @@ test.describe("User Update Operations", () => {
         name: "Auth Test User",
         email: testEmail,
         password: "password123",
-        roleId: 1,
         access: "USER",
       });
 
