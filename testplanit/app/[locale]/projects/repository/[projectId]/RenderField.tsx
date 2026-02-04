@@ -303,7 +303,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
               onUpdate={handleEditorUpdate}
               projectId={String(projectId)}
               className={
-                initialHeight ? `min-h-[${initialHeight}px]` : "min-h-[300px]"
+                initialHeight ? `min-h-[${initialHeight}px]` : "min-h-75"
               }
               readOnly={isDisabled}
             />
@@ -337,7 +337,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
       name={field.caseField.id.toString()}
       render={({ field: { onChange, value } }) => (
         <FormItem
-          className="min-w-[300px] mx-1"
+          className="min-w-75 mx-1"
           data-testid={`field-${field.caseField.systemName}`}
         >
           <FormLabel
