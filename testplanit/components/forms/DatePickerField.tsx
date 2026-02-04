@@ -66,7 +66,7 @@ export function DatePickerField({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-60 pl-3 text-left font-normal",
+                    "w-[240px] pl-3 text-left font-normal",
                     !field.value && "text-muted-foreground"
                   )}
                   disabled={disabled}

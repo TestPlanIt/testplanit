@@ -657,7 +657,7 @@ export function EditResultFieldModal({
       </DialogTrigger>
       <DialogContent
         key={resultfield.id}
-        className="sm:max-w-150 lg:max-w-250"
+        className="sm:max-w-[600px] lg:max-w-[1000px]"
         data-testid="result-field-dialog"
       >
         <Form {...form}>

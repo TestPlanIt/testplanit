@@ -676,7 +676,7 @@ export function AddResultFieldModal({
           )}
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-150 lg:max-w-250" data-testid="result-field-dialog">
+      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]" data-testid="result-field-dialog">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" data-testid="result-field-form">
             <DialogHeader>
