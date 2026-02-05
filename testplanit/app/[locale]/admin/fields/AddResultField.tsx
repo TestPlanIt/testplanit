@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   useCreateResultFields,
   useFindManyCaseFieldTypes,
@@ -19,8 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DraggableList } from "@/components/DraggableFieldOptions";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { emptyEditorContent } from "~/app/constants";
 
 import { CirclePlus, Ellipsis } from "lucide-react";
 
@@ -157,7 +155,6 @@ export function AddResultFieldModal({
   const [lastId, setLastId] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [defaultItem, setDefaultItem] = useState<number | null>(null);
-  const previousTypeNameRef = useRef<string | undefined | null>(undefined);
 
   const applyOptionOrder = (options: FieldOptions[]): FieldOptions[] =>
     options.map((option, index) => ({ ...option, order: index }));
@@ -435,20 +432,7 @@ export function AddResultFieldModal({
 
   useEffect(() => {
     const foundType = types?.find((type) => type.id.toString() === typeId);
-    const newTypeName = foundType?.type;
-
-    // Clear defaultValue when switching field types
-    if (
-      previousTypeNameRef.current &&
-      newTypeName &&
-      previousTypeNameRef.current !== newTypeName
-    ) {
-      setValue("defaultValue", "");
-    }
-
-    previousTypeNameRef.current = newTypeName;
-    setSelectedTypeName(newTypeName);
-
+    setSelectedTypeName(foundType?.type);
     if (foundType && foundType.options) {
       try {
         const parsedOptions =
@@ -463,7 +447,7 @@ export function AddResultFieldModal({
     } else {
       setSelectedTypeOptions(null);
     }
-  }, [types, typeId, setValue]);
+  }, [types, typeId]);
 
   const renderOptions = (options: any) => {
     const currentType = types?.find(
@@ -543,32 +527,10 @@ export function AddResultFieldModal({
                           />
                         </div>
                       </div>
-                    ) : option.key === "defaultValue" &&
-                      selectedTypeName === "Text Long" ? (
-                      <div
-                        className="ring-2 ring-muted rounded-lg min-h-[200px]"
-                        data-testid={`result-field-${option.key}`}
-                      >
-                        <TipTapEditor
-                          content={(() => {
-                            try {
-                              return field.value
-                                ? JSON.parse(field.value as string)
-                                : emptyEditorContent;
-                            } catch {
-                              return emptyEditorContent;
-                            }
-                          })()}
-                          onUpdate={(content) => {
-                            field.onChange(JSON.stringify(content));
-                          }}
-                          className="min-h-[200px]"
-                        />
-                      </div>
                     ) : option.key === "defaultValue" ? (
                       <Input
                         {...field}
-                        type={selectedTypeName === "Link" ? "url" : "text"}
+                        type="text"
                         onChange={field.onChange}
                         value={(field.value ?? "") as string}
                         data-testid={`result-field-${option.key}`}
