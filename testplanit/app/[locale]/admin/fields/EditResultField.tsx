@@ -19,6 +19,8 @@ import { ExtendedResultFields } from "./resultFieldColumns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DraggableList } from "@/components/DraggableFieldOptions";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { emptyEditorContent } from "~/app/constants";
 
 import { SquarePen } from "lucide-react";
 
@@ -473,10 +475,29 @@ export function EditResultFieldModal({
                           />
                         </div>
                       </div>
+                    ) : option.key === "defaultValue" &&
+                      selectedTypeName === "Text Long" ? (
+                      <div className="ring-2 ring-muted rounded-lg min-h-[200px]">
+                        <TipTapEditor
+                          content={(() => {
+                            try {
+                              return field.value
+                                ? JSON.parse(field.value as string)
+                                : emptyEditorContent;
+                            } catch {
+                              return emptyEditorContent;
+                            }
+                          })()}
+                          onUpdate={(content) => {
+                            field.onChange(JSON.stringify(content));
+                          }}
+                          className="min-h-[200px]"
+                        />
+                      </div>
                     ) : option.key === "defaultValue" ? (
                       <Input
                         {...field}
-                        type="text"
+                        type={selectedTypeName === "Link" ? "url" : "text"}
                         onChange={field.onChange}
                         value={(field.value ?? "") as string}
                       />
