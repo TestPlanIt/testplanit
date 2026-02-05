@@ -505,27 +505,26 @@ test.describe("User Update Operations", () => {
       await page.goto("/en-US");
       await page.waitForLoadState("networkidle");
 
-      // Open user menu (usually in top right)
-      const userMenuButton = page
-        .getByRole("button")
-        .filter({ hasText: /AA|admin/i })
-        .first();
+      // Open user menu using stable test-id selector
+      const userMenuButton = page.getByTestId("user-menu-trigger");
+      await expect(userMenuButton).toBeVisible({ timeout: 5000 });
       await userMenuButton.click();
 
-      // Wait for dropdown menu
-      await expect(page.getByRole("menu")).toBeVisible({ timeout: 3000 });
+      // Wait for dropdown menu content
+      const menuContent = page.getByTestId("user-menu-content");
+      await expect(menuContent).toBeVisible({ timeout: 3000 });
 
-      // Look for theme submenu
-      const themeMenu = page
-        .getByRole("menuitem")
-        .filter({ hasText: /theme|appearance/i })
-        .first();
+      // Open theme submenu using stable test-id
+      const themeSubmenu = page.getByTestId("theme-submenu-trigger");
+      if (await themeSubmenu.isVisible()) {
+        await themeSubmenu.click();
 
-      if (await themeMenu.isVisible()) {
-        await themeMenu.hover();
+        // Wait for theme submenu content
+        const themeContent = page.getByTestId("theme-submenu-content");
+        await expect(themeContent).toBeVisible({ timeout: 3000 });
 
-        // Select a theme option
-        const darkTheme = page
+        // Select dark theme option
+        const darkTheme = themeContent
           .getByRole("menuitem")
           .filter({ hasText: /dark/i })
           .first();

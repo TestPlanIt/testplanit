@@ -423,6 +423,19 @@ async function seedCoreData() {
   });
   console.log("Seeded edit results duration config.");
 
+  // --- Notification Settings ---
+  await prisma.appConfig.upsert({
+    where: { key: "notificationSettings" },
+    update: {},
+    create: {
+      key: "notificationSettings",
+      value: {
+        defaultMode: "IN_APP_EMAIL_DAILY",
+      },
+    },
+  });
+  console.log("Seeded notification settings config.");
+
   // --- Field Icons, Case Field Types, Case/Result Fields ---
   await seedFieldIcons();
   await seedCaseFieldTypes();

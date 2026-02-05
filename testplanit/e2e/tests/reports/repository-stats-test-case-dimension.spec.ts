@@ -10,7 +10,9 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
   async function getTestProjectId(
     api: import("../../fixtures/api.fixture").ApiHelper
   ): Promise<number> {
-    return await api.createProject(`E2E Report Test Project ${Date.now()}`);
+    // Use timestamp + random suffix to ensure uniqueness across parallel test runs
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    return await api.createProject(`E2E Report Project ${uniqueId}`);
   }
 
   /**

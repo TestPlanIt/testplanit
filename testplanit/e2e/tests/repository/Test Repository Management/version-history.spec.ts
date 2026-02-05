@@ -114,14 +114,14 @@ test.describe("Version History", () => {
     await expect(versionCreatedText).toBeVisible({ timeout: 10000 });
 
     // Version page should show diff indicators (green for added, red for removed)
-    // The diff display uses bg-green-100 and bg-red-100 classes OR text-green-600/text-red-600
-    const greenDiff = page.locator('.bg-green-100, .text-green-600').first();
-    const redDiff = page.locator('.bg-red-100, .text-red-600').first();
+    // Use stable test-id selectors instead of CSS class selectors
+    const addedDiff = page.getByTestId("diff-added").first();
+    const removedDiff = page.getByTestId("diff-removed").first();
 
     // At least one of the diffs should be visible (name changed)
-    const hasGreenDiff = await greenDiff.isVisible().catch(() => false);
-    const hasRedDiff = await redDiff.isVisible().catch(() => false);
-    expect(hasGreenDiff || hasRedDiff).toBe(true);
+    const hasAddedDiff = await addedDiff.isVisible().catch(() => false);
+    const hasRemovedDiff = await removedDiff.isVisible().catch(() => false);
+    expect(hasAddedDiff || hasRemovedDiff).toBe(true);
   });
 
   test("Version Navigation Buttons Work", async ({ api, page }) => {

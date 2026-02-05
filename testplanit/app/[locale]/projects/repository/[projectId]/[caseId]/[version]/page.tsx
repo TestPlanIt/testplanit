@@ -407,7 +407,7 @@ export default function TestCaseVersions() {
       return (
         <div>
           {previousFieldValue !== undefined && previousFieldValue !== null && (
-            <div className="relative p-1 rounded">
+            <div className="relative p-1 rounded" data-testid="diff-removed">
               <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
               <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
                 <div>
@@ -417,7 +417,7 @@ export default function TestCaseVersions() {
               </span>
             </div>
           )}
-          <div className="relative p-1 rounded">
+          <div className="relative p-1 rounded" data-testid="diff-added">
             <div className="absolute inset-0 bg-green-500/20 rounded pointer-events-none" />
             <span className="relative text-green-600 dark:text-green-400 flex space-x-1 items-center">
               <div>
