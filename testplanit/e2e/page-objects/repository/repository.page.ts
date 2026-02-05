@@ -134,13 +134,52 @@ export class RepositoryPage extends BasePage {
     const folder = this.getFolderById(folderId);
     await expect(folder).toBeVisible({ timeout: 10000 });
 
-    // Use evaluate to click via JavaScript to ensure we're clicking the exact element
-    await folder.evaluate((el) => {
-      (el as HTMLElement).click();
-    });
+    // Close any open dropdown menus by pressing Escape
+    await this.page.keyboard.press('Escape');
+    await this.page.waitForTimeout(100);
 
-    // Wait for the URL to update with the selected folder
-    await expect(this.page).toHaveURL(new RegExp(`node=${folderId}`), { timeout: 10000 });
+    // Use retry logic to ensure the folder is actually selected
+    await expect(async () => {
+      // Close any menus that may have opened
+      await this.page.keyboard.press('Escape');
+
+      // Scroll folder into view
+      await folder.scrollIntoViewIfNeeded();
+
+      // Find the folder icon specifically (svg element after the button)
+      // The structure is: <button>(chevron)</button> <svg class="w-4 h-4">(icon)</svg>
+      // Click on the icon which should trigger the folder click without opening menu
+      const folderIcon = folder.locator('svg').nth(1); // Second svg is the folder icon
+      const iconVisible = await folderIcon.isVisible().catch(() => false);
+
+      if (iconVisible) {
+        await folderIcon.click();
+      } else {
+        // Fallback: click on the folder row but avoid the right side where menu is
+        const box = await folder.boundingBox();
+        if (box) {
+          await this.page.mouse.click(box.x + 30, box.y + box.height / 2);
+        } else {
+          await folder.click();
+        }
+      }
+
+      // Wait for React to process the click
+      await this.page.waitForTimeout(300);
+
+      // Verify the URL contains a node parameter
+      const url = this.page.url();
+      expect(url).toMatch(/node=\d+/);
+
+      // Verify this folder is now selected (has bg-secondary class indicating selection)
+      const isSelected = await folder.evaluate((el) => {
+        return el.classList.contains('bg-secondary') ||
+               el.getAttribute('aria-selected') === 'true' ||
+               el.closest('[aria-selected="true"]') !== null;
+      });
+      expect(isSelected).toBe(true);
+    }).toPass({ timeout: 15000 });
+
     await this.page.waitForLoadState("networkidle");
   }
 

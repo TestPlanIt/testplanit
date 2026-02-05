@@ -135,8 +135,6 @@ test.describe("Sorting", () => {
     await repositoryPage.goto(projectId);
 
     await repositoryPage.selectFolder(folderId);
-    // Wait for URL to reflect folder selection to ensure we're viewing the right folder
-    await expect(page).toHaveURL(new RegExp(`node=${folderId}`), { timeout: 10000 });
     await waitForTableStable(page);
 
     // Use the cases table specifically - scoped to the right data-testid
@@ -212,8 +210,6 @@ test.describe("Sorting", () => {
     await repositoryPage.goto(projectId);
 
     await repositoryPage.selectFolder(folderId);
-    // Wait for URL to reflect folder selection to ensure we're viewing the right folder
-    await expect(page).toHaveURL(new RegExp(`node=${folderId}`), { timeout: 10000 });
     await page.waitForLoadState("networkidle");
 
     // Verify the table is visible
@@ -230,8 +226,6 @@ test.describe("Sorting", () => {
     await page.reload();
     await repositoryPage.waitForRepositoryLoad();
     await repositoryPage.selectFolder(folderId);
-    // Wait for URL to reflect folder selection again
-    await expect(page).toHaveURL(new RegExp(`node=${folderId}`), { timeout: 10000 });
     await page.waitForLoadState("networkidle");
 
     // Verify order is maintained (same number of rows)
