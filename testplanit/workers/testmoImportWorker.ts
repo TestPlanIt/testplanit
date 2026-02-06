@@ -20,6 +20,9 @@ import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVers
 import {
   isMultiTenantMode,
   disconnectAllTenantClients,
+  getPrismaClientForJob,
+  validateMultiTenantJobData,
+  type MultiTenantJobData,
 } from "../lib/multiTenantPrisma";
 import valkeyConnection from "../lib/valkey";
 import {
@@ -55,6 +58,7 @@ import {
   importAutomationRunLinks,
   importAutomationRunTestFields,
   importAutomationRunTags,
+  clearAutomationImportCaches,
 } from "./testmoImport/automationImports";
 import {
   importRepositoryCaseTags,
@@ -125,11 +129,6 @@ import {
 // TAGS
 // - milestone_automation_tags
 
-// TODO(multi-tenant): This worker currently uses a single global Prisma client.
-// For full multi-tenant support, the prisma client would need to be passed through
-// all import functions. This is a significant refactor due to the size and complexity
-// of this import worker. For now, Testmo imports are only supported in single-tenant mode.
-const prisma = new PrismaClient();
 
 const projectNameCache = new Map<number, string>();
 const templateNameCache = new Map<number, string>();
@@ -2781,6 +2780,7 @@ const importRepositories = async (
 };
 
 const importRepositoryFolders = async (
+  prisma: PrismaClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   repositoryIdMap: Map<number, number>,
@@ -3077,6 +3077,7 @@ const importRepositoryFolders = async (
   return { summary, folderIdMap, repositoryRootFolderMap };
 };
 const importRepositoryCases = async (
+  prisma: PrismaClient,
   datasetRows: Map<string, any[]>,
   projectIdMap: Map<number, number>,
   repositoryIdMap: Map<number, number>,
@@ -4287,6 +4288,7 @@ const importTestRuns = async (
 };
 
 const importTestRunCases = async (
+  prisma: PrismaClient,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,
   caseIdMap: Map<number, number>,
@@ -4609,6 +4611,7 @@ const importTestRunCases = async (
 };
 
 const importTestRunResults = async (
+  prisma: PrismaClient,
   datasetRows: Map<string, any[]>,
   testRunIdMap: Map<number, number>,
   testRunCaseIdMap: Map<number, number>,
@@ -4868,6 +4871,7 @@ const importTestRunResults = async (
 };
 
 const importTestRunStepResults = async (
+  prisma: PrismaClient,
   datasetRows: Map<string, any[]>,
   testRunResultIdMap: Map<number, number>,
   testRunCaseIdMap: Map<number, number>,
@@ -5419,7 +5423,7 @@ async function importStatuses(
   return summary;
 }
 
-async function processImportMode(importJob: TestmoImportJob, jobId: string) {
+async function processImportMode(importJob: TestmoImportJob, jobId: string, prisma: PrismaClient, tenantId?: string) {
   if (FINAL_STATUSES.has(importJob.status)) {
     return { status: importJob.status };
   }
@@ -6146,6 +6150,7 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string) {
     }
 
     const folderImport = await importRepositoryFolders(
+      prisma,
       datasetRowsByName,
       projectImport.projectIdMap,
       repositoryImport.repositoryIdMap,
@@ -6228,6 +6233,7 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string) {
     }
 
     const caseImport = await importRepositoryCases(
+      prisma,
       datasetRowsByName,
       projectImport.projectIdMap,
       repositoryImport.repositoryIdMap,
@@ -6644,6 +6650,7 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string) {
     }
 
     const testRunCaseImport = await importTestRunCases(
+      prisma,
       datasetRowsByName,
       testRunImport.testRunIdMap,
       caseImport.caseIdMap,
@@ -6704,6 +6711,7 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string) {
     }
 
     const testRunResultImport = await importTestRunResults(
+      prisma,
       datasetRowsByName,
       testRunImport.testRunIdMap,
       mergedTestRunCaseIdMap,
@@ -6728,6 +6736,7 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string) {
     );
 
     const stepResultsSummary = await importTestRunStepResults(
+      prisma,
       datasetRowsByName,
       testRunResultImport.testRunResultIdMap,
       mergedTestRunCaseIdMap,
@@ -7062,6 +7071,7 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string) {
         const reindexJobData: ReindexJobData = {
           entityType: "all",
           userId: importJob.createdById,
+          tenantId,
         };
         await elasticsearchReindexQueue.add(
           `reindex-after-import-${jobId}`,
@@ -7129,12 +7139,25 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string) {
 
 type TestmoQueueMode = "analyze" | "import";
 
-async function processor(job: Job<{ jobId: string; mode?: TestmoQueueMode }>) {
+async function processor(job: Job<{ jobId: string; mode?: TestmoQueueMode } & MultiTenantJobData>) {
   const { jobId, mode = "analyze" } = job.data;
 
   if (!jobId) {
     throw new Error("Job id is required");
   }
+
+  validateMultiTenantJobData(job.data);
+  const prisma = getPrismaClientForJob(job.data);
+
+  // Clear caches to prevent cross-tenant cache pollution
+  projectNameCache.clear();
+  templateNameCache.clear();
+  workflowNameCache.clear();
+  configurationNameCache.clear();
+  milestoneNameCache.clear();
+  userNameCache.clear();
+  folderNameCache.clear();
+  clearAutomationImportCaches();
 
   const importJob = await prisma.testmoImportJob.findUnique({
     where: { id: jobId },
@@ -7149,7 +7172,7 @@ async function processor(job: Job<{ jobId: string; mode?: TestmoQueueMode }>) {
   }
 
   if (mode === "import") {
-    return processImportMode(importJob, jobId);
+    return processImportMode(importJob, jobId, prisma, job.data.tenantId);
   }
 
   if (mode !== "analyze") {
@@ -7488,7 +7511,6 @@ async function startWorker() {
   // Log multi-tenant mode status
   if (isMultiTenantMode()) {
     console.log("Testmo import worker starting in MULTI-TENANT mode");
-    console.warn("WARNING: Testmo import currently only supports single-tenant mode. Multi-tenant support requires refactoring.");
   } else {
     console.log("Testmo import worker starting in SINGLE-TENANT mode");
   }
@@ -7524,8 +7546,6 @@ async function startWorker() {
   const shutdown = async () => {
     console.log("Shutting down Testmo import worker...");
     await worker.close();
-    await prisma.$disconnect();
-    // Disconnect all tenant Prisma clients in multi-tenant mode
     if (isMultiTenantMode()) {
       await disconnectAllTenantClients();
     }

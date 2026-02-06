@@ -30,6 +30,14 @@ const workflowNameCache = new Map<number, string>();
 const folderNameCache = new Map<number, string>();
 const userNameCache = new Map<string, string>();
 
+export function clearAutomationImportCaches(): void {
+  projectNameCache.clear();
+  templateNameCache.clear();
+  workflowNameCache.clear();
+  folderNameCache.clear();
+  userNameCache.clear();
+}
+
 type StatusResolution = Prisma.StatusGetPayload<{
   select: {
     id: true;

@@ -9,6 +9,7 @@ import {
 import { serializeImportJob } from "~/services/imports/testmo/jobPresenter";
 import type { TestmoImportJobPayload } from "~/services/imports/testmo/types";
 import { JOB_PROCESS_TESTMO_IMPORT } from "~/services/imports/testmo/constants";
+import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 
 const bucketName = process.env.AWS_BUCKET_NAME;
 
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
     await testmoImportQueue.add(JOB_PROCESS_TESTMO_IMPORT, {
       jobId: jobRecord.id,
       mode: "analyze",
+      tenantId: getCurrentTenantId(),
     });
 
     const payload = serializeImportJob(jobRecord);
