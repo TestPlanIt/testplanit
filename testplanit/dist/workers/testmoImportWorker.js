@@ -5,6 +5,13 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -21,11 +28,34 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// lib/prismaBase.ts
+var prismaBase_exports = {};
+__export(prismaBase_exports, {
+  prisma: () => prisma
+});
+var import_client, prismaClient, prisma;
+var init_prismaBase = __esm({
+  "lib/prismaBase.ts"() {
+    "use strict";
+    import_client = require("@prisma/client");
+    if (process.env.NODE_ENV === "production") {
+      prismaClient = new import_client.PrismaClient({ errorFormat: "pretty" });
+    } else {
+      if (!global.prismaBase) {
+        global.prismaBase = new import_client.PrismaClient({ errorFormat: "colorless" });
+      }
+      prismaClient = global.prismaBase;
+    }
+    prisma = prismaClient;
+  }
+});
 
 // workers/testmoImportWorker.ts
 var import_bullmq2 = require("bullmq");
 var import_client_s3 = require("@aws-sdk/client-s3");
-var import_client5 = require("@prisma/client");
+var import_client6 = require("@prisma/client");
 var import_core2 = require("@tiptap/core");
 var import_model2 = require("@tiptap/pm/model");
 var import_happy_dom2 = require("happy-dom");
@@ -140,12 +170,135 @@ async function createTestCaseVersionInTransaction(tx, caseId, options) {
 }
 
 // lib/multiTenantPrisma.ts
-var import_client = require("@prisma/client");
+var import_client2 = require("@prisma/client");
+var fs = __toESM(require("fs"));
 function isMultiTenantMode() {
   return process.env.MULTI_TENANT_MODE === "true";
 }
 var tenantClients = /* @__PURE__ */ new Map();
+var tenantConfigs = null;
 var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+function loadTenantsFromFile(filePath) {
+  const configs = /* @__PURE__ */ new Map();
+  try {
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(fileContent);
+      for (const [tenantId, config] of Object.entries(parsed)) {
+        configs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl
+        });
+      }
+      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+    }
+  } catch (error) {
+    console.error(`Failed to load tenant configs from ${filePath}:`, error);
+  }
+  return configs;
+}
+function reloadTenantConfigs() {
+  tenantConfigs = null;
+  return loadTenantConfigs();
+}
+function loadTenantConfigs() {
+  if (tenantConfigs) {
+    return tenantConfigs;
+  }
+  tenantConfigs = /* @__PURE__ */ new Map();
+  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
+  for (const [tenantId, config] of fileConfigs) {
+    tenantConfigs.set(tenantId, config);
+  }
+  const configJson = process.env.TENANT_CONFIGS;
+  if (configJson) {
+    try {
+      const configs = JSON.parse(configJson);
+      for (const [tenantId, config] of Object.entries(configs)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl
+        });
+      }
+      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+    } catch (error) {
+      console.error("Failed to parse TENANT_CONFIGS:", error);
+    }
+  }
+  for (const [key, value] of Object.entries(process.env)) {
+    const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
+    if (match && value) {
+      const tenantId = match[1].toLowerCase();
+      if (!tenantConfigs.has(tenantId)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: value,
+          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
+          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
+          baseUrl: process.env[`TENANT_${match[1]}_BASE_URL`]
+        });
+      }
+    }
+  }
+  if (tenantConfigs.size === 0) {
+    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+  }
+  return tenantConfigs;
+}
+function getTenantConfig(tenantId) {
+  const configs = loadTenantConfigs();
+  return configs.get(tenantId);
+}
+function createTenantPrismaClient(config) {
+  const client = new import_client2.PrismaClient({
+    datasources: {
+      db: {
+        url: config.databaseUrl
+      }
+    },
+    errorFormat: "pretty"
+  });
+  return client;
+}
+function getTenantPrismaClient(tenantId) {
+  reloadTenantConfigs();
+  const config = getTenantConfig(tenantId);
+  if (!config) {
+    throw new Error(`No configuration found for tenant: ${tenantId}`);
+  }
+  const cached = tenantClients.get(tenantId);
+  if (cached) {
+    if (cached.databaseUrl === config.databaseUrl) {
+      return cached.client;
+    } else {
+      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
+      cached.client.$disconnect().catch((err) => {
+        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
+      });
+      tenantClients.delete(tenantId);
+    }
+  }
+  const client = createTenantPrismaClient(config);
+  tenantClients.set(tenantId, { client, databaseUrl: config.databaseUrl });
+  console.log(`Created Prisma client for tenant: ${tenantId}`);
+  return client;
+}
+function getPrismaClientForJob(jobData) {
+  if (!isMultiTenantMode()) {
+    const { prisma: prisma2 } = (init_prismaBase(), __toCommonJS(prismaBase_exports));
+    return prisma2;
+  }
+  if (!jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+  return getTenantPrismaClient(jobData.tenantId);
+}
 async function disconnectAllTenantClients() {
   const disconnectPromises = [];
   for (const [tenantId, cached] of tenantClients) {
@@ -155,6 +308,11 @@ async function disconnectAllTenantClients() {
   await Promise.all(disconnectPromises);
   tenantClients.clear();
   console.log("All tenant Prisma clients disconnected");
+}
+function validateMultiTenantJobData(jobData) {
+  if (isMultiTenantMode() && !jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
 }
 
 // lib/valkey.ts
@@ -2809,12 +2967,19 @@ async function importUserGroups(tx, configuration, datasetRows) {
 }
 
 // workers/testmoImport/automationImports.ts
-var import_client2 = require("@prisma/client");
+var import_client3 = require("@prisma/client");
 var projectNameCache = /* @__PURE__ */ new Map();
 var templateNameCache = /* @__PURE__ */ new Map();
 var workflowNameCache = /* @__PURE__ */ new Map();
 var folderNameCache = /* @__PURE__ */ new Map();
 var userNameCache = /* @__PURE__ */ new Map();
+function clearAutomationImportCaches() {
+  projectNameCache.clear();
+  templateNameCache.clear();
+  workflowNameCache.clear();
+  folderNameCache.clear();
+  userNameCache.clear();
+}
 var chunkArray = (items, chunkSize) => {
   if (chunkSize <= 0) {
     throw new Error("chunkSize must be greater than 0");
@@ -3270,7 +3435,7 @@ var importAutomationCases = async (prisma2, configuration, datasetRows, projectI
                 data: caseFieldValues.map((fieldValue) => ({
                   versionId: caseVersion.id,
                   field: fieldValue.field.displayName || fieldValue.field.systemName,
-                  value: fieldValue.value ?? import_client2.Prisma.JsonNull
+                  value: fieldValue.value ?? import_client3.Prisma.JsonNull
                 }))
               });
             }
@@ -3502,18 +3667,18 @@ var importAutomationRunTests = async (prisma2, _configuration, datasetRows, proj
       return false;
     };
     if (hasCandidateIncluding("skip", "skipped", "block", "blocked", "omit")) {
-      return import_client2.JUnitResultType.SKIPPED;
+      return import_client3.JUnitResultType.SKIPPED;
     }
     if (hasCandidateIncluding("error", "exception")) {
-      return import_client2.JUnitResultType.ERROR;
+      return import_client3.JUnitResultType.ERROR;
     }
     if (resolvedStatus?.isFailure || hasCandidateIncluding("fail", "failed")) {
-      return import_client2.JUnitResultType.FAILURE;
+      return import_client3.JUnitResultType.FAILURE;
     }
     if (resolvedStatus?.isSuccess) {
-      return import_client2.JUnitResultType.PASSED;
+      return import_client3.JUnitResultType.PASSED;
     }
-    return import_client2.JUnitResultType.PASSED;
+    return import_client3.JUnitResultType.PASSED;
   };
   const entityName = "automationRunTests";
   const progressEntry = context.entityProgress[entityName] ?? (context.entityProgress[entityName] = {
@@ -3919,7 +4084,7 @@ var reconcileLegacyJUnitSuiteLinks = async (tx, suiteIds) => {
       UPDATE "JUnitTestResult" AS r
       SET "testSuiteId" = s."id"
       FROM "JUnitTestSuite" AS s
-      WHERE s."id" IN (${import_client2.Prisma.join(chunk)})
+      WHERE s."id" IN (${import_client3.Prisma.join(chunk)})
         AND r."testSuiteId" = s."testRunId"
         AND r."testSuiteId" IN (SELECT id FROM "TestRuns")
         AND r."testSuiteId" NOT IN (SELECT id FROM "JUnitTestSuite");
@@ -3969,13 +4134,13 @@ var recomputeJUnitSuiteStats = async (tx, suiteIds) => {
     suiteStats.total += count;
     suiteStats.time += timeSum;
     switch (entry.type) {
-      case import_client2.JUnitResultType.FAILURE:
+      case import_client3.JUnitResultType.FAILURE:
         suiteStats.failures += count;
         break;
-      case import_client2.JUnitResultType.ERROR:
+      case import_client3.JUnitResultType.ERROR:
         suiteStats.errors += count;
         break;
-      case import_client2.JUnitResultType.SKIPPED:
+      case import_client3.JUnitResultType.SKIPPED:
         suiteStats.skipped += count;
         break;
       default:
@@ -4898,7 +5063,7 @@ var importRunLinks = async (tx, configuration, datasetRows, testRunIdMap, contex
 };
 
 // workers/testmoImport/templateImports.ts
-var import_client3 = require("@prisma/client");
+var import_client4 = require("@prisma/client");
 var SYSTEM_NAME_REGEX = /^[A-Za-z][A-Za-z0-9_]*$/;
 var generateSystemName = (value) => {
   const normalized = value.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").replace(/^[^a-z]+/, "");
@@ -5200,7 +5365,7 @@ async function importTemplateFields(tx, configuration, templateMap, datasetRows)
       appliedAssignments.add(assignmentKey);
       details.assignmentsCreated += 1;
     } catch (error) {
-      if (!(error instanceof import_client3.Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
+      if (!(error instanceof import_client4.Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
         throw error;
       }
       appliedAssignments.add(assignmentKey);
@@ -5440,19 +5605,19 @@ async function importTemplateFields(tx, configuration, templateMap, datasetRows)
 }
 
 // workers/testmoImport/issueImports.ts
-var import_client4 = require("@prisma/client");
+var import_client5 = require("@prisma/client");
 var PROGRESS_UPDATE_INTERVAL = 500;
 var mapIssueTargetType = (testmoType) => {
   switch (testmoType) {
     case 1:
     case 4:
-      return import_client4.IntegrationProvider.JIRA;
+      return import_client5.IntegrationProvider.JIRA;
     case 2:
-      return import_client4.IntegrationProvider.GITHUB;
+      return import_client5.IntegrationProvider.GITHUB;
     case 3:
-      return import_client4.IntegrationProvider.AZURE_DEVOPS;
+      return import_client5.IntegrationProvider.AZURE_DEVOPS;
     default:
-      return import_client4.IntegrationProvider.SIMPLE_URL;
+      return import_client5.IntegrationProvider.SIMPLE_URL;
   }
 };
 var importIssueTargets = async (tx, configuration, context, persistProgress) => {
@@ -5500,7 +5665,7 @@ var importIssueTargets = async (tx, configuration, context, persistProgress) => 
         `Issue target ${sourceId} requires a name before it can be created.`
       );
     }
-    const provider = config.provider ? config.provider : config.testmoType ? mapIssueTargetType(config.testmoType) : import_client4.IntegrationProvider.SIMPLE_URL;
+    const provider = config.provider ? config.provider : config.testmoType ? mapIssueTargetType(config.testmoType) : import_client5.IntegrationProvider.SIMPLE_URL;
     const existing = await tx.integration.findFirst({
       where: {
         name,
@@ -5518,8 +5683,8 @@ var importIssueTargets = async (tx, configuration, context, persistProgress) => 
         data: {
           name,
           provider,
-          authType: import_client4.IntegrationAuthType.NONE,
-          status: import_client4.IntegrationStatus.INACTIVE,
+          authType: import_client5.IntegrationAuthType.NONE,
+          status: import_client5.IntegrationStatus.INACTIVE,
           credentials: {},
           // Empty credentials for now
           settings: {
@@ -5552,13 +5717,13 @@ var constructExternalUrl = (provider, baseUrl, externalKey) => {
   }
   const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
   switch (provider) {
-    case import_client4.IntegrationProvider.JIRA:
+    case import_client5.IntegrationProvider.JIRA:
       return `${cleanBaseUrl}/browse/${externalKey}`;
-    case import_client4.IntegrationProvider.GITHUB:
+    case import_client5.IntegrationProvider.GITHUB:
       return `${cleanBaseUrl}/issues/${externalKey}`;
-    case import_client4.IntegrationProvider.AZURE_DEVOPS:
+    case import_client5.IntegrationProvider.AZURE_DEVOPS:
       return `${cleanBaseUrl}/_workitems/edit/${externalKey}`;
-    case import_client4.IntegrationProvider.SIMPLE_URL:
+    case import_client5.IntegrationProvider.SIMPLE_URL:
       if (baseUrl.includes("{issueId}")) {
         return baseUrl.replace("{issueId}", externalKey);
       }
@@ -5993,7 +6158,6 @@ var createProjectIntegrations = async (tx, datasetRows, projectIdMap, integratio
 
 // workers/testmoImportWorker.ts
 var import_meta = {};
-var prisma = new import_client5.PrismaClient();
 var projectNameCache2 = /* @__PURE__ */ new Map();
 var templateNameCache2 = /* @__PURE__ */ new Map();
 var workflowNameCache2 = /* @__PURE__ */ new Map();
@@ -6124,9 +6288,9 @@ var s3Client = new import_client_s3.S3Client({
   // Retry transient network errors
 });
 var FINAL_STATUSES = /* @__PURE__ */ new Set(["COMPLETED", "FAILED", "CANCELED"]);
-var VALID_APPLICATION_AREAS = new Set(Object.values(import_client5.ApplicationArea));
-var VALID_WORKFLOW_TYPES = new Set(Object.values(import_client5.WorkflowType));
-var VALID_WORKFLOW_SCOPES = new Set(Object.values(import_client5.WorkflowScope));
+var VALID_APPLICATION_AREAS = new Set(Object.values(import_client6.ApplicationArea));
+var VALID_WORKFLOW_TYPES = new Set(Object.values(import_client6.WorkflowType));
+var VALID_WORKFLOW_SCOPES = new Set(Object.values(import_client6.WorkflowScope));
 var SYSTEM_NAME_REGEX2 = /^[A-Za-z][A-Za-z0-9_]*$/;
 var DEFAULT_STATUS_COLOR_HEX = "#B1B2B3";
 var MAX_INT_32 = 2147483647;
@@ -6883,12 +7047,12 @@ async function importUsers(tx, configuration, importJob) {
     created: 0,
     mapped: 0
   };
-  const validAccessValues = new Set(Object.values(import_client5.Access));
+  const validAccessValues = new Set(Object.values(import_client6.Access));
   const resolveAccess = (value) => {
     if (value && validAccessValues.has(value)) {
       return value;
     }
-    return import_client5.Access.USER;
+    return import_client6.Access.USER;
   };
   const ensureRoleExists = async (roleId) => {
     const role = await tx.roles.findUnique({ where: { id: roleId } });
@@ -7018,7 +7182,7 @@ var importProjects = async (tx, datasetRows, importJob, userIdMap, statusIdMap, 
     where: {
       isDefault: true,
       isDeleted: false,
-      scope: import_client5.WorkflowScope.CASES
+      scope: import_client6.WorkflowScope.CASES
     },
     select: { id: true }
   });
@@ -7337,7 +7501,7 @@ var importSessions = async (tx, datasetRows, projectIdMap, milestoneIdMap, confi
   });
   const defaultWorkflowState = await tx.workflows.findFirst({
     where: {
-      scope: import_client5.WorkflowScope.SESSIONS,
+      scope: import_client6.WorkflowScope.SESSIONS,
       isDeleted: false
     },
     select: { id: true }
@@ -7912,7 +8076,7 @@ var importRepositories = async (tx, datasetRows, projectIdMap, context, persistP
     masterRepositoryIds
   };
 };
-var importRepositoryFolders = async (datasetRows, projectIdMap, repositoryIdMap, canonicalRepoIdByProject, importJob, userIdMap, context, persistProgress) => {
+var importRepositoryFolders = async (prisma2, datasetRows, projectIdMap, repositoryIdMap, canonicalRepoIdByProject, importJob, userIdMap, context, persistProgress) => {
   const folderRows = datasetRows.get("repository_folders") ?? [];
   const summary = {
     entity: "repositoryFolders",
@@ -7966,7 +8130,7 @@ var importRepositoryFolders = async (datasetRows, projectIdMap, repositoryIdMap,
   const ensureRepositoryFor = async (repoSourceId, projectId) => {
     let repositoryId = repositoryIdMap.get(repoSourceId);
     if (!repositoryId) {
-      const repository = await prisma.repositories.create({
+      const repository = await prisma2.repositories.create({
         data: { projectId }
       });
       repositoryId = repository.id;
@@ -8077,7 +8241,7 @@ var importRepositoryFolders = async (datasetRows, projectIdMap, repositoryIdMap,
         record.created_by
       );
       const createdAt = toDateValue(record.created_at) ?? /* @__PURE__ */ new Date();
-      const transactionResult = await prisma.$transaction(
+      const transactionResult = await prisma2.$transaction(
         async (tx) => {
           const existing = await tx.repositoryFolders.findFirst({
             where: {
@@ -8146,7 +8310,7 @@ var importRepositoryFolders = async (datasetRows, projectIdMap, repositoryIdMap,
   processingFolders.clear();
   return { summary, folderIdMap, repositoryRootFolderMap };
 };
-var importRepositoryCases = async (datasetRows, projectIdMap, repositoryIdMap, canonicalRepoIdByProject, folderIdMap, repositoryRootFolderMap, templateIdMap, templateNameMap, workflowIdMap, userIdMap, caseFieldMap, testmoFieldValueMap, configuration, importJob, context, persistProgress) => {
+var importRepositoryCases = async (prisma2, datasetRows, projectIdMap, repositoryIdMap, canonicalRepoIdByProject, folderIdMap, repositoryRootFolderMap, templateIdMap, templateNameMap, workflowIdMap, userIdMap, caseFieldMap, testmoFieldValueMap, configuration, importJob, context, persistProgress) => {
   const caseRows = datasetRows.get("repository_cases") ?? [];
   const caseValuesRows = datasetRows.get("repository_case_values") ?? [];
   const multiSelectValuesByCaseAndField = /* @__PURE__ */ new Map();
@@ -8258,12 +8422,12 @@ var importRepositoryCases = async (datasetRows, projectIdMap, repositoryIdMap, c
   }
   initializeEntityProgress(context, "repositoryCases", canonicalCaseCount);
   let processedSinceLastPersist = 0;
-  const defaultTemplate = await prisma.templates.findFirst({
+  const defaultTemplate = await prisma2.templates.findFirst({
     where: { isDefault: true },
     select: { id: true }
   });
-  const defaultCaseWorkflow = await prisma.workflows.findFirst({
-    where: { scope: import_client5.WorkflowScope.CASES, isDefault: true },
+  const defaultCaseWorkflow = await prisma2.workflows.findFirst({
+    where: { scope: import_client6.WorkflowScope.CASES, isDefault: true },
     select: { id: true }
   });
   const fallbackCreator = importJob.createdById;
@@ -8272,7 +8436,7 @@ var importRepositoryCases = async (datasetRows, projectIdMap, repositoryIdMap, c
     const uniqueCaseFieldIds = Array.from(
       new Set(Array.from(caseFieldMap.values()))
     );
-    const caseFieldRecords = await prisma.caseFields.findMany({
+    const caseFieldRecords = await prisma2.caseFields.findMany({
       where: {
         id: {
           in: uniqueCaseFieldIds
@@ -8326,7 +8490,7 @@ var importRepositoryCases = async (datasetRows, projectIdMap, repositoryIdMap, c
     if (records.length === 0) {
       return;
     }
-    await prisma.$transaction(
+    await prisma2.$transaction(
       async (tx) => {
         for (const record of records) {
           const caseSourceId = toNumberValue(record.id);
@@ -8831,7 +8995,7 @@ var importRepositoryCases = async (datasetRows, projectIdMap, repositoryIdMap, c
               data: caseFieldValuesForVersion.map((fieldValue) => ({
                 versionId: caseVersion.id,
                 field: fieldValue.field.displayName || fieldValue.field.systemName,
-                value: fieldValue.value ?? import_client5.Prisma.JsonNull
+                value: fieldValue.value ?? import_client6.Prisma.JsonNull
               }))
             });
           }
@@ -8911,7 +9075,7 @@ Field: ${fieldName}`);
       }
     }
     if (assignmentRows.length > 0) {
-      await prisma.templateProjectAssignment.createMany({
+      await prisma2.templateProjectAssignment.createMany({
         data: assignmentRows,
         skipDuplicates: true
       });
@@ -9085,7 +9249,7 @@ var importTestRuns = async (tx, datasetRows, projectIdMap, _canonicalRepoIdByPro
   }
   return { summary, testRunIdMap };
 };
-var importTestRunCases = async (datasetRows, testRunIdMap, caseIdMap, caseMetaMap, userIdMap, statusIdMap, context, persistProgress) => {
+var importTestRunCases = async (prisma2, datasetRows, testRunIdMap, caseIdMap, caseMetaMap, userIdMap, statusIdMap, context, persistProgress) => {
   const runTestRows = datasetRows.get("run_tests") ?? [];
   const entityName = "testRunCases";
   const summary = {
@@ -9135,7 +9299,7 @@ var importTestRunCases = async (datasetRows, testRunIdMap, caseIdMap, caseMetaMa
     const statusMessage = `Processing test run case imports (${processed.toLocaleString()} / ${totalForStatus.toLocaleString()} cases processed)`;
     await persistProgress(entityName, statusMessage);
   };
-  const completedStatusRecords = await prisma.status.findMany({
+  const completedStatusRecords = await prisma2.status.findMany({
     select: { id: true, isCompleted: true }
   });
   const completedStatusIds = /* @__PURE__ */ new Set();
@@ -9201,7 +9365,7 @@ var importTestRunCases = async (datasetRows, testRunIdMap, caseIdMap, caseMetaMa
       if (!repositoryCaseId && caseSourceId !== null) {
         const meta = caseMetaMap.get(caseSourceId);
         if (meta) {
-          const fallbackCase = await prisma.repositoryCases.findFirst({
+          const fallbackCase = await prisma2.repositoryCases.findFirst({
             where: {
               projectId: meta.projectId,
               name: meta.name,
@@ -9260,7 +9424,7 @@ var importTestRunCases = async (datasetRows, testRunIdMap, caseIdMap, caseMetaMa
       });
     }
     if (mappedRecords.length > 0) {
-      const { createResult, persistedPairs } = await prisma.$transaction(
+      const { createResult, persistedPairs } = await prisma2.$transaction(
         async (tx) => {
           const createResult2 = await tx.testRunCases.createMany({
             data: mappedRecords.map((item) => item.data),
@@ -9332,7 +9496,7 @@ var importTestRunCases = async (datasetRows, testRunIdMap, caseIdMap, caseMetaMa
   await reportProgress(true);
   return { summary, testRunCaseIdMap };
 };
-var importTestRunResults = async (datasetRows, testRunIdMap, testRunCaseIdMap, statusIdMap, userIdMap, resultFieldMap, importJob, context, persistProgress) => {
+var importTestRunResults = async (prisma2, datasetRows, testRunIdMap, testRunCaseIdMap, statusIdMap, userIdMap, resultFieldMap, importJob, context, persistProgress) => {
   const resultRows = datasetRows.get("run_results") ?? [];
   datasetRows.delete("run_results");
   const summary = {
@@ -9356,7 +9520,7 @@ var importTestRunResults = async (datasetRows, testRunIdMap, testRunCaseIdMap, s
     );
     return { summary, testRunResultIdMap };
   }
-  const untestedStatus = await prisma.status.findFirst({
+  const untestedStatus = await prisma2.status.findFirst({
     where: { systemName: "untested" },
     select: { id: true }
   });
@@ -9372,7 +9536,7 @@ var importTestRunResults = async (datasetRows, testRunIdMap, testRunCaseIdMap, s
     if (records.length === 0) {
       return;
     }
-    await prisma.$transaction(
+    await prisma2.$transaction(
       async (tx) => {
         for (const record of records) {
           const resultSourceId = toNumberValue(record.id);
@@ -9527,7 +9691,7 @@ var importTestRunResults = async (datasetRows, testRunIdMap, testRunCaseIdMap, s
   clearTipTapCache();
   return { summary, testRunResultIdMap };
 };
-var importTestRunStepResults = async (datasetRows, testRunResultIdMap, testRunCaseIdMap, statusIdMap, _caseIdMap, importJob, context, persistProgress) => {
+var importTestRunStepResults = async (prisma2, datasetRows, testRunResultIdMap, testRunCaseIdMap, statusIdMap, _caseIdMap, importJob, context, persistProgress) => {
   const entityName = "testRunStepResults";
   const stepResultRows = datasetRows.get("run_result_steps") ?? [];
   const summary = {
@@ -9581,7 +9745,7 @@ var importTestRunStepResults = async (datasetRows, testRunResultIdMap, testRunCa
     return (async function* () {
       let nextRowIndex = 0;
       while (true) {
-        const stagedRows = await prisma.testmoImportStaging.findMany({
+        const stagedRows = await prisma2.testmoImportStaging.findMany({
           where: {
             jobId: context.jobId,
             datasetName: "run_result_steps",
@@ -9625,7 +9789,7 @@ var importTestRunStepResults = async (datasetRows, testRunResultIdMap, testRunCa
     if (uniqueIds.length === 0) {
       return;
     }
-    const cases = await prisma.testRunCases.findMany({
+    const cases = await prisma2.testRunCases.findMany({
       where: { id: { in: uniqueIds } },
       select: { id: true, repositoryCaseId: true }
     });
@@ -9643,7 +9807,7 @@ var importTestRunStepResults = async (datasetRows, testRunResultIdMap, testRunCa
       }
     }
   };
-  const untestedStatus = await prisma.status.findFirst({
+  const untestedStatus = await prisma2.status.findFirst({
     where: { systemName: "untested" },
     select: { id: true }
   });
@@ -9711,7 +9875,7 @@ var importTestRunStepResults = async (datasetRows, testRunResultIdMap, testRunCa
       }
       const stepPayload = stepContent ? convertToTipTapJsonValue(stepContent) : null;
       const expectedPayload = expectedResultContent ? convertToTipTapJsonValue(expectedResultContent) : null;
-      const createdStep = await prisma.steps.create({
+      const createdStep = await prisma2.steps.create({
         data: {
           testCaseId: repositoryCaseId,
           order: displayOrder,
@@ -9724,7 +9888,7 @@ var importTestRunStepResults = async (datasetRows, testRunResultIdMap, testRunCa
       const comment = toStringValue2(record.comment);
       const elapsed = toNumberValue(record.elapsed);
       try {
-        await prisma.testRunStepResults.create({
+        await prisma2.testRunStepResults.create({
           data: {
             testRunResultId: resultId,
             stepId: createdStep.id,
@@ -9891,7 +10055,7 @@ async function importStatuses(tx, configuration) {
         }
       });
     } catch (error) {
-      if (error instanceof import_client5.Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      if (error instanceof import_client6.Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
         const duplicate = await tx.status.findFirst({
           where: {
             OR: [{ name }, { systemName }],
@@ -9928,7 +10092,7 @@ async function importStatuses(tx, configuration) {
   }
   return summary;
 }
-async function processImportMode(importJob, jobId) {
+async function processImportMode(importJob, jobId, prisma2, tenantId) {
   if (FINAL_STATUSES.has(importJob.status)) {
     return { status: importJob.status };
   }
@@ -9940,7 +10104,7 @@ async function processImportMode(importJob, jobId) {
   const normalizedConfiguration = normalizeMappingConfiguration(
     importJob.configuration
   );
-  const datasetRecords = await prisma.testmoImportDataset.findMany({
+  const datasetRecords = await prisma2.testmoImportDataset.findMany({
     where: { jobId },
     select: {
       name: true,
@@ -9973,7 +10137,7 @@ async function processImportMode(importJob, jobId) {
       return data;
     };
     try {
-      const stagedRows = await prisma.testmoImportStaging.findMany({
+      const stagedRows = await prisma2.testmoImportStaging.findMany({
         where: {
           jobId,
           datasetName
@@ -9997,7 +10161,7 @@ async function processImportMode(importJob, jobId) {
         context,
         `Error loading ${datasetName} in single batch, trying batched approach: ${error}`
       );
-      const totalCount = await prisma.testmoImportStaging.count({
+      const totalCount = await prisma2.testmoImportStaging.count({
         where: {
           jobId,
           datasetName
@@ -10007,7 +10171,7 @@ async function processImportMode(importJob, jobId) {
       const allRows = [];
       for (let offset = 0; offset < totalCount; offset += batchSize) {
         try {
-          const stagedRows = await prisma.testmoImportStaging.findMany({
+          const stagedRows = await prisma2.testmoImportStaging.findMany({
             where: {
               jobId,
               datasetName
@@ -10107,7 +10271,7 @@ async function processImportMode(importJob, jobId) {
       if (statusMessage) {
         data.statusMessage = statusMessage;
       }
-      await prisma.testmoImportJob.update({
+      await prisma2.testmoImportJob.update({
         where: { id: jobId },
         data
       });
@@ -10120,7 +10284,7 @@ async function processImportMode(importJob, jobId) {
     }
   };
   const importStart = /* @__PURE__ */ new Date();
-  await prisma.testmoImportJob.update({
+  await prisma2.testmoImportJob.update({
     where: { id: jobId },
     data: {
       status: "RUNNING",
@@ -10140,7 +10304,7 @@ async function processImportMode(importJob, jobId) {
   });
   try {
     const withTransaction = async (operation, options) => {
-      return prisma.$transaction(operation, {
+      return prisma2.$transaction(operation, {
         timeout: options?.timeoutMs ?? IMPORT_TRANSACTION_TIMEOUT_MS,
         maxWait: IMPORT_TRANSACTION_MAX_WAIT_MS
       });
@@ -10513,6 +10677,7 @@ async function processImportMode(importJob, jobId) {
       datasetRowsByName.set("repository_folders", filtered);
     }
     const folderImport = await importRepositoryFolders(
+      prisma2,
       datasetRowsByName,
       projectImport.projectIdMap,
       repositoryImport.repositoryIdMap,
@@ -10570,6 +10735,7 @@ async function processImportMode(importJob, jobId) {
       datasetRowsByName.set("repository_case_values", filteredCaseValues);
     }
     const caseImport = await importRepositoryCases(
+      prisma2,
       datasetRowsByName,
       projectImport.projectIdMap,
       repositoryImport.repositoryIdMap,
@@ -10635,7 +10801,7 @@ async function processImportMode(importJob, jobId) {
       );
     }
     const automationCaseImport = await importAutomationCases(
-      prisma,
+      prisma2,
       normalizedConfiguration,
       datasetRowsByName,
       projectImport.projectIdMap,
@@ -10670,7 +10836,7 @@ async function processImportMode(importJob, jobId) {
       );
     }
     const automationRunImport = await importAutomationRuns(
-      prisma,
+      prisma2,
       normalizedConfiguration,
       datasetRowsByName,
       projectImport.projectIdMap,
@@ -10704,7 +10870,7 @@ async function processImportMode(importJob, jobId) {
       );
     }
     const automationRunTestImport = await importAutomationRunTests(
-      prisma,
+      prisma2,
       normalizedConfiguration,
       datasetRowsByName,
       projectImport.projectIdMap,
@@ -10745,7 +10911,7 @@ async function processImportMode(importJob, jobId) {
       );
     }
     const automationRunFieldsImport = await importAutomationRunFields(
-      prisma,
+      prisma2,
       normalizedConfiguration,
       datasetRowsByName,
       projectImport.projectIdMap,
@@ -10775,7 +10941,7 @@ async function processImportMode(importJob, jobId) {
       );
     }
     const automationRunLinksImport = await importAutomationRunLinks(
-      prisma,
+      prisma2,
       normalizedConfiguration,
       datasetRowsByName,
       projectImport.projectIdMap,
@@ -10801,7 +10967,7 @@ async function processImportMode(importJob, jobId) {
       "Processing automation run test fields"
     );
     const automationRunTestFieldsImport = await importAutomationRunTestFields(
-      prisma,
+      prisma2,
       normalizedConfiguration,
       datasetRowsByName,
       projectImport.projectIdMap,
@@ -10833,7 +10999,7 @@ async function processImportMode(importJob, jobId) {
       );
     }
     const automationRunTagsImport = await importAutomationRunTags(
-      prisma,
+      prisma2,
       normalizedConfiguration,
       datasetRowsByName,
       automationRunImport.testRunIdMap,
@@ -10933,6 +11099,7 @@ async function processImportMode(importJob, jobId) {
       );
     }
     const testRunCaseImport = await importTestRunCases(
+      prisma2,
       datasetRowsByName,
       testRunImport.testRunIdMap,
       caseImport.caseIdMap,
@@ -10983,6 +11150,7 @@ async function processImportMode(importJob, jobId) {
       mergedTestRunCaseIdMap.set(testmoId, testRunCaseId);
     }
     const testRunResultImport = await importTestRunResults(
+      prisma2,
       datasetRowsByName,
       testRunImport.testRunIdMap,
       mergedTestRunCaseIdMap,
@@ -11005,6 +11173,7 @@ async function processImportMode(importJob, jobId) {
       "Processing test run step results"
     );
     const stepResultsSummary = await importTestRunStepResults(
+      prisma2,
       datasetRowsByName,
       testRunResultImport.testRunResultIdMap,
       mergedTestRunCaseIdMap,
@@ -11118,7 +11287,7 @@ async function processImportMode(importJob, jobId) {
       );
     }
     const repositoryCaseIssuesSummary = await importRepositoryCaseIssues(
-      prisma,
+      prisma2,
       datasetRowsByName,
       caseImport.caseIdMap,
       issuesImport.issueIdMap,
@@ -11147,7 +11316,7 @@ async function processImportMode(importJob, jobId) {
       );
     }
     const runIssuesSummary = await importRunIssues(
-      prisma,
+      prisma2,
       datasetRowsByName,
       testRunImport.testRunIdMap,
       issuesImport.issueIdMap,
@@ -11173,7 +11342,7 @@ async function processImportMode(importJob, jobId) {
       );
     }
     const runResultIssuesSummary = await importRunResultIssues(
-      prisma,
+      prisma2,
       datasetRowsByName,
       testRunResultImport.testRunResultIdMap,
       issuesImport.issueIdMap,
@@ -11202,7 +11371,7 @@ async function processImportMode(importJob, jobId) {
       );
     }
     const sessionIssuesSummary = await importSessionIssues(
-      prisma,
+      prisma2,
       datasetRowsByName,
       sessionImport.sessionIdMap,
       issuesImport.issueIdMap,
@@ -11231,7 +11400,7 @@ async function processImportMode(importJob, jobId) {
       );
     }
     const sessionResultIssuesSummary = await importSessionResultIssues(
-      prisma,
+      prisma2,
       datasetRowsByName,
       sessionResultsImport.sessionResultIdMap,
       issuesImport.issueIdMap,
@@ -11264,7 +11433,7 @@ async function processImportMode(importJob, jobId) {
       totalTimeMs
     });
     await persistProgress(null, "Import completed successfully.");
-    const updatedJob = await prisma.testmoImportJob.update({
+    const updatedJob = await prisma2.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "COMPLETED",
@@ -11293,7 +11462,8 @@ async function processImportMode(importJob, jobId) {
         );
         const reindexJobData = {
           entityType: "all",
-          userId: importJob.createdById
+          userId: importJob.createdById,
+          tenantId
         };
         await elasticsearchReindexQueue.add(
           `reindex-after-import-${jobId}`,
@@ -11330,7 +11500,7 @@ async function processImportMode(importJob, jobId) {
     const serializedConfiguration = serializeMappingConfiguration(
       normalizedConfiguration
     );
-    await prisma.testmoImportJob.update({
+    await prisma2.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "FAILED",
@@ -11354,7 +11524,17 @@ async function processor(job) {
   if (!jobId) {
     throw new Error("Job id is required");
   }
-  const importJob = await prisma.testmoImportJob.findUnique({
+  validateMultiTenantJobData(job.data);
+  const prisma2 = getPrismaClientForJob(job.data);
+  projectNameCache2.clear();
+  templateNameCache2.clear();
+  workflowNameCache2.clear();
+  configurationNameCache.clear();
+  milestoneNameCache.clear();
+  userNameCache2.clear();
+  folderNameCache2.clear();
+  clearAutomationImportCaches();
+  const importJob = await prisma2.testmoImportJob.findUnique({
     where: { id: jobId }
   });
   if (!importJob) {
@@ -11364,7 +11544,7 @@ async function processor(job) {
     return { status: importJob.status };
   }
   if (mode === "import") {
-    return processImportMode(importJob, jobId);
+    return processImportMode(importJob, jobId, prisma2, job.data.tenantId);
   }
   if (mode !== "analyze") {
     throw new Error(`Unsupported Testmo import job mode: ${mode}`);
@@ -11377,7 +11557,7 @@ async function processor(job) {
     throw new Error("Storage key missing on import job");
   }
   if (importJob.cancelRequested) {
-    await prisma.testmoImportJob.update({
+    await prisma2.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "CANCELED",
@@ -11388,8 +11568,8 @@ async function processor(job) {
     });
     return { status: "CANCELED" };
   }
-  await prisma.testmoImportDataset.deleteMany({ where: { jobId } });
-  await prisma.testmoImportJob.update({
+  await prisma2.testmoImportDataset.deleteMany({ where: { jobId } });
+  await prisma2.testmoImportJob.update({
     where: { id: jobId },
     data: {
       status: "RUNNING",
@@ -11410,7 +11590,7 @@ async function processor(job) {
   console.log(
     `[Worker] Downloading file to temporary location: ${tempFilePath}`
   );
-  await prisma.testmoImportJob.update({
+  await prisma2.testmoImportJob.update({
     where: { id: jobId },
     data: {
       statusMessage: "Preparing data..."
@@ -11437,7 +11617,7 @@ async function processor(job) {
     console.log(`[Worker] Streaming file from S3 to disk...`);
     await pipeline(s3Stream, tempFileStream);
     console.log(`[Worker] Download complete. File saved to ${tempFilePath}`);
-    await prisma.testmoImportJob.update({
+    await prisma2.testmoImportJob.update({
       where: { id: jobId },
       data: {
         statusMessage: "Download complete. Starting analysis..."
@@ -11492,7 +11672,7 @@ async function processor(job) {
     console.log(
       `[Worker] Progress update: ${percentage}% (${bytesRead}/${totalBytes} bytes)${etaDisplay}`
     );
-    await prisma.testmoImportJob.update({
+    await prisma2.testmoImportJob.update({
       where: { id: jobId },
       data: {
         statusMessage: `Scanning file... ${percentage}% complete`,
@@ -11506,12 +11686,12 @@ async function processor(job) {
     }
     processedDatasets += 1;
     processedRows += BigInt(dataset.rowCount);
-    const schemaValue = dataset.schema !== void 0 && dataset.schema !== null ? JSON.parse(JSON.stringify(dataset.schema)) : import_client5.Prisma.JsonNull;
+    const schemaValue = dataset.schema !== void 0 && dataset.schema !== null ? JSON.parse(JSON.stringify(dataset.schema)) : import_client6.Prisma.JsonNull;
     const sampleRowsValue = dataset.sampleRows.length > 0 ? JSON.parse(
       JSON.stringify(dataset.sampleRows)
-    ) : import_client5.Prisma.JsonNull;
-    const allRowsValue = dataset.allRows && dataset.allRows.length > 0 ? JSON.parse(JSON.stringify(dataset.allRows)) : import_client5.Prisma.JsonNull;
-    await prisma.testmoImportDataset.create({
+    ) : import_client6.Prisma.JsonNull;
+    const allRowsValue = dataset.allRows && dataset.allRows.length > 0 ? JSON.parse(JSON.stringify(dataset.allRows)) : import_client6.Prisma.JsonNull;
+    await prisma2.testmoImportDataset.create({
       data: {
         jobId,
         name: dataset.name,
@@ -11523,7 +11703,7 @@ async function processor(job) {
         allRows: allRowsValue
       }
     });
-    const updatedJob = await prisma.testmoImportJob.update({
+    const updatedJob = await prisma2.testmoImportJob.update({
       where: { id: jobId },
       data: {
         processedDatasets,
@@ -11537,13 +11717,13 @@ async function processor(job) {
     cancelRequested = updatedJob.cancelRequested;
   };
   try {
-    const summary = await analyzeTestmoExport(bodyStream, jobId, prisma, {
+    const summary = await analyzeTestmoExport(bodyStream, jobId, prisma2, {
       onDatasetComplete: handleDatasetComplete,
       onProgress: handleProgress,
       shouldAbort: () => cancelRequested
     });
     if (cancelRequested) {
-      await prisma.testmoImportJob.update({
+      await prisma2.testmoImportJob.update({
         where: { id: jobId },
         data: {
           status: "CANCELED",
@@ -11566,7 +11746,7 @@ async function processor(job) {
         ) || 0
       }
     };
-    await prisma.testmoImportJob.update({
+    await prisma2.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "READY",
@@ -11578,8 +11758,8 @@ async function processor(job) {
         processedRows,
         durationMs: summary.meta.durationMs,
         analysisGeneratedAt: /* @__PURE__ */ new Date(),
-        configuration: import_client5.Prisma.JsonNull,
-        options: import_client5.Prisma.JsonNull,
+        configuration: import_client6.Prisma.JsonNull,
+        options: import_client6.Prisma.JsonNull,
         analysis: analysisPayload,
         processedCount: 0,
         errorCount: 0,
@@ -11588,12 +11768,12 @@ async function processor(job) {
         currentEntity: null,
         estimatedTimeRemaining: null,
         processingRate: null,
-        activityLog: import_client5.Prisma.JsonNull,
-        entityProgress: import_client5.Prisma.JsonNull
+        activityLog: import_client6.Prisma.JsonNull,
+        entityProgress: import_client6.Prisma.JsonNull
       }
     });
     if (processedDatasets === 0 && summary.meta.totalDatasets === 0) {
-      await prisma.testmoImportJob.update({
+      await prisma2.testmoImportJob.update({
         where: { id: jobId },
         data: {
           statusMessage: "Analysis complete (no datasets found)"
@@ -11603,7 +11783,7 @@ async function processor(job) {
     return { status: "READY" };
   } catch (error) {
     if (cancelRequested || error instanceof Error && error.name === "AbortError") {
-      await prisma.testmoImportJob.update({
+      await prisma2.testmoImportJob.update({
         where: { id: jobId },
         data: {
           status: "CANCELED",
@@ -11615,7 +11795,7 @@ async function processor(job) {
       return { status: "CANCELED" };
     }
     console.error(`Testmo import job ${jobId} failed`, error);
-    await prisma.testmoImportJob.update({
+    await prisma2.testmoImportJob.update({
       where: { id: jobId },
       data: {
         status: "FAILED",
@@ -11630,7 +11810,6 @@ async function processor(job) {
 async function startWorker() {
   if (isMultiTenantMode()) {
     console.log("Testmo import worker starting in MULTI-TENANT mode");
-    console.warn("WARNING: Testmo import currently only supports single-tenant mode. Multi-tenant support requires refactoring.");
   } else {
     console.log("Testmo import worker starting in SINGLE-TENANT mode");
   }
@@ -11659,7 +11838,6 @@ async function startWorker() {
   const shutdown = async () => {
     console.log("Shutting down Testmo import worker...");
     await worker.close();
-    await prisma.$disconnect();
     if (isMultiTenantMode()) {
       await disconnectAllTenantClients();
     }
