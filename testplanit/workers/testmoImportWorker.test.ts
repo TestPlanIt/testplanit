@@ -66,7 +66,10 @@ describe("testmoImportWorker multi-tenant support", () => {
       mockIsMultiTenantMode.mockReturnValue(false);
 
       // Simulate the validation logic
-      const jobData = { jobId: "test-job-123", mode: "analyze" };
+      const jobData: { jobId: string; mode: string; tenantId?: string } = {
+        jobId: "test-job-123",
+        mode: "analyze",
+      };
 
       // In single-tenant mode, validation should pass without tenantId
       expect(() => {
