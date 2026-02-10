@@ -916,7 +916,7 @@ var NotificationService = class {
     try {
       const jobData = {
         ...params,
-        tenantId: getCurrentTenantId()
+        tenantId: params.tenantId ?? getCurrentTenantId()
       };
       const job = await notificationQueue.add(JOB_CREATE_NOTIFICATION, jobData, {
         removeOnComplete: true,
@@ -965,7 +965,7 @@ var NotificationService = class {
   /**
    * Create a milestone due reminder notification
    */
-  static async createMilestoneDueNotification(userId, milestoneName, projectName, dueDate, milestoneId, projectId, isOverdue) {
+  static async createMilestoneDueNotification(userId, milestoneName, projectName, dueDate, milestoneId, projectId, isOverdue, tenantId) {
     const title = isOverdue ? "Milestone Overdue" : "Milestone Due Soon";
     const message = isOverdue ? `Milestone "${milestoneName}" in project "${projectName}" was due on ${dueDate.toLocaleDateString()}` : `Milestone "${milestoneName}" in project "${projectName}" is due on ${dueDate.toLocaleDateString()}`;
     return this.createNotification({
@@ -975,6 +975,7 @@ var NotificationService = class {
       message,
       relatedEntityId: milestoneId.toString(),
       relatedEntityType: "Milestone",
+      tenantId,
       data: {
         milestoneName,
         projectName,
@@ -1336,7 +1337,8 @@ var processor2 = async (job) => {
                 dueDate,
                 milestone.id,
                 milestone.project.id,
-                isOverdue
+                isOverdue,
+                job.data.tenantId
               );
               successCount++;
             } catch (error) {

@@ -373,7 +373,8 @@ const processor = async (job: Job) => {
                 dueDate,
                 milestone.id,
                 milestone.project.id,
-                isOverdue
+                isOverdue,
+                job.data.tenantId
               );
               successCount++;
             } catch (error) {

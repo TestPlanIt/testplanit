@@ -11,6 +11,7 @@ interface CreateNotificationParams {
   relatedEntityId?: string;
   relatedEntityType?: string;
   data?: any;
+  tenantId?: string;
 }
 
 export class NotificationService {
@@ -27,7 +28,7 @@ export class NotificationService {
     try {
       const jobData = {
         ...params,
-        tenantId: getCurrentTenantId(),
+        tenantId: params.tenantId ?? getCurrentTenantId(),
       };
 
       const job = await notificationQueue.add(JOB_CREATE_NOTIFICATION, jobData, {
@@ -102,7 +103,8 @@ export class NotificationService {
     dueDate: Date,
     milestoneId: number,
     projectId: number,
-    isOverdue: boolean
+    isOverdue: boolean,
+    tenantId?: string
   ) {
     const title = isOverdue ? "Milestone Overdue" : "Milestone Due Soon";
     const message = isOverdue
@@ -116,6 +118,7 @@ export class NotificationService {
       message,
       relatedEntityId: milestoneId.toString(),
       relatedEntityType: "Milestone",
+      tenantId,
       data: {
         milestoneName,
         projectName,
