@@ -1,6 +1,7 @@
 import { PrismaClient, WorkflowScope, ApplicationArea } from "@prisma/client";
 import { seedFieldIcons } from "./seedFieldIcons";
 import { seedTestData } from "./seedTestData";
+import { seedDemoProject } from "./seedDemoProject";
 import bcrypt from "bcrypt";
 
 export const prisma = new PrismaClient();
@@ -1621,7 +1622,10 @@ async function main() {
       );
     }
 
-    // Assign workflows to all projects
+    // Seed demo project with sample data for new users
+    await seedDemoProject();
+
+    // Assign workflows to all projects (must run after demo project is created)
     await assignWorkflowsToAllProjects();
 
     // Seed test data only when explicitly requested (e.g., E2E test setup)
