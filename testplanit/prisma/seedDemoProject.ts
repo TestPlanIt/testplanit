@@ -446,20 +446,10 @@ export async function seedDemoProject() {
           tiptapText("Login form is displayed with email and password fields")
         ),
       },
-      {
-        sharedStepGroupId: sharedStepGroup.id,
-        order: 3,
-        step: JSON.stringify(
-          tiptapText("Clear any cached sessions or cookies")
-        ),
-        expectedResult: JSON.stringify(
-          tiptapText("User is logged out and session is clean")
-        ),
-      },
     ],
   });
 
-  console.log('Created shared step group: "Login Prerequisites" (3 items)');
+  console.log('Created shared step group: "Login Prerequisites" (2 items)');
 
   // --- 5. Repository Cases ---
 
@@ -1012,7 +1002,7 @@ export async function seedDemoProject() {
   console.log("  - 3 Tags (Smoke, Regression, UI)");
   console.log("  - 3 Milestones (Sprint 1, Sprint 2, v1.0 Release)");
   console.log("  - 2 Folders (Authentication, Dashboard)");
-  console.log("  - 1 Shared Step Group (Login Prerequisites, 3 items)");
+  console.log("  - 1 Shared Step Group (Login Prerequisites, 2 items)");
   console.log(
     "  - 5 Repository Cases with steps, shared steps, and field values"
   );

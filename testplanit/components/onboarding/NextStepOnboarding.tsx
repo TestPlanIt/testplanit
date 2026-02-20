@@ -896,7 +896,7 @@ function NextStepController() {
     // Expose setCurrentStep for cross-page tour restoration
     (window as any).__setTourStep = (step: number) => {
       console.log("[Tour:Controller] __setTourStep called:", step);
-      setCurrentStep(step, 200);
+      setCurrentStep(step, 0);
     };
 
     return () => {
@@ -1195,15 +1195,28 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
         const originalStartTour = (window as any)._originalStartOnboardingTour;
         console.log("[Tour:Restore] timeout fired, originalStartTour exists:", !!originalStartTour);
         if (originalStartTour) {
-          originalStartTour(tourParam);
-          // Jump to the correct step from URL after the tour starts
           const targetStep = parseInt(stepParam || "0", 10);
-          console.log("[Tour:Restore] started tour, targetStep:", targetStep);
+          console.log("[Tour:Restore] starting tour at targetStep:", targetStep);
+
+          // Hide the tour UI while we jump to the correct step to prevent
+          // a flash of step 0 content before the target step renders
           if (targetStep > 0) {
+            const style = document.createElement("style");
+            style.id = "nextstep-restoration-hide";
+            style.textContent =
+              '[data-nextstep], [data-name="nextstep-overlay"], [data-name="nextstep-card"], [data-name="nextstep-overlay2"] { visibility: hidden !important; }';
+            document.head.appendChild(style);
+          }
+
+          originalStartTour(tourParam);
+          // Jump to the correct step immediately after starting
+          if (targetStep > 0) {
+            (window as any).__setTourStep?.(targetStep);
+            // Remove the hiding style after the step is set (setCurrentStep uses setTimeout(0))
             setTimeout(() => {
-              console.log("[Tour:Restore] setting step to:", targetStep);
-              (window as any).__setTourStep?.(targetStep);
-            }, 300);
+              const hideStyle = document.getElementById("nextstep-restoration-hide");
+              if (hideStyle) hideStyle.remove();
+            }, 50);
           }
         }
       }, 1000);
