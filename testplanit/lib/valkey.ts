@@ -20,7 +20,7 @@ const baseOptions = {
  * Accepts: "host1:port1,host2:port2,host3:port3"
  * Default port is 26379 if omitted.
  */
-function parseSentinels(
+export function parseSentinels(
   sentinelStr: string
 ): Array<{ host: string; port: number }> {
   return sentinelStr.split(",").map((entry) => {
@@ -39,7 +39,7 @@ function parseSentinels(
  * Extract the password from a Valkey/Redis URL.
  * Supports: "valkey://:password@host:port" and "redis://user:password@host:port"
  */
-function extractPasswordFromUrl(url: string): string | undefined {
+export function extractPasswordFromUrl(url: string): string | undefined {
   try {
     const redisUrl = url.replace(/^valkey:\/\//, "redis://");
     const parsed = new URL(redisUrl);
