@@ -333,6 +333,19 @@ export async function seedDemoProject() {
   }
   console.log(`Assigned ${allStatuses.length} statuses to Demo Project`);
 
+  // Assign the default template to the project
+  await prisma.templateProjectAssignment.upsert({
+    where: {
+      templateId_projectId: {
+        templateId: defaultTemplate.id,
+        projectId: demoProject.id,
+      },
+    },
+    update: {},
+    create: { templateId: defaultTemplate.id, projectId: demoProject.id },
+  });
+  console.log("Assigned Default Template to Demo Project");
+
   // Check if demo project already has data (idempotency)
   const existingCases = await prisma.repositoryCases.count({
     where: { projectId: demoProject.id, isDeleted: false },
