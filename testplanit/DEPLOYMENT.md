@@ -273,6 +273,17 @@ AWS_BUCKET_NAME="your-s3-bucket"
 # Leave AWS_ENDPOINT_URL empty for AWS S3
 ```
 
+**High Availability with Sentinel**: If using a self-managed Valkey/Redis cluster with Sentinel for automatic failover, add these variables instead of (or in addition to) `VALKEY_URL`:
+
+```bash
+VALKEY_SENTINELS="sentinel1:26379,sentinel2:26379,sentinel3:26379"
+VALKEY_SENTINEL_MASTER="mymaster"
+# VALKEY_SENTINEL_PASSWORD=""  # If sentinels require authentication
+VALKEY_URL="valkey://:your-master-password@unused-host:6379"  # Password extracted for master auth
+```
+
+Managed services like AWS ElastiCache with Multi-AZ handle failover internally -- use the standard `VALKEY_URL` with the primary endpoint.
+
 ---
 
 ## 11. Security Checklist

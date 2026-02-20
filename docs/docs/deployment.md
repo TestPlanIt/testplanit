@@ -417,12 +417,35 @@ docker exec testplanit-nginx rm /etc/nginx/maintenance.json
 
 - Workers can be scaled horizontally (multiple worker containers)
 - Valkey acts as job queue ensuring jobs are processed only once
-- Consider Valkey Cluster/Sentinel for high availability
 - For large deployments, use external managed services:
   - Amazon RDS for PostgreSQL
   - Amazon ElastiCache for Redis/Valkey
   - Amazon OpenSearch for Elasticsearch
   - Amazon S3 for file storage
+
+### High Availability with Valkey Sentinel
+
+For production environments where Valkey uptime is critical, TestPlanIt supports [Redis/Valkey Sentinel](https://redis.io/docs/latest/operate/oss_and_stack/management/sentinel/) for automatic failover. When the master goes down, Sentinel promotes a replica and the app reconnects automatically.
+
+Set these environment variables to enable Sentinel mode:
+
+```bash
+# Comma-separated list of sentinel host:port addresses
+VALKEY_SENTINELS="sentinel1:26379,sentinel2:26379,sentinel3:26379"
+
+# Master group name (default: mymaster)
+VALKEY_SENTINEL_MASTER="mymaster"
+
+# Password for sentinel instances, if required (separate from master password)
+# VALKEY_SENTINEL_PASSWORD=""
+
+# The password from VALKEY_URL is used to authenticate with the Valkey master
+VALKEY_URL="valkey://:your-master-password@unused-host:6379"
+```
+
+When `VALKEY_SENTINELS` is set, the app connects through Sentinel instead of directly. The host in `VALKEY_URL` is ignored (Sentinel discovers the master), but the password is still used to authenticate with the master instance.
+
+Managed services like **AWS ElastiCache with Multi-AZ** and **Azure Cache for Redis** handle Sentinel internally. For these, use the standard `VALKEY_URL` with the primary endpoint provided by the service -- no Sentinel configuration needed.
 
 ### Production Checklist
 
