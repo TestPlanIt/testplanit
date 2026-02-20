@@ -847,6 +847,7 @@
         "title": "Se connecter avec l'authentification unique",
         "googleOAuth": "Continuer avec Google",
         "apple": "Continuez avec Apple",
+        "microsoft": "Continuez avec Microsoft",
         "samlProvider": "Connectez-vous avec {name}",
         "magicLink": "Se connecter avec Magic Link",
         "emailLogin": "Poursuivre par courriel"
@@ -2500,7 +2501,17 @@
       }
     },
     "sso": {
-      "description": "Gérer les fournisseurs d'authentification unique",
+      "description": "Gérer les paramètres d'authentification et de sécurité",
+      "sections": {
+        "providers": {
+          "title": "Fournisseurs d'authentification",
+          "description": "Configurez la manière dont les utilisateurs peuvent se connecter à votre application."
+        },
+        "security": {
+          "title": "Sécurité",
+          "description": "Configurer les politiques de sécurité pour l'authentification"
+        }
+      },
       "globalSettings": {
         "title": "Paramètres SSO globaux",
         "googleOAuth": {
@@ -2514,6 +2525,10 @@
         "apple": {
           "title": "Connexion Apple",
           "description": "Activer ou désactiver l'authentification Apple Connect"
+        },
+        "microsoft": {
+          "title": "Authentification unique Microsoft",
+          "description": "Activer ou désactiver l'authentification Microsoft (Azure AD / Entra ID)"
         },
         "magicLink": {
           "title": "Authentification Magic Link",
@@ -2604,6 +2619,12 @@
         "appleConfigSaved": "Configuration de connexion Apple enregistrée avec succès",
         "appleConfigFailed": "Impossible d'enregistrer la configuration de connexion Apple",
         "appleUpdateFailed": "Échec de la mise à jour du fournisseur de connexion Apple",
+        "microsoftEnabled": "L'authentification unique Microsoft activée",
+        "microsoftDisabled": "L'authentification unique Microsoft désactivée",
+        "microsoftCreated": "fournisseur SSO Microsoft créé",
+        "microsoftConfigSaved": "La configuration de l'authentification unique Microsoft a été enregistrée avec succès.",
+        "microsoftConfigFailed": "Échec de l'enregistrement de la configuration SSO Microsoft",
+        "microsoftUpdateFailed": "Échec de la mise à jour du fournisseur SSO Microsoft",
         "magicLinkEnabled": "L'authentification Magic Link a été activée.",
         "magicLinkDisabled": "L'authentification Magic Link a été désactivée.",
         "magicLinkCreated": "fournisseur Magic Link créé",
@@ -2646,6 +2667,27 @@
             "step5": "Définissez l'URI de redirection autorisée sur :"
           },
           "redirectUri": "/api/auth/callback/google",
+          "validation": {
+            "bothRequired": "L'identifiant client et le secret client sont tous deux requis."
+          }
+        },
+        "microsoft": {
+          "title": "Configurer l'authentification unique Microsoft",
+          "description": "Configurez vos informations d'identification d'application Microsoft Entra ID (Azure AD). Vous pouvez les obtenir sur le portail Azure.",
+          "clientIdPlaceholder": "Votre identifiant d'application (client)",
+          "clientSecretPlaceholder": "La valeur secrète de votre client",
+          "tenantId": "Identifiant du locataire (facultatif)",
+          "tenantIdPlaceholder": "Votre identifiant d'annuaire (locataire)",
+          "tenantIdHint": "Laissez vide pour une utilisation mutualisée (« commune »). Indiquez l’identifiant de votre locataire pour limiter l’accès à votre organisation uniquement.",
+          "instructions": {
+            "title": "Pour obtenir ces identifiants :",
+            "step1": "Accédez au portail Azure (portal.azure.com)",
+            "step2": "Accédez à Microsoft Entra ID > Enregistrements d'applications",
+            "step3": "Enregistrez une nouvelle application ou sélectionnez-en une existante.",
+            "step4": "Sous « Certificats et secrets », créez un nouveau secret client.",
+            "step5": "Ajoutez l'URI de redirection suivante sous Authentification :"
+          },
+          "redirectUri": "/api/auth/callback/azure-ad",
           "validation": {
             "bothRequired": "L'identifiant client et le secret client sont tous deux requis."
           }

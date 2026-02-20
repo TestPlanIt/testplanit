@@ -21,7 +21,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShieldUser, Settings, Edit, Plus, X, Mail } from "lucide-react";
+import {
+  ShieldUser,
+  Settings,
+  Edit,
+  Plus,
+  X,
+  Mail,
+  KeyRound,
+  Shield,
+} from "lucide-react";
 import { toast } from "sonner";
 import { SsoProviderType, Access } from "@prisma/client";
 import {
@@ -100,14 +109,26 @@ export default function SSOAdminPage() {
   const [isSavingAppleConfig, setIsSavingAppleConfig] = useState(false);
   const [appleConfigured, setAppleConfigured] = useState(false);
 
+  // Microsoft configuration state
+  const [isMicrosoftConfigOpen, setIsMicrosoftConfigOpen] = useState(false);
+  const [microsoftClientId, setMicrosoftClientId] = useState("");
+  const [microsoftClientSecret, setMicrosoftClientSecret] = useState("");
+  const [microsoftTenantId, setMicrosoftTenantId] = useState("");
+  const [isSavingMicrosoftConfig, setIsSavingMicrosoftConfig] = useState(false);
+  const [microsoftConfigured, setMicrosoftConfigured] = useState(false);
+
   // Magic Link state
   const [magicLinkConfigured, setMagicLinkConfigured] = useState(false);
+
+  // Optimistic toggle state — updates immediately on click, syncs with server data
+  const [toggleState, setToggleState] = useState<Record<string, boolean>>({});
 
   // Email server configuration status
   const [isEmailServerConfigured, setIsEmailServerConfigured] = useState(true);
 
   // Email verification confirmation dialog state
-  const [showEmailVerificationConfirm, setShowEmailVerificationConfirm] = useState(false);
+  const [showEmailVerificationConfirm, setShowEmailVerificationConfirm] =
+    useState(false);
   const [isVerifyingAllUsers, setIsVerifyingAllUsers] = useState(false);
 
   // Check if Google OAuth is configured based on SSO providers data
@@ -169,6 +190,26 @@ export default function SSOAdminPage() {
     }
   }, [ssoProviders]);
 
+  // Check if Microsoft SSO is configured based on SSO providers data
+  useEffect(() => {
+    const microsoftProvider = ssoProviders?.find(
+      (p) => p.type === SsoProviderType.MICROSOFT
+    );
+
+    if (microsoftProvider?.config) {
+      const config = microsoftProvider.config as any;
+      setMicrosoftConfigured(!!(config.clientId && config.clientSecret));
+      if (config.clientId) {
+        setMicrosoftClientId(config.clientId);
+      }
+      if (config.tenantId) {
+        setMicrosoftTenantId(config.tenantId);
+      }
+    } else {
+      setMicrosoftConfigured(false);
+    }
+  }, [ssoProviders]);
+
   // Check if Magic Link is configured (requires email settings)
   useEffect(() => {
     // Fetch magic link configuration status from server
@@ -188,6 +229,29 @@ export default function SSOAdminPage() {
 
     checkMagicLinkConfig();
   }, []);
+
+  // Sync optimistic toggle state with server data
+  useEffect(() => {
+    if (ssoProviders) {
+      const serverState: Record<string, boolean> = {};
+      for (const p of ssoProviders) {
+        serverState[p.type] = p.enabled;
+      }
+      serverState.forceSso =
+        ssoProviders.some((p) => p.forceSso) || false;
+      setToggleState((prev) => ({ ...prev, ...serverState }));
+    }
+  }, [ssoProviders]);
+
+  useEffect(() => {
+    if (registrationSettings) {
+      setToggleState((prev) => ({
+        ...prev,
+        force2FANonSSO: registrationSettings.force2FANonSSO || false,
+        force2FAAllLogins: registrationSettings.force2FAAllLogins || false,
+      }));
+    }
+  }, [registrationSettings]);
 
   // Save Google OAuth configuration using ZenStack hooks
   const saveGoogleConfig = async () => {
@@ -304,19 +368,17 @@ export default function SSOAdminPage() {
   }
 
   const handleToggleGoogle = async (enabled: boolean) => {
+    setToggleState((prev) => ({ ...prev, [SsoProviderType.GOOGLE]: enabled }));
     try {
       const existingGoogle = ssoProviders?.find(
         (p) => p.type === SsoProviderType.GOOGLE
       );
 
-      // Warn user if trying to enable without configuration
       if (enabled && !googleConfigured) {
         toast.warning(t("admin.sso.messages.configureFirst"));
-        // Allow the toggle but show warning
       }
 
       if (existingGoogle) {
-        // Update existing
         await updateProvider({
           where: { id: existingGoogle.id },
           data: { enabled },
@@ -327,7 +389,6 @@ export default function SSOAdminPage() {
             : t("admin.sso.messages.googleDisabled")
         );
       } else {
-        // Create new provider (enabled or disabled)
         await createProvider({
           data: {
             name: "Google OAuth",
@@ -339,6 +400,7 @@ export default function SSOAdminPage() {
       }
       refetch();
     } catch (error) {
+      setToggleState((prev) => ({ ...prev, [SsoProviderType.GOOGLE]: !enabled }));
       toast.error(t("admin.sso.messages.googleUpdateFailed"));
     }
   };
@@ -395,19 +457,17 @@ export default function SSOAdminPage() {
   };
 
   const handleToggleApple = async (enabled: boolean) => {
+    setToggleState((prev) => ({ ...prev, [SsoProviderType.APPLE]: enabled }));
     try {
       const existingApple = ssoProviders?.find(
         (p) => p.type === SsoProviderType.APPLE
       );
 
-      // Warn user if trying to enable without configuration
       if (enabled && !appleConfigured) {
         toast.warning(t("admin.sso.messages.configureFirst"));
-        // Allow the toggle but show warning
       }
 
       if (existingApple) {
-        // Update existing
         await updateProvider({
           where: { id: existingApple.id },
           data: { enabled },
@@ -418,7 +478,6 @@ export default function SSOAdminPage() {
             : t("admin.sso.messages.appleDisabled")
         );
       } else {
-        // Create new provider (enabled or disabled)
         await createProvider({
           data: {
             name: "Apple Sign In",
@@ -430,24 +489,111 @@ export default function SSOAdminPage() {
       }
       refetch();
     } catch (error) {
+      setToggleState((prev) => ({ ...prev, [SsoProviderType.APPLE]: !enabled }));
       toast.error(t("admin.sso.messages.appleUpdateFailed"));
     }
   };
 
+  // Save Microsoft configuration using ZenStack hooks
+  const saveMicrosoftConfig = async () => {
+    if (!microsoftClientId || !microsoftClientSecret) {
+      toast.error(t("admin.sso.dialogs.microsoft.validation.bothRequired"));
+      return;
+    }
+
+    setIsSavingMicrosoftConfig(true);
+    try {
+      const config: Record<string, string> = {
+        clientId: microsoftClientId,
+        clientSecret: microsoftClientSecret,
+      };
+      if (microsoftTenantId) {
+        config.tenantId = microsoftTenantId;
+      }
+
+      const existingProvider = ssoProviders?.find(
+        (p) => p.type === SsoProviderType.MICROSOFT
+      );
+
+      if (existingProvider) {
+        await updateProvider({
+          where: { id: existingProvider.id },
+          data: { config, enabled: true },
+        });
+      } else {
+        await createProvider({
+          data: {
+            name: "Microsoft SSO",
+            type: SsoProviderType.MICROSOFT,
+            enabled: true,
+            config,
+          },
+        });
+      }
+
+      toast.success(t("admin.sso.messages.microsoftConfigSaved"));
+      setMicrosoftConfigured(true);
+      setIsMicrosoftConfigOpen(false);
+      setMicrosoftClientSecret(""); // Clear the secret from memory
+      refetch();
+    } catch (error) {
+      console.error("Failed to save Microsoft config:", error);
+      toast.error(t("admin.sso.messages.microsoftConfigFailed"));
+    } finally {
+      setIsSavingMicrosoftConfig(false);
+    }
+  };
+
+  const handleToggleMicrosoft = async (enabled: boolean) => {
+    setToggleState((prev) => ({ ...prev, [SsoProviderType.MICROSOFT]: enabled }));
+    try {
+      const existingMicrosoft = ssoProviders?.find(
+        (p) => p.type === SsoProviderType.MICROSOFT
+      );
+
+      if (enabled && !microsoftConfigured) {
+        toast.warning(t("admin.sso.messages.configureFirst"));
+      }
+
+      if (existingMicrosoft) {
+        await updateProvider({
+          where: { id: existingMicrosoft.id },
+          data: { enabled },
+        });
+        toast.success(
+          enabled
+            ? t("admin.sso.messages.microsoftEnabled")
+            : t("admin.sso.messages.microsoftDisabled")
+        );
+      } else {
+        await createProvider({
+          data: {
+            name: "Microsoft SSO",
+            type: SsoProviderType.MICROSOFT,
+            enabled,
+          },
+        });
+        toast.success(t("admin.sso.messages.microsoftCreated"));
+      }
+      refetch();
+    } catch (error) {
+      setToggleState((prev) => ({ ...prev, [SsoProviderType.MICROSOFT]: !enabled }));
+      toast.error(t("admin.sso.messages.microsoftUpdateFailed"));
+    }
+  };
+
   const handleToggleMagicLink = async (enabled: boolean) => {
+    setToggleState((prev) => ({ ...prev, [SsoProviderType.MAGIC_LINK]: enabled }));
     try {
       const existingMagicLink = ssoProviders?.find(
         (p) => p.type === SsoProviderType.MAGIC_LINK
       );
 
-      // Warn user if trying to enable without email configuration
       if (enabled && !magicLinkConfigured) {
         toast.warning(t("admin.sso.messages.configureFirst"));
-        // Allow the toggle but show warning
       }
 
       if (existingMagicLink) {
-        // Update existing
         await updateProvider({
           where: { id: existingMagicLink.id },
           data: { enabled },
@@ -458,7 +604,6 @@ export default function SSOAdminPage() {
             : t("admin.sso.messages.magicLinkDisabled")
         );
       } else {
-        // Create new provider (enabled by default as per requirements)
         await createProvider({
           data: {
             name: "Magic Link",
@@ -470,24 +615,23 @@ export default function SSOAdminPage() {
       }
       refetch();
     } catch (error) {
+      setToggleState((prev) => ({ ...prev, [SsoProviderType.MAGIC_LINK]: !enabled }));
       toast.error(t("admin.sso.messages.magicLinkUpdateFailed"));
     }
   };
 
   const handleToggleSAML = async (enabled: boolean) => {
+    setToggleState((prev) => ({ ...prev, [SsoProviderType.SAML]: enabled }));
     try {
       const existingSaml = ssoProviders?.find(
         (p) => p.type === SsoProviderType.SAML
       );
 
-      // Warn user if trying to enable without configuration
       if (enabled && !samlConfigured) {
         toast.warning(t("admin.sso.messages.configureFirst"));
-        // Allow the toggle but show warning
       }
 
       if (existingSaml) {
-        // Update existing
         await updateProvider({
           where: { id: existingSaml.id },
           data: { enabled },
@@ -498,7 +642,6 @@ export default function SSOAdminPage() {
             : t("admin.sso.messages.disabled")
         );
       } else {
-        // Create new provider (enabled or disabled)
         await createProvider({
           data: {
             name: "SAML Provider",
@@ -514,13 +657,14 @@ export default function SSOAdminPage() {
       }
       refetch();
     } catch (error) {
+      setToggleState((prev) => ({ ...prev, [SsoProviderType.SAML]: !enabled }));
       toast.error(t("admin.sso.messages.updateFailed"));
     }
   };
 
   const handleToggleForceSso = async (enabled: boolean) => {
+    setToggleState((prev) => ({ ...prev, forceSso: enabled }));
     try {
-      // Update all providers to have the same forceSso setting
       const updates =
         ssoProviders?.map((provider) =>
           updateProvider({
@@ -537,11 +681,13 @@ export default function SSOAdminPage() {
       );
       refetch();
     } catch (error) {
+      setToggleState((prev) => ({ ...prev, forceSso: !enabled }));
       toast.error(t("admin.sso.messages.forceSsoUpdateFailed"));
     }
   };
 
   const handleToggleForce2FANonSSO = async (enabled: boolean) => {
+    setToggleState((prev) => ({ ...prev, force2FANonSSO: enabled }));
     try {
       await upsertSettings({
         where: {
@@ -560,13 +706,18 @@ export default function SSOAdminPage() {
       );
       refetchSettings();
     } catch (error) {
+      setToggleState((prev) => ({ ...prev, force2FANonSSO: !enabled }));
       toast.error(t("admin.sso.messages.force2FAUpdateFailed"));
     }
   };
 
   const handleToggleForce2FAAllLogins = async (enabled: boolean) => {
+    setToggleState((prev) => ({
+      ...prev,
+      force2FAAllLogins: enabled,
+      ...(enabled ? { force2FANonSSO: true } : {}),
+    }));
     try {
-      // If enabling force 2FA for all logins, also enable for non-SSO
       const updates: { force2FAAllLogins: boolean; force2FANonSSO?: boolean } =
         {
           force2FAAllLogins: enabled,
@@ -589,6 +740,7 @@ export default function SSOAdminPage() {
       );
       refetchSettings();
     } catch (error) {
+      setToggleState((prev) => ({ ...prev, force2FAAllLogins: !enabled }));
       toast.error(t("admin.sso.messages.force2FAUpdateFailed"));
     }
   };
@@ -781,129 +933,54 @@ export default function SSOAdminPage() {
   const appleProvider = ssoProviders?.find(
     (p) => p.type === SsoProviderType.APPLE
   );
+  const microsoftProvider = ssoProviders?.find(
+    (p) => p.type === SsoProviderType.MICROSOFT
+  );
   const magicLinkProvider = ssoProviders?.find(
     (p) => p.type === SsoProviderType.MAGIC_LINK
   );
-  const globalForceSso =
-    ssoProviders?.some((provider) => provider.forceSso) || false;
+  // globalForceSso is now tracked in toggleState
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
-            <div>
-              <CardTitle
-                data-testid="sso-page-title"
-                className="items-center flex"
-              >
-                <ShieldUser className="inline mr-2 h-8 w-8" />
-                <span>{t("admin.menu.sso")}</span>
-              </CardTitle>
-              <CardDescription data-testid="sso-page-description">
-                {t("admin.sso.description")}
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
+      {/* Page Header */}
+      <div className="pt-4">
+        <h1
+          data-testid="sso-page-title"
+          className="flex items-center text-primary text-2xl md:text-4xl font-bold"
+        >
+          <ShieldUser className="inline mr-2 h-8 w-8" />
+          <span>{t("admin.menu.sso")}</span>
+        </h1>
+        <p
+          data-testid="sso-page-description"
+          className="text-muted-foreground mt-1"
+        >
+          {t("admin.sso.description")}
+        </p>
+      </div>
 
+      {/* Sign-in Providers Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <KeyRound className="inline mr-2 h-6 w-6" />
+            <span>{t("admin.sso.sections.providers.title")}</span>
+          </CardTitle>
+          <CardDescription>
+            {t("admin.sso.sections.providers.description")}
+          </CardDescription>
+        </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <Label className="text-base font-medium">
-                {t("admin.sso.globalSettings.magicLink.title")}
+                {t("admin.sso.globalSettings.googleOAuth.title")}
               </Label>
               <p className="text-sm text-muted-foreground">
-                {t("admin.sso.globalSettings.magicLink.description")}
+                {t("admin.sso.globalSettings.googleOAuth.description")}
               </p>
-              {magicLinkConfigured && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="default">
-                    {t("admin.sso.status.configured")}
-                  </Badge>
-                </div>
-              )}
-              {!magicLinkConfigured && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary">
-                    {t("admin.llm.notConfigured")}
-                  </Badge>
-                </div>
-              )}
-            </div>
-            <Switch
-              checked={magicLinkProvider?.enabled || false}
-              onCheckedChange={handleToggleMagicLink}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-base font-medium">
-                {t("admin.sso.globalSettings.forceSso.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t("admin.sso.globalSettings.forceSso.description")}
-              </p>
-            </div>
-            <Switch
-              checked={globalForceSso}
-              onCheckedChange={handleToggleForceSso}
-            />
-          </div>
-
-          {/* Two-Factor Authentication Settings */}
-          <div className="pt-4 border-t">
-            <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-              {t("auth.signin.twoFactor.title")}
-            </h4>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">
-                    {t("admin.sso.globalSettings.twoFactor.forceNonSSO.title")}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    {t(
-                      "admin.sso.globalSettings.twoFactor.forceNonSSO.description"
-                    )}
-                  </p>
-                </div>
-                <Switch
-                  checked={registrationSettings?.force2FANonSSO || false}
-                  onCheckedChange={handleToggleForce2FANonSSO}
-                  disabled={registrationSettings?.force2FAAllLogins || false}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-base font-medium">
-                    {t(
-                      "admin.sso.globalSettings.twoFactor.forceAllLogins.title"
-                    )}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    {t(
-                      "admin.sso.globalSettings.twoFactor.forceAllLogins.description"
-                    )}
-                  </p>
-                </div>
-                <Switch
-                  checked={registrationSettings?.force2FAAllLogins || false}
-                  onCheckedChange={handleToggleForce2FAAllLogins}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <Label className="text-base font-medium">
-                {t("admin.sso.globalSettings.samlProvider.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t("admin.sso.globalSettings.samlProvider.description")}
-              </p>
-              {samlProvider?.samlConfig && (
+              {googleConfigured && (
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="default">
                     {t("admin.sso.status.configured")}
@@ -911,16 +988,15 @@ export default function SSOAdminPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setIsSamlConfigOpen(true)}
+                    onClick={() => setIsGoogleConfigOpen(true)}
                     className="h-6 px-2 text-xs"
                   >
                     <Edit className="h-3 w-3" />
-                    {t("admin.integrations.table.configure")}
+                    {t("admin.integrations.editIntegration")}
                   </Button>
                 </div>
               )}
-              {((samlProvider && !samlProvider.samlConfig) ||
-                !samlProvider) && (
+              {!googleConfigured && (
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="secondary">
                     {t("admin.llm.notConfigured")}
@@ -928,7 +1004,7 @@ export default function SSOAdminPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setIsSamlConfigOpen(true)}
+                    onClick={() => setIsGoogleConfigOpen(true)}
                     className="h-6 px-2 text-xs"
                   >
                     <Settings className="h-3 w-3" />
@@ -938,8 +1014,8 @@ export default function SSOAdminPage() {
               )}
             </div>
             <Switch
-              checked={samlProvider?.enabled || false}
-              onCheckedChange={handleToggleSAML}
+              checked={toggleState[SsoProviderType.GOOGLE] || false}
+              onCheckedChange={handleToggleGoogle}
             />
           </div>
           <div className="flex items-center justify-between">
@@ -984,19 +1060,19 @@ export default function SSOAdminPage() {
               )}
             </div>
             <Switch
-              checked={appleProvider?.enabled || false}
+              checked={toggleState[SsoProviderType.APPLE] || false}
               onCheckedChange={handleToggleApple}
             />
           </div>
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <Label className="text-base font-medium">
-                {t("admin.sso.globalSettings.googleOAuth.title")}
+                {t("admin.sso.globalSettings.microsoft.title")}
               </Label>
               <p className="text-sm text-muted-foreground">
-                {t("admin.sso.globalSettings.googleOAuth.description")}
+                {t("admin.sso.globalSettings.microsoft.description")}
               </p>
-              {googleConfigured && (
+              {microsoftConfigured && (
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="default">
                     {t("admin.sso.status.configured")}
@@ -1004,15 +1080,15 @@ export default function SSOAdminPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setIsGoogleConfigOpen(true)}
+                    onClick={() => setIsMicrosoftConfigOpen(true)}
                     className="h-6 px-2 text-xs"
                   >
                     <Edit className="h-3 w-3" />
-                    {t("admin.integrations.editIntegration")}
+                    {t("admin.integrations.table.configure")}
                   </Button>
                 </div>
               )}
-              {!googleConfigured && (
+              {!microsoftConfigured && (
                 <div className="flex items-center gap-2 mt-1">
                   <Badge variant="secondary">
                     {t("admin.llm.notConfigured")}
@@ -1020,7 +1096,7 @@ export default function SSOAdminPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setIsGoogleConfigOpen(true)}
+                    onClick={() => setIsMicrosoftConfigOpen(true)}
                     className="h-6 px-2 text-xs"
                   >
                     <Settings className="h-3 w-3" />
@@ -1030,8 +1106,144 @@ export default function SSOAdminPage() {
               )}
             </div>
             <Switch
-              checked={googleProvider?.enabled || false}
-              onCheckedChange={handleToggleGoogle}
+              checked={toggleState[SsoProviderType.MICROSOFT] || false}
+              onCheckedChange={handleToggleMicrosoft}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <Label className="text-base font-medium">
+                {t("admin.sso.globalSettings.samlProvider.title")}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t("admin.sso.globalSettings.samlProvider.description")}
+              </p>
+              {samlConfigured && (
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="default">
+                    {t("admin.sso.status.configured")}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsSamlConfigOpen(true)}
+                    className="h-6 px-2 text-xs"
+                  >
+                    <Edit className="h-3 w-3" />
+                    {t("admin.integrations.table.configure")}
+                  </Button>
+                </div>
+              )}
+              {!samlConfigured && (
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="secondary">
+                    {t("admin.llm.notConfigured")}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsSamlConfigOpen(true)}
+                    className="h-6 px-2 text-xs"
+                  >
+                    <Settings className="h-3 w-3" />
+                    {t("admin.sso.status.setup")}
+                  </Button>
+                </div>
+              )}
+            </div>
+            <Switch
+              checked={toggleState[SsoProviderType.SAML] || false}
+              onCheckedChange={handleToggleSAML}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <Label className="text-base font-medium">
+                {t("admin.sso.globalSettings.magicLink.title")}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t("admin.sso.globalSettings.magicLink.description")}
+              </p>
+              {magicLinkConfigured && (
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="default">
+                    {t("admin.sso.status.configured")}
+                  </Badge>
+                </div>
+              )}
+              {!magicLinkConfigured && (
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="secondary">
+                    {t("admin.llm.notConfigured")}
+                  </Badge>
+                </div>
+              )}
+            </div>
+            <Switch
+              checked={toggleState[SsoProviderType.MAGIC_LINK] || false}
+              onCheckedChange={handleToggleMagicLink}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Security Settings Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Shield className="inline mr-2 h-6 w-6" />
+            <span>{t("admin.sso.sections.security.title")}</span>
+          </CardTitle>
+          <CardDescription>
+            {t("admin.sso.sections.security.description")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-base font-medium">
+                {t("admin.sso.globalSettings.forceSso.title")}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t("admin.sso.globalSettings.forceSso.description")}
+              </p>
+            </div>
+            <Switch
+              checked={toggleState.forceSso || false}
+              onCheckedChange={handleToggleForceSso}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-base font-medium">
+                {t("admin.sso.globalSettings.twoFactor.forceNonSSO.title")}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t(
+                  "admin.sso.globalSettings.twoFactor.forceNonSSO.description"
+                )}
+              </p>
+            </div>
+            <Switch
+              checked={toggleState.force2FANonSSO || false}
+              onCheckedChange={handleToggleForce2FANonSSO}
+              disabled={toggleState.force2FAAllLogins || false}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-base font-medium">
+                {t("admin.sso.globalSettings.twoFactor.forceAllLogins.title")}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t(
+                  "admin.sso.globalSettings.twoFactor.forceAllLogins.description"
+                )}
+              </p>
+            </div>
+            <Switch
+              checked={toggleState.force2FAAllLogins || false}
+              onCheckedChange={handleToggleForce2FAAllLogins}
             />
           </div>
         </CardContent>
@@ -1094,16 +1306,23 @@ export default function SSOAdminPage() {
                 {t("admin.sso.registration.requireEmailVerification.title")}
               </Label>
               <p className="text-sm text-muted-foreground">
-                {t("admin.sso.registration.requireEmailVerification.description")}
+                {t(
+                  "admin.sso.registration.requireEmailVerification.description"
+                )}
               </p>
               {!isEmailServerConfigured && (
-                <p className="text-sm text-amber-600 dark:text-amber-500 mt-2">
-                  {t("admin.sso.registration.requireEmailVerification.noEmailServerWarning")}
+                <p className="text-sm text-destructive mt-2">
+                  {t(
+                    "admin.sso.registration.requireEmailVerification.noEmailServerWarning"
+                  )}
                 </p>
               )}
             </div>
             <Switch
-              checked={isEmailServerConfigured && (registrationSettings?.requireEmailVerification ?? true)}
+              checked={
+                isEmailServerConfigured &&
+                (registrationSettings?.requireEmailVerification ?? true)
+              }
               onCheckedChange={handleToggleRequireEmailVerification}
               disabled={!isEmailServerConfigured}
             />
@@ -1521,23 +1740,138 @@ export default function SSOAdminPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Microsoft Configuration Dialog */}
+      <Dialog
+        open={isMicrosoftConfigOpen}
+        onOpenChange={setIsMicrosoftConfigOpen}
+      >
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>{t("admin.sso.dialogs.microsoft.title")}</DialogTitle>
+            <DialogDescription>
+              {t("admin.sso.dialogs.microsoft.description")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="microsoftClientId">
+                {t("admin.integrations.config.clientId")}
+              </Label>
+              <Input
+                id="microsoftClientId"
+                value={microsoftClientId}
+                onChange={(e) => setMicrosoftClientId(e.target.value)}
+                placeholder={t(
+                  "admin.sso.dialogs.microsoft.clientIdPlaceholder"
+                )}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="microsoftClientSecret">
+                {t("admin.integrations.config.clientSecret")}
+              </Label>
+              <Input
+                id="microsoftClientSecret"
+                type="password"
+                value={microsoftClientSecret}
+                onChange={(e) => setMicrosoftClientSecret(e.target.value)}
+                placeholder={t(
+                  "admin.sso.dialogs.microsoft.clientSecretPlaceholder"
+                )}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="microsoftTenantId">
+                {t("admin.sso.dialogs.microsoft.tenantId")}
+              </Label>
+              <Input
+                id="microsoftTenantId"
+                value={microsoftTenantId}
+                onChange={(e) => setMicrosoftTenantId(e.target.value)}
+                placeholder={t(
+                  "admin.sso.dialogs.microsoft.tenantIdPlaceholder"
+                )}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("admin.sso.dialogs.microsoft.tenantIdHint")}
+              </p>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              <p>{t("admin.sso.dialogs.microsoft.instructions.title")}</p>
+              <ol className="list-decimal ml-4 space-y-1">
+                <li>{t("admin.sso.dialogs.microsoft.instructions.step1")}</li>
+                <li>{t("admin.sso.dialogs.microsoft.instructions.step2")}</li>
+                <li>{t("admin.sso.dialogs.microsoft.instructions.step3")}</li>
+                <li>{t("admin.sso.dialogs.microsoft.instructions.step4")}</li>
+                <li>
+                  {t("admin.sso.dialogs.microsoft.instructions.step5")}{" "}
+                  <code className="bg-muted px-1 rounded">
+                    {typeof window !== "undefined"
+                      ? window.location.origin
+                      : ""}
+                    {t("admin.sso.dialogs.microsoft.redirectUri")}
+                  </code>
+                </li>
+              </ol>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsMicrosoftConfigOpen(false);
+                setMicrosoftClientSecret("");
+              }}
+              disabled={isSavingMicrosoftConfig}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              onClick={saveMicrosoftConfig}
+              disabled={
+                isSavingMicrosoftConfig ||
+                !microsoftClientId ||
+                !microsoftClientSecret
+              }
+            >
+              {isSavingMicrosoftConfig
+                ? t("common.actions.saving")
+                : t("admin.imports.testmo.mappingSaveConfiguration")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Email Verification Disable Confirmation Dialog */}
-      <Dialog open={showEmailVerificationConfirm} onOpenChange={setShowEmailVerificationConfirm}>
+      <Dialog
+        open={showEmailVerificationConfirm}
+        onOpenChange={setShowEmailVerificationConfirm}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>{t("admin.sso.dialogs.disableEmailVerification.title")}</DialogTitle>
+            <DialogTitle>
+              {t("admin.sso.dialogs.disableEmailVerification.title")}
+            </DialogTitle>
             <DialogDescription>
               {t("admin.sso.dialogs.disableEmailVerification.description")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200 font-semibold mb-2">
+            <div className="bg-muted border border-border rounded-lg p-4">
+              <p className="text-sm text-destructive font-semibold mb-2">
                 {t("admin.sso.dialogs.disableEmailVerification.warning")}
               </p>
-              <ul className="text-sm text-yellow-700 dark:text-yellow-300 list-disc list-inside space-y-1">
-                <li>{t("admin.sso.dialogs.disableEmailVerification.warningPoint1")}</li>
-                <li>{t("admin.sso.dialogs.disableEmailVerification.warningPoint2")}</li>
+              <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                <li>
+                  {t(
+                    "admin.sso.dialogs.disableEmailVerification.warningPoint1"
+                  )}
+                </li>
+                <li>
+                  {t(
+                    "admin.sso.dialogs.disableEmailVerification.warningPoint2"
+                  )}
+                </li>
               </ul>
             </div>
             <p className="text-sm text-muted-foreground">

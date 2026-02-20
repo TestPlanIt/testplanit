@@ -207,6 +207,7 @@ enum SsoProviderType {
   SAML
   APPLE
   MAGIC_LINK
+  MICROSOFT
 }
 
 enum AuthMethod {

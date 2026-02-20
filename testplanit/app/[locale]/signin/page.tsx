@@ -56,6 +56,12 @@ const AppleIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const MicrosoftIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+    <path d="M0 0h11.377v11.372H0zm12.623 0H24v11.372H12.623zM0 12.623h11.377V24H0zm12.623 0H24V24H12.623" />
+  </svg>
+);
+
 /**
  * Manually clear NextAuth session cookies via document.cookie
  * This is more reliable than signOut() when the session is corrupted
@@ -162,6 +168,10 @@ const Signin: NextPage = () => {
           // Apple Sign In credentials are configured via the admin UI
           return provider.enabled;
         }
+        if (provider.type === SsoProviderType.MICROSOFT) {
+          // Microsoft SSO credentials are configured via the admin UI
+          return provider.enabled;
+        }
         if (provider.type === SsoProviderType.MAGIC_LINK) {
           // Magic Link requires email server configuration
           return provider.enabled;
@@ -169,12 +179,13 @@ const Signin: NextPage = () => {
         return false;
       })
       .sort((a, b) => {
-        // Define sort order: Google, Apple, SAML providers, then Magic Link last
+        // Define sort order: Google, Apple, Microsoft, SAML providers, then Magic Link last
         const typeOrder = {
           [SsoProviderType.GOOGLE]: 1,
           [SsoProviderType.APPLE]: 2,
-          [SsoProviderType.SAML]: 3,
-          [SsoProviderType.MAGIC_LINK]: 4,
+          [SsoProviderType.MICROSOFT]: 3,
+          [SsoProviderType.SAML]: 4,
+          [SsoProviderType.MAGIC_LINK]: 5,
         };
 
         const orderA = typeOrder[a.type] || 999;
@@ -337,6 +348,8 @@ const Signin: NextPage = () => {
         await signIn("google", { callbackUrl });
       } else if (provider.type === SsoProviderType.APPLE) {
         await signIn("apple", { callbackUrl });
+      } else if (provider.type === SsoProviderType.MICROSOFT) {
+        await signIn("azure-ad", { callbackUrl });
       } else if (provider.type === SsoProviderType.SAML) {
         // Redirect to SAML login endpoint
         window.location.href = `/api/auth/saml/login/${provider.id}`;
@@ -515,6 +528,8 @@ const Signin: NextPage = () => {
                             <GoogleIcon className="h-4 w-4" />
                           ) : provider.type === SsoProviderType.APPLE ? (
                             <AppleIcon className="h-4 w-4" />
+                          ) : provider.type === SsoProviderType.MICROSOFT ? (
+                            <MicrosoftIcon className="h-4 w-4" />
                           ) : provider.type === SsoProviderType.MAGIC_LINK ? (
                             <Mail className="h-4 w-4" />
                           ) : (
@@ -526,11 +541,13 @@ const Signin: NextPage = () => {
                               ? t("auth.signin.sso.googleOAuth")
                               : provider.type === SsoProviderType.APPLE
                                 ? t("auth.signin.sso.apple")
-                                : provider.type === SsoProviderType.MAGIC_LINK
-                                  ? t("auth.signin.sso.magicLink")
-                                  : t("auth.signin.sso.samlProvider", {
-                                      name: provider.name,
-                                    })}
+                                : provider.type === SsoProviderType.MICROSOFT
+                                  ? t("auth.signin.sso.microsoft")
+                                  : provider.type === SsoProviderType.MAGIC_LINK
+                                    ? t("auth.signin.sso.magicLink")
+                                    : t("auth.signin.sso.samlProvider", {
+                                        name: provider.name,
+                                      })}
                         </Button>
                       ))}
                     </div>
@@ -565,6 +582,8 @@ const Signin: NextPage = () => {
                         <GoogleIcon className="h-4 w-4" />
                       ) : provider.type === SsoProviderType.APPLE ? (
                         <AppleIcon className="h-4 w-4" />
+                      ) : provider.type === SsoProviderType.MICROSOFT ? (
+                        <MicrosoftIcon className="h-4 w-4" />
                       ) : provider.type === SsoProviderType.MAGIC_LINK ? (
                         <Mail className="h-4 w-4" />
                       ) : (
@@ -576,11 +595,13 @@ const Signin: NextPage = () => {
                           ? t("auth.signin.sso.googleOAuth")
                           : provider.type === SsoProviderType.APPLE
                             ? t("auth.signin.sso.apple")
-                            : provider.type === SsoProviderType.MAGIC_LINK
-                              ? t("auth.signin.sso.magicLink")
-                              : t("auth.signin.sso.samlProvider", {
-                                  name: provider.name,
-                                })}
+                            : provider.type === SsoProviderType.MICROSOFT
+                              ? t("auth.signin.sso.microsoft")
+                              : provider.type === SsoProviderType.MAGIC_LINK
+                                ? t("auth.signin.sso.magicLink")
+                                : t("auth.signin.sso.samlProvider", {
+                                    name: provider.name,
+                                  })}
                     </Button>
                   ))}
                 </div>

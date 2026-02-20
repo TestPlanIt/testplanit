@@ -3348,6 +3348,7 @@ enum SsoProviderType {
     SAML
     APPLE
     MAGIC_LINK
+    MICROSOFT
 
     @@deny('create,update,delete', !auth())
     @@allow('read', true)

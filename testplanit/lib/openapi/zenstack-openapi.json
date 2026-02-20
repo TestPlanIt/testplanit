@@ -631,7 +631,8 @@
           "GOOGLE",
           "SAML",
           "APPLE",
-          "MAGIC_LINK"
+          "MAGIC_LINK",
+          "MICROSOFT"
         ]
       },
       "TestmoImportStatus": {

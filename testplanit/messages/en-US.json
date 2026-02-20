@@ -847,6 +847,7 @@
         "title": "Sign in with SSO",
         "googleOAuth": "Continue with Google",
         "apple": "Continue with Apple",
+        "microsoft": "Continue with Microsoft",
         "samlProvider": "Sign in with {name}",
         "magicLink": "Sign in with Magic Link",
         "emailLogin": "Continue with email"
@@ -2500,7 +2501,17 @@
       }
     },
     "sso": {
-      "description": "Manage Single Sign-On providers",
+      "description": "Manage authentication and security settings",
+      "sections": {
+        "providers": {
+          "title": "Sign-in Providers",
+          "description": "Configure how users can sign in to your application"
+        },
+        "security": {
+          "title": "Security",
+          "description": "Configure security policies for authentication"
+        }
+      },
       "globalSettings": {
         "title": "Global SSO Settings",
         "googleOAuth": {
@@ -2514,6 +2525,10 @@
         "apple": {
           "title": "Apple Sign In",
           "description": "Enable or disable Apple Sign In authentication"
+        },
+        "microsoft": {
+          "title": "Microsoft SSO",
+          "description": "Enable or disable Microsoft (Azure AD / Entra ID) authentication"
         },
         "magicLink": {
           "title": "Magic Link Authentication",
@@ -2604,6 +2619,12 @@
         "appleConfigSaved": "Apple Sign In configuration saved successfully",
         "appleConfigFailed": "Failed to save Apple Sign In configuration",
         "appleUpdateFailed": "Failed to update Apple Sign In provider",
+        "microsoftEnabled": "Microsoft SSO enabled",
+        "microsoftDisabled": "Microsoft SSO disabled",
+        "microsoftCreated": "Microsoft SSO provider created",
+        "microsoftConfigSaved": "Microsoft SSO configuration saved successfully",
+        "microsoftConfigFailed": "Failed to save Microsoft SSO configuration",
+        "microsoftUpdateFailed": "Failed to update Microsoft SSO provider",
         "magicLinkEnabled": "Magic Link authentication enabled",
         "magicLinkDisabled": "Magic Link authentication disabled",
         "magicLinkCreated": "Magic Link provider created",
@@ -2646,6 +2667,27 @@
             "step5": "Set the authorized redirect URI to:"
           },
           "redirectUri": "/api/auth/callback/google",
+          "validation": {
+            "bothRequired": "Both Client ID and Client Secret are required"
+          }
+        },
+        "microsoft": {
+          "title": "Configure Microsoft SSO",
+          "description": "Set up your Microsoft Entra ID (Azure AD) application credentials. You can obtain these from the Azure Portal.",
+          "clientIdPlaceholder": "Your Application (client) ID",
+          "clientSecretPlaceholder": "Your client secret value",
+          "tenantId": "Tenant ID (Optional)",
+          "tenantIdPlaceholder": "Your Directory (tenant) ID",
+          "tenantIdHint": "Leave empty for multi-tenant (\"common\"). Set to your specific tenant ID to restrict to your organization only.",
+          "instructions": {
+            "title": "To get these credentials:",
+            "step1": "Go to the Azure Portal (portal.azure.com)",
+            "step2": "Navigate to Microsoft Entra ID > App registrations",
+            "step3": "Register a new application or select an existing one",
+            "step4": "Under Certificates & secrets, create a new client secret",
+            "step5": "Add the following redirect URI under Authentication:"
+          },
+          "redirectUri": "/api/auth/callback/azure-ad",
           "validation": {
             "bothRequired": "Both Client ID and Client Secret are required"
           }

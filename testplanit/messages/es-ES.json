@@ -847,6 +847,7 @@
         "title": "Iniciar sesión con SSO",
         "googleOAuth": "Continuar con Google",
         "apple": "Continuar con Apple",
+        "microsoft": "Continuar con Microsoft",
         "samlProvider": "Iniciar sesión con {name}",
         "magicLink": "Inicia sesión con Magic Link",
         "emailLogin": "Continuar con el email"
@@ -2500,7 +2501,17 @@
       }
     },
     "sso": {
-      "description": "Administrar proveedores de inicio de sesión único",
+      "description": "Administrar la configuración de autenticación y seguridad",
+      "sections": {
+        "providers": {
+          "title": "Proveedores de inicio de sesión",
+          "description": "Configurar cómo los usuarios pueden iniciar sesión en su aplicación"
+        },
+        "security": {
+          "title": "Seguridad",
+          "description": "Configurar políticas de seguridad para la autenticación"
+        }
+      },
       "globalSettings": {
         "title": "Configuración global de SSO",
         "googleOAuth": {
@@ -2514,6 +2525,10 @@
         "apple": {
           "title": "Inicio de sesión de Apple",
           "description": "Habilitar o deshabilitar la autenticación de inicio de sesión de Apple"
+        },
+        "microsoft": {
+          "title": "Inicio de sesión único de Microsoft",
+          "description": "Habilitar o deshabilitar la autenticación de Microsoft (Azure AD/Entra ID)"
         },
         "magicLink": {
           "title": "Autenticación mediante enlace mágico",
@@ -2604,6 +2619,12 @@
         "appleConfigSaved": "La configuración de inicio de sesión de Apple se guardó correctamente",
         "appleConfigFailed": "No se pudo guardar la configuración de inicio de sesión de Apple",
         "appleUpdateFailed": "No se pudo actualizar el proveedor de inicio de sesión de Apple",
+        "microsoftEnabled": "Microsoft SSO habilitado",
+        "microsoftDisabled": "SSO de Microsoft deshabilitado",
+        "microsoftCreated": "Proveedor de SSO de Microsoft creado",
+        "microsoftConfigSaved": "La configuración de SSO de Microsoft se guardó correctamente",
+        "microsoftConfigFailed": "No se pudo guardar la configuración de SSO de Microsoft",
+        "microsoftUpdateFailed": "No se pudo actualizar el proveedor de SSO de Microsoft",
         "magicLinkEnabled": "Autenticación de Magic Link habilitada",
         "magicLinkDisabled": "Autenticación de Magic Link desactivada",
         "magicLinkCreated": "El proveedor Magic Link creó",
@@ -2648,6 +2669,27 @@
           "redirectUri": "/api/auth/callback/google",
           "validation": {
             "bothRequired": "Tanto el ID del cliente como el secreto del cliente son requeridos"
+          }
+        },
+        "microsoft": {
+          "title": "Configurar el SSO de Microsoft",
+          "description": "Configure las credenciales de su aplicación Microsoft Entra ID (Azure AD). Puede obtenerlas en el Portal de Azure.",
+          "clientIdPlaceholder": "Su ID de aplicación (cliente)",
+          "clientSecretPlaceholder": "El valor secreto de su cliente",
+          "tenantId": "ID del inquilino (opcional)",
+          "tenantIdPlaceholder": "Su ID de directorio (inquilino)",
+          "tenantIdHint": "Déjelo en blanco para multiinquilino (\"común\"). Configure su ID de inquilino específico para restringirlo solo a su organización.",
+          "instructions": {
+            "title": "Para obtener estas credenciales:",
+            "step1": "Vaya al Portal de Azure (portal.azure.com)",
+            "step2": "Vaya a Microsoft Entra ID > Registros de aplicaciones",
+            "step3": "Registrar una nueva aplicación o seleccionar una existente",
+            "step4": "En Certificados y secretos, cree un nuevo secreto de cliente",
+            "step5": "Agregue la siguiente URI de redirección en Autenticación:"
+          },
+          "redirectUri": "/api/auth/devolución de llamada/azure-ad",
+          "validation": {
+            "bothRequired": "Se requieren tanto el ID del cliente como el secreto del cliente"
           }
         },
         "saml": {

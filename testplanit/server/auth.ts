@@ -8,6 +8,7 @@ import {
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import AppleProvider from "next-auth/providers/apple";
+import AzureADProvider from "next-auth/providers/azure-ad";
 import EmailProvider from "next-auth/providers/email";
 import jwt from "jsonwebtoken";
 
@@ -171,6 +172,18 @@ async function getDynamicProviders() {
               },
               allowDangerousEmailAccountLinking: true,
               checks: [], // Disable all checks due to form_post cookie issues with proxy
+            })
+          );
+        }
+      } else if (provider.type === "MICROSOFT" && provider.config) {
+        const config = provider.config as any;
+        if (config.clientId && config.clientSecret) {
+          providers.push(
+            AzureADProvider({
+              clientId: config.clientId,
+              clientSecret: config.clientSecret,
+              tenantId: config.tenantId || "common",
+              allowDangerousEmailAccountLinking: true,
             })
           );
         }
@@ -383,7 +396,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             return false; // Reject sign-in if user doesn't exist
           }
 
-          // For other OAuth providers (Google, Apple), if this is a new user, check domain restrictions
+          // For other OAuth providers (Google, Apple, Microsoft), if this is a new user, check domain restrictions
           if (!dbUser && user.email) {
             const isDomainAllowed = await isEmailDomainAllowed(user.email);
             if (!isDomainAllowed) {
@@ -545,6 +558,20 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             }),
           ]
         : []),
+      // Fallback Microsoft/Azure AD Provider from environment variables
+      // Only used if not configured in database
+      ...(process.env.AZURE_AD_CLIENT_ID &&
+      process.env.AZURE_AD_CLIENT_SECRET &&
+      !dynamicProviders.some((p) => p.id === "azure-ad")
+        ? [
+            AzureADProvider({
+              clientId: process.env.AZURE_AD_CLIENT_ID,
+              clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
+              tenantId: process.env.AZURE_AD_TENANT_ID || "common",
+              allowDangerousEmailAccountLinking: true,
+            }),
+          ]
+        : []),
     ] as any[],
   };
 }
@@ -645,7 +672,7 @@ export const authOptions: NextAuthOptions = {
           return false; // Reject sign-in if user doesn't exist
         }
 
-        // For other OAuth providers (Google, Apple), if this is a new user, check domain restrictions
+        // For other OAuth providers (Google, Apple, Microsoft), if this is a new user, check domain restrictions
         if (!dbUser && user.email) {
           const isDomainAllowed = await isEmailDomainAllowed(user.email);
           if (!isDomainAllowed) {
