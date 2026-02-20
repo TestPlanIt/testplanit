@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, Link } from "~/lib/navigation";
 import { usePathname } from "~/lib/navigation";
 import { useParams } from "next/navigation";
-import { useFindUniqueProjects } from "~/lib/hooks";
+import { useFindUniqueProjects, useFindManyProjects } from "~/lib/hooks";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -65,6 +65,14 @@ export const Header = () => {
     { enabled: isOnProjectPage && !!projectId }
   );
   const isDemoProject = currentProject?.name === "Demo Project";
+
+  // Reuse the same query as ProjectQuickSelector — React Query deduplicates it
+  const { data: allProjects = [] } = useFindManyProjects({
+    where: { isDeleted: false },
+    orderBy: [{ isCompleted: "asc" as const }, { name: "asc" as const }],
+    select: { id: true, name: true, iconUrl: true, isCompleted: true, isDeleted: true },
+  });
+  const demoProject = allProjects.find((p) => p.name === "Demo Project");
 
   // Fetch trial configuration from API (env vars are baked in at build time, so we need runtime fetch)
   useEffect(() => {
@@ -330,6 +338,19 @@ export const Header = () => {
                         {t("help.menu.startProjectTour")}
                       </DropdownMenuItem>
                     )
+                  )}
+                  {!isOnProjectPage && demoProject && (
+                    <DropdownMenuItem
+                      onClick={() =>
+                        router.push(
+                          `/projects/overview/${demoProject.id}?tour=demoProjectTour&step=0`
+                        )
+                      }
+                      className="cursor-pointer"
+                    >
+                      <Waypoints className="mr-2 h-4 w-4" />
+                      {t("help.menu.startDemoProjectTour")}
+                    </DropdownMenuItem>
                   )}
                   {path.includes("/admin/") && (
                     <DropdownMenuItem
