@@ -101,9 +101,11 @@ See the [roles documentation](/docs/user-guide/roles) for details.
 
 Yes, TestPlanIt supports:
 
-- **SAML 2.0** - For enterprise identity providers
-- **OAuth 2.0** - For social and corporate logins
-- **Magic links** - Passwordless email authentication
+- **Google OAuth** - Sign in with Google accounts
+- **Apple Sign In** - Sign in with Apple IDs
+- **Microsoft (Azure AD)** - Sign in with Microsoft / Azure AD accounts
+- **SAML 2.0** - For enterprise identity providers (Okta, Azure AD, OneLogin, etc.)
+- **Magic Links** - Passwordless email authentication
 
 See the [SSO configuration guide](/docs/user-guide/sso) for setup instructions.
 

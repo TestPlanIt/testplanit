@@ -183,6 +183,7 @@ The Docker Compose setup starts these containerized services:
     - **Development**: [http://localhost:3000](http://localhost:3000)
     - **Production**: [http://localhost:30000](http://localhost:30000)
     - **Default login**: `admin@example.com` / `admin` (change in production!)
+    - **Demo Project**: A pre-populated Demo Project is created during initial setup with sample test cases, test runs, sessions, milestones, and issues. Use the **Help menu > Start Demo Project Tour** for a guided walkthrough.
 
 7. **Access Additional Services (if enabled):**
     - **MinIO Console** (`with-minio`): [http://localhost:9001](http://localhost:9001)

@@ -17,7 +17,7 @@ The initial administrator account is created by the database seed script (`pnpm 
 - **Password:** The value of the `ADMIN_PASSWORD` environment variable used during seeding (defaults to `admin` if not set in your `.env`).
 
 :::tip Alternative Authentication Methods
-TestPlanIt also supports alternative authentication methods including Magic Link (passwordless email authentication), Google OAuth, Apple Sign In, and SAML 2.0. See the [Authentication documentation](./user-guide/sso.md) for setup instructions.
+TestPlanIt also supports alternative authentication methods including Magic Link (passwordless email authentication), Google OAuth, Apple Sign In, Microsoft (Azure AD), and SAML 2.0. See the [Authentication documentation](./user-guide/sso.md) for setup instructions.
 :::
 
 :::warning Important Security Note
@@ -26,7 +26,25 @@ If the initial administrator account was created with the **default** credential
 If you configured your desired admin credentials using the `ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD` variables in your `.env` file **before** the initial setup process, then the created admin account is your intended primary account, and you do not need to delete it unless you create another one later.
 :::
 
-## 2. Exploring Administration
+## 2. Explore the Demo Project
+
+After your first login, you'll find a pre-populated **Demo Project** that showcases TestPlanIt's key features with sample data. The Demo Project includes:
+
+- **Repository** with organized test cases across folders (Authentication, Dashboard)
+- **Shared Steps** demonstrating reusable step sequences
+- **Test Runs** with example results (passed, failed, blocked)
+- **Exploratory Testing Sessions** with findings
+- **Milestones** (sprints and releases)
+- **Tags** and **Issues** linked to test results
+- **Documentation** pages with a guided overview
+
+Use the **Help menu > Start Demo Project Tour** to take a guided walkthrough of the project and its features.
+
+:::tip
+The Demo Project is a great starting point for learning. When you're ready, you can delete it and create your own projects.
+:::
+
+## 3. Exploring Administration
 
 Before creating tests, you might want to familiarize yourself with the administration settings.
 
@@ -40,7 +58,7 @@ Before creating tests, you might want to familiarize yourself with the administr
 
 See the [Administration section](./user-guide/administration.md) for details.
 
-## 3. Creating Your User Account
+## 4. Creating Your User Account
 
 **(Optional: Skip this step if you configured your desired admin credentials using the `ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD` variables in your `.env` file before running the initial application setup.)**
 
@@ -59,7 +77,7 @@ If you logged in using the default initial credentials and want to create a sepa
 
 Now you are logged in as your own administrative user!
 
-## 4. Creating Your First Project
+## 5. Creating Your First Project
 
 Test cases and runs are organized within Projects.
 
@@ -71,7 +89,7 @@ Test cases and runs are organized within Projects.
 
 See [Managing Projects](./user-guide/projects.md) for more.
 
-## 5. Navigating Your Project
+## 6. Navigating Your Project
 
 Click the TestPlanIt logo or the main navigation menu to go back to the main application view.
 
@@ -88,7 +106,7 @@ From here, you can access key project areas via the left-hand sidebar:
 - **Tags:** Organize cases with tags.
 - **Documentation:** Project-specific documentation.
 
-## 6. Creating a Basic Test Case
+## 7. Creating a Basic Test Case
 
 1. Navigate to **Repository** in the project sidebar.
 2. Click **Add Test Case**.
@@ -98,7 +116,7 @@ From here, you can access key project areas via the left-hand sidebar:
 
 See the [Test Case Repository](./user-guide/projects/repository.md) guide for details.
 
-## 7. Creating a Test Run
+## 8. Creating a Test Run
 
 1. Navigate to **Runs** in the project sidebar.
 2. Click **Add Test Run**.
@@ -109,7 +127,7 @@ See the [Test Case Repository](./user-guide/projects/repository.md) guide for de
 
 See [Test Runs](./user-guide/projects/runs.md) for more.
 
-## 8. Executing the Test Run
+## 9. Executing the Test Run
 
 1. From the Test Runs list, click on the name of the run you just created ("Login Smoke Test - Week 1").
 2. You are now in the execution view.
@@ -121,7 +139,7 @@ See [Test Runs](./user-guide/projects/runs.md) for more.
 
 See [Test Case Execution](./user-guide/projects/test-case-execution.md).
 
-## 9. Viewing Results
+## 10. Viewing Results
 
 - Results are visible immediately within the **Test Run** view.
 - You can also see the history for a specific test case by navigating back to **Repository**, clicking the test case name, and viewing the **Test Result History** section at the bottom.

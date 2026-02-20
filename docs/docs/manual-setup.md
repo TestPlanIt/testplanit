@@ -61,6 +61,7 @@ The application will run without these services, but certain features will be di
     - **Add the Valkey URL:** Add `VALKEY_URL="valkey://localhost:6379"` (or the appropriate URL if your Valkey instance is running elsewhere or requires authentication) to the file. This is needed for background job processing.
     - Review other settings like `NEXTAUTH_SECRET` (generate a new secret if needed), email server details (required for Magic Link authentication and notifications), etc., and configure them according to your needs.
     - **Admin User Seeding:** The `ADMIN_EMAIL`, `ADMIN_NAME`, and `ADMIN_PASSWORD` variables are used by the `pnpm prisma db seed` command to create the initial administrator user. You can customize these values in your `.env` file if you prefer different default credentials.
+    - **Demo Project:** The seed script also creates a pre-populated Demo Project with sample test cases, test runs, sessions, milestones, tags, and issues. This helps new users explore TestPlanIt's features immediately. You can delete the Demo Project at any time from Administration > Projects.
 
 4. **Run database migrations:**
     Navigate back into the application directory (`testplanit/testplanit`) and run the Prisma migrations to create the necessary database tables:

@@ -23,7 +23,7 @@ If you do not see an option to access Admin settings, you may not have the neces
 
 **Single Sign-On (SSO) Configuration** (`/admin/sso`)
 
-- Configure Google OAuth and SAML authentication providers
+- Configure Google OAuth, Apple Sign In, Microsoft (Azure AD), and SAML authentication providers
 - Enable/disable Force SSO to require SSO authentication
 - Manage email domain restrictions for new registrations
 - Control who can register based on email domains

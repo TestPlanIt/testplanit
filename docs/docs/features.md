@@ -107,7 +107,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 
 - **Role-based access** - Define custom roles with granular permissions
 - **Groups** - Organize users into groups for easier permission management
-- **SSO support** - Integrate with your identity provider via SAML or OAuth2
+- **SSO support** - Integrate with your identity provider via SAML, Google OAuth, Apple Sign In, or Microsoft (Azure AD)
 
 ### Customization
 

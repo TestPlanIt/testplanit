@@ -34,6 +34,13 @@ TestPlanIt currently supports the following SSO providers:
 - Enabled by default
 - Automatically provisions users on first login
 
+### Microsoft (Azure AD)
+
+- Uses OAuth 2.0 for authentication with Microsoft / Azure Active Directory accounts
+- Supports single-tenant or multi-tenant configurations
+- Requires an Azure AD app registration
+- Automatically provisions users on first login
+
 ### SAML 2.0
 
 - Supports any SAML 2.0 compliant identity provider
@@ -193,6 +200,42 @@ Toggle to enable/disable Google OAuth authentication. When enabled, users can si
 8. Enter your Client ID and Client Secret
 9. Enable Google OAuth by toggling the switch
 
+#### Microsoft (Azure AD)
+
+Toggle to enable/disable Microsoft / Azure AD authentication. When enabled, users can sign in using their Microsoft accounts.
+
+**Prerequisites:**
+
+- An Azure Active Directory tenant
+- An app registration in the Azure Portal
+- Client ID and Client Secret from the app registration
+
+**Setup Steps:**
+
+1. Go to the [Azure Portal](https://portal.azure.com/)
+2. Navigate to **Azure Active Directory > App registrations > New registration**
+3. Set the redirect URI to: `https://your-domain.com/api/auth/callback/azure-ad`
+4. Under **Certificates & secrets**, create a new client secret
+5. Copy the **Application (client) ID** and **Client secret**
+6. Note your **Directory (tenant) ID** if you want to restrict access to a single tenant
+7. In TestPlanIt, go to `/admin/sso` and click "Configure" next to Microsoft
+8. Enter your Client ID and Client Secret
+9. Optionally enter a Tenant ID (leave blank for multi-tenant / "common" access)
+10. Save the configuration
+11. Enable Microsoft by toggling the switch
+
+**Alternative: Environment Variable Configuration**
+
+For deployment automation, you can also configure Microsoft SSO via environment variables:
+
+```bash
+AZURE_AD_CLIENT_ID=your-application-client-id
+AZURE_AD_CLIENT_SECRET=your-client-secret
+AZURE_AD_TENANT_ID=your-tenant-id  # Optional, defaults to "common" (multi-tenant)
+```
+
+When environment variables are set and no database-configured Microsoft provider exists, a fallback provider is created automatically.
+
 ### Registration Settings
 
 TestPlanIt provides additional controls for managing user registration and access through email domain restrictions.
@@ -208,6 +251,7 @@ The Email Domain Restrictions feature allows administrators to control which ema
   - Email/password registration
   - Google OAuth sign-in (for new users)
   - Apple Sign In (for new users)
+  - Microsoft sign-in (for new users)
   - Magic Link (for new users)
   - SAML SSO sign-in (for new users)
 - **Flexible Domain Management**: Add, remove, enable, or disable specific domains
@@ -249,7 +293,7 @@ The sign-in page behavior changes based on SSO configuration:
 - **SSO options** appear below the form after an "Or" divider
 - Users can choose between:
   - Traditional email/password login
-  - Available SSO providers (Google OAuth, Apple Sign In, Magic Link, SAML)
+  - Available SSO providers (Google OAuth, Apple Sign In, Microsoft, Magic Link, SAML)
 - Link to signup page remains visible
 
 #### Force SSO Mode (Force SSO Enabled)
@@ -351,7 +395,12 @@ When a user signs in via SSO for the first time:
    - Default user preferences are applied
    - Name is only provided on first authorization
 
-3. **SAML**:
+3. **Microsoft (Azure AD)**:
+   - User is prompted to sign in with their Microsoft account
+   - Account is automatically created with Microsoft profile information
+   - Default user preferences are applied
+
+4. **SAML**:
    - User authenticates with their identity provider
    - If auto-provisioning is enabled, account is created
    - User attributes are mapped from SAML assertion
@@ -412,6 +461,15 @@ For users with existing TestPlanIt accounts:
 - Check that Sign In with Apple capability is enabled for your Service ID
 - Ensure Apple Sign In is enabled (toggle switch is on) in the Admin UI
 - Note: Apple Sign In requires HTTPS in production
+
+#### Microsoft (Azure AD) Not Working
+
+- Verify Microsoft credentials are configured in the Admin UI at `/admin/sso` or via environment variables
+- Click "Configure" next to Microsoft to verify Client ID and Client Secret are entered
+- If using a specific tenant, verify the Tenant ID is correct
+- Ensure the redirect URI is set to: `https://your-domain.com/api/auth/callback/azure-ad` in your Azure AD app registration
+- Check that the app registration has the correct API permissions (User.Read at minimum)
+- Ensure Microsoft is enabled (toggle switch is on) in the Admin UI
 
 #### SAML Authentication Fails
 
@@ -490,6 +548,11 @@ Response:
       "name": "Apple Sign In"
     },
     {
+      "type": "MICROSOFT",
+      "enabled": true,
+      "name": "Microsoft"
+    },
+    {
       "type": "SAML",
       "enabled": true,
       "name": "Corporate SSO"
@@ -523,7 +586,7 @@ TestPlanIt supports TOTP-based two-factor authentication that can work alongside
 
 #### Force 2FA for Non-SSO Logins
 - Requires 2FA for users signing in with email/password
-- SSO logins (Google, Apple, SAML, Magic Link) are not affected
+- SSO logins (Google, Apple, Microsoft, SAML, Magic Link) are not affected
 - Useful when SSO providers handle their own MFA
 
 #### Force 2FA for All Logins

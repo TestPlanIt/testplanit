@@ -144,6 +144,25 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>Click the <strong>Share</strong> button in Report Builder to create your first share link. See the <a href="https://docs.testplanit.io/user-guide/share-links" target="_blank">documentation</a> for details.</p>
     `,
   },
+  "0.12.0": {
+    title: "New Feature: Microsoft SSO & Demo Project",
+    message: `
+      <p>This release adds <strong>Microsoft (Azure AD) Single Sign-On</strong> and a pre-populated <strong>Demo Project</strong> for new installations.</p>
+      <h4>Microsoft SSO</h4>
+      <ul>
+        <li>Sign in with Microsoft / Azure Active Directory accounts</li>
+        <li>Supports single-tenant and multi-tenant configurations</li>
+        <li>Configure via the Admin UI at <strong>Admin → SSO</strong> or environment variables</li>
+      </ul>
+      <p>See the <a href="https://docs.testplanit.io/user-guide/sso" target="_blank">SSO documentation</a> for Microsoft setup instructions.</p>
+      <h4>Demo Project</h4>
+      <ul>
+        <li>A pre-populated Demo Project showcasing all major features</li>
+        <li>Includes sample test cases, test runs, sessions, milestones, tags, and issues</li>
+        <li>Use <strong>Help → Start Demo Project Tour</strong> for a guided walkthrough</li>
+      </ul>
+    `,
+  },
 };
 
 /**
