@@ -37,7 +37,7 @@ function TourCard({
 
   return (
     <div className="relative">
-      <Card className="w-80 shadow-lg border-border bg-card text-card-foreground">
+      <Card className="w-80 shadow-lg border-border bg-card/70 text-card-foreground backdrop-blur-xs">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-semibold text-primary">
@@ -102,7 +102,11 @@ function TourCard({
 const createTourSteps = (
   t: any,
   projectId?: string,
-  options?: { canSeeSharedSteps?: boolean; canSeeReports?: boolean; canSeeSettings?: boolean }
+  options?: {
+    canSeeSharedSteps?: boolean;
+    canSeeReports?: boolean;
+    canSeeSettings?: boolean;
+  }
 ): Tour[] => [
   {
     tour: "mainTour",
@@ -924,20 +928,36 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   // Debug: listen for popstate events (NextStep closes tour on popstate)
   useEffect(() => {
     const handler = (e: PopStateEvent) => {
-      console.log("[Tour:PopState] popstate event fired!", "state:", e.state, "location:", window.location.href, "activeTour:", activeTourRef.current);
+      console.log(
+        "[Tour:PopState] popstate event fired!",
+        "state:",
+        e.state,
+        "location:",
+        window.location.href,
+        "activeTour:",
+        activeTourRef.current
+      );
       console.trace("[Tour:PopState] stack trace");
     };
     window.addEventListener("popstate", handler);
     return () => window.removeEventListener("popstate", handler);
   }, []);
 
-  // Reset active tour ref when pathname changes (cross-page navigation)
-  // This allows tour restoration to fire on the new page
+  // Track pathname changes for debugging
+  // Don't clear activeTourRef here — NextStep's MutationObserver handles
+  // cross-page step transitions natively. Clearing would cause the restoration
+  // effect to re-start the tour, causing a disappear/reappear flash.
   useEffect(() => {
     if (prevPathnameRef.current !== pathname) {
-      console.log("[Tour:Pathname] changed:", prevPathnameRef.current, "→", pathname, "| clearing activeTourRef:", activeTourRef.current);
+      console.log(
+        "[Tour:Pathname] changed:",
+        prevPathnameRef.current,
+        "→",
+        pathname,
+        "| activeTour:",
+        (window as any).__activeTour
+      );
       prevPathnameRef.current = pathname;
-      activeTourRef.current = null;
     }
   }, [pathname]);
 
@@ -995,7 +1015,11 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   // not on every searchParams update (which happens frequently on repository pages)
   const tourSteps = useMemo(
     () =>
-      createTourSteps(t, projectId, { canSeeSharedSteps, canSeeReports, canSeeSettings }),
+      createTourSteps(t, projectId, {
+        canSeeSharedSteps,
+        canSeeReports,
+        canSeeSettings,
+      }),
     [t, projectId, canSeeSharedSteps, canSeeReports, canSeeSettings]
   );
 
@@ -1083,11 +1107,20 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
   const handleStepChange = useCallback(
     (step: number, tourName: string | null) => {
-      console.log("[Tour:StepChange] step:", step, "tour:", tourName, "pathname:", pathname);
+      console.log(
+        "[Tour:StepChange] step:",
+        step,
+        "tour:",
+        tourName,
+        "pathname:",
+        pathname
+      );
 
       // Demo tour: click the first shared step group to show its steps
       if (tourName === "demoProjectTour" && step === 10) {
-        const firstGroup = document.querySelector("[data-testid^='shared-step-group-']") as HTMLElement;
+        const firstGroup = document.querySelector(
+          "[data-testid^='shared-step-group-']"
+        ) as HTMLElement;
         if (firstGroup) {
           console.log("[Tour:StepChange] clicking first shared step group");
           firstGroup.click();
@@ -1096,9 +1129,13 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
       // Demo tour: click the first folder to populate the cases table
       if (tourName === "demoProjectTour" && step === 8) {
-        const firstFolder = document.querySelector("[data-testid^='folder-node-']") as HTMLElement;
+        const firstFolder = document.querySelector(
+          "[data-testid^='folder-node-']"
+        ) as HTMLElement;
         if (firstFolder) {
-          console.log("[Tour:StepChange] clicking first folder to populate cases table");
+          console.log(
+            "[Tour:StepChange] clicking first folder to populate cases table"
+          );
           firstFolder.click();
         }
       }
@@ -1140,7 +1177,12 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
     (window as any).__tourOverrideInstalled = true;
 
     (window as any).startOnboardingTour = (tourName: string = "mainTour") => {
-      console.log("[Tour:StartOverride] called:", tourName, "pathname:", pathnameRef.current);
+      console.log(
+        "[Tour:StartOverride] called:",
+        tourName,
+        "pathname:",
+        pathnameRef.current
+      );
 
       // Set active tour reference + global flag
       activeTourRef.current = tourName;
@@ -1171,19 +1213,39 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   }, []);
 
   useEffect(() => {
-    console.log("[Tour:Effect] fired | pathname:", pathname, "| tourParam:", tourParam, "| stepParam:", stepParam, "| manualParam:", manualParam, "| activeTourRef:", activeTourRef.current);
+    console.log(
+      "[Tour:Effect] fired | pathname:",
+      pathname,
+      "| tourParam:",
+      tourParam,
+      "| stepParam:",
+      stepParam,
+      "| manualParam:",
+      manualParam,
+      "| activeTourRef:",
+      activeTourRef.current
+    );
 
     // Check if user has seen the tour before
     const hasSeenTour = localStorage.getItem("hasSeenOnboardingTour");
 
-    // Check for tour state in URL parameters (for cross-page navigation)
-    // Restore project tour or demo project tour from URL (main tour doesn't use URL navigation)
+    // Check for tour state in URL parameters (for page refresh restoration)
+    // Only restore if the tour isn't already running — NextStep's MutationObserver
+    // handles cross-page navigation natively during same-session navigation.
+    // __activeTour persists during client-side navigation but clears on page refresh.
     if (
       (tourParam === "projectTour" || tourParam === "demoProjectTour") &&
       !manualParam &&
-      activeTourRef.current !== tourParam
+      !(window as any).__activeTour
     ) {
-      console.log("[Tour:Restore] will restore tour:", tourParam, "step:", stepParam, "activeTourRef was:", activeTourRef.current);
+      console.log(
+        "[Tour:Restore] will restore tour:",
+        tourParam,
+        "step:",
+        stepParam,
+        "activeTourRef was:",
+        activeTourRef.current
+      );
 
       // Set active tour reference for restoration
       activeTourRef.current = tourParam;
@@ -1193,10 +1255,16 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
       setTimeout(() => {
         // Access the original startOnboardingTour without URL parameter override
         const originalStartTour = (window as any)._originalStartOnboardingTour;
-        console.log("[Tour:Restore] timeout fired, originalStartTour exists:", !!originalStartTour);
+        console.log(
+          "[Tour:Restore] timeout fired, originalStartTour exists:",
+          !!originalStartTour
+        );
         if (originalStartTour) {
           const targetStep = parseInt(stepParam || "0", 10);
-          console.log("[Tour:Restore] starting tour at targetStep:", targetStep);
+          console.log(
+            "[Tour:Restore] starting tour at targetStep:",
+            targetStep
+          );
 
           // Hide the tour UI while we jump to the correct step to prevent
           // a flash of step 0 content before the target step renders
@@ -1204,7 +1272,7 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
             const style = document.createElement("style");
             style.id = "nextstep-restoration-hide";
             style.textContent =
-              '[data-nextstep], [data-name="nextstep-overlay"], [data-name="nextstep-card"], [data-name="nextstep-overlay2"] { visibility: hidden !important; }';
+              '[data-name="nextstep-overlay"], [data-name="nextstep-card"], [data-name="nextstep-overlay2"] { visibility: hidden !important; }';
             document.head.appendChild(style);
           }
 
@@ -1214,7 +1282,9 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
             (window as any).__setTourStep?.(targetStep);
             // Remove the hiding style after the step is set (setCurrentStep uses setTimeout(0))
             setTimeout(() => {
-              const hideStyle = document.getElementById("nextstep-restoration-hide");
+              const hideStyle = document.getElementById(
+                "nextstep-restoration-hide"
+              );
               if (hideStyle) hideStyle.remove();
             }, 50);
           }
