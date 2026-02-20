@@ -477,7 +477,7 @@ async function seedCoreData() {
           itemsPerPage: "P10",
           dateFormat: "MM_DD_YYYY_DASH",
           timeFormat: "HH_MM_A",
-          theme: "Light",
+          theme: "Purple",
           locale: "en_US",
           hasCompletedWelcomeTour: false,
           hasCompletedInitialPreferencesSetup: false,
