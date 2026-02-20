@@ -342,7 +342,9 @@ export default function Cases({
       currentSearchParams.set("node", firstFolder.id.toString());
       currentSearchParams.set("view", "folders");
 
-      router.replace(`${pathname}?${currentSearchParams.toString()}`);
+      const newUrl = `${pathname}?${currentSearchParams.toString()}`;
+      console.log("[Cases:AutoSelect] replacing URL →", newUrl, "| tour param:", currentSearchParams.get("tour"));
+      router.replace(newUrl);
 
       // Dispatch a custom event to notify the tree component
       // Use a small timeout to ensure the URL change propagates
@@ -354,7 +356,15 @@ export default function Cases({
         );
 
         // Also dispatch a popstate event to simulate URL change
-        window.dispatchEvent(new PopStateEvent("popstate", { state: null }));
+        // Skip this if a tour is active — popstate closes the NextStep overlay
+        // Use global flag instead of URL params since navigation can strip them
+        const activeTour = (window as any).__activeTour;
+        if (!activeTour) {
+          console.log("[Cases:AutoSelect] dispatching popstate (no tour active)");
+          window.dispatchEvent(new PopStateEvent("popstate", { state: null }));
+        } else {
+          console.log("[Cases:AutoSelect] SKIPPING popstate (tour active:", activeTour, ")");
+        }
       }, 100);
     }
   }, [

@@ -4340,7 +4340,8 @@
     "menu": {
       "startTour": "Guided Welcome Tour",
       "startProjectTour": "Project Tour",
-      "startAdminTour": "Admin Tour"
+      "startAdminTour": "Admin Tour",
+      "startDemoProjectTour": "Demo Project Tour"
     },
     "tour": {
       "mainTour": {
@@ -4397,6 +4398,10 @@
           "title": "Repository Right Panel",
           "content": "The right panel displays test case details, execution results, and provides actions to create new test cases or import existing ones."
         },
+        "sharedSteps": {
+          "title": "Shared Steps",
+          "content": "Define reusable step groups that can be referenced from multiple test cases. Keep your test steps DRY and consistent."
+        },
         "testRuns": {
           "content": "Execute planned test runs, track progress, and manage test assignments across your team. View detailed execution results."
         },
@@ -4423,6 +4428,10 @@
         "reports": {
           "title": "Reports & Analytics",
           "content": "Generate comprehensive reports and analytics for your project. View test coverage, execution trends, team performance metrics, and create custom reports for stakeholders."
+        },
+        "settings": {
+          "title": "Project Settings",
+          "content": "Manage project-level integrations, AI model configurations, and shared links from here."
         }
       },
       "adminTour": {
@@ -4493,6 +4502,92 @@
         "trash": {
           "title": "System Trash",
           "content": "View and manage deleted items across all projects. Restore accidentally deleted content or permanently purge items from the system."
+        }
+      },
+      "demoProjectTour": {
+        "projectSelector": {
+          "title": "Welcome to the Demo Project",
+          "content": "This project is pre-loaded with sample data. Let's walk through the key features together. Use this dropdown to switch between projects."
+        },
+        "overview": {
+          "title": "Project Overview",
+          "content": "The overview is your project dashboard. It shows milestone progress on the left and summaries of test cases, active runs, sessions, and tags on the right."
+        },
+        "documentation": {
+          "title": "Documentation",
+          "content": "Every project has a documentation page. Use it for test plans, project notes, or links to external resources."
+        },
+        "documentationContent": {
+          "title": "Rich Text Editor",
+          "content": "Documentation supports rich text with headings, lists, links, and images. Try editing this page to see how it works."
+        },
+        "milestones": {
+          "title": "Milestones",
+          "content": "Track your testing against sprints, releases, and other goals. Link test runs and sessions to milestones for progress tracking."
+        },
+        "milestonesPage": {
+          "title": "Milestone Timeline",
+          "content": "This project has three milestones: Sprint 1 (completed), Sprint 2 (in progress), and a future v1.0 Release."
+        },
+        "repository": {
+          "title": "Test Case Repository",
+          "content": "Organize test cases in folders with custom fields, steps, and priorities. Cases here are grouped under Authentication and Dashboard."
+        },
+        "repositoryPanels": {
+          "title": "Folders & Cases",
+          "content": "The left panel shows folders. Click a folder to see its test cases. Each case has steps, descriptions, and shared step references."
+        },
+        "repositoryCases": {
+          "title": "Test Cases",
+          "content": "Here you can see the test cases for the selected folder. Each row shows the case name, priority, and custom fields. Click a case to view its full details and steps."
+        },
+        "sharedSteps": {
+          "title": "Shared Steps",
+          "content": "Define reusable step groups that can be referenced from multiple test cases. The 'Login Prerequisites' group is used across all Authentication cases."
+        },
+        "sharedStepsPage": {
+          "title": "Shared Step Groups",
+          "content": "Each group contains a set of ordered steps. Reference them from any test case to keep your steps DRY and consistent."
+        },
+        "testRuns": {
+          "title": "Test Runs",
+          "content": "Create test runs to execute cases and record results. Assign runs to milestones and track pass/fail progress."
+        },
+        "testRunsPage": {
+          "title": "Test Run Results",
+          "content": "This project has a completed Sprint 1 smoke test and an in-progress Sprint 2 regression run with mixed results."
+        },
+        "sessions": {
+          "title": "Exploratory Sessions",
+          "content": "Capture ad-hoc testing with session-based testing. Record findings, assign statuses, and track time spent."
+        },
+        "sessionsPage": {
+          "title": "Session Results",
+          "content": "Each session includes detailed findings with status and notes. Review the Login Flows session to see example results."
+        },
+        "tags": {
+          "title": "Tags",
+          "content": "Tags help organize and filter test cases, runs, and sessions. This project uses Smoke, Regression, and UI tags."
+        },
+        "tagsPage": {
+          "title": "Tag Management",
+          "content": "Create, edit, and assign tags from here. Use tags to group and filter content across your project."
+        },
+        "issues": {
+          "title": "Issues",
+          "content": "Track bugs and defects found during testing. Issues can be linked to failed test run results and session findings for full traceability."
+        },
+        "issuesPage": {
+          "title": "Issue Tracker",
+          "content": "This project has sample issues linked to failed results. BUG-1 is from a failed password reset test, and BUG-2 is from an exploratory session finding."
+        },
+        "reports": {
+          "title": "Reports & Analytics",
+          "content": "Generate reports on test coverage, execution trends, and team performance. Use pre-built reports or create custom ones for stakeholders."
+        },
+        "settings": {
+          "title": "Project Settings",
+          "content": "Manage project-level integrations, AI model configurations, and shared links from here."
         }
       }
     }

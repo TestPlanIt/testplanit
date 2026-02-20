@@ -4340,7 +4340,8 @@
     "menu": {
       "startTour": "Visita de bienvenida guiada",
       "startProjectTour": "Tour de proyecto",
-      "startAdminTour": "Visita de administración"
+      "startAdminTour": "Visita de administración",
+      "startDemoProjectTour": "Recorrido del proyecto de demostración"
     },
     "tour": {
       "mainTour": {
@@ -4397,6 +4398,10 @@
           "title": "Panel derecho del repositorio",
           "content": "El panel derecho muestra los detalles del caso de prueba, los resultados de ejecución, y proporciona acciones para crear nuevos casos de prueba o importar los existentes."
         },
+        "sharedSteps": {
+          "title": "Pasos compartidos",
+          "content": "Define grupos de pasos reutilizables que puedan referenciarse desde múltiples casos de prueba. Mantén tus pasos de prueba DRY y consistentes."
+        },
         "testRuns": {
           "content": "Ejecuta las ejecuciones de pruebas planeadas, rastrea el progreso y gestiona las asignaciones de pruebas en todo su equipo. Vea los resultados detallados de la ejecución."
         },
@@ -4423,6 +4428,10 @@
         "reports": {
           "title": "Informes y análisis",
           "content": "Genere informes y análisis completos para su proyecto. Ver cobertura de pruebas, tendencias de ejecución, métricas de rendimiento del equipo y crear informes personalizados para los interesados."
+        },
+        "settings": {
+          "title": "Configuración del proyecto",
+          "content": "Administre integraciones a nivel de proyecto, configuraciones de modelos de IA y enlaces compartidos desde aquí."
         }
       },
       "adminTour": {
@@ -4493,6 +4502,92 @@
         "trash": {
           "title": "Papelera del sistema",
           "content": "Visualiza y gestiona elementos eliminados en todos los proyectos. Restaura contenido eliminado accidentalmente o purga elementos permanentemente del sistema."
+        }
+      },
+      "demoProjectTour": {
+        "projectSelector": {
+          "title": "Bienvenido al proyecto de demostración",
+          "content": "Este proyecto incluye datos de muestra precargados. Analicemos juntos las características clave. Utilice este menú desplegable para cambiar de proyecto."
+        },
+        "overview": {
+          "title": "Descripción general del proyecto",
+          "content": "La vista general es el panel de control de tu proyecto. Muestra el progreso de los hitos a la izquierda y resúmenes de casos de prueba, ejecuciones activas, sesiones y etiquetas a la derecha."
+        },
+        "documentation": {
+          "title": "Documentación",
+          "content": "Cada proyecto tiene una página de documentación. Úsala para planes de prueba, notas del proyecto o enlaces a recursos externos."
+        },
+        "documentationContent": {
+          "title": "Editor de texto enriquecido",
+          "content": "La documentación admite texto enriquecido con encabezados, listas, enlaces e imágenes. Pruebe a editar esta página para ver cómo funciona."
+        },
+        "milestones": {
+          "title": "Hitos",
+          "content": "Monitorea tus pruebas en relación con sprints, lanzamientos y otros objetivos. Vincula las ejecuciones y sesiones de pruebas con hitos para monitorear el progreso."
+        },
+        "milestonesPage": {
+          "title": "Cronología de hitos",
+          "content": "Este proyecto tiene tres hitos: Sprint 1 (completado), Sprint 2 (en progreso) y una futura versión v1.0."
+        },
+        "repository": {
+          "title": "Repositorio de casos de prueba",
+          "content": "Organice los casos de prueba en carpetas con campos, pasos y prioridades personalizados. Los casos se agrupan en Autenticación y Panel de Control."
+        },
+        "repositoryPanels": {
+          "title": "Carpetas y estuches",
+          "content": "El panel izquierdo muestra las carpetas. Haga clic en una carpeta para ver sus casos de prueba. Cada caso incluye pasos, descripciones y referencias de pasos compartidos."
+        },
+        "repositoryCases": {
+          "title": "Casos de prueba",
+          "content": "Aquí puede ver los casos de prueba de la carpeta seleccionada. Cada fila muestra el nombre del caso, la prioridad y los campos personalizados. Haga clic en un caso para ver todos sus detalles y pasos."
+        },
+        "sharedSteps": {
+          "title": "Pasos compartidos",
+          "content": "Defina grupos de pasos reutilizables a los que se pueda hacer referencia desde varios casos de prueba. El grupo \"Requisitos de inicio de sesión\" se utiliza en todos los casos de autenticación."
+        },
+        "sharedStepsPage": {
+          "title": "Grupos de pasos compartidos",
+          "content": "Cada grupo contiene un conjunto de pasos ordenados. Consúltelos desde cualquier caso de prueba para mantener sus pasos DRY y consistentes."
+        },
+        "testRuns": {
+          "title": "Ejecuciones de prueba",
+          "content": "Cree ejecuciones de prueba para ejecutar casos y registrar resultados. Asigne ejecuciones a hitos y monitoree el progreso de aprobación/reprobación."
+        },
+        "testRunsPage": {
+          "title": "Resultados de la prueba de funcionamiento",
+          "content": "Este proyecto tiene una prueba de humo Sprint 1 completada y una ejecución de regresión Sprint 2 en curso con resultados mixtos."
+        },
+        "sessions": {
+          "title": "Sesiones exploratorias",
+          "content": "Capture pruebas ad hoc con pruebas basadas en sesiones. Registre los hallazgos, asigne estados y monitoree el tiempo empleado."
+        },
+        "sessionsPage": {
+          "title": "Resultados de la sesión",
+          "content": "Cada sesión incluye hallazgos detallados con su estado y notas. Revise la sesión de Flujos de Inicio de Sesión para ver ejemplos de resultados."
+        },
+        "tags": {
+          "title": "Etiquetas",
+          "content": "Las etiquetas ayudan a organizar y filtrar casos de prueba, ejecuciones y sesiones. Este proyecto utiliza etiquetas Smoke, Regression y UI."
+        },
+        "tagsPage": {
+          "title": "Gestión de etiquetas",
+          "content": "Crea, edita y asigna etiquetas desde aquí. Usa etiquetas para agrupar y filtrar el contenido de tu proyecto."
+        },
+        "issues": {
+          "title": "Asuntos",
+          "content": "Monitorea errores y defectos detectados durante las pruebas. Los problemas se pueden vincular a resultados de pruebas fallidas y hallazgos de sesiones para una trazabilidad completa."
+        },
+        "issuesPage": {
+          "title": "Rastreador de problemas",
+          "content": "Este proyecto presenta ejemplos de problemas relacionados con resultados fallidos. El error 1 se debe a una prueba de restablecimiento de contraseña fallida, y el error 2 a un hallazgo de sesión exploratoria."
+        },
+        "reports": {
+          "title": "Informes y análisis",
+          "content": "Genere informes sobre la cobertura de pruebas, las tendencias de ejecución y el rendimiento del equipo. Utilice informes prediseñados o cree informes personalizados para las partes interesadas."
+        },
+        "settings": {
+          "title": "Configuración del proyecto",
+          "content": "Administre integraciones a nivel de proyecto, configuraciones de modelos de IA y enlaces compartidos desde aquí."
         }
       }
     }

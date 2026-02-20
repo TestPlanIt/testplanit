@@ -6,8 +6,9 @@ import {
   useNextStep,
   Tour,
   CardComponentProps,
+  NavigationAdapter,
 } from "nextstepjs";
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef, useMemo } from "react";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { useParams, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -16,6 +17,8 @@ import {
   useFindFirstUserPreferences,
   useUpdateUserPreferences,
 } from "~/lib/hooks";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { ApplicationArea } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -99,7 +102,7 @@ function TourCard({
 const createTourSteps = (
   t: any,
   projectId?: string,
-  currentStep?: number
+  options?: { canSeeSharedSteps?: boolean; canSeeReports?: boolean; canSeeSettings?: boolean }
 ): Tour[] => [
   {
     tour: "mainTour",
@@ -209,67 +212,60 @@ const createTourSteps = (
   },
   {
     tour: "projectTour",
-    steps: [
-      {
-        icon: null,
-        title: t("help.tour.projectTour.projectSelector.title"),
-        content: t("help.tour.projectTour.projectSelector.content"),
-        selector: "[data-testid='project-dropdown-trigger']",
-        side: "bottom-left",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.projectTour.projectSections.title"),
-        content: t("help.tour.projectTour.projectSections.content"),
-        selector: "#project-section",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        nextRoute: projectId
-          ? `/projects/repository/${projectId}?tour=projectTour&step=2`
-          : "/projects/repository?tour=projectTour&step=2",
-      },
-      {
-        icon: null,
-        title: t("repository.title"),
-        content: t("help.tour.projectTour.repository.content"),
-        selector: "#test-cases-link",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        nextRoute: projectId
-          ? `/projects/repository/${projectId}?tour=projectTour&step=3`
-          : "/projects/repository?tour=projectTour&step=3",
-      },
-      {
-        icon: null,
-        title: t("help.tour.projectTour.repositoryPanels.title"),
-        content: t("help.tour.projectTour.repositoryPanels.content"),
-        selector: "[data-testid='repository-left-panel-header']",
-        side: "bottom-right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      {
-        icon: null,
-        title: t("help.tour.projectTour.repositoryRightPanel.title"),
-        content: t("help.tour.projectTour.repositoryRightPanel.content"),
-        selector: "[data-testid='repository-right-panel-header']",
-        side: "bottom-left",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        nextRoute: projectId
-          ? `/projects/runs/${projectId}?tour=projectTour&step=5`
-          : "/projects/runs?tour=projectTour&step=5",
-      },
-      {
+    steps: (() => {
+      // Build steps dynamically based on feature access
+      const steps: Tour["steps"] = [
+        // Project selector dropdown
+        {
+          icon: null,
+          title: t("help.tour.projectTour.projectSelector.title"),
+          content: t("help.tour.projectTour.projectSelector.content"),
+          selector: "[data-testid='project-dropdown-trigger']",
+          side: "bottom-left",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+        },
+        // Project sections overview
+        {
+          icon: null,
+          title: t("help.tour.projectTour.projectSections.title"),
+          content: t("help.tour.projectTour.projectSections.content"),
+          selector: "#project-section",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+        },
+        // Repository
+        {
+          icon: null,
+          title: t("repository.title"),
+          content: t("help.tour.projectTour.repository.content"),
+          selector: "#test-cases-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+        },
+      ];
+
+      // Shared Steps (conditional)
+      if (options?.canSeeSharedSteps) {
+        steps.push({
+          icon: null,
+          title: t("help.tour.projectTour.sharedSteps.title"),
+          content: t("help.tour.projectTour.sharedSteps.content"),
+          selector: "#shared-steps-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+        });
+      }
+
+      // Test Runs
+      steps.push({
         icon: null,
         title: t("navigation.projects.menu.runs"),
         content: t("help.tour.projectTour.testRuns.content"),
@@ -278,30 +274,10 @@ const createTourSteps = (
         showControls: true,
         showSkip: true,
         pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/repository/${projectId}?tour=projectTour&step=4`
-          : "/projects/repository?tour=projectTour&step=4",
-        nextRoute: projectId
-          ? `/projects/runs/${projectId}?tour=projectTour&step=6`
-          : "/projects/runs?tour=projectTour&step=5",
-      },
-      {
-        icon: null,
-        title: t("help.tour.projectTour.testRunsPage.title"),
-        content: t("help.tour.projectTour.testRunsPage.content"),
-        selector: "#test-runs-page-header",
-        side: "bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/runs/${projectId}?tour=projectTour&step=5`
-          : "/projects/runs?tour=projectTour&step=5",
-        nextRoute: projectId
-          ? `/projects/sessions/${projectId}?tour=projectTour&step=7`
-          : "/projects/sessions?tour=projectTour&step=7",
-      },
-      {
+      });
+
+      // Sessions
+      steps.push({
         icon: null,
         title: t("help.tour.projectTour.sessions.title"),
         content: t("help.tour.projectTour.sessions.content"),
@@ -310,75 +286,85 @@ const createTourSteps = (
         showControls: true,
         showSkip: true,
         pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/runs/${projectId}?tour=projectTour&step=6`
-          : "/projects/runs?tour=projectTour&step=6",
-        nextRoute: projectId
-          ? `/projects/sessions/${projectId}?tour=projectTour&step=8`
-          : "/projects/sessions?tour=projectTour&step=8",
-      },
-      {
-        icon: null,
-        title: t("help.tour.projectTour.sessionsPage.title"),
-        content: t("help.tour.projectTour.sessionsPage.content"),
-        selector: "#sessions-page-header",
-        side: "bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/sessions/${projectId}?tour=projectTour&step=7`
-          : "/projects/sessions?tour=projectTour&step=7",
-        nextRoute: projectId
-          ? `/projects/tags/${projectId}?tour=projectTour&step=9`
-          : "/projects/tags?tour=projectTour&step=9",
-      },
-      {
+      });
+
+      // Tags
+      steps.push({
         icon: null,
         title: t("help.tour.projectTour.tags.title"),
         content: t("help.tour.projectTour.tags.content"),
-        selector: "#management-section a[href*='/tags']",
+        selector: "#project-tags-link",
         side: "right",
         showControls: true,
         showSkip: true,
         pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/sessions/${projectId}?tour=projectTour&step=7`
-          : "/projects/sessions?tour=projectTour&step=7",
-        nextRoute: projectId
-          ? `/projects/issues/${projectId}?tour=projectTour&step=11`
-          : "/projects/issues?tour=projectTour&step=11",
-      },
-      {
+      });
+
+      // Issues
+      steps.push({
         icon: null,
         title: t("help.tour.projectTour.issues.title"),
         content: t("help.tour.projectTour.issues.content"),
-        selector: "#management-section a[href*='/issues']",
+        selector: "#project-issues-link",
         side: "right",
         showControls: true,
         showSkip: true,
         pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/tags/${projectId}?tour=projectTour&step=10`
-          : "/projects/tags?tour=projectTour&step=10",
-        nextRoute: projectId
-          ? `/projects/reports/${projectId}?tour=projectTour&step=12`
-          : "/projects/reports?tour=projectTour&step=12",
-      },
-      {
-        icon: null,
-        title: t("help.tour.projectTour.reports.title"),
-        content: t("help.tour.projectTour.reports.content"),
-        selector: "#management-section a[href*='/reports']",
-        side: "right",
-        showControls: true,
-        showSkip: false,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/issues/${projectId}?tour=projectTour&step=11`
-          : "/projects/issues?tour=projectTour&step=11",
-      },
-    ],
+      });
+
+      // Reports (conditional)
+      if (options?.canSeeReports) {
+        steps.push({
+          icon: null,
+          title: t("help.tour.projectTour.reports.title"),
+          content: t("help.tour.projectTour.reports.content"),
+          selector: "#reports-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+        });
+      }
+
+      // Settings (conditional)
+      if (options?.canSeeSettings) {
+        steps.push({
+          icon: null,
+          title: t("help.tour.projectTour.settings.title"),
+          content: t("help.tour.projectTour.settings.content"),
+          selector: "#settings-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+        });
+      }
+
+      // Mark last step
+      steps[steps.length - 1].showSkip = false;
+
+      // Add nextRoute for cross-page navigation between consecutive steps
+      // Each step navigates to the page of the NEXT step's sidebar link
+      const routeMap: Record<string, string> = {
+        "#test-cases-link": "repository",
+        "#shared-steps-link": "shared-steps",
+        "#test-runs-link": "runs",
+        "#exploratory-link": "sessions",
+        "#project-tags-link": "tags",
+        "#project-issues-link": "issues",
+        "#reports-link": "reports",
+        "#settings-link": "settings",
+      };
+      for (let i = 0; i < steps.length - 1; i++) {
+        const nextSelector = steps[i + 1].selector;
+        const nextPage = nextSelector ? routeMap[nextSelector] : undefined;
+        if (nextPage && projectId) {
+          steps[i].nextRoute = `/projects/${nextPage}/${projectId}`;
+        }
+      }
+
+      return steps;
+    })(),
   },
   {
     tour: "adminTour",
@@ -565,7 +551,325 @@ const createTourSteps = (
       },
     ],
   },
+  {
+    tour: "demoProjectTour",
+    steps: [
+      // Step 0: Project selector
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.projectSelector.title"),
+        content: t("help.tour.demoProjectTour.projectSelector.content"),
+        selector: "[data-testid='project-dropdown-trigger']",
+        side: "bottom-left",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        nextRoute: projectId
+          ? `/projects/overview/${projectId}?tour=demoProjectTour&step=1`
+          : undefined,
+      },
+      // Step 1: Overview — project dashboard
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.overview.title"),
+        content: t("help.tour.demoProjectTour.overview.content"),
+        selector: "#overview-link",
+        side: "right",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        nextRoute: projectId
+          ? `/projects/documentation/${projectId}?tour=demoProjectTour&step=2`
+          : undefined,
+      },
+      // Step 2: Documentation sidebar link
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.documentation.title"),
+        content: t("help.tour.demoProjectTour.documentation.content"),
+        selector: "#documentation-link",
+        side: "right",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        prevRoute: projectId
+          ? `/projects/overview/${projectId}?tour=demoProjectTour&step=1`
+          : undefined,
+      },
+      // Step 3: Documentation content
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.documentationContent.title"),
+        content: t("help.tour.demoProjectTour.documentationContent.content"),
+        selector: "#documentation-content",
+        side: "bottom",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        nextRoute: projectId
+          ? `/projects/milestones/${projectId}?tour=demoProjectTour&step=4`
+          : undefined,
+      },
+      // Step 4: Milestones sidebar link
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.milestones.title"),
+        content: t("help.tour.demoProjectTour.milestones.content"),
+        selector: "#milestones-link",
+        side: "right",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        prevRoute: projectId
+          ? `/projects/documentation/${projectId}?tour=demoProjectTour&step=3`
+          : undefined,
+      },
+      // Step 5: Milestones page content
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.milestonesPage.title"),
+        content: t("help.tour.demoProjectTour.milestonesPage.content"),
+        selector: "#milestones-page-header",
+        side: "bottom",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        nextRoute: projectId
+          ? `/projects/repository/${projectId}?tour=demoProjectTour&step=6`
+          : undefined,
+      },
+      // Step 6: Repository sidebar link
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.repository.title"),
+        content: t("help.tour.demoProjectTour.repository.content"),
+        selector: "#test-cases-link",
+        side: "right",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        prevRoute: projectId
+          ? `/projects/milestones/${projectId}?tour=demoProjectTour&step=5`
+          : undefined,
+      },
+      // Step 7: Repository folder panel
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.repositoryPanels.title"),
+        content: t("help.tour.demoProjectTour.repositoryPanels.content"),
+        selector: "[data-testid='repository-left-panel-header']",
+        side: "bottom-right",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+      },
+      // Step 8: Repository test cases table
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.repositoryCases.title"),
+        content: t("help.tour.demoProjectTour.repositoryCases.content"),
+        selector: "[data-testid='repository-right-panel-header']",
+        side: "bottom-left",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        nextRoute: projectId
+          ? `/projects/shared-steps/${projectId}?tour=demoProjectTour&step=9`
+          : undefined,
+      },
+      // Step 9: Shared Steps sidebar link
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.sharedSteps.title"),
+        content: t("help.tour.demoProjectTour.sharedSteps.content"),
+        selector: "#shared-steps-link",
+        side: "right",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        prevRoute: projectId
+          ? `/projects/repository/${projectId}?tour=demoProjectTour&step=8`
+          : undefined,
+      },
+      // Step 10: Shared Steps page content
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.sharedStepsPage.title"),
+        content: t("help.tour.demoProjectTour.sharedStepsPage.content"),
+        selector: "[data-testid^='shared-step-group-']",
+        side: "bottom",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        nextRoute: projectId
+          ? `/projects/runs/${projectId}?tour=demoProjectTour&step=11`
+          : undefined,
+      },
+      // Step 11: Test Runs sidebar link
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.testRuns.title"),
+        content: t("help.tour.demoProjectTour.testRuns.content"),
+        selector: "#test-runs-link",
+        side: "right",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        prevRoute: projectId
+          ? `/projects/shared-steps/${projectId}?tour=demoProjectTour&step=10`
+          : undefined,
+      },
+      // Step 12: Test Runs page content
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.testRunsPage.title"),
+        content: t("help.tour.demoProjectTour.testRunsPage.content"),
+        selector: "#test-runs-page-header",
+        side: "bottom",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        nextRoute: projectId
+          ? `/projects/sessions/${projectId}?tour=demoProjectTour&step=13`
+          : undefined,
+      },
+      // Step 13: Sessions sidebar link
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.sessions.title"),
+        content: t("help.tour.demoProjectTour.sessions.content"),
+        selector: "#exploratory-link",
+        side: "right",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        prevRoute: projectId
+          ? `/projects/runs/${projectId}?tour=demoProjectTour&step=12`
+          : undefined,
+      },
+      // Step 14: Sessions page content
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.sessionsPage.title"),
+        content: t("help.tour.demoProjectTour.sessionsPage.content"),
+        selector: "#sessions-page-header",
+        side: "bottom",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        nextRoute: projectId
+          ? `/projects/tags/${projectId}?tour=demoProjectTour&step=15`
+          : undefined,
+      },
+      // Step 15: Tags sidebar link
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.tags.title"),
+        content: t("help.tour.demoProjectTour.tags.content"),
+        selector: "#project-tags-link",
+        side: "right",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        prevRoute: projectId
+          ? `/projects/sessions/${projectId}?tour=demoProjectTour&step=14`
+          : undefined,
+      },
+      // Step 16: Tags page content
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.tagsPage.title"),
+        content: t("help.tour.demoProjectTour.tagsPage.content"),
+        selector: "#tags-page-header",
+        side: "bottom",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        prevRoute: projectId
+          ? `/projects/tags/${projectId}?tour=demoProjectTour&step=15`
+          : undefined,
+        nextRoute: projectId
+          ? `/projects/issues/${projectId}?tour=demoProjectTour&step=17`
+          : undefined,
+      },
+      // Step 17: Issues sidebar link
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.issues.title"),
+        content: t("help.tour.demoProjectTour.issues.content"),
+        selector: "#project-issues-link",
+        side: "right",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        prevRoute: projectId
+          ? `/projects/tags/${projectId}?tour=demoProjectTour&step=16`
+          : undefined,
+      },
+      // Step 18: Issues page content
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.issuesPage.title"),
+        content: t("help.tour.demoProjectTour.issuesPage.content"),
+        selector: "#issues-page-header",
+        side: "bottom",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        nextRoute: projectId
+          ? `/projects/reports/${projectId}?tour=demoProjectTour&step=19`
+          : undefined,
+      },
+      // Step 19: Reports sidebar link
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.reports.title"),
+        content: t("help.tour.demoProjectTour.reports.content"),
+        selector: "#reports-link",
+        side: "right",
+        showControls: true,
+        showSkip: true,
+        pointerPadding: 10,
+        prevRoute: projectId
+          ? `/projects/issues/${projectId}?tour=demoProjectTour&step=18`
+          : undefined,
+        nextRoute: projectId
+          ? `/projects/settings/${projectId}?tour=demoProjectTour&step=20`
+          : undefined,
+      },
+      // Step 20: Settings sidebar link (final step)
+      {
+        icon: null,
+        title: t("help.tour.demoProjectTour.settings.title"),
+        content: t("help.tour.demoProjectTour.settings.content"),
+        selector: "#settings-link",
+        side: "right",
+        showControls: true,
+        showSkip: false,
+        pointerPadding: 10,
+        prevRoute: projectId
+          ? `/projects/reports/${projectId}?tour=demoProjectTour&step=19`
+          : undefined,
+      },
+    ],
+  },
 ];
+
+// Custom navigation adapter that uses the i18n-aware router from ~/lib/navigation
+// instead of next/navigation directly, which would navigate without the locale prefix
+// and cause a full page reload via middleware redirect.
+const useI18nNavigationAdapter = (): NavigationAdapter => {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  return {
+    push: (path: string) => {
+      console.log("[Tour:NavAdapter] push called:", path, "from:", pathname);
+      router.push(path);
+    },
+    getCurrentPath: () => pathname || "/",
+  };
+};
 
 interface NextStepOnboardingProps {
   children: React.ReactNode;
@@ -574,26 +878,33 @@ interface NextStepOnboardingProps {
 // Inner component that has access to NextStep context
 function NextStepController() {
   const nextStepContext = useNextStep();
-  const { startNextStep } = nextStepContext;
+  const { startNextStep, setCurrentStep } = nextStepContext;
 
   useEffect(() => {
     // Expose the context functions globally
     (window as any).startOnboardingTour = (tourName: string = "mainTour") => {
-      // console.log("Starting tour via context:", tourName);
+      console.log("[Tour:Controller] startOnboardingTour called:", tourName);
       startNextStep(tourName);
     };
 
     // Also expose admin tour function for consistency
     (window as any).startAdminTour = (tourName: string = "adminTour") => {
-      // console.log("Starting admin tour via context:", tourName);
+      console.log("[Tour:Controller] startAdminTour called:", tourName);
       startNextStep(tourName);
+    };
+
+    // Expose setCurrentStep for cross-page tour restoration
+    (window as any).__setTourStep = (step: number) => {
+      console.log("[Tour:Controller] __setTourStep called:", step);
+      setCurrentStep(step, 200);
     };
 
     return () => {
       delete (window as any).startOnboardingTour;
       delete (window as any).startAdminTour;
+      delete (window as any).__setTourStep;
     };
-  }, [startNextStep]);
+  }, [startNextStep, setCurrentStep]);
 
   return null; // This component only manages the global function
 }
@@ -608,6 +919,27 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
   // Track if we're currently in an active tour to prevent restoration conflicts
   const activeTourRef = useRef<string | null>(null);
+  const prevPathnameRef = useRef<string>(pathname);
+
+  // Debug: listen for popstate events (NextStep closes tour on popstate)
+  useEffect(() => {
+    const handler = (e: PopStateEvent) => {
+      console.log("[Tour:PopState] popstate event fired!", "state:", e.state, "location:", window.location.href, "activeTour:", activeTourRef.current);
+      console.trace("[Tour:PopState] stack trace");
+    };
+    window.addEventListener("popstate", handler);
+    return () => window.removeEventListener("popstate", handler);
+  }, []);
+
+  // Reset active tour ref when pathname changes (cross-page navigation)
+  // This allows tour restoration to fire on the new page
+  useEffect(() => {
+    if (prevPathnameRef.current !== pathname) {
+      console.log("[Tour:Pathname] changed:", prevPathnameRef.current, "→", pathname, "| clearing activeTourRef:", activeTourRef.current);
+      prevPathnameRef.current = pathname;
+      activeTourRef.current = null;
+    }
+  }, [pathname]);
 
   // Get user preferences to check tour completion status
   const { data: userPreferences } = useFindFirstUserPreferences(
@@ -623,6 +955,34 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   // Get current projectId from URL params
   const projectId = params?.projectId as string;
 
+  // Permission checks for conditional tour steps
+  const safeProjectId = projectId || "";
+  const { permissions: sharedStepsPerms } = useProjectPermissions(
+    safeProjectId,
+    ApplicationArea.SharedSteps
+  );
+  const canSeeSharedSteps = !!(
+    sharedStepsPerms &&
+    (sharedStepsPerms.canAddEdit || sharedStepsPerms.canDelete)
+  );
+  const { permissions: reportingPerms } = useProjectPermissions(
+    safeProjectId,
+    ApplicationArea.Reporting
+  );
+  const canSeeReports = !!(
+    reportingPerms &&
+    (reportingPerms.canAddEdit || reportingPerms.canDelete)
+  );
+  const { permissions: settingsPerms } = useProjectPermissions(
+    safeProjectId,
+    ApplicationArea.Settings
+  );
+  const canSeeSettings = !!(
+    session?.user?.access === "ADMIN" ||
+    session?.user?.access === "PROJECTADMIN" ||
+    (settingsPerms && settingsPerms.canAddEdit)
+  );
+
   // Check for tour state in URL parameters
   const tourParam = searchParams.get("tour");
   const stepParam = searchParams.get("step");
@@ -631,12 +991,18 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   // Parse current step from URL
   const currentStep = stepParam ? parseInt(stepParam, 10) : 0;
 
-  // Create tour steps with current translations and projectId
-  const tourSteps = createTourSteps(t, projectId, currentStep);
+  // Memoize tour steps so they're only recreated when projectId or permissions change,
+  // not on every searchParams update (which happens frequently on repository pages)
+  const tourSteps = useMemo(
+    () =>
+      createTourSteps(t, projectId, { canSeeSharedSteps, canSeeReports, canSeeSettings }),
+    [t, projectId, canSeeSharedSteps, canSeeReports, canSeeSettings]
+  );
 
   const handleTourComplete = useCallback(
     async (tourName: string | null) => {
-      // console.log("Tour completed:", tourName);
+      console.log("[Tour:Complete] tourName:", tourName);
+      (window as any).__activeTour = null;
       localStorage.setItem("hasSeenOnboardingTour", "true");
 
       // Update user preferences if user is logged in and preferences exist
@@ -676,7 +1042,8 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
   const handleTourSkip = useCallback(
     async (step: number, tourName: string | null) => {
-      // console.log("Tour skipped at step:", step, "tour:", tourName);
+      console.log("[Tour:Skip] step:", step, "tourName:", tourName);
+      (window as any).__activeTour = null;
       localStorage.setItem("hasSeenOnboardingTour", "true");
 
       // Update user preferences if user is logged in and preferences exist
@@ -716,89 +1083,128 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
   const handleStepChange = useCallback(
     (step: number, tourName: string | null) => {
-      // console.log(
-      //   "Step changed:",
-      //   step,
-      //   "tour:",
-      //   tourName,
-      //   "URL will show step:",
-      //   step
-      // );
+      console.log("[Tour:StepChange] step:", step, "tour:", tourName, "pathname:", pathname);
 
-      // Only update URL parameters for project tour (which needs cross-page navigation)
+      // Demo tour: click the first shared step group to show its steps
+      if (tourName === "demoProjectTour" && step === 10) {
+        const firstGroup = document.querySelector("[data-testid^='shared-step-group-']") as HTMLElement;
+        if (firstGroup) {
+          console.log("[Tour:StepChange] clicking first shared step group");
+          firstGroup.click();
+        }
+      }
+
+      // Demo tour: click the first folder to populate the cases table
+      if (tourName === "demoProjectTour" && step === 8) {
+        const firstFolder = document.querySelector("[data-testid^='folder-node-']") as HTMLElement;
+        if (firstFolder) {
+          console.log("[Tour:StepChange] clicking first folder to populate cases table");
+          firstFolder.click();
+        }
+      }
+
+      // Only update URL parameters for tours that need cross-page navigation
       // Main tour doesn't need URL tracking as it navigates within the same page
-      if (tourName === "projectTour") {
+      if (tourName === "projectTour" || tourName === "demoProjectTour") {
         const newSearchParams = new URLSearchParams(searchParams);
         newSearchParams.set("tour", tourName);
         newSearchParams.set("step", step.toString());
         // Remove manual flag after first step change
         newSearchParams.delete("manual");
-        router.replace(pathname + `?${newSearchParams.toString()}`);
+        const newUrl = pathname + `?${newSearchParams.toString()}`;
+        console.log("[Tour:StepChange] router.replace →", newUrl);
+        router.replace(newUrl);
       }
     },
     [searchParams, pathname, router]
   );
 
+  // Store refs for the override to avoid stale closures
+  const pathnameRef = useRef(pathname);
+  const searchParamsRef = useRef(searchParams);
+  const routerRef = useRef(router);
+  pathnameRef.current = pathname;
+  searchParamsRef.current = searchParams;
+  routerRef.current = router;
+
   useEffect(() => {
-    // Override the global function to add URL parameter handling
+    // Only set up override once — save the ORIGINAL Controller function
+    // and never chain overrides on top of overrides
+    if ((window as any).__tourOverrideInstalled) return;
+
     const originalStartTour = (window as any).startOnboardingTour;
-    if (originalStartTour) {
-      // Store reference to original function
-      (window as any)._originalStartOnboardingTour = originalStartTour;
+    if (!originalStartTour) return;
 
-      (window as any).startOnboardingTour = (tourName: string = "mainTour") => {
-        // console.log("Starting tour with URL params:", tourName);
+    // Save the original Controller function permanently
+    (window as any)._originalStartOnboardingTour = originalStartTour;
+    (window as any).__tourOverrideInstalled = true;
 
-        // Set active tour reference
-        activeTourRef.current = tourName;
+    (window as any).startOnboardingTour = (tourName: string = "mainTour") => {
+      console.log("[Tour:StartOverride] called:", tourName, "pathname:", pathnameRef.current);
 
-        // Call the original function first to start the tour
-        originalStartTour(tourName);
+      // Set active tour reference + global flag
+      activeTourRef.current = tourName;
+      (window as any).__activeTour = tourName;
 
-        // Only add URL parameters for project tour (which needs cross-page navigation)
-        // Main tour doesn't need URL tracking as it doesn't navigate between pages
-        if (tourName === "projectTour") {
-          setTimeout(() => {
-            const newSearchParams = new URLSearchParams(searchParams);
-            newSearchParams.set("tour", tourName);
-            newSearchParams.set("step", "0");
-            newSearchParams.set("manual", "true"); // Flag to distinguish manual start from restoration
-            router.replace(pathname + `?${newSearchParams.toString()}`);
-          }, 100);
-        }
-      };
-    }
-  }, [searchParams, pathname, router]);
+      // Call the original Controller function
+      originalStartTour(tourName);
+
+      // Only add URL parameters for tours that need cross-page navigation
+      if (tourName === "projectTour" || tourName === "demoProjectTour") {
+        setTimeout(() => {
+          const currentPathname = pathnameRef.current;
+          const newSearchParams = new URLSearchParams(searchParamsRef.current);
+          newSearchParams.set("tour", tourName);
+          newSearchParams.set("step", "0");
+          newSearchParams.set("manual", "true");
+          const newUrl = currentPathname + `?${newSearchParams.toString()}`;
+          console.log("[Tour:StartOverride] setting URL params →", newUrl);
+          routerRef.current.replace(newUrl);
+        }, 100);
+      }
+    };
+
+    return () => {
+      // Clean up on unmount
+      delete (window as any).__tourOverrideInstalled;
+    };
+  }, []);
 
   useEffect(() => {
+    console.log("[Tour:Effect] fired | pathname:", pathname, "| tourParam:", tourParam, "| stepParam:", stepParam, "| manualParam:", manualParam, "| activeTourRef:", activeTourRef.current);
+
     // Check if user has seen the tour before
     const hasSeenTour = localStorage.getItem("hasSeenOnboardingTour");
 
     // Check for tour state in URL parameters (for cross-page navigation)
-    // Only restore project tour from URL (main tour doesn't use URL navigation)
+    // Restore project tour or demo project tour from URL (main tour doesn't use URL navigation)
     if (
-      tourParam === "projectTour" &&
+      (tourParam === "projectTour" || tourParam === "demoProjectTour") &&
       !manualParam &&
       activeTourRef.current !== tourParam
     ) {
-      // console.log(
-      //   "Restoring tour from URL navigation:",
-      //   tourParam,
-      //   "step:",
-      //   stepParam,
-      //   "activeTour:",
-      //   activeTourRef.current
-      // );
+      console.log("[Tour:Restore] will restore tour:", tourParam, "step:", stepParam, "activeTourRef was:", activeTourRef.current);
 
       // Set active tour reference for restoration
       activeTourRef.current = tourParam;
+      (window as any).__activeTour = tourParam;
 
       // Small delay to ensure DOM is ready
       setTimeout(() => {
         // Access the original startOnboardingTour without URL parameter override
         const originalStartTour = (window as any)._originalStartOnboardingTour;
+        console.log("[Tour:Restore] timeout fired, originalStartTour exists:", !!originalStartTour);
         if (originalStartTour) {
           originalStartTour(tourParam);
+          // Jump to the correct step from URL after the tour starts
+          const targetStep = parseInt(stepParam || "0", 10);
+          console.log("[Tour:Restore] started tour, targetStep:", targetStep);
+          if (targetStep > 0) {
+            setTimeout(() => {
+              console.log("[Tour:Restore] setting step to:", targetStep);
+              (window as any).__setTourStep?.(targetStep);
+            }, 300);
+          }
         }
       }, 1000);
       return;
@@ -854,6 +1260,7 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
         scrollToTop={false}
         noInViewScroll={true}
         cardComponent={TourCard}
+        navigationAdapter={useI18nNavigationAdapter}
       >
         <NextStepController />
         {children}

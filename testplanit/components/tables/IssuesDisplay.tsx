@@ -217,7 +217,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   const badgeContent = (
     <Badge
       key={id}
-      className={`hover:bg-accent hover:text-accent-foreground hover:border-primary transition-colors w-full max-w-full inline-flex ${size === "large" ? "text-base" : ""}`}
+      className={`hover:bg-accent hover:text-accent-foreground hover:border-primary transition-colors max-w-full inline-flex ${size === "large" ? "text-base" : ""}`}
     >
       <div className="flex items-center gap-1 min-w-0 w-full">
         <IssueTypeIcon
@@ -249,7 +249,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   if (isExternalIssue) {
     return (
       <div
-        className="flex items-center group w-full max-w-full"
+        className="flex items-center group max-w-full"
         onMouseEnter={() => {
           // Trigger background sync if needed
           triggerSyncIfNeeded();
@@ -271,7 +271,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
         }}
       >
         <Popover open={isOpen} onOpenChange={setIsOpen} modal={false}>
-          <PopoverTrigger asChild className="w-full">
+          <PopoverTrigger asChild>
             {badgeContent}
           </PopoverTrigger>
           <PopoverContent
@@ -434,13 +434,13 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <div
-          className="flex items-center group w-full max-w-full"
+          className="flex items-center group max-w-full"
           onMouseEnter={() => {
             // Trigger background sync if needed
             triggerSyncIfNeeded();
           }}
         >
-          <TooltipTrigger asChild className="cursor-default w-full">
+          <TooltipTrigger asChild className="cursor-default">
             {badgeContent}
           </TooltipTrigger>
           {linkHref && (

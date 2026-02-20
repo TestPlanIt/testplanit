@@ -225,17 +225,29 @@ export default function ProjectsMenu({
                             <TooltipTrigger asChild>
                               <Link
                                 id={
-                                  option.path === "repository"
-                                    ? "test-cases-link"
-                                    : option.path === "runs"
-                                      ? "test-runs-link"
-                                      : option.path === "sessions"
-                                        ? "exploratory-link"
-                                        : option.path === "reports"
-                                          ? "reports-link"
-                                          : option.path === "settings"
-                                            ? "settings-link"
-                                            : undefined
+                                  option.path === "overview"
+                                    ? "overview-link"
+                                    : option.path === "documentation"
+                                      ? "documentation-link"
+                                      : option.path === "milestones"
+                                        ? "milestones-link"
+                                        : option.path === "repository"
+                                          ? "test-cases-link"
+                                          : option.path === "shared-steps"
+                                            ? "shared-steps-link"
+                                            : option.path === "runs"
+                                              ? "test-runs-link"
+                                              : option.path === "sessions"
+                                                ? "exploratory-link"
+                                                : option.path === "tags"
+                                                  ? "project-tags-link"
+                                                  : option.path === "issues"
+                                                    ? "project-issues-link"
+                                                    : option.path === "reports"
+                                                    ? "reports-link"
+                                                    : option.path === "settings"
+                                                      ? "settings-link"
+                                                      : undefined
                                 }
                                 href={
                                   option.path === "shared-steps"

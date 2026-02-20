@@ -153,7 +153,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
     return (
       <Card className="flex w-full min-w-[400px]">
         <div className="flex-1 w-full">
-          <CardHeader>
+          <CardHeader id="milestones-page-header">
             <CardTitle>
               <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
                 <div>

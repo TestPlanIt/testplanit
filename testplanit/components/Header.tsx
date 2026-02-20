@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, Link } from "~/lib/navigation";
 import { usePathname } from "~/lib/navigation";
+import { useParams } from "next/navigation";
+import { useFindUniqueProjects } from "~/lib/hooks";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -50,6 +52,19 @@ export const Header = () => {
     "sales@testplanit.com"
   );
   const versionString = getVersionString();
+  const params = useParams();
+  const projectId = params?.projectId as string | undefined;
+  const isOnProjectPage = path.includes("/projects/") && !!projectId;
+
+  // Minimal query to check if current project is the Demo Project
+  const { data: currentProject } = useFindUniqueProjects(
+    {
+      where: { id: Number(projectId) },
+      select: { name: true },
+    },
+    { enabled: isOnProjectPage && !!projectId }
+  );
+  const isDemoProject = currentProject?.name === "Demo Project";
 
   // Fetch trial configuration from API (env vars are baked in at build time, so we need runtime fetch)
   useEffect(() => {
@@ -293,16 +308,28 @@ export const Header = () => {
                     <Navigation className="mr-2 h-4 w-4" />
                     {t("help.menu.startTour")}
                   </DropdownMenuItem>
-                  {path.includes("/projects/") && (
-                    <DropdownMenuItem
-                      onClick={() =>
-                        (window as any).startOnboardingTour?.("projectTour")
-                      }
-                      className="cursor-pointer"
-                    >
-                      <Waypoints className="mr-2 h-4 w-4" />
-                      {t("help.menu.startProjectTour")}
-                    </DropdownMenuItem>
+                  {isOnProjectPage && (
+                    isDemoProject ? (
+                      <DropdownMenuItem
+                        onClick={() =>
+                          (window as any).startOnboardingTour?.("demoProjectTour")
+                        }
+                        className="cursor-pointer"
+                      >
+                        <Waypoints className="mr-2 h-4 w-4" />
+                        {t("help.menu.startDemoProjectTour")}
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem
+                        onClick={() =>
+                          (window as any).startOnboardingTour?.("projectTour")
+                        }
+                        className="cursor-pointer"
+                      >
+                        <Waypoints className="mr-2 h-4 w-4" />
+                        {t("help.menu.startProjectTour")}
+                      </DropdownMenuItem>
+                    )
                   )}
                   {path.includes("/admin/") && (
                     <DropdownMenuItem

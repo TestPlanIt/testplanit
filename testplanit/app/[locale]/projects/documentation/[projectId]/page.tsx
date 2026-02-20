@@ -190,7 +190,7 @@ export default function ProjectDocumentation({
 
   return (
     <div className="h-full flex flex-col">
-      <Card className="flex w-full min-w-[400px]">
+      <Card id="documentation-content" className="flex w-full min-w-[400px]">
         <div className="flex-1 w-3/4">
           <CardHeader>
             <CardTitle>

@@ -765,7 +765,7 @@ function ProjectIssues() {
   return (
     <main>
       <Card>
-        <CardHeader className="w-full">
+        <CardHeader id="issues-page-header" className="w-full">
           <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
             <CardTitle>{t("common.fields.issues")}</CardTitle>
           </div>

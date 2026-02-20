@@ -500,7 +500,7 @@ function TagList() {
   return (
     <main>
       <Card>
-        <CardHeader>
+        <CardHeader id="tags-page-header">
           <CardTitle>
             <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
               <CardTitle>{t("common.fields.tags")}</CardTitle>

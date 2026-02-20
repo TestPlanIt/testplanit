@@ -4340,7 +4340,8 @@
     "menu": {
       "startTour": "Visite guidée de bienvenue",
       "startProjectTour": "Visite du projet",
-      "startAdminTour": "Visite guidée de l'administration"
+      "startAdminTour": "Visite guidée de l'administration",
+      "startDemoProjectTour": "Visite du projet de démonstration"
     },
     "tour": {
       "mainTour": {
@@ -4397,6 +4398,10 @@
           "title": "Panneau de droite du dépôt",
           "content": "Le panneau de droite affiche les détails du cas de test, les résultats d'exécution et propose des actions pour créer de nouveaux cas de test ou importer ceux existants."
         },
+        "sharedSteps": {
+          "title": "Étapes partagées",
+          "content": "Définissez des groupes d'étapes réutilisables pouvant être référencés dans plusieurs cas de test. Veillez à ce que vos étapes de test soient DRY et cohérentes."
+        },
         "testRuns": {
           "content": "Exécutez les tests planifiés, suivez leur progression et gérez les affectations de tests au sein de votre équipe. Consultez les résultats détaillés de l'exécution."
         },
@@ -4423,6 +4428,10 @@
         "reports": {
           "title": "Rapports et analyses",
           "content": "Générez des rapports et des analyses complets pour votre projet. Consultez la couverture des tests, les tendances d'exécution, les indicateurs de performance de l'équipe et créez des rapports personnalisés pour les parties prenantes."
+        },
+        "settings": {
+          "title": "Paramètres du projet",
+          "content": "Gérez ici les intégrations au niveau du projet, les configurations des modèles d'IA et les liens partagés."
         }
       },
       "adminTour": {
@@ -4493,6 +4502,92 @@
         "trash": {
           "title": "Corbeille système",
           "content": "Consultez et gérez les éléments supprimés de tous vos projets. Restaurez les contenus supprimés accidentellement ou supprimez définitivement les éléments du système."
+        }
+      },
+      "demoProjectTour": {
+        "projectSelector": {
+          "title": "Bienvenue dans le projet de démonstration",
+          "content": "Ce projet est préchargé avec des exemples de données. Découvrons ensemble ses principales fonctionnalités. Utilisez ce menu déroulant pour passer d'un projet à l'autre."
+        },
+        "overview": {
+          "title": "Aperçu du projet",
+          "content": "La vue d'ensemble correspond au tableau de bord de votre projet. Elle affiche la progression des étapes clés à gauche et des résumés des cas de test, des exécutions en cours, des sessions et des étiquettes à droite."
+        },
+        "documentation": {
+          "title": "Documentation",
+          "content": "Chaque projet possède une page de documentation. Utilisez-la pour les plans de test, les notes de projet ou les liens vers des ressources externes."
+        },
+        "documentationContent": {
+          "title": "Éditeur de texte enrichi",
+          "content": "La documentation prend en charge le texte enrichi avec des titres, des listes, des liens et des images. Essayez de modifier cette page pour voir comment cela fonctionne."
+        },
+        "milestones": {
+          "title": "Étapes clés",
+          "content": "Suivez vos tests par rapport aux sprints, aux versions et aux autres objectifs. Associez les exécutions et les sessions de test aux étapes clés pour un suivi optimal."
+        },
+        "milestonesPage": {
+          "title": "Chronologie des étapes clés",
+          "content": "Ce projet comporte trois étapes clés : le sprint 1 (terminé), le sprint 2 (en cours) et une future version 1.0."
+        },
+        "repository": {
+          "title": "Référentiel de cas de test",
+          "content": "Organisez les cas de test dans des dossiers avec des champs, des étapes et des priorités personnalisés. Les cas sont ici regroupés sous Authentification et Tableau de bord."
+        },
+        "repositoryPanels": {
+          "title": "Chemises et étuis",
+          "content": "Le panneau de gauche affiche les dossiers. Cliquez sur un dossier pour consulter ses cas de test. Chaque cas comporte des étapes, des descriptions et des références partagées."
+        },
+        "repositoryCases": {
+          "title": "Cas de test",
+          "content": "Vous pouvez consulter ici les cas de test du dossier sélectionné. Chaque ligne affiche le nom du cas, sa priorité et les champs personnalisés. Cliquez sur un cas pour afficher tous ses détails et les étapes à suivre."
+        },
+        "sharedSteps": {
+          "title": "Étapes partagées",
+          "content": "Définissez des groupes d'étapes réutilisables pouvant être référencés dans plusieurs cas de test. Le groupe « Prérequis de connexion » est utilisé dans tous les cas d'authentification."
+        },
+        "sharedStepsPage": {
+          "title": "Groupes de pas partagés",
+          "content": "Chaque groupe contient une série d'étapes ordonnées. Référencez-les dans n'importe quel cas de test pour que vos étapes restent concises et cohérentes."
+        },
+        "testRuns": {
+          "title": "Essais",
+          "content": "Créez des séries de tests pour exécuter les cas et enregistrer les résultats. Attribuez ces séries aux étapes clés et suivez leur progression (réussite/échec)."
+        },
+        "testRunsPage": {
+          "title": "Résultats des essais",
+          "content": "Ce projet a un test de fumée Sprint 1 terminé et un test de régression Sprint 2 en cours avec des résultats mitigés."
+        },
+        "sessions": {
+          "title": "Séances exploratoires",
+          "content": "Capturez les tests ad hoc grâce aux tests par session. Enregistrez les résultats, attribuez des statuts et suivez le temps passé."
+        },
+        "sessionsPage": {
+          "title": "Résultats de la session",
+          "content": "Chaque session comprend des résultats détaillés, un statut et des notes. Consultez la session « Flux de connexion » pour voir des exemples de résultats."
+        },
+        "tags": {
+          "title": "Étiquettes",
+          "content": "Les balises permettent d'organiser et de filtrer les cas de test, les exécutions et les sessions. Ce projet utilise les balises Smoke, Regression et UI."
+        },
+        "tagsPage": {
+          "title": "Gestion des balises",
+          "content": "Créez, modifiez et attribuez des étiquettes à partir d'ici. Utilisez les étiquettes pour regrouper et filtrer le contenu de votre projet."
+        },
+        "issues": {
+          "title": "Problèmes",
+          "content": "Suivez les bogues et les défauts détectés lors des tests. Les problèmes peuvent être liés aux résultats des tests ayant échoué et aux conclusions des sessions pour une traçabilité complète."
+        },
+        "issuesPage": {
+          "title": "Suivi des problèmes",
+          "content": "Ce projet présente des exemples de problèmes liés à des résultats infructueux. Le bogue 1 provient d'un test de réinitialisation de mot de passe ayant échoué, et le bogue 2 d'une découverte lors d'une session exploratoire."
+        },
+        "reports": {
+          "title": "Rapports et analyses",
+          "content": "Générez des rapports sur la couverture des tests, les tendances d'exécution et les performances de l'équipe. Utilisez des rapports prédéfinis ou créez des rapports personnalisés pour les parties prenantes."
+        },
+        "settings": {
+          "title": "Paramètres du projet",
+          "content": "Gérez ici les intégrations au niveau du projet, les configurations des modèles d'IA et les liens partagés."
         }
       }
     }
