@@ -83,7 +83,7 @@ import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { ApplicationArea } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { emptyEditorContent } from "~/app/constants";
-import { tiptapToHtml } from "~/utils/tiptapToHtml";
+import { generateHTMLFallback } from "~/utils/tiptapToHtml";
 
 interface ExternalIssue {
   id: string;
@@ -3471,11 +3471,11 @@ function IssueDescriptionText({ description }: { description: string }) {
     const json = treatAsHtml
       ? convertHtmlToTipTapJSON(value)
       : ensureTipTapJSON(value);
-    const htmlOutput = tiptapToHtml(json);
+    const htmlOutput = generateHTMLFallback(json);
 
     return (
       <div
-        className="prose prose-sm max-w-none"
+        className="prose prose-sm dark:prose-invert max-w-none"
         dangerouslySetInnerHTML={{ __html: htmlOutput }}
       />
     );
