@@ -589,7 +589,7 @@ export function useExportData<
                     .map((step, index) => {
                       const stepText = formatStepContent(
                         step.step,
-                        "plainText"
+                        effectiveOptions.stepsFormat
                       );
                       // Check isDeleted before formatting expectedResult
                       const expectedText =
@@ -597,7 +597,7 @@ export function useExportData<
                           ? ""
                           : formatStepContent(
                               step.expectedResult.expectedResult,
-                              "plainText"
+                              effectiveOptions.stepsFormat
                             );
                       const stepStr = stepText
                         ? `Step ${index + 1}:\n${stepText}`

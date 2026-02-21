@@ -410,9 +410,8 @@ export class ApiHelper {
         {
           data: {
             data: {
-              repositoryCase: { connect: { id: caseId } },
-              caseField: { connect: { id: fieldId } },
-              project: { connect: { id: projectId } },
+              testCaseId: caseId,
+              fieldId: fieldId,
               value: typeof value === "string" ? value : JSON.stringify(value),
             },
           },

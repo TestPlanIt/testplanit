@@ -19,9 +19,13 @@ import Focus from "@tiptap/extension-focus";
 import { ImageWithResize } from "./ImageWithResize";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { Markdown } from "@tiptap/markdown";
+import { Slice } from "@tiptap/pm/model";
 // Import browser-compatible generateJSON from core
 import { generateJSON } from "@tiptap/core";
-import { convertMarkdownToTipTapJSON } from "~/utils/tiptapConversion";
+import {
+  convertMarkdownToTipTapJSON,
+  isLikelyMarkdown,
+} from "~/utils/tiptapConversion";
 
 import {
   Popover,
@@ -285,6 +289,23 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         class:
           "prose prose-xs sm:prose-sm lg:prose max-w-none w-full focus:outline-none p-1",
         style: "width: 100%; max-width: none;",
+      },
+      handlePaste: (view, event) => {
+        const text = event.clipboardData?.getData("text/plain");
+        if (!text || !isLikelyMarkdown(text)) {
+          return false;
+        }
+        try {
+          const json = convertMarkdownToTipTapJSON(text);
+          const doc = view.state.schema.nodeFromJSON(json);
+          const slice = new Slice(doc.content, 0, 0);
+          const tr = view.state.tr.replaceSelection(slice);
+          view.dispatch(tr);
+          return true;
+        } catch (error) {
+          console.warn("Failed to parse pasted markdown:", error);
+          return false;
+        }
       },
     },
     editable: !readOnly,
