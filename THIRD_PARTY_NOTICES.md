@@ -166,6 +166,13 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **Repository**: <https://github.com/wooorm/lowlight>
 - **Copyright**: Copyright (c) 2016 Titus Wormer
 
+### TipTap Markdown Extension
+
+- **Version**: 3.x
+- **License**: MIT
+- **Repository**: <https://github.com/ueberdosis/tiptap>
+- **Copyright**: Copyright (c) 2023 überdosis GmbH
+
 ### TipTap Resize Image Extension
 
 - **Version**: 1.x
@@ -322,6 +329,13 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **Repository**: <https://github.com/swagger-api/swagger-ui>
 - **Copyright**: Copyright (c) 2020 SmartBear Software
 
+### Swagger ApiDOM Core
+
+- **Version**: 1.x
+- **License**: Apache-2.0
+- **Repository**: <https://github.com/swagger-api/apidom>
+- **Copyright**: Copyright (c) 2020 SmartBear Software Inc.
+
 ### NextStepJS
 
 - **Version**: 2.x
@@ -349,6 +363,20 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **License**: MIT
 - **Repository**: <https://github.com/vercel/react-tweet>
 - **Copyright**: Copyright (c) 2023 Vercel, Inc.
+
+### SVGR
+
+- **Version**: 8.x
+- **License**: MIT
+- **Repository**: <https://github.com/gregberge/svgr>
+- **Copyright**: Copyright (c) 2017-present Greg Bergé
+
+### Slate Hyperscript
+
+- **Version**: 0.x
+- **License**: MIT
+- **Repository**: <https://github.com/ianstormtaylor/slate>
+- **Copyright**: Copyright (c) 2016 Ian Storm Taylor
 
 ## Data Visualization
 
@@ -548,6 +576,31 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **License**: MIT
 - **Repository**: <https://github.com/julianlam/html-to-adf>
 - **Copyright**: Copyright (c) Julian Lam
+
+## Markdown Processing
+
+### Marked
+
+- **Version**: 17.x
+- **License**: MIT
+- **Repository**: <https://github.com/markedjs/marked>
+- **Copyright**: Copyright (c) 2018 MarkedJS contributors, Copyright (c) 2011-2018 Christopher Jeffrey
+
+### Turndown
+
+- **Version**: 7.x
+- **License**: MIT
+- **Repository**: <https://github.com/mixmark-io/turndown>
+- **Copyright**: Copyright (c) 2017 Dom Christie
+
+## Web Framework
+
+### Hono
+
+- **Version**: 4.x
+- **License**: MIT
+- **Repository**: <https://github.com/honojs/hono>
+- **Copyright**: Copyright (c) 2021 Yusuke Wada & Hono contributors
 
 ## Utilities
 
@@ -1103,5 +1156,5 @@ For our commercial license, we ensure all dependencies allow commercial use and 
 
 ---
 
-*Last updated: December 2025*
+*Last updated: February 2026*
 *This document is automatically generated and manually reviewed quarterly.*
