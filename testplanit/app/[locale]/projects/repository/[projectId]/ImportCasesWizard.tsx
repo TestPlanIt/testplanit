@@ -48,6 +48,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { z } from "zod/v4";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
+import { ensureTipTapJSON } from "~/utils/tiptapConversion";
+import { generateHTMLFallback } from "~/utils/tiptapToHtml";
 
 interface ImportCasesWizardProps {
   onImportComplete?: () => void;
@@ -306,173 +308,175 @@ export function ImportCasesWizard({
     return fields;
   }, [selectedTemplate, importLocation, tGlobal, tCommon]);
 
-  // Parse CSV file
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const text = e.target?.result as string;
+  // Parse CSV file - only called when advancing from page 1 to page 2
+  const parseCSVFile = () => {
+    if (!selectedFile) return;
 
-    Papa.parse(text, {
-      delimiter,
-      header: hasHeaders,
-      encoding,
-      skipEmptyLines: true,
-      complete: (results) => {
-        let columnHeaders: string[] = [];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
 
-        if (hasHeaders) {
-          columnHeaders = results.meta.fields || [];
-          setParsedData(results.data as ParsedCase[]);
-        } else {
-          const firstRow = results.data[0] as string[];
-          columnHeaders = firstRow.map((_, i) => `Column ${i + 1}`);
-          setParsedData(
-            results.data.map((row: any) => {
-              const obj: ParsedCase = {};
-              columnHeaders.forEach((h, i) => {
-                obj[h] = row[i];
-              });
-              return obj;
-            })
-          );
-        }
-
-        // Initialize field mappings with automatic matching
-        const usedFields = new Set<string>();
-        const mappings = columnHeaders.map((col: string) => {
-          // Try to auto-map columns based on name matching
-          let matchedField: string | null = null;
+      Papa.parse(text, {
+        delimiter,
+        header: hasHeaders,
+        encoding,
+        skipEmptyLines: true,
+        complete: (results) => {
+          let columnHeaders: string[] = [];
 
           if (hasHeaders) {
-            const normalizedColName = col.toLowerCase().trim();
-
-            // Skip template column - template is already selected on page 1
-            if (
-              normalizedColName === "template" ||
-              normalizedColName === "templatename" ||
-              normalizedColName === "template name"
-            ) {
-              return {
-                csvColumn: col,
-                templateField: null,
-              };
-            }
-
-            // Try to find exact match first
-            const exactMatch = templateFields.find(
-              (field) =>
-                !usedFields.has(field.id) &&
-                (field.displayName.toLowerCase() === normalizedColName ||
-                  field.id.toLowerCase() === normalizedColName)
+            columnHeaders = results.meta.fields || [];
+            setParsedData(results.data as ParsedCase[]);
+          } else {
+            const firstRow = results.data[0] as string[];
+            columnHeaders = firstRow.map((_, i) => `Column ${i + 1}`);
+            setParsedData(
+              results.data.map((row: any) => {
+                const obj: ParsedCase = {};
+                columnHeaders.forEach((h, i) => {
+                  obj[h] = row[i];
+                });
+                return obj;
+              })
             );
+          }
 
-            if (exactMatch) {
-              matchedField = exactMatch.id;
-              usedFields.add(exactMatch.id);
-            } else {
-              // Try common variations
-              const commonMappings: Record<string, string> = {
-                "case name": "name",
-                "test case name": "name",
-                title: "name",
-                tag: "tags",
-                step: "steps",
-                "test steps": "steps",
-                estimated: "estimate",
-                estimation: "estimate",
-                "is automated": "automated",
-                automation: "automated",
-                "folder path": "folder",
-                path: "folder",
-                attachment: "attachments",
-                issue: "issues",
-                "linked case": "linkedCases",
-                "linked test case": "linkedCases",
-                "workflow state": "workflowState",
-                state: "workflowState",
-                status: "workflowState",
-                "created at": "createdAt",
-                "created date": "createdAt",
-                "creation date": "createdAt",
-                "date created": "createdAt",
-                "created by": "createdBy",
-                creator: "createdBy",
-                author: "createdBy",
-                "created user": "createdBy",
-                version: "version",
-                "version number": "version",
-                "case version": "version",
-                revision: "version",
-                "test runs": "testRuns",
-                "test run": "testRuns",
-                runs: "testRuns",
-                executions: "testRuns",
-                id: "id",
-                "test case id": "id",
-                "case id": "id",
-                identifier: "id",
-              };
+          // Initialize field mappings with automatic matching
+          const usedFields = new Set<string>();
+          const mappings = columnHeaders.map((col: string) => {
+            // Try to auto-map columns based on name matching
+            let matchedField: string | null = null;
 
-              // Check if column name matches any common mapping
-              for (const [commonName, fieldId] of Object.entries(
-                commonMappings
-              )) {
-                if (
-                  normalizedColName === commonName ||
-                  normalizedColName.includes(commonName)
-                ) {
-                  const field = templateFields.find(
-                    (f) => f.id === fieldId && !usedFields.has(f.id)
+            if (hasHeaders) {
+              const normalizedColName = col.toLowerCase().trim();
+
+              // Skip template column - template is already selected on page 1
+              if (
+                normalizedColName === "template" ||
+                normalizedColName === "templatename" ||
+                normalizedColName === "template name"
+              ) {
+                return {
+                  csvColumn: col,
+                  templateField: null,
+                };
+              }
+
+              // Try to find exact match first
+              const exactMatch = templateFields.find(
+                (field) =>
+                  !usedFields.has(field.id) &&
+                  (field.displayName.toLowerCase() === normalizedColName ||
+                    field.id.toLowerCase() === normalizedColName)
+              );
+
+              if (exactMatch) {
+                matchedField = exactMatch.id;
+                usedFields.add(exactMatch.id);
+              } else {
+                // Try common variations
+                const commonMappings: Record<string, string> = {
+                  "case name": "name",
+                  "test case name": "name",
+                  title: "name",
+                  tag: "tags",
+                  step: "steps",
+                  "test steps": "steps",
+                  estimated: "estimate",
+                  estimation: "estimate",
+                  "is automated": "automated",
+                  automation: "automated",
+                  "folder path": "folder",
+                  path: "folder",
+                  attachment: "attachments",
+                  issue: "issues",
+                  "linked case": "linkedCases",
+                  "linked test case": "linkedCases",
+                  "workflow state": "workflowState",
+                  state: "workflowState",
+                  status: "workflowState",
+                  "created at": "createdAt",
+                  "created date": "createdAt",
+                  "creation date": "createdAt",
+                  "date created": "createdAt",
+                  "created by": "createdBy",
+                  creator: "createdBy",
+                  author: "createdBy",
+                  "created user": "createdBy",
+                  version: "version",
+                  "version number": "version",
+                  "case version": "version",
+                  revision: "version",
+                  "test runs": "testRuns",
+                  "test run": "testRuns",
+                  runs: "testRuns",
+                  executions: "testRuns",
+                  id: "id",
+                  "test case id": "id",
+                  "case id": "id",
+                  identifier: "id",
+                };
+
+                // Check if column name matches any common mapping
+                for (const [commonName, fieldId] of Object.entries(
+                  commonMappings
+                )) {
+                  if (
+                    normalizedColName === commonName ||
+                    normalizedColName.includes(commonName)
+                  ) {
+                    const field = templateFields.find(
+                      (f) => f.id === fieldId && !usedFields.has(f.id)
+                    );
+                    if (field) {
+                      matchedField = fieldId;
+                      usedFields.add(fieldId);
+                      break;
+                    }
+                  }
+                }
+
+                // If still no match, try partial matching
+                if (!matchedField) {
+                  const partialMatch = templateFields.find(
+                    (field) =>
+                      !usedFields.has(field.id) &&
+                      (normalizedColName.includes(
+                        field.displayName.toLowerCase()
+                      ) ||
+                        normalizedColName.includes(field.id.toLowerCase()) ||
+                        field.displayName
+                          .toLowerCase()
+                          .includes(normalizedColName) ||
+                        field.id.toLowerCase().includes(normalizedColName))
                   );
-                  if (field) {
-                    matchedField = fieldId;
-                    usedFields.add(fieldId);
-                    break;
+
+                  if (partialMatch) {
+                    matchedField = partialMatch.id;
+                    usedFields.add(partialMatch.id);
                   }
                 }
               }
-
-              // If still no match, try partial matching
-              if (!matchedField) {
-                const partialMatch = templateFields.find(
-                  (field) =>
-                    !usedFields.has(field.id) &&
-                    (normalizedColName.includes(
-                      field.displayName.toLowerCase()
-                    ) ||
-                      normalizedColName.includes(field.id.toLowerCase()) ||
-                      field.displayName
-                        .toLowerCase()
-                        .includes(normalizedColName) ||
-                      field.id.toLowerCase().includes(normalizedColName))
-                );
-
-                if (partialMatch) {
-                  matchedField = partialMatch.id;
-                  usedFields.add(partialMatch.id);
-                }
-              }
             }
-          }
 
-          return {
-            csvColumn: col,
-            templateField: matchedField,
-          };
-        });
-        setFieldMappings(mappings);
-      },
-      error: (error: any) => {
-        toast({
-          title: tGlobal("sharedSteps.importWizard.errors.parseFailed"),
-          description: error.message,
-          variant: "destructive",
-        });
-      },
-    });
-  };
-  if (selectedFile) {
+            return {
+              csvColumn: col,
+              templateField: matchedField,
+            };
+          });
+          setFieldMappings(mappings);
+        },
+        error: (error: any) => {
+          toast({
+            title: tGlobal("sharedSteps.importWizard.errors.parseFailed"),
+            description: error.message,
+            variant: "destructive",
+          });
+        },
+      });
+    };
     reader.readAsText(selectedFile, encoding);
-  }
+  };
 
   const handleFileSelect = (files: File[]) => {
     if (files.length > 0) {
@@ -1182,6 +1186,17 @@ export function ImportCasesWizard({
       );
     }
 
+    if (field?.type === "Text Long") {
+      const json = ensureTipTapJSON(value);
+      const htmlOutput = generateHTMLFallback(json);
+      return (
+        <div
+          className="prose prose-sm dark:prose-invert max-w-none text-sm"
+          dangerouslySetInnerHTML={{ __html: htmlOutput }}
+        />
+      );
+    }
+
     if (field?.id === "steps" || field?.type === "Steps") {
       return renderStepsPreview(value);
     }
@@ -1246,7 +1261,7 @@ export function ImportCasesWizard({
                       );
                       const value = caseData[mapping.csvColumn];
                       const isExpandedField =
-                        field?.id === "steps" || field?.id === "tags";
+                        field?.id === "steps" || field?.id === "tags" || field?.type === "Text Long";
 
                       return (
                         <div
@@ -1284,6 +1299,7 @@ export function ImportCasesWizard({
   const handleNextPage = () => {
     if (currentPage === 1) {
       if (validatePage1()) {
+        parseCSVFile();
         setCurrentPage(currentPage + 1);
       }
     } else if (currentPage === 2) {
