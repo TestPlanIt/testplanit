@@ -6,6 +6,7 @@ import { CustomColumnDef } from "../components/tables/ColumnSelection";
 import { Projects, CaseFields } from "@prisma/client";
 import { format } from "date-fns";
 import { extractTextFromNode } from "../utils/extractTextFromJson";
+import { tiptapToMarkdown } from "../utils/tiptapToMarkdown";
 import { logDataExport } from "../lib/services/auditClient";
 
 // --- Start: Added Helper Functions ---
@@ -30,7 +31,7 @@ const safeJsonParse = (jsonString: any, defaultValue: any = null): any => {
 // Helper to format step/expected result based on options
 const formatStepContent = (
   content: any, // Can be JSON string or already parsed object
-  formatOption: "json" | "plainText"
+  formatOption: "json" | "plainText" | "markdown"
 ): string => {
   // Ensure always returns string for consistency
   if (content === null || content === undefined) return "";
@@ -46,6 +47,9 @@ const formatStepContent = (
     if (typeof parsedContent === "string") return parsedContent;
     // Otherwise, extract text from the parsed object
     return extractTextFromNode(parsedContent) ?? "";
+  } else if (formatOption === "markdown") {
+    if (typeof parsedContent === "string") return parsedContent;
+    return tiptapToMarkdown(parsedContent);
   } else {
     // format === 'json'
     // Return stringified JSON or the original string if it wasn't JSON
@@ -302,6 +306,9 @@ const formatItemData = (
                 if (options.textLongFormat === "plainText") {
                   const p = safeJsonParse(rawValue);
                   value = typeof p === "string" ? p : extractTextFromNode(p);
+                } else if (options.textLongFormat === "markdown") {
+                  const p = safeJsonParse(rawValue);
+                  value = typeof p === "string" ? p : tiptapToMarkdown(p);
                 } else {
                   value =
                     typeof rawValue === "string"

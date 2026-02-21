@@ -14,6 +14,7 @@ import {
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
+import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 
 function parseTags(value: any): string[] {
   if (!value) return [];
@@ -892,16 +893,8 @@ function validateFieldValue(
       return value.toString();
 
     case "Text Long":
-      // For CSV import, convert plain text to TipTap JSON format
-      return {
-        type: "doc",
-        content: [
-          {
-            type: "paragraph",
-            content: [{ type: "text", text: value.toString() }],
-          },
-        ],
-      };
+      // For CSV import, auto-detect format (plain text, markdown, HTML, or TipTap JSON)
+      return ensureTipTapJSON(value.toString());
 
     case "Integer":
       const intValue = parseInt(value);
@@ -1016,25 +1009,9 @@ function validateFieldValue(
         const expectedResultText = parts[1] || null;
 
         return {
-          step: {
-            type: "doc",
-            content: [
-              {
-                type: "paragraph",
-                content: stepText ? [{ type: "text", text: stepText }] : [],
-              },
-            ],
-          },
+          step: ensureTipTapJSON(stepText),
           expectedResult: expectedResultText
-            ? {
-                type: "doc",
-                content: [
-                  {
-                    type: "paragraph",
-                    content: [{ type: "text", text: expectedResultText }],
-                  },
-                ],
-              }
+            ? ensureTipTapJSON(expectedResultText)
             : null,
           order: index,
         };

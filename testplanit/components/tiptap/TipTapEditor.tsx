@@ -18,8 +18,10 @@ import Focus from "@tiptap/extension-focus";
 // import ImageResize from "tiptap-extension-resize-image";
 import { ImageWithResize } from "./ImageWithResize";
 import { Placeholder } from "@tiptap/extension-placeholder";
+import { Markdown } from "@tiptap/markdown";
 // Import browser-compatible generateJSON from core
 import { generateJSON } from "@tiptap/core";
+import { convertMarkdownToTipTapJSON } from "~/utils/tiptapConversion";
 
 import {
   Popover,
@@ -261,6 +263,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         emptyEditorClass:
           "before:content-[attr(data-placeholder)] before:text-muted-foreground before:float-left before:pointer-events-none",
       }),
+      Markdown,
     ],
     content: validateContent(content),
     onUpdate: ({ editor }) => {
@@ -544,75 +547,13 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   const acceptAiSuggestion = () => {
     if (!editor || !aiResponse) return;
 
-    // Convert the AI response to proper TipTap JSON format
+    // Convert the AI response (typically markdown from LLMs) to TipTap JSON
     let contentToInsert: any;
 
     try {
-      // First, normalize list items that have extra blank lines between them
-      const normalizedResponse = aiResponse
-        // Combine bullet list items separated by blank lines
-        .replace(/(^|\n)([\*\-•]\s.*?)(\n\n+(?=[\*\-•]\s))/gm, "$1$2\n")
-        // Combine numbered list items separated by blank lines
-        .replace(/(^|\n)(\d+[\.\)]\s.*?)(\n\n+(?=\d+[\.\)]\s))/gm, "$1$2\n")
-        // Clean up any remaining excessive blank lines
-        .replace(/\n{3,}/g, "\n\n")
-        .trim();
-
-      // Convert to HTML with proper structure
-      const htmlContent = normalizedResponse
-        .split("\n\n")
-        .map((paragraph) => {
-          // Check if it's a bullet list
-          if (paragraph.match(/^[\*\-•]\s/m)) {
-            const items = paragraph
-              .split("\n")
-              .filter((line) => line.trim())
-              .map((line) => `<li>${line.replace(/^[\*\-•]\s*/, "")}</li>`)
-              .join("");
-            return `<ul>${items}</ul>`;
-          }
-          // Check if it's a numbered list
-          else if (paragraph.match(/^\d+[\.\)]\s/m)) {
-            const items = paragraph
-              .split("\n")
-              .filter((line) => line.trim())
-              .map((line) => `<li>${line.replace(/^\d+[\.\)]\s*/, "")}</li>`)
-              .join("");
-            return `<ol>${items}</ol>`;
-          }
-          // Regular paragraph
-          else if (paragraph.trim()) {
-            return `<p>${paragraph}</p>`;
-          }
-          return "";
-        })
-        .filter((html) => html)
-        .join("");
-
-      // Convert HTML to TipTap JSON using the same extensions as the editor
-      const extensions = [
-        StarterKit.configure({
-          link: false,
-          underline: false,
-        }),
-        Underline,
-        Link,
-        ImageWithResize.configure({
-          inline: true,
-          allowBase64: true,
-        }),
-        Video,
-        Color,
-        TextStyle,
-        Emoji.configure({
-          emojis: gitHubEmojis,
-        }),
-      ];
-
-      contentToInsert = generateJSON(htmlContent, extensions);
+      contentToInsert = convertMarkdownToTipTapJSON(aiResponse);
     } catch (error) {
       console.error("Error converting AI response to TipTap format:", error);
-      // Fallback to plain text if conversion fails
       contentToInsert = aiResponse;
     }
 

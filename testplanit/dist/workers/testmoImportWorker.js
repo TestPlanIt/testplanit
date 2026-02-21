@@ -319,21 +319,64 @@ function validateMultiTenantJobData(jobData) {
 var import_ioredis = __toESM(require("ioredis"));
 var skipConnection = process.env.SKIP_VALKEY_CONNECTION === "true";
 var valkeyUrl = process.env.VALKEY_URL;
-if (!valkeyUrl && !skipConnection) {
-  console.error(
-    "VALKEY_URL environment variable is not set. Background jobs may fail."
-  );
-}
-var connectionOptions = {
+var valkeySentinels = process.env.VALKEY_SENTINELS;
+var sentinelMasterName = process.env.VALKEY_SENTINEL_MASTER || "mymaster";
+var sentinelPassword = process.env.VALKEY_SENTINEL_PASSWORD;
+var baseOptions = {
   maxRetriesPerRequest: null,
   // Required by BullMQ
   enableReadyCheck: false
-  // Optional: Sometimes helps with startup race conditions
+  // Helps with startup race conditions and Sentinel failover
 };
+function parseSentinels(sentinelStr) {
+  return sentinelStr.split(",").map((entry) => {
+    const trimmed = entry.trim();
+    const lastColon = trimmed.lastIndexOf(":");
+    if (lastColon === -1) {
+      return { host: trimmed, port: 26379 };
+    }
+    const host = trimmed.slice(0, lastColon);
+    const port = parseInt(trimmed.slice(lastColon + 1), 10);
+    return { host, port: Number.isNaN(port) ? 26379 : port };
+  });
+}
+function extractPasswordFromUrl(url) {
+  try {
+    const redisUrl = url.replace(/^valkey:\/\//, "redis://");
+    const parsed = new URL(redisUrl);
+    return parsed.password || void 0;
+  } catch {
+    return void 0;
+  }
+}
 var valkeyConnection = null;
-if (valkeyUrl && !skipConnection) {
+if (skipConnection) {
+  console.warn("Valkey connection skipped (SKIP_VALKEY_CONNECTION=true).");
+} else if (valkeySentinels) {
+  const sentinels = parseSentinels(valkeySentinels);
+  const masterPassword = valkeyUrl ? extractPasswordFromUrl(valkeyUrl) : void 0;
+  valkeyConnection = new import_ioredis.default({
+    sentinels,
+    name: sentinelMasterName,
+    ...masterPassword && { password: masterPassword },
+    ...sentinelPassword && { sentinelPassword },
+    ...baseOptions
+  });
+  console.log(
+    `Connecting to Valkey via Sentinel (master: "${sentinelMasterName}", sentinels: ${sentinels.map((s) => `${s.host}:${s.port}`).join(", ")})`
+  );
+  valkeyConnection.on("connect", () => {
+    console.log("Successfully connected to Valkey master via Sentinel.");
+  });
+  valkeyConnection.on("error", (err) => {
+    console.error("Valkey Sentinel connection error:", err);
+  });
+  valkeyConnection.on("reconnecting", () => {
+    console.log("Valkey Sentinel: reconnecting to master...");
+  });
+} else if (valkeyUrl) {
   const connectionUrl = valkeyUrl.replace(/^valkey:\/\//, "redis://");
-  valkeyConnection = new import_ioredis.default(connectionUrl, connectionOptions);
+  valkeyConnection = new import_ioredis.default(connectionUrl, baseOptions);
   valkeyConnection.on("connect", () => {
     console.log("Successfully connected to Valkey.");
   });
@@ -341,6 +384,9 @@ if (valkeyUrl && !skipConnection) {
     console.error("Valkey connection error:", err);
   });
 } else {
+  console.error(
+    "VALKEY_URL environment variable is not set. Background jobs may fail."
+  );
   console.warn("Valkey URL not provided. Valkey connection not established.");
 }
 var valkey_default = valkeyConnection;

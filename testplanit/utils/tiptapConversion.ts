@@ -5,6 +5,7 @@ import { Underline } from "@tiptap/extension-underline";
 import { Link } from "@tiptap/extension-link";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
+import { marked } from "marked";
 import { emptyEditorContent } from "~/app/constants/backend";
 
 const tiptapConversionExtensions = [
@@ -87,6 +88,61 @@ const applyInlineFormatting = (text: string): string => {
   }
 
   return output || escapeHtml(text);
+};
+
+/**
+ * Detects whether a string is likely markdown (not just plain text).
+ * Uses "strong" patterns (single match sufficient) and "weak" patterns (need 2+ matches).
+ */
+export const isLikelyMarkdown = (text: string): boolean => {
+  // Strong patterns: unambiguously markdown if any single one matches
+  const strongPatterns = [
+    /^#{1,6}\s+\S/m, // Headings: # H1, ## H2, etc.
+    /\[.+?\]\(.+?\)/, // Links: [text](url)
+    /!\[.*?\]\(.+?\)/, // Images: ![alt](url)
+    /^```/m, // Fenced code blocks
+    /^\|.+\|.+\|$/m, // Tables: | col | col |
+    /~~\S.*?\S~~/, // Strikethrough: ~~text~~
+  ];
+
+  if (strongPatterns.some((pattern) => pattern.test(text))) {
+    return true;
+  }
+
+  // Weak patterns: need 2+ to classify as markdown
+  const weakPatterns = [
+    /\*\*\S.*?\S?\*\*/, // Bold: **text**
+    /(?<!\*)\*(?!\*)\S.*?\S?\*(?!\*)/, // Italic: *text*
+    /^[-*+]\s+\S/m, // Unordered lists
+    /^\d+\.\s+\S/m, // Ordered lists
+    /^---$/m, // Horizontal rules
+    /`[^`]+`/, // Inline code: `code`
+    /^>\s+\S/m, // Blockquotes: > text
+  ];
+
+  const weakMatchCount = weakPatterns.filter((pattern) =>
+    pattern.test(text)
+  ).length;
+  return weakMatchCount >= 2;
+};
+
+export const convertMarkdownToTipTapJSON = (markdown: string): JSONContent => {
+  const trimmed = markdown ? markdown.trim() : "";
+  if (!trimmed) {
+    return emptyEditorContent as JSONContent;
+  }
+
+  try {
+    const html = marked.parse(trimmed, {
+      async: false,
+      gfm: true,
+    }) as string;
+
+    return convertHtmlToTipTapJSON(html);
+  } catch (error) {
+    console.error("Failed to convert Markdown to TipTap JSON:", error);
+    return convertTextToTipTapJSON(trimmed);
+  }
 };
 
 export const convertHtmlToTipTapJSON = (html: string): JSONContent => {
@@ -183,6 +239,10 @@ export const ensureTipTapJSON = (value: any): JSONContent => {
 
     if (/<\/?[a-z][\s\S]*>/i.test(trimmed)) {
       return convertHtmlToTipTapJSON(trimmed);
+    }
+
+    if (isLikelyMarkdown(trimmed)) {
+      return convertMarkdownToTipTapJSON(trimmed);
     }
 
     return convertTextToTipTapJSON(trimmed);

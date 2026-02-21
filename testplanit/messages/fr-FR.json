@@ -1820,7 +1820,8 @@
       "format": {
         "label": "Format",
         "csv": "CSV",
-        "pdf": "PDF"
+        "pdf": "PDF",
+        "markdown": "Réduction"
       },
       "columns": {
         "all": "Tous",

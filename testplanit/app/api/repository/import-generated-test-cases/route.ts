@@ -4,6 +4,7 @@ import { authOptions } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
 import { emptyEditorContent } from "~/app/constants/backend";
 import { ProjectAccessType } from "@prisma/client";
+import { serializeTipTapJSON } from "~/utils/tiptapConversion";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 
@@ -256,17 +257,9 @@ export async function POST(request: NextRequest) {
 
             switch (caseField.caseField.type.type) {
               case "Text Long":
-                // Convert string to TipTap JSON format if it's a string
+                // Auto-detect format (plain text, markdown, HTML, or TipTap JSON)
                 if (typeof fieldValue === "string") {
-                  processedValue = JSON.stringify({
-                    type: "doc",
-                    content: [
-                      {
-                        type: "paragraph",
-                        content: [{ type: "text", text: fieldValue }],
-                      },
-                    ],
-                  });
+                  processedValue = serializeTipTapJSON(fieldValue);
                 } else {
                   processedValue = JSON.stringify(fieldValue);
                 }
@@ -471,17 +464,9 @@ export async function POST(request: NextRequest) {
 
             switch (caseField.caseField.type.type) {
               case "Text Long":
-                // Convert string to TipTap JSON format if it's a string
+                // Auto-detect format (plain text, markdown, HTML, or TipTap JSON)
                 if (typeof fieldValue === "string") {
-                  processedValue = JSON.stringify({
-                    type: "doc",
-                    content: [
-                      {
-                        type: "paragraph",
-                        content: [{ type: "text", text: fieldValue }],
-                      },
-                    ],
-                  });
+                  processedValue = serializeTipTapJSON(fieldValue);
                 } else {
                   processedValue = JSON.stringify(fieldValue);
                 }

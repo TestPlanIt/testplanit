@@ -37,9 +37,9 @@ export interface ExportOptions {
   format: "csv" | "pdf";
   columns: "visible" | "all";
   delimiter: "," | ";" | ":" | "|";
-  textLongFormat: "json" | "plainText";
+  textLongFormat: "json" | "plainText" | "markdown";
   attachmentFormat: "json" | "names" | "embedded";
-  stepsFormat: "json" | "plainText";
+  stepsFormat: "json" | "plainText" | "markdown";
   rowMode: "single" | "multi";
 }
 
@@ -62,13 +62,15 @@ export function ExportModal({
   const [format, setFormat] = useState<"csv" | "pdf">("csv");
   const [columns, setColumns] = useState<"visible" | "all">("all");
   const [delimiter, setDelimiter] = useState<"," | ";" | ":" | "|">(",");
-  const [textLongFormat, setTextLongFormat] = useState<"json" | "plainText">(
-    "json"
-  );
+  const [textLongFormat, setTextLongFormat] = useState<
+    "json" | "plainText" | "markdown"
+  >("json");
   const [attachmentFormat, setAttachmentFormat] = useState<
     "json" | "names" | "embedded"
   >("json");
-  const [stepsFormat, setStepsFormat] = useState<"json" | "plainText">("json");
+  const [stepsFormat, setStepsFormat] = useState<
+    "json" | "plainText" | "markdown"
+  >("json");
   const [rowMode, setRowMode] = useState<"single" | "multi">("single");
   const [isExporting, setIsExporting] = useState(false);
 
@@ -325,9 +327,9 @@ export function ExportModal({
                 <RadioGroup
                   id="textLongFormat"
                   value={textLongFormat}
-                  onValueChange={(value: "json" | "plainText") =>
-                    setTextLongFormat(value)
-                  }
+                  onValueChange={(
+                    value: "json" | "plainText" | "markdown"
+                  ) => setTextLongFormat(value)}
                   className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
                   data-testid="export-textlong-format-radio-group"
                 >
@@ -357,6 +359,19 @@ export function ExportModal({
                       {tGlobal("repository.exportModal.stepsFormat.plainText")}
                     </Label>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value="markdown"
+                      id="textLongFormat-markdown"
+                      data-testid="export-textlong-markdown"
+                    />
+                    <Label
+                      htmlFor="textLongFormat-markdown"
+                      className="cursor-pointer"
+                    >
+                      {tGlobal("repository.exportModal.format.markdown")}
+                    </Label>
+                  </div>
                 </RadioGroup>
               </div>
 
@@ -372,9 +387,9 @@ export function ExportModal({
                 <RadioGroup
                   id="stepsFormat"
                   value={stepsFormat}
-                  onValueChange={(value: "json" | "plainText") =>
-                    setStepsFormat(value)
-                  }
+                  onValueChange={(
+                    value: "json" | "plainText" | "markdown"
+                  ) => setStepsFormat(value)}
                   className="flex flex-row flex-wrap gap-x-4 gap-y-1 justify-end"
                   data-testid="export-steps-format-radio-group"
                 >
@@ -402,6 +417,19 @@ export function ExportModal({
                       className="cursor-pointer"
                     >
                       {tGlobal("repository.exportModal.stepsFormat.plainText")}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem
+                      value="markdown"
+                      id="stepsFormat-markdown"
+                      data-testid="export-steps-markdown"
+                    />
+                    <Label
+                      htmlFor="stepsFormat-markdown"
+                      className="cursor-pointer"
+                    >
+                      {tGlobal("repository.exportModal.format.markdown")}
                     </Label>
                   </div>
                 </RadioGroup>
