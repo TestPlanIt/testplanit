@@ -12,7 +12,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 
 ### Test Case Editor
 
-- **Rich text editing** - Create detailed test steps with formatted text, images, and attachments
+- **Rich text editing** - Create detailed test steps with formatted text, images, and attachments. Supports pasting markdown directly into the editor with automatic conversion to rich text
 - **Shared steps** - Define reusable step sequences that can be included in multiple test cases
 - **Custom fields** - Define custom fields to capture additional metadata for your test cases
 - **Expected results** - Clearly define what success looks like for each step
@@ -133,10 +133,10 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 
 ### Import & Export
 
-- **Bulk import** - Import test cases from CSV or other test management tools
+- **Bulk import** - Import test cases from CSV with automatic markdown/HTML detection for rich text fields
 - **Test Results import** - Import automated test results via popular formats like JUnit XML
 - **TestMo migration** - Special import support for migrating from Testmo
-- **Export capabilities** - Export data for backup or migration
+- **Export capabilities** - Export data in CSV or PDF, with markdown format option for rich text fields
 - **API access** - Full programmatic access to all features
 
 ## Search & Discovery

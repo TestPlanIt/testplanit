@@ -12,8 +12,9 @@ TestPlanIt provides comprehensive import and export capabilities to help you mig
 The import/export system supports:
 
 - **CSV Import/Export** for test cases and bulk data operations
+- **Markdown support** for rich text fields during import and export
 - **Automated Test Results Import** for multiple formats (JUnit, TestNG, NUnit, xUnit, MSTest, Mocha, Cucumber)
-- **Field Mapping** for flexible data transformation
+- **Field Mapping** for flexible data transformation with auto-matching
 - **Bulk Operations** for efficient data management
 - **Attachment Support** during import/export processes
 
@@ -74,6 +75,17 @@ Test Name,Details,Procedure,Labels,Priority,Automated
 
 During import, you'll map these columns to the available fields. The wizard auto-matches columns when names are similar.
 
+#### Rich Text Content in CSV
+
+Rich text fields (such as Description and other "Text Long" fields) support multiple formats in CSV. During import, TestPlanIt automatically detects the format and converts it to rich text:
+
+- **TipTap JSON**: The native rich text format used internally. Imported as-is.
+- **HTML**: HTML markup is detected and converted to rich text.
+- **Markdown**: Markdown syntax (headings, bold, italic, lists, links, code blocks, etc.) is automatically detected and converted to rich text.
+- **Plain text**: Simple text is wrapped in a paragraph.
+
+Format detection happens automatically — you don't need to specify which format your CSV uses. This means you can export from TestPlanIt in Markdown format and re-import the CSV without any manual conversion.
+
 #### Step Format in CSV
 
 Test steps can be formatted in several ways:
@@ -94,6 +106,16 @@ Test steps can be formatted in several ways:
 3. Click login button | User is redirected to dashboard
 ```
 
+**Markdown Format:**
+
+Steps can also contain markdown formatting:
+
+```
+1. Navigate to the **Login** page | Login page displays with _username_ and _password_ fields
+2. Enter `admin` credentials | Fields accept input
+3. Click **Submit** | User is redirected to [Dashboard](/dashboard)
+```
+
 #### Import Process
 
 1. **Upload CSV File**
@@ -102,8 +124,10 @@ Test steps can be formatted in several ways:
 
 2. **Field Mapping**
    - Map CSV columns to TestPlanIt fields
+   - Columns are auto-matched to fields by name when possible
+   - You can change or ignore any auto-matched field mapping
    - Preview shows sample data mapping
-   - Set default values for unmapped fields
+   - Rich text fields show a formatted preview (rendered markdown/HTML)
 
 3. **Options Configuration**
    - Choose folder for imported cases
@@ -159,9 +183,11 @@ Export test cases and related data to CSV format.
    - Relationship data (tags, attachments)
 
 3. **Format Options**
-   - Step formatting (simple/detailed)
-   - Date format preferences
-   - Custom field formatting
+   - **Text Long format**: JSON (raw TipTap JSON), Plain Text (stripped formatting), or Markdown
+   - **Steps format**: JSON, Plain Text, or Markdown
+   - Attachment format: JSON, Names, or Embedded
+   - Custom delimiter selection (comma, semicolon, colon, pipe)
+   - Row mode: single or multi-row per test case
 
 #### Export Process
 
@@ -474,8 +500,11 @@ Export complete project data including:
 
 - Standard comma-separated values
 - Configurable field selection
-- Custom formatting options
 - Configurable delimiter (comma, semicolon, colon, pipe)
+- **Rich text format options**: Export Text Long fields and Steps as JSON, Plain Text, or **Markdown**
+  - **JSON**: Raw TipTap JSON (lossless, ideal for re-import)
+  - **Plain Text**: Stripped of all formatting
+  - **Markdown**: Preserves formatting as markdown syntax (headings, bold, italic, lists, links, etc.). Ideal for human readability and round-trip import/export
 
 #### PDF Export
 
@@ -489,9 +518,9 @@ Export complete project data including:
 |--------|--------|-------------|
 | **Scope** | Selected / All Filtered / All Project | Which test cases to include |
 | **Columns** | Visible / All | Which fields to export |
-| **Text Fields** | JSON / Plain Text | How to format rich text content |
+| **Text Fields** | JSON / Plain Text | How to format rich text content (Markdown option available in CSV only) |
 | **Attachment Format** | Names / Embed Images | How to display attachments |
-| **Steps Format** | JSON / Plain Text | How to format test steps |
+| **Steps Format** | JSON / Plain Text | How to format test steps (Markdown option available in CSV only) |
 
 **Attachment Format Options:**
 
