@@ -54,6 +54,20 @@ const config: Config = {
     },
   ],
 
+  plugins: [
+    [
+      '@docusaurus/plugin-client-redirects',
+      {
+        redirects: [
+          {
+            from: '/user-guide/llm-integrations',
+            to: '/docs/user-guide/prompt-configurations/',
+          },
+        ],
+      },
+    ],
+  ],
+
   presets: [
     [
       'classic',
