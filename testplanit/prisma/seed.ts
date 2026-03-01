@@ -2109,6 +2109,172 @@ Step {{{order}}} - {{{step}}}
 {{/steps}}
 `;
 
+  // --- Playwright API Testing ---
+  const playwrightApiTsHeader = `import { test, expect } from "@playwright/test";`;
+
+  const playwrightApiTsBody = `/**
+ * API Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+test.describe("{{name}}", () => {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  test("Step {{order}} - {{step}}", async ({ request }) => {
+    const response = await request.get("/api/endpoint");
+    expect(response.ok()).toBeTruthy();
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  const playwrightApiJsBody = `/**
+ * API Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+test.describe("{{name}}", () => {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  test("Step {{order}} - {{step}}", async ({ request }) => {
+    const response = await request.get("/api/endpoint");
+    expect(response.ok()).toBeTruthy();
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  const playwrightApiPythonBody = `"""
+API Test Case: {{{name}}}
+ID: {{{id}}}
+State: {{{state}}}
+Tags: {{{tags}}}
+Created by: {{{createdBy}}}
+"""
+import pytest
+from playwright.sync_api import Playwright, APIRequestContext
+
+
+@pytest.fixture(scope="session")
+def api_request_context(playwright: Playwright) -> APIRequestContext:
+    return playwright.request.new_context(base_url="http://localhost:3000")
+
+
+class Test{{{id}}}:
+    """{{{name}}}"""
+
+{{#steps}}
+    def test_step_{{{order}}}(self, api_request_context: APIRequestContext):
+        """Step {{{order}}}: {{{step}}}"""
+        # Expected: {{{expectedResult}}}
+        response = api_request_context.get("/api/endpoint")
+        assert response.ok
+        # TODO: Implement test logic
+
+{{/steps}}
+`;
+
+  const playwrightApiJavaHeader = `import com.microsoft.playwright.*;
+import org.junit.jupiter.api.*;`;
+
+  const playwrightApiJavaBody = `/**
+ * API Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+public class Test{{{id}}} {
+    static Playwright playwright;
+    static APIRequestContext request;
+
+    @BeforeAll
+    static void setup() {
+        playwright = Playwright.create();
+        request = playwright.request().newContext(
+            new APIRequest.NewContextOptions()
+                .setBaseURL("http://localhost:3000")
+        );
+    }
+
+    @AfterAll
+    static void teardown() {
+        if (request != null) request.dispose();
+        if (playwright != null) playwright.close();
+    }
+
+{{#steps}}
+    @Test
+    @DisplayName("Step {{order}} - {{step}}")
+    void testStep{{{order}}}() {
+        // Expected: {{{expectedResult}}}
+        APIResponse response = request.get("/api/endpoint");
+        Assertions.assertTrue(response.ok());
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  const playwrightApiCsharpHeader = `using Microsoft.Playwright;
+using NUnit.Framework;`;
+
+  const playwrightApiCsharpBody = `/// <summary>
+/// API Test Case: {{{name}}}
+/// ID: {{{id}}}
+/// State: {{{state}}}
+/// Tags: {{{tags}}}
+/// Created by: {{{createdBy}}}
+/// </summary>
+[TestFixture]
+public class Test{{{id}}}
+{
+    private IPlaywright _playwright;
+    private IAPIRequestContext _request;
+
+    [OneTimeSetUp]
+    public async Task Setup()
+    {
+        _playwright = await Playwright.CreateAsync();
+        _request = await _playwright.APIRequest.NewContextAsync(new()
+        {
+            BaseURL = "http://localhost:3000"
+        });
+    }
+
+    [OneTimeTearDown]
+    public async Task Teardown()
+    {
+        if (_request != null) await _request.DisposeAsync();
+        _playwright.Dispose();
+    }
+
+{{#steps}}
+    [Test]
+    public async Task Step{{{order}}}_{{{order}}}()
+    {
+        // Step {{{order}}}: {{{step}}}
+        // Expected: {{{expectedResult}}}
+        var response = await _request.GetAsync("/api/endpoint");
+        Assert.That(response.Ok, Is.True);
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
   // --- TestCafe ---
   const testcafeHeader = `import { Selector, ClientFunction } from "testcafe";`;
 
@@ -2617,6 +2783,74 @@ class Test{{{id}}}: XCTestCase {
       isDefault: false,
     },
     // --- API Testing ---
+    {
+      name: "Playwright API (TypeScript)",
+      description:
+        "Generates Playwright API test stubs in TypeScript using APIRequestContext for HTTP endpoint testing.",
+      category: "API Testing",
+      framework: "Playwright",
+      headerBody: playwrightApiTsHeader,
+      templateBody: playwrightApiTsBody,
+      footerBody: null as string | null,
+      fileExtension: ".api.spec.ts",
+      language: "typescript",
+      isDefault: false,
+    },
+    {
+      name: "Playwright API (JavaScript)",
+      description:
+        "Generates Playwright API test stubs in JavaScript using APIRequestContext for HTTP endpoint testing.",
+      category: "API Testing",
+      framework: "Playwright",
+      headerBody: playwrightApiTsHeader.replace(
+        'import { test, expect } from "@playwright/test";',
+        'const { test, expect } = require("@playwright/test");'
+      ),
+      templateBody: playwrightApiJsBody,
+      footerBody: null as string | null,
+      fileExtension: ".api.spec.js",
+      language: "javascript",
+      isDefault: false,
+    },
+    {
+      name: "Playwright API (Python)",
+      description:
+        "Generates Playwright API test stubs in Python using APIRequestContext with pytest fixtures.",
+      category: "API Testing",
+      framework: "Playwright",
+      headerBody: null as string | null,
+      templateBody: playwrightApiPythonBody,
+      footerBody: null as string | null,
+      fileExtension: ".py",
+      language: "python",
+      isDefault: false,
+    },
+    {
+      name: "Playwright API (Java)",
+      description:
+        "Generates Playwright API test stubs in Java using APIRequestContext with JUnit 5.",
+      category: "API Testing",
+      framework: "Playwright",
+      headerBody: playwrightApiJavaHeader,
+      templateBody: playwrightApiJavaBody,
+      footerBody: null as string | null,
+      fileExtension: ".java",
+      language: "java",
+      isDefault: false,
+    },
+    {
+      name: "Playwright API (C#)",
+      description:
+        "Generates Playwright API test stubs in C# using IAPIRequestContext with NUnit.",
+      category: "API Testing",
+      framework: "Playwright",
+      headerBody: playwrightApiCsharpHeader,
+      templateBody: playwrightApiCsharpBody,
+      footerBody: null as string | null,
+      fileExtension: ".cs",
+      language: "csharp",
+      isDefault: false,
+    },
     {
       name: "REST Assured (Java)",
       description:
