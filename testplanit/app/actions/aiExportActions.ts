@@ -63,7 +63,7 @@ export async function checkAiExportAvailable(args: {
  * Strip markdown code fences from LLM output.
  * Models sometimes wrap responses in ```lang ... ``` despite being told not to.
  */
-function stripMarkdownFences(code: string): string {
+export function stripMarkdownFences(code: string): string {
   return code
     .replace(/^```[\w]*\r?\n?/, "")
     .replace(/\r?\n?```\s*$/, "")
@@ -74,7 +74,7 @@ function stripMarkdownFences(code: string): string {
  * Build a human-readable error string from a caught value, including the
  * cause chain so "fetch failed" surfaces the underlying reason (e.g. ECONNREFUSED).
  */
-function formatAiError(err: unknown): string {
+export function formatAiError(err: unknown): string {
   if (!(err instanceof Error)) return "AI generation failed";
 
   const parts: string[] = [err.message];

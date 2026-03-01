@@ -27,7 +27,8 @@ const PRIVATE_RANGES: RegExp[] = [
 export function isSsrfSafe(url: string): boolean {
   try {
     const parsed = new URL(url);
-    const hostname = parsed.hostname;
+    // Strip brackets from IPv6 addresses (URL.hostname returns "[::1]" for IPv6)
+    const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
 
     // Block localhost by name
     if (hostname === "localhost") return false;

@@ -44,7 +44,7 @@ interface PathPattern {
   pattern: string;
 }
 
-function applyPathPatterns(
+export function applyPathPatterns(
   allFiles: RepoFileEntry[],
   pathPatterns: PathPattern[]
 ): RepoFileEntry[] {
@@ -68,7 +68,7 @@ function applyPathPatterns(
  * Extract meaningful terms from free text for relevance scoring.
  * Splits on non-alphanumeric, lowercases, removes stop words and short tokens.
  */
-function extractTerms(text: string): Set<string> {
+export function extractTerms(text: string): Set<string> {
   return new Set(
     text
       .toLowerCase()
@@ -81,7 +81,7 @@ function extractTerms(text: string): Set<string> {
  * Score a file path by how many case-derived terms appear in its segments.
  * e.g. "tests/e2e/login-page.spec.ts" scores higher if "login" is in terms.
  */
-function scoreFileRelevance(filePath: string, terms: Set<string>): number {
+export function scoreFileRelevance(filePath: string, terms: Set<string>): number {
   if (terms.size === 0) return 0;
   const segments = filePath.toLowerCase().split(/[\/.\-_]+/).filter((s) => s.length > 2);
   return segments.filter((s) => terms.has(s)).length;
