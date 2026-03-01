@@ -125,13 +125,14 @@ export class CustomLlmAdapter extends BaseLlmAdapter {
 
     const customRequest = this.buildCustomRequest(request, true);
 
-    // Use request timeout if provided, otherwise fall back to config timeout
+    // Use request timeout if provided, otherwise fall back to config timeout.
+    // timeout === 0 means no timeout (e.g. streaming where the full duration is unknown).
     const timeout = request.timeout ?? this.getTimeout();
     const response = await fetch(this.endpoint, {
       method: "POST",
       headers: this.getCustomHeaders(),
       body: JSON.stringify(customRequest),
-      signal: AbortSignal.timeout(timeout),
+      signal: timeout > 0 ? AbortSignal.timeout(timeout) : undefined,
     });
 
     if (!response.ok) {

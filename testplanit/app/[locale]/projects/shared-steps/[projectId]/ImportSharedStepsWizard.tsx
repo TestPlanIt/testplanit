@@ -800,7 +800,7 @@ export function ImportSharedStepsWizard({
               onClick={() => setCurrentPage(currentPage - 1)}
               disabled={isImporting}
             >
-              <ChevronLeft className="h-4 w-4 mr-2" />
+              <ChevronLeft className="h-4 w-4" />
               {tCommon("actions.previous")}
             </Button>
           )}
@@ -808,7 +808,7 @@ export function ImportSharedStepsWizard({
           {currentPage < 3 ? (
             <Button onClick={handleNextPage} data-testid="next-button">
               {tCommon("actions.next")}
-              <ChevronRight className="h-4 w-4 ml-2" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
             <Button

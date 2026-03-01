@@ -377,9 +377,10 @@ export class LlmManager {
     if (!config) return;
 
     const inputCost =
-      (response.promptTokens / 1000) * Number(config.costPerInputToken);
+      (response.promptTokens / 1_000_000) * Number(config.costPerInputToken);
     const outputCost =
-      (response.completionTokens / 1000) * Number(config.costPerOutputToken);
+      (response.completionTokens / 1_000_000) *
+      Number(config.costPerOutputToken);
 
     await this.prisma.llmUsage.create({
       data: {
@@ -414,7 +415,7 @@ export class LlmManager {
     if (!config) return;
 
     const estimatedCost =
-      (estimatedTokens / 1000) * Number(config.costPerOutputToken);
+      (estimatedTokens / 1_000_000) * Number(config.costPerOutputToken);
 
     await this.prisma.llmUsage.create({
       data: {

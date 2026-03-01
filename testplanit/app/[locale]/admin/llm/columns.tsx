@@ -26,7 +26,8 @@ export const getColumns = (
     llmProviderConfigId?: number
   ) => void,
   tCommon: ReturnType<typeof useTranslations<"common">>,
-  t: ReturnType<typeof useTranslations<"admin.llm">>
+  t: ReturnType<typeof useTranslations<"admin.llm">>,
+  usageByIntegrationId: Map<number, number> = new Map()
 ): ColumnDef<ExtendedLlmIntegration>[] => [
   {
     id: "name",
@@ -41,7 +42,7 @@ export const getColumns = (
     size: 300,
     cell: ({ row }) => (
       <div className="bg-primary-foreground flex items-center gap-2">
-        <Sparkles className="h-4 w-4 text-muted-foreground" />
+        <Sparkles className="h-4 w-4 text-muted-foreground shrink-0" />
         <span className="font-medium">{row.original.name}</span>
         {row.original.llmProviderConfig?.isDefault && (
           <Badge variant="secondary" className="text-xs">
@@ -129,11 +130,13 @@ export const getColumns = (
     size: 200,
     cell: ({ row }) => {
       const budget = row.original.llmProviderConfig?.monthlyBudget;
-      const usage = 0; // TODO: Add currentMonthUsage to database schema
+      const usage = usageByIntegrationId.get(row.original.id) ?? 0;
 
       if (!budget || Number(budget) === 0) {
         return (
-          <span className="text-sm text-muted-foreground">{t("noBudget")}</span>
+          <span className="text-sm text-muted-foreground">
+            {`$${usage.toFixed(4)}`}
+          </span>
         );
       }
 
@@ -143,7 +146,7 @@ export const getColumns = (
       return (
         <div className="space-y-1">
           <div className="text-sm">
-            {`$${usage.toFixed(2)} / $${budget.toFixed(2)}`}
+            {`$${usage.toFixed(4)} / $${Number(budget).toFixed(2)}`}
           </div>
           <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div

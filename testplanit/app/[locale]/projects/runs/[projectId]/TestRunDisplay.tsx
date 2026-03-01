@@ -791,7 +791,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                       initialSelectedCaseIds={modalSelectedTestCases}
                       onSelectedCasesChange={setModalSelectedTestCases}
                       trigger={
-                        <Button size="lg" className="gap-2">
+                        <Button size="lg">
                           <CirclePlus className="h-5 w-5" />
                           {tCommon("actions.create")}
                         </Button>

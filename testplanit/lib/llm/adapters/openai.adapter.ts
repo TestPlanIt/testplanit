@@ -133,13 +133,14 @@ export class OpenAIAdapter extends BaseLlmAdapter {
       stream: true,
     };
 
-    // Use request timeout if provided, otherwise fall back to config timeout
+    // Use request timeout if provided, otherwise fall back to config timeout.
+    // timeout === 0 means no timeout (e.g. streaming where the full duration is unknown).
     const timeout = request.timeout ?? this.getTimeout();
     const response = await fetch(this.getChatCompletionsUrl(), {
       method: "POST",
       headers: this.getOpenAIHeaders(),
       body: JSON.stringify(openAIRequest),
-      signal: AbortSignal.timeout(timeout),
+      signal: timeout > 0 ? AbortSignal.timeout(timeout) : undefined,
     });
 
     if (!response.ok) {
@@ -177,14 +178,23 @@ export class OpenAIAdapter extends BaseLlmAdapter {
             try {
               const chunk = JSON.parse(data) as OpenAIStreamChunk;
               const choice = chunk.choices[0];
+              const mappedFinishReason = choice.finish_reason
+                ? this.mapFinishReason(choice.finish_reason)
+                : undefined;
 
               if (choice.delta.content) {
                 yield {
                   delta: choice.delta.content,
                   model: chunk.model,
-                  finishReason: choice.finish_reason
-                    ? this.mapFinishReason(choice.finish_reason)
-                    : undefined,
+                  finishReason: mappedFinishReason,
+                };
+              } else if (mappedFinishReason) {
+                // Final chunk carries finish_reason but no content — yield it so
+                // callers can detect truncation (finishReason === "length") etc.
+                yield {
+                  delta: "",
+                  model: chunk.model,
+                  finishReason: mappedFinishReason,
                 };
               }
             } catch (e) {

@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { emptyEditorContent } from "~/app/constants";
-import { CirclePlus, CircleX, Undo2 } from "lucide-react";
+import { FolderPlus, CircleX, Undo2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -110,8 +110,6 @@ export function AddFolderModal({
       enabled: open, // Only fetch when dialog is open
     }
   );
-
-  const isTextVisible = panelWidth >= 25;
 
   const handleCancel = () => {
     setOpen(false);
@@ -250,13 +248,13 @@ export function AddFolderModal({
     >
       <DialogTrigger asChild>
         <Button
-          className="mt-0.5"
+          className="mt-0.5 group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
           variant="secondary"
           data-testid="add-folder-button"
           title={`${t("repository.addFolder")} (Shift+N)`}
         >
-          <CirclePlus className="w-4" />
-          <span className={`${isTextVisible ? "inline" : "hidden"}`}>
+          <FolderPlus className="w-4 shrink-0" />
+          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
             {t("repository.addFolder")}
           </span>
         </Button>

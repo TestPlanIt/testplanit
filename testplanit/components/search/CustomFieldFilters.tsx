@@ -222,7 +222,7 @@ export function CustomFieldFilters({
                   !filter.value && "text-muted-foreground"
                 )}
               >
-                <CalendarIcon className="mr-2 h-4 w-4" />
+                <CalendarIcon className="h-4 w-4" />
                 {filter.value ? (
                   format(new Date(filter.value), "PPP")
                 ) : (
@@ -366,7 +366,6 @@ export function CustomFieldFilters({
           variant="outline"
           size="sm"
           onClick={addFilter}
-          className="gap-1"
         >
           <Plus className="h-3 w-3" />
           {t("search.addFilter")}

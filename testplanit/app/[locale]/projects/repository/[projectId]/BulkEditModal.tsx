@@ -2073,7 +2073,7 @@ export function BulkEditModal({
                     disabled={isDeleting}
                   >
                     {isDeleting && (
-                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     )}
                     <Trash2 className="h-4 w-4" />
                     {tCommon("actions.delete")}

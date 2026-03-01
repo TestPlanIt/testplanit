@@ -210,7 +210,7 @@ export function DrillDownDrawer({
                 onClick={exportToCSV}
                 disabled={isExporting || isLoading || records.length === 0}
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-4 w-4" />
                 {isExporting
                   ? tGlobal("repository.exportModal.exporting")
                   : tGlobal("admin.auditLogs.exportCsv")}

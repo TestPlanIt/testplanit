@@ -146,6 +146,13 @@ enum IntegrationStatus {
   ERROR
 }
 
+enum CodeRepositoryProvider {
+  GITHUB
+  GITLAB
+  BITBUCKET
+  AZURE_DEVOPS
+}
+
 enum ApplicationArea {
   Documentation
   Milestones
@@ -429,47 +436,50 @@ model Roles {
 }
 
 model Projects {
-  id                     Int                         @id() @default(autoincrement())
-  name                   String                      @unique()
-  iconUrl                String?
-  note                   String?
-  docs                   String?
-  isCompleted            Boolean                     @default(false)
-  isDeleted              Boolean                     @default(false)
-  completedAt            DateTime?                   @db.Date()
-  createdAt              DateTime                    @default(now()) @db.Timestamptz(6)
-  createdBy              String
-  creator                User                        @relation("ProjectCreator", fields: [createdBy], references: [id])
-  assignedUsers          ProjectAssignment[]
-  assignedStatuses       ProjectStatusAssignment[]
-  milestoneTypes         MilestoneTypesAssignment[]
-  assignedTemplates      TemplateProjectAssignment[]
-  assignedWorkflows      ProjectWorkflowAssignment[]
-  milestones             Milestones[]
-  repositories           Repositories[]
-  repositoryFolders      RepositoryFolders[]
-  repositoryCases        RepositoryCases[]
-  repositoryCaseVersions RepositoryCaseVersions[]
-  sessions               Sessions[]
-  sessionVersions        SessionVersions[]
-  testRuns               TestRuns[]
-  defaultAccessType      ProjectAccessType           @default(GLOBAL_ROLE)
-  defaultRoleId          Int?
-  defaultRole            Roles?                      @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
-  userPermissions        UserProjectPermission[]
-  groupPermissions       GroupProjectPermission[]
-  sharedStepGroups       SharedStepGroup[]
-  projectIntegrations    ProjectIntegration[]
-  projectLlmIntegrations ProjectLlmIntegration[]
-  promptConfigId         String?
-  promptConfig           PromptConfig?               @relation(fields: [promptConfigId], references: [id])
-  issues                 Issue[]
-  llmUsages              LlmUsage[]
-  llmFeatureConfigs      LlmFeatureConfig[]
-  llmResponseCaches      LlmResponseCache[]
-  comments               Comment[]
-  auditLogs              AuditLog[]
-  shareLinks             ShareLink[]
+  id                      Int                                   @id() @default(autoincrement())
+  name                    String                                @unique()
+  iconUrl                 String?
+  note                    String?
+  docs                    String?
+  isCompleted             Boolean                               @default(false)
+  isDeleted               Boolean                               @default(false)
+  completedAt             DateTime?                             @db.Date()
+  createdAt               DateTime                              @default(now()) @db.Timestamptz(6)
+  createdBy               String
+  creator                 User                                  @relation("ProjectCreator", fields: [createdBy], references: [id])
+  assignedUsers           ProjectAssignment[]
+  assignedStatuses        ProjectStatusAssignment[]
+  milestoneTypes          MilestoneTypesAssignment[]
+  assignedTemplates       TemplateProjectAssignment[]
+  assignedWorkflows       ProjectWorkflowAssignment[]
+  milestones              Milestones[]
+  repositories            Repositories[]
+  repositoryFolders       RepositoryFolders[]
+  repositoryCases         RepositoryCases[]
+  repositoryCaseVersions  RepositoryCaseVersions[]
+  sessions                Sessions[]
+  sessionVersions         SessionVersions[]
+  testRuns                TestRuns[]
+  defaultAccessType       ProjectAccessType                     @default(GLOBAL_ROLE)
+  defaultRoleId           Int?
+  defaultRole             Roles?                                @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
+  userPermissions         UserProjectPermission[]
+  groupPermissions        GroupProjectPermission[]
+  sharedStepGroups        SharedStepGroup[]
+  projectIntegrations     ProjectIntegration[]
+  projectLlmIntegrations  ProjectLlmIntegration[]
+  codeRepositoryConfig    ProjectCodeRepositoryConfig?
+  promptConfigId          String?
+  promptConfig            PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
+  issues                  Issue[]
+  llmUsages               LlmUsage[]
+  llmFeatureConfigs       LlmFeatureConfig[]
+  llmResponseCaches       LlmResponseCache[]
+  comments                Comment[]
+  auditLogs               AuditLog[]
+  shareLinks              ShareLink[]
+  assignedExportTemplates CaseExportTemplateProjectAssignment[]
+  quickScriptEnabled      Boolean                               @default(false)
 
   @@index([isDeleted, isCompleted])
   @@index([createdBy])
@@ -697,6 +707,34 @@ model TemplateResultAssignment {
   order         Int          @default(0)
 
   @@id([resultFieldId, templateId])
+}
+
+model CaseExportTemplate {
+  id            Int                                   @id() @default(autoincrement())
+  name          String                                @unique()
+  description   String?
+  category      String
+  framework     String                                @default("")
+  headerBody    String?
+  templateBody  String
+  footerBody    String?
+  fileExtension String
+  language      String
+  isDefault     Boolean                               @default(false)
+  isEnabled     Boolean                               @default(true)
+  isDeleted     Boolean                               @default(false)
+  createdAt     DateTime                              @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime                              @updatedAt()
+  projects      CaseExportTemplateProjectAssignment[]
+}
+
+model CaseExportTemplateProjectAssignment {
+  templateId Int
+  template   CaseExportTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  projectId  Int
+  project    Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([templateId, projectId])
 }
 
 model CaseFieldAssignment {
@@ -1340,6 +1378,41 @@ model Integration {
 
   @@unique([name])
   @@index([provider, status])
+}
+
+model CodeRepository {
+  id             Int                           @id() @default(autoincrement())
+  name           String                        @unique()
+  provider       CodeRepositoryProvider
+  credentials    Json
+  settings       Json?
+  status         IntegrationStatus             @default(ACTIVE)
+  lastTestedAt   DateTime?
+  isDeleted      Boolean                       @default(false)
+  createdAt      DateTime                      @default(now())
+  updatedAt      DateTime                      @updatedAt()
+  projectConfigs ProjectCodeRepositoryConfig[]
+
+  @@index([provider, status])
+}
+
+model ProjectCodeRepositoryConfig {
+  id                 Int            @id() @default(autoincrement())
+  projectId          Int            @unique()
+  project            Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  repositoryId       Int
+  repository         CodeRepository @relation(fields: [repositoryId], references: [id])
+  branch             String?
+  pathPatterns       Json
+  cacheEnabled       Boolean        @default(true)
+  cacheTtlDays       Int            @default(7)
+  cacheStatus        String?
+  cacheLastFetchedAt DateTime?
+  cacheFileCount     Int?
+  cacheTotalSize     BigInt?
+  cacheError         String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt()
 }
 
 model LlmIntegration {

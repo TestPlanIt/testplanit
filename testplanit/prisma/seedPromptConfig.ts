@@ -1,12 +1,5 @@
-import { PrismaClient } from "@prisma/client";
-
-const LLM_FEATURES = {
-  MARKDOWN_PARSING: "markdown_parsing",
-  TEST_CASE_GENERATION: "test_case_generation",
-  MAGIC_SELECT_CASES: "magic_select_cases",
-  EDITOR_ASSISTANT: "editor_assistant",
-  LLM_TEST: "llm_test",
-} as const;
+import { Prisma, PrismaClient } from "@prisma/client";
+import { LLM_FEATURES, PROMPT_FEATURE_VARIABLES } from "../lib/llm/constants";
 
 /**
  * Seeds the default prompt configuration with prompts for all AI features.
@@ -132,23 +125,7 @@ STATUS: {{ISSUE_STATUS}}{{ISSUE_PRIORITY}}
 Based on this issue, generate specific test cases that validate the requirements and functionality described above. Make test case names and descriptions specific to this issue, not generic. Focus on what needs to be tested to verify this specific feature/fix works correctly.`,
       temperature: 0.7,
       maxOutputTokens: 6000,
-      variables: [
-        { name: "EXAMPLE_STRUCTURE", description: "JSON structure example based on template fields" },
-        { name: "REQUIRED_FIELDS_LIST", description: "List of required template fields" },
-        { name: "OPTIONAL_FIELDS_LIST", description: "List of optional template fields" },
-        { name: "QUANTITY_GUIDANCE", description: "Number range of test cases to generate" },
-        { name: "STEPS_INSTRUCTION", description: "Instructions for test steps (if template includes steps)" },
-        { name: "PRIORITY_INSTRUCTION", description: "Instructions for priority field values" },
-        { name: "TAG_INSTRUCTIONS", description: "Instructions for auto-generating tags" },
-        { name: "ISSUE_KEY", description: "Issue identifier (e.g., PROJ-123)" },
-        { name: "ISSUE_TITLE", description: "Issue title" },
-        { name: "ISSUE_DESCRIPTION", description: "Issue description text" },
-        { name: "ISSUE_STATUS", description: "Current issue status" },
-        { name: "ISSUE_PRIORITY", description: "Issue priority level" },
-        { name: "COMMENTS_SECTION", description: "Relevant issue comments" },
-        { name: "USER_NOTES_SECTION", description: "Additional user-provided notes" },
-        { name: "EXISTING_CASES_SECTION", description: "Existing test cases to avoid duplicating" },
-      ],
+      variables: PROMPT_FEATURE_VARIABLES[LLM_FEATURES.TEST_CASE_GENERATION],
     },
     {
       feature: LLM_FEATURES.MAGIC_SELECT_CASES,
@@ -200,9 +177,40 @@ Return ONLY the JSON.`,
       maxOutputTokens: 200,
       variables: [],
     },
+    {
+      feature: LLM_FEATURES.EXPORT_CODE_GENERATION,
+      systemPrompt: `You are an expert test automation engineer. Your task is to generate a complete, syntactically valid, executable test file in {{FRAMEWORK}} ({{LANGUAGE}}).
+
+CRITICAL RULES:
+- Generate a COMPLETE test file including all necessary imports, setup, test body, and teardown
+- A default header and footer will be shown at the end of the user message — use these as a starting point and extend or modify them as needed based on what the repository context requires
+- Add any additional imports, page objects, fixtures, or helpers that the generated tests need
+- Use the actual imports, page objects, fixtures, helpers, and utilities visible in the provided repository context files
+- Follow the coding patterns, naming conventions, and style visible in the context files
+- The code must be syntactically valid and runnable within the test framework
+- Output ONLY the raw code — no explanations, no markdown code fences, no comments about what the code does
+
+GUIDELINES:
+- Map each test step to one or more concrete automation actions
+- Use assertions that match the expected results for each step
+- Prefer existing helper methods and page objects from the repository over raw browser/API calls
+- Keep the code concise but complete — every test step should be covered`,
+      userPrompt: `TEST CASE: {{CASE_NAME}}
+
+TEST STEPS:
+{{STEPS_TEXT}}
+
+REPOSITORY CONTEXT (actual project files for reference):
+{{CODE_CONTEXT}}
+
+Generate the complete test file for this test case using the repository's actual test infrastructure. Output ONLY the executable code.`,
+      temperature: 0.3,
+      maxOutputTokens: 8192,
+      variables: PROMPT_FEATURE_VARIABLES[LLM_FEATURES.EXPORT_CODE_GENERATION],
+    },
   ];
 
-  // Upsert each feature prompt
+  // Upsert each feature prompt into the default config
   for (const prompt of featurePrompts) {
     await prisma.promptConfigPrompt.upsert({
       where: {
@@ -216,7 +224,7 @@ Return ONLY the JSON.`,
         userPrompt: prompt.userPrompt,
         temperature: prompt.temperature,
         maxOutputTokens: prompt.maxOutputTokens,
-        variables: prompt.variables,
+        variables: prompt.variables as Prisma.InputJsonValue,
       },
       create: {
         promptConfigId: defaultConfig.id,
@@ -225,7 +233,7 @@ Return ONLY the JSON.`,
         userPrompt: prompt.userPrompt,
         temperature: prompt.temperature,
         maxOutputTokens: prompt.maxOutputTokens,
-        variables: prompt.variables,
+        variables: prompt.variables as Prisma.InputJsonValue,
       },
     });
   }
@@ -233,4 +241,38 @@ Return ONLY the JSON.`,
   console.log(
     `Seeded default prompt configuration (ID: ${defaultConfig.id}) with ${featurePrompts.length} feature prompts.`
   );
+
+  // For all other existing prompt configs, insert any missing feature prompts using
+  // the default values — but do NOT overwrite prompts that users have already customized.
+  const otherConfigs = await prisma.promptConfig.findMany({
+    where: { id: { not: defaultConfig.id }, isDeleted: false },
+    include: { prompts: { select: { feature: true } } },
+  });
+
+  const knownFeatures = new Set(featurePrompts.map((p) => p.feature));
+
+  for (const config of otherConfigs) {
+    const existingFeatures = new Set(config.prompts.map((p) => p.feature));
+    const missingPrompts = featurePrompts.filter(
+      (p) => knownFeatures.has(p.feature) && !existingFeatures.has(p.feature)
+    );
+
+    if (missingPrompts.length === 0) continue;
+
+    await prisma.promptConfigPrompt.createMany({
+      data: missingPrompts.map((p) => ({
+        promptConfigId: config.id,
+        feature: p.feature,
+        systemPrompt: p.systemPrompt,
+        userPrompt: p.userPrompt,
+        temperature: p.temperature,
+        maxOutputTokens: p.maxOutputTokens,
+        variables: p.variables as Prisma.InputJsonValue,
+      })),
+    });
+
+    console.log(
+      `Added ${missingPrompts.length} missing feature prompt(s) to config "${config.name}" (ID: ${config.id}): ${missingPrompts.map((p) => p.feature).join(", ")}`
+    );
+  }
 }

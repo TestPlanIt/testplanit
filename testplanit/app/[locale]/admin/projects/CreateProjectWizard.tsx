@@ -79,6 +79,12 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -103,6 +109,7 @@ import {
   Asterisk,
   Check,
   Milestone,
+  Star,
 } from "lucide-react";
 
 import {
@@ -1189,8 +1196,20 @@ export function CreateProjectWizard({
                                 value={`ROLE_${role.id}`}
                               >
                                 {role.name}
-                                {role.isDefault &&
-                                  ` (${tCommon("fields.default")})`}
+                                {role.isDefault && (
+                                  <TooltipProvider delayDuration={300}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Badge variant="secondary">
+                                          <Star className="h-3 w-3 fill-current text-primary" />
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        {tCommon("defaultOption")}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
                               </SelectItem>
                             ))}
                           </SelectContent>

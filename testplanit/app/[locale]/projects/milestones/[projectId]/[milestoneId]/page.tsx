@@ -589,7 +589,7 @@ export default function MilestoneDetailsPage() {
                         variant="default"
                         disabled={isSubmitting}
                       >
-                        <Save className="h-4 w-4 mr-1" />
+                        <Save className="h-4 w-4" />
                         {isSubmitting
                           ? tCommon("actions.saving")
                           : tCommon("actions.save")}
@@ -600,7 +600,7 @@ export default function MilestoneDetailsPage() {
                         onClick={handleCancel}
                         disabled={isSubmitting}
                       >
-                        <CircleSlash2 className="h-4 w-4 mr-1" />
+                        <CircleSlash2 className="h-4 w-4" />
                         {tCommon("cancel")}
                       </Button>
                     </div>
@@ -612,7 +612,7 @@ export default function MilestoneDetailsPage() {
                         disabled={isSubmitting}
                         className="text-destructive"
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
+                        <Trash2 className="h-4 w-4" />
                         {tCommon("actions.delete")}
                       </Button>
                     )}
@@ -624,7 +624,7 @@ export default function MilestoneDetailsPage() {
                       onClick={handleEditClick}
                       variant="secondary"
                     >
-                      <SquarePen className="h-4 w-4 mr-1" />
+                      <SquarePen className="h-4 w-4" />
                       {tCommon("actions.edit")}
                     </Button>
                   )
@@ -639,7 +639,7 @@ export default function MilestoneDetailsPage() {
                       variant="secondary"
                       className="mt-2"
                     >
-                      <CircleCheckBig className="h-4 w-4 mr-1" />
+                      <CircleCheckBig className="h-4 w-4" />
                       {tCommon("actions.complete")}
                     </Button>
                   )}

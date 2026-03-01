@@ -26,12 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { PlusSquare } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -39,14 +33,15 @@ import { useTranslations } from "next-intl";
 
 const FormSchema = z.object({
   name: z.string().min(2, {
-      error: "Please enter a name for the Test Case"
-}),
+    error: "Please enter a name for the Test Case",
+  }),
   workflowId: z
     .number({
-        error: (issue) => issue.input === undefined ? "Please select a State" : undefined
+      error: (issue) =>
+        issue.input === undefined ? "Please select a State" : undefined,
     })
     .refine((value) => !isNaN(value), {
-        error: "Please select a valid State"
+      error: "Please select a valid State",
     }),
 });
 
@@ -310,7 +305,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
     <Form {...form}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex items-center gap-1 rounded-lg mt-1 border-2 border-muted">
-          <div className="m-1 min-w-[120px]">
+          <div className="m-1 mt-1 min-w-30">
             <FormField
               control={control}
               name="workflowId"
@@ -351,7 +346,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
               )}
             />
           </div>
-          <div className="w-full m-1">
+          <div className="w-full m-1 -mt-1">
             <FormField
               control={control}
               name="name"
@@ -384,17 +379,17 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
             type="submit"
             variant="secondary"
             disabled={isSubmitting}
-            className="mr-2"
+            className="-mt-2 group mr-2 px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
             data-testid="inline-add-case-button"
           >
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  {isSubmitting ? <LoadingSpinner /> : <PlusSquare />}
-                </TooltipTrigger>
-                <TooltipContent>{t("repository.cases.addCase")}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            {isSubmitting ? (
+              <LoadingSpinner />
+            ) : (
+              <PlusSquare className="w-4 h-4 shrink-0" />
+            )}
+            <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+              {t("repository.cases.addCase")}
+            </span>
           </Button>
         </div>
       </form>

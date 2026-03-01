@@ -7,6 +7,7 @@
     "at": "à",
     "in": "dans",
     "add": "Ajouter",
+    "never": "Jamais",
     "select": "Sélectionner...",
     "file": "Déposer",
     "selectMultiple": "Sélectionnez plusieurs...",
@@ -17,6 +18,7 @@
     "searchRuns": "{count, plural, =0 {Rechercher les exécutions de test} one {Rechercher le numéro de l'exécution de test} other {Rechercher le nombre d'exécutions de test}}",
     "searchSessions": "{count, plural, =0 {Recherche de sessions} one {Recherche de session n°} other {Recherche de sessions n°}}",
     "search": "Recherche...",
+    "defaultOption": "Option par défaut",
     "yes": "Oui",
     "no": "Non",
     "updated": "Mis à jour",
@@ -43,6 +45,7 @@
       "apply": "Appliquer",
       "confirm": "Confirmer",
       "confirmDelete": "Confirmer la suppression",
+      "saveChanges": "Enregistrer les modifications",
       "saving": "Économie...",
       "submitting": "Soumission...",
       "start": "Commencer",
@@ -110,7 +113,7 @@
         "testSuite": "Suite de tests :"
       },
       "junit": {
-        "details": "Détails JUnit",
+        "details": "Détails des résultats des tests automatisés",
         "import": {
           "trigger": "Résultats des tests d'importation",
           "title": "Résultats des tests d'importation",
@@ -1153,6 +1156,73 @@
       "shares": {
         "title": "Gérer les actions",
         "description": "Consultez et gérez tous les liens de partage de ce projet."
+      },
+      "quickScript": {
+        "title": "QuickScript",
+        "description": "Activez QuickScript et connectez un référentiel de code pour la génération de tests assistée par l'IA.",
+        "enableLabel": "Activer QuickScript",
+        "enableDescription": " Autoriser les membres de l'équipe à utiliser QuickScript pour convertir les cas de test en scripts d'automatisation dans ce projet.",
+        "enabledToast": "QuickScript activé",
+        "disabledToast": "QuickScript désactivé",
+        "noRepos": {
+          "title": "Aucun dépôt de code configuré",
+          "adminDescription": "Configurez une connexion au dépôt avant de configurer le contexte de code pour ce projet.",
+          "adminLink": "Accéder aux dépôts de code",
+          "userDescription": "Contactez votre administrateur système pour configurer une connexion au dépôt de code."
+        },
+        "repository": {
+          "title": "Dépôt de code",
+          "description": "Sélectionnez le dépôt de code à utiliser pour le contexte de l'IA",
+          "label": "Dépôt de code",
+          "placeholder": "Sélectionnez un dépôt de code...",
+          "branchLabel": "Bifurquer",
+          "branchPlaceholder": "Laissez vide pour utiliser la branche par défaut du dépôt"
+        },
+        "pathPatterns": {
+          "title": "Modèles de chemin",
+          "description": "Spécifiez les fichiers à inclure. Chaque ligne combine un chemin de base et un modèle glob. Exemples : `path=tests/e2e/pages + pattern=*` inclut tous les fichiers directement dans ce dossier ; `path=src + pattern=**/*.test.ts` inclut tous les fichiers de test de manière récursive.",
+          "pathLabel": "Chemin",
+          "pathPlaceholder": "tests/e2e/pages",
+          "patternLabel": "Modèle",
+          "addPath": "Ajouter un chemin",
+          "previewFiles": "Aperçu des fichiers",
+          "files": "{count} fichiers",
+          "truncatedBadge": "Les résultats peuvent être incomplets (limite du fournisseur).",
+          "exceedsLimit": "La taille totale dépasse la limite du contexte IA de {overflow}. Lors de l'exportation, les fichiers sont classés par ordre de pertinence pour le cas de test exporté : les fichiers les plus pertinents sont inclus en premier et les fichiers moins pertinents sont ignorés lorsque le budget est atteint. Affinez vos modèles de chemin si vous souhaitez un contrôle plus précis sur les fichiers inclus."
+        },
+        "cache": {
+          "title": "Paramètres du cache",
+          "description": "Les fichiers sont mis en cache dans Valkey pour un accès rapide lors de la génération par l'IA.",
+          "enableLabel": "Activer la mise en cache des fichiers",
+          "disabledWarning": "La mise en cache des fichiers est désactivée. Les fichiers du dépôt seront récupérés directement auprès de votre fournisseur lors de l'exportation et ne seront pas stockés dans TestPlanIt. QuickScript, optimisé par l'IA, conservera le contexte du code, mais chaque exportation effectuera une requête en direct auprès de votre dépôt.",
+          "ttlLabel": "Durée du cache (jours)",
+          "statusTitle": "État du cache",
+          "refreshButton": "Actualiser le cache",
+          "listingFiles": "Liste des fichiers…",
+          "cachingFiles": "Mise en cache des fichiers {count}…",
+          "statusNeverFetched": "Jamais récupéré",
+          "statusSuccess": "Succès",
+          "statusError": "Erreur",
+          "statusPending": "Rafraîchissant...",
+          "statusLabel": "Statut",
+          "lastFetched": "Dernière récupération",
+          "filesCached": "Fichiers en cache",
+          "totalSize": "Taille totale"
+        },
+        "save": "Enregistrer la configuration",
+        "saved": "Configuration du contexte de code enregistrée",
+        "saveError": "Échec de l'enregistrement de la configuration",
+        "listError": "Impossible de lister les fichiers du dépôt",
+        "contentsError": "Échec de la mise en cache du contenu du fichier",
+        "networkError": "Erreur réseau lors de l'actualisation du cache",
+        "refreshSuccess": "Cache actualisé : {fileCount} fichiers ({contentCached} contenus mis en cache)",
+        "refreshRateLimited": "Cache actualisé : {fileCount} fichiers listés, {contentCached}/{fileCount} contenus mis en cache (limite de débit — actualisez à nouveau pour terminer)",
+        "validation": {
+          "pathRequired": "Le chemin d'accès est requis.",
+          "patternRequired": "Un modèle est requis.",
+          "repositoryRequired": "Un dépôt est requis.",
+          "pathPatternRequired": "Au moins un modèle de chemin est requis"
+        }
       }
     }
   },
@@ -1659,6 +1729,7 @@
       "bulkEdit": "Modification en masse",
       "createTestRun": "Créer un test d'exécution",
       "export": "Exporter",
+      "quickScript": "QuickScript",
       "cannotReorderAcrossPages": "Il est impossible de réorganiser les cas de test sur plusieurs pages. Pour les réorganiser, affichez-les tous sur une seule page en sélectionnant « Tout » dans le menu de format de page, ou désélectionnez les cas sur les autres pages. Vous pouvez toujours glisser-déposer les cas sélectionnés dans des dossiers.",
       "exportModal": {
         "scope": {
@@ -1815,8 +1886,8 @@
           "description": "Seuls les champs standard peuvent être modifiés lorsque des cas utilisant des modèles différents sont sélectionnés. Les champs dynamiques peuvent être modifiés en sélectionnant des cas utilisant le même modèle."
         },
         "junitLimitations": {
-          "title": "Limitations de l'édition des cas de test JUnit",
-          "description": "Les champs « Estimation » et « Automatisation » ne peuvent pas être modifiés pour les cas de test importés à partir de fichiers XML JUnit."
+          "title": "Limitations de l'édition automatisée des cas de test",
+          "description": "Les champs « Estimation » et « Automatisé » ne peuvent pas être modifiés pour les cas de test importés à partir des résultats de tests automatisés."
         }
       },
       "errors": {
@@ -1900,6 +1971,36 @@
       "comingSoon": "À venir",
       "exporting": "Exportation...",
       "exportError": "L'exportation a échoué. Veuillez réessayer."
+    },
+    "quickScript": {
+      "title": "QuickScript",
+      "description": "Convertissez les cas de test sélectionnés en scripts d'automatisation à l'aide d'un modèle ou de l'IA.",
+      "templatePlaceholder": "Sélectionnez un modèle...",
+      "searchPlaceholder": "Modèles de recherche...",
+      "noTemplatesFound": "Aucun modèle trouvé.",
+      "outputModeLabel": "Mode de sortie",
+      "outputModeSingle": "Fichier unique (tous les cas {count})",
+      "outputModeIndividual": "Fichiers individuels (.zip)",
+      "casesToExport": "{count} cas à exporter",
+      "exportSuccess": "Exportation réussie."
+    },
+    "aiExport": {
+      "toggleLabel": "Générer avec l'IA",
+      "generating": "Générateur...",
+      "generatingProgress": "Génération du cas {current} de {total}...",
+      "generatingBatch": "Génération de cas {count} dans un seul fichier...",
+      "previewTitle": "Aperçu de l'exportation",
+      "previewDescription": "{count} fichiers générés",
+      "copySuccess": "Copié dans le presse-papiers",
+      "fallbackBadge": "Généré à partir d'un modèle (IA indisponible)",
+      "retryButton": "Réessayer la génération d'IA",
+      "downloadButton": "Télécharger",
+      "copyButton": "Copier dans le presse-papiers",
+      "backButton": "Dos",
+      "aiGenerated": "Généré par l'IA",
+      "templateGenerated": "Modèle généré",
+      "truncatedWarning": "Le résultat a été tronqué : le modèle a atteint sa limite de jetons. Essayez de réduire la taille du lot ou d’augmenter le nombre maximal de jetons de sortie dans votre configuration d’invite.",
+      "contextFiles": "{count, plural, one {(# fichier de contexte)} other {(# fichiers de contexte)}}"
     },
     "generateTestCases": {
       "buttonText": "Générer des cas de test",
@@ -2260,6 +2361,8 @@
       "integrations": "Intégrations de problèmes",
       "llm": "Modèles d'IA",
       "prompts": "Configurations d'invite",
+      "codeRepositories": "Dépôts de code",
+      "quickScript": "QuickScript",
       "sso": "Authentification",
       "trash": "Poubelle",
       "reports": "Rapports",
@@ -2268,6 +2371,7 @@
       "queues": "Files d'attente pour les tâches",
       "auditLogs": "Journaux d'audit",
       "apiTokens": "Jetons API",
+      "quickscriptTemplates": "Modèles QuickScript",
       "testManagement": "Gestion des tests",
       "peopleAndAccess": "Personnes et accès",
       "toolsAndIntegrations": "Outils et intégrations",
@@ -2977,6 +3081,91 @@
         }
       }
     },
+    "codeRepositories": {
+      "title": "Dépôts de code",
+      "description": "Gérer les connexions au référentiel de code pour le contexte QuickScript.",
+      "addRepository": "Ajouter un dépôt",
+      "noRepos": {
+        "title": "Aucun dépôt de code configuré",
+        "description": "Connectez un dépôt Git pour fournir le contexte des fichiers nécessaires à la génération d'exports de tests par l'IA."
+      },
+      "delete": {
+        "title": "Supprimer le dépôt",
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer <strong>{name}</strong>? Cette action est irréversible.",
+        "fallbackName": "ce dépôt"
+      },
+      "testConnection": "Test de connexion",
+      "connectionSuccess": "Connexion réussie"
+    },
+    "exportTemplates": {
+      "title": "Modèles QuickScript",
+      "description": "Gérer les modèles utilisés par QuickScript pour convertir les cas de test en scripts d'automatisation.",
+      "confirmSetAsDefault": "Définir comme modèle d'exportation par défaut",
+      "confirmSetAsDefaultDescription": "Êtes-vous sûr de vouloir définir ce modèle comme modèle par défaut ? Il sera présélectionné lors de l’exportation des cas de test par les utilisateurs.",
+      "fields": {
+        "category": "Catégorie",
+        "framework": "Cadre",
+        "fileExtension": "Extension de fichier",
+        "language": "Langue",
+        "headerBody": "Modèle d'en-tête",
+        "templateBody": "Corps du modèle",
+        "footerBody": "Modèle de pied de page",
+        "validation": {
+          "categoryRequired": "La catégorie est obligatoire.",
+          "frameworkRequired": "Un framework est requis.",
+          "templateBodyRequired": "Le corps du modèle est requis.",
+          "fileExtensionRequired": "L'extension du fichier est requise.",
+          "languageRequired": "La maîtrise de la langue est requise."
+        },
+        "placeholders": {
+          "name": "par exemple, dramaturge (TypeScript)",
+          "description": "Par exemple, génère des ébauches de tests pour dramaturges.",
+          "category": "Par exemple, navigateur E2E",
+          "framework": "par exemple, dramaturge",
+          "fileExtension": "par exemple, .spec.ts",
+          "language": "par exemple, script dactylographié",
+          "headerBody": "Facultatif. Contenu rendu une seule fois en haut (par exemple, instructions d'importation).",
+          "templateBody": "Saisir le modèle Moustache...\n\nVariables disponibles :\n'{{name}}', '{{id}}', '{{folder}}', '{{state}}', '{{estimate}}', '{{automated}}', '{{tags}}', '{{createdBy}}', '{{createdAt}}'\n\nSection Étapes :\n'{{#steps}}{{order}}', '{{step}}', '{{expectedResult}}{{/steps}}'\n\nChamps personnalisés :\n'{{fields.fieldSystemName}}'",
+          "footerBody": "Facultatif. Contenu rendu une seule fois en bas (par exemple, code de fermeture)."
+        },
+        "combobox": {
+          "typeNew": "Saisissez une nouvelle valeur"
+        }
+      },
+      "add": {
+        "button": "Ajouter un modèle QuickScript",
+        "title": "Ajouter un nouveau modèle QuickScript"
+      },
+      "edit": {
+        "title": "Modifier le modèle QuickScript"
+      },
+      "delete": {
+        "title": "Supprimer le modèle QuickScript",
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer le modèle QuickScript <strong>{name}</strong>?"
+      },
+      "preview": {
+        "title": "Aperçu (données fictives)",
+        "empty": "Saisissez un corps de modèle pour en afficher un aperçu.",
+        "error": "Erreur lors du rendu du modèle. Vérifiez votre syntaxe Mustache."
+      },
+      "filterPlaceholder": "Filtrer les modèles...",
+      "noResults": "Aucun modèle ne correspond à votre filtre.",
+      "templateCount": "{count, plural, one {# modèle} other {# modèles}}",
+      "allFrameworks": "Tous les frameworks",
+      "allFileExtensions": "Toutes les extensions",
+      "allLanguages": "Toutes les langues",
+      "showEnabled": "Activé uniquement",
+      "showAll": "Tous",
+      "variableInserter": {
+        "placeholder": "Insérer une variable...",
+        "groups": {
+          "caseFields": "Champs de cas",
+          "steps": "Mesures",
+          "customFields": "Champs personnalisés"
+        },
+        "stepsBlock": "Bloc d'escaliers"
+      }
+    },
     "users": {
       "showInactive": "Afficher les inactifs",
       "add": {
@@ -3346,7 +3535,8 @@
         "repositoryCaseLinks": "Liens vers les dossiers du référentiel",
         "repositoryCaseVersions": "Versions du dossier de dépôt",
         "testRunStepResults": "Résultats de l'étape d'exécution du test",
-        "issueConfigs": "Configurations des problèmes"
+        "issueConfigs": "Configurations des problèmes",
+        "sharedStepGroups": "Groupes de pas partagés"
       },
       "table": {
         "title": "Supprimé {itemType}",
@@ -3594,8 +3784,8 @@
       "allIntegrationsTested": "Toutes les connexions des modèles d'IA ont été testées.",
       "failedToTestConnections": "Échec du test de certaines connexions",
       "notConfigured": "Non configuré",
-      "defaultModel": "Modèle par défaut",
-      "budgetUsage": "Utilisation du budget",
+      "defaultModel": "Modèle sélectionné",
+      "budgetUsage": "Utilisation (ce mois-ci)",
       "noBudget": "Aucun budget défini",
       "streaming": "Streaming",
       "add": {
@@ -3621,15 +3811,15 @@
         "defaultModelDescription": "Le modèle à utiliser par défaut",
         "maxTokensPerRequest": "Nombre maximal de jetons par requête",
         "maxRequestsPerMinute": "Nombre maximal de requêtes par minute",
-        "costPerInputToken": "Coût par jeton d'entrée ($)",
-        "costPerOutputToken": "Coût par jeton de sortie ($)",
+        "costPerInputToken": "Coût par million de jetons d'entrée ($)",
+        "costPerOutputToken": "Coût par million de jetons de production ($)",
         "monthlyBudget": "Budget mensuel ($)",
         "monthlyBudgetPlaceholder": "100,00",
         "monthlyBudgetDescription": "Limite budgétaire optionnelle pour le suivi de l'utilisation",
         "defaultTemperature": "Température par défaut",
         "defaultMaxTokens": "Nombre maximal de jetons par défaut",
         "timeout": "Délai d'attente de la requête (ms)",
-        "timeoutDescription": "Délai maximal d'attente pour la réponse du modèle d'IA (5000-600000 ms)",
+        "timeoutDescription": "Délai maximal d'attente pour la réponse du modèle d'IA (5 000 à 600 000 ms). Ne s'applique pas aux requêtes en flux continu.",
         "streamingEnabled": "Activer la diffusion en continu",
         "streamingEnabledDescription": "Autoriser le flux de réponse en temps réel",
         "setAsDefault": "Définir comme valeur par défaut",
@@ -3701,6 +3891,7 @@
       "temperature": "Température",
       "maxOutputTokens": "Jetons de sortie maximum",
       "variables": "Variables",
+      "insertVariable": "Insérer une variable",
       "noConfigs": "Aucune configuration d'invite trouvée. Ajoutez votre première configuration pour commencer.",
       "add": {
         "title": "Ajouter une configuration d'invite",
@@ -3722,7 +3913,8 @@
         "test_case_generation": "Génération de cas de test",
         "magic_select_cases": "Sélection intelligente des cas de test",
         "editor_assistant": "Assistant de rédaction",
-        "llm_test": "Test de connexion LLM"
+        "llm_test": "Test de connexion LLM",
+        "export_code_generation": "Génération du code d'exportation"
       }
     },
     "elasticsearch": {
@@ -4276,6 +4468,24 @@
       "resultFields": "## Champs de résultat\nSélectionnez et organisez les champs personnalisés qui seront disponibles lors de l'ajout de résultats de test à l'aide de ce modèle.\n\n- Ajoutez des champs depuis la liste déroulante pour les inclure dans le modèle.\n- Réorganisez les champs par glisser-déposer.\n- L'ordre détermine l'affichage des champs lors de la saisie des résultats de test.\n- Seuls les champs de résultat activés sont disponibles.\n- Les champs de résultat capturent des données supplémentaires spécifiques aux résultats d'exécution des tests.",
       "projects": "## Projets associés\nSélectionnez les projets pour lesquels ce modèle sera disponible. Si aucun projet n'est sélectionné, le modèle sera disponible pour tous les projets. L'attribution d'un modèle à des projets spécifiques limite son utilisation à ces seuls projets."
     },
+    "llm": {
+      "name": "## Nom de l'intégration\nÉtiquette descriptive pour cette intégration LLM.\n\n- Utilisée pour l'identifier dans les listes et les paramètres.\n- Exemple : « OpenAI GPT-4o » ou « Ollama interne ».",
+      "provider": "## Fournisseur\nLe service LLM qui gère cette intégration.\n\n- Détermine le protocole API et les modèles disponibles.\n- Ne peut pas être modifié après sa création.",
+      "apiKey": "## Clé API\nVotre clé d'authentification pour l'API du fournisseur LLM.\n\n- À obtenir depuis la console développeur de votre fournisseur.\n- Conservée chiffrée et jamais affichée après enregistrement.\n- Non requise pour Ollama (déploiement local).",
+      "endpoint": "## Point de terminaison de l'API\nURL de base de l'API du fournisseur LLM.\n\n- Laisser vide pour OpenAI, Anthropic et Gemini ; les valeurs par défaut sont utilisées automatiquement.\n- Requis pour Ollama (par exemple, `http://localhost:11434`) et Azure OpenAI.\n- Requis pour les fournisseurs LLM personnalisés.",
+      "deploymentName": "## Nom du déploiement Azure\nLe nom de votre déploiement de modèle Azure OpenAI.\n\n- Disponible dans Azure OpenAI Studio, sous Déploiements.\n- Différent du nom du modèle ; par exemple, `my-gpt4-deploy` correspond à `gpt-4`.\n- Requis uniquement pour Azure OpenAI.",
+      "defaultModel": "## Modèle par défaut\nLe modèle utilisé pour les requêtes d'IA avec cette intégration.\n\n- Pour OpenAI, Anthropic et Gemini : les modèles disponibles sont récupérés automatiquement à partir de votre clé API.\n- Assurez-vous que le modèle est activé dans votre compte fournisseur.\n- Exemple : `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
+      "maxTokensPerRequest": "## Nombre maximal de jetons par requête\n**Limite maximale** du nombre de jetons de sortie pour une requête donnée.\n\n- Les requêtes dépassant cette limite sont **rejetées avec une erreur** avant d'atteindre le LLM.\n- Définissez cette valeur sur la capacité maximale réelle de jetons de sortie de votre modèle.\n- Exemple : `16384` pour GPT-4o, `8192` pour Claude 3.5 Sonnet.\n- Une valeur trop basse peut entraîner des dysfonctionnements des fonctionnalités d'IA ou produire une sortie tronquée.",
+      "defaultMaxTokens": "## Nombre maximal de jetons par défaut\nLimite de jetons de sortie **par défaut** utilisée lorsqu'une requête ne spécifie pas sa propre limite.\n\n- Chaque fonctionnalité d'IA (génération de tests, exportation de code, etc.) définit sa propre limite dans **Admin → Configuration des invites**.\n- Cette valeur est utilisée uniquement par défaut pour les fonctionnalités sans limite spécifique configurée.\n- Doit être ≤ Nombre maximal de jetons par requête",
+      "maxRequestsPerMinute": "## Nombre maximal de requêtes par minute\nLimite le nombre d'appels API pouvant être effectués vers ce fournisseur par minute.\n\n- Définissez cette valeur en fonction de la limite de votre forfait.\n- Les requêtes excédentaires sont mises en file d'attente et non rejetées.\n- Consultez la documentation de votre fournisseur pour connaître la limite de votre forfait.",
+      "costPerInputToken": "## Coût par jeton d'entrée (USD)\nLe coût en USD de chaque jeton d'entrée (invite) envoyé au modèle.\n\n- Utilisé pour le suivi des coûts et les alertes budgétaires\n- Trouvez cette information sur la page de tarification de votre fournisseur\n- Exemple : `0,000005` = 5 $ par million de jetons d'entrée",
+      "costPerOutputToken": "## Coût par jeton de sortie (USD)\nLe coût en USD de chaque jeton de sortie (achèvement) généré par le modèle.\n\n- Généralement supérieur au coût du jeton d'entrée\n- Utilisé pour le suivi des coûts et les alertes budgétaires\n- Exemple : `0,000015` = 15 $ par million de jetons de sortie",
+      "monthlyBudget": "## Budget mensuel (USD)\nDépenses mensuelles maximales autorisées pour cette intégration.\n\n- Indiquez `0` pour désactiver les limites budgétaires.\n- Une fois ce plafond atteint, les requêtes seront bloquées jusqu'au mois suivant.\n- Les coûts sont calculés selon les tarifs par jeton ci-dessus.",
+      "defaultTemperature": "## Température par défaut\nContrôle le caractère aléatoire des réponses du modèle (0–2).\n\n- **0 :** Déterministe — sortie identique pour une même entrée\n- **0,3 :** Ciblé — recommandé pour la génération de tests et la sortie de code\n- **1+ :** Créatif — réponses plus variées\n- Les fonctionnalités individuelles peuvent remplacer ce paramètre dans la configuration de l'invite",
+      "timeout": "## Délai d'attente de la requête (ms)\nDurée d'attente d'une réponse avant l'annulation de la requête.\n\n- Valeur en millisecondes (ex. : `30000` = 30 secondes).\n- Les requêtes en flux continu (ex. : aperçu de l'exportation de code) ignorent ce délai.\n- Augmenter pour les modèles lents ou volumineux.\n- Plage : 5 000 – 600 000 ms",
+      "streamingEnabled": "## Activer le streaming\nDiffuse la réponse jeton par jeton au lieu d'attendre la sortie complète.\n\n- Requis pour l'aperçu du code en temps réel dans la fenêtre modale d'exportation.\n- Réduit la latence perçue pour les réponses longues.\n- Recommandé pour tous les fournisseurs pris en charge.",
+      "isDefault": "## Définir comme intégration par défaut\nDéfinit cette intégration comme intégration utilisée par défaut pour toutes les fonctionnalités d'IA.\n\n- Une seule intégration peut être définie par défaut à la fois.\n- Les fonctionnalités sans fournisseur spécifique configuré utiliseront l'intégration par défaut.\n- Peut être modifié à tout moment."
+    },
     "integration": {
       "name": "## Nom de l'intégration\nUn nom descriptif permettant d'identifier cette intégration dans le système.\n\n- Doit être unique pour la distinguer des autres intégrations.\n- Utilisé dans les paramètres et la configuration du projet.\n- Doit indiquer clairement le service et son objectif.",
       "authType": "## Type d'authentification\nChoisissez le mode d'authentification auprès du service externe.\n\n- **Clé API :** Authentification simple par e-mail et jeton API\n- **OAuth 2.0 :** Authentification sécurisée via le flux OAuth\n- **Jeton d'accès personnel :** Authentification directe par jeton",
@@ -4471,6 +4681,34 @@
       "dimensions": "## Dimensions\nSélectionnez les dimensions que vous souhaitez analyser dans votre rapport. Les dimensions sont des attributs qui catégorisent vos données, comme la date, l'utilisateur, le statut, etc. Vous pouvez les réorganiser par glisser-déposer.",
       "metrics": "## Métriques\nSélectionnez les métriques que vous souhaitez inclure dans votre rapport. Les métriques sont des mesures quantitatives issues de vos données, telles que le nombre de résultats de test, le taux de réussite, le temps moyen écoulé, etc. Vous pouvez les réorganiser par glisser-déposer.",
       "dateRange": "## Plage de dates\nFiltrez les données de votre rapport selon une période spécifique. Vous pouvez choisir parmi des plages prédéfinies comme « 7 derniers jours » ou « Mois précédent », ou définir une plage de dates personnalisée. Ce filtre s'applique au champ de date correspondant à chaque type de rapport (par exemple, la date d'exécution pour les résultats de test, la date de création pour les cas de test)."
+    },
+    "codeRepository": {
+      "name": "## Nom du dépôt\nNom convivial pour cette connexion au dépôt.\n\n- Utilisé pour l'identifier dans les paramètres contextuels du code du projet.\n- Ne doit pas nécessairement correspondre au nom du dépôt chez le fournisseur.",
+      "provider": "## Fournisseur Git\nLa plateforme hébergeant ce dépôt.\n\n- **GitHub** — github.com (cloud ou Enterprise)\n- **GitLab** — gitlab.com ou auto-hébergé\n- **Bitbucket Cloud** — bitbucket.org (cloud uniquement)\n- **Azure DevOps** — dev.azure.com",
+      "githubToken": "## Jeton d'accès personnel\nUn jeton GitHub avec l'autorisation **Contenu : Lecture**.\n\nGénérez-en un ici : GitHub → Paramètres du profil → Paramètres développeur → Jetons d'accès personnels → Jetons à granularité fine.",
+      "owner": "## Propriétaire\nL'organisation GitHub ou le compte utilisateur propriétaire du dépôt.\n\n- Exemple : `myorg` ou `myusername`\n- Il s'agit du premier segment du chemin d'accès dans l'URL de votre dépôt sur github.com",
+      "repo": "## Dépôt\nLe nom du dépôt, sans le préfixe du propriétaire.\n\n- Exemple : `my-repo` (et non `myorg/my-repo`)\n- Il s'agit du deuxième segment du chemin dans l'URL de votre dépôt sur github.com",
+      "gitlabToken": "## Jeton d'accès personnel\nUn jeton GitLab avec les autorisations **read_api** et **read_repository**.\n\nGénérez-en un ici : GitLab → Paramètres utilisateur → Jetons d'accès.",
+      "projectPath": "## ID ou chemin du projet\nL'ID numérique du projet ou le chemin complet de l'espace de noms.\n\n- Exemple de chemin : `myorg/my-project`\n- Exemple d'ID : `12345678`\n- Disponible dans GitLab sous Paramètres → Général.",
+      "baseUrl": "## URL GitLab\nLaissez vide pour gitlab.com. Pour les instances auto-hébergées, saisissez votre URL GitLab.\n\n- Exemple : `https://gitlab.example.com`",
+      "bitbucketUsername": "## Nom d'utilisateur Bitbucket\nVotre nom d'utilisateur de compte Bitbucket (et non votre adresse e-mail).\n\n- Disponible sur Bitbucket → Votre profil → Paramètres du compte.",
+      "appPassword": "## Mot de passe de l'application\nUn mot de passe d'application Bitbucket avec l'autorisation **Dépôts : Lecture**.\n\nCréez-en un à l'adresse : Bitbucket → Paramètres personnels → Mots de passe d'application.",
+      "workspace": "## Espace de travail\nLe slug de votre espace de travail dans l'URL Bitbucket.\n\n- Exemple : `myworkspace` de `bitbucket.org/myworkspace`",
+      "repoSlug": "## Identifiant du dépôt\nL'identifiant du dépôt tiré de son URL.\n\n- Exemple : `my-repo` dans `bitbucket.org/myworkspace/my-repo`",
+      "azureToken": "## Jeton d'accès personnel\nUn jeton d'accès personnel Azure DevOps avec l'autorisation **Lecture du code**.\n\nCréez-en un à l'adresse : Azure DevOps → Paramètres utilisateur → Jetons d'accès personnels.",
+      "organizationUrl": "## URL de l'organisation\nURL de votre organisation Azure DevOps.\n\n- Exemple : `https://dev.azure.com/myorg`",
+      "project": "## Nom du projet\nLe nom du projet Azure DevOps contenant le dépôt.\n\n- Se trouve comme troisième segment de chemin dans votre URL Azure DevOps après le nom de l'organisation.",
+      "azureRepoId": "## Nom ou ID du dépôt\nLe nom ou le GUID du dépôt dans le projet Azure DevOps.\n\n- Exemple : `my-repo`"
+    },
+    "promptConfig": {
+      "name": "## Nom de la configuration\nUn nom unique et descriptif pour cette configuration d'invite.\n\n- Utilisé pour identifier la configuration lors de son attribution à un projet (par exemple « Invites GPT-4o », « Invites conservatrices »).",
+      "description": "## Description\nUn résumé facultatif de ce qui rend cette configuration particulière.\n\n- Aide les administrateurs à comprendre l'objectif en un coup d'œil (par exemple « Des invites de température plus basses pour une sortie déterministe »).",
+      "isActive": "## Actif\nLorsqu'elle est activée, cette configuration est disponible pour les projets.\n\n- Les configurations inactives sont masquées dans les listes déroulantes d'affectation aux projets.\n- La configuration par défaut ne peut pas être désactivée.",
+      "isDefault": "## Configuration par défaut\nLorsqu'elle est activée, cette configuration est utilisée par tout projet auquel aucune configuration spécifique n'a été attribuée.\n\n- Une seule configuration peut être définie par défaut à la fois.\n- La définition d'une nouvelle configuration par défaut annule automatiquement la précédente.",
+      "systemPrompt": "## Invite système\nInstructions envoyées au modèle d'IA avant toute interaction utilisateur. Définit le rôle du modèle, le format de sortie et ses contraintes.\n\n- Prend en charge les espaces réservés entre doubles accolades (par exemple, FRAMEWORK, LANGUAGE, CASE_NAME) qui sont remplacés lors de l'exécution.\n- Les modifications apportées ici affectent tous les projets utilisant cette configuration.",
+      "userPrompt": "## Invite utilisateur\nMessage envoyé à l'IA au nom de l'utilisateur. Laisser vide si la fonctionnalité génère le message utilisateur entièrement par programmation.\n\n- Prend en charge les espaces réservés entre doubles accolades (par exemple, TITRE_DU_DOSSIER, NOM_DU_DOSSIER, CONTEXTE_DU_CODE) qui sont remplacés lors de l'exécution.\n- Les espaces réservés disponibles pour chaque fonctionnalité sont listés dans la section Variables ci-dessous.",
+      "temperature": "## Température\nContrôle le degré d'aléatoire de la sortie de l'IA. Plage : 0–2.\n\n- **0,0–0,3** — Très déterministe, idéal pour les sorties structurées (JSON, code).\n- **0,4–0,7** — Équilibré, convient à la génération de cas de test.\n- **0,8–2,0** — Plus créatif et varié, adapté aux textes libres.",
+      "maxOutputTokens": "## Nombre maximal de jetons de sortie\nLe nombre maximal de jetons que le modèle générera dans une seule réponse.\n\n- Des valeurs plus élevées permettent des réponses plus longues, mais augmentent le coût et la latence.\n- Plages typiques : 2 048 pour du texte court, 4 096 pour la génération de code, plus de 6 000 pour une sortie multi-cas."
     },
     "menu": {
       "startTour": "Visite guidée de bienvenue",

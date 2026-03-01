@@ -142,6 +142,41 @@ const softDeletedItemTypes: Array<{
     translationKey: "common.fields.attachments",
     iconName: "paperclip",
   },
+  {
+    name: "Repositories",
+    translationKey: "admin.trash.itemTypes.repositories",
+    iconName: "book-open",
+  },
+  {
+    name: "SharedStepGroup",
+    translationKey: "admin.trash.itemTypes.sharedStepGroups",
+    iconName: "share-2",
+  },
+  {
+    name: "Integration",
+    translationKey: "admin.menu.integrations",
+    iconName: "plug",
+  },
+  {
+    name: "LlmIntegration",
+    translationKey: "admin.menu.llm",
+    iconName: "sparkles",
+  },
+  {
+    name: "PromptConfig",
+    translationKey: "admin.menu.prompts",
+    iconName: "message-square-code",
+  },
+  {
+    name: "CaseExportTemplate",
+    translationKey: "admin.menu.exportTemplates",
+    iconName: "file-code",
+  },
+  {
+    name: "CodeRepository",
+    translationKey: "admin.menu.codeRepositories",
+    iconName: "git-branch",
+  },
 ];
 
 export default function TrashPage() {

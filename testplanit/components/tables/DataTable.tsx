@@ -551,60 +551,64 @@ export function DataTable<TData extends DataRow, TValue>({
   const renderedLeafRowIds = new Set<string | number>();
 
   if (showSkeleton) {
+    const skeletonHeaders =
+      table
+        .getHeaderGroups()[0]
+        ?.headers.filter((header) => {
+          // Filter headers using the same logic as visibleColumns
+          if (Object.keys(effectiveColumnVisibility).length > 0) {
+            // Always show columns that cannot be hidden
+            if (header.column.columnDef.enableHiding === false) {
+              return true;
+            }
+            return effectiveColumnVisibility[header.column.id] === true;
+          }
+
+          // If columnVisibility from parent is empty, we're still initializing
+          if (Object.keys(columnVisibility).length === 0) {
+            const column = header.column.columnDef;
+            // Always show columns that cannot be hidden
+            if (column.enableHiding === false) {
+              return true;
+            }
+            // Always show first and last columns
+            if (
+              header.column.id === finalColumns[0]?.id ||
+              header.column.id === finalColumns[finalColumns.length - 1]?.id
+            ) {
+              return true;
+            }
+            // Check meta visibility - if explicitly set to false, hide the column
+            const metaVisible = (column.meta as CustomColumnMeta)?.isVisible;
+            if (metaVisible === false) {
+              return false;
+            }
+            // Default to showing columns that don't have isVisible set
+            return true;
+          }
+
+          // Fallback to showing all headers
+          return true;
+        }) ?? [];
+
     return (
       <div className="rounded-md border h-full">
         <Table>
           <TableHeader>
             <TableRow>
               {enableReorder && <TableHead className="w-[30px]" />}
-              {table
-                .getHeaderGroups()[0]
-                ?.headers.filter((header) => {
-                  // Filter headers using the same logic as visibleColumns
-                  if (Object.keys(effectiveColumnVisibility).length > 0) {
-                    // Always show columns that cannot be hidden
-                    if (header.column.columnDef.enableHiding === false) {
-                      return true;
-                    }
-                    return effectiveColumnVisibility[header.column.id] === true;
-                  }
-
-                  // If columnVisibility from parent is empty, we're still initializing
-                  if (Object.keys(columnVisibility).length === 0) {
-                    const column = header.column.columnDef;
-                    // Always show columns that cannot be hidden
-                    if (column.enableHiding === false) {
-                      return true;
-                    }
-                    // Always show first and last columns
-                    if (
-                      header.column.id === finalColumns[0]?.id ||
-                      header.column.id ===
-                        finalColumns[finalColumns.length - 1]?.id
-                    ) {
-                      return true;
-                    }
-                    // Check meta visibility - if explicitly set to false, hide the column
-                    const metaVisible = (column.meta as CustomColumnMeta)
-                      ?.isVisible;
-                    if (metaVisible === false) {
-                      return false;
-                    }
-                    // Default to showing columns that don't have isVisible set
-                    return true;
-                  }
-
-                  // Fallback to showing all headers
-                  return true;
-                })
-                .map((header) => (
-                  <TableHead key={header.id} className="select-none">
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </TableHead>
-                ))}
+              {skeletonHeaders.map((header) => (
+                <TableHead
+                  key={header.id}
+                  className="select-none"
+                  style={cellPinningStyleFn(header.column)}
+                >
+                  {flexRender(
+                    header.column.columnDef.header,
+                    header.getContext()
+                  )}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -615,11 +619,12 @@ export function DataTable<TData extends DataRow, TValue>({
                     <Skeleton className="h-8 w-4" />
                   </TableCell>
                 )}
-                {visibleColumns.map((column, colIndex) => (
-                  <TableCell key={String(column.id)}>
-                    <Skeleton
-                      className={`h-8 ${colIndex === 0 ? "w-[500px]" : "w-full"}`}
-                    />
+                {skeletonHeaders.map((header) => (
+                  <TableCell
+                    key={String(header.column.id)}
+                    style={cellPinningStyleFn(header.column)}
+                  >
+                    <Skeleton className="h-8 w-full" />
                   </TableCell>
                 ))}
               </TableRow>

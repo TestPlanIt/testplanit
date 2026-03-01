@@ -113,7 +113,7 @@ export function UnifiedIssueManager({
         <span>{t("common.errors.issueTrackerNotConfigured")}</span>
         <Button variant="outline" size="sm" asChild>
           <Link href={`/projects/settings/${projectId}/integrations`}>
-            <Settings className="h-4 w-4 mr-2" />
+            <Settings className="h-4 w-4" />
             {t("common.actions.edit")}
           </Link>
         </Button>

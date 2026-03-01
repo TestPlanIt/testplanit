@@ -198,7 +198,7 @@ export function ProjectIntegrationSettings({
 
         {/* Only show external project selection for integrations that support it */}
         {integration.provider !== "SIMPLE_URL" && (
-          <div className="space-y-2 max-w-48">
+          <div className="space-y-2 w-sm max-w-full">
             <div className="flex items-center">
               <Label htmlFor="externalProject">
                 {tGlobal("issues.externalProject")}

@@ -80,7 +80,7 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
               onClick={() => setOpenPopover(false)}
               disabled={isLoading}
             >
-              <CircleSlash2 className="h-4 w-4 mr-1" />{" "}
+              <CircleSlash2 className="h-4 w-4" />{" "}
               {tCommon("cancel")}
             </Button>
           </div>
@@ -92,7 +92,7 @@ export function RemoveAvatar({ user }: RemoveAvatarProps) {
               className="ml-auto"
               disabled={isLoading}
             >
-              <Trash2 className="h-4 w-4 mr-1" /> {tCommon("actions.delete")}
+              <Trash2 className="h-4 w-4" /> {tCommon("actions.delete")}
             </Button>
           </div>
         </div>

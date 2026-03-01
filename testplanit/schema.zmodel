@@ -361,8 +361,9 @@ model Projects {
     userPermissions        UserProjectPermission[]
     groupPermissions       GroupProjectPermission[]
     sharedStepGroups       SharedStepGroup[]
-    projectIntegrations    ProjectIntegration[]
-    projectLlmIntegrations ProjectLlmIntegration[]
+    projectIntegrations        ProjectIntegration[]
+    projectLlmIntegrations     ProjectLlmIntegration[]
+    codeRepositoryConfig       ProjectCodeRepositoryConfig?
     promptConfigId         String?
     promptConfig           PromptConfig?               @relation(fields: [promptConfigId], references: [id])
     issues                 Issue[]
@@ -372,6 +373,8 @@ model Projects {
     comments               Comment[]
     auditLogs              AuditLog[]
     shareLinks             ShareLink[]
+    assignedExportTemplates CaseExportTemplateProjectAssignment[]
+    quickScriptEnabled       Boolean                     @default(false)
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -773,6 +776,41 @@ model TemplateResultAssignment {
     order         Int          @default(0)
 
     @@id([resultFieldId, templateId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model CaseExportTemplate {
+    id            Int                                    @id @default(autoincrement())
+    name          String                                 @unique @length(1)
+    description   String?
+    category      String                                 @length(1)
+    framework     String                                 @length(1) @default("")
+    headerBody    String?
+    templateBody  String
+    footerBody    String?
+    fileExtension String                                 @length(1)
+    language      String                                 @length(1)
+    isDefault     Boolean                                @default(false)
+    isEnabled     Boolean                                @default(true)
+    isDeleted     Boolean                                @default(false)
+    createdAt     DateTime                               @default(now()) @db.Timestamptz(6)
+    updatedAt     DateTime                               @updatedAt
+    projects      CaseExportTemplateProjectAssignment[]
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model CaseExportTemplateProjectAssignment {
+    templateId Int
+    template   CaseExportTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+    projectId  Int
+    project    Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+    @@id([templateId, projectId])
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
@@ -2265,6 +2303,17 @@ enum IntegrationStatus {
     @@allow('read', auth().access != null)
 }
 
+enum CodeRepositoryProvider {
+    GITHUB
+    GITLAB
+    BITBUCKET
+    AZURE_DEVOPS
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
 model Integration {
     id                   Int                   @id @default(autoincrement())
     name                 String                @length(1)
@@ -2286,6 +2335,55 @@ model Integration {
     @@deny('all', !auth())
     @@allow('read', auth().access != null)
     @@allow('all', auth().access == 'ADMIN')
+}
+
+// ============================================
+// Code Repository Models
+// ============================================
+
+model CodeRepository {
+    id             Int                          @id @default(autoincrement())
+    name           String                       @unique @length(1)
+    provider       CodeRepositoryProvider
+    credentials    Json                         // Provider credentials (PAT, username/password, etc.)
+    settings       Json?                        // Non-sensitive: baseUrl, orgUrl, repoIdentifier
+    status         IntegrationStatus            @default(ACTIVE)
+    lastTestedAt   DateTime?
+    isDeleted      Boolean                      @default(false)
+    createdAt      DateTime                     @default(now())
+    updatedAt      DateTime                     @updatedAt
+    projectConfigs ProjectCodeRepositoryConfig[]
+
+    @@index([provider, status])
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model ProjectCodeRepositoryConfig {
+    id                 Int            @id @default(autoincrement())
+    projectId          Int            @unique  // One repository config per project (v1)
+    project            Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    repositoryId       Int
+    repository         CodeRepository @relation(fields: [repositoryId], references: [id])
+    branch             String?        // null = use repository's default branch
+    pathPatterns       Json           // Array of { path: string, pattern: string }
+    cacheEnabled       Boolean        @default(true)   // false = no file caching (privacy mode)
+    cacheTtlDays       Int            @default(7)
+    cacheStatus        String?        // "success" | "error" | "pending" | null (never fetched)
+    cacheLastFetchedAt DateTime?
+    cacheFileCount     Int?
+    cacheTotalSize     BigInt?        // bytes
+    cacheError         String?
+    createdAt          DateTime       @default(now())
+    updatedAt          DateTime       @updatedAt
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read,update', auth().access == 'PROJECTADMIN')
+    @@allow('read,update',
+      project.userPermissions?[user == auth() && role.rolePermissions?[area == 'Settings' && canAddEdit == true]]
+    )
 }
 
 // ============================================

@@ -1708,7 +1708,7 @@ export default function SessionPage() {
                         variant="destructive"
                         onClick={() => setIsDeleteDialogOpen(true)}
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
+                        <Trash2 className="h-4 w-4" />
                         {t("actions.delete")}
                       </Button>
                     )}

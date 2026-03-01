@@ -3576,7 +3576,7 @@ export function TestmoImportPanel() {
             onClick={goPrev}
             disabled={!canGoPrev}
           >
-            <ChevronLeft className="mr-2 h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
             {tCommon("actions.previous")}
           </Button>
           <Button type="button" onClick={handleNext} disabled={!canGoNext}>

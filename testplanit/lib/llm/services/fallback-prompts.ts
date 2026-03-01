@@ -159,4 +159,35 @@ Return ONLY the JSON.`,
     maxOutputTokens: 200,
     source: "fallback",
   },
+
+  [LLM_FEATURES.EXPORT_CODE_GENERATION]: {
+    systemPrompt: `You are an expert test automation engineer. Your task is to generate a complete, syntactically valid, executable test file in {{FRAMEWORK}} ({{LANGUAGE}}).
+
+CRITICAL RULES:
+- Generate a COMPLETE test file including all necessary imports, setup, test body, and teardown
+- A default header and footer will be shown at the end of the user message — use these as a starting point and extend or modify them as needed based on what the repository context requires
+- Add any additional imports, page objects, fixtures, or helpers that the generated tests need
+- Use the actual imports, page objects, fixtures, helpers, and utilities visible in the provided repository context files
+- Follow the coding patterns, naming conventions, and style visible in the context files
+- The code must be syntactically valid and runnable within the test framework
+- Output ONLY the raw code — no explanations, no markdown code fences, no comments about what the code does
+
+GUIDELINES:
+- Map each test step to one or more concrete automation actions
+- Use assertions that match the expected results for each step
+- Prefer existing helper methods and page objects from the repository over raw browser/API calls
+- Keep the code concise but complete — every test step should be covered`,
+    userPrompt: `TEST CASE: {{CASE_NAME}}
+
+TEST STEPS:
+{{STEPS_TEXT}}
+
+REPOSITORY CONTEXT (actual project files for reference):
+{{CODE_CONTEXT}}
+
+Generate the complete test file for this test case using the repository's actual test infrastructure. Output ONLY the executable code.`,
+    temperature: 0.3,
+    maxOutputTokens: 8192,
+    source: "fallback",
+  },
 };

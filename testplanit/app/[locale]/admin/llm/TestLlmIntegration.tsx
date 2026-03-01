@@ -139,7 +139,7 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
                   variant={connectionStatus === "connected" ? "outline" : "default"}
                 >
                   {connectionStatus === "testing" && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   )}
                   {connectionStatus === "connected" ? t("retest") : tGlobal("admin.integrations.testConnection")}
                 </Button>
@@ -169,7 +169,7 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
                 </>
               ) : (
                 <>
-                  <Send className="mr-2 h-4 w-4" />
+                  <Send className="h-4 w-4" />
                   {t("sendTestMessage")}
                 </>
               )}

@@ -53,24 +53,22 @@ export function HelpPopover({ helpKey, side = "bottom", tabIndex }: HelpPopoverP
         {children}
       </a>
     ),
-    code: ({ node, className, children, ...props }: any) => {
-      const match = /language-(\w+)/.exec(className || "");
-      const isInline = props.inline || false;
-      return !isInline ? (
-        <pre className="block bg-muted p-4 rounded text-sm font-mono overflow-x-auto my-3">
-          <code className={match ? className : ""} {...props}>
-            {children}
-          </code>
-        </pre>
-      ) : (
-        <code
-          className="bg-muted px-1 py-0.5 rounded text-sm font-mono"
-          {...props}
-        >
-          {children}
-        </code>
-      );
-    },
+    pre: ({ node, children, ...props }) => (
+      <pre
+        className="block bg-muted p-4 rounded text-sm font-mono overflow-x-auto my-3"
+        {...props}
+      >
+        {children}
+      </pre>
+    ),
+    code: ({ node, className, children, ...props }: any) => (
+      <code
+        className="bg-muted px-1 py-0.5 rounded text-sm font-mono"
+        {...props}
+      >
+        {children}
+      </code>
+    ),
     blockquote: ({ node, ...props }) => (
       <blockquote
         className="border-l-4 border-border pl-4 italic my-3"

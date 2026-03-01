@@ -733,6 +733,7 @@ export function UnifiedSearch({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-10 pr-10"
+              autoFocus
             />
             {query && (
               <Button
@@ -753,7 +754,7 @@ export function UnifiedSearch({
               onOpenChange={setShowEntityTypeSheet}
             >
               <SheetTrigger asChild>
-                <Button variant="outline" className="gap-1">
+                <Button variant="outline">
                   <Settings2 className="h-4 w-4" />
                   {selectedEntitiesText}
                 </Button>

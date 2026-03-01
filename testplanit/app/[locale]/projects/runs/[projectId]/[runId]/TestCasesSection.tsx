@@ -477,7 +477,7 @@ export function TestCasesSection({
               onClick={handleStartTesting}
               disabled={isLoadingPermissions}
             >
-              <CirclePlay className="h-4 w-4 mr-1" />
+              <CirclePlay className="h-4 w-4" />
               {t("common.actions.startTesting")}
             </Button>
           )}

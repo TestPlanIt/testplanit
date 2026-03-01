@@ -20,8 +20,12 @@ import {
   useFindManyTemplates,
   useFindManyRepositoryFolders,
   useFindFirstTestRuns,
+  useFindUniqueProjects,
 } from "~/lib/hooks";
-import { useFindManyRepositoryCasesFiltered, PostFetchFilter } from "~/hooks/useRepositoryCasesWithFilteredFields";
+import {
+  useFindManyRepositoryCasesFiltered,
+  PostFetchFilter,
+} from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { DataTable } from "@/components/tables/DataTable";
 import { getColumns } from "./columns";
 import { useDebounce } from "@/components/Debounce";
@@ -43,9 +47,10 @@ import { usePagination } from "~/lib/contexts/PaginationContext";
 import { Button } from "@/components/ui/button";
 import { BulkEditModal } from "./BulkEditModal";
 import { AddResultModal } from "./AddResultModal";
-import { PenSquare, PlayCircle, Upload } from "lucide-react";
+import { PenSquare, PlayCircle, Upload, ScrollText } from "lucide-react";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { ExportModal, ExportOptions } from "./ExportModal";
+import { QuickScriptModal } from "./QuickScriptModal";
 import { useExportData, TFunction } from "~/hooks/useExportData";
 import { fetchAllCasesForExport as fetchAllCasesAction } from "~/app/actions/exportActions";
 import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
@@ -242,6 +247,13 @@ export default function Cases({
     );
   const totalProjectCases = totalProjectCasesCountData ?? 0;
 
+  // QuickScript feature flag
+  const { data: projectSettings } = useFindUniqueProjects(
+    { where: { id: projectId }, select: { quickScriptEnabled: true } },
+    { enabled: isValidProjectId }
+  );
+  const quickScriptEnabled = projectSettings?.quickScriptEnabled ?? false;
+
   // Lightweight project-wide template field discovery
   const { data: projectTemplates, isLoading: isTemplatesLoading } =
     useFindManyTemplates(
@@ -328,6 +340,7 @@ export default function Cases({
 
   // Add state for the export modal
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isQuickScriptModalOpen, setIsQuickScriptModalOpen] = useState(false);
 
   // Reset auto-select guard when switching away from folders view
   useEffect(() => {
@@ -506,7 +519,10 @@ export default function Cases({
             // Add the dynamic filtering logic here (Link, Dropdown, etc.)
             if (fieldType === "Link") {
               // Support both numeric IDs (legacy) and string IDs (new)
-              if ((singleFilterId as number) === 1 || singleFilterId === "hasValue") {
+              if (
+                (singleFilterId as number) === 1 ||
+                singleFilterId === "hasValue"
+              ) {
                 // Has link
                 filterConditions.push({
                   caseFieldValues: {
@@ -519,7 +535,10 @@ export default function Cases({
                     },
                   },
                 });
-              } else if ((singleFilterId as number) === 2 || singleFilterId === "none") {
+              } else if (
+                (singleFilterId as number) === 2 ||
+                singleFilterId === "none"
+              ) {
                 // No link
                 filterConditions.push({
                   OR: [
@@ -609,12 +628,18 @@ export default function Cases({
               }
             } else if (fieldType === "Steps") {
               // Support both numeric IDs (legacy) and string IDs (new)
-              if ((singleFilterId as number) === 1 || singleFilterId === "hasValue") {
+              if (
+                (singleFilterId as number) === 1 ||
+                singleFilterId === "hasValue"
+              ) {
                 // Has steps
                 filterConditions.push({
                   steps: { some: { isDeleted: false } },
                 });
-              } else if ((singleFilterId as number) === 2 || singleFilterId === "none") {
+              } else if (
+                (singleFilterId as number) === 2 ||
+                singleFilterId === "none"
+              ) {
                 // No steps
                 filterConditions.push({
                   steps: { none: { isDeleted: false } },
@@ -658,7 +683,10 @@ export default function Cases({
                     },
                   },
                 });
-              } else if (typeof singleFilterId === "string" && singleFilterId.includes(":")) {
+              } else if (
+                typeof singleFilterId === "string" &&
+                singleFilterId.includes(":")
+              ) {
                 // Operator-based filter: format is "operator:value1" or "operator:value1:value2"
                 const parts = singleFilterId.split(":");
                 const operator = parts[0];
@@ -682,7 +710,11 @@ export default function Cases({
                     // Not equals
                     filterConditions.push({
                       OR: [
-                        { caseFieldValues: { none: { fieldId: numericFieldId } } },
+                        {
+                          caseFieldValues: {
+                            none: { fieldId: numericFieldId },
+                          },
+                        },
                         {
                           caseFieldValues: {
                             some: {
@@ -697,7 +729,9 @@ export default function Cases({
                               fieldId: numericFieldId,
                               AND: [
                                 { value: { not: { equals: value1 } } },
-                                { value: { not: { equals: value1.toString() } } },
+                                {
+                                  value: { not: { equals: value1.toString() } },
+                                },
                               ],
                             },
                           },
@@ -793,7 +827,9 @@ export default function Cases({
                       OR: [
                         {
                           value: {
-                            equals: (singleFilterId as string | number).toString(),
+                            equals: (
+                              singleFilterId as string | number
+                            ).toString(),
                           },
                         },
                         {
@@ -838,8 +874,12 @@ export default function Cases({
               } else if (singleFilterId === "last7") {
                 // Last 7 days
                 const now = new Date();
-                const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
+                const sevenDaysAgo = new Date(
+                  now.getTime() - 7 * 24 * 60 * 60 * 1000
+                );
+                const sevenDaysAgoStr = sevenDaysAgo
+                  .toISOString()
+                  .split("T")[0];
                 filterConditions.push({
                   caseFieldValues: {
                     some: {
@@ -854,8 +894,12 @@ export default function Cases({
               } else if (singleFilterId === "last30") {
                 // Last 30 days
                 const now = new Date();
-                const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-                const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
+                const thirtyDaysAgo = new Date(
+                  now.getTime() - 30 * 24 * 60 * 60 * 1000
+                );
+                const thirtyDaysAgoStr = thirtyDaysAgo
+                  .toISOString()
+                  .split("T")[0];
                 filterConditions.push({
                   caseFieldValues: {
                     some: {
@@ -870,8 +914,12 @@ export default function Cases({
               } else if (singleFilterId === "last90") {
                 // Last 90 days
                 const now = new Date();
-                const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-                const ninetyDaysAgoStr = ninetyDaysAgo.toISOString().split("T")[0];
+                const ninetyDaysAgo = new Date(
+                  now.getTime() - 90 * 24 * 60 * 60 * 1000
+                );
+                const ninetyDaysAgoStr = ninetyDaysAgo
+                  .toISOString()
+                  .split("T")[0];
                 filterConditions.push({
                   caseFieldValues: {
                     some: {
@@ -899,7 +947,10 @@ export default function Cases({
                     },
                   },
                 });
-              } else if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+              } else if (
+                typeof singleFilterId === "string" &&
+                singleFilterId.includes("|")
+              ) {
                 // Operator-based filter: format is "operator|date1" or "operator|date1|date2"
                 const parts = singleFilterId.split("|");
                 const operator = parts[0];
@@ -1011,7 +1062,10 @@ export default function Cases({
                   ],
                 });
               }
-            } else if (fieldType === "Text Long" || fieldType === "Text String") {
+            } else if (
+              fieldType === "Text Long" ||
+              fieldType === "Text String"
+            ) {
               // Handle hasValue/none special filters
               if (singleFilterId === "hasValue") {
                 // Has text - filter for non-null, non-empty values
@@ -1044,7 +1098,10 @@ export default function Cases({
                     },
                   ],
                 });
-              } else if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+              } else if (
+                typeof singleFilterId === "string" &&
+                singleFilterId.includes("|")
+              ) {
                 // Operator-based text filtering
                 const parts = singleFilterId.split("|");
                 const operator = parts[0];
@@ -1097,7 +1154,10 @@ export default function Cases({
                     },
                   ],
                 });
-              } else if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+              } else if (
+                typeof singleFilterId === "string" &&
+                singleFilterId.includes("|")
+              ) {
                 // Operator-based link filtering
                 const parts = singleFilterId.split("|");
                 const operator = parts[0];
@@ -1147,7 +1207,10 @@ export default function Cases({
                     },
                   ],
                 });
-              } else if (typeof singleFilterId === "string" && singleFilterId.includes("|")) {
+              } else if (
+                typeof singleFilterId === "string" &&
+                singleFilterId.includes("|")
+              ) {
                 // Operator-based steps count filtering
                 // Note: Actual step count filtering will happen after fetch in application logic
                 // We don't filter at database level, just ensure we fetch cases with steps
@@ -1251,7 +1314,7 @@ export default function Cases({
           const filterParts = singleFilterId.split("|");
           filters.push({
             fieldId,
-            type: 'text',
+            type: "text",
             operator: filterParts[0],
             value1: filterParts[1],
           });
@@ -1259,7 +1322,7 @@ export default function Cases({
           const filterParts = singleFilterId.split("|");
           filters.push({
             fieldId,
-            type: 'link',
+            type: "link",
             operator: filterParts[0],
             value1: filterParts[1],
           });
@@ -1270,7 +1333,7 @@ export default function Cases({
           if (!isNaN(count1)) {
             filters.push({
               fieldId,
-              type: 'steps',
+              type: "steps",
               operator: filterParts[0],
               value1: count1,
               value2: count2,
@@ -1675,25 +1738,26 @@ export default function Cases({
 
   // Add filtered count query for accurate pagination
   // For repository mode: count repository cases
-  const { data: filteredCountData, refetch: refetchFilteredCount } = useCountRepositoryCases(
-    {
-      where: repositoryCaseWhereClause,
-    },
-    {
-      enabled: Boolean(
-        // Skip query if we know the selected folder has 0 cases
-        viewType === "folders" && selectedFolderCaseCount === 0
-          ? false
-          : !isRunMode && // Don't run this in run mode
-              ((!!session?.user && deferredSearchString.length === 0) ||
-                deferredSearchString.length > 0)
-      ),
-      refetchOnWindowFocus: false,
-      // Keep previous data to prevent count from dropping to 0 during refetch
-      // This prevents pagination from resetting when switching pages
-      placeholderData: (previousData) => previousData,
-    }
-  );
+  const { data: filteredCountData, refetch: refetchFilteredCount } =
+    useCountRepositoryCases(
+      {
+        where: repositoryCaseWhereClause,
+      },
+      {
+        enabled: Boolean(
+          // Skip query if we know the selected folder has 0 cases
+          viewType === "folders" && selectedFolderCaseCount === 0
+            ? false
+            : !isRunMode && // Don't run this in run mode
+                ((!!session?.user && deferredSearchString.length === 0) ||
+                  deferredSearchString.length > 0)
+        ),
+        refetchOnWindowFocus: false,
+        // Keep previous data to prevent count from dropping to 0 during refetch
+        // This prevents pagination from resetting when switching pages
+        placeholderData: (previousData) => previousData,
+      }
+    );
 
   // For run mode: count test run cases matching the filters
   const { data: testRunCasesCountData } = useCountTestRunCases(
@@ -2005,8 +2069,16 @@ export default function Cases({
       },
       // When post-fetch filtering is active, fetch all data (no pagination)
       // Otherwise apply server-side pagination for repository mode
-      skip: postFetchFilters.length > 0 ? undefined : (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
-      take: postFetchFilters.length > 0 ? undefined : (pageSize === "All" ? undefined : pageSize),
+      skip:
+        postFetchFilters.length > 0
+          ? undefined
+          : (currentPage - 1) * (pageSize === "All" ? 0 : pageSize),
+      take:
+        postFetchFilters.length > 0
+          ? undefined
+          : pageSize === "All"
+            ? undefined
+            : pageSize,
     },
     postFetchFilters.length > 0 ? postFetchFilters : undefined,
     {
@@ -3212,12 +3284,14 @@ export default function Cases({
                     disabled={selectedCaseIdsForBulkEdit.length === 0}
                     variant="outline"
                     data-testid="bulk-edit-button"
+                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                   >
-                    <div className="flex flex-row items-center gap-1">
-                      <PenSquare className="w-4 h-4" />
-                      {t("repository.cases.bulkEdit")}
-                      <span>{`(${selectedCaseIdsForBulkEdit.length})`}</span>
-                    </div>
+                    <PenSquare className="w-4 h-4 shrink-0" />
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                      {t("repository.cases.bulkEdit")} {"("}
+                      {selectedCaseIdsForBulkEdit.length}
+                      {")"}
+                    </span>
                   </Button>
                 )}
               {!isRunMode &&
@@ -3229,12 +3303,14 @@ export default function Cases({
                     disabled={selectedCaseIdsForBulkEdit.length === 0}
                     variant="outline"
                     data-testid="create-test-run-button"
+                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                   >
-                    <div className="flex flex-row items-center gap-1">
-                      <PlayCircle className="w-4 h-4" />
-                      {t("repository.cases.createTestRun")}
-                      <span>{`(${selectedCaseIdsForBulkEdit.length})`}</span>
-                    </div>
+                    <PlayCircle className="w-4 h-4 shrink-0" />
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                      {t("repository.cases.createTestRun")} {"("}
+                      {selectedCaseIdsForBulkEdit.length}
+                      {")"}
+                    </span>
                   </Button>
                 )}
               {canAddEdit && !isSelectionMode && !isRunMode && (
@@ -3243,13 +3319,31 @@ export default function Cases({
                   disabled={totalItems === 0}
                   variant="outline"
                   data-testid="export-cases-button"
+                  className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                 >
-                  <div className="flex flex-row items-center gap-1">
-                    <Upload className="w-4 h-4" />
+                  <Upload className="w-4 h-4 shrink-0" />
+                  <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
                     {t("repository.cases.export")}
-                  </div>
+                  </span>
                 </Button>
               )}
+              {canAddEdit &&
+                quickScriptEnabled &&
+                !isSelectionMode &&
+                !isRunMode &&
+                selectedCaseIdsForBulkEdit.length > 0 && (
+                  <Button
+                    onClick={() => setIsQuickScriptModalOpen(true)}
+                    variant="outline"
+                    data-testid="quickscript-cases-button"
+                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                  >
+                    <ScrollText className="w-4 h-4 shrink-0" />
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                      {t("repository.cases.quickScript")}
+                    </span>
+                  </Button>
+                )}
             </div>
           </div>
         </div>
@@ -3377,6 +3471,16 @@ export default function Cases({
           totalCases={totalItems}
           selectedCaseIds={selectedCaseIdsForBulkEdit}
           totalProjectCases={totalProjectCases}
+        />
+      )}
+
+      {/* QuickScript Modal */}
+      {isValidProjectId && (
+        <QuickScriptModal
+          isOpen={isQuickScriptModalOpen}
+          onClose={() => setIsQuickScriptModalOpen(false)}
+          selectedCaseIds={selectedCaseIdsForBulkEdit}
+          projectId={projectId}
         />
       )}
 

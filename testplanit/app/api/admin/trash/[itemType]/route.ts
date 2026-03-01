@@ -83,6 +83,12 @@ const itemTypeToModelMap: Record<string, any> = {
   TestRunStepResults: db.testRunStepResults,
   Issues: db.issue,
   AppConfig: db.appConfig,
+  CodeRepository: db.codeRepository,
+  LlmIntegration: db.llmIntegration,
+  Integration: db.integration,
+  PromptConfig: db.promptConfig,
+  CaseExportTemplate: db.caseExportTemplate,
+  SharedStepGroup: db.sharedStepGroup,
 };
 
 export async function GET(
