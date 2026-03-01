@@ -11,6 +11,7 @@ import {
   useFindFirstProjectCodeRepositoryConfig,
   useCreateProjectCodeRepositoryConfig,
   useUpdateProjectCodeRepositoryConfig,
+  useDeleteProjectCodeRepositoryConfig,
   useFindUniqueProjects,
   useUpdateProjects,
 } from "~/lib/hooks";
@@ -33,6 +34,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -54,6 +65,7 @@ import {
   XCircle,
   Loader2,
   GitBranch,
+  Unlink,
 } from "lucide-react";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useSession } from "next-auth/react";
@@ -98,6 +110,7 @@ export default function QuickScriptPage() {
   useRequireAuth();
   const { data: session } = useSession();
   const t = useTranslations("projects.settings.quickScript");
+  const tCommon = useTranslations("common");
 
   const pathPatternSchema = z.object({
     path: z.string().min(1, t("validation.pathRequired")),
@@ -121,6 +134,7 @@ export default function QuickScriptPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshStep, setRefreshStep] = useState<string>("");
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
 
   // Load existing config
   const { data: existingConfig, refetch: refetchConfig } =
@@ -142,6 +156,7 @@ export default function QuickScriptPage() {
 
   const createConfig = useCreateProjectCodeRepositoryConfig();
   const updateConfig = useUpdateProjectCodeRepositoryConfig();
+  const deleteConfig = useDeleteProjectCodeRepositoryConfig();
 
   // QuickScript enabled toggle
   const { data: project } = useFindUniqueProjects({
@@ -156,6 +171,27 @@ export default function QuickScriptPage() {
       data: { quickScriptEnabled: enabled },
     });
     toast.success(enabled ? t("enabledToast") : t("disabledToast"));
+  };
+
+  const handleDisconnect = async () => {
+    if (!existingConfig) return;
+    try {
+      await deleteConfig.mutateAsync({
+        where: { id: existingConfig.id },
+      });
+      form.reset({
+        repositoryId: "",
+        branch: "",
+        pathPatterns: [{ path: "tests/e2e", pattern: "**/*.ts" }],
+        cacheEnabled: true,
+        cacheTtlDays: 7,
+      });
+      setPreview(null);
+      toast.success(t("disconnectSuccess"));
+      refetchConfig();
+    } catch {
+      toast.error(t("disconnectError"));
+    }
   };
 
   const form = useForm<FormData>({
@@ -458,6 +494,18 @@ export default function QuickScriptPage() {
                 <CardHeader>
                   <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
                     <CardTitle>{t("repository.title")}</CardTitle>
+                    {existingConfig && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive"
+                        onClick={() => setShowDisconnectDialog(true)}
+                      >
+                        <Unlink className="h-4 w-4" />
+                        {t("disconnect")}
+                      </Button>
+                    )}
                   </div>
                   <CardDescription>
                     {t("repository.description")}
@@ -869,6 +917,41 @@ export default function QuickScriptPage() {
       )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={showDisconnectDialog} onOpenChange={setShowDisconnectDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {t("disconnect")}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                {t("confirmDisconnect", {
+                  name: (existingConfig as any)?.repository?.name ?? "",
+                })}
+              </p>
+              <div>
+                <p className="font-medium">{t("disconnectWarningTitle")}</p>
+                <ul className="list-disc pl-5 mt-1">
+                  <li>{t("disconnectWarning1")}</li>
+                  <li>{t("disconnectWarning2")}</li>
+                  <li>{t("disconnectWarning3")}</li>
+                </ul>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDisconnect}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("disconnect")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

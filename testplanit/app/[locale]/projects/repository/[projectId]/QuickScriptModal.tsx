@@ -117,7 +117,11 @@ async function streamExportCase(
             truncated: data.finishReason === "length",
           };
         } else if (data.type === "fallback") {
-          return { code: data.code, generatedBy: "template", error: data.error };
+          return {
+            code: data.code,
+            generatedBy: "template",
+            error: data.error,
+          };
         } else if (data.type === "error") {
           throw new Error(data.message);
         }
@@ -160,6 +164,7 @@ export function QuickScriptModal({
   // AI export state
   const [aiEnabled, setAiEnabled] = useState(false);
   const [aiAvailable, setAiAvailable] = useState(false);
+  const [hasCodeContext, setHasCodeContext] = useState(false);
   const [aiCheckLoading, setAiCheckLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
   const [previewResults, setPreviewResults] = useState<AiExportResult[]>([]);
@@ -223,9 +228,11 @@ export function QuickScriptModal({
       checkAiExportAvailable({ projectId })
         .then((result) => {
           setAiAvailable(result.available);
+          setHasCodeContext(result.hasCodeContext ?? false);
         })
         .catch(() => {
           setAiAvailable(false);
+          setHasCodeContext(false);
         })
         .finally(() => {
           setAiCheckLoading(false);
@@ -592,7 +599,9 @@ export function QuickScriptModal({
             language={selectedTemplate?.language || ""}
             isGenerating={isExporting}
             progress={generationProgress || undefined}
-            batchCount={isBatchModeRef.current ? selectedCaseIds.length : undefined}
+            batchCount={
+              isBatchModeRef.current ? selectedCaseIds.length : undefined
+            }
             streamingCode={streamingCode}
             onRetry={handleRetry}
             onCancel={handleCancelGeneration}
@@ -613,27 +622,25 @@ export function QuickScriptModal({
                       className="w-full justify-between font-normal"
                       data-testid="quickscript-template-select"
                     >
-                      {selectedTemplate ? (
-                        <>
-                          {selectedTemplate.name}
-                          {selectedTemplate.isDefault && (
-                            <TooltipProvider delayDuration={300}>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge variant="secondary">
-                                    <Star className="h-3 w-3 fill-current text-primary" />
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {tCommon("defaultOption")}
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </>
-                      ) : (
-                        t("templatePlaceholder")
-                      )}
+                      <span className="flex items-center gap-1.5">
+                        {selectedTemplate
+                          ? selectedTemplate.name
+                          : t("templatePlaceholder")}
+                        {selectedTemplate?.isDefault && (
+                          <TooltipProvider delayDuration={300}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="secondary">
+                                  <Star className="h-3 w-3 fill-current text-primary" />
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {tCommon("defaultOption")}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
@@ -718,23 +725,30 @@ export function QuickScriptModal({
                 </RadioGroup>
               </div>
 
-              {/* AI toggle - only visible when all prerequisites are met (GEN-02) */}
+              {/* AI toggle - visible when LLM is configured (GEN-02) */}
               {aiAvailable && !aiCheckLoading && (
                 <div
-                  className="flex items-center justify-between rounded-lg border p-3"
+                  className="rounded-lg border p-3"
                   data-testid="ai-export-toggle"
                 >
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <Label htmlFor="ai-toggle" className="cursor-pointer">
-                      {tAi("toggleLabel")}
-                    </Label>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <Label htmlFor="ai-toggle" className="cursor-pointer">
+                        {tAi("toggleLabel")}
+                      </Label>
+                    </div>
+                    <Switch
+                      id="ai-toggle"
+                      checked={aiEnabled}
+                      onCheckedChange={setAiEnabled}
+                    />
                   </div>
-                  <Switch
-                    id="ai-toggle"
-                    checked={aiEnabled}
-                    onCheckedChange={setAiEnabled}
-                  />
+                  {!hasCodeContext && aiEnabled && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      {tAi("noCodeContextHint")}
+                    </p>
+                  )}
                 </div>
               )}
 

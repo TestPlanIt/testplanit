@@ -96,6 +96,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 ### LLM Integration
 
 - **Test case generation** - Generate test cases from requirements using AI
+- **QuickScript AI generation** - Convert manual test cases into automation scripts with AI, optionally informed by your code repository
 - **Enhance Writing** - Get AI recommendations to improve writing for any rich text field
 - **Magic Select** - AI-assisted test case selection for quickly building test runs
 - **Multiple providers** - Support for OpenAI, Azure OpenAI, Anthropic, Ollama, and more

@@ -8,6 +8,7 @@ import { LLM_FEATURES } from "~/lib/llm/constants";
 import { CodeContextService } from "~/lib/llm/services/code-context.service";
 import type { QuickScriptCaseData } from "~/app/actions/quickScriptActions";
 import type { LlmRequest } from "~/lib/llm/types";
+import { stripMarkdownFences, formatAiError } from "~/utils/ai-export-helpers";
 
 export interface AiExportResult {
   code: string;
@@ -21,17 +22,18 @@ export interface AiExportResult {
 
 /**
  * Check whether AI export is available for a given project.
- * Requires: active LLM integration + code repository with cached files.
+ * Requires: active LLM integration. Code repository is optional — when
+ * absent the LLM still generates code using standard framework patterns.
  */
 export async function checkAiExportAvailable(args: {
   projectId: number;
-}): Promise<{ available: boolean; reason?: string }> {
+}): Promise<{ available: boolean; reason?: string; hasCodeContext?: boolean }> {
   const session = await getServerAuthSession();
   if (!session?.user) {
     return { available: false, reason: "not_authenticated" };
   }
 
-  // Check 1: Active LLM integration exists for this project
+  // Active LLM integration is the only hard requirement
   const llmIntegration = await prisma.projectLlmIntegration.findFirst({
     where: { projectId: args.projectId, isActive: true },
   });
@@ -40,16 +42,12 @@ export async function checkAiExportAvailable(args: {
     return { available: false, reason: "no_llm" };
   }
 
-  // Check 2: Code repository configured with cached files
+  // Code context is informational — not a gate
   const hasCodeContext = await CodeContextService.checkProjectHasCodeContext(
     args.projectId
   );
 
-  if (!hasCodeContext) {
-    return { available: false, reason: "no_repo" };
-  }
-
-  return { available: true };
+  return { available: true, hasCodeContext };
 }
 
 /**
@@ -59,44 +57,6 @@ export async function checkAiExportAvailable(args: {
  * On LLM failure, falls back to Mustache template rendering (GEN-05).
  * Usage is tracked automatically via LlmManager.chat() with feature="export_code_generation" (GEN-07).
  */
-/**
- * Strip markdown code fences from LLM output.
- * Models sometimes wrap responses in ```lang ... ``` despite being told not to.
- */
-export function stripMarkdownFences(code: string): string {
-  return code
-    .replace(/^```[\w]*\r?\n?/, "")
-    .replace(/\r?\n?```\s*$/, "")
-    .trim();
-}
-
-/**
- * Build a human-readable error string from a caught value, including the
- * cause chain so "fetch failed" surfaces the underlying reason (e.g. ECONNREFUSED).
- */
-export function formatAiError(err: unknown): string {
-  if (!(err instanceof Error)) return "AI generation failed";
-
-  const parts: string[] = [err.message];
-  let cause = (err as { cause?: unknown }).cause;
-  while (cause) {
-    if (cause instanceof Error) {
-      parts.push(cause.message);
-      cause = (cause as { cause?: unknown }).cause;
-    } else if (
-      typeof cause === "object" &&
-      cause !== null &&
-      "code" in cause
-    ) {
-      parts.push(String((cause as { code: unknown }).code));
-      break;
-    } else {
-      break;
-    }
-  }
-  return parts.filter(Boolean).join(": ");
-}
-
 /**
  * Generate AI-powered export code for multiple test cases as a single cohesive file.
  *
@@ -145,30 +105,7 @@ export async function generateAiExportBatch(args: {
 
   const caseName = `Combined (${args.cases.length} tests)`;
 
-  // Get repo config
-  const repoConfig = await prisma.projectCodeRepositoryConfig.findUnique({
-    where: { projectId: args.projectId },
-    select: { id: true },
-  });
-
-  if (!repoConfig) {
-    return {
-      code: mustacheFallback,
-      generatedBy: "template",
-      error: "No code repository configured",
-      caseId: args.caseIds[0],
-      caseName,
-    };
-  }
-
-  // Resolve prompt
-  const resolver = new PromptResolver(prisma);
-  const resolvedPrompt = await resolver.resolve(
-    LLM_FEATURES.EXPORT_CODE_GENERATION,
-    args.projectId
-  );
-
-  // Get LLM integration
+  // Get LLM integration (hard requirement)
   const llmIntegration = await prisma.projectLlmIntegration.findFirst({
     where: { projectId: args.projectId, isActive: true },
     select: { llmIntegrationId: true },
@@ -184,29 +121,48 @@ export async function generateAiExportBatch(args: {
     };
   }
 
-  // Determine token budget and assemble code context
+  // Resolve prompt
+  const resolver = new PromptResolver(prisma);
+  const resolvedPrompt = await resolver.resolve(
+    LLM_FEATURES.EXPORT_CODE_GENERATION,
+    args.projectId
+  );
+
+  // Determine token budget and assemble code context (if repo configured)
   const providerConfig = await prisma.llmProviderConfig.findFirst({
     where: { llmIntegrationId: llmIntegration.llmIntegrationId },
     select: { defaultMaxTokens: true },
   });
-
   const maxContextTokens = providerConfig?.defaultMaxTokens || 8000;
-  // Build relevance hint from all cases
-  const relevanceHint = args.cases
-    .flatMap((c) => [
-      c.name,
-      ...c.steps.map((s: any) => `${s.step} ${s.expectedResult}`),
-    ])
-    .join(" ");
 
-  console.log(
-    `[generateAiExportBatch] Assembling context for ${args.cases.length} cases (budget: ${maxContextTokens} tokens)`
-  );
-  const contextResult = await CodeContextService.assembleContext(
-    repoConfig.id,
-    maxContextTokens,
-    relevanceHint
-  );
+  const repoConfig = await prisma.projectCodeRepositoryConfig.findUnique({
+    where: { projectId: args.projectId },
+    select: { id: true },
+  });
+
+  let contextResult = {
+    context: "",
+    filesUsed: [] as string[],
+    tokenEstimate: 0,
+    truncated: false,
+  };
+
+  if (repoConfig) {
+    const relevanceHint = args.cases
+      .flatMap((c) => [
+        c.name,
+        ...c.steps.map((s: any) => `${s.step} ${s.expectedResult}`),
+      ])
+      .join(" ");
+    console.log(
+      `[generateAiExportBatch] Assembling context for ${args.cases.length} cases (budget: ${maxContextTokens} tokens)`
+    );
+    contextResult = await CodeContextService.assembleContext(
+      repoConfig.id,
+      maxContextTokens,
+      relevanceHint
+    );
+  }
 
   // Build system prompt (same as single-case: framework/language context)
   let systemPrompt = resolvedPrompt.systemPrompt;
@@ -228,7 +184,10 @@ export async function generateAiExportBatch(args: {
   // Note: resolvedPrompt.userPrompt is intentionally not used here — the single-case
   // placeholders ({{CASE_NAME}}, {{STEPS_TEXT}}) don't map cleanly to multiple cases.
   // The system prompt and temperature from resolvedPrompt still apply.
-  let userPrompt = `Generate a single complete ${template.language || ""} test file that contains ALL ${args.cases.length} test cases below. Use a single set of imports at the top of the file — do not repeat imports between tests.\n\n${casesText}\n\nREPOSITORY CONTEXT:\n${contextResult.context}`;
+  const contextSection = contextResult.context
+    ? `REPOSITORY CONTEXT:\n${contextResult.context}`
+    : `No repository context available. Generate test code using standard ${template.framework || "framework"} patterns and best practices.`;
+  let userPrompt = `Generate a single complete ${template.language || ""} test file that contains ALL ${args.cases.length} test cases below. Use a single set of imports at the top of the file — do not repeat imports between tests.\n\n${casesText}\n\n${contextSection}`;
 
   if (header) {
     userPrompt += `\n\nDEFAULT HEADER (use as a starting point — extend or modify imports/setup as needed based on the repository context):\n\`\`\`\n${header}\n\`\`\``;
@@ -326,41 +285,13 @@ export async function generateAiExport(args: {
     args.caseData
   );
 
-  // 5. Get project code repo config ID
-  const repoConfig = await prisma.projectCodeRepositoryConfig.findUnique({
-    where: { projectId: args.projectId },
-    select: { id: true },
-  });
-
-  if (!repoConfig) {
-    // No code repo configured -- return template fallback immediately
-    const fullCode = [header, mustacheFallback, footer]
-      .filter(Boolean)
-      .join("\n\n");
-    return {
-      code: fullCode,
-      generatedBy: "template",
-      error: "No code repository configured",
-      caseId: args.caseId,
-      caseName: args.caseData.name,
-    };
-  }
-
-  // 6. Resolve prompt
-  const resolver = new PromptResolver(prisma);
-  const resolvedPrompt = await resolver.resolve(
-    LLM_FEATURES.EXPORT_CODE_GENERATION,
-    args.projectId
-  );
-
-  // 7. Get LLM integration
+  // 5. Get LLM integration (hard requirement)
   const llmIntegration = await prisma.projectLlmIntegration.findFirst({
     where: { projectId: args.projectId, isActive: true },
     select: { llmIntegrationId: true },
   });
 
   if (!llmIntegration) {
-    // No active LLM integration -- return template fallback
     const fullCode = [header, mustacheFallback, footer]
       .filter(Boolean)
       .join("\n\n");
@@ -373,29 +304,51 @@ export async function generateAiExport(args: {
     };
   }
 
-  // 8. Determine token budget and assemble code context
-  // Load provider config to get the total token budget
+  // 6. Resolve prompt
+  const resolver = new PromptResolver(prisma);
+  const resolvedPrompt = await resolver.resolve(
+    LLM_FEATURES.EXPORT_CODE_GENERATION,
+    args.projectId
+  );
+
+  // 7. Determine token budget and assemble code context (if repo configured)
   const providerConfig = await prisma.llmProviderConfig.findFirst({
     where: { llmIntegrationId: llmIntegration.llmIntegrationId },
     select: { defaultMaxTokens: true },
   });
-
   const maxContextTokens = providerConfig?.defaultMaxTokens || 8000;
-  const relevanceHint = [
-    args.caseData.name,
-    ...args.caseData.steps.map((s: any) => `${s.step} ${s.expectedResult}`),
-  ].join(" ");
-  console.log(
-    `[generateAiExport] Assembling context for case ${args.caseId} (budget: ${maxContextTokens} tokens)`
-  );
-  const contextResult = await CodeContextService.assembleContext(
-    repoConfig.id,
-    maxContextTokens,
-    relevanceHint
-  );
-  console.log(
-    `[generateAiExport] Context assembled: ${contextResult.filesUsed.length} files, ~${contextResult.tokenEstimate} tokens, truncated=${contextResult.truncated}`
-  );
+
+  const repoConfig = await prisma.projectCodeRepositoryConfig.findUnique({
+    where: { projectId: args.projectId },
+    select: { id: true },
+  });
+
+  let contextResult = {
+    context: "",
+    filesUsed: [] as string[],
+    tokenEstimate: 0,
+    truncated: false,
+  };
+
+  if (repoConfig) {
+    const relevanceHint = [
+      args.caseData.name,
+      ...args.caseData.steps.map(
+        (s: any) => `${s.step} ${s.expectedResult}`
+      ),
+    ].join(" ");
+    console.log(
+      `[generateAiExport] Assembling context for case ${args.caseId} (budget: ${maxContextTokens} tokens)`
+    );
+    contextResult = await CodeContextService.assembleContext(
+      repoConfig.id,
+      maxContextTokens,
+      relevanceHint
+    );
+    console.log(
+      `[generateAiExport] Context assembled: ${contextResult.filesUsed.length} files, ~${contextResult.tokenEstimate} tokens, truncated=${contextResult.truncated}`
+    );
+  }
 
   // 9. Build LLM messages with placeholder replacement
   let systemPrompt = resolvedPrompt.systemPrompt;
@@ -411,7 +364,11 @@ export async function generateAiExport(args: {
   userPrompt = userPrompt
     .replace(/\{\{CASE_NAME\}\}/g, args.caseData.name)
     .replace(/\{\{STEPS_TEXT\}\}/g, stepsText)
-    .replace(/\{\{CODE_CONTEXT\}\}/g, contextResult.context);
+    .replace(
+      /\{\{CODE_CONTEXT\}\}/g,
+      contextResult.context ||
+        `No repository context available. Generate test code using standard ${template.framework || "framework"} patterns and best practices.`
+    );
 
   // Show header/footer as a starting point — AI generates the full file and may extend them
   if (header) {

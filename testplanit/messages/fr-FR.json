@@ -1222,7 +1222,15 @@
           "patternRequired": "Un modèle est requis.",
           "repositoryRequired": "Un dépôt est requis.",
           "pathPatternRequired": "Au moins un modèle de chemin est requis"
-        }
+        },
+        "disconnect": "Déconnexion du dépôt",
+        "confirmDisconnect": "Êtes-vous sûr de vouloir déconnecter «{name}» de ce projet ?",
+        "disconnectWarningTitle": "La déconnexion de ce dépôt aura pour effet :",
+        "disconnectWarning1": "Supprimer tous les fichiers de dépôt mis en cache",
+        "disconnectWarning2": "Supprimer les configurations de chemin et de branche",
+        "disconnectWarning3": "Cessez d'inclure le contexte du code dans les exportations générées par l'IA",
+        "disconnectSuccess": "Dépôt de code déconnecté",
+        "disconnectError": "Échec de la déconnexion du dépôt de code"
       }
     }
   },
@@ -2000,7 +2008,8 @@
       "aiGenerated": "Généré par l'IA",
       "templateGenerated": "Modèle généré",
       "truncatedWarning": "Le résultat a été tronqué : le modèle a atteint sa limite de jetons. Essayez de réduire la taille du lot ou d’augmenter le nombre maximal de jetons de sortie dans votre configuration d’invite.",
-      "contextFiles": "{count, plural, one {(# fichier de contexte)} other {(# fichiers de contexte)}}"
+      "contextFiles": "{count, plural, one {(# fichier de contexte)} other {(# fichiers de contexte)}}",
+      "noCodeContextHint": "Aucun dépôt de code n'est configuré. L'IA utilisera des modèles de framework standard."
     },
     "generateTestCases": {
       "buttonText": "Générer des cas de test",

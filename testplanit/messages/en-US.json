@@ -1222,7 +1222,15 @@
           "patternRequired": "Pattern is required",
           "repositoryRequired": "Repository is required",
           "pathPatternRequired": "At least one path pattern is required"
-        }
+        },
+        "disconnect": "Disconnect Repository",
+        "confirmDisconnect": "Are you sure you want to disconnect \"{name}\" from this project?",
+        "disconnectWarningTitle": "Disconnecting this repository will:",
+        "disconnectWarning1": "Remove all cached repository files",
+        "disconnectWarning2": "Remove path pattern and branch configurations",
+        "disconnectWarning3": "Stop including code context in AI-generated exports",
+        "disconnectSuccess": "Code repository disconnected",
+        "disconnectError": "Failed to disconnect code repository"
       }
     }
   },
@@ -2000,7 +2008,8 @@
       "aiGenerated": "AI Generated",
       "templateGenerated": "Template Generated",
       "truncatedWarning": "Output was truncated — the model reached its token limit. Try reducing the batch size or increasing Max Output Tokens in your Prompt Config.",
-      "contextFiles": "{count, plural, one {(# context file)} other {(# context files)}}"
+      "contextFiles": "{count, plural, one {(# context file)} other {(# context files)}}",
+      "noCodeContextHint": "No code repository configured. AI will use standard framework patterns."
     },
     "generateTestCases": {
       "buttonText": "Generate Test Cases",

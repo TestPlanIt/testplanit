@@ -1222,7 +1222,15 @@
           "patternRequired": "Se requiere patrón",
           "repositoryRequired": "Se requiere repositorio",
           "pathPatternRequired": "Se requiere al menos un patrón de ruta"
-        }
+        },
+        "disconnect": "Desconectar el repositorio",
+        "confirmDisconnect": "¿Estás seguro de que deseas desconectar \"{name}\" de este proyecto?",
+        "disconnectWarningTitle": "Desconectar este repositorio provocará lo siguiente:",
+        "disconnectWarning1": "Eliminar todos los archivos del repositorio en caché",
+        "disconnectWarning2": "Eliminar patrones de ruta y configuraciones de rama",
+        "disconnectWarning3": "Dejar de incluir el contexto del código en las exportaciones generadas por IA",
+        "disconnectSuccess": "Repositorio de código desconectado",
+        "disconnectError": "No se pudo desconectar el repositorio de código"
       }
     }
   },
@@ -2000,7 +2008,8 @@
       "aiGenerated": "Generado por IA",
       "templateGenerated": "Plantilla generada",
       "truncatedWarning": "La salida se truncó: el modelo alcanzó su límite de tokens. Intente reducir el tamaño del lote o aumentar el número máximo de tokens de salida en la configuración del símbolo del sistema.",
-      "contextFiles": "{count, plural, one {(# archivo de contexto)} other {(# archivos de contexto)}}"
+      "contextFiles": "{count, plural, one {(# archivo de contexto)} other {(# archivos de contexto)}}",
+      "noCodeContextHint": "No se ha configurado ningún repositorio de código. La IA utilizará patrones de marco estándar."
     },
     "generateTestCases": {
       "buttonText": "Generar Casos de Prueba",

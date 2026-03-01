@@ -1,8 +1,24 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// vi.hoisted runs before vi.mock hoisting — safe to reference in factories
+const {
+  mockPrisma,
+  mockGetServerAuthSession,
+  mockCheckProjectHasCodeContext,
+} = vi.hoisted(() => ({
+  mockPrisma: {
+    projectLlmIntegration: { findFirst: vi.fn() },
+    projectCodeRepositoryConfig: { findUnique: vi.fn() },
+  },
+  mockGetServerAuthSession: vi.fn(),
+  mockCheckProjectHasCodeContext: vi.fn(),
+}));
 
 // Mock all server-side dependencies to prevent env var access errors
-vi.mock("~/lib/prisma", () => ({ prisma: {} }));
-vi.mock("~/server/auth", () => ({ getServerAuthSession: vi.fn() }));
+vi.mock("~/lib/prisma", () => ({ prisma: mockPrisma }));
+vi.mock("~/server/auth", () => ({
+  getServerAuthSession: mockGetServerAuthSession,
+}));
 vi.mock("~/lib/llm/services/llm-manager.service", () => ({
   LlmManager: { getInstance: vi.fn() },
 }));
@@ -13,10 +29,14 @@ vi.mock("~/lib/llm/constants", () => ({
   LLM_FEATURES: { EXPORT_CODE_GENERATION: "export_code_generation" },
 }));
 vi.mock("~/lib/llm/services/code-context.service", () => ({
-  CodeContextService: { assembleContext: vi.fn(), checkProjectHasCodeContext: vi.fn() },
+  CodeContextService: {
+    assembleContext: vi.fn(),
+    checkProjectHasCodeContext: mockCheckProjectHasCodeContext,
+  },
 }));
 
-import { stripMarkdownFences, formatAiError } from "./aiExportActions";
+import { stripMarkdownFences, formatAiError } from "~/utils/ai-export-helpers";
+import { checkAiExportAvailable } from "./aiExportActions";
 
 describe("stripMarkdownFences", () => {
   it("strips opening fence with language tag", () => {
@@ -103,5 +123,51 @@ describe("formatAiError", () => {
     const cause = { something: "else" };
     const err = new Error("fetch failed", { cause: cause as any });
     expect(formatAiError(err)).toBe("fetch failed");
+  });
+});
+
+describe("checkAiExportAvailable", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns unavailable when not authenticated", async () => {
+    mockGetServerAuthSession.mockResolvedValue(null);
+
+    const result = await checkAiExportAvailable({ projectId: 1 });
+    expect(result).toEqual({
+      available: false,
+      reason: "not_authenticated",
+    });
+  });
+
+  it("returns unavailable when no LLM integration exists", async () => {
+    mockGetServerAuthSession.mockResolvedValue({ user: { id: "u1" } });
+    mockPrisma.projectLlmIntegration.findFirst.mockResolvedValue(null);
+
+    const result = await checkAiExportAvailable({ projectId: 1 });
+    expect(result).toEqual({ available: false, reason: "no_llm" });
+  });
+
+  it("returns available with hasCodeContext=true when LLM and repo exist", async () => {
+    mockGetServerAuthSession.mockResolvedValue({ user: { id: "u1" } });
+    mockPrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+      llmIntegrationId: 10,
+    });
+    mockCheckProjectHasCodeContext.mockResolvedValue(true);
+
+    const result = await checkAiExportAvailable({ projectId: 1 });
+    expect(result).toEqual({ available: true, hasCodeContext: true });
+  });
+
+  it("returns available with hasCodeContext=false when LLM exists but no repo", async () => {
+    mockGetServerAuthSession.mockResolvedValue({ user: { id: "u1" } });
+    mockPrisma.projectLlmIntegration.findFirst.mockResolvedValue({
+      llmIntegrationId: 10,
+    });
+    mockCheckProjectHasCodeContext.mockResolvedValue(false);
+
+    const result = await checkAiExportAvailable({ projectId: 1 });
+    expect(result).toEqual({ available: true, hasCodeContext: false });
   });
 });

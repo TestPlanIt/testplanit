@@ -129,22 +129,6 @@ export async function POST(req: NextRequest) {
           return;
         }
 
-        // Get repo config
-        const repoConfig =
-          await prisma.projectCodeRepositoryConfig.findUnique({
-            where: { projectId },
-            select: { id: true },
-          });
-
-        if (!repoConfig) {
-          send(controller, {
-            type: "fallback",
-            code: mustacheFallback,
-            error: "No code repository configured",
-          });
-          return;
-        }
-
         // Resolve prompt
         const resolver = new PromptResolver(prisma);
         const resolvedPrompt = await resolver.resolve(
@@ -164,29 +148,46 @@ export async function POST(req: NextRequest) {
         // Cap output tokens at the provider's hard ceiling so we never throw MAX_TOKENS_EXCEEDED.
         const outputTokenCap = providerConfig?.maxTokensPerRequest ?? Infinity;
 
-        // Build relevance hint and code context
-        let relevanceHint: string;
-        if (body.mode === "single") {
-          relevanceHint = [
-            body.caseData.name,
-            ...body.caseData.steps.map(
-              (s: any) => `${s.step} ${s.expectedResult}`
-            ),
-          ].join(" ");
-        } else {
-          relevanceHint = body.cases
-            .flatMap((c) => [
-              c.name,
-              ...c.steps.map((s: any) => `${s.step} ${s.expectedResult}`),
-            ])
-            .join(" ");
+        // Assemble code context if a repo is configured (optional)
+        const repoConfig =
+          await prisma.projectCodeRepositoryConfig.findUnique({
+            where: { projectId },
+            select: { id: true },
+          });
+
+        let contextResult = {
+          context: "",
+          filesUsed: [] as string[],
+          tokenEstimate: 0,
+          truncated: false,
+        };
+
+        if (repoConfig) {
+          let relevanceHint: string;
+          if (body.mode === "single") {
+            relevanceHint = [
+              body.caseData.name,
+              ...body.caseData.steps.map(
+                (s: any) => `${s.step} ${s.expectedResult}`
+              ),
+            ].join(" ");
+          } else {
+            relevanceHint = body.cases
+              .flatMap((c) => [
+                c.name,
+                ...c.steps.map((s: any) => `${s.step} ${s.expectedResult}`),
+              ])
+              .join(" ");
+          }
+
+          contextResult = await CodeContextService.assembleContext(
+            repoConfig.id,
+            maxContextTokens,
+            relevanceHint
+          );
         }
 
-        const contextResult = await CodeContextService.assembleContext(
-          repoConfig.id,
-          maxContextTokens,
-          relevanceHint
-        );
+        const noContextFallbackNote = `No repository context available. Generate test code using standard ${template.framework || "framework"} patterns and best practices.`;
 
         // Build system prompt
         let systemPrompt = resolvedPrompt.systemPrompt;
@@ -206,7 +207,10 @@ export async function POST(req: NextRequest) {
           userPrompt = resolvedPrompt.userPrompt
             .replace(/\{\{CASE_NAME\}\}/g, body.caseData.name)
             .replace(/\{\{STEPS_TEXT\}\}/g, stepsText)
-            .replace(/\{\{CODE_CONTEXT\}\}/g, contextResult.context);
+            .replace(
+              /\{\{CODE_CONTEXT\}\}/g,
+              contextResult.context || noContextFallbackNote
+            );
         } else {
           // Batch mode uses a hardcoded user prompt structure because the single-case
           // placeholders ({{CASE_NAME}}, {{STEPS_TEXT}}) don't map cleanly to multiple
@@ -222,7 +226,10 @@ export async function POST(req: NextRequest) {
               return `--- Test Case ${idx + 1}: ${caseData.name} ---\n${stepsText}`;
             })
             .join("\n\n");
-          userPrompt = `Generate a single complete ${template.language || ""} test file that contains ALL ${body.cases.length} test cases below. Use a single set of imports at the top of the file — do not repeat imports between tests.\n\n${casesText}\n\nREPOSITORY CONTEXT:\n${contextResult.context}`;
+          const contextSection = contextResult.context
+            ? `REPOSITORY CONTEXT:\n${contextResult.context}`
+            : noContextFallbackNote;
+          userPrompt = `Generate a single complete ${template.language || ""} test file that contains ALL ${body.cases.length} test cases below. Use a single set of imports at the top of the file — do not repeat imports between tests.\n\n${casesText}\n\n${contextSection}`;
         }
 
         if (header) {

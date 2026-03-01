@@ -5,7 +5,7 @@ title: QuickScript
 
 # QuickScript
 
-QuickScript converts your manual test cases into automation scripts. Select test cases from the Repository and export them as ready-to-use code for frameworks like Playwright, Cypress, Selenium, Jest, pytest, and more — using a template, or with AI assistance if a code repository and LLM integration are configured.
+QuickScript converts your manual test cases into automation scripts. Select test cases from the Repository and export them as ready-to-use code for frameworks like Playwright, Cypress, Selenium, Jest, pytest, and more — using a template, or with AI assistance when an LLM integration is configured.
 
 ## Accessing QuickScript
 
@@ -32,16 +32,28 @@ If an administrator has set a default template, it will be pre-selected automati
 
 ## AI-Powered Generation
 
-If your project has an active LLM integration and a connected code repository with cached files, a **Generate with AI** toggle appears in the dialog.
+If your project has an active LLM integration, a **Generate with AI** toggle appears in the dialog.
 
-When enabled, QuickScript uses AI to generate each script by analyzing your test case steps alongside your actual repository code — helpers, page objects, fixtures, and utilities. The result is code that follows your project's real patterns rather than generic stubs.
+When enabled, QuickScript uses AI to generate each script by analyzing your test case steps and the template's framework context. If a code repository is also connected, the AI additionally draws on your actual repository code — helpers, page objects, fixtures, and utilities — producing code that follows your project's real patterns rather than generic stubs.
 
-### How AI Generation Works
+### With a Code Repository
+
+When a code repository is configured and cached, AI generation works at its best:
 
 1. QuickScript assembles context from your code repository (files most relevant to the test case).
 2. The AI receives your test steps, the repository context, and the template's header/footer as a starting point.
 3. It generates a complete, runnable test file — including imports and any setup it infers from the repository.
 4. The result streams into a preview pane before you download.
+
+### Without a Code Repository
+
+AI generation also works without a connected code repository. In this mode:
+
+1. The AI receives your test steps, the template's framework and language, and the header/footer as guidance.
+2. It generates code using standard framework patterns and best practices.
+3. A hint below the AI toggle indicates that no code repository is configured.
+
+The generated code is still significantly more tailored than static template output, but won't reference project-specific helpers or page objects since it has no repository context to draw from.
 
 ### Preview Pane
 
@@ -49,7 +61,7 @@ After generation, a preview pane shows:
 
 - Each generated file with syntax-highlighted code
 - A badge indicating whether each file was **AI Generated** or **Template Generated** (fallback)
-- The number of repository context files used
+- The number of repository context files used (when a code repository is configured)
 - A truncation warning if the AI hit its token limit
 
 You can copy individual files to the clipboard or download the full set.
