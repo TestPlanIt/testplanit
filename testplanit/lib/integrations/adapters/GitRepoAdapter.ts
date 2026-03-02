@@ -124,8 +124,8 @@ export abstract class GitRepoAdapter {
 
   /**
    * Validate a URL is safe for server-side requests (blocks private/internal addresses).
-   * Returns a normalized URL string so that callers use the validated value
-   * for fetch — this breaks the taint chain for static analysis (CodeQL).
+   * Returns the parsed+normalized URL so callers use the validated value for
+   * fetch — this breaks the taint chain for static analysis (CodeQL).
    */
   protected sanitizeUrl(url: string): string {
     const parsed = new URL(url);
@@ -134,7 +134,14 @@ export abstract class GitRepoAdapter {
         "Request blocked: URL targets a private or internal address"
       );
     }
-    return parsed.href;
+    // new URL() adds a trailing slash to origin-only URLs (e.g. "https://gitlab.com"
+    // becomes "https://gitlab.com/"). Preserve the original's trailing-slash behavior
+    // so base URLs don't produce double-slashes during path concatenation.
+    let result = parsed.href;
+    if (!url.endsWith("/") && result.endsWith("/")) {
+      result = result.slice(0, -1);
+    }
+    return result;
   }
 
   protected async applyRateLimit(): Promise<void> {
