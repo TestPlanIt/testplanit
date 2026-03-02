@@ -719,7 +719,9 @@ export function QuickScriptModal({
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="individual" id="individual" />
                     <Label htmlFor="individual">
-                      {t("outputModeIndividual")}
+                      {t("outputModeIndividual", {
+                        count: selectedCaseIds.length,
+                      })}
                     </Label>
                   </div>
                 </RadioGroup>

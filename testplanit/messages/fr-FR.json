@@ -1987,8 +1987,8 @@
       "searchPlaceholder": "Modèles de recherche...",
       "noTemplatesFound": "Aucun modèle trouvé.",
       "outputModeLabel": "Mode de sortie",
-      "outputModeSingle": "Fichier unique (tous les cas {count})",
-      "outputModeIndividual": "Fichiers individuels (.zip)",
+      "outputModeSingle": "Fichier unique ({count, plural, one {# cas} other {tous les # cas}})",
+      "outputModeIndividual": "{count, plural, one {Fichier individuel (.zip)} other {Fichiers individuels (.zip)}}",
       "casesToExport": "{count} cas à exporter",
       "exportSuccess": "Exportation réussie."
     },
@@ -3862,7 +3862,8 @@
         "title": "Supprimer l'intégration du modèle d'IA",
         "description": "Êtes-vous sûr de vouloir supprimer cette intégration de modèle d'IA ? Cette action la supprimera de tous les projets et ne pourra pas être annulée.",
         "integrationDeletedSuccess": "Intégration du modèle d'IA supprimée avec succès",
-        "failedToDeleteIntegration": "Échec de la suppression de l'intégration du modèle d'IA"
+        "failedToDeleteIntegration": "Échec de la suppression de l'intégration du modèle d'IA",
+        "cannotDeleteDefault": "Impossible de supprimer le modèle d'IA par défaut. Veuillez d'abord en définir un autre comme modèle par défaut."
       },
       "validation": {
         "defaultModelRequired": "Le modèle par défaut est requis"

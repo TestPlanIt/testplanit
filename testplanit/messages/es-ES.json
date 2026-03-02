@@ -1987,8 +1987,8 @@
       "searchPlaceholder": "Buscar plantillas...",
       "noTemplatesFound": "No se encontraron plantillas.",
       "outputModeLabel": "Modo de salida",
-      "outputModeSingle": "Archivo único (todos los casos {count})",
-      "outputModeIndividual": "Archivos individuales (.zip)",
+      "outputModeSingle": "Archivo único ({count, plural, one {# caso} other {todos # casos}})",
+      "outputModeIndividual": "{count, plural, one {Archivo individual (.zip)} other {Archivos individuales (.zip)}}",
       "casesToExport": "{count} casos para exportar",
       "exportSuccess": "Exportación completada exitosamente."
     },
@@ -3862,7 +3862,8 @@
         "title": "Eliminar Integración del Modelo AI",
         "description": "¿Está seguro de que desea eliminar esta integración de modelo de IA? Esto lo eliminará de todos los proyectos y no se puede deshacer.",
         "integrationDeletedSuccess": "Integración del modelo IA eliminada con éxito",
-        "failedToDeleteIntegration": "Error al eliminar integración de modelo IA"
+        "failedToDeleteIntegration": "Error al eliminar integración de modelo IA",
+        "cannotDeleteDefault": "No se puede eliminar el modelo de IA predeterminado. Primero, configure otro como predeterminado."
       },
       "validation": {
         "defaultModelRequired": "Modelo por defecto es requerido"

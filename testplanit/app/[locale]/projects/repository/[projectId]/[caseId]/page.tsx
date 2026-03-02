@@ -21,6 +21,7 @@ import {
   useFindManyRepositoryFolders,
   useFindManyIssue,
   useFindFirstProjects,
+  useFindUniqueProjects,
   useFindManyJUnitTestSuite,
   useFindManyJUnitTestStep,
   useFindManyJUnitAttachment,
@@ -63,6 +64,7 @@ import {
   LockIcon,
   Asterisk,
   AlertCircle,
+  ScrollText,
 } from "lucide-react";
 import {
   Tooltip,
@@ -109,6 +111,7 @@ import {
 } from "@/components/forms/FolderSelect";
 import LinkedCasesPanel from "@/components/LinkedCasesPanel";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import { QuickScriptModal } from "../QuickScriptModal";
 import { StepsDisplay } from "./StepsDisplay";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -421,6 +424,14 @@ export default function TestCaseDetails() {
   );
   // Use the active project integration instead of issueConfigId
   const activeIntegration = project?.projectIntegrations?.[0];
+
+  // QuickScript feature flag
+  const { data: projectSettings } = useFindUniqueProjects(
+    { where: { id: Number(projectId) }, select: { quickScriptEnabled: true } },
+    { enabled: isValidProjectId }
+  );
+  const quickScriptEnabled = projectSettings?.quickScriptEnabled ?? false;
+  const [isQuickScriptModalOpen, setIsQuickScriptModalOpen] = useState(false);
 
   const { data, isLoading, refetch, error } =
     useFindFirstRepositoryCasesFiltered(
@@ -1811,20 +1822,35 @@ export default function TestCaseDetails() {
                       )}
                     </div>
                   ) : (
-                    canAddEdit && (
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={handleEditModeToggle}
-                        disabled={isLoadingSharedStepGroups}
-                        data-testid="edit-test-case-button"
-                      >
-                        <div className="flex items-center">
-                          <SquarePen className="w-5 h-5 mr-2" />
-                          <div>{t("common.actions.edit")}</div>
-                        </div>
-                      </Button>
-                    )
+                    <div className="flex items-center space-x-2">
+                      {quickScriptEnabled && canAddEdit && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsQuickScriptModalOpen(true)}
+                          data-testid="quickscript-case-button"
+                        >
+                          <div className="flex items-center">
+                            <ScrollText className="w-5 h-5 mr-2" />
+                            <div>{t("repository.cases.quickScript")}</div>
+                          </div>
+                        </Button>
+                      )}
+                      {canAddEdit && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={handleEditModeToggle}
+                          disabled={isLoadingSharedStepGroups}
+                          data-testid="edit-test-case-button"
+                        >
+                          <div className="flex items-center">
+                            <SquarePen className="w-5 h-5 mr-2" />
+                            <div>{t("common.actions.edit")}</div>
+                          </div>
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -2323,6 +2349,14 @@ export default function TestCaseDetails() {
           </CardContent>
         </div>
       </form>
+      {isValidProjectId && (
+        <QuickScriptModal
+          isOpen={isQuickScriptModalOpen}
+          onClose={() => setIsQuickScriptModalOpen(false)}
+          selectedCaseIds={[Number(caseId)]}
+          projectId={Number(projectId)}
+        />
+      )}
     </FormProvider>
   );
 }

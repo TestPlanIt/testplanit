@@ -1987,8 +1987,8 @@
       "searchPlaceholder": "Search templates...",
       "noTemplatesFound": "No templates found.",
       "outputModeLabel": "Output Mode",
-      "outputModeSingle": "Single file (all {count} cases)",
-      "outputModeIndividual": "Individual files (.zip)",
+      "outputModeSingle": "Single file ({count, plural, one {# case} other {all # cases}})",
+      "outputModeIndividual": "{count, plural, one {Individual file (.zip)} other {Individual files (.zip)}}",
       "casesToExport": "{count} cases to export",
       "exportSuccess": "Export completed successfully."
     },
@@ -3862,7 +3862,8 @@
         "title": "Delete AI Model Integration",
         "description": "Are you sure you want to delete this AI model integration? This will remove it from all projects and cannot be undone.",
         "integrationDeletedSuccess": "AI model integration deleted successfully",
-        "failedToDeleteIntegration": "Failed to delete AI model integration"
+        "failedToDeleteIntegration": "Failed to delete AI model integration",
+        "cannotDeleteDefault": "Cannot delete the default AI model. Set another as default first."
       },
       "validation": {
         "defaultModelRequired": "Default model is required"

@@ -844,6 +844,7 @@ export function EditLlmIntegration({
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        disabled={integration.llmProviderConfig?.isDefault}
                       />
                     </FormControl>
                   </FormItem>

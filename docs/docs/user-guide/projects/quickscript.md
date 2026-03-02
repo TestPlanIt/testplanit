@@ -9,11 +9,20 @@ QuickScript converts your manual test cases into automation scripts. Select test
 
 ## Accessing QuickScript
 
+### From the Repository
+
 1. Navigate to your project's **Repository**.
 2. Select one or more test cases using the checkboxes in the table.
 3. Click the **QuickScript** button in the toolbar.
 
 The button appears when you have at least one test case selected.
+
+### From a Test Case
+
+1. Open a test case from the Repository.
+2. Click the **QuickScript** button next to the Edit button.
+
+This opens QuickScript for that single test case.
 
 ## Using the QuickScript Dialog
 

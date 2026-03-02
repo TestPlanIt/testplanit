@@ -27,7 +27,8 @@ export const getColumns = (
   ) => void,
   tCommon: ReturnType<typeof useTranslations<"common">>,
   t: ReturnType<typeof useTranslations<"admin.llm">>,
-  usageByIntegrationId: Map<number, number> = new Map()
+  usageByIntegrationId: Map<number, number> = new Map(),
+  totalIntegrations: number = 0
 ): ColumnDef<ExtendedLlmIntegration>[] => [
   {
     id: "name",
@@ -44,11 +45,6 @@ export const getColumns = (
       <div className="bg-primary-foreground flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-muted-foreground shrink-0" />
         <span className="font-medium">{row.original.name}</span>
-        {row.original.llmProviderConfig?.isDefault && (
-          <Badge variant="secondary" className="text-xs">
-            {tCommon("fields.default")}
-          </Badge>
-        )}
       </div>
     ),
   },
@@ -91,6 +87,7 @@ export const getColumns = (
       );
     },
   },
+
   {
     id: "projects",
     accessorKey: "projectLlmIntegrations",
@@ -232,6 +229,30 @@ export const getColumns = (
     ),
   },
   {
+    id: "isDefault",
+    accessorKey: "llmProviderConfig.isDefault",
+    header: tCommon("fields.default"),
+    enableSorting: false,
+    enableResizing: true,
+    size: 100,
+    cell: ({ row }) => (
+      <div className="text-center">
+        <Switch
+          checked={row.original.llmProviderConfig?.isDefault || false}
+          disabled={row.original.llmProviderConfig?.isDefault}
+          onCheckedChange={(checked) =>
+            handleToggle(
+              row.original.id,
+              "isDefault",
+              checked,
+              row.original.llmProviderConfig?.id
+            )
+          }
+        />
+      </div>
+    ),
+  },
+  {
     id: "actions",
     header: tCommon("actions.actionsLabel"),
     enableResizing: true,
@@ -253,6 +274,7 @@ export const getColumns = (
         <DeleteLlmIntegration
           key={`delete-${row.original.id}`}
           integration={row.original}
+          isOnlyIntegration={totalIntegrations <= 1}
         />
       </div>
     ),
