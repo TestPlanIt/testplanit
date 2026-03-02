@@ -1,14 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import Prism from "prismjs";
-import "prismjs/components/prism-typescript";
-import "prismjs/components/prism-javascript";
-import "prismjs/components/prism-python";
-import "prismjs/components/prism-java";
-import "prismjs/components/prism-csharp";
-import "prismjs/components/prism-ruby";
-import "prismjs/components/prism-go";
+import { mapLanguageToPrism, highlightCode } from "~/lib/utils/codeHighlight";
 import "prismjs/themes/prism-tomorrow.css";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -39,41 +32,6 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 import type { AiExportResult } from "~/app/actions/aiExportActions";
-
-/**
- * Maps template language names to PrismJS grammar identifiers.
- */
-function mapLanguageToPrism(language: string): string {
-  const normalized = language.toLowerCase().trim();
-  const mapping: Record<string, string> = {
-    typescript: "typescript",
-    ts: "typescript",
-    javascript: "javascript",
-    js: "javascript",
-    python: "python",
-    py: "python",
-    java: "java",
-    "c#": "csharp",
-    csharp: "csharp",
-    cs: "csharp",
-    ruby: "ruby",
-    rb: "ruby",
-    go: "go",
-  };
-  return mapping[normalized] || "javascript";
-}
-
-/**
- * Highlights code using PrismJS and returns an HTML string.
- * Falls back to plain text if the grammar is not loaded.
- */
-function highlightCode(code: string, prismLanguage: string): string {
-  const grammar = Prism.languages[prismLanguage] || Prism.languages.javascript;
-  const effectiveLang = Prism.languages[prismLanguage]
-    ? prismLanguage
-    : "javascript";
-  return Prism.highlight(code, grammar, effectiveLang);
-}
 
 interface ExportPreviewPaneProps {
   results: AiExportResult[];
@@ -428,7 +386,7 @@ function CodeBlock({
   );
 
   return (
-    <pre className="bg-[#2d2d2d] rounded-md overflow-auto p-4 text-sm max-w-full">
+    <pre className="bg-stone-800 rounded-md overflow-auto p-4 text-sm max-w-full">
       <code
         className={`language-${prismLanguage}`}
         dangerouslySetInnerHTML={{ __html: html }}

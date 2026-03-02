@@ -43,8 +43,12 @@ export function ComboboxInput({
   const [width, setWidth] = React.useState<number>(0);
 
   React.useEffect(() => {
-    setInputValue(value);
-  }, [value]);
+    if (open) {
+      setInputValue("");
+    } else {
+      setInputValue(value);
+    }
+  }, [open, value]);
 
   React.useEffect(() => {
     if (!triggerRef.current) return;

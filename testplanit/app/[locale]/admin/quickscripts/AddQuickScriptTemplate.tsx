@@ -19,6 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { TemplateVariableInserter } from "./TemplateVariableInserter";
 import { SAMPLE_CASE_BASE, buildSampleFields } from "./sampleCaseData";
+import { mapLanguageToPrism, highlightCode } from "~/lib/utils/codeHighlight";
+import "prismjs/themes/prism-tomorrow.css";
 import { CirclePlus } from "lucide-react";
 import Mustache from "mustache";
 
@@ -82,28 +84,41 @@ export function AddQuickScriptTemplateModal() {
 
   const { data: existingTemplates } = useFindManyCaseExportTemplate({
     where: { isDeleted: false },
-    select: { category: true, framework: true, fileExtension: true, language: true },
+    select: {
+      category: true,
+      framework: true,
+      fileExtension: true,
+      language: true,
+    },
   });
   const templates = existingTemplates as CaseExportTemplate[] | undefined;
 
   const categoryOptions = useMemo(() => {
     if (!templates) return [];
-    return [...new Set(templates.map((t) => t.category).filter(Boolean))].sort();
+    return [
+      ...new Set(templates.map((t) => t.category).filter(Boolean)),
+    ].sort();
   }, [templates]);
 
   const frameworkOptions = useMemo(() => {
     if (!templates) return [];
-    return [...new Set(templates.map((t) => t.framework).filter(Boolean))].sort();
+    return [
+      ...new Set(templates.map((t) => t.framework).filter(Boolean)),
+    ].sort();
   }, [templates]);
 
   const extensionOptions = useMemo(() => {
     if (!templates) return [];
-    return [...new Set(templates.map((t) => t.fileExtension).filter(Boolean))].sort();
+    return [
+      ...new Set(templates.map((t) => t.fileExtension).filter(Boolean)),
+    ].sort();
   }, [templates]);
 
   const languageOptions = useMemo(() => {
     if (!templates) return [];
-    return [...new Set(templates.map((t) => t.language).filter(Boolean))].sort();
+    return [
+      ...new Set(templates.map((t) => t.language).filter(Boolean)),
+    ].sort();
   }, [templates]);
 
   const { data: caseFieldsData } = useFindManyCaseFields({
@@ -138,6 +153,12 @@ export function AddQuickScriptTemplateModal() {
   const headerBody = form.watch("headerBody");
   const templateBody = form.watch("templateBody");
   const footerBody = form.watch("footerBody");
+  const language = form.watch("language");
+
+  const prismLanguage = useMemo(
+    () => mapLanguageToPrism(language || ""),
+    [language]
+  );
 
   const preview = useMemo(() => {
     if (!headerBody && !templateBody && !footerBody) return "";
@@ -154,6 +175,11 @@ export function AddQuickScriptTemplateModal() {
       return t("preview.error");
     }
   }, [headerBody, templateBody, footerBody, sampleCase, t]);
+
+  const highlightedPreview = useMemo(
+    () => (preview ? highlightCode(preview, prismLanguage) : ""),
+    [preview, prismLanguage]
+  );
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
@@ -455,12 +481,24 @@ export function AddQuickScriptTemplateModal() {
                 <label className="text-sm font-medium">
                   {t("preview.title")}
                 </label>
-                <pre
-                  className="mt-2 p-3 bg-muted rounded-md text-sm font-mono overflow-auto max-h-[400px] whitespace-pre-wrap"
-                  data-testid="export-template-preview"
-                >
-                  {preview || t("preview.empty")}
-                </pre>
+                {highlightedPreview ? (
+                  <pre
+                    className="mt-2 bg-stone-800 rounded-md overflow-auto p-4 text-sm max-h-[400px]"
+                    data-testid="export-template-preview"
+                  >
+                    <code
+                      className={`language-${prismLanguage}`}
+                      dangerouslySetInnerHTML={{ __html: highlightedPreview }}
+                    />
+                  </pre>
+                ) : (
+                  <pre
+                    className="mt-2 p-3 bg-muted rounded-md text-sm font-mono overflow-auto max-h-[400px] whitespace-pre-wrap"
+                    data-testid="export-template-preview"
+                  >
+                    {t("preview.empty")}
+                  </pre>
+                )}
               </div>
             </div>
 

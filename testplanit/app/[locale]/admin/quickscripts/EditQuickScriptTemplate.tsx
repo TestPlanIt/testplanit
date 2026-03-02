@@ -19,6 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { TemplateVariableInserter } from "./TemplateVariableInserter";
 import { SAMPLE_CASE_BASE, buildSampleFields } from "./sampleCaseData";
+import { mapLanguageToPrism, highlightCode } from "~/lib/utils/codeHighlight";
+import "prismjs/themes/prism-tomorrow.css";
 import { Pencil } from "lucide-react";
 import Mustache from "mustache";
 
@@ -174,6 +176,12 @@ export function EditQuickScriptTemplateModal({
   const headerBody = form.watch("headerBody");
   const templateBody = form.watch("templateBody");
   const footerBody = form.watch("footerBody");
+  const language = form.watch("language");
+
+  const prismLanguage = useMemo(
+    () => mapLanguageToPrism(language || ""),
+    [language]
+  );
 
   const preview = useMemo(() => {
     if (!headerBody && !templateBody && !footerBody) return "";
@@ -190,6 +198,11 @@ export function EditQuickScriptTemplateModal({
       return t("preview.error");
     }
   }, [headerBody, templateBody, footerBody, sampleCase, t]);
+
+  const highlightedPreview = useMemo(
+    () => (preview ? highlightCode(preview, prismLanguage) : ""),
+    [preview, prismLanguage]
+  );
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
@@ -492,12 +505,24 @@ export function EditQuickScriptTemplateModal({
                 <label className="text-sm font-medium">
                   {t("preview.title")}
                 </label>
-                <pre
-                  className="mt-2 p-3 bg-muted rounded-md text-sm font-mono overflow-auto max-h-[690px] whitespace-pre-wrap ring-1 ring-border"
-                  data-testid="edit-export-template-preview"
-                >
-                  {preview || t("preview.empty")}
-                </pre>
+                {highlightedPreview ? (
+                  <pre
+                    className="mt-2 bg-stone-800 rounded-md overflow-auto p-4 text-sm max-h-[690px]"
+                    data-testid="edit-export-template-preview"
+                  >
+                    <code
+                      className={`language-${prismLanguage}`}
+                      dangerouslySetInnerHTML={{ __html: highlightedPreview }}
+                    />
+                  </pre>
+                ) : (
+                  <pre
+                    className="mt-2 p-3 bg-muted rounded-md text-sm font-mono overflow-auto max-h-[690px] whitespace-pre-wrap ring-1 ring-border"
+                    data-testid="edit-export-template-preview"
+                  >
+                    {t("preview.empty")}
+                  </pre>
+                )}
               </div>
             </div>
 

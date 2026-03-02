@@ -2580,6 +2580,257 @@ class Test{{{id}}}: XCTestCase {
 }
 `;
 
+  // --- Appium (Kotlin) ---
+  const appiumKotlinHeader = `import io.appium.java_client.android.AndroidDriver
+import io.appium.java_client.android.options.UiAutomator2Options
+import org.junit.jupiter.api.*
+import java.net.URL`;
+
+  const appiumKotlinBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+class Test{{{id}}} {
+    private lateinit var driver: AndroidDriver
+
+    @BeforeEach
+    fun setUp() {
+        val options = UiAutomator2Options()
+            .setDeviceName("emulator-5554")
+            .setApp("/path/to/app.apk")
+        driver = AndroidDriver(URL("http://127.0.0.1:4723"), options)
+    }
+
+    @AfterEach
+    fun tearDown() {
+        driver.quit()
+    }
+
+{{#steps}}
+    @Test
+    @DisplayName("Step {{order}} - {{step}}")
+    fun testStep{{{order}}}() {
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  // --- Espresso (Java) ---
+  const espressoJavaHeader = `import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.espresso.Espresso;
+import androidx.test.espresso.action.ViewActions;
+import androidx.test.espresso.assertion.ViewAssertions;
+import androidx.test.espresso.matcher.ViewMatchers;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;`;
+
+  const espressoJavaBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+@RunWith(AndroidJUnit4.class)
+public class Test{{{id}}} {
+
+    @Rule
+    public ActivityScenarioRule<MainActivity> activityRule =
+            new ActivityScenarioRule<>(MainActivity.class);
+
+{{#steps}}
+    @Test
+    public void testStep{{{order}}}() {
+        // Step {{{order}}}: {{{step}}}
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  // --- Espresso (Kotlin) ---
+  const espressoKotlinHeader = `import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.ext.junit.rules.ActivityScenarioRule
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith`;
+
+  const espressoKotlinBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+@RunWith(AndroidJUnit4::class)
+class Test{{{id}}} {
+
+    @get:Rule
+    val activityRule = ActivityScenarioRule(MainActivity::class.java)
+
+{{#steps}}
+    @Test
+    fun testStep{{{order}}}() {
+        // Step {{{order}}}: {{{step}}}
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  // --- Detox (JavaScript) ---
+  const detoxJsBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+describe("{{{name}}}", () => {
+  beforeAll(async () => {
+    await device.launchApp();
+  });
+
+  beforeEach(async () => {
+    await device.reloadReactNative();
+  });
+
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  it("Step {{order}} - {{step}}", async () => {
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  // --- Detox (TypeScript) ---
+  const detoxTsBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+describe("{{{name}}}", () => {
+  beforeAll(async () => {
+    await device.launchApp();
+  });
+
+  beforeEach(async () => {
+    await device.reloadReactNative();
+  });
+
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  it("Step {{order}} - {{step}}", async () => {
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  // --- Maestro (YAML) ---
+  const maestroBody = `# Test Case: {{{name}}}
+# ID: {{{id}}}
+# State: {{{state}}}
+# Tags: {{{tags}}}
+# Created by: {{{createdBy}}}
+appId: com.example.app
+---
+{{#steps}}
+# Step {{{order}}}: {{{step}}}
+# Expected: {{{expectedResult}}}
+- tapOn: "TODO: element identifier"
+
+{{/steps}}
+`;
+
+  // --- Flutter Integration Test (Dart) ---
+  const flutterTestHeader = `import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:your_app/main.dart' as app;`;
+
+  const flutterTestBody = `/// Test Case: {{{name}}}
+/// ID: {{{id}}}
+/// State: {{{state}}}
+/// Tags: {{{tags}}}
+/// Created by: {{{createdBy}}}
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  group("{{{name}}}", () {
+    testWidgets("setup", (tester) async {
+      app.main();
+      await tester.pumpAndSettle();
+    });
+
+{{#steps}}
+    // Step {{{order}}}: {{{step}}}
+    // Expected: {{{expectedResult}}}
+    testWidgets("Step {{order}} - {{step}}", (tester) async {
+      // TODO: Implement test logic
+      await tester.pumpAndSettle();
+    });
+
+{{/steps}}
+  });
+}
+`;
+
+  // --- Earl Grey (Swift) ---
+  const earlGreyHeader = `import XCTest`;
+
+  const earlGreyBody = `/// Test Case: {{{name}}}
+/// ID: {{{id}}}
+/// State: {{{state}}}
+/// Tags: {{{tags}}}
+/// Created by: {{{createdBy}}}
+class Test{{{id}}}: XCTestCase {
+
+  override func setUp() {
+    super.setUp()
+    continueAfterFailure = false
+  }
+
+  override func tearDown() {
+    super.tearDown()
+  }
+
+{{#steps}}
+  /// Step {{{order}}}: {{{step}}}
+  func testStep{{{order}}}() {
+    // Expected: {{{expectedResult}}}
+    // TODO: Implement test logic using EarlGrey matchers
+    // EarlGrey.selectElement(with: grey_accessibilityID("elementId"))
+    //   .perform(grey_tap())
+    //   .assert(grey_sufficientlyVisible())
+  }
+
+{{/steps}}
+}
+`;
+
   const templates = [
     // --- Browser E2E ---
     {
@@ -3084,6 +3335,19 @@ class Test{{{id}}}: XCTestCase {
       isDefault: false,
     },
     {
+      name: "Appium (Kotlin)",
+      description:
+        "Generates Appium test stubs in Kotlin with JUnit 5 and UiAutomator2 driver setup.",
+      category: "Mobile Testing",
+      framework: "Appium",
+      headerBody: appiumKotlinHeader,
+      templateBody: appiumKotlinBody,
+      footerBody: null as string | null,
+      fileExtension: ".kt",
+      language: "kotlin",
+      isDefault: false,
+    },
+    {
       name: "XCUITest (Swift)",
       description:
         "Generates XCUITest stubs in Swift with XCTestCase and XCUIApplication setup.",
@@ -3091,6 +3355,97 @@ class Test{{{id}}}: XCTestCase {
       framework: "XCUITest",
       headerBody: xcuiTestHeader,
       templateBody: xcuiTestBody,
+      footerBody: null as string | null,
+      fileExtension: ".swift",
+      language: "swift",
+      isDefault: false,
+    },
+    {
+      name: "Espresso (Java)",
+      description:
+        "Generates Espresso test stubs in Java with ActivityScenarioRule and JUnit 4.",
+      category: "Mobile Testing",
+      framework: "Espresso",
+      headerBody: espressoJavaHeader,
+      templateBody: espressoJavaBody,
+      footerBody: null as string | null,
+      fileExtension: ".java",
+      language: "java",
+      isDefault: false,
+    },
+    {
+      name: "Espresso (Kotlin)",
+      description:
+        "Generates Espresso test stubs in Kotlin with ActivityScenarioRule and JUnit 4.",
+      category: "Mobile Testing",
+      framework: "Espresso",
+      headerBody: espressoKotlinHeader,
+      templateBody: espressoKotlinBody,
+      footerBody: null as string | null,
+      fileExtension: ".kt",
+      language: "kotlin",
+      isDefault: false,
+    },
+    {
+      name: "Detox (JavaScript)",
+      description:
+        "Generates Detox test stubs in JavaScript for React Native apps.",
+      category: "Mobile Testing",
+      framework: "Detox",
+      headerBody: null as string | null,
+      templateBody: detoxJsBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.js",
+      language: "javascript",
+      isDefault: false,
+    },
+    {
+      name: "Detox (TypeScript)",
+      description:
+        "Generates Detox test stubs in TypeScript for React Native apps.",
+      category: "Mobile Testing",
+      framework: "Detox",
+      headerBody: null as string | null,
+      templateBody: detoxTsBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.ts",
+      language: "typescript",
+      isDefault: false,
+    },
+    {
+      name: "Maestro",
+      description:
+        "Generates Maestro flow files in YAML for cross-platform mobile testing (Android, iOS, React Native, Flutter).",
+      category: "Mobile Testing",
+      framework: "Maestro",
+      headerBody: null as string | null,
+      templateBody: maestroBody,
+      footerBody: null as string | null,
+      fileExtension: ".yaml",
+      language: "yaml",
+      isDefault: false,
+    },
+    {
+      name: "Flutter Integration Test (Dart)",
+      description:
+        "Generates Flutter integration test stubs in Dart with IntegrationTestWidgetsFlutterBinding.",
+      category: "Mobile Testing",
+      framework: "Flutter",
+      headerBody: flutterTestHeader,
+      templateBody: flutterTestBody,
+      footerBody: null as string | null,
+      fileExtension: "_test.dart",
+      language: "dart",
+      isDefault: false,
+    },
+    {
+      name: "Earl Grey (Swift)",
+      description:
+        "Generates Earl Grey test stubs in Swift for iOS UI testing with EarlGrey matchers.",
+      category: "Mobile Testing",
+      framework: "Earl Grey",
+      headerBody: earlGreyHeader,
+      templateBody: earlGreyBody,
       footerBody: null as string | null,
       fileExtension: ".swift",
       language: "swift",
