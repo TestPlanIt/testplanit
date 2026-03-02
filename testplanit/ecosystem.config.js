@@ -103,6 +103,19 @@ module.exports = {
       env: {
         NODE_ENV: 'production'
       }
+    },
+    {
+      name: 'budget-alert-worker',
+      script: isDev ? 'tsx' : 'node',
+      args: isDev ? 'workers/budgetAlertWorker.ts' : 'dist/workers/budgetAlertWorker.js',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+      node_args: '--max-old-space-size=384',
+      env: {
+        NODE_ENV: 'production'
+      }
     }
   ]
 };

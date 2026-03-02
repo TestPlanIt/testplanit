@@ -3886,6 +3886,13 @@
         "failedToGetResponse": "Failed to get response from AI model",
         "failedToSendMessage": "Failed to send test message",
         "defaultTestMessage": "Hello! Please respond with a brief confirmation that you're working correctly."
+      },
+      "budgetAlert": {
+        "budgetDisclaimer": "Setting a monthly budget does not prevent LLM usage from exceeding it. Budget limits are informational only for admin decision-making.",
+        "budgetDisclaimerShort": "Budget limits are informational only and do not block usage.",
+        "spendLabel": "Current Month Spend",
+        "spendOfBudget": "{currentSpend} of {budgetLimit}",
+        "overBudget": "Over budget"
       }
     },
     "prompts": {
