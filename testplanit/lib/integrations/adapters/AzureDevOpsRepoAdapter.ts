@@ -70,6 +70,7 @@ export class AzureDevOpsRepoAdapter extends GitRepoAdapter {
       );
 
       try {
+        this.assertSsrfSafe(url);
         const response = await fetch(url, {
           headers: this.authHeaders,
           signal: controller.signal,

@@ -4,6 +4,8 @@
  * Does NOT extend BaseAdapter (which is for issue tracking, not git file fetching).
  */
 
+import { isSsrfSafe } from "~/utils/ssrf";
+
 export interface RepoFileEntry {
   path: string;
   size: number; // bytes; 0 if provider doesn't return size
@@ -72,6 +74,12 @@ export abstract class GitRepoAdapter {
       );
 
       try {
+        if (!isSsrfSafe(url)) {
+          throw new Error(
+            "Request blocked: URL targets a private or internal address"
+          );
+        }
+
         const response = await fetch(url, {
           ...options,
           signal: controller.signal,
@@ -116,6 +124,18 @@ export abstract class GitRepoAdapter {
         clearTimeout(timeoutId);
       }
     });
+  }
+
+  /**
+   * Validate a URL is safe for server-side requests (blocks private/internal addresses).
+   * Call this before any direct `fetch` that bypasses `makeRequest`.
+   */
+  protected assertSsrfSafe(url: string): void {
+    if (!isSsrfSafe(url)) {
+      throw new Error(
+        "Request blocked: URL targets a private or internal address"
+      );
+    }
   }
 
   protected async applyRateLimit(): Promise<void> {

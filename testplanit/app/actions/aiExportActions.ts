@@ -231,7 +231,7 @@ export async function generateAiExportBatch(args: {
     };
   } catch (err) {
     console.error(
-      `[generateAiExportBatch] LLM generation failed, falling back to template:`,
+      "[generateAiExportBatch] LLM generation failed, falling back to template:",
       err
     );
 
@@ -414,7 +414,9 @@ export async function generateAiExport(args: {
   } catch (err) {
     // 11. Fallback on failure (GEN-05)
     console.error(
-      `[generateAiExport] LLM generation failed for case ${args.caseId}, falling back to template:`,
+      "[generateAiExport] LLM generation failed for case",
+      args.caseId,
+      "falling back to template:",
       err
     );
 
