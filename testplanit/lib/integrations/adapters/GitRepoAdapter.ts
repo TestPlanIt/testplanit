@@ -74,11 +74,7 @@ export abstract class GitRepoAdapter {
       );
 
       try {
-        if (!isSsrfSafe(url)) {
-          throw new Error(
-            "Request blocked: URL targets a private or internal address"
-          );
-        }
+        this.assertSsrfSafe(url);
 
         const response = await fetch(url, {
           ...options,

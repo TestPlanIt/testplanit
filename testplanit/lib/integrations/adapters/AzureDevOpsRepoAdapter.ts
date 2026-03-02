@@ -18,6 +18,9 @@ export class AzureDevOpsRepoAdapter extends GitRepoAdapter {
     super();
     this.personalAccessToken = credentials.personalAccessToken;
     this.organizationUrl = (settings?.organizationUrl ?? "").replace(/\/$/, "");
+    if (this.organizationUrl) {
+      this.assertSsrfSafe(this.organizationUrl);
+    }
     this.project = settings?.project ?? "";
     this.repositoryId = settings?.repositoryId ?? "";
   }

@@ -23,6 +23,7 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
       /\/$/,
       ""
     );
+    this.assertSsrfSafe(this.baseUrl);
   }
 
   private get authHeaders() {
