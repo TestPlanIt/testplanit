@@ -704,10 +704,15 @@ describe("BudgetAlertService", () => {
 
       await service.checkAndAlert(1);
 
+      // Build expected start-of-month the same way the service does (local time)
+      const expectedStartOfMonth = new Date();
+      expectedStartOfMonth.setDate(1);
+      expectedStartOfMonth.setHours(0, 0, 0, 0);
+
       expect(mockPrisma.llmUsage.aggregate).toHaveBeenCalledWith({
         where: {
           llmIntegrationId: 1,
-          createdAt: { gte: new Date("2026-03-01T00:00:00.000Z") },
+          createdAt: { gte: expectedStartOfMonth },
         },
         _sum: { totalCost: true },
       });
