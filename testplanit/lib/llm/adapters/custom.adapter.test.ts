@@ -44,6 +44,7 @@ const createTestConfig = (
     streamingEnabled: false,
     isDefault: false,
     settings: null,
+    alertThresholdsFired: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   },

@@ -75,6 +75,7 @@ enum NotificationType {
   COMMENT_MENTION
   MILESTONE_DUE_REMINDER
   SHARE_LINK_ACCESSED
+  LLM_BUDGET_ALERT
 }
 
 enum WorkflowType {
@@ -1739,6 +1740,7 @@ model LlmProviderConfig {
   streamingEnabled     Boolean         @default(false)
   isDefault            Boolean         @default(false)
   settings             Json?
+  alertThresholdsFired Json?
   createdAt            DateTime        @default(now()) @db.Timestamptz(6)
   updatedAt            DateTime        @updatedAt()
 }

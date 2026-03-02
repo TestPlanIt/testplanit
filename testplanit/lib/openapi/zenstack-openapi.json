@@ -633,7 +633,8 @@
           "USER_REGISTERED",
           "COMMENT_MENTION",
           "MILESTONE_DUE_REMINDER",
-          "SHARE_LINK_ACCESSED"
+          "SHARE_LINK_ACCESSED",
+          "LLM_BUDGET_ALERT"
         ]
       },
       "ShareLinkEntityType": {
@@ -1816,6 +1817,7 @@
           "streamingEnabled",
           "isDefault",
           "settings",
+          "alertThresholdsFired",
           "createdAt",
           "updatedAt"
         ]
@@ -8902,6 +8904,14 @@
             "type": "boolean"
           },
           "settings": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {}
+            ]
+          },
+          "alertThresholdsFired": {
             "oneOf": [
               {
                 "type": "null"
@@ -50051,6 +50061,9 @@
           "settings": {
             "$ref": "#/components/schemas/JsonNullableFilter"
           },
+          "alertThresholdsFired": {
+            "$ref": "#/components/schemas/JsonNullableFilter"
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -50161,6 +50174,16 @@
             "$ref": "#/components/schemas/SortOrder"
           },
           "settings": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SortOrder"
+              },
+              {
+                "$ref": "#/components/schemas/SortOrderInput"
+              }
+            ]
+          },
+          "alertThresholdsFired": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/SortOrder"
@@ -50383,6 +50406,9 @@
             ]
           },
           "settings": {
+            "$ref": "#/components/schemas/JsonNullableFilter"
+          },
+          "alertThresholdsFired": {
             "$ref": "#/components/schemas/JsonNullableFilter"
           },
           "createdAt": {
@@ -50641,6 +50667,9 @@
             ]
           },
           "settings": {
+            "$ref": "#/components/schemas/JsonNullableWithAggregatesFilter"
+          },
+          "alertThresholdsFired": {
             "$ref": "#/components/schemas/JsonNullableWithAggregatesFilter"
           },
           "createdAt": {
@@ -82934,6 +82963,14 @@
               {}
             ]
           },
+          "alertThresholdsFired": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -83129,6 +83166,14 @@
               {}
             ]
           },
+          "alertThresholdsFired": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -83251,6 +83296,14 @@
             "type": "boolean"
           },
           "settings": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "alertThresholdsFired": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/NullableJsonNullValueInput"
@@ -83443,6 +83496,14 @@
             ]
           },
           "settings": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "alertThresholdsFired": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/NullableJsonNullValueInput"
@@ -329427,6 +329488,14 @@
               {}
             ]
           },
+          "alertThresholdsFired": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -329528,6 +329597,14 @@
             "type": "boolean"
           },
           "settings": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "alertThresholdsFired": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/NullableJsonNullValueInput"
@@ -331082,6 +331159,14 @@
               {}
             ]
           },
+          "alertThresholdsFired": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
           "createdAt": {
             "oneOf": [
               {
@@ -331285,6 +331370,14 @@
             ]
           },
           "settings": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/NullableJsonNullValueInput"
+              },
+              {}
+            ]
+          },
+          "alertThresholdsFired": {
             "oneOf": [
               {
                 "$ref": "#/components/schemas/NullableJsonNullValueInput"
@@ -479623,6 +479716,9 @@
           "settings": {
             "type": "boolean"
           },
+          "alertThresholdsFired": {
+            "type": "boolean"
+          },
           "createdAt": {
             "type": "boolean"
           },
@@ -490281,6 +490377,9 @@
             "type": "boolean"
           },
           "settings": {
+            "type": "boolean"
+          },
+          "alertThresholdsFired": {
             "type": "boolean"
           },
           "createdAt": {
@@ -506008,6 +506107,14 @@
             "type": "boolean"
           },
           "settings": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {}
+            ]
+          },
+          "alertThresholdsFired": {
             "oneOf": [
               {
                 "type": "null"
@@ -532240,6 +532347,9 @@
           "settings": {
             "type": "integer"
           },
+          "alertThresholdsFired": {
+            "type": "integer"
+          },
           "createdAt": {
             "type": "integer"
           },
@@ -532268,6 +532378,7 @@
           "streamingEnabled",
           "isDefault",
           "settings",
+          "alertThresholdsFired",
           "createdAt",
           "updatedAt",
           "_all"

@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
         createdAt: new Date(),
         updatedAt: new Date(),
         settings: {},
+        alertThresholdsFired: null,
       },
       apiKey,
       baseUrl: endpoint,

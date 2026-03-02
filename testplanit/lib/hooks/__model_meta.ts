@@ -6364,6 +6364,10 @@ const metadata: ModelMeta = {
                     name: "settings",
                     type: "Json",
                     isOptional: true,
+                }, alertThresholdsFired: {
+                    name: "alertThresholdsFired",
+                    type: "Json",
+                    isOptional: true,
                 }, createdAt: {
                     name: "createdAt",
                     type: "DateTime",
