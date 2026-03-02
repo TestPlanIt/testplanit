@@ -3824,7 +3824,7 @@
         "costPerOutputToken": "Coût par million de jetons de production ($)",
         "monthlyBudget": "Budget mensuel ($)",
         "monthlyBudgetPlaceholder": "100,00",
-        "monthlyBudgetDescription": "Limite budgétaire optionnelle pour le suivi de l'utilisation",
+        "monthlyBudgetDescription": "Objectif de dépenses facultatif pour les notifications (n'empêche pas l'utilisation)",
         "defaultTemperature": "Température par défaut",
         "defaultMaxTokens": "Nombre maximal de jetons par défaut",
         "timeout": "Délai d'attente de la requête (ms)",
@@ -3886,6 +3886,14 @@
         "failedToGetResponse": "Aucune réponse du modèle d'IA",
         "failedToSendMessage": "Échec de l'envoi du message de test",
         "defaultTestMessage": "Bonjour ! Veuillez confirmer brièvement que tout fonctionne correctement."
+      },
+      "budgetAlert": {
+        "budgetDisclaimer": "L'établissement d'un budget mensuel n'empêche pas l'utilisation de LLM de le dépasser. Les limites budgétaires sont fournies à titre indicatif uniquement, afin de faciliter la prise de décision par l'administrateur.",
+        "budgetDisclaimerShort": "Les limites budgétaires sont données à titre indicatif uniquement et n'empêchent pas l'utilisation.",
+        "spendLabel": "Dépenses du mois en cours",
+        "spendOfBudget": "{currentSpend} de {budgetLimit}",
+        "overBudget": "Dépassement du budget",
+        "budgetPercentage": "{percentage}% du budget utilisé"
       }
     },
     "prompts": {
@@ -4489,7 +4497,7 @@
       "maxRequestsPerMinute": "## Nombre maximal de requêtes par minute\nLimite le nombre d'appels API pouvant être effectués vers ce fournisseur par minute.\n\n- Définissez cette valeur en fonction de la limite de votre forfait.\n- Les requêtes excédentaires sont mises en file d'attente et non rejetées.\n- Consultez la documentation de votre fournisseur pour connaître la limite de votre forfait.",
       "costPerInputToken": "## Coût par jeton d'entrée (USD)\nLe coût en USD de chaque jeton d'entrée (invite) envoyé au modèle.\n\n- Utilisé pour le suivi des coûts et les alertes budgétaires\n- Trouvez cette information sur la page de tarification de votre fournisseur\n- Exemple : `0,000005` = 5 $ par million de jetons d'entrée",
       "costPerOutputToken": "## Coût par jeton de sortie (USD)\nLe coût en USD de chaque jeton de sortie (achèvement) généré par le modèle.\n\n- Généralement supérieur au coût du jeton d'entrée\n- Utilisé pour le suivi des coûts et les alertes budgétaires\n- Exemple : `0,000015` = 15 $ par million de jetons de sortie",
-      "monthlyBudget": "## Budget mensuel (USD)\nDépenses mensuelles maximales autorisées pour cette intégration.\n\n- Indiquez `0` pour désactiver les limites budgétaires.\n- Une fois ce plafond atteint, les requêtes seront bloquées jusqu'au mois suivant.\n- Les coûts sont calculés selon les tarifs par jeton ci-dessus.",
+      "monthlyBudget": "## Budget mensuel (USD)\nObjectif de dépenses facultatif pour cette intégration.\n\n- Définissez cette valeur sur `0` pour désactiver le suivi du budget.\n- Le budget est **uniquement informatif** ; il n'empêche pas l'utilisation de LLM.\n- Vous recevrez des notifications lorsque le budget sera atteint à 80 %, 90 % et 100 %.\n- Les coûts sont calculés à l'aide des tarifs par jeton ci-dessus.",
       "defaultTemperature": "## Température par défaut\nContrôle le caractère aléatoire des réponses du modèle (0–2).\n\n- **0 :** Déterministe — sortie identique pour une même entrée\n- **0,3 :** Ciblé — recommandé pour la génération de tests et la sortie de code\n- **1+ :** Créatif — réponses plus variées\n- Les fonctionnalités individuelles peuvent remplacer ce paramètre dans la configuration de l'invite",
       "timeout": "## Délai d'attente de la requête (ms)\nDurée d'attente d'une réponse avant l'annulation de la requête.\n\n- Valeur en millisecondes (ex. : `30000` = 30 secondes).\n- Les requêtes en flux continu (ex. : aperçu de l'exportation de code) ignorent ce délai.\n- Augmenter pour les modèles lents ou volumineux.\n- Plage : 5 000 – 600 000 ms",
       "streamingEnabled": "## Activer le streaming\nDiffuse la réponse jeton par jeton au lieu d'attendre la sortie complète.\n\n- Requis pour l'aperçu du code en temps réel dans la fenêtre modale d'exportation.\n- Réduit la latence perçue pour les réponses longues.\n- Recommandé pour tous les fournisseurs pris en charge.",

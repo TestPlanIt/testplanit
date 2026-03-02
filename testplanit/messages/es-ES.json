@@ -3824,7 +3824,7 @@
         "costPerOutputToken": "Costo por 1 millón de tokens de salida ($)",
         "monthlyBudget": "Presupuesto mensual ($)",
         "monthlyBudgetPlaceholder": "100.00",
-        "monthlyBudgetDescription": "Límite presupuestario opcional para el seguimiento de uso",
+        "monthlyBudgetDescription": "Objetivo de gasto opcional para notificaciones (no bloquea el uso)",
         "defaultTemperature": "Temperatura por defecto",
         "defaultMaxTokens": "Tokens máximos por defecto",
         "timeout": "Tiempo de espera de solicitud (ms)",
@@ -3886,6 +3886,14 @@
         "failedToGetResponse": "Error al obtener respuesta del modelo de IA",
         "failedToSendMessage": "Error al enviar el mensaje de prueba",
         "defaultTestMessage": "¡Hola! Por favor, responde con una breve confirmación de que estás trabajando correctamente."
+      },
+      "budgetAlert": {
+        "budgetDisclaimer": "Establecer un presupuesto mensual no impide que se exceda el uso de LLM. Los límites presupuestarios son solo informativos para la toma de decisiones administrativas.",
+        "budgetDisclaimerShort": "Los límites de presupuesto son sólo informativos y no bloquean el uso.",
+        "spendLabel": "Gastos del mes actual",
+        "spendOfBudget": "{currentSpend} de {budgetLimit}",
+        "overBudget": "Por encima del presupuesto",
+        "budgetPercentage": "{percentage}% del presupuesto utilizado"
       }
     },
     "prompts": {
@@ -4489,7 +4497,7 @@
       "maxRequestsPerMinute": "## Máximo de solicitudes por minuto\nLimita la cantidad de llamadas API que se pueden realizar a este proveedor por minuto.\n\n- Se configura para que coincida con el límite de velocidad del plan de su proveedor.\n- Las solicitudes en exceso se ponen en cola, no se rechazan.\n- Consulte la documentación de su proveedor para conocer el límite de su plan.",
       "costPerInputToken": "## Costo por token de entrada (USD)\nEl costo en USD de cada token de entrada (solicitud) enviado al modelo.\n\n- Se utiliza para seguimiento de costos y alertas de presupuesto\n- Encuéntrelo en la página de precios de su proveedor\n- Ejemplo: `0.000005` = $5 por millón de tokens de entrada",
       "costPerOutputToken": "## Costo por token de salida (USD)\nEl costo en USD de cada token de salida (finalización) generado por el modelo.\n\n- Generalmente más alto que el costo del token de entrada\n- Se usa para seguimiento de costos y alertas de presupuesto\n- Ejemplo: `0.000015` = $15 por millón de tokens de salida",
-      "monthlyBudget": "## Presupuesto mensual (USD)\nEl gasto mensual máximo permitido para esta integración.\n\n- Establézcalo en `0` para deshabilitar los límites de presupuesto\n- Cuando se alcance, las solicitudes se bloquearán hasta el próximo mes\n- Los costos se calculan utilizando las tarifas por token anteriores",
+      "monthlyBudget": "## Presupuesto mensual (USD)\nUn objetivo de gasto opcional para esta integración.\n\n- Establézcalo en `0` para deshabilitar el seguimiento del presupuesto\n- El presupuesto es **solo informativo**; no bloquea el uso de LLM\n- Recibirá notificaciones al 80 %, 90 % y 100 % del presupuesto\n- Los costos se calculan utilizando las tarifas por token anteriores",
       "defaultTemperature": "## Temperatura predeterminada\nControla la aleatoriedad de las respuestas del modelo (0–2).\n\n- **0:** Determinista: salida idéntica para la misma entrada\n- **0.3:** Enfocado: recomendado para la generación de pruebas y la salida de código\n- **1+:** Creativo: respuestas más variadas\n- Las características individuales pueden anular esto en la configuración del indicador",
       "timeout": "## Tiempo de espera de solicitud (ms)\nCuánto tiempo se debe esperar una respuesta antes de cancelar la solicitud.\n\n- El valor está en milisegundos (por ejemplo, `30000` = 30 segundos)\n- Las solicitudes de transmisión (por ejemplo, vista previa de exportación de código) ignoran este tiempo de espera\n- Aumentar para modelos lentos o grandes\n- Rango: 5000 – 600 000 ms",
       "streamingEnabled": "## Habilitar transmisión\nTransmite la respuesta token por token en lugar de esperar la salida completa.\n\n- Obligatorio para la vista previa del código en tiempo real en el modo Exportar\n- Reduce la latencia percibida para respuestas largas\n- Recomendado para todos los proveedores compatibles",
