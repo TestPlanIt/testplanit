@@ -74,9 +74,9 @@ export abstract class GitRepoAdapter {
       );
 
       try {
-        this.assertSsrfSafe(url);
+        const safeUrl = this.sanitizeUrl(url);
 
-        const response = await fetch(url, {
+        const response = await fetch(safeUrl, {
           ...options,
           signal: controller.signal,
         });
@@ -124,14 +124,17 @@ export abstract class GitRepoAdapter {
 
   /**
    * Validate a URL is safe for server-side requests (blocks private/internal addresses).
-   * Call this before any direct `fetch` that bypasses `makeRequest`.
+   * Returns a normalized URL string so that callers use the validated value
+   * for fetch — this breaks the taint chain for static analysis (CodeQL).
    */
-  protected assertSsrfSafe(url: string): void {
-    if (!isSsrfSafe(url)) {
+  protected sanitizeUrl(url: string): string {
+    const parsed = new URL(url);
+    if (!isSsrfSafe(parsed.href)) {
       throw new Error(
         "Request blocked: URL targets a private or internal address"
       );
     }
+    return parsed.href;
   }
 
   protected async applyRateLimit(): Promise<void> {

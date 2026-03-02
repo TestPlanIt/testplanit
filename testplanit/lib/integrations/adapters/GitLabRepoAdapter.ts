@@ -23,7 +23,7 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
       /\/$/,
       ""
     );
-    this.assertSsrfSafe(this.baseUrl);
+    this.baseUrl = this.sanitizeUrl(this.baseUrl);
   }
 
   private get authHeaders() {
@@ -60,9 +60,9 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
 
       let response: Response;
       try {
-        this.assertSsrfSafe(url);
+        const safeUrl = this.sanitizeUrl(url);
         await this.applyRateLimit();
-        response = await fetch(url, {
+        response = await fetch(safeUrl, {
           headers: this.authHeaders,
           signal: controller.signal,
         });
@@ -108,8 +108,8 @@ export class GitLabRepoAdapter extends GitRepoAdapter {
       );
 
       try {
-        this.assertSsrfSafe(url);
-        const response = await fetch(url, {
+        const safeUrl = this.sanitizeUrl(url);
+        const response = await fetch(safeUrl, {
           headers: this.authHeaders,
           signal: controller.signal,
         });

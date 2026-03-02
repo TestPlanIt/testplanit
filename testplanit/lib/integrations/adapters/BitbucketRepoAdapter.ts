@@ -83,8 +83,8 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
       );
 
       try {
-        this.assertSsrfSafe(url);
-        const response = await fetch(url, {
+        const safeUrl = this.sanitizeUrl(url);
+        const response = await fetch(safeUrl, {
           headers: this.authHeaders,
           signal: controller.signal,
         });

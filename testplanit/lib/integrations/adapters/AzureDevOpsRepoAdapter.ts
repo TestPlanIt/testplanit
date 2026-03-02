@@ -19,7 +19,7 @@ export class AzureDevOpsRepoAdapter extends GitRepoAdapter {
     this.personalAccessToken = credentials.personalAccessToken;
     this.organizationUrl = (settings?.organizationUrl ?? "").replace(/\/$/, "");
     if (this.organizationUrl) {
-      this.assertSsrfSafe(this.organizationUrl);
+      this.organizationUrl = this.sanitizeUrl(this.organizationUrl);
     }
     this.project = settings?.project ?? "";
     this.repositoryId = settings?.repositoryId ?? "";
@@ -73,8 +73,8 @@ export class AzureDevOpsRepoAdapter extends GitRepoAdapter {
       );
 
       try {
-        this.assertSsrfSafe(url);
-        const response = await fetch(url, {
+        const safeUrl = this.sanitizeUrl(url);
+        const response = await fetch(safeUrl, {
           headers: this.authHeaders,
           signal: controller.signal,
         });
