@@ -297,6 +297,8 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
             timeout: values.timeout,
             streamingEnabled: values.streamingEnabled,
             isDefault: values.isDefault,
+            // Reset budget alert thresholds when config is saved — allows re-alerting against updated budget
+            alertThresholdsFired: {},
           },
         });
       }
