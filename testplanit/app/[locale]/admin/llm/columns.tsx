@@ -248,6 +248,7 @@ export const getColumns = (
         <EditLlmIntegration
           key={`edit-${row.original.id}`}
           integration={row.original}
+          currentSpend={usageByIntegrationId.get(row.original.id) ?? 0}
         />
         <DeleteLlmIntegration
           key={`delete-${row.original.id}`}

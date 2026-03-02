@@ -3892,7 +3892,8 @@
         "budgetDisclaimerShort": "Budget limits are informational only and do not block usage.",
         "spendLabel": "Current Month Spend",
         "spendOfBudget": "{currentSpend} of {budgetLimit}",
-        "overBudget": "Over budget"
+        "overBudget": "Over budget",
+        "budgetPercentage": "{percentage}% of budget used"
       }
     },
     "prompts": {

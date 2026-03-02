@@ -74,9 +74,10 @@ const PROVIDERS_WITH_DYNAMIC_MODELS = [
 
 interface EditLlmIntegrationProps {
   integration: any;
+  currentSpend?: number;
 }
 
-export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
+export function EditLlmIntegration({ integration, currentSpend = 0 }: EditLlmIntegrationProps) {
   const t = useTranslations("admin.llm.edit");
   const tAdd = useTranslations("admin.llm.add");
   const tCommon = useTranslations("common");
