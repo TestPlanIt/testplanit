@@ -34,7 +34,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Edit } from "lucide-react";
+import { Loader2, Edit, Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { useUpdateLlmIntegration } from "~/lib/hooks/llm-integration";
 import {
@@ -83,6 +84,7 @@ export function EditLlmIntegration({ integration, currentSpend = 0 }: EditLlmInt
   const tCommon = useTranslations("common");
   const tLlm = useTranslations("admin.llm");
   const tIntegrations = useTranslations("admin.integrations");
+  const tBudgetAlert = useTranslations("admin.llm.budgetAlert");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
@@ -118,6 +120,7 @@ export function EditLlmIntegration({ integration, currentSpend = 0 }: EditLlmInt
 
   const apiKey = form.watch("apiKey");
   const endpoint = form.watch("endpoint");
+  const watchedBudget = form.watch("monthlyBudget");
 
   const fetchAvailableModels = async (
     providerType: string,
@@ -654,6 +657,58 @@ export function EditLlmIntegration({ integration, currentSpend = 0 }: EditLlmInt
                   </FormItem>
                 )}
               />
+
+              {watchedBudget != null && Number(watchedBudget) > 0 && (() => {
+                const budgetNum = Number(watchedBudget);
+                const percentage = budgetNum > 0 ? (currentSpend / budgetNum) * 100 : 0;
+                return (
+                  <div className="space-y-3">
+                    {/* Disclaimer callout */}
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        {tBudgetAlert("budgetDisclaimer")}
+                      </AlertDescription>
+                    </Alert>
+
+                    {/* Spend display and progress bar */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {tBudgetAlert("spendLabel")}
+                        </span>
+                        <span className={percentage > 100 ? "text-red-500 font-medium" : ""}>
+                          {tBudgetAlert("spendOfBudget", {
+                            currentSpend: `$${currentSpend.toFixed(2)}`,
+                            budgetLimit: `$${budgetNum.toFixed(2)}`,
+                          })}
+                        </span>
+                      </div>
+
+                      {/* Color-coded progress bar */}
+                      <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all ${
+                            percentage > 100
+                              ? "bg-red-500"
+                              : percentage > 80
+                                ? "bg-yellow-500"
+                                : "bg-green-500"
+                          }`}
+                          style={{ width: `${Math.min(percentage, 100)}%` }}
+                        />
+                      </div>
+
+                      {/* Percentage text */}
+                      <div className="text-xs text-muted-foreground">
+                        {percentage > 100
+                          ? tBudgetAlert("overBudget")
+                          : tBudgetAlert("budgetPercentage", { percentage: percentage.toFixed(0) })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField
