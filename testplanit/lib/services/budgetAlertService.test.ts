@@ -386,7 +386,7 @@ describe("BudgetAlertService", () => {
   });
 
   describe("notification content", () => {
-    it("title at 80%: 'LLM Budget Warning: 80% Used'", async () => {
+    it("title at 80%: 'LLM Budget 80% Used'", async () => {
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
       mockPrisma.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(82)
@@ -396,12 +396,12 @@ describe("BudgetAlertService", () => {
 
       expect(NotificationService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
-          title: "LLM Budget Warning: 80% Used",
+          title: "LLM Budget 80% Used",
         })
       );
     });
 
-    it("title at 90%: 'LLM Budget Warning: 90% Used'", async () => {
+    it("title at 90%: 'LLM Budget 90% Used'", async () => {
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           alertThresholdsFired: { "2026-03": [80] },
@@ -415,12 +415,12 @@ describe("BudgetAlertService", () => {
 
       expect(NotificationService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
-          title: "LLM Budget Warning: 90% Used",
+          title: "LLM Budget 90% Used",
         })
       );
     });
 
-    it("title at 100%: 'LLM Budget Alert: Budget Exceeded'", async () => {
+    it("title at 100%: 'LLM Budget Exceeded'", async () => {
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(
         createConfig({
           alertThresholdsFired: { "2026-03": [80, 90] },
@@ -434,7 +434,7 @@ describe("BudgetAlertService", () => {
 
       expect(NotificationService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
-          title: "LLM Budget Alert: Budget Exceeded",
+          title: "LLM Budget Exceeded",
         })
       );
     });
@@ -473,7 +473,7 @@ describe("BudgetAlertService", () => {
       );
     });
 
-    it("message includes informational-only disclaimer", async () => {
+    it("message does not include disclaimer (disclaimer is rendered in UI)", async () => {
       mockPrisma.llmProviderConfig.findUnique.mockResolvedValue(createConfig());
       mockPrisma.llmUsage.aggregate.mockResolvedValue(
         createAggregateResult(85)
@@ -483,9 +483,7 @@ describe("BudgetAlertService", () => {
 
       expect(NotificationService.createNotification).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: expect.stringContaining(
-            "Budget limits are informational only and do not prevent LLM usage"
-          ),
+          message: expect.not.stringContaining("Budget limits"),
         })
       );
     });
