@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { FormField, FormControl, FormMessage } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { ManageTags } from "@/components/ManageTags";
 import UploadAttachments from "@/components/UploadAttachments";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
@@ -250,21 +251,18 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
               </li>
             )}
 
-            <li className="mb-2 mr-6 flex items-center gap-1">
+            <li className="mb-2 items-center">
               <div id="automated-display" className="font-bold">
                 {t("common.fields.automated")}
               </div>
-              <div aria-labelledby="automated-display">
-                <Switch
-                  disabled
-                  checked={testcase.automated}
-                  aria-label={t("repository.testCase.automatedStatus", {
-                    status: testcase.automated
-                      ? t("common.fields.isActive")
-                      : t("common.status.disabled"),
-                  })}
-                />
-              </div>
+              <Badge
+                variant={testcase.automated ? "default" : "secondary"}
+                aria-labelledby="automated-display"
+              >
+                {testcase.automated
+                  ? t("common.fields.automated")
+                  : t("common.fields.manual")}
+              </Badge>
             </li>
             <Separator
               orientation="horizontal"

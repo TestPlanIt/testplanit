@@ -44,7 +44,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatSeconds } from "@/components/DurationDisplay";
-import { Switch } from "@/components/ui/switch";
 import { DateFormatter } from "@/components/DateFormatter";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Separator } from "@/components/ui/separator";
@@ -930,21 +929,30 @@ export default function TestCaseVersions() {
                     </li>
                   )}
 
-                  <div className="font-bold">
-                    {t("common.fields.automated")}
-                  </div>
                   <li className="mb-2 mr-6">
+                    <div className="font-bold">
+                      {t("common.fields.automated")}
+                    </div>
                     {testcase && previousTestcase
                       ? renderFieldValue(
                           "automated",
-                          <Switch disabled checked={testcase.automated} />,
-                          <Switch
-                            disabled
-                            checked={previousTestcase.automated}
-                          />
+                          <Badge variant={testcase.automated ? "default" : "secondary"}>
+                            {testcase.automated
+                              ? t("common.fields.automated")
+                              : t("common.fields.manual")}
+                          </Badge>,
+                          <Badge variant={previousTestcase.automated ? "default" : "secondary"}>
+                            {previousTestcase.automated
+                              ? t("common.fields.automated")
+                              : t("common.fields.manual")}
+                          </Badge>
                         )
                       : testcase && (
-                          <Switch disabled checked={testcase.automated} />
+                          <Badge variant={testcase.automated ? "default" : "secondary"}>
+                            {testcase.automated
+                              ? t("common.fields.automated")
+                              : t("common.fields.manual")}
+                          </Badge>
                         )}
                     <Separator
                       orientation="horizontal"
