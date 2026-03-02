@@ -83,7 +83,7 @@ export const getColumns = (
           </Badge>
           {isConnected !== undefined &&
             (isConnected ? (
-              <CheckCircle className="h-4 w-4 text-green-600" />
+              <CheckCircle className="h-4 w-4 text-success" />
             ) : (
               <XCircle className="h-4 w-4 text-red-600" />
             ))}

@@ -804,7 +804,7 @@ export default function QuickScriptPage() {
                                   )}
                                   {configData.cacheStatus === "success" && (
                                     <>
-                                      <CheckCircle className="h-4 w-4 text-green-500" />
+                                      <CheckCircle className="h-4 w-4 text-success" />
                                       <Badge variant="default">
                                         {t("cache.statusSuccess")}
                                       </Badge>

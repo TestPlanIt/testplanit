@@ -363,7 +363,7 @@ export function useIssueTestCoverageSummaryColumns(
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="text-green-600 dark:text-green-400 font-mono cursor-default">
+                    <span className="text-success font-mono cursor-default">
                       {firstRow.passedTestCases}
                     </span>
                   </TooltipTrigger>
@@ -428,7 +428,7 @@ export function useIssueTestCoverageSummaryColumns(
           }
 
           const getPassRateColor = (r: number) => {
-            if (r >= 90) return "text-green-600 dark:text-green-400";
+            if (r >= 90) return "text-success";
             if (r >= 70) return "text-yellow-600 dark:text-yellow-400";
             if (r >= 50) return "text-orange-600 dark:text-orange-400";
             return "text-red-600 dark:text-red-400";

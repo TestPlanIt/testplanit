@@ -264,8 +264,8 @@ export function CodeRepositoryModal({
                 <div className="flex items-center gap-2">
                   {testResult.success ? (
                     <>
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="text-sm text-green-600">
+                      <CheckCircle className="h-4 w-4 text-success" />
+                      <span className="text-sm text-success">
                         {t("connectionSuccess")}
                       </span>
                     </>

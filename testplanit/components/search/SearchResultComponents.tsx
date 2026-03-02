@@ -61,7 +61,7 @@ export function StatusBadge({
       variant="secondary" 
       className={cn(
         "text-xs",
-        isCompleted ? "text-green-600" : "text-yellow-600",
+        isCompleted ? "text-success" : "text-warning",
         className
       )}
     >

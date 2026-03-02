@@ -199,7 +199,7 @@ export function QueueJobsView({
       },
       completed: {
         variant: "outline",
-        icon: <CheckCircle2 className="h-3 w-3 text-green-500" />,
+        icon: <CheckCircle2 className="h-3 w-3 text-success" />,
       },
       failed: {
         variant: "destructive",

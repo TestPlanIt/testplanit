@@ -294,9 +294,9 @@ export function ElasticsearchAdmin({
   const getHealthIcon = (available: boolean, health?: string) => {
     if (!available) return <XCircle className="h-5 w-5 text-destructive" />;
     if (health === "green")
-      return <CheckCircle className="h-5 w-5 text-green-500" />;
+      return <CheckCircle className="h-5 w-5 text-success" />;
     if (health === "yellow")
-      return <AlertCircle className="h-5 w-5 text-yellow-500" />;
+      return <AlertCircle className="h-5 w-5 text-warning" />;
     return <XCircle className="h-5 w-5 text-destructive" />;
   };
 
