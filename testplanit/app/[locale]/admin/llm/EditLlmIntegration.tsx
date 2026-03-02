@@ -78,7 +78,10 @@ interface EditLlmIntegrationProps {
   currentSpend?: number;
 }
 
-export function EditLlmIntegration({ integration, currentSpend = 0 }: EditLlmIntegrationProps) {
+export function EditLlmIntegration({
+  integration,
+  currentSpend = 0,
+}: EditLlmIntegrationProps) {
   const t = useTranslations("admin.llm.edit");
   const tAdd = useTranslations("admin.llm.add");
   const tCommon = useTranslations("common");
@@ -658,57 +661,66 @@ export function EditLlmIntegration({ integration, currentSpend = 0 }: EditLlmInt
                 )}
               />
 
-              {watchedBudget != null && Number(watchedBudget) > 0 && (() => {
-                const budgetNum = Number(watchedBudget);
-                const percentage = budgetNum > 0 ? (currentSpend / budgetNum) * 100 : 0;
-                return (
-                  <div className="space-y-3">
-                    {/* Disclaimer callout */}
-                    <Alert>
-                      <Info className="h-4 w-4" />
-                      <AlertDescription>
-                        {tBudgetAlert("budgetDisclaimer")}
-                      </AlertDescription>
-                    </Alert>
+              {watchedBudget != null &&
+                Number(watchedBudget) > 0 &&
+                (() => {
+                  const budgetNum = Number(watchedBudget);
+                  const percentage =
+                    budgetNum > 0 ? (currentSpend / budgetNum) * 100 : 0;
+                  return (
+                    <div className="space-y-3">
+                      {/* Disclaimer callout */}
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          {tBudgetAlert("budgetDisclaimer")}
+                        </AlertDescription>
+                      </Alert>
 
-                    {/* Spend display and progress bar */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          {tBudgetAlert("spendLabel")}
-                        </span>
-                        <span className={percentage > 100 ? "text-red-500 font-medium" : ""}>
-                          {tBudgetAlert("spendOfBudget", {
-                            currentSpend: `$${currentSpend.toFixed(2)}`,
-                            budgetLimit: `$${budgetNum.toFixed(2)}`,
-                          })}
-                        </span>
-                      </div>
+                      {/* Spend display and progress bar */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            {tBudgetAlert("spendLabel")}
+                          </span>
+                          <span
+                            className={
+                              percentage > 100 ? "text-destructive font-medium" : ""
+                            }
+                          >
+                            {tBudgetAlert("spendOfBudget", {
+                              currentSpend: `$${currentSpend.toFixed(2)}`,
+                              budgetLimit: `$${budgetNum.toFixed(2)}`,
+                            })}
+                          </span>
+                        </div>
 
-                      {/* Color-coded progress bar */}
-                      <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full transition-all ${
-                            percentage > 100
-                              ? "bg-red-500"
-                              : percentage > 80
-                                ? "bg-yellow-500"
-                                : "bg-green-500"
-                          }`}
-                          style={{ width: `${Math.min(percentage, 100)}%` }}
-                        />
-                      </div>
+                        {/* Color-coded progress bar */}
+                        <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${
+                              percentage > 100
+                                ? "bg-destructive"
+                                : percentage > 80
+                                  ? "bg-warning"
+                                  : "bg-success"
+                            }`}
+                            style={{ width: `${Math.min(percentage, 100)}%` }}
+                          />
+                        </div>
 
-                      {/* Percentage text */}
-                      <div className="text-xs text-muted-foreground">
-                        {percentage > 100
-                          ? tBudgetAlert("overBudget")
-                          : tBudgetAlert("budgetPercentage", { percentage: percentage.toFixed(0) })}
+                        {/* Percentage text */}
+                        <div className="text-xs text-muted-foreground">
+                          {percentage > 100
+                            ? tBudgetAlert("overBudget")
+                            : tBudgetAlert("budgetPercentage", {
+                                percentage: percentage.toFixed(0),
+                              })}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })()}
+                  );
+                })()}
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField

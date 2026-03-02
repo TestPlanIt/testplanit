@@ -4166,7 +4166,8 @@
         "milestoneNotificationContinue": "You will continue to receive daily reminders until this milestone is marked as complete.",
         "shareLinkAccessedTitle": "Share Link Accessed",
         "viewedYourSharedLink": "viewed your shared link",
-        "viewedAt": "Viewed at"
+        "viewedAt": "Viewed at",
+        "budgetDisclaimer": "Budget limits are informational only and do not prevent usage."
       }
     },
     "issues": {

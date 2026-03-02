@@ -4166,7 +4166,8 @@
         "milestoneNotificationContinue": "Vous continuerez à recevoir des rappels quotidiens jusqu'à ce que cette étape soit franchie.",
         "shareLinkAccessedTitle": "Lien de partage consulté",
         "viewedYourSharedLink": "J'ai consulté votre lien partagé",
-        "viewedAt": "Consulté à"
+        "viewedAt": "Consulté à",
+        "budgetDisclaimer": "Les limites budgétaires sont données à titre indicatif uniquement et n'empêchent pas l'utilisation."
       }
     },
     "issues": {

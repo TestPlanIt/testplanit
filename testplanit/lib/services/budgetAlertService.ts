@@ -162,13 +162,13 @@ export class BudgetAlertService {
    */
   private getNotificationTitle(threshold: number): string {
     if (threshold >= 100) {
-      return "LLM Budget Alert: Budget Exceeded";
+      return "LLM Budget Exceeded";
     }
-    return `LLM Budget Warning: ${threshold}% Used`;
+    return `LLM Budget ${threshold}% Used`;
   }
 
   /**
-   * Get notification message with dollar-formatted amounts and disclaimer.
+   * Get notification message (main body only, no disclaimer).
    */
   private getNotificationMessage(
     providerName: string,
@@ -180,8 +180,8 @@ export class BudgetAlertService {
     const budgetFormatted = `$${budget.toFixed(2)}`;
 
     if (threshold >= 100) {
-      return `${providerName} has exceeded its monthly budget: ${spendFormatted} spent of ${budgetFormatted} budget. Budget limits are informational only and do not prevent LLM usage.`;
+      return `${providerName} has exceeded its monthly budget: ${spendFormatted} spent of ${budgetFormatted} budget.`;
     }
-    return `${providerName} has used ${threshold}% of its monthly budget: ${spendFormatted} of ${budgetFormatted}. Budget limits are informational only and do not prevent LLM usage.`;
+    return `${providerName} has used ${threshold}% of its monthly budget: ${spendFormatted} of ${budgetFormatted}.`;
   }
 }

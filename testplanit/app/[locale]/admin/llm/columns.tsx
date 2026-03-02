@@ -152,10 +152,10 @@ export const getColumns = (
             <div
               className={`h-full transition-all ${
                 isOverBudget
-                  ? "bg-red-500"
+                  ? "bg-destructive"
                   : percentage > 80
-                    ? "bg-yellow-500"
-                    : "bg-green-500"
+                    ? "bg-warning"
+                    : "bg-success"
               }`}
               style={{ width: `${Math.min(percentage, 100)}%` }}
             />
@@ -240,7 +240,7 @@ export const getColumns = (
     size: 150,
     meta: { isPinned: "right" },
     cell: ({ row }) => (
-      <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+      <div className="bg-primary-foreground whitespace-nowrap flex">
         <TestLlmIntegration
           key={`test-${row.original.id}`}
           integration={row.original}

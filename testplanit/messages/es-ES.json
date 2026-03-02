@@ -4166,7 +4166,8 @@
         "milestoneNotificationContinue": "Continuará recibiendo recordatorios diarios hasta que este hito se marque como completado.",
         "shareLinkAccessedTitle": "Enlace compartido accedido",
         "viewedYourSharedLink": "vi tu enlace compartido",
-        "viewedAt": "Visto en"
+        "viewedAt": "Visto en",
+        "budgetDisclaimer": "Los límites de presupuesto son sólo informativos y no impiden su uso."
       }
     },
     "issues": {

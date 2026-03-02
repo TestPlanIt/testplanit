@@ -380,6 +380,24 @@ export function NotificationContent({
     );
   }
 
+  // Handle LLM budget alerts
+  if (notification.type === "LLM_BUDGET_ALERT") {
+    return (
+      <div className="space-y-2">
+        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <div className="text-sm text-muted-foreground">
+          <p>{notification.message}</p>
+          <p className="text-xs mt-2">
+            {t("budgetDisclaimer", {
+              defaultValue:
+                "Budget limits are informational only and do not prevent usage.",
+            })}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Handle system announcements
   if (notification.type === "SYSTEM_ANNOUNCEMENT") {
     const hasRichContent = notification.data?.richContent;
