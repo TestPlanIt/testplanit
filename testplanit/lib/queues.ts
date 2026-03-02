@@ -8,6 +8,7 @@ import {
   TESTMO_IMPORT_QUEUE_NAME,
   ELASTICSEARCH_REINDEX_QUEUE_NAME,
   AUDIT_LOG_QUEUE_NAME,
+  BUDGET_ALERT_QUEUE_NAME,
 } from "./queueNames";
 
 // Re-export queue names for backward compatibility
@@ -19,6 +20,7 @@ export {
   TESTMO_IMPORT_QUEUE_NAME,
   ELASTICSEARCH_REINDEX_QUEUE_NAME,
   AUDIT_LOG_QUEUE_NAME,
+  BUDGET_ALERT_QUEUE_NAME,
 };
 
 // Lazy-initialized queue instances
@@ -29,6 +31,7 @@ let _syncQueue: Queue | null = null;
 let _testmoImportQueue: Queue | null = null;
 let _elasticsearchReindexQueue: Queue | null = null;
 let _auditLogQueue: Queue | null = null;
+let _budgetAlertQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -300,6 +303,46 @@ export function getAuditLogQueue(): Queue | null {
 }
 
 /**
+ * Get the budget alert queue instance (lazy initialization)
+ * Used for async budget threshold checking after LLM usage
+ */
+export function getBudgetAlertQueue(): Queue | null {
+  if (_budgetAlertQueue) return _budgetAlertQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${BUDGET_ALERT_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+
+  _budgetAlertQueue = new Queue(BUDGET_ALERT_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 5000,
+      },
+      removeOnComplete: {
+        age: 3600 * 24 * 7, // 7 days
+        count: 1000,
+      },
+      removeOnFail: {
+        age: 3600 * 24 * 14, // 14 days
+      },
+    },
+  });
+
+  console.log(`Queue "${BUDGET_ALERT_QUEUE_NAME}" initialized.`);
+
+  _budgetAlertQueue.on("error", (error) => {
+    console.error(`Queue ${BUDGET_ALERT_QUEUE_NAME} error:`, error);
+  });
+
+  return _budgetAlertQueue;
+}
+
+/**
  * Get all queues (initializes all of them)
  * Use this only when you need access to all queues (e.g., admin dashboard)
  */
@@ -312,5 +355,6 @@ export function getAllQueues() {
     testmoImportQueue: getTestmoImportQueue(),
     elasticsearchReindexQueue: getElasticsearchReindexQueue(),
     auditLogQueue: getAuditLogQueue(),
+    budgetAlertQueue: getBudgetAlertQueue(),
   };
 }
