@@ -415,6 +415,19 @@ curl http://localhost:9200/_cluster/health
 
 **File upload/display issues:**
 
+*Mixed content errors / uploads fail with "Failed to fetch":*
+
+- **Cause**: The app generates presigned URLs using the internal MinIO hostname (e.g., `http://minio:9000`), which the browser cannot reach. When the page is served over HTTPS, the browser blocks the HTTP request to the internal URL.
+- **Symptoms**: Browser console shows `Mixed Content: ... requested an insecure resource 'http://minio:9000/...'` and file uploads fail.
+- **Fix**: Set `IS_HOSTED=true` in your `.env.production` to enable proxy mode, which routes uploads through the Next.js server instead of directly to MinIO:
+
+  ```env
+  IS_HOSTED=true
+  ```
+
+  Then recreate the container: `docker compose up -d --force-recreate prod`
+- **Alternative**: Set `AWS_PUBLIC_ENDPOINT_URL=https://yourdomain.com` if MinIO is accessible through your reverse proxy. See [File Storage docs](/docs/file-storage#storage-modes) for details.
+
 *403 Forbidden on file uploads:*
 
 - **Cause**: AWS signature mismatch between app and MinIO
