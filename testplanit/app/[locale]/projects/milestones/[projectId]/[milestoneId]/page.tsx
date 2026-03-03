@@ -663,7 +663,7 @@ export default function MilestoneDetailsPage() {
               className="min-h-[400px]"
               autoSaveId="milestone-panels"
             >
-              <ResizablePanel defaultSize={80} minSize={20}>
+              <ResizablePanel id="milestone-left" order={1} defaultSize={80} minSize={20}>
                 <div className="px-4 h-full space-y-4">
                   <FormField
                     name="docs"
@@ -913,7 +913,7 @@ export default function MilestoneDetailsPage() {
 
               <ResizableHandle withHandle />
 
-              <ResizablePanel defaultSize={20} minSize={10}>
+              <ResizablePanel id="milestone-right" order={2} defaultSize={20} minSize={10}>
                 <div className="pl-4 pr-1 pb-1 h-full">
                   <div className="space-y-4">
                     <MilestoneFormControls

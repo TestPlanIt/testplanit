@@ -287,7 +287,6 @@ export default function TestRunPage() {
   const [isCollapsedRight, setIsCollapsedRight] = useState(false);
   const [isTransitioningLeft, setIsTransitioningLeft] = useState(false);
   const [isTransitioningRight, setIsTransitioningRight] = useState(false);
-  const [panelRightWidth, setPanelRightWidth] = useState(20);
   const panelRightRef = useRef<ImperativePanelHandle>(null);
   const [contentLoaded, setContentLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -712,10 +711,6 @@ export default function TestRunPage() {
     }
     setTimeout(() => setIsTransitioningRight(false), 300);
   };
-
-  const handleResize = useCallback((size: number) => {
-    setPanelRightWidth(size);
-  }, []);
 
   // Sheet controls
   const handleSheetOpenChange = (open: boolean) => {
@@ -1648,6 +1643,8 @@ export default function TestRunPage() {
               autoSaveId="test-run-panels"
             >
               <ResizablePanel
+                id="test-run-left"
+                order={1}
                 ref={panelLeftRef}
                 defaultSize={80}
                 collapsible
@@ -1825,19 +1822,20 @@ export default function TestRunPage() {
                 </TooltipProvider>
               </div>
               <ResizablePanel
+                id="test-run-right"
+                order={2}
                 ref={panelRightRef}
-                defaultSize={panelRightWidth}
-                onResize={handleResize}
+                defaultSize={20}
                 collapsedSize={0}
                 minSize={20}
                 collapsible
                 onCollapse={() => setIsCollapsedRight(true)}
                 onExpand={() => setIsCollapsedRight(false)}
-                className={`${
+                className={
                   isTransitioningRight
                     ? "transition-all duration-300 ease-in-out"
                     : ""
-                } w-["${panelRightWidth}%"]`}
+                }
               >
                 <div className="p-4 space-y-4">
                   {(testRunData?.forecastManual ?? 0) > 0 && (

@@ -1202,6 +1202,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                   data-testid="repository-layout"
                 >
                   <ResizablePanel
+                    id="repository-left"
                     order={1}
                     ref={panelRef}
                     defaultSize={20}
@@ -1308,6 +1309,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                     </Button>
                   </div>
                   <ResizablePanel
+                    id="repository-right"
                     order={2}
                     defaultSize={80}
                     className="p-0 m-0 min-w-[400px]"

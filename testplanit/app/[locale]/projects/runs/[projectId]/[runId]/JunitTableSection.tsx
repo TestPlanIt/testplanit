@@ -154,15 +154,11 @@ function JunitTableSection({
   // --- Right panel state ---
   const [isCollapsedRight, setIsCollapsedRight] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [panelRightWidth, setPanelRightWidth] = useState(20);
   const panelRightRef = useRef<any>(null);
   const [selectedAttachments, setSelectedAttachments] = useState<any[]>([]);
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null
   >(null);
-  const handleResize = useCallback((size: number) => {
-    setPanelRightWidth(size);
-  }, []);
   const toggleCollapseRight = () => {
     setIsTransitioning(true);
     if (panelRightRef.current) {
@@ -479,6 +475,8 @@ function JunitTableSection({
               autoSaveId="junit-table-panels"
             >
               <ResizablePanel
+                id="junit-table-left"
+                order={1}
                 defaultSize={80}
                 collapsible
                 minSize={30}
@@ -572,17 +570,18 @@ function JunitTableSection({
                 </TooltipProvider>
               </div>
               <ResizablePanel
+                id="junit-table-right"
+                order={2}
                 ref={panelRightRef}
-                defaultSize={panelRightWidth}
-                onResize={handleResize}
+                defaultSize={20}
                 collapsedSize={0}
                 minSize={20}
                 collapsible
                 onCollapse={() => setIsCollapsedRight(true)}
                 onExpand={() => setIsCollapsedRight(false)}
-                className={`${
+                className={
                   isTransitioning ? "transition-all duration-300 ease-in-out" : ""
-                } w-[${panelRightWidth}%]`}
+                }
               >
                 <div className="p-4 space-y-4">
                   {isAutomatedTestRunType(testRunData?.testRunType) && (

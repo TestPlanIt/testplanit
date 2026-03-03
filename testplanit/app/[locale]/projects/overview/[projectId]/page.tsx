@@ -133,6 +133,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
           autoSaveId="project-overview-horizontal"
         >
           <ResizablePanel
+            id="overview-left"
+            order={1}
             ref={leftPanelRef}
             defaultSize={40}
             minSize={20}
@@ -209,6 +211,8 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ params }) => {
             </TooltipProvider>
           </div>
           <ResizablePanel
+            id="overview-right"
+            order={2}
             ref={rightPanelRef}
             defaultSize={60}
             minSize={20}

@@ -1695,6 +1695,8 @@ function ReportBuilderContent({
         autoSaveId="report-builder-panels"
       >
         <ResizablePanel
+          id="report-builder-left"
+          order={1}
           ref={panelRef}
           defaultSize={25}
           collapsedSize={0}
@@ -2412,6 +2414,8 @@ function ReportBuilderContent({
         </div>
 
         <ResizablePanel
+          id="report-builder-right"
+          order={2}
           defaultSize={75}
           collapsedSize={0}
           collapsible

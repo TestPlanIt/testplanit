@@ -180,6 +180,7 @@ const Welcome = ({ user }: { user: AuthUser }) => {
         className="w-full"
       >
         <ResizablePanel
+          id="home-left"
           order={1}
           ref={panelRef}
           defaultSize={50}
@@ -206,7 +207,7 @@ const Welcome = ({ user }: { user: AuthUser }) => {
             {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
           </Button>
         </div>
-        <ResizablePanel order={2} defaultSize={50} minSize={20}>
+        <ResizablePanel id="home-right" order={2} defaultSize={50} minSize={20}>
           {(session?.user.access != "NONE" || projectCount === 0) && (
             <Card data-testid="dashboard-card" className="w-full h-full">
               <CardHeader id="your-projects-header">

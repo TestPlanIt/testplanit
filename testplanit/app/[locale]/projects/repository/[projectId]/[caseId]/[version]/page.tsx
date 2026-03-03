@@ -92,7 +92,6 @@ export default function TestCaseVersions() {
   const t = useTranslations();
   const panelRightRef = useRef<React.ComponentRef<typeof ResizablePanel>>(null);
   const panelLeftRef = useRef<React.ComponentRef<typeof ResizablePanel>>(null);
-  const [panelRightWidth, setPanelRightWidth] = useState<number>(30);
   const [isCollapsedRight, setIsCollapsedRight] = useState<boolean>(false);
   const [isCollapsedLeft, setIsCollapsedLeft] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
@@ -298,10 +297,6 @@ export default function TestCaseVersions() {
       const nextIndex = currentVersionIndex + 1;
       viewVersion(versions[nextIndex].version.toString());
     }
-  };
-
-  const handleResize = async (size: number) => {
-    setPanelRightWidth(size);
   };
 
   if (status === "loading" || isLoading) return <Loading />;
@@ -717,6 +712,7 @@ export default function TestCaseVersions() {
             autoSaveId="case-version-panels"
           >
             <ResizablePanel
+              id="case-version-left"
               order={1}
               ref={panelLeftRef}
               className={`p-0 m-0 min-w-6 ${
@@ -890,19 +886,19 @@ export default function TestCaseVersions() {
               </TooltipProvider>
             </div>
             <ResizablePanel
+              id="case-version-right"
               order={2}
               ref={panelRightRef}
-              defaultSize={panelRightWidth || 30}
-              onResize={handleResize}
+              defaultSize={30}
               collapsedSize={0}
               minSize={0}
               collapsible
               onCollapse={() => setIsCollapsedRight(true)}
               onExpand={() => setIsCollapsedRight(false)}
-              className={`${isTransitioning ? "transition-all duration-300 ease-in-out" : ""} w-["${panelRightWidth}%"]`}
+              className={isTransitioning ? "transition-all duration-300 ease-in-out" : ""}
             >
               <div
-                className={`${isTransitioning ? "transition-all duration-300 ease-in-out" : ""} w-["${panelRightWidth}%"]`}
+                className={isTransitioning ? "transition-all duration-300 ease-in-out" : ""}
                 role="region"
                 aria-label={t("repository.version.metadataRegion")}
               >

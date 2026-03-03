@@ -152,29 +152,6 @@ const parseJsonToTipTap = (
   return emptyEditorContent;
 };
 
-// Utility function to get a cookie value
-function getCookie(name: string) {
-  if (typeof document === "undefined") return null;
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(";").shift();
-  return null;
-}
-
-// Utility function to set a cookie
-function setCookie(name: string, value: string, days: number) {
-  if (typeof document === "undefined") return;
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${value}; expires=${expires}; path=/`;
-}
-
-// Utility function to get a number from a cookie or a default value
-const getInitialPanelRightWidth = () => {
-  if (typeof window === "undefined") return 40; // Default value for server-side rendering
-  const storedWidth = getCookie("testDetailsPanelWidth");
-  return storedWidth ? parseInt(storedWidth, 10) : 40;
-};
-
 const mapFieldToZodType = (field: any) => {
   const isRequired = field.caseField.isRequired;
 
@@ -385,9 +362,6 @@ export default function TestCaseDetails() {
 
   const panelRightRef = useRef<ImperativePanelHandle>(null);
   const panelLeftRef = useRef<ImperativePanelHandle>(null);
-  const [panelRightWidth, setPanelRightWidth] = useState<number>(
-    getInitialPanelRightWidth()
-  );
   const [isCollapsedRight, setIsCollapsedRight] = useState<boolean>(false);
   const [isCollapsedLeft, setIsCollapsedLeft] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
@@ -924,7 +898,6 @@ export default function TestCaseDetails() {
         panelRightRef.current.expand();
       } else {
         panelRightRef.current.collapse();
-        setCookie("testDetailsPanelWidth", "0.1", 30);
       }
       setIsCollapsedRight(!isCollapsedRight);
     }
@@ -939,7 +912,6 @@ export default function TestCaseDetails() {
         panelLeftRef.current.expand();
       } else {
         panelLeftRef.current.collapse();
-        setCookie("testDetailsPanelWidth", "100", 30);
       }
       setIsCollapsedLeft(!isCollapsedLeft);
     }
@@ -1577,15 +1549,6 @@ export default function TestCaseDetails() {
     }
   };
 
-  const handleResize = async (size: number) => {
-    setPanelRightWidth(size);
-    setCookie(
-      "testDetailsPanelWidth",
-      parseInt(size.toString()).toString(),
-      90
-    );
-  };
-
   useEffect(() => {
     if (!isLoading && folders) {
       const formattedData = folders.map((folder) => ({
@@ -1995,6 +1958,7 @@ export default function TestCaseDetails() {
               autoSaveId="case-detail-panels"
             >
               <ResizablePanel
+                id="case-detail-left"
                 order={1}
                 ref={panelLeftRef}
                 className={`p-0 m-0 min-w-6 ${
@@ -2289,27 +2253,27 @@ export default function TestCaseDetails() {
                 </TooltipProvider>
               </div>
               <ResizablePanel
+                id="case-detail-right"
                 order={2}
                 ref={panelRightRef}
-                defaultSize={panelRightWidth || 40}
-                onResize={handleResize}
+                defaultSize={40}
                 collapsedSize={0}
                 minSize={0}
                 collapsible
                 onCollapse={() => setIsCollapsedRight(true)}
                 onExpand={() => setIsCollapsedRight(false)}
-                className={`${
+                className={
                   isTransitioning
                     ? "transition-all duration-300 ease-in-out"
                     : ""
-                } w-["${panelRightWidth}%"]`}
+                }
               >
                 <div
-                  className={`${
+                  className={
                     isTransitioning
                       ? "transition-all duration-300 ease-in-out"
                       : ""
-                  } w-["${panelRightWidth}%"]`}
+                  }
                 >
                   <TestCaseFormControls
                     isEditMode={isEditMode}
