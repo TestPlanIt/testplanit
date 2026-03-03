@@ -275,7 +275,6 @@ export function EditWorkflowsModal({
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
-        {workflows.id}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <DialogHeader>
