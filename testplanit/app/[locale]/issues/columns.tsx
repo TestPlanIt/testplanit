@@ -6,7 +6,6 @@ import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
 import { Plug } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -137,9 +136,7 @@ export function useIssueColumns({
             </PopoverTrigger>
             <PopoverContent className="w-[500px] max-h-[400px] overflow-auto">
               <div className="space-y-2">
-                <h4 className="font-semibold text-sm">
-                  {translations.title}
-                </h4>
+                <h4 className="font-semibold text-sm">{translations.title}</h4>
                 {hasHtml ? (
                   <div
                     className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
@@ -274,7 +271,9 @@ export function useIssueColumns({
       maxSize: 200,
       cell: ({ row }) => {
         const priority = row.original.priority;
-        return <IssuePriorityDisplay priority={priority} className="capitalize" />;
+        return (
+          <IssuePriorityDisplay priority={priority} className="capitalize" />
+        );
       },
     },
     {
@@ -289,7 +288,8 @@ export function useIssueColumns({
       maxSize: 250,
       cell: ({ row, column }) => {
         const lastSyncedAt = row.original.lastSyncedAt;
-        if (!lastSyncedAt) return <span className="text-muted-foreground">-</span>;
+        if (!lastSyncedAt)
+          return <span className="text-muted-foreground">-</span>;
         return (
           <span
             className="text-sm truncate overflow-hidden block"
@@ -406,7 +406,10 @@ export function useIssueColumns({
         const projects = row.original.projects || [];
         return (
           <div className="text-center">
-            <ProjectListDisplay projects={projects} isLoading={isLoadingCounts} />
+            <ProjectListDisplay
+              projects={projects}
+              isLoading={isLoadingCounts}
+            />
           </div>
         );
       },
@@ -420,12 +423,12 @@ export function useIssueColumns({
       enableResizing: true,
       size: 150,
       minSize: 100,
-      maxSize: 250,
+      maxSize: 150,
       cell: ({ row }) => {
         return (
           <div className="flex items-center gap-1">
-            <Plug className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">
+            <Plug className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="font-medium truncate">
               {row.original.integration?.name || "-"}
             </span>
           </div>
