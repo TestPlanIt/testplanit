@@ -392,7 +392,7 @@ describe("useExportData", () => {
     expect(mockUnparse).toHaveBeenCalled(); // Check if export proceeded
   });
 
-  it("should use currentData when scope is selected", async () => {
+  it("should fetch from server when scope is selected (to resolve shared steps)", async () => {
     const { result } = renderExportHook({ selectedIds: [1] });
     const options: ExportOptions = {
       format: "csv",
@@ -407,7 +407,8 @@ describe("useExportData", () => {
     await act(async () => {
       await result.current.handleExport(options);
     });
-    expect(mockFetchAllData).not.toHaveBeenCalled();
+    // Always fetches from server to ensure shared steps are resolved
+    expect(mockFetchAllData).toHaveBeenCalledTimes(1);
     expect(mockUnparse).toHaveBeenCalledTimes(1);
     // Check if only selected data was processed
     const unparseData = mockUnparse.mock.calls[0][0];

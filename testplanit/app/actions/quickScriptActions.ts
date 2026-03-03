@@ -4,6 +4,7 @@ import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { format } from "date-fns";
+import { resolveSharedSteps } from "~/lib/utils/resolveSharedSteps";
 
 export interface QuickScriptCaseData {
   name: string;
@@ -50,6 +51,14 @@ export async function fetchCasesForQuickScript(args: {
         steps: {
           where: { isDeleted: false },
           orderBy: { order: "asc" },
+          select: {
+            id: true,
+            step: true,
+            expectedResult: true,
+            order: true,
+            isDeleted: true,
+            sharedStepGroupId: true,
+          },
         },
         caseFieldValues: {
           include: {
@@ -68,7 +77,10 @@ export async function fetchCasesForQuickScript(args: {
       },
     })) as any[];
 
-    const data: QuickScriptCaseData[] = cases.map((c: any) => {
+    // Resolve shared step references (expand placeholders into actual step items)
+    const resolvedCases = await resolveSharedSteps(cases);
+
+    const data: QuickScriptCaseData[] = resolvedCases.map((c: any) => {
       const fields: Record<string, string> = {};
 
       for (const cfv of c.caseFieldValues || []) {
