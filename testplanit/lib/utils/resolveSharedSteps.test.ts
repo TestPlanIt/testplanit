@@ -70,7 +70,7 @@ describe("resolveSharedSteps", () => {
   });
 
   it("returns cases unchanged when steps is undefined", async () => {
-    const cases = [{ id: 1 }];
+    const cases: { id: number; steps?: StepWithSharedRef[] }[] = [{ id: 1 }];
 
     const result = await resolveSharedSteps(cases);
 
