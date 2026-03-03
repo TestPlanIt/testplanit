@@ -170,9 +170,9 @@ function setCookie(name: string, value: string, days: number) {
 
 // Utility function to get a number from a cookie or a default value
 const getInitialPanelRightWidth = () => {
-  if (typeof window === "undefined") return 100; // Default value for server-side rendering
+  if (typeof window === "undefined") return 40; // Default value for server-side rendering
   const storedWidth = getCookie("testDetailsPanelWidth");
-  return storedWidth ? parseInt(storedWidth, 10) : 100;
+  return storedWidth ? parseInt(storedWidth, 10) : 40;
 };
 
 const mapFieldToZodType = (field: any) => {
