@@ -166,7 +166,7 @@ export function QuickScriptModal({
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
   const [comboboxOpen, setComboboxOpen] = useState(false);
   const [outputMode, setOutputMode] = useState<"single" | "individual">(
-    "single"
+    "individual"
   );
   const [isExporting, setIsExporting] = useState(false);
 
@@ -849,17 +849,17 @@ export function QuickScriptModal({
                   data-testid="quickscript-output-mode"
                 >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="single" id="single" />
-                    <Label htmlFor="single">
-                      {t("outputModeSingle", {
+                    <RadioGroupItem value="individual" id="individual" />
+                    <Label htmlFor="individual">
+                      {t("outputModeIndividual", {
                         count: selectedCaseIds.length,
                       })}
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="individual" id="individual" />
-                    <Label htmlFor="individual">
-                      {t("outputModeIndividual", {
+                    <RadioGroupItem value="single" id="single" />
+                    <Label htmlFor="single">
+                      {t("outputModeSingle", {
                         count: selectedCaseIds.length,
                       })}
                     </Label>
