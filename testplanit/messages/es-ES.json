@@ -2009,7 +2009,9 @@
       "templateGenerated": "Plantilla generada",
       "truncatedWarning": "La salida se truncó: el modelo alcanzó su límite de tokens. Intente reducir el tamaño del lote o aumentar el número máximo de tokens de salida en la configuración del símbolo del sistema.",
       "contextFiles": "{count, plural, one {(# archivo de contexto)} other {(# archivos de contexto)}}",
-      "noCodeContextHint": "No se ha configurado ningún repositorio de código. La IA utilizará patrones de marco estándar."
+      "noCodeContextHint": "No se ha configurado ningún repositorio de código. La IA utilizará patrones de marco estándar.",
+      "generatingParallelProgress": "Se generaron {done} de {total} archivos...",
+      "cancelledGeneration": "Cancelado"
     },
     "generateTestCases": {
       "buttonText": "Generar Casos de Prueba",
@@ -3842,6 +3844,7 @@
         "failedToCreate": "Error al crear integración de modelo de IA",
         "validation": {
           "nameRequired": "El nombre de la integración es obligatorio",
+          "nameUnique": "Ya existe una integración con este nombre",
           "defaultModelRequired": "Se requiere el modelo predeterminado"
         }
       },
@@ -3855,6 +3858,7 @@
         "failedToUpdate": "Error al actualizar la integración del modelo AI",
         "validation": {
           "nameRequired": "El nombre de la integración es obligatorio",
+          "nameUnique": "Ya existe una integración con este nombre",
           "defaultModelRequired": "Se requiere el modelo predeterminado"
         }
       },

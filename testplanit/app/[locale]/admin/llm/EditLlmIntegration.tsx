@@ -37,15 +37,29 @@ import { toast } from "sonner";
 import { Loader2, Edit, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { HelpPopover } from "@/components/ui/help-popover";
-import { useUpdateLlmIntegration } from "~/lib/hooks/llm-integration";
+import {
+  useUpdateLlmIntegration,
+  useFindManyLlmIntegration,
+} from "~/lib/hooks/llm-integration";
 import {
   useUpdateLlmProviderConfig,
   useFindManyLlmProviderConfig,
 } from "~/lib/hooks/llm-provider-config";
 
-const createFormSchema = (t: any) =>
+const createFormSchema = (t: any, existingNames: string[], currentName: string) =>
   z.object({
-    name: z.string().min(1, t("validation.nameRequired")),
+    name: z
+      .string()
+      .min(1, t("validation.nameRequired"))
+      .refine(
+        (name) =>
+          !existingNames.some(
+            (existing) =>
+              existing.toLowerCase() === name.toLowerCase() &&
+              existing.toLowerCase() !== currentName.toLowerCase()
+          ),
+        { message: t("validation.nameUnique") }
+      ),
     apiKey: z.string().optional(),
     endpoint: z.string().optional(),
     deploymentName: z.string().optional(),
@@ -99,8 +113,12 @@ export function EditLlmIntegration({
   const { data: existingDefaultConfigs } = useFindManyLlmProviderConfig({
     where: { isDefault: true },
   });
+  const { data: existingIntegrations } = useFindManyLlmIntegration({
+    select: { name: true },
+  });
 
-  const formSchema = createFormSchema(t);
+  const existingNames = (existingIntegrations ?? []).map((i) => i.name);
+  const formSchema = createFormSchema(t, existingNames, integration?.name ?? "");
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),

@@ -2009,7 +2009,9 @@
       "templateGenerated": "Template Generated",
       "truncatedWarning": "Output was truncated — the model reached its token limit. Try reducing the batch size or increasing Max Output Tokens in your Prompt Config.",
       "contextFiles": "{count, plural, one {(# context file)} other {(# context files)}}",
-      "noCodeContextHint": "No code repository configured. AI will use standard framework patterns."
+      "noCodeContextHint": "No code repository configured. AI will use standard framework patterns.",
+      "generatingParallelProgress": "Generated {done} of {total} files...",
+      "cancelledGeneration": "Cancelled"
     },
     "generateTestCases": {
       "buttonText": "Generate Test Cases",
@@ -3842,6 +3844,7 @@
         "failedToCreate": "Failed to create AI model integration",
         "validation": {
           "nameRequired": "Integration name is required",
+          "nameUnique": "An integration with this name already exists",
           "defaultModelRequired": "Default model is required"
         }
       },
@@ -3855,6 +3858,7 @@
         "failedToUpdate": "Failed to update AI model integration",
         "validation": {
           "nameRequired": "Integration name is required",
+          "nameUnique": "An integration with this name already exists",
           "defaultModelRequired": "Default model is required"
         }
       },

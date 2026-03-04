@@ -136,6 +136,15 @@ async function streamExportCase(
   return { code: stripFences(accumulated), generatedBy: "ai" };
 }
 
+type FileGenStatus = "pending" | "generating" | "done" | "error";
+
+export interface ParallelFileProgress {
+  caseId: number;
+  caseName: string;
+  status: FileGenStatus;
+  error?: string;
+}
+
 interface QuickScriptModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -174,6 +183,14 @@ export function QuickScriptModal({
   } | null>(null);
   // Live code text while the LLM response is streaming in
   const [streamingCode, setStreamingCode] = useState<string | null>(null);
+  // Per-file progress tracking for parallel individual mode
+  const [parallelProgress, setParallelProgress] = useState<
+    ParallelFileProgress[] | null
+  >(null);
+  // Per-file AbortControllers for individual cancellation
+  const fileAbortControllersRef = useRef<Map<number, AbortController>>(
+    new Map()
+  );
 
   // Store case data for retry support
   const casesDataRef = useRef<QuickScriptCaseData[]>([]);
@@ -248,6 +265,8 @@ export function QuickScriptModal({
       setAiEnabled(true);
       setGenerationProgress(null);
       setStreamingCode(null);
+      setParallelProgress(null);
+      fileAbortControllersRef.current.clear();
       casesDataRef.current = [];
       isBatchModeRef.current = false;
       abortControllerRef.current = null;
@@ -325,7 +344,13 @@ export function QuickScriptModal({
   const handleCancelGeneration = useCallback(() => {
     cancelledRef.current = true;
     abortControllerRef.current?.abort();
+    // Abort all per-file controllers
+    for (const ac of fileAbortControllersRef.current.values()) {
+      ac.abort();
+    }
+    fileAbortControllersRef.current.clear();
     setStreamingCode(null);
+    setParallelProgress(null);
     setIsExporting(false);
     setGenerationProgress(null);
     if (previewResults.length === 0) {
@@ -334,6 +359,13 @@ export function QuickScriptModal({
     }
     // If results already exist, keep the preview open so the user can see them
   }, [previewResults.length]);
+
+  const handleCancelFile = useCallback((caseId: number) => {
+    const ac = fileAbortControllersRef.current.get(caseId);
+    if (ac) {
+      ac.abort();
+    }
+  }, []);
 
   // Retry handler — for batch mode regenerates the whole file; otherwise retries a single case
   const handleRetry = useCallback(
@@ -431,44 +463,96 @@ export function QuickScriptModal({
           return;
         }
 
-        // Individual mode or single case: stream each case in sequence
+        // Individual mode or single case: fire all LLM calls in parallel
         isBatchModeRef.current = false;
-        setGenerationProgress({ current: 0, total: response.data.length });
 
-        const results: AiExportResult[] = [];
-        for (let i = 0; i < response.data.length; i++) {
-          if (cancelledRef.current) break;
-          setGenerationProgress({
-            current: i + 1,
-            total: response.data.length,
-          });
-          setStreamingCode("");
-          try {
-            const raw = await streamExportCase(
-              {
-                mode: "single",
-                caseId: selectedCaseIds[i],
-                projectId,
-                templateId: parseInt(effectiveTemplateId),
-                caseData: response.data[i],
-              },
-              abortController.signal,
-              (delta) => setStreamingCode((prev) => (prev ?? "") + delta)
-            );
-            setStreamingCode(null);
-            results.push({
-              ...raw,
-              caseId: selectedCaseIds[i],
-              caseName: response.data[i].name,
-            });
-            setPreviewResults([...results]);
-          } catch (err) {
-            if ((err as DOMException)?.name === "AbortError") return;
-            throw err;
-          }
+        // Build per-file progress list and abort controllers
+        const fileProgressList: ParallelFileProgress[] = response.data.map(
+          (c, i) => ({
+            caseId: selectedCaseIds[i],
+            caseName: c.name,
+            status: "pending" as FileGenStatus,
+          })
+        );
+        const fileAbortControllers = new Map<number, AbortController>();
+        for (const caseId of selectedCaseIds) {
+          fileAbortControllers.set(caseId, new AbortController());
         }
+        fileAbortControllersRef.current = fileAbortControllers;
+        setParallelProgress([...fileProgressList]);
 
-        setGenerationProgress(null);
+        // Helper to update a single file's status
+        const updateFileStatus = (
+          caseId: number,
+          status: FileGenStatus,
+          error?: string
+        ) => {
+          const idx = fileProgressList.findIndex((f) => f.caseId === caseId);
+          if (idx !== -1) {
+            fileProgressList[idx] = {
+              ...fileProgressList[idx],
+              status,
+              error,
+            };
+            setParallelProgress([...fileProgressList]);
+          }
+        };
+
+        // Fire all stream calls in parallel
+        const promises = response.data.map((caseData, i) => {
+          const caseId = selectedCaseIds[i];
+          const fileAbort = fileAbortControllers.get(caseId)!;
+          updateFileStatus(caseId, "generating");
+
+          return streamExportCase(
+            {
+              mode: "single",
+              caseId,
+              projectId,
+              templateId: parseInt(effectiveTemplateId),
+              caseData,
+            },
+            fileAbort.signal,
+            () => {} // No live streaming display in parallel mode
+          )
+            .then((raw) => {
+              updateFileStatus(caseId, "done");
+              return {
+                ...raw,
+                caseId,
+                caseName: caseData.name,
+              } as AiExportResult;
+            })
+            .catch((err) => {
+              if ((err as DOMException)?.name === "AbortError") {
+                updateFileStatus(caseId, "error", tAi("cancelledGeneration"));
+                return {
+                  code: "",
+                  generatedBy: "template" as const,
+                  error: tAi("cancelledGeneration"),
+                  caseId,
+                  caseName: caseData.name,
+                } as AiExportResult;
+              }
+              const msg =
+                err instanceof Error ? err.message : "Generation failed";
+              updateFileStatus(caseId, "error", msg);
+              return {
+                code: "",
+                generatedBy: "template" as const,
+                error: msg,
+                caseId,
+                caseName: caseData.name,
+              } as AiExportResult;
+            });
+        });
+
+        const results = await Promise.all(promises);
+        if (cancelledRef.current) return;
+
+        setPreviewResults(results);
+        setParallelProgress(null);
+        fileAbortControllersRef.current.clear();
         return; // Do not auto-download -- user reviews in preview first
       }
 
@@ -557,6 +641,8 @@ export function QuickScriptModal({
       // Reset preview state so the user isn't stuck on an empty preview pane
       setStreamingCode(null);
       setGenerationProgress(null);
+      setParallelProgress(null);
+      fileAbortControllersRef.current.clear();
       if (previewResults.length === 0) {
         setShowPreview(false);
       }
@@ -612,8 +698,10 @@ export function QuickScriptModal({
               isBatchModeRef.current ? selectedCaseIds.length : undefined
             }
             streamingCode={streamingCode}
+            parallelProgress={parallelProgress}
             onRetry={handleRetry}
             onCancel={handleCancelGeneration}
+            onCancelFile={handleCancelFile}
             onDownload={handlePreviewDownload}
             onClose={() => setShowPreview(false)}
           />

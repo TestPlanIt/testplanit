@@ -37,16 +37,28 @@ import { Loader2, Info } from "lucide-react";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Prisma } from "@prisma/client";
-import { useCreateLlmIntegration } from "~/lib/hooks/llm-integration";
+import {
+  useCreateLlmIntegration,
+  useFindManyLlmIntegration,
+} from "~/lib/hooks/llm-integration";
 import {
   useCreateLlmProviderConfig,
   useUpdateLlmProviderConfig,
   useFindManyLlmProviderConfig,
 } from "~/lib/hooks/llm-provider-config";
 
-const createFormSchema = (t: any) =>
+const createFormSchema = (t: any, existingNames: string[]) =>
   z.object({
-    name: z.string().min(1, t("validation.nameRequired")),
+    name: z
+      .string()
+      .min(1, t("validation.nameRequired"))
+      .refine(
+        (name) =>
+          !existingNames.some(
+            (existing) => existing.toLowerCase() === name.toLowerCase()
+          ),
+        { message: t("validation.nameUnique") }
+      ),
     provider: z.enum([
       "OPENAI",
       "ANTHROPIC",
@@ -171,8 +183,12 @@ export function AddLlmIntegration({
   const { data: existingDefaultConfigs } = useFindManyLlmProviderConfig({
     where: { isDefault: true },
   });
+  const { data: existingIntegrations } = useFindManyLlmIntegration({
+    select: { name: true },
+  });
 
-  const formSchema = createFormSchema(t);
+  const existingNames = (existingIntegrations ?? []).map((i) => i.name);
+  const formSchema = createFormSchema(t, existingNames);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),

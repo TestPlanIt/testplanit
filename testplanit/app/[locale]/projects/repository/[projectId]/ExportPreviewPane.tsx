@@ -25,6 +25,8 @@ import {
   HelpCircle,
   ChevronDown,
   AlertTriangle,
+  X,
+  Circle,
 } from "lucide-react";
 import {
   Collapsible,
@@ -32,6 +34,7 @@ import {
   CollapsibleContent,
 } from "@/components/ui/collapsible";
 import type { AiExportResult } from "~/app/actions/aiExportActions";
+import type { ParallelFileProgress } from "./QuickScriptModal";
 
 interface ExportPreviewPaneProps {
   results: AiExportResult[];
@@ -40,8 +43,10 @@ interface ExportPreviewPaneProps {
   progress?: { current: number; total: number };
   batchCount?: number; // Set when generating all cases as a single file
   streamingCode?: string | null; // Live code content while streaming
+  parallelProgress?: ParallelFileProgress[] | null;
   onRetry?: (caseId: number) => void;
   onCancel?: () => void;
+  onCancelFile?: (caseId: number) => void;
   onDownload: () => void;
   onClose: () => void;
 }
@@ -53,8 +58,10 @@ export function ExportPreviewPane({
   progress,
   batchCount,
   streamingCode,
+  parallelProgress,
   onRetry,
   onCancel,
+  onCancelFile,
   onDownload,
   onClose,
 }: ExportPreviewPaneProps) {
@@ -109,6 +116,80 @@ export function ExportPreviewPane({
       el.scrollTop = el.scrollHeight;
     }
   }, [streamingCode, hasStreamingContent]);
+
+  // Parallel generation: show file list with per-file status indicators
+  if (parallelProgress && parallelProgress.length > 0) {
+    const doneCount = parallelProgress.filter(
+      (f) => f.status === "done" || f.status === "error"
+    ).length;
+    const totalCount = parallelProgress.length;
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            {t("generatingParallelProgress", {
+              done: doneCount,
+              total: totalCount,
+            })}
+          </p>
+          {onCancel && (
+            <Button variant="outline" size="sm" onClick={onCancel}>
+              {tCommon("cancel")}
+            </Button>
+          )}
+        </div>
+
+        <div className="space-y-1.5 max-h-80 overflow-y-auto">
+          {parallelProgress.map((file) => (
+            <div
+              key={file.caseId}
+              className="flex items-center gap-3 rounded-md border px-3 py-2"
+            >
+              {file.status === "pending" && (
+                <Circle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+              )}
+              {file.status === "generating" && (
+                <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+              )}
+              {file.status === "done" && (
+                <Check className="h-4 w-4 text-green-500 shrink-0" />
+              )}
+              {file.status === "error" && (
+                <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+              )}
+              <FileCode className="h-4 w-4 text-muted-foreground shrink-0" />
+              <span className="text-sm truncate flex-1">{file.caseName}</span>
+              {file.status === "error" && file.error && (
+                <span className="text-xs text-destructive truncate max-w-40">
+                  {file.error}
+                </span>
+              )}
+              {(file.status === "generating" || file.status === "pending") &&
+                onCancelFile && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0"
+                    onClick={() => onCancelFile(file.caseId)}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+            </div>
+          ))}
+        </div>
+
+        {/* Progress bar */}
+        <div className="h-2 rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full bg-primary transition-all duration-300"
+            style={{ width: `${(doneCount / totalCount) * 100}%` }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   // Spinner: generating but streaming hasn't produced any text yet
   if (isGenerating && results.length === 0 && !hasStreamingContent) {

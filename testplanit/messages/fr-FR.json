@@ -2009,7 +2009,9 @@
       "templateGenerated": "Modèle généré",
       "truncatedWarning": "Le résultat a été tronqué : le modèle a atteint sa limite de jetons. Essayez de réduire la taille du lot ou d’augmenter le nombre maximal de jetons de sortie dans votre configuration d’invite.",
       "contextFiles": "{count, plural, one {(# fichier de contexte)} other {(# fichiers de contexte)}}",
-      "noCodeContextHint": "Aucun dépôt de code n'est configuré. L'IA utilisera des modèles de framework standard."
+      "noCodeContextHint": "Aucun dépôt de code n'est configuré. L'IA utilisera des modèles de framework standard.",
+      "generatingParallelProgress": "Génération de {done} de fichiers {total}...",
+      "cancelledGeneration": "Annulé"
     },
     "generateTestCases": {
       "buttonText": "Générer des cas de test",
@@ -3842,6 +3844,7 @@
         "failedToCreate": "Échec de l'intégration du modèle d'IA",
         "validation": {
           "nameRequired": "Le nom de l'intégration est requis.",
+          "nameUnique": "Une intégration portant ce nom existe déjà.",
           "defaultModelRequired": "Le modèle par défaut est requis"
         }
       },
@@ -3855,6 +3858,7 @@
         "failedToUpdate": "Échec de la mise à jour de l'intégration du modèle d'IA",
         "validation": {
           "nameRequired": "Le nom de l'intégration est requis.",
+          "nameUnique": "Une intégration portant ce nom existe déjà.",
           "defaultModelRequired": "Le modèle par défaut est requis"
         }
       },
