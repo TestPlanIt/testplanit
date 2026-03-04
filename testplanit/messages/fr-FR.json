@@ -371,7 +371,7 @@
         "label": "Étiquette",
         "validation": {
           "empty": "L'option ne peut pas être vide.",
-          "invalidChars": "L'option contient des caractères invalides",
+          "invalidChars": "L'option contient un caractère invalide : « {char} »",
           "duplicate": "L'option doit être unique",
           "systemNameError": "Le nom du système est invalide.",
           "initialHeightMax": "La hauteur initiale ne peut pas dépasser 600px.",

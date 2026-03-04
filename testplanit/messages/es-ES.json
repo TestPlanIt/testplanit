@@ -371,7 +371,7 @@
         "label": "Etiqueta",
         "validation": {
           "empty": "La opción no puede estar vacía",
-          "invalidChars": "La opción contiene caracteres no válidos",
+          "invalidChars": "La opción contiene un carácter no válido: \"{char}\"",
           "duplicate": "La opción debe ser única",
           "systemNameError": "El nombre del sistema no es válido",
           "initialHeightMax": "La altura inicial no puede ser superior a 600px.",
