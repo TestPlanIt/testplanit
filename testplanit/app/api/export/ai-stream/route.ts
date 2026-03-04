@@ -107,9 +107,21 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  /** Send an SSE comment to keep the connection alive through reverse proxies. */
+  function keepAlive(controller: ReadableStreamDefaultController): void {
+    controller.enqueue(encoder.encode(": keepalive\n\n"));
+  }
+
   const stream = new ReadableStream({
     async start(controller) {
+      // Send periodic keepalive comments so reverse proxies don't 504 us
+      // while we resolve prompts, fetch code context, and wait for the
+      // first LLM token (Gemini/Ollama can be slow).
+      const heartbeat = setInterval(() => keepAlive(controller), 15_000);
       try {
+        // Send an immediate keepalive so the proxy sees bytes right away
+        keepAlive(controller);
+
         // Get LLM integration
         const llmIntegration = await prisma.projectLlmIntegration.findFirst({
           where: { projectId, isActive: true },
@@ -280,6 +292,7 @@ export async function POST(req: NextRequest) {
             err instanceof Error ? err.message : "Internal server error",
         });
       } finally {
+        clearInterval(heartbeat);
         controller.close();
       }
     },
