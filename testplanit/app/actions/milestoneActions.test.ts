@@ -3,6 +3,7 @@ import { completeMilestoneCascade } from "./milestoneActions";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 import { checkUserPermission } from "./permissions";
+import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 
 // Mock dependencies
 vi.mock("~/lib/prisma", () => ({
@@ -36,13 +37,13 @@ vi.mock("./permissions", () => ({
   checkUserPermission: vi.fn(),
 }));
 
+vi.mock("~/lib/services/milestoneDescendants", () => ({
+  getAllDescendantMilestoneIds: vi.fn().mockResolvedValue([]),
+}));
+
 describe("milestoneActions", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("completeMilestoneCascade", () => {
@@ -66,6 +67,8 @@ describe("milestoneActions", () => {
     beforeEach(() => {
       // Default: allow permission for most tests
       vi.mocked(checkUserPermission).mockResolvedValue(true);
+      // Default: no descendants
+      vi.mocked(getAllDescendantMilestoneIds).mockResolvedValue([]);
     });
 
     describe("authentication", () => {
@@ -201,11 +204,10 @@ describe("milestoneActions", () => {
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
 
-        // First call returns children, second call returns no more children
-        vi.mocked(prisma.milestones.findMany)
-          .mockResolvedValueOnce([{ id: 2 }, { id: 3 }] as any) // Children of milestone 1
-          .mockResolvedValueOnce([]) // No children of 2 or 3
-          .mockResolvedValueOnce([{ id: 2 }, { id: 3 }] as any); // Incomplete descendants
+        // Shared utility returns descendant IDs
+        vi.mocked(getAllDescendantMilestoneIds).mockResolvedValue([2, 3]);
+        // Incomplete descendants query
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([{ id: 2 }, { id: 3 }] as any);
 
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
@@ -226,10 +228,10 @@ describe("milestoneActions", () => {
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
 
-        vi.mocked(prisma.milestones.findMany)
-          .mockResolvedValueOnce([{ id: 2 }] as any)
-          .mockResolvedValueOnce([])
-          .mockResolvedValueOnce([{ id: 2 }] as any);
+        // Shared utility returns descendant IDs
+        vi.mocked(getAllDescendantMilestoneIds).mockResolvedValue([2]);
+        // Incomplete descendants query
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([{ id: 2 }] as any);
 
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([{ id: 10 }] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([{ id: 20 }, { id: 21 }] as any);
@@ -459,12 +461,10 @@ describe("milestoneActions", () => {
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
 
-        // Simulate 3 levels of hierarchy
-        vi.mocked(prisma.milestones.findMany)
-          .mockResolvedValueOnce([{ id: 2 }, { id: 3 }] as any) // Level 1: children of 1
-          .mockResolvedValueOnce([{ id: 4 }] as any) // Level 2: children of 2,3
-          .mockResolvedValueOnce([]) // Level 3: no more children
-          .mockResolvedValueOnce([{ id: 2 }, { id: 3 }, { id: 4 }] as any); // All incomplete descendants
+        // Shared utility returns all descendant IDs (3 levels deep)
+        vi.mocked(getAllDescendantMilestoneIds).mockResolvedValue([2, 3, 4]);
+        // Incomplete descendants query
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([{ id: 2 }, { id: 3 }, { id: 4 }] as any);
 
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
@@ -485,7 +485,8 @@ describe("milestoneActions", () => {
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
 
-        // The findMany query includes isDeleted: false filter
+        // Shared utility handles isDeleted filtering internally
+        vi.mocked(getAllDescendantMilestoneIds).mockResolvedValue([]);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);
@@ -503,14 +504,8 @@ describe("milestoneActions", () => {
         });
 
         expect(result.status).toBe("success");
-        // Verify findMany was called with isDeleted: false
-        expect(prisma.milestones.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({
-            where: expect.objectContaining({
-              isDeleted: false,
-            }),
-          })
-        );
+        // Verify shared utility was called with the milestone ID
+        expect(getAllDescendantMilestoneIds).toHaveBeenCalledWith(1);
       });
     });
 
@@ -645,10 +640,9 @@ describe("milestoneActions", () => {
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
 
-        vi.mocked(prisma.milestones.findMany)
-          .mockResolvedValueOnce([{ id: 2 }, { id: 3 }] as any)
-          .mockResolvedValueOnce([])
-          .mockResolvedValueOnce([{ id: 2 }, { id: 3 }] as any);
+        vi.mocked(getAllDescendantMilestoneIds).mockResolvedValue([2, 3]);
+        // Incomplete descendants query
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([{ id: 2 }, { id: 3 }] as any);
 
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([]);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([]);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "~/server/auth";
 import { prisma } from "~/lib/prisma";
+import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 
 export type MilestoneSummaryData = {
   milestoneId: number;
@@ -76,11 +77,15 @@ export async function GET(
       );
     }
 
-    // Get test run segments
-    const testRunSegments = await getTestRunSegments(milestoneId);
+    // Get all descendant milestone IDs for rollup
+    const descendantIds = await getAllDescendantMilestoneIds(milestoneId);
+    const allMilestoneIds = [milestoneId, ...descendantIds];
 
-    // Get session segments
-    const sessionSegments = await getSessionSegments(milestoneId);
+    // Get test run segments (including descendants)
+    const testRunSegments = await getTestRunSegments(allMilestoneIds);
+
+    // Get session segments (including descendants)
+    const sessionSegments = await getSessionSegments(allMilestoneIds);
 
     // Combine segments
     const allSegments = [...testRunSegments, ...sessionSegments];
@@ -100,7 +105,7 @@ export async function GET(
 
     // Calculate completion rate for test runs
     // (# of test results with isCompleted=true) / (# of total test cases in test runs) × 100
-    const completionRate = await calculateMilestoneCompletion(milestoneId);
+    const completionRate = await calculateMilestoneCompletion(allMilestoneIds);
 
     // Get comment count for this milestone
     const commentsCount = await prisma.comment.count({
@@ -219,14 +224,14 @@ export async function GET(
 }
 
 async function calculateMilestoneCompletion(
-  milestoneId: number
+  milestoneIds: number[]
 ): Promise<number> {
-  // Get total test cases in all test runs for this milestone
+  // Get total test cases in all test runs for these milestones
   const totalCasesResult = await prisma.$queryRaw<Array<{ count: bigint }>>`
     SELECT COUNT(*) as count
     FROM "TestRunCases" trc
     JOIN "TestRuns" tr ON trc."testRunId" = tr.id
-    WHERE tr."milestoneId" = ${milestoneId}
+    WHERE tr."milestoneId" = ANY(${milestoneIds}::int[])
       AND tr."isDeleted" = false
   `;
   const totalTestCases = Number(totalCasesResult[0]?.count || 0);
@@ -241,7 +246,7 @@ async function calculateMilestoneCompletion(
     FROM "TestRunCases" trc
     JOIN "TestRuns" tr ON trc."testRunId" = tr.id
     JOIN "Status" s ON trc."statusId" = s.id
-    WHERE tr."milestoneId" = ${milestoneId}
+    WHERE tr."milestoneId" = ANY(${milestoneIds}::int[])
       AND tr."isDeleted" = false
       AND s."isCompleted" = true
   `;
@@ -252,7 +257,7 @@ async function calculateMilestoneCompletion(
 }
 
 async function getTestRunSegments(
-  milestoneId: number
+  milestoneIds: number[]
 ): Promise<MilestoneSummaryData["segments"]> {
   // Get test runs for this milestone with aggregated case data
   const testRuns = await prisma.$queryRaw<
@@ -295,7 +300,7 @@ async function getTestRunSegments(
       LEFT JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
       LEFT JOIN "Status" s ON trc."statusId" = s.id
       LEFT JOIN "Color" c ON s."colorId" = c.id
-      WHERE tr."milestoneId" = ${milestoneId}
+      WHERE tr."milestoneId" = ANY(${milestoneIds}::int[])
         AND tr."isDeleted" = false
       GROUP BY tr.id, tr.name, tr."testRunType", trc."statusId", s.name, c.value
     )
@@ -378,7 +383,7 @@ async function getTestRunSegments(
 }
 
 async function getSessionSegments(
-  milestoneId: number
+  milestoneIds: number[]
 ): Promise<MilestoneSummaryData["segments"]> {
   // Get sessions for this milestone with their latest results
   const sessions = await prisma.$queryRaw<
@@ -419,7 +424,7 @@ async function getSessionSegments(
     ) sr ON true
     LEFT JOIN "Status" st ON sr."statusId" = st.id
     LEFT JOIN "Color" c ON st."colorId" = c.id
-    WHERE s."milestoneId" = ${milestoneId}
+    WHERE s."milestoneId" = ANY(${milestoneIds}::int[])
       AND s."isDeleted" = false
     ORDER BY s.id
   `;

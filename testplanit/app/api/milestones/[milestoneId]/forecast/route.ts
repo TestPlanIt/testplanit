@@ -1,23 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
 import type { NextRequest } from "next/server";
-
-// Helper function to get all descendant milestone IDs
-async function getAllDescendantIds(milestoneId: number): Promise<number[]> {
-  const allIds: number[] = [];
-  const _getDirectChildren = async (parentId: number) => {
-    const children = await db.milestones.findMany({
-      where: { parentId: parentId, isDeleted: false },
-      select: { id: true },
-    });
-    for (const child of children) {
-      allIds.push(child.id);
-      await _getDirectChildren(child.id);
-    }
-  };
-  await _getDirectChildren(milestoneId);
-  return allIds;
-}
+import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 
 export async function GET(
   request: NextRequest,
@@ -35,7 +19,7 @@ export async function GET(
 
   try {
     // 1. Get the current milestone ID and all its descendant IDs
-    const descendantIds = await getAllDescendantIds(numericMilestoneId);
+    const descendantIds = await getAllDescendantMilestoneIds(numericMilestoneId);
     const allRelevantMilestoneIds = [numericMilestoneId, ...descendantIds];
 
     // 2. Fetch non-deleted TestRuns for all relevant milestones

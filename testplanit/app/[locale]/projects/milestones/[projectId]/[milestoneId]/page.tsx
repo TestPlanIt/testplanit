@@ -218,9 +218,25 @@ export default function MilestoneDetailsPage() {
     orderBy: { colorFamily: { order: "asc" } },
   });
 
+  // Fetch descendant milestone IDs for rollup
+  const { data: descendantsData } = useQuery<{ descendantIds: number[] }>({
+    queryKey: ["milestoneDescendants", milestoneId],
+    queryFn: async () => {
+      const response = await fetch(`/api/milestones/${milestoneId}/descendants`);
+      if (!response.ok) return { descendantIds: [] };
+      return response.json();
+    },
+    staleTime: 60000,
+  });
+
+  const allMilestoneIds = useMemo(
+    () => [Number(milestoneId), ...(descendantsData?.descendantIds ?? [])],
+    [milestoneId, descendantsData]
+  );
+
   const { data: milestoneSessions } = useFindManySessions({
     where: {
-      milestoneId: Number(milestoneId),
+      milestoneId: { in: allMilestoneIds },
       isDeleted: false,
     },
     include: {
@@ -253,7 +269,7 @@ export default function MilestoneDetailsPage() {
 
   const { data: milestoneTestRuns } = useFindManyTestRuns({
     where: {
-      milestoneId: Number(milestoneId),
+      milestoneId: { in: allMilestoneIds },
       isDeleted: false,
     },
     include: {
@@ -863,7 +879,7 @@ export default function MilestoneDetailsPage() {
                                 <TestRunItem
                                   key={testRun.id}
                                   testRun={transformedTestRun}
-                                  showMilestone={false}
+                                  showMilestone={testRun.milestoneId !== Number(milestoneId)}
                                   summaryData={batchSummaries?.summaries[testRun.id]}
                                 />
                               );
@@ -896,7 +912,7 @@ export default function MilestoneDetailsPage() {
                                 isCompleted={testSession.isCompleted}
                                 onComplete={handleCompleteSession}
                                 canComplete={canCompleteSession}
-                                showMilestone={false}
+                                showMilestone={testSession.milestoneId !== Number(milestoneId)}
                               />
                             ))}
                           </div>

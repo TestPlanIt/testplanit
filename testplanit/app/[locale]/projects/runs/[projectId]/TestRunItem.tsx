@@ -358,7 +358,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
         {/* Right Column - MemberList & Actions */}
         <div className="flex items-center justify-end space-x-2 min-w-0">
           <div className="flex flex-col items-start gap-1.5 w-full min-w-0 max-w-xs overflow-hidden">
-            {testRun.isCompleted && showMilestone && testRun.milestone && (
+            {showMilestone && testRun.milestone && (
               <div className="truncate w-full min-w-0">
                 <MilestoneIconAndName milestone={testRun.milestone} />
               </div>
