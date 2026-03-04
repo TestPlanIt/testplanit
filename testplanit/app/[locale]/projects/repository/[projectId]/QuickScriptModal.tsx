@@ -191,6 +191,14 @@ export function QuickScriptModal({
   const fileAbortControllersRef = useRef<Map<number, AbortController>>(
     new Map()
   );
+  // Accumulates streaming chunks per file without triggering renders
+  const fileStreamingRef = useRef<Record<number, string>>({});
+  // Periodically flushed snapshot of streaming content for the UI
+  const [fileStreamingSnippets, setFileStreamingSnippets] = useState<
+    Record<number, string>
+  >({});
+  // Interval handle for periodic flush
+  const streamingFlushRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Store case data for retry support
   const casesDataRef = useRef<QuickScriptCaseData[]>([]);
@@ -267,6 +275,12 @@ export function QuickScriptModal({
       setStreamingCode(null);
       setParallelProgress(null);
       fileAbortControllersRef.current.clear();
+      fileStreamingRef.current = {};
+      setFileStreamingSnippets({});
+      if (streamingFlushRef.current) {
+        clearInterval(streamingFlushRef.current);
+        streamingFlushRef.current = null;
+      }
       casesDataRef.current = [];
       isBatchModeRef.current = false;
       abortControllerRef.current = null;
@@ -351,6 +365,12 @@ export function QuickScriptModal({
     fileAbortControllersRef.current.clear();
     setStreamingCode(null);
     setParallelProgress(null);
+    setFileStreamingSnippets({});
+    fileStreamingRef.current = {};
+    if (streamingFlushRef.current) {
+      clearInterval(streamingFlushRef.current);
+      streamingFlushRef.current = null;
+    }
     setIsExporting(false);
     setGenerationProgress(null);
     if (previewResults.length === 0) {
@@ -479,7 +499,14 @@ export function QuickScriptModal({
           fileAbortControllers.set(caseId, new AbortController());
         }
         fileAbortControllersRef.current = fileAbortControllers;
+        fileStreamingRef.current = {};
+        setFileStreamingSnippets({});
         setParallelProgress([...fileProgressList]);
+
+        // Flush accumulated streaming chunks to state every 150ms
+        streamingFlushRef.current = setInterval(() => {
+          setFileStreamingSnippets({ ...fileStreamingRef.current });
+        }, 150);
 
         // Helper to update a single file's status
         const updateFileStatus = (
@@ -513,7 +540,10 @@ export function QuickScriptModal({
               caseData,
             },
             fileAbort.signal,
-            () => {} // No live streaming display in parallel mode
+            (delta) => {
+              fileStreamingRef.current[caseId] =
+                (fileStreamingRef.current[caseId] || "") + delta;
+            }
           )
             .then((raw) => {
               updateFileStatus(caseId, "done");
@@ -548,6 +578,12 @@ export function QuickScriptModal({
         });
 
         const results = await Promise.all(promises);
+        if (streamingFlushRef.current) {
+          clearInterval(streamingFlushRef.current);
+          streamingFlushRef.current = null;
+        }
+        fileStreamingRef.current = {};
+        setFileStreamingSnippets({});
         if (cancelledRef.current) return;
 
         setPreviewResults(results);
@@ -643,6 +679,12 @@ export function QuickScriptModal({
       setGenerationProgress(null);
       setParallelProgress(null);
       fileAbortControllersRef.current.clear();
+      fileStreamingRef.current = {};
+      setFileStreamingSnippets({});
+      if (streamingFlushRef.current) {
+        clearInterval(streamingFlushRef.current);
+        streamingFlushRef.current = null;
+      }
       if (previewResults.length === 0) {
         setShowPreview(false);
       }
@@ -670,7 +712,7 @@ export function QuickScriptModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         className={cn(
-          showPreview ? "sm:max-w-225" : "sm:max-w-125",
+          showPreview ? "sm:max-w-225 max-h-[95vh]" : "sm:max-w-125",
           "transition-all"
         )}
         data-testid="quickscript-dialog"
@@ -699,6 +741,7 @@ export function QuickScriptModal({
             }
             streamingCode={streamingCode}
             parallelProgress={parallelProgress}
+            fileStreamingSnippets={fileStreamingSnippets}
             onRetry={handleRetry}
             onCancel={handleCancelGeneration}
             onCancelFile={handleCancelFile}

@@ -44,6 +44,7 @@ interface ExportPreviewPaneProps {
   batchCount?: number; // Set when generating all cases as a single file
   streamingCode?: string | null; // Live code content while streaming
   parallelProgress?: ParallelFileProgress[] | null;
+  fileStreamingSnippets?: Record<number, string>;
   onRetry?: (caseId: number) => void;
   onCancel?: () => void;
   onCancelFile?: (caseId: number) => void;
@@ -59,6 +60,7 @@ export function ExportPreviewPane({
   batchCount,
   streamingCode,
   parallelProgress,
+  fileStreamingSnippets,
   onRetry,
   onCancel,
   onCancelFile,
@@ -140,44 +142,57 @@ export function ExportPreviewPane({
           )}
         </div>
 
-        <div className="space-y-1.5 max-h-80 overflow-y-auto">
-          {parallelProgress.map((file) => (
-            <div
-              key={file.caseId}
-              className="flex items-center gap-3 rounded-md border px-3 py-2"
-            >
-              {file.status === "pending" && (
-                <Circle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
-              )}
-              {file.status === "generating" && (
-                <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
-              )}
-              {file.status === "done" && (
-                <Check className="h-4 w-4 text-green-500 shrink-0" />
-              )}
-              {file.status === "error" && (
-                <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-              )}
-              <FileCode className="h-4 w-4 text-muted-foreground shrink-0" />
-              <span className="text-sm truncate flex-1">{file.caseName}</span>
-              {file.status === "error" && file.error && (
-                <span className="text-xs text-destructive truncate max-w-40">
-                  {file.error}
-                </span>
-              )}
-              {(file.status === "generating" || file.status === "pending") &&
-                onCancelFile && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0"
-                    onClick={() => onCancelFile(file.caseId)}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
+        <div className="space-y-1.5 overflow-y-auto">
+          {parallelProgress.map((file) => {
+            const snippet = fileStreamingSnippets?.[file.caseId];
+            return (
+              <div
+                key={file.caseId}
+                className="rounded-md border overflow-hidden"
+              >
+                <div className="flex items-center gap-3 px-3 py-2">
+                  {file.status === "pending" && (
+                    <Circle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                  )}
+                  {file.status === "generating" && (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+                  )}
+                  {file.status === "done" && (
+                    <Check className="h-4 w-4 text-success shrink-0" />
+                  )}
+                  {file.status === "error" && (
+                    <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                  )}
+                  <FileCode className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm truncate flex-1">
+                    {file.caseName}
+                  </span>
+                  {file.status === "error" && file.error && (
+                    <span className="text-xs text-destructive truncate max-w-40">
+                      {file.error}
+                    </span>
+                  )}
+                  {(file.status === "generating" ||
+                    file.status === "pending") &&
+                    onCancelFile && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 shrink-0"
+                        onClick={() => onCancelFile(file.caseId)}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                </div>
+                {file.status === "generating" && snippet && (
+                  <pre className="bg-stone-800 text-muted-foreground text-[11px] leading-tight px-3 py-1.5 max-h-14 overflow-hidden border-t">
+                    <code>{snippet.slice(-300)}</code>
+                  </pre>
                 )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
         {/* Progress bar */}
@@ -237,7 +252,10 @@ export function ExportPreviewPane({
               </Button>
             )}
           </div>
-          <div ref={streamingScrollRef} className="max-h-100 overflow-y-auto">
+          <div
+            ref={streamingScrollRef}
+            className="max-h-[70vh] overflow-y-auto"
+          >
             <CodeBlock code={streamingCode!} prismLanguage={prismLanguage} />
           </div>
         </div>
@@ -252,7 +270,7 @@ export function ExportPreviewPane({
         />
       ) : (
         // Multiple completed results and/or a case currently streaming
-        <div ref={streamingScrollRef} className="max-h-100 overflow-y-auto">
+        <div ref={streamingScrollRef} className="max-h-[70vh] overflow-y-auto">
           <div className="space-y-4">
             {results.map((result, index) => (
               <div key={result.caseId}>
@@ -441,7 +459,7 @@ function SingleResultView({
           {t("truncatedWarning")}
         </div>
       )}
-      <div className="max-h-100 overflow-y-auto">
+      <div className="max-h-[70vh] overflow-y-auto">
         <CodeBlock code={result.code} prismLanguage={prismLanguage} />
       </div>
       {result.contextFiles && result.contextFiles.length > 0 && (
