@@ -336,7 +336,7 @@ const DraggableList: React.FC<DraggableListProps> = ({
         {/* Header */}
         {items.length > 0 && (
           <div
-            className={`${columns} shadow-xs text-muted-foreground sticky top-0 z-10 bg-white`}
+            className={`${columns} shadow-xs text-muted-foreground font-medium sticky top-0 z-10 bg-background border border-foreground/10`}
           >
             <span />
             <span className="ml-2">{t("common.fields.icon")}</span>
