@@ -149,6 +149,7 @@ function TagDetail() {
           id: true,
           name: true,
           source: true,
+          automated: true,
         },
         orderBy: { name: "asc" as const },
         skip: (casesPage - 1) * effectiveCasesPageSize,

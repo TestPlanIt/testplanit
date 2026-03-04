@@ -357,6 +357,7 @@ export function TestRunCaseDetails({
       },
     },
     source: true,
+    automated: true,
   } satisfies Prisma.RepositoryCasesSelect;
 
   // Define the explicit type for the testcase based on the select
@@ -900,6 +901,7 @@ export function TestRunCaseDetails({
             name={testcase.name}
             size="large"
             source={testcase.source}
+            automated={testcase.automated}
           />
           {testcase.testRuns?.[0]?.testRun?.configuration && (
             <Badge className="flex items-center gap-1 text-sm mt-1 w-fit">

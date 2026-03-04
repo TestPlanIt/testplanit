@@ -590,6 +590,7 @@ export default function TestCaseVersions() {
                     name={testcase.name}
                     size="large"
                     source={testcase.source}
+                    automated={testcase.automated}
                   />,
                   previousTestcase ? (
                     <CaseDisplay
@@ -597,6 +598,7 @@ export default function TestCaseVersions() {
                       name={previousTestcase.name}
                       size="large"
                       source={previousTestcase.source}
+                      automated={previousTestcase.automated}
                     />
                   ) : null
                 )}

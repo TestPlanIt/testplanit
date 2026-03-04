@@ -380,6 +380,7 @@ export function useReportColumns(
                 const testCaseName =
                   testCaseData?.name || tCommon("labels.unknown");
                 const testCaseSource = testCaseData?.source || "MANUAL";
+                const testCaseAutomated = testCaseData?.automated;
                 const linkHref =
                   rowProjectId && testCaseId
                     ? `/projects/repository/${rowProjectId}/${testCaseId}`
@@ -389,6 +390,7 @@ export function useReportColumns(
                     id={testCaseId}
                     name={testCaseName}
                     source={testCaseSource}
+                    automated={testCaseAutomated}
                     link={linkHref}
                     size="medium"
                     maxLines={2}
@@ -677,6 +679,7 @@ export function useReportColumns(
                   const testCaseName =
                     testCaseData?.name || tCommon("labels.unknown");
                   const testCaseSource = testCaseData?.source || "MANUAL";
+                  const testCaseAutomated = testCaseData?.automated;
                   const linkHref =
                     rowProjectId && testCaseId
                       ? `/projects/repository/${rowProjectId}/${testCaseId}`
@@ -686,6 +689,7 @@ export function useReportColumns(
                       id={testCaseId}
                       name={testCaseName}
                       source={testCaseSource}
+                      automated={testCaseAutomated}
                       link={linkHref}
                       size="medium"
                       maxLines={2}
