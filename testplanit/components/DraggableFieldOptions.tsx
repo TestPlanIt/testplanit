@@ -85,11 +85,14 @@ const DraggableItem = ({
       const isUnique = !allNames.some(
         (existingName) => existingName === newName && newName !== name
       );
-      const validChars = /^[a-zA-Z0-9_ ]+$/;
+      const invalidChar = newName.match(/[,\x00-\x1F]/);
       if (newName.length === 0) {
         return t("common.fields.options.validation.empty");
-      } else if (!newName.match(validChars)) {
-        return t("common.fields.options.validation.invalidChars");
+      } else if (invalidChar) {
+        const char = invalidChar[0] === "," ? "," : "control character";
+        return t("common.fields.options.validation.invalidChars", {
+          char,
+        });
       } else if (!isUnique) {
         return t("common.fields.options.validation.duplicate");
       }

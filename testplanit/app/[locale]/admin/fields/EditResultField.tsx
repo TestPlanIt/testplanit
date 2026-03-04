@@ -266,9 +266,9 @@ export function EditResultFieldModal({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value.trim();
 
-    const isValidInput = (input: string) => {
-      const regex = /^[A-Za-z0-9_\s]+$/; // Only allow letters, numbers, and underscores
-      return regex.test(input);
+    const findInvalidChar = (input: string) => {
+      const match = input.match(/[,\x00-\x1F]/);
+      return match ? (match[0] === "," ? "," : "control character") : null;
     };
 
     // Function to check if the input value is unique
@@ -277,9 +277,10 @@ export function EditResultFieldModal({
     };
 
     // Check for valid characters
-    if (inputValue && !isValidInput(inputValue)) {
+    const badChar = findInvalidChar(inputValue);
+    if (inputValue && badChar) {
       setError(
-        "Options can only contain letters, numbers, spaces and underscores."
+        tCommon("fields.options.validation.invalidChars", { char: badChar })
       );
     } else if (!isUniqueInput(inputValue)) {
       // Check for uniqueness only if input is valid to avoid stacking messages

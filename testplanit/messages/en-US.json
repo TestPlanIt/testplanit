@@ -371,7 +371,7 @@
         "label": "Label",
         "validation": {
           "empty": "Option cannot be empty",
-          "invalidChars": "Option contains invalid characters",
+          "invalidChars": "Option contains an invalid character: \"{char}\"",
           "duplicate": "Option must be unique",
           "systemNameError": "System name is invalid",
           "initialHeightMax": "Initial height cannot be greater than 600px.",
