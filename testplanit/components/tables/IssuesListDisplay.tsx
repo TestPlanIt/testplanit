@@ -46,8 +46,8 @@ export const IssuesListDisplay: React.FC<IssuesListProps> = ({
   return (
     <Popover modal={false}>
       <PopoverTrigger asChild>
-        <Badge className="cursor-pointer">
-          <Bug className="w-4 h-4 mr-1 shrink-0" />
+        <Badge className="cursor-pointer text-xs px-1.5 py-0">
+          <Bug className="w-3 h-3 mr-0.5 shrink-0" />
           {issues.length}
         </Badge>
       </PopoverTrigger>
