@@ -551,7 +551,15 @@ export function QuickScriptModal({
       onClose();
     } catch (error) {
       console.error("Templated export failed:", error);
-      toast.error(tExportModal("exportError"));
+      const errorMessage =
+        error instanceof Error ? error.message : tExportModal("exportError");
+      toast.error(errorMessage);
+      // Reset preview state so the user isn't stuck on an empty preview pane
+      setStreamingCode(null);
+      setGenerationProgress(null);
+      if (previewResults.length === 0) {
+        setShowPreview(false);
+      }
     } finally {
       // Only reset if this run is still the active one — prevents a stale
       // finally from a cancelled run overwriting a new run's isExporting=true.
@@ -567,6 +575,7 @@ export function QuickScriptModal({
     outputMode,
     onClose,
     aiEnabled,
+    previewResults.length,
     t,
     tExportModal,
   ]);
