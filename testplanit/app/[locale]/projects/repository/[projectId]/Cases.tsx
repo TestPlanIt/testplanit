@@ -341,6 +341,7 @@ export default function Cases({
   // Add state for the export modal
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isQuickScriptModalOpen, setIsQuickScriptModalOpen] = useState(false);
+  const [quickScriptCaseIds, setQuickScriptCaseIds] = useState<number[] | null>(null);
 
   // Reset auto-select guard when switching away from folders view
   useEffect(() => {
@@ -2809,7 +2810,14 @@ export default function Cases({
       isDefaultSort &&
         !isSelectionMode &&
         !isCompleted &&
-        ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit))
+        ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit)),
+      // QuickScript per-row action
+      quickScriptEnabled,
+      canAddEdit,
+      (caseId: number) => {
+        setQuickScriptCaseIds([caseId]);
+        setIsQuickScriptModalOpen(true);
+      }
     );
   }, [
     userPreferencesForColumns,
@@ -2835,6 +2843,7 @@ export default function Cases({
     totalItems,
     selectedTestCases.length,
     selectedCaseIdsForBulkEdit.length,
+    quickScriptEnabled,
   ]);
 
   // Create lightweight column metadata for ColumnSelection component
@@ -3333,7 +3342,10 @@ export default function Cases({
                 !isRunMode &&
                 selectedCaseIdsForBulkEdit.length > 0 && (
                   <Button
-                    onClick={() => setIsQuickScriptModalOpen(true)}
+                    onClick={() => {
+                      setQuickScriptCaseIds(null);
+                      setIsQuickScriptModalOpen(true);
+                    }}
                     variant="outline"
                     data-testid="quickscript-cases-button"
                     className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
@@ -3478,8 +3490,11 @@ export default function Cases({
       {isValidProjectId && (
         <QuickScriptModal
           isOpen={isQuickScriptModalOpen}
-          onClose={() => setIsQuickScriptModalOpen(false)}
-          selectedCaseIds={selectedCaseIdsForBulkEdit}
+          onClose={() => {
+            setIsQuickScriptModalOpen(false);
+            setQuickScriptCaseIds(null);
+          }}
+          selectedCaseIds={quickScriptCaseIds ?? selectedCaseIdsForBulkEdit}
           projectId={projectId}
         />
       )}
