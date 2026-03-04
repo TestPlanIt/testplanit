@@ -790,7 +790,7 @@ export function QuickScriptModal({
                         placeholder={t("searchPlaceholder")}
                         data-testid="quickscript-template-search"
                       />
-                      <CommandList>
+                      <CommandList onWheel={(e) => e.stopPropagation()}>
                         <CommandEmpty>{t("noTemplatesFound")}</CommandEmpty>
                         {groupedTemplates.map(
                           ([category, categoryTemplates]) => (
