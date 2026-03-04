@@ -14,9 +14,11 @@ interface TestCaseNameDisplayProps {
         repositoryCase?: {
           id?: number | string;
           name?: string;
+          automated?: boolean;
           isDeleted?: boolean;
           source?: string;
         };
+        automated?: boolean;
         isDeleted?: boolean;
         source?: string;
       }
@@ -56,6 +58,8 @@ export function TestCaseNameDisplay({
   const isDeleted =
     testCase.isDeleted || testCase.repositoryCase?.isDeleted || false;
   const source = testCase.source || testCase.repositoryCase?.source || "MANUAL";
+  const automated =
+    testCase.automated || testCase.repositoryCase?.automated || false;
 
   // Determine which icon to show
   let icon = null;
@@ -67,7 +71,7 @@ export function TestCaseNameDisplay({
           className={cn("shrink-0 mt-0.5 text-muted-foreground", iconSize)}
         />
       );
-    } else if (isAutomatedCaseSource(source)) {
+    } else if (automated || isAutomatedCaseSource(source)) {
       icon = <Bot className={cn("shrink-0 mt-0.5", iconSize)} />;
     } else {
       icon = <ListChecks className={cn("shrink-0 mt-0.5", iconSize)} />;

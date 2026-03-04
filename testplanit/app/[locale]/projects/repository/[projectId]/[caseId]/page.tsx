@@ -1732,6 +1732,7 @@ export default function TestCaseDetails() {
                       name={testcase.name}
                       size="xl"
                       source={testcase.source}
+                      automated={testcase.automated}
                     />
                   </div>
                 )}

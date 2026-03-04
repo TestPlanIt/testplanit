@@ -240,6 +240,7 @@ interface NameCellProps {
   };
   viewType?: string;
   canAddEditResults?: boolean;
+  automated?: boolean;
   source?: RepositoryCaseSource;
   isSoftDeletedInRun?: boolean;
 }
@@ -254,6 +255,7 @@ const NameCell = React.memo(function NameCell({
   onTestCaseClick,
   folder,
   viewType,
+  automated,
   canAddEditResults,
   source,
   isSoftDeletedInRun,
@@ -316,7 +318,7 @@ const NameCell = React.memo(function NameCell({
       <div className="flex items-center">
         {isSoftDeletedInRun ? (
           <Trash2 className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
-        ) : isAutomatedCaseSource(source) ? (
+        ) : automated || isAutomatedCaseSource(source) ? (
           <Bot className="w-4 h-4 mr-1 text-primary shrink-0" />
         ) : (
           <ListChecks className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
@@ -374,7 +376,7 @@ const NameCell = React.memo(function NameCell({
     <div className="flex items-center">
       {isSoftDeletedInRun ? (
         <Trash2 className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
-      ) : isAutomatedCaseSource(source) ? (
+      ) : automated || isAutomatedCaseSource(source) ? (
         <Bot className="w-4 h-4 mr-1 text-primary shrink-0" />
       ) : (
         <ListChecks className="w-4 h-4 mr-1 text-primary shrink-0" />
@@ -1600,6 +1602,7 @@ export const getColumns = (
               : undefined
           }
           viewType={viewType}
+          automated={row.original.automated}
           canAddEditResults={canAddEditResults}
           source={row.original.source}
           isSoftDeletedInRun={isRunMode && row.original.isDeleted}
