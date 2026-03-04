@@ -135,7 +135,7 @@ export function AddUserModal() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Badge variant="secondary">
-                    <Star className="h-3 w-3 fill-current text-primary" />
+                    <Star className="h-3 w-3 fill-current text-primary-background" />
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>
