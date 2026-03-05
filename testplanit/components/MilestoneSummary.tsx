@@ -365,7 +365,7 @@ export function MilestoneSummary({
           {/* Display aggregated issues list if any exist */}
           {summaryData.issues && summaryData.issues.length > 0 && (
             <div>
-              <IssuesListDisplay issues={summaryData.issues} />
+              <IssuesListDisplay issues={summaryData.issues} size="small" />
             </div>
           )}
         </div>
