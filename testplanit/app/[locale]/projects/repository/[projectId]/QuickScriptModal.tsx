@@ -333,7 +333,7 @@ export function QuickScriptModal({
       }
 
       logDataExport({
-        exportType: `AI Export (${selectedTemplate.name})`,
+        exportType: `${previewResults.some((r) => r.generatedBy === "ai") ? "AI Export" : "QuickScript"} (${selectedTemplate.name})`,
         entityType: "RepositoryCases",
         recordCount: previewResults.length,
         projectId,
@@ -592,7 +592,7 @@ export function QuickScriptModal({
         return; // Do not auto-download -- user reviews in preview first
       }
 
-      // Standard Mustache-only export path (unchanged)
+      // Standard Mustache-only export path — render then show preview
       const response = await fetchCasesForQuickScript({
         caseIds: selectedCaseIds,
         projectId,
@@ -615,60 +615,35 @@ export function QuickScriptModal({
       const header = template.headerBody || "";
       const footer = template.footerBody || "";
 
+      let results: AiExportResult[];
+
       if (outputMode === "single") {
         const combined = [header, ...renderedCases, footer]
           .filter(Boolean)
           .join("\n\n");
-        const blob = new Blob([combined], {
-          type: "text/plain;charset=utf-8;",
-        });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-        link.setAttribute(
-          "download",
-          `testplanit-export-${timestamp}${template.fileExtension}`
-        );
-        link.style.visibility = "hidden";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        results = [
+          {
+            code: combined,
+            generatedBy: "template",
+            caseId: cases[0].id,
+            caseName: cases[0].name,
+          },
+        ];
       } else {
-        const JSZip = (await import("jszip")).default;
-        const zip = new JSZip();
-
-        cases.forEach((caseData: QuickScriptCaseData, index: number) => {
-          const filename = `${sanitizeFilename(caseData.name) || `case-${caseData.id}`}${template.fileExtension}`;
-          const fileContent = [header, renderedCases[index], footer]
-            .filter(Boolean)
-            .join("\n\n");
-          zip.file(filename, fileContent);
-        });
-
-        const zipBlob = await zip.generateAsync({ type: "blob" });
-        const link = document.createElement("a");
-        const url = URL.createObjectURL(zipBlob);
-        link.setAttribute("href", url);
-        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-        link.setAttribute("download", `testplanit-export-${timestamp}.zip`);
-        link.style.visibility = "hidden";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        results = cases.map(
+          (caseData: QuickScriptCaseData, index: number) => ({
+            code: [header, renderedCases[index], footer]
+              .filter(Boolean)
+              .join("\n\n"),
+            generatedBy: "template" as const,
+            caseId: caseData.id,
+            caseName: caseData.name,
+          })
+        );
       }
 
-      logDataExport({
-        exportType: `QuickScript (${template.name})`,
-        entityType: "RepositoryCases",
-        recordCount: cases.length,
-        projectId,
-      });
-
-      toast.success(t("exportSuccess"));
-      onClose();
+      setPreviewResults(results);
+      setShowPreview(true);
     } catch (error) {
       console.error("Templated export failed:", error);
       const errorMessage =
