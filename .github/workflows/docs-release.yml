@@ -45,7 +45,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and push AMD64 docs image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: .
         file: ./docs/Dockerfile
@@ -84,7 +84,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Build and push ARM64 docs image
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: .
         file: ./docs/Dockerfile
