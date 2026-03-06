@@ -645,8 +645,8 @@ importers:
         specifier: ~2.22.2
         version: 2.22.2(@prisma/client@6.19.2(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(zod@4.3.6)
       '@zenstackhq/server':
-        specifier: ~2.22.2
-        version: 2.22.2(@prisma/client@6.19.2(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(zod@4.3.6)
+        specifier: ~3.4.4
+        version: 3.4.4(express@5.2.1)(hono@4.12.2)(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(zod@4.3.6)
       ai:
         specifier: ^6.0.100
         version: 6.0.100(zod@4.3.6)
@@ -8674,6 +8674,9 @@ packages:
   '@xtuc/long@4.2.2':
     resolution: {integrity: sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==}
 
+  '@zenstackhq/common-helpers@3.4.4':
+    resolution: {integrity: sha512-HS/B0uhyhzFoDamM/yQ4e7Zi/P/bYSTEa81YfIZ1b4TQB7vxNjO+CslpV/17XxpuzZl/758FfisJylztd+Jq4w==}
+
   '@zenstackhq/language@2.22.2':
     resolution: {integrity: sha512-j3mcc3UDjRf5BIyqH0+G/gJ5btqusM1GfeOQlq23pmr9XUmt3ZTrFeiQRCxM/v3UIMfNfxPshqKlKBvTgi4Lrg==}
 
@@ -8682,22 +8685,73 @@ packages:
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
+  '@zenstackhq/orm@3.4.4':
+    resolution: {integrity: sha512-0r0HDj5ZZK5TaXRuFGSmRKMoHhpHBiDu0qWSFY+ZyDtEjjOXnKsWSlReGsyt4kX4IqKsD1jH0cFVeMjONVseWA==}
+    peerDependencies:
+      better-sqlite3: ^12.5.0
+      mysql2: ^3.16.1
+      pg: ^8.13.1
+      sql.js: ^1.13.0
+      zod: ^4.0.0
+    peerDependenciesMeta:
+      better-sqlite3:
+        optional: true
+      mysql2:
+        optional: true
+      pg:
+        optional: true
+      sql.js:
+        optional: true
+
   '@zenstackhq/runtime@2.22.2':
     resolution: {integrity: sha512-GgWSyU1nL1q89ZOS7O7cn9GWUcQ2ywavTp73RJvqRw0HSQ2r5sCi+wAyh2eAxqGTSnBob4jg2kq7CcFqcaze9A==}
     peerDependencies:
       '@prisma/client': 5.0.0 - 7.x
       zod: ^3.25.0 || ^4.0.0
 
+  '@zenstackhq/schema@3.4.4':
+    resolution: {integrity: sha512-VOnTaakDs5xgm4639kZLersRKyMay7h1vPvRxxmYDRU9faTvGgOgXKLlSrNdzt0pA12AM/4E2XXUBo+zNzaMeg==}
+
   '@zenstackhq/sdk@2.22.2':
     resolution: {integrity: sha512-1FnfjRJcEJnmrp8NgjNRZIi5fAaLNSxyEvxrsWDppwwaR/WTU0XRS7ARsR2UqhL4Q6VrXB+xhM5tAeFaCcU7GA==}
 
-  '@zenstackhq/server@2.22.2':
-    resolution: {integrity: sha512-mPsRL2UAtp9luafPLJYqW+z9cS5/9Ro/+jv6QVAXjVik9rQdmFH1xTB+wPO5Y2As9+B+ckXarMyoJbXOI2wMqg==}
+  '@zenstackhq/server@3.4.4':
+    resolution: {integrity: sha512-/rSMaLluK1uwMWYNKZF2NVELZ0f8OZtyYxAGTzkTJmS7amwYJJ7Yj2BVGQxzzcV0W35ofUyWeTMuEjin3yXBTA==}
     peerDependencies:
-      zod: ^3.25.0 || ^4.0.0
+      '@sveltejs/kit': ^2.0.0
+      elysia: ^1.3.0
+      express: ^5.0.0
+      fastify: ^5.0.0
+      fastify-plugin: ^5.0.0
+      hono: '>=4.11.10'
+      next: ^15.0.0 || ^16.0.0
+      nuxt: ^4.0.0
+      zod: ^4.0.0
+    peerDependenciesMeta:
+      '@sveltejs/kit':
+        optional: true
+      elysia:
+        optional: true
+      express:
+        optional: true
+      fastify:
+        optional: true
+      fastify-plugin:
+        optional: true
+      hono:
+        optional: true
+      next:
+        optional: true
+      nuxt:
+        optional: true
 
   '@zenstackhq/tanstack-query@2.22.2':
     resolution: {integrity: sha512-VXYc9MyJRuEbwvkcIKwsgKjKSW44Gh19YPNGarR5//IfjZ2+uPf916vrOiOXb6Qzyc9aU3PriDYFrkZY5enK1g==}
+
+  '@zenstackhq/zod@3.4.4':
+    resolution: {integrity: sha512-1ARS5WU3cmVvDq7VRVVawAvFXdZgKQHwf9KUNkVlvabIaVf79on/tNswKaRU6qSnfmbWG9Ea7rUHFVP2Fva7Iw==}
+    peerDependencies:
+      zod: ^4.0.0
 
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -9820,6 +9874,10 @@ packages:
     resolution: {integrity: sha512-yCEafptTtb4bk7GLEQoM8KVJpxAfdBJYaXyzQEgQQQgYrZiDp8SJmGKlYza6CYjEDNstAdNdKA3UuoULlEbS6w==}
     engines: {node: '>=12.13'}
 
+  copy-anything@4.0.5:
+    resolution: {integrity: sha512-7Vv6asjS4gMOuILabD3l739tsaxFQmC+a7pLZm02zyvs8p977bL3zEgq3yDk5rn9B0PbYgIv++jmHcuUab4RhA==}
+    engines: {node: '>=18'}
+
   copy-to-clipboard@3.3.3:
     resolution: {integrity: sha512-2KV8NhB5JqC3ky0r9PMCAZKbUHSwtEo4CwCs0KXgruG43gX5PMqDEBbVU4OUzw2MuAWUfsuFmWvEKG5QRfSnJA==}
 
@@ -10064,6 +10122,10 @@ packages:
 
   csv-parse@6.1.0:
     resolution: {integrity: sha512-CEE+jwpgLn+MmtCpVcPtiCZpVtB6Z2OKPTr34pycYYoL7sxdOkXDdQ4lRiw6ioC0q6BLqhc6cKweCVvral8yhw==}
+
+  cuid@3.0.0:
+    resolution: {integrity: sha512-WZYYkHdIDnaxdeP8Misq3Lah5vFjJwGuItJuV+tvMafosMzw0nF297T7mrm8IOWiPJkV6gc7sa8pzx27+w25Zg==}
+    deprecated: Cuid and other k-sortable and non-cryptographic ids (Ulid, ObjectId, KSUID, all UUIDs) are all insecure. Use @paralleldrive/cuid2 instead.
 
   culvert@0.1.2:
     resolution: {integrity: sha512-yi1x3EAWKjQTreYWeSd98431AV+IEE0qoDyOoaHJ7KJ21gv6HtBXHVLX74opVSGqcR8/AbjJBHAHpcOy2bj5Gg==}
@@ -12373,6 +12435,10 @@ packages:
     resolution: {integrity: sha512-ZhMwEosbFJkA0YhFnNDgTM4ZxDRsS6HqTo7qsZM08fehyRYIYa0yHu5R6mgo1n/8MgaPBXiPimPD77baVFYg+A==}
     engines: {node: '>=12.13'}
 
+  is-what@5.5.0:
+    resolution: {integrity: sha512-oG7cgbmg5kLYae2N5IVd3jm2s+vldjxJzK1pcu9LfpGuQ93MQSzo0okvRna+7y5ifrD+20FE8FvjusyGaz14fw==}
+    engines: {node: '>=18'}
+
   is-windows@1.0.2:
     resolution: {integrity: sha512-eXK1UInq2bPmjyX6e3VHIzMLobc4J94i4AWn+Hpq3OU5KkrRC96OAcR3PRJ/pGu6m8TRnBHP9dkXQVsT/COVIA==}
     engines: {node: '>=0.10.0'}
@@ -12551,6 +12617,10 @@ packages:
   json-stable-stringify-without-jsonify@1.0.1:
     resolution: {integrity: sha512-Bdboy+l7tA3OGW6FjyFHWkP5LuByj1Tk33Ljyq0axyzdk9//JSi2u3fP1QSmd1KNwq6VOKYGlAu87CisVir6Pw==}
 
+  json-stable-stringify@1.3.0:
+    resolution: {integrity: sha512-qtYiSSFlwot9XHtF9bD9c7rwKjr+RecWT//ZnPvSmEjpV5mmPOCN4j8UjY5hbjNkOwZ/jQv3J6R1/pL7RwgMsg==}
+    engines: {node: '>= 0.4'}
+
   json-stringify-safe@5.0.1:
     resolution: {integrity: sha512-ZClg6AaYvamvYEE82d3Iyd3vSSIjQ+odgjaTzRuO3s7toCdFKczob2i0zCh7JE8kWn17yvAWhUVxvqGwUalsRA==}
 
@@ -12574,6 +12644,9 @@ packages:
 
   jsonfile@6.2.0:
     resolution: {integrity: sha512-FGuPw30AdOIUTRMC2OMRtQV+jkVj2cfPqSeWXv1NEAJ1qZ5zb1X6z1mFhbfOB/iy3ssJCD+3KuZ8r8C3uVFlAg==}
+
+  jsonify@0.0.1:
+    resolution: {integrity: sha512-2/Ki0GcmuqSrgFyelQq9M05y7PS0mEwuIzrf3f1fPqkVDVRvZrPZtVSMHxdgo8Aq0sxAOb/cr2aqqA3LeWHVPg==}
 
   jsonpointer@5.0.1:
     resolution: {integrity: sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==}
@@ -12617,6 +12690,10 @@ packages:
   kleur@4.1.5:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
+
+  kysely@0.28.11:
+    resolution: {integrity: sha512-zpGIFg0HuoC893rIjYX1BETkVWdDnzTzF5e0kWXJFg5lE0k1/LfNWBejrcnOFu8Q2Rfq/hTDTU7XLUM8QOrpzg==}
+    engines: {node: '>=20.0.0'}
 
   langium@1.3.1:
     resolution: {integrity: sha512-xC+DnAunl6cZIgYjRpgm3s1kYAB5/Wycsj24iYaXG9uai7SgvMaFZSrRvdA5rUK/lSta/CRvgF+ZFoEKEOFJ5w==}
@@ -14889,6 +14966,10 @@ packages:
     resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
     engines: {node: ^10 || ^12 || >=14}
 
+  postgres-array@3.0.4:
+    resolution: {integrity: sha512-nAUSGfSDGOaOAEGwqsRY27GPOea7CNipJPOA7lPbdEpx5Kg3qzdP0AaWC5MlhTWV9s4hFX39nomVZ+C4tnGOJQ==}
+    engines: {node: '>=12'}
+
   powershell-utils@0.1.0:
     resolution: {integrity: sha512-dM0jVuXJPsDN6DvRpea484tCUaMiXWjuCn++HGTqUWzGDjv5tZkEZldAJ/UMlqRYGFrD/etByo4/xOuC/snX2A==}
     engines: {node: '>=20'}
@@ -16632,6 +16713,10 @@ packages:
     resolution: {integrity: sha512-mJiVjfd2vokfDxsQPOwJ/PtanO87LhpYY88ubI5dUB1Ab58Txbyje3+jpm+/83R/fevaq/107NNhtYBLuoTrFg==}
     engines: {node: '>=10'}
 
+  superjson@2.2.6:
+    resolution: {integrity: sha512-H+ue8Zo4vJmV2nRjpx86P35lzwDT3nItnIsocgumgr0hHMQ+ZGq5vrERg9kJBo5AWGmxZDhzDo+WVIJqkB0cGA==}
+    engines: {node: '>=16'}
+
   supports-color@5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
     engines: {node: '>=4'}
@@ -16880,6 +16965,9 @@ packages:
     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
     engines: {node: '>=0.6'}
 
+  toposort@2.0.2:
+    resolution: {integrity: sha512-0a5EOkAUp8D4moMi2W8ZF8jcga7BgZd91O/yabJCFY8az+XSzeGyTKs0Aoo897iV1Nj6guFq8orWDS96z91oGg==}
+
   totalist@3.0.1:
     resolution: {integrity: sha512-sf4i37nQ2LBx4m3wB74y+ubopq6W/dIzXg0FDGjsYnZHVa1Da8FH853wlL2gtUhg+xJXjfk3kUZS3BRoQeoQBQ==}
     engines: {node: '>=6'}
@@ -16974,6 +17062,9 @@ packages:
 
   ts-pattern@4.3.0:
     resolution: {integrity: sha512-pefrkcd4lmIVR0LA49Imjf9DYLK8vtWhqBPA3Ya1ir8xCW0O2yjL9dsCVvI7pCodLC5q7smNpEtDR2yVulQxOg==}
+
+  ts-pattern@5.9.0:
+    resolution: {integrity: sha512-6s5V71mX8qBUmlgbrfL33xDUwO0fq48rxAu2LBE11WBeGdpCPOsXksQbZJHvHwhrd3QjUusd3mAOM5Gg0mFBLg==}
 
   ts-toolbelt@9.6.0:
     resolution: {integrity: sha512-nsZd8ZeNUzukXPlJmTBwUAuABDe/9qtVDelJeT/qW0ow3ZS3BsQJtNkan1802aM9Uf68/Y8ljw86Hu0h5IUW3w==}
@@ -17172,6 +17263,10 @@ packages:
   uint8array-extras@1.5.0:
     resolution: {integrity: sha512-rvKSBiC5zqCCiDZ9kAOszZcDvdAHwwIKJG33Ykj43OKcWsnmcBRL09YTU4nOeHZ8Y2a7l1MgTd08SBe9A8Qj6A==}
     engines: {node: '>=18'}
+
+  ulid@3.0.2:
+    resolution: {integrity: sha512-yu26mwteFYzBAot7KVMqFGCVpsF6g8wXfJzQUHvu1no3+rRRSFcSV2nKeYvNPLD2J4b08jYBDhHUjeH0ygIl9w==}
+    hasBin: true
 
   unbox-primitive@1.1.0:
     resolution: {integrity: sha512-nWJ91DjeOkej/TA8pXQ3myruKpKEYgqvpw9lz4OPHj/NWFNluYrjbz9j01CJ8yKQd2g4jFoOkINCTW2I5LEEyw==}
@@ -35592,6 +35687,8 @@ snapshots:
 
   '@xtuc/long@4.2.2': {}
 
+  '@zenstackhq/common-helpers@3.4.4': {}
+
   '@zenstackhq/language@2.22.2':
     dependencies:
       langium: 1.3.1
@@ -35611,6 +35708,25 @@ snapshots:
       - magicast
       - typescript
 
+  '@zenstackhq/orm@3.4.4(zod@4.3.6)':
+    dependencies:
+      '@paralleldrive/cuid2': 2.3.1
+      '@zenstackhq/common-helpers': 3.4.4
+      '@zenstackhq/schema': 3.4.4
+      '@zenstackhq/zod': 3.4.4(zod@4.3.6)
+      cuid: 3.0.0
+      decimal.js: 10.6.0
+      json-stable-stringify: 1.3.0
+      kysely: 0.28.11
+      nanoid: 5.1.6
+      postgres-array: 3.0.4
+      toposort: 2.0.2
+      ts-pattern: 5.9.0
+      ulid: 3.0.2
+      uuid: 11.1.0
+      zod: 4.3.6
+      zod-validation-error: 4.0.2(zod@4.3.6)
+
   '@zenstackhq/runtime@2.22.2(@prisma/client@6.19.2(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(zod@4.3.6)':
     dependencies:
       '@prisma/client': 6.19.2(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3)
@@ -35629,6 +35745,10 @@ snapshots:
       zod: 4.3.6
       zod-validation-error: 4.0.2(zod@4.3.6)
 
+  '@zenstackhq/schema@3.4.4':
+    dependencies:
+      decimal.js: 10.6.0
+
   '@zenstackhq/sdk@2.22.2(@prisma/client@6.19.2(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(magicast@0.3.5)(typescript@5.9.3)(zod@4.3.6)':
     dependencies:
       '@prisma/generator-helper': 6.19.2
@@ -35646,16 +35766,26 @@ snapshots:
       - typescript
       - zod
 
-  '@zenstackhq/server@2.22.2(@prisma/client@6.19.2(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(zod@4.3.6)':
+  '@zenstackhq/server@3.4.4(express@5.2.1)(hono@4.12.2)(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(zod@4.3.6)':
     dependencies:
-      '@zenstackhq/runtime': 2.22.2(@prisma/client@6.19.2(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(zod@4.3.6)
+      '@zenstackhq/common-helpers': 3.4.4
+      '@zenstackhq/orm': 3.4.4(zod@4.3.6)
       decimal.js: 10.6.0
-      superjson: 1.13.3
+      superjson: 2.2.6
       ts-japi: 1.12.1
+      ts-pattern: 5.9.0
       url-pattern: 1.0.3
       zod: 4.3.6
+      zod-validation-error: 4.0.2(zod@4.3.6)
+    optionalDependencies:
+      express: 5.2.1
+      hono: 4.12.2
+      next: 16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     transitivePeerDependencies:
-      - '@prisma/client'
+      - better-sqlite3
+      - mysql2
+      - pg
+      - sql.js
 
   '@zenstackhq/tanstack-query@2.22.2(@prisma/client@6.19.2(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(magicast@0.3.5)(typescript@5.9.3)(zod@4.3.6)':
     dependencies:
@@ -35671,6 +35801,12 @@ snapshots:
       - magicast
       - typescript
       - zod
+
+  '@zenstackhq/zod@3.4.4(zod@4.3.6)':
+    dependencies:
+      '@zenstackhq/schema': 3.4.4
+      decimal.js: 10.6.0
+      zod: 4.3.6
 
   abort-controller@3.0.0:
     dependencies:
@@ -36883,6 +37019,10 @@ snapshots:
     dependencies:
       is-what: 4.1.16
 
+  copy-anything@4.0.5:
+    dependencies:
+      is-what: 5.5.0
+
   copy-to-clipboard@3.3.3:
     dependencies:
       toggle-selection: 1.0.6
@@ -37170,6 +37310,8 @@ snapshots:
   csstype@3.2.3: {}
 
   csv-parse@6.1.0: {}
+
+  cuid@3.0.0: {}
 
   culvert@0.1.2: {}
 
@@ -39837,6 +39979,8 @@ snapshots:
 
   is-what@4.1.16: {}
 
+  is-what@5.5.0: {}
+
   is-windows@1.0.2: {}
 
   is-wsl@2.2.0:
@@ -40032,6 +40176,14 @@ snapshots:
 
   json-stable-stringify-without-jsonify@1.0.1: {}
 
+  json-stable-stringify@1.3.0:
+    dependencies:
+      call-bind: 1.0.8
+      call-bound: 1.0.4
+      isarray: 2.0.5
+      jsonify: 0.0.1
+      object-keys: 1.1.1
+
   json-stringify-safe@5.0.1: {}
 
   json-with-bigint@3.5.3: {}
@@ -40053,6 +40205,8 @@ snapshots:
       universalify: 2.0.1
     optionalDependencies:
       graceful-fs: 4.2.11
+
+  jsonify@0.0.1: {}
 
   jsonpointer@5.0.1: {}
 
@@ -40116,6 +40270,8 @@ snapshots:
   kleur@3.0.3: {}
 
   kleur@4.1.5: {}
+
+  kysely@0.28.11: {}
 
   langium@1.3.1:
     dependencies:
@@ -42675,6 +42831,8 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
+  postgres-array@3.0.4: {}
+
   powershell-utils@0.1.0: {}
 
   preact-render-to-string@5.2.6(preact@10.28.4):
@@ -44950,6 +45108,10 @@ snapshots:
     dependencies:
       copy-anything: 3.0.5
 
+  superjson@2.2.6:
+    dependencies:
+      copy-anything: 4.0.5
+
   supports-color@5.5.0:
     dependencies:
       has-flag: 3.0.0
@@ -45270,6 +45432,8 @@ snapshots:
 
   toidentifier@1.0.1: {}
 
+  toposort@2.0.2: {}
+
   totalist@3.0.1: {}
 
   tough-cookie@6.0.0:
@@ -45364,6 +45528,8 @@ snapshots:
       '@swc/core': 1.15.13(@swc/helpers@0.5.19)
 
   ts-pattern@4.3.0: {}
+
+  ts-pattern@5.9.0: {}
 
   ts-toolbelt@9.6.0: {}
 
@@ -45568,6 +45734,8 @@ snapshots:
     optional: true
 
   uint8array-extras@1.5.0: {}
+
+  ulid@3.0.2: {}
 
   unbox-primitive@1.1.0:
     dependencies:
