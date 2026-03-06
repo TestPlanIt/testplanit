@@ -1,3 +1,17 @@
+## [0.14.3](https://github.com/TestPlanIt/testplanit/compare/v0.14.2...v0.14.3) (2026-03-06)
+
+### Bug Fixes
+
+* **ci:** auto-approve Dependabot PRs before auto-merge ([#110](https://github.com/TestPlanIt/testplanit/issues/110)) ([ccc614d](https://github.com/TestPlanIt/testplanit/commit/ccc614d7311b64db4bc26614644fe0f4913e7e8b))
+* **ci:** exclude @types/node from dev-dependency groups ([c9b92c0](https://github.com/TestPlanIt/testplanit/commit/c9b92c05c1657c5eafdd5bd2fb3b5ede9cf3b88b))
+* **ci:** ignore major version bumps for packages that break testplanit ([fe5280d](https://github.com/TestPlanIt/testplanit/commit/fe5280d9c7f41272cd03de4d0d0191e035eb656b))
+* **docs:** update Jira Forge app documentation with new sections for Test Runs, Sessions, and Test Cases ([8228306](https://github.com/TestPlanIt/testplanit/commit/82283065bf881c420d41230f1730769b1f30d219))
+* **forge-app:** strip trailing slashes from URLs in resolver functions ([c2eae82](https://github.com/TestPlanIt/testplanit/commit/c2eae82dffd470e1f5f70aa237ed1175239308a0))
+
+### Enhancements
+
+* **docs:** add Jira Forge app to sidebars configuration ([67a0d87](https://github.com/TestPlanIt/testplanit/commit/67a0d8794f40c39cd2fc1033716da364f3b35d5f))
+
 ## [0.14.2](https://github.com/TestPlanIt/testplanit/compare/v0.14.1...v0.14.2) (2026-02-25)
 
 ### Features
