@@ -16,8 +16,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### API
 
-- [ ] **API-01**: User can request AI tag suggestions for a set of entity IDs within a project
-- [ ] **API-02**: System processes large batches (50+) as background jobs with progress tracking; user can navigate away and return to check status
+- [x] **API-01**: User can request AI tag suggestions for a set of entity IDs within a project
+- [x] **API-02**: System processes large batches (50+) as background jobs with progress tracking; user can navigate away and return to check status
 - [ ] **API-03**: User can apply accepted tag suggestions (including creating new tags) in bulk
 
 ### UI - Review Dialog
@@ -62,8 +62,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LLM-02 | Phase 1 | Complete |
 | LLM-03 | Phase 1 | Complete |
 | LLM-04 | Phase 1 | Complete |
-| API-01 | Phase 2 | Pending |
-| API-02 | Phase 2 | Pending |
+| API-01 | Phase 2 | Complete |
+| API-02 | Phase 2 | Complete |
 | API-03 | Phase 2 | Pending |
 | UI-01 | Phase 3 | Pending |
 | UI-02 | Phase 3 | Pending |
