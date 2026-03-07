@@ -286,6 +286,99 @@ describe("TagAnalysisService", () => {
     expect(result.batchCount).toBe(1);
   });
 
+  it("calls onBatchComplete callback with correct progress values", async () => {
+    setupDefaults();
+
+    // Use long names so each entity's estimated tokens exceeds half the budget,
+    // forcing 2 separate batches. Budget = floor(4096 * 0.65 - systemPromptTokens) ~2400.
+    // Each entity with ~6000 char name → ~1500 tokens → 2 batches.
+    const longName = "x".repeat(6000);
+    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      {
+        id: 1,
+        name: longName + " entity1",
+        steps: [],
+        caseFieldValues: [],
+        tags: [],
+        folder: null,
+      },
+      {
+        id: 2,
+        name: longName + " entity2",
+        steps: [],
+        caseFieldValues: [],
+        tags: [],
+        folder: null,
+      },
+    ]);
+
+    let chatCallCount = 0;
+    mockLlmManager.chat.mockImplementation(async () => {
+      chatCallCount++;
+      return {
+        content: JSON.stringify({ suggestions: [] }),
+        model: "gpt-4",
+        promptTokens: 50,
+        completionTokens: 10,
+        totalTokens: 60,
+      };
+    });
+
+    const onBatchComplete = vi.fn().mockResolvedValue(undefined);
+
+    await service.analyzeTags({
+      entityIds: [1, 2],
+      entityType: "repositoryCase",
+      projectId: 5,
+      userId: "u1",
+      onBatchComplete,
+    });
+
+    // Each entity is ~1500 tokens, budget ~2400, so they can't both fit in one batch
+    expect(chatCallCount).toBe(2);
+    expect(onBatchComplete).toHaveBeenCalledTimes(2);
+    // First call: 1 processed out of 2
+    expect(onBatchComplete).toHaveBeenNthCalledWith(1, 1, 2);
+    // Second call: 2 processed out of 2
+    expect(onBatchComplete).toHaveBeenNthCalledWith(2, 2, 2);
+  });
+
+  // Backward compatibility: existing tests implicitly verify that analyzeTags works
+  // without onBatchComplete (it's optional). The tests above ("returns tag suggestions
+  // from valid LLM response", etc.) all pass without providing onBatchComplete.
+
+  it("calls onBatchComplete even when a batch fails", async () => {
+    setupDefaults();
+
+    mockPrisma.repositoryCases.findMany.mockResolvedValue([
+      {
+        id: 1,
+        name: "Test",
+        steps: [],
+        caseFieldValues: [],
+        tags: [],
+        folder: null,
+      },
+    ]);
+
+    mockLlmManager.chat.mockRejectedValue(new Error("LLM service unavailable"));
+
+    const onBatchComplete = vi.fn().mockResolvedValue(undefined);
+
+    const result = await service.analyzeTags({
+      entityIds: [1],
+      entityType: "repositoryCase",
+      projectId: 5,
+      userId: "u1",
+      onBatchComplete,
+    });
+
+    // Even though the batch failed, callback should still be called
+    expect(onBatchComplete).toHaveBeenCalledTimes(1);
+    expect(onBatchComplete).toHaveBeenCalledWith(1, 1);
+    expect(result.suggestions).toEqual([]);
+  });
+
   it("properly fuzzy-matches LLM suggestions against existing tags", async () => {
     setupDefaults();
 

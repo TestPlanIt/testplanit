@@ -23,6 +23,7 @@ interface AnalyzeTagsParams {
   entityType: EntityType;
   projectId: number;
   userId: string;
+  onBatchComplete?: (processed: number, total: number) => Promise<void>;
 }
 
 /**
@@ -168,6 +169,7 @@ export class TagAnalysisService {
     // 9. Process batches sequentially
     let allSuggestions: TagSuggestion[] = [];
     let totalTokensUsed = 0;
+    let processedEntities = 0;
 
     for (const batch of batches) {
       try {
@@ -220,6 +222,12 @@ export class TagAnalysisService {
           `Auto-tag batch failed (${batch.length} entities):`,
           error instanceof Error ? error.message : error,
         );
+      }
+
+      // Report progress after each batch (even on failure — per-batch error isolation)
+      processedEntities += batch.length;
+      if (params.onBatchComplete) {
+        await params.onBatchComplete(processedEntities, entityContents.length);
       }
     }
 

@@ -162,6 +162,14 @@ export class LlmManager {
     return LlmManager.instance;
   }
 
+  /**
+   * Create a fresh LlmManager instance for worker context.
+   * Bypasses the singleton cache so each tenant gets its own instance.
+   */
+  static createForWorker(prisma: PrismaClient): LlmManager {
+    return new LlmManager(prisma);
+  }
+
   async getAdapter(llmIntegrationId: number): Promise<BaseLlmAdapter> {
     if (this.adapters.has(llmIntegrationId)) {
       return this.adapters.get(llmIntegrationId)!;
