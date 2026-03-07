@@ -27,6 +27,8 @@ export interface AutoTagJobResult {
   suggestions: Array<{
     entityId: number;
     entityType: EntityType;
+    entityName: string;
+    currentTags: string[];
     tags: Array<{
       tagName: string;
       isExisting: boolean;
@@ -112,9 +114,48 @@ const processor = async (job: Job<AutoTagJobData>): Promise<AutoTagJobResult> =>
     });
   }
 
+  // 7. Fetch entity names and current tags for the result
+  const entityMeta = new Map<number, { name: string; currentTags: string[] }>();
+  const entityIds = job.data.entityIds;
+
+  switch (job.data.entityType) {
+    case "repositoryCase": {
+      const entities = await prisma.repositoryCases.findMany({
+        where: { id: { in: entityIds } },
+        select: { id: true, name: true, tags: { select: { name: true } } },
+      });
+      for (const e of entities) {
+        entityMeta.set(e.id, { name: e.name, currentTags: e.tags.map((t) => t.name) });
+      }
+      break;
+    }
+    case "testRun": {
+      const entities = await prisma.testRuns.findMany({
+        where: { id: { in: entityIds } },
+        select: { id: true, name: true, tags: { select: { name: true } } },
+      });
+      for (const e of entities) {
+        entityMeta.set(e.id, { name: e.name, currentTags: e.tags.map((t) => t.name) });
+      }
+      break;
+    }
+    case "session": {
+      const entities = await prisma.sessions.findMany({
+        where: { id: { in: entityIds } },
+        select: { id: true, name: true, tags: { select: { name: true } } },
+      });
+      for (const e of entities) {
+        entityMeta.set(e.id, { name: e.name, currentTags: e.tags.map((t) => t.name) });
+      }
+      break;
+    }
+  }
+
   const suggestions = Array.from(entityMap.entries()).map(([entityId, tags]) => ({
     entityId,
     entityType: job.data.entityType,
+    entityName: entityMeta.get(entityId)?.name ?? `Entity ${entityId}`,
+    currentTags: entityMeta.get(entityId)?.currentTags ?? [],
     tags,
   }));
 
