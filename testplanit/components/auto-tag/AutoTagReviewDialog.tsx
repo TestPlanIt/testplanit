@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { invalidateModelQueries } from "~/utils/optimistic-updates";
 import { EntityList } from "./EntityList";
 import { EntitySuggestions } from "./EntitySuggestions";
@@ -44,6 +45,8 @@ export function AutoTagReviewDialog({
   job,
 }: AutoTagReviewDialogProps) {
   const queryClient = useQueryClient();
+  const t = useTranslations("autoTag.review");
+  const tCommon = useTranslations("common");
   const [selectedEntityId, setSelectedEntityId] = useState<number | null>(null);
 
   // Auto-select first entity when suggestions load or dialog opens
@@ -77,14 +80,17 @@ export function AutoTagReviewDialog({
           .map((e) => e.entityId),
       ).size;
 
+      const tagCount = existingCount + newCount;
       toast.success(
-        `${existingCount + newCount} tags applied to ${entityCount} ${entityCount === 1 ? "entity" : "entities"}${newCount > 0 ? `, ${newCount} new tags created` : ""}`,
+        newCount > 0
+          ? t("applySuccessNewTags", { tagCount, entityCount, newCount })
+          : t("applySuccess", { tagCount, entityCount }),
       );
 
       onOpenChange(false);
       job.reset();
     } catch (err: any) {
-      toast.error(err.message || "Failed to apply tags. Please try again.");
+      toast.error(err.message || t("applyError"));
     }
   }, [job, queryClient, onOpenChange]);
 
@@ -94,9 +100,9 @@ export function AutoTagReviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[600px] max-w-[900px] flex-col">
         <DialogHeader>
-          <DialogTitle>Review Tag Suggestions</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            Click tags to toggle acceptance. Double-click to edit a tag name.
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -123,7 +129,7 @@ export function AutoTagReviewDialog({
               />
             ) : (
               <p className="text-sm text-muted-foreground">
-                Select an entity to view tag suggestions.
+                {t("selectEntity")}
               </p>
             )}
           </div>
@@ -133,12 +139,12 @@ export function AutoTagReviewDialog({
         <DialogFooter className="flex items-center justify-between sm:justify-between">
           <p className="text-sm text-muted-foreground">
             {totalSelected > 0
-              ? `${job.summary.existingCount} existing tag${job.summary.existingCount !== 1 ? "s" : ""}, ${job.summary.newCount} new tag${job.summary.newCount !== 1 ? "s" : ""} will be created`
-              : "No tags selected"}
+              ? t("footerSummary", { existingCount: job.summary.existingCount, newCount: job.summary.newCount })
+              : t("noTagsSelected")}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {tCommon("cancel")}
             </Button>
             <Button
               onClick={handleApply}
@@ -147,7 +153,7 @@ export function AutoTagReviewDialog({
               {job.isApplying && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              {job.isApplying ? "Applying..." : "Apply"}
+              {job.isApplying ? t("applying") : tCommon("actions.apply")}
             </Button>
           </div>
         </DialogFooter>

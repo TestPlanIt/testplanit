@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tag } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { TagChip } from "./TagChip";
 import type { AutoTagSuggestionEntity, AutoTagSelection } from "./types";
 
@@ -19,6 +20,7 @@ export function EntitySuggestions({
   onToggle,
   onEdit,
 }: EntitySuggestionsProps) {
+  const t = useTranslations("autoTag.review");
   const entitySelections = selections.get(entity.entityId);
 
   return (
@@ -30,7 +32,7 @@ export function EntitySuggestions({
         {/* Suggested Tags */}
         <div className="space-y-2">
           <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Suggested Tags
+            {t("suggestedTags")}
           </h4>
           {entity.tags.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -49,7 +51,7 @@ export function EntitySuggestions({
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No suggestions for this entity.
+              {t("noSuggestions")}
             </p>
           )}
         </div>
@@ -58,7 +60,7 @@ export function EntitySuggestions({
         {entity.currentTags.length > 0 && (
           <div className="space-y-2">
             <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Already Applied
+              {t("alreadyApplied")}
             </h4>
             <div className="flex flex-wrap gap-2">
               {entity.currentTags.map((tagName) => (

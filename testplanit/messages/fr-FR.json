@@ -2,6 +2,7 @@
   "common": {
     "name": "Nom",
     "cancel": "Annuler",
+    "dismiss": "Rejeter",
     "of": "de",
     "on": "sur",
     "at": "à",
@@ -5319,8 +5320,7 @@
     "authBypass": {
       "title": "Vous avez accès à ce projet",
       "description": "Affichage en tant que {userName} avec accès à {projectName}.",
-      "viewInApp": "Voir dans l'application complète",
-      "dismiss": "Rejeter"
+      "viewInApp": "Voir dans l'application complète"
     }
   },
   "sharedSteps": {
@@ -5560,6 +5560,33 @@
     "expiresT oday": "L'essai gratuit expire aujourd'hui",
     "expired": "{count, plural, =1 {Essai expiré il y a 1 jour} other {Essai expiré il y a # jours}}",
     "contactSales": "Contactez le service commercial"
+  },
+  "autoTag": {
+    "review": {
+      "title": "Suggestions de balises pour les avis",
+      "description": "Cliquez sur les étiquettes pour les autoriser ou les désactiver. Double-cliquez pour modifier le nom d'une étiquette.",
+      "selectEntity": "Sélectionnez une entité pour afficher les suggestions de balises.",
+      "noTagsSelected": "Aucune étiquette sélectionnée",
+      "footerSummary": "{existingCount, plural, one {# balise existante} other {# balises existantes}}, {newCount, plural, one {# nouvelle balise} other {# nouvelles balises}} seront créées",
+      "applying": "Candidature...",
+      "applySuccess": "{tagCount, plural, one {# étiquette} other {# étiquettes}} appliquées à {entityCount, plural, one {# entité} other {# entités}}",
+      "applySuccessNewTags": "{tagCount, plural, one {# étiquette} other {# étiquettes}} appliquées à {entityCount, plural, one {# entité} other {# entités}}, {newCount, plural, one {# nouvelle étiquette} other {# nouvelles étiquettes}} créées",
+      "applyError": "Impossible d'appliquer les balises. Veuillez réessayer.",
+      "suggestedTags": "Suggestions de balises",
+      "noSuggestions": "Aucune suggestion pour cette entité.",
+      "alreadyApplied": "Déjà postulé",
+      "filterEntities": "Entités de filtrage...",
+      "noEntitiesMatch": "Aucun résultat ne correspond à votre recherche.",
+      "tagCount": "{count, plural, one {# balise} other {# balises}}",
+      "noTags": "aucun"
+    },
+    "progress": {
+      "starting": "Début de l'analyse...",
+      "analyzed": "Entités analysées {analyzed}/{total}",
+      "complete": "Analyse complète",
+      "reviewSuggestions": "Suggestions de révision",
+      "failed": "L'analyse a échoué"
+    }
   },
   "TrialExpired": {
     "title": "Votre période d'essai a expiré.",

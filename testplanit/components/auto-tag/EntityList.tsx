@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useTranslations } from "next-intl";
 import { cn } from "~/utils";
 import type { AutoTagSuggestionEntity, AutoTagSelection } from "./types";
 
@@ -20,6 +21,7 @@ export function EntityList({
   onSelectEntity,
   selections,
 }: EntityListProps) {
+  const t = useTranslations("autoTag.review");
   const [search, setSearch] = useState("");
 
   const filteredEntities = useMemo(() => {
@@ -33,7 +35,7 @@ export function EntityList({
       <div className="relative mb-2">
         <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Filter entities..."
+          placeholder={t("filterEntities")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-8"
@@ -59,9 +61,9 @@ export function EntityList({
                 <span className="truncate pr-2">{entity.entityName}</span>
                 <span className="shrink-0 text-xs text-muted-foreground">
                   {acceptedCount > 0
-                    ? `${acceptedCount} tag${acceptedCount !== 1 ? "s" : ""}`
+                    ? t("tagCount", { count: acceptedCount })
                     : hasSuggestions
-                      ? "none"
+                      ? t("noTags")
                       : "--"}
                 </span>
               </button>
@@ -69,7 +71,7 @@ export function EntityList({
           })}
           {filteredEntities.length === 0 && (
             <p className="px-3 py-4 text-center text-sm text-muted-foreground">
-              No entities match your search.
+              {t("noEntitiesMatch")}
             </p>
           )}
         </div>

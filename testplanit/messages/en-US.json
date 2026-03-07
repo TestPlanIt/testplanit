@@ -2,6 +2,7 @@
   "common": {
     "name": "Name",
     "cancel": "Cancel",
+    "dismiss": "Dismiss",
     "of": "of",
     "on": "on",
     "at": "at",
@@ -5319,8 +5320,7 @@
     "authBypass": {
       "title": "You have access to this project",
       "description": "Viewing as {userName} with access to {projectName}.",
-      "viewInApp": "View in full app",
-      "dismiss": "Dismiss"
+      "viewInApp": "View in full app"
     }
   },
   "sharedSteps": {
@@ -5560,6 +5560,33 @@
     "expiresT oday": "Trial expires today",
     "expired": "{count, plural, =1 {Trial expired 1 day ago} other {Trial expired # days ago}}",
     "contactSales": "Contact Sales"
+  },
+  "autoTag": {
+    "review": {
+      "title": "Review Tag Suggestions",
+      "description": "Click tags to toggle acceptance. Double-click to edit a tag name.",
+      "selectEntity": "Select an entity to view tag suggestions.",
+      "noTagsSelected": "No tags selected",
+      "footerSummary": "{existingCount, plural, one {# existing tag} other {# existing tags}}, {newCount, plural, one {# new tag} other {# new tags}} will be created",
+      "applying": "Applying...",
+      "applySuccess": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}",
+      "applySuccessNewTags": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}, {newCount, plural, one {# new tag} other {# new tags}} created",
+      "applyError": "Failed to apply tags. Please try again.",
+      "suggestedTags": "Suggested Tags",
+      "noSuggestions": "No suggestions for this entity.",
+      "alreadyApplied": "Already Applied",
+      "filterEntities": "Filter entities...",
+      "noEntitiesMatch": "No entities match your search.",
+      "tagCount": "{count, plural, one {# tag} other {# tags}}",
+      "noTags": "none"
+    },
+    "progress": {
+      "starting": "Starting analysis...",
+      "analyzed": "Analyzed {analyzed}/{total} entities",
+      "complete": "Analysis complete",
+      "reviewSuggestions": "Review Suggestions",
+      "failed": "Analysis failed"
+    }
   },
   "TrialExpired": {
     "title": "Your Trial Has Expired",

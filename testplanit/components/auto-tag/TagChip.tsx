@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Tag } from "lucide-react";
+import { Tag, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "~/utils";
@@ -88,7 +88,7 @@ export function TagChip({
       <Tag className="mr-1 h-3 w-3" />
       {tagName}
       {!isExisting && (
-        <span className="ml-1 text-[10px] font-normal opacity-70">New</span>
+        <Sparkles className="ml-1 h-3 w-3 opacity-70" />
       )}
     </Badge>
   );

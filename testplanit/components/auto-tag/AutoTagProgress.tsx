@@ -1,8 +1,9 @@
-"use client";
+ ones "use client";
 
 import { CheckCircle2, XCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { useTranslations } from "next-intl";
 import type { AutoTagJobState } from "./types";
 
 interface AutoTagProgressProps {
@@ -20,6 +21,9 @@ export function AutoTagProgress({
   onReview,
   onCancel,
 }: AutoTagProgressProps) {
+  const t = useTranslations("autoTag.progress");
+  const tCommon = useTranslations("common");
+
   if (status === "idle") return null;
 
   // Processing states: waiting or active
@@ -34,8 +38,8 @@ export function AutoTagProgress({
         <div className="min-w-0 flex-1 space-y-1">
           <p className="text-sm">
             {hasProgress
-              ? `Analyzed ${progress.analyzed}/${progress.total} entities`
-              : "Starting analysis..."}
+              ? t("analyzed", { analyzed: progress.analyzed, total: progress.total })
+              : t("starting")}
           </p>
           <Progress value={hasProgress ? percent : undefined} className="h-1.5" />
         </div>
@@ -46,7 +50,7 @@ export function AutoTagProgress({
           className="h-auto shrink-0 px-2 py-1 text-xs text-muted-foreground"
         >
           <X className="mr-1 h-3 w-3" />
-          Cancel
+          {tCommon("cancel")}
         </Button>
       </div>
     );
@@ -55,11 +59,11 @@ export function AutoTagProgress({
   // Completed
   if (status === "completed") {
     return (
-      <div className="flex items-center gap-3 rounded-md border border-green-200 bg-green-50 px-3 py-2 dark:border-green-900 dark:bg-green-950/30">
-        <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
-        <span className="flex-1 text-sm">Analysis complete</span>
+      <div className="flex items-center gap-3 rounded-md border border-success/30 bg-success/10 px-3 py-2">
+        <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+        <span className="flex-1 text-sm">{t("complete")}</span>
         <Button size="sm" onClick={onReview} className="h-auto px-3 py-1 text-xs">
-          Review Suggestions
+          {t("reviewSuggestions")}
         </Button>
       </div>
     );
@@ -68,10 +72,10 @@ export function AutoTagProgress({
   // Failed
   if (status === "failed") {
     return (
-      <div className="flex items-center gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900 dark:bg-red-950/30">
-        <XCircle className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
-        <span className="flex-1 text-sm text-red-700 dark:text-red-300">
-          {error || "Analysis failed"}
+      <div className="flex items-center gap-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2">
+        <XCircle className="h-4 w-4 shrink-0 text-destructive" />
+        <span className="flex-1 text-sm text-destructive">
+          {error || t("failed")}
         </span>
         <Button
           variant="ghost"
@@ -79,7 +83,7 @@ export function AutoTagProgress({
           onClick={onCancel}
           className="h-auto px-2 py-1 text-xs text-muted-foreground"
         >
-          Dismiss
+          {tCommon("dismiss")}
         </Button>
       </div>
     );

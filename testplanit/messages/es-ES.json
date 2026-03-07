@@ -2,6 +2,7 @@
   "common": {
     "name": "Nombre",
     "cancel": "Cancelar",
+    "dismiss": "Despedir",
     "of": "de",
     "on": "en",
     "at": "en",
@@ -110,7 +111,7 @@
         "testSuite": "Conjunto de pruebas:"
       },
       "junit": {
-        "details": "Detalles JUnit",
+        "details": "Detalles de JUnit",
         "import": {
           "trigger": "Importar resultados de pruebas",
           "title": "Importar resultados de pruebas",
@@ -1815,8 +1816,8 @@
           "description": "Sólo los campos estándar pueden ser editados cuando se seleccionan casos con diferentes plantillas. Los campos dinámicos pueden ser editados seleccionando los casos que utilizan la misma plantilla."
         },
         "junitLimitations": {
-          "title": "Limitaciones de Edición de Casos JUnit Test",
-          "description": "Los campos estimados y automatizados no pueden ser modificados para casos de prueba importados de archivos XML JUnit."
+          "title": "Limitaciones de la edición de casos de prueba de JUnit",
+          "description": "Los campos Estimación y Automatizado no se pueden modificar para los casos de prueba importados desde archivos XML de JUnit."
         }
       },
       "errors": {
@@ -3594,7 +3595,7 @@
       "allIntegrationsTested": "Todas las conexiones de modelos de IA han sido probadas",
       "failedToTestConnections": "Error al probar algunas conexiones",
       "notConfigured": "No configurada",
-      "defaultModel": "Modelo por defecto",
+      "defaultModel": "Modelo predeterminado",
       "budgetUsage": "Uso del presupuesto",
       "noBudget": "Ningún Presupuesto",
       "streaming": "Transmisión",
@@ -3621,15 +3622,15 @@
         "defaultModelDescription": "El modelo a usar por defecto",
         "maxTokensPerRequest": "Máximas fichas por solicitud",
         "maxRequestsPerMinute": "Máximo de solicitudes por minuto",
-        "costPerInputToken": "Cost Per Input Token ($)",
-        "costPerOutputToken": "Costo por Token de Salida ($)",
+        "costPerInputToken": "Costo por token de entrada ($)",
+        "costPerOutputToken": "Costo por token de salida ($)",
         "monthlyBudget": "Presupuesto mensual ($)",
         "monthlyBudgetPlaceholder": "100.00",
-        "monthlyBudgetDescription": "Límite presupuestario opcional para el seguimiento de uso",
+        "monthlyBudgetDescription": "Límite de presupuesto opcional para el seguimiento del uso",
         "defaultTemperature": "Temperatura por defecto",
         "defaultMaxTokens": "Tokens máximos por defecto",
         "timeout": "Tiempo de espera de solicitud (ms)",
-        "timeoutDescription": "Tiempo máximo de espera para la respuesta del modelo IA (5000-600000ms)",
+        "timeoutDescription": "Tiempo máximo de espera para la respuesta del modelo de IA (5000-600000 ms)",
         "streamingEnabled": "Activar Streaming",
         "streamingEnabledDescription": "Permitir transmisión de respuesta en tiempo real",
         "setAsDefault": "Establecer por defecto",
@@ -5319,8 +5320,7 @@
     "authBypass": {
       "title": "Tienes acceso a este proyecto",
       "description": "Visualización como {userName} con acceso a {projectName}.",
-      "viewInApp": "Ver en la aplicación completa",
-      "dismiss": "Despedir"
+      "viewInApp": "Ver en la aplicación completa"
     }
   },
   "sharedSteps": {
@@ -5560,6 +5560,33 @@
     "expiresT oday": "El período de prueba finaliza hoy",
     "expired": "{count, plural, =1 {La prueba expiró hace 1 día} other {La prueba expiró hace # días}}",
     "contactSales": "Contacte con el departamento de ventas"
+  },
+  "autoTag": {
+    "review": {
+      "title": "Sugerencias de etiquetas de revisión",
+      "description": "Haga clic en las etiquetas para activar o desactivar la aceptación. Haga doble clic para editar el nombre de una etiqueta.",
+      "selectEntity": "Seleccione una entidad para ver sugerencias de etiquetas.",
+      "noTagsSelected": "No hay etiquetas seleccionadas",
+      "footerSummary": "{existingCount, plural, one {# etiqueta existente} other {# etiquetas existentes}}, {newCount, plural, one {# etiqueta nueva} other {# se crearán nuevas etiquetas}}",
+      "applying": "Aplicando...",
+      "applySuccess": "{tagCount, plural, one {# etiqueta} other {# etiquetas}} aplicadas a {entityCount, plural, one {# entidad} other {# entidades}}",
+      "applySuccessNewTags": "{tagCount, plural, one {# etiqueta} other {# etiquetas}} aplicadas a {entityCount, plural, one {# entidad} other {# entidades}}, {newCount, plural, one {# nueva etiqueta} other {# nuevas etiquetas}} creadas",
+      "applyError": "No se pudieron aplicar las etiquetas. Inténtalo de nuevo.",
+      "suggestedTags": "Etiquetas sugeridas",
+      "noSuggestions": "No hay sugerencias para esta entidad.",
+      "alreadyApplied": "Ya aplicado",
+      "filterEntities": "Filtrar entidades...",
+      "noEntitiesMatch": "No hay entidades que coincidan con tu búsqueda.",
+      "tagCount": "{count, plural, one {# etiqueta} other {# etiquetas}}",
+      "noTags": "ninguno"
+    },
+    "progress": {
+      "starting": "Comenzando el análisis...",
+      "analyzed": "Entidades analizadas {analyzed}/{total}",
+      "complete": "Análisis completo",
+      "reviewSuggestions": "Sugerencias de revisión",
+      "failed": "Análisis fallido"
+    }
   },
   "TrialExpired": {
     "title": "Su período de prueba ha expirado.",
