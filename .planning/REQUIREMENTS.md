@@ -9,10 +9,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### LLM Feature (Backend)
 
-- [ ] **LLM-01**: System can analyze entity content (title, description, steps, custom field values) and suggest matching tags
+- [x] **LLM-01**: System can analyze entity content (title, description, steps, custom field values) and suggest matching tags
 - [ ] **LLM-02**: System supports smart batching of entities based on estimated token count
 - [ ] **LLM-03**: AI can suggest both existing tags and new tags that don't exist yet
-- [ ] **LLM-04**: Prompt is configurable via the existing prompt config system (project > default > fallback)
+- [x] **LLM-04**: Prompt is configurable via the existing prompt config system (project > default > fallback)
 
 ### API
 
@@ -58,10 +58,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LLM-01 | Phase 1 | Pending |
+| LLM-01 | Phase 1 | Complete |
 | LLM-02 | Phase 1 | Pending |
 | LLM-03 | Phase 1 | Pending |
-| LLM-04 | Phase 1 | Pending |
+| LLM-04 | Phase 1 | Complete |
 | API-01 | Phase 2 | Pending |
 | API-02 | Phase 2 | Pending |
 | API-03 | Phase 2 | Pending |
