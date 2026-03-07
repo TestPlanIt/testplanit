@@ -58,27 +58,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LLM-01 | -- | Pending |
-| LLM-02 | -- | Pending |
-| LLM-03 | -- | Pending |
-| LLM-04 | -- | Pending |
-| API-01 | -- | Pending |
-| API-02 | -- | Pending |
-| API-03 | -- | Pending |
-| UI-01 | -- | Pending |
-| UI-02 | -- | Pending |
-| UI-03 | -- | Pending |
-| UI-04 | -- | Pending |
-| EP-01 | -- | Pending |
-| EP-02 | -- | Pending |
-| EP-03 | -- | Pending |
-| EP-04 | -- | Pending |
+| LLM-01 | Phase 1 | Pending |
+| LLM-02 | Phase 1 | Pending |
+| LLM-03 | Phase 1 | Pending |
+| LLM-04 | Phase 1 | Pending |
+| API-01 | Phase 2 | Pending |
+| API-02 | Phase 2 | Pending |
+| API-03 | Phase 2 | Pending |
+| UI-01 | Phase 3 | Pending |
+| UI-02 | Phase 3 | Pending |
+| UI-03 | Phase 3 | Pending |
+| UI-04 | Phase 3 | Pending |
+| EP-01 | Phase 4 | Pending |
+| EP-02 | Phase 4 | Pending |
+| EP-03 | Phase 4 | Pending |
+| EP-04 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 15 total
-- Mapped to phases: 0
-- Unmapped: 15
+- Mapped to phases: 15
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-07*
-*Last updated: 2026-03-07 after initial definition*
+*Last updated: 2026-03-07 after roadmap creation*
