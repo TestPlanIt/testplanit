@@ -1,0 +1,84 @@
+# Requirements: AI Bulk Auto-Tagging
+
+**Defined:** 2026-03-07
+**Core Value:** Users can quickly organize large numbers of test artifacts with meaningful tags without manual effort
+
+## v1 Requirements
+
+Requirements for initial release. Each maps to roadmap phases.
+
+### LLM Feature (Backend)
+
+- [ ] **LLM-01**: System can analyze entity content (title, description, steps, custom field values) and suggest matching tags
+- [ ] **LLM-02**: System supports smart batching of entities based on estimated token count
+- [ ] **LLM-03**: AI can suggest both existing tags and new tags that don't exist yet
+- [ ] **LLM-04**: Prompt is configurable via the existing prompt config system (project > default > fallback)
+
+### API
+
+- [ ] **API-01**: User can request AI tag suggestions for a set of entity IDs within a project
+- [ ] **API-02**: System processes large batches (50+) as background jobs with progress tracking; user can navigate away and return to check status
+- [ ] **API-03**: User can apply accepted tag suggestions (including creating new tags) in bulk
+
+### UI - Review Dialog
+
+- [ ] **UI-01**: User can review AI-suggested tags per entity before applying
+- [ ] **UI-02**: User can accept, reject, or modify suggestions per entity
+- [ ] **UI-03**: New tag suggestions are visually distinct from existing tags
+- [ ] **UI-04**: User can apply all accepted suggestions with one action
+
+### UI - Entry Points
+
+- [ ] **EP-01**: User can trigger AI tagging from bulk action menu on cases list
+- [ ] **EP-02**: User can trigger AI tagging from bulk action menu on test runs list
+- [ ] **EP-03**: User can trigger AI tagging from bulk action menu on sessions list
+- [ ] **EP-04**: User can trigger AI tagging from tags management page with entity type selection
+
+## v2 Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Enhancements
+
+- **ENH-01**: User can trigger AI tag suggestions for a single entity from entity detail view
+- **ENH-02**: System learns from user's accept/reject patterns to improve suggestions over time
+- **ENH-03**: Cross-project tagging support
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Auto-apply without review | Users must always confirm before tags are applied |
+| Cross-project tagging | Tags are meaningful within project context; adds complexity |
+| Tag hierarchy/taxonomy | Separate feature, not related to AI suggestion |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| LLM-01 | -- | Pending |
+| LLM-02 | -- | Pending |
+| LLM-03 | -- | Pending |
+| LLM-04 | -- | Pending |
+| API-01 | -- | Pending |
+| API-02 | -- | Pending |
+| API-03 | -- | Pending |
+| UI-01 | -- | Pending |
+| UI-02 | -- | Pending |
+| UI-03 | -- | Pending |
+| UI-04 | -- | Pending |
+| EP-01 | -- | Pending |
+| EP-02 | -- | Pending |
+| EP-03 | -- | Pending |
+| EP-04 | -- | Pending |
+
+**Coverage:**
+- v1 requirements: 15 total
+- Mapped to phases: 0
+- Unmapped: 15
+
+---
+*Requirements defined: 2026-03-07*
+*Last updated: 2026-03-07 after initial definition*
