@@ -31,22 +31,22 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 01-01-PLAN.md — Register AUTO_TAG feature, define types, create fallback prompt, build content extractors
-- [ ] 01-02-PLAN.md — Build tag analysis service with smart batching, LLM orchestration, and fuzzy tag matching
+- [x] 01-01-PLAN.md — Register AUTO_TAG feature, define types, create fallback prompt, build content extractors
+- [x] 01-02-PLAN.md — Build tag analysis service with smart batching, LLM orchestration, and fuzzy tag matching
 
 ### Phase 2: API and Background Processing
-**Goal**: Users can request tag suggestions via API and the system handles large batches as background jobs with progress tracking
+**Goal**: Users can request tag suggestions via API and the system handles all batches as background jobs with progress tracking
 **Depends on**: Phase 1
 **Requirements**: API-01, API-02, API-03
 **Success Criteria** (what must be TRUE):
   1. A user can submit a set of entity IDs and receive AI tag suggestions for those entities
-  2. When the selection exceeds the inline threshold (50+ entities), processing happens as a background job and the user can navigate away and return to check progress
+  2. All processing happens as a background job and the user can navigate away and return to check progress
   3. A user can submit accepted suggestions and all tags (including newly created ones) are applied to the correct entities in bulk
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — Queue infrastructure, worker with progress/cancellation, TagAnalysisService callback support
+- [ ] 02-02-PLAN.md — Submit, status, cancel, and bulk apply API routes
 
 ### Phase 3: Review Dialog
 **Goal**: Users can review AI-suggested tags per entity and decide which to accept before anything is applied
@@ -86,6 +86,6 @@ Phases execute in numeric order: 1 > 2 > 3 > 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. LLM Tag Analysis | 2/2 | Complete   | 2026-03-07 |
-| 2. API and Background Processing | 0/0 | Not started | - |
+| 2. API and Background Processing | 0/2 | Planning complete | - |
 | 3. Review Dialog | 0/0 | Not started | - |
 | 4. Entry Point Integrations | 0/0 | Not started | - |
