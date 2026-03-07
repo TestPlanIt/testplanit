@@ -91,7 +91,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
     try {
       // Use request timeout if provided, otherwise fall back to config timeout
       const timeout = request.timeout ?? this.getTimeout();
-      const response = await fetch(this.getChatCompletionsUrl(), {
+      const response = await this.safeFetch(this.getChatCompletionsUrl(), {
         method: "POST",
         headers: this.getOpenAIHeaders(),
         body: JSON.stringify(openAIRequest),
@@ -136,7 +136,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
     // Use request timeout if provided, otherwise fall back to config timeout.
     // timeout === 0 means no timeout (e.g. streaming where the full duration is unknown).
     const timeout = request.timeout ?? this.getTimeout();
-    const response = await fetch(this.getChatCompletionsUrl(), {
+    const response = await this.safeFetch(this.getChatCompletionsUrl(), {
       method: "POST",
       headers: this.getOpenAIHeaders(),
       body: JSON.stringify(openAIRequest),
@@ -210,7 +210,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
 
   async getAvailableModels(): Promise<LlmModelInfo[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/models`, {
+      const response = await this.safeFetch(`${this.baseUrl}/models`, {
         headers: this.getOpenAIHeaders(),
         signal: AbortSignal.timeout(10000),
       });
@@ -245,7 +245,7 @@ export class OpenAIAdapter extends BaseLlmAdapter {
 
   async testConnection(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/models`, {
+      const response = await this.safeFetch(`${this.baseUrl}/models`, {
         headers: this.getOpenAIHeaders(),
         signal: AbortSignal.timeout(5000),
       });

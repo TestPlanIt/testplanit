@@ -12,11 +12,47 @@ import type {
   RateLimitInfo,
 } from "../types";
 
+/**
+ * SSRF prevention for LLM adapter URLs.
+ *
+ * Unlike the stricter `isSsrfSafe` in `utils/ssrf.ts` (which blocks all
+ * private IPs), this check intentionally allows localhost and private
+ * network addresses because adapters like Ollama legitimately use local
+ * endpoints. It only blocks cloud metadata services and non-HTTP protocols.
+ */
+const SSRF_BLOCKED_HOSTS = [
+  "169.254.169.254", // AWS/GCP/Azure instance metadata
+  "metadata.google.internal", // GCP metadata
+  "metadata.google",
+  "100.100.100.200", // Alibaba Cloud metadata
+];
+
+function assertSafeUrl(url: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error(`Invalid URL: ${url}`);
+  }
+
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    throw new Error(`URL must use http or https protocol: ${url}`);
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  if (SSRF_BLOCKED_HOSTS.includes(hostname)) {
+    throw new Error(`Requests to ${hostname} are not allowed`);
+  }
+}
+
 export abstract class BaseLlmAdapter {
   protected config: LlmAdapterConfig;
 
   constructor(config: LlmAdapterConfig) {
     this.config = config;
+    if (config.baseUrl) {
+      assertSafeUrl(config.baseUrl);
+    }
   }
 
   /**
@@ -68,6 +104,18 @@ export abstract class BaseLlmAdapter {
    */
   getTimeout(): number {
     return this.config.config.timeout;
+  }
+
+  /**
+   * Fetch wrapper that validates the URL against SSRF blocklist before
+   * making the request. Use this instead of bare `fetch()` in adapters.
+   */
+  protected safeFetch(
+    url: string,
+    init?: RequestInit
+  ): Promise<Response> {
+    assertSafeUrl(url);
+    return fetch(url, init);
   }
 
   /**
