@@ -183,6 +183,20 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>System Administrators get started at <strong>Admin → Prompt Configs</strong> (Tools & Integrations section). See the <a href="https://docs.testplanit.com/user-guide/llm-integrations#prompt-configurations" target="_blank">documentation</a> for details.</p>
     `,
   },
+  "0.15.0": {
+    title: "New Feature: QuickScript",
+    message: `
+      <p>Convert your manual test cases into automation scripts right from the Repository.</p>
+      <ul>
+        <li>Select test cases and click <strong>QuickScript</strong> to export as real, reviewable code</li>
+        <li>40 built-in templates covering popular frameworks and languages</li>
+        <li>Export as a single file or individual files bundled in a ZIP</li>
+        <li>Toggle <strong>Generate with AI</strong> for complete, framework-idiomatic test files</li>
+        <li>Connect a code repository for AI output that uses your actual page objects, fixtures, and helpers</li>
+      </ul>
+      <p>Manage templates at <strong>Admin → QuickScript Templates</strong>. See the <a href="https://docs.testplanit.com/user-guide/projects/quickscript" target="_blank">documentation</a> or watch the <a href="https://www.youtube.com/watch?v=ZUByrgED-ao" target="_blank">demo video</a>.</p>
+    `,
+  },
 };
 
 /**
