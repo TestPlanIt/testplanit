@@ -13,7 +13,7 @@ Deliver AI-powered bulk tagging for test cases, test runs, and sessions. The bui
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: LLM Tag Analysis** - Backend service that analyzes entity content and produces tag suggestions with smart batching (completed 2026-03-07)
-- [ ] **Phase 2: API and Background Processing** - API routes for requesting suggestions, background job processing for large batches, and bulk apply endpoint
+- [x] **Phase 2: API and Background Processing** - API routes for requesting suggestions, background job processing for large batches, and bulk apply endpoint (completed 2026-03-07)
 - [ ] **Phase 3: Review Dialog** - UI component for reviewing, accepting/rejecting, and applying AI-suggested tags
 - [ ] **Phase 4: Entry Point Integrations** - Wire AI tagging into bulk action menus on list views and the tags management page
 
@@ -42,7 +42,7 @@ Plans:
   1. A user can submit a set of entity IDs and receive AI tag suggestions for those entities
   2. All processing happens as a background job and the user can navigate away and return to check progress
   3. A user can submit accepted suggestions and all tags (including newly created ones) are applied to the correct entities in bulk
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 02-01-PLAN.md — Queue infrastructure, worker with progress/cancellation, TagAnalysisService callback support
@@ -86,6 +86,6 @@ Phases execute in numeric order: 1 > 2 > 3 > 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. LLM Tag Analysis | 2/2 | Complete   | 2026-03-07 |
-| 2. API and Background Processing | 0/2 | Planning complete | - |
+| 2. API and Background Processing | 2/2 | Complete   | 2026-03-07 |
 | 3. Review Dialog | 0/0 | Not started | - |
 | 4. Entry Point Integrations | 0/0 | Not started | - |
