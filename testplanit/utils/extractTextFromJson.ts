@@ -5,8 +5,19 @@
 export const extractTextFromNode = (node: any): string => {
   if (!node) return "";
 
-  // If the node itself is just a string, return it
-  if (typeof node === "string") return node;
+  // If the node is a string, try to parse it as JSON in case
+  // it's a stringified Tiptap document (common with Prisma Json fields)
+  if (typeof node === "string") {
+    try {
+      const parsed = JSON.parse(node);
+      if (typeof parsed === "object" && parsed !== null) {
+        return extractTextFromNode(parsed);
+      }
+    } catch {
+      // Not JSON, return as plain text
+    }
+    return node;
+  }
 
   // If the node has a direct text property, return it
   if (node.text && typeof node.text === "string") return node.text;

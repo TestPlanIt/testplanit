@@ -32,18 +32,21 @@ export async function indexProject(
 
   const indexName = getEntityIndexName(SearchableEntityType.PROJECT, tenantId);
 
+  const noteText = project.note ? extractTextFromNode(project.note) : "";
+  const docsText = project.docs ? extractTextFromNode(project.docs) : "";
+
   const searchableContent = [
     project.name,
-    project.note ? extractTextFromNode(project.note) : "",
-    project.docs ? extractTextFromNode(project.docs) : "",
+    noteText,
+    docsText,
   ].join(" ");
 
   const document = {
     id: project.id,
     name: project.name,
     iconUrl: project.iconUrl,
-    note: project.note,
-    docs: project.docs,
+    note: noteText,
+    docs: docsText,
     isDeleted: project.isDeleted,
     createdAt: project.createdAt,
     createdById: project.createdBy,
@@ -165,10 +168,13 @@ export async function syncAllProjectsToElasticsearch(
 
   const bulkBody = [];
   for (const project of projects) {
+    const noteText = project.note ? extractTextFromNode(project.note) : "";
+    const docsText = project.docs ? extractTextFromNode(project.docs) : "";
+
     const searchableContent = [
       project.name,
-      project.note ? extractTextFromNode(project.note) : "",
-      project.docs ? extractTextFromNode(project.docs) : "",
+      noteText,
+      docsText,
     ].join(" ");
 
     bulkBody.push({
@@ -182,8 +188,8 @@ export async function syncAllProjectsToElasticsearch(
       id: project.id,
       name: project.name,
       iconUrl: project.iconUrl,
-      note: project.note,
-      docs: project.docs,
+      note: noteText,
+      docs: docsText,
       isDeleted: project.isDeleted,
       createdAt: project.createdAt,
       createdById: project.createdBy,
