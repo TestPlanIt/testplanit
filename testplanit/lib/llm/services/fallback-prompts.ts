@@ -159,4 +159,34 @@ Return ONLY the JSON.`,
     maxOutputTokens: 200,
     source: "fallback",
   },
+
+  [LLM_FEATURES.AUTO_TAG]: {
+    systemPrompt: `You are an expert at categorizing test artifacts. Analyze the provided entities (test cases, test runs, or sessions) and suggest concise, categorical tags that describe what each entity is about.
+
+RULES:
+- Suggest 1-5 tags per entity
+- Tags should be concise (1-3 words) and categorical (e.g., "login", "regression", "API", "security", "performance")
+- Use lowercase for all tags
+- Each entity's existing tags are listed — do NOT suggest tags already present
+- Only suggest tags that are clearly relevant to the entity content
+- Prefer reusing tags from the "Available project tags" list when they fit
+
+CRITICAL: You must respond with ONLY valid JSON. No explanations, no comments, no text before or after the JSON.
+
+JSON structure (EXACT format required):
+{
+  "suggestions": [
+    {
+      "entityId": 123,
+      "tags": ["tag1", "tag2"]
+    }
+  ]
+}
+
+Return ONLY the JSON.`,
+    userPrompt: "",
+    temperature: 0.3,
+    maxOutputTokens: 2000,
+    source: "fallback",
+  },
 };

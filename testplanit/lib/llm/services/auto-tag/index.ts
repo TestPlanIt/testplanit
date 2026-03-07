@@ -7,3 +7,8 @@ export type {
   BatchConfig,
   AutoTagAIResponse,
 } from "./types";
+export {
+  extractTiptapText,
+  extractFieldValue,
+  extractEntityContent,
+} from "./content-extractor";
