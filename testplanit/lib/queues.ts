@@ -8,6 +8,7 @@ import {
   TESTMO_IMPORT_QUEUE_NAME,
   ELASTICSEARCH_REINDEX_QUEUE_NAME,
   AUDIT_LOG_QUEUE_NAME,
+  AUTO_TAG_QUEUE_NAME,
 } from "./queueNames";
 
 // Re-export queue names for backward compatibility
@@ -19,6 +20,7 @@ export {
   TESTMO_IMPORT_QUEUE_NAME,
   ELASTICSEARCH_REINDEX_QUEUE_NAME,
   AUDIT_LOG_QUEUE_NAME,
+  AUTO_TAG_QUEUE_NAME,
 };
 
 // Lazy-initialized queue instances
@@ -29,6 +31,7 @@ let _syncQueue: Queue | null = null;
 let _testmoImportQueue: Queue | null = null;
 let _elasticsearchReindexQueue: Queue | null = null;
 let _auditLogQueue: Queue | null = null;
+let _autoTagQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -300,6 +303,46 @@ export function getAuditLogQueue(): Queue | null {
 }
 
 /**
+ * Get the auto-tag queue instance (lazy initialization)
+ * Used for background LLM tag suggestion processing
+ */
+export function getAutoTagQueue(): Queue | null {
+  if (_autoTagQueue) return _autoTagQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${AUTO_TAG_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+
+  _autoTagQueue = new Queue(AUTO_TAG_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 5000,
+      },
+      removeOnComplete: {
+        age: 3600 * 24, // 24 hours
+        count: 500,
+      },
+      removeOnFail: {
+        age: 3600 * 24 * 7, // 7 days
+      },
+    },
+  });
+
+  console.log(`Queue "${AUTO_TAG_QUEUE_NAME}" initialized.`);
+
+  _autoTagQueue.on("error", (error) => {
+    console.error(`Queue ${AUTO_TAG_QUEUE_NAME} error:`, error);
+  });
+
+  return _autoTagQueue;
+}
+
+/**
  * Get all queues (initializes all of them)
  * Use this only when you need access to all queues (e.g., admin dashboard)
  */
@@ -312,5 +355,6 @@ export function getAllQueues() {
     testmoImportQueue: getTestmoImportQueue(),
     elasticsearchReindexQueue: getElasticsearchReindexQueue(),
     auditLogQueue: getAuditLogQueue(),
+    autoTagQueue: getAutoTagQueue(),
   };
 }

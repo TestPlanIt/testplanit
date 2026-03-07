@@ -25,6 +25,7 @@ const entryPoints = [
   'workers/testmoImportWorker.ts',
   'workers/elasticsearchReindexWorker.ts',
   'workers/auditLogWorker.ts',
+  'workers/autoTagWorker.ts',
   'scheduler.ts',
 ];
 
