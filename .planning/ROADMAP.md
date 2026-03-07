@@ -28,11 +28,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Entities are grouped into batches that respect estimated token limits so no single LLM call exceeds context window
   3. Suggestions include both existing project tags and new tag names that do not yet exist in the project
   4. The tag suggestion prompt is resolved through the existing prompt config chain (project-specific > system default > fallback)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — Register AUTO_TAG feature, define types, create fallback prompt, build content extractors
+- [ ] 01-02-PLAN.md — Build tag analysis service with smart batching, LLM orchestration, and fuzzy tag matching
 
 ### Phase 2: API and Background Processing
 **Goal**: Users can request tag suggestions via API and the system handles large batches as background jobs with progress tracking
@@ -85,7 +85,7 @@ Phases execute in numeric order: 1 > 2 > 3 > 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. LLM Tag Analysis | 0/0 | Not started | - |
+| 1. LLM Tag Analysis | 0/2 | Planning complete | - |
 | 2. API and Background Processing | 0/0 | Not started | - |
 | 3. Review Dialog | 0/0 | Not started | - |
 | 4. Entry Point Integrations | 0/0 | Not started | - |
