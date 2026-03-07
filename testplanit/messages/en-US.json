@@ -3106,7 +3106,16 @@
         "fallbackName": "this repository"
       },
       "testConnection": "Test Connection",
-      "connectionSuccess": "Connection successful"
+      "connectionSuccess": "Connection successful",
+      "connectionFailed": "Connection failed",
+      "networkError": "Network error",
+      "editTitle": "Edit Code Repository",
+      "addTitle": "Add Code Repository",
+      "repositoryUpdated": "Repository updated",
+      "repositoryCreated": "Repository created",
+      "saveFailed": "Failed to save repository",
+      "namePlaceholder": "My Repository",
+      "selectProvider": "Select provider"
     },
     "exportTemplates": {
       "title": "QuickScript Templates",

@@ -3106,7 +3106,16 @@
         "fallbackName": "este repositorio"
       },
       "testConnection": "Conexión de prueba",
-      "connectionSuccess": "Conexión exitosa"
+      "connectionSuccess": "Conexión exitosa",
+      "connectionFailed": "La conexión falló",
+      "networkError": "Error de red",
+      "editTitle": "Editar repositorio de código",
+      "addTitle": "Agregar repositorio de código",
+      "repositoryUpdated": "Repositorio actualizado",
+      "repositoryCreated": "Repositorio creado",
+      "saveFailed": "No se pudo guardar el repositorio",
+      "namePlaceholder": "Mi repositorio",
+      "selectProvider": "Seleccionar proveedor"
     },
     "exportTemplates": {
       "title": "Plantillas de QuickScript",

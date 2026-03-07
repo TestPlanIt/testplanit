@@ -3106,7 +3106,16 @@
         "fallbackName": "ce dépôt"
       },
       "testConnection": "Test de connexion",
-      "connectionSuccess": "Connexion réussie"
+      "connectionSuccess": "Connexion réussie",
+      "connectionFailed": "Échec de la connexion",
+      "networkError": "Erreur réseau",
+      "editTitle": "Modifier le dépôt de code",
+      "addTitle": "Ajouter un dépôt de code",
+      "repositoryUpdated": "Dépôt mis à jour",
+      "repositoryCreated": "Dépôt créé",
+      "saveFailed": "Échec de l'enregistrement du dépôt",
+      "namePlaceholder": "Mon dépôt",
+      "selectProvider": "Sélectionner le fournisseur"
     },
     "exportTemplates": {
       "title": "Modèles QuickScript",

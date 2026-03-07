@@ -120,7 +120,7 @@ export function CodeRepositoryModal({
       const data = await response.json();
       setTestResult(data);
     } catch {
-      setTestResult({ success: false, error: "Network error" });
+      setTestResult({ success: false, error: t("networkError") });
     } finally {
       setIsTesting(false);
     }
@@ -158,11 +158,11 @@ export function CodeRepositoryModal({
           },
         });
       }
-      toast.success(repository ? "Repository updated" : "Repository created");
+      toast.success(repository ? t("repositoryUpdated") : t("repositoryCreated"));
       onSaved();
       onClose();
     } catch (err: any) {
-      toast.error(err?.info?.message ?? "Failed to save repository");
+      toast.error(err?.info?.message ?? t("saveFailed"));
     }
   };
 
@@ -171,7 +171,7 @@ export function CodeRepositoryModal({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {repository ? "Edit Code Repository" : "Add Code Repository"}
+            {repository ? t("editTitle") : t("addTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -187,7 +187,7 @@ export function CodeRepositoryModal({
                     <HelpPopover helpKey="codeRepository.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="My Repository" />
+                    <Input {...field} placeholder={t("namePlaceholder")} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -207,7 +207,7 @@ export function CodeRepositoryModal({
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select provider" />
+                          <SelectValue placeholder={t("selectProvider")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -273,7 +273,7 @@ export function CodeRepositoryModal({
                     <>
                       <XCircle className="h-4 w-4 text-destructive" />
                       <span className="text-sm text-destructive">
-                        {testResult.error ?? "Connection failed"}
+                        {testResult.error ?? t("connectionFailed")}
                       </span>
                     </>
                   )}
