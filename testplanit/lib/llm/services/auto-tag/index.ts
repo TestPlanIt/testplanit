@@ -12,3 +12,5 @@ export {
   extractFieldValue,
   extractEntityContent,
 } from "./content-extractor";
+export { TagAnalysisService } from "./tag-analysis.service";
+export { matchTagSuggestions, normalizeTagName } from "./tag-matcher";
