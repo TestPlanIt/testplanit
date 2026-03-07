@@ -8,6 +8,7 @@ export const LLM_FEATURES = {
   MAGIC_SELECT_CASES: "magic_select_cases",
   EDITOR_ASSISTANT: "editor_assistant",
   LLM_TEST: "llm_test",
+  AUTO_TAG: "auto_tag",
 } as const;
 
 export type LlmFeature = (typeof LLM_FEATURES)[keyof typeof LLM_FEATURES];
@@ -21,4 +22,5 @@ export const LLM_FEATURE_LABELS: Record<LlmFeature, string> = {
   [LLM_FEATURES.MAGIC_SELECT_CASES]: "Smart Test Case Selection",
   [LLM_FEATURES.EDITOR_ASSISTANT]: "Editor Writing Assistant",
   [LLM_FEATURES.LLM_TEST]: "LLM Connection Test",
+  [LLM_FEATURES.AUTO_TAG]: "AI Tag Suggestions",
 };

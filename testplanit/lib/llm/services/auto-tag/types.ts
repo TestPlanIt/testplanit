@@ -1,0 +1,50 @@
+export type EntityType = "repositoryCase" | "testRun" | "session";
+
+/** Represents one entity's content extracted for LLM consumption */
+export interface EntityContent {
+  id: number;
+  entityType: EntityType;
+  name: string;
+  textContent: string;
+  existingTagNames: string[];
+  estimatedTokens: number;
+}
+
+/** A single tag suggestion from the AI */
+export interface TagSuggestion {
+  entityId: number;
+  entityType: EntityType;
+  tagName: string;
+  isExisting: boolean;
+  matchedExistingTag?: string;
+  confidence?: number;
+}
+
+/** Result for one batch of entities */
+export interface BatchAnalysisResult {
+  suggestions: TagSuggestion[];
+  tokensUsed: number;
+}
+
+/** Full result across all batches */
+export interface TagAnalysisResult {
+  suggestions: TagSuggestion[];
+  totalTokensUsed: number;
+  batchCount: number;
+  entityCount: number;
+}
+
+/** Configuration for batching */
+export interface BatchConfig {
+  maxTokensPerRequest: number;
+  contentBudgetRatio: number;
+  systemPromptTokens: number;
+}
+
+/** Raw AI response shape (what we expect back from the LLM) */
+export interface AutoTagAIResponse {
+  suggestions: Array<{
+    entityId: number;
+    tags: string[];
+  }>;
+}
