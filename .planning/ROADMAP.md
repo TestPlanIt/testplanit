@@ -72,11 +72,12 @@ Plans:
   2. User can select test runs on the test runs list, open bulk actions, and trigger AI tagging
   3. User can select sessions on the sessions list, open bulk actions, and trigger AI tagging
   4. User can trigger AI tagging from the tags management page by choosing an entity type and selecting entities
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md — localStorage persistence for useAutoTagJob, i18n keys, and cases list bulk action integration
+- [ ] 04-02-PLAN.md — Tag All buttons for test runs and sessions pages
+- [ ] 04-03-PLAN.md — AI Auto-Tag popover on tags management page
 
 ## Progress
 
@@ -88,4 +89,4 @@ Phases execute in numeric order: 1 > 2 > 3 > 4
 | 1. LLM Tag Analysis | 2/2 | Complete   | 2026-03-07 |
 | 2. API and Background Processing | 2/2 | Complete   | 2026-03-07 |
 | 3. Review Dialog | 1/2 | In Progress|  |
-| 4. Entry Point Integrations | 0/0 | Not started | - |
+| 4. Entry Point Integrations | 0/3 | Not started | - |
