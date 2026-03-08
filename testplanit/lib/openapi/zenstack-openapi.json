@@ -608,7 +608,8 @@
           "USER_REGISTERED",
           "COMMENT_MENTION",
           "MILESTONE_DUE_REMINDER",
-          "SHARE_LINK_ACCESSED"
+          "SHARE_LINK_ACCESSED",
+          "LLM_BUDGET_ALERT"
         ]
       },
       "ShareLinkEntityType": {

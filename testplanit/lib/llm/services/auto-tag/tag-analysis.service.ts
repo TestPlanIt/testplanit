@@ -70,8 +70,9 @@ export function createBatches(
       continue;
     }
 
-    // Check if adding this entity would exceed budget
-    if (currentTokens + entity.estimatedTokens > contentBudget) {
+    // Check if adding this entity would exceed input budget or entity count limit
+    const maxPerBatch = config.maxEntitiesPerBatch ?? Infinity;
+    if (currentTokens + entity.estimatedTokens > contentBudget || currentBatch.length >= maxPerBatch) {
       // Start new batch
       if (currentBatch.length > 0) {
         batches.push(currentBatch);
@@ -109,11 +110,11 @@ export class TagAnalysisService {
   async analyzeTags(params: AnalyzeTagsParams): Promise<TagAnalysisResult> {
     const { entityIds, entityType, projectId, userId } = params;
 
-    // 1. Get default LLM integration
-    const integrationId = await this.llmManager.getDefaultIntegration();
+    // 1. Get project-level LLM integration (falls back to system default)
+    const integrationId = await this.llmManager.getProjectIntegration(projectId);
     if (!integrationId) {
       throw new Error(
-        "No default LLM integration configured. Please set up an LLM provider in admin settings.",
+        "No LLM integration configured. Please set up an LLM provider in admin settings or assign one to this project.",
       );
     }
 
@@ -122,6 +123,10 @@ export class TagAnalysisService {
       where: { llmIntegrationId: integrationId },
     });
     const maxTokensPerRequest = providerConfig?.maxTokensPerRequest ?? 4096;
+
+    console.log(
+      `[auto-tag] Using integration ${integrationId}, model: ${providerConfig?.defaultModel}, maxTokensPerRequest: ${maxTokensPerRequest}`,
+    );
 
     // 3. Fetch all existing (non-deleted) tags
     const existingTags = await (this.prisma as any).tags.findMany({
@@ -157,19 +162,27 @@ export class TagAnalysisService {
       Math.ceil(resolvedPrompt.systemPrompt.length / 4) +
       Math.ceil(existingTagsString.length / 4);
 
+    // Each entity's output is ~40 tokens: {"entityId":NNN,"tags":["tag1","tag2","tag3"]}
+    const OUTPUT_TOKENS_PER_ENTITY = 40;
+    const maxEntitiesPerBatch = Math.max(1, Math.floor(resolvedPrompt.maxOutputTokens / OUTPUT_TOKENS_PER_ENTITY));
+
     const batchConfig: BatchConfig = {
       maxTokensPerRequest,
       contentBudgetRatio: DEFAULT_CONTENT_BUDGET_RATIO,
       systemPromptTokens,
+      maxEntitiesPerBatch,
     };
 
     // 8. Create batches
     const batches = createBatches(entityContents, batchConfig);
 
+
     // 9. Process batches sequentially
     let allSuggestions: TagSuggestion[] = [];
     let totalTokensUsed = 0;
     let processedEntities = 0;
+    let failedBatchCount = 0;
+    const errors: string[] = [];
 
     for (const batch of batches) {
       try {
@@ -185,6 +198,7 @@ export class TagAnalysisService {
           userId,
           projectId,
           feature: LLM_FEATURES.AUTO_TAG,
+          disableThinking: true, // JSON output — no reasoning needed
         });
 
         totalTokensUsed += response.totalTokens;
@@ -217,10 +231,15 @@ export class TagAnalysisService {
           }
         }
       } catch (error) {
-        // Log and skip failed batch — don't fail entire operation
+        failedBatchCount++;
+        const msg = error instanceof Error ? error.message : String(error);
+        // Keep unique errors only (same error repeats for every batch)
+        if (!errors.includes(msg)) {
+          errors.push(msg);
+        }
         console.warn(
           `Auto-tag batch failed (${batch.length} entities):`,
-          error instanceof Error ? error.message : error,
+          msg,
         );
       }
 
@@ -236,6 +255,8 @@ export class TagAnalysisService {
       totalTokensUsed,
       batchCount: batches.length,
       entityCount: entityContents.length,
+      failedBatchCount,
+      errors,
     };
   }
 
@@ -344,31 +365,79 @@ export class TagAnalysisService {
   }
 
   /**
+   * Attempt to recover a truncated JSON response by finding the last complete
+   * entity in the suggestions array and closing the JSON structure.
+   */
+  private salvageTruncatedJson(jsonStr: string): AutoTagAIResponse | null {
+    // Find the last complete suggestion object: '}' followed by ',' or ']'
+    // Pattern: look for last complete {"entityId":N,"tags":[...]}
+    const lastCompleteEntry = jsonStr.lastIndexOf("}");
+    if (lastCompleteEntry === -1) return null;
+
+    // Try progressively shorter substrings ending at each '}' from the end
+    let pos = lastCompleteEntry;
+    while (pos > 0) {
+      const candidate = jsonStr.substring(0, pos + 1) + "]}";
+      try {
+        const parsed = JSON.parse(candidate) as AutoTagAIResponse;
+        if (parsed.suggestions && Array.isArray(parsed.suggestions)) {
+          return parsed;
+        }
+      } catch {
+        // Try next '}' position
+      }
+      pos = jsonStr.lastIndexOf("}", pos - 1);
+    }
+    return null;
+  }
+
+  /**
    * Parse LLM response JSON. Returns null on parse failure (graceful degradation).
    */
   private parseLlmResponse(content: string): AutoTagAIResponse | null {
     try {
-      // Try to extract JSON from the response (LLM might wrap it in markdown code blocks)
       let jsonStr = content.trim();
 
       // Strip markdown code fences if present
-      const codeBlockMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-      if (codeBlockMatch) {
-        jsonStr = codeBlockMatch[1]!.trim();
+      if (jsonStr.startsWith("```")) {
+        jsonStr = jsonStr.replace(/^```(?:json)?\s*\n?/, "");
+        jsonStr = jsonStr.replace(/\n?```\s*$/, "");
+        jsonStr = jsonStr.trim();
       }
 
-      const parsed = JSON.parse(jsonStr) as AutoTagAIResponse;
+      // Strip truncation marker appended by Gemini adapter
+      jsonStr = jsonStr.replace(/\n?\n?\[Response was truncated due to length limit\]\s*$/, "");
 
-      // Basic validation
+      // Sanitize control characters that break JSON.parse (tabs/newlines inside strings)
+      // eslint-disable-next-line no-control-regex
+      jsonStr = jsonStr.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+
+      let parsed: AutoTagAIResponse;
+      try {
+        parsed = JSON.parse(jsonStr) as AutoTagAIResponse;
+      } catch (parseErr) {
+        // Attempt to salvage truncated JSON by closing open arrays/objects
+        console.warn("[auto-tag] Initial parse failed, attempting truncated JSON recovery");
+        const salvaged = this.salvageTruncatedJson(jsonStr);
+        if (!salvaged) {
+          console.warn(
+            "[auto-tag] Failed to parse LLM response:",
+            parseErr instanceof Error ? parseErr.message : parseErr,
+          );
+          return null;
+        }
+        parsed = salvaged;
+      }
+
       if (!parsed.suggestions || !Array.isArray(parsed.suggestions)) {
-        console.warn("Auto-tag LLM response missing suggestions array");
+        console.warn("[auto-tag] Response missing suggestions array");
         return null;
       }
 
       return parsed;
     } catch (error) {
       console.warn(
-        "Failed to parse auto-tag LLM response:",
+        "[auto-tag] Failed to parse LLM response:",
         error instanceof Error ? error.message : error,
       );
       return null;

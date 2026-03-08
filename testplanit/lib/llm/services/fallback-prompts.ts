@@ -186,7 +186,7 @@ JSON structure (EXACT format required):
 Return ONLY the JSON.`,
     userPrompt: "",
     temperature: 0.3,
-    maxOutputTokens: 2000,
+    maxOutputTokens: 4096,
     source: "fallback",
   },
 };

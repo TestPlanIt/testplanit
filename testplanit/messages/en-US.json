@@ -3723,7 +3723,8 @@
         "test_case_generation": "Test Case Generation",
         "magic_select_cases": "Smart Test Case Selection",
         "editor_assistant": "Editor Writing Assistant",
-        "llm_test": "LLM Connection Test"
+        "llm_test": "LLM Connection Test",
+        "auto_tag": "AI Tag Suggestions"
       }
     },
     "elasticsearch": {
@@ -3791,7 +3792,9 @@
         "emails": "Email Queue",
         "issue-sync": "Issue Synchronization",
         "testmo-imports": "Testmo Imports",
-        "elasticsearch-reindex": "Elasticsearch Reindex"
+        "elasticsearch-reindex": "Elasticsearch Reindex",
+        "audit-logs": "Audit Logs",
+        "auto-tag": "AI Auto-Tag"
       },
       "status": {
         "paused": "Paused",
@@ -5565,7 +5568,7 @@
     "actions": {
       "aiTag": "AI Tag",
       "tagAll": "Tag All",
-      "aiAutoTag": "AI Auto-Tag",
+      "aiAutoTag": "Auto-Tag",
       "tagActions": "Tag Actions",
       "startTagging": "Start Tagging",
       "selectEntityType": "Select entity type",
@@ -5592,14 +5595,25 @@
       "filterEntities": "Filter entities...",
       "noEntitiesMatch": "No entities match your search.",
       "tagCount": "{count, plural, one {# tag} other {# tags}}",
-      "noTags": "none"
+      "noTags": "none",
+      "tooltipExisting": "Existing tag",
+      "tooltipNew": "New tag — will be created",
+      "tooltipAssign": "Assign existing tag",
+      "batchErrors": "Some entities could not be analyzed due to errors:"
     },
     "progress": {
       "starting": "Starting analysis...",
       "analyzed": "Analyzed {analyzed}/{total} entities",
+      "finalizing": "Preparing results...",
       "complete": "Analysis complete",
       "reviewSuggestions": "Review Suggestions",
       "failed": "Analysis failed"
+    },
+    "wizard": {
+      "description": "AI will analyze your project's test cases, test runs, and sessions to suggest relevant tags based on their content.",
+      "entityLine": "{count} {type}",
+      "startAnalysis": "Start Analysis",
+      "analyzingDescription": "AI is analyzing your entities and generating tag suggestions. This may take a moment."
     }
   },
   "TrialExpired": {

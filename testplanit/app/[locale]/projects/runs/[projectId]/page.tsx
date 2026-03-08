@@ -30,10 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import AddTestRunModal from "./AddTestRunModal";
 import { Button } from "@/components/ui/button";
-import { CirclePlus, Maximize2, Sparkles } from "lucide-react";
-import { useAutoTagJob } from "@/components/auto-tag/useAutoTagJob";
-import { AutoTagProgress } from "@/components/auto-tag/AutoTagProgress";
-import { AutoTagReviewDialog } from "@/components/auto-tag/AutoTagReviewDialog";
+import { CirclePlus, Maximize2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -452,9 +449,6 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
   // Drag/drop from desktop to import test results
   const canAddEdit = permissions?.canAddEdit ?? false;
 
-  // Auto-tag state
-  const autoTag = useAutoTagJob(`autoTagJob:testRun:${projectId}`);
-  const [showAutoTagReview, setShowAutoTagReview] = useState(false);
   const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const tFileDropZone = useTranslations("common.fileDropZone");
@@ -544,20 +538,6 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   const completedTestRuns = completedRunsData?.runs || [];
   const totalCompletedRunsCount = completedRunsData?.totalCount || 0;
-
-  const visibleRunIds = useMemo(() => {
-    if (activeTab === "active") {
-      return (incompleteTestRuns || []).map((r: any) => r.id);
-    } else {
-      return (completedTestRuns || []).map((r: any) => r.id);
-    }
-  }, [activeTab, incompleteTestRuns, completedTestRuns]);
-
-  const handleAutoTag = useCallback(() => {
-    if (numericProjectId && visibleRunIds.length > 0) {
-      autoTag.submit(visibleRunIds, "testRun", numericProjectId);
-    }
-  }, [autoTag, visibleRunIds, numericProjectId]);
 
   // Update pagination context with total count
   useEffect(() => {
@@ -1043,15 +1023,6 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                   <div>
                     {canAddEdit && (
                       <div className="flex flex-row gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={handleAutoTag}
-                          disabled={autoTag.isSubmitting || autoTag.status !== "idle" || visibleRunIds.length === 0}
-                          data-testid="tag-all-runs-button"
-                        >
-                          <Sparkles className="h-4 w-4" />
-                          {tGlobal("autoTag.actions.tagAll")}
-                        </Button>
                         <TestResultsImportDialog
                           projectId={parseInt(projectId)}
                           onSuccess={() => {
@@ -1099,17 +1070,6 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                 </span>
               </CardDescription>
             </CardHeader>
-            {autoTag.status !== "idle" && (
-              <div className="px-6">
-                <AutoTagProgress
-                  status={autoTag.status}
-                  progress={autoTag.progress}
-                  error={autoTag.error}
-                  onReview={() => setShowAutoTagReview(true)}
-                  onCancel={autoTag.cancel}
-                />
-              </div>
-            )}
             <CardContent className="flex flex-col">
               {/* Summary Metrics Display */}
               <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1668,11 +1628,6 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
             onSelectedCasesChange={setModalSelectedTestCases}
           />
         )}
-        <AutoTagReviewDialog
-          open={showAutoTagReview}
-          onOpenChange={setShowAutoTagReview}
-          job={autoTag}
-        />
       </SimpleDndProvider>
     );
   }

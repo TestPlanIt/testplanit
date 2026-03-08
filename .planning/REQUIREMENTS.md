@@ -24,7 +24,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **UI-01**: User can review AI-suggested tags per entity before applying
 - [x] **UI-02**: User can accept, reject, or modify suggestions per entity
-- [ ] **UI-03**: New tag suggestions are visually distinct from existing tags
+- [x] **UI-03**: New tag suggestions are visually distinct from existing tags
 - [x] **UI-04**: User can apply all accepted suggestions with one action
 
 ### UI - Entry Points
@@ -67,7 +67,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | API-03 | Phase 2 | Complete |
 | UI-01 | Phase 3 | Complete |
 | UI-02 | Phase 3 | Complete |
-| UI-03 | Phase 3 | Pending |
+| UI-03 | Phase 3 | Complete |
 | UI-04 | Phase 3 | Complete |
 | EP-01 | Phase 4 | Complete |
 | EP-02 | Phase 4 | Complete |

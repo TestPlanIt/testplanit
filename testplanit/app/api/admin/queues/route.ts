@@ -50,7 +50,9 @@ export async function GET(request: NextRequest) {
       'emails': 3,
       'issue-sync': 2,
       'testmo-imports': 1,
-      'elasticsearch-reindex': 2
+      'elasticsearch-reindex': 2,
+      'audit-logs': 5,
+      'auto-tag': 1
     };
 
     // Get configured concurrency from environment (or use defaults)
@@ -60,7 +62,9 @@ export async function GET(request: NextRequest) {
       'emails': parseInt(process.env.EMAIL_CONCURRENCY || String(defaultConcurrency['emails']), 10),
       'issue-sync': parseInt(process.env.SYNC_CONCURRENCY || String(defaultConcurrency['issue-sync']), 10),
       'testmo-imports': parseInt(process.env.TESTMO_IMPORT_CONCURRENCY || String(defaultConcurrency['testmo-imports']), 10),
-      'elasticsearch-reindex': parseInt(process.env.ELASTICSEARCH_REINDEX_CONCURRENCY || String(defaultConcurrency['elasticsearch-reindex']), 10)
+      'elasticsearch-reindex': parseInt(process.env.ELASTICSEARCH_REINDEX_CONCURRENCY || String(defaultConcurrency['elasticsearch-reindex']), 10),
+      'audit-logs': parseInt(process.env.AUDIT_LOG_CONCURRENCY || String(defaultConcurrency['audit-logs']), 10),
+      'auto-tag': parseInt(process.env.AUTO_TAG_CONCURRENCY || String(defaultConcurrency['auto-tag']), 10)
     };
 
     const allQueues = getAllQueues();
@@ -70,7 +74,9 @@ export async function GET(request: NextRequest) {
       { name: 'emails', queue: allQueues.emailQueue },
       { name: 'issue-sync', queue: allQueues.syncQueue },
       { name: 'testmo-imports', queue: allQueues.testmoImportQueue },
-      { name: 'elasticsearch-reindex', queue: allQueues.elasticsearchReindexQueue }
+      { name: 'elasticsearch-reindex', queue: allQueues.elasticsearchReindexQueue },
+      { name: 'audit-logs', queue: allQueues.auditLogQueue },
+      { name: 'auto-tag', queue: allQueues.autoTagQueue }
     ];
 
     // Get current tenant ID for filtering in multi-tenant mode

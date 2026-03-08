@@ -24,6 +24,8 @@ import {
   CheckCircle2,
   XCircle,
   AlertCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   Table,
@@ -48,6 +50,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
+const PAGE_SIZE = 25;
 
 interface Job {
   id: string;
@@ -78,12 +82,13 @@ export function QueueJobsView({
 }: QueueJobsViewProps) {
   const t = useTranslations("admin.queues.jobs");
   const tGlobal = useTranslations();
-  const tCommon = useTranslations("common.actions");
 
 
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [state, setState] = useState("all");
+  const [page, setPage] = useState(0);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [forceRemoveDialog, setForceRemoveDialog] = useState<{
@@ -96,14 +101,17 @@ export function QueueJobsView({
   const loadJobs = useCallback(async () => {
     try {
       setLoading(true);
+      const start = page * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
       const response = await fetch(
-        `/api/admin/queues/${queueName}/jobs?state=${state}&start=0&end=100`
+        `/api/admin/queues/${queueName}/jobs?state=${state}&start=${start}&end=${end}`
       );
       if (!response.ok) {
         throw new Error("Failed to load jobs");
       }
       const data = await response.json();
       setJobs(data.jobs);
+      setTotal(data.total ?? data.jobs.length);
     } catch (error: any) {
       console.error("Error loading jobs:", error);
       toast.error(t("error.loadFailed"), {
@@ -112,11 +120,20 @@ export function QueueJobsView({
     } finally {
       setLoading(false);
     }
-  }, [queueName, state, t]);
+  }, [queueName, state, page, t]);
 
   useEffect(() => {
     loadJobs();
   }, [loadJobs]);
+
+  // Reset to first page when state filter changes
+  useEffect(() => {
+    setPage(0);
+  }, [state]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const startIndex = page * PAGE_SIZE + 1;
+  const endIndex = Math.min((page + 1) * PAGE_SIZE, total);
 
   const performJobAction = async (
     jobId: string,
@@ -291,87 +308,119 @@ export function QueueJobsView({
           </div>
         </CardHeader>
         <CardContent>
-          {jobs.length === 0 ? (
+          {jobs.length === 0 && !loading ? (
             <div className="text-center py-8 text-muted-foreground">
               {t("noJobs")}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("table.id")}</TableHead>
-                  <TableHead>{t("table.name")}</TableHead>
-                  <TableHead>{tGlobal("common.fields.state")}</TableHead>
-                  <TableHead>{t("table.attempts")}</TableHead>
-                  <TableHead>{tGlobal("common.fields.created")}</TableHead>
-                  <TableHead>{tGlobal("common.fields.duration")}</TableHead>
-                  <TableHead className="text-right">
-                    {tGlobal("common.actions.actionsLabel")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {jobs.map((job) => (
-                  <TableRow key={job.id}>
-                    <TableCell className="font-mono text-sm">
-                      {job.id?.substring(0, 8)}
-                      {"..."}
-                    </TableCell>
-                    <TableCell>{job.name}</TableCell>
-                    <TableCell>{getStateBadge(job.state)}</TableCell>
-                    <TableCell>
-                      {job.attemptsMade}/{job.opts?.attempts || 1}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {formatTimestamp(job.timestamp)}
-                    </TableCell>
-                    <TableCell>
-                      {formatDuration(job.processedOn, job.finishedOn)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          className="px-2 py-1 h-auto"
-                          onClick={() => setSelectedJob(job)}
-                          disabled={actionInProgress === job.id}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {job.state === "failed" && (
-                          <Button
-                            variant="ghost"
-                            className="px-2 py-1 h-auto"
-                            onClick={() => performJobAction(job.id, "retry")}
-                            disabled={actionInProgress === job.id}
-                          >
-                            <RotateCcw className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {job.state === "delayed" && (
-                          <Button
-                            variant="ghost"
-                            className="px-2 py-1 h-auto"
-                            onClick={() => performJobAction(job.id, "promote")}
-                            disabled={actionInProgress === job.id}
-                          >
-                            <ChevronUp className="h-4 w-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="destructive"
-                          className="px-2 py-1 h-auto"
-                          onClick={() => performJobAction(job.id, "remove")}
-                          disabled={actionInProgress === job.id}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("table.id")}</TableHead>
+                    <TableHead>{t("table.name")}</TableHead>
+                    <TableHead>{tGlobal("common.fields.state")}</TableHead>
+                    <TableHead>{t("table.attempts")}</TableHead>
+                    <TableHead>{tGlobal("common.fields.created")}</TableHead>
+                    <TableHead>{tGlobal("common.fields.duration")}</TableHead>
+                    <TableHead className="text-right">
+                      {tGlobal("common.actions.actionsLabel")}
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {jobs.map((job) => (
+                    <TableRow key={job.id}>
+                      <TableCell className="font-mono text-sm">
+                        {job.id?.substring(0, 8)}
+                        {"..."}
+                      </TableCell>
+                      <TableCell>{job.name}</TableCell>
+                      <TableCell>{getStateBadge(job.state)}</TableCell>
+                      <TableCell>
+                        {job.attemptsMade}/{job.opts?.attempts || 1}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {formatTimestamp(job.timestamp)}
+                      </TableCell>
+                      <TableCell>
+                        {formatDuration(job.processedOn, job.finishedOn)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            className="px-2 py-1 h-auto"
+                            onClick={() => setSelectedJob(job)}
+                            disabled={actionInProgress === job.id}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {job.state === "failed" && (
+                            <Button
+                              variant="ghost"
+                              className="px-2 py-1 h-auto"
+                              onClick={() => performJobAction(job.id, "retry")}
+                              disabled={actionInProgress === job.id}
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {job.state === "delayed" && (
+                            <Button
+                              variant="ghost"
+                              className="px-2 py-1 h-auto"
+                              onClick={() => performJobAction(job.id, "promote")}
+                              disabled={actionInProgress === job.id}
+                            >
+                              <ChevronUp className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="destructive"
+                            className="px-2 py-1 h-auto"
+                            onClick={() => performJobAction(job.id, "remove")}
+                            disabled={actionInProgress === job.id}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {/* Pagination */}
+              {total > PAGE_SIZE && (
+                <div className="flex items-center justify-between mt-4">
+                  <p className="text-sm text-muted-foreground">
+                    {startIndex}–{endIndex} of {total}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(0, p - 1))}
+                      disabled={page === 0 || loading}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      {page + 1} / {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                      disabled={page >= totalPages - 1 || loading}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>

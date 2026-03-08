@@ -14,8 +14,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: LLM Tag Analysis** - Backend service that analyzes entity content and produces tag suggestions with smart batching (completed 2026-03-07)
 - [x] **Phase 2: API and Background Processing** - API routes for requesting suggestions, background job processing for large batches, and bulk apply endpoint (completed 2026-03-07)
-- [ ] **Phase 3: Review Dialog** - UI component for reviewing, accepting/rejecting, and applying AI-suggested tags
-- [ ] **Phase 4: Entry Point Integrations** - Wire AI tagging into bulk action menus on list views and the tags management page
+- [x] **Phase 3: Review Dialog** - UI component for reviewing, accepting/rejecting, and applying AI-suggested tags (completed 2026-03-08)
+- [x] **Phase 4: Entry Point Integrations** - Wire AI tagging into bulk action menus on list views and the tags management page (completed 2026-03-08)
 
 ## Phase Details
 
@@ -45,8 +45,8 @@ Plans:
 **Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 02-01-PLAN.md — Queue infrastructure, worker with progress/cancellation, TagAnalysisService callback support
-- [ ] 02-02-PLAN.md — Submit, status, cancel, and bulk apply API routes
+- [x] 02-01-PLAN.md — Queue infrastructure, worker with progress/cancellation, TagAnalysisService callback support
+- [x] 02-02-PLAN.md — Submit, status, cancel, and bulk apply API routes
 
 ### Phase 3: Review Dialog
 **Goal**: Users can review AI-suggested tags per entity and decide which to accept before anything is applied
@@ -57,11 +57,11 @@ Plans:
   2. The user can accept or reject individual tag suggestions per entity, and can modify suggestions before applying
   3. New tags (tags that do not yet exist in the project) are visually distinguished from existing tags (e.g., badge or color)
   4. A single "Apply" action commits all accepted suggestions across all entities
-**Plans**: TBD
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [x] 03-01-PLAN.md — Auto-tag review dialog component structure, state management, and entity list
+- [x] 03-02-PLAN.md — Tag chips, suggestion toggles, apply flow, and i18n
 
 ### Phase 4: Entry Point Integrations
 **Goal**: Users can trigger AI bulk tagging from everywhere it makes sense: list view bulk actions and the tags management page
@@ -72,12 +72,12 @@ Plans:
   2. User can select test runs on the test runs list, open bulk actions, and trigger AI tagging
   3. User can select sessions on the sessions list, open bulk actions, and trigger AI tagging
   4. User can trigger AI tagging from the tags management page by choosing an entity type and selecting entities
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 04-01-PLAN.md — localStorage persistence for useAutoTagJob, i18n keys, and cases list bulk action integration
-- [ ] 04-02-PLAN.md — Tag All buttons for test runs and sessions pages
-- [ ] 04-03-PLAN.md — AI Auto-Tag popover on tags management page
+- [x] 04-01-PLAN.md — localStorage persistence for useAutoTagJob, i18n keys, and cases list bulk action integration
+- [x] 04-02-PLAN.md — Tag All buttons for test runs and sessions pages
+- [x] 04-03-PLAN.md — AI Auto-Tag popover on tags management page
 
 ## Progress
 
@@ -86,7 +86,7 @@ Phases execute in numeric order: 1 > 2 > 3 > 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. LLM Tag Analysis | 2/2 | Complete   | 2026-03-07 |
-| 2. API and Background Processing | 2/2 | Complete   | 2026-03-07 |
-| 3. Review Dialog | 1/2 | In Progress|  |
-| 4. Entry Point Integrations | 0/3 | Not started | - |
+| 1. LLM Tag Analysis | 2/2 | Complete | 2026-03-07 |
+| 2. API and Background Processing | 2/2 | Complete | 2026-03-07 |
+| 3. Review Dialog | 2/2 | Complete | 2026-03-08 |
+| 4. Entry Point Integrations | 3/3 | Complete | 2026-03-08 |

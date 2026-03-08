@@ -12,6 +12,7 @@ interface AutoTagProgressProps {
   error: string | null;
   onReview: () => void;
   onCancel: () => void;
+  onDismiss?: () => void;
 }
 
 export function AutoTagProgress({
@@ -20,6 +21,7 @@ export function AutoTagProgress({
   error,
   onReview,
   onCancel,
+  onDismiss,
 }: AutoTagProgressProps) {
   const t = useTranslations("autoTag.progress");
   const tCommon = useTranslations("common");
@@ -38,10 +40,16 @@ export function AutoTagProgress({
         <div className="min-w-0 flex-1 space-y-1">
           <p className="text-sm">
             {hasProgress
-              ? t("analyzed", { analyzed: progress.analyzed, total: progress.total })
+              ? t("analyzed", {
+                  analyzed: progress.analyzed,
+                  total: progress.total,
+                })
               : t("starting")}
           </p>
-          <Progress value={hasProgress ? percent : undefined} className="h-1.5" />
+          <Progress
+            value={hasProgress ? percent : undefined}
+            className="h-1.5"
+          />
         </div>
         <Button
           variant="ghost"
@@ -62,9 +70,21 @@ export function AutoTagProgress({
       <div className="flex items-center gap-3 rounded-md border border-success/30 bg-success/10 px-3 py-2">
         <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
         <span className="flex-1 text-sm">{t("complete")}</span>
-        <Button size="sm" onClick={onReview} className="h-auto px-3 py-1 text-xs">
+        <Button
+          size="sm"
+          onClick={onReview}
+          className="h-auto shrink-0 px-3 py-1 text-xs"
+        >
           {t("reviewSuggestions")}
         </Button>
+        {onDismiss && (
+          <button
+            onClick={onDismiss}
+            className="shrink-0 rounded-sm bg-destructive p-0.5 text-destructive-foreground hover:bg-destructive/80"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
     );
   }

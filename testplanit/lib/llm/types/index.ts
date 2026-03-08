@@ -32,6 +32,7 @@ export interface LlmRequest {
   feature: string;
   metadata?: Record<string, any>;
   timeout?: number; // Optional timeout override in milliseconds
+  disableThinking?: boolean; // Disable model reasoning/thinking for structured output
 }
 
 export interface LlmResponse {

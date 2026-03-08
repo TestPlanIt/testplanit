@@ -1,12 +1,19 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search } from "lucide-react";
+import { Search, ListTree, PlayCircle, Compass } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslations } from "next-intl";
 import { cn } from "~/utils";
+import type { EntityType } from "~/lib/llm/services/auto-tag/types";
 import type { AutoTagSuggestionEntity, AutoTagSelection } from "./types";
+
+const ENTITY_TYPE_ICONS: Record<EntityType, typeof ListTree> = {
+  repositoryCase: ListTree,
+  testRun: PlayCircle,
+  session: Compass,
+};
 
 interface EntityListProps {
   entities: AutoTagSuggestionEntity[];
@@ -58,7 +65,13 @@ export function EntityList({
                   !hasSuggestions && "opacity-50",
                 )}
               >
-                <span className="truncate pr-2">{entity.entityName}</span>
+                <span className="flex min-w-0 items-center gap-1.5">
+                  {(() => {
+                    const Icon = ENTITY_TYPE_ICONS[entity.entityType];
+                    return Icon ? <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null;
+                  })()}
+                  <span className="truncate">{entity.entityName}</span>
+                </span>
                 <span className="shrink-0 text-xs text-muted-foreground">
                   {acceptedCount > 0
                     ? t("tagCount", { count: acceptedCount })

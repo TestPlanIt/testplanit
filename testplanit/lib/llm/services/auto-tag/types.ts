@@ -32,6 +32,8 @@ export interface TagAnalysisResult {
   totalTokensUsed: number;
   batchCount: number;
   entityCount: number;
+  failedBatchCount: number;
+  errors: string[];
 }
 
 /** Configuration for batching */
@@ -39,6 +41,8 @@ export interface BatchConfig {
   maxTokensPerRequest: number;
   contentBudgetRatio: number;
   systemPromptTokens: number;
+  /** Max entities per batch to keep output within maxOutputTokens */
+  maxEntitiesPerBatch?: number;
 }
 
 /** Raw AI response shape (what we expect back from the LLM) */

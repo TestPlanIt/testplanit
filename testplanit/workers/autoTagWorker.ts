@@ -42,7 +42,9 @@ export interface AutoTagJobResult {
     newTagCount: number;
     totalTokensUsed: number;
     batchCount: number;
+    failedBatchCount: number;
   };
+  errors: string[];
 }
 
 // ─── Redis cancellation key helper ──────────────────────────────────────────
@@ -97,7 +99,10 @@ const processor = async (job: Job<AutoTagJobData>): Promise<AutoTagJobResult> =>
     },
   });
 
-  // 6. Transform flat suggestions into grouped AutoTagJobResult format
+  // 6. Signal "finalizing" so the UI knows analysis is done but results are being prepared
+  await job.updateProgress({ analyzed: job.data.entityIds.length, total: job.data.entityIds.length, finalizing: true });
+
+  // 7. Transform flat suggestions into grouped AutoTagJobResult format
   const entityMap = new Map<
     number,
     Array<{ tagName: string; isExisting: boolean; matchedExistingTag?: string }>
@@ -114,9 +119,9 @@ const processor = async (job: Job<AutoTagJobData>): Promise<AutoTagJobResult> =>
     });
   }
 
-  // 7. Fetch entity names and current tags for the result
+  // 7. Fetch entity names and current tags only for entities with suggestions
   const entityMeta = new Map<number, { name: string; currentTags: string[] }>();
-  const entityIds = job.data.entityIds;
+  const entityIds = Array.from(entityMap.keys());
 
   switch (job.data.entityType) {
     case "repositoryCase": {
@@ -170,7 +175,9 @@ const processor = async (job: Job<AutoTagJobData>): Promise<AutoTagJobResult> =>
       newTagCount: result.suggestions.length - existingTagCount,
       totalTokensUsed: result.totalTokensUsed,
       batchCount: result.batchCount,
+      failedBatchCount: result.failedBatchCount,
     },
+    errors: result.errors,
   };
 };
 
@@ -191,7 +198,7 @@ const startWorker = async () => {
       processor,
       {
         connection: valkeyConnection as any,
-        concurrency: 1, // One job at a time — LLM calls are the bottleneck
+        concurrency: 3, // Process up to 3 jobs in parallel (one per entity type)
       },
     );
 

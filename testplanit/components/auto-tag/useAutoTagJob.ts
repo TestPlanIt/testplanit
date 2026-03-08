@@ -48,6 +48,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
   const [progress, setProgress] = useState<{
     analyzed: number;
     total: number;
+    finalizing?: boolean;
   } | null>(null);
   const [suggestions, setSuggestions] = useState<
     AutoTagSuggestionEntity[] | null
@@ -60,6 +61,8 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
 
   // Track polling interval for cleanup
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Track submit abort controller for cancellation during submit
+  const submitAbortRef = useRef<AbortController | null>(null);
 
   // ── Submit ──────────────────────────────────────────────────────────────
 
@@ -77,11 +80,15 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
       setEdits(new Map());
       setProgress(null);
 
+      const abortController = new AbortController();
+      submitAbortRef.current = abortController;
+
       try {
         const res = await fetch("/api/auto-tag/submit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ entityIds, entityType, projectId }),
+          signal: abortController.signal,
         });
 
         if (!res.ok) {
@@ -90,12 +97,21 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
         }
 
         const data = await res.json();
+
+        // If cancelled while submit was in flight, cancel the newly created job
+        if (abortController.signal.aborted) {
+          fetch(`/api/auto-tag/cancel/${data.jobId}`, { method: "POST" }).catch(() => {});
+          return;
+        }
+
         setJobId(data.jobId);
         if (persistKey) persistJobId(persistKey, data.jobId);
       } catch (err: any) {
+        if (err.name === "AbortError") return; // Cancelled by user
         setError(err.message || "Failed to submit auto-tag job");
         setStatus("failed");
       } finally {
+        submitAbortRef.current = null;
         setIsSubmitting(false);
       }
     },
@@ -139,10 +155,16 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
         if (state === "completed") {
           setStatus("completed");
           if (persistKey) clearPersistedJobId(persistKey);
+
           if (data.result?.suggestions) {
             const sug = data.result.suggestions as AutoTagSuggestionEntity[];
             setSuggestions(sug);
             setSelections(initSelections(sug));
+          }
+
+          // Surface batch errors so the UI can display them
+          if (data.result?.errors?.length > 0) {
+            setError(data.result.errors.join("; "));
           }
           // Stop polling
           if (intervalRef.current) {
@@ -297,9 +319,17 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
   // ── Cancel ──────────────────────────────────────────────────────────────
 
   const cancel = useCallback(async () => {
-    if (jobId) {
+    // Abort in-flight submit request if still pending
+    if (submitAbortRef.current) {
+      submitAbortRef.current.abort();
+      submitAbortRef.current = null;
+    }
+
+    // Use persisted jobId as fallback if state hasn't been set yet (race with submit)
+    const effectiveJobId = jobId ?? (persistKey ? getPersistedJobId(persistKey) : null);
+    if (effectiveJobId) {
       try {
-        await fetch(`/api/auto-tag/cancel/${jobId}`, { method: "POST" });
+        await fetch(`/api/auto-tag/cancel/${effectiveJobId}`, { method: "POST" });
       } catch {
         // Best effort -- cancel may fail if job already completed
       }

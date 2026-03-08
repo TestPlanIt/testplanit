@@ -177,6 +177,8 @@ export function QueueManagement() {
       "issue-sync": t("queueNames.issue-sync"),
       "testmo-imports": t("queueNames.testmo-imports"),
       "elasticsearch-reindex": t("queueNames.elasticsearch-reindex"),
+      "audit-logs": t("queueNames.audit-logs"),
+      "auto-tag": t("queueNames.auto-tag"),
     };
     return queueNames[name] || name;
   };

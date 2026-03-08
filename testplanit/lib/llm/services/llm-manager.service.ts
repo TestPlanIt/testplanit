@@ -28,6 +28,9 @@ const ALLOWED_BASE_URLS: Record<string, string[]> = {
 // Providers that allow custom endpoints (must pass additional validation)
 const CUSTOM_ENDPOINT_PROVIDERS = ["AZURE_OPENAI", "OLLAMA", "CUSTOM_LLM"];
 
+/** Providers that are designed to run on private/local networks */
+const PRIVATE_NETWORK_PROVIDERS = ["OLLAMA", "CUSTOM_LLM"];
+
 /**
  * Checks if a hostname is a private/internal address that should be blocked
  */
@@ -122,8 +125,12 @@ function getValidatedBaseUrl(
   }
 
   // For providers that allow custom endpoints, block private/internal addresses
+  // (but allow Ollama and Custom LLM since they're designed for private networks)
   if (CUSTOM_ENDPOINT_PROVIDERS.includes(provider)) {
-    if (isPrivateOrInternalHost(parsedUrl.hostname)) {
+    if (
+      !PRIVATE_NETWORK_PROVIDERS.includes(provider) &&
+      isPrivateOrInternalHost(parsedUrl.hostname)
+    ) {
       console.warn(
         `Blocked private/internal URL "${userProvidedUrl}" for provider ${provider}. Using default.`
       );
@@ -290,6 +297,33 @@ export class LlmManager {
     });
 
     return config?.llmIntegrationId || null;
+  }
+
+  /**
+   * Get the LLM integration configured for a specific project.
+   * Falls back to the system default if no project-level integration is set.
+   */
+  async getProjectIntegration(projectId: number): Promise<number | null> {
+    const projectIntegration = await (this.prisma as any).projectLlmIntegration.findFirst({
+      where: {
+        projectId,
+        isActive: true,
+        llmIntegration: {
+          isDeleted: false,
+          status: "ACTIVE",
+        },
+      },
+      select: {
+        llmIntegrationId: true,
+      },
+    });
+
+    if (projectIntegration?.llmIntegrationId) {
+      return projectIntegration.llmIntegrationId;
+    }
+
+    // Fall back to system default
+    return this.getDefaultIntegration();
   }
 
   async listAvailableIntegrations(): Promise<

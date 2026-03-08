@@ -1,9 +1,16 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Tag, Sparkles } from "lucide-react";
+import { Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useTranslations } from "next-intl";
 import { cn } from "~/utils";
 
 interface TagChipProps {
@@ -21,6 +28,7 @@ export function TagChip({
   onToggle,
   onEdit,
 }: TagChipProps) {
+  const t = useTranslations("autoTag.review");
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(tagName);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -60,6 +68,12 @@ export function TagChip({
     [commitEdit, tagName],
   );
 
+  const tooltip = isExisting
+    ? isAccepted
+      ? t("tooltipAssign")
+      : t("tooltipExisting")
+    : t("tooltipNew");
+
   if (isEditing) {
     return (
       <Input
@@ -75,21 +89,25 @@ export function TagChip({
   }
 
   return (
-    <Badge
-      variant={isAccepted ? "default" : "outline"}
-      className={cn(
-        "cursor-pointer select-none transition-all",
-        !isExisting && "border-dashed",
-        !isAccepted && "opacity-50",
-      )}
-      onClick={onToggle}
-      onDoubleClick={handleDoubleClick}
-    >
-      <Tag className="mr-1 h-3 w-3" />
-      {tagName}
-      {!isExisting && (
-        <Sparkles className="ml-1 h-3 w-3 opacity-70" />
-      )}
-    </Badge>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge
+            variant={isAccepted ? "default" : "outline"}
+            className={cn(
+              "cursor-pointer select-none transition-all",
+              !isExisting && "outline-2 outline-offset-1 outline-primary/50",
+              !isAccepted && "opacity-50",
+            )}
+            onClick={onToggle}
+            onDoubleClick={handleDoubleClick}
+          >
+            <Tag className="mr-1 h-3 w-3" />
+            {tagName}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">{tooltip}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

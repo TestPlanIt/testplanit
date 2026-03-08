@@ -5,6 +5,9 @@ import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useRouter } from "~/lib/navigation";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
 import {
   usePagination,
   PaginationProvider,
@@ -243,6 +246,9 @@ function TagList() {
     () => testRuns?.map((r) => r.id) || [],
     [testRuns]
   );
+
+  // ── AI Auto-Tag ──────────────────────────────────────────────────────
+  const [showAutoTagWizard, setShowAutoTagWizard] = useState(false);
 
   const filteredTags = useMemo(() => {
     if (!tags) return [];
@@ -504,6 +510,20 @@ function TagList() {
           <CardTitle>
             <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
               <CardTitle>{t("common.fields.tags")}</CardTitle>
+              <Button
+                variant="outline"
+                onClick={() => setShowAutoTagWizard(true)}
+                disabled={
+                  activeCaseIds.length +
+                    activeSessionIds.length +
+                    activeRunIds.length ===
+                  0
+                }
+                data-testid="ai-auto-tag-button"
+              >
+                <Sparkles className="h-4 w-4" />
+                {t("autoTag.actions.aiAutoTag")}
+              </Button>
             </div>
           </CardTitle>
           <CardDescription className="uppercase">
@@ -571,6 +591,14 @@ function TagList() {
           </div>
         </CardContent>
       </Card>
+      <AutoTagWizardDialog
+        open={showAutoTagWizard}
+        onOpenChange={setShowAutoTagWizard}
+        projectId={projectId as string}
+        caseIds={activeCaseIds}
+        sessionIds={activeSessionIds}
+        runIds={activeRunIds}
+      />
     </main>
   );
 }

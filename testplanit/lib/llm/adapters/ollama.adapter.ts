@@ -22,6 +22,7 @@ interface OllamaGenerateRequest {
     content: string;
   }>;
   stream?: boolean;
+  think?: boolean;
   options?: {
     temperature?: number;
     num_predict?: number;
@@ -89,6 +90,7 @@ export class OllamaAdapter extends BaseLlmAdapter {
         content: msg.content,
       })),
       stream: false,
+      ...(request.disableThinking ? { think: false } : {}),
       options: {
         temperature: request.temperature ?? this.config.config.defaultTemperature,
         num_predict: request.maxTokens ?? this.config.config.defaultMaxTokens,
@@ -148,6 +150,7 @@ export class OllamaAdapter extends BaseLlmAdapter {
         content: msg.content,
       })),
       stream: true,
+      ...(request.disableThinking ? { think: false } : {}),
       options: {
         temperature: request.temperature ?? this.config.config.defaultTemperature,
         num_predict: request.maxTokens ?? this.config.config.defaultMaxTokens,

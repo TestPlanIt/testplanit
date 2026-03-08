@@ -43,16 +43,7 @@ import { usePagination } from "~/lib/contexts/PaginationContext";
 import { Button } from "@/components/ui/button";
 import { BulkEditModal } from "./BulkEditModal";
 import { AddResultModal } from "./AddResultModal";
-import { PenSquare, PlayCircle, Upload, Sparkles, ChevronDown, Tags } from "lucide-react";
-import { useAutoTagJob } from "@/components/auto-tag/useAutoTagJob";
-import { AutoTagProgress } from "@/components/auto-tag/AutoTagProgress";
-import { AutoTagReviewDialog } from "@/components/auto-tag/AutoTagReviewDialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { PenSquare, PlayCircle, Upload } from "lucide-react";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { ExportModal, ExportOptions } from "./ExportModal";
 import { useExportData, TFunction } from "~/hooks/useExportData";
@@ -205,18 +196,6 @@ export default function Cases({
     number[]
   >([]);
   const [isBulkEditModalOpen, setIsBulkEditModalOpen] = useState(false);
-
-  // Auto-tag state
-  const autoTag = useAutoTagJob(`autoTagJob:repositoryCase:${projectId}`);
-  const [showAutoTagReview, setShowAutoTagReview] = useState(false);
-
-  const handleAutoTag = useCallback(() => {
-    autoTag.submit(
-      selectedCaseIdsForBulkEdit,
-      "repositoryCase",
-      projectId,
-    );
-  }, [autoTag, selectedCaseIdsForBulkEdit, projectId]);
 
   // Store rowSelection state here, it will be controlled by the useLayoutEffect
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -3271,44 +3250,11 @@ export default function Cases({
                   </div>
                 </Button>
               )}
-              {canAddEdit && !isSelectionMode && !isRunMode && selectedCaseIdsForBulkEdit.length > 0 && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" data-testid="tag-actions-dropdown">
-                      <div className="flex flex-row items-center gap-1">
-                        <Tags className="w-4 h-4" />
-                        {t("autoTag.actions.tagActions")}
-                        <ChevronDown className="w-3 h-3 ml-1" />
-                      </div>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem
-                      onClick={handleAutoTag}
-                      disabled={autoTag.isSubmitting || autoTag.status !== "idle"}
-                      data-testid="ai-tag-menu-item"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      {t("autoTag.actions.aiTag")}
-                      <span className="ml-1">({selectedCaseIdsForBulkEdit.length})</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
             </div>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        {autoTag.status !== "idle" && (
-          <AutoTagProgress
-            status={autoTag.status}
-            progress={autoTag.progress}
-            error={autoTag.error}
-            onReview={() => setShowAutoTagReview(true)}
-            onCancel={autoTag.cancel}
-          />
-        )}
         {(() => {
           // Handle preliminary states first (where DataTable might not be relevant)
           if (!folderId && viewType === "folders") {
@@ -3421,13 +3367,6 @@ export default function Cases({
           projectId={projectId}
         />
       )}
-
-      {/* Auto-Tag Review Dialog */}
-      <AutoTagReviewDialog
-        open={showAutoTagReview}
-        onOpenChange={setShowAutoTagReview}
-        job={autoTag}
-      />
 
       {/* Export Modal */}
       {isValidProjectId && (

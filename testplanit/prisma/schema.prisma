@@ -75,6 +75,7 @@ enum NotificationType {
   COMMENT_MENTION
   MILESTONE_DUE_REMINDER
   SHARE_LINK_ACCESSED
+  LLM_BUDGET_ALERT
 }
 
 enum WorkflowType {

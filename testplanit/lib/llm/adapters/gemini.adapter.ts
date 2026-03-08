@@ -23,6 +23,9 @@ interface GeminiGenerateRequest {
     topP?: number;
     topK?: number;
     stopSequences?: string[];
+    thinkingConfig?: {
+      thinkingBudget: number;
+    };
   };
   safetySettings?: Array<{
     category: string;
@@ -96,14 +99,23 @@ export class GeminiAdapter extends BaseLlmAdapter {
     const model = request.model || this.getDefaultModel();
     const contents = this.convertMessagesToGeminiFormat(request.messages);
 
+    const generationConfig: NonNullable<GeminiGenerateRequest["generationConfig"]> = {
+      temperature: request.temperature ?? this.config.config.defaultTemperature,
+      maxOutputTokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
+      topP: 0.95,
+      topK: 64,
+    };
+
+    // Disable thinking/reasoning for structured output (e.g., JSON-only responses)
+    // Thinking models (Gemini 2.5+, 3.x) use output tokens for internal reasoning,
+    // which can truncate actual content. thinkingBudget: 0 disables this.
+    if (request.disableThinking) {
+      generationConfig.thinkingConfig = { thinkingBudget: 0 };
+    }
+
     const geminiRequest: GeminiGenerateRequest = {
       contents,
-      generationConfig: {
-        temperature: request.temperature ?? this.config.config.defaultTemperature,
-        maxOutputTokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
-        topP: 0.95,
-        topK: 64,
-      },
+      generationConfig,
       safetySettings: [
         {
           category: "HARM_CATEGORY_HARASSMENT",

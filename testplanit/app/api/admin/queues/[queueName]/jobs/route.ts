@@ -15,6 +15,8 @@ function getQueueByName(queueName: string): Queue | null {
     "issue-sync": allQueues.syncQueue,
     "testmo-imports": allQueues.testmoImportQueue,
     "elasticsearch-reindex": allQueues.elasticsearchReindexQueue,
+    "audit-logs": allQueues.auditLogQueue,
+    "auto-tag": allQueues.autoTagQueue,
   };
   return queueMap[queueName] ?? null;
 }
@@ -94,7 +96,7 @@ export async function GET(
       return jobs.filter((job) => job.data?.tenantId === currentTenantId);
     };
 
-    let jobs: Job[];
+    let allFilteredJobs: Job[];
     if (state === "all") {
       // Get jobs from all states
       const [waiting, active, completed, failed, delayed] = await Promise.all([
@@ -105,20 +107,20 @@ export async function GET(
         queue.getJobs(["delayed"], 0, 1000),
       ]);
 
-      // Filter by tenant first, then apply pagination
-      const allJobs = filterByTenant([
+      allFilteredJobs = filterByTenant([
         ...waiting,
         ...active,
         ...completed,
         ...failed,
         ...delayed,
       ]);
-      jobs = allJobs.slice(start, end);
     } else {
       const stateJobs = await queue.getJobs([state as any], 0, 1000);
-      const filteredJobs = filterByTenant(stateJobs);
-      jobs = filteredJobs.slice(start, end);
+      allFilteredJobs = filterByTenant(stateJobs);
     }
+
+    const total = allFilteredJobs.length;
+    const jobs = allFilteredJobs.slice(start, end);
 
     // Format jobs for response
     const formattedJobs = await Promise.all(
@@ -142,7 +144,7 @@ export async function GET(
       })
     );
 
-    return NextResponse.json({ jobs: formattedJobs });
+    return NextResponse.json({ jobs: formattedJobs, total });
   } catch (error: any) {
     console.error("Error fetching queue jobs:", error);
     return NextResponse.json(

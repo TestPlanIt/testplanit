@@ -240,57 +240,56 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="isActive"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-0.5">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 pb-2">
                       <FormLabel>{tCommon("fields.isActive")}</FormLabel>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={form.watch("isDefault")}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={form.watch("isDefault")}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="isDefault"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                    <div className="space-y-0.5">
+                <FormField
+                  control={form.control}
+                  name="isDefault"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 pb-2">
                       <FormLabel>{tCommon("fields.default")}</FormLabel>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={(checked) => {
-                          field.onChange(checked);
-                          if (checked) {
-                            form.setValue("isActive", true);
-                          }
-                        }}
-                        disabled={config.isDefault}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            if (checked) {
+                              form.setValue("isActive", true);
+                            }
+                          }}
+                          disabled={config.isDefault}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              <div className="border rounded-lg p-4">
-                <h3 className="text-sm font-medium mb-3">{t("features")}</h3>
-                <Accordion type="single" collapsible className="w-full">
-                  {featureKeys.map((feature) => (
-                    <AccordionItem key={feature} value={feature}>
-                      <AccordionTrigger className="text-sm">
-                        {t(`featureLabels.${feature}` as any) ||
-                          LLM_FEATURE_LABELS[feature as LlmFeature]}
+              <div>
+                <h3 className="text-sm font-medium leading-none mb-2">{t("features")}</h3>
+                <div className="border rounded-lg px-4 pb-4 pt-1">
+                  <Accordion type="single" collapsible className="w-full">
+                    {featureKeys.map((feature) => (
+                      <AccordionItem key={feature} value={feature}>
+                        <AccordionTrigger className="text-sm">
+                          {t(`featureLabels.${feature}` as any) ||
+                            LLM_FEATURE_LABELS[feature as LlmFeature]}
                       </AccordionTrigger>
                       <AccordionContent className="space-y-4 px-1">
                         <FormField
@@ -381,7 +380,8 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
                       </AccordionContent>
                     </AccordionItem>
                   ))}
-                </Accordion>
+                  </Accordion>
+                </div>
               </div>
 
               <DialogFooter>

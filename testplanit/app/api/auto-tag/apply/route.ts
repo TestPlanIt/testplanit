@@ -46,47 +46,63 @@ export async function POST(request: Request) {
     });
     const existingTagNames = new Set(existingTags.map((t) => t.name));
 
-    const result = await prisma.$transaction(async (tx) => {
-      // Upsert all tags upfront (findOrCreate pattern)
-      const tagMap = new Map<string, number>();
+    // Upsert all tags outside the transaction (idempotent, safe without tx)
+    const tagMap = new Map<string, number>();
+    for (const tag of existingTags) {
+      tagMap.set(tag.name, tag.id);
+    }
+    const newTagNames = uniqueTagNames.filter((n) => !existingTagNames.has(n));
+    for (const name of newTagNames) {
+      const tag = await prisma.tags.upsert({
+        where: { name },
+        create: { name },
+        update: {},
+      });
+      tagMap.set(name, tag.id);
+    }
 
-      for (const name of uniqueTagNames) {
-        const tag = await tx.tags.upsert({
-          where: { name },
-          create: { name },
-          update: {}, // no-op if exists
-        });
-        tagMap.set(name, tag.id);
-      }
+    // Group tag connections by entity to minimize queries
+    const entityOps = new Map<string, number[]>();
+    for (const suggestion of suggestions) {
+      const key = `${suggestion.entityType}:${suggestion.entityId}`;
+      const tagId = tagMap.get(suggestion.tagName)!;
+      const ids = entityOps.get(key) ?? [];
+      ids.push(tagId);
+      entityOps.set(key, ids);
+    }
 
-      // Connect tags to entities
-      for (const suggestion of suggestions) {
-        const tagId = tagMap.get(suggestion.tagName)!;
+    // Connect tags to entities in a single transaction with extended timeout
+    await prisma.$transaction(
+      async (tx) => {
+        for (const [key, tagIds] of entityOps) {
+          const [entityType, entityIdStr] = key.split(":");
+          const entityId = Number(entityIdStr);
+          const connectData = tagIds.map((id) => ({ id }));
 
-        switch (suggestion.entityType) {
-          case "repositoryCase":
-            await tx.repositoryCases.update({
-              where: { id: suggestion.entityId },
-              data: { tags: { connect: { id: tagId } } },
-            });
-            break;
-          case "testRun":
-            await tx.testRuns.update({
-              where: { id: suggestion.entityId },
-              data: { tags: { connect: { id: tagId } } },
-            });
-            break;
-          case "session":
-            await tx.sessions.update({
-              where: { id: suggestion.entityId },
-              data: { tags: { connect: { id: tagId } } },
-            });
-            break;
+          switch (entityType) {
+            case "repositoryCase":
+              await tx.repositoryCases.update({
+                where: { id: entityId },
+                data: { tags: { connect: connectData } },
+              });
+              break;
+            case "testRun":
+              await tx.testRuns.update({
+                where: { id: entityId },
+                data: { tags: { connect: connectData } },
+              });
+              break;
+            case "session":
+              await tx.sessions.update({
+                where: { id: entityId },
+                data: { tags: { connect: connectData } },
+              });
+              break;
+          }
         }
-      }
-
-      return tagMap;
-    });
+      },
+      { timeout: 30000 },
+    );
 
     const tagsCreated = uniqueTagNames.filter(
       (name) => !existingTagNames.has(name),

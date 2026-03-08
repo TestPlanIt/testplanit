@@ -29,7 +29,7 @@ export interface UseAutoTagJobReturn {
   // Job lifecycle
   jobId: string | null;
   status: AutoTagJobState;
-  progress: { analyzed: number; total: number } | null;
+  progress: { analyzed: number; total: number; finalizing?: boolean } | null;
   error: string | null;
 
   // Results and selections

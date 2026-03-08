@@ -6,6 +6,7 @@ const LLM_FEATURES = {
   MAGIC_SELECT_CASES: "magic_select_cases",
   EDITOR_ASSISTANT: "editor_assistant",
   LLM_TEST: "llm_test",
+  AUTO_TAG: "auto_tag",
 } as const;
 
 /**
@@ -200,37 +201,73 @@ Return ONLY the JSON.`,
       maxOutputTokens: 200,
       variables: [],
     },
+    {
+      feature: LLM_FEATURES.AUTO_TAG,
+      systemPrompt: `You are an expert at categorizing test artifacts. Analyze the provided entities (test cases, test runs, or sessions) and suggest concise, categorical tags that describe what each entity is about.
+
+RULES:
+- Suggest 1-5 tags per entity
+- Tags should be concise (1-3 words) and categorical (e.g., "login", "regression", "API", "security", "performance")
+- Use lowercase for all tags
+- Each entity's existing tags are listed — do NOT suggest tags already present
+- Only suggest tags that are clearly relevant to the entity content
+- Prefer reusing tags from the "Available project tags" list when they fit
+
+CRITICAL: You must respond with ONLY valid JSON. No explanations, no comments, no text before or after the JSON.
+
+JSON structure (EXACT format required):
+{
+  "suggestions": [
+    {
+      "entityId": 123,
+      "tags": ["tag1", "tag2"]
+    }
+  ]
+}
+
+Return ONLY the JSON.`,
+      userPrompt: "",
+      temperature: 0.3,
+      maxOutputTokens: 4096,
+      variables: [],
+    },
   ];
 
-  // Upsert each feature prompt
-  for (const prompt of featurePrompts) {
-    await prisma.promptConfigPrompt.upsert({
-      where: {
-        promptConfigId_feature: {
-          promptConfigId: defaultConfig.id,
-          feature: prompt.feature,
-        },
-      },
-      update: {
-        systemPrompt: prompt.systemPrompt,
-        userPrompt: prompt.userPrompt,
-        temperature: prompt.temperature,
-        maxOutputTokens: prompt.maxOutputTokens,
-        variables: prompt.variables,
-      },
-      create: {
-        promptConfigId: defaultConfig.id,
-        feature: prompt.feature,
-        systemPrompt: prompt.systemPrompt,
-        userPrompt: prompt.userPrompt,
-        temperature: prompt.temperature,
-        maxOutputTokens: prompt.maxOutputTokens,
-        variables: prompt.variables,
-      },
+  // Backfill missing feature prompts into ALL prompt configs (including
+  // Default). Only creates prompts that don't exist yet — never overwrites
+  // user-customized prompts.
+  const allConfigs = await prisma.promptConfig.findMany({
+    select: { id: true, name: true },
+  });
+
+  for (const config of allConfigs) {
+    const existingPrompts = await prisma.promptConfigPrompt.findMany({
+      where: { promptConfigId: config.id },
+      select: { feature: true },
     });
+    const existingFeatures = new Set(existingPrompts.map((p) => p.feature));
+
+    for (const prompt of featurePrompts) {
+      if (!existingFeatures.has(prompt.feature)) {
+        await prisma.promptConfigPrompt.create({
+          data: {
+            promptConfigId: config.id,
+            feature: prompt.feature,
+            systemPrompt: prompt.systemPrompt,
+            userPrompt: prompt.userPrompt,
+            temperature: prompt.temperature,
+            maxOutputTokens: prompt.maxOutputTokens,
+            variables: prompt.variables,
+          },
+        });
+        console.log(
+          `Seeded "${prompt.feature}" prompt into config "${config.name}" (ID: ${config.id})`
+        );
+      }
+    }
   }
 
   console.log(
-    `Seeded default prompt configuration (ID: ${defaultConfig.id}) with ${featurePrompts.length} feature prompts.`
+    `Prompt config seeding complete. Checked ${allConfigs.length} config(s) for ${featurePrompts.length} features.`
   );
 }
