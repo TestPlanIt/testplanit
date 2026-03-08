@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 
 interface TextFromJsonProps {
-  jsonString: string;
+  jsonString: string | object;
   format?: "text" | "html";
   room: string;
   expand?: boolean;
@@ -13,12 +13,17 @@ interface TextFromJsonProps {
 }
 
 const TextFromJson: React.FC<TextFromJsonProps> = ({
-  jsonString,
+  jsonString: jsonStringProp,
   format = "text",
   room,
   expand = false,
   expandable = true,
 }) => {
+  // Normalize input: if an object is passed instead of a string, stringify it
+  const jsonString =
+    typeof jsonStringProp === "string"
+      ? jsonStringProp
+      : JSON.stringify(jsonStringProp);
   const [plainText, setPlainText] = useState("");
   const [isOpen, setIsOpen] = useState(expand);
   const [showButton, setShowButton] = useState(false);
@@ -125,9 +130,13 @@ const isValidTipTapContent = (content: any): boolean => {
 };
 
 const TipTapEditorWrapper: React.FC<{
-  jsonString: string;
+  jsonString: string | object;
   room: string;
-}> = ({ jsonString, room }) => {
+}> = ({ jsonString: jsonStringProp, room }) => {
+  const jsonString =
+    typeof jsonStringProp === "string"
+      ? jsonStringProp
+      : JSON.stringify(jsonStringProp);
   let content;
 
   try {

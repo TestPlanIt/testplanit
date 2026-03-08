@@ -21,6 +21,7 @@ export const getCaseColumns = (translations: {
   id: number;
   name: string;
   source: any;
+  automated?: boolean;
   projectId?: number;
   projectName?: string;
   iconUrl?: string | null;
@@ -42,6 +43,7 @@ export const getCaseColumns = (translations: {
               name={row.original.name}
               link={`/projects/repository/${row.original.projectId}/${row.original.id}`}
               source={row.original.source}
+              automated={row.original.automated}
               maxLines={2}
             />
           </div>

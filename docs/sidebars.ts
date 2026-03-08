@@ -62,6 +62,7 @@ const sidebars: SidebarsConfig = {
             'user-guide/app-config', // Corresponds to app-config.md
             'user-guide/projects', // Corresponds to projects.md
             'user-guide/templates-fields', // Corresponds to templates-fields.md
+            'user-guide/quickscript-templates', // QuickScript templates for test case export
             'user-guide/workflows', // Corresponds to workflows.md
             'user-guide/statuses', // Corresponds to statuses.md
             'user-guide/milestone-types', // Corresponds to milestone-types.md
@@ -151,6 +152,7 @@ const sidebars: SidebarsConfig = {
                 'user-guide/shared-steps', // Add shared-steps.md
                 'user-guide/import-shared-steps', // Add import-shared-steps.md
                 'import-export', // Add import-export.md
+                'user-guide/projects/quickscript', // QuickScript from repository
               ],
             },
             // Add the new Test Runs category
@@ -203,7 +205,6 @@ const sidebars: SidebarsConfig = {
     },
     'best-practices', // Best practices guide
     'faq', // Frequently asked questions
-    'api-reference', // Add api-reference.md
     'cli', // CLI tool documentation
     'api-tokens', // API tokens documentation
     'e2e-testing', // E2E testing guide for contributors
@@ -216,6 +217,7 @@ const sidebars: SidebarsConfig = {
         id: 'sdk/sdk-overview', // Link to the overview page
       },
       items: [
+        'api-reference', // Add api-reference.md
         'sdk/api-client', // @testplanit/api package
         'sdk/jira-forge-app', // Jira Forge app (Marketplace plugin)
         {

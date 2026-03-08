@@ -105,6 +105,7 @@ Object.defineProperty(window, "matchMedia", {
 
 // Mock ResizeObserver for components that use it (like async-combobox)
 class MockResizeObserver {
+  constructor(_callback?: ResizeObserverCallback) {}
   observe = vi.fn();
   unobserve = vi.fn();
   disconnect = vi.fn();

@@ -161,6 +161,7 @@ function TagDetail() {
           id: true,
           name: true,
           source: true,
+          automated: true,
           projectId: true,
           project: {
             select: {

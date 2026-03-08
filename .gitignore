@@ -65,3 +65,5 @@ testplanit/test-data/tpi*test*
 testplanit/backups/*
 
 *cases/*
+.planning/
+demo/

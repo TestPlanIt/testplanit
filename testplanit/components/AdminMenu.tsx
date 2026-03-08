@@ -12,6 +12,7 @@ import {
   Milestone,
   LayoutList,
   Workflow,
+  ScrollText,
   Tags,
   Settings,
   Trash2,
@@ -28,6 +29,7 @@ import {
   KeyRound,
   Share2,
   MessageSquareCode,
+  GitBranch,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
@@ -180,6 +182,18 @@ const menuOptions: MenuOption[] = [
     path: "prompts",
     section: "toolsAndIntegrations",
   },
+  {
+    icon: ScrollText,
+    translationKey: "quickscriptTemplates",
+    path: "quickscripts",
+    section: "toolsAndIntegrations",
+  },
+  {
+    icon: GitBranch,
+    translationKey: "codeRepositories",
+    path: "code-repositories",
+    section: "toolsAndIntegrations",
+  },
 
   // System
   {
@@ -270,7 +284,28 @@ export default function AdminMenu() {
 
   const groups = getGroupedItems();
 
-  const [openSections, setOpenSections] = useState<string[]>([]);
+  const [openSections, setOpenSections] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("adminMenu:openSections");
+        return stored ? (JSON.parse(stored) as string[]) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "adminMenu:openSections",
+        JSON.stringify(openSections)
+      );
+    } catch {
+      // ignore storage errors
+    }
+  }, [openSections]);
 
   useEffect(() => {
     if (page === undefined) {

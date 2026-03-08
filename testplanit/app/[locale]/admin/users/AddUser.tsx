@@ -31,8 +31,14 @@ import {
   SelectValue,
   SelectGroup,
 } from "@/components/ui/select";
-
-import { CirclePlus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { CirclePlus, Star } from "lucide-react";
 
 import {
   Form,
@@ -122,12 +128,21 @@ export function AddUserModal() {
       // Add type annotation for role
       value: role.id.toString(),
       label: (
-        <span>
+        <span className="inline-flex items-center gap-1">
           {role.name}
           {role.isDefault && (
-            <span className="text-muted-foreground italic ml-1">
-              {tCommon("fields.default")}
-            </span>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="secondary">
+                    <Star className="h-3 w-3 fill-current text-primary-background" />
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {tCommon("defaultOption")}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </span>
       ),

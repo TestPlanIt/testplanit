@@ -4,6 +4,14 @@ import { getServerSession } from "next-auth/next";
 import { enhance } from "@zenstackhq/runtime";
 import { notFound } from "next/navigation";
 import { ShareLinkList } from "@/components/share/ShareLinkList";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ProjectIcon } from "@/components/ProjectIcon";
 
 interface PageProps {
   params: Promise<{
@@ -38,6 +46,7 @@ export default async function ProjectSharesPage({ params }: PageProps) {
     select: {
       id: true,
       name: true,
+      iconUrl: true,
       createdBy: true,
       defaultAccessType: true,
     },
@@ -132,13 +141,25 @@ export default async function ProjectSharesPage({ params }: PageProps) {
   const t = await getTranslations("reports.shareDialog.manageShares");
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">{t("title")}</h1>
-        <p className="text-muted-foreground">{t("description")}</p>
-      </div>
-
-      <ShareLinkList projectId={projectId} showProjectColumn={false} />
-    </div>
+    <main>
+      <Card>
+        <CardHeader className="w-full">
+          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+            <CardTitle>
+              <span>{t("title")}</span>
+            </CardTitle>
+          </div>
+          <CardDescription className="uppercase">
+            <span className="flex items-center gap-2">
+              <ProjectIcon iconUrl={project.iconUrl} />
+              {project.name}
+            </span>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ShareLinkList projectId={projectId} showProjectColumn={false} />
+        </CardContent>
+      </Card>
+    </main>
   );
 }

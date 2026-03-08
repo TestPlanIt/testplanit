@@ -23,7 +23,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Download } from "lucide-react";
+import { Download, Star } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import {
   useFindManyTemplates,
@@ -1051,9 +1057,18 @@ export function ImportCasesWizard({
               <SelectItem key={template.id} value={template.id.toString()}>
                 {template.templateName}
                 {template.isDefault && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    {tCommon("fields.default")}
-                  </span>
+                  <TooltipProvider delayDuration={300}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="secondary">
+                          <Star className="h-3 w-3 fill-current text-primary-background" />
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {tCommon("defaultOption")}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </SelectItem>
             ))}

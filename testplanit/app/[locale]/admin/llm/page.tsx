@@ -13,7 +13,8 @@ import {
   useFindManyLlmIntegration,
   useUpdateLlmIntegration,
 } from "~/lib/hooks/llm-integration";
-import { useUpdateLlmProviderConfig } from "~/lib/hooks/llm-provider-config";
+import { useUpdateLlmProviderConfig, useUpdateManyLlmProviderConfig } from "~/lib/hooks/llm-provider-config";
+import { useGroupByLlmUsage } from "~/lib/hooks/llm-usage";
 import { DataTable } from "@/components/tables/DataTable";
 import { ExtendedLlmIntegration, getColumns } from "./columns";
 import { useDebounce } from "@/components/Debounce";
@@ -73,12 +74,15 @@ function LlmIntegrationList() {
 
   const { mutateAsync: updateLlmIntegration } = useUpdateLlmIntegration();
   const { mutateAsync: updateLlmProviderConfig } = useUpdateLlmProviderConfig();
+  const { mutateAsync: updateManyLlmProviderConfig } = useUpdateManyLlmProviderConfig();
 
   // Stabilize mutation refs — ZenStack's mutateAsync changes identity every render
   const updateLlmIntegrationRef = useRef(updateLlmIntegration);
   updateLlmIntegrationRef.current = updateLlmIntegration;
   const updateLlmProviderConfigRef = useRef(updateLlmProviderConfig);
   updateLlmProviderConfigRef.current = updateLlmProviderConfig;
+  const updateManyLlmProviderConfigRef = useRef(updateManyLlmProviderConfig);
+  updateManyLlmProviderConfigRef.current = updateManyLlmProviderConfig;
 
   const handleToggle = useCallback(
     async (
@@ -88,10 +92,19 @@ function LlmIntegrationList() {
       llmProviderConfigId?: number
     ) => {
       try {
-        if (key === "streamingEnabled" && llmProviderConfigId) {
+        if (key === "isDefault" && llmProviderConfigId && value) {
+          await updateManyLlmProviderConfigRef.current({
+            where: { isDefault: true },
+            data: { isDefault: false },
+          });
           await updateLlmProviderConfigRef.current({
             where: { id: llmProviderConfigId },
-            data: { streamingEnabled: value },
+            data: { isDefault: true },
+          });
+        } else if ((key === "streamingEnabled" || key === "isDefault") && llmProviderConfigId) {
+          await updateLlmProviderConfigRef.current({
+            where: { id: llmProviderConfigId },
+            data: { [key]: value },
           });
         } else {
           await updateLlmIntegrationRef.current({
@@ -226,9 +239,37 @@ function LlmIntegrationList() {
     [dateFormat, timezone]
   );
 
+  // Fetch current-month cost per integration for the Budget Usage column
+  const startOfMonth = useMemo(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  }, []);
+
+  const { data: monthlyUsageGroups } = useGroupByLlmUsage(
+    {
+      by: ["llmIntegrationId"],
+      _sum: { totalCost: true },
+      where: {
+        createdAt: { gte: startOfMonth },
+        llmIntegrationId: { not: null },
+      },
+    },
+    { enabled: !!session?.user }
+  );
+
+  const usageByIntegrationId = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const row of monthlyUsageGroups ?? []) {
+      if (row.llmIntegrationId != null) {
+        map.set(row.llmIntegrationId, Number(row._sum?.totalCost ?? 0));
+      }
+    }
+    return map;
+  }, [monthlyUsageGroups]);
+
   const columns = useMemo(
-    () => getColumns(userPreferences, handleToggle, tCommon, t),
-    [userPreferences, handleToggle, tCommon, t]
+    () => getColumns(userPreferences, handleToggle, tCommon, t, usageByIntegrationId, integrations?.length ?? 0),
+    [userPreferences, handleToggle, tCommon, t, usageByIntegrationId, integrations?.length]
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

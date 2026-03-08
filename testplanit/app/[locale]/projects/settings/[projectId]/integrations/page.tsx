@@ -152,14 +152,7 @@ export default function ProjectIntegrationsPage() {
       <Card>
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-            <CardTitle className="flex items-center gap-2">
-              <Link
-                href={`/projects/settings/${projectId}`}
-                className="hover:underline"
-              >
-                {tCommon("tabs.settings")}
-              </Link>
-              <ChevronRight className="h-5 w-5" />
+            <CardTitle>
               <span>{tGlobal("admin.menu.integrations")}</span>
             </CardTitle>
           </div>

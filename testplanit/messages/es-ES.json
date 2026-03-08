@@ -8,6 +8,7 @@
     "at": "en",
     "in": "en",
     "add": "Añadir",
+    "never": "Nunca",
     "select": "Seleccionar...",
     "file": "Archivo",
     "selectMultiple": "Seleccionar múltiples...",
@@ -18,6 +19,7 @@
     "searchRuns": "{count, plural, =0 {Ejecuciones de pruebas de búsqueda} one {Ejecución de pruebas de búsqueda n.°} other {Ejecuciones de pruebas de búsqueda n.°}}",
     "searchSessions": "{count, plural, =0 {Buscar sesiones} one {Buscar # sesión} other {Buscar # sesiones}}",
     "search": "Buscar...",
+    "defaultOption": "Opción predeterminada",
     "yes": "Sí",
     "no": "Nu",
     "updated": "Actualizado",
@@ -44,6 +46,7 @@
       "apply": "Aplicar",
       "confirm": "Confirmar",
       "confirmDelete": "Confirmar eliminación",
+      "saveChanges": "Guardar cambios",
       "saving": "Guardando...",
       "submitting": "Enviando...",
       "start": "Comenzar",
@@ -111,7 +114,7 @@
         "testSuite": "Conjunto de pruebas:"
       },
       "junit": {
-        "details": "Detalles de JUnit",
+        "details": "Detalles de los resultados de las pruebas automatizadas",
         "import": {
           "trigger": "Importar resultados de pruebas",
           "title": "Importar resultados de pruebas",
@@ -369,7 +372,7 @@
         "label": "Etiqueta",
         "validation": {
           "empty": "La opción no puede estar vacía",
-          "invalidChars": "La opción contiene caracteres no válidos",
+          "invalidChars": "La opción contiene un carácter no válido: \"{char}\"",
           "duplicate": "La opción debe ser única",
           "systemNameError": "El nombre del sistema no es válido",
           "initialHeightMax": "La altura inicial no puede ser superior a 600px.",
@@ -1154,6 +1157,81 @@
       "shares": {
         "title": "Administrar acciones",
         "description": "Ver y administrar todos los enlaces para compartir este proyecto"
+      },
+      "quickScript": {
+        "title": "Script rápido",
+        "description": "Habilite QuickScript y conecte un repositorio de código para la generación de pruebas asistida por IA.",
+        "enableLabel": "Habilitar QuickScript",
+        "enableDescription": " Permitir que los miembros del equipo utilicen QuickScript para convertir casos de prueba en scripts de automatización en este proyecto.",
+        "enabledToast": "QuickScript habilitado",
+        "disabledToast": "QuickScript deshabilitado",
+        "noRepos": {
+          "title": "No hay repositorios de código configurados",
+          "adminDescription": "Configure una conexión de repositorio antes de configurar el contexto del código para este proyecto.",
+          "adminLink": "Ir a Repositorios de Código",
+          "userDescription": "Comuníquese con su administrador del sistema para configurar una conexión al repositorio de código."
+        },
+        "repository": {
+          "title": "Repositorio de código",
+          "description": "Seleccione el repositorio de código que se utilizará para el contexto de IA",
+          "label": "Repositorio de código",
+          "placeholder": "Seleccione un repositorio de código...",
+          "branchLabel": "Rama",
+          "branchPlaceholder": "Déjelo en blanco para usar la rama predeterminada del repositorio"
+        },
+        "pathPatterns": {
+          "title": "Patrones de ruta",
+          "description": "Especifique los archivos que se incluirán. Cada fila combina una ruta base y un patrón global. Ejemplos: path=tests/e2e/pages + pattern=* incluye todos los archivos directamente en esa carpeta; path=src + pattern=**/*.test.ts incluye todos los archivos de prueba recursivamente.",
+          "pathLabel": "Camino",
+          "pathPlaceholder": "pruebas/e2e/páginas",
+          "patternLabel": "Patrón",
+          "addPath": "Agregar ruta",
+          "previewFiles": "Vista previa de archivos",
+          "files": "{count} archivos",
+          "truncatedBadge": "Los resultados pueden estar incompletos (límite del proveedor)",
+          "exceedsLimit": "El tamaño total supera el límite del contexto de IA en {overflow}. Durante la exportación, los archivos se clasifican según su relevancia para el caso de prueba que se exporta: los archivos más relevantes se incluyen primero y los de menor rango se omiten al alcanzar el límite. Reduzca los patrones de ruta si desea tener más control sobre los archivos incluidos."
+        },
+        "cache": {
+          "title": "Configuración de caché",
+          "description": "Los archivos se almacenan en caché en Valkey para un acceso rápido durante la generación de IA.",
+          "enableLabel": "Habilitar el almacenamiento en caché de archivos",
+          "disabledWarning": "El almacenamiento en caché de archivos está deshabilitado. Los archivos del repositorio se obtendrán directamente de su proveedor al exportar y no se almacenarán en TestPlanIt. QuickScript, basado en IA, seguirá incluyendo el contexto del código, pero cada exportación realizará una solicitud en vivo a su repositorio.",
+          "ttlLabel": "Duración de la caché (días)",
+          "statusTitle": "Estado de la caché",
+          "refreshButton": "Actualizar caché",
+          "listingFiles": "Listado de archivos…",
+          "cachingFiles": "Almacenamiento en caché de {count} archivos…",
+          "statusNeverFetched": "Nunca recuperado",
+          "statusSuccess": "Éxito",
+          "statusError": "Error",
+          "statusPending": "Refrescante...",
+          "statusLabel": "Estado",
+          "lastFetched": "Última obtención",
+          "filesCached": "Archivos en caché",
+          "totalSize": "Tamaño total"
+        },
+        "save": "Guardar configuración",
+        "saved": "Configuración del contexto del código guardada",
+        "saveError": "No se pudo guardar la configuración",
+        "listError": "No se pudieron listar los archivos del repositorio",
+        "contentsError": "No se pudo almacenar en caché el contenido del archivo",
+        "networkError": "Error de red durante la actualización de caché",
+        "refreshSuccess": "Caché actualizada: {fileCount} archivos ({contentCached} contenidos almacenados en caché)",
+        "refreshRateLimited": "Caché actualizada: {fileCount} archivos listados, {contentCached}/{fileCount} contenidos almacenados en caché (velocidad limitada; actualice nuevamente para completar)",
+        "validation": {
+          "pathRequired": "La ruta es obligatoria",
+          "patternRequired": "Se requiere patrón",
+          "repositoryRequired": "Se requiere repositorio",
+          "pathPatternRequired": "Se requiere al menos un patrón de ruta"
+        },
+        "disconnect": "Desconectar el repositorio",
+        "confirmDisconnect": "¿Estás seguro de que deseas desconectar \"{name}\" de este proyecto?",
+        "disconnectWarningTitle": "Desconectar este repositorio provocará lo siguiente:",
+        "disconnectWarning1": "Eliminar todos los archivos del repositorio en caché",
+        "disconnectWarning2": "Eliminar patrones de ruta y configuraciones de rama",
+        "disconnectWarning3": "Dejar de incluir el contexto del código en las exportaciones generadas por IA",
+        "disconnectSuccess": "Repositorio de código desconectado",
+        "disconnectError": "No se pudo desconectar el repositorio de código"
       }
     }
   },
@@ -1660,6 +1738,7 @@
       "bulkEdit": "Edición masiva",
       "createTestRun": "Crear prueba de ejecución",
       "export": "Exportar",
+      "quickScript": "Script rápido",
       "cannotReorderAcrossPages": "No se pueden reordenar los casos de prueba en varias páginas. Para reordenarlos, visualice todos los casos en una sola página seleccionando «Todos» en el menú de tamaño de página, o deseleccione los casos de otras páginas. Aún puede arrastrar los casos seleccionados a carpetas.",
       "exportModal": {
         "scope": {
@@ -1816,8 +1895,8 @@
           "description": "Sólo los campos estándar pueden ser editados cuando se seleccionan casos con diferentes plantillas. Los campos dinámicos pueden ser editados seleccionando los casos que utilizan la misma plantilla."
         },
         "junitLimitations": {
-          "title": "Limitaciones de la edición de casos de prueba de JUnit",
-          "description": "Los campos Estimación y Automatizado no se pueden modificar para los casos de prueba importados desde archivos XML de JUnit."
+          "title": "Limitaciones de la edición automatizada de casos de prueba",
+          "description": "Los campos Estimación y Automatizado no se pueden modificar para los casos de prueba importados desde resultados de pruebas automatizadas."
         }
       },
       "errors": {
@@ -1901,6 +1980,39 @@
       "comingSoon": "Próximamente",
       "exporting": "Exportando...",
       "exportError": "Error en la exportación. Inténtalo de nuevo."
+    },
+    "quickScript": {
+      "title": "Script rápido",
+      "description": "Convierta casos de prueba seleccionados en scripts de automatización utilizando una plantilla o IA.",
+      "templatePlaceholder": "Seleccione una plantilla...",
+      "searchPlaceholder": "Buscar plantillas...",
+      "noTemplatesFound": "No se encontraron plantillas.",
+      "outputModeLabel": "Modo de salida",
+      "outputModeSingle": "Archivo único ({count, plural, one {# caso} other {todos # casos}})",
+      "outputModeIndividual": "{count, plural, one {Archivo individual (.zip)} other {Archivos individuales (.zip)}}",
+      "casesToExport": "{count} casos para exportar",
+      "exportSuccess": "Exportación completada exitosamente."
+    },
+    "aiExport": {
+      "toggleLabel": "Generar con IA",
+      "generating": "Generando...",
+      "generatingProgress": "Generando caso {current} de {total}...",
+      "generatingBatch": "Generando {count} casos en un archivo...",
+      "previewTitle": "Vista previa de exportación",
+      "previewDescription": "{count} archivos generados",
+      "copySuccess": "Copiado al portapapeles",
+      "fallbackBadge": "Generado usando plantilla (IA no disponible)",
+      "retryButton": "Reintentar la generación de IA",
+      "downloadButton": "Descargar",
+      "copyButton": "Copiar al portapapeles",
+      "backButton": "Atrás",
+      "aiGenerated": "Generado por IA",
+      "templateGenerated": "Plantilla generada",
+      "truncatedWarning": "La salida se truncó: el modelo alcanzó su límite de tokens. Intente reducir el tamaño del lote o aumentar el número máximo de tokens de salida en la configuración del símbolo del sistema.",
+      "contextFiles": "{count, plural, one {(# archivo de contexto)} other {(# archivos de contexto)}}",
+      "noCodeContextHint": "No se ha configurado ningún repositorio de código. La IA utilizará patrones de marco estándar.",
+      "generatingParallelProgress": "Se generaron {done} de {total} archivos...",
+      "cancelledGeneration": "Cancelado"
     },
     "generateTestCases": {
       "buttonText": "Generar Casos de Prueba",
@@ -2261,6 +2373,8 @@
       "integrations": "Integraciones del problema",
       "llm": "AI Models",
       "prompts": "Configuraciones de aviso",
+      "codeRepositories": "Repositorios de código",
+      "quickScript": "Script rápido",
       "sso": "Autenticación",
       "trash": "Basura",
       "reports": "Informes",
@@ -2269,6 +2383,7 @@
       "queues": "Colas de trabajos",
       "auditLogs": "Registros de auditoría",
       "apiTokens": "Tokens API",
+      "quickscriptTemplates": "Plantillas de QuickScript",
       "testManagement": "Gestión de pruebas",
       "peopleAndAccess": "Personas y acceso",
       "toolsAndIntegrations": "Herramientas e integraciones",
@@ -2978,6 +3093,100 @@
         }
       }
     },
+    "codeRepositories": {
+      "title": "Repositorios de código",
+      "description": "Administrar conexiones de repositorio de código para el contexto de QuickScript.",
+      "addRepository": "Agregar repositorio",
+      "noRepos": {
+        "title": "No hay repositorios de código configurados",
+        "description": "Conecte un repositorio Git para proporcionar contexto de archivo para la generación de exportaciones de pruebas impulsadas por IA."
+      },
+      "delete": {
+        "title": "Eliminar repositorio",
+        "confirmMessage": "¿Seguro que quieres eliminar <strong>{name}</strong>? Esta acción no se puede deshacer.",
+        "fallbackName": "este repositorio"
+      },
+      "testConnection": "Conexión de prueba",
+      "connectionSuccess": "Conexión exitosa",
+      "connectionFailed": "La conexión falló",
+      "networkError": "Error de red",
+      "editTitle": "Editar repositorio de código",
+      "addTitle": "Agregar repositorio de código",
+      "repositoryUpdated": "Repositorio actualizado",
+      "repositoryCreated": "Repositorio creado",
+      "saveFailed": "No se pudo guardar el repositorio",
+      "namePlaceholder": "Mi repositorio",
+      "selectProvider": "Seleccionar proveedor"
+    },
+    "exportTemplates": {
+      "title": "Plantillas de QuickScript",
+      "description": "Administre las plantillas utilizadas por QuickScript para convertir casos de prueba en scripts de automatización.",
+      "confirmSetAsDefault": "Establecer como plantilla de exportación predeterminada",
+      "confirmSetAsDefaultDescription": "¿Seguro que desea establecer esta plantilla como predeterminada? Se preseleccionará cuando los usuarios exporten casos de prueba.",
+      "fields": {
+        "category": "Categoría",
+        "framework": "Estructura",
+        "fileExtension": "Extensión de archivo",
+        "language": "Idioma",
+        "headerBody": "Plantilla de encabezado",
+        "templateBody": "Cuerpo de la plantilla",
+        "footerBody": "Plantilla de pie de página",
+        "validation": {
+          "categoryRequired": "La categoría es obligatoria.",
+          "frameworkRequired": "Se requiere marco.",
+          "templateBodyRequired": "El cuerpo de la plantilla es obligatorio.",
+          "fileExtensionRequired": "Se requiere extensión de archivo.",
+          "languageRequired": "Se requiere idioma."
+        },
+        "placeholders": {
+          "name": "p. ej., Dramaturgo (TypeScript)",
+          "description": "p. ej., genera stubs de prueba de Dramaturgo",
+          "category": "p. ej., Navegador E2E",
+          "framework": "p. ej., dramaturgo",
+          "fileExtension": "por ejemplo, .spec.ts",
+          "language": "p. ej., mecanografiado",
+          "headerBody": "Opcional. Contenido representado una sola vez en la parte superior (por ejemplo, declaraciones de importación).",
+          "templateBody": "Ingresar plantilla Mustache...\n\nVariables disponibles:\n'{{name}}', '{{id}}', '{{folder}}', '{{state}}', '{{estimate}}', '{{automated}}', '{{tags}}', '{{createdBy}}', '{{createdAt}}'\n\nSección de pasos:\n'{{#steps}}{{order}}', '{{step}}', '{{expectedResult}}{{/steps}}'\n\nCampos personalizados:\n'{{fields.fieldSystemName}}'",
+          "footerBody": "Opcional. Contenido renderizado una sola vez en la parte inferior (por ejemplo, código de cierre)."
+        },
+        "combobox": {
+          "typeNew": "Escriba para ingresar un nuevo valor"
+        }
+      },
+      "add": {
+        "button": "Agregar plantilla QuickScript",
+        "title": "Agregar nueva plantilla de QuickScript"
+      },
+      "edit": {
+        "title": "Editar plantilla de QuickScript"
+      },
+      "delete": {
+        "title": "Eliminar plantilla de QuickScript",
+        "confirmMessage": "¿Está seguro de que desea eliminar la plantilla QuickScript <strong>{name}</strong>?"
+      },
+      "preview": {
+        "title": "Vista previa (datos simulados)",
+        "empty": "Ingrese un cuerpo de plantilla para ver una vista previa.",
+        "error": "Error al renderizar la plantilla. Revisa la sintaxis de Mustache."
+      },
+      "filterPlaceholder": "Plantillas de filtro...",
+      "noResults": "No hay plantillas que coincidan con tu filtro.",
+      "templateCount": "{count, plural, one {# plantilla} other {# plantillas}}",
+      "allFrameworks": "Todos los marcos",
+      "allFileExtensions": "Todas las extensiones",
+      "allLanguages": "Todos los idiomas",
+      "showEnabled": "Sólo habilitado",
+      "showAll": "Todo",
+      "variableInserter": {
+        "placeholder": "Insertar variable...",
+        "groups": {
+          "caseFields": "Campos de caso",
+          "steps": "Pasos",
+          "customFields": "Campos personalizados"
+        },
+        "stepsBlock": "Bloque de pasos"
+      }
+    },
     "users": {
       "showInactive": "Mostrar inactivo",
       "add": {
@@ -3347,7 +3556,8 @@
         "repositoryCaseLinks": "Enlaces de Caso de Repositorio",
         "repositoryCaseVersions": "Versiones del Caso de Repositorio",
         "testRunStepResults": "Resultados del paso de prueba",
-        "issueConfigs": "Configuraciones del problema"
+        "issueConfigs": "Configuraciones del problema",
+        "sharedStepGroups": "Grupos de pasos compartidos"
       },
       "table": {
         "title": "Eliminado {itemType}",
@@ -3595,8 +3805,8 @@
       "allIntegrationsTested": "Todas las conexiones de modelos de IA han sido probadas",
       "failedToTestConnections": "Error al probar algunas conexiones",
       "notConfigured": "No configurada",
-      "defaultModel": "Modelo predeterminado",
-      "budgetUsage": "Uso del presupuesto",
+      "defaultModel": "Modelo seleccionado",
+      "budgetUsage": "Uso (este mes)",
       "noBudget": "Ningún Presupuesto",
       "streaming": "Transmisión",
       "add": {
@@ -3622,15 +3832,15 @@
         "defaultModelDescription": "El modelo a usar por defecto",
         "maxTokensPerRequest": "Máximas fichas por solicitud",
         "maxRequestsPerMinute": "Máximo de solicitudes por minuto",
-        "costPerInputToken": "Costo por token de entrada ($)",
-        "costPerOutputToken": "Costo por token de salida ($)",
+        "costPerInputToken": "Costo por 1 millón de tokens de entrada ($)",
+        "costPerOutputToken": "Costo por 1 millón de tokens de salida ($)",
         "monthlyBudget": "Presupuesto mensual ($)",
         "monthlyBudgetPlaceholder": "100.00",
-        "monthlyBudgetDescription": "Límite de presupuesto opcional para el seguimiento del uso",
+        "monthlyBudgetDescription": "Objetivo de gasto opcional para notificaciones (no bloquea el uso)",
         "defaultTemperature": "Temperatura por defecto",
         "defaultMaxTokens": "Tokens máximos por defecto",
         "timeout": "Tiempo de espera de solicitud (ms)",
-        "timeoutDescription": "Tiempo máximo de espera para la respuesta del modelo de IA (5000-600000 ms)",
+        "timeoutDescription": "Tiempo máximo de espera para la respuesta del modelo de IA (5000-600 000 ms). No aplica a solicitudes de streaming.",
         "streamingEnabled": "Activar Streaming",
         "streamingEnabledDescription": "Permitir transmisión de respuesta en tiempo real",
         "setAsDefault": "Establecer por defecto",
@@ -3644,6 +3854,7 @@
         "failedToCreate": "Error al crear integración de modelo de IA",
         "validation": {
           "nameRequired": "El nombre de la integración es obligatorio",
+          "nameUnique": "Ya existe una integración con este nombre",
           "defaultModelRequired": "Se requiere el modelo predeterminado"
         }
       },
@@ -3657,6 +3868,7 @@
         "failedToUpdate": "Error al actualizar la integración del modelo AI",
         "validation": {
           "nameRequired": "El nombre de la integración es obligatorio",
+          "nameUnique": "Ya existe una integración con este nombre",
           "defaultModelRequired": "Se requiere el modelo predeterminado"
         }
       },
@@ -3664,7 +3876,8 @@
         "title": "Eliminar Integración del Modelo AI",
         "description": "¿Está seguro de que desea eliminar esta integración de modelo de IA? Esto lo eliminará de todos los proyectos y no se puede deshacer.",
         "integrationDeletedSuccess": "Integración del modelo IA eliminada con éxito",
-        "failedToDeleteIntegration": "Error al eliminar integración de modelo IA"
+        "failedToDeleteIntegration": "Error al eliminar integración de modelo IA",
+        "cannotDeleteDefault": "No se puede eliminar el modelo de IA predeterminado. Primero, configure otro como predeterminado."
       },
       "validation": {
         "defaultModelRequired": "Modelo por defecto es requerido"
@@ -3688,6 +3901,14 @@
         "failedToGetResponse": "Error al obtener respuesta del modelo de IA",
         "failedToSendMessage": "Error al enviar el mensaje de prueba",
         "defaultTestMessage": "¡Hola! Por favor, responde con una breve confirmación de que estás trabajando correctamente."
+      },
+      "budgetAlert": {
+        "budgetDisclaimer": "Establecer un presupuesto mensual no impide que se exceda el uso de LLM. Los límites presupuestarios son solo informativos para la toma de decisiones administrativas.",
+        "budgetDisclaimerShort": "Los límites de presupuesto son sólo informativos y no bloquean el uso.",
+        "spendLabel": "Gastos del mes actual",
+        "spendOfBudget": "{currentSpend} de {budgetLimit}",
+        "overBudget": "Por encima del presupuesto",
+        "budgetPercentage": "{percentage}% del presupuesto utilizado"
       }
     },
     "prompts": {
@@ -3702,6 +3923,7 @@
       "temperature": "Temperatura",
       "maxOutputTokens": "Tokens de salida máxima",
       "variables": "Variables",
+      "insertVariable": "Insertar variable",
       "noConfigs": "No se encontraron configuraciones de solicitud. Agrega tu primera configuración para comenzar.",
       "add": {
         "title": "Agregar configuración de solicitud",
@@ -3723,7 +3945,8 @@
         "test_case_generation": "Generación de casos de prueba",
         "magic_select_cases": "Selección inteligente de casos de prueba",
         "editor_assistant": "Asistente de redacción del editor",
-        "llm_test": "Prueba de conexión LLM"
+        "llm_test": "Prueba de conexión LLM",
+        "export_code_generation": "Generación de código de exportación"
       }
     },
     "elasticsearch": {
@@ -3958,7 +4181,8 @@
         "milestoneNotificationContinue": "Continuará recibiendo recordatorios diarios hasta que este hito se marque como completado.",
         "shareLinkAccessedTitle": "Enlace compartido accedido",
         "viewedYourSharedLink": "vi tu enlace compartido",
-        "viewedAt": "Visto en"
+        "viewedAt": "Visto en",
+        "budgetDisclaimer": "Los límites de presupuesto son sólo informativos y no impiden su uso."
       }
     },
     "issues": {
@@ -4277,6 +4501,24 @@
       "resultFields": "## Campos de resultados\nSeleccione y ordene los campos personalizados que estarán disponibles al agregar resultados de pruebas con esta plantilla.\n\n- Agregue campos del menú desplegable para incluirlos en la plantilla.\n- Arrastre y suelte para reordenar los campos.\n- El orden determina cómo aparecen los campos al ingresar los resultados de las pruebas.\n- Solo los campos de resultados habilitados están disponibles para su selección.\n- Los campos de resultados capturan datos adicionales específicos de los resultados de la ejecución de las pruebas.",
       "projects": "## Proyectos asociados\nSeleccione para qué proyectos estará disponible esta plantilla. Si no hay proyectos seleccionados, la plantilla estará disponible globalmente. Asignando una plantilla a proyectos específicos restringe su uso a sólo esos proyectos."
     },
+    "llm": {
+      "name": "## Nombre de la integración\nUna etiqueta descriptiva para esta integración LLM.\n\n- Se utiliza para identificarla en listas y configuraciones\n- Ejemplo: \"OpenAI GPT-4o\" o \"Internal Ollama\"",
+      "provider": "## Proveedor\nEl servicio LLM que potencia esta integración.\n\n- Determina el protocolo API y los modelos disponibles.\n- No se puede cambiar después de la creación.",
+      "apiKey": "## Clave API\nSu clave de autenticación para la API del proveedor de LLM.\n\n- Obtenga esta clave desde la consola de desarrollador de su proveedor.\n- Se mantiene cifrada y nunca se muestra después de guardar.\n- No se requiere para Ollama (implementación local).",
+      "endpoint": "## Punto de conexión de API\nLa URL base para la API del proveedor de LLM.\n\n- Déjelo en blanco para OpenAI, Anthropic y Gemini; los valores predeterminados se utilizan automáticamente\n- Obligatorio para Ollama (por ejemplo, `http://localhost:11434`) y Azure OpenAI\n- Obligatorio para proveedores de LLM personalizados",
+      "deploymentName": "## Nombre de implementación de Azure\nEl nombre de la implementación del modelo de Azure OpenAI.\n\n- Se encuentra en Azure OpenAI Studio en Implementaciones\n- Diferente del nombre del modelo, por ejemplo, `my-gpt4-deploy` se asigna a `gpt-4`\n- Solo se requiere para Azure OpenAI",
+      "defaultModel": "## Modelo predeterminado\nEl modelo utilizado para las solicitudes de IA con esta integración.\n\n- Para OpenAI, Anthropic y Gemini, los modelos disponibles se obtienen automáticamente de su clave API\n- Asegúrese de que el modelo esté habilitado en su cuenta de proveedor\n- Ejemplo: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
+      "maxTokensPerRequest": "## Máximos tokens por solicitud\nEl **techo estricto** de tokens de salida para cualquier solicitud individual.\n\n- Las solicitudes que excedan este límite se **rechazarán con un error** antes de alcanzar el LLM\n- Establezca esto en la capacidad máxima real de tokens de salida de su modelo\n- Ejemplo: `16384` para GPT-4o, `8192` para Claude 3.5 Sonnet\n- Establecer esto demasiado bajo hace que las funciones de IA fallen o produzcan una salida truncada",
+      "defaultMaxTokens": "## Tokens máximos predeterminados\nEl límite de token de salida **de reserva** utilizado cuando una solicitud no especifica el suyo.\n\n- Cada función de IA (generación de pruebas, exportación de código, etc.) establece su propio límite en **Admin → Prompt Config**\n- Este valor solo se utiliza como reserva para funciones que no tienen un límite específico configurado\n- Debe ser ≤ Tokens máximos por solicitud",
+      "maxRequestsPerMinute": "## Máximo de solicitudes por minuto\nLimita la cantidad de llamadas API que se pueden realizar a este proveedor por minuto.\n\n- Se configura para que coincida con el límite de velocidad del plan de su proveedor.\n- Las solicitudes en exceso se ponen en cola, no se rechazan.\n- Consulte la documentación de su proveedor para conocer el límite de su plan.",
+      "costPerInputToken": "## Costo por token de entrada (USD)\nEl costo en USD de cada token de entrada (solicitud) enviado al modelo.\n\n- Se utiliza para seguimiento de costos y alertas de presupuesto\n- Encuéntrelo en la página de precios de su proveedor\n- Ejemplo: `0.000005` = $5 por millón de tokens de entrada",
+      "costPerOutputToken": "## Costo por token de salida (USD)\nEl costo en USD de cada token de salida (finalización) generado por el modelo.\n\n- Generalmente más alto que el costo del token de entrada\n- Se usa para seguimiento de costos y alertas de presupuesto\n- Ejemplo: `0.000015` = $15 por millón de tokens de salida",
+      "monthlyBudget": "## Presupuesto mensual (USD)\nUn objetivo de gasto opcional para esta integración.\n\n- Establézcalo en `0` para deshabilitar el seguimiento del presupuesto\n- El presupuesto es **solo informativo**; no bloquea el uso de LLM\n- Recibirá notificaciones al 80 %, 90 % y 100 % del presupuesto\n- Los costos se calculan utilizando las tarifas por token anteriores",
+      "defaultTemperature": "## Temperatura predeterminada\nControla la aleatoriedad de las respuestas del modelo (0–2).\n\n- **0:** Determinista: salida idéntica para la misma entrada\n- **0.3:** Enfocado: recomendado para la generación de pruebas y la salida de código\n- **1+:** Creativo: respuestas más variadas\n- Las características individuales pueden anular esto en la configuración del indicador",
+      "timeout": "## Tiempo de espera de solicitud (ms)\nCuánto tiempo se debe esperar una respuesta antes de cancelar la solicitud.\n\n- El valor está en milisegundos (por ejemplo, `30000` = 30 segundos)\n- Las solicitudes de transmisión (por ejemplo, vista previa de exportación de código) ignoran este tiempo de espera\n- Aumentar para modelos lentos o grandes\n- Rango: 5000 – 600 000 ms",
+      "streamingEnabled": "## Habilitar transmisión\nTransmite la respuesta token por token en lugar de esperar la salida completa.\n\n- Obligatorio para la vista previa del código en tiempo real en el modo Exportar\n- Reduce la latencia percibida para respuestas largas\n- Recomendado para todos los proveedores compatibles",
+      "isDefault": "## Establecer como integración predeterminada\nHace que esta sea la integración utilizada para todas las funciones de IA de forma predeterminada.\n\n- Solo una integración puede ser la predeterminada a la vez\n- Las funciones sin un proveedor específico configurado usarán el predeterminado\n- Se puede cambiar en cualquier momento"
+    },
     "integration": {
       "name": "## Nombre de integración\nUn nombre descriptivo para identificar esta integración en el sistema.\n\n- Debe ser único para distinguir de otras integraciones\n- Utilizado en la configuración y configuración del proyecto\n- Debe indicar claramente el servicio y propósito",
       "authType": "## Autenticación Tipo\nElija cómo autenticar con el servicio externo.\n\n- **Clave API:** Autenticación simple usando email y token API\n- **OAuth 2. :** Autenticación segura usando OAuth flow\n- **token de acceso personal:** Autenticación directa basada en token",
@@ -4472,6 +4714,34 @@
       "dimensions": "## Dimensiones\nSeleccione las dimensiones que desea analizar en su informe. Las dimensiones son atributos que categorizan sus datos, como fecha, usuario, estado, etc. Puede arrastrarlos para reordenarlos.",
       "metrics": "## métricas\nSeleccione las métricas que desea medir en su informe. Las métricas son mediciones cuantitativas derivadas de sus datos, como el recuento de resultados de pruebas, la tasa de paso, el tiempo promedio transcurrido, etc. Puede arrastrar para reordenarlos.",
       "dateRange": "## Rango de fecha\nFiltra los datos de tu informe por un período de tiempo específico. Puede seleccionar entre rangos predefinidos como 'Últimos 7 días' o 'Mes anteriores', o definir un rango de fechas personalizado. Este filtro se aplica al campo de fecha correspondiente para cada tipo de informe (por ejemplo, fecha de ejecución para los resultados de la prueba, fecha de creación para los casos de prueba)."
+    },
+    "codeRepository": {
+      "name": "## Nombre del repositorio\nUn nombre para mostrar descriptivo para esta conexión de repositorio.\n\n- Se utiliza para identificarlo en la configuración del contexto del código del proyecto.\n- No necesita coincidir con el nombre del repositorio en el proveedor.",
+      "provider": "## Proveedor de Git\nLa plataforma que aloja este repositorio.\n\n- **GitHub** — github.com (nube o Enterprise)\n- **GitLab** — gitlab.com o autoalojado\n- **Bitbucket Cloud** — bitbucket.org (solo en la nube)\n- **Azure DevOps** — dev.azure.com",
+      "githubToken": "## Token de acceso personal\nUn token de GitHub con permiso de **Contenido: Lectura**.\n\nGenere uno en: GitHub → Configuración de perfil → Configuración de desarrollador → Tokens de acceso personal → Tokens de grano fino.",
+      "owner": "## Propietario\nLa organización de GitHub o la cuenta de usuario que posee el repositorio.\n\n- Ejemplo: `myorg` o `myusername`\n- Este es el primer segmento de ruta en la URL de su repositorio en github.com",
+      "repo": "## Repositorio\nEl nombre del repositorio, sin el prefijo del propietario.\n\n- Ejemplo: `my-repo` (no `myorg/my-repo`)\n- Este es el segundo segmento de ruta en la URL de su repositorio en github.com",
+      "gitlabToken": "## Token de acceso personal\nUn token de GitLab con alcances **read_api** y **read_repository**.\n\nGenere uno en: GitLab → Configuración de usuario → Tokens de acceso.",
+      "projectPath": "## ID o ruta del proyecto\nEl ID numérico del proyecto o la ruta completa del espacio de nombres.\n\n- Ruta de ejemplo: `myorg/my-project`\n- ID de ejemplo: `12345678`\n- Se encuentra en GitLab en Configuración → General.",
+      "baseUrl": "## URL de GitLab\nDeja en blanco gitlab.com. Para instancias autoalojadas, introduce tu URL de GitLab.\n\n- Ejemplo: `https://gitlab.example.com`",
+      "bitbucketUsername": "## Nombre de usuario de Bitbucket\nSu nombre de usuario de cuenta de Bitbucket (no su dirección de correo electrónico).\n\n- Se encuentra en Bitbucket → Su perfil → Configuración de la cuenta.",
+      "appPassword": "## Contraseña de la aplicación\nUna contraseña de aplicación de Bitbucket con permiso **Repositorios: Lectura**.\n\nCree una en: Bitbucket → Configuración personal → Contraseñas de aplicaciones.",
+      "workspace": "## Espacio de trabajo\nEl slug del espacio de trabajo de su URL de Bitbucket.\n\n- Ejemplo: `myworkspace` de `bitbucket.org/myworkspace`",
+      "repoSlug": "## Slug del repositorio\nEl identificador del repositorio de su URL.\n\n- Ejemplo: `my-repo` de `bitbucket.org/myworkspace/my-repo`",
+      "azureToken": "## Token de acceso personal\nUn PAT de Azure DevOps con permiso **Código (lectura)**.\n\nCree uno en: Azure DevOps → Configuración de usuario → Tokens de acceso personal.",
+      "organizationUrl": "## URL de la organización\nLa URL de su organización de Azure DevOps.\n\n- Ejemplo: `https://dev.azure.com/myorg`",
+      "project": "## Nombre del proyecto\nEl nombre del proyecto de Azure DevOps que contiene el repositorio.\n\n- Se encuentra como el tercer segmento de ruta en la URL de Azure DevOps después del nombre de la organización",
+      "azureRepoId": "## Nombre o ID del repositorio\nEl nombre del repositorio o GUID dentro del proyecto de Azure DevOps.\n\n- Ejemplo: `my-repo`"
+    },
+    "promptConfig": {
+      "name": "## Nombre de configuración\nUn nombre descriptivo único para esta configuración de solicitud.\n\n- Se utiliza para identificar la configuración al asignarla a un proyecto (por ejemplo, \"Solicitantes GPT-4o\", \"Solicitantes conservadores\").",
+      "description": "## Descripción\nUn resumen opcional de lo que hace que esta configuración sea distinta.\n\n- Ayuda a los administradores a comprender el propósito de un vistazo (por ejemplo, \"Solicita una temperatura más baja para una salida determinista\").",
+      "isActive": "## Activo\nCuando está habilitada, esta configuración está disponible para que la utilicen los proyectos.\n\n- Las configuraciones inactivas se ocultan de los menús desplegables de asignación de proyectos.\n- La configuración predeterminada no se puede desactivar.",
+      "isDefault": "## Configuración predeterminada\nCuando está habilitada, esta configuración la utiliza cualquier proyecto al que no se le haya asignado una configuración específica.\n\n- Solo una configuración puede ser predeterminada a la vez.\n- Establecer un nuevo valor predeterminado anula automáticamente el anterior.",
+      "systemPrompt": "## Indicador del sistema\nInstrucciones enviadas al modelo de IA antes de cualquier entrada del usuario. Define la función del modelo, el formato de salida y las restricciones.\n\n- Admite marcadores de posición de doble llave (p. ej., FRAMEWORK, LANGUAGE, CASE_NAME) que se sustituyen en tiempo de ejecución.\n- Los cambios aquí afectan a todos los proyectos que utilizan esta configuración.",
+      "userPrompt": "## Mensaje de usuario\nEl mensaje enviado a la IA en nombre del usuario. Déjelo en blanco si la función construye el mensaje de usuario completamente en código.\n\n- Admite marcadores de posición con doble llave (p. ej., TÍTULO DEL EMISIÓN, NOMBRE DEL CASO, CONTEXTO DEL CÓDIGO) que se sustituyen en tiempo de ejecución.\n- Los marcadores de posición disponibles para cada función se listan en la sección Variables a continuación.",
+      "temperature": "## Temperatura\nControla la aleatoriedad de la salida de IA. Rango: 0–2.\n\n- **0.0–0.3** — Altamente determinista, ideal para salida estructurada (JSON, código).\n- **0.4–0.7** — Equilibrado, ideal para la generación de casos de prueba.\n- **0.8–2.0** — Más creativo y variado, ideal para texto abierto.",
+      "maxOutputTokens": "## Tokens de salida máximos\nLa cantidad máxima de tokens que el modelo generará en una sola respuesta.\n\n: los valores más altos permiten respuestas más largas, pero aumentan el costo y la latencia.\n: rangos típicos: 2048 para texto corto, 4096 para generación de código, 6000+ para salida de múltiples casos."
     },
     "menu": {
       "startTour": "Visita de bienvenida guiada",

@@ -123,32 +123,32 @@ describe("SearchResultComponents", () => {
   });
 
   describe("StatusBadge", () => {
-    it("should render completed status with green color", () => {
+    it("should render completed status with success color", () => {
       render(
-        <StatusBadge 
-          isCompleted={true} 
-          completedText="Completed" 
-          activeText="Active" 
+        <StatusBadge
+          isCompleted={true}
+          completedText="Completed"
+          activeText="Active"
         />
       );
-      
+
       const badge = screen.getByText("Completed");
       expect(badge).toBeInTheDocument();
-      expect(badge).toHaveClass("text-green-600");
+      expect(badge).toHaveClass("text-success");
     });
 
-    it("should render active status with yellow color", () => {
+    it("should render active status with warning color", () => {
       render(
-        <StatusBadge 
-          isCompleted={false} 
-          completedText="Completed" 
-          activeText="Active" 
+        <StatusBadge
+          isCompleted={false}
+          completedText="Completed"
+          activeText="Active"
         />
       );
-      
+
       const badge = screen.getByText("Active");
       expect(badge).toBeInTheDocument();
-      expect(badge).toHaveClass("text-yellow-600");
+      expect(badge).toHaveClass("text-warning");
     });
 
     it("should apply custom className", () => {

@@ -218,9 +218,25 @@ export default function MilestoneDetailsPage() {
     orderBy: { colorFamily: { order: "asc" } },
   });
 
+  // Fetch descendant milestone IDs for rollup
+  const { data: descendantsData } = useQuery<{ descendantIds: number[] }>({
+    queryKey: ["milestoneDescendants", milestoneId],
+    queryFn: async () => {
+      const response = await fetch(`/api/milestones/${milestoneId}/descendants`);
+      if (!response.ok) return { descendantIds: [] };
+      return response.json();
+    },
+    staleTime: 60000,
+  });
+
+  const allMilestoneIds = useMemo(
+    () => [Number(milestoneId), ...(descendantsData?.descendantIds ?? [])],
+    [milestoneId, descendantsData]
+  );
+
   const { data: milestoneSessions } = useFindManySessions({
     where: {
-      milestoneId: Number(milestoneId),
+      milestoneId: { in: allMilestoneIds },
       isDeleted: false,
     },
     include: {
@@ -253,7 +269,7 @@ export default function MilestoneDetailsPage() {
 
   const { data: milestoneTestRuns } = useFindManyTestRuns({
     where: {
-      milestoneId: Number(milestoneId),
+      milestoneId: { in: allMilestoneIds },
       isDeleted: false,
     },
     include: {
@@ -589,7 +605,7 @@ export default function MilestoneDetailsPage() {
                         variant="default"
                         disabled={isSubmitting}
                       >
-                        <Save className="h-4 w-4 mr-1" />
+                        <Save className="h-4 w-4" />
                         {isSubmitting
                           ? tCommon("actions.saving")
                           : tCommon("actions.save")}
@@ -600,7 +616,7 @@ export default function MilestoneDetailsPage() {
                         onClick={handleCancel}
                         disabled={isSubmitting}
                       >
-                        <CircleSlash2 className="h-4 w-4 mr-1" />
+                        <CircleSlash2 className="h-4 w-4" />
                         {tCommon("cancel")}
                       </Button>
                     </div>
@@ -612,7 +628,7 @@ export default function MilestoneDetailsPage() {
                         disabled={isSubmitting}
                         className="text-destructive"
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
+                        <Trash2 className="h-4 w-4" />
                         {tCommon("actions.delete")}
                       </Button>
                     )}
@@ -624,7 +640,7 @@ export default function MilestoneDetailsPage() {
                       onClick={handleEditClick}
                       variant="secondary"
                     >
-                      <SquarePen className="h-4 w-4 mr-1" />
+                      <SquarePen className="h-4 w-4" />
                       {tCommon("actions.edit")}
                     </Button>
                   )
@@ -639,7 +655,7 @@ export default function MilestoneDetailsPage() {
                       variant="secondary"
                       className="mt-2"
                     >
-                      <CircleCheckBig className="h-4 w-4 mr-1" />
+                      <CircleCheckBig className="h-4 w-4" />
                       {tCommon("actions.complete")}
                     </Button>
                   )}
@@ -663,7 +679,7 @@ export default function MilestoneDetailsPage() {
               className="min-h-[400px]"
               autoSaveId="milestone-panels"
             >
-              <ResizablePanel defaultSize={80} minSize={20}>
+              <ResizablePanel id="milestone-left" order={1} defaultSize={80} minSize={20}>
                 <div className="px-4 h-full space-y-4">
                   <FormField
                     name="docs"
@@ -863,7 +879,7 @@ export default function MilestoneDetailsPage() {
                                 <TestRunItem
                                   key={testRun.id}
                                   testRun={transformedTestRun}
-                                  showMilestone={false}
+                                  showMilestone={testRun.milestoneId !== Number(milestoneId)}
                                   summaryData={batchSummaries?.summaries[testRun.id]}
                                 />
                               );
@@ -896,7 +912,7 @@ export default function MilestoneDetailsPage() {
                                 isCompleted={testSession.isCompleted}
                                 onComplete={handleCompleteSession}
                                 canComplete={canCompleteSession}
-                                showMilestone={false}
+                                showMilestone={testSession.milestoneId !== Number(milestoneId)}
                               />
                             ))}
                           </div>
@@ -913,7 +929,7 @@ export default function MilestoneDetailsPage() {
 
               <ResizableHandle withHandle />
 
-              <ResizablePanel defaultSize={20} minSize={10}>
+              <ResizablePanel id="milestone-right" order={2} defaultSize={20} minSize={10}>
                 <div className="pl-4 pr-1 pb-1 h-full">
                   <div className="space-y-4">
                     <MilestoneFormControls

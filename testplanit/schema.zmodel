@@ -332,47 +332,50 @@ model Roles {
 }
 
 model Projects {
-    id                     Int                         @id @default(autoincrement())
-    name                   String                      @unique @length(1)
-    iconUrl                String?
-    note                   String?
-    docs                   String?
-    isCompleted            Boolean                     @default(false)
-    isDeleted              Boolean                     @default(false)
-    completedAt            DateTime?                   @db.Date
-    createdAt              DateTime                    @default(now()) @db.Timestamptz(6)
-    createdBy              String
-    creator                User                        @relation("ProjectCreator", fields: [createdBy], references: [id])
-    assignedUsers          ProjectAssignment[]
-    assignedStatuses       ProjectStatusAssignment[]
-    milestoneTypes         MilestoneTypesAssignment[]
-    assignedTemplates      TemplateProjectAssignment[]
-    assignedWorkflows      ProjectWorkflowAssignment[]
-    milestones             Milestones[]
-    repositories           Repositories[]
-    repositoryFolders      RepositoryFolders[]
-    repositoryCases        RepositoryCases[]
-    repositoryCaseVersions RepositoryCaseVersions[]
-    sessions               Sessions[]
-    sessionVersions        SessionVersions[]
-    testRuns               TestRuns[]
-    defaultAccessType      ProjectAccessType           @default(GLOBAL_ROLE)
-    defaultRoleId          Int?
-    defaultRole            Roles?                      @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
-    userPermissions        UserProjectPermission[]
-    groupPermissions       GroupProjectPermission[]
-    sharedStepGroups       SharedStepGroup[]
-    projectIntegrations    ProjectIntegration[]
-    projectLlmIntegrations ProjectLlmIntegration[]
-    promptConfigId         String?
-    promptConfig           PromptConfig?               @relation(fields: [promptConfigId], references: [id])
-    issues                 Issue[]
-    llmUsages              LlmUsage[]
-    llmFeatureConfigs      LlmFeatureConfig[]
-    llmResponseCaches      LlmResponseCache[]
-    comments               Comment[]
-    auditLogs              AuditLog[]
-    shareLinks             ShareLink[]
+    id                      Int                                   @id @default(autoincrement())
+    name                    String                                @unique @length(1)
+    iconUrl                 String?
+    note                    String?
+    docs                    String?
+    isCompleted             Boolean                               @default(false)
+    isDeleted               Boolean                               @default(false)
+    completedAt             DateTime?                             @db.Date
+    createdAt               DateTime                              @default(now()) @db.Timestamptz(6)
+    createdBy               String
+    creator                 User                                  @relation("ProjectCreator", fields: [createdBy], references: [id])
+    assignedUsers           ProjectAssignment[]
+    assignedStatuses        ProjectStatusAssignment[]
+    milestoneTypes          MilestoneTypesAssignment[]
+    assignedTemplates       TemplateProjectAssignment[]
+    assignedWorkflows       ProjectWorkflowAssignment[]
+    milestones              Milestones[]
+    repositories            Repositories[]
+    repositoryFolders       RepositoryFolders[]
+    repositoryCases         RepositoryCases[]
+    repositoryCaseVersions  RepositoryCaseVersions[]
+    sessions                Sessions[]
+    sessionVersions         SessionVersions[]
+    testRuns                TestRuns[]
+    defaultAccessType       ProjectAccessType                     @default(GLOBAL_ROLE)
+    defaultRoleId           Int?
+    defaultRole             Roles?                                @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
+    userPermissions         UserProjectPermission[]
+    groupPermissions        GroupProjectPermission[]
+    sharedStepGroups        SharedStepGroup[]
+    projectIntegrations     ProjectIntegration[]
+    projectLlmIntegrations  ProjectLlmIntegration[]
+    codeRepositoryConfig    ProjectCodeRepositoryConfig?
+    promptConfigId          String?
+    promptConfig            PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
+    issues                  Issue[]
+    llmUsages               LlmUsage[]
+    llmFeatureConfigs       LlmFeatureConfig[]
+    llmResponseCaches       LlmResponseCache[]
+    comments                Comment[]
+    auditLogs               AuditLog[]
+    shareLinks              ShareLink[]
+    assignedExportTemplates CaseExportTemplateProjectAssignment[]
+    quickScriptEnabled      Boolean                               @default(false)
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -774,6 +777,41 @@ model TemplateResultAssignment {
     order         Int          @default(0)
 
     @@id([resultFieldId, templateId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model CaseExportTemplate {
+    id            Int                                   @id @default(autoincrement())
+    name          String                                @unique @length(1)
+    description   String?
+    category      String                                @length(1)
+    framework     String                                @length(1) @default("")
+    headerBody    String?
+    templateBody  String
+    footerBody    String?
+    fileExtension String                                @length(1)
+    language      String                                @length(1)
+    isDefault     Boolean                               @default(false)
+    isEnabled     Boolean                               @default(true)
+    isDeleted     Boolean                               @default(false)
+    createdAt     DateTime                              @default(now()) @db.Timestamptz(6)
+    updatedAt     DateTime                              @updatedAt
+    projects      CaseExportTemplateProjectAssignment[]
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model CaseExportTemplateProjectAssignment {
+    templateId Int
+    template   CaseExportTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+    projectId  Int
+    project    Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+    @@id([templateId, projectId])
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
@@ -2266,6 +2304,17 @@ enum IntegrationStatus {
     @@allow('read', auth().access != null)
 }
 
+enum CodeRepositoryProvider {
+    GITHUB
+    GITLAB
+    BITBUCKET
+    AZURE_DEVOPS
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
 model Integration {
     id                   Int                   @id @default(autoincrement())
     name                 String                @length(1)
@@ -2287,6 +2336,55 @@ model Integration {
     @@deny('all', !auth())
     @@allow('read', auth().access != null)
     @@allow('all', auth().access == 'ADMIN')
+}
+
+// ============================================
+// Code Repository Models
+// ============================================
+
+model CodeRepository {
+    id             Int                           @id @default(autoincrement())
+    name           String                        @unique @length(1)
+    provider       CodeRepositoryProvider
+    credentials    Json                         // Provider credentials (PAT, username/password, etc.)
+    settings       Json?                        // Non-sensitive: baseUrl, orgUrl, repoIdentifier
+    status         IntegrationStatus             @default(ACTIVE)
+    lastTestedAt   DateTime?
+    isDeleted      Boolean                       @default(false)
+    createdAt      DateTime                      @default(now())
+    updatedAt      DateTime                      @updatedAt
+    projectConfigs ProjectCodeRepositoryConfig[]
+
+    @@index([provider, status])
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model ProjectCodeRepositoryConfig {
+    id                 Int            @id @default(autoincrement())
+    projectId          Int            @unique  // One repository config per project (v1)
+    project            Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    repositoryId       Int
+    repository         CodeRepository @relation(fields: [repositoryId], references: [id])
+    branch             String?        // null = use repository's default branch
+    pathPatterns       Json           // Array of { path: string, pattern: string }
+    cacheEnabled       Boolean        @default(true)   // false = no file caching (privacy mode)
+    cacheTtlDays       Int            @default(7)
+    cacheStatus        String?        // "success" | "error" | "pending" | null (never fetched)
+    cacheLastFetchedAt DateTime?
+    cacheFileCount     Int?
+    cacheTotalSize     BigInt?        // bytes
+    cacheError         String?
+    createdAt          DateTime       @default(now())
+    updatedAt          DateTime       @updatedAt
+
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read,update', auth().access == 'PROJECTADMIN')
+    @@allow('read,update',
+      project.userPermissions?[user == auth() && role.rolePermissions?[area == 'Settings' && canAddEdit == true]]
+    )
 }
 
 // ============================================
@@ -3047,6 +3145,10 @@ model LlmProviderConfig {
     // Ollama-specific settings (stored in settings Json)
     settings             Json?     // Contains baseUrl, keepAlive, numGpu, etc.
 
+    // Budget alert tracking - which thresholds have fired per billing month
+    // e.g., {"2026-03": [80, 90]} means 80% and 90% alerts fired for March 2026
+    alertThresholdsFired Json?
+
     createdAt            DateTime        @default(now()) @db.Timestamptz(6)
     updatedAt            DateTime        @updatedAt
 
@@ -3170,22 +3272,22 @@ model LlmUsage {
 }
 
 model LlmFeatureConfig {
-    id                String             @id @default(cuid())
+    id                String          @id @default(cuid())
     projectId         Int
-    project           Projects           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    project           Projects        @relation(fields: [projectId], references: [id], onDelete: Cascade)
     feature           String   // e.g., "test_case_generation", "bug_analysis"
 
     // Feature settings
-    enabled           Boolean            @default(false)
+    enabled           Boolean         @default(false)
     llmIntegrationId  Int?     // Specific integration to use
-    llmIntegration    LlmIntegration?    @relation(fields: [llmIntegrationId], references: [id])
+    llmIntegration    LlmIntegration? @relation(fields: [llmIntegrationId], references: [id])
     // Override settings
     model             String?  // Override default model
     temperature       Float?   // Override temperature
     maxTokens         Int?     // Override max tokens
 
     // Feature-specific configuration
-    autoTrigger       Boolean            @default(false) // Auto-generate on certain events
+    autoTrigger       Boolean         @default(false) // Auto-generate on certain events
     triggerConditions Json?    // Conditions for auto-triggering
     outputFormat      String?  // Expected output format
     postProcessing    Json?    // Post-processing rules
@@ -3194,8 +3296,8 @@ model LlmFeatureConfig {
     dailyLimit        Int?     // Daily usage limit for this feature
     monthlyLimit      Int?     // Monthly usage limit
 
-    createdAt         DateTime           @default(now()) @db.Timestamptz(6)
-    updatedAt         DateTime           @updatedAt
+    createdAt         DateTime        @default(now()) @db.Timestamptz(6)
+    updatedAt         DateTime        @updatedAt
 
     @@unique([projectId, feature])
     @@index([llmIntegrationId])

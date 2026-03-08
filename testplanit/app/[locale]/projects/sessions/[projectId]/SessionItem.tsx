@@ -154,7 +154,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
       {/* Right Column - MemberList & Actions */}
       <div className="flex items-center justify-end space-x-2 min-w-0">
         <div className="flex flex-col items-end gap-1.5 w-full">
-          {isCompleted && showMilestone && testSession.milestone && (
+          {showMilestone && testSession.milestone && (
             <MilestoneIconAndName milestone={testSession.milestone} />
           )}
           {isCompleted && testSession.completedAt && (

@@ -160,33 +160,34 @@ Return ONLY the JSON.`,
     source: "fallback",
   },
 
-  [LLM_FEATURES.AUTO_TAG]: {
-    systemPrompt: `You are an expert at categorizing test artifacts. Analyze the provided entities (test cases, test runs, or sessions) and suggest concise, categorical tags that describe what each entity is about.
+  [LLM_FEATURES.EXPORT_CODE_GENERATION]: {
+    systemPrompt: `You are an expert test automation engineer. Your task is to generate a complete, syntactically valid, executable test file in {{FRAMEWORK}} ({{LANGUAGE}}).
 
-RULES:
-- Suggest 1-5 tags per entity
-- Tags should be concise (1-3 words) and categorical (e.g., "login", "regression", "API", "security", "performance")
-- Use lowercase for all tags
-- Each entity's existing tags are listed — do NOT suggest tags already present
-- Only suggest tags that are clearly relevant to the entity content
-- Prefer reusing tags from the "Available project tags" list when they fit
+CRITICAL RULES:
+- Generate a COMPLETE test file including all necessary imports, setup, test body, and teardown
+- A default header and footer will be shown at the end of the user message — use these as a starting point and extend or modify them as needed based on what the repository context requires
+- Add any additional imports, page objects, fixtures, or helpers that the generated tests need
+- Use the actual imports, page objects, fixtures, helpers, and utilities visible in the provided repository context files
+- Follow the coding patterns, naming conventions, and style visible in the context files
+- The code must be syntactically valid and runnable within the test framework
+- Output ONLY the raw code — no explanations, no markdown code fences, no comments about what the code does
 
-CRITICAL: You must respond with ONLY valid JSON. No explanations, no comments, no text before or after the JSON.
+GUIDELINES:
+- Map each test step to one or more concrete automation actions
+- Use assertions that match the expected results for each step
+- Prefer existing helper methods and page objects from the repository over raw browser/API calls
+- Keep the code concise but complete — every test step should be covered`,
+    userPrompt: `TEST CASE: {{CASE_NAME}}
 
-JSON structure (EXACT format required):
-{
-  "suggestions": [
-    {
-      "entityId": 123,
-      "tags": ["tag1", "tag2"]
-    }
-  ]
-}
+TEST STEPS:
+{{STEPS_TEXT}}
 
-Return ONLY the JSON.`,
-    userPrompt: "",
+REPOSITORY CONTEXT (actual project files for reference):
+{{CODE_CONTEXT}}
+
+Generate the complete test file for this test case using the repository's actual test infrastructure. Output ONLY the executable code.`,
     temperature: 0.3,
-    maxOutputTokens: 4096,
+    maxOutputTokens: 8192,
     source: "fallback",
   },
 };

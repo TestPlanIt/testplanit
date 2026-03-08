@@ -34,16 +34,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Edit } from "lucide-react";
-import { useUpdateLlmIntegration } from "~/lib/hooks/llm-integration";
+import { Loader2, Edit, Info } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { HelpPopover } from "@/components/ui/help-popover";
+import {
+  useUpdateLlmIntegration,
+  useFindManyLlmIntegration,
+} from "~/lib/hooks/llm-integration";
 import {
   useUpdateLlmProviderConfig,
   useFindManyLlmProviderConfig,
 } from "~/lib/hooks/llm-provider-config";
 
-const createFormSchema = (t: any) =>
+const createFormSchema = (t: any, existingNames: string[], currentName: string) =>
   z.object({
-    name: z.string().min(1, t("validation.nameRequired")),
+    name: z
+      .string()
+      .min(1, t("validation.nameRequired"))
+      .refine(
+        (name) =>
+          !existingNames.some(
+            (existing) =>
+              existing.toLowerCase() === name.toLowerCase() &&
+              existing.toLowerCase() !== currentName.toLowerCase()
+          ),
+        { message: t("validation.nameUnique") }
+      ),
     apiKey: z.string().optional(),
     endpoint: z.string().optional(),
     deploymentName: z.string().optional(),
@@ -64,18 +80,28 @@ const createFormSchema = (t: any) =>
 type FormData = z.infer<ReturnType<typeof createFormSchema>>;
 
 // Providers that support dynamic model fetching
-const PROVIDERS_WITH_DYNAMIC_MODELS = ["OPENAI", "ANTHROPIC", "GEMINI", "OLLAMA"];
+const PROVIDERS_WITH_DYNAMIC_MODELS = [
+  "OPENAI",
+  "ANTHROPIC",
+  "GEMINI",
+  "OLLAMA",
+];
 
 interface EditLlmIntegrationProps {
   integration: any;
+  currentSpend?: number;
 }
 
-export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
+export function EditLlmIntegration({
+  integration,
+  currentSpend = 0,
+}: EditLlmIntegrationProps) {
   const t = useTranslations("admin.llm.edit");
   const tAdd = useTranslations("admin.llm.add");
   const tCommon = useTranslations("common");
   const tLlm = useTranslations("admin.llm");
   const tIntegrations = useTranslations("admin.integrations");
+  const tBudgetAlert = useTranslations("admin.llm.budgetAlert");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
@@ -87,8 +113,12 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
   const { data: existingDefaultConfigs } = useFindManyLlmProviderConfig({
     where: { isDefault: true },
   });
+  const { data: existingIntegrations } = useFindManyLlmIntegration({
+    select: { name: true },
+  });
 
-  const formSchema = createFormSchema(t);
+  const existingNames = (existingIntegrations ?? []).map((i) => i.name);
+  const formSchema = createFormSchema(t, existingNames, integration?.name ?? "");
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -111,6 +141,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
 
   const apiKey = form.watch("apiKey");
   const endpoint = form.watch("endpoint");
+  const watchedBudget = form.watch("monthlyBudget");
 
   const fetchAvailableModels = async (
     providerType: string,
@@ -184,7 +215,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
     }
 
     // For providers that require an API key, wait until one is provided
-    if (["OPENAI", "ANTHROPIC", "GEMINI"].includes(integration.provider) && !apiKey) {
+    if (
+      ["OPENAI", "ANTHROPIC", "GEMINI"].includes(integration.provider) &&
+      !apiKey
+    ) {
       return;
     }
 
@@ -288,6 +322,8 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
             timeout: values.timeout,
             streamingEnabled: values.streamingEnabled,
             isDefault: values.isDefault,
+            // Reset budget alert thresholds when config is saved — allows re-alerting against updated budget
+            alertThresholdsFired: {},
           },
         });
       }
@@ -347,7 +383,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tIntegrations("config.name")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {tIntegrations("config.name")}
+                      <HelpPopover helpKey="llm.name" />
+                    </FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -362,10 +401,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                     <div className="space-y-0.5">
-                      <FormLabel>{tCommon("fields.state")}</FormLabel>
-                      <FormDescription>
-                        {t("statusDescription")}
-                      </FormDescription>
+                      <FormLabel>{tCommon("fields.isActive")}</FormLabel>
                     </div>
                     <FormControl>
                       <Switch
@@ -385,7 +421,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="apiKey"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tIntegrations("authType.api_key")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tIntegrations("authType.api_key")}
+                        <HelpPopover helpKey="llm.apiKey" />
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="password"
@@ -411,7 +450,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="endpoint"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tAdd("endpoint")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tAdd("endpoint")}
+                        <HelpPopover helpKey="llm.endpoint" />
+                      </FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -427,7 +469,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="deploymentName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tAdd("deploymentName")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tAdd("deploymentName")}
+                        <HelpPopover helpKey="llm.deploymentName" />
+                      </FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -443,7 +488,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center justify-between">
-                      {tLlm("defaultModel")}
+                      <span className="flex items-center">
+                        {tLlm("defaultModel")}
+                        <HelpPopover helpKey="llm.defaultModel" />
+                      </span>
                       {PROVIDERS_WITH_DYNAMIC_MODELS.includes(
                         integration?.provider
                       ) &&
@@ -494,7 +542,8 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                         <FormDescription className="text-muted-foreground">
                           {integration?.provider === "GEMINI"
                             ? "Enter your API key and endpoint above. Models will be fetched automatically."
-                            : integration?.provider === "OPENAI" || integration?.provider === "ANTHROPIC"
+                            : integration?.provider === "OPENAI" ||
+                                integration?.provider === "ANTHROPIC"
                               ? "Enter your API key above. We'll fetch the available models automatically."
                               : "Models will be fetched automatically from your Ollama instance."}
                         </FormDescription>
@@ -510,7 +559,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="maxTokensPerRequest"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tAdd("maxTokensPerRequest")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tAdd("maxTokensPerRequest")}
+                        <HelpPopover helpKey="llm.maxTokensPerRequest" />
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -530,7 +582,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="maxRequestsPerMinute"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tAdd("maxRequestsPerMinute")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tAdd("maxRequestsPerMinute")}
+                        <HelpPopover helpKey="llm.maxRequestsPerMinute" />
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -552,7 +607,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="costPerInputToken"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tAdd("costPerInputToken")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tAdd("costPerInputToken")}
+                        <HelpPopover helpKey="llm.costPerInputToken" />
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -573,7 +631,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="costPerOutputToken"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tAdd("costPerOutputToken")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tAdd("costPerOutputToken")}
+                        <HelpPopover helpKey="llm.costPerOutputToken" />
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -595,7 +656,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 name="monthlyBudget"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tAdd("monthlyBudget")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {tAdd("monthlyBudget")}
+                      <HelpPopover helpKey="llm.monthlyBudget" />
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -615,13 +679,77 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 )}
               />
 
+              {watchedBudget != null &&
+                Number(watchedBudget) > 0 &&
+                (() => {
+                  const budgetNum = Number(watchedBudget);
+                  const percentage =
+                    budgetNum > 0 ? (currentSpend / budgetNum) * 100 : 0;
+                  return (
+                    <div className="space-y-3">
+                      {/* Disclaimer callout */}
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          {tBudgetAlert("budgetDisclaimer")}
+                        </AlertDescription>
+                      </Alert>
+
+                      {/* Spend display and progress bar */}
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            {tBudgetAlert("spendLabel")}
+                          </span>
+                          <span
+                            className={
+                              percentage > 100 ? "text-destructive font-medium" : ""
+                            }
+                          >
+                            {tBudgetAlert("spendOfBudget", {
+                              currentSpend: `$${currentSpend.toFixed(2)}`,
+                              budgetLimit: `$${budgetNum.toFixed(2)}`,
+                            })}
+                          </span>
+                        </div>
+
+                        {/* Color-coded progress bar */}
+                        <div className="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${
+                              percentage > 100
+                                ? "bg-destructive"
+                                : percentage > 80
+                                  ? "bg-warning"
+                                  : "bg-success"
+                            }`}
+                            style={{ width: `${Math.min(percentage, 100)}%` }}
+                          />
+                        </div>
+
+                        {/* Percentage text */}
+                        <div className="text-xs text-muted-foreground">
+                          {percentage > 100
+                            ? tBudgetAlert("overBudget")
+                            : tBudgetAlert("budgetPercentage", {
+                                percentage: percentage.toFixed(0),
+                              })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="defaultTemperature"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tAdd("defaultTemperature")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tAdd("defaultTemperature")}
+                        <HelpPopover helpKey="llm.defaultTemperature" />
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -644,7 +772,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   name="defaultMaxTokens"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{tAdd("defaultMaxTokens")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tAdd("defaultMaxTokens")}
+                        <HelpPopover helpKey="llm.defaultMaxTokens" />
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -665,7 +796,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 name="timeout"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tAdd("timeout")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {tAdd("timeout")}
+                      <HelpPopover helpKey="llm.timeout" />
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -692,7 +826,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                     <div className="space-y-0.5">
-                      <FormLabel>{tAdd("streamingEnabled")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tAdd("streamingEnabled")}
+                        <HelpPopover helpKey="llm.streamingEnabled" />
+                      </FormLabel>
                       <FormDescription>
                         {tAdd("streamingEnabledDescription")}
                       </FormDescription>
@@ -713,7 +850,10 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                     <div className="space-y-0.5">
-                      <FormLabel>{tAdd("setAsDefault")}</FormLabel>
+                      <FormLabel className="flex items-center">
+                        {tAdd("setAsDefault")}
+                        <HelpPopover helpKey="llm.isDefault" />
+                      </FormLabel>
                       <FormDescription>
                         {tAdd("setAsDefaultDescription")}
                       </FormDescription>
@@ -722,6 +862,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                       <Switch
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        disabled={integration.llmProviderConfig?.isDefault}
                       />
                     </FormControl>
                   </FormItem>
@@ -737,7 +878,7 @@ export function EditLlmIntegration({ integration }: EditLlmIntegrationProps) {
                   {tCommon("cancel")}
                 </Button>
                 <Button type="submit" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                   {t("update")}
                 </Button>
               </DialogFooter>

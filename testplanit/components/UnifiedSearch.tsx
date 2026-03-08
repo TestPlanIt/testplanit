@@ -72,6 +72,7 @@ import {
 } from "@/components/ui/tooltip";
 import { CustomFieldDisplay } from "@/components/search/CustomFieldDisplay";
 import { EntityTypeSelector } from "@/components/EntityTypeSelector";
+import { SearchHelpContent } from "@/components/search/SearchHelpContent";
 
 interface UnifiedSearchProps {
   // Context overrides
@@ -537,13 +538,18 @@ export function UnifiedSearch({
   const defaultResultRenderer = (results: UnifiedSearchResult) => {
     if (!results.hits.length && results.total === 0) {
       return (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-2">
-            {t("common.labels.noResults")}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {t("search.results.tryAdjusting")}
-          </p>
+        <div className="py-12 space-y-12">
+          <div className="text-center">
+            <p className="text-muted-foreground mb-2">
+              {t("common.labels.noResults")}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {t("search.results.tryAdjusting")}
+            </p>
+          </div>
+          <div className="ml-2 border-l-8 pl-2">
+            <SearchHelpContent />
+          </div>
         </div>
       );
     }
@@ -657,9 +663,8 @@ export function UnifiedSearch({
   const paginationControls = (
     <div className="my-4 flex items-center justify-between">
       <div className="text-sm text-muted-foreground">
-        {t("common.pagination.showing")} {showingFromForTab}-
-        {showingToForTab} {t("common.of")} {totalForTab}{" "}
-        {t("common.results")}
+        {t("common.pagination.showing")} {showingFromForTab}-{showingToForTab}{" "}
+        {t("common.of")} {totalForTab} {t("common.results")}
       </div>
 
       <div className="flex items-center gap-2">
@@ -733,6 +738,7 @@ export function UnifiedSearch({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-10 pr-10"
+              autoFocus
             />
             {query && (
               <Button
@@ -753,16 +759,14 @@ export function UnifiedSearch({
               onOpenChange={setShowEntityTypeSheet}
             >
               <SheetTrigger asChild>
-                <Button variant="outline" className="gap-1">
+                <Button variant="outline">
                   <Settings2 className="h-4 w-4" />
                   {selectedEntitiesText}
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[320px]">
                 <SheetHeader>
-                  <SheetTitle>
-                    {t("search.title")}
-                  </SheetTitle>
+                  <SheetTitle>{t("search.title")}</SheetTitle>
                   <SheetDescription className="sr-only">
                     {t("search.title")}
                   </SheetDescription>
@@ -1025,73 +1029,104 @@ function SearchResultCard({
                 <div className="space-y-1.5 text-sm text-muted-foreground">
                   {(() => {
                     // Get highlighted steps from Elasticsearch
-                    const highlightedSteps = hit.highlights?.['steps.step'] || [];
-                    const highlightedExpectedResults = hit.highlights?.['steps.expectedResult'] || [];
+                    const highlightedSteps =
+                      hit.highlights?.["steps.step"] || [];
+                    const highlightedExpectedResults =
+                      hit.highlights?.["steps.expectedResult"] || [];
 
                     // Helper to find highlighted version of text
-                    const getHighlightedText = (originalText: string, highlightArray: string[]): string | null => {
+                    const getHighlightedText = (
+                      originalText: string,
+                      highlightArray: string[]
+                    ): string | null => {
                       if (!originalText || !highlightArray.length) return null;
 
                       // Find a highlight that contains part of the original text
                       // The highlight will have <mark> tags, so strip those for comparison
                       for (const highlighted of highlightArray) {
-                        const strippedHighlight = highlighted.replace(/<\/?mark[^>]*>/gi, '');
+                        const strippedHighlight = highlighted.replace(
+                          /<\/?mark[^>]*>/gi,
+                          ""
+                        );
                         // If the stripped highlight contains the original text or vice versa, use it
-                        if (strippedHighlight.includes(originalText) || originalText.includes(strippedHighlight)) {
+                        if (
+                          strippedHighlight.includes(originalText) ||
+                          originalText.includes(strippedHighlight)
+                        ) {
                           return highlighted;
                         }
                       }
                       return null;
                     };
 
-                    return hit.source.steps.slice(0, 3).map((step: any, index: number) => {
-                      // Get highlighted versions from Elasticsearch
-                      const highlightedStep = getHighlightedText(step.step, highlightedSteps);
-                      const highlightedExpectedResult = getHighlightedText(step.expectedResult, highlightedExpectedResults);
+                    return hit.source.steps
+                      .slice(0, 3)
+                      .map((step: any, index: number) => {
+                        // Get highlighted versions from Elasticsearch
+                        const highlightedStep = getHighlightedText(
+                          step.step,
+                          highlightedSteps
+                        );
+                        const highlightedExpectedResult = getHighlightedText(
+                          step.expectedResult,
+                          highlightedExpectedResults
+                        );
 
-                      // Determine if this step has highlights
-                      const hasHighlights = highlightedStep || highlightedExpectedResult;
+                        // Determine if this step has highlights
+                        const hasHighlights =
+                          highlightedStep || highlightedExpectedResult;
 
-                      return (
-                        <div
-                          key={step.id || index}
-                          className={cn(
-                            "flex gap-2 rounded px-2 py-1",
-                            hasHighlights && "bg-yellow-50 dark:bg-yellow-900/20 border-l-2 border-yellow-400"
-                          )}
-                        >
-                          <span className="font-medium shrink-0">
-                            {index + 1}
-                            {"."}
-                          </span>
-                          <div className="min-w-0">
-                            {step.step && (
-                              <div className="truncate">
-                                {highlightedStep ? (
-                                  <span dangerouslySetInnerHTML={{ __html: highlightedStep }} />
-                                ) : (
-                                  step.step
-                                )}
-                              </div>
+                        return (
+                          <div
+                            key={step.id || index}
+                            className={cn(
+                              "flex gap-2 rounded px-2 py-1",
+                              hasHighlights &&
+                                "bg-yellow-50 dark:bg-yellow-900/20 border-l-2 border-yellow-400"
                             )}
-                            {step.expectedResult && (
-                              <div className="text-xs italic truncate">
-                                {"→ "}{highlightedExpectedResult ? (
-                                  <span dangerouslySetInnerHTML={{ __html: highlightedExpectedResult }} />
-                                ) : (
-                                  step.expectedResult
-                                )}
-                              </div>
-                            )}
+                          >
+                            <span className="font-medium shrink-0">
+                              {index + 1}
+                              {"."}
+                            </span>
+                            <div className="min-w-0">
+                              {step.step && (
+                                <div className="truncate">
+                                  {highlightedStep ? (
+                                    <span
+                                      dangerouslySetInnerHTML={{
+                                        __html: highlightedStep,
+                                      }}
+                                    />
+                                  ) : (
+                                    step.step
+                                  )}
+                                </div>
+                              )}
+                              {step.expectedResult && (
+                                <div className="text-xs italic truncate">
+                                  {"→ "}
+                                  {highlightedExpectedResult ? (
+                                    <span
+                                      dangerouslySetInnerHTML={{
+                                        __html: highlightedExpectedResult,
+                                      }}
+                                    />
+                                  ) : (
+                                    step.expectedResult
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    });
+                        );
+                      });
                   })()}
                   {hit.source.steps.length > 3 && (
                     <div className="text-xs">
                       {"+"}
-                      {hit.source.steps.length - 3} {t("common.ui.breadcrumb.more")}
+                      {hit.source.steps.length - 3}{" "}
+                      {t("common.ui.breadcrumb.more")}
                     </div>
                   )}
                 </div>
@@ -1333,7 +1368,10 @@ function SearchResultCard({
                   />
                 ),
                 hit.source.dueDate && (
-                  <DateDisplay date={hit.source.dueDate} label={t("milestones.fields.dueDate")} />
+                  <DateDisplay
+                    date={hit.source.dueDate}
+                    label={t("milestones.fields.dueDate")}
+                  />
                 ),
               ]}
             />
@@ -1441,12 +1479,13 @@ function SearchResultCard({
           {renderEntitySpecificInfo()}
 
           {/* Only show searchableContent highlights if there are no step-specific matches to avoid redundancy */}
-          {!hit.highlights?.['steps.step'] && !hit.highlights?.['steps.expectedResult'] && (
-            <SearchHighlight
-              highlights={hit.highlights}
-              field="searchableContent"
-            />
-          )}
+          {!hit.highlights?.["steps.step"] &&
+            !hit.highlights?.["steps.expectedResult"] && (
+              <SearchHighlight
+                highlights={hit.highlights}
+                field="searchableContent"
+              />
+            )}
         </div>
       </div>
     </Card>

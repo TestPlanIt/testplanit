@@ -8,6 +8,7 @@
     "at": "at",
     "in": "in",
     "add": "Add",
+    "never": "Never",
     "select": "Select...",
     "file": "File",
     "selectMultiple": "Select multiple...",
@@ -18,6 +19,7 @@
     "searchRuns": "{count, plural, =0 {Search test runs} one {Search # test run} other {Search # test runs}}",
     "searchSessions": "{count, plural, =0 {Search sessions} one {Search # session} other {Search # sessions}}",
     "search": "Search...",
+    "defaultOption": "Default Option",
     "yes": "Yes",
     "no": "No",
     "updated": "Updated",
@@ -44,6 +46,7 @@
       "apply": "Apply",
       "confirm": "Confirm",
       "confirmDelete": "Confirm Delete",
+      "saveChanges": "Save Changes",
       "saving": "Saving...",
       "submitting": "Submitting...",
       "start": "Start",
@@ -111,7 +114,7 @@
         "testSuite": "Test Suite:"
       },
       "junit": {
-        "details": "JUnit Details",
+        "details": "Automated Test Result Details",
         "import": {
           "trigger": "Import Test Results",
           "title": "Import Test Results",
@@ -369,7 +372,7 @@
         "label": "Label",
         "validation": {
           "empty": "Option cannot be empty",
-          "invalidChars": "Option contains invalid characters",
+          "invalidChars": "Option contains an invalid character: \"{char}\"",
           "duplicate": "Option must be unique",
           "systemNameError": "System name is invalid",
           "initialHeightMax": "Initial height cannot be greater than 600px.",
@@ -1154,6 +1157,81 @@
       "shares": {
         "title": "Manage Shares",
         "description": "View and manage all share links for this project"
+      },
+      "quickScript": {
+        "title": "QuickScript",
+        "description": "Enable QuickScript and connect a code repository for AI-assisted test generation.",
+        "enableLabel": "Enable QuickScript",
+        "enableDescription": " Allow team members to use QuickScript to convert test cases into automation scripts in this project.",
+        "enabledToast": "QuickScript enabled",
+        "disabledToast": "QuickScript disabled",
+        "noRepos": {
+          "title": "No code repositories configured",
+          "adminDescription": "Set up a repository connection before configuring code context for this project.",
+          "adminLink": "Go to Code Repositories",
+          "userDescription": "Contact your system administrator to set up a code repository connection."
+        },
+        "repository": {
+          "title": "Code Repository",
+          "description": "Select the code repository to use for AI context",
+          "label": "Code Repository",
+          "placeholder": "Select a code repository...",
+          "branchLabel": "Branch",
+          "branchPlaceholder": "Leave blank to use repository default branch"
+        },
+        "pathPatterns": {
+          "title": "Path Patterns",
+          "description": "Specify which files to include. Each row combines a base path and a glob pattern. Examples: path=tests/e2e/pages + pattern=* includes all files directly in that folder; path=src + pattern=**/*.test.ts includes all test files recursively.",
+          "pathLabel": "Path",
+          "pathPlaceholder": "tests/e2e/pages",
+          "patternLabel": "Pattern",
+          "addPath": "Add Path",
+          "previewFiles": "Preview Files",
+          "files": "{count} files",
+          "truncatedBadge": "Results may be incomplete (provider limit)",
+          "exceedsLimit": "Total size exceeds the AI context limit by {overflow}. During export, files are ranked by relevance to the test case being exported — the most relevant files are included first and lower-ranked files are skipped when the budget is reached. Narrow your path patterns if you want more control over which files are included."
+        },
+        "cache": {
+          "title": "Cache Settings",
+          "description": "Files are cached in Valkey for fast access during AI generation.",
+          "enableLabel": "Enable file caching",
+          "disabledWarning": "File caching is disabled. Repository files will be fetched directly from your provider at export time and will not be stored in TestPlanIt. AI-powered QuickScript will still include code context, but each export will make a live request to your repository.",
+          "ttlLabel": "Cache Duration (days)",
+          "statusTitle": "Cache Status",
+          "refreshButton": "Refresh Cache",
+          "listingFiles": "Listing files…",
+          "cachingFiles": "Caching {count} files…",
+          "statusNeverFetched": "Never fetched",
+          "statusSuccess": "Success",
+          "statusError": "Error",
+          "statusPending": "Refreshing...",
+          "statusLabel": "Status",
+          "lastFetched": "Last Fetched",
+          "filesCached": "Files Cached",
+          "totalSize": "Total Size"
+        },
+        "save": "Save Configuration",
+        "saved": "Code context configuration saved",
+        "saveError": "Failed to save configuration",
+        "listError": "Failed to list repository files",
+        "contentsError": "Failed to cache file contents",
+        "networkError": "Network error during cache refresh",
+        "refreshSuccess": "Cache refreshed: {fileCount} files ({contentCached} contents cached)",
+        "refreshRateLimited": "Cache refreshed: {fileCount} files listed, {contentCached}/{fileCount} contents cached (rate limited — refresh again to complete)",
+        "validation": {
+          "pathRequired": "Path is required",
+          "patternRequired": "Pattern is required",
+          "repositoryRequired": "Repository is required",
+          "pathPatternRequired": "At least one path pattern is required"
+        },
+        "disconnect": "Disconnect Repository",
+        "confirmDisconnect": "Are you sure you want to disconnect \"{name}\" from this project?",
+        "disconnectWarningTitle": "Disconnecting this repository will:",
+        "disconnectWarning1": "Remove all cached repository files",
+        "disconnectWarning2": "Remove path pattern and branch configurations",
+        "disconnectWarning3": "Stop including code context in AI-generated exports",
+        "disconnectSuccess": "Code repository disconnected",
+        "disconnectError": "Failed to disconnect code repository"
       }
     }
   },
@@ -1660,6 +1738,7 @@
       "bulkEdit": "Bulk Edit",
       "createTestRun": "Create Test Run",
       "export": "Export",
+      "quickScript": "QuickScript",
       "cannotReorderAcrossPages": "Cannot reorder test cases across multiple pages. To reorder, view all cases on one page by selecting 'All' from the page size menu, or deselect cases from other pages. You can still drag selected cases to folders.",
       "exportModal": {
         "scope": {
@@ -1816,8 +1895,8 @@
           "description": "Only standard fields can be edited when cases with different templates are selected. Dynamic fields can be edited by selecting cases that use the same template."
         },
         "junitLimitations": {
-          "title": "JUnit Test Case Editing Limitations",
-          "description": "Estimate and Automated fields cannot be modified for test cases imported from JUnit XML files."
+          "title": "Automated Test Case Editing Limitations",
+          "description": "Estimate and Automated fields cannot be modified for test cases imported from automated test results."
         }
       },
       "errors": {
@@ -1901,6 +1980,39 @@
       "comingSoon": "Coming Soon",
       "exporting": "Exporting...",
       "exportError": "Export failed. Please try again."
+    },
+    "quickScript": {
+      "title": "QuickScript",
+      "description": "Convert selected test cases into automation scripts using a template or AI.",
+      "templatePlaceholder": "Select a template...",
+      "searchPlaceholder": "Search templates...",
+      "noTemplatesFound": "No templates found.",
+      "outputModeLabel": "Output Mode",
+      "outputModeSingle": "Single file ({count, plural, one {# case} other {all # cases}})",
+      "outputModeIndividual": "{count, plural, one {Individual file (.zip)} other {Individual files (.zip)}}",
+      "casesToExport": "{count} cases to export",
+      "exportSuccess": "Export completed successfully."
+    },
+    "aiExport": {
+      "toggleLabel": "Generate with AI",
+      "generating": "Generating...",
+      "generatingProgress": "Generating case {current} of {total}...",
+      "generatingBatch": "Generating {count} cases in one file...",
+      "previewTitle": "Export Preview",
+      "previewDescription": "{count} files generated",
+      "copySuccess": "Copied to clipboard",
+      "fallbackBadge": "Generated using template (AI unavailable)",
+      "retryButton": "Retry AI generation",
+      "downloadButton": "Download",
+      "copyButton": "Copy to clipboard",
+      "backButton": "Back",
+      "aiGenerated": "AI Generated",
+      "templateGenerated": "Template Generated",
+      "truncatedWarning": "Output was truncated — the model reached its token limit. Try reducing the batch size or increasing Max Output Tokens in your Prompt Config.",
+      "contextFiles": "{count, plural, one {(# context file)} other {(# context files)}}",
+      "noCodeContextHint": "No code repository configured. AI will use standard framework patterns.",
+      "generatingParallelProgress": "Generated {done} of {total} files...",
+      "cancelledGeneration": "Cancelled"
     },
     "generateTestCases": {
       "buttonText": "Generate Test Cases",
@@ -2261,6 +2373,8 @@
       "integrations": "Issue Integrations",
       "llm": "AI Models",
       "prompts": "Prompt Configs",
+      "codeRepositories": "Code Repositories",
+      "quickScript": "QuickScript",
       "sso": "Authentication",
       "trash": "Trash",
       "reports": "Reports",
@@ -2269,6 +2383,7 @@
       "queues": "Job Queues",
       "auditLogs": "Audit Logs",
       "apiTokens": "API Tokens",
+      "quickscriptTemplates": "QuickScript Templates",
       "testManagement": "Test Management",
       "peopleAndAccess": "People & Access",
       "toolsAndIntegrations": "Tools & Integrations",
@@ -2978,6 +3093,100 @@
         }
       }
     },
+    "codeRepositories": {
+      "title": "Code Repositories",
+      "description": "Manage code repository connections for QuickScript context.",
+      "addRepository": "Add Repository",
+      "noRepos": {
+        "title": "No code repositories configured",
+        "description": "Connect a Git repository to provide file context for AI-powered test export generation."
+      },
+      "delete": {
+        "title": "Delete Repository",
+        "confirmMessage": "Are you sure you want to delete <strong>{name}</strong>? This action cannot be undone.",
+        "fallbackName": "this repository"
+      },
+      "testConnection": "Test Connection",
+      "connectionSuccess": "Connection successful",
+      "connectionFailed": "Connection failed",
+      "networkError": "Network error",
+      "editTitle": "Edit Code Repository",
+      "addTitle": "Add Code Repository",
+      "repositoryUpdated": "Repository updated",
+      "repositoryCreated": "Repository created",
+      "saveFailed": "Failed to save repository",
+      "namePlaceholder": "My Repository",
+      "selectProvider": "Select provider"
+    },
+    "exportTemplates": {
+      "title": "QuickScript Templates",
+      "description": "Manage templates used by QuickScript to convert test cases into automation scripts.",
+      "confirmSetAsDefault": "Set as default export template",
+      "confirmSetAsDefaultDescription": "Are you sure you want to set this template as the default? It will be pre-selected when users export test cases.",
+      "fields": {
+        "category": "Category",
+        "framework": "Framework",
+        "fileExtension": "File Extension",
+        "language": "Language",
+        "headerBody": "Header Template",
+        "templateBody": "Template Body",
+        "footerBody": "Footer Template",
+        "validation": {
+          "categoryRequired": "Category is required.",
+          "frameworkRequired": "Framework is required.",
+          "templateBodyRequired": "Template body is required.",
+          "fileExtensionRequired": "File extension is required.",
+          "languageRequired": "Language is required."
+        },
+        "placeholders": {
+          "name": "e.g., Playwright (TypeScript)",
+          "description": "e.g., Generates Playwright test stubs",
+          "category": "e.g., Browser E2E",
+          "framework": "e.g., Playwright",
+          "fileExtension": "e.g., .spec.ts",
+          "language": "e.g., typescript",
+          "headerBody": "Optional. Content rendered once at the top (e.g., import statements).",
+          "templateBody": "Enter Mustache template...\n\nAvailable variables:\n'{{name}}', '{{id}}', '{{folder}}', '{{state}}', '{{estimate}}', '{{automated}}', '{{tags}}', '{{createdBy}}', '{{createdAt}}'\n\nSteps section:\n'{{#steps}}{{order}}', '{{step}}', '{{expectedResult}}{{/steps}}'\n\nCustom fields:\n'{{fields.fieldSystemName}}'",
+          "footerBody": "Optional. Content rendered once at the bottom (e.g., closing code)."
+        },
+        "combobox": {
+          "typeNew": "Type to enter a new value"
+        }
+      },
+      "add": {
+        "button": "Add QuickScript Template",
+        "title": "Add New QuickScript Template"
+      },
+      "edit": {
+        "title": "Edit QuickScript Template"
+      },
+      "delete": {
+        "title": "Delete QuickScript Template",
+        "confirmMessage": "Are you sure you want to delete the <strong>{name}</strong> QuickScript template?"
+      },
+      "preview": {
+        "title": "Preview (mock data)",
+        "empty": "Enter a template body to see a preview.",
+        "error": "Error rendering template. Check your Mustache syntax."
+      },
+      "filterPlaceholder": "Filter templates...",
+      "noResults": "No templates match your filter.",
+      "templateCount": "{count, plural, one {# template} other {# templates}}",
+      "allFrameworks": "All Frameworks",
+      "allFileExtensions": "All Extensions",
+      "allLanguages": "All Languages",
+      "showEnabled": "Enabled only",
+      "showAll": "All",
+      "variableInserter": {
+        "placeholder": "Insert variable...",
+        "groups": {
+          "caseFields": "Case Fields",
+          "steps": "Steps",
+          "customFields": "Custom Fields"
+        },
+        "stepsBlock": "Steps block"
+      }
+    },
     "users": {
       "showInactive": "Show Inactive",
       "add": {
@@ -3347,7 +3556,8 @@
         "repositoryCaseLinks": "Repository Case Links",
         "repositoryCaseVersions": "Repository Case Versions",
         "testRunStepResults": "Test Run Step Results",
-        "issueConfigs": "Issue Configs"
+        "issueConfigs": "Issue Configs",
+        "sharedStepGroups": "Shared Step Groups"
       },
       "table": {
         "title": "Deleted {itemType}",
@@ -3595,8 +3805,8 @@
       "allIntegrationsTested": "All AI model connections have been tested",
       "failedToTestConnections": "Failed to test some connections",
       "notConfigured": "Not Configured",
-      "defaultModel": "Default Model",
-      "budgetUsage": "Budget Usage",
+      "defaultModel": "Selected Model",
+      "budgetUsage": "Usage (This Month)",
       "noBudget": "No Budget Set",
       "streaming": "Streaming",
       "add": {
@@ -3622,15 +3832,15 @@
         "defaultModelDescription": "The model to use by default",
         "maxTokensPerRequest": "Max Tokens Per Request",
         "maxRequestsPerMinute": "Max Requests Per Minute",
-        "costPerInputToken": "Cost Per Input Token ($)",
-        "costPerOutputToken": "Cost Per Output Token ($)",
+        "costPerInputToken": "Cost Per 1M Input Tokens ($)",
+        "costPerOutputToken": "Cost Per 1M Output Tokens ($)",
         "monthlyBudget": "Monthly Budget ($)",
         "monthlyBudgetPlaceholder": "100.00",
-        "monthlyBudgetDescription": "Optional budget limit for usage tracking",
+        "monthlyBudgetDescription": "Optional spending target for notifications (does not block usage)",
         "defaultTemperature": "Default Temperature",
         "defaultMaxTokens": "Default Max Tokens",
         "timeout": "Request Timeout (ms)",
-        "timeoutDescription": "Maximum time to wait for AI model response (5000-600000ms)",
+        "timeoutDescription": "Maximum time to wait for AI model response (5000-600000ms). Does not apply to streaming requests.",
         "streamingEnabled": "Enable Streaming",
         "streamingEnabledDescription": "Allow real-time response streaming",
         "setAsDefault": "Set as Default",
@@ -3644,6 +3854,7 @@
         "failedToCreate": "Failed to create AI model integration",
         "validation": {
           "nameRequired": "Integration name is required",
+          "nameUnique": "An integration with this name already exists",
           "defaultModelRequired": "Default model is required"
         }
       },
@@ -3657,6 +3868,7 @@
         "failedToUpdate": "Failed to update AI model integration",
         "validation": {
           "nameRequired": "Integration name is required",
+          "nameUnique": "An integration with this name already exists",
           "defaultModelRequired": "Default model is required"
         }
       },
@@ -3664,7 +3876,8 @@
         "title": "Delete AI Model Integration",
         "description": "Are you sure you want to delete this AI model integration? This will remove it from all projects and cannot be undone.",
         "integrationDeletedSuccess": "AI model integration deleted successfully",
-        "failedToDeleteIntegration": "Failed to delete AI model integration"
+        "failedToDeleteIntegration": "Failed to delete AI model integration",
+        "cannotDeleteDefault": "Cannot delete the default AI model. Set another as default first."
       },
       "validation": {
         "defaultModelRequired": "Default model is required"
@@ -3688,6 +3901,14 @@
         "failedToGetResponse": "Failed to get response from AI model",
         "failedToSendMessage": "Failed to send test message",
         "defaultTestMessage": "Hello! Please respond with a brief confirmation that you're working correctly."
+      },
+      "budgetAlert": {
+        "budgetDisclaimer": "Setting a monthly budget does not prevent LLM usage from exceeding it. Budget limits are informational only for admin decision-making.",
+        "budgetDisclaimerShort": "Budget limits are informational only and do not block usage.",
+        "spendLabel": "Current Month Spend",
+        "spendOfBudget": "{currentSpend} of {budgetLimit}",
+        "overBudget": "Over budget",
+        "budgetPercentage": "{percentage}% of budget used"
       }
     },
     "prompts": {
@@ -3702,6 +3923,7 @@
       "temperature": "Temperature",
       "maxOutputTokens": "Max Output Tokens",
       "variables": "Variables",
+      "insertVariable": "Insert variable",
       "noConfigs": "No prompt configurations found. Add your first configuration to get started.",
       "add": {
         "title": "Add Prompt Configuration",
@@ -3724,7 +3946,7 @@
         "magic_select_cases": "Smart Test Case Selection",
         "editor_assistant": "Editor Writing Assistant",
         "llm_test": "LLM Connection Test",
-        "auto_tag": "AI Tag Suggestions"
+        "export_code_generation": "Export Code Generation"
       }
     },
     "elasticsearch": {
@@ -3961,7 +4183,8 @@
         "milestoneNotificationContinue": "You will continue to receive daily reminders until this milestone is marked as complete.",
         "shareLinkAccessedTitle": "Share Link Accessed",
         "viewedYourSharedLink": "viewed your shared link",
-        "viewedAt": "Viewed at"
+        "viewedAt": "Viewed at",
+        "budgetDisclaimer": "Budget limits are informational only and do not prevent usage."
       }
     },
     "issues": {
@@ -4280,6 +4503,24 @@
       "resultFields": "## Result Fields\nSelect and order the custom fields that will be available when adding test results using this template.\n\n- Add fields from the dropdown to include them in the template\n- Drag and drop to reorder fields\n- The order determines how fields appear when entering test results\n- Only enabled result fields are available for selection\n- Result fields capture additional data specific to test execution outcomes",
       "projects": "## Associated Projects\nSelect which projects this template will be available for. If no projects are selected, the template will be available globally. Assigning a template to specific projects restricts its use to only those projects."
     },
+    "llm": {
+      "name": "## Integration Name\nA descriptive label for this LLM integration.\n\n- Used to identify it in lists and settings\n- Example: \"OpenAI GPT-4o\" or \"Internal Ollama\"",
+      "provider": "## Provider\nThe LLM service that powers this integration.\n\n- Determines the API protocol and available models\n- Cannot be changed after creation",
+      "apiKey": "## API Key\nYour authentication key for the LLM provider's API.\n\n- Obtain this from your provider's developer console\n- Kept encrypted and never displayed after saving\n- Not required for Ollama (local deployment)",
+      "endpoint": "## API Endpoint\nThe base URL for the LLM provider's API.\n\n- Leave blank for OpenAI, Anthropic, and Gemini — defaults are used automatically\n- Required for Ollama (e.g. `http://localhost:11434`) and Azure OpenAI\n- Required for Custom LLM providers",
+      "deploymentName": "## Azure Deployment Name\nThe name of your Azure OpenAI model deployment.\n\n- Found in Azure OpenAI Studio under Deployments\n- Different from the model name — e.g. `my-gpt4-deploy` maps to `gpt-4`\n- Required only for Azure OpenAI",
+      "defaultModel": "## Default Model\nThe model used for AI requests with this integration.\n\n- For OpenAI, Anthropic, and Gemini — available models are fetched automatically from your API key\n- Ensure the model is enabled in your provider account\n- Example: `gpt-4o`, `claude-3-5-sonnet-20241022`, `gemini-1.5-pro`",
+      "maxTokensPerRequest": "## Max Tokens Per Request\nThe **hard ceiling** on output tokens for any single request.\n\n- Requests exceeding this are **rejected with an error** before reaching the LLM\n- Set this to your model's actual maximum output token capacity\n- Example: `16384` for GPT-4o, `8192` for Claude 3.5 Sonnet\n- Setting this too low causes AI features to fail or produce truncated output",
+      "defaultMaxTokens": "## Default Max Tokens\nThe **fallback** output token limit used when a request doesn't specify its own.\n\n- Each AI feature (test generation, code export, etc.) sets its own limit in **Admin → Prompt Config**\n- This value is only used as a fallback for features with no specific limit configured\n- Should be ≤ Max Tokens Per Request",
+      "maxRequestsPerMinute": "## Max Requests Per Minute\nLimits how many API calls can be made to this provider per minute.\n\n- Set to match your provider plan's rate limit\n- Excess requests are queued, not rejected\n- Check your provider's documentation for your plan's limit",
+      "costPerInputToken": "## Cost Per Input Token (USD)\nThe cost in USD for each input (prompt) token sent to the model.\n\n- Used for cost tracking and budget alerts\n- Find this on your provider's pricing page\n- Example: `0.000005` = $5 per million input tokens",
+      "costPerOutputToken": "## Cost Per Output Token (USD)\nThe cost in USD for each output (completion) token generated by the model.\n\n- Usually higher than the input token cost\n- Used for cost tracking and budget alerts\n- Example: `0.000015` = $15 per million output tokens",
+      "monthlyBudget": "## Monthly Budget (USD)\nAn optional spending target for this integration.\n\n- Set to `0` to disable budget tracking\n- Budget is **informational only** — it does not block LLM usage\n- You'll receive notifications at 80%, 90%, and 100% of the budget\n- Costs are calculated using the per-token rates above",
+      "defaultTemperature": "## Default Temperature\nControls the randomness of model responses (0–2).\n\n- **0:** Deterministic — identical output for the same input\n- **0.3:** Focused — recommended for test generation and code output\n- **1+:** Creative — more varied responses\n- Individual features can override this in Prompt Config",
+      "timeout": "## Request Timeout (ms)\nHow long to wait for a response before the request is cancelled.\n\n- Value is in milliseconds (e.g. `30000` = 30 seconds)\n- Streaming requests (e.g. code export preview) ignore this timeout\n- Increase for slow or large models\n- Range: 5,000 – 600,000 ms",
+      "streamingEnabled": "## Enable Streaming\nStreams the response token-by-token instead of waiting for the full output.\n\n- Required for real-time code preview in the Export modal\n- Reduces perceived latency for long responses\n- Recommended for all supported providers",
+      "isDefault": "## Set as Default Integration\nMakes this the integration used for all AI features by default.\n\n- Only one integration can be the default at a time\n- Features without a specific provider configured will use the default\n- Can be changed at any time"
+    },
     "integration": {
       "name": "## Integration Name\nA descriptive name to identify this integration across the system.\n\n- Must be unique to distinguish from other integrations\n- Used in project settings and configuration\n- Should clearly indicate the service and purpose",
       "authType": "## Authentication Type\nChoose how to authenticate with the external service.\n\n- **API Key:** Simple authentication using email and API token\n- **OAuth 2.0:** Secure authentication using OAuth flow\n- **Personal Access Token:** Direct token-based authentication",
@@ -4475,6 +4716,34 @@
       "dimensions": "## Dimensions\nSelect the dimensions you want to analyze in your report. Dimensions are attributes that categorize your data, such as Date, User, Status, etc. You can drag to reorder them.",
       "metrics": "## Metrics\nSelect the metrics you want to measure in your report. Metrics are quantitative measurements derived from your data, such as Test Results Count, Pass Rate, Average Elapsed Time, etc. You can drag to reorder them.",
       "dateRange": "## Date Range\nFilter your report data by a specific time period. You can select from predefined ranges like 'Last 7 days' or 'Previous month', or define a custom date range. This filter applies to the relevant date field for each report type (e.g., execution date for test results, creation date for test cases)."
+    },
+    "codeRepository": {
+      "name": "## Repository Name\nA friendly display name for this repository connection.\n\n- Used to identify it in project code context settings.\n- Does not need to match the repository name on the provider.",
+      "provider": "## Git Provider\nThe platform hosting this repository.\n\n- **GitHub** — github.com (cloud or Enterprise)\n- **GitLab** — gitlab.com or self-hosted\n- **Bitbucket Cloud** — bitbucket.org (cloud only)\n- **Azure DevOps** — dev.azure.com",
+      "githubToken": "## Personal Access Token\nA GitHub token with **Contents: Read** permission.\n\nGenerate one at: GitHub → Profile Settings → Developer settings → Personal access tokens → Fine-grained tokens.",
+      "owner": "## Owner\nThe GitHub organization or user account that owns the repository.\n\n- Example: `myorg` or `myusername`\n- This is the first path segment in your repository URL on github.com",
+      "repo": "## Repository\nThe repository name, without the owner prefix.\n\n- Example: `my-repo` (not `myorg/my-repo`)\n- This is the second path segment in your repository URL on github.com",
+      "gitlabToken": "## Personal Access Token\nA GitLab token with **read_api** and **read_repository** scopes.\n\nGenerate one at: GitLab → User Settings → Access Tokens.",
+      "projectPath": "## Project ID or Path\nThe numeric project ID or full namespace path.\n\n- Example path: `myorg/my-project`\n- Example ID: `12345678`\n- Found in GitLab under Settings → General.",
+      "baseUrl": "## GitLab URL\nLeave blank for gitlab.com. For self-hosted instances, enter your GitLab URL.\n\n- Example: `https://gitlab.example.com`",
+      "bitbucketUsername": "## Bitbucket Username\nYour Bitbucket account username (not your email address).\n\n- Found at Bitbucket → Your profile → Account settings.",
+      "appPassword": "## App Password\nA Bitbucket App Password with **Repositories: Read** permission.\n\nCreate one at: Bitbucket → Personal settings → App passwords.",
+      "workspace": "## Workspace\nThe workspace slug from your Bitbucket URL.\n\n- Example: `myworkspace` from `bitbucket.org/myworkspace`",
+      "repoSlug": "## Repository Slug\nThe repository identifier from its URL.\n\n- Example: `my-repo` from `bitbucket.org/myworkspace/my-repo`",
+      "azureToken": "## Personal Access Token\nAn Azure DevOps PAT with **Code (Read)** permission.\n\nCreate one at: Azure DevOps → User settings → Personal access tokens.",
+      "organizationUrl": "## Organization URL\nYour Azure DevOps organization URL.\n\n- Example: `https://dev.azure.com/myorg`",
+      "project": "## Project Name\nThe name of the Azure DevOps project containing the repository.\n\n- Found as the third path segment in your Azure DevOps URL after the organization name",
+      "azureRepoId": "## Repository Name or ID\nThe repository name or GUID within the Azure DevOps project.\n\n- Example: `my-repo`"
+    },
+    "promptConfig": {
+      "name": "## Configuration Name\nA unique, descriptive name for this prompt configuration.\n\n- Used to identify the configuration when assigning it to a project (e.g. \"GPT-4o Prompts\", \"Conservative Prompts\").",
+      "description": "## Description\nAn optional summary of what makes this configuration distinct.\n\n- Helps admins understand the purpose at a glance (e.g. \"Lower temperature prompts for deterministic output\").",
+      "isActive": "## Active\nWhen enabled, this configuration is available for use by projects.\n\n- Inactive configurations are hidden from project assignment dropdowns.\n- The default configuration cannot be deactivated.",
+      "isDefault": "## Default Configuration\nWhen enabled, this configuration is used by any project that has not been assigned a specific configuration.\n\n- Only one configuration can be the default at a time.\n- Setting a new default automatically unsets the previous one.",
+      "systemPrompt": "## System Prompt\nInstructions sent to the AI model before any user input. Defines the model's role, output format, and constraints.\n\n- Supports double-brace placeholders (e.g. FRAMEWORK, LANGUAGE, CASE_NAME) that are substituted at runtime.\n- Changes here affect every project using this configuration.",
+      "userPrompt": "## User Prompt\nThe message sent to the AI on behalf of the user. Leave blank if the feature constructs the user message entirely in code.\n\n- Supports double-brace placeholders (e.g. ISSUE_TITLE, CASE_NAME, CODE_CONTEXT) that are substituted at runtime.\n- The available placeholders for each feature are listed in the Variables section below.",
+      "temperature": "## Temperature\nControls the randomness of the AI output. Range: 0–2.\n\n- **0.0–0.3** — Highly deterministic, best for structured output (JSON, code).\n- **0.4–0.7** — Balanced, good for test case generation.\n- **0.8–2.0** — More creative and varied, suitable for open-ended text.",
+      "maxOutputTokens": "## Max Output Tokens\nThe maximum number of tokens the model will generate in a single response.\n\n- Higher values allow longer responses but increase cost and latency.\n- Typical ranges: 2048 for short text, 4096 for code generation, 6000+ for multi-case output."
     },
     "menu": {
       "startTour": "Guided Welcome Tour",

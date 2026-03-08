@@ -79,6 +79,12 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -103,6 +109,7 @@ import {
   Asterisk,
   Check,
   Milestone,
+  Star,
 } from "lucide-react";
 
 import {
@@ -186,8 +193,8 @@ const FormSchema = z.object({
   selectedMilestoneTypes: z.array(z.number()),
 
   // Step 4: Integrations
-  selectedIntegrations: z.array(z.number()),
-  selectedLlmIntegrations: z.array(z.number()),
+  selectedIntegration: z.number().nullable(),
+  selectedLlmIntegration: z.number().nullable(),
 
   // Step 5: Permissions
   assignedUsers: z.array(z.string()).optional(),
@@ -449,8 +456,8 @@ export function CreateProjectWizard({
       selectedStatuses:
         statuses?.filter((s) => s.isEnabled)?.map((s) => s.id) || [],
       selectedMilestoneTypes: allMilestoneTypeIds, // Select ALL milestone types
-      selectedIntegrations: [],
-      selectedLlmIntegrations: [],
+      selectedIntegration: null,
+      selectedLlmIntegration: null,
       assignedUsers: defaultUserId ? [defaultUserId] : [],
       userPermissions: initialUserPermissions,
       groupPermissions: initialGroupPermissions,
@@ -485,8 +492,8 @@ export function CreateProjectWizard({
   const selectedWorkflows = watch("selectedWorkflows");
   const selectedStatuses = watch("selectedStatuses");
   const selectedMilestoneTypes = watch("selectedMilestoneTypes");
-  const selectedIntegrations = watch("selectedIntegrations");
-  const selectedLlmIntegrations = watch("selectedLlmIntegrations");
+  const selectedIntegration = watch("selectedIntegration");
+  const selectedLlmIntegration = watch("selectedLlmIntegration");
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -626,19 +633,26 @@ export function CreateProjectWizard({
     setCurrentStep((prev) => Math.max(prev - 1, WizardStep.PROJECT_DETAILS));
   };
 
-  const toggleTemplate = useCallback((templateId: number) => {
-    setLocalSelectedTemplates((current) => {
-      if (current.includes(templateId)) {
-        return current.filter((id) => id !== templateId);
-      } else {
-        return [...current, templateId];
-      }
-    });
-  }, []);
+  const toggleTemplate = useCallback(
+    (templateId: number) => {
+      const isDefault = templates?.find((t) => t.id === templateId)?.isDefault;
+      setLocalSelectedTemplates((current) => {
+        if (current.includes(templateId)) {
+          if (isDefault) return current;
+          return current.filter((id) => id !== templateId);
+        } else {
+          return [...current, templateId];
+        }
+      });
+    },
+    [templates]
+  );
 
   const toggleWorkflow = (workflowId: number) => {
+    const isDefault = workflows?.find((w) => w.id === workflowId)?.isDefault;
     const current = getValues("selectedWorkflows");
     if (current.includes(workflowId)) {
+      if (isDefault) return;
       setValue(
         "selectedWorkflows",
         current.filter((id) => id !== workflowId)
@@ -672,28 +686,12 @@ export function CreateProjectWizard({
     }
   };
 
-  const toggleIntegration = (integrationId: number) => {
-    const current = getValues("selectedIntegrations");
-    if (current.includes(integrationId)) {
-      setValue(
-        "selectedIntegrations",
-        current.filter((id) => id !== integrationId)
-      );
-    } else {
-      setValue("selectedIntegrations", [...current, integrationId]);
-    }
+  const selectIntegration = (integrationId: number) => {
+    setValue("selectedIntegration", integrationId);
   };
 
-  const toggleLlmIntegration = (llmIntegrationId: number) => {
-    const current = getValues("selectedLlmIntegrations");
-    if (current.includes(llmIntegrationId)) {
-      setValue(
-        "selectedLlmIntegrations",
-        current.filter((id) => id !== llmIntegrationId)
-      );
-    } else {
-      setValue("selectedLlmIntegrations", [...current, llmIntegrationId]);
-    }
+  const selectLlmIntegration = (llmIntegrationId: number) => {
+    setValue("selectedLlmIntegration", llmIntegrationId);
   };
 
   const onSubmit = async (data: CreateProjectFormData) => {
@@ -828,26 +826,26 @@ export function CreateProjectWizard({
         );
       }
 
-      // Assign integrations
-      for (const integrationId of data.selectedIntegrations) {
+      // Assign integration
+      if (data.selectedIntegration) {
         setupPromises.push(
           createProjectIntegration({
             data: {
               projectId: newProjectId,
-              integrationId: integrationId,
+              integrationId: data.selectedIntegration,
               isActive: true,
             },
           })
         );
       }
 
-      // Assign LLM integrations
-      for (const llmIntegrationId of data.selectedLlmIntegrations) {
+      // Assign LLM integration
+      if (data.selectedLlmIntegration) {
         setupPromises.push(
           createProjectLlmIntegration({
             data: {
               projectId: newProjectId,
-              llmIntegrationId: llmIntegrationId,
+              llmIntegrationId: data.selectedLlmIntegration,
               isActive: true,
             },
           })
@@ -1189,8 +1187,20 @@ export function CreateProjectWizard({
                                 value={`ROLE_${role.id}`}
                               >
                                 {role.name}
-                                {role.isDefault &&
-                                  ` (${tCommon("fields.default")})`}
+                                {role.isDefault && (
+                                  <TooltipProvider delayDuration={300}>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Badge variant="secondary">
+                                          <Star className="h-3 w-3 fill-current text-primary-background" />
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        {tCommon("defaultOption")}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -1271,7 +1281,11 @@ export function CreateProjectWizard({
                   return (
                     <div
                       key={template.id}
-                      className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                      className={`border rounded-lg p-4 transition-colors ${
+                        template.isDefault
+                          ? "opacity-60 cursor-not-allowed"
+                          : "cursor-pointer"
+                      } ${
                         isSelected
                           ? "border-primary bg-primary/5"
                           : "hover:bg-muted/50"
@@ -1287,7 +1301,9 @@ export function CreateProjectWizard({
                           <div
                             className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
                               isSelected
-                                ? "border-primary bg-primary"
+                                ? template.isDefault
+                                  ? "border-primary/50 bg-primary/50"
+                                  : "border-primary bg-primary"
                                 : "border-gray-300"
                             }`}
                           >
@@ -1409,6 +1425,7 @@ export function CreateProjectWizard({
                                   checked={selectedWorkflows.includes(
                                     workflow.id
                                   )}
+                                  disabled={workflow.isDefault}
                                   onCheckedChange={() =>
                                     toggleWorkflow(workflow.id)
                                   }
@@ -1459,6 +1476,7 @@ export function CreateProjectWizard({
                                   checked={selectedWorkflows.includes(
                                     workflow.id
                                   )}
+                                  disabled={workflow.isDefault}
                                   onCheckedChange={() =>
                                     toggleWorkflow(workflow.id)
                                   }
@@ -1509,6 +1527,7 @@ export function CreateProjectWizard({
                                   checked={selectedWorkflows.includes(
                                     workflow.id
                                   )}
+                                  disabled={workflow.isDefault}
                                   onCheckedChange={() =>
                                     toggleWorkflow(workflow.id)
                                   }
@@ -1631,13 +1650,6 @@ export function CreateProjectWizard({
               </Alert>
             ) : (
               <>
-                <Alert>
-                  <AlertDescription className="flex items-center gap-1">
-                    <AlertCircle className="h-4 w-4" />
-                    {t("admin.projects.wizard.descriptions.integrations")}
-                  </AlertDescription>
-                </Alert>
-
                 {integrations && integrations.length > 0 && (
                   <Card>
                     <CardHeader>
@@ -1648,36 +1660,66 @@ export function CreateProjectWizard({
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {integrations.map((integration: any) => (
-                          <div
-                            key={integration.id}
-                            className="flex items-center justify-between p-3 border rounded hover:bg-muted/50"
-                          >
-                            <div className="flex items-center gap-3">
-                              <Checkbox
-                                checked={selectedIntegrations.includes(
-                                  integration.id
-                                )}
-                                onCheckedChange={() =>
-                                  toggleIntegration(integration.id)
-                                }
-                              />
-                              <div>
-                                <Label>{integration.name}</Label>
-                                {integration.provider && (
-                                  <p className="text-xs text-muted-foreground">
-                                    {integration.provider}
-                                  </p>
-                                )}
-                              </div>
+                        <div
+                          className={`flex items-center p-3 border rounded cursor-pointer transition-colors ${
+                            selectedIntegration === null
+                              ? "border-primary bg-primary/5"
+                              : "hover:bg-muted/50"
+                          }`}
+                          onClick={() => setValue("selectedIntegration", null)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                selectedIntegration === null
+                                  ? "border-primary"
+                                  : "border-gray-300"
+                              }`}
+                            >
+                              {selectedIntegration === null && (
+                                <div className="w-2 h-2 rounded-full bg-primary" />
+                              )}
                             </div>
-                            {integration.isActive && (
-                              <Badge variant="secondary">
-                                {tCommon("fields.isActive")}
-                              </Badge>
-                            )}
+                            <Label className="text-muted-foreground">
+                              {tCommon("access.none")}
+                            </Label>
                           </div>
-                        ))}
+                        </div>
+                        {integrations.map((integration: any) => {
+                          const isSelected =
+                            selectedIntegration === integration.id;
+                          return (
+                            <div
+                              key={integration.id}
+                              className={`flex items-center justify-between p-3 border rounded cursor-pointer transition-colors ${
+                                isSelected
+                                  ? "border-primary bg-primary/5"
+                                  : "hover:bg-muted/50"
+                              }`}
+                              onClick={() => selectIntegration(integration.id)}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                    isSelected
+                                      ? "border-primary"
+                                      : "border-gray-300"
+                                  }`}
+                                >
+                                  {isSelected && (
+                                    <div className="w-2 h-2 rounded-full bg-primary" />
+                                  )}
+                                </div>
+                                <Label>{integration.name}</Label>
+                              </div>
+                              {integration.isActive && (
+                                <Badge variant="secondary">
+                                  {tCommon("fields.isActive")}
+                                </Badge>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
@@ -1696,32 +1738,73 @@ export function CreateProjectWizard({
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {llmIntegrations.map((llmIntegration: any) => (
-                          <div
-                            key={llmIntegration.id}
-                            className="flex items-center justify-between p-3 border rounded hover:bg-muted/50"
-                          >
-                            <div className="flex items-center gap-3">
-                              <Checkbox
-                                checked={selectedLlmIntegrations.includes(
-                                  llmIntegration.id
-                                )}
-                                onCheckedChange={() =>
-                                  toggleLlmIntegration(llmIntegration.id)
-                                }
-                              />
-                              <div>
-                                <Label>{llmIntegration.name}</Label>
-                                <p className="text-xs text-muted-foreground">
-                                  {llmIntegration.model}
-                                </p>
-                              </div>
+                        <div
+                          className={`flex items-center p-3 border rounded cursor-pointer transition-colors ${
+                            selectedLlmIntegration === null
+                              ? "border-primary bg-primary/5"
+                              : "hover:bg-muted/50"
+                          }`}
+                          onClick={() =>
+                            setValue("selectedLlmIntegration", null)
+                          }
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                selectedLlmIntegration === null
+                                  ? "border-primary"
+                                  : "border-gray-300"
+                              }`}
+                            >
+                              {selectedLlmIntegration === null && (
+                                <div className="w-2 h-2 rounded-full bg-primary" />
+                              )}
                             </div>
-                            <Badge variant="outline">
-                              {llmIntegration.provider}
-                            </Badge>
+                            <Label className="text-muted-foreground">
+                              {tCommon("access.none")}
+                            </Label>
                           </div>
-                        ))}
+                        </div>
+                        {llmIntegrations.map((llmIntegration: any) => {
+                          const isSelected =
+                            selectedLlmIntegration === llmIntegration.id;
+                          return (
+                            <div
+                              key={llmIntegration.id}
+                              className={`flex items-center justify-between p-3 border rounded cursor-pointer transition-colors ${
+                                isSelected
+                                  ? "border-primary bg-primary/5"
+                                  : "hover:bg-muted/50"
+                              }`}
+                              onClick={() =>
+                                selectLlmIntegration(llmIntegration.id)
+                              }
+                            >
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                    isSelected
+                                      ? "border-primary"
+                                      : "border-gray-300"
+                                  }`}
+                                >
+                                  {isSelected && (
+                                    <div className="w-2 h-2 rounded-full bg-primary" />
+                                  )}
+                                </div>
+                                <div>
+                                  <Label>{llmIntegration.name}</Label>
+                                  <p className="text-xs text-muted-foreground">
+                                    {llmIntegration.model}
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge variant="outline">
+                                {llmIntegration.provider}
+                              </Badge>
+                            </div>
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>

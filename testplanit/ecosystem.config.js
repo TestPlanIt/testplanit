@@ -72,8 +72,8 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: '512M',
-      node_args: '--max-old-space-size=384',
+      max_memory_restart: '4G',
+      node_args: '--max-old-space-size=3584',
       env: {
         NODE_ENV: 'production'
       }
@@ -95,6 +95,19 @@ module.exports = {
       name: 'audit-log-worker',
       script: isDev ? 'tsx' : 'node',
       args: isDev ? 'workers/auditLogWorker.ts' : 'dist/workers/auditLogWorker.js',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+      node_args: '--max-old-space-size=384',
+      env: {
+        NODE_ENV: 'production'
+      }
+    },
+    {
+      name: 'budget-alert-worker',
+      script: isDev ? 'tsx' : 'node',
+      args: isDev ? 'workers/budgetAlertWorker.ts' : 'dist/workers/budgetAlertWorker.js',
       instances: 1,
       autorestart: true,
       watch: false,

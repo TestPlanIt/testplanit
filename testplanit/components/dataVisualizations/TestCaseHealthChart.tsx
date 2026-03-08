@@ -410,12 +410,12 @@ export const TestCaseHealthChart: React.FC<TestCaseHealthChartProps> = ({
         </div>
 
         {/* Healthy */}
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-          <div className="p-2 rounded-md bg-green-500/10">
-            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
+          <div className="p-2 rounded-md bg-success/10">
+            <CheckCircle2 className="h-4 w-4 text-success" />
           </div>
           <div>
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+            <p className="text-2xl font-bold text-success">
               {summaryMetrics.healthy}
               <span className="text-sm font-normal ml-1">{"("}{summaryMetrics.healthyPct}{"%)"}</span>
             </p>

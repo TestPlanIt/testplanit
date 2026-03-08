@@ -378,6 +378,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                         id={option.id}
                         name={option.name}
                         source={option.source}
+                        automated={option.automated}
                         size="large"
                       />
                     )}

@@ -824,7 +824,6 @@ export default function SessionPage() {
   const [isCollapsedRight, setIsCollapsedRight] = useState(false);
   const [isTransitioningLeft, setIsTransitioningLeft] = useState(false);
   const [isTransitioningRight, setIsTransitioningRight] = useState(false);
-  const [panelRightWidth, setPanelRightWidth] = useState(20);
   const panelRightRef = useRef<ImperativePanelHandle>(null);
   const [contentLoaded, setContentLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -1273,9 +1272,6 @@ export default function SessionPage() {
     setTimeout(() => setIsTransitioningRight(false), 300);
   };
 
-  const handleResize = useCallback((size: number) => {
-    setPanelRightWidth(size);
-  }, []);
 
   // Fix the useEffect for content initialization
   useEffect(() => {
@@ -1708,7 +1704,7 @@ export default function SessionPage() {
                         variant="destructive"
                         onClick={() => setIsDeleteDialogOpen(true)}
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
+                        <Trash2 className="h-4 w-4" />
                         {t("actions.delete")}
                       </Button>
                     )}
@@ -1799,6 +1795,8 @@ export default function SessionPage() {
               autoSaveId="session-panels"
             >
               <ResizablePanel
+                id="session-left"
+                order={1}
                 ref={panelLeftRef}
                 defaultSize={80}
                 collapsible
@@ -2003,9 +2001,10 @@ export default function SessionPage() {
               </div>
 
               <ResizablePanel
+                id="session-right"
+                order={2}
                 ref={panelRightRef}
-                defaultSize={panelRightWidth}
-                onResize={handleResize}
+                defaultSize={20}
                 collapsedSize={0}
                 minSize={10}
                 collapsible

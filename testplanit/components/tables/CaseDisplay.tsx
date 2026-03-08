@@ -17,6 +17,7 @@ interface Case {
   id: number;
   name: string;
   source: RepositoryCaseSource;
+  automated?: boolean;
   isDeleted?: boolean;
   link?: string;
   size?: CaseDisplaySize;
@@ -30,6 +31,7 @@ export const CaseDisplay: React.FC<Case> = ({
   link,
   size = "medium",
   source,
+  automated,
   isDeleted,
   className,
   maxLines,
@@ -61,6 +63,7 @@ export const CaseDisplay: React.FC<Case> = ({
         id,
         name,
         source,
+        automated,
         isDeleted,
       }}
       showIcon={true}

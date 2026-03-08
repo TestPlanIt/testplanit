@@ -1198,6 +1198,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
                 autoSaveId="add-case-panels"
               >
                 <ResizablePanel
+                  id="add-case-left"
                   order={1}
                   ref={panelRef}
                   defaultSize={80}
@@ -1314,6 +1315,7 @@ export function AddCaseModal({ folderId }: AddCaseModalProps) {
                   </Button>
                 </div>
                 <ResizablePanel
+                  id="add-case-right"
                   order={2}
                   collapsedSize={0}
                   minSize={0}

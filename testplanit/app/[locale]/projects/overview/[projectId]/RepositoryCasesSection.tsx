@@ -276,6 +276,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
                       name={caseItem.name}
                       size="large"
                       source={caseItem.source}
+                      automated={caseItem.automated}
                       className="line-clamp-2"
                     />
                     <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />

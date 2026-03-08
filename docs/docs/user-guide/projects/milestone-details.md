@@ -16,8 +16,8 @@ The page uses a resizable two-panel layout:
   - **Documentation**: Shows the rich text documentation associated with this milestone (`docs` field). Editable in Edit Mode via a `TipTapEditor`.
   - **(View Mode Only)** Lists of:
     - **Child Milestones**: Displays any direct children of this milestone, showing their name, status badge, and dates. Clicking a child navigates to its own detail page.
-    - **Associated Test Runs**: Lists Test Runs linked to this milestone.
-    - **Associated Sessions**: Lists Test Sessions linked to this milestone.
+    - **Associated Test Runs**: Lists Test Runs linked to this milestone and all descendant milestones. Runs from child milestones display a milestone label to indicate their source.
+    - **Associated Sessions**: Lists Test Sessions linked to this milestone and all descendant milestones. Sessions from child milestones display a milestone label to indicate their source.
 - **Right Panel (Controls & Details)**:
   - Displays/allows editing of core milestone properties using form controls.
 
@@ -30,7 +30,7 @@ In the default view mode:
 - An **Edit** button (icon: SquarePen) is available for users with **ADMIN** or **PROJECTADMIN** access.
 - The right panel displays:
   - **Status Badge**: Shows the calculated status (Not Started, In Progress, Completed, Overdue).
-  - **Completion Rate**: Displays the percentage of completed test results out of total test cases in test runs associated with this milestone.
+  - **Completion Rate**: Displays the percentage of completed test results out of total test cases in test runs associated with this milestone and all descendant milestones.
   - **Dates**: Displays Start and Due dates.
   - **Description**: Shows the rich text description (`note` field). It's initially collapsed but expandable.
   - **Type**: Shows the selected Milestone Type.

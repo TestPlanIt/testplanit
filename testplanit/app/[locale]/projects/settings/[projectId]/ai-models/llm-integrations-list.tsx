@@ -168,18 +168,13 @@ export function LlmIntegrationsList({
                       {integration.name}
                     </CardTitle>
                   </div>
-                  {isActive && (
-                    <Badge variant="default" className="ml-auto">
-                      {tCommon("fields.isActive")}
-                    </Badge>
-                  )}
+                  <Badge
+                    variant="secondary"
+                    className={`w-fit ${getProviderColor(integration.provider)}`}
+                  >
+                    {integration.provider.replace("_", " ")}
+                  </Badge>
                 </div>
-                <Badge
-                  variant="secondary"
-                  className={`w-fit ${getProviderColor(integration.provider)}`}
-                >
-                  {integration.provider.replace("_", " ")}
-                </Badge>
               </CardHeader>
               <CardContent className="space-y-4">
                 {config && (
@@ -197,7 +192,6 @@ export function LlmIntegrationsList({
                       Number(config.monthlyBudget) > 0 && (
                         <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">
-                            <DollarSign className="inline h-3 w-3" />{" "}
                             {t("budget")}:
                           </span>
                           <span className="font-medium">
@@ -208,7 +202,7 @@ export function LlmIntegrationsList({
                         </div>
                       )}
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-2">
                       {config.streamingEnabled && (
                         <Tooltip>
                           <TooltipTrigger type="button">
@@ -261,7 +255,7 @@ export function LlmIntegrationsList({
                       ) : (
                         <Check className="h-4 w-4" />
                       )}
-                      {t("useForProject")}
+                      {tCommon("actions.assign")}
                     </Button>
                   )}
                 </div>
@@ -337,7 +331,7 @@ export function LlmIntegrationsList({
                 integrationToAssign &&
                 handleAssignIntegration(integrationToAssign)
               }
-              className="bg-warning text-warning-foreground hover:bg-warning/90"
+              className="bg-primary text-primary-foreground hover:bg-warning/90"
             >
               {t("switchModel")}
             </AlertDialogAction>
@@ -346,4 +340,5 @@ export function LlmIntegrationsList({
       </AlertDialog>
     </TooltipProvider>
   );
+  1;
 }

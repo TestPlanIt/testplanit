@@ -31,9 +31,16 @@ import { optionalImageUrlSchema } from "~/lib/schemas/imageUrl";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { HelpPopover } from "@/components/ui/help-popover";
 
-import { SquarePen, Bug } from "lucide-react";
+import { SquarePen, Bug, Star } from "lucide-react";
 
 import {
   Form,
@@ -956,9 +963,21 @@ export function EditProjectModal({
                                   key={role.id}
                                   value={`ROLE_${role.id}`}
                                 >
-                                  {role.name}{" "}
-                                  {role.isDefault &&
-                                    `(${tCommon("fields.default")})`}
+                                  {role.name}
+                                  {role.isDefault && (
+                                    <TooltipProvider delayDuration={300}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Badge variant="secondary">
+                                            <Star className="h-3 w-3 fill-current text-primary-background" />
+                                          </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          {tCommon("defaultOption")}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
                                 </SelectItem>
                               ))}
                             </SelectContent>

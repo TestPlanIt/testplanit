@@ -16,7 +16,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,26 +23,18 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import { Loader2, Edit } from "lucide-react";
+import { HelpPopover } from "@/components/ui/help-popover";
 import {
   useUpdatePromptConfig,
   useFindManyPromptConfig,
 } from "~/lib/hooks/prompt-config";
 import { useUpdatePromptConfigPrompt } from "~/lib/hooks/prompt-config-prompt";
-import {
-  LLM_FEATURES,
-  LLM_FEATURE_LABELS,
-  type LlmFeature,
-} from "~/lib/llm/constants";
+import { LLM_FEATURES, type LlmFeature } from "~/lib/llm/constants";
+import { PromptFeatureSection } from "./PromptFeatureSection";
 import type { ExtendedPromptConfig } from "./columns";
 
 const featureKeys = Object.values(LLM_FEATURES);
@@ -217,7 +208,10 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tCommon("name")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {tCommon("name")}
+                      <HelpPopover helpKey="promptConfig.name" />
+                    </FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -231,7 +225,10 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{tCommon("fields.description")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {tCommon("fields.description")}
+                      <HelpPopover helpKey="promptConfig.description" />
+                    </FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -240,145 +237,60 @@ export function EditPromptConfig({ config }: EditPromptConfigProps) {
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="isActive"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 pb-2">
-                      <FormLabel>{tCommon("fields.isActive")}</FormLabel>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          disabled={form.watch("isDefault")}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="isActive"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel className="flex items-center">
+                        {tCommon("fields.isActive")}
+                        <HelpPopover helpKey="promptConfig.isActive" />
+                      </FormLabel>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={form.watch("isDefault")}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="isDefault"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 pb-2">
-                      <FormLabel>{tCommon("fields.default")}</FormLabel>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={(checked) => {
-                            field.onChange(checked);
-                            if (checked) {
-                              form.setValue("isActive", true);
-                            }
-                          }}
-                          disabled={config.isDefault}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="isDefault"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <FormLabel className="flex items-center">
+                        {tCommon("fields.default")}
+                        <HelpPopover helpKey="promptConfig.isDefault" />
+                      </FormLabel>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={(checked) => {
+                          field.onChange(checked);
+                          if (checked) {
+                            form.setValue("isActive", true);
+                          }
+                        }}
+                        disabled={config.isDefault}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
-              <div>
-                <h3 className="text-sm font-medium leading-none mb-2">{t("features")}</h3>
-                <div className="border rounded-lg px-4 pb-4 pt-1">
-                  <Accordion type="single" collapsible className="w-full">
-                    {featureKeys.map((feature) => (
-                      <AccordionItem key={feature} value={feature}>
-                        <AccordionTrigger className="text-sm">
-                          {t(`featureLabels.${feature}` as any) ||
-                            LLM_FEATURE_LABELS[feature as LlmFeature]}
-                      </AccordionTrigger>
-                      <AccordionContent className="space-y-4 px-1">
-                        <FormField
-                          control={form.control}
-                          name={`prompts.${feature}.systemPrompt` as any}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t("systemPrompt")}</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  rows={8}
-                                  className="font-mono text-xs"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name={`prompts.${feature}.userPrompt` as any}
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t("userPrompt")}</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  rows={4}
-                                  className="font-mono text-xs"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name={`prompts.${feature}.temperature` as any}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t("temperature")}</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    step="0.1"
-                                    min="0"
-                                    max="2"
-                                    {...field}
-                                    onChange={(e) =>
-                                      field.onChange(
-                                        parseFloat(e.target.value)
-                                      )
-                                    }
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={
-                              `prompts.${feature}.maxOutputTokens` as any
-                            }
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t("maxOutputTokens")}</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    min="1"
-                                    {...field}
-                                    onChange={(e) =>
-                                      field.onChange(parseInt(e.target.value))
-                                    }
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
+              <div className="border rounded-lg p-4">
+                <h3 className="text-sm font-medium mb-3">{t("features")}</h3>
+                <Accordion type="single" collapsible className="w-full">
+                  {featureKeys.map((feature) => (
+                    <PromptFeatureSection key={feature} feature={feature as LlmFeature} />
                   ))}
                   </Accordion>
                 </div>

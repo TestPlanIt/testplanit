@@ -436,27 +436,13 @@ export function useExportData<
       try {
         // Fetch data based on scope
         if (options.scope === "selected") {
-          // First check if all selected items are in currentData
-          const currentDataIds = currentData.map((item) => item.id);
-          const allSelectedInCurrentData = selectedIds.every((id) =>
-            currentDataIds.includes(id)
-          );
-
-          if (allSelectedInCurrentData) {
-            // All selected items are in current page data
+          // Always fetch from server to ensure shared steps are resolved
+          if (!fetchAllData) {
+            // Fallback to currentData if fetchAllData is not available
             dataToExportInitial = currentData.filter((item) =>
               selectedIds.includes(item.id)
             );
           } else {
-            // Some selected items are from other pages, need to fetch them
-            if (!fetchAllData) {
-              console.error(
-                "fetchAllData function is required for exporting selected items across multiple pages."
-              );
-              setIsExporting(false);
-              return;
-            }
-
             // Fetch all data that matches the current filters
             const allDataResult = await fetchAllData({
               ...options,
@@ -468,7 +454,6 @@ export function useExportData<
               selectedIds.includes(item.id)
             );
           }
-          // console.log(`Using ${dataToExportInitial.length} selected items.`);
         } else {
           if (!fetchAllData) {
             console.error(

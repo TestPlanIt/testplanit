@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Send, CheckCircle, XCircle, Settings } from "lucide-react";
+import { Loader2, Send, CheckCircle, XCircle, TestTube2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface TestLlmIntegrationProps {
@@ -26,21 +26,24 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
   const t = useTranslations("admin.llm.test");
   const tGlobal = useTranslations();
   const [open, setOpen] = useState(false);
-  const [testMessage, setTestMessage] = useState(
-    t("defaultTestMessage")
-  );
+  const [testMessage, setTestMessage] = useState(t("defaultTestMessage"));
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<"testing" | "connected" | "failed" | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<
+    "testing" | "connected" | "failed" | null
+  >(null);
 
   const testConnection = async () => {
     setConnectionStatus("testing");
     setResponse("");
 
     try {
-      const response = await fetch(`/api/admin/llm/integrations/${integration.id}/test`, {
-        method: "POST",
-      });
+      const response = await fetch(
+        `/api/admin/llm/integrations/${integration.id}/test`,
+        {
+          method: "POST",
+        }
+      );
 
       const data = await response.json();
 
@@ -68,22 +71,27 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
     setResponse("");
 
     try {
-      const res = await fetch(`/api/admin/llm/integrations/${integration.id}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: testMessage,
-        }),
-      });
+      const res = await fetch(
+        `/api/admin/llm/integrations/${integration.id}/chat`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: testMessage,
+          }),
+        }
+      );
 
       const data = await res.json();
 
       if (res.ok && data.success) {
         setResponse(data.response.content);
-        
+
         if (data.usage) {
           toast.success(t("testSuccessful"), {
-            description: t("responseReceived", { cost: data.usage.totalCost.toFixed(6) }),
+            description: t("responseReceived", {
+              cost: data.usage.totalCost.toFixed(6),
+            }),
           });
         }
       } else {
@@ -106,9 +114,9 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
         onClick={() => setOpen(true)}
         className="px-2 py-1 h-auto"
       >
-        <Settings className="h-4 w-4" />
+        <TestTube2 className="h-4 w-4" />
       </Button>
-      
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -128,7 +136,7 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
               </div>
               <div className="flex items-center gap-2">
                 {connectionStatus === "connected" && (
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <CheckCircle className="h-5 w-5 text-success" />
                 )}
                 {connectionStatus === "failed" && (
                   <XCircle className="h-5 w-5 text-red-600" />
@@ -136,12 +144,16 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
                 <Button
                   onClick={testConnection}
                   disabled={connectionStatus === "testing"}
-                  variant={connectionStatus === "connected" ? "outline" : "default"}
+                  variant={
+                    connectionStatus === "connected" ? "outline" : "default"
+                  }
                 >
                   {connectionStatus === "testing" && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   )}
-                  {connectionStatus === "connected" ? t("retest") : tGlobal("admin.integrations.testConnection")}
+                  {connectionStatus === "connected"
+                    ? t("retest")
+                    : tGlobal("admin.integrations.testConnection")}
                 </Button>
               </div>
             </div>
@@ -169,7 +181,7 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
                 </>
               ) : (
                 <>
-                  <Send className="mr-2 h-4 w-4" />
+                  <Send className="h-4 w-4" />
                   {t("sendTestMessage")}
                 </>
               )}
@@ -186,11 +198,15 @@ export function TestLlmIntegration({ integration }: TestLlmIntegrationProps) {
 
             <Alert>
               <AlertDescription>
-                <strong>{tGlobal("common.fields.provider")}:</strong> {integration?.provider?.replace("_", " ")}
+                <strong>{tGlobal("common.fields.provider")}:</strong>{" "}
+                {integration?.provider?.replace("_", " ")}
                 <br />
-                <strong>{tGlobal("admin.llm.defaultModel")}:</strong> {integration?.llmProviderConfig?.defaultModel || tGlobal("admin.llm.notConfigured")}
+                <strong>{tGlobal("admin.llm.defaultModel")}:</strong>{" "}
+                {integration?.llmProviderConfig?.defaultModel ||
+                  tGlobal("admin.llm.notConfigured")}
                 <br />
-                <strong>{tGlobal("common.actions.status")}:</strong> {integration?.status}
+                <strong>{tGlobal("common.actions.status")}:</strong>{" "}
+                {integration?.status}
               </AlertDescription>
             </Alert>
           </div>

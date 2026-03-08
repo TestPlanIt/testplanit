@@ -85,11 +85,14 @@ const DraggableItem = ({
       const isUnique = !allNames.some(
         (existingName) => existingName === newName && newName !== name
       );
-      const validChars = /^[a-zA-Z0-9_ ]+$/;
+      const invalidChar = newName.match(/[,\x00-\x1F]/);
       if (newName.length === 0) {
         return t("common.fields.options.validation.empty");
-      } else if (!newName.match(validChars)) {
-        return t("common.fields.options.validation.invalidChars");
+      } else if (invalidChar) {
+        const char = invalidChar[0] === "," ? "," : "control character";
+        return t("common.fields.options.validation.invalidChars", {
+          char,
+        });
       } else if (!isUnique) {
         return t("common.fields.options.validation.duplicate");
       }
@@ -333,7 +336,7 @@ const DraggableList: React.FC<DraggableListProps> = ({
         {/* Header */}
         {items.length > 0 && (
           <div
-            className={`${columns} shadow-xs text-muted-foreground sticky top-0 z-10 bg-white`}
+            className={`${columns} shadow-xs text-muted-foreground font-medium sticky top-0 z-10 bg-background border border-foreground/10`}
           >
             <span />
             <span className="ml-2">{t("common.fields.icon")}</span>

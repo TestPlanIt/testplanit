@@ -160,7 +160,7 @@ export default function TwoFactorVerifyPage() {
               onClick={handleVerify}
               disabled={isLoading || verificationCode.length < (useBackupCode ? 8 : 6)}
             >
-              {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
               {t("common.actions.verify")}
             </Button>
 

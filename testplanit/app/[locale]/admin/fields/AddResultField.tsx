@@ -262,17 +262,20 @@ export function AddResultFieldModal({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value.trim();
 
-    const isValidInput = (input: string) => {
-      const regex = /^[A-Za-z0-9_\s]+$/;
-      return regex.test(input);
+    const findInvalidChar = (input: string) => {
+      const match = input.match(/[,\x00-\x1F]/);
+      return match ? (match[0] === "," ? "," : "control character") : null;
     };
 
     const isUniqueInput = (input: string) => {
       return !dropdownOptions.some((option) => option.name === input);
     };
 
-    if (inputValue && !isValidInput(inputValue)) {
-      setError(tCommon("fields.options.validation.invalidChars"));
+    const badChar = findInvalidChar(inputValue);
+    if (inputValue && badChar) {
+      setError(
+        tCommon("fields.options.validation.invalidChars", { char: badChar })
+      );
     } else if (!isUniqueInput(inputValue)) {
       setError(tCommon("fields.options.validation.duplicate"));
     } else {

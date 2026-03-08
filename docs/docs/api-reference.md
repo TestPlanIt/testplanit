@@ -293,4 +293,4 @@ API requests may be subject to rate limiting. When rate limited, you'll receive 
 - **OpenAPI Spec:** Available at `/api/docs?category={category}`
 - **CLI Tool:** See the [CLI documentation](./cli.md) for importing test results from CI/CD pipelines
 - **API Tokens:** See the [API Tokens documentation](./api-tokens.md) for managing programmatic access
-- **ZenStack Documentation:** [zenstack.dev](https://zenstack.dev/docs)
+- **ZenStack Documentation (v2):** [zenstack.dev](https://zenstack.dev/docs/2.x)

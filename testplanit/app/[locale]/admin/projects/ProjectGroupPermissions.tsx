@@ -23,6 +23,14 @@ import {
   SelectValue,
   SelectSeparator,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Star } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GroupNameCell } from "@/components/tables/GroupNameCell"; // Corrected import path
@@ -226,9 +234,21 @@ export function ProjectGroupPermissions({
                           <SelectSeparator />
                           {roles?.map((role) => (
                             <SelectItem key={role.id} value={`ROLE_${role.id}`}>
-                              {role.name}{" "}
-                              {role.isDefault &&
-                                `(${tCommon("fields.default")})`}
+                              {role.name}
+                              {role.isDefault && (
+                                <TooltipProvider delayDuration={300}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Badge variant="secondary">
+                                        <Star className="h-3 w-3 fill-current text-primary-background" />
+                                      </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      {tCommon("defaultOption")}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
                             </SelectItem>
                           ))}
                         </SelectContent>

@@ -132,6 +132,12 @@ const itemTypeToModelMap: Record<string, { model: any; modelName: string }> = {
   JUnitProperty: { model: db.jUnitProperty, modelName: "JUnitProperty" },
   JUnitAttachment: { model: db.jUnitAttachment, modelName: "JUnitAttachment" },
   JUnitTestStep: { model: db.jUnitTestStep, modelName: "JUnitTestStep" },
+  CodeRepository: { model: db.codeRepository, modelName: "CodeRepository" },
+  LlmIntegration: { model: db.llmIntegration, modelName: "LlmIntegration" },
+  Integration: { model: db.integration, modelName: "Integration" },
+  PromptConfig: { model: db.promptConfig, modelName: "PromptConfig" },
+  CaseExportTemplate: { model: db.caseExportTemplate, modelName: "CaseExportTemplate" },
+  SharedStepGroup: { model: db.sharedStepGroup, modelName: "SharedStepGroup" },
   // Ensure all models that can be soft-deleted and purged are in this map with the correct structure.
 };
 
@@ -194,6 +200,12 @@ export async function PATCH(
       "JUnitAttachment",
       "JUnitTestStep",
       "RepositoryCaseLink",
+      "CodeRepository",
+      "LlmIntegration",
+      "Integration",
+      "PromptConfig",
+      "CaseExportTemplate",
+      "SharedStepGroup",
     ];
 
     if (intIdModels.includes(modelMapEntry.modelName)) {
@@ -307,6 +319,12 @@ export async function DELETE(
     "JUnitAttachment",
     "JUnitTestStep",
     "RepositoryCaseLink",
+    "CodeRepository",
+    "LlmIntegration",
+    "Integration",
+    "PromptConfig",
+    "CaseExportTemplate",
+    "SharedStepGroup",
   ];
 
   if (intIdModels.includes(modelMapEntry.modelName)) {

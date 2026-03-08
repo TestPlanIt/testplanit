@@ -184,6 +184,7 @@ export function SelectedTestCasesDrawer({
               id={testCase.id}
               name={testCase.name}
               source={testCase.source || RepositoryCaseSource.MANUAL}
+              automated={testCase.automated}
               maxLines={2}
             />
           </div>

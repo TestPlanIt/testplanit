@@ -156,7 +156,7 @@ export function ManageSimpleUrlIssues({
         })}
 
         <Button variant="outline" size="sm" onClick={() => setIsAddOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" />
+          <Plus className="h-4 w-4" />
           {t("common.add")}
         </Button>
       </div>

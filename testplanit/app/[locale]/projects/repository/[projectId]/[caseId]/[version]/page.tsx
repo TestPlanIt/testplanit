@@ -44,7 +44,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatSeconds } from "@/components/DurationDisplay";
-import { Switch } from "@/components/ui/switch";
 import { DateFormatter } from "@/components/DateFormatter";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Separator } from "@/components/ui/separator";
@@ -93,7 +92,6 @@ export default function TestCaseVersions() {
   const t = useTranslations();
   const panelRightRef = useRef<React.ComponentRef<typeof ResizablePanel>>(null);
   const panelLeftRef = useRef<React.ComponentRef<typeof ResizablePanel>>(null);
-  const [panelRightWidth, setPanelRightWidth] = useState<number>(30);
   const [isCollapsedRight, setIsCollapsedRight] = useState<boolean>(false);
   const [isCollapsedLeft, setIsCollapsedLeft] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
@@ -299,10 +297,6 @@ export default function TestCaseVersions() {
       const nextIndex = currentVersionIndex + 1;
       viewVersion(versions[nextIndex].version.toString());
     }
-  };
-
-  const handleResize = async (size: number) => {
-    setPanelRightWidth(size);
   };
 
   if (status === "loading" || isLoading) return <Loading />;
@@ -596,6 +590,7 @@ export default function TestCaseVersions() {
                     name={testcase.name}
                     size="large"
                     source={testcase.source}
+                    automated={testcase.automated}
                   />,
                   previousTestcase ? (
                     <CaseDisplay
@@ -603,6 +598,7 @@ export default function TestCaseVersions() {
                       name={previousTestcase.name}
                       size="large"
                       source={previousTestcase.source}
+                      automated={previousTestcase.automated}
                     />
                   ) : null
                 )}
@@ -718,6 +714,7 @@ export default function TestCaseVersions() {
             autoSaveId="case-version-panels"
           >
             <ResizablePanel
+              id="case-version-left"
               order={1}
               ref={panelLeftRef}
               className={`p-0 m-0 min-w-6 ${
@@ -891,19 +888,19 @@ export default function TestCaseVersions() {
               </TooltipProvider>
             </div>
             <ResizablePanel
+              id="case-version-right"
               order={2}
               ref={panelRightRef}
-              defaultSize={panelRightWidth || 30}
-              onResize={handleResize}
+              defaultSize={30}
               collapsedSize={0}
               minSize={0}
               collapsible
               onCollapse={() => setIsCollapsedRight(true)}
               onExpand={() => setIsCollapsedRight(false)}
-              className={`${isTransitioning ? "transition-all duration-300 ease-in-out" : ""} w-["${panelRightWidth}%"]`}
+              className={isTransitioning ? "transition-all duration-300 ease-in-out" : ""}
             >
               <div
-                className={`${isTransitioning ? "transition-all duration-300 ease-in-out" : ""} w-["${panelRightWidth}%"]`}
+                className={isTransitioning ? "transition-all duration-300 ease-in-out" : ""}
                 role="region"
                 aria-label={t("repository.version.metadataRegion")}
               >
@@ -930,21 +927,30 @@ export default function TestCaseVersions() {
                     </li>
                   )}
 
-                  <div className="font-bold">
-                    {t("common.fields.automated")}
-                  </div>
                   <li className="mb-2 mr-6">
+                    <div className="font-bold">
+                      {t("common.fields.automated")}
+                    </div>
                     {testcase && previousTestcase
                       ? renderFieldValue(
                           "automated",
-                          <Switch disabled checked={testcase.automated} />,
-                          <Switch
-                            disabled
-                            checked={previousTestcase.automated}
-                          />
+                          <Badge variant={testcase.automated ? "default" : "secondary"}>
+                            {testcase.automated
+                              ? t("common.fields.automated")
+                              : t("common.fields.manual")}
+                          </Badge>,
+                          <Badge variant={previousTestcase.automated ? "default" : "secondary"}>
+                            {previousTestcase.automated
+                              ? t("common.fields.automated")
+                              : t("common.fields.manual")}
+                          </Badge>
                         )
                       : testcase && (
-                          <Switch disabled checked={testcase.automated} />
+                          <Badge variant={testcase.automated ? "default" : "secondary"}>
+                            {testcase.automated
+                              ? t("common.fields.automated")
+                              : t("common.fields.manual")}
+                          </Badge>
                         )}
                     <Separator
                       orientation="horizontal"

@@ -139,7 +139,7 @@ export class GeminiAdapter extends BaseLlmAdapter {
     try {
       // Use request timeout if provided, otherwise fall back to config timeout
       const timeout = request.timeout ?? this.getTimeout();
-      const response = await fetch(`${this.baseUrl}/models/${model}:generateContent?key=${this.apiKey}`, {
+      const response = await this.safeFetch(`${this.baseUrl}/models/${model}:generateContent?key=${this.apiKey}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -287,15 +287,16 @@ export class GeminiAdapter extends BaseLlmAdapter {
       ],
     };
 
-    // Use request timeout if provided, otherwise fall back to config timeout
+    // Use request timeout if provided, otherwise fall back to config timeout.
+    // timeout === 0 means no timeout (e.g. streaming where the full duration is unknown).
     const timeout = request.timeout ?? this.getTimeout();
-    const response = await fetch(`${this.baseUrl}/models/${model}:streamGenerateContent?key=${this.apiKey}`, {
+    const response = await this.safeFetch(`${this.baseUrl}/models/${model}:streamGenerateContent?alt=sse&key=${this.apiKey}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(geminiRequest),
-      signal: AbortSignal.timeout(timeout),
+      signal: timeout > 0 ? AbortSignal.timeout(timeout) : undefined,
     });
 
     if (!response.ok) {
@@ -351,7 +352,7 @@ export class GeminiAdapter extends BaseLlmAdapter {
 
   async getAvailableModels(): Promise<LlmModelInfo[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/models?key=${this.apiKey}`, {
+      const response = await this.safeFetch(`${this.baseUrl}/models?key=${this.apiKey}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -390,7 +391,7 @@ export class GeminiAdapter extends BaseLlmAdapter {
 
   async testConnection(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/models?key=${this.apiKey}`, {
+      const response = await this.safeFetch(`${this.baseUrl}/models?key=${this.apiKey}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

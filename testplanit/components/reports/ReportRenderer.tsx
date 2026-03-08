@@ -335,6 +335,8 @@ export function ReportRenderer({
     >
       {/* Visualization Panel */}
       <ResizablePanel
+        id="report-results-top"
+        order={1}
         defaultSize={50}
         minSize={20}
         collapsedSize={0}
@@ -380,6 +382,8 @@ export function ReportRenderer({
 
       {/* Results Table Panel */}
       <ResizablePanel
+        id="report-results-bottom"
+        order={2}
         defaultSize={50}
         minSize={20}
         collapsedSize={0}

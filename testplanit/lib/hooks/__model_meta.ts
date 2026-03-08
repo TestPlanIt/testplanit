@@ -918,6 +918,12 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'project',
+                }, codeRepositoryConfig: {
+                    name: "codeRepositoryConfig",
+                    type: "ProjectCodeRepositoryConfig",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'project',
                 }, promptConfigId: {
                     name: "promptConfigId",
                     type: "String",
@@ -974,6 +980,16 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'project',
+                }, assignedExportTemplates: {
+                    name: "assignedExportTemplates",
+                    type: "CaseExportTemplateProjectAssignment",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'project',
+                }, quickScriptEnabled: {
+                    name: "quickScriptEnabled",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 },
             }, uniqueConstraints: {
                 id: {
@@ -1967,6 +1983,120 @@ const metadata: ModelMeta = {
                 resultFieldId_templateId: {
                     name: "resultFieldId_templateId",
                     fields: ["resultFieldId", "templateId"]
+                },
+            },
+        },
+        caseExportTemplate: {
+            name: 'CaseExportTemplate', fields: {
+                id: {
+                    name: "id",
+                    type: "Int",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                    isAutoIncrement: true,
+                }, name: {
+                    name: "name",
+                    type: "String",
+                }, description: {
+                    name: "description",
+                    type: "String",
+                    isOptional: true,
+                }, category: {
+                    name: "category",
+                    type: "String",
+                }, framework: {
+                    name: "framework",
+                    type: "String",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": "" }] }],
+                }, headerBody: {
+                    name: "headerBody",
+                    type: "String",
+                    isOptional: true,
+                }, templateBody: {
+                    name: "templateBody",
+                    type: "String",
+                }, footerBody: {
+                    name: "footerBody",
+                    type: "String",
+                    isOptional: true,
+                }, fileExtension: {
+                    name: "fileExtension",
+                    type: "String",
+                }, language: {
+                    name: "language",
+                    type: "String",
+                }, isDefault: {
+                    name: "isDefault",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, isEnabled: {
+                    name: "isEnabled",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": true }] }],
+                }, isDeleted: {
+                    name: "isDeleted",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, updatedAt: {
+                    name: "updatedAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@updatedAt", "args": [] }],
+                }, projects: {
+                    name: "projects",
+                    type: "CaseExportTemplateProjectAssignment",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'template',
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, name: {
+                    name: "name",
+                    fields: ["name"]
+                },
+            },
+        },
+        caseExportTemplateProjectAssignment: {
+            name: 'CaseExportTemplateProjectAssignment', fields: {
+                templateId: {
+                    name: "templateId",
+                    type: "Int",
+                    isId: true,
+                    isForeignKey: true,
+                    relationField: 'template',
+                }, template: {
+                    name: "template",
+                    type: "CaseExportTemplate",
+                    isDataModel: true,
+                    backLink: 'projects',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "templateId" },
+                }, projectId: {
+                    name: "projectId",
+                    type: "Int",
+                    isId: true,
+                    isForeignKey: true,
+                    relationField: 'project',
+                }, project: {
+                    name: "project",
+                    type: "Projects",
+                    isDataModel: true,
+                    backLink: 'assignedExportTemplates',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "projectId" },
+                },
+            }, uniqueConstraints: {
+                templateId_projectId: {
+                    name: "templateId_projectId",
+                    fields: ["templateId", "projectId"]
                 },
             },
         },
@@ -4762,6 +4892,151 @@ const metadata: ModelMeta = {
                 },
             },
         },
+        codeRepository: {
+            name: 'CodeRepository', fields: {
+                id: {
+                    name: "id",
+                    type: "Int",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                    isAutoIncrement: true,
+                }, name: {
+                    name: "name",
+                    type: "String",
+                }, provider: {
+                    name: "provider",
+                    type: "CodeRepositoryProvider",
+                }, credentials: {
+                    name: "credentials",
+                    type: "Json",
+                }, settings: {
+                    name: "settings",
+                    type: "Json",
+                    isOptional: true,
+                }, status: {
+                    name: "status",
+                    type: "IntegrationStatus",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, lastTestedAt: {
+                    name: "lastTestedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, isDeleted: {
+                    name: "isDeleted",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, updatedAt: {
+                    name: "updatedAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@updatedAt", "args": [] }],
+                }, projectConfigs: {
+                    name: "projectConfigs",
+                    type: "ProjectCodeRepositoryConfig",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'repository',
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, name: {
+                    name: "name",
+                    fields: ["name"]
+                },
+            },
+        },
+        projectCodeRepositoryConfig: {
+            name: 'ProjectCodeRepositoryConfig', fields: {
+                id: {
+                    name: "id",
+                    type: "Int",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                    isAutoIncrement: true,
+                }, projectId: {
+                    name: "projectId",
+                    type: "Int",
+                    isForeignKey: true,
+                    relationField: 'project',
+                }, project: {
+                    name: "project",
+                    type: "Projects",
+                    isDataModel: true,
+                    backLink: 'codeRepositoryConfig',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "projectId" },
+                }, repositoryId: {
+                    name: "repositoryId",
+                    type: "Int",
+                    isForeignKey: true,
+                    relationField: 'repository',
+                }, repository: {
+                    name: "repository",
+                    type: "CodeRepository",
+                    isDataModel: true,
+                    backLink: 'projectConfigs',
+                    isRelationOwner: true,
+                    foreignKeyMapping: { "id": "repositoryId" },
+                }, branch: {
+                    name: "branch",
+                    type: "String",
+                    isOptional: true,
+                }, pathPatterns: {
+                    name: "pathPatterns",
+                    type: "Json",
+                }, cacheEnabled: {
+                    name: "cacheEnabled",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": true }] }],
+                }, cacheTtlDays: {
+                    name: "cacheTtlDays",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 7 }] }],
+                }, cacheStatus: {
+                    name: "cacheStatus",
+                    type: "String",
+                    isOptional: true,
+                }, cacheLastFetchedAt: {
+                    name: "cacheLastFetchedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, cacheFileCount: {
+                    name: "cacheFileCount",
+                    type: "Int",
+                    isOptional: true,
+                }, cacheTotalSize: {
+                    name: "cacheTotalSize",
+                    type: "BigInt",
+                    isOptional: true,
+                }, cacheError: {
+                    name: "cacheError",
+                    type: "String",
+                    isOptional: true,
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, updatedAt: {
+                    name: "updatedAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@updatedAt", "args": [] }],
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, projectId: {
+                    name: "projectId",
+                    fields: ["projectId"]
+                },
+            },
+        },
         llmIntegration: {
             name: 'LlmIntegration', fields: {
                 id: {
@@ -6087,6 +6362,10 @@ const metadata: ModelMeta = {
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 }, settings: {
                     name: "settings",
+                    type: "Json",
+                    isOptional: true,
+                }, alertThresholdsFired: {
+                    name: "alertThresholdsFired",
                     type: "Json",
                     isOptional: true,
                 }, createdAt: {
@@ -7461,12 +7740,13 @@ const metadata: ModelMeta = {
         user: ['Account', 'UserPreferences', 'ApiToken', 'GroupAssignment', 'UserIntegrationAuth', 'UserProjectPermission', 'Notification', 'ShareLink', 'CommentMention'],
         groups: ['GroupAssignment', 'GroupProjectPermission'],
         roles: ['RolePermission'],
-        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'ShareLink', 'ProjectIntegration', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
+        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'CaseExportTemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectCodeRepositoryConfig', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'ShareLink', 'ProjectIntegration', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
         milestones: ['Comment'],
         caseFields: ['TemplateCaseAssignment', 'CaseFieldAssignment', 'CaseFieldValues', 'SessionFieldValues'],
         resultFields: ['TemplateResultAssignment', 'ResultFieldAssignment', 'ResultFieldValues'],
         fieldOptions: ['CaseFieldAssignment', 'ResultFieldAssignment'],
         templates: ['TemplateCaseAssignment', 'TemplateResultAssignment'],
+        caseExportTemplate: ['CaseExportTemplateProjectAssignment'],
         status: ['StatusScopeAssignment'],
         configCategories: ['ConfigVariants'],
         configVariants: ['ConfigurationConfigVariant'],

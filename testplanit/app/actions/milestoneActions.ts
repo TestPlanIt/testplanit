@@ -5,6 +5,7 @@ import { ApplicationArea } from "@prisma/client";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 import { checkUserPermission } from "./permissions";
+import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 
 const CompleteMilestoneSchema = z.object({
   milestoneId: z.number(),
@@ -57,34 +58,6 @@ export async function completeMilestoneCascade(
     testRunStateId,
     sessionStateId,
   } = parseResult.data;
-
-  // Helper function to get all descendant milestone IDs
-  async function getAllDescendantMilestoneIds(
-    startMilestoneId: number,
-    existingPrisma: typeof prisma
-  ): Promise<number[]> {
-    const allDescendantIds: number[] = [];
-    let parentIdsToQuery: number[] = [startMilestoneId];
-
-    while (parentIdsToQuery.length > 0) {
-      const children = await existingPrisma.milestones.findMany({
-        where: {
-          parentId: { in: parentIdsToQuery },
-          isDeleted: false, // Exclude deleted milestones from descendants
-        },
-        select: { id: true },
-      });
-
-      const foundChildIds = children.map((child: { id: number }) => child.id);
-      if (foundChildIds.length === 0) {
-        break;
-      }
-
-      allDescendantIds.push(...foundChildIds);
-      parentIdsToQuery = foundChildIds;
-    }
-    return allDescendantIds;
-  }
 
   // Fetch the milestone to check its current status and get projectId
   const currentMilestone = await prisma.milestones.findUnique({
@@ -174,8 +147,7 @@ export async function completeMilestoneCascade(
 
   // --- Database Logic ---
   const descendantMilestoneIds = await getAllDescendantMilestoneIds(
-    milestoneId,
-    prisma
+    milestoneId
   );
   const allRelevantMilestoneIds = [milestoneId, ...descendantMilestoneIds];
 

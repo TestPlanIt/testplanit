@@ -124,7 +124,7 @@ export function useTestCaseHealthColumns(
             healthy: {
               label: t("reports.ui.testCaseHealth.healthStatus.healthy"),
               variant: "default",
-              className: "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20",
+              className: "bg-success/10 text-success border-success/20",
             },
             never_executed: {
               label: t("reports.ui.testCaseHealth.healthStatus.neverExecuted"),
@@ -213,7 +213,7 @@ export function useTestCaseHealthColumns(
         cell: (info) => {
           const score = info.getValue();
           const getScoreColor = (s: number) => {
-            if (s >= 80) return "text-green-600 dark:text-green-400";
+            if (s >= 80) return "text-success";
             if (s >= 60) return "text-yellow-600 dark:text-yellow-400";
             if (s >= 40) return "text-orange-600 dark:text-orange-400";
             return "text-red-600 dark:text-red-400";
@@ -300,7 +300,7 @@ export function useTestCaseHealthColumns(
             return <span className="text-muted-foreground">-</span>;
           }
           const getPassRateColor = (r: number) => {
-            if (r >= 90) return "text-green-600 dark:text-green-400";
+            if (r >= 90) return "text-success";
             if (r >= 70) return "text-yellow-600 dark:text-yellow-400";
             if (r >= 50) return "text-orange-600 dark:text-orange-400";
             return "text-red-600 dark:text-red-400";

@@ -134,7 +134,7 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
                     title={icon.name}
                     key={icon.id}
                     value={icon.id.toString()}
-                    className={`flex justify-center items-center p-2 ${icon.id === selectedIconId ? "bg-muted-foreground" : "bg-gray-200"}`}
+                    className={`flex justify-center items-center p-2 ${icon.id === selectedIconId ? "bg-primary/20" : "bg-background"}`}
                   >
                     <DynamicIcon
                       aria-label={icon.name}

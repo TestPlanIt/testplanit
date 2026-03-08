@@ -5,16 +5,14 @@ import { useParams } from "next/navigation";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Star } from "lucide-react";
 import {
   useFindFirstProjects,
   useUpdateProjects,
   useFindManyLlmIntegration,
   useFindManyProjectLlmIntegration,
 } from "~/lib/hooks";
-import {
-  useFindManyPromptConfig,
-} from "~/lib/hooks/prompt-config";
+import { useFindManyPromptConfig } from "~/lib/hooks/prompt-config";
 import {
   Card,
   CardContent,
@@ -30,6 +28,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { LlmIntegrationsList } from "./llm-integrations-list";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { Loading } from "@/components/Loading";
@@ -190,14 +195,7 @@ export default function ProjectAiModelsPage() {
       <Card>
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-            <CardTitle className="flex items-center gap-2">
-              <Link
-                href={`/projects/settings/${projectId}`}
-                className="hover:underline"
-              >
-                {tCommon("tabs.settings")}
-              </Link>
-              <ChevronRight className="h-5 w-5" />
+            <CardTitle>
               <span>{tGlobal("admin.menu.llm")}</span>
             </CardTitle>
           </div>
@@ -231,74 +229,10 @@ export default function ProjectAiModelsPage() {
             </CardContent>
           </Card>
 
-          {currentIntegration && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("currentModelSettings")}</CardTitle>
-                <CardDescription>
-                  {t("currentModelDescription", {
-                    name: currentIntegration.llmIntegration.name,
-                  })}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <p className="text-sm font-medium">
-                      {tCommon("fields.provider")}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {currentIntegration.llmIntegration.provider.replace(
-                        "_",
-                        " "
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {tCommon("actions.status")}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {currentIntegration.llmIntegration.status}
-                    </p>
-                  </div>
-                  {currentIntegration.llmIntegration.llmProviderConfig && (
-                    <>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {tGlobal("admin.llm.defaultModel")}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {
-                            currentIntegration.llmIntegration.llmProviderConfig
-                              .defaultModel
-                          }
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {t("monthlyBudget")}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {`$${Number(
-                            currentIntegration.llmIntegration.llmProviderConfig
-                              .monthlyBudget || 0
-                          ).toFixed(2)}`}
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           <Card>
             <CardHeader>
               <CardTitle>{t("promptConfig")}</CardTitle>
-              <CardDescription>
-                {t("promptConfigDescription")}
-              </CardDescription>
+              <CardDescription>{t("promptConfigDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
               <Select
@@ -316,7 +250,20 @@ export default function ProjectAiModelsPage() {
                   {promptConfigs?.map((config) => (
                     <SelectItem key={config.id} value={config.id}>
                       {config.name}
-                      {config.isDefault ? ` (${tCommon("fields.default")})` : ""}
+                      {config.isDefault && (
+                        <TooltipProvider delayDuration={300}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge variant="secondary">
+                                <Star className="h-3 w-3 fill-current text-primary-background" />
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {tCommon("defaultOption")}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </SelectItem>
                   ))}
                 </SelectContent>

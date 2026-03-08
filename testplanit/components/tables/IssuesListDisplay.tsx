@@ -32,12 +32,12 @@ interface Issue {
 
 interface IssuesListProps {
   issues: Issue[] | null | undefined;
+  size?: "small" | "default";
 }
 
 export const IssuesListDisplay: React.FC<IssuesListProps> = ({
   issues,
-  // projectId,
-  // baseUrl,
+  size = "default",
 }) => {
   if (!issues || issues.length === 0) {
     return null;
@@ -46,8 +46,8 @@ export const IssuesListDisplay: React.FC<IssuesListProps> = ({
   return (
     <Popover modal={false}>
       <PopoverTrigger asChild>
-        <Badge className="cursor-pointer">
-          <Bug className="w-4 h-4 mr-1 shrink-0" />
+        <Badge className={size === "small" ? "cursor-pointer text-xs px-1.5 py-0" : "cursor-pointer"}>
+          <Bug className={size === "small" ? "w-3 h-3 mr-0.5 shrink-0" : "w-4 h-4 mr-1 shrink-0"} />
           {issues.length}
         </Badge>
       </PopoverTrigger>

@@ -250,7 +250,7 @@ export default function TwoFactorSetupPage() {
                 onClick={completeSetup}
                 disabled={isLoading || verificationCode.length < 6}
               >
-                {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                 {t("auth.twoFactorSetup.verify")}
               </Button>
             </div>
@@ -280,12 +280,12 @@ export default function TwoFactorSetupPage() {
               >
                 {copiedCodes ? (
                   <>
-                    <Check className="h-4 w-4 mr-2" />
+                    <Check className="h-4 w-4" />
                     {t("common.actions.copied")}
                   </>
                 ) : (
                   <>
-                    <Copy className="h-4 w-4 mr-2" />
+                    <Copy className="h-4 w-4" />
                     {t("auth.twoFactorSetup.copyCodes")}
                   </>
                 )}
@@ -298,7 +298,7 @@ export default function TwoFactorSetupPage() {
                 onClick={completeSignIn}
                 disabled={isLoading}
               >
-                {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                 {t("auth.twoFactorSetup.continue")}
               </Button>
             </div>

@@ -70,6 +70,7 @@ import {
   ListChecks,
   Bot,
   Trash2,
+  ScrollText,
 } from "lucide-react";
 import { useFindManyRepositoryFolders, useFindManyStatus } from "~/lib/hooks";
 import {
@@ -240,6 +241,7 @@ interface NameCellProps {
   };
   viewType?: string;
   canAddEditResults?: boolean;
+  automated?: boolean;
   source?: RepositoryCaseSource;
   isSoftDeletedInRun?: boolean;
 }
@@ -254,6 +256,7 @@ const NameCell = React.memo(function NameCell({
   onTestCaseClick,
   folder,
   viewType,
+  automated,
   canAddEditResults,
   source,
   isSoftDeletedInRun,
@@ -316,7 +319,7 @@ const NameCell = React.memo(function NameCell({
       <div className="flex items-center">
         {isSoftDeletedInRun ? (
           <Trash2 className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
-        ) : isAutomatedCaseSource(source) ? (
+        ) : automated || isAutomatedCaseSource(source) ? (
           <Bot className="w-4 h-4 mr-1 text-primary shrink-0" />
         ) : (
           <ListChecks className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
@@ -374,7 +377,7 @@ const NameCell = React.memo(function NameCell({
     <div className="flex items-center">
       {isSoftDeletedInRun ? (
         <Trash2 className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
-      ) : isAutomatedCaseSource(source) ? (
+      ) : automated || isAutomatedCaseSource(source) ? (
         <Bot className="w-4 h-4 mr-1 text-primary shrink-0" />
       ) : (
         <ListChecks className="w-4 h-4 mr-1 text-primary shrink-0" />
@@ -878,6 +881,9 @@ const ActionsCell = React.memo(function ActionsCell({
   canDelete,
   canAddEditRun,
   isSoftDeletedInRun,
+  quickScriptEnabled,
+  canAddEdit,
+  onQuickScript,
 }: {
   row: any;
   isRunMode: boolean;
@@ -885,16 +891,31 @@ const ActionsCell = React.memo(function ActionsCell({
   canDelete?: boolean;
   canAddEditRun?: boolean;
   isSoftDeletedInRun?: boolean;
+  quickScriptEnabled?: boolean;
+  canAddEdit?: boolean;
+  onQuickScript?: (caseId: number) => void;
 }) {
   const t = useTranslations();
   return (
     <div className="whitespace-nowrap flex justify-center gap-1 w-full">
-      {canDelete && (
-        <DeleteCaseModal
-          key={`delete-${row.original.id}`}
-          testcase={row.original}
-          showLabel={false}
-        />
+      {!isRunMode && !isSelectionMode && quickScriptEnabled && canAddEdit && onQuickScript && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                className="px-2 py-1 h-auto"
+                onClick={() => onQuickScript(row.original.id)}
+                data-testid={`quickscript-case-${row.original.id}`}
+              >
+                <ScrollText className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{t("repository.cases.quickScript")}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
       {!isRunMode && !isSelectionMode && canAddEditRun && (
         <TooltipProvider>
@@ -921,6 +942,13 @@ const ActionsCell = React.memo(function ActionsCell({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
+      )}
+      {canDelete && (
+        <DeleteCaseModal
+          key={`delete-${row.original.id}`}
+          testcase={row.original}
+          showLabel={false}
+        />
       )}
     </div>
   );
@@ -1230,7 +1258,10 @@ export const getColumns = (
   isMultiConfigRun?: boolean,
   totalItems?: number,
   selectedCount?: number,
-  enableReorder?: boolean
+  enableReorder?: boolean,
+  quickScriptEnabled?: boolean,
+  canAddEdit?: boolean,
+  onQuickScript?: (caseId: number) => void
 ): ColumnDef<ExtendedCases>[] => {
   const isStepsFieldPresent = uniqueCaseFieldList.some(
     (field) => field.displayName === "Steps"
@@ -1600,6 +1631,7 @@ export const getColumns = (
               : undefined
           }
           viewType={viewType}
+          automated={row.original.automated}
           canAddEditResults={canAddEditResults}
           source={row.original.source}
           isSoftDeletedInRun={isRunMode && row.original.isDeleted}
@@ -2093,7 +2125,7 @@ export const getColumns = (
       },
     });
   } else {
-    if ((canDelete || canAddEditRun) && !isSelectionMode) {
+    if ((canDelete || canAddEditRun || (quickScriptEnabled && canAddEdit)) && !isSelectionMode) {
       orderedColumns.push({
         id: "actions",
         header: columnTranslations.actions,
@@ -2101,7 +2133,7 @@ export const getColumns = (
         enableSorting: false,
         enableHiding: false,
         meta: { isPinned: "right" },
-        size: 80,
+        size: 110,
         cell: ({ row }) => (
           <ActionsCell
             row={row}
@@ -2110,6 +2142,9 @@ export const getColumns = (
             canDelete={canDelete}
             canAddEditRun={canAddEditRun}
             isSoftDeletedInRun={isRunMode && row.original.isDeleted}
+            quickScriptEnabled={quickScriptEnabled}
+            canAddEdit={canAddEdit}
+            onQuickScript={onQuickScript}
           />
         ),
       });

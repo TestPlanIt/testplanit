@@ -168,7 +168,7 @@ export function useAutomationTrendsColumns(projects: Project[] = [], dateGroupin
 
             // Color code based on percentage
             let colorClass = "text-red-600";
-            if (value >= 70) colorClass = "text-green-600";
+            if (value >= 70) colorClass = "text-success";
             else if (value >= 40) colorClass = "text-yellow-600";
 
             return (
@@ -203,7 +203,7 @@ export function useAutomationTrendsColumns(projects: Project[] = [], dateGroupin
             const colorClass = isZero
               ? "text-gray-500"
               : isPositive
-                ? "text-green-600"
+                ? "text-success"
                 : "text-red-600";
             const sign = isPositive ? "+" : "";
 
@@ -241,7 +241,7 @@ export function useAutomationTrendsColumns(projects: Project[] = [], dateGroupin
               ? "text-gray-500"
               : isPositive
                 ? "text-red-600"
-                : "text-green-600";
+                : "text-success";
             const sign = isPositive ? "+" : "";
 
             return (

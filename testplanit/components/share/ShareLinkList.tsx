@@ -280,7 +280,7 @@ export function ShareLinkList({ projectId, entityType, showProjectColumn = false
                     ) : isExpired ? (
                       <Badge variant="secondary">{t("status.expired")}</Badge>
                     ) : (
-                      <Badge variant="default" className="bg-green-500">
+                      <Badge variant="default" className="bg-success">
                         {t("status.active")}
                       </Badge>
                     )}

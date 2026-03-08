@@ -270,7 +270,7 @@ export function TwoFactorSettings({
               size="sm"
               onClick={() => setIsRegenerateOpen(true)}
             >
-              <RefreshCw className="h-3 w-3 mr-1" />
+              <RefreshCw className="h-3 w-3" />
               {t("users.profile.twoFactor.regenerateCodes")}
             </Button>
           )}
@@ -401,12 +401,12 @@ export function TwoFactorSettings({
               >
                 {copiedCodes ? (
                   <>
-                    <Check className="h-4 w-4 mr-2" />
+                    <Check className="h-4 w-4" />
                     {t("common.actions.copied")}
                   </>
                 ) : (
                   <>
-                    <Copy className="h-4 w-4 mr-2" />
+                    <Copy className="h-4 w-4" />
                     {t("auth.twoFactorSetup.copyCodes")}
                   </>
                 )}
@@ -425,7 +425,7 @@ export function TwoFactorSettings({
                   disabled={isLoading || verificationCode.length < 6}
                 >
                   {isLoading && (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   )}
                   {t("auth.twoFactorSetup.verify")}
                 </Button>
@@ -596,12 +596,12 @@ export function TwoFactorSettings({
               >
                 {copiedCodes ? (
                   <>
-                    <Check className="h-4 w-4 mr-2" />
+                    <Check className="h-4 w-4" />
                     {t("common.actions.copied")}
                   </>
                 ) : (
                   <>
-                    <Copy className="h-4 w-4 mr-2" />
+                    <Copy className="h-4 w-4" />
                     {t("auth.twoFactorSetup.copyCodes")}
                   </>
                 )}
@@ -620,7 +620,7 @@ export function TwoFactorSettings({
                   disabled={isLoading || regenerateCode.length < 6}
                 >
                   {isLoading && (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   )}
                   {t("users.profile.twoFactor.regenerate.confirm")}
                 </Button>

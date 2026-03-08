@@ -21,6 +21,7 @@ import {
   Plug,
   Sparkles,
   Share2,
+  ScrollText,
 } from "lucide-react";
 import { cn } from "~/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -258,6 +259,13 @@ export default function ProjectsMenu({
             section: "settings" as MenuSection,
           },
           {
+            icon: ScrollText,
+            label: t("admin.menu.quickScript"),
+            path: "settings/quickscript",
+            id: "settings-quickscript-link",
+            section: "settings" as MenuSection,
+          },
+          {
             icon: Share2,
             label: t("admin.menu.shares"),
             path: "settings/shares",
@@ -281,11 +289,33 @@ export default function ProjectsMenu({
     }))
     .filter((group) => group.items.length > 0);
 
-  const [openSections, setOpenSections] = useState<string[]>([]);
+  const [openSections, setOpenSections] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("projectMenu:openSections");
+        return stored ? (JSON.parse(stored) as string[]) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        "projectMenu:openSections",
+        JSON.stringify(openSections)
+      );
+    } catch {
+      // ignore storage errors
+    }
+  }, [openSections]);
 
   useEffect(() => {
     // Ensure the section containing the active page is open
-    const activePage = page === "settings" ? `settings/${settingsSubPage}` : page;
+    const activePage =
+      page === "settings" ? `settings/${settingsSubPage}` : page;
     const activeSection = groups.find((group) =>
       group.items.some((item) => item.path === activePage)
     );

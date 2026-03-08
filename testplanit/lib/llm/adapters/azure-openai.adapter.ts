@@ -174,7 +174,7 @@ export class AzureOpenAIAdapter extends OpenAIAdapter {
         return false;
       }
 
-      const response = await fetch(sanitizedUrl, {
+      const response = await this.safeFetch(sanitizedUrl, {
         method: "POST",
         headers: this.getOpenAIHeaders(),
         body: JSON.stringify({

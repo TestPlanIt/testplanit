@@ -96,7 +96,7 @@ export class AnthropicAdapter extends BaseLlmAdapter {
     try {
       // Use request timeout if provided, otherwise fall back to config timeout
       const timeout = request.timeout ?? this.getTimeout();
-      const response = await fetch(`${this.baseUrl}/messages`, {
+      const response = await this.safeFetch(`${this.baseUrl}/messages`, {
         method: "POST",
         headers: this.getAnthropicHeaders(),
         body: JSON.stringify(anthropicRequest),
@@ -149,13 +149,14 @@ export class AnthropicAdapter extends BaseLlmAdapter {
       anthropicRequest.system = systemMessage;
     }
 
-    // Use request timeout if provided, otherwise fall back to config timeout
+    // Use request timeout if provided, otherwise fall back to config timeout.
+    // timeout === 0 means no timeout (e.g. streaming where the full duration is unknown).
     const timeout = request.timeout ?? this.getTimeout();
-    const response = await fetch(`${this.baseUrl}/messages`, {
+    const response = await this.safeFetch(`${this.baseUrl}/messages`, {
       method: "POST",
       headers: this.getAnthropicHeaders(),
       body: JSON.stringify(anthropicRequest),
-      signal: AbortSignal.timeout(timeout),
+      signal: timeout > 0 ? AbortSignal.timeout(timeout) : undefined,
     });
 
     if (!response.ok) {
@@ -197,9 +198,15 @@ export class AnthropicAdapter extends BaseLlmAdapter {
                 yield {
                   delta: event.delta.text,
                   model: currentModel,
-                  finishReason: event.delta.stop_reason
-                    ? this.mapStopReason(event.delta.stop_reason)
-                    : undefined,
+                  finishReason: undefined,
+                };
+              } else if (event.type === "message_delta" && event.delta?.stop_reason) {
+                // stop_reason comes in message_delta, not content_block_delta — yield
+                // a zero-delta chunk so callers can detect truncation, etc.
+                yield {
+                  delta: "",
+                  model: currentModel,
+                  finishReason: this.mapStopReason(event.delta.stop_reason),
                 };
               } else if (event.type === "message_stop") {
                 return;
@@ -230,7 +237,7 @@ export class AnthropicAdapter extends BaseLlmAdapter {
 
   async testConnection(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/messages`, {
+      const response = await this.safeFetch(`${this.baseUrl}/messages`, {
         method: "POST",
         headers: this.getAnthropicHeaders(),
         body: JSON.stringify({

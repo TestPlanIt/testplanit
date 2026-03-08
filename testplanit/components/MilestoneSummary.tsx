@@ -266,7 +266,7 @@ export function MilestoneSummary({
       </TooltipProvider>
 
       {/* Container for Summary Text and Issues */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-y-1">
         {/* Summary text below the bar */}
         <div
           className="text-muted-foreground text-xs truncate grow mr-2"
@@ -365,7 +365,7 @@ export function MilestoneSummary({
           {/* Display aggregated issues list if any exist */}
           {summaryData.issues && summaryData.issues.length > 0 && (
             <div>
-              <IssuesListDisplay issues={summaryData.issues} />
+              <IssuesListDisplay issues={summaryData.issues} size="small" />
             </div>
           )}
         </div>

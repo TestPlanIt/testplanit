@@ -49,8 +49,8 @@ export function ShareLinkCreated({
     <div className="space-y-6">
       {/* Success header */}
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/20">
-          <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success/10">
+          <CheckCircle2 className="h-6 w-6 text-success" />
         </div>
         <div className="flex-1">
           <h3 className="text-lg font-semibold mb-1">{t("title")}</h3>

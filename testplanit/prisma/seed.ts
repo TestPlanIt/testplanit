@@ -1588,10 +1588,1896 @@ async function seedDefaultTemplate() {
   );
 }
 
+// --- Seed Case Export Templates ---
+async function seedCaseExportTemplates() {
+  console.log("Seeding case export templates...");
+
+  const playwrightHeader = `import { test, expect } from "@playwright/test";`;
+
+  const playwrightBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+test.describe("{{name}}", () => {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  test("Step {{order}} - {{step}}", async ({ page }) => {
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  const cypressHeader = `/// <reference types="cypress" />`;
+
+  const cypressBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+describe("{{name}}", () => {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  it("Step {{order}} - {{step}}", () => {
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  const webdriverioBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+describe("{{name}}", () => {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  it("Step {{order}} - {{step}}", async () => {
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  const webdriverioTsHeader = `import { browser, $ } from "@wdio/globals";`;
+
+  const webdriverioTsBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+describe("{{name}}", () => {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  it("Step {{order}} - {{step}}", async () => {
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  const markdownBody = `# {{{name}}}
+
+| Field | Value |
+|-------|-------|
+| **ID** | {{{id}}} |
+| **State** | {{{state}}} |
+| **Folder** | {{{folder}}} |
+| **Estimate** | {{{estimate}}} |
+| **Automated** | {{{automated}}} |
+| **Tags** | {{{tags}}} |
+| **Created by** | {{{createdBy}}} |
+| **Created at** | {{{createdAt}}} |
+
+## Steps
+
+{{#steps}}
+### Step {{{order}}}
+
+**Action:** {{{step}}}
+
+**Expected Result:** {{{expectedResult}}}
+
+{{/steps}}
+`;
+
+  const playwrightPythonBody = `"""
+Test Case: {{{name}}}
+ID: {{{id}}}
+State: {{{state}}}
+Tags: {{{tags}}}
+Created by: {{{createdBy}}}
+"""
+import pytest
+from playwright.sync_api import Page, expect
+
+
+class Test{{{id}}}:
+    """{{{name}}}"""
+
+{{#steps}}
+    def test_step_{{{order}}}(self, page: Page):
+        """Step {{{order}}}: {{{step}}}"""
+        # Expected: {{{expectedResult}}}
+        # TODO: Implement test logic
+        pass
+
+{{/steps}}
+`;
+
+  const playwrightJavaHeader = `import com.microsoft.playwright.*;
+import org.junit.jupiter.api.*;`;
+
+  const playwrightJavaBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+public class Test{{{id}}} {
+    static Playwright playwright;
+    static Browser browser;
+    BrowserContext context;
+    Page page;
+
+    @BeforeAll
+    static void launchBrowser() {
+        playwright = Playwright.create();
+        browser = playwright.chromium().launch();
+    }
+
+    @BeforeEach
+    void createContextAndPage() {
+        context = browser.newContext();
+        page = context.newPage();
+    }
+
+    @AfterEach
+    void closeContext() {
+        context.close();
+    }
+
+    @AfterAll
+    static void closeBrowser() {
+        playwright.close();
+    }
+
+{{#steps}}
+    @Test
+    @DisplayName("Step {{order}} - {{step}}")
+    void testStep{{{order}}}() {
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  const playwrightCsharpHeader = `using Microsoft.Playwright;
+using NUnit.Framework;`;
+
+  const playwrightCsharpBody = `/// <summary>
+/// Test Case: {{{name}}}
+/// ID: {{{id}}}
+/// State: {{{state}}}
+/// Tags: {{{tags}}}
+/// Created by: {{{createdBy}}}
+/// </summary>
+[TestFixture]
+public class Test{{{id}}}
+{
+    private IPlaywright _playwright;
+    private IBrowser _browser;
+    private IPage _page;
+
+    [OneTimeSetUp]
+    public async Task Setup()
+    {
+        _playwright = await Playwright.CreateAsync();
+        _browser = await _playwright.Chromium.LaunchAsync();
+        _page = await _browser.NewPageAsync();
+    }
+
+    [OneTimeTearDown]
+    public async Task Teardown()
+    {
+        await _browser.CloseAsync();
+        _playwright.Dispose();
+    }
+
+{{#steps}}
+    [Test]
+    public async Task Step{{{order}}}_{{{order}}}()
+    {
+        // Step {{{order}}}: {{{step}}}
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  const cypressTsHeader = `/// <reference types="cypress" />`;
+
+  const cypressTsBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+describe("{{name}}", () => {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  it("Step {{order}} - {{step}}", () => {
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  const seleniumJavaHeader = `import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.junit.jupiter.api.*;`;
+
+  const seleniumJavaBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+public class Test{{{id}}} {
+    private WebDriver driver;
+
+    @BeforeEach
+    void setUp() {
+        driver = new ChromeDriver();
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (driver != null) {
+            driver.quit();
+        }
+    }
+
+{{#steps}}
+    @Test
+    @DisplayName("Step {{order}} - {{step}}")
+    void testStep{{{order}}}() {
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  const seleniumPythonBody = `"""
+Test Case: {{{name}}}
+ID: {{{id}}}
+State: {{{state}}}
+Tags: {{{tags}}}
+Created by: {{{createdBy}}}
+"""
+import pytest
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+
+
+class Test{{{id}}}:
+    """{{{name}}}"""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        self.driver = webdriver.Chrome()
+        yield
+        self.driver.quit()
+
+{{#steps}}
+    def test_step_{{{order}}}(self):
+        """Step {{{order}}}: {{{step}}}"""
+        # Expected: {{{expectedResult}}}
+        # TODO: Implement test logic
+        pass
+
+{{/steps}}
+`;
+
+  const jestTsBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+describe("{{name}}", () => {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  it("Step {{order}} - {{step}}", () => {
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  const pytestBody = `"""
+Test Case: {{{name}}}
+ID: {{{id}}}
+State: {{{state}}}
+Tags: {{{tags}}}
+Created by: {{{createdBy}}}
+"""
+import pytest
+
+
+class Test{{{id}}}:
+    """{{{name}}}"""
+
+{{#steps}}
+    def test_step_{{{order}}}(self):
+        """Step {{{order}}}: {{{step}}}"""
+        # Expected: {{{expectedResult}}}
+        # TODO: Implement test logic
+        pass
+
+{{/steps}}
+`;
+
+  const junitHeader = `import org.junit.jupiter.api.*;`;
+
+  const junitBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+public class Test{{{id}}} {
+
+{{#steps}}
+    @Test
+    @DisplayName("Step {{order}} - {{step}}")
+    void testStep{{{order}}}() {
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  const gherkinBody = `Feature: {{{name}}}
+  As a tester
+  I want to verify {{{name}}}
+  So that the expected behavior is confirmed
+
+  # ID: {{{id}}}
+  # State: {{{state}}}
+  # Tags: {{{tags}}}
+  # Created by: {{{createdBy}}}
+
+  Scenario: {{{name}}}
+{{#steps}}
+    # Step {{{order}}}
+    Given the preconditions for step {{{order}}} are met
+    When I {{{step}}}
+    Then {{{expectedResult}}}
+{{/steps}}
+`;
+
+  const restAssuredHeader = `import io.restassured.RestAssured;
+import org.junit.jupiter.api.*;
+import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.*;`;
+
+  const restAssuredBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+public class Test{{{id}}} {
+
+    @BeforeAll
+    static void setup() {
+        RestAssured.baseURI = "http://localhost";
+        RestAssured.port = 8080;
+    }
+
+{{#steps}}
+    @Test
+    @DisplayName("Step {{order}} - {{step}}")
+    void testStep{{{order}}}() {
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+        given()
+            .when()
+            .get("/api/endpoint")
+            .then()
+            .statusCode(200);
+    }
+
+{{/steps}}
+}
+`;
+
+  const supertestHeader = `import request from "supertest";
+import { describe, it, expect } from "vitest";
+
+const API_URL = process.env.API_URL || "http://localhost:3000";`;
+
+  const supertestBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+describe("{{name}}", () => {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  it("Step {{order}} - {{step}}", async () => {
+    const response = await request(API_URL)
+      .get("/api/endpoint");
+    expect(response.status).toBe(200);
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  const k6Header = `import http from "k6/http";
+import { check, sleep } from "k6";`;
+
+  const k6Body = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+
+export const options = {
+  vus: 10,
+  duration: "30s",
+};
+
+export default function () {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  {
+    const res = http.get("http://localhost:3000/api/endpoint");
+    check(res, {
+      "Step {{order}} - status is 200": (r) => r.status === 200,
+    });
+  }
+
+{{/steps}}
+  sleep(1);
+}
+`;
+
+  const robotFrameworkBody = `*** Settings ***
+Documentation    Test Case: {{{name}}}
+...              ID: {{{id}}}
+...              State: {{{state}}}
+...              Tags: {{{tags}}}
+...              Created by: {{{createdBy}}}
+Library          SeleniumLibrary
+
+*** Variables ***
+\${BROWSER}    chrome
+\${URL}        http://localhost:3000
+
+*** Test Cases ***
+{{#steps}}
+Step {{{order}}} - {{{step}}}
+    [Documentation]    Expected: {{{expectedResult}}}
+    Log    TODO: Implement test logic
+
+{{/steps}}
+`;
+
+  // --- Playwright API Testing ---
+  const playwrightApiTsHeader = `import { test, expect } from "@playwright/test";`;
+
+  const playwrightApiTsBody = `/**
+ * API Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+test.describe("{{name}}", () => {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  test("Step {{order}} - {{step}}", async ({ request }) => {
+    const response = await request.get("/api/endpoint");
+    expect(response.ok()).toBeTruthy();
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  const playwrightApiJsBody = `/**
+ * API Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+test.describe("{{name}}", () => {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  test("Step {{order}} - {{step}}", async ({ request }) => {
+    const response = await request.get("/api/endpoint");
+    expect(response.ok()).toBeTruthy();
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  const playwrightApiPythonBody = `"""
+API Test Case: {{{name}}}
+ID: {{{id}}}
+State: {{{state}}}
+Tags: {{{tags}}}
+Created by: {{{createdBy}}}
+"""
+import pytest
+from playwright.sync_api import Playwright, APIRequestContext
+
+
+@pytest.fixture(scope="session")
+def api_request_context(playwright: Playwright) -> APIRequestContext:
+    return playwright.request.new_context(base_url="http://localhost:3000")
+
+
+class Test{{{id}}}:
+    """{{{name}}}"""
+
+{{#steps}}
+    def test_step_{{{order}}}(self, api_request_context: APIRequestContext):
+        """Step {{{order}}}: {{{step}}}"""
+        # Expected: {{{expectedResult}}}
+        response = api_request_context.get("/api/endpoint")
+        assert response.ok
+        # TODO: Implement test logic
+
+{{/steps}}
+`;
+
+  const playwrightApiJavaHeader = `import com.microsoft.playwright.*;
+import org.junit.jupiter.api.*;`;
+
+  const playwrightApiJavaBody = `/**
+ * API Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+public class Test{{{id}}} {
+    static Playwright playwright;
+    static APIRequestContext request;
+
+    @BeforeAll
+    static void setup() {
+        playwright = Playwright.create();
+        request = playwright.request().newContext(
+            new APIRequest.NewContextOptions()
+                .setBaseURL("http://localhost:3000")
+        );
+    }
+
+    @AfterAll
+    static void teardown() {
+        if (request != null) request.dispose();
+        if (playwright != null) playwright.close();
+    }
+
+{{#steps}}
+    @Test
+    @DisplayName("Step {{order}} - {{step}}")
+    void testStep{{{order}}}() {
+        // Expected: {{{expectedResult}}}
+        APIResponse response = request.get("/api/endpoint");
+        Assertions.assertTrue(response.ok());
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  const playwrightApiCsharpHeader = `using Microsoft.Playwright;
+using NUnit.Framework;`;
+
+  const playwrightApiCsharpBody = `/// <summary>
+/// API Test Case: {{{name}}}
+/// ID: {{{id}}}
+/// State: {{{state}}}
+/// Tags: {{{tags}}}
+/// Created by: {{{createdBy}}}
+/// </summary>
+[TestFixture]
+public class Test{{{id}}}
+{
+    private IPlaywright _playwright;
+    private IAPIRequestContext _request;
+
+    [OneTimeSetUp]
+    public async Task Setup()
+    {
+        _playwright = await Playwright.CreateAsync();
+        _request = await _playwright.APIRequest.NewContextAsync(new()
+        {
+            BaseURL = "http://localhost:3000"
+        });
+    }
+
+    [OneTimeTearDown]
+    public async Task Teardown()
+    {
+        if (_request != null) await _request.DisposeAsync();
+        _playwright.Dispose();
+    }
+
+{{#steps}}
+    [Test]
+    public async Task Step{{{order}}}_{{{order}}}()
+    {
+        // Step {{{order}}}: {{{step}}}
+        // Expected: {{{expectedResult}}}
+        var response = await _request.GetAsync("/api/endpoint");
+        Assert.That(response.Ok, Is.True);
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  // --- TestCafe ---
+  const testcafeHeader = `import { Selector, ClientFunction } from "testcafe";`;
+
+  const testcafeBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+fixture\`{{{name}}}\`.page\`http://localhost:3000\`;
+
+{{#steps}}
+// Step {{{order}}}: {{{step}}}
+// Expected: {{{expectedResult}}}
+test("Step {{order}} - {{step}}", async (t) => {
+  // TODO: Implement test logic
+});
+
+{{/steps}}
+`;
+
+  // --- Vitest ---
+  const vitestHeader = `import { describe, it, expect } from "vitest";`;
+
+  const vitestBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+describe("{{name}}", () => {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  it("Step {{order}} - {{step}}", () => {
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  // --- Go Test ---
+  const goTestHeader = `package tests
+
+import "testing"`;
+
+  const goTestBody = `// Test Case: {{{name}}}
+// ID: {{{id}}}
+// State: {{{state}}}
+// Tags: {{{tags}}}
+// Created by: {{{createdBy}}}
+
+{{#steps}}
+func TestStep{{{order}}}(t *testing.T) {
+\t// Step {{{order}}}: {{{step}}}
+\t// Expected: {{{expectedResult}}}
+\tt.Skip("TODO: Implement test logic")
+}
+
+{{/steps}}
+`;
+
+  // --- xUnit C# ---
+  const xunitHeader = `using Xunit;`;
+
+  const xunitBody = `/// <summary>
+/// Test Case: {{{name}}}
+/// ID: {{{id}}}
+/// State: {{{state}}}
+/// Tags: {{{tags}}}
+/// Created by: {{{createdBy}}}
+/// </summary>
+public class Test{{{id}}}
+{
+{{#steps}}
+    [Fact]
+    public void Step{{{order}}}()
+    {
+        // Step {{{order}}}: {{{step}}}
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  // --- Mocha ---
+  const mochaJsHeader = `const { expect } = require("chai");`;
+
+  const mochaTsHeader = `import { expect } from "chai";`;
+
+  const mochaBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+describe("{{name}}", function () {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  it("Step {{order}} - {{step}}", function () {
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  // --- Postman Test Script ---
+  const postmanBody = `// Postman Test Script for: {{{name}}}
+// ID: {{{id}}}
+// State: {{{state}}}
+// Tags: {{{tags}}}
+// Created by: {{{createdBy}}}
+
+{{#steps}}
+// Step {{{order}}}: {{{step}}}
+pm.test("Step {{order}} - {{step}}", function () {
+    // Expected: {{{expectedResult}}}
+    // TODO: Implement test assertions
+    pm.response.to.have.status(200);
+});
+
+{{/steps}}
+`;
+
+  // --- Karate ---
+  const karateBody = `Feature: {{{name}}}
+  # ID: {{{id}}}
+  # State: {{{state}}}
+  # Tags: {{{tags}}}
+  # Created by: {{{createdBy}}}
+
+  Background:
+    * url 'https://api.example.com'
+
+{{#steps}}
+  Scenario: Step {{{order}}} - {{{step}}}
+    # Expected: {{{expectedResult}}}
+    Given path '/api/endpoint'
+    When method get
+    Then status 200
+
+{{/steps}}
+`;
+
+  // --- Appium Java ---
+  const appiumJavaHeader = `import io.appium.java_client.android.AndroidDriver;
+import io.appium.java_client.android.options.UiAutomator2Options;
+import org.junit.jupiter.api.*;
+import java.net.URL;`;
+
+  const appiumJavaBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+public class Test{{{id}}} {
+    private AndroidDriver driver;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        UiAutomator2Options options = new UiAutomator2Options()
+            .setDeviceName("emulator-5554")
+            .setApp("/path/to/app.apk");
+        driver = new AndroidDriver(new URL("http://127.0.0.1:4723"), options);
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (driver != null) {
+            driver.quit();
+        }
+    }
+
+{{#steps}}
+    @Test
+    @DisplayName("Step {{order}} - {{step}}")
+    void testStep{{{order}}}() {
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  // --- Appium Python ---
+  const appiumPythonBody = `"""
+Test Case: {{{name}}}
+ID: {{{id}}}
+State: {{{state}}}
+Tags: {{{tags}}}
+Created by: {{{createdBy}}}
+"""
+import pytest
+from appium import webdriver
+from appium.options import UiAutomator2Options
+
+
+class Test{{{id}}}:
+    """{{{name}}}"""
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        options = UiAutomator2Options()
+        options.device_name = "emulator-5554"
+        options.app = "/path/to/app.apk"
+        self.driver = webdriver.Remote("http://127.0.0.1:4723", options=options)
+        yield
+        self.driver.quit()
+
+{{#steps}}
+    def test_step_{{{order}}}(self):
+        """Step {{{order}}}: {{{step}}}"""
+        # Expected: {{{expectedResult}}}
+        # TODO: Implement test logic
+        pass
+
+{{/steps}}
+`;
+
+  // --- Appium JavaScript ---
+  const appiumJsHeader = `const { remote } = require("webdriverio");`;
+
+  const appiumJsBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+describe("{{name}}", () => {
+  let driver;
+
+  before(async () => {
+    driver = await remote({
+      hostname: "127.0.0.1",
+      port: 4723,
+      capabilities: {
+        platformName: "Android",
+        "appium:automationName": "UiAutomator2",
+        "appium:deviceName": "emulator-5554",
+        "appium:app": "/path/to/app.apk",
+      },
+    });
+  });
+
+  after(async () => {
+    if (driver) {
+      await driver.deleteSession();
+    }
+  });
+
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  it("Step {{order}} - {{step}}", async () => {
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  // --- XCUITest Swift ---
+  const xcuiTestHeader = `import XCTest`;
+
+  const xcuiTestBody = `/// Test Case: {{{name}}}
+/// ID: {{{id}}}
+/// State: {{{state}}}
+/// Tags: {{{tags}}}
+/// Created by: {{{createdBy}}}
+class Test{{{id}}}: XCTestCase {
+    var app: XCUIApplication!
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        app = XCUIApplication()
+        app.launch()
+    }
+
+    override func tearDownWithError() throws {
+        app = nil
+    }
+
+{{#steps}}
+    /// Step {{{order}}}: {{{step}}}
+    func testStep{{{order}}}() throws {
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  // --- Appium (Kotlin) ---
+  const appiumKotlinHeader = `import io.appium.java_client.android.AndroidDriver
+import io.appium.java_client.android.options.UiAutomator2Options
+import org.junit.jupiter.api.*
+import java.net.URL`;
+
+  const appiumKotlinBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+class Test{{{id}}} {
+    private lateinit var driver: AndroidDriver
+
+    @BeforeEach
+    fun setUp() {
+        val options = UiAutomator2Options()
+            .setDeviceName("emulator-5554")
+            .setApp("/path/to/app.apk")
+        driver = AndroidDriver(URL("http://127.0.0.1:4723"), options)
+    }
+
+    @AfterEach
+    fun tearDown() {
+        driver.quit()
+    }
+
+{{#steps}}
+    @Test
+    @DisplayName("Step {{order}} - {{step}}")
+    fun testStep{{{order}}}() {
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  // --- Espresso (Java) ---
+  const espressoJavaHeader = `import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.espresso.Espresso;
+import androidx.test.espresso.action.ViewActions;
+import androidx.test.espresso.assertion.ViewAssertions;
+import androidx.test.espresso.matcher.ViewMatchers;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;`;
+
+  const espressoJavaBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+@RunWith(AndroidJUnit4.class)
+public class Test{{{id}}} {
+
+    @Rule
+    public ActivityScenarioRule<MainActivity> activityRule =
+            new ActivityScenarioRule<>(MainActivity.class);
+
+{{#steps}}
+    @Test
+    public void testStep{{{order}}}() {
+        // Step {{{order}}}: {{{step}}}
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  // --- Espresso (Kotlin) ---
+  const espressoKotlinHeader = `import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.ext.junit.rules.ActivityScenarioRule
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith`;
+
+  const espressoKotlinBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+@RunWith(AndroidJUnit4::class)
+class Test{{{id}}} {
+
+    @get:Rule
+    val activityRule = ActivityScenarioRule(MainActivity::class.java)
+
+{{#steps}}
+    @Test
+    fun testStep{{{order}}}() {
+        // Step {{{order}}}: {{{step}}}
+        // Expected: {{{expectedResult}}}
+        // TODO: Implement test logic
+    }
+
+{{/steps}}
+}
+`;
+
+  // --- Detox (JavaScript) ---
+  const detoxJsBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+describe("{{{name}}}", () => {
+  beforeAll(async () => {
+    await device.launchApp();
+  });
+
+  beforeEach(async () => {
+    await device.reloadReactNative();
+  });
+
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  it("Step {{order}} - {{step}}", async () => {
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  // --- Detox (TypeScript) ---
+  const detoxTsBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+describe("{{{name}}}", () => {
+  beforeAll(async () => {
+    await device.launchApp();
+  });
+
+  beforeEach(async () => {
+    await device.reloadReactNative();
+  });
+
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  it("Step {{order}} - {{step}}", async () => {
+    // TODO: Implement test logic
+  });
+
+{{/steps}}
+});
+`;
+
+  // --- Maestro (YAML) ---
+  const maestroBody = `# Test Case: {{{name}}}
+# ID: {{{id}}}
+# State: {{{state}}}
+# Tags: {{{tags}}}
+# Created by: {{{createdBy}}}
+appId: com.example.app
+---
+{{#steps}}
+# Step {{{order}}}: {{{step}}}
+# Expected: {{{expectedResult}}}
+- tapOn: "TODO: element identifier"
+
+{{/steps}}
+`;
+
+  // --- Flutter Integration Test (Dart) ---
+  const flutterTestHeader = `import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:your_app/main.dart' as app;`;
+
+  const flutterTestBody = `/// Test Case: {{{name}}}
+/// ID: {{{id}}}
+/// State: {{{state}}}
+/// Tags: {{{tags}}}
+/// Created by: {{{createdBy}}}
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  group("{{{name}}}", () {
+    testWidgets("setup", (tester) async {
+      app.main();
+      await tester.pumpAndSettle();
+    });
+
+{{#steps}}
+    // Step {{{order}}}: {{{step}}}
+    // Expected: {{{expectedResult}}}
+    testWidgets("Step {{order}} - {{step}}", (tester) async {
+      // TODO: Implement test logic
+      await tester.pumpAndSettle();
+    });
+
+{{/steps}}
+  });
+}
+`;
+
+  // --- Earl Grey (Swift) ---
+  const earlGreyHeader = `import XCTest`;
+
+  const earlGreyBody = `/// Test Case: {{{name}}}
+/// ID: {{{id}}}
+/// State: {{{state}}}
+/// Tags: {{{tags}}}
+/// Created by: {{{createdBy}}}
+class Test{{{id}}}: XCTestCase {
+
+  override func setUp() {
+    super.setUp()
+    continueAfterFailure = false
+  }
+
+  override func tearDown() {
+    super.tearDown()
+  }
+
+{{#steps}}
+  /// Step {{{order}}}: {{{step}}}
+  func testStep{{{order}}}() {
+    // Expected: {{{expectedResult}}}
+    // TODO: Implement test logic using EarlGrey matchers
+    // EarlGrey.selectElement(with: grey_accessibilityID("elementId"))
+    //   .perform(grey_tap())
+    //   .assert(grey_sufficientlyVisible())
+  }
+
+{{/steps}}
+}
+`;
+
+  const templates = [
+    // --- Browser E2E ---
+    {
+      name: "Playwright (TypeScript)",
+      description:
+        "Generates Playwright test stubs in TypeScript with test.describe and test blocks for each step.",
+      category: "Browser E2E",
+      framework: "Playwright",
+      headerBody: playwrightHeader,
+      templateBody: playwrightBody,
+      footerBody: null as string | null,
+      fileExtension: ".spec.ts",
+      language: "typescript",
+      isDefault: true,
+    },
+    {
+      name: "Playwright (JavaScript)",
+      description:
+        "Generates Playwright test stubs in JavaScript with test.describe and test blocks for each step.",
+      category: "Browser E2E",
+      framework: "Playwright",
+      headerBody: playwrightHeader.replace(
+        'import { test, expect } from "@playwright/test";',
+        'const { test, expect } = require("@playwright/test");'
+      ),
+      templateBody: playwrightBody,
+      footerBody: null as string | null,
+      fileExtension: ".spec.js",
+      language: "javascript",
+      isDefault: false,
+    },
+    {
+      name: "Playwright (Python)",
+      description:
+        "Generates Playwright test stubs in Python using pytest-playwright with sync API.",
+      category: "Browser E2E",
+      framework: "Playwright",
+      headerBody: null as string | null,
+      templateBody: playwrightPythonBody,
+      footerBody: null as string | null,
+      fileExtension: ".py",
+      language: "python",
+      isDefault: false,
+    },
+    {
+      name: "Playwright (Java)",
+      description:
+        "Generates Playwright test stubs in Java with JUnit 5 and browser lifecycle management.",
+      category: "Browser E2E",
+      framework: "Playwright",
+      headerBody: playwrightJavaHeader,
+      templateBody: playwrightJavaBody,
+      footerBody: null as string | null,
+      fileExtension: ".java",
+      language: "java",
+      isDefault: false,
+    },
+    {
+      name: "Playwright (C#)",
+      description:
+        "Generates Playwright test stubs in C# with NUnit and async/await patterns.",
+      category: "Browser E2E",
+      framework: "Playwright",
+      headerBody: playwrightCsharpHeader,
+      templateBody: playwrightCsharpBody,
+      footerBody: null as string | null,
+      fileExtension: ".cs",
+      language: "csharp",
+      isDefault: false,
+    },
+    {
+      name: "Cypress (JavaScript)",
+      description:
+        "Generates Cypress test stubs in JavaScript with describe and it blocks for each step.",
+      category: "Browser E2E",
+      framework: "Cypress",
+      headerBody: cypressHeader,
+      templateBody: cypressBody,
+      footerBody: null as string | null,
+      fileExtension: ".cy.js",
+      language: "javascript",
+      isDefault: false,
+    },
+    {
+      name: "Cypress (TypeScript)",
+      description:
+        "Generates Cypress test stubs in TypeScript with describe and it blocks for each step.",
+      category: "Browser E2E",
+      framework: "Cypress",
+      headerBody: cypressTsHeader,
+      templateBody: cypressTsBody,
+      footerBody: null as string | null,
+      fileExtension: ".cy.ts",
+      language: "typescript",
+      isDefault: false,
+    },
+    {
+      name: "Selenium (Java)",
+      description:
+        "Generates Selenium WebDriver test stubs in Java with JUnit 5 and ChromeDriver setup.",
+      category: "Browser E2E",
+      framework: "Selenium",
+      headerBody: seleniumJavaHeader,
+      templateBody: seleniumJavaBody,
+      footerBody: null as string | null,
+      fileExtension: ".java",
+      language: "java",
+      isDefault: false,
+    },
+    {
+      name: "Selenium (Python)",
+      description:
+        "Generates Selenium WebDriver test stubs in Python with pytest fixtures and Chrome driver.",
+      category: "Browser E2E",
+      framework: "Selenium",
+      headerBody: null as string | null,
+      templateBody: seleniumPythonBody,
+      footerBody: null as string | null,
+      fileExtension: ".py",
+      language: "python",
+      isDefault: false,
+    },
+    {
+      name: "WebdriverIO (JavaScript)",
+      description:
+        "Generates WebdriverIO test stubs in JavaScript with describe and it blocks for each step.",
+      category: "Browser E2E",
+      framework: "WebdriverIO",
+      headerBody: null as string | null,
+      templateBody: webdriverioBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.js",
+      language: "javascript",
+      isDefault: false,
+    },
+    {
+      name: "WebdriverIO (TypeScript)",
+      description:
+        "Generates WebdriverIO test stubs in TypeScript with describe and it blocks for each step.",
+      category: "Browser E2E",
+      framework: "WebdriverIO",
+      headerBody: webdriverioTsHeader,
+      templateBody: webdriverioTsBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.ts",
+      language: "typescript",
+      isDefault: false,
+    },
+    // --- Unit Testing ---
+    {
+      name: "Jest (TypeScript)",
+      description:
+        "Generates Jest test stubs in TypeScript with describe and it blocks.",
+      category: "Unit Testing",
+      framework: "Jest",
+      headerBody: null as string | null,
+      templateBody: jestTsBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.ts",
+      language: "typescript",
+      isDefault: false,
+    },
+    {
+      name: "pytest",
+      description:
+        "Generates pytest test stubs in Python with class-based test organization.",
+      category: "Unit Testing",
+      framework: "pytest",
+      headerBody: null as string | null,
+      templateBody: pytestBody,
+      footerBody: null as string | null,
+      fileExtension: ".py",
+      language: "python",
+      isDefault: false,
+    },
+    {
+      name: "JUnit 5 (Java)",
+      description:
+        "Generates JUnit 5 test stubs in Java with @Test and @DisplayName annotations.",
+      category: "Unit Testing",
+      framework: "JUnit",
+      headerBody: junitHeader,
+      templateBody: junitBody,
+      footerBody: null as string | null,
+      fileExtension: ".java",
+      language: "java",
+      isDefault: false,
+    },
+    // --- BDD ---
+    {
+      name: "Gherkin Feature File",
+      description:
+        "Generates Gherkin .feature files with Given/When/Then steps for Cucumber, SpecFlow, or Behave.",
+      category: "BDD",
+      framework: "Cucumber",
+      headerBody: null as string | null,
+      templateBody: gherkinBody,
+      footerBody: null as string | null,
+      fileExtension: ".feature",
+      language: "gherkin",
+      isDefault: false,
+    },
+    // --- API Testing ---
+    {
+      name: "Playwright API (TypeScript)",
+      description:
+        "Generates Playwright API test stubs in TypeScript using APIRequestContext for HTTP endpoint testing.",
+      category: "API Testing",
+      framework: "Playwright",
+      headerBody: playwrightApiTsHeader,
+      templateBody: playwrightApiTsBody,
+      footerBody: null as string | null,
+      fileExtension: ".api.spec.ts",
+      language: "typescript",
+      isDefault: false,
+    },
+    {
+      name: "Playwright API (JavaScript)",
+      description:
+        "Generates Playwright API test stubs in JavaScript using APIRequestContext for HTTP endpoint testing.",
+      category: "API Testing",
+      framework: "Playwright",
+      headerBody: playwrightApiTsHeader.replace(
+        'import { test, expect } from "@playwright/test";',
+        'const { test, expect } = require("@playwright/test");'
+      ),
+      templateBody: playwrightApiJsBody,
+      footerBody: null as string | null,
+      fileExtension: ".api.spec.js",
+      language: "javascript",
+      isDefault: false,
+    },
+    {
+      name: "Playwright API (Python)",
+      description:
+        "Generates Playwright API test stubs in Python using APIRequestContext with pytest fixtures.",
+      category: "API Testing",
+      framework: "Playwright",
+      headerBody: null as string | null,
+      templateBody: playwrightApiPythonBody,
+      footerBody: null as string | null,
+      fileExtension: ".py",
+      language: "python",
+      isDefault: false,
+    },
+    {
+      name: "Playwright API (Java)",
+      description:
+        "Generates Playwright API test stubs in Java using APIRequestContext with JUnit 5.",
+      category: "API Testing",
+      framework: "Playwright",
+      headerBody: playwrightApiJavaHeader,
+      templateBody: playwrightApiJavaBody,
+      footerBody: null as string | null,
+      fileExtension: ".java",
+      language: "java",
+      isDefault: false,
+    },
+    {
+      name: "Playwright API (C#)",
+      description:
+        "Generates Playwright API test stubs in C# using IAPIRequestContext with NUnit.",
+      category: "API Testing",
+      framework: "Playwright",
+      headerBody: playwrightApiCsharpHeader,
+      templateBody: playwrightApiCsharpBody,
+      footerBody: null as string | null,
+      fileExtension: ".cs",
+      language: "csharp",
+      isDefault: false,
+    },
+    {
+      name: "REST Assured (Java)",
+      description:
+        "Generates REST Assured API test stubs in Java with JUnit 5.",
+      category: "API Testing",
+      framework: "REST Assured",
+      headerBody: restAssuredHeader,
+      templateBody: restAssuredBody,
+      footerBody: null as string | null,
+      fileExtension: ".java",
+      language: "java",
+      isDefault: false,
+    },
+    {
+      name: "Supertest (TypeScript)",
+      description:
+        "Generates Supertest API test stubs in TypeScript with Vitest.",
+      category: "API Testing",
+      framework: "Supertest",
+      headerBody: supertestHeader,
+      templateBody: supertestBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.ts",
+      language: "typescript",
+      isDefault: false,
+    },
+    // --- Performance ---
+    {
+      name: "k6 (JavaScript)",
+      description:
+        "Generates k6 performance test scripts in JavaScript with configurable VUs and duration.",
+      category: "Performance",
+      framework: "k6",
+      headerBody: k6Header,
+      templateBody: k6Body,
+      footerBody: null as string | null,
+      fileExtension: ".js",
+      language: "javascript",
+      isDefault: false,
+    },
+    // --- Robot Framework ---
+    {
+      name: "Robot Framework",
+      description:
+        "Generates Robot Framework test cases with keyword-driven format and SeleniumLibrary.",
+      category: "Robot Framework",
+      framework: "Robot Framework",
+      headerBody: null as string | null,
+      templateBody: robotFrameworkBody,
+      footerBody: null as string | null,
+      fileExtension: ".robot",
+      language: "robotframework",
+      isDefault: false,
+    },
+    // --- Generic ---
+    {
+      name: "Generic Markdown",
+      description:
+        "Exports test case details as a Markdown document with metadata table and step sections.",
+      category: "Generic",
+      framework: "Generic",
+      headerBody: null as string | null,
+      templateBody: markdownBody,
+      footerBody: null as string | null,
+      fileExtension: ".md",
+      language: "markdown",
+      isDefault: false,
+    },
+    // --- TestCafe ---
+    {
+      name: "TestCafe (JavaScript)",
+      description:
+        "Generates TestCafe test stubs in JavaScript with fixture and test blocks.",
+      category: "Browser E2E",
+      framework: "TestCafe",
+      headerBody: testcafeHeader,
+      templateBody: testcafeBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.js",
+      language: "javascript",
+      isDefault: false,
+    },
+    {
+      name: "TestCafe (TypeScript)",
+      description:
+        "Generates TestCafe test stubs in TypeScript with fixture and test blocks.",
+      category: "Browser E2E",
+      framework: "TestCafe",
+      headerBody: testcafeHeader,
+      templateBody: testcafeBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.ts",
+      language: "typescript",
+      isDefault: false,
+    },
+    // --- Vitest ---
+    {
+      name: "Vitest (TypeScript)",
+      description:
+        "Generates Vitest test stubs in TypeScript with describe and it blocks.",
+      category: "Unit Testing",
+      framework: "Vitest",
+      headerBody: vitestHeader,
+      templateBody: vitestBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.ts",
+      language: "typescript",
+      isDefault: false,
+    },
+    // --- Go Test ---
+    {
+      name: "Go Test",
+      description:
+        "Generates Go test stubs using the standard testing package.",
+      category: "Unit Testing",
+      framework: "Go",
+      headerBody: goTestHeader,
+      templateBody: goTestBody,
+      footerBody: null as string | null,
+      fileExtension: "_test.go",
+      language: "go",
+      isDefault: false,
+    },
+    // --- xUnit C# ---
+    {
+      name: "xUnit (C#)",
+      description:
+        "Generates xUnit.net test stubs in C# with [Fact] attributes.",
+      category: "Unit Testing",
+      framework: "xUnit",
+      headerBody: xunitHeader,
+      templateBody: xunitBody,
+      footerBody: null as string | null,
+      fileExtension: ".cs",
+      language: "csharp",
+      isDefault: false,
+    },
+    // --- Mocha ---
+    {
+      name: "Mocha (JavaScript)",
+      description:
+        "Generates Mocha test stubs in JavaScript with describe and it blocks using Chai assertions.",
+      category: "Unit Testing",
+      framework: "Mocha",
+      headerBody: mochaJsHeader,
+      templateBody: mochaBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.js",
+      language: "javascript",
+      isDefault: false,
+    },
+    {
+      name: "Mocha (TypeScript)",
+      description:
+        "Generates Mocha test stubs in TypeScript with describe and it blocks using Chai assertions.",
+      category: "Unit Testing",
+      framework: "Mocha",
+      headerBody: mochaTsHeader,
+      templateBody: mochaBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.ts",
+      language: "typescript",
+      isDefault: false,
+    },
+    // --- Postman ---
+    {
+      name: "Postman Test Script",
+      description:
+        "Generates Postman test scripts with pm.test blocks for use in the Tests tab.",
+      category: "API Testing",
+      framework: "Postman",
+      headerBody: null as string | null,
+      templateBody: postmanBody,
+      footerBody: null as string | null,
+      fileExtension: ".js",
+      language: "javascript",
+      isDefault: false,
+    },
+    // --- Karate ---
+    {
+      name: "Karate",
+      description:
+        "Generates Karate API test stubs with Feature/Scenario format and HTTP request templates.",
+      category: "API Testing",
+      framework: "Karate",
+      headerBody: null as string | null,
+      templateBody: karateBody,
+      footerBody: null as string | null,
+      fileExtension: ".feature",
+      language: "karate",
+      isDefault: false,
+    },
+    // --- Mobile Testing ---
+    {
+      name: "Appium (Java)",
+      description:
+        "Generates Appium test stubs in Java with JUnit 5 and UiAutomator2 driver setup.",
+      category: "Mobile Testing",
+      framework: "Appium",
+      headerBody: appiumJavaHeader,
+      templateBody: appiumJavaBody,
+      footerBody: null as string | null,
+      fileExtension: ".java",
+      language: "java",
+      isDefault: false,
+    },
+    {
+      name: "Appium (Python)",
+      description:
+        "Generates Appium test stubs in Python with pytest and UiAutomator2 driver setup.",
+      category: "Mobile Testing",
+      framework: "Appium",
+      headerBody: null as string | null,
+      templateBody: appiumPythonBody,
+      footerBody: null as string | null,
+      fileExtension: ".py",
+      language: "python",
+      isDefault: false,
+    },
+    {
+      name: "Appium (JavaScript)",
+      description:
+        "Generates Appium test stubs in JavaScript with WebdriverIO remote driver setup.",
+      category: "Mobile Testing",
+      framework: "Appium",
+      headerBody: appiumJsHeader,
+      templateBody: appiumJsBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.js",
+      language: "javascript",
+      isDefault: false,
+    },
+    {
+      name: "Appium (Kotlin)",
+      description:
+        "Generates Appium test stubs in Kotlin with JUnit 5 and UiAutomator2 driver setup.",
+      category: "Mobile Testing",
+      framework: "Appium",
+      headerBody: appiumKotlinHeader,
+      templateBody: appiumKotlinBody,
+      footerBody: null as string | null,
+      fileExtension: ".kt",
+      language: "kotlin",
+      isDefault: false,
+    },
+    {
+      name: "XCUITest (Swift)",
+      description:
+        "Generates XCUITest stubs in Swift with XCTestCase and XCUIApplication setup.",
+      category: "Mobile Testing",
+      framework: "XCUITest",
+      headerBody: xcuiTestHeader,
+      templateBody: xcuiTestBody,
+      footerBody: null as string | null,
+      fileExtension: ".swift",
+      language: "swift",
+      isDefault: false,
+    },
+    {
+      name: "Espresso (Java)",
+      description:
+        "Generates Espresso test stubs in Java with ActivityScenarioRule and JUnit 4.",
+      category: "Mobile Testing",
+      framework: "Espresso",
+      headerBody: espressoJavaHeader,
+      templateBody: espressoJavaBody,
+      footerBody: null as string | null,
+      fileExtension: ".java",
+      language: "java",
+      isDefault: false,
+    },
+    {
+      name: "Espresso (Kotlin)",
+      description:
+        "Generates Espresso test stubs in Kotlin with ActivityScenarioRule and JUnit 4.",
+      category: "Mobile Testing",
+      framework: "Espresso",
+      headerBody: espressoKotlinHeader,
+      templateBody: espressoKotlinBody,
+      footerBody: null as string | null,
+      fileExtension: ".kt",
+      language: "kotlin",
+      isDefault: false,
+    },
+    {
+      name: "Detox (JavaScript)",
+      description:
+        "Generates Detox test stubs in JavaScript for React Native apps.",
+      category: "Mobile Testing",
+      framework: "Detox",
+      headerBody: null as string | null,
+      templateBody: detoxJsBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.js",
+      language: "javascript",
+      isDefault: false,
+    },
+    {
+      name: "Detox (TypeScript)",
+      description:
+        "Generates Detox test stubs in TypeScript for React Native apps.",
+      category: "Mobile Testing",
+      framework: "Detox",
+      headerBody: null as string | null,
+      templateBody: detoxTsBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.ts",
+      language: "typescript",
+      isDefault: false,
+    },
+    {
+      name: "Maestro",
+      description:
+        "Generates Maestro flow files in YAML for cross-platform mobile testing (Android, iOS, React Native, Flutter).",
+      category: "Mobile Testing",
+      framework: "Maestro",
+      headerBody: null as string | null,
+      templateBody: maestroBody,
+      footerBody: null as string | null,
+      fileExtension: ".yaml",
+      language: "yaml",
+      isDefault: false,
+    },
+    {
+      name: "Flutter Integration Test (Dart)",
+      description:
+        "Generates Flutter integration test stubs in Dart with IntegrationTestWidgetsFlutterBinding.",
+      category: "Mobile Testing",
+      framework: "Flutter",
+      headerBody: flutterTestHeader,
+      templateBody: flutterTestBody,
+      footerBody: null as string | null,
+      fileExtension: "_test.dart",
+      language: "dart",
+      isDefault: false,
+    },
+    {
+      name: "Earl Grey (Swift)",
+      description:
+        "Generates Earl Grey test stubs in Swift for iOS UI testing with EarlGrey matchers.",
+      category: "Mobile Testing",
+      framework: "Earl Grey",
+      headerBody: earlGreyHeader,
+      templateBody: earlGreyBody,
+      footerBody: null as string | null,
+      fileExtension: ".swift",
+      language: "swift",
+      isDefault: false,
+    },
+  ];
+
+  for (const tmpl of templates) {
+    await prisma.caseExportTemplate.upsert({
+      where: { name: tmpl.name },
+      update: {
+        description: tmpl.description,
+        category: tmpl.category,
+        framework: tmpl.framework,
+        headerBody: tmpl.headerBody,
+        templateBody: tmpl.templateBody,
+        footerBody: tmpl.footerBody,
+        fileExtension: tmpl.fileExtension,
+        language: tmpl.language,
+      },
+      create: tmpl,
+    });
+  }
+
+  console.log("Case export templates seeded successfully.");
+}
+
 // --- Main Execution ---
 async function main() {
   try {
     await seedCoreData();
+    await seedCaseExportTemplates();
 
     // Always create magic link SSO provider for production environments
     // But keep it disabled by default to prevent unwanted email sending

@@ -21,10 +21,12 @@ import { useDeleteLlmProviderConfig } from "~/lib/hooks/llm-provider-config";
 
 interface DeleteLlmIntegrationProps {
   integration: any;
+  isOnlyIntegration?: boolean;
 }
 
 export function DeleteLlmIntegration({
   integration,
+  isOnlyIntegration = false,
 }: DeleteLlmIntegrationProps) {
   const t = useTranslations("admin.llm.delete");
   const tGlobal = useTranslations();
@@ -73,6 +75,8 @@ export function DeleteLlmIntegration({
         size="icon"
         onClick={() => setOpen(true)}
         className="px-2 py-1 h-auto"
+        disabled={integration.llmProviderConfig?.isDefault && !isOnlyIntegration}
+        title={integration.llmProviderConfig?.isDefault && !isOnlyIntegration ? t("cannotDeleteDefault") : undefined}
       >
         <Trash2 className="h-8 w-8 shrink-0" />
       </Button>

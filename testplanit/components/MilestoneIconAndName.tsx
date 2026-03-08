@@ -26,8 +26,8 @@ export const MilestoneIconAndName: React.FC<MilestoneIconAndNameProps> = ({
     : `/milestone/${milestone.id}`;
 
   return (
-    <Link href={href} className="group">
-      <span className="flex items-center gap-1">
+    <Link href={href} className="group max-w-full min-w-0 overflow-hidden">
+      <span className="flex items-center gap-1 min-w-0">
         <DynamicIcon
           name={(milestone.milestoneType?.icon?.name as IconName) || "milestone"}
           className="w-6 h-6 shrink-0"

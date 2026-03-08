@@ -421,7 +421,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                     handlePopoverOpenChange(index, false)
                                   }
                                 >
-                                  <CircleSlash2 className="h-4 w-4 mr-1" />
+                                  <CircleSlash2 className="h-4 w-4" />
                                   {t("common.cancel")}
                                 </Button>
                                 <Button
@@ -430,7 +430,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                                   size="sm"
                                   onClick={(e) => handleDelete(index, e)}
                                 >
-                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  <Trash2 className="h-4 w-4" />
                                   {t("common.actions.delete")}
                                 </Button>
                               </div>

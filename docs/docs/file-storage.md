@@ -155,17 +155,35 @@ This is the most efficient mode as files upload directly to storage.
 
 #### Proxy Mode
 
-Used for hosted instances where MinIO is not publicly accessible:
+Used when MinIO/S3 is not publicly accessible from the browser (e.g., MinIO is running inside a Docker network):
 
 1. Browser sends file to a Next.js server action
-2. Server action uploads the file to S3/MinIO
-3. Server returns the stored file URL
+2. Server action uploads the file to S3/MinIO internally
+3. Server returns a proxy URL (`/api/storage/...`) for accessing the file
 
-Set proxy mode by configuring `STORAGE_MODE=proxy` in your environment.
+Enable proxy mode by setting `IS_HOSTED=true` in your environment:
+
+```env
+IS_HOSTED=true
+```
+
+:::tip When to use Proxy Mode
+If your MinIO instance is only accessible within your Docker network (e.g., `http://minio:9000`) and not directly reachable from users' browsers, you **must** enable proxy mode. Without it, the app will generate presigned URLs pointing to the internal MinIO hostname, causing **mixed content errors** and **upload failures** in the browser.
+:::
 
 :::info Technical Note
 Proxy mode uses Next.js Server Actions instead of Route Handlers. This is because Next.js App Router Route Handlers have a hardcoded 1MB body size limit that cannot be configured. Server Actions support configurable body size limits via `experimental.serverActions.bodySizeLimit` in `next.config.mjs`.
 :::
+
+#### Alternative: Public Endpoint URL
+
+If you prefer direct browser-to-storage uploads (better performance for large files), you can expose MinIO publicly and set `AWS_PUBLIC_ENDPOINT_URL` instead:
+
+```env
+AWS_PUBLIC_ENDPOINT_URL=https://yourdomain.com
+```
+
+This tells the app to generate presigned URLs using your public domain instead of the internal MinIO hostname. The Nginx reverse proxy included in the Docker setup routes `/testplanit/` requests to MinIO automatically. This approach avoids the need for `IS_HOSTED=true` but requires MinIO to be reachable through your reverse proxy.
 
 ### Upload Flow
 

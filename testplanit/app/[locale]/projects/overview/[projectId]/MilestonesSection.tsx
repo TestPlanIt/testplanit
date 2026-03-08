@@ -82,6 +82,7 @@ const MilestonesSection: React.FC<MilestonesSectionProps> = ({ projectId }) => {
           <MilestoneDisplay
             milestones={milestones as MilestonesWithTypes[]}
             projectId={projectId}
+            compact
           />
         ) : (
           <Link

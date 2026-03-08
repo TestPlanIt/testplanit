@@ -19,6 +19,13 @@ import {
   SelectValue,
   SelectGroup,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
 import UploadAttachments from "./UploadAttachments";
 import {
@@ -40,7 +47,7 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { IconName } from "~/types/globals";
 import { FolderSelect, transformFolders } from "./forms/FolderSelect";
 import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
-import { Asterisk, Upload } from "lucide-react";
+import { Asterisk, Star, Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -595,9 +602,18 @@ export default function TestResultsImportDialog({
                                 >
                                   {template.templateName}
                                   {template.isDefault && (
-                                    <span className="ml-2 text-xs text-muted-foreground">
-                                      {tCommon("fields.default")}
-                                    </span>
+                                    <TooltipProvider delayDuration={300}>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Badge variant="secondary">
+                                            <Star className="h-3 w-3 fill-current text-primary-background" />
+                                          </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          {tCommon("defaultOption")}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
                                   )}
                                 </SelectItem>
                               ))}

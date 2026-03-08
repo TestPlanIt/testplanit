@@ -3,6 +3,7 @@
 import { prisma } from "~/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { getServerAuthSession } from "~/server/auth";
+import { resolveSharedSteps } from "~/lib/utils/resolveSharedSteps";
 
 // Define the arguments type based on Prisma generated types
 interface FetchCasesArgs {
@@ -112,6 +113,14 @@ const exportSelectClause = {
   steps: {
     where: { isDeleted: false },
     orderBy: { order: "asc" as const },
+    select: {
+      id: true,
+      step: true,
+      expectedResult: true,
+      order: true,
+      isDeleted: true,
+      sharedStepGroupId: true,
+    },
   },
   tags: {
     where: {
@@ -202,11 +211,13 @@ export async function fetchAllCasesForExport(
       // );
     }
 
-    const allData = await prisma.repositoryCases.findMany({
+    const allDataRaw = await prisma.repositoryCases.findMany({
       where: finalWhereClause, // Use the determined where clause
       orderBy: args.orderBy,
       select: exportSelectClause,
     });
+    // Resolve shared step references (expand placeholders into actual step items)
+    const allData = await resolveSharedSteps(allDataRaw);
     // Cast source to RepositoryCaseSource for type safety
     const mappedData = await Promise.all(
       allData.map(async (item: any) => {

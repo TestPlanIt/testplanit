@@ -269,7 +269,7 @@ export function CompleteSessionDialog({
                     !selectedDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="h-4 w-4" />
                   {selectedDate ? (
                     format(selectedDate, "PPP")
                   ) : (

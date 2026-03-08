@@ -47,24 +47,6 @@ import { VersionNavigation } from "@/components/VersionNavigation";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { useTranslations } from "next-intl";
 
-// Utility functions for cookies
-function getCookie(name: string) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(";").shift();
-  return null;
-}
-
-function setCookie(name: string, value: string, days: number) {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${value}; expires=${expires}; path=/`;
-}
-
-const getInitialPanelRightWidth = () => {
-  const storedWidth = getCookie("sessionDetailsPanelWidth");
-  return storedWidth ? parseInt(storedWidth, 10) : 100;
-};
-
 // Helper functions for sorting version data
 const sortByName = (a: any, b: any) => {
   const aName = typeof a === "string" ? a : a.name;
@@ -84,9 +66,6 @@ export default function SessionVersionPage() {
   const [isCollapsedRight, setIsCollapsedRight] = useState<boolean>(false);
   const [isCollapsedLeft, setIsCollapsedLeft] = useState<boolean>(false);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
-  const [panelRightWidth, setPanelRightWidth] = useState<number>(
-    getInitialPanelRightWidth()
-  );
   const panelRightRef = useRef<React.ComponentRef<typeof ResizablePanel>>(null);
   const panelLeftRef = useRef<React.ComponentRef<typeof ResizablePanel>>(null);
   const t = useTranslations();
@@ -191,7 +170,6 @@ export default function SessionVersionPage() {
         panelRightRef.current.expand();
       } else {
         panelRightRef.current.collapse();
-        setCookie("sessionDetailsPanelWidth", "0.1", 30);
       }
       setIsCollapsedRight(!isCollapsedRight);
     }
@@ -206,20 +184,10 @@ export default function SessionVersionPage() {
         panelLeftRef.current.expand();
       } else {
         panelLeftRef.current.collapse();
-        setCookie("sessionDetailsPanelWidth", "100", 30);
       }
       setIsCollapsedLeft(!isCollapsedLeft);
     }
     setTimeout(() => setIsTransitioning(false), 300);
-  };
-
-  const handleResize = async (size: number) => {
-    setPanelRightWidth(size);
-    setCookie(
-      "sessionDetailsPanelWidth",
-      parseInt(size.toString()).toString(),
-      90
-    );
   };
 
   const handleVersionChange = (newVersion: string) => {
@@ -352,6 +320,8 @@ export default function SessionVersionPage() {
           autoSaveId="session-version-panels"
         >
           <ResizablePanel
+            id="session-version-left"
+            order={1}
             ref={panelLeftRef}
             defaultSize={80}
             minSize={30}
@@ -447,9 +417,10 @@ export default function SessionVersionPage() {
           </div>
 
           <ResizablePanel
+            id="session-version-right"
+            order={2}
             ref={panelRightRef}
-            defaultSize={panelRightWidth}
-            onResize={handleResize}
+            defaultSize={20}
             collapsedSize={0}
             minSize={0}
             collapsible
