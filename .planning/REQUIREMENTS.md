@@ -32,7 +32,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **EP-01**: User can trigger AI tagging from bulk action menu on cases list
 - [ ] **EP-02**: User can trigger AI tagging from bulk action menu on test runs list
 - [ ] **EP-03**: User can trigger AI tagging from bulk action menu on sessions list
-- [ ] **EP-04**: User can trigger AI tagging from tags management page with entity type selection
+- [x] **EP-04**: User can trigger AI tagging from tags management page with entity type selection
 
 ## v2 Requirements
 
@@ -72,7 +72,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EP-01 | Phase 4 | Complete |
 | EP-02 | Phase 4 | Pending |
 | EP-03 | Phase 4 | Pending |
-| EP-04 | Phase 4 | Pending |
+| EP-04 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 15 total
