@@ -29,7 +29,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### UI - Entry Points
 
-- [ ] **EP-01**: User can trigger AI tagging from bulk action menu on cases list
+- [x] **EP-01**: User can trigger AI tagging from bulk action menu on cases list
 - [ ] **EP-02**: User can trigger AI tagging from bulk action menu on test runs list
 - [ ] **EP-03**: User can trigger AI tagging from bulk action menu on sessions list
 - [ ] **EP-04**: User can trigger AI tagging from tags management page with entity type selection
@@ -69,7 +69,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-02 | Phase 3 | Complete |
 | UI-03 | Phase 3 | Pending |
 | UI-04 | Phase 3 | Complete |
-| EP-01 | Phase 4 | Pending |
+| EP-01 | Phase 4 | Complete |
 | EP-02 | Phase 4 | Pending |
 | EP-03 | Phase 4 | Pending |
 | EP-04 | Phase 4 | Pending |
