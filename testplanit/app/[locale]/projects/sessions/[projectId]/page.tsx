@@ -27,7 +27,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { AddSessionModal } from "./AddSessionModal";
 import { Button } from "@/components/ui/button";
-import { CirclePlus, Maximize2 } from "lucide-react";
+import { CirclePlus, Maximize2, Sparkles } from "lucide-react";
+import { useAutoTagJob } from "@/components/auto-tag/useAutoTagJob";
+import { AutoTagProgress } from "@/components/auto-tag/AutoTagProgress";
+import { AutoTagReviewDialog } from "@/components/auto-tag/AutoTagReviewDialog";
 import { useTranslations } from "next-intl";
 import { ApplicationArea } from "@prisma/client";
 import { Filter } from "@/components/tables/Filter";
@@ -292,6 +295,24 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
       session.name.toLowerCase().includes(searchLower)
     );
   }, [allCompletedSessions, debouncedCompletedSessionsSearchString, hasFilter]);
+
+  // Auto-tag state
+  const autoTag = useAutoTagJob(`autoTagJob:session:${projectId}`);
+  const [showAutoTagReview, setShowAutoTagReview] = useState(false);
+
+  const visibleSessionIds = useMemo(() => {
+    if (activeTab === "active") {
+      return (incompleteSessions || []).map((s: any) => s.id);
+    } else {
+      return filteredData.map((s: any) => s.id);
+    }
+  }, [activeTab, incompleteSessions, filteredData]);
+
+  const handleAutoTag = useCallback(() => {
+    if (numericProjectId && visibleSessionIds.length > 0) {
+      autoTag.submit(visibleSessionIds, "session", numericProjectId);
+    }
+  }, [autoTag, visibleSessionIds, numericProjectId]);
 
   // Pagination on filtered data
   const totalCompletedSessionsCount = filteredData.length;
@@ -709,7 +730,18 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                   <div>
                     <CardTitle>{t("sessions.title", { count: 2 })}</CardTitle>
                   </div>
-                  <div>
+                  <div className="flex flex-row gap-2">
+                    {canAddEditSession && (
+                      <Button
+                        variant="outline"
+                        onClick={handleAutoTag}
+                        disabled={autoTag.isSubmitting || autoTag.status !== "idle" || visibleSessionIds.length === 0}
+                        data-testid="tag-all-sessions-button"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        {t("autoTag.actions.tagAll")}
+                      </Button>
+                    )}
                     {canAddEditSession && (
                       <AddSessionModal
                         trigger={
@@ -735,6 +767,17 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                 </span>
               </CardDescription>
             </CardHeader>
+            {autoTag.status !== "idle" && (
+              <div className="px-6">
+                <AutoTagProgress
+                  status={autoTag.status}
+                  progress={autoTag.progress}
+                  error={autoTag.error}
+                  onReview={() => setShowAutoTagReview(true)}
+                  onCancel={autoTag.cancel}
+                />
+              </div>
+            )}
             <CardContent className="flex flex-col">
               {/* --- Summary Metrics Display --- */}
               <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1099,6 +1142,11 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
             )}
           </DialogContent>
         </Dialog>
+        <AutoTagReviewDialog
+          open={showAutoTagReview}
+          onOpenChange={setShowAutoTagReview}
+          job={autoTag}
+        />
       </>
     );
   }
