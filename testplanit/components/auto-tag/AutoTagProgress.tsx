@@ -1,4 +1,4 @@
- ones "use client";
+"use client";
 
 import { CheckCircle2, XCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";

@@ -11,6 +11,23 @@ import type {
 
 const POLL_INTERVAL_MS = 2000;
 
+// ── localStorage helpers (SSR-safe) ──────────────────────────────────────
+
+function getPersistedJobId(key: string): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(key);
+}
+
+function persistJobId(key: string, jobId: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(key, jobId);
+}
+
+function clearPersistedJobId(key: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(key);
+}
+
 /** Initialize selections with all tags accepted (opt-out model) */
 function initSelections(
   suggestions: AutoTagSuggestionEntity[],
@@ -25,7 +42,7 @@ function initSelections(
   return map;
 }
 
-export function useAutoTagJob(): UseAutoTagJobReturn {
+export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
   const [jobId, setJobId] = useState<string | null>(null);
   const [status, setStatus] = useState<AutoTagJobState>("idle");
   const [progress, setProgress] = useState<{
@@ -74,6 +91,7 @@ export function useAutoTagJob(): UseAutoTagJobReturn {
 
         const data = await res.json();
         setJobId(data.jobId);
+        if (persistKey) persistJobId(persistKey, data.jobId);
       } catch (err: any) {
         setError(err.message || "Failed to submit auto-tag job");
         setStatus("failed");
@@ -83,6 +101,18 @@ export function useAutoTagJob(): UseAutoTagJobReturn {
     },
     [],
   );
+
+  // ── Restore persisted job on mount ─────────────────────────────────────
+
+  useEffect(() => {
+    if (!persistKey) return;
+    const stored = getPersistedJobId(persistKey);
+    if (stored && status === "idle") {
+      setJobId(stored);
+      setStatus("waiting"); // triggers polling useEffect
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persistKey]); // only on mount
 
   // ── Polling ─────────────────────────────────────────────────────────────
 
@@ -108,6 +138,7 @@ export function useAutoTagJob(): UseAutoTagJobReturn {
         const state = data.state as string;
         if (state === "completed") {
           setStatus("completed");
+          if (persistKey) clearPersistedJobId(persistKey);
           if (data.result?.suggestions) {
             const sug = data.result.suggestions as AutoTagSuggestionEntity[];
             setSuggestions(sug);
@@ -121,6 +152,7 @@ export function useAutoTagJob(): UseAutoTagJobReturn {
         } else if (state === "failed") {
           setStatus("failed");
           setError(data.failedReason || "Job failed");
+          if (persistKey) clearPersistedJobId(persistKey);
           if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -279,6 +311,8 @@ export function useAutoTagJob(): UseAutoTagJobReturn {
       intervalRef.current = null;
     }
 
+    if (persistKey) clearPersistedJobId(persistKey);
+
     setJobId(null);
     setStatus("idle");
     setProgress(null);
@@ -288,7 +322,7 @@ export function useAutoTagJob(): UseAutoTagJobReturn {
     setError(null);
     setIsApplying(false);
     setIsSubmitting(false);
-  }, [jobId]);
+  }, [jobId, persistKey]);
 
   // ── Reset ───────────────────────────────────────────────────────────────
 
@@ -298,6 +332,8 @@ export function useAutoTagJob(): UseAutoTagJobReturn {
       intervalRef.current = null;
     }
 
+    if (persistKey) clearPersistedJobId(persistKey);
+
     setJobId(null);
     setStatus("idle");
     setProgress(null);
@@ -307,7 +343,7 @@ export function useAutoTagJob(): UseAutoTagJobReturn {
     setError(null);
     setIsApplying(false);
     setIsSubmitting(false);
-  }, []);
+  }, [persistKey]);
 
   // ── Summary (computed) ──────────────────────────────────────────────────
 
