@@ -5887,6 +5887,7 @@
       "description": "La IA analizará todos los casos de prueba, ejecuciones de pruebas y sesiones de su proyecto para sugerir etiquetas relevantes según su contenido.",
       "entityLine": "{count} {type}",
       "startAnalysis": "Iniciar análisis",
+      "untaggedOnly": "Analizar únicamente registros sin etiquetas existentes",
       "analyzingDescription": "La IA está analizando tus entidades y generando sugerencias de etiquetas. Esto puede tardar un momento."
     }
   },

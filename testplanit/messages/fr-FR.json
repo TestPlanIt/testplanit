@@ -5887,6 +5887,7 @@
       "description": "L'IA analysera l'ensemble des cas de test, des exécutions de test et des sessions de votre projet afin de suggérer des balises pertinentes en fonction de leur contenu.",
       "entityLine": "{count} {type}",
       "startAnalysis": "Lancer l'analyse",
+      "untaggedOnly": "Analyser uniquement les enregistrements sans balises existantes",
       "analyzingDescription": "L'IA analyse vos entités et génère des suggestions de balises. Cela peut prendre quelques instants."
     }
   },
