@@ -3908,7 +3908,9 @@
         "spendLabel": "Gastos del mes actual",
         "spendOfBudget": "{currentSpend} de {budgetLimit}",
         "overBudget": "Por encima del presupuesto",
-        "budgetPercentage": "{percentage}% del presupuesto utilizado"
+        "budgetPercentage": "{percentage}% del presupuesto utilizado",
+        "resetSpend": "Reiniciar",
+        "spendReset": "El gasto del mes actual se ha restablecido"
       }
     },
     "prompts": {
@@ -3946,7 +3948,8 @@
         "magic_select_cases": "Selección inteligente de casos de prueba",
         "editor_assistant": "Asistente de redacción del editor",
         "llm_test": "Prueba de conexión LLM",
-        "export_code_generation": "Generación de código de exportación"
+        "export_code_generation": "Generación de código de exportación",
+        "auto_tag": "Sugerencias de etiquetas de IA"
       }
     },
     "elasticsearch": {
@@ -4014,7 +4017,9 @@
         "emails": "Cola de correo electrónico",
         "issue-sync": "Sincronización de problemas",
         "testmo-imports": "Importaciones de Testmo",
-        "elasticsearch-reindex": "Reindexación de Elasticsearch"
+        "elasticsearch-reindex": "Reindexación de Elasticsearch",
+        "audit-logs": "Registros de auditoría",
+        "auto-tag": "Etiquetado automático con IA"
       },
       "status": {
         "paused": "En pausa",
@@ -5832,6 +5837,20 @@
     "contactSales": "Contacte con el departamento de ventas"
   },
   "autoTag": {
+    "actions": {
+      "aiTag": "Etiqueta de IA",
+      "tagAll": "Etiquetar a todos",
+      "aiAutoTag": "Etiquetado automático",
+      "tagActions": "Acciones de etiquetas",
+      "startTagging": "Empezar a etiquetar",
+      "selectEntityType": "Seleccionar el tipo de entidad",
+      "selectProject": "Seleccione un proyecto",
+      "entityTypes": {
+        "repositoryCase": "Casos de prueba",
+        "testRun": "Ejecuciones de prueba",
+        "session": "Sesiones"
+      }
+    },
     "review": {
       "title": "Sugerencias de etiquetas de revisión",
       "description": "Haga clic en las etiquetas para activar o desactivar la aceptación. Haga doble clic para editar el nombre de una etiqueta.",
@@ -5848,14 +5867,26 @@
       "filterEntities": "Filtrar entidades...",
       "noEntitiesMatch": "No hay entidades que coincidan con tu búsqueda.",
       "tagCount": "{count, plural, one {# etiqueta} other {# etiquetas}}",
-      "noTags": "ninguno"
+      "noTags": "ninguno",
+      "failed": "Fallido",
+      "analysisFailed": "No se pudo analizar esta entidad",
+      "tooltipExisting": "Etiqueta existente",
+      "tooltipNew": "Se creará una nueva etiqueta",
+      "tooltipAssign": "Asignar etiqueta existente"
     },
     "progress": {
       "starting": "Comenzando el análisis...",
       "analyzed": "Entidades analizadas {analyzed}/{total}",
+      "finalizing": "Preparando resultados...",
       "complete": "Análisis completo",
       "reviewSuggestions": "Sugerencias de revisión",
       "failed": "Análisis fallido"
+    },
+    "wizard": {
+      "description": "La IA analizará todos los casos de prueba, ejecuciones de pruebas y sesiones de su proyecto para sugerir etiquetas relevantes según su contenido.",
+      "entityLine": "{count} {type}",
+      "startAnalysis": "Iniciar análisis",
+      "analyzingDescription": "La IA está analizando tus entidades y generando sugerencias de etiquetas. Esto puede tardar un momento."
     }
   },
   "TrialExpired": {

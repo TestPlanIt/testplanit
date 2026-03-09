@@ -23,6 +23,8 @@ interface AutoTagReviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   job: UseAutoTagJobReturn;
+  /** Called after tags have been successfully applied */
+  onApplied?: () => void;
 }
 
 /** Map entity type to the React Query model name for invalidation */
@@ -43,6 +45,7 @@ export function AutoTagReviewDialog({
   open,
   onOpenChange,
   job,
+  onApplied,
 }: AutoTagReviewDialogProps) {
   const queryClient = useQueryClient();
   const t = useTranslations("autoTag.review");
@@ -89,10 +92,11 @@ export function AutoTagReviewDialog({
 
       onOpenChange(false);
       job.reset();
+      onApplied?.();
     } catch (err: any) {
       toast.error(err.message || t("applyError"));
     }
-  }, [job, queryClient, onOpenChange]);
+  }, [job, queryClient, onOpenChange, onApplied]);
 
   if (!job.suggestions) return null;
 

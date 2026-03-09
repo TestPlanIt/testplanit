@@ -116,6 +116,18 @@ module.exports = {
       env: {
         NODE_ENV: 'production'
       }
+    },
+    {
+      name: 'auto-tag-worker',
+      script: isDev ? 'tsx' : 'node',
+      args: isDev ? 'workers/autoTagWorker.ts' : 'dist/workers/autoTagWorker.js',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'production'
+      }
     }
   ]
 };

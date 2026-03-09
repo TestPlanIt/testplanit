@@ -34,6 +34,11 @@ export interface AutoTagJobResult {
       isExisting: boolean;
       matchedExistingTag?: string;
     }>;
+    failed?: boolean;
+    errorMessage?: string;
+    automated?: boolean;
+    source?: string;
+    testRunType?: string;
   }>;
   stats: {
     entityCount: number;
@@ -119,50 +124,102 @@ const processor = async (job: Job<AutoTagJobData>): Promise<AutoTagJobResult> =>
     });
   }
 
-  // 7. Fetch entity names and current tags only for entities with suggestions
-  const entityMeta = new Map<number, { name: string; currentTags: string[] }>();
-  const entityIds = Array.from(entityMap.keys());
+  // Collect all entity IDs we need metadata for (successful + failed)
+  const failedEntityIdSet = new Set(result.failedEntityIds);
+  const allRelevantIds = [
+    ...Array.from(entityMap.keys()),
+    ...result.failedEntityIds.filter((id) => !entityMap.has(id)),
+  ];
 
-  switch (job.data.entityType) {
-    case "repositoryCase": {
-      const entities = await prisma.repositoryCases.findMany({
-        where: { id: { in: entityIds } },
-        select: { id: true, name: true, tags: { select: { name: true } } },
-      });
-      for (const e of entities) {
-        entityMeta.set(e.id, { name: e.name, currentTags: e.tags.map((t) => t.name) });
+  // 8. Fetch entity names, current tags, and display metadata for all relevant entities
+  const entityMeta = new Map<number, {
+    name: string;
+    currentTags: string[];
+    automated?: boolean;
+    source?: string;
+    testRunType?: string;
+  }>();
+
+  if (allRelevantIds.length > 0) {
+    switch (job.data.entityType) {
+      case "repositoryCase": {
+        const entities = await prisma.repositoryCases.findMany({
+          where: { id: { in: allRelevantIds } },
+          select: { id: true, name: true, automated: true, source: true, tags: { select: { name: true } } },
+        });
+        for (const e of entities) {
+          entityMeta.set(e.id, {
+            name: e.name,
+            currentTags: e.tags.map((t) => t.name),
+            automated: e.automated,
+            source: e.source,
+          });
+        }
+        break;
       }
-      break;
-    }
-    case "testRun": {
-      const entities = await prisma.testRuns.findMany({
-        where: { id: { in: entityIds } },
-        select: { id: true, name: true, tags: { select: { name: true } } },
-      });
-      for (const e of entities) {
-        entityMeta.set(e.id, { name: e.name, currentTags: e.tags.map((t) => t.name) });
+      case "testRun": {
+        const entities = await prisma.testRuns.findMany({
+          where: { id: { in: allRelevantIds } },
+          select: { id: true, name: true, testRunType: true, tags: { select: { name: true } } },
+        });
+        for (const e of entities) {
+          entityMeta.set(e.id, {
+            name: e.name,
+            currentTags: e.tags.map((t) => t.name),
+            testRunType: e.testRunType,
+          });
+        }
+        break;
       }
-      break;
-    }
-    case "session": {
-      const entities = await prisma.sessions.findMany({
-        where: { id: { in: entityIds } },
-        select: { id: true, name: true, tags: { select: { name: true } } },
-      });
-      for (const e of entities) {
-        entityMeta.set(e.id, { name: e.name, currentTags: e.tags.map((t) => t.name) });
+      case "session": {
+        const entities = await prisma.sessions.findMany({
+          where: { id: { in: allRelevantIds } },
+          select: { id: true, name: true, tags: { select: { name: true } } },
+        });
+        for (const e of entities) {
+          entityMeta.set(e.id, { name: e.name, currentTags: e.tags.map((t) => t.name) });
+        }
+        break;
       }
-      break;
     }
   }
 
-  const suggestions = Array.from(entityMap.entries()).map(([entityId, tags]) => ({
-    entityId,
-    entityType: job.data.entityType,
-    entityName: entityMeta.get(entityId)?.name ?? `Entity ${entityId}`,
-    currentTags: entityMeta.get(entityId)?.currentTags ?? [],
-    tags,
-  }));
+  // Build suggestions for successful entities
+  const suggestions: AutoTagJobResult["suggestions"] = Array.from(entityMap.entries()).map(([entityId, tags]) => {
+    const meta = entityMeta.get(entityId);
+    return {
+      entityId,
+      entityType: job.data.entityType,
+      entityName: meta?.name ?? `Unknown`,
+      currentTags: meta?.currentTags ?? [],
+      tags,
+      automated: meta?.automated,
+      source: meta?.source,
+      testRunType: meta?.testRunType,
+    };
+  });
+
+  // Append failed entities with empty tags and error flag
+  const errorMessage = result.errors.length > 0
+    ? result.errors[result.errors.length - 1]
+    : "Analysis failed";
+  for (const failedId of failedEntityIdSet) {
+    if (!entityMap.has(failedId)) {
+      const meta = entityMeta.get(failedId);
+      suggestions.push({
+        entityId: failedId,
+        entityType: job.data.entityType,
+        entityName: meta?.name ?? `Unknown`,
+        currentTags: meta?.currentTags ?? [],
+        tags: [],
+        failed: true,
+        errorMessage,
+        automated: meta?.automated,
+        source: meta?.source,
+        testRunType: meta?.testRunType,
+      });
+    }
+  }
 
   const existingTagCount = result.suggestions.filter((s) => s.isExisting).length;
 

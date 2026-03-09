@@ -3908,7 +3908,9 @@
         "spendLabel": "Dépenses du mois en cours",
         "spendOfBudget": "{currentSpend} de {budgetLimit}",
         "overBudget": "Dépassement du budget",
-        "budgetPercentage": "{percentage}% du budget utilisé"
+        "budgetPercentage": "{percentage}% du budget utilisé",
+        "resetSpend": "Réinitialiser",
+        "spendReset": "Les dépenses du mois en cours ont été réinitialisées."
       }
     },
     "prompts": {
@@ -3946,7 +3948,8 @@
         "magic_select_cases": "Sélection intelligente des cas de test",
         "editor_assistant": "Assistant de rédaction",
         "llm_test": "Test de connexion LLM",
-        "export_code_generation": "Génération du code d'exportation"
+        "export_code_generation": "Génération du code d'exportation",
+        "auto_tag": "Suggestions de balises IA"
       }
     },
     "elasticsearch": {
@@ -4014,7 +4017,9 @@
         "emails": "File d'attente des e-mails",
         "issue-sync": "Synchronisation des problèmes",
         "testmo-imports": "Importations Testmo",
-        "elasticsearch-reindex": "Réindexation Elasticsearch"
+        "elasticsearch-reindex": "Réindexation Elasticsearch",
+        "audit-logs": "Journaux d'audit",
+        "auto-tag": "Étiquetage automatique par IA"
       },
       "status": {
         "paused": "En pause",
@@ -5832,6 +5837,20 @@
     "contactSales": "Contactez le service commercial"
   },
   "autoTag": {
+    "actions": {
+      "aiTag": "Étiquette IA",
+      "tagAll": "Étiqueter tout",
+      "aiAutoTag": "Étiquette automatique",
+      "tagActions": "Actions des balises",
+      "startTagging": "Commencez à étiqueter",
+      "selectEntityType": "Sélectionnez le type d'entité",
+      "selectProject": "Sélectionnez un projet",
+      "entityTypes": {
+        "repositoryCase": "Cas de test",
+        "testRun": "Essais",
+        "session": "Séances"
+      }
+    },
     "review": {
       "title": "Suggestions de balises pour les avis",
       "description": "Cliquez sur les étiquettes pour les autoriser ou les désactiver. Double-cliquez pour modifier le nom d'une étiquette.",
@@ -5848,14 +5867,26 @@
       "filterEntities": "Entités de filtrage...",
       "noEntitiesMatch": "Aucun résultat ne correspond à votre recherche.",
       "tagCount": "{count, plural, one {# balise} other {# balises}}",
-      "noTags": "aucun"
+      "noTags": "aucun",
+      "failed": "Échoué",
+      "analysisFailed": "Impossible d'analyser cette entité",
+      "tooltipExisting": "Balise existante",
+      "tooltipNew": "Nouvelle étiquette — sera créée",
+      "tooltipAssign": "Attribuer une étiquette existante"
     },
     "progress": {
       "starting": "Début de l'analyse...",
       "analyzed": "Entités analysées {analyzed}/{total}",
+      "finalizing": "Préparation des résultats...",
       "complete": "Analyse complète",
       "reviewSuggestions": "Suggestions de révision",
       "failed": "L'analyse a échoué"
+    },
+    "wizard": {
+      "description": "L'IA analysera l'ensemble des cas de test, des exécutions de test et des sessions de votre projet afin de suggérer des balises pertinentes en fonction de leur contenu.",
+      "entityLine": "{count} {type}",
+      "startAnalysis": "Lancer l'analyse",
+      "analyzingDescription": "L'IA analyse vos entités et génère des suggestions de balises. Cela peut prendre quelques instants."
     }
   },
   "TrialExpired": {

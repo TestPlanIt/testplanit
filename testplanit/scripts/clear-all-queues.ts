@@ -6,6 +6,7 @@ import {
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
   ELASTICSEARCH_REINDEX_QUEUE_NAME,
+  AUTO_TAG_QUEUE_NAME,
 } from "../lib/queues";
 import valkeyConnection from "../lib/valkey";
 
@@ -16,6 +17,7 @@ const QUEUE_NAMES = [
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
   ELASTICSEARCH_REINDEX_QUEUE_NAME,
+  AUTO_TAG_QUEUE_NAME,
 ];
 
 async function clearQueue(queueName: string) {

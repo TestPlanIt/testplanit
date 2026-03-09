@@ -34,7 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Edit, Info } from "lucide-react";
+import { Loader2, Edit, Info, RotateCcw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { HelpPopover } from "@/components/ui/help-popover";
 import {
@@ -45,6 +45,7 @@ import {
   useUpdateLlmProviderConfig,
   useFindManyLlmProviderConfig,
 } from "~/lib/hooks/llm-provider-config";
+import { useDeleteManyLlmUsage } from "~/lib/hooks/llm-usage";
 
 const createFormSchema = (t: any, existingNames: string[], currentName: string) =>
   z.object({
@@ -110,6 +111,8 @@ export function EditLlmIntegration({
 
   const { mutateAsync: updateLlmIntegration } = useUpdateLlmIntegration();
   const { mutateAsync: updateLlmProviderConfig } = useUpdateLlmProviderConfig();
+  const { mutateAsync: deleteManyLlmUsage } = useDeleteManyLlmUsage();
+  const [resettingSpend, setResettingSpend] = useState(false);
   const { data: existingDefaultConfigs } = useFindManyLlmProviderConfig({
     where: { isDefault: true },
   });
@@ -356,6 +359,33 @@ export function EditLlmIntegration({
     }
   };
 
+  const handleResetSpend = async () => {
+    if (!integration?.id) return;
+
+    setResettingSpend(true);
+    try {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      await deleteManyLlmUsage({
+        where: {
+          llmIntegrationId: integration.id,
+          createdAt: { gte: startOfMonth },
+        },
+      });
+
+      toast.success(tBudgetAlert("spendReset"));
+    } catch (error: any) {
+      console.error("Error resetting spend:", error);
+      toast.error(tCommon("errors.error"), {
+        description: error.message || tCommon("errors.error"),
+      });
+    } finally {
+      setResettingSpend(false);
+    }
+  };
+
   return (
     <>
       <Button
@@ -367,8 +397,8 @@ export function EditLlmIntegration({
         <Edit className="h-4 w-4" />
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={open} onOpenChange={(value) => { if (!resettingSpend) setOpen(value); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onInteractOutside={(e) => { if (resettingSpend) e.preventDefault(); }}>
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
             <DialogDescription>
@@ -666,9 +696,11 @@ export function EditLlmIntegration({
                         step="0.01"
                         placeholder={tAdd("monthlyBudgetPlaceholder")}
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
-                        }
+                        value={field.value ?? ""}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          field.onChange(isNaN(val) ? 0 : val);
+                        }}
                       />
                     </FormControl>
                     <FormDescription>
@@ -697,20 +729,41 @@ export function EditLlmIntegration({
 
                       {/* Spend display and progress bar */}
                       <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
+                        <div className="flex justify-between items-center text-sm">
                           <span className="text-muted-foreground">
                             {tBudgetAlert("spendLabel")}
                           </span>
-                          <span
-                            className={
-                              percentage > 100 ? "text-destructive font-medium" : ""
-                            }
-                          >
-                            {tBudgetAlert("spendOfBudget", {
-                              currentSpend: `$${currentSpend.toFixed(2)}`,
-                              budgetLimit: `$${budgetNum.toFixed(2)}`,
-                            })}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={
+                                percentage > 100 ? "text-destructive font-medium" : ""
+                              }
+                            >
+                              {tBudgetAlert("spendOfBudget", {
+                                currentSpend: `$${currentSpend.toFixed(2)}`,
+                                budgetLimit: `$${budgetNum.toFixed(2)}`,
+                              })}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleResetSpend();
+                              }}
+                              disabled={resettingSpend || currentSpend === 0}
+                            >
+                              {resettingSpend ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <RotateCcw className="h-3 w-3" />
+                              )}
+                              {tBudgetAlert("resetSpend")}
+                            </Button>
+                          </div>
                         </div>
 
                         {/* Color-coded progress bar */}

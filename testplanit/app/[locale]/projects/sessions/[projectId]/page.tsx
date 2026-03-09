@@ -709,7 +709,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                   <div>
                     <CardTitle>{t("sessions.title", { count: 2 })}</CardTitle>
                   </div>
-                  <div className="flex flex-row gap-2">
+                  <div>
                     {canAddEditSession && (
                       <AddSessionModal
                         trigger={

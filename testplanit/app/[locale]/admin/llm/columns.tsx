@@ -1,3 +1,4 @@
+import { type MutableRefObject } from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { LlmIntegration, LlmProviderConfig } from "@prisma/client";
 import { useTranslations } from "next-intl";
@@ -27,7 +28,7 @@ export const getColumns = (
   ) => void,
   tCommon: ReturnType<typeof useTranslations<"common">>,
   t: ReturnType<typeof useTranslations<"admin.llm">>,
-  usageByIntegrationId: Map<number, number> = new Map(),
+  usageByIntegrationIdRef: MutableRefObject<Map<number, number>>,
   totalIntegrations: number = 0
 ): ColumnDef<ExtendedLlmIntegration>[] => [
   {
@@ -127,7 +128,7 @@ export const getColumns = (
     size: 200,
     cell: ({ row }) => {
       const budget = row.original.llmProviderConfig?.monthlyBudget;
-      const usage = usageByIntegrationId.get(row.original.id) ?? 0;
+      const usage = usageByIntegrationIdRef.current.get(row.original.id) ?? 0;
 
       if (!budget || Number(budget) === 0) {
         return (
@@ -269,7 +270,7 @@ export const getColumns = (
         <EditLlmIntegration
           key={`edit-${row.original.id}`}
           integration={row.original}
-          currentSpend={usageByIntegrationId.get(row.original.id) ?? 0}
+          currentSpend={usageByIntegrationIdRef.current.get(row.original.id) ?? 0}
         />
         <DeleteLlmIntegration
           key={`delete-${row.original.id}`}

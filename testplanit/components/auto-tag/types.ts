@@ -11,6 +11,16 @@ export interface AutoTagSuggestionEntity {
     isExisting: boolean;
     matchedExistingTag?: string;
   }>;
+  /** True if this entity was in a failed batch and could not be analyzed */
+  failed?: boolean;
+  /** Human-readable error reason when failed */
+  errorMessage?: string;
+  /** For repositoryCase: whether the case is automated */
+  automated?: boolean;
+  /** For repositoryCase: the source type (MANUAL, JUNIT, etc.) */
+  source?: string;
+  /** For testRun: the run type (REGULAR, JUNIT, etc.) */
+  testRunType?: string;
 }
 
 /** Per-entity selection state: set of accepted tag names */

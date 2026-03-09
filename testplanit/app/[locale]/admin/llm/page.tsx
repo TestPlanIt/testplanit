@@ -13,7 +13,10 @@ import {
   useFindManyLlmIntegration,
   useUpdateLlmIntegration,
 } from "~/lib/hooks/llm-integration";
-import { useUpdateLlmProviderConfig, useUpdateManyLlmProviderConfig } from "~/lib/hooks/llm-provider-config";
+import {
+  useUpdateLlmProviderConfig,
+  useUpdateManyLlmProviderConfig,
+} from "~/lib/hooks/llm-provider-config";
 import { useGroupByLlmUsage } from "~/lib/hooks/llm-usage";
 import { DataTable } from "@/components/tables/DataTable";
 import { ExtendedLlmIntegration, getColumns } from "./columns";
@@ -74,7 +77,8 @@ function LlmIntegrationList() {
 
   const { mutateAsync: updateLlmIntegration } = useUpdateLlmIntegration();
   const { mutateAsync: updateLlmProviderConfig } = useUpdateLlmProviderConfig();
-  const { mutateAsync: updateManyLlmProviderConfig } = useUpdateManyLlmProviderConfig();
+  const { mutateAsync: updateManyLlmProviderConfig } =
+    useUpdateManyLlmProviderConfig();
 
   // Stabilize mutation refs — ZenStack's mutateAsync changes identity every render
   const updateLlmIntegrationRef = useRef(updateLlmIntegration);
@@ -101,7 +105,10 @@ function LlmIntegrationList() {
             where: { id: llmProviderConfigId },
             data: { isDefault: true },
           });
-        } else if ((key === "streamingEnabled" || key === "isDefault") && llmProviderConfigId) {
+        } else if (
+          (key === "streamingEnabled" || key === "isDefault") &&
+          llmProviderConfigId
+        ) {
           await updateLlmProviderConfigRef.current({
             where: { id: llmProviderConfigId },
             data: { [key]: value },
@@ -254,22 +261,31 @@ function LlmIntegrationList() {
         llmIntegrationId: { not: null },
       },
     },
-    { enabled: !!session?.user }
+    { enabled: !!session?.user, refetchInterval: 10_000 }
   );
 
-  const usageByIntegrationId = useMemo(() => {
+  const usageByIntegrationIdRef = useRef(new Map<number, number>());
+  useMemo(() => {
     const map = new Map<number, number>();
     for (const row of monthlyUsageGroups ?? []) {
       if (row.llmIntegrationId != null) {
         map.set(row.llmIntegrationId, Number(row._sum?.totalCost ?? 0));
       }
     }
-    return map;
+    usageByIntegrationIdRef.current = map;
   }, [monthlyUsageGroups]);
 
   const columns = useMemo(
-    () => getColumns(userPreferences, handleToggle, tCommon, t, usageByIntegrationId, integrations?.length ?? 0),
-    [userPreferences, handleToggle, tCommon, t, usageByIntegrationId, integrations?.length]
+    () =>
+      getColumns(
+        userPreferences,
+        handleToggle,
+        tCommon,
+        t,
+        usageByIntegrationIdRef,
+        integrations?.length ?? 0
+      ),
+    [userPreferences, handleToggle, tCommon, t, integrations?.length]
   );
 
   const [columnVisibility, setColumnVisibility] = useState<
@@ -378,7 +394,7 @@ function LlmIntegrationList() {
                       disabled={refreshing || (integrations?.length || 0) === 0}
                     >
                       <RefreshCw
-                        className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+                        className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
                       />
                       {t("testAll")}
                     </Button>

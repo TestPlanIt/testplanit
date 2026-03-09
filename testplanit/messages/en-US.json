@@ -3908,7 +3908,9 @@
         "spendLabel": "Current Month Spend",
         "spendOfBudget": "{currentSpend} of {budgetLimit}",
         "overBudget": "Over budget",
-        "budgetPercentage": "{percentage}% of budget used"
+        "budgetPercentage": "{percentage}% of budget used",
+        "resetSpend": "Reset",
+        "spendReset": "Current month spend has been reset"
       }
     },
     "prompts": {
@@ -3946,7 +3948,8 @@
         "magic_select_cases": "Smart Test Case Selection",
         "editor_assistant": "Editor Writing Assistant",
         "llm_test": "LLM Connection Test",
-        "export_code_generation": "Export Code Generation"
+        "export_code_generation": "Export Code Generation",
+        "auto_tag": "AI Tag Suggestions"
       }
     },
     "elasticsearch": {
@@ -5859,16 +5862,17 @@
       "applySuccessNewTags": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}, {newCount, plural, one {# new tag} other {# new tags}} created",
       "applyError": "Failed to apply tags. Please try again.",
       "suggestedTags": "Suggested Tags",
-      "noSuggestions": "No suggestions for this entity.",
+      "noSuggestions": "AI could not generate any tags.",
       "alreadyApplied": "Already Applied",
       "filterEntities": "Filter entities...",
       "noEntitiesMatch": "No entities match your search.",
       "tagCount": "{count, plural, one {# tag} other {# tags}}",
       "noTags": "none",
+      "failed": "Failed",
+      "analysisFailed": "Could not analyze this entity",
       "tooltipExisting": "Existing tag",
       "tooltipNew": "New tag — will be created",
-      "tooltipAssign": "Assign existing tag",
-      "batchErrors": "Some entities could not be analyzed due to errors:"
+      "tooltipAssign": "Assign existing tag"
     },
     "progress": {
       "starting": "Starting analysis...",
@@ -5879,7 +5883,7 @@
       "failed": "Analysis failed"
     },
     "wizard": {
-      "description": "AI will analyze your project's test cases, test runs, and sessions to suggest relevant tags based on their content.",
+      "description": "AI will analyze your entire project's test cases, test runs, and sessions to suggest relevant tags based on their content.",
       "entityLine": "{count} {type}",
       "startAnalysis": "Start Analysis",
       "analyzingDescription": "AI is analyzing your entities and generating tag suggestions. This may take a moment."

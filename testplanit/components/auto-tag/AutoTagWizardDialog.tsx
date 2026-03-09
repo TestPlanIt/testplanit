@@ -19,16 +19,31 @@ import {
   Loader2,
   XCircle,
   CheckCircle2,
-  AlertTriangle,
   ListTree,
   PlayCircle,
   Compass,
+  Bot,
+  ListChecks,
+  AlertTriangle,
+  Search,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  isAutomatedCaseSource,
+  isAutomatedTestRunType,
+} from "~/utils/testResultTypes";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTranslations } from "next-intl";
+import { cn } from "~/utils";
 import { invalidateModelQueries } from "~/utils/optimistic-updates";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/tables/DataTable";
 import type { EntityType } from "~/lib/llm/services/auto-tag/types";
+import { useDebounce } from "@/components/Debounce";
+import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { PaginationComponent } from "@/components/tables/Pagination";
+import { useSession } from "next-auth/react";
+import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
 import { useAutoTagJob } from "./useAutoTagJob";
 import { TagChip } from "./TagChip";
 import type { AutoTagSuggestionEntity, UseAutoTagJobReturn } from "./types";
@@ -46,7 +61,7 @@ function EntityJobStatus({
   label: string;
   count: number;
   job: UseAutoTagJobReturn;
-  t: (key: string) => string;
+  t: (key: any) => string;
 }) {
   const isActive = job.status === "waiting" || job.status === "active";
   const isDone = job.status === "completed";
@@ -64,13 +79,46 @@ function EntityJobStatus({
       {!isActive && !isDone && !isFailed && <div className="h-3 w-3" />}
       <Icon className="h-3 w-3" />
       <span>
-        {label} ({analyzed}/{total})
+        {label}
+        {" ("}
+        {analyzed}/{total}
+        {")"}
         {isFinalizing && (
           <span className="ml-1 italic">{` — ${t("progress.finalizing")}`}</span>
         )}
       </span>
     </div>
   );
+}
+
+/** Get the correct icon for an entity based on type and metadata */
+function getEntityIcon(entity: {
+  entityType: EntityType;
+  automated?: boolean;
+  source?: string;
+  testRunType?: string;
+  failed?: boolean;
+  errorMessage?: string;
+}) {
+  if (entity.failed || entity.errorMessage) {
+    return <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-500" />;
+  }
+  switch (entity.entityType) {
+    case "repositoryCase":
+      return entity.automated || isAutomatedCaseSource(entity.source) ? (
+        <Bot className="h-3.5 w-3.5 shrink-0 text-primary" />
+      ) : (
+        <ListChecks className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      );
+    case "testRun":
+      return isAutomatedTestRunType(entity.testRunType) ? (
+        <Bot className="h-3.5 w-3.5 shrink-0 text-primary" />
+      ) : (
+        <PlayCircle className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      );
+    case "session":
+      return <Compass className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
+  }
 }
 
 const ENTITY_TYPE_ICONS: Record<EntityType, typeof ListTree> = {
@@ -87,6 +135,11 @@ interface AutoTagReviewRow {
   entityType: EntityType;
   tags: AutoTagSuggestionEntity["tags"];
   currentTags: string[];
+  automated?: boolean;
+  source?: string;
+  testRunType?: string;
+  failed?: boolean;
+  errorMessage?: string;
 }
 
 interface AutoTagWizardDialogProps {
@@ -109,6 +162,7 @@ export function AutoTagWizardDialog({
   const t = useTranslations("autoTag");
   const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
 
   const [step, setStep] = useState<WizardStep>("configure");
 
@@ -159,28 +213,34 @@ export function AutoTagWizardDialog({
   );
   // Show "Preparing results..." when analysis is done but jobs haven't completed yet.
   // Check each active job individually: if its own progress shows analyzed >= total, it's finalizing.
-  const anyFinalizing = anyActive && allJobs.some((j) => {
-    if (j.status !== "active" && j.status !== "waiting") return false;
-    if (j.progress?.finalizing) return true;
-    if (j.progress && j.progress.total > 0 && j.progress.analyzed >= j.progress.total) return true;
-    return false;
-  });
+  const anyFinalizing =
+    anyActive &&
+    allJobs.some((j) => {
+      if (j.status !== "active" && j.status !== "waiting") return false;
+      if (j.progress?.finalizing) return true;
+      if (
+        j.progress &&
+        j.progress.total > 0 &&
+        j.progress.analyzed >= j.progress.total
+      )
+        return true;
+      return false;
+    });
   const failedError = allJobs.find((j) => j.status === "failed")?.error;
-  // Collect batch-level errors from completed jobs (e.g. LLM config issues)
-  const batchErrors = allJobs
-    .filter((j) => j.status === "completed" && j.error)
-    .map((j) => j.error!)
-    .filter((e, i, arr) => arr.indexOf(e) === i); // dedupe
-
   // Merge suggestions from all completed jobs
   const allSuggestions = useMemo(() => {
     return allJobs.flatMap((j) => j.suggestions ?? []);
   }, [allJobs]);
 
   // Transition to review when all jobs complete (or fail)
-  const allDone = allJobs.every(
-    (j) => j.status === "completed" || j.status === "failed" || j.status === "idle"
-  );
+  // At least one job must have been submitted (non-idle) to prevent immediate transition
+  const anySubmitted = allJobs.some((j) => j.status !== "idle");
+  const allDone =
+    anySubmitted &&
+    allJobs.every(
+      (j) =>
+        j.status === "completed" || j.status === "failed" || j.status === "idle"
+    );
   useEffect(() => {
     if (step === "analyzing" && !anyActive && allDone) {
       setStep("review");
@@ -298,6 +358,44 @@ export function AutoTagWizardDialog({
     [findJobForEntity]
   );
 
+  // ── Review filters & pagination ─────────────────────────────────
+
+  const [reviewSearch, setReviewSearch] = useState("");
+  const debouncedSearch = useDebounce(reviewSearch, 250);
+  const [reviewEntityTypes, setReviewEntityTypes] = useState<EntityType[]>([
+    "repositoryCase",
+    "testRun",
+    "session",
+  ]);
+  const userPreferredPageSize = useMemo<number | "All">(() => {
+    const pref = session?.user?.preferences?.itemsPerPage;
+    if (!pref) return 25;
+    const parsed = parseInt(String(pref).replace("P", ""), 10);
+    return !isNaN(parsed) && parsed > 0 ? parsed : 25;
+  }, [session?.user?.preferences?.itemsPerPage]);
+
+  const [reviewPage, setReviewPage] = useState(1);
+  const [reviewPageSize, setReviewPageSize] = useState<number | "All">(
+    userPreferredPageSize
+  );
+
+  // Reset filters when entering review step
+  useEffect(() => {
+    if (step === "review") {
+      setReviewSearch("");
+      setReviewPage(1);
+      setReviewPageSize(userPreferredPageSize);
+      // Default to showing all entity types that have results
+      const types = new Set(allSuggestions.map((s) => s.entityType));
+      setReviewEntityTypes(Array.from(types) as EntityType[]);
+    }
+  }, [step]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setReviewPage(1);
+  }, [debouncedSearch, reviewEntityTypes]);
+
   // ── Review DataTable rows & columns ────────────────────────────────
 
   const reviewRows = useMemo<AutoTagReviewRow[]>(
@@ -309,8 +407,46 @@ export function AutoTagWizardDialog({
         entityType: entity.entityType,
         tags: entity.tags,
         currentTags: entity.currentTags,
+        automated: entity.automated,
+        source: entity.source,
+        testRunType: entity.testRunType,
+        failed: entity.failed,
+        errorMessage: entity.errorMessage,
       })),
     [allSuggestions]
+  );
+
+  const filteredReviewRows = useMemo(() => {
+    let rows = reviewRows;
+    if (reviewEntityTypes.length < 3) {
+      rows = rows.filter((r) => reviewEntityTypes.includes(r.entityType));
+    }
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.trim().toLowerCase();
+      rows = rows.filter((r) => r.name.toLowerCase().includes(q));
+    }
+    return rows;
+  }, [reviewRows, reviewEntityTypes, debouncedSearch]);
+
+  const effectivePageSize =
+    reviewPageSize === "All" ? filteredReviewRows.length : reviewPageSize;
+  const totalFilteredPages =
+    effectivePageSize > 0
+      ? Math.ceil(filteredReviewRows.length / effectivePageSize)
+      : 1;
+  const paginatedReviewRows = useMemo(() => {
+    if (reviewPageSize === "All") return filteredReviewRows;
+    const start = (reviewPage - 1) * (reviewPageSize as number);
+    return filteredReviewRows.slice(start, start + (reviewPageSize as number));
+  }, [filteredReviewRows, reviewPage, reviewPageSize]);
+
+  const reviewStartIndex =
+    filteredReviewRows.length === 0
+      ? 0
+      : (reviewPage - 1) * effectivePageSize + 1;
+  const reviewEndIndex = Math.min(
+    reviewPage * effectivePageSize,
+    filteredReviewRows.length
   );
 
   const reviewColumns = useMemo<ColumnDef<AutoTagReviewRow, unknown>[]>(
@@ -325,11 +461,19 @@ export function AutoTagWizardDialog({
         enableResizing: true,
         enableHiding: false,
         cell: ({ row }) => {
-          const Icon = ENTITY_TYPE_ICONS[row.original.entityType];
+          const entity = row.original;
           return (
             <div className="flex items-center gap-1.5">
-              <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <span className="truncate">{row.original.name}</span>
+              {getEntityIcon(entity)}
+              <span
+                className={cn(
+                  "truncate",
+                  (entity.failed || entity.errorMessage) &&
+                    "text-red-600 dark:text-red-400"
+                )}
+              >
+                {entity.name}
+              </span>
             </div>
           );
         },
@@ -343,6 +487,13 @@ export function AutoTagWizardDialog({
         cell: ({ row }) => {
           const entity = row.original;
           const entitySelections = mergedSelections.get(entity.entityId);
+          if (entity.failed || entity.errorMessage) {
+            return (
+              <span className="text-xs text-red-600 dark:text-red-400">
+                {t("review.analysisFailed")}
+              </span>
+            );
+          }
           if (entity.tags.length === 0) {
             return (
               <span className="text-xs text-muted-foreground">
@@ -606,29 +757,105 @@ export function AutoTagWizardDialog({
               </div>
             )}
 
-            {batchErrors.length > 0 && (
-              <div className="flex items-start gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/10 px-3 py-2">
-                <AlertTriangle className="h-4 w-4 shrink-0 text-yellow-600 mt-0.5" />
-                <div className="text-sm text-yellow-700 dark:text-yellow-500">
-                  <p className="font-medium">{t("review.batchErrors")}</p>
-                  <ul className="mt-1 list-disc pl-4">
-                    {batchErrors.map((err, i) => (
-                      <li key={i}>{err}</li>
-                    ))}
-                  </ul>
+            {/* Filter bar */}
+            {reviewRows.length > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder={t("review.filterEntities")}
+                    value={reviewSearch}
+                    onChange={(e) => setReviewSearch(e.target.value)}
+                    className="pl-8 h-8 text-sm"
+                  />
                 </div>
+                {/* Only show toggles if results contain multiple entity types */}
+                {new Set(reviewRows.map((r) => r.entityType)).size > 1 && (
+                  <ToggleGroup
+                    type="multiple"
+                    value={reviewEntityTypes}
+                    onValueChange={(v) => {
+                      if (v.length > 0) setReviewEntityTypes(v as EntityType[]);
+                    }}
+                    className="gap-0.5"
+                  >
+                    {reviewRows.some(
+                      (r) => r.entityType === "repositoryCase"
+                    ) && (
+                      <ToggleGroupItem
+                        value="repositoryCase"
+                        size="sm"
+                        className="h-8 px-2 text-xs gap-1"
+                      >
+                        <ListChecks className="h-3.5 w-3.5" />
+                        {t("actions.entityTypes.repositoryCase")}
+                      </ToggleGroupItem>
+                    )}
+                    {reviewRows.some((r) => r.entityType === "testRun") && (
+                      <ToggleGroupItem
+                        value="testRun"
+                        size="sm"
+                        className="h-8 px-2 text-xs gap-1"
+                      >
+                        <PlayCircle className="h-3.5 w-3.5" />
+                        {t("actions.entityTypes.testRun")}
+                      </ToggleGroupItem>
+                    )}
+                    {reviewRows.some((r) => r.entityType === "session") && (
+                      <ToggleGroupItem
+                        value="session"
+                        size="sm"
+                        className="h-8 px-2 text-xs gap-1"
+                      >
+                        <Compass className="h-3.5 w-3.5" />
+                        {t("actions.entityTypes.session")}
+                      </ToggleGroupItem>
+                    )}
+                  </ToggleGroup>
+                )}
               </div>
             )}
 
-            {reviewRows.length > 0 ? (
-              <div className="min-h-0 flex-1 overflow-auto w-full">
-                <DataTable
-                  columns={reviewColumns}
-                  data={reviewRows}
-                  columnVisibility={reviewColumnVisibility}
-                  onColumnVisibilityChange={setReviewColumnVisibility}
-                  pageSize={reviewRows.length}
-                />
+            {paginatedReviewRows.length > 0 ? (
+              <>
+                <div className="min-h-0 flex-1 overflow-auto w-full">
+                  <DataTable
+                    columns={reviewColumns}
+                    data={paginatedReviewRows}
+                    columnVisibility={reviewColumnVisibility}
+                    onColumnVisibilityChange={setReviewColumnVisibility}
+                    pageSize={effectivePageSize}
+                  />
+                </div>
+                {filteredReviewRows.length > 0 && (
+                  <div className="flex items-center justify-between pt-1 w-full">
+                    <PaginationInfo
+                      startIndex={reviewStartIndex}
+                      endIndex={reviewEndIndex}
+                      totalRows={filteredReviewRows.length}
+                      searchString={debouncedSearch}
+                      pageSize={reviewPageSize}
+                      pageSizeOptions={defaultPageSizeOptions}
+                      handlePageSizeChange={(size) => {
+                        setReviewPageSize(size);
+                        setReviewPage(1);
+                      }}
+                    />
+                    <div className="ml-auto">
+                      <PaginationComponent
+                        currentPage={reviewPage}
+                        totalPages={totalFilteredPages}
+                        onPageChange={setReviewPage}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : reviewRows.length > 0 ? (
+              <div className="flex flex-1 items-center justify-center">
+                <p className="text-sm text-muted-foreground">
+                  {t("review.noEntitiesMatch")}
+                </p>
               </div>
             ) : (
               <div className="flex flex-1 items-center justify-center">
@@ -648,9 +875,7 @@ export function AutoTagWizardDialog({
                     onClick={handleApply}
                     disabled={isApplying || totalSelected === 0}
                   >
-                    {isApplying && (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    )}
+                    {isApplying && <Loader2 className="h-4 w-4 animate-spin" />}
                     {isApplying
                       ? t("review.applying")
                       : tCommon("actions.apply")}

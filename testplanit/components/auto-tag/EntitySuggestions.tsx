@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tag } from "lucide-react";
+import { Tag, AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TagChip } from "./TagChip";
 import type { AutoTagSuggestionEntity, AutoTagSelection } from "./types";
@@ -22,6 +22,25 @@ export function EntitySuggestions({
 }: EntitySuggestionsProps) {
   const t = useTranslations("autoTag.review");
   const entitySelections = selections.get(entity.entityId);
+
+  if (entity.failed) {
+    return (
+      <ScrollArea className="h-full">
+        <div className="space-y-6 pr-4">
+          <h3 className="text-sm font-medium">{entity.entityName}</h3>
+          <div className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-3">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-destructive mt-0.5" />
+            <div className="text-sm text-destructive-foreground">
+              <p className="font-medium">{t("analysisFailed")}</p>
+              {entity.errorMessage && (
+                <p className="mt-1 text-xs opacity-80">{entity.errorMessage}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </ScrollArea>
+    );
+  }
 
   return (
     <ScrollArea className="h-full">

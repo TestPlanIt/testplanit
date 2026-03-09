@@ -183,6 +183,7 @@ export class TagAnalysisService {
     let processedEntities = 0;
     let failedBatchCount = 0;
     const errors: string[] = [];
+    const failedEntityIds: number[] = [];
 
     for (const batch of batches) {
       try {
@@ -198,7 +199,7 @@ export class TagAnalysisService {
           userId,
           projectId,
           feature: LLM_FEATURES.AUTO_TAG,
-          disableThinking: true, // JSON output — no reasoning needed
+          disableThinking: false,
         });
 
         totalTokensUsed += response.totalTokens;
@@ -232,14 +233,12 @@ export class TagAnalysisService {
         }
       } catch (error) {
         failedBatchCount++;
-        const msg = error instanceof Error ? error.message : String(error);
-        // Keep unique errors only (same error repeats for every batch)
-        if (!errors.includes(msg)) {
-          errors.push(msg);
-        }
+        const rawMsg = error instanceof Error ? error.message : String(error);
+        errors.push(rawMsg);
+        failedEntityIds.push(...batch.map((e) => e.id));
         console.warn(
           `Auto-tag batch failed (${batch.length} entities):`,
-          msg,
+          rawMsg,
         );
       }
 
@@ -257,6 +256,7 @@ export class TagAnalysisService {
       entityCount: entityContents.length,
       failedBatchCount,
       errors,
+      failedEntityIds,
     };
   }
 

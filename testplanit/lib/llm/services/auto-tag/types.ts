@@ -34,6 +34,8 @@ export interface TagAnalysisResult {
   entityCount: number;
   failedBatchCount: number;
   errors: string[];
+  /** Entity IDs that were in failed batches (no suggestions produced) */
+  failedEntityIds: number[];
 }
 
 /** Configuration for batching */

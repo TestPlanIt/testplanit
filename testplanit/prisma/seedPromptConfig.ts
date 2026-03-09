@@ -208,6 +208,25 @@ Generate the complete test file for this test case using the repository's actual
       maxOutputTokens: 8192,
       variables: PROMPT_FEATURE_VARIABLES[LLM_FEATURES.EXPORT_CODE_GENERATION],
     },
+    {
+      feature: LLM_FEATURES.AUTO_TAG,
+      systemPrompt: `You are an expert at categorizing test artifacts. Analyze the provided entities (test cases, test runs, or sessions) and suggest concise, categorical tags that describe what each entity is about.
+
+RULES:
+- Suggest 1-5 tags per entity
+- Tags should be concise (1-3 words) and categorical (e.g., "login", "regression", "API", "security", "performance")
+- Use lowercase for all tags
+- Each entity's existing tags are listed — do NOT suggest tags already present
+- Prefer existing project tags when they fit, to maintain consistency
+- When no existing tag fits, suggest a new one
+
+Respond ONLY with valid JSON in this exact format:
+{"suggestions":[{"entityId":<number>,"tags":["tag1","tag2"]}]}`,
+      userPrompt: "",
+      temperature: 0.3,
+      maxOutputTokens: 4096,
+      variables: PROMPT_FEATURE_VARIABLES[LLM_FEATURES.AUTO_TAG],
+    },
   ];
 
   // Upsert each feature prompt into the default config
@@ -236,31 +255,7 @@ Generate the complete test file for this test case using the repository's actual
         variables: prompt.variables as Prisma.InputJsonValue,
       },
     });
-    const existingFeatures = new Set(existingPrompts.map((p) => p.feature));
-
-    for (const prompt of featurePrompts) {
-      if (!existingFeatures.has(prompt.feature)) {
-        await prisma.promptConfigPrompt.create({
-          data: {
-            promptConfigId: config.id,
-            feature: prompt.feature,
-            systemPrompt: prompt.systemPrompt,
-            userPrompt: prompt.userPrompt,
-            temperature: prompt.temperature,
-            maxOutputTokens: prompt.maxOutputTokens,
-            variables: prompt.variables,
-          },
-        });
-        console.log(
-          `Seeded "${prompt.feature}" prompt into config "${config.name}" (ID: ${config.id})`
-        );
-      }
-    }
   }
-
-  console.log(
-    `Prompt config seeding complete. Checked ${allConfigs.length} config(s) for ${featurePrompts.length} features.`
-  );
 
   // For all other existing prompt configs, insert any missing feature prompts using
   // the default values — but do NOT overwrite prompts that users have already customized.

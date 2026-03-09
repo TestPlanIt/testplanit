@@ -7,3 +7,4 @@ export const TESTMO_IMPORT_QUEUE_NAME = "testmo-imports";
 export const ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
 export const AUDIT_LOG_QUEUE_NAME = "audit-logs";
 export const BUDGET_ALERT_QUEUE_NAME = "budget-alerts";
+export const AUTO_TAG_QUEUE_NAME = "auto-tag";

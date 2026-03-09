@@ -190,4 +190,23 @@ Generate the complete test file for this test case using the repository's actual
     maxOutputTokens: 8192,
     source: "fallback",
   },
+
+  [LLM_FEATURES.AUTO_TAG]: {
+    systemPrompt: `You are an expert at categorizing test artifacts. Analyze the provided entities (test cases, test runs, or sessions) and suggest concise, categorical tags that describe what each entity is about.
+
+RULES:
+- Suggest 1-5 tags per entity
+- Tags should be concise (1-3 words) and categorical (e.g., "login", "regression", "API", "security", "performance")
+- Use lowercase for all tags
+- Each entity's existing tags are listed — do NOT suggest tags already present
+- Prefer existing project tags when they fit, to maintain consistency
+- When no existing tag fits, suggest a new one
+
+Respond ONLY with valid JSON in this exact format:
+{"suggestions":[{"entityId":<number>,"tags":["tag1","tag2"]}]}`,
+    userPrompt: "",
+    temperature: 0.3,
+    maxOutputTokens: 4096,
+    source: "fallback",
+  },
 };

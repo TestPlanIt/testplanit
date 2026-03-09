@@ -46,11 +46,21 @@ export async function GET(
 
     const state = await job.getState();
 
+    // BullMQ may return returnvalue as a JSON string or parsed object
+    // depending on how it was stored/retrieved. Ensure it's always an object.
+    let result = null;
+    if (state === "completed" && job.returnvalue != null) {
+      result =
+        typeof job.returnvalue === "string"
+          ? JSON.parse(job.returnvalue)
+          : job.returnvalue;
+    }
+
     return NextResponse.json({
       jobId: job.id,
       state,
       progress: job.progress,
-      result: state === "completed" ? job.returnvalue : null,
+      result,
       failedReason: state === "failed" ? job.failedReason : null,
       timestamp: job.timestamp,
       processedOn: job.processedOn,
