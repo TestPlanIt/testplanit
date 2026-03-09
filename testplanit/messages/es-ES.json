@@ -5862,7 +5862,7 @@
       "applySuccessNewTags": "{tagCount, plural, one {# etiqueta} other {# etiquetas}} aplicadas a {entityCount, plural, one {# entidad} other {# entidades}}, {newCount, plural, one {# nueva etiqueta} other {# nuevas etiquetas}} creadas",
       "applyError": "No se pudieron aplicar las etiquetas. Inténtalo de nuevo.",
       "suggestedTags": "Etiquetas sugeridas",
-      "noSuggestions": "No hay sugerencias para esta entidad.",
+      "noSuggestions": "La IA no pudo generar ninguna etiqueta.",
       "alreadyApplied": "Ya aplicado",
       "filterEntities": "Filtrar entidades...",
       "noEntitiesMatch": "No hay entidades que coincidan con tu búsqueda.",
@@ -5870,6 +5870,7 @@
       "noTags": "ninguno",
       "failed": "Fallido",
       "analysisFailed": "No se pudo analizar esta entidad",
+      "responseTruncated": "Respuesta truncada: aumente los tokens de salida máximos en la configuración de LLM",
       "tooltipExisting": "Etiqueta existente",
       "tooltipNew": "Se creará una nueva etiqueta",
       "tooltipAssign": "Asignar etiqueta existente"

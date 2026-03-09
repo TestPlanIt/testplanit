@@ -28,6 +28,7 @@ import {
   Search,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   isAutomatedCaseSource,
   isAutomatedTestRunType,
@@ -98,10 +99,14 @@ function getEntityIcon(entity: {
   source?: string;
   testRunType?: string;
   failed?: boolean;
+  truncated?: boolean;
   errorMessage?: string;
 }) {
   if (entity.failed || entity.errorMessage) {
     return <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-500" />;
+  }
+  if (entity.truncated) {
+    return <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" />;
   }
   switch (entity.entityType) {
     case "repositoryCase":
@@ -139,6 +144,7 @@ interface AutoTagReviewRow {
   source?: string;
   testRunType?: string;
   failed?: boolean;
+  truncated?: boolean;
   errorMessage?: string;
 }
 
@@ -149,6 +155,10 @@ interface AutoTagWizardDialogProps {
   caseIds: number[];
   sessionIds: number[];
   runIds: number[];
+  /** IDs of entities that currently have no tags assigned */
+  untaggedCaseIds?: number[];
+  untaggedSessionIds?: number[];
+  untaggedRunIds?: number[];
 }
 
 export function AutoTagWizardDialog({
@@ -158,6 +168,9 @@ export function AutoTagWizardDialog({
   caseIds,
   sessionIds,
   runIds,
+  untaggedCaseIds,
+  untaggedSessionIds,
+  untaggedRunIds,
 }: AutoTagWizardDialogProps) {
   const t = useTranslations("autoTag");
   const tCommon = useTranslations("common");
@@ -170,6 +183,7 @@ export function AutoTagWizardDialog({
   const [includeCases, setIncludeCases] = useState(true);
   const [includeRuns, setIncludeRuns] = useState(true);
   const [includeSessions, setIncludeSessions] = useState(true);
+  const [untaggedOnly, setUntaggedOnly] = useState(false);
 
   // Reset toggles when dialog opens
   useEffect(() => {
@@ -177,13 +191,19 @@ export function AutoTagWizardDialog({
       setIncludeCases(true);
       setIncludeRuns(true);
       setIncludeSessions(true);
+      setUntaggedOnly(false);
     }
   }, [open]);
 
+  // Effective IDs based on untaggedOnly toggle
+  const effectiveCaseIds = untaggedOnly && untaggedCaseIds ? untaggedCaseIds : caseIds;
+  const effectiveSessionIds = untaggedOnly && untaggedSessionIds ? untaggedSessionIds : sessionIds;
+  const effectiveRunIds = untaggedOnly && untaggedRunIds ? untaggedRunIds : runIds;
+
   const selectedTotal =
-    (includeCases ? caseIds.length : 0) +
-    (includeRuns ? runIds.length : 0) +
-    (includeSessions ? sessionIds.length : 0);
+    (includeCases ? effectiveCaseIds.length : 0) +
+    (includeRuns ? effectiveRunIds.length : 0) +
+    (includeSessions ? effectiveSessionIds.length : 0);
 
   // One hook per entity type (API constraint: single entityType per job)
   const autoTagCases = useAutoTagJob(`autoTagJob:repositoryCase:${projectId}`);
@@ -265,25 +285,25 @@ export function AutoTagWizardDialog({
     setStep("analyzing");
     const projectIdNum = Number(projectId);
     const promises: Promise<void>[] = [];
-    if (includeCases && caseIds.length > 0) {
+    if (includeCases && effectiveCaseIds.length > 0) {
       promises.push(
-        autoTagCases.submit(caseIds, "repositoryCase", projectIdNum)
+        autoTagCases.submit(effectiveCaseIds, "repositoryCase", projectIdNum)
       );
     }
-    if (includeSessions && sessionIds.length > 0) {
+    if (includeSessions && effectiveSessionIds.length > 0) {
       promises.push(
-        autoTagSessions.submit(sessionIds, "session", projectIdNum)
+        autoTagSessions.submit(effectiveSessionIds, "session", projectIdNum)
       );
     }
-    if (includeRuns && runIds.length > 0) {
-      promises.push(autoTagRuns.submit(runIds, "testRun", projectIdNum));
+    if (includeRuns && effectiveRunIds.length > 0) {
+      promises.push(autoTagRuns.submit(effectiveRunIds, "testRun", projectIdNum));
     }
     await Promise.all(promises);
   }, [
     projectId,
-    caseIds,
-    sessionIds,
-    runIds,
+    effectiveCaseIds,
+    effectiveSessionIds,
+    effectiveRunIds,
     includeCases,
     includeRuns,
     includeSessions,
@@ -367,6 +387,10 @@ export function AutoTagWizardDialog({
     "testRun",
     "session",
   ]);
+  const [reviewSortConfig, setReviewSortConfig] = useState<{
+    column: string;
+    direction: "asc" | "desc";
+  }>({ column: "name", direction: "asc" });
   const userPreferredPageSize = useMemo<number | "All">(() => {
     const pref = session?.user?.preferences?.itemsPerPage;
     if (!pref) return 25;
@@ -385,6 +409,7 @@ export function AutoTagWizardDialog({
       setReviewSearch("");
       setReviewPage(1);
       setReviewPageSize(userPreferredPageSize);
+      setReviewSortConfig({ column: "name", direction: "asc" });
       // Default to showing all entity types that have results
       const types = new Set(allSuggestions.map((s) => s.entityType));
       setReviewEntityTypes(Array.from(types) as EntityType[]);
@@ -411,10 +436,19 @@ export function AutoTagWizardDialog({
         source: entity.source,
         testRunType: entity.testRunType,
         failed: entity.failed,
+        truncated: entity.truncated,
         errorMessage: entity.errorMessage,
       })),
     [allSuggestions]
   );
+
+  const handleReviewSortChange = useCallback((column: string) => {
+    setReviewSortConfig((prev) => ({
+      column,
+      direction: prev.column === column && prev.direction === "asc" ? "desc" : "asc",
+    }));
+    setReviewPage(1);
+  }, []);
 
   const filteredReviewRows = useMemo(() => {
     let rows = reviewRows;
@@ -425,8 +459,18 @@ export function AutoTagWizardDialog({
       const q = debouncedSearch.trim().toLowerCase();
       rows = rows.filter((r) => r.name.toLowerCase().includes(q));
     }
+    // Apply sorting
+    const { column, direction } = reviewSortConfig;
+    const dir = direction === "asc" ? 1 : -1;
+    rows = [...rows].sort((a, b) => {
+      if (column === "entityType") {
+        return dir * a.entityType.localeCompare(b.entityType);
+      }
+      // Default: sort by name
+      return dir * a.name.localeCompare(b.name);
+    });
     return rows;
-  }, [reviewRows, reviewEntityTypes, debouncedSearch]);
+  }, [reviewRows, reviewEntityTypes, debouncedSearch, reviewSortConfig]);
 
   const effectivePageSize =
     reviewPageSize === "All" ? filteredReviewRows.length : reviewPageSize;
@@ -452,28 +496,46 @@ export function AutoTagWizardDialog({
   const reviewColumns = useMemo<ColumnDef<AutoTagReviewRow, unknown>[]>(
     () => [
       {
-        id: "name",
-        accessorKey: "name",
-        header: tCommon("name"),
-        size: 280,
-        minSize: 200,
-        maxSize: 400,
-        enableResizing: true,
+        id: "entityType",
+        accessorKey: "entityType",
+        header: tCommon("fields.type"),
+        size: 48,
+        minSize: 40,
+        maxSize: 60,
+        enableResizing: false,
         enableHiding: false,
+        enableSorting: true,
         cell: ({ row }) => {
           const entity = row.original;
           return (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center justify-center">
               {getEntityIcon(entity)}
-              <span
-                className={cn(
-                  "truncate",
-                  (entity.failed || entity.errorMessage) &&
-                    "text-red-600 dark:text-red-400"
-                )}
-              >
-                {entity.name}
-              </span>
+            </div>
+          );
+        },
+      },
+      {
+        id: "name",
+        accessorKey: "name",
+        header: tCommon("name"),
+        size: 260,
+        minSize: 180,
+        maxSize: 400,
+        enableResizing: true,
+        enableHiding: false,
+        enableSorting: true,
+        cell: ({ row }) => {
+          const entity = row.original;
+          return (
+            <div
+              className={cn(
+                "truncate",
+                (entity.failed || entity.errorMessage) &&
+                  "text-red-600 dark:text-red-400",
+                entity.truncated && "text-amber-600 dark:text-amber-400"
+              )}
+            >
+              {entity.name}
             </div>
           );
         },
@@ -482,6 +544,7 @@ export function AutoTagWizardDialog({
         id: "suggestedTags",
         header: t("review.suggestedTags"),
         enableHiding: false,
+        enableSorting: false,
         minSize: 450,
         enableResizing: true,
         cell: ({ row }) => {
@@ -491,6 +554,13 @@ export function AutoTagWizardDialog({
             return (
               <span className="text-xs text-red-600 dark:text-red-400">
                 {t("review.analysisFailed")}
+              </span>
+            );
+          }
+          if (entity.truncated) {
+            return (
+              <span className="text-xs text-amber-600 dark:text-amber-400">
+                {t("review.responseTruncated")}
               </span>
             );
           }
@@ -603,7 +673,7 @@ export function AutoTagWizardDialog({
                   <ListTree className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <span className="text-sm">
                     {t("wizard.entityLine", {
-                      count: caseIds.length,
+                      count: effectiveCaseIds.length,
                       type: t("actions.entityTypes.repositoryCase"),
                     })}
                   </span>
@@ -618,7 +688,7 @@ export function AutoTagWizardDialog({
                   <PlayCircle className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <span className="text-sm">
                     {t("wizard.entityLine", {
-                      count: runIds.length,
+                      count: effectiveRunIds.length,
                       type: t("actions.entityTypes.testRun"),
                     })}
                   </span>
@@ -633,12 +703,23 @@ export function AutoTagWizardDialog({
                   <Compass className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <span className="text-sm">
                     {t("wizard.entityLine", {
-                      count: sessionIds.length,
+                      count: effectiveSessionIds.length,
                       type: t("actions.entityTypes.session"),
                     })}
                   </span>
                 </label>
               )}
+
+              {/* Untagged-only filter */}
+              <label className="flex cursor-pointer items-center gap-3 rounded-md border px-3 py-2.5 transition-colors hover:bg-accent/50">
+                <Switch
+                  checked={untaggedOnly}
+                  onCheckedChange={setUntaggedOnly}
+                />
+                <span className="text-sm">
+                  {t("wizard.untaggedOnly")}
+                </span>
+              </label>
             </div>
 
             <DialogFooter>
@@ -701,29 +782,29 @@ export function AutoTagWizardDialog({
                     className="h-2"
                   />
                   <div className="mt-2 space-y-1">
-                    {includeCases && caseIds.length > 0 && (
+                    {includeCases && effectiveCaseIds.length > 0 && (
                       <EntityJobStatus
                         icon={ListTree}
                         label={t("actions.entityTypes.repositoryCase")}
-                        count={caseIds.length}
+                        count={effectiveCaseIds.length}
                         job={autoTagCases}
                         t={t}
                       />
                     )}
-                    {includeRuns && runIds.length > 0 && (
+                    {includeRuns && effectiveRunIds.length > 0 && (
                       <EntityJobStatus
                         icon={PlayCircle}
                         label={t("actions.entityTypes.testRun")}
-                        count={runIds.length}
+                        count={effectiveRunIds.length}
                         job={autoTagRuns}
                         t={t}
                       />
                     )}
-                    {includeSessions && sessionIds.length > 0 && (
+                    {includeSessions && effectiveSessionIds.length > 0 && (
                       <EntityJobStatus
                         icon={Compass}
                         label={t("actions.entityTypes.session")}
-                        count={sessionIds.length}
+                        count={effectiveSessionIds.length}
                         job={autoTagSessions}
                         t={t}
                       />
@@ -824,6 +905,8 @@ export function AutoTagWizardDialog({
                     data={paginatedReviewRows}
                     columnVisibility={reviewColumnVisibility}
                     onColumnVisibilityChange={setReviewColumnVisibility}
+                    onSortChange={handleReviewSortChange}
+                    sortConfig={reviewSortConfig}
                     pageSize={effectivePageSize}
                   />
                 </div>

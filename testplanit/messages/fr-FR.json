@@ -5862,7 +5862,7 @@
       "applySuccessNewTags": "{tagCount, plural, one {# étiquette} other {# étiquettes}} appliquées à {entityCount, plural, one {# entité} other {# entités}}, {newCount, plural, one {# nouvelle étiquette} other {# nouvelles étiquettes}} créées",
       "applyError": "Impossible d'appliquer les balises. Veuillez réessayer.",
       "suggestedTags": "Suggestions de balises",
-      "noSuggestions": "Aucune suggestion pour cette entité.",
+      "noSuggestions": "L'IA n'a pu générer aucune étiquette.",
       "alreadyApplied": "Déjà postulé",
       "filterEntities": "Entités de filtrage...",
       "noEntitiesMatch": "Aucun résultat ne correspond à votre recherche.",
@@ -5870,6 +5870,7 @@
       "noTags": "aucun",
       "failed": "Échoué",
       "analysisFailed": "Impossible d'analyser cette entité",
+      "responseTruncated": "Réponse tronquée — augmentez le nombre maximal de jetons de sortie dans les paramètres LLM",
       "tooltipExisting": "Balise existante",
       "tooltipNew": "Nouvelle étiquette — sera créée",
       "tooltipAssign": "Attribuer une étiquette existante"

@@ -13,7 +13,9 @@ export interface AutoTagSuggestionEntity {
   }>;
   /** True if this entity was in a failed batch and could not be analyzed */
   failed?: boolean;
-  /** Human-readable error reason when failed */
+  /** True if this entity's suggestions were lost due to truncated LLM response */
+  truncated?: boolean;
+  /** Human-readable error reason when failed or truncated */
   errorMessage?: string;
   /** For repositoryCase: whether the case is automated */
   automated?: boolean;

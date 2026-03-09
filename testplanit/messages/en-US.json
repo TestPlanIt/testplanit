@@ -5870,6 +5870,7 @@
       "noTags": "none",
       "failed": "Failed",
       "analysisFailed": "Could not analyze this entity",
+      "responseTruncated": "Response truncated — increase Max Output Tokens in LLM settings",
       "tooltipExisting": "Existing tag",
       "tooltipNew": "New tag — will be created",
       "tooltipAssign": "Assign existing tag"
@@ -5886,6 +5887,7 @@
       "description": "AI will analyze your entire project's test cases, test runs, and sessions to suggest relevant tags based on their content.",
       "entityLine": "{count} {type}",
       "startAnalysis": "Start Analysis",
+      "untaggedOnly": "Only analyze records without existing tags",
       "analyzingDescription": "AI is analyzing your entities and generating tag suggestions. This may take a moment."
     }
   },

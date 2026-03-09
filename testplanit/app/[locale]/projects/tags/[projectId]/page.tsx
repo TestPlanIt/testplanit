@@ -213,6 +213,14 @@ function TagList() {
     [repositoryCases]
   );
 
+  const untaggedCaseIds = useMemo(
+    () =>
+      repositoryCases
+        ?.filter((c) => !c.tags || c.tags.length === 0)
+        .map((c) => c.id) || [],
+    [repositoryCases]
+  );
+
   const activeSessionMap = useMemo(() => {
     return (
       sessions?.reduce(
@@ -230,6 +238,14 @@ function TagList() {
     [sessions]
   );
 
+  const untaggedSessionIds = useMemo(
+    () =>
+      sessions
+        ?.filter((s) => !s.tags || s.tags.length === 0)
+        .map((s) => s.id) || [],
+    [sessions]
+  );
+
   const activeRunMap = useMemo(() => {
     return (
       testRuns?.reduce(
@@ -244,6 +260,14 @@ function TagList() {
 
   const activeRunIds = useMemo(
     () => testRuns?.map((r) => r.id) || [],
+    [testRuns]
+  );
+
+  const untaggedRunIds = useMemo(
+    () =>
+      testRuns
+        ?.filter((r) => !r.tags || r.tags.length === 0)
+        .map((r) => r.id) || [],
     [testRuns]
   );
 
@@ -598,6 +622,9 @@ function TagList() {
         caseIds={activeCaseIds}
         sessionIds={activeSessionIds}
         runIds={activeRunIds}
+        untaggedCaseIds={untaggedCaseIds}
+        untaggedSessionIds={untaggedSessionIds}
+        untaggedRunIds={untaggedRunIds}
       />
     </main>
   );

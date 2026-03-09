@@ -184,6 +184,7 @@ export class TagAnalysisService {
     let failedBatchCount = 0;
     const errors: string[] = [];
     const failedEntityIds: number[] = [];
+    const truncatedEntityIds: number[] = [];
 
     for (const batch of batches) {
       try {
@@ -208,6 +209,11 @@ export class TagAnalysisService {
         const parsed = this.parseLlmResponse(response.content);
         if (!parsed) continue;
 
+        // Track entity IDs the LLM responded about
+        const respondedEntityIds = new Set(
+          parsed.suggestions.map((s) => s.entityId),
+        );
+
         // Process each entity's suggestions
         for (const entitySugg of parsed.suggestions) {
           const entityContent = batch.find(
@@ -229,6 +235,16 @@ export class TagAnalysisService {
               isExisting: match.isExisting,
               matchedExistingTag: match.matchedExistingTag,
             });
+          }
+        }
+
+        // If the response was truncated, entities missing from the response
+        // likely had their suggestions cut off
+        if (parsed.truncated) {
+          for (const entity of batch) {
+            if (!respondedEntityIds.has(entity.id)) {
+              truncatedEntityIds.push(entity.id);
+            }
           }
         }
       } catch (error) {
@@ -257,6 +273,7 @@ export class TagAnalysisService {
       failedBatchCount,
       errors,
       failedEntityIds,
+      truncatedEntityIds,
     };
   }
 
@@ -393,8 +410,9 @@ export class TagAnalysisService {
 
   /**
    * Parse LLM response JSON. Returns null on parse failure (graceful degradation).
+   * The `truncated` flag indicates the response was salvaged from truncated JSON.
    */
-  private parseLlmResponse(content: string): AutoTagAIResponse | null {
+  private parseLlmResponse(content: string): (AutoTagAIResponse & { truncated?: boolean }) | null {
     try {
       let jsonStr = content.trim();
 
@@ -413,6 +431,7 @@ export class TagAnalysisService {
       jsonStr = jsonStr.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
 
       let parsed: AutoTagAIResponse;
+      let truncated = false;
       try {
         parsed = JSON.parse(jsonStr) as AutoTagAIResponse;
       } catch (parseErr) {
@@ -427,6 +446,7 @@ export class TagAnalysisService {
           return null;
         }
         parsed = salvaged;
+        truncated = true;
       }
 
       if (!parsed.suggestions || !Array.isArray(parsed.suggestions)) {
@@ -434,7 +454,7 @@ export class TagAnalysisService {
         return null;
       }
 
-      return parsed;
+      return { ...parsed, truncated };
     } catch (error) {
       console.warn(
         "[auto-tag] Failed to parse LLM response:",

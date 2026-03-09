@@ -36,6 +36,8 @@ export interface TagAnalysisResult {
   errors: string[];
   /** Entity IDs that were in failed batches (no suggestions produced) */
   failedEntityIds: number[];
+  /** Entity IDs whose suggestions were lost due to truncated LLM responses */
+  truncatedEntityIds: number[];
 }
 
 /** Configuration for batching */

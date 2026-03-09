@@ -35,6 +35,7 @@ export interface AutoTagJobResult {
       matchedExistingTag?: string;
     }>;
     failed?: boolean;
+    truncated?: boolean;
     errorMessage?: string;
     automated?: boolean;
     source?: string;
@@ -124,12 +125,9 @@ const processor = async (job: Job<AutoTagJobData>): Promise<AutoTagJobResult> =>
     });
   }
 
-  // Collect all entity IDs we need metadata for (successful + failed)
+  // Collect all entity IDs we need metadata for (all submitted entities)
   const failedEntityIdSet = new Set(result.failedEntityIds);
-  const allRelevantIds = [
-    ...Array.from(entityMap.keys()),
-    ...result.failedEntityIds.filter((id) => !entityMap.has(id)),
-  ];
+  const allRelevantIds = [...job.data.entityIds];
 
   // 8. Fetch entity names, current tags, and display metadata for all relevant entities
   const entityMeta = new Map<number, {
@@ -218,6 +216,45 @@ const processor = async (job: Job<AutoTagJobData>): Promise<AutoTagJobResult> =>
         source: meta?.source,
         testRunType: meta?.testRunType,
       });
+    }
+  }
+
+  // Append truncated entities (suggestions lost due to LLM output truncation)
+  const truncatedEntityIdSet = new Set(result.truncatedEntityIds);
+  for (const truncatedId of truncatedEntityIdSet) {
+    if (!entityMap.has(truncatedId) && !failedEntityIdSet.has(truncatedId)) {
+      const meta = entityMeta.get(truncatedId);
+      suggestions.push({
+        entityId: truncatedId,
+        entityType: job.data.entityType,
+        entityName: meta?.name ?? `Unknown`,
+        currentTags: meta?.currentTags ?? [],
+        tags: [],
+        truncated: true,
+        errorMessage: "LLM response was truncated — increase Max Output Tokens in LLM settings",
+        automated: meta?.automated,
+        source: meta?.source,
+        testRunType: meta?.testRunType,
+      });
+    }
+  }
+
+  // Append entities with no suggestions (successfully analyzed but LLM returned no tags)
+  for (const entityId of job.data.entityIds) {
+    if (!entityMap.has(entityId) && !failedEntityIdSet.has(entityId) && !truncatedEntityIdSet.has(entityId)) {
+      const meta = entityMeta.get(entityId);
+      if (meta) {
+        suggestions.push({
+          entityId,
+          entityType: job.data.entityType,
+          entityName: meta.name,
+          currentTags: meta.currentTags,
+          tags: [],
+          automated: meta.automated,
+          source: meta.source,
+          testRunType: meta.testRunType,
+        });
+      }
     }
   }
 
