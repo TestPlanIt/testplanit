@@ -98,6 +98,7 @@ const sidebars: SidebarsConfig = {
               items: [
                 'user-guide/llm-test-generation', // AI test case generation
                 'user-guide/llm-magic-select', // AI-powered test case selection
+                'user-guide/llm-quickscript', // AI-powered QuickScript generation
                 'user-guide/llm-writing-assistant', // In-editor AI writing assistant
                 'user-guide/llm-markdown-import', // AI-assisted markdown import
                 'user-guide/llm-auto-tag', // AI-powered auto tagging
