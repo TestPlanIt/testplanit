@@ -1012,24 +1012,22 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   );
 
   const handleTourComplete = useCallback(
-    async (tourName: string | null) => {
+    (tourName: string | null) => {
       (window as any).__activeTour = null;
       localStorage.setItem("hasSeenOnboardingTour", "true");
 
-      // Update user preferences if user is logged in and preferences exist
-      if (session?.user?.id && userPreferences?.id) {
-        try {
-          await updateUserPreferences({
-            where: { id: userPreferences.id },
-            data: { hasCompletedWelcomeTour: true },
-          });
-        } catch (error) {
-          console.error("Failed to update tour completion status:", error);
-        }
-      }
-
       // Clear active tour reference
       activeTourRef.current = null;
+
+      // Update user preferences in the background (don't block navigation)
+      if (session?.user?.id && userPreferences?.id) {
+        updateUserPreferences({
+          where: { id: userPreferences.id },
+          data: { hasCompletedWelcomeTour: true },
+        }).catch((error: unknown) => {
+          console.error("Failed to update tour completion status:", error);
+        });
+      }
 
       // If the welcome tour just finished and a Demo Project exists,
       // automatically start the demo project tour
