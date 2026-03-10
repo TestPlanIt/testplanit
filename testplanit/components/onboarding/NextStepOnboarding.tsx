@@ -562,305 +562,310 @@ const createTourSteps = (
   },
   {
     tour: "demoProjectTour",
-    steps: [
-      // Step 0: Project selector
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.projectSelector.title"),
-        content: t("help.tour.demoProjectTour.projectSelector.content"),
-        selector: "[data-testid='project-dropdown-trigger']",
-        side: "bottom-left",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        nextRoute: projectId
-          ? `/projects/overview/${projectId}?tour=demoProjectTour&step=1`
-          : undefined,
-      },
-      // Step 1: Overview — project dashboard
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.overview.title"),
-        content: t("help.tour.demoProjectTour.overview.content"),
-        selector: "#overview-link",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        nextRoute: projectId
-          ? `/projects/documentation/${projectId}?tour=demoProjectTour&step=2`
-          : undefined,
-      },
-      // Step 2: Documentation sidebar link
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.documentation.title"),
-        content: t("help.tour.demoProjectTour.documentation.content"),
-        selector: "#documentation-link",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/overview/${projectId}?tour=demoProjectTour&step=1`
-          : undefined,
-      },
-      // Step 3: Documentation content
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.documentationContent.title"),
-        content: t("help.tour.demoProjectTour.documentationContent.content"),
-        selector: "#documentation-content",
-        side: "bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        nextRoute: projectId
-          ? `/projects/milestones/${projectId}?tour=demoProjectTour&step=4`
-          : undefined,
-      },
-      // Step 4: Milestones sidebar link
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.milestones.title"),
-        content: t("help.tour.demoProjectTour.milestones.content"),
-        selector: "#milestones-link",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/documentation/${projectId}?tour=demoProjectTour&step=3`
-          : undefined,
-      },
-      // Step 5: Milestones page content
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.milestonesPage.title"),
-        content: t("help.tour.demoProjectTour.milestonesPage.content"),
-        selector: "#milestones-page-header",
-        side: "bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        nextRoute: projectId
-          ? `/projects/repository/${projectId}?tour=demoProjectTour&step=6`
-          : undefined,
-      },
-      // Step 6: Repository sidebar link
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.repository.title"),
-        content: t("help.tour.demoProjectTour.repository.content"),
-        selector: "#test-cases-link",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/milestones/${projectId}?tour=demoProjectTour&step=5`
-          : undefined,
-      },
-      // Step 7: Repository folder panel
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.repositoryPanels.title"),
-        content: t("help.tour.demoProjectTour.repositoryPanels.content"),
-        selector: "[data-testid='repository-left-panel-header']",
-        side: "bottom-right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-      },
-      // Step 8: Repository test cases table
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.repositoryCases.title"),
-        content: t("help.tour.demoProjectTour.repositoryCases.content"),
-        selector: "[data-testid='repository-right-panel-header']",
-        side: "bottom-left",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        nextRoute: projectId
-          ? `/projects/shared-steps/${projectId}?tour=demoProjectTour&step=9`
-          : undefined,
-      },
-      // Step 9: Shared Steps sidebar link
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.sharedSteps.title"),
-        content: t("help.tour.demoProjectTour.sharedSteps.content"),
-        selector: "#shared-steps-link",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/repository/${projectId}?tour=demoProjectTour&step=8`
-          : undefined,
-      },
-      // Step 10: Shared Steps page content
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.sharedStepsPage.title"),
-        content: t("help.tour.demoProjectTour.sharedStepsPage.content"),
-        selector: "[data-testid^='shared-step-group-']",
-        side: "bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        nextRoute: projectId
-          ? `/projects/runs/${projectId}?tour=demoProjectTour&step=11`
-          : undefined,
-      },
-      // Step 11: Test Runs sidebar link
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.testRuns.title"),
-        content: t("help.tour.demoProjectTour.testRuns.content"),
-        selector: "#test-runs-link",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/shared-steps/${projectId}?tour=demoProjectTour&step=10`
-          : undefined,
-      },
-      // Step 12: Test Runs page content
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.testRunsPage.title"),
-        content: t("help.tour.demoProjectTour.testRunsPage.content"),
-        selector: "#test-runs-page-header",
-        side: "bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        nextRoute: projectId
-          ? `/projects/sessions/${projectId}?tour=demoProjectTour&step=13`
-          : undefined,
-      },
-      // Step 13: Sessions sidebar link
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.sessions.title"),
-        content: t("help.tour.demoProjectTour.sessions.content"),
-        selector: "#exploratory-link",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/runs/${projectId}?tour=demoProjectTour&step=12`
-          : undefined,
-      },
-      // Step 14: Sessions page content
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.sessionsPage.title"),
-        content: t("help.tour.demoProjectTour.sessionsPage.content"),
-        selector: "#sessions-page-header",
-        side: "bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        nextRoute: projectId
-          ? `/projects/tags/${projectId}?tour=demoProjectTour&step=15`
-          : undefined,
-      },
-      // Step 15: Tags sidebar link
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.tags.title"),
-        content: t("help.tour.demoProjectTour.tags.content"),
-        selector: "#project-tags-link",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/sessions/${projectId}?tour=demoProjectTour&step=14`
-          : undefined,
-      },
-      // Step 16: Tags page content
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.tagsPage.title"),
-        content: t("help.tour.demoProjectTour.tagsPage.content"),
-        selector: "#tags-page-header",
-        side: "bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/tags/${projectId}?tour=demoProjectTour&step=15`
-          : undefined,
-        nextRoute: projectId
-          ? `/projects/issues/${projectId}?tour=demoProjectTour&step=17`
-          : undefined,
-      },
-      // Step 17: Issues sidebar link
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.issues.title"),
-        content: t("help.tour.demoProjectTour.issues.content"),
-        selector: "#project-issues-link",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/tags/${projectId}?tour=demoProjectTour&step=16`
-          : undefined,
-      },
-      // Step 18: Issues page content
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.issuesPage.title"),
-        content: t("help.tour.demoProjectTour.issuesPage.content"),
-        selector: "#issues-page-header",
-        side: "bottom",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        nextRoute: projectId
-          ? `/projects/reports/${projectId}?tour=demoProjectTour&step=19`
-          : undefined,
-      },
-      // Step 19: Reports sidebar link
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.reports.title"),
-        content: t("help.tour.demoProjectTour.reports.content"),
-        selector: "#reports-link",
-        side: "right",
-        showControls: true,
-        showSkip: true,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/issues/${projectId}?tour=demoProjectTour&step=18`
-          : undefined,
-        nextRoute: projectId
-          ? `/projects/settings/${projectId}/integrations?tour=demoProjectTour&step=20`
-          : undefined,
-      },
-      // Step 20: Settings sidebar link (final step)
-      {
-        icon: null,
-        title: t("help.tour.demoProjectTour.settings.title"),
-        content: t("help.tour.demoProjectTour.settings.content"),
-        selector: "#settings-integrations-link",
-        side: "right",
-        showControls: true,
-        showSkip: false,
-        pointerPadding: 10,
-        prevRoute: projectId
-          ? `/projects/reports/${projectId}?tour=demoProjectTour&step=19`
-          : undefined,
-      },
-    ],
+    steps: (() => {
+      // Each step is tagged with the page it belongs to (_page) so that
+      // cross-page nextRoute/prevRoute can be auto-generated below.
+      type TaggedStep = Tour["steps"][number] & { _page?: string };
+      const steps: TaggedStep[] = [
+        // Project selector
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.projectSelector.title"),
+          content: t("help.tour.demoProjectTour.projectSelector.content"),
+          selector: "[data-testid='project-dropdown-trigger']",
+          side: "bottom-left",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "overview",
+        },
+        // Overview — project dashboard
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.overview.title"),
+          content: t("help.tour.demoProjectTour.overview.content"),
+          selector: "#overview-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "overview",
+        },
+        // Documentation sidebar link
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.documentation.title"),
+          content: t("help.tour.demoProjectTour.documentation.content"),
+          selector: "#documentation-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "documentation",
+        },
+        // Documentation content
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.documentationContent.title"),
+          content: t("help.tour.demoProjectTour.documentationContent.content"),
+          selector: "#documentation-content",
+          side: "bottom",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "documentation",
+        },
+        // Milestones sidebar link
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.milestones.title"),
+          content: t("help.tour.demoProjectTour.milestones.content"),
+          selector: "#milestones-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "milestones",
+        },
+        // Milestones page content
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.milestonesPage.title"),
+          content: t("help.tour.demoProjectTour.milestonesPage.content"),
+          selector: "#milestones-page-header",
+          side: "bottom",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "milestones",
+        },
+        // Repository sidebar link
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.repository.title"),
+          content: t("help.tour.demoProjectTour.repository.content"),
+          selector: "#test-cases-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "repository",
+        },
+        // Repository folder panel
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.repositoryPanels.title"),
+          content: t("help.tour.demoProjectTour.repositoryPanels.content"),
+          selector: "[data-testid='repository-left-panel-header']",
+          side: "bottom-right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "repository",
+        },
+        // Repository test cases table
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.repositoryCases.title"),
+          content: t("help.tour.demoProjectTour.repositoryCases.content"),
+          selector: "[data-testid='repository-right-panel-header']",
+          side: "bottom-left",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "repository",
+        },
+      ];
+
+      // Shared Steps (conditional)
+      if (options?.canSeeSharedSteps) {
+        steps.push(
+          {
+            icon: null,
+            title: t("help.tour.demoProjectTour.sharedSteps.title"),
+            content: t("help.tour.demoProjectTour.sharedSteps.content"),
+            selector: "#shared-steps-link",
+            side: "right",
+            showControls: true,
+            showSkip: true,
+            pointerPadding: 10,
+            _page: "shared-steps",
+          },
+          {
+            icon: null,
+            title: t("help.tour.demoProjectTour.sharedStepsPage.title"),
+            content: t("help.tour.demoProjectTour.sharedStepsPage.content"),
+            selector: "[data-testid^='shared-step-group-']",
+            side: "bottom",
+            showControls: true,
+            showSkip: true,
+            pointerPadding: 10,
+            _page: "shared-steps",
+          }
+        );
+      }
+
+      // Test Runs
+      steps.push(
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.testRuns.title"),
+          content: t("help.tour.demoProjectTour.testRuns.content"),
+          selector: "#test-runs-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "runs",
+        },
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.testRunsPage.title"),
+          content: t("help.tour.demoProjectTour.testRunsPage.content"),
+          selector: "#test-runs-page-header",
+          side: "bottom",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "runs",
+        }
+      );
+
+      // Sessions
+      steps.push(
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.sessions.title"),
+          content: t("help.tour.demoProjectTour.sessions.content"),
+          selector: "#exploratory-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "sessions",
+        },
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.sessionsPage.title"),
+          content: t("help.tour.demoProjectTour.sessionsPage.content"),
+          selector: "#sessions-page-header",
+          side: "bottom",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "sessions",
+        }
+      );
+
+      // Tags
+      steps.push(
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.tags.title"),
+          content: t("help.tour.demoProjectTour.tags.content"),
+          selector: "#project-tags-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "tags",
+        },
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.tagsPage.title"),
+          content: t("help.tour.demoProjectTour.tagsPage.content"),
+          selector: "#tags-page-header",
+          side: "bottom",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "tags",
+        }
+      );
+
+      // Issues
+      steps.push(
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.issues.title"),
+          content: t("help.tour.demoProjectTour.issues.content"),
+          selector: "#project-issues-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "issues",
+        },
+        {
+          icon: null,
+          title: t("help.tour.demoProjectTour.issuesPage.title"),
+          content: t("help.tour.demoProjectTour.issuesPage.content"),
+          selector: "#issues-page-header",
+          side: "bottom",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "issues",
+        }
+      );
+
+      // Reports (conditional)
+      if (options?.canSeeReports) {
+        steps.push({
+          icon: null,
+          title: t("help.tour.demoProjectTour.reports.title"),
+          content: t("help.tour.demoProjectTour.reports.content"),
+          selector: "#reports-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "reports",
+        });
+      }
+
+      // Settings (conditional)
+      if (options?.canSeeSettings) {
+        steps.push({
+          icon: null,
+          title: t("help.tour.demoProjectTour.settings.title"),
+          content: t("help.tour.demoProjectTour.settings.content"),
+          selector: "#settings-integrations-link",
+          side: "right",
+          showControls: true,
+          showSkip: true,
+          pointerPadding: 10,
+          _page: "settings/integrations",
+        });
+      }
+
+      // Mark last step
+      steps[steps.length - 1].showSkip = false;
+
+      // Auto-generate nextRoute / prevRoute for cross-page transitions
+      const pageToRoute = (page: string) =>
+        page === "settings/integrations"
+          ? `/projects/settings/${projectId}/integrations`
+          : `/projects/${page}/${projectId}`;
+
+      for (let i = 0; i < steps.length; i++) {
+        // nextRoute: when the NEXT step is on a different page
+        if (i < steps.length - 1 && steps[i]._page !== steps[i + 1]._page) {
+          steps[i].nextRoute = projectId
+            ? `${pageToRoute(steps[i + 1]._page!)}?tour=demoProjectTour&step=${i + 1}`
+            : undefined;
+        }
+        // prevRoute: when the PREVIOUS step is on a different page
+        if (i > 0 && steps[i]._page !== steps[i - 1]._page) {
+          steps[i].prevRoute = projectId
+            ? `${pageToRoute(steps[i - 1]._page!)}?tour=demoProjectTour&step=${i - 1}`
+            : undefined;
+        }
+      }
+
+      // Strip the _page metadata before returning
+      return steps.map(({ _page, ...step }) => step);
+    })(),
   },
 ];
 
@@ -1098,23 +1103,29 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
 
   const handleStepChange = useCallback(
     (step: number, tourName: string | null) => {
-      // Demo tour: click the first shared step group to show its steps
-      if (tourName === "demoProjectTour" && step === 10) {
-        const firstGroup = document.querySelector(
-          "[data-testid^='shared-step-group-']"
-        ) as HTMLElement;
-        if (firstGroup) {
-          firstGroup.click();
-        }
-      }
+      if (tourName === "demoProjectTour") {
+        // Look up the current step's selector to decide auto-click actions
+        const demoTour = tourSteps.find((t) => t.tour === "demoProjectTour");
+        const selector = demoTour?.steps[step]?.selector;
 
-      // Demo tour: click the first folder to populate the cases table
-      if (tourName === "demoProjectTour" && step === 8) {
-        const firstFolder = document.querySelector(
-          "[data-testid^='folder-node-']"
-        ) as HTMLElement;
-        if (firstFolder) {
-          firstFolder.click();
+        // Auto-click the first shared step group to show its steps
+        if (selector === "[data-testid^='shared-step-group-']") {
+          const firstGroup = document.querySelector(
+            "[data-testid^='shared-step-group-']"
+          ) as HTMLElement;
+          if (firstGroup) {
+            firstGroup.click();
+          }
+        }
+
+        // Auto-click the first folder to populate the cases table
+        if (selector === "[data-testid='repository-right-panel-header']") {
+          const firstFolder = document.querySelector(
+            "[data-testid^='folder-node-']"
+          ) as HTMLElement;
+          if (firstFolder) {
+            firstFolder.click();
+          }
         }
       }
 
@@ -1130,7 +1141,7 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
         router.replace(newUrl);
       }
     },
-    [searchParams, pathname, router]
+    [searchParams, pathname, router, tourSteps]
   );
 
   // Store refs for the override to avoid stale closures
