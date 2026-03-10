@@ -106,6 +106,7 @@ describe("TagAnalysisService", () => {
 
   const mockLlmManager = {
     getDefaultIntegration: vi.fn(),
+    getProjectIntegration: vi.fn(),
     chat: vi.fn(),
   } as any;
 
@@ -126,6 +127,7 @@ describe("TagAnalysisService", () => {
 
   function setupDefaults() {
     mockLlmManager.getDefaultIntegration.mockResolvedValue(1);
+    mockLlmManager.getProjectIntegration.mockResolvedValue(1);
     mockPrisma.llmProviderConfig.findFirst.mockResolvedValue({
       maxTokensPerRequest: 4096,
     });
@@ -246,7 +248,7 @@ describe("TagAnalysisService", () => {
   });
 
   it("throws descriptive error when no default LLM integration", async () => {
-    mockLlmManager.getDefaultIntegration.mockResolvedValue(null);
+    mockLlmManager.getProjectIntegration.mockResolvedValue(null);
 
     await expect(
       service.analyzeTags({
@@ -255,7 +257,7 @@ describe("TagAnalysisService", () => {
         projectId: 5,
         userId: "u1",
       }),
-    ).rejects.toThrow(/no default llm integration/i);
+    ).rejects.toThrow(/no llm integration configured/i);
   });
 
   it("handles LLM call failure gracefully per batch", async () => {
