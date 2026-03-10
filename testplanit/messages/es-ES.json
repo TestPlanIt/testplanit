@@ -5846,9 +5846,9 @@
       "selectEntityType": "Seleccionar el tipo de entidad",
       "selectProject": "Seleccione un proyecto",
       "entityTypes": {
-        "repositoryCase": "Casos de prueba",
-        "testRun": "Ejecuciones de prueba",
-        "session": "Sesiones"
+        "repositoryCase": "{count, plural, one {Caso de prueba} other {Casos de prueba}}",
+        "testRun": "{count, plural, one {Ejecución de prueba} other {Ejecuciones de prueba}}",
+        "session": "{count, plural, one {Sesión} other {Sesiones}}"
       }
     },
     "review": {
@@ -5888,7 +5888,14 @@
       "entityLine": "{count} {type}",
       "startAnalysis": "Iniciar análisis",
       "untaggedOnly": "Analizar únicamente registros sin etiquetas existentes",
+      "noLlmConfigured": "(No hay LLM configurado)",
       "analyzingDescription": "La IA está analizando tus entidades y generando sugerencias de etiquetas. Esto puede tardar un momento."
+    },
+    "entityDetail": {
+      "customFields": "Campos personalizados",
+      "documentation": "Documentación",
+      "noDetails": "No hay detalles adicionales disponibles.",
+      "openInNewTab": "Abrir en nueva pestaña"
     }
   },
   "TrialExpired": {

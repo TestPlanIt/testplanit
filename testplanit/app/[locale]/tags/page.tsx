@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "~/lib/navigation";
-import { useFindManyTags, useCountTags, useFindManyProjects } from "~/lib/hooks";
+import {
+  useFindManyTags,
+  useCountTags,
+  useFindManyProjects,
+} from "~/lib/hooks";
 import { DataTable } from "@/components/tables/DataTable";
 import { getColumns } from "./columns";
 import { useDebounce } from "@/components/Debounce";
@@ -16,14 +20,16 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Boxes } from "lucide-react";
+import Image from "next/image";
+import { cn } from "~/utils";
 import {
   Card,
   CardHeader,
@@ -36,10 +42,6 @@ import {
   usePagination,
   PaginationProvider,
 } from "~/lib/contexts/PaginationContext";
-import { useAutoTagJob } from "@/components/auto-tag/useAutoTagJob";
-import { AutoTagProgress } from "@/components/auto-tag/AutoTagProgress";
-import { AutoTagReviewDialog } from "@/components/auto-tag/AutoTagReviewDialog";
-import type { EntityType } from "~/lib/llm/services/auto-tag/types";
 
 type PageSizeOption = number | "All";
 
@@ -74,62 +76,19 @@ function Tags() {
     direction: "asc",
   });
 
-  // ── AI Auto-Tag state ──────────────────────────────────────────────────
-  const [entityType, setEntityType] = useState<EntityType | "">("");
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
-  const [showAutoTagReview, setShowAutoTagReview] = useState(false);
-  const [popoverOpen, setPopoverOpen] = useState(false);
-
+  // ── AI Auto-Tag ──────────────────────────────────────────────────
+  const [autoTagOpen, setAutoTagOpen] = useState(false);
   const { data: projects } = useFindManyProjects({
-    select: { id: true, name: true },
-    orderBy: { name: "asc" },
+    where: { isDeleted: false },
+    include: {
+      projectLlmIntegrations: {
+        where: { isActive: true },
+        select: { id: true },
+        take: 1,
+      },
+    },
+    orderBy: [{ isCompleted: "asc" }, { name: "asc" }],
   });
-
-  const persistKey =
-    entityType && selectedProjectId
-      ? `autoTagJob:${entityType}:${selectedProjectId}`
-      : undefined;
-
-  const autoTag = useAutoTagJob(persistKey);
-
-  const handleAutoTagSubmit = useCallback(async () => {
-    if (!entityType || !selectedProjectId) return;
-
-    const projectIdNum = parseInt(selectedProjectId);
-    setPopoverOpen(false);
-
-    const modelMap: Record<EntityType, string> = {
-      repositoryCase: "repositoryCase",
-      testRun: "testRun",
-      session: "session",
-    };
-
-    try {
-      const res = await fetch(
-        `/api/model/${modelMap[entityType as EntityType]}/findMany`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            q: {
-              where: { projectId: projectIdNum },
-              select: { id: true },
-            },
-          }),
-        },
-      );
-
-      if (!res.ok) throw new Error("Failed to fetch entities");
-      const data = await res.json();
-      const entityIds = (data.data || []).map((e: { id: number }) => e.id);
-
-      if (entityIds.length === 0) return;
-
-      await autoTag.submit(entityIds, entityType as EntityType, projectIdNum);
-    } catch (err) {
-      console.error("Failed to start auto-tag:", err);
-    }
-  }, [entityType, selectedProjectId, autoTag]);
 
   // Valid column IDs for sorting
   const validColumnIds = useMemo(
@@ -218,7 +177,8 @@ function Tags() {
   // When sorting by count columns, we need to fetch ALL tags to sort properly
   // Otherwise we can paginate server-side
   const needsClientSideSorting = sortConfig.column !== "name";
-  const shouldPaginate = !needsClientSideSorting && typeof effectivePageSize === "number";
+  const shouldPaginate =
+    !needsClientSideSorting && typeof effectivePageSize === "number";
   const paginationArgs = {
     skip: shouldPaginate ? skip : undefined,
     take: shouldPaginate ? effectivePageSize : undefined,
@@ -275,7 +235,6 @@ function Tags() {
   >({});
 
   const [isLoadingCounts, setIsLoadingCounts] = useState(false);
-  const [refreshCounter, setRefreshCounter] = useState(0);
 
   useEffect(() => {
     if (!tags || tags.length === 0) {
@@ -321,7 +280,7 @@ function Tags() {
     };
 
     fetchCountsAndProjects();
-  }, [tags, refreshCounter]);
+  }, [tags]);
 
   const mappedTags = useMemo(() => {
     if (!tags) {
@@ -459,67 +418,81 @@ function Tags() {
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">
             <CardTitle>{t("enums.ApplicationArea.Tags")}</CardTitle>
-            <div>
-              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" data-testid="ai-auto-tag-button">
-                    <Sparkles className="h-4 w-4" />
-                    {t("autoTag.actions.aiAutoTag")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80" align="end">
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <h4 className="font-medium leading-none">{t("autoTag.actions.aiAutoTag")}</h4>
-                    </div>
-                    <div className="grid gap-2">
-                      <Select value={entityType} onValueChange={(v) => setEntityType(v as EntityType)}>
-                        <SelectTrigger data-testid="entity-type-select">
-                          <SelectValue placeholder={t("autoTag.actions.selectEntityType")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="repositoryCase">{t("autoTag.actions.entityTypes.repositoryCase")}</SelectItem>
-                          <SelectItem value="testRun">{t("autoTag.actions.entityTypes.testRun")}</SelectItem>
-                          <SelectItem value="session">{t("autoTag.actions.entityTypes.session")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                        <SelectTrigger data-testid="project-select">
-                          <SelectValue placeholder={t("autoTag.actions.selectProject")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(projects || []).map((p: { id: number; name: string }) => (
-                            <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        onClick={handleAutoTagSubmit}
-                        disabled={!entityType || !selectedProjectId || autoTag.isSubmitting}
-                        data-testid="start-tagging-button"
-                      >
-                        <Sparkles className="h-4 w-4" />
-                        {t("autoTag.actions.startTagging")}
-                      </Button>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
+            <Popover open={autoTagOpen} onOpenChange={setAutoTagOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="default"
+                  size="sm"
+                  data-testid="ai-auto-tag-button"
+                  disabled={!projects || projects.length === 0}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {t("autoTag.actions.aiAutoTag")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[400px] px-0 py-2" align="end">
+                <Command className="py-0.5">
+                  <CommandInput placeholder={t("common.fields.projects")} />
+                  <CommandEmpty>
+                    {t("common.ui.search.noProjectsFound")}
+                  </CommandEmpty>
+                  <CommandGroup className="max-h-[600px] overflow-y-auto">
+                    {(projects || []).map((p) => {
+                      const hasLlm =
+                        p.projectLlmIntegrations &&
+                        p.projectLlmIntegrations.length > 0;
+                      return (
+                        <CommandItem
+                          key={p.id}
+                          value={p.name}
+                          disabled={!hasLlm}
+                          onSelect={() => {
+                            if (!hasLlm) return;
+                            setAutoTagOpen(false);
+                            router.push(
+                              `/projects/tags/${p.id}?autoTag=true`
+                            );
+                          }}
+                        >
+                          {p.iconUrl ? (
+                            <Image
+                              src={p.iconUrl}
+                              alt={`${p.name} icon`}
+                              width={16}
+                              height={16}
+                              className="shrink-0 object-contain"
+                            />
+                          ) : (
+                            <Boxes className="h-4 w-4 shrink-0" />
+                          )}
+                          <span
+                            className={cn(
+                              "truncate",
+                              (p.isCompleted || !hasLlm) && "opacity-60"
+                            )}
+                          >
+                            {p.name}
+                          </span>
+                          {p.isCompleted && (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              {"(Complete)"}
+                            </span>
+                          )}
+                          {!hasLlm && (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              {t("autoTag.wizard.noLlmConfigured")}
+                            </span>
+                          )}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <CardDescription>{t("tags.description")}</CardDescription>
         </CardHeader>
-        {autoTag.status !== "idle" && (
-          <div className="px-6 pb-2">
-            <AutoTagProgress
-              status={autoTag.status}
-              progress={autoTag.progress}
-              error={autoTag.error}
-              onReview={() => setShowAutoTagReview(true)}
-              onCancel={autoTag.cancel}
-            />
-          </div>
-        )}
         <CardContent>
           <div className="flex flex-row items-start">
             <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
@@ -573,12 +546,6 @@ function Tags() {
           </div>
         </CardContent>
       </Card>
-      <AutoTagReviewDialog
-        open={showAutoTagReview}
-        onOpenChange={setShowAutoTagReview}
-        job={autoTag}
-        onApplied={() => setRefreshCounter((c) => c + 1)}
-      />
     </main>
   );
 }

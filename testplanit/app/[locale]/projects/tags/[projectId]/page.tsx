@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useRouter } from "~/lib/navigation";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -272,7 +272,20 @@ function TagList() {
   );
 
   // ── AI Auto-Tag ──────────────────────────────────────────────────────
+  const searchParams = useSearchParams();
   const [showAutoTagWizard, setShowAutoTagWizard] = useState(false);
+
+  // Auto-open wizard when navigated with ?autoTag=true, then clear the param
+  useEffect(() => {
+    if (searchParams.get("autoTag") === "true") {
+      setShowAutoTagWizard(true);
+      // Remove the search param so closing the dialog isn't blocked
+      const url = new URL(window.location.href);
+      url.searchParams.delete("autoTag");
+      window.history.replaceState({}, "", url.pathname + url.search);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const filteredTags = useMemo(() => {
     if (!tags) return [];
@@ -535,7 +548,7 @@ function TagList() {
             <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
               <CardTitle>{t("common.fields.tags")}</CardTitle>
               <Button
-                variant="outline"
+                variant="default"
                 onClick={() => setShowAutoTagWizard(true)}
                 disabled={
                   activeCaseIds.length +

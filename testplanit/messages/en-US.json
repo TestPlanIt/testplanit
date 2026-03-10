@@ -5846,9 +5846,9 @@
       "selectEntityType": "Select entity type",
       "selectProject": "Select a project",
       "entityTypes": {
-        "repositoryCase": "Test Cases",
-        "testRun": "Test Runs",
-        "session": "Sessions"
+        "repositoryCase": "{count, plural, one {Test Case} other {Test Cases}}",
+        "testRun": "{count, plural, one {Test Run} other {Test Runs}}",
+        "session": "{count, plural, one {Session} other {Sessions}}"
       }
     },
     "review": {
@@ -5888,7 +5888,14 @@
       "entityLine": "{count} {type}",
       "startAnalysis": "Start Analysis",
       "untaggedOnly": "Only analyze records without existing tags",
+      "noLlmConfigured": "(No LLM configured)",
       "analyzingDescription": "AI is analyzing your entities and generating tag suggestions. This may take a moment."
+    },
+    "entityDetail": {
+      "customFields": "Custom Fields",
+      "documentation": "Documentation",
+      "noDetails": "No additional details available.",
+      "openInNewTab": "Open in new tab"
     }
   },
   "TrialExpired": {

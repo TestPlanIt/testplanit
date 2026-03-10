@@ -152,6 +152,7 @@ export function DataTable<TData extends DataRow, TValue>({
   subRowColumns,
 }: DataTableProps<TData, TValue>) {
   const t = useTranslations("common.table");
+  const tLabels = useTranslations("common.labels");
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -552,44 +553,42 @@ export function DataTable<TData extends DataRow, TValue>({
 
   if (showSkeleton) {
     const skeletonHeaders =
-      table
-        .getHeaderGroups()[0]
-        ?.headers.filter((header) => {
-          // Filter headers using the same logic as visibleColumns
-          if (Object.keys(effectiveColumnVisibility).length > 0) {
-            // Always show columns that cannot be hidden
-            if (header.column.columnDef.enableHiding === false) {
-              return true;
-            }
-            return effectiveColumnVisibility[header.column.id] === true;
-          }
-
-          // If columnVisibility from parent is empty, we're still initializing
-          if (Object.keys(columnVisibility).length === 0) {
-            const column = header.column.columnDef;
-            // Always show columns that cannot be hidden
-            if (column.enableHiding === false) {
-              return true;
-            }
-            // Always show first and last columns
-            if (
-              header.column.id === finalColumns[0]?.id ||
-              header.column.id === finalColumns[finalColumns.length - 1]?.id
-            ) {
-              return true;
-            }
-            // Check meta visibility - if explicitly set to false, hide the column
-            const metaVisible = (column.meta as CustomColumnMeta)?.isVisible;
-            if (metaVisible === false) {
-              return false;
-            }
-            // Default to showing columns that don't have isVisible set
+      table.getHeaderGroups()[0]?.headers.filter((header) => {
+        // Filter headers using the same logic as visibleColumns
+        if (Object.keys(effectiveColumnVisibility).length > 0) {
+          // Always show columns that cannot be hidden
+          if (header.column.columnDef.enableHiding === false) {
             return true;
           }
+          return effectiveColumnVisibility[header.column.id] === true;
+        }
 
-          // Fallback to showing all headers
+        // If columnVisibility from parent is empty, we're still initializing
+        if (Object.keys(columnVisibility).length === 0) {
+          const column = header.column.columnDef;
+          // Always show columns that cannot be hidden
+          if (column.enableHiding === false) {
+            return true;
+          }
+          // Always show first and last columns
+          if (
+            header.column.id === finalColumns[0]?.id ||
+            header.column.id === finalColumns[finalColumns.length - 1]?.id
+          ) {
+            return true;
+          }
+          // Check meta visibility - if explicitly set to false, hide the column
+          const metaVisible = (column.meta as CustomColumnMeta)?.isVisible;
+          if (metaVisible === false) {
+            return false;
+          }
+          // Default to showing columns that don't have isVisible set
           return true;
-        }) ?? [];
+        }
+
+        // Fallback to showing all headers
+        return true;
+      }) ?? [];
 
     return (
       <div className="rounded-md border h-full">
@@ -951,6 +950,16 @@ export function DataTable<TData extends DataRow, TValue>({
               </React.Fragment>
             );
           })}
+          {table.getRowModel().rows.length === 0 && !isLoading && (
+            <TableRow>
+              <TableCell
+                colSpan={visibleColumns.length}
+                className="h-12 text-center text-muted-foreground"
+              >
+                {tLabels("noResults")}
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>

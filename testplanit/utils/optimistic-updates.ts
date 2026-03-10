@@ -198,10 +198,12 @@ export async function invalidateModelQueries(
   additionalKeys?: string[][]
 ) {
   // Invalidate the main model queries
-  await queryClient.invalidateQueries({ 
+  // ZenStack query keys: ["zenstack", modelName, operation, args, ...]
+  await queryClient.invalidateQueries({
     predicate: (query) => {
       const queryKey = query.queryKey as any[];
-      return queryKey[0]?.includes?.(modelName);
+      // Check both index 0 (non-ZenStack keys) and index 1 (ZenStack keys)
+      return queryKey[0]?.includes?.(modelName) || queryKey[1]?.includes?.(modelName);
     }
   });
 

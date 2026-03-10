@@ -3301,7 +3301,16 @@ init_prismaBase();
 // utils/extractTextFromJson.ts
 var extractTextFromNode = (node) => {
   if (!node) return "";
-  if (typeof node === "string") return node;
+  if (typeof node === "string") {
+    try {
+      const parsed = JSON.parse(node);
+      if (typeof parsed === "object" && parsed !== null) {
+        return extractTextFromNode(parsed);
+      }
+    } catch {
+    }
+    return node;
+  }
   if (node.text && typeof node.text === "string") return node.text;
   if (node.content && Array.isArray(node.content)) {
     return node.content.map(extractTextFromNode).join("");

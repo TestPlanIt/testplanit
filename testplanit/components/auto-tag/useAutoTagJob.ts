@@ -145,9 +145,20 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
         }
         const data = await res.json();
 
-        // Update progress
+        // Update progress only when values actually change to avoid
+        // unnecessary re-renders (poll fires every 2s with same values)
         if (data.progress) {
-          setProgress(data.progress);
+          setProgress((prev) => {
+            if (
+              prev &&
+              prev.analyzed === data.progress.analyzed &&
+              prev.total === data.progress.total &&
+              prev.finalizing === data.progress.finalizing
+            ) {
+              return prev; // same reference → no re-render
+            }
+            return data.progress;
+          });
         }
 
         // Map BullMQ state to our state type
@@ -401,22 +412,42 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
     return { existingCount, newCount };
   }, [suggestions, selections]);
 
-  return {
-    jobId,
-    status,
-    progress,
-    error,
-    suggestions,
-    selections,
-    edits,
-    submit,
-    toggleTag,
-    editTag,
-    apply,
-    cancel,
-    reset,
-    summary,
-    isApplying,
-    isSubmitting,
-  };
+  return useMemo(
+    () => ({
+      jobId,
+      status,
+      progress,
+      error,
+      suggestions,
+      selections,
+      edits,
+      submit,
+      toggleTag,
+      editTag,
+      apply,
+      cancel,
+      reset,
+      summary,
+      isApplying,
+      isSubmitting,
+    }),
+    [
+      jobId,
+      status,
+      progress,
+      error,
+      suggestions,
+      selections,
+      edits,
+      submit,
+      toggleTag,
+      editTag,
+      apply,
+      cancel,
+      reset,
+      summary,
+      isApplying,
+      isSubmitting,
+    ],
+  );
 }

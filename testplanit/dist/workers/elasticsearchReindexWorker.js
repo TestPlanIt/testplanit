@@ -435,7 +435,16 @@ async function bulkIndexRepositoryCases(cases, tenantId) {
 // utils/extractTextFromJson.ts
 var extractTextFromNode = (node) => {
   if (!node) return "";
-  if (typeof node === "string") return node;
+  if (typeof node === "string") {
+    try {
+      const parsed = JSON.parse(node);
+      if (typeof parsed === "object" && parsed !== null) {
+        return extractTextFromNode(parsed);
+      }
+    } catch {
+    }
+    return node;
+  }
   if (node.text && typeof node.text === "string") return node.text;
   if (node.content && Array.isArray(node.content)) {
     return node.content.map(extractTextFromNode).join("");
@@ -1850,10 +1859,12 @@ async function syncAllProjectsToElasticsearch(prismaClient2, tenantId) {
   }
   const bulkBody = [];
   for (const project of projects) {
+    const noteText = project.note ? extractTextFromNode(project.note) : "";
+    const docsText = project.docs ? extractTextFromNode(project.docs) : "";
     const searchableContent = [
       project.name,
-      project.note ? extractTextFromNode(project.note) : "",
-      project.docs ? extractTextFromNode(project.docs) : ""
+      noteText,
+      docsText
     ].join(" ");
     bulkBody.push({
       index: {
@@ -1865,8 +1876,8 @@ async function syncAllProjectsToElasticsearch(prismaClient2, tenantId) {
       id: project.id,
       name: project.name,
       iconUrl: project.iconUrl,
-      note: project.note,
-      docs: project.docs,
+      note: noteText,
+      docs: docsText,
       isDeleted: project.isDeleted,
       createdAt: project.createdAt,
       createdById: project.createdBy,

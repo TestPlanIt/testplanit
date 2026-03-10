@@ -5846,9 +5846,9 @@
       "selectEntityType": "Sélectionnez le type d'entité",
       "selectProject": "Sélectionnez un projet",
       "entityTypes": {
-        "repositoryCase": "Cas de test",
-        "testRun": "Essais",
-        "session": "Séances"
+        "repositoryCase": "{count, plural, one {Cas de test} other {Cas de test}}",
+        "testRun": "{count, plural, one {Exécution de test} other {Exécutions de test}}",
+        "session": "{count, plural, one {Session} other {Sessions}}"
       }
     },
     "review": {
@@ -5888,7 +5888,14 @@
       "entityLine": "{count} {type}",
       "startAnalysis": "Lancer l'analyse",
       "untaggedOnly": "Analyser uniquement les enregistrements sans balises existantes",
+      "noLlmConfigured": "(Aucun LLM configuré)",
       "analyzingDescription": "L'IA analyse vos entités et génère des suggestions de balises. Cela peut prendre quelques instants."
+    },
+    "entityDetail": {
+      "customFields": "Champs personnalisés",
+      "documentation": "Documentation",
+      "noDetails": "Aucun détail supplémentaire disponible.",
+      "openInNewTab": "Ouvrir dans un nouvel onglet"
     }
   },
   "TrialExpired": {
