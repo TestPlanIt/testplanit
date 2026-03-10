@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import {
   useFindFirstUserPreferences,
+  useFindManyProjects,
   useUpdateUserPreferences,
 } from "~/lib/hooks";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -336,7 +337,7 @@ const createTourSteps = (
           icon: null,
           title: t("help.tour.projectTour.settings.title"),
           content: t("help.tour.projectTour.settings.content"),
-          selector: "#settings-link",
+          selector: "#settings-integrations-link",
           side: "right",
           showControls: true,
           showSkip: true,
@@ -357,13 +358,17 @@ const createTourSteps = (
         "#project-tags-link": "tags",
         "#project-issues-link": "issues",
         "#reports-link": "reports",
-        "#settings-link": "settings",
+        "#settings-integrations-link": "settings",
       };
       for (let i = 0; i < steps.length - 1; i++) {
         const nextSelector = steps[i + 1].selector;
         const nextPage = nextSelector ? routeMap[nextSelector] : undefined;
         if (nextPage && projectId) {
-          steps[i].nextRoute = `/projects/${nextPage}/${projectId}`;
+          if (nextSelector === "#settings-integrations-link") {
+            steps[i].nextRoute = `/projects/settings/${projectId}/integrations`;
+          } else {
+            steps[i].nextRoute = `/projects/${nextPage}/${projectId}`;
+          }
         }
       }
 
@@ -838,7 +843,7 @@ const createTourSteps = (
           ? `/projects/issues/${projectId}?tour=demoProjectTour&step=18`
           : undefined,
         nextRoute: projectId
-          ? `/projects/settings/${projectId}?tour=demoProjectTour&step=20`
+          ? `/projects/settings/${projectId}/integrations?tour=demoProjectTour&step=20`
           : undefined,
       },
       // Step 20: Settings sidebar link (final step)
@@ -846,7 +851,7 @@ const createTourSteps = (
         icon: null,
         title: t("help.tour.demoProjectTour.settings.title"),
         content: t("help.tour.demoProjectTour.settings.content"),
-        selector: "#settings-link",
+        selector: "#settings-integrations-link",
         side: "right",
         showControls: true,
         showSkip: false,
@@ -942,6 +947,14 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
   // Hook to update user preferences
   const { mutateAsync: updateUserPreferences } = useUpdateUserPreferences();
 
+  // Find Demo Project (React Query deduplicates with Header's identical query)
+  const { data: allProjects = [] } = useFindManyProjects({
+    where: { isDeleted: false },
+    orderBy: [{ isCompleted: "asc" as const }, { name: "asc" as const }],
+    select: { id: true, name: true, iconUrl: true, isCompleted: true, isDeleted: true },
+  });
+  const demoProject = allProjects.find((p: any) => p.name === "Demo Project");
+
   // Get current projectId from URL params
   const projectId = params?.projectId as string;
 
@@ -1013,6 +1026,15 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
       // Clear active tour reference
       activeTourRef.current = null;
 
+      // If the welcome tour just finished and a Demo Project exists,
+      // automatically start the demo project tour
+      if (tourName === "mainTour" && demoProject) {
+        router.push(
+          `/projects/overview/${demoProject.id}?tour=demoProjectTour&step=0`
+        );
+        return;
+      }
+
       // Remove tour parameters from URL
       const newSearchParams = new URLSearchParams(searchParams);
       newSearchParams.delete("tour");
@@ -1030,6 +1052,7 @@ export function NextStepOnboarding({ children }: NextStepOnboardingProps) {
       session?.user?.id,
       userPreferences,
       updateUserPreferences,
+      demoProject,
     ]
   );
 
