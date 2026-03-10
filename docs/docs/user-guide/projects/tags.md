@@ -33,6 +33,27 @@ The table displays tags that are used by at least one item (Case, Session, or Ru
   - **Test Runs**: Shows the count of Test Runs _in this project_ that use this tag. Clicking the count might show a popover or list of associated runs.
 - **Pagination**: Standard pagination controls are available if the list of tags exceeds the page size.
 
+## Auto Tag
+
+The **AI Tag** button in the toolbar opens the Auto Tag wizard, which uses AI to automatically suggest relevant tags for your test cases, test runs, and sessions based on their content.
+
+### Quick Start
+
+1. Click the **AI Tag** button in the toolbar
+2. Select which entity types to analyze (test cases, test runs, sessions)
+3. Optionally toggle **Untagged Only** to focus on items that have no tags yet
+4. Click **Start Tagging** — the AI will analyze your items in batches
+5. Review the suggestions: click tags to toggle them on/off, double-click to edit names
+6. Click **Apply** to save the selected tags
+
+The AI will match suggestions against your existing project tags when possible, and create new tags only when no suitable match exists.
+
+:::tip
+Running Auto Tag with **Untagged Only** enabled is a great way to quickly organize items that were added without tags.
+:::
+
+For full details on configuration, best practices, and troubleshooting, see the [Auto Tag documentation](../llm-auto-tag.md).
+
 ## Tag Details
 
 Clicking on a specific tag name in the list will take you to the [Project Tag Details](./tag-details.md) page, which shows exactly which Test Cases, Sessions, and Test Runs within this project are associated with that tag.

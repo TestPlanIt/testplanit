@@ -26,6 +26,12 @@ The main part of the page is a table listing the active tags with the following 
 - **Sessions**: Displays the count of active Test Sessions currently associated with this Tag.
 - **Projects**: Displays the count of unique projects where this Tag is used (across both active Test Cases and Sessions).
 
+## Auto Tag
+
+The **AI Tag** button in the toolbar lets you select a project and then opens the Auto Tag wizard for that project, allowing you to analyze and tag items within it.
+
+For full details on using Auto Tag, see the [Auto Tag documentation](./llm-auto-tag.md).
+
 ## Tag Detail Page
 
 Clicking on a tag's name in the **Name** column navigates you to a dedicated page for that tag (`/tags/[tagId]`). This detail page shows:
