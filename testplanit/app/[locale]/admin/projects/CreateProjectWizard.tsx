@@ -110,6 +110,7 @@ import {
   Check,
   Milestone,
   Star,
+  ScrollText,
 } from "lucide-react";
 
 import {
@@ -195,6 +196,7 @@ const FormSchema = z.object({
   // Step 4: Integrations
   selectedIntegration: z.number().nullable(),
   selectedLlmIntegration: z.number().nullable(),
+  quickScriptEnabled: z.boolean(),
 
   // Step 5: Permissions
   assignedUsers: z.array(z.string()).optional(),
@@ -458,6 +460,7 @@ export function CreateProjectWizard({
       selectedMilestoneTypes: allMilestoneTypeIds, // Select ALL milestone types
       selectedIntegration: null,
       selectedLlmIntegration: null,
+      quickScriptEnabled: true,
       assignedUsers: defaultUserId ? [defaultUserId] : [],
       userPermissions: initialUserPermissions,
       groupPermissions: initialGroupPermissions,
@@ -494,6 +497,7 @@ export function CreateProjectWizard({
   const selectedMilestoneTypes = watch("selectedMilestoneTypes");
   const selectedIntegration = watch("selectedIntegration");
   const selectedLlmIntegration = watch("selectedLlmIntegration");
+  const quickScriptEnabled = watch("quickScriptEnabled");
 
   // Reset form when dialog opens/closes
   useEffect(() => {
@@ -751,6 +755,7 @@ export function CreateProjectWizard({
         },
         ...(data.iconUrl && { iconUrl: data.iconUrl }),
         defaultAccessType: data.defaultAccessType,
+        quickScriptEnabled: data.quickScriptEnabled,
         ...(defaultRoleIdToSend !== null && {
           defaultRole: {
             connect: { id: defaultRoleIdToSend },
@@ -1641,6 +1646,28 @@ export function CreateProjectWizard({
 
         return (
           <div className="space-y-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <ScrollText className="h-4 w-4" />
+                      {t("projects.settings.quickScript.enableLabel")}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {t("projects.settings.quickScript.enableDescription")}
+                    </p>
+                  </div>
+                  <Switch
+                    checked={quickScriptEnabled}
+                    onCheckedChange={(checked) =>
+                      setValue("quickScriptEnabled", checked)
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
             {!hasIntegrations ? (
               <Alert>
                 <AlertDescription className="flex items-center gap-1">
