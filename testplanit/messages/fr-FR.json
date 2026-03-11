@@ -5856,7 +5856,7 @@
       "description": "Cliquez sur les étiquettes pour les autoriser ou les désactiver. Double-cliquez pour modifier le nom d'une étiquette.",
       "selectEntity": "Sélectionnez une entité pour afficher les suggestions de balises.",
       "noTagsSelected": "Aucune étiquette sélectionnée",
-      "footerSummary": "{existingCount, plural, one {# balise existante} other {# balises existantes}}, {newCount, plural, one {# nouvelle balise} other {# nouvelles balises}} seront créées",
+      "footerSummary": "{assignCount, plural, one {# étiquette} other {# étiquettes}} seront attribuées, {newCount, plural, one {# nouvelle étiquette} other {# nouvelles étiquettes}} seront créées",
       "applying": "Candidature...",
       "applySuccess": "{tagCount, plural, one {# étiquette} other {# étiquettes}} appliquées à {entityCount, plural, one {# entité} other {# entités}}",
       "applySuccessNewTags": "{tagCount, plural, one {# étiquette} other {# étiquettes}} appliquées à {entityCount, plural, one {# entité} other {# entités}}, {newCount, plural, one {# nouvelle étiquette} other {# nouvelles étiquettes}} créées",

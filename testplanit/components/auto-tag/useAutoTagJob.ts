@@ -59,6 +59,9 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
   const [isApplying, setIsApplying] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Set of existing project tag names (captured when suggestions arrive)
+  const existingTagNamesRef = useRef<Set<string>>(new Set());
+
   // Track polling interval for cleanup
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Track submit abort controller for cancellation during submit
@@ -169,6 +172,14 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
 
           if (data.result?.suggestions) {
             const sug = data.result.suggestions as AutoTagSuggestionEntity[];
+            // Capture existing tag names before any edits
+            const existingNames = new Set<string>();
+            for (const entity of sug) {
+              for (const tag of entity.tags) {
+                if (tag.isExisting) existingNames.add(tag.tagName);
+              }
+            }
+            existingTagNamesRef.current = existingNames;
             setSuggestions(sug);
             setSelections(initSelections(sug));
           }
@@ -257,6 +268,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
       });
 
       // Update suggestions state so UI reflects the edit
+      const matchesExisting = existingTagNamesRef.current.has(newName);
       setSuggestions((prev) => {
         if (!prev) return prev;
         return prev.map((entity) => {
@@ -264,7 +276,14 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
           return {
             ...entity,
             tags: entity.tags.map((t) =>
-              t.tagName === oldName ? { ...t, tagName: newName } : t,
+              t.tagName === oldName
+                ? {
+                    ...t,
+                    tagName: newName,
+                    isExisting: matchesExisting,
+                    matchedExistingTag: matchesExisting ? newName : undefined,
+                  }
+                : t,
             ),
           };
         });
@@ -389,10 +408,10 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
   // ── Summary (computed) ──────────────────────────────────────────────────
 
   const summary = useMemo(() => {
-    if (!suggestions) return { existingCount: 0, newCount: 0 };
+    if (!suggestions) return { assignCount: 0, newCount: 0 };
 
-    let existingCount = 0;
-    let newCount = 0;
+    let assignCount = 0;
+    const newTagNames = new Set<string>();
 
     for (const entity of suggestions) {
       const accepted = selections.get(entity.entityId);
@@ -400,16 +419,14 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
 
       for (const tag of entity.tags) {
         if (!accepted.has(tag.tagName)) continue;
-
-        if (tag.isExisting) {
-          existingCount++;
-        } else {
-          newCount++;
+        assignCount++;
+        if (!tag.isExisting) {
+          newTagNames.add(tag.tagName);
         }
       }
     }
 
-    return { existingCount, newCount };
+    return { assignCount, newCount: newTagNames.size };
   }, [suggestions, selections]);
 
   return useMemo(

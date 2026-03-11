@@ -33,13 +33,31 @@ export function TagChip({
   const [editValue, setEditValue] = useState(tagName);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (clickTimerRef.current) return; // ignore second click of double-click
+      clickTimerRef.current = setTimeout(() => {
+        clickTimerRef.current = null;
+        onToggle();
+      }, 200);
+    },
+    [onToggle],
+  );
+
   const handleDoubleClick = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
+      if (clickTimerRef.current) {
+        clearTimeout(clickTimerRef.current);
+        clickTimerRef.current = null;
+      }
       setEditValue(tagName);
       setIsEditing(true);
-      // Auto-focus happens via autoFocus prop
     },
     [tagName],
   );
@@ -99,7 +117,7 @@ export function TagChip({
               !isExisting && "outline-2 outline-offset-1 outline-primary/50",
               !isAccepted && "opacity-50",
             )}
-            onClick={onToggle}
+            onClick={handleClick}
             onDoubleClick={handleDoubleClick}
           >
             <Tag className="mr-1 h-3 w-3" />

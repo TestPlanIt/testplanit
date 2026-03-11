@@ -5,7 +5,7 @@ import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useRouter } from "~/lib/navigation";
 import { useParams, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Sparkles } from "lucide-react";
+import { Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
 import {
@@ -558,7 +558,7 @@ function TagList() {
                 }
                 data-testid="ai-auto-tag-button"
               >
-                <Sparkles className="h-4 w-4" />
+                <Tags className="h-4 w-4" />
                 {t("autoTag.actions.aiAutoTag")}
               </Button>
             </div>

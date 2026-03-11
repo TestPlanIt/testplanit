@@ -22,9 +22,13 @@ Auto Tag helps you:
 
 ## Using Auto Tag
 
-Auto Tag is accessed from the **Project Tags** page. Click the **AI Tag** button in the toolbar to open the Auto Tag wizard.
+Auto Tag can be launched from two places:
 
-### Step 1: Configure
+### From the Project Tags Page
+
+Click the **Auto-Tag** button in the toolbar to open the Auto Tag wizard.
+
+#### Step 1: Configure
 
 Choose what to analyze:
 
@@ -32,6 +36,10 @@ Choose what to analyze:
 - **Untagged Only**: Toggle this option to limit analysis to items that currently have no tags. This is useful for catching items that were missed during manual tagging.
 
 Click **Start Tagging** to begin the analysis.
+
+### From the Project Repository
+
+Select one or more test cases using the checkboxes, then click the **Auto-Tag** button in the bulk action bar. This skips the configuration step and immediately begins analyzing the selected test cases.
 
 ### Step 2: Analyzing
 

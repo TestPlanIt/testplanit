@@ -63,7 +63,7 @@ export function AutoTagReviewDialog({
     (e) => e.entityId === selectedEntityId,
   );
 
-  const totalSelected = job.summary.existingCount + job.summary.newCount;
+  const totalSelected = job.summary.assignCount;
 
   const handleApply = useCallback(async () => {
     try {
@@ -76,14 +76,14 @@ export function AutoTagReviewDialog({
       }
       await invalidateModelQueries(queryClient, "Tags");
 
-      const { existingCount, newCount } = job.summary;
+      const { assignCount, newCount } = job.summary;
       const entityCount = new Set(
         job.suggestions
           ?.filter((e) => (job.selections.get(e.entityId)?.size ?? 0) > 0)
           .map((e) => e.entityId),
       ).size;
 
-      const tagCount = existingCount + newCount;
+      const tagCount = assignCount;
       toast.success(
         newCount > 0
           ? t("applySuccessNewTags", { tagCount, entityCount, newCount })
@@ -143,7 +143,7 @@ export function AutoTagReviewDialog({
         <DialogFooter className="flex items-center justify-between sm:justify-between">
           <p className="text-sm text-muted-foreground">
             {totalSelected > 0
-              ? t("footerSummary", { existingCount: job.summary.existingCount, newCount: job.summary.newCount })
+              ? t("footerSummary", { assignCount: job.summary.assignCount, newCount: job.summary.newCount })
               : t("noTagsSelected")}
           </p>
           <div className="flex gap-2">

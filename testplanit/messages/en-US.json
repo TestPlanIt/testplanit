@@ -5856,7 +5856,7 @@
       "description": "Click tags to toggle acceptance. Double-click to edit a tag name.",
       "selectEntity": "Select an entity to view tag suggestions.",
       "noTagsSelected": "No tags selected",
-      "footerSummary": "{existingCount, plural, one {# existing tag} other {# existing tags}}, {newCount, plural, one {# new tag} other {# new tags}} will be created",
+      "footerSummary": "{assignCount, plural, one {# tag} other {# tags}} will be assigned, {newCount, plural, one {# new tag} other {# new tags}} will be created",
       "applying": "Applying...",
       "applySuccess": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}",
       "applySuccessNewTags": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}, {newCount, plural, one {# new tag} other {# new tags}} created",

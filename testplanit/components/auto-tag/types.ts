@@ -64,7 +64,7 @@ export interface UseAutoTagJobReturn {
   reset: () => void;
 
   // Computed
-  summary: { existingCount: number; newCount: number };
+  summary: { assignCount: number; newCount: number };
   isApplying: boolean;
   isSubmitting: boolean;
 }

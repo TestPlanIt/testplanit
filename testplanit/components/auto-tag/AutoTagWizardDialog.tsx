@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import {
   Sparkles,
+  Tags,
   Loader2,
   XCircle,
   CheckCircle2,
@@ -160,6 +161,8 @@ interface AutoTagWizardDialogProps {
   untaggedCaseIds?: number[];
   untaggedSessionIds?: number[];
   untaggedRunIds?: number[];
+  /** Skip the configure step and immediately start analysis */
+  autoStart?: boolean;
 }
 
 export function AutoTagWizardDialog({
@@ -172,6 +175,7 @@ export function AutoTagWizardDialog({
   untaggedCaseIds,
   untaggedSessionIds,
   untaggedRunIds,
+  autoStart,
 }: AutoTagWizardDialogProps) {
   const t = useTranslations("autoTag");
   const tCommon = useTranslations("common");
@@ -278,10 +282,10 @@ export function AutoTagWizardDialog({
       setStep("analyzing");
     } else if (allSuggestions.length > 0) {
       setStep("review");
-    } else {
+    } else if (!autoStart) {
       setStep("configure");
     }
-  }, [allSuggestions.length, anyActive, open]);
+  }, [allSuggestions.length, anyActive, open, autoStart]);
 
   // ── Actions ────────────────────────────────────────────────────────
 
@@ -318,6 +322,24 @@ export function AutoTagWizardDialog({
     autoTagRuns,
   ]);
 
+  // Auto-start analysis when dialog opens with autoStart (skip configure step)
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (
+      open &&
+      autoStart &&
+      !anyActive &&
+      allSuggestions.length === 0 &&
+      !autoStartedRef.current
+    ) {
+      autoStartedRef.current = true;
+      handleStart();
+    }
+    if (!open) {
+      autoStartedRef.current = false;
+    }
+  }, [open, autoStart, anyActive, allSuggestions.length, handleStart]);
+
   const handleCancel = useCallback(async () => {
     await Promise.all(allJobs.map((j) => j.cancel()));
     setStep("configure");
@@ -349,16 +371,16 @@ export function AutoTagWizardDialog({
   }, [allJobs]);
 
   const mergedSummary = useMemo(() => {
-    let existingCount = 0;
+    let assignCount = 0;
     let newCount = 0;
     for (const job of allJobs) {
-      existingCount += job.summary.existingCount;
+      assignCount += job.summary.assignCount;
       newCount += job.summary.newCount;
     }
-    return { existingCount, newCount };
+    return { assignCount, newCount };
   }, [allJobs]);
 
-  const totalSelected = mergedSummary.existingCount + mergedSummary.newCount;
+  const totalSelected = mergedSummary.assignCount;
 
   // Find which job owns a given entity for toggle/edit/apply
   const findJobForEntity = useCallback(
@@ -616,13 +638,13 @@ export function AutoTagWizardDialog({
         invalidateModelQueries(queryClient, "Tags"),
       ]);
 
-      const { existingCount, newCount } = mergedSummary;
+      const { assignCount, newCount } = mergedSummary;
       const entityCount = new Set(
         allSuggestions
           .filter((e) => (mergedSelections.get(e.entityId)?.size ?? 0) > 0)
           .map((e) => e.entityId)
       ).size;
-      const tagCount = existingCount + newCount;
+      const tagCount = assignCount;
 
       toast.success(
         newCount > 0
@@ -666,7 +688,7 @@ export function AutoTagWizardDialog({
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5" />
+                <Tags className="h-5 w-5" />
                 {t("actions.aiAutoTag")}
               </DialogTitle>
               <DialogDescription>{t("wizard.description")}</DialogDescription>
@@ -751,7 +773,7 @@ export function AutoTagWizardDialog({
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5" />
+                <Tags className="h-5 w-5" />
                 {t("actions.aiAutoTag")}
               </DialogTitle>
               <DialogDescription>
@@ -1002,7 +1024,7 @@ export function AutoTagWizardDialog({
                 <p className="text-xs text-muted-foreground">
                   {totalSelected > 0
                     ? t("review.footerSummary", {
-                        existingCount: mergedSummary.existingCount,
+                        assignCount: mergedSummary.assignCount,
                         newCount: mergedSummary.newCount,
                       })
                     : t("review.noTagsSelected")}

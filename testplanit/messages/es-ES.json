@@ -5856,7 +5856,7 @@
       "description": "Haga clic en las etiquetas para activar o desactivar la aceptación. Haga doble clic para editar el nombre de una etiqueta.",
       "selectEntity": "Seleccione una entidad para ver sugerencias de etiquetas.",
       "noTagsSelected": "No hay etiquetas seleccionadas",
-      "footerSummary": "{existingCount, plural, one {# etiqueta existente} other {# etiquetas existentes}}, {newCount, plural, one {# etiqueta nueva} other {# se crearán nuevas etiquetas}}",
+      "footerSummary": "{assignCount, plural, one {# etiqueta} other {# etiquetas}} serán asignadas, {newCount, plural, one {# nueva etiqueta} other {# nuevas etiquetas}} serán creadas",
       "applying": "Aplicando...",
       "applySuccess": "{tagCount, plural, one {# etiqueta} other {# etiquetas}} aplicadas a {entityCount, plural, one {# entidad} other {# entidades}}",
       "applySuccessNewTags": "{tagCount, plural, one {# etiqueta} other {# etiquetas}} aplicadas a {entityCount, plural, one {# entidad} other {# entidades}}, {newCount, plural, one {# nueva etiqueta} other {# nuevas etiquetas}} creadas",

@@ -21,6 +21,7 @@ import {
   useFindManyRepositoryFolders,
   useFindFirstTestRuns,
   useFindUniqueProjects,
+  useFindManyProjectLlmIntegration,
 } from "~/lib/hooks";
 import {
   useFindManyRepositoryCasesFiltered,
@@ -47,10 +48,17 @@ import { usePagination } from "~/lib/contexts/PaginationContext";
 import { Button } from "@/components/ui/button";
 import { BulkEditModal } from "./BulkEditModal";
 import { AddResultModal } from "./AddResultModal";
-import { PenSquare, PlayCircle, Upload, ScrollText } from "lucide-react";
+import {
+  PenSquare,
+  PlayCircle,
+  Upload,
+  ScrollText,
+  Tags,
+} from "lucide-react";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { ExportModal, ExportOptions } from "./ExportModal";
 import { QuickScriptModal } from "./QuickScriptModal";
+import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
 import { useExportData, TFunction } from "~/hooks/useExportData";
 import { fetchAllCasesForExport as fetchAllCasesAction } from "~/app/actions/exportActions";
 import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
@@ -254,6 +262,12 @@ export default function Cases({
   );
   const quickScriptEnabled = projectSettings?.quickScriptEnabled ?? false;
 
+  // Check if project has an active LLM integration (for auto-tag)
+  const { data: projectLlmIntegrations } = useFindManyProjectLlmIntegration({
+    where: { projectId },
+  }, { enabled: isValidProjectId });
+  const hasLlmIntegration = projectLlmIntegrations && projectLlmIntegrations.length > 0;
+
   // Lightweight project-wide template field discovery
   const { data: projectTemplates, isLoading: isTemplatesLoading } =
     useFindManyTemplates(
@@ -342,6 +356,7 @@ export default function Cases({
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isQuickScriptModalOpen, setIsQuickScriptModalOpen] = useState(false);
   const [quickScriptCaseIds, setQuickScriptCaseIds] = useState<number[] | null>(null);
+  const [isAutoTagOpen, setIsAutoTagOpen] = useState(false);
 
   // Reset auto-select guard when switching away from folders view
   useEffect(() => {
@@ -3303,6 +3318,25 @@ export default function Cases({
                     </span>
                   </Button>
                 )}
+              {canAddEdit &&
+                hasLlmIntegration &&
+                !isSelectionMode &&
+                !isRunMode &&
+                selectedCaseIdsForBulkEdit.length > 0 && (
+                  <Button
+                    onClick={() => setIsAutoTagOpen(true)}
+                    variant="outline"
+                    data-testid="auto-tag-cases-button"
+                    className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
+                  >
+                    <Tags className="w-4 h-4 shrink-0" />
+                    <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                      {t("autoTag.actions.aiAutoTag")} {"("}
+                      {selectedCaseIdsForBulkEdit.length}
+                      {")"}
+                    </span>
+                  </Button>
+                )}
               {!isRunMode &&
                 !isSelectionMode &&
                 canAddEditRun &&
@@ -3496,6 +3530,19 @@ export default function Cases({
           }}
           selectedCaseIds={quickScriptCaseIds ?? selectedCaseIdsForBulkEdit}
           projectId={projectId}
+        />
+      )}
+
+      {/* Auto-Tag Dialog */}
+      {isValidProjectId && (
+        <AutoTagWizardDialog
+          open={isAutoTagOpen}
+          onOpenChange={setIsAutoTagOpen}
+          projectId={String(projectId)}
+          caseIds={selectedCaseIdsForBulkEdit}
+          sessionIds={[]}
+          runIds={[]}
+          autoStart
         />
       )}
 

@@ -27,7 +27,7 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Boxes } from "lucide-react";
+import { TagsIcon, Boxes } from "lucide-react";
 import Image from "next/image";
 import { cn } from "~/utils";
 import {
@@ -426,7 +426,7 @@ function Tags() {
                   data-testid="ai-auto-tag-button"
                   disabled={!projects || projects.length === 0}
                 >
-                  <Sparkles className="h-4 w-4" />
+                  <TagsIcon className="h-4 w-4" />
                   {t("autoTag.actions.aiAutoTag")}
                 </Button>
               </PopoverTrigger>
@@ -449,9 +449,7 @@ function Tags() {
                           onSelect={() => {
                             if (!hasLlm) return;
                             setAutoTagOpen(false);
-                            router.push(
-                              `/projects/tags/${p.id}?autoTag=true`
-                            );
+                            router.push(`/projects/tags/${p.id}?autoTag=true`);
                           }}
                         >
                           {p.iconUrl ? (
