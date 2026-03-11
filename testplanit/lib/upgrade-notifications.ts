@@ -197,6 +197,19 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>Manage templates at <strong>Admin → QuickScript Templates</strong>. See the <a href="https://docs.testplanit.com/user-guide/projects/quickscript" target="_blank">documentation</a> or watch the <a href="https://www.youtube.com/watch?v=ZUByrgED-ao" target="_blank">demo video</a>.</p>
     `,
   },
+  "0.16.0": {
+    title: "New Feature: Auto Tag",
+    message: `
+      <p>Automatically suggest and apply tags to your test cases using AI — keeping your repository organized without the manual effort.</p>
+      <ul>
+        <li>Access Auto Tag from the <strong>Tags</strong> page (top menu), <strong>Project → Tags</strong>, or by selecting cases in the <strong>Repository</strong></li>
+        <li>AI analyzes your content to propose relevant tags</li>
+        <li>Review suggestions before applying — accept all or pick individual tags</li>
+        <li>Reuses your existing tags when they fit, and creates new ones when needed</li>
+      </ul>
+      <p>Requires an LLM integration configured in your project settings.</p>
+    `,
+  },
 };
 
 /**
