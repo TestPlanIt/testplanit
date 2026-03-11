@@ -630,16 +630,14 @@ export function QuickScriptModal({
           },
         ];
       } else {
-        results = cases.map(
-          (caseData: QuickScriptCaseData, index: number) => ({
-            code: [header, renderedCases[index], footer]
-              .filter(Boolean)
-              .join("\n\n"),
-            generatedBy: "template" as const,
-            caseId: caseData.id,
-            caseName: caseData.name,
-          })
-        );
+        results = cases.map((caseData: QuickScriptCaseData, index: number) => ({
+          code: [header, renderedCases[index], footer]
+            .filter(Boolean)
+            .join("\n\n"),
+          generatedBy: "template" as const,
+          caseId: caseData.id,
+          caseName: caseData.name,
+        }));
       }
 
       setPreviewResults(results);
@@ -673,14 +671,13 @@ export function QuickScriptModal({
   }, [
     effectiveTemplateId,
     selectedCaseIds,
-    projectId,
     templates,
-    outputMode,
-    onClose,
     aiEnabled,
-    previewResults.length,
-    t,
+    projectId,
+    outputMode,
+    tAi,
     tExportModal,
+    previewResults.length,
   ]);
 
   return (

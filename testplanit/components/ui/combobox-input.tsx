@@ -85,6 +85,7 @@ export function ComboboxInput({
           ref={triggerRef}
           type="button"
           role="combobox"
+          aria-controls={testId ? `${testId}-listbox` : undefined}
           aria-expanded={open}
           disabled={disabled}
           data-testid={testId}
