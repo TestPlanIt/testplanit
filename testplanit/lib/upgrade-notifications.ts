@@ -200,10 +200,10 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
   "0.16.0": {
     title: "New Feature: Auto Tag",
     message: `
-      <p>Automatically suggest and apply tags to your test cases using AI — keeping your repository organized without the manual effort.</p>
+      <p>Automatically suggest and apply tags to your test cases, test runs, and sessions using AI — keeping your repository organized without the manual effort.</p>
       <ul>
         <li>Access Auto Tag from the <strong>Tags</strong> page (top menu), <strong>Project → Tags</strong>, or by selecting cases in the <strong>Repository</strong></li>
-        <li>AI analyzes your content to propose relevant tags</li>
+        <li>AI analyzes test case steps and custom fields, run notes and docs, and session mission and notes</li>
         <li>Review suggestions before applying — accept all or pick individual tags</li>
         <li>Reuses your existing tags when they fit, and creates new ones when needed</li>
       </ul>
