@@ -22,7 +22,7 @@ jobs:
       NODE_OPTIONS: "--max-old-space-size=12288"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
