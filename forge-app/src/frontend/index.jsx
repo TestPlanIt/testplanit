@@ -152,7 +152,7 @@ const App = () => {
   if (loading) {
     return (
       <Box xcss={containerStyles}>
-        <Heading size="medium">🚀 TestPlanIt v3.8.0</Heading>
+        <Heading as="h3">🚀 TestPlanIt v3.8.0</Heading>
         <Stack direction="horizontal" alignItems="center" space="space.100">
           <Spinner size="small" />
           <Text size="small" color="color.text.subtle">Loading test information...</Text>
@@ -164,7 +164,7 @@ const App = () => {
   if (error) {
     return (
       <Box xcss={containerStyles}>
-        <Heading size="medium">🚀 TestPlanIt v3.8.0</Heading>
+        <Heading as="h3">🚀 TestPlanIt v3.8.0</Heading>
         <Text size="small" color="color.text.danger">Error: {error}</Text>
         <Button size="small" appearance="primary" onClick={openTestPlanIt}>
           Open TestPlanIt
@@ -179,7 +179,7 @@ const App = () => {
   if (!hasTestCases && !hasTestRuns) {
     return (
       <Box xcss={containerStyles}>
-        <Heading size="medium">🚀 TestPlanIt v3.8.0</Heading>
+        <Heading as="h3">🚀 TestPlanIt v3.8.0</Heading>
         <Box xcss={emptyStateStyles}>
           <Text size="small" color="color.text.subtle">No tests linked to this issue yet</Text>
           <Button size="small" appearance="primary" onClick={openTestPlanIt}>
@@ -192,7 +192,7 @@ const App = () => {
 
   return (
     <Box xcss={containerStyles}>
-      <Heading size="medium" color="color.text">TestPlanIt</Heading>
+      <Heading as="h3">TestPlanIt</Heading>
       <Text size="small" color="color.text.subtle">Linked test cases and runs</Text>
 
       {hasTestCases && (
@@ -260,7 +260,7 @@ const App = () => {
       )}
 
       <Box xcss={footerStyles}>
-        <Button size="small" appearance="link" onClick={openTestPlanIt}>
+        <Button size="small" appearance="subtle" onClick={openTestPlanIt}>
           Open TestPlanIt →
         </Button>
       </Box>

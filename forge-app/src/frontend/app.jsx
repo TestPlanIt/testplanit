@@ -979,7 +979,7 @@ const App = () => {
               }}
               placeholder="https://demo.testplanit.com"
               disabled={configLoading}
-              className="w-full px-3 py-2 border border-border rounded text-xs focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground disabled:opacity-50"
+              className="w-full px-3 py-2 border border-border rounded text-xs focus:outline-hidden focus:ring-2 focus:ring-primary bg-background text-foreground disabled:opacity-50"
             />
             <p className="text-xs text-muted-foreground mt-1">
               Must be a *.testplanit.com subdomain

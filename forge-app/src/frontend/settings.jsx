@@ -145,7 +145,7 @@ const Settings = () => {
                 setError(null);
               }}
               placeholder="https://demo.testplanit.com"
-              className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
+              className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-hidden focus:ring-2 focus:ring-primary bg-background text-foreground"
             />
             <p className="text-xs text-muted-foreground mt-2">
               Enter the full URL of your TestPlanIt instance (e.g., https://demo.testplanit.com)
@@ -164,7 +164,7 @@ const Settings = () => {
                 setError(null);
               }}
               placeholder="Enter your Forge integration API key"
-              className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
+              className="w-full px-3 py-2 border border-border rounded-md text-sm focus:outline-hidden focus:ring-2 focus:ring-primary bg-background text-foreground"
             />
             <p className="text-xs text-muted-foreground mt-2">
               Generate an API key from your TestPlanIt instance under Admin &gt; Integrations &gt; Jira &gt; Forge API Key.
