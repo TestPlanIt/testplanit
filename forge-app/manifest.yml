@@ -37,11 +37,11 @@ permissions:
   external:
     fetch:
       backend:
-        - '*.testplanit.com'
-        - testplanit.com
+        - address: '*.testplanit.com'
+        - address: testplanit.com
       client:
-        - '*.testplanit.com'
-        - testplanit.com
+        - address: '*.testplanit.com'
+        - address: testplanit.com
     images:
-      - '*.testplanit.com'
-      - testplanit.com
+      - address: '*.testplanit.com'
+      - address: testplanit.com

@@ -79,6 +79,8 @@
             "ajv": ">=8.18.0",
             "eslint>ajv": "^6.14.0",
             "@eslint/eslintrc>ajv": "^6.14.0",
+            "schema-utils@2>ajv": "^6.14.0",
+            "schema-utils@2>ajv-keywords": "^3.5.2",
             "schema-utils@3>ajv": "^6.14.0",
             "schema-utils@3>ajv-keywords": "^3.5.2",
             "svgo": ">=3.3.3",

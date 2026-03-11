@@ -121,34 +121,58 @@ resolver.define('saveSettings', async ({ payload }) => {
 
 resolver.define('testConnection', async ({ payload }) => {
   try {
-    const { instanceUrl } = payload;
+    const { instanceUrl, apiKey } = payload;
 
     if (!instanceUrl) {
       return { success: false, message: 'Instance URL is required' };
     }
 
-    const cleanUrl = instanceUrl.replace(/\/+$/, '');
-    const testUrl = `${cleanUrl}/version.json`;
+    if (!apiKey) {
+      return { success: false, message: 'API Key is required' };
+    }
 
-    const response = await api.fetch(testUrl, {
+    const cleanUrl = instanceUrl.replace(/\/+$/, '');
+
+    // First check the instance is reachable
+    const versionUrl = `${cleanUrl}/version.json`;
+    const versionResponse = await api.fetch(versionUrl, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!versionResponse.ok) {
+      return {
+        success: false,
+        message: `Could not reach TestPlanIt instance (status ${versionResponse.status}). Please check the URL.`
+      };
+    }
+
+    const versionData = await versionResponse.json();
+
+    // Validate the API key using the existing test-info endpoint with a dummy issue key.
+    // A 401 means bad key; 200 or 400 (missing params) means the key is valid.
+    const testUrl = `${cleanUrl}/api/integrations/jira/test-info?issueKey=TEST-0`;
+    const testResponse = await api.fetch(testUrl, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-Forge-Api-Key': apiKey
       }
     });
 
-    if (response.ok) {
-      const versionData = await response.json();
-      return {
-        success: true,
-        message: `Successfully connected to TestPlanIt ${versionData.version || 'instance'}`
-      };
-    } else {
+    if (testResponse.status === 401 || testResponse.status === 403) {
       return {
         success: false,
-        message: `Connection failed with status ${response.status}. Please check the URL and try again.`
+        message: 'Instance is reachable but the API key is invalid or expired. Please check your key in Admin > Integrations > Jira.'
       };
     }
+
+    // Any other response (200, 400, etc.) means the key was accepted
+    return {
+      success: true,
+      message: `Successfully connected to TestPlanIt ${versionData.version || 'instance'} — API key is valid.`
+    };
   } catch (error) {
     return {
       success: false,

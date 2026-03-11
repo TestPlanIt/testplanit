@@ -67,7 +67,7 @@ const Settings = () => {
     setTestStatus(null);
 
     try {
-      const response = await invoke('testConnection', { instanceUrl });
+      const response = await invoke('testConnection', { instanceUrl, apiKey });
       setTestStatus(response);
     } catch (err) {
       setTestStatus({
@@ -174,7 +174,7 @@ const Settings = () => {
           <div className="flex gap-3 mb-4">
             <button
               onClick={testConnection}
-              disabled={testing || !instanceUrl}
+              disabled={testing || !instanceUrl || !apiKey}
               className="flex items-center gap-2 px-4 py-2 border border-border rounded-md text-sm font-medium hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {testing ? (
