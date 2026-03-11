@@ -145,6 +145,7 @@ import type {
   Integration,
   LlmProviderConfig,
   LlmProvider,
+  LlmError,
 } from "../types";
 
 export class LlmManager {
@@ -233,22 +234,64 @@ export class LlmManager {
     }
   }
 
+  /**
+   * Send a chat request to the LLM with automatic retry and exponential backoff.
+   *
+   * Retries are only attempted for errors marked as `retryable` by the adapter
+   * (e.g. 429 rate limits, 5xx server errors). Non-retryable errors (auth,
+   * bad request, content filter) are thrown immediately.
+   *
+   * @param retryOptions.maxRetries  Max retry attempts (default 3, set 0 to disable)
+   * @param retryOptions.baseDelayMs Base delay before first retry in ms (default 1000)
+   */
   async chat(
     llmIntegrationId: number,
-    request: LlmRequest
+    request: LlmRequest,
+    retryOptions?: { maxRetries?: number; baseDelayMs?: number },
   ): Promise<LlmResponse> {
-    const adapter = await this.getAdapter(llmIntegrationId);
+    const maxRetries = retryOptions?.maxRetries ?? 3;
+    const baseDelay = retryOptions?.baseDelayMs ?? 1000;
 
-    try {
-      const response = await adapter.chat(request);
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const adapter = await this.getAdapter(llmIntegrationId);
+        const response = await adapter.chat(request);
 
-      await this.trackUsage(llmIntegrationId, request, response);
+        await this.trackUsage(llmIntegrationId, request, response);
 
-      return response;
-    } catch (error) {
-      await this.trackError(llmIntegrationId, request, error);
-      throw error;
+        return response;
+      } catch (error) {
+        const isRetryable = (error as Partial<LlmError>).retryable === true;
+        const isLastAttempt = attempt >= maxRetries;
+
+        if (!isRetryable || isLastAttempt) {
+          await this.trackError(llmIntegrationId, request, error);
+          throw error;
+        }
+
+        // Exponential backoff: 1s, 2s, 4s (with defaults)
+        let delay = baseDelay * Math.pow(2, attempt);
+
+        // Respect retry-after header from 429 responses
+        const retryAfter = (error as Partial<LlmError>).details?.retryAfter;
+        if (typeof retryAfter === "number" && retryAfter > 0) {
+          delay = Math.max(delay, retryAfter * 1000);
+        }
+
+        // Add jitter (±20%) to avoid thundering herd
+        delay *= 0.8 + Math.random() * 0.4;
+
+        const errorCode = (error as Partial<LlmError>).code || (error as Error).message;
+        console.warn(
+          `[LlmManager] Retryable error (attempt ${attempt + 1}/${maxRetries}): ${errorCode}. Retrying in ${Math.round(delay)}ms...`,
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
     }
+
+    // Unreachable — the loop always returns or throws
+    throw new Error("Unexpected: retry loop exited without result");
   }
 
   async *chatStream(

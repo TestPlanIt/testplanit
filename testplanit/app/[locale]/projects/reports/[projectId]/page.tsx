@@ -1,8 +1,10 @@
-import { getTranslations } from "next-intl/server";
-import { authOptions } from "~/server/auth";
-import { getServerSession } from "next-auth/next";
-import { notFound } from "next/navigation";
-import { getEnhancedDb } from "~/lib/auth/utils";
+"use client";
+
+import { useEffect } from "react";
+import { useParams } from "next/navigation";
+import { useRequireAuth } from "~/hooks/useRequireAuth";
+import { useTranslations } from "next-intl";
+import { useFindFirstProjects } from "~/lib/hooks";
 import {
   Card,
   CardContent,
@@ -12,116 +14,87 @@ import {
 } from "@/components/ui/card";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { ReportBuilder } from "~/components/reports/ReportBuilder";
+import { Loading } from "@/components/Loading";
+import { notFound } from "next/navigation";
 
-interface PageProps {
-  params: Promise<{
-    projectId: string;
-    locale: string;
-  }>;
-}
+export default function ProjectReportsPage() {
+  const params = useParams();
+  const projectId = parseInt(params.projectId as string);
+  const { session, status, isLoading: isAuthLoading } = useRequireAuth();
+  const t = useTranslations("admin.menu");
+  const tCommon = useTranslations("common");
 
-export async function generateMetadata({ params }: PageProps) {
-  const t = await getTranslations("admin.menu");
-  return {
-    title: t("reports"),
-  };
-}
-
-export default async function ProjectReportsPage({ params }: PageProps) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    notFound();
-  }
-
-  const { projectId: projectIdParam } = await params;
-  const db = await getEnhancedDb(session);
-  const projectId = parseInt(projectIdParam);
-
-  // First check if the project exists and user has basic access to it
-  const project = await db.projects.findFirst({
-    where: {
-      id: projectId,
-    },
-    select: {
-      id: true,
-      name: true,
-      iconUrl: true,
-      defaultAccessType: true,
-      defaultRoleId: true,
-    },
-  });
-
-  if (!project) {
-    notFound();
-  }
-
-  // Check access to reports:
-  // 1. System ADMIN users always have access
-  // 2. System PROJECTADMIN users have access to any project they can see
-  // 3. Users with Reporting area permissions through their project role
-
-  const { ApplicationArea } = await import("@prisma/client");
-
-  // Get user's project permission with their role
-  const userProjectPerm = await db.userProjectPermission.findFirst({
-    where: {
-      userId: session.user.id,
-      projectId: projectId,
-      accessType: {
-        not: "NO_ACCESS",
-      },
-    },
-  });
-
-  // If user has a role assigned, check if it has Reporting permissions
-  let hasReportingPermission = false;
-  if (userProjectPerm?.roleId) {
-    const reportingPermission = await db.rolePermission.findFirst({
-      where: {
-        roleId: userProjectPerm.roleId,
-        area: ApplicationArea.Reporting,
-        OR: [{ canAddEdit: true }, { canDelete: true }],
-      },
-    });
-    hasReportingPermission = !!reportingPermission;
-  }
-
-  // Also check if user has Reporting permissions through their global role with GLOBAL_ROLE projects
-  let hasGlobalRoleReportingPermission = false;
-  if (project.defaultAccessType === "GLOBAL_ROLE") {
-    // Get the user's global role
-    const user = await db.user.findFirst({
-      where: {
-        id: session.user.id,
-      },
+  // Fetch project data (allow global admin access or project assignment)
+  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
+    {
+      where: { id: projectId },
       select: {
-        roleId: true,
-      },
-    });
-
-    if (user?.roleId) {
-      const globalRoleReportingPermission = await db.rolePermission.findFirst({
-        where: {
-          roleId: user.roleId,
-          area: ApplicationArea.Reporting,
-          OR: [{ canAddEdit: true }, { canDelete: true }],
+        id: true,
+        name: true,
+        iconUrl: true,
+        assignedUsers: {
+          where: {
+            user: {
+              id: session?.user?.id || "",
+            },
+          },
+          select: {
+            user: {
+              select: {
+                access: true,
+              },
+            },
+          },
         },
-      });
-      hasGlobalRoleReportingPermission = !!globalRoleReportingPermission;
+      },
+    },
+    {
+      enabled: status === "authenticated",
+      retry: 3,
+      retryDelay: 1000,
     }
+  );
+
+  // Access control check - must be ADMIN or PROJECTADMIN
+  useEffect(() => {
+    if (!projectLoading && project && session?.user) {
+      const hasAccess =
+        session.user.access === "ADMIN" ||
+        session.user.access === "PROJECTADMIN";
+
+      if (!hasAccess) {
+        notFound();
+      }
+    } else if (!projectLoading && !project && session?.user) {
+      notFound();
+    }
+  }, [project, projectLoading, session]);
+
+  // Wait for session to load
+  if (isAuthLoading) {
+    return <Loading />;
   }
 
-  const hasReportsAccess =
-    session.user.access === "ADMIN" ||
-    session.user.access === "PROJECTADMIN" ||
-    hasReportingPermission ||
-    hasGlobalRoleReportingPermission;
-
-  if (!hasReportsAccess) {
-    notFound();
+  // Wait for data to load
+  if (projectLoading) {
+    return <Loading />;
   }
 
-  const t = await getTranslations("admin.menu");
+  // Project not found after loading
+  if (!project) {
+    return (
+      <Card className="flex flex-col w-full min-w-100 h-full">
+        <CardContent className="flex flex-col items-center justify-center h-full">
+          <h2 className="text-2xl font-semibold mb-2">
+            {tCommon("errors.projectNotFound")}
+          </h2>
+          <p className="text-muted-foreground">
+            {tCommon("errors.projectNotFoundDescription")}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <main>

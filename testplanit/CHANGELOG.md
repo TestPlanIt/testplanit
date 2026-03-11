@@ -1,3 +1,37 @@
+## [0.15.4](https://github.com/TestPlanIt/testplanit/compare/v0.15.3...v0.15.4) (2026-03-11)
+
+### Bug Fixes
+
+* update hono and other dependencies for improved compatibility ([6c92666](https://github.com/TestPlanIt/testplanit/commit/6c926661e499f67773e8681257f02990abfd31e8))
+
+## [0.15.3](https://github.com/TestPlanIt/testplanit/compare/v0.15.2...v0.15.3) (2026-03-11)
+
+### Enhancements
+
+* Replaced deprecated methods with new hooks for fetching project data ([#116](https://github.com/TestPlanIt/testplanit/issues/116)) ([f2edeef](https://github.com/TestPlanIt/testplanit/commit/f2edeef31d2540dc32d25edab002fe0b4ddbe372))
+
+## [0.15.2](https://github.com/TestPlanIt/testplanit/compare/v0.15.1...v0.15.2) (2026-03-09)
+
+### Bug Fixes
+
+* enhance error handling and logging in seed process ([a8e5b53](https://github.com/TestPlanIt/testplanit/commit/a8e5b53650cd38cee0d7070e71a0018beac56906))
+
+## [0.15.0](https://github.com/TestPlanIt/testplanit/compare/v0.14.3...v0.15.0) (2026-03-08)
+
+### Features
+
+* export templates ([adf0655](https://github.com/TestPlanIt/testplanit/commit/adf0655ab24e588a59d238c01e6ec588a843d004))
+* export templates ([#84](https://github.com/TestPlanIt/testplanit/issues/84)) ([641bc8b](https://github.com/TestPlanIt/testplanit/commit/641bc8b5f2b2dbdec3d2be3e5c81a44012030e08))
+* trigger release ([11d1ca7](https://github.com/TestPlanIt/testplanit/commit/11d1ca7401824d582add416a0652d75f59e9c574))
+* trigger v0.15.0 release ([92b19b1](https://github.com/TestPlanIt/testplanit/commit/92b19b132cf91da81c56308e336a9200ce48dc2d))
+
+## [0.15.0](https://github.com/TestPlanIt/testplanit/compare/v0.14.3...v0.15.0) (2026-03-08)
+
+### Features
+
+* export templates ([adf0655](https://github.com/TestPlanIt/testplanit/commit/adf0655ab24e588a59d238c01e6ec588a843d004))
+* export templates ([#84](https://github.com/TestPlanIt/testplanit/issues/84)) ([641bc8b](https://github.com/TestPlanIt/testplanit/commit/641bc8b5f2b2dbdec3d2be3e5c81a44012030e08))
+
 ## [0.14.3](https://github.com/TestPlanIt/testplanit/compare/v0.14.2...v0.14.3) (2026-03-06)
 
 ### Bug Fixes

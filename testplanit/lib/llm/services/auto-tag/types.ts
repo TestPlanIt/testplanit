@@ -38,15 +38,8 @@ export interface TagAnalysisResult {
   failedEntityIds: number[];
   /** Entity IDs whose suggestions were lost due to truncated LLM responses */
   truncatedEntityIds: number[];
-}
-
-/** Configuration for batching */
-export interface BatchConfig {
-  maxTokensPerRequest: number;
-  contentBudgetRatio: number;
-  systemPromptTokens: number;
-  /** Max entities per batch to keep output within maxOutputTokens */
-  maxEntitiesPerBatch?: number;
+  /** True if processing was cancelled before all batches completed */
+  cancelled: boolean;
 }
 
 /** Raw AI response shape (what we expect back from the LLM) */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod/v4";
@@ -97,6 +97,17 @@ export function CodeRepositoryModal({
   });
 
   const selectedProvider = form.watch("provider");
+  const prevProvider = useRef(selectedProvider);
+
+  // Reset credentials and settings when provider changes to clear leftover field values
+  useEffect(() => {
+    if (prevProvider.current !== selectedProvider) {
+      prevProvider.current = selectedProvider;
+      form.setValue("credentials", {});
+      form.setValue("settings", {});
+      setTestResult(null);
+    }
+  }, [selectedProvider, form]);
 
   const handleTestConnection = async () => {
     const values = form.getValues();

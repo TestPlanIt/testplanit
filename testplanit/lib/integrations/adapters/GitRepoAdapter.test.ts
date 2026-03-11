@@ -35,11 +35,11 @@ describe("GitRepoAdapter adapter instantiation", () => {
 
   it("instantiates BitbucketRepoAdapter with credentials and settings", () => {
     const adapter = new BitbucketRepoAdapter(
-      { username: "user", appPassword: "pass" },
+      { email: "user@example.com", apiToken: "token" },
       { workspace: "ws", repoSlug: "repo" }
     );
     expect(adapter).toBeInstanceOf(BitbucketRepoAdapter);
-    expect((adapter as any).username).toBe("user");
+    expect((adapter as any).email).toBe("user@example.com");
     expect((adapter as any).workspace).toBe("ws");
   });
 

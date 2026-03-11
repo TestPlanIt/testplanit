@@ -1,5 +1,6 @@
 import Resolver from '@forge/resolver';
-import api, { storage } from '@forge/api';
+import api from '@forge/api';
+import { kvs } from '@forge/kvs';
 
 const resolver = new Resolver();
 
@@ -8,12 +9,12 @@ const INSTANCE_URL_KEY = 'testplanit_instance_url';
 const API_KEY_KEY = 'testplanit_api_key';
 
 async function getInstanceUrl() {
-  const url = await storage.get(INSTANCE_URL_KEY);
+  const url = await kvs.get(INSTANCE_URL_KEY);
   return url || null;
 }
 
 async function getApiKey() {
-  const key = await storage.get(API_KEY_KEY);
+  const key = await kvs.get(API_KEY_KEY);
   return key || null;
 }
 
@@ -102,13 +103,13 @@ resolver.define('saveSettings', async ({ payload }) => {
 
     const cleanUrl = instanceUrl.replace(/\/$/, '');
 
-    await storage.set(INSTANCE_URL_KEY, cleanUrl);
+    await kvs.set(INSTANCE_URL_KEY, cleanUrl);
 
     if (apiKey !== undefined) {
       if (apiKey) {
-        await storage.set(API_KEY_KEY, apiKey);
+        await kvs.set(API_KEY_KEY, apiKey);
       } else {
-        await storage.delete(API_KEY_KEY);
+        await kvs.delete(API_KEY_KEY);
       }
     }
 
@@ -120,34 +121,63 @@ resolver.define('saveSettings', async ({ payload }) => {
 
 resolver.define('testConnection', async ({ payload }) => {
   try {
-    const { instanceUrl } = payload;
+    const { instanceUrl, apiKey } = payload;
 
     if (!instanceUrl) {
       return { success: false, message: 'Instance URL is required' };
     }
 
-    const cleanUrl = instanceUrl.replace(/\/+$/, '');
-    const testUrl = `${cleanUrl}/version.json`;
+    if (!apiKey) {
+      return { success: false, message: 'API Key is required' };
+    }
 
-    const response = await api.fetch(testUrl, {
+    const cleanUrl = instanceUrl.replace(/\/+$/, '');
+
+    // First check the instance is reachable
+    const versionUrl = `${cleanUrl}/version.json`;
+    const versionResponse = await api.fetch(versionUrl, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!versionResponse.ok) {
+      return {
+        success: false,
+        message: `Could not reach TestPlanIt instance (status ${versionResponse.status}). Please check the URL.`
+      };
+    }
+
+    const versionData = await versionResponse.json();
+
+    // Validate the API key using the test-connection endpoint
+    const testUrl = `${cleanUrl}/api/integrations/jira/test-connection`;
+    const testResponse = await api.fetch(testUrl, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-Forge-Api-Key': apiKey
       }
     });
 
-    if (response.ok) {
-      const versionData = await response.json();
-      return {
-        success: true,
-        message: `Successfully connected to TestPlanIt ${versionData.version || 'instance'}`
-      };
-    } else {
+    if (testResponse.status === 401 || testResponse.status === 403) {
       return {
         success: false,
-        message: `Connection failed with status ${response.status}. Please check the URL and try again.`
+        message: 'Instance is reachable but the API key is invalid or expired. Please check your key in Admin > Integrations > Jira.'
       };
     }
+
+    if (!testResponse.ok) {
+      return {
+        success: false,
+        message: `Connection test returned status ${testResponse.status}. Please ensure your TestPlanIt instance is v0.15.4 or later.`
+      };
+    }
+
+    return {
+      success: true,
+      message: `Successfully connected to TestPlanIt ${versionData.version || 'instance'} — API key is valid.`
+    };
   } catch (error) {
     return {
       success: false,
@@ -158,8 +188,8 @@ resolver.define('testConnection', async ({ payload }) => {
 
 resolver.define('clearSettings', async () => {
   try {
-    await storage.delete(INSTANCE_URL_KEY);
-    await storage.delete(API_KEY_KEY);
+    await kvs.delete(INSTANCE_URL_KEY);
+    await kvs.delete(API_KEY_KEY);
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };

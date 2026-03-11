@@ -4,9 +4,9 @@ export type {
   TagSuggestion,
   BatchAnalysisResult,
   TagAnalysisResult,
-  BatchConfig,
   AutoTagAIResponse,
 } from "./types";
+export type { BatchConfig } from "~/lib/llm/services/batch-processor";
 export {
   extractTiptapText,
   extractFieldValue,

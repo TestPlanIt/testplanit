@@ -31,6 +31,17 @@ function applyPathPatterns(
   return allFiles.filter((f) => matched.has(f.path));
 }
 
+/** Extract unique base directory paths from PathPattern[] for scoped listing. */
+function extractBasePaths(pathPatterns: PathPattern[]): string[] {
+  if (!pathPatterns.length) return [];
+  const paths = new Set<string>();
+  for (const { path: basePath } of pathPatterns) {
+    const trimmed = basePath.replace(/\/$/, "");
+    if (trimmed) paths.add(trimmed);
+  }
+  return paths.size > 0 ? [...paths] : [];
+}
+
 function isRateLimitError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   const msg = err.message.toLowerCase();
@@ -171,10 +182,15 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     });
 
     try {
-      const { files: allFiles, truncated } = await adapter.listAllFiles(branch);
-
-      // Apply path patterns to limit the cache to only relevant files
       const pathPatterns = (config.pathPatterns as unknown as PathPattern[]) ?? [];
+      const basePaths = extractBasePaths(pathPatterns);
+
+      const { files: allFiles, truncated } = await adapter.listFilesInPaths(
+        branch,
+        basePaths
+      );
+
+      // Apply glob pattern filtering
       const files = applyPathPatterns(allFiles, pathPatterns);
 
       // Store file list in Valkey

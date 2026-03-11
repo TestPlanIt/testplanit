@@ -4,6 +4,10 @@
 # Node modules
 node_modules/
 
+# Lock file - managed locally, not tracked
+# Prevents Dependabot false positives from transitive dev deps
+package-lock.json
+
 # Build output
 static/
 

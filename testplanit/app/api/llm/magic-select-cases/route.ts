@@ -5,6 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import { LLM_FEATURES } from "@/lib/llm/constants";
+import {
+  createBatches,
+  executeBatches,
+} from "@/lib/llm/services/batch-processor";
+import type { BatchableItem } from "@/lib/llm/services/batch-processor";
 import type { LlmRequest } from "@/lib/llm/types";
 import { ProjectAccessType } from "@prisma/client";
 import { z } from "zod/v4";
@@ -29,9 +34,6 @@ const MagicSelectRequestSchema = z.object({
   }),
   clarification: z.string().optional(),
   excludeCaseIds: z.array(z.number()).optional(),
-  // Pagination support for large repositories
-  batchSize: z.number().min(1).optional(),
-  batchIndex: z.number().min(0).optional(),
   // If true, only returns total case count without making LLM call
   countOnly: z.boolean().optional(),
 });
@@ -534,8 +536,6 @@ export async function POST(request: NextRequest) {
       testRunMetadata,
       clarification,
       excludeCaseIds,
-      batchSize,
-      batchIndex,
       countOnly,
     } = parseResult.data;
 
@@ -845,9 +845,6 @@ export async function POST(request: NextRequest) {
         searchKeywords: searchPreFiltered ? searchKeywords : undefined,
         hitMaxSearchResults, // True if search results were capped at max
         noSearchMatches, // True if search was performed but found no matches
-        batchesNeeded: batchSize
-          ? Math.ceil(effectiveCaseCount / batchSize)
-          : 1,
       });
     }
 
@@ -995,113 +992,149 @@ export async function POST(request: NextRequest) {
     const systemPrompt = resolvedPrompt.source !== "fallback"
       ? resolvedPrompt.systemPrompt
       : buildSystemPrompt();
-    const userPrompt = buildUserPrompt(
-      testRunMetadata,
-      issues,
-      compressedCases,
-      clarification
-    );
-
-    // Log the prompts for debugging
-    console.log("=== Magic Select LLM Request ===");
-    console.log("Project ID:", projectId);
-    console.log("Test Run Name:", testRunMetadata.name);
-    console.log("Total Cases:", compressedCases.length);
-    console.log("Linked Issues:", issues.length);
-    console.log("Prompt Source:", resolvedPrompt.source);
-    console.log("\n--- System Prompt ---");
-    console.log(systemPrompt);
-    console.log("\n--- User Prompt ---");
-    console.log(userPrompt);
-    console.log("=== End Magic Select LLM Request ===\n");
 
     // Use configured max tokens
     const configuredMaxTokens =
       activeLlmIntegration.llmIntegration.llmProviderConfig?.defaultMaxTokens ||
       resolvedPrompt.maxOutputTokens;
     const maxTokens = Math.max(configuredMaxTokens, 2000);
+    const maxTokensPerRequest =
+      activeLlmIntegration.llmIntegration.llmProviderConfig?.maxTokensPerRequest ?? 4096;
 
-    const llmRequest: LlmRequest = {
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
-      temperature: resolvedPrompt.temperature,
-      maxTokens,
-      userId: session.user.id,
-      feature: "magic_select_cases",
-      metadata: {
-        projectId,
-        testRunName: testRunMetadata.name,
-        totalCases: compressedCases.length,
-        linkedIssues: testRunMetadata.linkedIssueIds.length,
-        timestamp: new Date().toISOString(),
-      },
-      // Allow up to 4 minutes for large repositories (under the 5-minute maxDuration)
-      timeout: 240000,
-    };
+    // Estimate tokens for the fixed parts of the prompt (system + test run context)
+    const testRunContext = buildUserPrompt(testRunMetadata, issues, [], clarification);
+    const systemPromptTokens =
+      Math.ceil(systemPrompt.length / 4) +
+      Math.ceil(testRunContext.length / 4);
 
-    const response = await manager.chat(
-      activeLlmIntegration.llmIntegrationId,
-      llmRequest
-    );
+    // Convert compressed cases to batchable items with token estimates
+    const batchableItems: (CompressedTestCase & BatchableItem)[] = compressedCases.map((tc) => {
+      const serialized = JSON.stringify([
+        tc.id,
+        tc.name,
+        tc.folderPath !== "/" ? tc.folderPath : null,
+        tc.tags.length > 0 ? tc.tags : null,
+        Object.keys(tc.fields).length > 0 ? tc.fields : null,
+        tc.linksTo.length > 0 ? tc.linksTo : null,
+        tc.linksFrom.length > 0 ? tc.linksFrom : null,
+      ]);
+      return {
+        ...tc,
+        estimatedTokens: Math.ceil(serialized.length / 4),
+      };
+    });
 
-    // Parse the LLM response
-    let suggestedCaseIds: number[] = [];
-    let reasoning = "";
+    // Create batches using the shared token-aware batch processor
+    const batches = createBatches(batchableItems, {
+      maxTokensPerRequest,
+      systemPromptTokens,
+    });
 
-    try {
-      const cleanContent = response.content.trim();
+    console.log("=== Magic Select LLM Request ===");
+    console.log("Project ID:", projectId);
+    console.log("Test Run Name:", testRunMetadata.name);
+    console.log("Total Cases:", compressedCases.length);
+    console.log("Batches:", batches.length);
+    console.log("Linked Issues:", issues.length);
+    console.log("Prompt Source:", resolvedPrompt.source);
+    console.log("=== End Magic Select LLM Request ===\n");
 
-      // Try to extract JSON from the response
-      let jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
+    // Process batches with the shared executor (retry/backoff handled by LlmManager.chat)
+    const allSuggestedIds: number[] = [];
+    const allReasonings: string[] = [];
+    let totalTokens = { prompt: 0, completion: 0, total: 0 };
+    let model = "";
 
-      if (!jsonMatch) {
-        // Try code blocks
-        const codeBlockMatch = cleanContent.match(
-          /```(?:json)?\s*(\{[\s\S]*?\})\s*```/
+    const batchResult = await executeBatches({
+      batches,
+      processBatch: async (batch) => {
+        // Build prompt for just this batch of cases
+        const batchCases: CompressedTestCase[] = batch;
+        const userPrompt = buildUserPrompt(
+          testRunMetadata,
+          issues,
+          batchCases,
+          clarification
         );
-        if (codeBlockMatch) {
-          jsonMatch = [codeBlockMatch[1]];
-        }
-      }
 
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
+        const llmRequest: LlmRequest = {
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: resolvedPrompt.temperature,
+          maxTokens,
+          userId: session.user.id,
+          feature: "magic_select_cases",
+          metadata: {
+            projectId,
+            testRunName: testRunMetadata.name,
+            totalCases: batchCases.length,
+            linkedIssues: testRunMetadata.linkedIssueIds.length,
+            timestamp: new Date().toISOString(),
+          },
+          timeout: 240000,
+        };
 
-        if (Array.isArray(parsed.caseIds)) {
-          // Validate that all IDs exist in the repository
-          const validIds = new Set(compressedCases.map((tc) => tc.id));
-          suggestedCaseIds = parsed.caseIds.filter(
-            (id: unknown) => typeof id === "number" && validIds.has(id)
+        const response = await manager.chat(
+          activeLlmIntegration.llmIntegrationId,
+          llmRequest,
+        );
+
+        totalTokens.prompt += response.promptTokens;
+        totalTokens.completion += response.completionTokens;
+        totalTokens.total += response.totalTokens;
+        model = response.model || model;
+
+        // Parse the LLM response
+        const cleanContent = response.content.trim();
+        let jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
+
+        if (!jsonMatch) {
+          const codeBlockMatch = cleanContent.match(
+            /```(?:json)?\s*(\{[\s\S]*?\})\s*```/
           );
+          if (codeBlockMatch) {
+            jsonMatch = [codeBlockMatch[1]];
+          }
         }
 
-        if (typeof parsed.reasoning === "string") {
-          reasoning = parsed.reasoning;
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          const validIds = new Set(batchCases.map((tc) => tc.id));
+
+          if (Array.isArray(parsed.caseIds)) {
+            const validSuggestions = parsed.caseIds.filter(
+              (id: unknown) => typeof id === "number" && validIds.has(id)
+            );
+            allSuggestedIds.push(...validSuggestions);
+          }
+
+          if (typeof parsed.reasoning === "string") {
+            allReasonings.push(parsed.reasoning);
+          }
         }
-      }
-    } catch (parseError) {
-      console.error("Failed to parse LLM response:", parseError);
+      },
+    });
+
+    if (batchResult.failedBatchCount > 0 && allSuggestedIds.length === 0) {
+      // All batches failed — return the error from the last batch
       return NextResponse.json(
         {
           error: "Failed to parse AI response",
-          details:
+          details: batchResult.errors[batchResult.errors.length - 1] ||
             "The AI response was not in the expected format. Please try again.",
         },
         { status: 500 }
       );
     }
 
+    // Deduplicate
+    const uniqueSuggestedIds = [...new Set(allSuggestedIds)];
+
     // Expand linked cases
     const expandedCaseIds = expandLinkedCases(
-      suggestedCaseIds,
+      uniqueSuggestedIds,
       compressedCases
     );
 
@@ -1109,6 +1142,10 @@ export async function POST(request: NextRequest) {
     const finalCaseIds = excludeCaseIds
       ? expandedCaseIds.filter((id) => !excludeCaseIds.includes(id))
       : expandedCaseIds;
+
+    const reasoning = allReasonings.length === 1
+      ? allReasonings[0]
+      : allReasonings.map((r, i) => `Batch ${i + 1}: ${r}`).join("\n");
 
     return NextResponse.json({
       success: true,
@@ -1119,20 +1156,14 @@ export async function POST(request: NextRequest) {
         repositoryTotalCount,
         effectiveCaseCount,
         suggestedCount: finalCaseIds.length,
-        directlySelected: suggestedCaseIds.length,
-        linkedCasesAdded: finalCaseIds.length - suggestedCaseIds.length,
+        directlySelected: uniqueSuggestedIds.length,
+        linkedCasesAdded: finalCaseIds.length - uniqueSuggestedIds.length,
         searchPreFiltered,
         searchKeywords: searchPreFiltered ? searchKeywords : undefined,
-        model: response.model,
-        tokens: {
-          prompt: response.promptTokens,
-          completion: response.completionTokens,
-          total: response.totalTokens,
-        },
-        // Pagination info
-        batchIndex: batchIndex ?? 0,
-        batchSize: batchSize ?? effectiveCaseCount,
-        totalBatches: batchSize ? Math.ceil(effectiveCaseCount / batchSize) : 1,
+        model,
+        tokens: totalTokens,
+        batchCount: batchResult.batchCount,
+        failedBatchCount: batchResult.failedBatchCount,
       },
     });
   } catch (error) {

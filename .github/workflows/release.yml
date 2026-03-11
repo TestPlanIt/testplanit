@@ -47,7 +47,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set lowercase repo name
       run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -98,7 +98,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set lowercase repo name
       run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -157,7 +157,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0  # Need full history to get all tags
 
@@ -219,7 +219,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.event.inputs.tag }}
 
@@ -267,7 +267,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.event.inputs.tag }}
 
@@ -333,7 +333,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0
 

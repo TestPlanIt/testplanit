@@ -29,7 +29,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set lowercase repo name
       run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -61,7 +61,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set lowercase repo name
       run: echo "REPO_LC=$(echo $GITHUB_REPOSITORY | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV

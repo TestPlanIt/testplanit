@@ -98,18 +98,30 @@ export async function POST(req: NextRequest) {
 
   const encoder = new TextEncoder();
 
+  let controllerClosed = false;
+
   function send(
     controller: ReadableStreamDefaultController,
     data: object
   ): void {
-    controller.enqueue(
-      encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-    );
+    if (controllerClosed) return;
+    try {
+      controller.enqueue(
+        encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
+      );
+    } catch {
+      controllerClosed = true;
+    }
   }
 
   /** Send an SSE comment to keep the connection alive through reverse proxies. */
   function keepAlive(controller: ReadableStreamDefaultController): void {
-    controller.enqueue(encoder.encode(": keepalive\n\n"));
+    if (controllerClosed) return;
+    try {
+      controller.enqueue(encoder.encode(": keepalive\n\n"));
+    } catch {
+      controllerClosed = true;
+    }
   }
 
   const stream = new ReadableStream({
@@ -293,7 +305,10 @@ export async function POST(req: NextRequest) {
         });
       } finally {
         clearInterval(heartbeat);
-        controller.close();
+        if (!controllerClosed) {
+          controllerClosed = true;
+          controller.close();
+        }
       }
     },
   });

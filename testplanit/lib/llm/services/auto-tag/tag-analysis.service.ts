@@ -2,6 +2,10 @@
 import type { PrismaClient } from "@prisma/client";
 
 import { LLM_FEATURES } from "~/lib/llm/constants";
+import {
+  createBatches,
+  executeBatches,
+} from "~/lib/llm/services/batch-processor";
 import type { LlmManager } from "~/lib/llm/services/llm-manager.service";
 import type { PromptResolver } from "~/lib/llm/services/prompt-resolver.service";
 
@@ -9,14 +13,11 @@ import { extractEntityContent } from "./content-extractor";
 import { matchTagSuggestions } from "./tag-matcher";
 import type {
   AutoTagAIResponse,
-  BatchConfig,
   EntityContent,
   EntityType,
   TagAnalysisResult,
   TagSuggestion,
 } from "./types";
-
-const DEFAULT_CONTENT_BUDGET_RATIO = 0.65;
 
 interface AnalyzeTagsParams {
   entityIds: number[];
@@ -24,73 +25,7 @@ interface AnalyzeTagsParams {
   projectId: number;
   userId: string;
   onBatchComplete?: (processed: number, total: number) => Promise<void>;
-}
-
-/**
- * Create batches of entities that fit within the token budget.
- *
- * - Entities that fit are grouped into batches respecting the budget.
- * - Oversized entities (exceeding budget alone) are truncated and placed in their own batch.
- */
-export function createBatches(
-  entities: EntityContent[],
-  config: BatchConfig,
-): EntityContent[][] {
-  if (entities.length === 0) return [];
-
-  const contentBudget = Math.floor(
-    config.maxTokensPerRequest * config.contentBudgetRatio -
-      config.systemPromptTokens,
-  );
-
-  const batches: EntityContent[][] = [];
-  let currentBatch: EntityContent[] = [];
-  let currentTokens = 0;
-
-  for (const entity of entities) {
-    // Oversized entity: truncate and give it its own batch
-    if (entity.estimatedTokens > contentBudget) {
-      // Flush current batch if non-empty
-      if (currentBatch.length > 0) {
-        batches.push(currentBatch);
-        currentBatch = [];
-        currentTokens = 0;
-      }
-
-      // Truncate: slice textContent to fit budget (chars ~= tokens * 4)
-      const maxChars = contentBudget * 4;
-      const truncated: EntityContent = {
-        ...entity,
-        textContent: entity.textContent.slice(0, maxChars),
-        estimatedTokens: Math.ceil(
-          Math.min(entity.textContent.length, maxChars) / 4,
-        ),
-      };
-      batches.push([truncated]);
-      continue;
-    }
-
-    // Check if adding this entity would exceed input budget or entity count limit
-    const maxPerBatch = config.maxEntitiesPerBatch ?? Infinity;
-    if (currentTokens + entity.estimatedTokens > contentBudget || currentBatch.length >= maxPerBatch) {
-      // Start new batch
-      if (currentBatch.length > 0) {
-        batches.push(currentBatch);
-      }
-      currentBatch = [entity];
-      currentTokens = entity.estimatedTokens;
-    } else {
-      currentBatch.push(entity);
-      currentTokens += entity.estimatedTokens;
-    }
-  }
-
-  // Flush remaining
-  if (currentBatch.length > 0) {
-    batches.push(currentBatch);
-  }
-
-  return batches;
+  isCancelled?: () => Promise<boolean>;
 }
 
 /**
@@ -166,28 +101,34 @@ export class TagAnalysisService {
     const OUTPUT_TOKENS_PER_ENTITY = 40;
     const maxEntitiesPerBatch = Math.max(1, Math.floor(resolvedPrompt.maxOutputTokens / OUTPUT_TOKENS_PER_ENTITY));
 
-    const batchConfig: BatchConfig = {
-      maxTokensPerRequest,
-      contentBudgetRatio: DEFAULT_CONTENT_BUDGET_RATIO,
-      systemPromptTokens,
-      maxEntitiesPerBatch,
-    };
+    // 8. Create batches using shared batch processor
+    const batches = createBatches(
+      entityContents,
+      {
+        maxTokensPerRequest,
+        systemPromptTokens,
+        maxItemsPerBatch: maxEntitiesPerBatch,
+      },
+      // Truncate oversized entities
+      (entity, maxChars) => ({
+        ...entity,
+        textContent: entity.textContent.slice(0, maxChars),
+        estimatedTokens: Math.ceil(
+          Math.min(entity.textContent.length, maxChars) / 4,
+        ),
+      }),
+    );
 
-    // 8. Create batches
-    const batches = createBatches(entityContents, batchConfig);
-
-
-    // 9. Process batches sequentially
-    let allSuggestions: TagSuggestion[] = [];
+    // 9. Process batches using shared executor (with per-batch error isolation)
     let totalTokensUsed = 0;
-    let processedEntities = 0;
-    let failedBatchCount = 0;
-    const errors: string[] = [];
-    const failedEntityIds: number[] = [];
+    const allSuggestions: TagSuggestion[] = [];
     const truncatedEntityIds: number[] = [];
 
-    for (const batch of batches) {
-      try {
+    const batchResult = await executeBatches({
+      batches,
+      onBatchComplete: params.onBatchComplete,
+      isCancelled: params.isCancelled,
+      processBatch: async (batch) => {
         const userPrompt = this.buildUserPrompt(batch, existingTagNames);
 
         const response = await this.llmManager.chat(integrationId, {
@@ -207,7 +148,7 @@ export class TagAnalysisService {
 
         // Parse LLM response
         const parsed = this.parseLlmResponse(response.content);
-        if (!parsed) continue;
+        if (!parsed) return;
 
         // Track entity IDs the LLM responded about
         const respondedEntityIds = new Set(
@@ -247,33 +188,19 @@ export class TagAnalysisService {
             }
           }
         }
-      } catch (error) {
-        failedBatchCount++;
-        const rawMsg = error instanceof Error ? error.message : String(error);
-        errors.push(rawMsg);
-        failedEntityIds.push(...batch.map((e) => e.id));
-        console.warn(
-          `Auto-tag batch failed (${batch.length} entities):`,
-          rawMsg,
-        );
-      }
-
-      // Report progress after each batch (even on failure — per-batch error isolation)
-      processedEntities += batch.length;
-      if (params.onBatchComplete) {
-        await params.onBatchComplete(processedEntities, entityContents.length);
-      }
-    }
+      },
+    });
 
     return {
       suggestions: allSuggestions,
       totalTokensUsed,
-      batchCount: batches.length,
+      batchCount: batchResult.batchCount,
       entityCount: entityContents.length,
-      failedBatchCount,
-      errors,
-      failedEntityIds,
+      failedBatchCount: batchResult.failedBatchCount,
+      errors: batchResult.errors,
+      failedEntityIds: batchResult.failedItemIds,
       truncatedEntityIds,
+      cancelled: batchResult.cancelled,
     };
   }
 

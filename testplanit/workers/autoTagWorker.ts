@@ -95,20 +95,26 @@ const processor = async (job: Job<AutoTagJobData>): Promise<AutoTagJobResult> =>
     onBatchComplete: async (processed: number, total: number) => {
       // Report progress to BullMQ
       await job.updateProgress({ analyzed: processed, total });
-
-      // Check for cancellation between batches
-      const isCancelled = await redis.get(cancelKey(job.id));
-      if (isCancelled) {
+    },
+    isCancelled: async () => {
+      const flag = await redis.get(cancelKey(job.id));
+      if (flag) {
         await redis.del(cancelKey(job.id));
-        throw new Error("Job cancelled by user");
+        return true;
       }
+      return false;
     },
   });
 
-  // 6. Signal "finalizing" so the UI knows analysis is done but results are being prepared
+  // 6. If cancelled between batches, throw so the job is marked as failed
+  if (result.cancelled) {
+    throw new Error("Job cancelled by user");
+  }
+
+  // 8. Signal "finalizing" so the UI knows analysis is done but results are being prepared
   await job.updateProgress({ analyzed: job.data.entityIds.length, total: job.data.entityIds.length, finalizing: true });
 
-  // 7. Transform flat suggestions into grouped AutoTagJobResult format
+  // 9. Transform flat suggestions into grouped AutoTagJobResult format
   const entityMap = new Map<
     number,
     Array<{ tagName: string; isExisting: boolean; matchedExistingTag?: string }>
@@ -129,7 +135,7 @@ const processor = async (job: Job<AutoTagJobData>): Promise<AutoTagJobResult> =>
   const failedEntityIdSet = new Set(result.failedEntityIds);
   const allRelevantIds = [...job.data.entityIds];
 
-  // 8. Fetch entity names, current tags, and display metadata for all relevant entities
+  // 10. Fetch entity names, current tags, and display metadata for all relevant entities
   const entityMeta = new Map<number, {
     name: string;
     currentTags: string[];

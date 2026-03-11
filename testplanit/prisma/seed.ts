@@ -3482,41 +3482,55 @@ async function main() {
     // Always create magic link SSO provider for production environments
     // But keep it disabled by default to prevent unwanted email sending
     if (process.env.NODE_ENV === "production") {
-      console.log("Seeding production SSO provider...");
-      // Create Magic Link provider (disabled by default to prevent unwanted emails)
-      const magicLinkProvider = await prisma.ssoProvider.upsert({
-        where: {
-          id: "magic-link-provider",
-        },
-        update: {
-          name: "Magic Link",
-          type: "MAGIC_LINK",
-          enabled: false, // Disabled by default - must be manually enabled
-          forceSso: false, // Allow both SSO and regular signup
-          config: {},
-        },
-        create: {
-          id: "magic-link-provider",
-          name: "Magic Link",
-          type: "MAGIC_LINK",
-          enabled: false, // Disabled by default - must be manually enabled
-          forceSso: false, // Allow both SSO and regular signup
-          config: {},
-        },
-      });
-      console.log(
-        `✓ Created Magic Link provider (disabled by default - must be manually enabled in admin settings)`
-      );
+      try {
+        console.log("Seeding production SSO provider...");
+        // Create Magic Link provider (disabled by default to prevent unwanted emails)
+        await prisma.ssoProvider.upsert({
+          where: {
+            name: "Magic Link",
+          },
+          update: {
+            type: "MAGIC_LINK",
+            enabled: false, // Disabled by default - must be manually enabled
+            forceSso: false, // Allow both SSO and regular signup
+            config: {},
+          },
+          create: {
+            name: "Magic Link",
+            type: "MAGIC_LINK",
+            enabled: false, // Disabled by default - must be manually enabled
+            forceSso: false, // Allow both SSO and regular signup
+            config: {},
+          },
+        });
+        console.log(
+          `✓ Created Magic Link provider (disabled by default - must be manually enabled in admin settings)`
+        );
+      } catch (error) {
+        console.error("Error seeding SSO provider (continuing):", error);
+      }
     }
 
     // Seed default prompt configuration (must run before demo project)
-    await seedDefaultPromptConfig(prisma);
+    try {
+      await seedDefaultPromptConfig(prisma);
+    } catch (error) {
+      console.error("Error seeding prompt config (continuing):", error);
+    }
 
     // Seed demo project with sample data for new users
-    await seedDemoProject();
+    try {
+      await seedDemoProject();
+    } catch (error) {
+      console.error("Error seeding demo project (continuing):", error);
+    }
 
     // Assign workflows to all projects (must run after demo project is created)
-    await assignWorkflowsToAllProjects();
+    try {
+      await assignWorkflowsToAllProjects();
+    } catch (error) {
+      console.error("Error assigning workflows (continuing):", error);
+    }
 
     // Seed test data only when explicitly requested (e.g., E2E test setup)
     if (process.env.SEED_TEST_DATA === "true") {

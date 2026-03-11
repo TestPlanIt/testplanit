@@ -1,7 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-import { createBatches, TagAnalysisService } from "./tag-analysis.service";
-import type { EntityContent, BatchConfig } from "./types";
+import { createBatches } from "~/lib/llm/services/batch-processor";
+import type { BatchConfig } from "~/lib/llm/services/batch-processor";
+
+import { TagAnalysisService } from "./tag-analysis.service";
+import type { EntityContent } from "./types";
 
 // ─── createBatches unit tests ────────────────────────────────────────────────
 
@@ -54,7 +57,12 @@ describe("createBatches", () => {
   it("truncates oversized entity and puts it in its own batch", () => {
     // Budget ~2462 tokens, entity has 5000 tokens
     const entities = [makeEntity(1, 100), makeEntity(2, 5000), makeEntity(3, 100)];
-    const batches = createBatches(entities, defaultConfig);
+    const truncateItem = (item: EntityContent, maxChars: number): EntityContent => ({
+      ...item,
+      textContent: item.textContent.slice(0, maxChars),
+      estimatedTokens: Math.ceil(Math.min(item.textContent.length, maxChars) / 4),
+    });
+    const batches = createBatches(entities, defaultConfig, truncateItem);
     // Entity 2 should be alone in a batch, truncated
     expect(batches.length).toBeGreaterThanOrEqual(2);
 
@@ -67,7 +75,7 @@ describe("createBatches", () => {
     // Its estimated tokens should be <= budget
     const truncatedEntity = oversizedBatch![0]!;
     const budget = Math.floor(
-      defaultConfig.maxTokensPerRequest * defaultConfig.contentBudgetRatio -
+      defaultConfig.maxTokensPerRequest * defaultConfig.contentBudgetRatio! -
         defaultConfig.systemPromptTokens,
     );
     expect(truncatedEntity.estimatedTokens).toBeLessThanOrEqual(budget);

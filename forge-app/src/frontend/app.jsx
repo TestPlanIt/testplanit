@@ -841,6 +841,7 @@ const App = () => {
   // Configuration UI Component (shown when not configured)
   const ConfigurationUI = () => {
     const [configUrl, setConfigUrl] = useState('');
+    const [configApiKey, setConfigApiKey] = useState('');
     const [configSaving, setConfigSaving] = useState(false);
     const [configError, setConfigError] = useState(null);
     const [configTesting, setConfigTesting] = useState(false);
@@ -861,6 +862,9 @@ const App = () => {
           setCurrentUrl(response.instanceUrl);
           setConfigUrl(response.instanceUrl);
         }
+        if (response.apiKey) {
+          setConfigApiKey(response.apiKey);
+        }
       } catch (err) {
         console.error('Error loading current settings:', err);
       } finally {
@@ -873,6 +877,7 @@ const App = () => {
         await invoke('clearSettings');
         setCurrentUrl(null);
         setConfigUrl('');
+        setConfigApiKey('');
         setTestResult(null);
         setConfigError(null);
       } catch (err) {
@@ -885,13 +890,17 @@ const App = () => {
         setConfigError('Please enter a URL');
         return;
       }
+      if (!configApiKey) {
+        setConfigError('Please enter an API key');
+        return;
+      }
 
       setConfigTesting(true);
       setConfigError(null);
       setTestResult(null);
 
       try {
-        const response = await invoke('testConnection', { instanceUrl: configUrl });
+        const response = await invoke('testConnection', { instanceUrl: configUrl, apiKey: configApiKey });
         setTestResult(response);
       } catch (err) {
         setTestResult({ success: false, message: err.message });
@@ -905,12 +914,16 @@ const App = () => {
         setConfigError('Please enter a URL');
         return;
       }
+      if (!configApiKey) {
+        setConfigError('Please enter an API key');
+        return;
+      }
 
       setConfigSaving(true);
       setConfigError(null);
 
       try {
-        const response = await invoke('saveSettings', { instanceUrl: configUrl });
+        const response = await invoke('saveSettings', { instanceUrl: configUrl, apiKey: configApiKey.trim() });
         if (response.success) {
           // Reload test info after successful save
           setLoading(true);
@@ -979,17 +992,36 @@ const App = () => {
               }}
               placeholder="https://demo.testplanit.com"
               disabled={configLoading}
-              className="w-full px-3 py-2 border border-border rounded text-xs focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground disabled:opacity-50"
+              className="w-full px-3 py-2 border border-border rounded text-xs focus:outline-hidden focus:ring-2 focus:ring-primary bg-background text-foreground disabled:opacity-50"
             />
             <p className="text-xs text-muted-foreground mt-1">
               Must be a *.testplanit.com subdomain
             </p>
           </div>
 
+          <div className="mb-3">
+            <label className="block text-xs font-medium mb-2">Forge API Key</label>
+            <input
+              type="password"
+              value={configApiKey}
+              onChange={(e) => {
+                setConfigApiKey(e.target.value);
+                setConfigError(null);
+                setTestResult(null);
+              }}
+              placeholder="Enter your Forge integration API key"
+              disabled={configLoading}
+              className="w-full px-3 py-2 border border-border rounded text-xs focus:outline-hidden focus:ring-2 focus:ring-primary bg-background text-foreground disabled:opacity-50"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Generate in TestPlanIt: Admin &gt; Integrations &gt; Jira &gt; Forge API Key
+            </p>
+          </div>
+
           <div className="flex gap-2 mb-3">
             <button
               onClick={handleTestConnection}
-              disabled={configTesting || !configUrl}
+              disabled={configTesting || !configUrl || !configApiKey}
               className="flex items-center gap-1 px-3 py-2 border border-border rounded text-xs font-medium hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {configTesting ? (
@@ -1007,7 +1039,7 @@ const App = () => {
 
             <button
               onClick={handleSave}
-              disabled={configSaving || !configUrl}
+              disabled={configSaving || !configUrl || !configApiKey}
               className="flex items-center gap-1 px-3 py-2 bg-primary text-primary-foreground rounded text-xs font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {configSaving ? (

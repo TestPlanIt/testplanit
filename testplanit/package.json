@@ -1,6 +1,6 @@
 {
   "name": "testplanit",
-  "version": "0.14.3",
+  "version": "0.15.4",
   "private": true,
   "scripts": {
     "generate": "NODE_OPTIONS='--max-old-space-size=12288' zenstack generate && prisma db push",
@@ -185,7 +185,7 @@
     "framer-motion": "^12.35.2",
     "handlebars": "^4.7.8",
     "happy-dom": "^20.8.3",
-    "hono": "^4.12.5",
+    "hono": "^4.12.7",
     "html-to-adf-converter": "^1.0.2",
     "humanize-duration": "^3.33.2",
     "iframe-resizer": "^5.5.9",

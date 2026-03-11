@@ -12,7 +12,7 @@ import {
   useCreateProjectCodeRepositoryConfig,
   useUpdateProjectCodeRepositoryConfig,
   useDeleteProjectCodeRepositoryConfig,
-  useFindUniqueProjects,
+  useFindFirstProjects,
   useUpdateProjects,
 } from "~/lib/hooks";
 import {
@@ -68,11 +68,12 @@ import {
   Unlink,
 } from "lucide-react";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useSession } from "next-auth/react";
 import { DateFormatter } from "@/components/DateFormatter";
 import { Link } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { Loading } from "@/components/Loading";
+import { notFound } from "next/navigation";
 
 interface PreviewFile {
   path: string;
@@ -107,8 +108,7 @@ function formatBytes(bytes: number): string {
 export default function QuickScriptPage() {
   const params = useParams();
   const projectId = parseInt(params.projectId as string);
-  useRequireAuth();
-  const { data: session } = useSession();
+  const { session, status, isLoading: isAuthLoading } = useRequireAuth();
   const t = useTranslations("projects.settings.quickScript");
   const tCommon = useTranslations("common");
 
@@ -131,6 +131,12 @@ export default function QuickScriptPage() {
 
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [preview, setPreview] = useState<PreviewResult | null>(null);
+  const [previewProgress, setPreviewProgress] = useState<{
+    step: string;
+    filesFound?: number;
+    scope?: string;
+    totalFiles?: number;
+  } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshStep, setRefreshStep] = useState<string>("");
   const [refreshError, setRefreshError] = useState<string | null>(null);
@@ -158,12 +164,53 @@ export default function QuickScriptPage() {
   const updateConfig = useUpdateProjectCodeRepositoryConfig();
   const deleteConfig = useDeleteProjectCodeRepositoryConfig();
 
-  // QuickScript enabled toggle
-  const { data: project } = useFindUniqueProjects({
-    where: { id: projectId },
-    select: { id: true, name: true, iconUrl: true, quickScriptEnabled: true },
-  });
+  // Fetch project data (allow global admin access or project assignment)
+  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
+    {
+      where: { id: projectId },
+      select: {
+        id: true,
+        name: true,
+        iconUrl: true,
+        quickScriptEnabled: true,
+        assignedUsers: {
+          where: {
+            user: {
+              id: session?.user?.id || "",
+            },
+          },
+          select: {
+            user: {
+              select: {
+                access: true,
+              },
+            },
+          },
+        },
+      },
+    },
+    {
+      enabled: status === "authenticated",
+      retry: 3,
+      retryDelay: 1000,
+    }
+  );
   const updateProject = useUpdateProjects();
+
+  // Access control check - must be ADMIN or PROJECTADMIN
+  useEffect(() => {
+    if (!projectLoading && project && session?.user) {
+      const hasAccess =
+        session.user.access === "ADMIN" ||
+        session.user.access === "PROJECTADMIN";
+
+      if (!hasAccess) {
+        notFound();
+      }
+    } else if (!projectLoading && !project && session?.user) {
+      notFound();
+    }
+  }, [project, projectLoading, session]);
 
   const handleToggleQuickScript = async (enabled: boolean) => {
     await updateProject.mutateAsync({
@@ -235,6 +282,7 @@ export default function QuickScriptPage() {
 
     setIsPreviewing(true);
     setPreview(null);
+    setPreviewProgress(null);
 
     try {
       const response = await fetch(
@@ -249,8 +297,8 @@ export default function QuickScriptPage() {
         }
       );
 
-      const data = await response.json();
       if (!response.ok) {
+        const data = await response.json().catch(() => ({ error: "Request failed" }));
         setPreview({
           files: [],
           fileCount: 0,
@@ -261,8 +309,55 @@ export default function QuickScriptPage() {
           truncated: false,
           error: data.error,
         });
-      } else {
-        setPreview(data);
+        return;
+      }
+
+      // Read SSE stream
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error("No response body");
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        // Keep the last partial line in the buffer
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const json = line.slice(6);
+          try {
+            const event = JSON.parse(json);
+            if (event.type === "progress") {
+              setPreviewProgress({
+                step: event.step,
+                filesFound: event.filesFound,
+                scope: event.scope,
+                totalFiles: event.totalFiles,
+              });
+            } else if (event.type === "complete") {
+              setPreview(event);
+            } else if (event.type === "error") {
+              setPreview({
+                files: [],
+                fileCount: 0,
+                totalSize: 0,
+                totalSizeFormatted: "0 B",
+                exceedsLimit: false,
+                overflowBytes: 0,
+                truncated: false,
+                error: event.error,
+              });
+            }
+          } catch {
+            // Skip malformed SSE lines
+          }
+        }
       }
     } catch {
       setPreview({
@@ -277,6 +372,7 @@ export default function QuickScriptPage() {
       });
     } finally {
       setIsPreviewing(false);
+      setPreviewProgress(null);
     }
   };
 
@@ -409,6 +505,32 @@ export default function QuickScriptPage() {
       })
     | null
     | undefined;
+
+  // Wait for session to load
+  if (isAuthLoading) {
+    return <Loading />;
+  }
+
+  // Wait for data to load
+  if (projectLoading || repositoriesLoading) {
+    return <Loading />;
+  }
+
+  // Project not found after loading
+  if (!project) {
+    return (
+      <Card className="flex flex-col w-full min-w-100 h-full">
+        <CardContent className="flex flex-col items-center justify-center h-full">
+          <h2 className="text-2xl font-semibold mb-2">
+            {tCommon("errors.projectNotFound")}
+          </h2>
+          <p className="text-muted-foreground">
+            {tCommon("errors.projectNotFoundDescription")}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <main>
@@ -652,6 +774,25 @@ export default function QuickScriptPage() {
                       )}
                       {t("pathPatterns.previewFiles")}
                     </Button>
+                    {isPreviewing && previewProgress && (
+                      <span className="text-sm text-muted-foreground">
+                        {previewProgress.step === "branch" &&
+                          t("preview.resolvingBranch")}
+                        {previewProgress.step === "listing" &&
+                          (previewProgress.filesFound != null
+                            ? t("preview.scanningFilesCount", {
+                                count: previewProgress.filesFound,
+                                scope: previewProgress.scope ?? "",
+                              })
+                            : t("preview.scanningFiles", {
+                                scope: previewProgress.scope ?? "",
+                              }))}
+                        {previewProgress.step === "filtering" &&
+                          t("preview.filtering", {
+                            count: previewProgress.totalFiles ?? 0,
+                          })}
+                      </span>
+                    )}
                   </div>
 
                   {preview && !preview.error && (
