@@ -41,6 +41,21 @@ export abstract class GitRepoAdapter {
   abstract listAllFiles(branch: string): Promise<ListFilesResult>;
 
   /**
+   * List files scoped to specific base paths. Falls back to full listing
+   * for providers that don't support path-scoped queries.
+   * @param onProgress Optional callback invoked after each API page with the running file count.
+   */
+  async listFilesInPaths(
+    branch: string,
+    basePaths: string[],
+    onProgress?: (filesFound: number) => void
+  ): Promise<ListFilesResult> {
+    // Default: ignore basePaths and list everything.
+    // Subclasses (e.g. Bitbucket) override for path-scoped listing.
+    return this.listAllFiles(branch);
+  }
+
+  /**
    * Get the repository's default branch name.
    */
   abstract getDefaultBranch(): Promise<string>;
@@ -92,20 +107,38 @@ export abstract class GitRepoAdapter {
           this.rateLimitResetAt = Math.floor(Date.now() / 1000) + parseInt(retryAfter);
 
         if (!response.ok) {
-          // Surface rate limit resets as a human-readable message
-          if (
-            (response.status === 403 || response.status === 429) &&
-            (remaining === "0" || retryAfter !== null)
-          ) {
+          // Handle rate limiting: 429 is always a rate limit; 403 with
+          // exhausted quota is also treated as one.
+          const isRateLimited =
+            response.status === 429 ||
+            (response.status === 403 &&
+              (remaining === "0" || retryAfter !== null));
+
+          if (isRateLimited) {
+            // Force adaptive throttling to pause until the window resets
+            this.rateLimitRemaining = 0;
+            if (!this.rateLimitResetAt) {
+              // No reset header — default to 60s from now
+              this.rateLimitResetAt =
+                Math.floor(Date.now() / 1000) + 60;
+            }
+
             let suffix = "";
             if (retryAfter) {
-              suffix = ` Retry after ${retryAfter}s.`;
+              const secs = parseInt(retryAfter);
+              suffix = secs >= 60
+                ? ` Try again in ${Math.ceil(secs / 60)} minute${Math.ceil(secs / 60) !== 1 ? "s" : ""}.`
+                : ` Try again in ${secs} seconds.`;
             } else if (reset) {
               const resetDate = new Date(parseInt(reset) * 1000);
               const minutesLeft = Math.ceil(
                 (resetDate.getTime() - Date.now()) / 60_000
               );
-              suffix = ` Resets in ${minutesLeft} minute${minutesLeft !== 1 ? "s" : ""} (${resetDate.toUTCString()}).`;
+              suffix = minutesLeft > 0
+                ? ` Try again in ${minutesLeft} minute${minutesLeft !== 1 ? "s" : ""}.`
+                : ` Try again shortly.`;
+            } else {
+              suffix = " Try again in a few minutes.";
             }
             throw new Error(`Rate limit exceeded.${suffix}`);
           }
@@ -178,21 +211,27 @@ export abstract class GitRepoAdapter {
 
   protected async executeWithRetry<T>(
     fn: () => Promise<T>,
-    retriesLeft: number = this.maxRetries
+    retriesLeft: number = this.maxRetries,
+    attempt: number = 0
   ): Promise<T> {
     try {
       return await fn();
     } catch (err: any) {
       if (retriesLeft <= 0) throw err;
-      // Don't retry client errors (4xx) except 429
+      // Don't retry client errors (4xx) except rate limits
+      const isRateLimit = err.message?.includes("Rate limit exceeded");
       if (
+        !isRateLimit &&
         err.message?.includes("HTTP 4") &&
         !err.message?.includes("HTTP 429")
       ) {
         throw err;
       }
-      await new Promise((r) => setTimeout(r, this.retryDelay));
-      return this.executeWithRetry(fn, retriesLeft - 1);
+      // Rate limits: applyRateLimit() in the next makeRequest call will
+      // handle the long pause; just wait a short backoff here.
+      const backoff = this.retryDelay * Math.pow(2, attempt);
+      await new Promise((r) => setTimeout(r, backoff));
+      return this.executeWithRetry(fn, retriesLeft - 1, attempt + 1);
     }
   }
 }

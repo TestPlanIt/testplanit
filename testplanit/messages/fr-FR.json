@@ -1186,9 +1186,16 @@
           "patternLabel": "Modèle",
           "addPath": "Ajouter un chemin",
           "previewFiles": "Aperçu des fichiers",
+          "scanningRepo": "Analyse des fichiers du dépôt… ({seconds}s)",
           "files": "{count} fichiers",
           "truncatedBadge": "Les résultats peuvent être incomplets (limite du fournisseur).",
           "exceedsLimit": "La taille totale dépasse la limite du contexte IA de {overflow}. Lors de l'exportation, les fichiers sont classés par ordre de pertinence pour le cas de test exporté : les fichiers les plus pertinents sont inclus en premier et les fichiers moins pertinents sont ignorés lorsque le budget est atteint. Affinez vos modèles de chemin si vous souhaitez un contrôle plus précis sur les fichiers inclus."
+        },
+        "preview": {
+          "resolvingBranch": "Résolution de la branche…",
+          "scanningFiles": "Analyse des fichiers dans {scope}…",
+          "scanningFilesCount": "Analyse des fichiers dans {scope}… ({count} trouvé)",
+          "filtering": "Application des filtres aux fichiers {count}…"
         },
         "cache": {
           "title": "Paramètres du cache",
@@ -4723,8 +4730,8 @@
       "gitlabToken": "## Jeton d'accès personnel\nUn jeton GitLab avec les autorisations **read_api** et **read_repository**.\n\nGénérez-en un ici : GitLab → Paramètres utilisateur → Jetons d'accès.",
       "projectPath": "## ID ou chemin du projet\nL'ID numérique du projet ou le chemin complet de l'espace de noms.\n\n- Exemple de chemin : `myorg/my-project`\n- Exemple d'ID : `12345678`\n- Disponible dans GitLab sous Paramètres → Général.",
       "baseUrl": "## URL GitLab\nLaissez vide pour gitlab.com. Pour les instances auto-hébergées, saisissez votre URL GitLab.\n\n- Exemple : `https://gitlab.example.com`",
-      "bitbucketUsername": "## Nom d'utilisateur Bitbucket\nVotre nom d'utilisateur de compte Bitbucket (et non votre adresse e-mail).\n\n- Disponible sur Bitbucket → Votre profil → Paramètres du compte.",
-      "appPassword": "## Mot de passe de l'application\nUn mot de passe d'application Bitbucket avec l'autorisation **Dépôts : Lecture**.\n\nCréez-en un à l'adresse : Bitbucket → Paramètres personnels → Mots de passe d'application.",
+      "bitbucketEmail": "## Adresse e-mail du compte Atlassian\nL'adresse e-mail associée à votre compte Atlassian.\n\n- Il s'agit de l'adresse e-mail que vous utilisez pour vous connecter à Bitbucket Cloud.",
+      "bitbucketApiToken": "## Jeton d'API\nJeton d'API Bitbucket avec l'autorisation **Dépôts : Lecture**.\n\nCréez-en un ici : Bitbucket → Paramètres personnels → Jetons d'API.\n\nAtlassian a abandonné l'utilisation des mots de passe d'application au profit des jetons d'API.",
       "workspace": "## Espace de travail\nLe slug de votre espace de travail dans l'URL Bitbucket.\n\n- Exemple : `myworkspace` de `bitbucket.org/myworkspace`",
       "repoSlug": "## Identifiant du dépôt\nL'identifiant du dépôt tiré de son URL.\n\n- Exemple : `my-repo` dans `bitbucket.org/myworkspace/my-repo`",
       "azureToken": "## Jeton d'accès personnel\nUn jeton d'accès personnel Azure DevOps avec l'autorisation **Lecture du code**.\n\nCréez-en un à l'adresse : Azure DevOps → Paramètres utilisateur → Jetons d'accès personnels.",

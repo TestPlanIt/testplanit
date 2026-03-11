@@ -1,9 +1,10 @@
-import { getTranslations } from "next-intl/server";
-import { authOptions } from "~/server/auth";
-import { getServerSession } from "next-auth/next";
-import { enhance } from "@zenstackhq/runtime";
-import { notFound } from "next/navigation";
-import { ShareLinkList } from "@/components/share/ShareLinkList";
+"use client";
+
+import { useEffect } from "react";
+import { useParams } from "next/navigation";
+import { useRequireAuth } from "~/hooks/useRequireAuth";
+import { useTranslations } from "next-intl";
+import { useFindFirstProjects } from "~/lib/hooks";
 import {
   Card,
   CardContent,
@@ -12,133 +13,88 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { ShareLinkList } from "@/components/share/ShareLinkList";
+import { Loading } from "@/components/Loading";
+import { notFound } from "next/navigation";
 
-interface PageProps {
-  params: Promise<{
-    projectId: string;
-    locale: string;
-  }>;
-}
+export default function ProjectSharesPage() {
+  const params = useParams();
+  const projectId = parseInt(params.projectId as string);
+  const { session, status, isLoading: isAuthLoading } = useRequireAuth();
+  const t = useTranslations("reports.shareDialog.manageShares");
+  const tCommon = useTranslations("common");
 
-export async function generateMetadata({ params }: PageProps) {
-  const t = await getTranslations("reports.shareDialog");
-  return {
-    title: t("manageShares.title"),
-  };
-}
-
-export default async function ProjectSharesPage({ params }: PageProps) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user) {
-    notFound();
-  }
-
-  const { prisma } = await import("@/lib/prisma");
-  const db = enhance(prisma, { user: session.user as any });
-  const { projectId: projectIdParam } = await params;
-  const projectId = parseInt(projectIdParam);
-
-  // Check if the project exists and user has access
-  const project = await db.projects.findFirst({
-    where: {
-      id: projectId,
-    },
-    select: {
-      id: true,
-      name: true,
-      iconUrl: true,
-      createdBy: true,
-      defaultAccessType: true,
-    },
-  });
-
-  if (!project) {
-    notFound();
-  }
-
-  // Check access to settings:
-  // 1. System ADMIN users always have access
-  // 2. System PROJECTADMIN users assigned to this project have access
-  // 3. Project creator has access
-  // 4. Users with Settings area permissions through their project role
-  // 5. Users with Settings permissions through their global role (for GLOBAL_ROLE projects)
-
-  const isCreator = project.createdBy === session.user.id;
-  const isAdmin = session.user.access === "ADMIN";
-
-  // Check if user is PROJECTADMIN and assigned to this project
-  const isProjectAdmin =
-    session.user.access === "PROJECTADMIN" &&
-    !!(await db.projectAssignment.findFirst({
-      where: {
-        userId: session.user.id,
-        projectId: projectId,
-      },
-    }));
-
-  // Check if user has Settings area permissions through their project role
-  const { ApplicationArea } = await import("@prisma/client");
-
-  const userProjectPerm = await db.userProjectPermission.findFirst({
-    where: {
-      userId: session.user.id,
-      projectId: projectId,
-      accessType: {
-        not: "NO_ACCESS",
-      },
-    },
-  });
-
-  // If user has a role assigned, check if it has Settings permissions
-  let hasSettingsPermission = false;
-  if (userProjectPerm?.roleId) {
-    const settingsPermission = await db.rolePermission.findFirst({
-      where: {
-        roleId: userProjectPerm.roleId,
-        area: ApplicationArea.Settings,
-        canAddEdit: true,
-      },
-    });
-    hasSettingsPermission = !!settingsPermission;
-  }
-
-  // Also check if user has Settings permissions through their global role with GLOBAL_ROLE projects
-  let hasGlobalRoleSettingsPermission = false;
-  if (project.defaultAccessType === "GLOBAL_ROLE") {
-    // Get the user's global role
-    const user = await db.user.findFirst({
-      where: {
-        id: session.user.id,
-      },
+  // Fetch project data (allow global admin access or project assignment)
+  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
+    {
+      where: { id: projectId },
       select: {
-        roleId: true,
-      },
-    });
-
-    if (user?.roleId) {
-      const globalRoleSettingsPermission = await db.rolePermission.findFirst({
-        where: {
-          roleId: user.roleId,
-          area: ApplicationArea.Settings,
-          canAddEdit: true,
+        id: true,
+        name: true,
+        iconUrl: true,
+        assignedUsers: {
+          where: {
+            user: {
+              id: session?.user?.id || "",
+            },
+          },
+          select: {
+            user: {
+              select: {
+                access: true,
+              },
+            },
+          },
         },
-      });
-      hasGlobalRoleSettingsPermission = !!globalRoleSettingsPermission;
+      },
+    },
+    {
+      enabled: status === "authenticated",
+      retry: 3,
+      retryDelay: 1000,
     }
+  );
+
+  // Access control check - must be ADMIN or PROJECTADMIN
+  useEffect(() => {
+    if (!projectLoading && project && session?.user) {
+      const hasAccess =
+        session.user.access === "ADMIN" ||
+        session.user.access === "PROJECTADMIN";
+
+      if (!hasAccess) {
+        notFound();
+      }
+    } else if (!projectLoading && !project && session?.user) {
+      notFound();
+    }
+  }, [project, projectLoading, session]);
+
+  // Wait for session to load
+  if (isAuthLoading) {
+    return <Loading />;
   }
 
-  const hasSettingsAccess =
-    isAdmin ||
-    isProjectAdmin ||
-    isCreator ||
-    hasSettingsPermission ||
-    hasGlobalRoleSettingsPermission;
-
-  if (!hasSettingsAccess) {
-    notFound();
+  // Wait for data to load
+  if (projectLoading) {
+    return <Loading />;
   }
 
-  const t = await getTranslations("reports.shareDialog.manageShares");
+  // Project not found after loading
+  if (!project) {
+    return (
+      <Card className="flex flex-col w-full min-w-100 h-full">
+        <CardContent className="flex flex-col items-center justify-center h-full">
+          <h2 className="text-2xl font-semibold mb-2">
+            {tCommon("errors.projectNotFound")}
+          </h2>
+          <p className="text-muted-foreground">
+            {tCommon("errors.projectNotFoundDescription")}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <main>

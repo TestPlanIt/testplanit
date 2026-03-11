@@ -72,19 +72,19 @@ const providerFields: Record<string, FieldConfig[]> = {
   ],
   BITBUCKET: [
     {
-      name: "username",
-      label: "Bitbucket Username",
+      name: "email",
+      label: "Atlassian Account Email",
       isCredential: true,
-      placeholder: "myusername",
-      helpKey: "codeRepository.bitbucketUsername",
+      placeholder: "you@example.com",
+      helpKey: "codeRepository.bitbucketEmail",
     },
     {
-      name: "appPassword",
-      label: "App Password",
+      name: "apiToken",
+      label: "API Token",
       type: "password",
       isCredential: true,
       placeholder: "...",
-      helpKey: "codeRepository.appPassword",
+      helpKey: "codeRepository.bitbucketApiToken",
     },
     {
       name: "workspace",

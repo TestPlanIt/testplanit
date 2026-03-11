@@ -1186,9 +1186,16 @@
           "patternLabel": "Patrón",
           "addPath": "Agregar ruta",
           "previewFiles": "Vista previa de archivos",
+          "scanningRepo": "Escaneando archivos del repositorio… ({seconds}s)",
           "files": "{count} archivos",
           "truncatedBadge": "Los resultados pueden estar incompletos (límite del proveedor)",
           "exceedsLimit": "El tamaño total supera el límite del contexto de IA en {overflow}. Durante la exportación, los archivos se clasifican según su relevancia para el caso de prueba que se exporta: los archivos más relevantes se incluyen primero y los de menor rango se omiten al alcanzar el límite. Reduzca los patrones de ruta si desea tener más control sobre los archivos incluidos."
+        },
+        "preview": {
+          "resolvingBranch": "Resolviendo la rama…",
+          "scanningFiles": "Escaneando archivos en {scope}…",
+          "scanningFilesCount": "Escaneando archivos en {scope}… ({count} encontrados)",
+          "filtering": "Aplicación de filtros a {count} archivos…"
         },
         "cache": {
           "title": "Configuración de caché",
@@ -4723,8 +4730,8 @@
       "gitlabToken": "## Token de acceso personal\nUn token de GitLab con alcances **read_api** y **read_repository**.\n\nGenere uno en: GitLab → Configuración de usuario → Tokens de acceso.",
       "projectPath": "## ID o ruta del proyecto\nEl ID numérico del proyecto o la ruta completa del espacio de nombres.\n\n- Ruta de ejemplo: `myorg/my-project`\n- ID de ejemplo: `12345678`\n- Se encuentra en GitLab en Configuración → General.",
       "baseUrl": "## URL de GitLab\nDeja en blanco gitlab.com. Para instancias autoalojadas, introduce tu URL de GitLab.\n\n- Ejemplo: `https://gitlab.example.com`",
-      "bitbucketUsername": "## Nombre de usuario de Bitbucket\nSu nombre de usuario de cuenta de Bitbucket (no su dirección de correo electrónico).\n\n- Se encuentra en Bitbucket → Su perfil → Configuración de la cuenta.",
-      "appPassword": "## Contraseña de la aplicación\nUna contraseña de aplicación de Bitbucket con permiso **Repositorios: Lectura**.\n\nCree una en: Bitbucket → Configuración personal → Contraseñas de aplicaciones.",
+      "bitbucketEmail": "## Correo electrónico de la cuenta de Atlassian\nLa dirección de correo electrónico asociada a su cuenta de Atlassian.\n\n- Este es el correo electrónico que utiliza para iniciar sesión en Bitbucket Cloud.",
+      "bitbucketApiToken": "## Token API\nUn token API de Bitbucket con alcance **Repositorios: Lectura**.\n\nCree uno en: Bitbucket → Configuración personal → Tokens API.\n\n> Atlassian ha dejado obsoletas las contraseñas de aplicaciones en favor de los tokens API.",
       "workspace": "## Espacio de trabajo\nEl slug del espacio de trabajo de su URL de Bitbucket.\n\n- Ejemplo: `myworkspace` de `bitbucket.org/myworkspace`",
       "repoSlug": "## Slug del repositorio\nEl identificador del repositorio de su URL.\n\n- Ejemplo: `my-repo` de `bitbucket.org/myworkspace/my-repo`",
       "azureToken": "## Token de acceso personal\nUn PAT de Azure DevOps con permiso **Código (lectura)**.\n\nCree uno en: Azure DevOps → Configuración de usuario → Tokens de acceso personal.",

@@ -1186,9 +1186,16 @@
           "patternLabel": "Pattern",
           "addPath": "Add Path",
           "previewFiles": "Preview Files",
+          "scanningRepo": "Scanning repository files… ({seconds}s)",
           "files": "{count} files",
           "truncatedBadge": "Results may be incomplete (provider limit)",
           "exceedsLimit": "Total size exceeds the AI context limit by {overflow}. During export, files are ranked by relevance to the test case being exported — the most relevant files are included first and lower-ranked files are skipped when the budget is reached. Narrow your path patterns if you want more control over which files are included."
+        },
+        "preview": {
+          "resolvingBranch": "Resolving branch…",
+          "scanningFiles": "Scanning files in {scope}…",
+          "scanningFilesCount": "Scanning files in {scope}… ({count} found)",
+          "filtering": "Applying filters to {count} files…"
         },
         "cache": {
           "title": "Cache Settings",
@@ -4723,8 +4730,8 @@
       "gitlabToken": "## Personal Access Token\nA GitLab token with **read_api** and **read_repository** scopes.\n\nGenerate one at: GitLab → User Settings → Access Tokens.",
       "projectPath": "## Project ID or Path\nThe numeric project ID or full namespace path.\n\n- Example path: `myorg/my-project`\n- Example ID: `12345678`\n- Found in GitLab under Settings → General.",
       "baseUrl": "## GitLab URL\nLeave blank for gitlab.com. For self-hosted instances, enter your GitLab URL.\n\n- Example: `https://gitlab.example.com`",
-      "bitbucketUsername": "## Bitbucket Username\nYour Bitbucket account username (not your email address).\n\n- Found at Bitbucket → Your profile → Account settings.",
-      "appPassword": "## App Password\nA Bitbucket App Password with **Repositories: Read** permission.\n\nCreate one at: Bitbucket → Personal settings → App passwords.",
+      "bitbucketEmail": "## Atlassian Account Email\nThe email address associated with your Atlassian account.\n\n- This is the email you use to log in to Bitbucket Cloud.",
+      "bitbucketApiToken": "## API Token\nA Bitbucket API token with **Repositories: Read** scope.\n\nCreate one at: Bitbucket → Personal settings → API tokens.\n\n> App passwords have been deprecated by Atlassian in favor of API tokens.",
       "workspace": "## Workspace\nThe workspace slug from your Bitbucket URL.\n\n- Example: `myworkspace` from `bitbucket.org/myworkspace`",
       "repoSlug": "## Repository Slug\nThe repository identifier from its URL.\n\n- Example: `my-repo` from `bitbucket.org/myworkspace/my-repo`",
       "azureToken": "## Personal Access Token\nAn Azure DevOps PAT with **Code (Read)** permission.\n\nCreate one at: Azure DevOps → User settings → Personal access tokens.",

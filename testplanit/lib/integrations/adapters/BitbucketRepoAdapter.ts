@@ -8,8 +8,8 @@ import {
 const MAX_FILES = 10000;
 
 export class BitbucketRepoAdapter extends GitRepoAdapter {
-  private username: string;
-  private appPassword: string;
+  private email: string;
+  private apiToken: string;
   private workspace: string;
   private repoSlug: string;
 
@@ -18,15 +18,16 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
     settings: Record<string, string> | null | undefined
   ) {
     super();
-    this.username = credentials.username;
-    this.appPassword = credentials.appPassword;
+    // Support both new (email/apiToken) and legacy (username/appPassword) credentials
+    this.email = credentials.email ?? credentials.username;
+    this.apiToken = credentials.apiToken ?? credentials.appPassword;
     this.workspace = settings?.workspace ?? "";
     this.repoSlug = settings?.repoSlug ?? "";
   }
 
   private get authHeaders() {
     const encoded = Buffer.from(
-      `${this.username}:${this.appPassword}`
+      `${this.email}:${this.apiToken}`
     ).toString("base64");
     return { Authorization: `Basic ${encoded}` };
   }
@@ -40,13 +41,28 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
   }
 
   async listAllFiles(branch: string): Promise<ListFilesResult> {
+    return this.listFilesInPaths(branch, [""]);
+  }
+
+  /**
+   * Path-scoped listing: only fetches files under the given base paths,
+   * avoiding a full-repo scan when the user specifies path patterns.
+   */
+  async listFilesInPaths(
+    branch: string,
+    basePaths: string[],
+    onProgress?: (filesFound: number) => void
+  ): Promise<ListFilesResult> {
     const files: RepoFileEntry[] = [];
-    // Recursive directory traversal via paginated API
-    const queue: string[] = [""]; // Empty string = repo root
+    const seen = new Set<string>();
+    const MAX_DEPTH = 10;
+    // Deduplicate and normalise paths; empty string = repo root
+    const seeds = basePaths.length > 0 ? basePaths : [""];
+    const queue: string[] = [...seeds];
 
     while (queue.length > 0 && files.length < MAX_FILES) {
       const path = queue.shift()!;
-      let url: string | null = `https://api.bitbucket.org/2.0/repositories/${this.workspace}/${this.repoSlug}/src/${encodeURIComponent(branch)}/${path}?pagelen=100`;
+      let url: string | null = `https://api.bitbucket.org/2.0/repositories/${this.workspace}/${this.repoSlug}/src/${encodeURIComponent(branch)}/${path}?pagelen=100&max_depth=${MAX_DEPTH}`;
 
       while (url && files.length < MAX_FILES) {
         const data: any = await this.makeRequest<any>(url, {
@@ -54,16 +70,22 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
         });
         for (const item of data.values ?? []) {
           if (item.type === "commit_file") {
-            files.push({
-              path: item.path as string,
-              size: (item.size as number) ?? 0,
-              type: "file",
-            });
+            const filePath = item.path as string;
+            if (!seen.has(filePath)) {
+              seen.add(filePath);
+              files.push({
+                path: filePath,
+                size: (item.size as number) ?? 0,
+                type: "file",
+              });
+            }
           } else if (item.type === "commit_directory") {
+            // Directories still appearing means they're deeper than max_depth
             queue.push(item.path as string);
           }
         }
         url = data.next ?? null; // Bitbucket provides full next URL
+        onProgress?.(files.length);
       }
     }
 
