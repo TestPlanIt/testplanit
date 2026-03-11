@@ -16,6 +16,8 @@ import {
   ChartNoAxesCombined,
   Globe,
   Server,
+  ScrollText,
+  Tags,
 } from 'lucide-react';
 
 import styles from './index.module.css';
@@ -179,6 +181,22 @@ function HomepageFeaturesSection() {
         'Generate comprehensive test cases automatically from issues, requirements, or documentation using cutting-edge AI models including OpenAI GPT-4, Google Gemini, Anthropic Claude, and local Ollama models.',
       link: '/docs/user-guide/llm-integrations',
       color: 'purple',
+    },
+    {
+      icon: ScrollText,
+      title: 'QuickScript',
+      description:
+        'Convert manual test cases into real automation scripts for Playwright, Cypress, Selenium, pytest, Jest, and 35+ more frameworks. Export as code, or use AI with repository context for framework-idiomatic output.',
+      link: '/docs/user-guide/llm-quickscript',
+      color: 'pink',
+    },
+    {
+      icon: Tags,
+      title: 'Auto Tag',
+      description:
+        'Automatically suggest and apply tags to test cases, test runs, and sessions using AI. Keep your repository consistently organized without the manual overhead.',
+      link: '/docs/user-guide/llm-auto-tag',
+      color: 'yellow',
     },
     {
       icon: LinkIcon,
