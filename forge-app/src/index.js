@@ -1,5 +1,6 @@
 import Resolver from '@forge/resolver';
-import api, { storage } from '@forge/api';
+import api from '@forge/api';
+import { kvs } from '@forge/kvs';
 
 const resolver = new Resolver();
 
@@ -8,12 +9,12 @@ const INSTANCE_URL_KEY = 'testplanit_instance_url';
 const API_KEY_KEY = 'testplanit_api_key';
 
 async function getInstanceUrl() {
-  const url = await storage.get(INSTANCE_URL_KEY);
+  const url = await kvs.get(INSTANCE_URL_KEY);
   return url || null;
 }
 
 async function getApiKey() {
-  const key = await storage.get(API_KEY_KEY);
+  const key = await kvs.get(API_KEY_KEY);
   return key || null;
 }
 
@@ -102,13 +103,13 @@ resolver.define('saveSettings', async ({ payload }) => {
 
     const cleanUrl = instanceUrl.replace(/\/$/, '');
 
-    await storage.set(INSTANCE_URL_KEY, cleanUrl);
+    await kvs.set(INSTANCE_URL_KEY, cleanUrl);
 
     if (apiKey !== undefined) {
       if (apiKey) {
-        await storage.set(API_KEY_KEY, apiKey);
+        await kvs.set(API_KEY_KEY, apiKey);
       } else {
-        await storage.delete(API_KEY_KEY);
+        await kvs.delete(API_KEY_KEY);
       }
     }
 
@@ -158,8 +159,8 @@ resolver.define('testConnection', async ({ payload }) => {
 
 resolver.define('clearSettings', async () => {
   try {
-    await storage.delete(INSTANCE_URL_KEY);
-    await storage.delete(API_KEY_KEY);
+    await kvs.delete(INSTANCE_URL_KEY);
+    await kvs.delete(API_KEY_KEY);
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
