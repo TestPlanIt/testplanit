@@ -5880,7 +5880,8 @@
       "responseTruncated": "Response truncated — increase Max Output Tokens in LLM settings",
       "tooltipExisting": "Existing tag",
       "tooltipNew": "New tag — will be created",
-      "tooltipAssign": "Assign existing tag"
+      "tooltipAssign": "Assign existing tag",
+      "toggleFailed": "Show/hide failed entities"
     },
     "progress": {
       "starting": "Starting analysis...",

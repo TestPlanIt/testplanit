@@ -124,70 +124,116 @@ export class TagAnalysisService {
     const allSuggestions: TagSuggestion[] = [];
     const truncatedEntityIds: number[] = [];
 
+    /**
+     * Process a batch of entities, retrying with smaller sub-batches if the
+     * LLM response is truncated or unparseable. On failure, the batch is split
+     * in half and each half is retried recursively until individual entities
+     * are reached. This handles models with limited output token windows
+     * gracefully.
+     */
+    const processWithRetry = async (
+      batch: EntityContent[],
+      depth: number = 0,
+    ): Promise<void> => {
+      const userPrompt = this.buildUserPrompt(batch, existingTagNames);
+
+      const response = await this.llmManager.chat(integrationId, {
+        messages: [
+          { role: "system", content: resolvedPrompt.systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: resolvedPrompt.temperature,
+        maxTokens: resolvedPrompt.maxOutputTokens,
+        userId,
+        projectId,
+        feature: LLM_FEATURES.AUTO_TAG,
+        disableThinking: false,
+      });
+
+      totalTokensUsed += response.totalTokens;
+
+      // Parse LLM response
+      const parsed = this.parseLlmResponse(response.content);
+
+      // If parse failed entirely, retry with smaller batches
+      if (!parsed) {
+        if (batch.length <= 1) {
+          // Can't split further — record as failed
+          console.warn(
+            `[auto-tag] Parse failed for single entity ${batch[0]?.id}, skipping`,
+          );
+          truncatedEntityIds.push(...batch.map((e) => e.id));
+          return;
+        }
+
+        const mid = Math.ceil(batch.length / 2);
+        console.warn(
+          `[auto-tag] Parse failed for batch of ${batch.length}, retrying as 2 sub-batches of ${mid} and ${batch.length - mid} (depth ${depth + 1})`,
+        );
+        await processWithRetry(batch.slice(0, mid), depth + 1);
+        await processWithRetry(batch.slice(mid), depth + 1);
+        return;
+      }
+
+      // Track entity IDs the LLM responded about
+      const respondedEntityIds = new Set(
+        parsed.suggestions.map((s) => s.entityId),
+      );
+
+      // Process each entity's suggestions
+      for (const entitySugg of parsed.suggestions) {
+        const entityContent = batch.find(
+          (e) => e.id === entitySugg.entityId,
+        );
+        if (!entityContent) continue;
+
+        const matched = matchTagSuggestions(
+          entitySugg.tags,
+          existingTagNames,
+          entityContent.existingTagNames,
+        );
+
+        for (const match of matched) {
+          allSuggestions.push({
+            entityId: entitySugg.entityId,
+            entityType,
+            tagName: match.tagName,
+            isExisting: match.isExisting,
+            matchedExistingTag: match.matchedExistingTag,
+          });
+        }
+      }
+
+      // If the response was truncated, retry missing entities with smaller batches
+      if (parsed.truncated) {
+        const missingEntities = batch.filter(
+          (e) => !respondedEntityIds.has(e.id),
+        );
+
+        if (missingEntities.length > 0) {
+          console.warn(
+            `[auto-tag] Truncated response: ${missingEntities.length} entities missing, retrying them in smaller batches (depth ${depth + 1})`,
+          );
+
+          if (missingEntities.length === batch.length) {
+            // All missing — split in half
+            const mid = Math.ceil(missingEntities.length / 2);
+            await processWithRetry(missingEntities.slice(0, mid), depth + 1);
+            await processWithRetry(missingEntities.slice(mid), depth + 1);
+          } else {
+            // Only some missing — retry just those as one batch (will split further if needed)
+            await processWithRetry(missingEntities, depth + 1);
+          }
+        }
+      }
+    };
+
     const batchResult = await executeBatches({
       batches,
       onBatchComplete: params.onBatchComplete,
       isCancelled: params.isCancelled,
       processBatch: async (batch) => {
-        const userPrompt = this.buildUserPrompt(batch, existingTagNames);
-
-        const response = await this.llmManager.chat(integrationId, {
-          messages: [
-            { role: "system", content: resolvedPrompt.systemPrompt },
-            { role: "user", content: userPrompt },
-          ],
-          temperature: resolvedPrompt.temperature,
-          maxTokens: resolvedPrompt.maxOutputTokens,
-          userId,
-          projectId,
-          feature: LLM_FEATURES.AUTO_TAG,
-          disableThinking: false,
-        });
-
-        totalTokensUsed += response.totalTokens;
-
-        // Parse LLM response
-        const parsed = this.parseLlmResponse(response.content);
-        if (!parsed) return;
-
-        // Track entity IDs the LLM responded about
-        const respondedEntityIds = new Set(
-          parsed.suggestions.map((s) => s.entityId),
-        );
-
-        // Process each entity's suggestions
-        for (const entitySugg of parsed.suggestions) {
-          const entityContent = batch.find(
-            (e) => e.id === entitySugg.entityId,
-          );
-          if (!entityContent) continue;
-
-          const matched = matchTagSuggestions(
-            entitySugg.tags,
-            existingTagNames,
-            entityContent.existingTagNames,
-          );
-
-          for (const match of matched) {
-            allSuggestions.push({
-              entityId: entitySugg.entityId,
-              entityType,
-              tagName: match.tagName,
-              isExisting: match.isExisting,
-              matchedExistingTag: match.matchedExistingTag,
-            });
-          }
-        }
-
-        // If the response was truncated, entities missing from the response
-        // likely had their suggestions cut off
-        if (parsed.truncated) {
-          for (const entity of batch) {
-            if (!respondedEntityIds.has(entity.id)) {
-              truncatedEntityIds.push(entity.id);
-            }
-          }
-        }
+        await processWithRetry(batch);
       },
     });
 

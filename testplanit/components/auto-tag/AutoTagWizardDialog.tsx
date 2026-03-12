@@ -58,12 +58,18 @@ function EntityJobStatus({
   label,
   count,
   job,
+  onCancel,
+  cancelLabel,
+  cancelled,
   t,
 }: {
   icon: typeof ListTree;
   label: string;
   count: number;
   job: UseAutoTagJobReturn;
+  onCancel: () => void;
+  cancelLabel: string;
+  cancelled?: boolean;
   t: ReturnType<typeof useTranslations>;
 }) {
   const isActive = job.status === "waiting" || job.status === "active";
@@ -75,13 +81,17 @@ function EntityJobStatus({
   const isFinalizing = isActive && job.progress?.finalizing;
 
   return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className={cn(
+      "flex items-center gap-2 text-xs text-muted-foreground",
+      cancelled && "line-through opacity-50",
+    )}>
       {isActive && <Loader2 className="h-3 w-3 animate-spin" />}
       {isDone && <CheckCircle2 className="h-3 w-3 text-success" />}
       {isFailed && <XCircle className="h-3 w-3 text-destructive" />}
-      {!isActive && !isDone && !isFailed && <div className="h-3 w-3" />}
+      {cancelled && <XCircle className="h-3 w-3" />}
+      {!isActive && !isDone && !isFailed && !cancelled && <div className="h-3 w-3" />}
       <Icon className="h-3 w-3" />
-      <span>
+      <span className="flex-1">
         {label}
         {" ("}
         {analyzed}/{total}
@@ -90,6 +100,16 @@ function EntityJobStatus({
           <span className="ml-1 italic">{` — ${t("progress.finalizing")}`}</span>
         )}
       </span>
+      {isActive && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="ml-1 rounded-sm p-0.5 text-muted-foreground transition-colors hover:text-destructive"
+          title={cancelLabel}
+        >
+          <XCircle className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   );
 }
@@ -104,27 +124,24 @@ function getEntityIcon(entity: {
   truncated?: boolean;
   errorMessage?: string;
 }) {
-  if (entity.failed || entity.errorMessage) {
-    return <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />;
-  }
-  if (entity.truncated) {
-    return <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-warning" />;
-  }
+  const isFailed = entity.failed || !!entity.errorMessage;
+  const colorClass = isFailed ? "text-destructive" : "text-muted-foreground";
+
   switch (entity.entityType) {
     case "repositoryCase":
       return entity.automated || isAutomatedCaseSource(entity.source) ? (
-        <Bot className="h-3.5 w-3.5 shrink-0 text-primary" />
+        <Bot className={cn("h-3.5 w-3.5 shrink-0", isFailed ? "text-destructive" : "text-primary")} />
       ) : (
-        <ListChecks className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        <ListChecks className={cn("h-3.5 w-3.5 shrink-0", colorClass)} />
       );
     case "testRun":
       return isAutomatedTestRunType(entity.testRunType) ? (
-        <Bot className="h-3.5 w-3.5 shrink-0 text-primary" />
+        <Bot className={cn("h-3.5 w-3.5 shrink-0", isFailed ? "text-destructive" : "text-primary")} />
       ) : (
-        <PlayCircle className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        <PlayCircle className={cn("h-3.5 w-3.5 shrink-0", colorClass)} />
       );
     case "session":
-      return <Compass className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
+      return <Compass className={cn("h-3.5 w-3.5 shrink-0", colorClass)} />;
   }
 }
 
@@ -269,11 +286,15 @@ export function AutoTagWizardDialog({
       (j) =>
         j.status === "completed" || j.status === "failed" || j.status === "idle"
     );
+  // If all jobs individually cancelled (all idle) while analyzing, go back to configure
+  const allIdle = allJobs.every((j) => j.status === "idle");
   useEffect(() => {
     if (step === "analyzing" && !anyActive && allDone) {
       setStep("review");
+    } else if (step === "analyzing" && allIdle) {
+      setStep("configure");
     }
-  }, [step, anyActive, allDone]);
+  }, [step, anyActive, allDone, allIdle]);
 
   // Restore step from persisted jobs on open
   useEffect(() => {
@@ -409,6 +430,7 @@ export function AutoTagWizardDialog({
   // ── Review filters & pagination ─────────────────────────────────
 
   const [reviewSearch, setReviewSearch] = useState("");
+  const [showFailed, setShowFailed] = useState(true);
   const debouncedSearch = useDebounce(reviewSearch, 250);
   const [reviewEntityTypes, setReviewEntityTypes] = useState<EntityType[]>([
     "repositoryCase",
@@ -435,6 +457,7 @@ export function AutoTagWizardDialog({
   useEffect(() => {
     if (step === "review") {
       setReviewSearch("");
+      setShowFailed(true);
       setReviewPage(1);
       setReviewPageSize(userPreferredPageSize);
       setReviewSortConfig({ column: "name", direction: "asc" });
@@ -447,7 +470,7 @@ export function AutoTagWizardDialog({
   // Reset to page 1 when filters change
   useEffect(() => {
     setReviewPage(1);
-  }, [debouncedSearch, reviewEntityTypes]);
+  }, [debouncedSearch, reviewEntityTypes, showFailed]);
 
   // ── Review DataTable rows & columns ────────────────────────────────
 
@@ -483,6 +506,9 @@ export function AutoTagWizardDialog({
     let rows = reviewRows;
     if (reviewEntityTypes.length < 3) {
       rows = rows.filter((r) => reviewEntityTypes.includes(r.entityType));
+    }
+    if (!showFailed) {
+      rows = rows.filter((r) => !r.failed && !r.errorMessage && !r.truncated);
     }
     if (debouncedSearch.trim()) {
       const q = debouncedSearch.trim().toLowerCase();
@@ -563,7 +589,7 @@ export function AutoTagWizardDialog({
               className={cn(
                 "w-full",
                 (entity.failed || entity.errorMessage) && "text-destructive",
-                entity.truncated && "text-warning"
+                entity.truncated && !entity.failed && !entity.errorMessage && "text-warning"
               )}
             >
               {entity.name}
@@ -825,6 +851,9 @@ export function AutoTagWizardDialog({
                         })}
                         count={effectiveCaseIds.length}
                         job={autoTagCases}
+                        onCancel={() => autoTagCases.cancel()}
+                        cancelLabel={tCommon("cancel")}
+                        cancelled={step === "analyzing" && autoTagCases.status === "idle"}
                         t={t}
                       />
                     )}
@@ -836,6 +865,9 @@ export function AutoTagWizardDialog({
                         })}
                         count={effectiveRunIds.length}
                         job={autoTagRuns}
+                        onCancel={() => autoTagRuns.cancel()}
+                        cancelLabel={tCommon("cancel")}
+                        cancelled={step === "analyzing" && autoTagRuns.status === "idle"}
                         t={t}
                       />
                     )}
@@ -847,6 +879,9 @@ export function AutoTagWizardDialog({
                         })}
                         count={effectiveSessionIds.length}
                         job={autoTagSessions}
+                        onCancel={() => autoTagSessions.cancel()}
+                        cancelLabel={tCommon("cancel")}
+                        cancelled={step === "analyzing" && autoTagSessions.status === "idle"}
                         t={t}
                       />
                     )}
@@ -891,6 +926,18 @@ export function AutoTagWizardDialog({
                     className="pl-8 h-8 text-sm"
                   />
                 </div>
+                {/* Show failed/truncated toggle only when there are failed rows */}
+                {reviewRows.some((r) => r.failed || r.errorMessage || r.truncated) && (
+                  <Button
+                    variant={showFailed ? "outline" : "ghost"}
+                    size="sm"
+                    className={cn("h-8 w-8 p-0", !showFailed && "opacity-50")}
+                    onClick={() => setShowFailed((v) => !v)}
+                    title={t("review.toggleFailed")}
+                  >
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                  </Button>
+                )}
                 {/* Only show toggles if results contain multiple entity types */}
                 {new Set(reviewRows.map((r) => r.entityType)).size > 1 && (
                   <ToggleGroup
