@@ -81,15 +81,19 @@ function EntityJobStatus({
   const isFinalizing = isActive && job.progress?.finalizing;
 
   return (
-    <div className={cn(
-      "flex items-center gap-2 text-xs text-muted-foreground",
-      cancelled && "line-through opacity-50",
-    )}>
+    <div
+      className={cn(
+        "flex items-center gap-2 text-xs text-muted-foreground",
+        cancelled && "line-through opacity-50"
+      )}
+    >
       {isActive && <Loader2 className="h-3 w-3 animate-spin" />}
       {isDone && <CheckCircle2 className="h-3 w-3 text-success" />}
       {isFailed && <XCircle className="h-3 w-3 text-destructive" />}
       {cancelled && <XCircle className="h-3 w-3" />}
-      {!isActive && !isDone && !isFailed && !cancelled && <div className="h-3 w-3" />}
+      {!isActive && !isDone && !isFailed && !cancelled && (
+        <div className="h-3 w-3" />
+      )}
       <Icon className="h-3 w-3" />
       <span className="flex-1">
         {label}
@@ -130,13 +134,23 @@ function getEntityIcon(entity: {
   switch (entity.entityType) {
     case "repositoryCase":
       return entity.automated || isAutomatedCaseSource(entity.source) ? (
-        <Bot className={cn("h-3.5 w-3.5 shrink-0", isFailed ? "text-destructive" : "text-primary")} />
+        <Bot
+          className={cn(
+            "h-3.5 w-3.5 shrink-0",
+            isFailed ? "text-destructive" : "text-primary"
+          )}
+        />
       ) : (
         <ListChecks className={cn("h-3.5 w-3.5 shrink-0", colorClass)} />
       );
     case "testRun":
       return isAutomatedTestRunType(entity.testRunType) ? (
-        <Bot className={cn("h-3.5 w-3.5 shrink-0", isFailed ? "text-destructive" : "text-primary")} />
+        <Bot
+          className={cn(
+            "h-3.5 w-3.5 shrink-0",
+            isFailed ? "text-destructive" : "text-primary"
+          )}
+        />
       ) : (
         <PlayCircle className={cn("h-3.5 w-3.5 shrink-0", colorClass)} />
       );
@@ -525,7 +539,13 @@ export function AutoTagWizardDialog({
       return dir * a.name.localeCompare(b.name);
     });
     return rows;
-  }, [reviewRows, reviewEntityTypes, debouncedSearch, reviewSortConfig]);
+  }, [
+    reviewRows,
+    reviewEntityTypes,
+    debouncedSearch,
+    reviewSortConfig,
+    showFailed,
+  ]);
 
   const effectivePageSize =
     reviewPageSize === "All" ? filteredReviewRows.length : reviewPageSize;
@@ -589,7 +609,10 @@ export function AutoTagWizardDialog({
               className={cn(
                 "w-full",
                 (entity.failed || entity.errorMessage) && "text-destructive",
-                entity.truncated && !entity.failed && !entity.errorMessage && "text-warning"
+                entity.truncated &&
+                  !entity.failed &&
+                  !entity.errorMessage &&
+                  "text-warning"
               )}
             >
               {entity.name}
@@ -853,7 +876,9 @@ export function AutoTagWizardDialog({
                         job={autoTagCases}
                         onCancel={() => autoTagCases.cancel()}
                         cancelLabel={tCommon("cancel")}
-                        cancelled={step === "analyzing" && autoTagCases.status === "idle"}
+                        cancelled={
+                          step === "analyzing" && autoTagCases.status === "idle"
+                        }
                         t={t}
                       />
                     )}
@@ -867,7 +892,9 @@ export function AutoTagWizardDialog({
                         job={autoTagRuns}
                         onCancel={() => autoTagRuns.cancel()}
                         cancelLabel={tCommon("cancel")}
-                        cancelled={step === "analyzing" && autoTagRuns.status === "idle"}
+                        cancelled={
+                          step === "analyzing" && autoTagRuns.status === "idle"
+                        }
                         t={t}
                       />
                     )}
@@ -881,7 +908,10 @@ export function AutoTagWizardDialog({
                         job={autoTagSessions}
                         onCancel={() => autoTagSessions.cancel()}
                         cancelLabel={tCommon("cancel")}
-                        cancelled={step === "analyzing" && autoTagSessions.status === "idle"}
+                        cancelled={
+                          step === "analyzing" &&
+                          autoTagSessions.status === "idle"
+                        }
                         t={t}
                       />
                     )}
@@ -926,18 +956,6 @@ export function AutoTagWizardDialog({
                     className="pl-8 h-8 text-sm"
                   />
                 </div>
-                {/* Show failed/truncated toggle only when there are failed rows */}
-                {reviewRows.some((r) => r.failed || r.errorMessage || r.truncated) && (
-                  <Button
-                    variant={showFailed ? "outline" : "ghost"}
-                    size="sm"
-                    className={cn("h-8 w-8 p-0", !showFailed && "opacity-50")}
-                    onClick={() => setShowFailed((v) => !v)}
-                    title={t("review.toggleFailed")}
-                  >
-                    <AlertTriangle className="h-4 w-4 text-destructive" />
-                  </Button>
-                )}
                 {/* Only show toggles if results contain multiple entity types */}
                 {new Set(reviewRows.map((r) => r.entityType)).size > 1 && (
                   <ToggleGroup
@@ -997,6 +1015,19 @@ export function AutoTagWizardDialog({
                       </ToggleGroupItem>
                     )}
                   </ToggleGroup>
+                )}
+                {/* Show failed/truncated toggle only when there are failed rows */}
+                {reviewRows.some(
+                  (r) => r.failed || r.errorMessage || r.truncated
+                ) && (
+                  <label className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                    <Switch
+                      checked={showFailed}
+                      onCheckedChange={setShowFailed}
+                      className="scale-75"
+                    />
+                    {t("review.showFailed")}
+                  </label>
                 )}
               </div>
             )}

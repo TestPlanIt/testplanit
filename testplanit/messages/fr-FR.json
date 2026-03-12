@@ -5881,7 +5881,8 @@
       "tooltipExisting": "Balise existante",
       "tooltipNew": "Nouvelle étiquette — sera créée",
       "tooltipAssign": "Attribuer une étiquette existante",
-      "toggleFailed": "Afficher/masquer les entités défaillantes"
+      "toggleFailed": "Afficher/masquer les entités défaillantes",
+      "showFailed": "Échec de l'affichage"
     },
     "progress": {
       "starting": "Début de l'analyse...",

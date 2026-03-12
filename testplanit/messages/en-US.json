@@ -5881,7 +5881,8 @@
       "tooltipExisting": "Existing tag",
       "tooltipNew": "New tag — will be created",
       "tooltipAssign": "Assign existing tag",
-      "toggleFailed": "Show/hide failed entities"
+      "toggleFailed": "Show/hide failed entities",
+      "showFailed": "Show failed"
     },
     "progress": {
       "starting": "Starting analysis...",

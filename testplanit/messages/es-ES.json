@@ -5881,7 +5881,8 @@
       "tooltipExisting": "Etiqueta existente",
       "tooltipNew": "Se creará una nueva etiqueta",
       "tooltipAssign": "Asignar etiqueta existente",
-      "toggleFailed": "Mostrar/ocultar entidades fallidas"
+      "toggleFailed": "Mostrar/ocultar entidades fallidas",
+      "showFailed": "El espectáculo falló"
     },
     "progress": {
       "starting": "Comenzando el análisis...",
