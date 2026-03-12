@@ -5880,7 +5880,8 @@
       "responseTruncated": "Respuesta truncada: aumente los tokens de salida máximos en la configuración de LLM",
       "tooltipExisting": "Etiqueta existente",
       "tooltipNew": "Se creará una nueva etiqueta",
-      "tooltipAssign": "Asignar etiqueta existente"
+      "tooltipAssign": "Asignar etiqueta existente",
+      "toggleFailed": "Mostrar/ocultar entidades fallidas"
     },
     "progress": {
       "starting": "Comenzando el análisis...",
