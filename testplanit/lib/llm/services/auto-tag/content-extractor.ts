@@ -46,8 +46,6 @@ export function extractFieldValue(fieldValue: {
   return String(val);
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * Extract all relevant content from a raw entity (with Prisma includes) into
  * a plain-text EntityContent suitable for LLM consumption.

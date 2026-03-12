@@ -83,7 +83,6 @@ export function QueueJobsView({
   const t = useTranslations("admin.queues.jobs");
   const tGlobal = useTranslations();
 
-
   const [jobs, setJobs] = useState<Job[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -370,7 +369,9 @@ export function QueueJobsView({
                             <Button
                               variant="ghost"
                               className="px-2 py-1 h-auto"
-                              onClick={() => performJobAction(job.id, "promote")}
+                              onClick={() =>
+                                performJobAction(job.id, "promote")
+                              }
                               disabled={actionInProgress === job.id}
                             >
                               <ChevronUp className="h-4 w-4" />
@@ -395,7 +396,8 @@ export function QueueJobsView({
               {total > PAGE_SIZE && (
                 <div className="flex items-center justify-between mt-4">
                   <p className="text-sm text-muted-foreground">
-                    {startIndex}–{endIndex} of {total}
+                    {tGlobal("common.pagination.showing")} {startIndex}
+                    {"-"} {endIndex} {tGlobal("common.of")} {total}
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -412,7 +414,9 @@ export function QueueJobsView({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                      onClick={() =>
+                        setPage((p) => Math.min(totalPages - 1, p + 1))
+                      }
                       disabled={page >= totalPages - 1 || loading}
                     >
                       <ChevronRight className="h-4 w-4" />

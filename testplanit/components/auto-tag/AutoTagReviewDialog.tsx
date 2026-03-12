@@ -96,7 +96,7 @@ export function AutoTagReviewDialog({
     } catch (err: any) {
       toast.error(err.message || t("applyError"));
     }
-  }, [job, queryClient, onOpenChange, onApplied]);
+  }, [job, queryClient, onOpenChange, onApplied, t]);
 
   if (!job.suggestions) return null;
 

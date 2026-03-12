@@ -118,7 +118,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
         setIsSubmitting(false);
       }
     },
-    [],
+    [persistKey],
   );
 
   // ── Restore persisted job on mount ─────────────────────────────────────
@@ -223,7 +223,7 @@ export function useAutoTagJob(persistKey?: string): UseAutoTagJobReturn {
         intervalRef.current = null;
       }
     };
-  }, [jobId, status]);
+  }, [jobId, status, persistKey]);
 
   // ── Toggle tag selection ────────────────────────────────────────────────
 

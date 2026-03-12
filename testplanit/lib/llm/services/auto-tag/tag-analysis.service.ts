@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { PrismaClient } from "@prisma/client";
 
 import { LLM_FEATURES } from "~/lib/llm/constants";
@@ -400,7 +399,6 @@ export class TagAnalysisService {
       jsonStr = jsonStr.replace(/\n?\n?\[Response was truncated due to length limit\]\s*$/, "");
 
       // Sanitize control characters that break JSON.parse (tabs/newlines inside strings)
-      // eslint-disable-next-line no-control-regex
       jsonStr = jsonStr.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
 
       let parsed: AutoTagAIResponse;
