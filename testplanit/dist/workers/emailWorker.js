@@ -1019,7 +1019,7 @@ var startWorker = async () => {
   } else {
     console.warn("Valkey connection not available. Email worker not started.");
   }
-  process.on("SIGINT", async () => {
+  const shutdown = async () => {
     console.log("Shutting down email worker...");
     if (worker) {
       await worker.close();
@@ -1028,7 +1028,9 @@ var startWorker = async () => {
       await disconnectAllTenantClients();
     }
     process.exit(0);
-  });
+  };
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 };
 if (typeof import_meta3 !== "undefined" && import_meta3.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || (typeof import_meta3 === "undefined" || import_meta3.url === void 0)) {
   console.log("Email worker running...");

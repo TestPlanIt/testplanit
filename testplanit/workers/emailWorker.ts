@@ -441,7 +441,7 @@ const startWorker = async () => {
   }
 
   // Allow graceful shutdown
-  process.on("SIGINT", async () => {
+  const shutdown = async () => {
     console.log("Shutting down email worker...");
     if (worker) {
       await worker.close();
@@ -451,7 +451,10 @@ const startWorker = async () => {
       await disconnectAllTenantClients();
     }
     process.exit(0);
-  });
+  };
+
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 };
 
 // Run the worker if this file is executed directly (works with both ESM and CommonJS)

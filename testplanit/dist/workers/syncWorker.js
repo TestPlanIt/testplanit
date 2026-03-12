@@ -4074,7 +4074,9 @@ var syncService = new SyncService();
 var import_node_url = require("node:url");
 var import_meta = {};
 var processor = async (job) => {
-  console.log(`Processing sync job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  console.log(
+    `Processing sync job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
+  );
   validateMultiTenantJobData(job.data);
   const prisma2 = getPrismaClientForJob(job.data);
   const serviceOptions = { prismaClient: prisma2 };
@@ -4186,13 +4188,9 @@ var startWorker = async () => {
     worker = new import_bullmq2.Worker(SYNC_QUEUE_NAME, processor, {
       connection: valkey_default,
       concurrency: 1,
-      // Process 1 sync job at a time to manage memory usage
       lockDuration: 216e5,
-      // 6 hours - allows for very large issue syncs
-      maxStalledCount: 1,
-      // Reduce automatic stalled job retries
+      maxStalledCount: 3,
       stalledInterval: 3e5
-      // Check for stalled jobs every 5 minutes
     });
     worker.on("completed", (job) => {
       console.log(`Sync job ${job.id} completed successfully.`);
@@ -4207,7 +4205,7 @@ var startWorker = async () => {
   } else {
     console.warn("Valkey connection not available. Sync worker not started.");
   }
-  process.on("SIGINT", async () => {
+  const shutdown = async () => {
     console.log("Shutting down sync worker...");
     if (worker) {
       await worker.close();
@@ -4216,9 +4214,11 @@ var startWorker = async () => {
       await disconnectAllTenantClients();
     }
     process.exit(0);
-  });
+  };
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 };
-if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || (typeof import_meta === "undefined" || import_meta.url === void 0)) {
+if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || typeof import_meta === "undefined" || import_meta.url === void 0) {
   console.log("Sync worker running...");
   startWorker().catch((err) => {
     console.error("Failed to start sync worker:", err);

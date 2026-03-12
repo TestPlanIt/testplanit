@@ -928,7 +928,7 @@ var startWorker = async () => {
       "Valkey connection not available. Notification worker not started."
     );
   }
-  process.on("SIGINT", async () => {
+  const shutdown = async () => {
     console.log("Shutting down notification worker...");
     if (worker) {
       await worker.close();
@@ -937,7 +937,9 @@ var startWorker = async () => {
       await disconnectAllTenantClients();
     }
     process.exit(0);
-  });
+  };
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 };
 if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || (typeof import_meta === "undefined" || import_meta.url === void 0)) {
   console.log("Notification worker running...");

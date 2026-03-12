@@ -2049,7 +2049,9 @@ function validateMultiTenantJobData(jobData) {
 // workers/elasticsearchReindexWorker.ts
 var import_meta = {};
 var processor = async (job) => {
-  console.log(`Processing Elasticsearch reindex job ${job.id}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  console.log(
+    `Processing Elasticsearch reindex job ${job.id}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
+  );
   validateMultiTenantJobData(job.data);
   const prisma2 = getPrismaClientForJob(job.data);
   const { entityType, projectId, tenantId } = job.data;
@@ -2060,7 +2062,9 @@ var processor = async (job) => {
     }
     await job.updateProgress(0);
     await job.log("Starting reindex operation...");
-    const entityTypesToReindex = entityType === "all" ? Object.values(SearchableEntityType) : [entityType === "repositoryCases" ? "repository_case" /* REPOSITORY_CASE */ : entityType === "sharedSteps" ? "shared_step" /* SHARED_STEP */ : entityType === "testRuns" ? "test_run" /* TEST_RUN */ : entityType === "sessions" ? "session" /* SESSION */ : entityType === "issues" ? "issue" /* ISSUE */ : entityType === "milestones" ? "milestone" /* MILESTONE */ : "project" /* PROJECT */];
+    const entityTypesToReindex = entityType === "all" ? Object.values(SearchableEntityType) : [
+      entityType === "repositoryCases" ? "repository_case" /* REPOSITORY_CASE */ : entityType === "sharedSteps" ? "shared_step" /* SHARED_STEP */ : entityType === "testRuns" ? "test_run" /* TEST_RUN */ : entityType === "sessions" ? "session" /* SESSION */ : entityType === "issues" ? "issue" /* ISSUE */ : entityType === "milestones" ? "milestone" /* MILESTONE */ : "project" /* PROJECT */
+    ];
     await job.updateProgress(2);
     await job.log("Deleting old indices to apply latest mappings...");
     for (const et of entityTypesToReindex) {
@@ -2072,7 +2076,9 @@ var processor = async (job) => {
           await job.log(`Deleted index: ${indexName}`);
         }
       } catch (err) {
-        await job.log(`Warning: failed to delete index ${indexName}: ${err.message}`);
+        await job.log(
+          `Warning: failed to delete index ${indexName}: ${err.message}`
+        );
       }
     }
     await job.updateProgress(5);
@@ -2098,7 +2104,11 @@ var processor = async (job) => {
     for (const project of projects) {
       if (entityType === "all" || entityType === "repositoryCases") {
         totalCounts.repositoryCases = (totalCounts.repositoryCases || 0) + await prisma2.repositoryCases.count({
-          where: { projectId: project.id, isDeleted: false, isArchived: false }
+          where: {
+            projectId: project.id,
+            isDeleted: false,
+            isArchived: false
+          }
         });
       }
       if (entityType === "all" || entityType === "sharedSteps") {
@@ -2118,7 +2128,10 @@ var processor = async (job) => {
       }
       if (entityType === "all" || entityType === "issues") {
         totalCounts.issues = (totalCounts.issues || 0) + await prisma2.issue.count({
-          where: { isDeleted: false, testRuns: { some: { projectId: project.id } } }
+          where: {
+            isDeleted: false,
+            testRuns: { some: { projectId: project.id } }
+          }
         });
       }
       if (entityType === "all" || entityType === "milestones") {
@@ -2127,7 +2140,10 @@ var processor = async (job) => {
         });
       }
     }
-    const totalDocuments = Object.values(totalCounts).reduce((a, b) => a + b, 0);
+    const totalDocuments = Object.values(totalCounts).reduce(
+      (a, b) => a + b,
+      0
+    );
     let processedDocuments = 0;
     let currentProgress = 10;
     const progressPerProject = 80 / projects.length;
@@ -2152,14 +2168,22 @@ var processor = async (job) => {
           }
         });
         if (count > 0) {
-          await job.log(`Syncing ${count} repository cases for project ${project.name}`);
+          await job.log(
+            `Syncing ${count} repository cases for project ${project.name}`
+          );
           const progressCallback = async (processed, total, message) => {
             processedDocuments = results.repositoryCases + processed;
             const overallProgress = 10 + processedDocuments / totalDocuments * 80;
             await job.updateProgress(Math.min(overallProgress, 90));
             await job.log(message);
           };
-          await syncProjectCasesToElasticsearch(project.id, 100, progressCallback, prisma2, tenantId);
+          await syncProjectCasesToElasticsearch(
+            project.id,
+            100,
+            progressCallback,
+            prisma2,
+            tenantId
+          );
           results.repositoryCases += count;
           processedDocuments = results.repositoryCases;
         }
@@ -2172,8 +2196,15 @@ var processor = async (job) => {
           }
         });
         if (count > 0) {
-          await job.log(`Syncing ${count} shared steps for project ${project.name}`);
-          await syncProjectSharedStepsToElasticsearch(project.id, 100, prisma2, tenantId);
+          await job.log(
+            `Syncing ${count} shared steps for project ${project.name}`
+          );
+          await syncProjectSharedStepsToElasticsearch(
+            project.id,
+            100,
+            prisma2,
+            tenantId
+          );
           results.sharedSteps += count;
         }
       }
@@ -2185,8 +2216,14 @@ var processor = async (job) => {
           }
         });
         if (count > 0) {
-          await job.log(`Syncing ${count} test runs for project ${project.name}`);
-          await syncProjectTestRunsToElasticsearch(project.id, prisma2, tenantId);
+          await job.log(
+            `Syncing ${count} test runs for project ${project.name}`
+          );
+          await syncProjectTestRunsToElasticsearch(
+            project.id,
+            prisma2,
+            tenantId
+          );
           results.testRuns += count;
         }
       }
@@ -2198,8 +2235,14 @@ var processor = async (job) => {
           }
         });
         if (count > 0) {
-          await job.log(`Syncing ${count} sessions for project ${project.name}`);
-          await syncProjectSessionsToElasticsearch(project.id, prisma2, tenantId);
+          await job.log(
+            `Syncing ${count} sessions for project ${project.name}`
+          );
+          await syncProjectSessionsToElasticsearch(
+            project.id,
+            prisma2,
+            tenantId
+          );
           results.sessions += count;
         }
       }
@@ -2228,8 +2271,14 @@ var processor = async (job) => {
           }
         });
         if (count > 0) {
-          await job.log(`Syncing ${count} milestones for project ${project.name}`);
-          await syncProjectMilestonesToElasticsearch(project.id, prisma2, tenantId);
+          await job.log(
+            `Syncing ${count} milestones for project ${project.name}`
+          );
+          await syncProjectMilestonesToElasticsearch(
+            project.id,
+            prisma2,
+            tenantId
+          );
           results.milestones += count;
         }
       }
@@ -2239,8 +2288,13 @@ var processor = async (job) => {
     }
     await job.updateProgress(100);
     await job.log("Reindex completed successfully!");
-    const finalTotalDocuments = Object.values(results).reduce((a, b) => a + b, 0);
-    console.log(`Reindex job ${job.id} completed. Indexed ${finalTotalDocuments} documents.`);
+    const finalTotalDocuments = Object.values(results).reduce(
+      (a, b) => a + b,
+      0
+    );
+    console.log(
+      `Reindex job ${job.id} completed. Indexed ${finalTotalDocuments} documents.`
+    );
     return {
       success: true,
       results,
@@ -2263,16 +2317,14 @@ var startWorker = async () => {
     worker = new import_bullmq.Worker(ELASTICSEARCH_REINDEX_QUEUE_NAME, processor, {
       connection: valkey_default,
       concurrency: 2,
-      // Process 2 reindex jobs at a time
       lockDuration: 36e5,
-      // 1 hour - allows for very large reindex operations
-      maxStalledCount: 1,
-      // Reduce automatic stalled job retries
+      maxStalledCount: 3,
       stalledInterval: 3e5
-      // Check for stalled jobs every 5 minutes
     });
     worker.on("completed", (job) => {
-      console.log(`Elasticsearch reindex job ${job.id} completed successfully.`);
+      console.log(
+        `Elasticsearch reindex job ${job.id} completed successfully.`
+      );
     });
     worker.on("failed", (job, err) => {
       console.error(`Elasticsearch reindex job ${job?.id} failed:`, err);
@@ -2280,11 +2332,15 @@ var startWorker = async () => {
     worker.on("error", (err) => {
       console.error("Elasticsearch reindex worker error:", err);
     });
-    console.log(`Elasticsearch reindex worker started for queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}".`);
+    console.log(
+      `Elasticsearch reindex worker started for queue "${ELASTICSEARCH_REINDEX_QUEUE_NAME}".`
+    );
   } else {
-    console.warn("Valkey connection not available. Elasticsearch reindex worker not started.");
+    console.warn(
+      "Valkey connection not available. Elasticsearch reindex worker not started."
+    );
   }
-  process.on("SIGINT", async () => {
+  const shutdown = async () => {
     console.log("Shutting down Elasticsearch reindex worker...");
     if (worker) {
       await worker.close();
@@ -2293,9 +2349,11 @@ var startWorker = async () => {
       await disconnectAllTenantClients();
     }
     process.exit(0);
-  });
+  };
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 };
-if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || (typeof import_meta === "undefined" || import_meta.url === void 0)) {
+if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || typeof import_meta === "undefined" || import_meta.url === void 0) {
   console.log("Elasticsearch reindex worker running...");
   startWorker().catch((err) => {
     console.error("Failed to start Elasticsearch reindex worker:", err);

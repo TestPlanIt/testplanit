@@ -1,7 +1,10 @@
 import { Worker, Job } from "bullmq";
 import valkeyConnection from "../lib/valkey";
 import { SYNC_QUEUE_NAME } from "../lib/queueNames";
-import { syncService, SyncJobData } from "../lib/integrations/services/SyncService";
+import {
+  syncService,
+  SyncJobData,
+} from "../lib/integrations/services/SyncService";
 import { pathToFileURL } from "node:url";
 import {
   getPrismaClientForJob,
@@ -15,7 +18,9 @@ import {
 interface MultiTenantSyncJobData extends SyncJobData, MultiTenantJobData {}
 
 const processor = async (job: Job) => {
-  console.log(`Processing sync job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  console.log(
+    `Processing sync job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
+  );
 
   // Validate multi-tenant job data if in multi-tenant mode
   validateMultiTenantJobData(job.data);
@@ -152,10 +157,10 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker(SYNC_QUEUE_NAME, processor, {
       connection: valkeyConnection as any,
-      concurrency: 1, // Process 1 sync job at a time to manage memory usage
-      lockDuration: 21600000, // 6 hours - allows for very large issue syncs
-      maxStalledCount: 1, // Reduce automatic stalled job retries
-      stalledInterval: 300000, // Check for stalled jobs every 5 minutes
+      concurrency: 1,
+      lockDuration: 21600000,
+      maxStalledCount: 3,
+      stalledInterval: 300000,
     });
 
     worker.on("completed", (job) => {
@@ -176,7 +181,7 @@ const startWorker = async () => {
   }
 
   // Allow graceful shutdown
-  process.on("SIGINT", async () => {
+  const shutdown = async () => {
     console.log("Shutting down sync worker...");
     if (worker) {
       await worker.close();
@@ -186,15 +191,18 @@ const startWorker = async () => {
       await disconnectAllTenantClients();
     }
     process.exit(0);
-  });
+  };
+
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
 };
 
 // Run the worker if this file is executed directly (works with both ESM and CommonJS)
 if (
   (typeof import.meta !== "undefined" &&
     import.meta.url === pathToFileURL(process.argv[1]).href) ||
-  (typeof import.meta === "undefined" ||
-    (import.meta as any).url === undefined)
+  typeof import.meta === "undefined" ||
+  (import.meta as any).url === undefined
 ) {
   console.log("Sync worker running...");
   startWorker().catch((err) => {
