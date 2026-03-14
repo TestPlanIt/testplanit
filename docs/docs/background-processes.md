@@ -19,7 +19,8 @@ The application uses the following background processes:
 7. **Auto Tag Worker** - Runs AI-powered automatic tagging on test cases and other entities
 8. **Audit Log Worker** - Persists audit log entries for user and system actions
 9. **Budget Alert Worker** - Checks and sends alerts for AI model budget thresholds
-10. **Scheduler** - Sets up recurring jobs (cron jobs)
+10. **Repo Cache Worker** - Automatically refreshes expired code repository caches for QuickScript
+11. **Scheduler** - Sets up recurring jobs (cron jobs)
 
 ## Workers
 
@@ -93,11 +94,20 @@ The application uses the following background processes:
 - Default concurrency: 2
 - Location: `workers/budgetAlertWorker.ts`
 
+### Repo Cache Worker
+
+- Automatically refreshes expired code repository caches used by QuickScript AI generation
+- Runs a daily sweep (4 AM) to find configs with expired or missing caches and re-fetches from git
+- Only refreshes caches that have actually expired — configs with valid caches are skipped
+- Default concurrency: 1 (serial processing to avoid hammering git provider APIs)
+- Location: `workers/repoCacheWorker.ts`
+
 ### Scheduler
 
 - Sets up recurring jobs using cron patterns
 - Configures daily digest emails (8 AM)
 - Configures forecast updates (3 AM)
+- Configures code repository cache refresh (4 AM)
 - Location: `scheduler.ts`
 
 ## Running Workers

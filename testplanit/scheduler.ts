@@ -1,11 +1,12 @@
-import { getForecastQueue, getNotificationQueue } from "./lib/queues";
-import { FORECAST_QUEUE_NAME, NOTIFICATION_QUEUE_NAME } from "./lib/queues";
+import { getForecastQueue, getNotificationQueue, getRepoCacheQueue } from "./lib/queues";
+import { FORECAST_QUEUE_NAME, NOTIFICATION_QUEUE_NAME, REPO_CACHE_QUEUE_NAME } from "./lib/queues";
 import {
   JOB_UPDATE_ALL_CASES,
   JOB_AUTO_COMPLETE_MILESTONES,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
 } from "./workers/forecastWorker";
 import { JOB_SEND_DAILY_DIGEST } from "./workers/notificationWorker";
+import { JOB_REFRESH_EXPIRED_CACHES } from "./workers/repoCacheWorker";
 import { isMultiTenantMode, getAllTenantIds } from "./lib/multiTenantPrisma";
 
 // Define the cron schedule (e.g., every day at 3:00 AM server time)
@@ -13,14 +14,16 @@ import { isMultiTenantMode, getAllTenantIds } from "./lib/multiTenantPrisma";
 const CRON_SCHEDULE_DAILY_3AM = "0 3 * * *";
 const CRON_SCHEDULE_DAILY_6AM = "0 6 * * *"; // For milestone auto-completion and notifications
 const CRON_SCHEDULE_DAILY_8AM = "0 8 * * *"; // For daily digest emails
+const CRON_SCHEDULE_DAILY_4AM = "0 4 * * *"; // For code repository cache refresh
 
 async function scheduleJobs() {
   console.log("Attempting to schedule jobs...");
 
   const forecastQueue = getForecastQueue();
   const notificationQueue = getNotificationQueue();
+  const repoCacheQueue = getRepoCacheQueue();
 
-  if (!forecastQueue || !notificationQueue) {
+  if (!forecastQueue || !notificationQueue || !repoCacheQueue) {
     console.error("Required queues are not initialized. Cannot schedule jobs.");
     process.exit(1); // Exit if queues aren't available
   }
@@ -154,6 +157,46 @@ async function scheduleJobs() {
 
       console.log(
         `Successfully scheduled repeatable job "${JOB_SEND_DAILY_DIGEST}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_8AM}" on queue "${NOTIFICATION_QUEUE_NAME}".`
+      );
+    }
+
+    // Clean up any old versions of the repeatable repo cache jobs
+    const repoCacheRepeatableJobs = await repoCacheQueue.getRepeatableJobs();
+    let removedRepoCacheCount = 0;
+    for (const job of repoCacheRepeatableJobs) {
+      if (job.name === JOB_REFRESH_EXPIRED_CACHES) {
+        console.log(
+          `Removing existing repeatable job "${job.name}" with key: ${job.key}`
+        );
+        await repoCacheQueue.removeRepeatableByKey(job.key);
+        removedRepoCacheCount++;
+      }
+    }
+    if (removedRepoCacheCount > 0) {
+      console.log(
+        `Removed ${removedRepoCacheCount} old repeatable repo cache jobs.`
+      );
+    }
+
+    // Schedule repo cache refresh jobs for each tenant (or single job if not multi-tenant)
+    for (const tenantId of tenantIds) {
+      const jobId = tenantId
+        ? `${JOB_REFRESH_EXPIRED_CACHES}-${tenantId}`
+        : JOB_REFRESH_EXPIRED_CACHES;
+
+      await repoCacheQueue.add(
+        JOB_REFRESH_EXPIRED_CACHES,
+        { tenantId },
+        {
+          repeat: {
+            pattern: CRON_SCHEDULE_DAILY_4AM,
+          },
+          jobId,
+        }
+      );
+
+      console.log(
+        `Successfully scheduled repeatable job "${JOB_REFRESH_EXPIRED_CACHES}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_4AM}" on queue "${REPO_CACHE_QUEUE_NAME}".`
       );
     }
   } catch (error) {

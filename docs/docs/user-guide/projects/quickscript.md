@@ -51,7 +51,7 @@ When enabled, QuickScript uses AI to generate each script by analyzing your test
 
 ### With a Code Repository
 
-When a code repository is configured and cached, AI generation works at its best:
+When a code repository is configured and cached, AI generation works at its best. Caches are automatically refreshed by a daily background job when they expire, so code context is always available without manual intervention.
 
 1. QuickScript assembles context from your code repository (files most relevant to the test case).
 2. The AI receives your test steps, the repository context, and the template's header/footer as a starting point.

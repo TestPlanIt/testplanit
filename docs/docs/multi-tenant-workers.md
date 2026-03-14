@@ -139,6 +139,8 @@ This creates separate scheduled jobs per tenant:
 - `update-all-cases-forecast-tenant-b`
 - `send-daily-digest-tenant-a`
 - `send-daily-digest-tenant-b`
+- `refresh-expired-repo-caches-tenant-a`
+- `refresh-expired-repo-caches-tenant-b`
 
 ## Job Queue Admin UI
 
@@ -161,15 +163,19 @@ All workers support multi-tenant mode:
 | Forecast Worker | Yes | Updates forecasts per tenant database |
 | Sync Worker | Yes | Syncs issues to correct tenant database |
 | Elasticsearch Reindex Worker | Yes | Indexes to tenant-specific ES index |
-| Testmo Import Worker | Partial | Memory-intensive; consider per-tenant deployment |
+| Auto Tag Worker | Yes | Runs AI tagging against correct tenant database |
+| Audit Log Worker | Yes | Persists audit entries to correct tenant database |
+| Budget Alert Worker | Yes | Checks budgets per tenant database |
+| Repo Cache Worker | Yes | Refreshes tenant-scoped Valkey caches |
+| Testmo Import Worker | Yes | Memory-intensive; consider per-tenant deployment for frequent imports |
 
 ### Testmo Import Worker Note
 
 The Testmo Import Worker is memory-intensive and processes large JSON files. In multi-tenant deployments:
 
-- Consider running separate import workers per tenant if imports are frequent
 - Set `TESTMO_IMPORT_CONCURRENCY=1` to limit memory usage
 - Monitor memory during large imports
+- Consider running separate import workers per tenant if imports are frequent and concurrent
 
 ## Docker Compose Example
 

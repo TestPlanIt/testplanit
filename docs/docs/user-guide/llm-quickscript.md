@@ -43,7 +43,8 @@ In your project, go to **Settings > QuickScript** to configure:
 
 - **Caching** — Enable file caching to avoid fetching files from the repository on every export:
   - **Cache TTL** — How long cached files remain valid (1–30 days)
-  - **Refresh Cache** — Manually refresh when your repository code changes
+  - **Automatic Refresh** — Expired caches are automatically refreshed by a daily background job (4 AM), so you never lose code context due to cache expiration
+  - **Refresh Cache** — Manually refresh at any time when your repository code changes (e.g., after merging a PR that adds new helpers or page objects)
   - The cache status shows file count, total size, and last fetch time
 
 ### How File Relevance Works
@@ -91,6 +92,7 @@ If the AI produces generic framework code instead of referencing your project's 
 - Ensure a code repository is connected and cached in **Settings > QuickScript**
 - Verify your path patterns include the relevant files (use Preview Files to check)
 - Refresh the cache if your repository has changed recently
+- If the cache has expired, it will be automatically refreshed by the next daily background run (4 AM) — or click **Refresh Cache** to refresh immediately
 
 ### Truncated Output
 

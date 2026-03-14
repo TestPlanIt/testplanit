@@ -10,6 +10,7 @@ import {
   AUDIT_LOG_QUEUE_NAME,
   BUDGET_ALERT_QUEUE_NAME,
   AUTO_TAG_QUEUE_NAME,
+  REPO_CACHE_QUEUE_NAME,
 } from "./queueNames";
 
 // Re-export queue names for backward compatibility
@@ -23,6 +24,7 @@ export {
   AUDIT_LOG_QUEUE_NAME,
   BUDGET_ALERT_QUEUE_NAME,
   AUTO_TAG_QUEUE_NAME,
+  REPO_CACHE_QUEUE_NAME,
 };
 
 // Lazy-initialized queue instances
@@ -35,6 +37,7 @@ let _elasticsearchReindexQueue: Queue | null = null;
 let _auditLogQueue: Queue | null = null;
 let _budgetAlertQueue: Queue | null = null;
 let _autoTagQueue: Queue | null = null;
+let _repoCacheQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -382,6 +385,46 @@ export function getAutoTagQueue(): Queue | null {
 }
 
 /**
+ * Get the repo cache queue instance (lazy initialization)
+ * Used for automatic code repository cache refresh jobs
+ */
+export function getRepoCacheQueue(): Queue | null {
+  if (_repoCacheQueue) return _repoCacheQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${REPO_CACHE_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+
+  _repoCacheQueue = new Queue(REPO_CACHE_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 10000,
+      },
+      removeOnComplete: {
+        age: 3600 * 24 * 7, // 7 days
+        count: 1000,
+      },
+      removeOnFail: {
+        age: 3600 * 24 * 14, // 14 days
+      },
+    },
+  });
+
+  console.log(`Queue "${REPO_CACHE_QUEUE_NAME}" initialized.`);
+
+  _repoCacheQueue.on("error", (error) => {
+    console.error(`Queue ${REPO_CACHE_QUEUE_NAME} error:`, error);
+  });
+
+  return _repoCacheQueue;
+}
+
+/**
  * Get all queues (initializes all of them)
  * Use this only when you need access to all queues (e.g., admin dashboard)
  */
@@ -396,5 +439,6 @@ export function getAllQueues() {
     auditLogQueue: getAuditLogQueue(),
     budgetAlertQueue: getBudgetAlertQueue(),
     autoTagQueue: getAutoTagQueue(),
+    repoCacheQueue: getRepoCacheQueue(),
   };
 }

@@ -27,6 +27,7 @@ const entryPoints = [
   'workers/auditLogWorker.ts',
   'workers/autoTagWorker.ts',
   'workers/budgetAlertWorker.ts',
+  'workers/repoCacheWorker.ts',
   'scheduler.ts',
 ];
 
