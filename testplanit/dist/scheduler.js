@@ -136,6 +136,624 @@ var init_db = __esm({
   }
 });
 
+// utils/ssrf.ts
+function isSsrfSafe(url) {
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
+    if (hostname === "localhost") return false;
+    if (PRIVATE_RANGES.some((r) => r.test(hostname))) return false;
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+var PRIVATE_RANGES;
+var init_ssrf = __esm({
+  "utils/ssrf.ts"() {
+    "use strict";
+    PRIVATE_RANGES = [
+      // IPv4 loopback
+      /^127\./,
+      // RFC 1918 private ranges
+      /^10\./,
+      /^172\.(1[6-9]|2[0-9]|3[01])\./,
+      /^192\.168\./,
+      // AWS metadata / link-local
+      /^169\.254\./,
+      // "This" network
+      /^0\./,
+      // IPv6 loopback
+      /^::1$/,
+      // IPv6 unique local
+      /^fc/i,
+      /^fd/i
+    ];
+  }
+});
+
+// lib/integrations/adapters/GitHubRepoAdapter.ts
+var GitHubRepoAdapter_exports = {};
+__export(GitHubRepoAdapter_exports, {
+  GitHubRepoAdapter: () => GitHubRepoAdapter
+});
+var GitHubRepoAdapter;
+var init_GitHubRepoAdapter = __esm({
+  "lib/integrations/adapters/GitHubRepoAdapter.ts"() {
+    "use strict";
+    init_GitRepoAdapter();
+    GitHubRepoAdapter = class extends GitRepoAdapter {
+      personalAccessToken;
+      owner;
+      repo;
+      constructor(credentials, settings) {
+        super();
+        this.personalAccessToken = credentials.personalAccessToken;
+        this.owner = settings?.owner ?? "";
+        this.repo = settings?.repo ?? "";
+      }
+      get authHeaders() {
+        return {
+          Authorization: `token ${this.personalAccessToken}`,
+          Accept: "application/vnd.github.v3+json"
+        };
+      }
+      async getDefaultBranch() {
+        const data = await this.makeRequest(
+          `https://api.github.com/repos/${this.owner}/${this.repo}`,
+          { headers: this.authHeaders }
+        );
+        return data.default_branch;
+      }
+      async listAllFiles(branch) {
+        const branchData = await this.makeRequest(
+          `https://api.github.com/repos/${this.owner}/${this.repo}/branches/${encodeURIComponent(branch)}`,
+          { headers: this.authHeaders }
+        );
+        const treeSha = branchData.commit.commit.tree.sha;
+        const treeData = await this.makeRequest(
+          `https://api.github.com/repos/${this.owner}/${this.repo}/git/trees/${treeSha}?recursive=1`,
+          { headers: this.authHeaders }
+        );
+        if (treeData.truncated) {
+          console.warn(
+            `[GitHubRepoAdapter] Tree truncated for ${this.owner}/${this.repo} \u2014 results may be incomplete (>100k files or >7MB)`
+          );
+        }
+        const files = (treeData.tree ?? []).filter((item) => item.type === "blob").map((item) => ({
+          path: item.path,
+          size: item.size ?? 0,
+          type: "file"
+        }));
+        return { files, truncated: treeData.truncated === true };
+      }
+      async getFileContent(path, branch) {
+        const data = await this.makeRequest(
+          `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch)}`,
+          { headers: this.authHeaders }
+        );
+        return Buffer.from(data.content, "base64").toString("utf-8");
+      }
+      async testConnection() {
+        try {
+          const data = await this.makeRequest(
+            `https://api.github.com/repos/${this.owner}/${this.repo}`,
+            { headers: this.authHeaders }
+          );
+          return { success: true, defaultBranch: data.default_branch };
+        } catch (err) {
+          return { success: false, error: err.message };
+        }
+      }
+    };
+  }
+});
+
+// lib/integrations/adapters/GitLabRepoAdapter.ts
+var GitLabRepoAdapter_exports = {};
+__export(GitLabRepoAdapter_exports, {
+  GitLabRepoAdapter: () => GitLabRepoAdapter
+});
+var MAX_FILES, GitLabRepoAdapter;
+var init_GitLabRepoAdapter = __esm({
+  "lib/integrations/adapters/GitLabRepoAdapter.ts"() {
+    "use strict";
+    init_GitRepoAdapter();
+    MAX_FILES = 1e4;
+    GitLabRepoAdapter = class extends GitRepoAdapter {
+      personalAccessToken;
+      projectPath;
+      // numeric ID or "namespace/project"
+      baseUrl;
+      // defaults to https://gitlab.com
+      constructor(credentials, settings) {
+        super();
+        this.personalAccessToken = credentials.personalAccessToken;
+        this.projectPath = settings?.projectPath ?? "";
+        this.baseUrl = (settings?.baseUrl ?? "https://gitlab.com").replace(
+          /\/$/,
+          ""
+        );
+        this.baseUrl = this.sanitizeUrl(this.baseUrl);
+      }
+      get authHeaders() {
+        return { "PRIVATE-TOKEN": this.personalAccessToken };
+      }
+      get encodedProjectPath() {
+        return /^\d+$/.test(this.projectPath) ? this.projectPath : encodeURIComponent(this.projectPath);
+      }
+      async getDefaultBranch() {
+        const data = await this.makeRequest(
+          `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}`,
+          { headers: this.authHeaders }
+        );
+        return data.default_branch;
+      }
+      async listAllFiles(branch) {
+        const files = [];
+        let page = 1;
+        while (files.length < MAX_FILES) {
+          const url = `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/repository/tree?recursive=true&per_page=100&ref=${encodeURIComponent(branch)}&page=${page}`;
+          const controller = new AbortController();
+          const timeoutId = setTimeout(
+            () => controller.abort(),
+            this.requestTimeout
+          );
+          let response;
+          try {
+            const safeUrl = this.sanitizeUrl(url);
+            await this.applyRateLimit();
+            response = await fetch(safeUrl, {
+              headers: this.authHeaders,
+              signal: controller.signal
+            });
+          } finally {
+            clearTimeout(timeoutId);
+          }
+          if (!response.ok) {
+            const text = await response.text().catch(() => "");
+            throw new Error(
+              `GitLab HTTP ${response.status}: ${text.slice(0, 200)}`
+            );
+          }
+          const items = await response.json();
+          const fileItems = items.filter((item) => item.type === "blob").map((item) => ({
+            path: item.path,
+            size: 0,
+            // GitLab recursive tree does not return file sizes
+            type: "file"
+          }));
+          files.push(...fileItems);
+          const nextPage = response.headers.get("X-Next-Page");
+          if (!nextPage) break;
+          page = parseInt(nextPage, 10);
+        }
+        return { files: files.slice(0, MAX_FILES) };
+      }
+      async getFileContent(path, branch) {
+        const url = `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}/repository/files/${encodeURIComponent(path)}/raw?ref=${encodeURIComponent(branch)}`;
+        return this.executeWithRetry(async () => {
+          await this.applyRateLimit();
+          const controller = new AbortController();
+          const timeoutId = setTimeout(
+            () => controller.abort(),
+            this.requestTimeout
+          );
+          try {
+            const safeUrl = this.sanitizeUrl(url);
+            const response = await fetch(safeUrl, {
+              headers: this.authHeaders,
+              signal: controller.signal
+            });
+            if (!response.ok) {
+              const text = await response.text().catch(() => "");
+              throw new Error(
+                `GitLab HTTP ${response.status}: ${text.slice(0, 200)}`
+              );
+            }
+            return await response.text();
+          } finally {
+            clearTimeout(timeoutId);
+          }
+        });
+      }
+      async testConnection() {
+        try {
+          const data = await this.makeRequest(
+            `${this.baseUrl}/api/v4/projects/${this.encodedProjectPath}`,
+            { headers: this.authHeaders }
+          );
+          return { success: true, defaultBranch: data.default_branch };
+        } catch (err) {
+          return { success: false, error: err.message };
+        }
+      }
+    };
+  }
+});
+
+// lib/integrations/adapters/BitbucketRepoAdapter.ts
+var BitbucketRepoAdapter_exports = {};
+__export(BitbucketRepoAdapter_exports, {
+  BitbucketRepoAdapter: () => BitbucketRepoAdapter
+});
+var MAX_FILES2, BitbucketRepoAdapter;
+var init_BitbucketRepoAdapter = __esm({
+  "lib/integrations/adapters/BitbucketRepoAdapter.ts"() {
+    "use strict";
+    init_GitRepoAdapter();
+    MAX_FILES2 = 1e4;
+    BitbucketRepoAdapter = class extends GitRepoAdapter {
+      email;
+      apiToken;
+      workspace;
+      repoSlug;
+      constructor(credentials, settings) {
+        super();
+        this.email = credentials.email ?? credentials.username;
+        this.apiToken = credentials.apiToken ?? credentials.appPassword;
+        this.workspace = settings?.workspace ?? "";
+        this.repoSlug = settings?.repoSlug ?? "";
+      }
+      get authHeaders() {
+        const encoded = Buffer.from(
+          `${this.email}:${this.apiToken}`
+        ).toString("base64");
+        return { Authorization: `Basic ${encoded}` };
+      }
+      async getDefaultBranch() {
+        const data = await this.makeRequest(
+          `https://api.bitbucket.org/2.0/repositories/${this.workspace}/${this.repoSlug}`,
+          { headers: this.authHeaders }
+        );
+        return data.mainbranch?.name ?? "main";
+      }
+      async listAllFiles(branch) {
+        return this.listFilesInPaths(branch, [""]);
+      }
+      /**
+       * Path-scoped listing: only fetches files under the given base paths,
+       * avoiding a full-repo scan when the user specifies path patterns.
+       */
+      async listFilesInPaths(branch, basePaths, onProgress) {
+        const files = [];
+        const seen = /* @__PURE__ */ new Set();
+        const MAX_DEPTH = 10;
+        const seeds = basePaths.length > 0 ? basePaths : [""];
+        const queue = [...seeds];
+        while (queue.length > 0 && files.length < MAX_FILES2) {
+          const path = queue.shift();
+          let url = `https://api.bitbucket.org/2.0/repositories/${this.workspace}/${this.repoSlug}/src/${encodeURIComponent(branch)}/${path}?pagelen=100&max_depth=${MAX_DEPTH}`;
+          while (url && files.length < MAX_FILES2) {
+            const data = await this.makeRequest(url, {
+              headers: this.authHeaders
+            });
+            for (const item of data.values ?? []) {
+              if (item.type === "commit_file") {
+                const filePath = item.path;
+                if (!seen.has(filePath)) {
+                  seen.add(filePath);
+                  files.push({
+                    path: filePath,
+                    size: item.size ?? 0,
+                    type: "file"
+                  });
+                }
+              } else if (item.type === "commit_directory") {
+                queue.push(item.path);
+              }
+            }
+            url = data.next ?? null;
+            onProgress?.(files.length);
+          }
+        }
+        return { files: files.slice(0, MAX_FILES2) };
+      }
+      async getFileContent(path, branch) {
+        const url = `https://api.bitbucket.org/2.0/repositories/${this.workspace}/${this.repoSlug}/src/${encodeURIComponent(branch)}/${path}`;
+        return this.executeWithRetry(async () => {
+          await this.applyRateLimit();
+          const controller = new AbortController();
+          const timeoutId = setTimeout(
+            () => controller.abort(),
+            this.requestTimeout
+          );
+          try {
+            const safeUrl = this.sanitizeUrl(url);
+            const response = await fetch(safeUrl, {
+              headers: this.authHeaders,
+              signal: controller.signal
+            });
+            if (!response.ok) {
+              const text = await response.text().catch(() => "");
+              throw new Error(
+                `Bitbucket HTTP ${response.status}: ${text.slice(0, 200)}`
+              );
+            }
+            return await response.text();
+          } finally {
+            clearTimeout(timeoutId);
+          }
+        });
+      }
+      async testConnection() {
+        try {
+          const data = await this.makeRequest(
+            `https://api.bitbucket.org/2.0/repositories/${this.workspace}/${this.repoSlug}`,
+            { headers: this.authHeaders }
+          );
+          return { success: true, defaultBranch: data.mainbranch?.name };
+        } catch (err) {
+          return { success: false, error: err.message };
+        }
+      }
+    };
+  }
+});
+
+// lib/integrations/adapters/AzureDevOpsRepoAdapter.ts
+var AzureDevOpsRepoAdapter_exports = {};
+__export(AzureDevOpsRepoAdapter_exports, {
+  AzureDevOpsRepoAdapter: () => AzureDevOpsRepoAdapter
+});
+var AzureDevOpsRepoAdapter;
+var init_AzureDevOpsRepoAdapter = __esm({
+  "lib/integrations/adapters/AzureDevOpsRepoAdapter.ts"() {
+    "use strict";
+    init_GitRepoAdapter();
+    AzureDevOpsRepoAdapter = class extends GitRepoAdapter {
+      personalAccessToken;
+      organizationUrl;
+      // e.g. https://dev.azure.com/myorg
+      project;
+      repositoryId;
+      // repo name or ID
+      constructor(credentials, settings) {
+        super();
+        this.personalAccessToken = credentials.personalAccessToken;
+        this.organizationUrl = (settings?.organizationUrl ?? "").replace(/\/$/, "");
+        if (this.organizationUrl) {
+          this.organizationUrl = this.sanitizeUrl(this.organizationUrl);
+        }
+        this.project = settings?.project ?? "";
+        this.repositoryId = settings?.repositoryId ?? "";
+      }
+      get authHeaders() {
+        const encoded = Buffer.from(`:${this.personalAccessToken}`).toString(
+          "base64"
+        );
+        return { Authorization: `Basic ${encoded}` };
+      }
+      async getDefaultBranch() {
+        const data = await this.makeRequest(
+          `${this.organizationUrl}/${encodeURIComponent(this.project)}/_apis/git/repositories/${encodeURIComponent(this.repositoryId)}?api-version=7.0`,
+          { headers: this.authHeaders }
+        );
+        return data.defaultBranch?.replace("refs/heads/", "") ?? "main";
+      }
+      async listAllFiles(branch) {
+        const data = await this.makeRequest(
+          `${this.organizationUrl}/${encodeURIComponent(this.project)}/_apis/git/repositories/${encodeURIComponent(this.repositoryId)}/items?recursionLevel=Full&versionDescriptor.version=${encodeURIComponent(branch)}&versionDescriptor.versionType=branch&api-version=7.0`,
+          { headers: this.authHeaders }
+        );
+        const files = (data.value ?? []).filter((item) => item.gitObjectType === "blob").map((item) => ({
+          path: item.path.replace(/^\//, ""),
+          // Remove leading slash
+          size: item.size ?? 0,
+          type: "file"
+        }));
+        return { files };
+      }
+      async getFileContent(path, branch) {
+        const url = `${this.organizationUrl}/${encodeURIComponent(this.project)}/_apis/git/repositories/${encodeURIComponent(this.repositoryId)}/items?path=${encodeURIComponent(path)}&versionDescriptor.version=${encodeURIComponent(branch)}&versionDescriptor.versionType=branch&api-version=7.0`;
+        return this.executeWithRetry(async () => {
+          await this.applyRateLimit();
+          const controller = new AbortController();
+          const timeoutId = setTimeout(
+            () => controller.abort(),
+            this.requestTimeout
+          );
+          try {
+            const safeUrl = this.sanitizeUrl(url);
+            const response = await fetch(safeUrl, {
+              headers: this.authHeaders,
+              signal: controller.signal
+            });
+            if (!response.ok) {
+              const text = await response.text().catch(() => "");
+              throw new Error(
+                `Azure DevOps HTTP ${response.status}: ${text.slice(0, 200)}`
+              );
+            }
+            return await response.text();
+          } finally {
+            clearTimeout(timeoutId);
+          }
+        });
+      }
+      async testConnection() {
+        try {
+          await this.makeRequest(
+            `${this.organizationUrl}/${encodeURIComponent(this.project)}/_apis/git/repositories/${encodeURIComponent(this.repositoryId)}?api-version=7.0`,
+            { headers: this.authHeaders }
+          );
+          const defaultBranch = await this.getDefaultBranch();
+          return { success: true, defaultBranch };
+        } catch (err) {
+          return { success: false, error: err.message };
+        }
+      }
+    };
+  }
+});
+
+// lib/integrations/adapters/GitRepoAdapter.ts
+function createGitRepoAdapter(provider, credentials, settings) {
+  switch (provider) {
+    case "GITHUB": {
+      const { GitHubRepoAdapter: GitHubRepoAdapter2 } = (init_GitHubRepoAdapter(), __toCommonJS(GitHubRepoAdapter_exports));
+      return new GitHubRepoAdapter2(credentials, settings);
+    }
+    case "GITLAB": {
+      const { GitLabRepoAdapter: GitLabRepoAdapter2 } = (init_GitLabRepoAdapter(), __toCommonJS(GitLabRepoAdapter_exports));
+      return new GitLabRepoAdapter2(credentials, settings);
+    }
+    case "BITBUCKET": {
+      const { BitbucketRepoAdapter: BitbucketRepoAdapter2 } = (init_BitbucketRepoAdapter(), __toCommonJS(BitbucketRepoAdapter_exports));
+      return new BitbucketRepoAdapter2(credentials, settings);
+    }
+    case "AZURE_DEVOPS": {
+      const { AzureDevOpsRepoAdapter: AzureDevOpsRepoAdapter2 } = (init_AzureDevOpsRepoAdapter(), __toCommonJS(AzureDevOpsRepoAdapter_exports));
+      return new AzureDevOpsRepoAdapter2(credentials, settings);
+    }
+    default:
+      throw new Error(`Unknown git provider: ${provider}`);
+  }
+}
+var GitRepoAdapter;
+var init_GitRepoAdapter = __esm({
+  "lib/integrations/adapters/GitRepoAdapter.ts"() {
+    "use strict";
+    init_ssrf();
+    GitRepoAdapter = class {
+      rateLimitDelay = 500;
+      // ms between requests (baseline)
+      lastRequestTime = 0;
+      maxRetries = 3;
+      retryDelay = 1e3;
+      requestTimeout = 3e4;
+      // 30 seconds
+      // Populated from response headers to drive adaptive throttling
+      rateLimitRemaining = null;
+      rateLimitResetAt = null;
+      /**
+       * List files scoped to specific base paths. Falls back to full listing
+       * for providers that don't support path-scoped queries.
+       * @param onProgress Optional callback invoked after each API page with the running file count.
+       */
+      async listFilesInPaths(branch, basePaths, onProgress) {
+        return this.listAllFiles(branch);
+      }
+      /**
+       * HTTP request with timeout via AbortController.
+       * Throws on non-2xx status codes.
+       */
+      async makeRequest(url, options = {}) {
+        await this.applyRateLimit();
+        return this.executeWithRetry(async () => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(
+            () => controller.abort(),
+            this.requestTimeout
+          );
+          try {
+            const safeUrl = this.sanitizeUrl(url);
+            const response = await fetch(safeUrl, {
+              ...options,
+              signal: controller.signal
+            });
+            const remaining = response.headers.get("X-RateLimit-Remaining");
+            const reset = response.headers.get("X-RateLimit-Reset");
+            const retryAfter = response.headers.get("Retry-After");
+            if (remaining !== null) this.rateLimitRemaining = parseInt(remaining);
+            if (reset !== null) this.rateLimitResetAt = parseInt(reset);
+            if (retryAfter !== null)
+              this.rateLimitResetAt = Math.floor(Date.now() / 1e3) + parseInt(retryAfter);
+            if (!response.ok) {
+              const isRateLimited = response.status === 429 || response.status === 403 && (remaining === "0" || retryAfter !== null);
+              if (isRateLimited) {
+                this.rateLimitRemaining = 0;
+                if (!this.rateLimitResetAt) {
+                  this.rateLimitResetAt = Math.floor(Date.now() / 1e3) + 60;
+                }
+                let suffix = "";
+                if (retryAfter) {
+                  const secs = parseInt(retryAfter);
+                  suffix = secs >= 60 ? ` Try again in ${Math.ceil(secs / 60)} minute${Math.ceil(secs / 60) !== 1 ? "s" : ""}.` : ` Try again in ${secs} seconds.`;
+                } else if (reset) {
+                  const resetDate = new Date(parseInt(reset) * 1e3);
+                  const minutesLeft = Math.ceil(
+                    (resetDate.getTime() - Date.now()) / 6e4
+                  );
+                  suffix = minutesLeft > 0 ? ` Try again in ${minutesLeft} minute${minutesLeft !== 1 ? "s" : ""}.` : ` Try again shortly.`;
+                } else {
+                  suffix = " Try again in a few minutes.";
+                }
+                throw new Error(`Rate limit exceeded.${suffix}`);
+              }
+              const errorText = await response.text().catch(() => "");
+              throw new Error(
+                `HTTP ${response.status} ${response.statusText}: ${errorText.slice(0, 200)}`
+              );
+            }
+            return await response.json();
+          } finally {
+            clearTimeout(timeoutId);
+          }
+        });
+      }
+      /**
+       * Validate a URL is safe for server-side requests (blocks private/internal addresses).
+       * Returns the parsed+normalized URL so callers use the validated value for
+       * fetch — this breaks the taint chain for static analysis (CodeQL).
+       */
+      sanitizeUrl(url) {
+        const parsed = new URL(url);
+        if (!isSsrfSafe(parsed.href)) {
+          throw new Error(
+            "Request blocked: URL targets a private or internal address"
+          );
+        }
+        let result = parsed.href;
+        if (!url.endsWith("/") && result.endsWith("/")) {
+          result = result.slice(0, -1);
+        }
+        return result;
+      }
+      async applyRateLimit() {
+        const now = Date.now();
+        let delay = this.rateLimitDelay;
+        if (this.rateLimitRemaining !== null) {
+          if (this.rateLimitRemaining < 10) {
+            const waitMs = this.rateLimitResetAt ? this.rateLimitResetAt * 1e3 - now : 3e4;
+            delay = Math.max(delay, waitMs > 0 ? waitMs : 0);
+          } else if (this.rateLimitRemaining < 50) {
+            delay = Math.max(delay, 8e3);
+          } else if (this.rateLimitRemaining < 100) {
+            delay = Math.max(delay, 4e3);
+          } else if (this.rateLimitRemaining < 200) {
+            delay = Math.max(delay, 2e3);
+          } else if (this.rateLimitRemaining < 500) {
+            delay = Math.max(delay, 1e3);
+          }
+        }
+        const elapsed = now - this.lastRequestTime;
+        if (elapsed < delay) {
+          await new Promise((r) => setTimeout(r, delay - elapsed));
+        }
+        this.lastRequestTime = Date.now();
+      }
+      async executeWithRetry(fn, retriesLeft = this.maxRetries, attempt = 0) {
+        try {
+          return await fn();
+        } catch (err) {
+          if (retriesLeft <= 0) throw err;
+          const isRateLimit = err.message?.includes("Rate limit exceeded");
+          if (!isRateLimit && err.message?.includes("HTTP 4") && !err.message?.includes("HTTP 429")) {
+            throw err;
+          }
+          const backoff = this.retryDelay * Math.pow(2, attempt);
+          await new Promise((r) => setTimeout(r, backoff));
+          return this.executeWithRetry(fn, retriesLeft - 1, attempt + 1);
+        }
+      }
+    };
+  }
+});
+
 // lib/queues.ts
 var import_bullmq = require("bullmq");
 
@@ -219,11 +837,13 @@ var valkey_default = valkeyConnection;
 var FORECAST_QUEUE_NAME = "forecast-updates";
 var NOTIFICATION_QUEUE_NAME = "notifications";
 var EMAIL_QUEUE_NAME = "emails";
+var REPO_CACHE_QUEUE_NAME = "repo-cache";
 
 // lib/queues.ts
 var _forecastQueue = null;
 var _notificationQueue = null;
 var _emailQueue = null;
+var _repoCacheQueue = null;
 function getForecastQueue() {
   if (_forecastQueue) return _forecastQueue;
   if (!valkey_default) {
@@ -316,6 +936,39 @@ function getEmailQueue() {
     console.error(`Queue ${EMAIL_QUEUE_NAME} error:`, error);
   });
   return _emailQueue;
+}
+function getRepoCacheQueue() {
+  if (_repoCacheQueue) return _repoCacheQueue;
+  if (!valkey_default) {
+    console.warn(
+      `Valkey connection not available, Queue "${REPO_CACHE_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _repoCacheQueue = new import_bullmq.Queue(REPO_CACHE_QUEUE_NAME, {
+    connection: valkey_default,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 1e4
+      },
+      removeOnComplete: {
+        age: 3600 * 24 * 7,
+        // 7 days
+        count: 1e3
+      },
+      removeOnFail: {
+        age: 3600 * 24 * 14
+        // 14 days
+      }
+    }
+  });
+  console.log(`Queue "${REPO_CACHE_QUEUE_NAME}" initialized.`);
+  _repoCacheQueue.on("error", (error) => {
+    console.error(`Queue ${REPO_CACHE_QUEUE_NAME} error:`, error);
+  });
+  return _repoCacheQueue;
 }
 
 // workers/forecastWorker.ts
@@ -1500,15 +2153,494 @@ if (typeof import_meta2 !== "undefined" && import_meta2.url === (0, import_node_
   });
 }
 
+// workers/repoCacheWorker.ts
+var import_bullmq4 = require("bullmq");
+
+// lib/integrations/cache/RepoFileCache.ts
+var RepoFileCache = class {
+  valkey;
+  constructor() {
+    this.valkey = valkey_default ? valkey_default.duplicate() : null;
+  }
+  getFilesKey(projectConfigId) {
+    const tenantId = getCurrentTenantId();
+    const prefix = tenantId ? `${tenantId}:` : "";
+    return `repo-files:${prefix}config:${projectConfigId}`;
+  }
+  getMetaKey(projectConfigId) {
+    const tenantId = getCurrentTenantId();
+    const prefix = tenantId ? `${tenantId}:` : "";
+    return `repo-files-meta:${prefix}config:${projectConfigId}`;
+  }
+  getContentsKey(projectConfigId) {
+    const tenantId = getCurrentTenantId();
+    const prefix = tenantId ? `${tenantId}:` : "";
+    return `repo-file-contents:${prefix}config:${projectConfigId}`;
+  }
+  /**
+   * Retrieve cached file list. Returns null on cache miss or Valkey unavailable.
+   */
+  async getFiles(projectConfigId) {
+    if (!this.valkey) return null;
+    const key = this.getFilesKey(projectConfigId);
+    try {
+      const cached = await this.valkey.get(key);
+      if (!cached) return null;
+      return JSON.parse(cached);
+    } catch (err) {
+      console.error(
+        `[RepoFileCache] Failed to parse cached files for config ${projectConfigId}:`,
+        err
+      );
+      await this.valkey.del(key).catch(() => {
+      });
+      return null;
+    }
+  }
+  /**
+   * Store file list with TTL. Both files and metadata keys share the same TTL.
+   * @param ttlDays - from ProjectCodeRepositoryConfig.cacheTtlDays (days, NOT seconds)
+   */
+  async setFiles(projectConfigId, files, ttlDays, options) {
+    if (!this.valkey) return;
+    const ttlSeconds = ttlDays * 24 * 3600;
+    const meta = {
+      fetchedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      fileCount: files.length,
+      totalSize: files.reduce((sum, f) => sum + (f.size ?? 0), 0),
+      status: options?.error ? "error" : "success",
+      ...options?.error && { error: options.error },
+      ...options?.truncated && { truncated: true }
+    };
+    try {
+      const pipeline = this.valkey.pipeline();
+      pipeline.setex(
+        this.getFilesKey(projectConfigId),
+        ttlSeconds,
+        JSON.stringify(files)
+      );
+      pipeline.setex(
+        this.getMetaKey(projectConfigId),
+        ttlSeconds,
+        JSON.stringify(meta)
+      );
+      await pipeline.exec();
+    } catch (err) {
+      console.error(
+        `[RepoFileCache] Failed to cache files for config ${projectConfigId}:`,
+        err
+      );
+      throw err;
+    }
+  }
+  /**
+   * Store a cache error (no files available). Uses the same TTL as a successful fetch
+   * so the status panel shows the error, not "never fetched".
+   */
+  async setError(projectConfigId, error, ttlDays) {
+    if (!this.valkey) return;
+    const ttlSeconds = ttlDays * 24 * 3600;
+    const meta = {
+      fetchedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      fileCount: 0,
+      totalSize: 0,
+      status: "error",
+      error
+    };
+    try {
+      const pipeline = this.valkey.pipeline();
+      pipeline.setex(
+        this.getMetaKey(projectConfigId),
+        ttlSeconds,
+        JSON.stringify(meta)
+      );
+      await pipeline.exec();
+    } catch (err) {
+      console.error(
+        `[RepoFileCache] Failed to set error metadata for config ${projectConfigId}:`,
+        err
+      );
+    }
+  }
+  /**
+   * Get cache metadata for the status panel (last fetched, file count, size, status).
+   * Returns null if never fetched or Valkey unavailable.
+   */
+  async getMeta(projectConfigId) {
+    if (!this.valkey) return null;
+    const key = this.getMetaKey(projectConfigId);
+    try {
+      const cached = await this.valkey.get(key);
+      if (!cached) return null;
+      return JSON.parse(cached);
+    } catch (err) {
+      console.error(
+        `[RepoFileCache] Failed to parse meta for config ${projectConfigId}:`,
+        err
+      );
+      return null;
+    }
+  }
+  /**
+   * Retrieve all cached file contents as a path→content map.
+   * Returns null on cache miss or Valkey unavailable.
+   */
+  async getFileContents(projectConfigId) {
+    if (!this.valkey) return null;
+    const key = this.getContentsKey(projectConfigId);
+    try {
+      const hash = await this.valkey.hgetall(key);
+      if (!hash || Object.keys(hash).length === 0) return null;
+      return new Map(Object.entries(hash));
+    } catch (err) {
+      console.error(
+        `[RepoFileCache] Failed to get file contents for config ${projectConfigId}:`,
+        err
+      );
+      return null;
+    }
+  }
+  /**
+   * Store file contents as a Redis hash (path→content). Uses the same TTL as the
+   * file list so all cache keys expire together.
+   * Failures are logged but not re-thrown — content cache is a performance
+   * optimization and callers fall back to live fetches on cache miss.
+   */
+  async setFileContents(projectConfigId, contents, ttlDays) {
+    if (!this.valkey || contents.size === 0) return;
+    const key = this.getContentsKey(projectConfigId);
+    const ttlSeconds = ttlDays * 24 * 3600;
+    try {
+      const hashData = {};
+      for (const [path, content] of contents) {
+        hashData[path] = content;
+      }
+      const pipeline = this.valkey.pipeline();
+      pipeline.hset(key, hashData);
+      pipeline.expire(key, ttlSeconds);
+      await pipeline.exec();
+    } catch (err) {
+      console.error(
+        `[RepoFileCache] Failed to set file contents for config ${projectConfigId}:`,
+        err
+      );
+    }
+  }
+  /**
+   * Invalidate both file list and metadata for a project config.
+   * Call this when ProjectCodeRepositoryConfig is updated (branch/patterns changed).
+   */
+  async invalidate(projectConfigId) {
+    if (!this.valkey) return;
+    try {
+      const pipeline = this.valkey.pipeline();
+      pipeline.del(this.getFilesKey(projectConfigId));
+      pipeline.del(this.getMetaKey(projectConfigId));
+      pipeline.del(this.getContentsKey(projectConfigId));
+      await pipeline.exec();
+    } catch (err) {
+      console.error(
+        `[RepoFileCache] Failed to invalidate cache for config ${projectConfigId}:`,
+        err
+      );
+    }
+  }
+};
+var repoFileCache = new RepoFileCache();
+
+// lib/services/repoCacheRefreshService.ts
+var import_micromatch = __toESM(require("micromatch"));
+init_GitRepoAdapter();
+function applyPathPatterns(allFiles, pathPatterns) {
+  if (!pathPatterns.length) return allFiles;
+  const matched = /* @__PURE__ */ new Set();
+  for (const { path: basePath, pattern } of pathPatterns) {
+    const trimmedBase = basePath.replace(/\/$/, "");
+    const globPattern = trimmedBase ? `${trimmedBase}/${pattern}` : pattern;
+    const matchedPaths = (0, import_micromatch.default)(
+      allFiles.map((f) => f.path),
+      globPattern
+    );
+    matchedPaths.forEach((p) => matched.add(p));
+  }
+  return allFiles.filter((f) => matched.has(f.path));
+}
+function extractBasePaths(pathPatterns) {
+  if (!pathPatterns.length) return [];
+  const paths = /* @__PURE__ */ new Set();
+  for (const { path: basePath } of pathPatterns) {
+    const trimmed = basePath.replace(/\/$/, "");
+    if (trimmed) paths.add(trimmed);
+  }
+  return paths.size > 0 ? [...paths] : [];
+}
+function isRateLimitError(err) {
+  if (!(err instanceof Error)) return false;
+  const msg = err.message.toLowerCase();
+  return msg.includes("rate limit") || msg.includes("429");
+}
+async function refreshRepoCache(configId, prismaClient2) {
+  const config = await prismaClient2.projectCodeRepositoryConfig.findUnique({
+    where: { id: configId },
+    include: {
+      repository: {
+        select: { credentials: true, settings: true, provider: true }
+      }
+    }
+  });
+  if (!config) {
+    throw new Error(`ProjectCodeRepositoryConfig ${configId} not found`);
+  }
+  if (!config.cacheEnabled) {
+    return {
+      success: false,
+      fileCount: 0,
+      totalSize: 0,
+      truncated: false,
+      contentCached: 0,
+      contentRateLimited: false,
+      error: "File caching is disabled for this project"
+    };
+  }
+  const credentials = config.repository.credentials;
+  const adapter = createGitRepoAdapter(
+    config.repository.provider,
+    credentials,
+    config.repository.settings
+  );
+  const branch = config.branch || await adapter.getDefaultBranch();
+  await repoFileCache.invalidate(config.id);
+  await prismaClient2.projectCodeRepositoryConfig.update({
+    where: { id: config.id },
+    data: { cacheStatus: "pending", cacheError: null }
+  });
+  try {
+    const pathPatterns = config.pathPatterns ?? [];
+    const basePaths = extractBasePaths(pathPatterns);
+    const { files: allFiles, truncated } = await adapter.listFilesInPaths(
+      branch,
+      basePaths
+    );
+    const files = applyPathPatterns(allFiles, pathPatterns);
+    await repoFileCache.setFiles(config.id, files, config.cacheTtlDays, {
+      truncated: truncated ?? false
+    });
+    const totalSize = files.reduce((sum, f) => sum + (f.size ?? 0), 0);
+    await prismaClient2.projectCodeRepositoryConfig.update({
+      where: { id: config.id },
+      data: {
+        cacheStatus: "success",
+        cacheLastFetchedAt: /* @__PURE__ */ new Date(),
+        cacheFileCount: files.length,
+        cacheTotalSize: BigInt(totalSize),
+        cacheError: null
+      }
+    });
+    const CONTENT_FETCH_CONCURRENCY = 10;
+    const contentMap = /* @__PURE__ */ new Map();
+    let contentRateLimited = false;
+    for (let i = 0; i < files.length; i += CONTENT_FETCH_CONCURRENCY) {
+      if (contentRateLimited) break;
+      const batch = files.slice(i, i + CONTENT_FETCH_CONCURRENCY);
+      const results = await Promise.allSettled(
+        batch.map(async (file) => {
+          const content = await adapter.getFileContent(file.path, branch);
+          return { path: file.path, content };
+        })
+      );
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          contentMap.set(result.value.path, result.value.content);
+        } else if (isRateLimitError(result.reason)) {
+          contentRateLimited = true;
+          console.warn(
+            `[repoCacheRefresh] Rate limited \u2014 stopping content fetch after ${contentMap.size}/${files.length} files cached`
+          );
+        } else {
+          console.warn(
+            `[repoCacheRefresh] Skipping content for a file:`,
+            result.reason
+          );
+        }
+      }
+    }
+    if (contentMap.size > 0) {
+      await repoFileCache.setFileContents(
+        config.id,
+        contentMap,
+        config.cacheTtlDays
+      );
+    }
+    return {
+      success: true,
+      fileCount: files.length,
+      totalSize,
+      truncated: truncated ?? false,
+      contentCached: contentMap.size,
+      contentRateLimited
+    };
+  } catch (fetchErr) {
+    const errorMessage = fetchErr instanceof Error ? fetchErr.message : "Unknown error during file fetch";
+    await repoFileCache.setError(config.id, errorMessage, config.cacheTtlDays);
+    await prismaClient2.projectCodeRepositoryConfig.update({
+      where: { id: config.id },
+      data: {
+        cacheStatus: "error",
+        cacheLastFetchedAt: /* @__PURE__ */ new Date(),
+        cacheError: errorMessage
+      }
+    });
+    return {
+      success: false,
+      fileCount: 0,
+      totalSize: 0,
+      truncated: false,
+      contentCached: 0,
+      contentRateLimited: false,
+      error: errorMessage
+    };
+  }
+}
+
+// workers/repoCacheWorker.ts
+var import_node_url3 = require("node:url");
+var import_meta3 = {};
+var JOB_REFRESH_EXPIRED_CACHES = "refresh-expired-repo-caches";
+var processor3 = async (job) => {
+  console.log(
+    `Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
+  );
+  validateMultiTenantJobData(job.data);
+  const previousTenantId = process.env.INSTANCE_TENANT_ID;
+  if (job.data.tenantId) {
+    process.env.INSTANCE_TENANT_ID = job.data.tenantId;
+  }
+  try {
+    const prisma2 = getPrismaClientForJob(job.data);
+    let successCount = 0;
+    let failCount = 0;
+    let skippedCount = 0;
+    switch (job.name) {
+      case JOB_REFRESH_EXPIRED_CACHES: {
+        console.log(`Job ${job.id}: Checking for expired code repository caches.`);
+        const configs = await prisma2.projectCodeRepositoryConfig.findMany({
+          where: { cacheEnabled: true },
+          select: { id: true, projectId: true, cacheTtlDays: true }
+        });
+        console.log(
+          `Job ${job.id}: Found ${configs.length} cache-enabled code repository configs.`
+        );
+        for (const config of configs) {
+          try {
+            const cached = await repoFileCache.getFiles(config.id);
+            if (cached && cached.length > 0) {
+              skippedCount++;
+              continue;
+            }
+            console.log(
+              `Job ${job.id}: Refreshing expired cache for config ${config.id} (project ${config.projectId})`
+            );
+            const result = await refreshRepoCache(config.id, prisma2);
+            if (result.success) {
+              successCount++;
+              console.log(
+                `Job ${job.id}: Refreshed cache for config ${config.id} \u2014 ${result.fileCount} files, ${result.contentCached} contents cached`
+              );
+            } else {
+              failCount++;
+              console.warn(
+                `Job ${job.id}: Failed to refresh cache for config ${config.id}: ${result.error}`
+              );
+            }
+          } catch (error) {
+            failCount++;
+            console.error(
+              `Job ${job.id}: Error refreshing cache for config ${config.id}:`,
+              error
+            );
+          }
+        }
+        console.log(
+          `Job ${job.id} completed: ${successCount} refreshed, ${skippedCount} still valid, ${failCount} failed (of ${configs.length} total)`
+        );
+        break;
+      }
+      default:
+        throw new Error(`Unknown job type: ${job.name}`);
+    }
+    return { status: "completed", successCount, failCount, skippedCount };
+  } finally {
+    if (previousTenantId !== void 0) {
+      process.env.INSTANCE_TENANT_ID = previousTenantId;
+    } else {
+      delete process.env.INSTANCE_TENANT_ID;
+    }
+  }
+};
+async function startWorker3() {
+  if (isMultiTenantMode()) {
+    console.log("Repo cache worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Repo cache worker starting in SINGLE-TENANT mode");
+  }
+  if (valkey_default) {
+    const worker2 = new import_bullmq4.Worker(REPO_CACHE_QUEUE_NAME, processor3, {
+      connection: valkey_default,
+      concurrency: 1
+      // Serial processing — avoid hammering git APIs
+    });
+    worker2.on("completed", (job, result) => {
+      console.info(
+        `Worker: Job ${job.id} (${job.name}) completed successfully. Result:`,
+        result
+      );
+    });
+    worker2.on("failed", (job, err) => {
+      console.error(
+        `Worker: Job ${job?.id} (${job?.name}) failed with error:`,
+        err
+      );
+    });
+    worker2.on("error", (err) => {
+      console.error("Worker encountered an error:", err);
+    });
+    console.log("Repo cache worker started and listening for jobs...");
+    const shutdown = async () => {
+      console.log("Shutting down repo cache worker...");
+      await worker2.close();
+      if (isMultiTenantMode()) {
+        await disconnectAllTenantClients();
+      }
+      console.log("Repo cache worker shut down gracefully.");
+      process.exit(0);
+    };
+    process.on("SIGTERM", shutdown);
+    process.on("SIGINT", shutdown);
+  } else {
+    console.warn(
+      "Valkey connection not available. Repo cache worker cannot start."
+    );
+    process.exit(1);
+  }
+}
+if (typeof import_meta3 !== "undefined" && import_meta3.url === (0, import_node_url3.pathToFileURL)(process.argv[1]).href || typeof import_meta3 === "undefined" || import_meta3.url === void 0) {
+  startWorker3().catch((err) => {
+    console.error("Failed to start worker:", err);
+    process.exit(1);
+  });
+}
+
 // scheduler.ts
 var CRON_SCHEDULE_DAILY_3AM = "0 3 * * *";
 var CRON_SCHEDULE_DAILY_6AM = "0 6 * * *";
 var CRON_SCHEDULE_DAILY_8AM = "0 8 * * *";
+var CRON_SCHEDULE_DAILY_4AM = "0 4 * * *";
 async function scheduleJobs() {
   console.log("Attempting to schedule jobs...");
   const forecastQueue = getForecastQueue();
   const notificationQueue = getNotificationQueue();
-  if (!forecastQueue || !notificationQueue) {
+  const repoCacheQueue = getRepoCacheQueue();
+  if (!forecastQueue || !notificationQueue || !repoCacheQueue) {
     console.error("Required queues are not initialized. Cannot schedule jobs.");
     process.exit(1);
   }
@@ -1608,6 +2740,38 @@ async function scheduleJobs() {
       );
       console.log(
         `Successfully scheduled repeatable job "${JOB_SEND_DAILY_DIGEST}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_8AM}" on queue "${NOTIFICATION_QUEUE_NAME}".`
+      );
+    }
+    const repoCacheRepeatableJobs = await repoCacheQueue.getRepeatableJobs();
+    let removedRepoCacheCount = 0;
+    for (const job of repoCacheRepeatableJobs) {
+      if (job.name === JOB_REFRESH_EXPIRED_CACHES) {
+        console.log(
+          `Removing existing repeatable job "${job.name}" with key: ${job.key}`
+        );
+        await repoCacheQueue.removeRepeatableByKey(job.key);
+        removedRepoCacheCount++;
+      }
+    }
+    if (removedRepoCacheCount > 0) {
+      console.log(
+        `Removed ${removedRepoCacheCount} old repeatable repo cache jobs.`
+      );
+    }
+    for (const tenantId of tenantIds) {
+      const jobId = tenantId ? `${JOB_REFRESH_EXPIRED_CACHES}-${tenantId}` : JOB_REFRESH_EXPIRED_CACHES;
+      await repoCacheQueue.add(
+        JOB_REFRESH_EXPIRED_CACHES,
+        { tenantId },
+        {
+          repeat: {
+            pattern: CRON_SCHEDULE_DAILY_4AM
+          },
+          jobId
+        }
+      );
+      console.log(
+        `Successfully scheduled repeatable job "${JOB_REFRESH_EXPIRED_CACHES}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_4AM}" on queue "${REPO_CACHE_QUEUE_NAME}".`
       );
     }
   } catch (error) {
