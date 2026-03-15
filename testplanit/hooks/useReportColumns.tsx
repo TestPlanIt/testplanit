@@ -215,7 +215,7 @@ export function useReportColumns(
                 }
 
                 // Handle None/null case
-                if (!userId || userId === null) {
+                if (!userId) {
                   // Check if the name is "None" from the API and translate it
                   const displayName =
                     userName === "None"

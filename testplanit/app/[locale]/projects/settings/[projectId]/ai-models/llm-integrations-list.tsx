@@ -8,7 +8,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,17 +17,21 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  LlmIntegration, LlmProviderConfig, ProjectLlmIntegration
+  LlmIntegration,
+  LlmProviderConfig,
+  ProjectLlmIntegration,
 } from "@prisma/client";
 import { AlertTriangle, Check, Loader2, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
-  useCreateProjectLlmIntegration, useDeleteProjectLlmIntegration, useUpdateProjectLlmIntegration
+  useCreateProjectLlmIntegration,
+  useDeleteProjectLlmIntegration,
+  useUpdateProjectLlmIntegration,
 } from "~/lib/hooks";
 import { getProviderColor, getProviderIcon } from "~/lib/llm/provider-styles";
 
@@ -336,5 +340,4 @@ export function LlmIntegrationsList({
       </AlertDialog>
     </TooltipProvider>
   );
-  1;
 }

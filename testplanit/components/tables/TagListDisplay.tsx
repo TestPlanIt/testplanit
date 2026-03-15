@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tag, TagIcon } from "lucide-react";
 import React from "react";
@@ -25,7 +25,6 @@ export const TagsListDisplay: React.FC<TagsListProps> = ({
   if (!tags || tags.length === 0) {
     return null;
   }
-  null;
   return (
     <Popover>
       <PopoverTrigger asChild>
