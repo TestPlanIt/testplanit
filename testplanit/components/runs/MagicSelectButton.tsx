@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
 import { Wand2 } from "lucide-react";
-import { MagicSelectDialog } from "./MagicSelectDialog";
+import { useTranslations } from "next-intl";
+import { useCallback, useState } from "react";
 import { useFindFirstProjects } from "~/lib/hooks";
+import { MagicSelectDialog } from "./MagicSelectDialog";
 
 interface MagicSelectButtonProps {
   projectId: number;

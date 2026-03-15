@@ -1,45 +1,41 @@
-import React, { useMemo, useState, useEffect, useRef } from "react";
-import { useFormContext } from "react-hook-form";
-import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import { MoreHorizontal } from "lucide-react";
-import { HelpPopover } from "@/components/ui/help-popover";
+import { DateTextDisplay } from "@/components/DateTextDisplay";
+import DynamicIcon from "@/components/DynamicIcon";
+import { DatePickerField } from "@/components/forms/DatePickerField";
 import { UserDisplay } from "@/components/search/UserDisplay";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Badge } from "@/components/ui/badge";
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
 import {
-  useFindManyMilestoneTypes,
-  useFindManyMilestones,
-  useFindManyColor,
-} from "~/lib/hooks";
-import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import {
-  getStatus,
-  getStatusStyle,
-  createColorMap,
-  ColorMap,
-} from "~/utils/milestoneUtils";
-import { Badge } from "@/components/ui/badge";
-import { useTheme } from "next-themes";
-import { DateTextDisplay } from "@/components/DateTextDisplay";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { emptyEditorContent } from "~/app/constants";
+import { Switch } from "@/components/ui/switch";
+import { MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { DatePickerField } from "@/components/forms/DatePickerField";
+import { useTheme } from "next-themes";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useFormContext } from "react-hook-form";
+import { emptyEditorContent } from "~/app/constants";
+import {
+  useFindManyColor, useFindManyMilestones, useFindManyMilestoneTypes
+} from "~/lib/hooks";
+import { IconName } from "~/types/globals";
+import {
+  ColorMap, createColorMap, getStatus,
+  getStatusStyle
+} from "~/utils/milestoneUtils";
 
 interface MilestoneFormControlsProps {
   isEditMode: boolean;

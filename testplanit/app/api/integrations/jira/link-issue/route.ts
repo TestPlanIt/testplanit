@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod/v4";
 import { JiraLinkService } from "@/lib/services/jira-link-service";
 import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod/v4";
 import { authOptions } from "~/server/auth";
 
 const linkIssueSchema = z.object({

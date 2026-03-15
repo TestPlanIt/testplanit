@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import Handlebars from "handlebars";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock fs/promises
 const mockReadFile = vi.fn();

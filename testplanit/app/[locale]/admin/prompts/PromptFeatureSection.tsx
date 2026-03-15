@@ -1,29 +1,29 @@
 "use client";
 
-import { useRef } from "react";
-import { useFormContext } from "react-hook-form";
-import { useTranslations } from "next-intl";
 import {
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
+  AccordionTrigger
 } from "@/components/ui/accordion";
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { HelpPopover } from "@/components/ui/help-popover";
-import { PromptVariableInserter } from "./PromptVariableInserter";
+import { useTranslations } from "next-intl";
+import { useRef } from "react";
+import { useFormContext } from "react-hook-form";
 import {
   LLM_FEATURE_LABELS,
   PROMPT_FEATURE_VARIABLES,
-  type LlmFeature,
+  type LlmFeature
 } from "~/lib/llm/constants";
+import { PromptVariableInserter } from "./PromptVariableInserter";
 
 interface PromptFeatureSectionProps {
   feature: LlmFeature;

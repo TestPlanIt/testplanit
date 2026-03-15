@@ -1,9 +1,9 @@
-import createMiddleware from "next-intl/middleware";
-import { locales, defaultLocale } from "./i18n/navigation";
-import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import createMiddleware from "next-intl/middleware";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { checkApiRateLimit, type RateLimitResult } from "~/lib/api-rate-limit";
+import { defaultLocale, locales } from "./i18n/navigation";
 
 const middleware = createMiddleware({
   // A list of all locales that are supported

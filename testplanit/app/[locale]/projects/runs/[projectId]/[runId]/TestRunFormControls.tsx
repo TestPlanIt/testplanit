@@ -1,35 +1,30 @@
 import {
-  FormField,
+  AttachmentChanges, AttachmentsDisplay
+} from "@/components/AttachmentsDisplay";
+import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
+import DynamicIcon from "@/components/DynamicIcon";
+import { MilestoneSelect } from "@/components/forms/MilestoneSelect";
+import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
+import { ManageTags } from "@/components/ManageTags";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { TagsDisplay } from "@/components/tables/TagDisplay";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import {
+  FormControl, FormField,
   FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
+  FormLabel, FormMessage
 } from "@/components/ui/form";
 import {
   Select,
-  SelectContent,
-  SelectItem,
+  SelectContent, SelectGroup, SelectItem,
   SelectTrigger,
-  SelectValue,
-  SelectGroup,
+  SelectValue
 } from "@/components/ui/select";
-import { MilestoneSelect } from "@/components/forms/MilestoneSelect";
-import { UserNameCell } from "@/components/tables/UserNameCell";
-import { Attachments, RepositoryCases, Tags } from "@prisma/client";
-import { IconName } from "~/types/globals";
-import DynamicIcon from "@/components/DynamicIcon";
-import { ManageTags } from "@/components/ManageTags";
-import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
-import {
-  AttachmentsDisplay,
-  AttachmentChanges,
-} from "@/components/AttachmentsDisplay";
 import UploadAttachments from "@/components/UploadAttachments";
-import { TagsDisplay } from "@/components/tables/TagDisplay";
-import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
-import { useTranslations, useLocale } from "next-intl";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
+import { Attachments, RepositoryCases, Tags } from "@prisma/client";
+import { useTranslations } from "next-intl";
+import { IconName } from "~/types/globals";
 import { SelectedConfigurationInfo } from "./TestCasesSection";
 
 type MilestoneWithType = {

@@ -2,10 +2,10 @@
 
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tag, AlertTriangle } from "lucide-react";
+import { AlertTriangle, Tag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { TagChip } from "./TagChip";
-import type { AutoTagSuggestionEntity, AutoTagSelection } from "./types";
+import type { AutoTagSelection, AutoTagSuggestionEntity } from "./types";
 
 interface EntitySuggestionsProps {
   entity: AutoTagSuggestionEntity;

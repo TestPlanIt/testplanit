@@ -1,24 +1,19 @@
+import DynamicIcon from "@/components/DynamicIcon";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { IconName } from "~/types/globals";
 import {
-  LucideIcon,
-  LayoutTemplate,
-  CircleDashed,
-  Bot,
-  User,
-  FolderOpen,
+  Bot, CircleDashed, FolderOpen, LayoutTemplate, LucideIcon, User
 } from "lucide-react";
-import { cn } from "~/utils";
-import DynamicIcon from "@/components/DynamicIcon";
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
+import { IconName } from "~/types/globals";
+import { cn } from "~/utils";
 
 interface FilterOption {
   id: string | number | null;

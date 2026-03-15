@@ -1,25 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
-import { DataTable } from "@/components/tables/DataTable";
 import { ReportChart } from "@/components/dataVisualizations/ReportChart";
+import { DateFormatter } from "@/components/DateFormatter";
+import { DataTable } from "@/components/tables/DataTable";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ResizableHandle, ResizablePanel, ResizablePanelGroup
+} from "@/components/ui/resizable";
+import { ColumnDef, ExpandedState, OnChangeFn, VisibilityState } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 import { PaginationComponent } from "~/components/tables/Pagination";
 import { PaginationInfo } from "~/components/tables/PaginationControls";
-import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
-import { DateFormatter } from "@/components/DateFormatter";
-import { useReportColumns } from "~/hooks/useReportColumns";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
-import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
-import { ColumnDef, VisibilityState, ExpandedState, OnChangeFn } from "@tanstack/react-table";
+import { useReportColumns } from "~/hooks/useReportColumns";
+import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
+import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
 
 // Helper functions for report type matching
 // These helpers allow us to write code that works with both project-level and cross-project variants

@@ -1,36 +1,28 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import { Roles, User } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import {
-  useCreateManyProjectAssignment,
-  useFindManyProjects,
-  useDeleteManyProjectAssignment,
-  useCreateManyGroupAssignment,
-  useFindManyGroups,
-  useDeleteManyGroupAssignment,
-  useFindManyRoles,
+  useCreateManyGroupAssignment, useCreateManyProjectAssignment, useDeleteManyGroupAssignment, useDeleteManyProjectAssignment, useFindManyGroups, useFindManyProjects, useFindManyRoles
 } from "~/lib/hooks";
-import { User, Roles } from "@prisma/client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useTheme } from "next-themes";
 import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useTheme } from "next-themes";
 
 import {
   Select,
-  SelectContent,
-  SelectItem,
+  SelectContent, SelectGroup, SelectItem,
   SelectTrigger,
-  SelectValue,
-  SelectGroup,
+  SelectValue
 } from "@/components/ui/select";
 
 import { SquarePen } from "lucide-react";
@@ -41,7 +33,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -51,10 +43,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { Switch } from "@/components/ui/switch";
 
 interface ExtendedUser extends User {
   projects: { projectId: number }[];

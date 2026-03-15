@@ -1,22 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod/v4";
-import { useSession } from "next-auth/react";
-import {
-  useCreateSessionResults,
-  useFindManyStatus,
-  useCreateAttachments,
-  useFindFirstSessions,
-  useFindManyTemplateResultAssignment,
-  useCreateResultFieldValues,
-  useFindManyWorkflows,
-  useUpdateSessions,
-  useFindFirstProjects,
-} from "~/lib/hooks";
-import { emptyEditorContent } from "~/app/constants";
+import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { SimpleUnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -26,6 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -33,27 +22,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { Save, Paperclip, Bug, Clock, CircleCheckBig } from "lucide-react";
-import parseDuration from "parse-duration";
-import { toHumanReadable } from "~/utils/duration";
-import { MAX_DURATION } from "~/app/constants";
-import { useTranslations, useLocale } from "next-intl";
-import { getBackgroundStyle } from "~/utils/colorUtils";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
 import UploadAttachments from "@/components/UploadAttachments";
-import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
-import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type { Attachments } from "@prisma/client";
-import { SimpleUnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
+import { Bug, CircleCheckBig, Clock, Paperclip, Save } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
+import parseDuration from "parse-duration";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod/v4";
+import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
+import {
+  useCreateAttachments,
+  useCreateResultFieldValues,
+  useCreateSessionResults,
+  useFindFirstProjects,
+  useFindFirstSessions,
+  useFindManyStatus,
+  useFindManyTemplateResultAssignment,
+  useFindManyWorkflows,
+  useUpdateSessions,
+} from "~/lib/hooks";
+import { getBackgroundStyle } from "~/utils/colorUtils";
+import { toHumanReadable } from "~/utils/duration";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { Separator } from "@/components/ui/separator";
 // Import Spanish locale for parseDuration
 // @ts-expect-error - No type definitions for parse-duration locales
 import es from "parse-duration/locale/es.js";
-import { Separator } from "@/components/ui/separator";
-import { useRouter } from "~/lib/navigation";
-import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 
 // Helper function to map field types to Zod schemas

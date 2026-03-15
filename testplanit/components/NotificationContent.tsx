@@ -1,16 +1,15 @@
 "use client";
 
-import React from "react";
-import { Link } from "~/lib/navigation";
-import { useLocale, useTranslations } from "next-intl";
-import { UserNameCell } from "@/components/tables/UserNameCell";
-import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
-import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
-import { SessionNameDisplay } from "@/components/SessionNameDisplay";
-import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import { MilestoneNameDisplay } from "@/components/MilestoneNameDisplay";
-import { ExternalLink, Megaphone } from "lucide-react";
+import { SessionNameDisplay } from "@/components/SessionNameDisplay";
+import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
+import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
 import TextFromJson from "@/components/TextFromJson";
+import { ExternalLink, Megaphone } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { Link } from "~/lib/navigation";
 
 interface NotificationContentProps {
   notification: any;

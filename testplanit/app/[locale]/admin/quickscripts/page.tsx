@@ -1,14 +1,14 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
+import { useRouter } from "~/lib/navigation";
 
 import {
   Card,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
 import QuickScriptTemplates from "./QuickScriptTemplates";
 

@@ -1,11 +1,11 @@
-import { Suspense } from "react";
-import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
-import { notFound } from "next/navigation";
-import { redirect } from "~/lib/navigation";
 import { ShareContent } from "@/components/share/ShareContent";
 import { Loader2 } from "lucide-react";
+import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { redirect } from "~/lib/navigation";
+import { authOptions } from "~/server/auth";
 
 interface SharePageProps {
   params: Promise<{

@@ -1,16 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
-import { Prisma } from "@prisma/client";
 import {
-  OpenAIAdapter,
   AnthropicAdapter,
-  AzureOpenAIAdapter,
-  GeminiAdapter,
-  OllamaAdapter,
-  CustomLlmAdapter,
+  AzureOpenAIAdapter, CustomLlmAdapter, GeminiAdapter,
+  OllamaAdapter, OpenAIAdapter
 } from "@/lib/llm/adapters";
 import type { LlmAdapterConfig } from "@/lib/llm/types";
+import { Prisma } from "@prisma/client";
+import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
+import { authOptions } from "~/server/auth";
 
 export async function POST(request: NextRequest) {
   // Test credentials endpoint called

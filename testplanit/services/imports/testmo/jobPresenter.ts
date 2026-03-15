@@ -1,11 +1,11 @@
 import type {
   TestmoImportDataset,
-  TestmoImportJob,
+  TestmoImportJob
 } from "@prisma/client";
 import type {
   TestmoAnalysisSummaryPayload,
   TestmoDatasetSummaryPayload,
-  TestmoImportJobPayload,
+  TestmoImportJobPayload
 } from "./types";
 
 function toNumber(value: bigint | number | null | undefined): number | null {

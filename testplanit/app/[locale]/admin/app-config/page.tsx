@@ -1,20 +1,19 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useTranslations } from "next-intl";
-import {
-  usePagination,
-  PaginationProvider,
-} from "~/lib/contexts/PaginationContext";
-import { useFindManyAppConfig } from "~/lib/hooks";
-import { DataTable } from "@/components/tables/DataTable";
-import { getColumns } from "./columns";
 import { useDebounce } from "@/components/Debounce";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
+import {
+  PaginationProvider, usePagination
+} from "~/lib/contexts/PaginationContext";
+import { useFindManyAppConfig } from "~/lib/hooks";
 import { AddAppConfigModal } from "./AddAppConfig";
+import { getColumns } from "./columns";
 import { AppConfigRow } from "./types";
 
 type PageSizeOption = number | "All";

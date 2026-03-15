@@ -1,28 +1,25 @@
 "use client";
 
-import {
-  NextStep,
-  NextStepProvider,
-  useNextStep,
-  Tour,
-  CardComponentProps,
-  NavigationAdapter,
-} from "nextstepjs";
-import { useEffect, useCallback, useRef, useMemo } from "react";
-import { usePathname, useRouter } from "~/lib/navigation";
-import { useParams, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ApplicationArea } from "@prisma/client";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useParams, useSearchParams } from "next/navigation";
+import {
+  CardComponentProps,
+  NavigationAdapter, NextStep,
+  NextStepProvider, Tour, useNextStep
+} from "nextstepjs";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   useFindFirstUserPreferences,
   useFindManyProjects,
-  useUpdateUserPreferences,
+  useUpdateUserPreferences
 } from "~/lib/hooks";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { ApplicationArea } from "@prisma/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { usePathname, useRouter } from "~/lib/navigation";
 
 // Custom tour card component that respects Tailwind theme
 function TourCard({

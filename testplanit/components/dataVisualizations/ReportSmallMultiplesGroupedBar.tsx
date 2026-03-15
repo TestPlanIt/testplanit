@@ -1,14 +1,13 @@
 "use client";
-import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
-import { toHumanReadable } from "~/utils/duration";
-import { useLocale } from "next-intl";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
+import { useSession } from "next-auth/react";
+import { useLocale } from "next-intl";
+import React, { useEffect, useRef } from "react";
+import { toHumanReadable } from "~/utils/duration";
 import { getDateFnsLocale } from "~/utils/locales";
 import { mapDateTimeFormatString } from "~/utils/mapDateTimeFormat";
-import { useSession } from "next-auth/react";
-import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 
 // Data structure for a single small multiple
 export interface SmallMultipleData {

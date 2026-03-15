@@ -1,17 +1,12 @@
+import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "~/server/db";
-import { createSAMLClient, validateSAMLResponse } from "~/server/saml-provider";
 import {
-  verifyState,
-  sanitizeCallbackUrl,
-  createTempSessionToken,
-  checkRateLimit,
-  validateSAMLTimestamp,
-  getSecurityHeaders,
+  checkRateLimit, createTempSessionToken, getSecurityHeaders, sanitizeCallbackUrl, validateSAMLTimestamp, verifyState
 } from "~/lib/auth-security";
 import { NotificationService } from "~/lib/services/notificationService";
-import { randomUUID } from "crypto";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
+import { db } from "~/server/db";
+import { createSAMLClient, validateSAMLResponse } from "~/server/saml-provider";
 
 // SAML callback handler
 export async function POST(request: NextRequest) {

@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Prisma, PrismaClient } from "@prisma/client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { LlmRequest, LlmStreamResponse } from "../types";
 import { LlmManager } from "./llm-manager.service";
-import type { LlmRequest, LlmResponse, LlmStreamResponse } from "../types";
 
 // Mock adapters with proper class constructors
 vi.mock("../adapters", () => ({

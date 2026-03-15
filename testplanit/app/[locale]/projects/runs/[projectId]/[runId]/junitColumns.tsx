@@ -1,15 +1,15 @@
-import SystemOutputPopover from "@/components/junit/SystemOutputPopover";
-import SystemErrorPopover from "@/components/junit/SystemErrorPopover";
-import { Badge } from "@/components/ui/badge";
-import { toHumanReadable } from "~/utils/duration";
 import { DateFormatter } from "@/components/DateFormatter";
-import { UserNameCell } from "@/components/tables/UserNameCell";
-import type { Session } from "next-auth";
-import { LinkIcon } from "lucide-react";
-import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
-import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
+import SystemErrorPopover from "@/components/junit/SystemErrorPopover";
+import SystemOutputPopover from "@/components/junit/SystemOutputPopover";
 import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
+import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
+import { Badge } from "@/components/ui/badge";
 import type { Attachments } from "@prisma/client";
+import { LinkIcon } from "lucide-react";
+import type { Session } from "next-auth";
+import { toHumanReadable } from "~/utils/duration";
 
 export function getJunitColumns({
   t,

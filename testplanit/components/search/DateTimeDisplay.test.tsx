@@ -1,7 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "~/test/test-utils";
 import { DateTimeDisplay } from "./DateTimeDisplay";
-import React from "react";
 
 // Mock DateFormatter component
 vi.mock("@/components/DateFormatter", () => ({

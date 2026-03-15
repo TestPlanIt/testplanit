@@ -1,29 +1,26 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
-import { useTranslations } from "next-intl";
-import {
-  useUpdateMilestoneTypes,
-  useUpdateManyMilestoneTypes,
-  useFindManyProjects,
-  useCreateManyMilestoneTypesAssignment,
-  useDeleteManyMilestoneTypesAssignment,
-} from "~/lib/hooks";
 import { MilestoneTypes } from "@prisma/client";
+import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
+import {
+  useCreateManyMilestoneTypesAssignment,
+  useDeleteManyMilestoneTypesAssignment, useFindManyProjects, useUpdateManyMilestoneTypes, useUpdateMilestoneTypes
+} from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { TriangleAlert } from "lucide-react";
+import { useTheme } from "next-themes";
 import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useTheme } from "next-themes";
 
-import { SquarePen } from "lucide-react";
 import { FieldIconPicker } from "@/components/FieldIconPicker";
+import { SquarePen } from "lucide-react";
 
 import {
   Form,
@@ -31,7 +28,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -41,10 +38,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { Switch } from "@/components/ui/switch";
 
 interface ExtendedMilestoneTypes extends MilestoneTypes {
   projects: { projectId: number }[];

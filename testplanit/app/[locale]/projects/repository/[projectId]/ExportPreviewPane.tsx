@@ -1,38 +1,28 @@
 "use client";
 
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { mapLanguageToPrism, highlightCode } from "~/lib/utils/codeHighlight";
-import "prismjs/themes/prism-tomorrow.css";
 import { useTranslations } from "next-intl";
+import "prismjs/themes/prism-tomorrow.css";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { highlightCode, mapLanguageToPrism } from "~/lib/utils/codeHighlight";
 
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible, CollapsibleContent, CollapsibleTrigger
+} from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
 import {
-  Copy,
-  Download,
-  RefreshCw,
-  Check,
-  Loader2,
-  FileCode,
-  HelpCircle,
-  ChevronDown,
-  AlertTriangle,
-  X,
-  Circle,
+  AlertTriangle, Check, ChevronDown, Circle, Copy,
+  Download, FileCode,
+  HelpCircle, Loader2, RefreshCw, X
 } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from "@/components/ui/collapsible";
 import type { AiExportResult } from "~/app/actions/aiExportActions";
 import type { ParallelFileProgress } from "./QuickScriptModal";
 

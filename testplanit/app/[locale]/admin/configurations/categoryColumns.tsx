@@ -1,21 +1,21 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import { ConfigCategories } from "@prisma/client";
-import { useTranslations } from "next-intl";
-import { EditCategoryModal } from "./EditCategory";
-import { DeleteConfigCategoriesModal } from "./DeleteCategory";
+import { ColumnDef } from "@tanstack/react-table";
 import {
   ChevronDown,
   ChevronRight,
   CircleCheckBig,
   CircleSlash2,
-  Component,
+  Component
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { useTranslations } from "next-intl";
+import { DeleteConfigCategoriesModal } from "./DeleteCategory";
+import { EditCategoryModal } from "./EditCategory";
 
 export type ConfigCategoryWithVariants = ConfigCategories & {
   variants: {

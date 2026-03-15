@@ -1,15 +1,11 @@
-import React from "react";
 import { useTranslations } from "next-intl";
+import React from "react";
 
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
+  Card, CardContent, CardDescription, CardFooter, CardHeader,
+  CardTitle
 } from "@/components/ui/card";
-import { UserX, Mail, Boxes } from "lucide-react";
+import { Boxes, Mail, UserX } from "lucide-react";
 import { Link } from "~/lib/navigation";
 
 interface NoProjectsCardProps {

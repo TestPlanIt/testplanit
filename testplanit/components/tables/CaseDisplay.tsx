@@ -1,14 +1,14 @@
-import React from "react";
+import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { LinkIcon } from "lucide-react";
-import { Link } from "~/lib/navigation";
 import { RepositoryCaseSource } from "@prisma/client";
-import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
+import { LinkIcon } from "lucide-react";
+import React from "react";
+import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
 
 export type CaseDisplaySize = "small" | "medium" | "large" | "xl";

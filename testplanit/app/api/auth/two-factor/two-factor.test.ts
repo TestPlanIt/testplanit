@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies using vi.hoisted
 const {
@@ -61,11 +61,11 @@ vi.mock("~/lib/auth-security", () => ({
 }));
 
 // Import routes after mocking
-import { GET as getSettings } from "./settings/route";
 import { POST as disableTwoFactor } from "./disable/route";
-import { POST as verifySso } from "./verify-sso/route";
-import { GET as setup } from "./setup/route";
 import { POST as enable } from "./enable/route";
+import { GET as getSettings } from "./settings/route";
+import { GET as setup } from "./setup/route";
+import { POST as verifySso } from "./verify-sso/route";
 
 describe("Two-Factor Authentication API Routes", () => {
   const mockSession = {

@@ -1,49 +1,40 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { useParams, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { ApplicationArea } from "@prisma/client";
-import { Layers, Edit, Trash2, Save, CircleSlash2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { Filter } from "@/components/tables/Filter";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useFindManySharedStepGroup,
-  useUpdateSharedStepGroup,
-} from "~/lib/hooks/shared-step-group";
-import {
-  useFindManySharedStepItem,
-  useUpdateSharedStepItem,
-  useCreateSharedStepItem,
-  useDeleteSharedStepItem,
-} from "~/lib/hooks/shared-step-item";
-import { StepsDisplay } from "~/app/[locale]/projects/repository/[projectId]/[caseId]/StepsDisplay";
-import StepsForm from "~/app/[locale]/projects/repository/[projectId]/StepsForm";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogAction,
-  AlertDialogCancel,
+  AlertDialog, AlertDialogAction,
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useForm, FormProvider } from "react-hook-form";
+import {
+  Popover, PopoverContent, PopoverTrigger
+} from "@/components/ui/popover";
+import { ApplicationArea } from "@prisma/client";
+import { CircleSlash2, Edit, Layers, Save, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { StepFormField } from "~/app/[locale]/projects/repository/[projectId]/StepsForm";
+import StepsForm from "~/app/[locale]/projects/repository/[projectId]/StepsForm";
+import { StepsDisplay } from "~/app/[locale]/projects/repository/[projectId]/[caseId]/StepsDisplay";
 import LoadingSpinner from "~/components/LoadingSpinner";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindManyRepositoryCases } from "~/lib/hooks";
-import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import {
+  useFindManySharedStepGroup,
+  useUpdateSharedStepGroup
+} from "~/lib/hooks/shared-step-group";
+import {
+  useCreateSharedStepItem,
+  useDeleteSharedStepItem, useFindManySharedStepItem,
+  useUpdateSharedStepItem
+} from "~/lib/hooks/shared-step-item";
 import { ImportSharedStepsWizard } from "./ImportSharedStepsWizard";
 import { ManualSharedStepsDialog } from "./ManualSharedStepsDialog";
 

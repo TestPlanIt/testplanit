@@ -1,44 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useTranslations } from "next-intl";
-import { Link } from "~/lib/navigation";
-import { ChevronRight, Star } from "lucide-react";
-import {
-  useFindFirstProjects,
-  useUpdateProjects,
-  useFindManyLlmIntegration,
-  useFindManyProjectLlmIntegration,
-} from "~/lib/hooks";
-import { useFindManyPromptConfig } from "~/lib/hooks/prompt-config";
+import { Loading } from "@/components/Loading";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import { Star } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { notFound, useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useRequireAuth } from "~/hooks/useRequireAuth";
+import {
+  useFindFirstProjects, useFindManyLlmIntegration,
+  useFindManyProjectLlmIntegration, useUpdateProjects
+} from "~/lib/hooks";
+import { useFindManyPromptConfig } from "~/lib/hooks/prompt-config";
 import { LlmIntegrationsList } from "./llm-integrations-list";
-import { ProjectIcon } from "@/components/ProjectIcon";
-import { Loading } from "@/components/Loading";
-import { notFound } from "next/navigation";
 
 export default function ProjectAiModelsPage() {
   const params = useParams();

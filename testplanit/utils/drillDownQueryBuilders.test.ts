@@ -1,19 +1,10 @@
-import { describe, it, expect } from "vitest";
 import { Prisma } from "@prisma/client";
-import {
-  buildTestExecutionQuery,
-  buildTestRunsQuery,
-  buildRepositoryStatsQuery,
-  buildTestCasesQuery,
-  buildSessionsQuery,
-  buildSessionResultsQuery,
-  buildIssuesQuery,
-  buildMilestonesQuery,
-  buildMilestoneCompletionQuery,
-  getQueryBuilderForMetric,
-  getModelForMetric,
-} from "./drillDownQueryBuilders";
+import { describe, expect, it } from "vitest";
 import type { DrillDownContext } from "~/lib/types/reportDrillDown";
+import {
+  buildIssuesQuery, buildMilestoneCompletionQuery, buildMilestonesQuery, buildRepositoryStatsQuery, buildSessionResultsQuery, buildSessionsQuery, buildTestCasesQuery, buildTestExecutionQuery,
+  buildTestRunsQuery, getModelForMetric, getQueryBuilderForMetric
+} from "./drillDownQueryBuilders";
 
 // Helper to create a base context
 function createBaseContext(overrides: Partial<DrillDownContext> = {}): DrillDownContext {

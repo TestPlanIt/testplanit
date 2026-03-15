@@ -1,9 +1,8 @@
-import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
-import type { ChartableItem, ChartableCase } from "../UserDashboard"; // Updated import
-import { toHumanReadable } from "../../utils/duration";
-import useResponsiveSVG from "~/hooks/useResponsiveSVG"; // Import the hook
 import { useTranslations } from "next-intl";
+import React, { useEffect, useRef } from "react";
+import useResponsiveSVG from "~/hooks/useResponsiveSVG"; // Import the hook
+import type { ChartableItem } from "../UserDashboard"; // Updated import
 
 interface UserWorkChartProps {
   data: ChartableItem[]; // Updated prop type

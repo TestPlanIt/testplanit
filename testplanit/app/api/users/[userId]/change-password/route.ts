@@ -1,8 +1,8 @@
-import { NextResponse, NextRequest } from "next/server";
-import { db } from "~/server/db";
-import { getServerAuthSession } from "~/server/auth";
 import bcrypt from "bcrypt";
+import { NextRequest, NextResponse } from "next/server";
 import { auditPasswordChange } from "~/lib/services/auditLog";
+import { getServerAuthSession } from "~/server/auth";
+import { db } from "~/server/db";
 
 export async function POST(
   request: NextRequest,

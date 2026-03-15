@@ -1,10 +1,10 @@
 "use server";
 
+import { format } from "date-fns";
 import { prisma } from "~/lib/prisma";
+import { resolveSharedSteps } from "~/lib/utils/resolveSharedSteps";
 import { getServerAuthSession } from "~/server/auth";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
-import { format } from "date-fns";
-import { resolveSharedSteps } from "~/lib/utils/resolveSharedSteps";
 
 export interface QuickScriptCaseData {
   name: string;

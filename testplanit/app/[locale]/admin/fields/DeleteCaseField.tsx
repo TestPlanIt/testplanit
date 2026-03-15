@@ -1,11 +1,11 @@
 "use client";
+import { CaseFields } from "@prisma/client";
 import { useState } from "react";
 import {
   useFindFirstCaseFields,
   useUpdateCaseFields,
-  useUpdateManyFieldOptions,
+  useUpdateManyFieldOptions
 } from "~/lib/hooks";
-import { CaseFields } from "@prisma/client";
 
 import { useForm } from "react-hook-form";
 
@@ -17,13 +17,7 @@ import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogTitle,
-  AlertDialogDescription,
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 
 import { useTranslations } from "next-intl";

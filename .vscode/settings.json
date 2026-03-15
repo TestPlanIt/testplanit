@@ -1,6 +1,4 @@
 {
-    "WillLuke.nextjs.addTypesOnSave": true,
-    "WillLuke.nextjs.hasPrompted": true,
     "editor.formatOnSave": false,
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": "explicit"
@@ -32,5 +30,6 @@
     "i18n-ally.pathMatcher": "{locale}.json",
     "i18n-ally.namespace": false,
     "i18n-ally.extract.autoDetect": true,
-    "i18n-ally.sortKeys": true
+    "i18n-ally.sortKeys": true,
+    "tailwindCSS.lint.suggestCanonicalClasses": "ignore"
 }

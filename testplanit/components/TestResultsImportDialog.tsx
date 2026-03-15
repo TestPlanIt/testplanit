@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import DynamicIcon from "@/components/DynamicIcon";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -9,56 +8,52 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import {
+  Form, FormControl, FormField,
+  FormItem,
+  FormLabel, FormMessage
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import {
   Select,
-  SelectContent,
-  SelectItem,
+  SelectContent, SelectGroup, SelectItem,
   SelectTrigger,
-  SelectValue,
-  SelectGroup,
+  SelectValue
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { Label } from "@/components/ui/label";
-import UploadAttachments from "./UploadAttachments";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Asterisk, Star, Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod/v4";
 import {
   useFindManyConfigurations,
   useFindManyMilestones,
   useFindManyTags,
   useFindManyTemplates,
-  useFindManyWorkflows,
+  useFindManyWorkflows
 } from "~/lib/hooks";
-import { ManageTags } from "./ManageTags";
-import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
+import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
+import { IconName } from "~/types/globals";
 import {
   ConfigurationSelect,
-  transformConfigurations,
+  transformConfigurations
 } from "./forms/ConfigurationSelect";
-import { MilestoneSelect, transformMilestones } from "./forms/MilestoneSelect";
-import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
 import { FolderSelect, transformFolders } from "./forms/FolderSelect";
-import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
-import { Asterisk, Star, Upload } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod/v4";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { MilestoneSelect, transformMilestones } from "./forms/MilestoneSelect";
+import { ManageTags } from "./ManageTags";
+import UploadAttachments from "./UploadAttachments";
 
 /**
  * Supported test result formats

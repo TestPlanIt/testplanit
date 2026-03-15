@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { AzureDevOpsRepoAdapter } from "./AzureDevOpsRepoAdapter";
+import { BitbucketRepoAdapter } from "./BitbucketRepoAdapter";
 import { GitHubRepoAdapter } from "./GitHubRepoAdapter";
 import { GitLabRepoAdapter } from "./GitLabRepoAdapter";
-import { BitbucketRepoAdapter } from "./BitbucketRepoAdapter";
-import { AzureDevOpsRepoAdapter } from "./AzureDevOpsRepoAdapter";
 
 // Stub fetch so adapters don't error
 vi.stubGlobal("fetch", vi.fn());

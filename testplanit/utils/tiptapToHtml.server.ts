@@ -1,10 +1,10 @@
+import { Color } from "@tiptap/extension-color";
+import { Emoji, gitHubEmojis } from "@tiptap/extension-emoji";
+import { Image } from "@tiptap/extension-image";
+import { Link } from "@tiptap/extension-link";
+import { TextStyle } from "@tiptap/extension-text-style";
 import { generateHTML } from "@tiptap/html/server";
 import { StarterKit } from "@tiptap/starter-kit";
-import { TextStyle } from "@tiptap/extension-text-style";
-import { Color } from "@tiptap/extension-color";
-import { Link } from "@tiptap/extension-link";
-import { Image } from "@tiptap/extension-image";
-import { Emoji, gitHubEmojis } from "@tiptap/extension-emoji";
 import { generateHTMLFallback } from "./tiptapToHtml";
 
 // Extensions configuration (same as client version)

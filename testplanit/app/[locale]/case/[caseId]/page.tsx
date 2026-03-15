@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "~/lib/navigation";
-import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useFindFirstRepositoryCases } from "~/lib/hooks";
 import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useFindFirstRepositoryCases } from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
 
 export default function TestCaseDetails() {
   const { data: session, status } = useSession();

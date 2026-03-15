@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createSystemNotification, getSystemNotificationHistory } from "./admin-system-notifications";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "~/lib/prisma";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";
+import { createSystemNotification, getSystemNotificationHistory } from "./admin-system-notifications";
 
 // Mock dependencies
 vi.mock("~/lib/prisma", () => ({

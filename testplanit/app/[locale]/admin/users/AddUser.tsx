@@ -1,44 +1,35 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 import {
-  useCreateUser,
-  useCreateUserPreferences,
-  useFindManyRoles,
-  useCreateManyProjectAssignment,
-  useFindManyProjects,
-  useCreateManyGroupAssignment,
-  useFindManyGroups,
-  useUpdateUser,
-  useFindFirstRegistrationSettings,
+  useCreateManyGroupAssignment, useCreateManyProjectAssignment, useCreateUser,
+  useCreateUserPreferences, useFindFirstRegistrationSettings, useFindManyGroups, useFindManyProjects, useFindManyRoles, useUpdateUser
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import MultiSelect from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useTheme } from "next-themes";
 import {
   Select,
-  SelectContent,
-  SelectItem,
+  SelectContent, SelectGroup, SelectItem,
   SelectTrigger,
-  SelectValue,
-  SelectGroup,
+  SelectValue
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
 import { CirclePlus, Star } from "lucide-react";
+import { useTheme } from "next-themes";
+import MultiSelect from "react-select";
+import { getCustomStyles } from "~/styles/multiSelectStyles";
 
 import {
   Form,
@@ -46,7 +37,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -56,10 +47,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { Switch } from "@/components/ui/switch";
 import { Roles } from "@prisma/client";
 
 export function AddUserModal() {

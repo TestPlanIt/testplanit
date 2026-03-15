@@ -1,60 +1,49 @@
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
-import { CaseDisplay } from "@/components/tables/CaseDisplay";
-import { Separator } from "@/components/ui/separator";
-import FieldValueRenderer from "@/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
-import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
-import { TagsListDisplay } from "@/components/tables/TagListDisplay";
-import { useSession } from "next-auth/react";
-import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
-import { useFindManyTemplates } from "~/lib/hooks/templates";
-import { useFindManyStatus } from "~/lib/hooks";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
-import { Attachments, Status, Prisma } from "@prisma/client";
-import { Card } from "@/components/ui/card";
-import {
-  X,
-  LayoutTemplate,
-  Check,
-  CheckCircle,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Clock,
-  CloudSunRain,
-  Combine,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { emptyEditorContent } from "~/app/constants";
+import { DurationDisplay } from "@/components/DurationDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
+import { TagsListDisplay } from "@/components/tables/TagListDisplay";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import TestResultHistory from "@/components/TestResultHistory";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import { AddResultModal } from "@/projects/repository/[projectId]/AddResultModal";
+import FieldValueRenderer from "@/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
+import { Attachments, Prisma, Status } from "@prisma/client";
 import {
-  useCreateTestRunResults,
-  useUpdateTestRunCases,
-  useFindManyTestRunResults,
-  useFindFirstWorkflows,
-  useUpdateTestRuns,
-} from "~/lib/hooks";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+  Check,
+  CheckCircle,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight, Clock,
+  CloudSunRain,
+  Combine, LayoutTemplate, Plus
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import React, { useState } from "react";
 import { toast } from "sonner";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import TestResultHistory from "@/components/TestResultHistory";
-import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
-import { DurationDisplay } from "@/components/DurationDisplay";
-import LinkedCasesPanel from "./LinkedCasesPanel";
-import { ForecastDisplay } from "./ForecastDisplay";
-import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
-import { UserNameCell } from "@/components/tables/UserNameCell";
+import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
+import { emptyEditorContent } from "~/app/constants";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
+import { useCreateTestRunResults, useFindFirstWorkflows, useFindManyStatus, useFindManyTestRunResults, useUpdateTestRunCases, useUpdateTestRuns } from "~/lib/hooks";
+import { useFindManyTemplates } from "~/lib/hooks/templates";
+import { IconName } from "~/types/globals";
+import { ForecastDisplay } from "./ForecastDisplay";
+import LinkedCasesPanel from "./LinkedCasesPanel";
 import { Badge } from "./ui/badge";
 
 interface TestRunCaseDetailsProps {

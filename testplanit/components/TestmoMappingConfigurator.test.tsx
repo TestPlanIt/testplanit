@@ -1,7 +1,7 @@
-import { useState, createContext, useContext } from "react";
-import type { ReactNode } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
+import { createContext, useContext, useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
@@ -118,10 +118,10 @@ vi.mock("@prisma/client", () => ({
   },
 }));
 
-import TestmoMappingConfigurator from "./TestmoMappingConfigurator";
 import { createEmptyMappingConfiguration } from "~/services/imports/testmo/configuration";
 import type { TestmoMappingAnalysis } from "~/services/imports/testmo/types";
 import { generateRandomPassword } from "~/utils/randomPassword";
+import TestmoMappingConfigurator from "./TestmoMappingConfigurator";
 
 if (typeof HTMLElement !== "undefined") {
   if (!HTMLElement.prototype.hasPointerCapture) {

@@ -1,43 +1,37 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod/v4";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  DialogContent, DialogFooter, DialogHeader,
+  DialogTitle
 } from "@/components/ui/dialog";
 import {
-  Form,
-  FormField,
+  Form, FormControl, FormField,
   FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
+  FormLabel, FormMessage
 } from "@/components/ui/form";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { CodeRepositoryConfigForm } from "./CodeRepositoryConfigForm";
-import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { HelpPopover } from "@/components/ui/help-popover";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod/v4";
 import {
-  useUpsertCodeRepository,
-  useUpdateCodeRepository,
+  useUpdateCodeRepository, useUpsertCodeRepository
 } from "~/lib/hooks";
+import { CodeRepositoryConfigForm } from "./CodeRepositoryConfigForm";
 
 const PROVIDERS = [
   { value: "GITHUB", label: "GitHub" },

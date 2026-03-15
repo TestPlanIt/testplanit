@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { completeMilestoneCascade } from "./milestoneActions";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "~/lib/prisma";
-import { getServerAuthSession } from "~/server/auth";
-import { checkUserPermission } from "./permissions";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
+import { getServerAuthSession } from "~/server/auth";
+import { completeMilestoneCascade } from "./milestoneActions";
+import { checkUserPermission } from "./permissions";
 
 // Mock dependencies
 vi.mock("~/lib/prisma", () => ({

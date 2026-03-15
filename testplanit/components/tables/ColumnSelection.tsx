@@ -1,17 +1,17 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { useRouter, usePathname } from "~/lib/navigation";
-import { useSearchParams } from "next/navigation";
-import { ColumnDef } from "@tanstack/react-table";
-import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Columns3, CirclePlus, CircleMinus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ColumnDef } from "@tanstack/react-table";
+import { CircleMinus, CirclePlus, Columns3 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter } from "~/lib/navigation";
 
 export interface CustomColumnMeta {
   isVisible?: boolean;

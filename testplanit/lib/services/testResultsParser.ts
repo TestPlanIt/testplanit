@@ -6,12 +6,12 @@
  * NUnit, MSTest, Mocha, Cucumber).
  */
 
-import type { ITestResult, ITestSuite, ITestCase } from "test-results-parser";
+import { randomUUID } from "crypto";
+import { existsSync, writeFileSync } from "fs";
 import { mkdir, rm } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
-import { randomUUID } from "crypto";
-import { existsSync, writeFileSync } from "fs";
+import type { ITestCase, ITestResult, ITestSuite } from "test-results-parser";
 
 // Import parseV2 dynamically to avoid Turbopack bundling issues
 const { parseV2 } = require("test-results-parser") as {

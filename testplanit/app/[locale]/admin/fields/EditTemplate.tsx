@@ -1,34 +1,23 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import { useState, useEffect, useMemo, useRef } from "react";
+import { Projects, Templates } from "@prisma/client";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  useUpdateTemplates,
-  useUpdateManyTemplates,
-  useFindManyProjects,
-  useFindManyCaseFields,
-  useFindManyResultFields,
-  useCreateManyTemplateProjectAssignment,
-  useCreateManyTemplateCaseAssignment,
-  useCreateManyTemplateResultAssignment,
-  useDeleteManyTemplateProjectAssignment,
-  useDeleteManyTemplateCaseAssignment,
-  useDeleteManyTemplateResultAssignment,
+  useCreateManyTemplateCaseAssignment, useCreateManyTemplateProjectAssignment, useCreateManyTemplateResultAssignment, useDeleteManyTemplateCaseAssignment, useDeleteManyTemplateProjectAssignment, useDeleteManyTemplateResultAssignment, useFindManyCaseFields, useFindManyProjects, useFindManyResultFields, useUpdateManyTemplates, useUpdateTemplates
 } from "~/lib/hooks";
-import { Templates, Projects } from "@prisma/client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
 import {
-  DraggableList,
-  DraggableField,
+  DraggableField, DraggableList
 } from "@/components/DraggableCaseFields";
 import { SelectScrollable } from "@/components/SelectScrollableCaseFields";
 
+import { useTheme } from "next-themes";
 import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +30,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -51,10 +40,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { Switch } from "@/components/ui/switch";
 
 import { useTranslations } from "next-intl";
 

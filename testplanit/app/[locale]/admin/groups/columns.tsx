@@ -1,10 +1,10 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { Groups } from "@prisma/client";
-import { EditGroupModal } from "./EditGroup";
-import { DeleteGroupModal } from "./DeleteGroup";
 import { UserListDisplay } from "@/components/tables/UserListDisplay";
+import { Groups } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import { GroupNameCell } from "~/components/tables/GroupNameCell";
+import { DeleteGroupModal } from "./DeleteGroup";
+import { EditGroupModal } from "./EditGroup";
 
 export interface ExtendedGroups extends Groups {
   assignedUsers: {

@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
-import { verifyTOTP, decryptSecret, verifyBackupCode } from "~/lib/two-factor";
-import { checkRateLimit } from "~/lib/auth-security";
 import jwt from "jsonwebtoken";
+import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "~/lib/auth-security";
+import { prisma } from "~/lib/prisma";
+import { decryptSecret, verifyBackupCode, verifyTOTP } from "~/lib/two-factor";
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
 

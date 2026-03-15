@@ -1,8 +1,8 @@
-import React, { useState, useEffect, ComponentType, FC } from "react";
-import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { LucideProps } from "lucide-react";
-import LoadingSpinner from "./LoadingSpinner";
+import dynamicIconImports from "lucide-react/dynamicIconImports";
+import React, { ComponentType, FC, useEffect, useState } from "react";
 import { type ClassValue } from "~/utils";
+import LoadingSpinner from "./LoadingSpinner";
 
 interface IconProps {
   name: keyof typeof dynamicIconImports;

@@ -1,13 +1,6 @@
 import {
-  IssueAdapter,
-  IssueAdapterCapabilities,
-  AuthenticationData,
-  IssueData,
-  CreateIssueData,
-  UpdateIssueData,
-  IssueSearchOptions,
-  WebhookData,
-  FieldMapping,
+  AuthenticationData, CreateIssueData, FieldMapping, IssueAdapter,
+  IssueAdapterCapabilities, IssueData, IssueSearchOptions, UpdateIssueData, WebhookData
 } from "./IssueAdapter";
 
 /**

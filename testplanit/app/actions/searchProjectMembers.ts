@@ -1,7 +1,7 @@
 "use server";
 
-import { getProjectEffectiveMembers } from "./getProjectEffectiveMembers";
 import { prisma } from "~/lib/prisma";
+import { getProjectEffectiveMembers } from "./getProjectEffectiveMembers";
 
 /**
  * Search and paginate users who have access to a project.

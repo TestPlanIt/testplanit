@@ -1,23 +1,20 @@
 "use client";
 
-import { useMemo } from "react";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { Loader2, FolderOpen, ExternalLink } from "lucide-react";
+import { ExternalLink, FolderOpen, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Link } from "~/lib/navigation";
-import { cn } from "~/utils";
+import { useMemo } from "react";
 import {
-  useFindUniqueRepositoryCases,
-  useFindUniqueTestRuns,
-  useFindUniqueSessions,
-  useFindManyCaseFields,
+  useFindManyCaseFields, useFindUniqueRepositoryCases, useFindUniqueSessions, useFindUniqueTestRuns
 } from "~/lib/hooks";
 import { extractTiptapText } from "~/lib/llm/services/auto-tag/content-extractor";
 import type { EntityType } from "~/lib/llm/services/auto-tag/types";
+import { Link } from "~/lib/navigation";
+import { cn } from "~/utils";
 
 interface EntityDetailPopoverProps {
   entityId: number;

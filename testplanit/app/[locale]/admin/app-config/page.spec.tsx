@@ -1,8 +1,8 @@
-import { test, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, cleanup, act } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import React from "react"; // Ensure React is imported for JSX in mocks
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 // Import the entire mock module as a namespace
 // import * as AppConfigHooksMock from "./app-config.hooks.mock";

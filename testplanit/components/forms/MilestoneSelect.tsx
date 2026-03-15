@@ -1,15 +1,13 @@
-import React from "react";
+import DynamicIcon from "@/components/DynamicIcon";
 import {
   Select,
-  SelectContent,
-  SelectItem,
+  SelectContent, SelectGroup, SelectItem,
   SelectTrigger,
-  SelectValue,
-  SelectGroup,
+  SelectValue
 } from "@/components/ui/select";
-import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
 import { useTranslations } from "next-intl";
+import React from "react";
+import { IconName } from "~/types/globals";
 
 // Utility function to transform milestones into milestonesOptions
 export const transformMilestones = (

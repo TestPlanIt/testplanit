@@ -1,14 +1,14 @@
+import { prisma } from "@/lib/prisma";
 import micromatch from "micromatch";
 import {
-  repoFileCache,
-  type RepoFileEntry,
-} from "~/lib/integrations/cache/RepoFileCache";
-import {
   createGitRepoAdapter,
-  type GitRepoAdapter,
+  type GitRepoAdapter
 } from "~/lib/integrations/adapters/GitRepoAdapter";
-import { prisma } from "@/lib/prisma";
-import { buildImportGraph, bfsRank, isBarrelFile } from "./import-analyzer";
+import {
+  repoFileCache,
+  type RepoFileEntry
+} from "~/lib/integrations/cache/RepoFileCache";
+import { bfsRank, buildImportGraph, isBarrelFile } from "./import-analyzer";
 
 // Same heuristic as LlmManager.chatStream (line 261): ~4 chars per token
 const CHARS_PER_TOKEN = 4;

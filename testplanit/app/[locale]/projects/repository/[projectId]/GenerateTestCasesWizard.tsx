@@ -1,96 +1,70 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
+import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
+import { SearchIssuesDialog } from "@/components/issues/search-issues-dialog";
+import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
+import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Bot,
-  ChevronRight,
-  ChevronLeft,
-  Sparkles,
-  FileText,
-  Search,
-  Settings,
-  Eye,
-  Download,
-  AlertTriangle,
-  CheckCircle2,
-  ExternalLink,
-  Tag,
-  SquarePen,
-  ListChecks,
-  Info,
-  Star,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
+import { ApplicationArea } from "@prisma/client";
+import type { LucideIcon } from "lucide-react";
+import {
+  AlertTriangle, Bot, CheckCircle2, ChevronLeft, ChevronRight, Download, ExternalLink, Eye, FileText, Info, ListChecks, Search,
+  Settings, Sparkles, SquarePen, Star, Tag
 } from "lucide-react";
-import { SearchIssuesDialog } from "@/components/issues/search-issues-dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
-import { useForm, Controller, FormProvider } from "react-hook-form";
-import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
+import { emptyEditorContent } from "~/app/constants";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import {
+  useCreateCaseFieldValues, useCreateCaseFieldVersionValues, useCreateRepositoryCases, useCreateRepositoryCaseVersions, useCreateSteps, useFindFirstProjects, useFindFirstWorkflows, useFindManyRepositoryCases, useFindManyTemplates, useUpdateRepositoryCases,
+  useUpsertIssue, useUpsertTags
+} from "~/lib/hooks";
 import {
   convertHtmlToTipTapJSON,
   ensureTipTapJSON,
-  serializeTipTapJSON,
+  serializeTipTapJSON
 } from "~/utils/tiptapConversion";
-import {
-  useFindFirstProjects,
-  useFindManyTemplates,
-  useFindManyRepositoryCases,
-  useCreateRepositoryCases,
-  useUpdateRepositoryCases,
-  useUpsertIssue,
-  useCreateCaseFieldValues,
-  useCreateSteps,
-  useFindFirstWorkflows,
-  useUpsertTags,
-  useCreateRepositoryCaseVersions,
-  useCreateCaseFieldVersionValues,
-} from "~/lib/hooks";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
-import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
-import { ApplicationArea } from "@prisma/client";
-import { useSession } from "next-auth/react";
-import { emptyEditorContent } from "~/app/constants";
 import { generateHTMLFallback } from "~/utils/tiptapToHtml";
+import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
 
 interface ExternalIssue {
   id: string;

@@ -1,54 +1,50 @@
 "use client";
 
-import * as React from "react";
-import { useEffect, useState, use, useMemo, useCallback } from "react";
-import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useRouter } from "~/lib/navigation";
-import {
-  useFindFirstProjects,
-  useFindManySessions,
-  useFindManyMilestones,
-  useFindManySessionResults,
-  useFindFirstSessionResults,
-} from "~/lib/hooks";
-import { useQueryClient } from "@tanstack/react-query";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { useTabState } from "~/hooks/useTabState";
-import SessionDisplay from "./SessionDisplay";
+import { useDebounce } from "@/components/Debounce";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { Filter } from "@/components/tables/Filter";
+import { PaginationComponent } from "@/components/tables/Pagination";
+import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProjectIcon } from "@/components/ProjectIcon";
-import { AddSessionModal } from "./AddSessionModal";
-import { Button } from "@/components/ui/button";
+import { ApplicationArea } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { CirclePlus, Maximize2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { ApplicationArea } from "@prisma/client";
-import { Filter } from "@/components/tables/Filter";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { useDebounce } from "@/components/Debounce";
+import * as React from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useRequireAuth } from "~/hooks/useRequireAuth";
+import { useTabState } from "~/hooks/useTabState";
 import {
-  PaginationProvider,
-  usePagination,
-  defaultPageSizeOptions,
+  defaultPageSizeOptions, PaginationProvider,
+  usePagination
 } from "~/lib/contexts/PaginationContext";
+import {
+  useFindFirstProjects, useFindFirstSessionResults, useFindManyMilestones,
+  useFindManySessionResults, useFindManySessions
+} from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import { AddSessionModal } from "./AddSessionModal";
+import SessionDisplay from "./SessionDisplay";
 
-import RecentResultsDonut, {
-  type RecentResultStatusItem,
-} from "@/components/dataVisualizations/RecentResultsDonut";
 import CompletedRunsLineChart, {
-  type MonthlyCount,
+  type MonthlyCount
 } from "@/components/dataVisualizations/CompletedRunsLineChart";
+import RecentResultsDonut, {
+  type RecentResultStatusItem
+} from "@/components/dataVisualizations/RecentResultsDonut";
 import SummarySunburstChart, {
   type SunburstHierarchyNode,
-  type SunburstLegendItem,
+  type SunburstLegendItem
 } from "@/components/dataVisualizations/SummarySunburstChart";
 import { DateFormatter } from "@/components/DateFormatter";
 import LoadingSpinner from "~/components/LoadingSpinner";
@@ -59,7 +55,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
 
 interface ProjectSessionsProps {

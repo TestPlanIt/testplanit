@@ -2,12 +2,10 @@
  * Hook for managing report drill-down state and data fetching
  */
 
-import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
 import type {
-  DrillDownContext,
-  DrillDownResponse,
-  DrillDownRecord,
+  DrillDownContext, DrillDownRecord, DrillDownResponse
 } from "~/lib/types/reportDrillDown";
 
 const RECORDS_PER_PAGE = 50;

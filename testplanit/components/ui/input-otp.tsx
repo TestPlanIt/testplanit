@@ -1,7 +1,7 @@
-import * as React from "react"
-import { OTPInput, OTPInputContext } from "input-otp"
-import { cn } from "~/utils"
 import { MinusIcon } from "@radix-ui/react-icons"
+import { OTPInput, OTPInputContext } from "input-otp"
+import * as React from "react"
+import { cn } from "~/utils"
 
 const InputOTP = React.forwardRef<
   React.ElementRef<typeof OTPInput>,

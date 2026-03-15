@@ -1,8 +1,7 @@
-import { format } from "date-fns";
+import { format, Locale } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es";
 import { fr } from "date-fns/locale/fr";
-import { Locale } from "date-fns";
 
 // Map locales to date-fns locales
 const localeMap: Record<string, Locale> = {

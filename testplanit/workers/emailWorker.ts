@@ -1,25 +1,19 @@
-import { Worker, Job } from "bullmq";
-import valkeyConnection from "../lib/valkey";
-import { EMAIL_QUEUE_NAME } from "../lib/queues";
-import {
-  sendNotificationEmail,
-  sendDigestEmail,
-} from "../lib/email/notificationTemplates";
+import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
 import {
-  getServerTranslation,
-  getServerTranslations,
-  formatLocaleForUrl,
-} from "../lib/server-translations";
-import { tiptapToHtml, isTipTapContent } from "../utils/tiptapToHtml";
+  sendDigestEmail, sendNotificationEmail
+} from "../lib/email/notificationTemplates";
 import {
-  getPrismaClientForJob,
-  isMultiTenantMode,
-  MultiTenantJobData,
-  disconnectAllTenantClients,
-  validateMultiTenantJobData,
-  getTenantConfig,
+  disconnectAllTenantClients, getPrismaClientForJob, getTenantConfig, isMultiTenantMode,
+  MultiTenantJobData, validateMultiTenantJobData
 } from "../lib/multiTenantPrisma";
+import { EMAIL_QUEUE_NAME } from "../lib/queues";
+import {
+  formatLocaleForUrl, getServerTranslation,
+  getServerTranslations
+} from "../lib/server-translations";
+import valkeyConnection from "../lib/valkey";
+import { isTipTapContent, tiptapToHtml } from "../utils/tiptapToHtml";
 
 interface SendNotificationEmailJobData extends MultiTenantJobData {
   notificationId: string;

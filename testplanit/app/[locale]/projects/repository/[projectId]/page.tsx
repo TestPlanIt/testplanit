@@ -1,8 +1,8 @@
 "use client";
 
-import ProjectRepository from "./ProjectRepository";
-import { useParams } from "next/navigation";
 import { ApplicationArea } from "@prisma/client";
+import { useParams } from "next/navigation";
+import ProjectRepository from "./ProjectRepository";
 
 export default function Page() {
   const params = useParams();

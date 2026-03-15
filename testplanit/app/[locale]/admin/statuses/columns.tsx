@@ -1,20 +1,20 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { Status } from "@prisma/client";
-import { EditStatusModal } from "./EditStatus";
-import { DeleteStatusModal } from "./DeleteStatus";
-import { Switch } from "@/components/ui/switch";
 import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Trash2, SquarePen } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Status } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
+import { SquarePen, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { IconName } from "~/types/globals";
+import { DeleteStatusModal } from "./DeleteStatus";
+import { EditStatusModal } from "./EditStatus";
 
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
 
 export interface ExtendedStatus extends Status {

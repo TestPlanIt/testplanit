@@ -1,7 +1,7 @@
-import { Trash2, Bot, ListChecks } from "lucide-react";
+import { Bot, ListChecks, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn, type ClassValue } from "~/utils";
 import { Link } from "~/lib/navigation";
+import { cn, type ClassValue } from "~/utils";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 export type TestCaseNameDisplaySize = "small" | "medium" | "large" | "xl";

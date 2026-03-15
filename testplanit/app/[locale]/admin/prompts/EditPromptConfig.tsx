@@ -1,17 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useTranslations } from "next-intl";
+import { Accordion } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -19,23 +16,25 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Accordion } from "@/components/ui/accordion";
-import { toast } from "sonner";
-import { Loader2, Edit } from "lucide-react";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Edit, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod";
 import {
-  useUpdatePromptConfig,
-  useFindManyPromptConfig,
+  useFindManyPromptConfig, useUpdatePromptConfig
 } from "~/lib/hooks/prompt-config";
 import { useUpdatePromptConfigPrompt } from "~/lib/hooks/prompt-config-prompt";
 import { LLM_FEATURES, type LlmFeature } from "~/lib/llm/constants";
-import { PromptFeatureSection } from "./PromptFeatureSection";
 import type { ExtendedPromptConfig } from "./columns";
+import { PromptFeatureSection } from "./PromptFeatureSection";
 
 const featureKeys = Object.values(LLM_FEATURES);
 

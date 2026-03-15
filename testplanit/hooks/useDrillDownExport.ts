@@ -2,15 +2,15 @@
  * Hook for exporting drill-down data to CSV
  */
 
-import { useState, useCallback } from "react";
+import { format } from "date-fns";
 import Papa from "papaparse";
+import { useCallback, useState } from "react";
+import { logDataExport } from "~/lib/services/auditClient";
 import type {
   DrillDownContext,
-  DrillDownRecord,
+  DrillDownRecord
 } from "~/lib/types/reportDrillDown";
-import { format } from "date-fns";
 import { toHumanReadable } from "~/utils/duration";
-import { logDataExport } from "~/lib/services/auditClient";
 
 interface UseDrillDownExportProps {
   /** The drill-down context */

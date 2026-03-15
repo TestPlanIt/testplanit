@@ -1,25 +1,11 @@
-import type {
-  TestmoGroupMappingConfig,
-  TestmoMappingConfiguration,
-  TestmoMilestoneTypeMappingConfig,
-  TestmoConfigurationMappingConfig,
-  TestmoConfigVariantMappingConfig,
-  TestmoConfigVariantAction,
-  TestmoRoleMappingConfig,
-  TestmoStatusMappingConfig,
-  TestmoTagMappingConfig,
-  TestmoIssueTargetMappingConfig,
-  TestmoWorkflowMappingConfig,
-  TestmoRolePermissions,
-  TestmoRolePermissionConfig,
-  TestmoUserMappingConfig,
-  TestmoFieldOptionConfig,
-  TestmoTemplateFieldMappingConfig,
-  TestmoTemplateMappingConfig,
-  TestmoTemplateAction,
-} from "./types";
 import type { Access } from "@prisma/client";
 import { generateRandomPassword } from "~/utils/randomPassword";
+import type {
+  TestmoConfigurationMappingConfig, TestmoConfigVariantAction, TestmoConfigVariantMappingConfig, TestmoFieldOptionConfig, TestmoGroupMappingConfig, TestmoIssueTargetMappingConfig, TestmoMappingConfiguration,
+  TestmoMilestoneTypeMappingConfig, TestmoRoleMappingConfig, TestmoRolePermissionConfig, TestmoRolePermissions, TestmoStatusMappingConfig,
+  TestmoTagMappingConfig, TestmoTemplateAction, TestmoTemplateFieldMappingConfig,
+  TestmoTemplateMappingConfig, TestmoUserMappingConfig, TestmoWorkflowMappingConfig
+} from "./types";
 
 const ACTION_MAP = new Set(["map", "create"]);
 const CONFIG_VARIANT_ACTIONS = new Set([

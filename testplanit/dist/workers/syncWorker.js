@@ -59,6 +59,774 @@ __export(syncWorker_exports, {
 });
 module.exports = __toCommonJS(syncWorker_exports);
 var import_bullmq2 = require("bullmq");
+var import_node_url = require("node:url");
+
+// lib/integrations/services/SyncService.ts
+init_prismaBase();
+
+// services/issueSearch.ts
+init_prismaBase();
+
+// utils/extractTextFromJson.ts
+var extractTextFromNode = (node) => {
+  if (!node) return "";
+  if (typeof node === "string") {
+    try {
+      const parsed = JSON.parse(node);
+      if (typeof parsed === "object" && parsed !== null) {
+        return extractTextFromNode(parsed);
+      }
+    } catch {
+    }
+    return node;
+  }
+  if (node.text && typeof node.text === "string") return node.text;
+  if (node.content && Array.isArray(node.content)) {
+    return node.content.map(extractTextFromNode).join("");
+  }
+  return "";
+};
+
+// services/unifiedElasticsearchService.ts
+init_prismaBase();
+
+// services/elasticsearchService.ts
+var import_elasticsearch = require("@elastic/elasticsearch");
+
+// env.js
+var import_env_nextjs = require("@t3-oss/env-nextjs");
+var import_v4 = require("zod/v4");
+var env = (0, import_env_nextjs.createEnv)({
+  /**
+   * Specify your server-side environment variables schema here. This way you can ensure the app
+   * isn't built with invalid env vars.
+   */
+  server: {
+    DATABASE_URL: import_v4.z.string().refine(
+      (str) => !str.includes("YOUR_MYSQL_URL_HERE"),
+      "You forgot to change the default URL"
+    ),
+    NODE_ENV: import_v4.z.enum(["development", "test", "production"]).prefault("development"),
+    NEXTAUTH_SECRET: process.env.NODE_ENV === "production" ? import_v4.z.string() : import_v4.z.string().optional(),
+    NEXTAUTH_URL: import_v4.z.preprocess(
+      // This makes Vercel deployments not fail if you don't set NEXTAUTH_URL
+      // Since NextAuth.js automatically uses the VERCEL_URL if present.
+      (str) => process.env.VERCEL_URL ?? str,
+      // VERCEL_URL doesn't include `https` so it cant be validated as a URL
+      process.env.VERCEL ? import_v4.z.string() : import_v4.z.url()
+    ),
+    ELASTICSEARCH_NODE: import_v4.z.url().optional()
+  },
+  /**
+   * Specify your client-side environment variables schema here. This way you can ensure the app
+   * isn't built with invalid env vars. To expose them to the client, prefix them with
+   * `NEXT_PUBLIC_`.
+   */
+  client: {
+    // NEXT_PUBLIC_CLIENTVAR: z.string(),
+  },
+  /**
+   * You can't destruct `process.env` as a regular object in the Next.js edge runtimes (e.g.
+   * middlewares) or client-side so we need to destruct manually.
+   */
+  runtimeEnv: {
+    DATABASE_URL: process.env.DATABASE_URL,
+    NODE_ENV: process.env.NODE_ENV,
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+    ELASTICSEARCH_NODE: process.env.ELASTICSEARCH_NODE
+  },
+  /**
+   * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
+   * useful for Docker builds.
+   */
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+  /**
+   * Makes it so that empty strings are treated as undefined. `SOME_VAR: z.string()` and
+   * `SOME_VAR=''` will throw an error.
+   */
+  emptyStringAsUndefined: true
+});
+
+// services/elasticsearchService.ts
+init_prismaBase();
+var esClient = null;
+function getElasticsearchClient() {
+  if (!env.ELASTICSEARCH_NODE) {
+    console.warn(
+      "ELASTICSEARCH_NODE environment variable not set. Elasticsearch integration disabled."
+    );
+    return null;
+  }
+  if (!esClient) {
+    try {
+      esClient = new import_elasticsearch.Client({
+        node: env.ELASTICSEARCH_NODE,
+        // Add additional configuration as needed
+        maxRetries: 3,
+        requestTimeout: 3e4,
+        sniffOnStart: false
+        // Disable sniffing for custom ports
+      });
+    } catch (error) {
+      console.error("Failed to initialize Elasticsearch client:", error);
+      return null;
+    }
+  }
+  return esClient;
+}
+
+// services/unifiedElasticsearchService.ts
+var BASE_INDEX_NAMES = {
+  ["repository_case" /* REPOSITORY_CASE */]: "repository-cases",
+  ["shared_step" /* SHARED_STEP */]: "shared-steps",
+  ["test_run" /* TEST_RUN */]: "test-runs",
+  ["session" /* SESSION */]: "sessions",
+  ["project" /* PROJECT */]: "projects",
+  ["issue" /* ISSUE */]: "issues",
+  ["milestone" /* MILESTONE */]: "milestones"
+};
+function getEntityIndexName(entityType, tenantId) {
+  const baseName = BASE_INDEX_NAMES[entityType];
+  if (tenantId) {
+    return `testplanit-${tenantId}-${baseName}`;
+  }
+  return `testplanit-${baseName}`;
+}
+var ENTITY_INDICES = {
+  ["repository_case" /* REPOSITORY_CASE */]: "testplanit-repository-cases",
+  ["shared_step" /* SHARED_STEP */]: "testplanit-shared-steps",
+  ["test_run" /* TEST_RUN */]: "testplanit-test-runs",
+  ["session" /* SESSION */]: "testplanit-sessions",
+  ["project" /* PROJECT */]: "testplanit-projects",
+  ["issue" /* ISSUE */]: "testplanit-issues",
+  ["milestone" /* MILESTONE */]: "testplanit-milestones"
+};
+var baseMapping = {
+  properties: {
+    id: { type: "integer" },
+    projectId: { type: "integer" },
+    projectName: { type: "keyword" },
+    projectIconUrl: { type: "keyword" },
+    createdAt: { type: "date" },
+    updatedAt: { type: "date" },
+    createdById: { type: "keyword" },
+    createdByName: { type: "keyword" },
+    createdByImage: { type: "keyword" },
+    searchableContent: {
+      type: "text",
+      analyzer: "standard",
+      fields: {
+        keyword: {
+          type: "keyword",
+          ignore_above: 256
+        }
+      }
+    },
+    customFields: {
+      type: "nested",
+      properties: {
+        fieldId: { type: "integer" },
+        fieldName: { type: "keyword" },
+        fieldType: { type: "keyword" },
+        value: { type: "text" },
+        valueKeyword: { type: "keyword" },
+        valueNumeric: { type: "double" },
+        valueBoolean: { type: "boolean" },
+        valueDate: { type: "date" },
+        valueArray: { type: "keyword" },
+        fieldOption: {
+          type: "object",
+          properties: {
+            id: { type: "integer" },
+            name: { type: "keyword" },
+            icon: {
+              type: "object",
+              properties: {
+                name: { type: "keyword" }
+              }
+            },
+            iconColor: {
+              type: "object",
+              properties: {
+                value: { type: "keyword" }
+              }
+            }
+          }
+        },
+        fieldOptions: {
+          type: "nested",
+          properties: {
+            id: { type: "integer" },
+            name: { type: "keyword" },
+            icon: {
+              type: "object",
+              properties: {
+                name: { type: "keyword" }
+              }
+            },
+            iconColor: {
+              type: "object",
+              properties: {
+                value: { type: "keyword" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+var ENTITY_MAPPINGS = {
+  ["repository_case" /* REPOSITORY_CASE */]: {
+    properties: {
+      ...baseMapping.properties,
+      repositoryId: { type: "integer" },
+      folderId: { type: "integer" },
+      folderPath: { type: "keyword" },
+      templateId: { type: "integer" },
+      templateName: { type: "keyword" },
+      name: {
+        type: "text",
+        analyzer: "standard",
+        fields: {
+          keyword: {
+            type: "keyword",
+            ignore_above: 256
+          }
+        }
+      },
+      className: { type: "keyword" },
+      source: { type: "keyword" },
+      stateId: { type: "integer" },
+      stateName: { type: "keyword" },
+      stateIcon: { type: "keyword" },
+      stateColor: { type: "keyword" },
+      estimate: { type: "integer" },
+      forecastManual: { type: "integer" },
+      forecastAutomated: { type: "float" },
+      automated: { type: "boolean" },
+      isArchived: { type: "boolean" },
+      isDeleted: { type: "boolean" },
+      tags: {
+        type: "nested",
+        properties: {
+          id: { type: "integer" },
+          name: { type: "keyword" }
+        }
+      },
+      steps: {
+        type: "nested",
+        properties: {
+          id: { type: "integer" },
+          order: { type: "integer" },
+          step: { type: "text" },
+          expectedResult: { type: "text" },
+          isSharedStep: { type: "boolean" },
+          sharedStepGroupId: { type: "integer" },
+          sharedStepGroupName: { type: "text" }
+        }
+      }
+    }
+  },
+  ["shared_step" /* SHARED_STEP */]: {
+    properties: {
+      ...baseMapping.properties,
+      name: {
+        type: "text",
+        analyzer: "standard",
+        fields: {
+          keyword: {
+            type: "keyword",
+            ignore_above: 256
+          }
+        }
+      },
+      isDeleted: { type: "boolean" },
+      items: {
+        type: "nested",
+        properties: {
+          id: { type: "integer" },
+          order: { type: "integer" },
+          step: { type: "text" },
+          expectedResult: { type: "text" }
+        }
+      }
+    }
+  },
+  ["test_run" /* TEST_RUN */]: {
+    properties: {
+      ...baseMapping.properties,
+      name: {
+        type: "text",
+        analyzer: "standard",
+        fields: {
+          keyword: {
+            type: "keyword",
+            ignore_above: 256
+          }
+        }
+      },
+      note: { type: "text" },
+      docs: { type: "text" },
+      configId: { type: "integer" },
+      configurationName: { type: "keyword" },
+      milestoneId: { type: "integer" },
+      milestoneName: { type: "keyword" },
+      stateId: { type: "integer" },
+      stateName: { type: "keyword" },
+      stateIcon: { type: "keyword" },
+      stateColor: { type: "keyword" },
+      forecastManual: { type: "integer" },
+      forecastAutomated: { type: "float" },
+      elapsed: { type: "integer" },
+      isCompleted: { type: "boolean" },
+      isDeleted: { type: "boolean" },
+      completedAt: { type: "date" },
+      testRunType: { type: "keyword" },
+      tags: {
+        type: "nested",
+        properties: {
+          id: { type: "integer" },
+          name: { type: "keyword" }
+        }
+      }
+    }
+  },
+  ["session" /* SESSION */]: {
+    properties: {
+      ...baseMapping.properties,
+      templateId: { type: "integer" },
+      templateName: { type: "keyword" },
+      name: {
+        type: "text",
+        analyzer: "standard",
+        fields: {
+          keyword: {
+            type: "keyword",
+            ignore_above: 256
+          }
+        }
+      },
+      note: { type: "text" },
+      mission: { type: "text" },
+      configId: { type: "integer" },
+      configurationName: { type: "keyword" },
+      milestoneId: { type: "integer" },
+      milestoneName: { type: "keyword" },
+      stateId: { type: "integer" },
+      stateName: { type: "keyword" },
+      stateIcon: { type: "keyword" },
+      stateColor: { type: "keyword" },
+      assignedToId: { type: "keyword" },
+      assignedToName: { type: "keyword" },
+      assignedToImage: { type: "keyword" },
+      estimate: { type: "integer" },
+      forecastManual: { type: "integer" },
+      forecastAutomated: { type: "float" },
+      elapsed: { type: "integer" },
+      isCompleted: { type: "boolean" },
+      isDeleted: { type: "boolean" },
+      completedAt: { type: "date" },
+      tags: {
+        type: "nested",
+        properties: {
+          id: { type: "integer" },
+          name: { type: "keyword" }
+        }
+      }
+    }
+  },
+  ["project" /* PROJECT */]: {
+    properties: {
+      id: { type: "integer" },
+      name: {
+        type: "text",
+        analyzer: "standard",
+        fields: {
+          keyword: {
+            type: "keyword",
+            ignore_above: 256
+          }
+        }
+      },
+      iconUrl: { type: "keyword" },
+      note: { type: "text" },
+      docs: { type: "text" },
+      isDeleted: { type: "boolean" },
+      createdAt: { type: "date" },
+      createdById: { type: "keyword" },
+      createdByName: { type: "keyword" },
+      createdByImage: { type: "keyword" },
+      searchableContent: { type: "text" }
+    }
+  },
+  ["issue" /* ISSUE */]: {
+    properties: {
+      ...baseMapping.properties,
+      name: {
+        type: "text",
+        analyzer: "standard",
+        fields: {
+          keyword: {
+            type: "keyword",
+            ignore_above: 256
+          }
+        }
+      },
+      title: {
+        type: "text",
+        analyzer: "standard",
+        fields: {
+          keyword: {
+            type: "keyword",
+            ignore_above: 256
+          }
+        }
+      },
+      description: { type: "text" },
+      externalId: { type: "keyword" },
+      note: { type: "text" },
+      url: { type: "keyword" },
+      issueSystem: { type: "text" },
+      isDeleted: { type: "boolean" }
+    }
+  },
+  ["milestone" /* MILESTONE */]: {
+    properties: {
+      ...baseMapping.properties,
+      name: {
+        type: "text",
+        analyzer: "standard",
+        fields: {
+          keyword: {
+            type: "keyword",
+            ignore_above: 256
+          }
+        }
+      },
+      note: { type: "text" },
+      docs: { type: "text" },
+      milestoneTypeId: { type: "integer" },
+      milestoneTypeName: { type: "keyword" },
+      milestoneTypeIcon: { type: "keyword" },
+      parentId: { type: "integer" },
+      parentName: { type: "keyword" },
+      dueDate: { type: "date" },
+      isCompleted: { type: "boolean" },
+      completedAt: { type: "date" },
+      isDeleted: { type: "boolean" }
+    }
+  }
+};
+
+// services/issueSearch.ts
+function getProjectFromIssue(issue) {
+  if (issue.project) {
+    return issue.project;
+  }
+  if (issue.repositoryCases?.[0]?.project) {
+    return issue.repositoryCases[0].project;
+  }
+  if (issue.sessions?.[0]?.project) {
+    return issue.sessions[0].project;
+  }
+  if (issue.testRuns?.[0]?.project) {
+    return issue.testRuns[0].project;
+  }
+  if (issue.sessionResults?.[0]?.session?.project) {
+    return issue.sessionResults[0].session.project;
+  }
+  if (issue.testRunResults?.[0]?.testRun?.project) {
+    return issue.testRunResults[0].testRun.project;
+  }
+  if (issue.testRunStepResults?.[0]?.testRunResult?.testRun?.project) {
+    return issue.testRunStepResults[0].testRunResult.testRun.project;
+  }
+  return null;
+}
+async function indexIssue(issue, tenantId) {
+  const client = getElasticsearchClient();
+  if (!client) {
+    throw new Error("Elasticsearch client not available");
+  }
+  const indexName = getEntityIndexName("issue" /* ISSUE */, tenantId);
+  const projectInfo = getProjectFromIssue(issue);
+  if (!projectInfo) {
+    console.warn(`Issue ${issue.id} (${issue.name}) has no linked project, skipping indexing`);
+    return;
+  }
+  const noteText = issue.note ? extractTextFromNode(issue.note) : "";
+  const searchableContent = [
+    issue.name,
+    issue.title,
+    issue.description || "",
+    issue.externalId || "",
+    noteText,
+    issue.integration?.name || ""
+  ].join(" ");
+  const document = {
+    id: issue.id,
+    projectId: projectInfo.id,
+    projectName: projectInfo.name,
+    projectIconUrl: projectInfo.iconUrl,
+    name: issue.name,
+    title: issue.title,
+    description: issue.description,
+    externalId: issue.externalId,
+    note: noteText,
+    url: issue.data?.url,
+    issueSystem: issue.integration?.name || "Unknown",
+    isDeleted: issue.isDeleted,
+    createdAt: issue.createdAt,
+    createdById: issue.createdById,
+    createdByName: issue.createdBy.name,
+    createdByImage: issue.createdBy.image,
+    searchableContent
+  };
+  await client.index({
+    index: indexName,
+    id: issue.id.toString(),
+    document,
+    refresh: true
+  });
+}
+async function syncIssueToElasticsearch(issueId, prismaClient2, tenantId) {
+  const prisma2 = prismaClient2 || prisma;
+  const client = getElasticsearchClient();
+  if (!client) {
+    console.warn("Elasticsearch client not available");
+    return false;
+  }
+  try {
+    const issue = await prisma2.issue.findUnique({
+      where: { id: issueId },
+      include: {
+        createdBy: true,
+        integration: true,
+        // Include direct project relationship (preferred)
+        project: true,
+        // Fallback: Check all possible relationships to find project
+        repositoryCases: {
+          take: 1,
+          include: {
+            project: true
+          }
+        },
+        sessions: {
+          take: 1,
+          include: {
+            project: true
+          }
+        },
+        testRuns: {
+          take: 1,
+          include: {
+            project: true
+          }
+        },
+        sessionResults: {
+          take: 1,
+          include: {
+            session: {
+              include: {
+                project: true
+              }
+            }
+          }
+        },
+        testRunResults: {
+          take: 1,
+          include: {
+            testRun: {
+              include: {
+                project: true
+              }
+            }
+          }
+        },
+        testRunStepResults: {
+          take: 1,
+          include: {
+            testRunResult: {
+              include: {
+                testRun: {
+                  include: {
+                    project: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+    if (!issue) {
+      console.warn(`Issue ${issueId} not found`);
+      return false;
+    }
+    await indexIssue(issue, tenantId);
+    return true;
+  } catch (error) {
+    console.error(`Failed to sync issue ${issueId}:`, error);
+    return false;
+  }
+}
+
+// lib/multiTenantPrisma.ts
+var import_client2 = require("@prisma/client");
+var fs = __toESM(require("fs"));
+function isMultiTenantMode() {
+  return process.env.MULTI_TENANT_MODE === "true";
+}
+function getCurrentTenantId() {
+  return process.env.INSTANCE_TENANT_ID;
+}
+var tenantClients = /* @__PURE__ */ new Map();
+var tenantConfigs = null;
+var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+function loadTenantsFromFile(filePath) {
+  const configs = /* @__PURE__ */ new Map();
+  try {
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(fileContent);
+      for (const [tenantId, config] of Object.entries(parsed)) {
+        configs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl
+        });
+      }
+      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+    }
+  } catch (error) {
+    console.error(`Failed to load tenant configs from ${filePath}:`, error);
+  }
+  return configs;
+}
+function reloadTenantConfigs() {
+  tenantConfigs = null;
+  return loadTenantConfigs();
+}
+function loadTenantConfigs() {
+  if (tenantConfigs) {
+    return tenantConfigs;
+  }
+  tenantConfigs = /* @__PURE__ */ new Map();
+  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
+  for (const [tenantId, config] of fileConfigs) {
+    tenantConfigs.set(tenantId, config);
+  }
+  const configJson = process.env.TENANT_CONFIGS;
+  if (configJson) {
+    try {
+      const configs = JSON.parse(configJson);
+      for (const [tenantId, config] of Object.entries(configs)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl
+        });
+      }
+      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+    } catch (error) {
+      console.error("Failed to parse TENANT_CONFIGS:", error);
+    }
+  }
+  for (const [key, value] of Object.entries(process.env)) {
+    const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
+    if (match && value) {
+      const tenantId = match[1].toLowerCase();
+      if (!tenantConfigs.has(tenantId)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: value,
+          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
+          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
+          baseUrl: process.env[`TENANT_${match[1]}_BASE_URL`]
+        });
+      }
+    }
+  }
+  if (tenantConfigs.size === 0) {
+    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+  }
+  return tenantConfigs;
+}
+function getTenantConfig(tenantId) {
+  const configs = loadTenantConfigs();
+  return configs.get(tenantId);
+}
+function createTenantPrismaClient(config) {
+  const client = new import_client2.PrismaClient({
+    datasources: {
+      db: {
+        url: config.databaseUrl
+      }
+    },
+    errorFormat: "pretty"
+  });
+  return client;
+}
+function getTenantPrismaClient(tenantId) {
+  reloadTenantConfigs();
+  const config = getTenantConfig(tenantId);
+  if (!config) {
+    throw new Error(`No configuration found for tenant: ${tenantId}`);
+  }
+  const cached = tenantClients.get(tenantId);
+  if (cached) {
+    if (cached.databaseUrl === config.databaseUrl) {
+      return cached.client;
+    } else {
+      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
+      cached.client.$disconnect().catch((err) => {
+        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
+      });
+      tenantClients.delete(tenantId);
+    }
+  }
+  const client = createTenantPrismaClient(config);
+  tenantClients.set(tenantId, { client, databaseUrl: config.databaseUrl });
+  console.log(`Created Prisma client for tenant: ${tenantId}`);
+  return client;
+}
+function getPrismaClientForJob(jobData) {
+  if (!isMultiTenantMode()) {
+    const { prisma: prisma2 } = (init_prismaBase(), __toCommonJS(prismaBase_exports));
+    return prisma2;
+  }
+  if (!jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+  return getTenantPrismaClient(jobData.tenantId);
+}
+async function disconnectAllTenantClients() {
+  const disconnectPromises = [];
+  for (const [tenantId, cached] of tenantClients) {
+    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
+    disconnectPromises.push(cached.client.$disconnect());
+  }
+  await Promise.all(disconnectPromises);
+  tenantClients.clear();
+  console.log("All tenant Prisma clients disconnected");
+}
+function validateMultiTenantJobData(jobData) {
+  if (isMultiTenantMode() && !jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+}
+
+// lib/queues.ts
+var import_bullmq = require("bullmq");
+
+// lib/queueNames.ts
+var SYNC_QUEUE_NAME = "issue-sync";
 
 // lib/valkey.ts
 var import_ioredis = __toESM(require("ioredis"));
@@ -136,11 +904,7 @@ if (skipConnection) {
 }
 var valkey_default = valkeyConnection;
 
-// lib/queueNames.ts
-var SYNC_QUEUE_NAME = "issue-sync";
-
 // lib/queues.ts
-var import_bullmq = require("bullmq");
 var _syncQueue = null;
 function getSyncQueue() {
   if (_syncQueue) return _syncQueue;
@@ -377,6 +1141,65 @@ var issueCache = new IssueCache();
 // lib/integrations/IntegrationManager.ts
 init_prismaBase();
 
+// utils/encryption.ts
+var import_crypto = __toESM(require("crypto"));
+var algorithm = "aes-256-gcm";
+var ivLength = 16;
+var saltLength = 32;
+var tagLength = 16;
+var iterations = 1e5;
+var keyLength = 32;
+var getMasterKey = () => {
+  const key = process.env.ENCRYPTION_KEY;
+  if (!key) {
+    console.warn("ENCRYPTION_KEY not set, using default key for development");
+    return "development-key-do-not-use-in-production-please!";
+  }
+  return key;
+};
+var deriveKey = (password, salt) => {
+  return import_crypto.default.pbkdf2Sync(password, salt, iterations, keyLength, "sha256");
+};
+var EncryptionService = class {
+  static encrypt(text, key) {
+    const salt = import_crypto.default.randomBytes(saltLength);
+    const derivedKey = deriveKey(key, salt);
+    const iv = import_crypto.default.randomBytes(ivLength);
+    const cipher = import_crypto.default.createCipheriv(algorithm, derivedKey, iv);
+    const encrypted = Buffer.concat([
+      cipher.update(text, "utf8"),
+      cipher.final()
+    ]);
+    const tag = cipher.getAuthTag();
+    const combined = Buffer.concat([salt, iv, tag, encrypted]);
+    return combined.toString("base64");
+  }
+  static decrypt(encryptedText, key) {
+    const combined = Buffer.from(encryptedText, "base64");
+    const salt = combined.slice(0, saltLength);
+    const iv = combined.slice(saltLength, saltLength + ivLength);
+    const tag = combined.slice(
+      saltLength + ivLength,
+      saltLength + ivLength + tagLength
+    );
+    const encrypted = combined.slice(saltLength + ivLength + tagLength);
+    const derivedKey = deriveKey(key, salt);
+    const decipher = import_crypto.default.createDecipheriv(algorithm, derivedKey, iv);
+    decipher.setAuthTag(tag);
+    const decrypted = Buffer.concat([
+      decipher.update(encrypted),
+      decipher.final()
+    ]);
+    return decrypted.toString("utf8");
+  }
+  static encryptObject(obj, key) {
+    return this.encrypt(JSON.stringify(obj), key);
+  }
+  static decryptObject(encryptedText, key) {
+    return JSON.parse(this.decrypt(encryptedText, key));
+  }
+};
+
 // lib/integrations/adapters/BaseAdapter.ts
 var BaseAdapter = class {
   config;
@@ -590,6 +1413,734 @@ var BaseAdapter = class {
       valid: errors.length === 0,
       errors: errors.length > 0 ? errors : void 0
     };
+  }
+};
+
+// lib/integrations/adapters/AzureDevOpsAdapter.ts
+var AzureDevOpsAdapter = class extends BaseAdapter {
+  organizationUrl;
+  project;
+  apiVersion = "7.0";
+  constructor(config) {
+    super(config);
+    this.organizationUrl = config.organizationUrl;
+    this.project = config.project;
+  }
+  getCapabilities() {
+    return {
+      createIssue: true,
+      updateIssue: true,
+      linkIssue: true,
+      syncIssue: true,
+      searchIssues: true,
+      webhooks: true,
+      customFields: true,
+      attachments: true
+    };
+  }
+  async performAuthentication(authData) {
+    if (authData.type !== "api_key") {
+      throw new Error(
+        "Azure DevOps adapter only supports Personal Access Token authentication"
+      );
+    }
+    if (!authData.apiKey) {
+      throw new Error(
+        "Personal Access Token is required for Azure DevOps authentication"
+      );
+    }
+    if (!this.organizationUrl) {
+      throw new Error("Organization URL is required for Azure DevOps");
+    }
+    try {
+      await this.makeRequest(
+        `${this.organizationUrl}/_apis/projects?api-version=${this.apiVersion}`
+      );
+    } catch (error) {
+      throw new Error(
+        "Invalid Azure DevOps Personal Access Token or Organization URL"
+      );
+    }
+  }
+  buildUrl(path) {
+    if (!this.organizationUrl) {
+      throw new Error("Organization URL not configured");
+    }
+    if (path.includes("{project}") && this.project) {
+      path = path.replace("{project}", encodeURIComponent(this.project));
+    }
+    return `${this.organizationUrl}${path}`;
+  }
+  async createIssue(data) {
+    if (!this.project && data.projectId) {
+      this.project = data.projectId;
+    }
+    if (!this.project) {
+      throw new Error("Azure DevOps project not configured");
+    }
+    const patchDocument = [
+      {
+        op: "add",
+        path: "/fields/System.Title",
+        value: data.title
+      }
+    ];
+    if (data.description) {
+      let descriptionValue;
+      if (typeof data.description === "object" && data.description && "type" in data.description && data.description.type === "doc") {
+        descriptionValue = this.extractTextFromTiptap(data.description);
+      } else {
+        descriptionValue = data.description;
+      }
+      patchDocument.push({
+        op: "add",
+        path: "/fields/System.Description",
+        value: descriptionValue
+      });
+    }
+    if (data.priority) {
+      patchDocument.push({
+        op: "add",
+        path: "/fields/Microsoft.VSTS.Common.Priority",
+        value: parseInt(data.priority)
+      });
+    }
+    if (data.assigneeId) {
+      patchDocument.push({
+        op: "add",
+        path: "/fields/System.AssignedTo",
+        value: data.assigneeId
+      });
+    }
+    if (data.labels && data.labels.length > 0) {
+      patchDocument.push({
+        op: "add",
+        path: "/fields/System.Tags",
+        value: data.labels.join("; ")
+      });
+    }
+    if (data.customFields) {
+      for (const [field, value] of Object.entries(data.customFields)) {
+        patchDocument.push({
+          op: "add",
+          path: `/fields/${field}`,
+          value
+        });
+      }
+    }
+    const workItemType = data.issueType || "Bug";
+    const response = await this.makeRequest(
+      this.buildUrl(
+        `/{project}/_apis/wit/workitems/$${workItemType}?api-version=${this.apiVersion}`
+      ),
+      {
+        method: "POST",
+        body: JSON.stringify(patchDocument),
+        headers: {
+          "Content-Type": "application/json-patch+json"
+        }
+      }
+    );
+    return this.mapAzureDevOpsWorkItem(response);
+  }
+  async updateIssue(issueId, data) {
+    const patchDocument = [];
+    if (data.title !== void 0) {
+      patchDocument.push({
+        op: "replace",
+        path: "/fields/System.Title",
+        value: data.title
+      });
+    }
+    if (data.description !== void 0) {
+      patchDocument.push({
+        op: "replace",
+        path: "/fields/System.Description",
+        value: data.description
+      });
+    }
+    if (data.status !== void 0) {
+      patchDocument.push({
+        op: "replace",
+        path: "/fields/System.State",
+        value: data.status
+      });
+    }
+    if (data.priority !== void 0) {
+      patchDocument.push({
+        op: "replace",
+        path: "/fields/Microsoft.VSTS.Common.Priority",
+        value: parseInt(data.priority)
+      });
+    }
+    if (data.assigneeId !== void 0) {
+      patchDocument.push({
+        op: "replace",
+        path: "/fields/System.AssignedTo",
+        value: data.assigneeId
+      });
+    }
+    if (data.labels !== void 0) {
+      patchDocument.push({
+        op: "replace",
+        path: "/fields/System.Tags",
+        value: data.labels.join("; ")
+      });
+    }
+    if (data.customFields) {
+      for (const [field, value] of Object.entries(data.customFields)) {
+        patchDocument.push({
+          op: "replace",
+          path: `/fields/${field}`,
+          value
+        });
+      }
+    }
+    const response = await this.makeRequest(
+      this.buildUrl(
+        `/_apis/wit/workitems/${issueId}?api-version=${this.apiVersion}`
+      ),
+      {
+        method: "PATCH",
+        body: JSON.stringify(patchDocument),
+        headers: {
+          "Content-Type": "application/json-patch+json"
+        }
+      }
+    );
+    return this.mapAzureDevOpsWorkItem(response);
+  }
+  async getIssue(issueId) {
+    const response = await this.makeRequest(
+      this.buildUrl(
+        `/_apis/wit/workitems/${issueId}?api-version=${this.apiVersion}&$expand=all`
+      )
+    );
+    return this.mapAzureDevOpsWorkItem(response);
+  }
+  async searchIssues(options) {
+    const conditions = [];
+    if (this.project) {
+      conditions.push(`[System.TeamProject] = '${this.project}'`);
+    } else if (options.projectId) {
+      conditions.push(`[System.TeamProject] = '${options.projectId}'`);
+    }
+    if (options.query) {
+      conditions.push(
+        `([System.Title] CONTAINS '${options.query}' OR [System.Description] CONTAINS '${options.query}')`
+      );
+    }
+    if (options.status && options.status.length > 0) {
+      const statusCondition = options.status.map((s) => `[System.State] = '${s}'`).join(" OR ");
+      conditions.push(`(${statusCondition})`);
+    }
+    if (options.assignee) {
+      conditions.push(`[System.AssignedTo] = '${options.assignee}'`);
+    }
+    if (options.labels && options.labels.length > 0) {
+      const labelConditions = options.labels.map(
+        (l) => `[System.Tags] CONTAINS '${l}'`
+      );
+      conditions.push(`(${labelConditions.join(" OR ")})`);
+    }
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const wiql = `SELECT [System.Id] FROM WorkItems ${whereClause} ORDER BY [System.CreatedDate] DESC`;
+    const wiqlResponse = await this.makeRequest(
+      this.buildUrl(
+        `/_apis/wit/wiql?api-version=${this.apiVersion}&$top=${options.limit || 200}`
+      ),
+      {
+        method: "POST",
+        body: JSON.stringify({ query: wiql })
+      }
+    );
+    if (!wiqlResponse.workItems || wiqlResponse.workItems.length === 0) {
+      return {
+        issues: [],
+        total: 0,
+        hasMore: false
+      };
+    }
+    const ids = wiqlResponse.workItems.slice(options.offset || 0, (options.offset || 0) + (options.limit || 50)).map((item) => item.id);
+    if (ids.length === 0) {
+      return {
+        issues: [],
+        total: wiqlResponse.workItems.length,
+        hasMore: false
+      };
+    }
+    const response = await this.makeRequest(
+      this.buildUrl(
+        `/_apis/wit/workitems?ids=${ids.join(",")}&api-version=${this.apiVersion}&$expand=all`
+      )
+    );
+    return {
+      issues: response.value.map(
+        (item) => this.mapAzureDevOpsWorkItem(item)
+      ),
+      total: wiqlResponse.workItems.length,
+      hasMore: (options.offset || 0) + ids.length < wiqlResponse.workItems.length
+    };
+  }
+  async addComment(issueId, comment) {
+    await this.makeRequest(
+      this.buildUrl(
+        `/_apis/wit/workitems/${issueId}/comments?api-version=${this.apiVersion}-preview`
+      ),
+      {
+        method: "POST",
+        body: JSON.stringify({ text: comment })
+      }
+    );
+  }
+  /**
+   * Get available projects
+   */
+  async getProjects() {
+    const response = await this.makeRequest(
+      this.buildUrl(`/_apis/projects?api-version=${this.apiVersion}`)
+    );
+    return response.value.map((project) => ({
+      id: project.id,
+      key: project.name,
+      name: project.name
+    }));
+  }
+  /**
+   * Get work item types for a project
+   */
+  async getIssueTypes(projectId) {
+    const project = projectId || this.project;
+    if (!project) {
+      throw new Error("Project not specified");
+    }
+    const response = await this.makeRequest(
+      this.buildUrl(
+        `/${project}/_apis/wit/workitemtypes?api-version=${this.apiVersion}`
+      )
+    );
+    return response.value.map((type) => ({
+      id: type.name,
+      name: type.name
+    }));
+  }
+  /**
+   * Get available states for work items
+   */
+  async getStatuses() {
+    return [
+      { id: "New", name: "New" },
+      { id: "Active", name: "Active" },
+      { id: "Resolved", name: "Resolved" },
+      { id: "Closed", name: "Closed" },
+      { id: "Removed", name: "Removed" }
+    ];
+  }
+  /**
+   * Get priorities
+   */
+  async getPriorities() {
+    return [
+      { id: "1", name: "1 - Critical" },
+      { id: "2", name: "2 - High" },
+      { id: "3", name: "3 - Medium" },
+      { id: "4", name: "4 - Low" }
+    ];
+  }
+  /**
+   * Upload attachment to a work item
+   */
+  async uploadAttachment(issueId, file, filename) {
+    const uploadResponse = await this.makeRequest(
+      this.buildUrl(
+        `/_apis/wit/attachments?fileName=${encodeURIComponent(filename)}&api-version=${this.apiVersion}`
+      ),
+      {
+        method: "POST",
+        body: file,
+        headers: {
+          "Content-Type": "application/octet-stream"
+        }
+      }
+    );
+    const patchDocument = [
+      {
+        op: "add",
+        path: "/relations/-",
+        value: {
+          rel: "AttachedFile",
+          url: uploadResponse.url
+        }
+      }
+    ];
+    await this.makeRequest(
+      this.buildUrl(
+        `/_apis/wit/workitems/${issueId}?api-version=${this.apiVersion}`
+      ),
+      {
+        method: "PATCH",
+        body: JSON.stringify(patchDocument),
+        headers: {
+          "Content-Type": "application/json-patch+json"
+        }
+      }
+    );
+    return {
+      id: uploadResponse.id,
+      url: uploadResponse.url
+    };
+  }
+  mapAzureDevOpsWorkItem(workItem) {
+    const fields = workItem.fields;
+    return {
+      id: workItem.id.toString(),
+      key: workItem.id.toString(),
+      title: fields["System.Title"],
+      description: fields["System.Description"],
+      status: fields["System.State"],
+      priority: fields["Microsoft.VSTS.Common.Priority"]?.toString(),
+      assignee: fields["System.AssignedTo"] ? {
+        id: fields["System.AssignedTo"].uniqueName || fields["System.AssignedTo"],
+        name: fields["System.AssignedTo"].displayName || fields["System.AssignedTo"],
+        email: fields["System.AssignedTo"].uniqueName
+      } : void 0,
+      reporter: fields["System.CreatedBy"] ? {
+        id: fields["System.CreatedBy"].uniqueName || fields["System.CreatedBy"],
+        name: fields["System.CreatedBy"].displayName || fields["System.CreatedBy"],
+        email: fields["System.CreatedBy"].uniqueName
+      } : void 0,
+      labels: fields["System.Tags"] ? fields["System.Tags"].split(";").map((tag) => tag.trim()) : [],
+      customFields: this.extractCustomFields(fields),
+      createdAt: new Date(fields["System.CreatedDate"]),
+      updatedAt: new Date(fields["System.ChangedDate"]),
+      url: workItem._links?.html?.href || workItem.url
+    };
+  }
+  extractCustomFields(fields) {
+    const customFields = {};
+    const systemFields = [
+      "System.Id",
+      "System.Title",
+      "System.Description",
+      "System.State",
+      "System.AssignedTo",
+      "System.CreatedBy",
+      "System.CreatedDate",
+      "System.ChangedDate",
+      "System.Tags",
+      "System.TeamProject",
+      "System.WorkItemType",
+      "Microsoft.VSTS.Common.Priority"
+    ];
+    for (const [key, value] of Object.entries(fields)) {
+      if (!systemFields.includes(key) && value !== null && value !== void 0) {
+        customFields[key] = value;
+      }
+    }
+    return customFields;
+  }
+  async linkToTestCase(issueId, testCaseId, metadata) {
+    const comment = `Linked to test case: ${testCaseId}${metadata ? `
+
+Metadata: ${JSON.stringify(metadata, null, 2)}` : ""}`;
+    await this.addComment(issueId, comment);
+  }
+  async syncIssue(issueId) {
+    return this.getIssue(issueId);
+  }
+  extractTextFromTiptap(tiptapJson) {
+    let text = "";
+    if (tiptapJson.content && Array.isArray(tiptapJson.content)) {
+      tiptapJson.content.forEach((node) => {
+        if (node.type === "text") {
+          text += node.text || "";
+        } else if (node.content && Array.isArray(node.content)) {
+          text += this.extractTextFromTiptap(node) + "\n";
+        }
+      });
+    }
+    return text.trim();
+  }
+};
+
+// lib/integrations/adapters/GitHubAdapter.ts
+var GitHubAdapter = class extends BaseAdapter {
+  owner;
+  repo;
+  baseUrl = "https://api.github.com";
+  constructor(config) {
+    super(config);
+    if (config.repository) {
+      const [owner, repo] = config.repository.split("/");
+      this.owner = owner;
+      this.repo = repo;
+    }
+  }
+  getCapabilities() {
+    return {
+      createIssue: true,
+      updateIssue: true,
+      linkIssue: true,
+      syncIssue: true,
+      searchIssues: true,
+      webhooks: true,
+      customFields: false,
+      // GitHub doesn't have custom fields like Jira
+      attachments: false
+      // GitHub doesn't support direct attachments on issues
+    };
+  }
+  async performAuthentication(authData) {
+    if (authData.type !== "api_key") {
+      throw new Error(
+        "GitHub adapter only supports Personal Access Token authentication"
+      );
+    }
+    if (!authData.apiKey) {
+      throw new Error(
+        "Personal Access Token is required for GitHub authentication"
+      );
+    }
+    try {
+      await this.makeRequest(`${this.baseUrl}/user`);
+    } catch (error) {
+      throw new Error("Invalid GitHub Personal Access Token");
+    }
+  }
+  buildUrl(path) {
+    if (path.startsWith("/repos/") && this.owner && this.repo) {
+      return `${this.baseUrl}${path.replace("{owner}/{repo}", `${this.owner}/${this.repo}`)}`;
+    }
+    return `${this.baseUrl}${path}`;
+  }
+  async createIssue(data) {
+    if (!this.owner || !this.repo) {
+      if (data.projectId.includes("/")) {
+        const [owner, repo] = data.projectId.split("/");
+        this.owner = owner;
+        this.repo = repo;
+      } else {
+        throw new Error(
+          "GitHub repository not configured. Expected format: owner/repo"
+        );
+      }
+    }
+    const githubPayload = {
+      title: data.title,
+      body: data.description || "",
+      labels: data.labels || [],
+      assignees: data.assigneeId ? [data.assigneeId] : void 0
+    };
+    const response = await this.makeRequest(
+      this.buildUrl(`/repos/{owner}/{repo}/issues`),
+      {
+        method: "POST",
+        body: JSON.stringify(githubPayload)
+      }
+    );
+    return this.mapGitHubIssue(response);
+  }
+  async updateIssue(issueId, data) {
+    const updatePayload = {};
+    if (data.title !== void 0) {
+      updatePayload.title = data.title;
+    }
+    if (data.description !== void 0) {
+      updatePayload.body = data.description;
+    }
+    if (data.status !== void 0) {
+      updatePayload.state = this.mapStatusToGitHub(data.status);
+    }
+    if (data.labels !== void 0) {
+      updatePayload.labels = data.labels;
+    }
+    if (data.assigneeId !== void 0) {
+      updatePayload.assignees = [data.assigneeId];
+    }
+    const response = await this.makeRequest(
+      this.buildUrl(`/repos/{owner}/{repo}/issues/${issueId}`),
+      {
+        method: "PATCH",
+        body: JSON.stringify(updatePayload)
+      }
+    );
+    return this.mapGitHubIssue(response);
+  }
+  async getIssue(issueId) {
+    let owner = this.owner;
+    let repo = this.repo;
+    let issueNumber = issueId;
+    const repoIssueMatch = issueId.match(/^([^/]+)\/([^#]+)#(\d+)$/);
+    if (repoIssueMatch) {
+      owner = repoIssueMatch[1];
+      repo = repoIssueMatch[2];
+      issueNumber = repoIssueMatch[3];
+    } else if (issueId.startsWith("#")) {
+      issueNumber = issueId.substring(1);
+    }
+    if (!owner || !repo) {
+      throw new Error(
+        "GitHub repository not configured. Cannot fetch issue without owner/repo context."
+      );
+    }
+    const response = await this.makeRequest(
+      `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}`
+    );
+    return this.mapGitHubIssue(response);
+  }
+  async searchIssues(options) {
+    const searchQuery = [];
+    searchQuery.push("is:issue");
+    if (this.owner && this.repo) {
+      searchQuery.push(`repo:${this.owner}/${this.repo}`);
+    } else if (options.projectId) {
+      searchQuery.push(`repo:${options.projectId}`);
+    }
+    if (options.query) {
+      searchQuery.push(options.query);
+    }
+    if (options.status && options.status.length > 0) {
+      const states = options.status.map((s) => this.mapStatusToGitHub(s));
+      searchQuery.push(`is:${states.join(" is:")}`);
+    }
+    if (options.assignee) {
+      searchQuery.push(`assignee:${options.assignee}`);
+    }
+    if (options.labels && options.labels.length > 0) {
+      searchQuery.push(options.labels.map((l) => `label:"${l}"`).join(" "));
+    }
+    const params = new URLSearchParams({
+      q: searchQuery.join(" "),
+      per_page: (options.limit || 30).toString(),
+      page: Math.floor(
+        (options.offset || 0) / (options.limit || 30) + 1
+      ).toString(),
+      sort: "created",
+      order: "desc"
+    });
+    const response = await this.makeRequest(
+      `${this.baseUrl}/search/issues?${params.toString()}`
+    );
+    return {
+      issues: response.items.map((issue) => this.mapGitHubIssue(issue)),
+      total: response.total_count,
+      hasMore: response.incomplete_results || response.total_count > (options.offset || 0) + response.items.length
+    };
+  }
+  async addComment(issueId, comment) {
+    await this.makeRequest(
+      this.buildUrl(`/repos/{owner}/{repo}/issues/${issueId}/comments`),
+      {
+        method: "POST",
+        body: JSON.stringify({ body: comment })
+      }
+    );
+  }
+  /**
+   * Get available repositories for the authenticated user
+   */
+  async getProjects() {
+    const repos = await this.makeRequest(
+      `${this.baseUrl}/user/repos?per_page=100&sort=updated`
+    );
+    return repos.map((repo) => ({
+      id: repo.full_name,
+      key: repo.name,
+      name: repo.full_name
+    }));
+  }
+  /**
+   * Get available labels for a repository
+   */
+  async getLabels() {
+    if (!this.owner || !this.repo) {
+      throw new Error("Repository not configured");
+    }
+    const labels = await this.makeRequest(
+      this.buildUrl(`/repos/{owner}/{repo}/labels`)
+    );
+    return labels.map((label) => ({
+      id: label.name,
+      name: label.name,
+      color: label.color
+    }));
+  }
+  /**
+   * Get available milestones for a repository
+   */
+  async getMilestones() {
+    if (!this.owner || !this.repo) {
+      throw new Error("Repository not configured");
+    }
+    const milestones = await this.makeRequest(
+      this.buildUrl(`/repos/{owner}/{repo}/milestones`)
+    );
+    return milestones.map((milestone) => ({
+      id: milestone.number.toString(),
+      title: milestone.title,
+      state: milestone.state
+    }));
+  }
+  mapStatusToGitHub(status) {
+    const lowerStatus = status.toLowerCase();
+    if (lowerStatus === "closed" || lowerStatus === "done" || lowerStatus === "resolved") {
+      return "closed";
+    }
+    return "open";
+  }
+  mapGitHubIssue(githubIssue) {
+    let owner = this.owner;
+    let repo = this.repo;
+    if (githubIssue.repository_url) {
+      const match = githubIssue.repository_url.match(/\/repos\/([^/]+)\/([^/]+)$/);
+      if (match) {
+        owner = match[1];
+        repo = match[2];
+      }
+    } else if (githubIssue.html_url) {
+      const match = githubIssue.html_url.match(/github\.com\/([^/]+)\/([^/]+)\/issues/);
+      if (match) {
+        owner = match[1];
+        repo = match[2];
+      }
+    }
+    return {
+      id: githubIssue.number.toString(),
+      key: `#${githubIssue.number}`,
+      title: githubIssue.title,
+      description: githubIssue.body,
+      status: githubIssue.state,
+      priority: void 0,
+      // GitHub doesn't have priority
+      assignee: githubIssue.assignee ? {
+        id: githubIssue.assignee.login,
+        name: githubIssue.assignee.login,
+        email: githubIssue.assignee.email
+      } : void 0,
+      reporter: githubIssue.user ? {
+        id: githubIssue.user.login,
+        name: githubIssue.user.login,
+        email: githubIssue.user.email
+      } : void 0,
+      labels: githubIssue.labels.map((label) => label.name),
+      // Store repo context in customFields for sync support
+      customFields: {
+        _github_owner: owner,
+        _github_repo: repo
+      },
+      createdAt: new Date(githubIssue.created_at),
+      updatedAt: new Date(githubIssue.updated_at),
+      url: githubIssue.html_url
+    };
+  }
+  async linkToTestCase(issueId, testCaseId, metadata) {
+    const comment = `Linked to test case: ${testCaseId}${metadata ? `
+
+Metadata: ${JSON.stringify(metadata, null, 2)}` : ""}`;
+    await this.addComment(issueId, comment);
+  }
+  async syncIssue(issueId) {
+    return this.getIssue(issueId);
   }
 };
 
@@ -1706,734 +3257,6 @@ var JiraAdapter = class extends BaseAdapter {
   }
 };
 
-// lib/integrations/adapters/GitHubAdapter.ts
-var GitHubAdapter = class extends BaseAdapter {
-  owner;
-  repo;
-  baseUrl = "https://api.github.com";
-  constructor(config) {
-    super(config);
-    if (config.repository) {
-      const [owner, repo] = config.repository.split("/");
-      this.owner = owner;
-      this.repo = repo;
-    }
-  }
-  getCapabilities() {
-    return {
-      createIssue: true,
-      updateIssue: true,
-      linkIssue: true,
-      syncIssue: true,
-      searchIssues: true,
-      webhooks: true,
-      customFields: false,
-      // GitHub doesn't have custom fields like Jira
-      attachments: false
-      // GitHub doesn't support direct attachments on issues
-    };
-  }
-  async performAuthentication(authData) {
-    if (authData.type !== "api_key") {
-      throw new Error(
-        "GitHub adapter only supports Personal Access Token authentication"
-      );
-    }
-    if (!authData.apiKey) {
-      throw new Error(
-        "Personal Access Token is required for GitHub authentication"
-      );
-    }
-    try {
-      await this.makeRequest(`${this.baseUrl}/user`);
-    } catch (error) {
-      throw new Error("Invalid GitHub Personal Access Token");
-    }
-  }
-  buildUrl(path) {
-    if (path.startsWith("/repos/") && this.owner && this.repo) {
-      return `${this.baseUrl}${path.replace("{owner}/{repo}", `${this.owner}/${this.repo}`)}`;
-    }
-    return `${this.baseUrl}${path}`;
-  }
-  async createIssue(data) {
-    if (!this.owner || !this.repo) {
-      if (data.projectId.includes("/")) {
-        const [owner, repo] = data.projectId.split("/");
-        this.owner = owner;
-        this.repo = repo;
-      } else {
-        throw new Error(
-          "GitHub repository not configured. Expected format: owner/repo"
-        );
-      }
-    }
-    const githubPayload = {
-      title: data.title,
-      body: data.description || "",
-      labels: data.labels || [],
-      assignees: data.assigneeId ? [data.assigneeId] : void 0
-    };
-    const response = await this.makeRequest(
-      this.buildUrl(`/repos/{owner}/{repo}/issues`),
-      {
-        method: "POST",
-        body: JSON.stringify(githubPayload)
-      }
-    );
-    return this.mapGitHubIssue(response);
-  }
-  async updateIssue(issueId, data) {
-    const updatePayload = {};
-    if (data.title !== void 0) {
-      updatePayload.title = data.title;
-    }
-    if (data.description !== void 0) {
-      updatePayload.body = data.description;
-    }
-    if (data.status !== void 0) {
-      updatePayload.state = this.mapStatusToGitHub(data.status);
-    }
-    if (data.labels !== void 0) {
-      updatePayload.labels = data.labels;
-    }
-    if (data.assigneeId !== void 0) {
-      updatePayload.assignees = [data.assigneeId];
-    }
-    const response = await this.makeRequest(
-      this.buildUrl(`/repos/{owner}/{repo}/issues/${issueId}`),
-      {
-        method: "PATCH",
-        body: JSON.stringify(updatePayload)
-      }
-    );
-    return this.mapGitHubIssue(response);
-  }
-  async getIssue(issueId) {
-    let owner = this.owner;
-    let repo = this.repo;
-    let issueNumber = issueId;
-    const repoIssueMatch = issueId.match(/^([^/]+)\/([^#]+)#(\d+)$/);
-    if (repoIssueMatch) {
-      owner = repoIssueMatch[1];
-      repo = repoIssueMatch[2];
-      issueNumber = repoIssueMatch[3];
-    } else if (issueId.startsWith("#")) {
-      issueNumber = issueId.substring(1);
-    }
-    if (!owner || !repo) {
-      throw new Error(
-        "GitHub repository not configured. Cannot fetch issue without owner/repo context."
-      );
-    }
-    const response = await this.makeRequest(
-      `${this.baseUrl}/repos/${owner}/${repo}/issues/${issueNumber}`
-    );
-    return this.mapGitHubIssue(response);
-  }
-  async searchIssues(options) {
-    const searchQuery = [];
-    searchQuery.push("is:issue");
-    if (this.owner && this.repo) {
-      searchQuery.push(`repo:${this.owner}/${this.repo}`);
-    } else if (options.projectId) {
-      searchQuery.push(`repo:${options.projectId}`);
-    }
-    if (options.query) {
-      searchQuery.push(options.query);
-    }
-    if (options.status && options.status.length > 0) {
-      const states = options.status.map((s) => this.mapStatusToGitHub(s));
-      searchQuery.push(`is:${states.join(" is:")}`);
-    }
-    if (options.assignee) {
-      searchQuery.push(`assignee:${options.assignee}`);
-    }
-    if (options.labels && options.labels.length > 0) {
-      searchQuery.push(options.labels.map((l) => `label:"${l}"`).join(" "));
-    }
-    const params = new URLSearchParams({
-      q: searchQuery.join(" "),
-      per_page: (options.limit || 30).toString(),
-      page: Math.floor(
-        (options.offset || 0) / (options.limit || 30) + 1
-      ).toString(),
-      sort: "created",
-      order: "desc"
-    });
-    const response = await this.makeRequest(
-      `${this.baseUrl}/search/issues?${params.toString()}`
-    );
-    return {
-      issues: response.items.map((issue) => this.mapGitHubIssue(issue)),
-      total: response.total_count,
-      hasMore: response.incomplete_results || response.total_count > (options.offset || 0) + response.items.length
-    };
-  }
-  async addComment(issueId, comment) {
-    await this.makeRequest(
-      this.buildUrl(`/repos/{owner}/{repo}/issues/${issueId}/comments`),
-      {
-        method: "POST",
-        body: JSON.stringify({ body: comment })
-      }
-    );
-  }
-  /**
-   * Get available repositories for the authenticated user
-   */
-  async getProjects() {
-    const repos = await this.makeRequest(
-      `${this.baseUrl}/user/repos?per_page=100&sort=updated`
-    );
-    return repos.map((repo) => ({
-      id: repo.full_name,
-      key: repo.name,
-      name: repo.full_name
-    }));
-  }
-  /**
-   * Get available labels for a repository
-   */
-  async getLabels() {
-    if (!this.owner || !this.repo) {
-      throw new Error("Repository not configured");
-    }
-    const labels = await this.makeRequest(
-      this.buildUrl(`/repos/{owner}/{repo}/labels`)
-    );
-    return labels.map((label) => ({
-      id: label.name,
-      name: label.name,
-      color: label.color
-    }));
-  }
-  /**
-   * Get available milestones for a repository
-   */
-  async getMilestones() {
-    if (!this.owner || !this.repo) {
-      throw new Error("Repository not configured");
-    }
-    const milestones = await this.makeRequest(
-      this.buildUrl(`/repos/{owner}/{repo}/milestones`)
-    );
-    return milestones.map((milestone) => ({
-      id: milestone.number.toString(),
-      title: milestone.title,
-      state: milestone.state
-    }));
-  }
-  mapStatusToGitHub(status) {
-    const lowerStatus = status.toLowerCase();
-    if (lowerStatus === "closed" || lowerStatus === "done" || lowerStatus === "resolved") {
-      return "closed";
-    }
-    return "open";
-  }
-  mapGitHubIssue(githubIssue) {
-    let owner = this.owner;
-    let repo = this.repo;
-    if (githubIssue.repository_url) {
-      const match = githubIssue.repository_url.match(/\/repos\/([^/]+)\/([^/]+)$/);
-      if (match) {
-        owner = match[1];
-        repo = match[2];
-      }
-    } else if (githubIssue.html_url) {
-      const match = githubIssue.html_url.match(/github\.com\/([^/]+)\/([^/]+)\/issues/);
-      if (match) {
-        owner = match[1];
-        repo = match[2];
-      }
-    }
-    return {
-      id: githubIssue.number.toString(),
-      key: `#${githubIssue.number}`,
-      title: githubIssue.title,
-      description: githubIssue.body,
-      status: githubIssue.state,
-      priority: void 0,
-      // GitHub doesn't have priority
-      assignee: githubIssue.assignee ? {
-        id: githubIssue.assignee.login,
-        name: githubIssue.assignee.login,
-        email: githubIssue.assignee.email
-      } : void 0,
-      reporter: githubIssue.user ? {
-        id: githubIssue.user.login,
-        name: githubIssue.user.login,
-        email: githubIssue.user.email
-      } : void 0,
-      labels: githubIssue.labels.map((label) => label.name),
-      // Store repo context in customFields for sync support
-      customFields: {
-        _github_owner: owner,
-        _github_repo: repo
-      },
-      createdAt: new Date(githubIssue.created_at),
-      updatedAt: new Date(githubIssue.updated_at),
-      url: githubIssue.html_url
-    };
-  }
-  async linkToTestCase(issueId, testCaseId, metadata) {
-    const comment = `Linked to test case: ${testCaseId}${metadata ? `
-
-Metadata: ${JSON.stringify(metadata, null, 2)}` : ""}`;
-    await this.addComment(issueId, comment);
-  }
-  async syncIssue(issueId) {
-    return this.getIssue(issueId);
-  }
-};
-
-// lib/integrations/adapters/AzureDevOpsAdapter.ts
-var AzureDevOpsAdapter = class extends BaseAdapter {
-  organizationUrl;
-  project;
-  apiVersion = "7.0";
-  constructor(config) {
-    super(config);
-    this.organizationUrl = config.organizationUrl;
-    this.project = config.project;
-  }
-  getCapabilities() {
-    return {
-      createIssue: true,
-      updateIssue: true,
-      linkIssue: true,
-      syncIssue: true,
-      searchIssues: true,
-      webhooks: true,
-      customFields: true,
-      attachments: true
-    };
-  }
-  async performAuthentication(authData) {
-    if (authData.type !== "api_key") {
-      throw new Error(
-        "Azure DevOps adapter only supports Personal Access Token authentication"
-      );
-    }
-    if (!authData.apiKey) {
-      throw new Error(
-        "Personal Access Token is required for Azure DevOps authentication"
-      );
-    }
-    if (!this.organizationUrl) {
-      throw new Error("Organization URL is required for Azure DevOps");
-    }
-    try {
-      await this.makeRequest(
-        `${this.organizationUrl}/_apis/projects?api-version=${this.apiVersion}`
-      );
-    } catch (error) {
-      throw new Error(
-        "Invalid Azure DevOps Personal Access Token or Organization URL"
-      );
-    }
-  }
-  buildUrl(path) {
-    if (!this.organizationUrl) {
-      throw new Error("Organization URL not configured");
-    }
-    if (path.includes("{project}") && this.project) {
-      path = path.replace("{project}", encodeURIComponent(this.project));
-    }
-    return `${this.organizationUrl}${path}`;
-  }
-  async createIssue(data) {
-    if (!this.project && data.projectId) {
-      this.project = data.projectId;
-    }
-    if (!this.project) {
-      throw new Error("Azure DevOps project not configured");
-    }
-    const patchDocument = [
-      {
-        op: "add",
-        path: "/fields/System.Title",
-        value: data.title
-      }
-    ];
-    if (data.description) {
-      let descriptionValue;
-      if (typeof data.description === "object" && data.description && "type" in data.description && data.description.type === "doc") {
-        descriptionValue = this.extractTextFromTiptap(data.description);
-      } else {
-        descriptionValue = data.description;
-      }
-      patchDocument.push({
-        op: "add",
-        path: "/fields/System.Description",
-        value: descriptionValue
-      });
-    }
-    if (data.priority) {
-      patchDocument.push({
-        op: "add",
-        path: "/fields/Microsoft.VSTS.Common.Priority",
-        value: parseInt(data.priority)
-      });
-    }
-    if (data.assigneeId) {
-      patchDocument.push({
-        op: "add",
-        path: "/fields/System.AssignedTo",
-        value: data.assigneeId
-      });
-    }
-    if (data.labels && data.labels.length > 0) {
-      patchDocument.push({
-        op: "add",
-        path: "/fields/System.Tags",
-        value: data.labels.join("; ")
-      });
-    }
-    if (data.customFields) {
-      for (const [field, value] of Object.entries(data.customFields)) {
-        patchDocument.push({
-          op: "add",
-          path: `/fields/${field}`,
-          value
-        });
-      }
-    }
-    const workItemType = data.issueType || "Bug";
-    const response = await this.makeRequest(
-      this.buildUrl(
-        `/{project}/_apis/wit/workitems/$${workItemType}?api-version=${this.apiVersion}`
-      ),
-      {
-        method: "POST",
-        body: JSON.stringify(patchDocument),
-        headers: {
-          "Content-Type": "application/json-patch+json"
-        }
-      }
-    );
-    return this.mapAzureDevOpsWorkItem(response);
-  }
-  async updateIssue(issueId, data) {
-    const patchDocument = [];
-    if (data.title !== void 0) {
-      patchDocument.push({
-        op: "replace",
-        path: "/fields/System.Title",
-        value: data.title
-      });
-    }
-    if (data.description !== void 0) {
-      patchDocument.push({
-        op: "replace",
-        path: "/fields/System.Description",
-        value: data.description
-      });
-    }
-    if (data.status !== void 0) {
-      patchDocument.push({
-        op: "replace",
-        path: "/fields/System.State",
-        value: data.status
-      });
-    }
-    if (data.priority !== void 0) {
-      patchDocument.push({
-        op: "replace",
-        path: "/fields/Microsoft.VSTS.Common.Priority",
-        value: parseInt(data.priority)
-      });
-    }
-    if (data.assigneeId !== void 0) {
-      patchDocument.push({
-        op: "replace",
-        path: "/fields/System.AssignedTo",
-        value: data.assigneeId
-      });
-    }
-    if (data.labels !== void 0) {
-      patchDocument.push({
-        op: "replace",
-        path: "/fields/System.Tags",
-        value: data.labels.join("; ")
-      });
-    }
-    if (data.customFields) {
-      for (const [field, value] of Object.entries(data.customFields)) {
-        patchDocument.push({
-          op: "replace",
-          path: `/fields/${field}`,
-          value
-        });
-      }
-    }
-    const response = await this.makeRequest(
-      this.buildUrl(
-        `/_apis/wit/workitems/${issueId}?api-version=${this.apiVersion}`
-      ),
-      {
-        method: "PATCH",
-        body: JSON.stringify(patchDocument),
-        headers: {
-          "Content-Type": "application/json-patch+json"
-        }
-      }
-    );
-    return this.mapAzureDevOpsWorkItem(response);
-  }
-  async getIssue(issueId) {
-    const response = await this.makeRequest(
-      this.buildUrl(
-        `/_apis/wit/workitems/${issueId}?api-version=${this.apiVersion}&$expand=all`
-      )
-    );
-    return this.mapAzureDevOpsWorkItem(response);
-  }
-  async searchIssues(options) {
-    const conditions = [];
-    if (this.project) {
-      conditions.push(`[System.TeamProject] = '${this.project}'`);
-    } else if (options.projectId) {
-      conditions.push(`[System.TeamProject] = '${options.projectId}'`);
-    }
-    if (options.query) {
-      conditions.push(
-        `([System.Title] CONTAINS '${options.query}' OR [System.Description] CONTAINS '${options.query}')`
-      );
-    }
-    if (options.status && options.status.length > 0) {
-      const statusCondition = options.status.map((s) => `[System.State] = '${s}'`).join(" OR ");
-      conditions.push(`(${statusCondition})`);
-    }
-    if (options.assignee) {
-      conditions.push(`[System.AssignedTo] = '${options.assignee}'`);
-    }
-    if (options.labels && options.labels.length > 0) {
-      const labelConditions = options.labels.map(
-        (l) => `[System.Tags] CONTAINS '${l}'`
-      );
-      conditions.push(`(${labelConditions.join(" OR ")})`);
-    }
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-    const wiql = `SELECT [System.Id] FROM WorkItems ${whereClause} ORDER BY [System.CreatedDate] DESC`;
-    const wiqlResponse = await this.makeRequest(
-      this.buildUrl(
-        `/_apis/wit/wiql?api-version=${this.apiVersion}&$top=${options.limit || 200}`
-      ),
-      {
-        method: "POST",
-        body: JSON.stringify({ query: wiql })
-      }
-    );
-    if (!wiqlResponse.workItems || wiqlResponse.workItems.length === 0) {
-      return {
-        issues: [],
-        total: 0,
-        hasMore: false
-      };
-    }
-    const ids = wiqlResponse.workItems.slice(options.offset || 0, (options.offset || 0) + (options.limit || 50)).map((item) => item.id);
-    if (ids.length === 0) {
-      return {
-        issues: [],
-        total: wiqlResponse.workItems.length,
-        hasMore: false
-      };
-    }
-    const response = await this.makeRequest(
-      this.buildUrl(
-        `/_apis/wit/workitems?ids=${ids.join(",")}&api-version=${this.apiVersion}&$expand=all`
-      )
-    );
-    return {
-      issues: response.value.map(
-        (item) => this.mapAzureDevOpsWorkItem(item)
-      ),
-      total: wiqlResponse.workItems.length,
-      hasMore: (options.offset || 0) + ids.length < wiqlResponse.workItems.length
-    };
-  }
-  async addComment(issueId, comment) {
-    await this.makeRequest(
-      this.buildUrl(
-        `/_apis/wit/workitems/${issueId}/comments?api-version=${this.apiVersion}-preview`
-      ),
-      {
-        method: "POST",
-        body: JSON.stringify({ text: comment })
-      }
-    );
-  }
-  /**
-   * Get available projects
-   */
-  async getProjects() {
-    const response = await this.makeRequest(
-      this.buildUrl(`/_apis/projects?api-version=${this.apiVersion}`)
-    );
-    return response.value.map((project) => ({
-      id: project.id,
-      key: project.name,
-      name: project.name
-    }));
-  }
-  /**
-   * Get work item types for a project
-   */
-  async getIssueTypes(projectId) {
-    const project = projectId || this.project;
-    if (!project) {
-      throw new Error("Project not specified");
-    }
-    const response = await this.makeRequest(
-      this.buildUrl(
-        `/${project}/_apis/wit/workitemtypes?api-version=${this.apiVersion}`
-      )
-    );
-    return response.value.map((type) => ({
-      id: type.name,
-      name: type.name
-    }));
-  }
-  /**
-   * Get available states for work items
-   */
-  async getStatuses() {
-    return [
-      { id: "New", name: "New" },
-      { id: "Active", name: "Active" },
-      { id: "Resolved", name: "Resolved" },
-      { id: "Closed", name: "Closed" },
-      { id: "Removed", name: "Removed" }
-    ];
-  }
-  /**
-   * Get priorities
-   */
-  async getPriorities() {
-    return [
-      { id: "1", name: "1 - Critical" },
-      { id: "2", name: "2 - High" },
-      { id: "3", name: "3 - Medium" },
-      { id: "4", name: "4 - Low" }
-    ];
-  }
-  /**
-   * Upload attachment to a work item
-   */
-  async uploadAttachment(issueId, file, filename) {
-    const uploadResponse = await this.makeRequest(
-      this.buildUrl(
-        `/_apis/wit/attachments?fileName=${encodeURIComponent(filename)}&api-version=${this.apiVersion}`
-      ),
-      {
-        method: "POST",
-        body: file,
-        headers: {
-          "Content-Type": "application/octet-stream"
-        }
-      }
-    );
-    const patchDocument = [
-      {
-        op: "add",
-        path: "/relations/-",
-        value: {
-          rel: "AttachedFile",
-          url: uploadResponse.url
-        }
-      }
-    ];
-    await this.makeRequest(
-      this.buildUrl(
-        `/_apis/wit/workitems/${issueId}?api-version=${this.apiVersion}`
-      ),
-      {
-        method: "PATCH",
-        body: JSON.stringify(patchDocument),
-        headers: {
-          "Content-Type": "application/json-patch+json"
-        }
-      }
-    );
-    return {
-      id: uploadResponse.id,
-      url: uploadResponse.url
-    };
-  }
-  mapAzureDevOpsWorkItem(workItem) {
-    const fields = workItem.fields;
-    return {
-      id: workItem.id.toString(),
-      key: workItem.id.toString(),
-      title: fields["System.Title"],
-      description: fields["System.Description"],
-      status: fields["System.State"],
-      priority: fields["Microsoft.VSTS.Common.Priority"]?.toString(),
-      assignee: fields["System.AssignedTo"] ? {
-        id: fields["System.AssignedTo"].uniqueName || fields["System.AssignedTo"],
-        name: fields["System.AssignedTo"].displayName || fields["System.AssignedTo"],
-        email: fields["System.AssignedTo"].uniqueName
-      } : void 0,
-      reporter: fields["System.CreatedBy"] ? {
-        id: fields["System.CreatedBy"].uniqueName || fields["System.CreatedBy"],
-        name: fields["System.CreatedBy"].displayName || fields["System.CreatedBy"],
-        email: fields["System.CreatedBy"].uniqueName
-      } : void 0,
-      labels: fields["System.Tags"] ? fields["System.Tags"].split(";").map((tag) => tag.trim()) : [],
-      customFields: this.extractCustomFields(fields),
-      createdAt: new Date(fields["System.CreatedDate"]),
-      updatedAt: new Date(fields["System.ChangedDate"]),
-      url: workItem._links?.html?.href || workItem.url
-    };
-  }
-  extractCustomFields(fields) {
-    const customFields = {};
-    const systemFields = [
-      "System.Id",
-      "System.Title",
-      "System.Description",
-      "System.State",
-      "System.AssignedTo",
-      "System.CreatedBy",
-      "System.CreatedDate",
-      "System.ChangedDate",
-      "System.Tags",
-      "System.TeamProject",
-      "System.WorkItemType",
-      "Microsoft.VSTS.Common.Priority"
-    ];
-    for (const [key, value] of Object.entries(fields)) {
-      if (!systemFields.includes(key) && value !== null && value !== void 0) {
-        customFields[key] = value;
-      }
-    }
-    return customFields;
-  }
-  async linkToTestCase(issueId, testCaseId, metadata) {
-    const comment = `Linked to test case: ${testCaseId}${metadata ? `
-
-Metadata: ${JSON.stringify(metadata, null, 2)}` : ""}`;
-    await this.addComment(issueId, comment);
-  }
-  async syncIssue(issueId) {
-    return this.getIssue(issueId);
-  }
-  extractTextFromTiptap(tiptapJson) {
-    let text = "";
-    if (tiptapJson.content && Array.isArray(tiptapJson.content)) {
-      tiptapJson.content.forEach((node) => {
-        if (node.type === "text") {
-          text += node.text || "";
-        } else if (node.content && Array.isArray(node.content)) {
-          text += this.extractTextFromTiptap(node) + "\n";
-        }
-      });
-    }
-    return text.trim();
-  }
-};
-
 // lib/integrations/adapters/SimpleUrlAdapter.ts
 init_prismaBase();
 var SimpleUrlAdapter = class extends BaseAdapter {
@@ -2609,65 +3432,6 @@ var SimpleUrlAdapter = class extends BaseAdapter {
       valid: errors.length === 0,
       errors: errors.length > 0 ? errors : void 0
     };
-  }
-};
-
-// utils/encryption.ts
-var import_crypto = __toESM(require("crypto"));
-var algorithm = "aes-256-gcm";
-var ivLength = 16;
-var saltLength = 32;
-var tagLength = 16;
-var iterations = 1e5;
-var keyLength = 32;
-var getMasterKey = () => {
-  const key = process.env.ENCRYPTION_KEY;
-  if (!key) {
-    console.warn("ENCRYPTION_KEY not set, using default key for development");
-    return "development-key-do-not-use-in-production-please!";
-  }
-  return key;
-};
-var deriveKey = (password, salt) => {
-  return import_crypto.default.pbkdf2Sync(password, salt, iterations, keyLength, "sha256");
-};
-var EncryptionService = class {
-  static encrypt(text, key) {
-    const salt = import_crypto.default.randomBytes(saltLength);
-    const derivedKey = deriveKey(key, salt);
-    const iv = import_crypto.default.randomBytes(ivLength);
-    const cipher = import_crypto.default.createCipheriv(algorithm, derivedKey, iv);
-    const encrypted = Buffer.concat([
-      cipher.update(text, "utf8"),
-      cipher.final()
-    ]);
-    const tag = cipher.getAuthTag();
-    const combined = Buffer.concat([salt, iv, tag, encrypted]);
-    return combined.toString("base64");
-  }
-  static decrypt(encryptedText, key) {
-    const combined = Buffer.from(encryptedText, "base64");
-    const salt = combined.slice(0, saltLength);
-    const iv = combined.slice(saltLength, saltLength + ivLength);
-    const tag = combined.slice(
-      saltLength + ivLength,
-      saltLength + ivLength + tagLength
-    );
-    const encrypted = combined.slice(saltLength + ivLength + tagLength);
-    const derivedKey = deriveKey(key, salt);
-    const decipher = import_crypto.default.createDecipheriv(algorithm, derivedKey, iv);
-    decipher.setAuthTag(tag);
-    const decrypted = Buffer.concat([
-      decipher.update(encrypted),
-      decipher.final()
-    ]);
-    return decrypted.toString("utf8");
-  }
-  static encryptObject(obj, key) {
-    return this.encrypt(JSON.stringify(obj), key);
-  }
-  static decryptObject(encryptedText, key) {
-    return JSON.parse(this.decrypt(encryptedText, key));
   }
 };
 
@@ -2861,765 +3625,6 @@ var IntegrationManager = class _IntegrationManager {
   }
 };
 var integrationManager = IntegrationManager.getInstance();
-
-// lib/integrations/services/SyncService.ts
-init_prismaBase();
-
-// services/elasticsearchService.ts
-var import_elasticsearch = require("@elastic/elasticsearch");
-
-// env.js
-var import_env_nextjs = require("@t3-oss/env-nextjs");
-var import_v4 = require("zod/v4");
-var env = (0, import_env_nextjs.createEnv)({
-  /**
-   * Specify your server-side environment variables schema here. This way you can ensure the app
-   * isn't built with invalid env vars.
-   */
-  server: {
-    DATABASE_URL: import_v4.z.string().refine(
-      (str) => !str.includes("YOUR_MYSQL_URL_HERE"),
-      "You forgot to change the default URL"
-    ),
-    NODE_ENV: import_v4.z.enum(["development", "test", "production"]).prefault("development"),
-    NEXTAUTH_SECRET: process.env.NODE_ENV === "production" ? import_v4.z.string() : import_v4.z.string().optional(),
-    NEXTAUTH_URL: import_v4.z.preprocess(
-      // This makes Vercel deployments not fail if you don't set NEXTAUTH_URL
-      // Since NextAuth.js automatically uses the VERCEL_URL if present.
-      (str) => process.env.VERCEL_URL ?? str,
-      // VERCEL_URL doesn't include `https` so it cant be validated as a URL
-      process.env.VERCEL ? import_v4.z.string() : import_v4.z.url()
-    ),
-    ELASTICSEARCH_NODE: import_v4.z.url().optional()
-  },
-  /**
-   * Specify your client-side environment variables schema here. This way you can ensure the app
-   * isn't built with invalid env vars. To expose them to the client, prefix them with
-   * `NEXT_PUBLIC_`.
-   */
-  client: {
-    // NEXT_PUBLIC_CLIENTVAR: z.string(),
-  },
-  /**
-   * You can't destruct `process.env` as a regular object in the Next.js edge runtimes (e.g.
-   * middlewares) or client-side so we need to destruct manually.
-   */
-  runtimeEnv: {
-    DATABASE_URL: process.env.DATABASE_URL,
-    NODE_ENV: process.env.NODE_ENV,
-    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-    ELASTICSEARCH_NODE: process.env.ELASTICSEARCH_NODE
-  },
-  /**
-   * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
-   * useful for Docker builds.
-   */
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
-  /**
-   * Makes it so that empty strings are treated as undefined. `SOME_VAR: z.string()` and
-   * `SOME_VAR=''` will throw an error.
-   */
-  emptyStringAsUndefined: true
-});
-
-// services/elasticsearchService.ts
-init_prismaBase();
-var esClient = null;
-function getElasticsearchClient() {
-  if (!env.ELASTICSEARCH_NODE) {
-    console.warn(
-      "ELASTICSEARCH_NODE environment variable not set. Elasticsearch integration disabled."
-    );
-    return null;
-  }
-  if (!esClient) {
-    try {
-      esClient = new import_elasticsearch.Client({
-        node: env.ELASTICSEARCH_NODE,
-        // Add additional configuration as needed
-        maxRetries: 3,
-        requestTimeout: 3e4,
-        sniffOnStart: false
-        // Disable sniffing for custom ports
-      });
-    } catch (error) {
-      console.error("Failed to initialize Elasticsearch client:", error);
-      return null;
-    }
-  }
-  return esClient;
-}
-
-// services/unifiedElasticsearchService.ts
-init_prismaBase();
-var BASE_INDEX_NAMES = {
-  ["repository_case" /* REPOSITORY_CASE */]: "repository-cases",
-  ["shared_step" /* SHARED_STEP */]: "shared-steps",
-  ["test_run" /* TEST_RUN */]: "test-runs",
-  ["session" /* SESSION */]: "sessions",
-  ["project" /* PROJECT */]: "projects",
-  ["issue" /* ISSUE */]: "issues",
-  ["milestone" /* MILESTONE */]: "milestones"
-};
-function getEntityIndexName(entityType, tenantId) {
-  const baseName = BASE_INDEX_NAMES[entityType];
-  if (tenantId) {
-    return `testplanit-${tenantId}-${baseName}`;
-  }
-  return `testplanit-${baseName}`;
-}
-var ENTITY_INDICES = {
-  ["repository_case" /* REPOSITORY_CASE */]: "testplanit-repository-cases",
-  ["shared_step" /* SHARED_STEP */]: "testplanit-shared-steps",
-  ["test_run" /* TEST_RUN */]: "testplanit-test-runs",
-  ["session" /* SESSION */]: "testplanit-sessions",
-  ["project" /* PROJECT */]: "testplanit-projects",
-  ["issue" /* ISSUE */]: "testplanit-issues",
-  ["milestone" /* MILESTONE */]: "testplanit-milestones"
-};
-var baseMapping = {
-  properties: {
-    id: { type: "integer" },
-    projectId: { type: "integer" },
-    projectName: { type: "keyword" },
-    projectIconUrl: { type: "keyword" },
-    createdAt: { type: "date" },
-    updatedAt: { type: "date" },
-    createdById: { type: "keyword" },
-    createdByName: { type: "keyword" },
-    createdByImage: { type: "keyword" },
-    searchableContent: {
-      type: "text",
-      analyzer: "standard",
-      fields: {
-        keyword: {
-          type: "keyword",
-          ignore_above: 256
-        }
-      }
-    },
-    customFields: {
-      type: "nested",
-      properties: {
-        fieldId: { type: "integer" },
-        fieldName: { type: "keyword" },
-        fieldType: { type: "keyword" },
-        value: { type: "text" },
-        valueKeyword: { type: "keyword" },
-        valueNumeric: { type: "double" },
-        valueBoolean: { type: "boolean" },
-        valueDate: { type: "date" },
-        valueArray: { type: "keyword" },
-        fieldOption: {
-          type: "object",
-          properties: {
-            id: { type: "integer" },
-            name: { type: "keyword" },
-            icon: {
-              type: "object",
-              properties: {
-                name: { type: "keyword" }
-              }
-            },
-            iconColor: {
-              type: "object",
-              properties: {
-                value: { type: "keyword" }
-              }
-            }
-          }
-        },
-        fieldOptions: {
-          type: "nested",
-          properties: {
-            id: { type: "integer" },
-            name: { type: "keyword" },
-            icon: {
-              type: "object",
-              properties: {
-                name: { type: "keyword" }
-              }
-            },
-            iconColor: {
-              type: "object",
-              properties: {
-                value: { type: "keyword" }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-};
-var ENTITY_MAPPINGS = {
-  ["repository_case" /* REPOSITORY_CASE */]: {
-    properties: {
-      ...baseMapping.properties,
-      repositoryId: { type: "integer" },
-      folderId: { type: "integer" },
-      folderPath: { type: "keyword" },
-      templateId: { type: "integer" },
-      templateName: { type: "keyword" },
-      name: {
-        type: "text",
-        analyzer: "standard",
-        fields: {
-          keyword: {
-            type: "keyword",
-            ignore_above: 256
-          }
-        }
-      },
-      className: { type: "keyword" },
-      source: { type: "keyword" },
-      stateId: { type: "integer" },
-      stateName: { type: "keyword" },
-      stateIcon: { type: "keyword" },
-      stateColor: { type: "keyword" },
-      estimate: { type: "integer" },
-      forecastManual: { type: "integer" },
-      forecastAutomated: { type: "float" },
-      automated: { type: "boolean" },
-      isArchived: { type: "boolean" },
-      isDeleted: { type: "boolean" },
-      tags: {
-        type: "nested",
-        properties: {
-          id: { type: "integer" },
-          name: { type: "keyword" }
-        }
-      },
-      steps: {
-        type: "nested",
-        properties: {
-          id: { type: "integer" },
-          order: { type: "integer" },
-          step: { type: "text" },
-          expectedResult: { type: "text" },
-          isSharedStep: { type: "boolean" },
-          sharedStepGroupId: { type: "integer" },
-          sharedStepGroupName: { type: "text" }
-        }
-      }
-    }
-  },
-  ["shared_step" /* SHARED_STEP */]: {
-    properties: {
-      ...baseMapping.properties,
-      name: {
-        type: "text",
-        analyzer: "standard",
-        fields: {
-          keyword: {
-            type: "keyword",
-            ignore_above: 256
-          }
-        }
-      },
-      isDeleted: { type: "boolean" },
-      items: {
-        type: "nested",
-        properties: {
-          id: { type: "integer" },
-          order: { type: "integer" },
-          step: { type: "text" },
-          expectedResult: { type: "text" }
-        }
-      }
-    }
-  },
-  ["test_run" /* TEST_RUN */]: {
-    properties: {
-      ...baseMapping.properties,
-      name: {
-        type: "text",
-        analyzer: "standard",
-        fields: {
-          keyword: {
-            type: "keyword",
-            ignore_above: 256
-          }
-        }
-      },
-      note: { type: "text" },
-      docs: { type: "text" },
-      configId: { type: "integer" },
-      configurationName: { type: "keyword" },
-      milestoneId: { type: "integer" },
-      milestoneName: { type: "keyword" },
-      stateId: { type: "integer" },
-      stateName: { type: "keyword" },
-      stateIcon: { type: "keyword" },
-      stateColor: { type: "keyword" },
-      forecastManual: { type: "integer" },
-      forecastAutomated: { type: "float" },
-      elapsed: { type: "integer" },
-      isCompleted: { type: "boolean" },
-      isDeleted: { type: "boolean" },
-      completedAt: { type: "date" },
-      testRunType: { type: "keyword" },
-      tags: {
-        type: "nested",
-        properties: {
-          id: { type: "integer" },
-          name: { type: "keyword" }
-        }
-      }
-    }
-  },
-  ["session" /* SESSION */]: {
-    properties: {
-      ...baseMapping.properties,
-      templateId: { type: "integer" },
-      templateName: { type: "keyword" },
-      name: {
-        type: "text",
-        analyzer: "standard",
-        fields: {
-          keyword: {
-            type: "keyword",
-            ignore_above: 256
-          }
-        }
-      },
-      note: { type: "text" },
-      mission: { type: "text" },
-      configId: { type: "integer" },
-      configurationName: { type: "keyword" },
-      milestoneId: { type: "integer" },
-      milestoneName: { type: "keyword" },
-      stateId: { type: "integer" },
-      stateName: { type: "keyword" },
-      stateIcon: { type: "keyword" },
-      stateColor: { type: "keyword" },
-      assignedToId: { type: "keyword" },
-      assignedToName: { type: "keyword" },
-      assignedToImage: { type: "keyword" },
-      estimate: { type: "integer" },
-      forecastManual: { type: "integer" },
-      forecastAutomated: { type: "float" },
-      elapsed: { type: "integer" },
-      isCompleted: { type: "boolean" },
-      isDeleted: { type: "boolean" },
-      completedAt: { type: "date" },
-      tags: {
-        type: "nested",
-        properties: {
-          id: { type: "integer" },
-          name: { type: "keyword" }
-        }
-      }
-    }
-  },
-  ["project" /* PROJECT */]: {
-    properties: {
-      id: { type: "integer" },
-      name: {
-        type: "text",
-        analyzer: "standard",
-        fields: {
-          keyword: {
-            type: "keyword",
-            ignore_above: 256
-          }
-        }
-      },
-      iconUrl: { type: "keyword" },
-      note: { type: "text" },
-      docs: { type: "text" },
-      isDeleted: { type: "boolean" },
-      createdAt: { type: "date" },
-      createdById: { type: "keyword" },
-      createdByName: { type: "keyword" },
-      createdByImage: { type: "keyword" },
-      searchableContent: { type: "text" }
-    }
-  },
-  ["issue" /* ISSUE */]: {
-    properties: {
-      ...baseMapping.properties,
-      name: {
-        type: "text",
-        analyzer: "standard",
-        fields: {
-          keyword: {
-            type: "keyword",
-            ignore_above: 256
-          }
-        }
-      },
-      title: {
-        type: "text",
-        analyzer: "standard",
-        fields: {
-          keyword: {
-            type: "keyword",
-            ignore_above: 256
-          }
-        }
-      },
-      description: { type: "text" },
-      externalId: { type: "keyword" },
-      note: { type: "text" },
-      url: { type: "keyword" },
-      issueSystem: { type: "text" },
-      isDeleted: { type: "boolean" }
-    }
-  },
-  ["milestone" /* MILESTONE */]: {
-    properties: {
-      ...baseMapping.properties,
-      name: {
-        type: "text",
-        analyzer: "standard",
-        fields: {
-          keyword: {
-            type: "keyword",
-            ignore_above: 256
-          }
-        }
-      },
-      note: { type: "text" },
-      docs: { type: "text" },
-      milestoneTypeId: { type: "integer" },
-      milestoneTypeName: { type: "keyword" },
-      milestoneTypeIcon: { type: "keyword" },
-      parentId: { type: "integer" },
-      parentName: { type: "keyword" },
-      dueDate: { type: "date" },
-      isCompleted: { type: "boolean" },
-      completedAt: { type: "date" },
-      isDeleted: { type: "boolean" }
-    }
-  }
-};
-
-// services/issueSearch.ts
-init_prismaBase();
-
-// utils/extractTextFromJson.ts
-var extractTextFromNode = (node) => {
-  if (!node) return "";
-  if (typeof node === "string") {
-    try {
-      const parsed = JSON.parse(node);
-      if (typeof parsed === "object" && parsed !== null) {
-        return extractTextFromNode(parsed);
-      }
-    } catch {
-    }
-    return node;
-  }
-  if (node.text && typeof node.text === "string") return node.text;
-  if (node.content && Array.isArray(node.content)) {
-    return node.content.map(extractTextFromNode).join("");
-  }
-  return "";
-};
-
-// services/issueSearch.ts
-function getProjectFromIssue(issue) {
-  if (issue.project) {
-    return issue.project;
-  }
-  if (issue.repositoryCases?.[0]?.project) {
-    return issue.repositoryCases[0].project;
-  }
-  if (issue.sessions?.[0]?.project) {
-    return issue.sessions[0].project;
-  }
-  if (issue.testRuns?.[0]?.project) {
-    return issue.testRuns[0].project;
-  }
-  if (issue.sessionResults?.[0]?.session?.project) {
-    return issue.sessionResults[0].session.project;
-  }
-  if (issue.testRunResults?.[0]?.testRun?.project) {
-    return issue.testRunResults[0].testRun.project;
-  }
-  if (issue.testRunStepResults?.[0]?.testRunResult?.testRun?.project) {
-    return issue.testRunStepResults[0].testRunResult.testRun.project;
-  }
-  return null;
-}
-async function indexIssue(issue, tenantId) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    throw new Error("Elasticsearch client not available");
-  }
-  const indexName = getEntityIndexName("issue" /* ISSUE */, tenantId);
-  const projectInfo = getProjectFromIssue(issue);
-  if (!projectInfo) {
-    console.warn(`Issue ${issue.id} (${issue.name}) has no linked project, skipping indexing`);
-    return;
-  }
-  const noteText = issue.note ? extractTextFromNode(issue.note) : "";
-  const searchableContent = [
-    issue.name,
-    issue.title,
-    issue.description || "",
-    issue.externalId || "",
-    noteText,
-    issue.integration?.name || ""
-  ].join(" ");
-  const document = {
-    id: issue.id,
-    projectId: projectInfo.id,
-    projectName: projectInfo.name,
-    projectIconUrl: projectInfo.iconUrl,
-    name: issue.name,
-    title: issue.title,
-    description: issue.description,
-    externalId: issue.externalId,
-    note: noteText,
-    url: issue.data?.url,
-    issueSystem: issue.integration?.name || "Unknown",
-    isDeleted: issue.isDeleted,
-    createdAt: issue.createdAt,
-    createdById: issue.createdById,
-    createdByName: issue.createdBy.name,
-    createdByImage: issue.createdBy.image,
-    searchableContent
-  };
-  await client.index({
-    index: indexName,
-    id: issue.id.toString(),
-    document,
-    refresh: true
-  });
-}
-async function syncIssueToElasticsearch(issueId, prismaClient2, tenantId) {
-  const prisma2 = prismaClient2 || prisma;
-  const client = getElasticsearchClient();
-  if (!client) {
-    console.warn("Elasticsearch client not available");
-    return false;
-  }
-  try {
-    const issue = await prisma2.issue.findUnique({
-      where: { id: issueId },
-      include: {
-        createdBy: true,
-        integration: true,
-        // Include direct project relationship (preferred)
-        project: true,
-        // Fallback: Check all possible relationships to find project
-        repositoryCases: {
-          take: 1,
-          include: {
-            project: true
-          }
-        },
-        sessions: {
-          take: 1,
-          include: {
-            project: true
-          }
-        },
-        testRuns: {
-          take: 1,
-          include: {
-            project: true
-          }
-        },
-        sessionResults: {
-          take: 1,
-          include: {
-            session: {
-              include: {
-                project: true
-              }
-            }
-          }
-        },
-        testRunResults: {
-          take: 1,
-          include: {
-            testRun: {
-              include: {
-                project: true
-              }
-            }
-          }
-        },
-        testRunStepResults: {
-          take: 1,
-          include: {
-            testRunResult: {
-              include: {
-                testRun: {
-                  include: {
-                    project: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-    if (!issue) {
-      console.warn(`Issue ${issueId} not found`);
-      return false;
-    }
-    await indexIssue(issue, tenantId);
-    return true;
-  } catch (error) {
-    console.error(`Failed to sync issue ${issueId}:`, error);
-    return false;
-  }
-}
-
-// lib/multiTenantPrisma.ts
-var import_client2 = require("@prisma/client");
-var fs = __toESM(require("fs"));
-function isMultiTenantMode() {
-  return process.env.MULTI_TENANT_MODE === "true";
-}
-function getCurrentTenantId() {
-  return process.env.INSTANCE_TENANT_ID;
-}
-var tenantClients = /* @__PURE__ */ new Map();
-var tenantConfigs = null;
-var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
-function loadTenantsFromFile(filePath) {
-  const configs = /* @__PURE__ */ new Map();
-  try {
-    if (fs.existsSync(filePath)) {
-      const fileContent = fs.readFileSync(filePath, "utf-8");
-      const parsed = JSON.parse(fileContent);
-      for (const [tenantId, config] of Object.entries(parsed)) {
-        configs.set(tenantId, {
-          tenantId,
-          databaseUrl: config.databaseUrl,
-          elasticsearchNode: config.elasticsearchNode,
-          elasticsearchIndex: config.elasticsearchIndex,
-          baseUrl: config.baseUrl
-        });
-      }
-      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
-    }
-  } catch (error) {
-    console.error(`Failed to load tenant configs from ${filePath}:`, error);
-  }
-  return configs;
-}
-function reloadTenantConfigs() {
-  tenantConfigs = null;
-  return loadTenantConfigs();
-}
-function loadTenantConfigs() {
-  if (tenantConfigs) {
-    return tenantConfigs;
-  }
-  tenantConfigs = /* @__PURE__ */ new Map();
-  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
-  for (const [tenantId, config] of fileConfigs) {
-    tenantConfigs.set(tenantId, config);
-  }
-  const configJson = process.env.TENANT_CONFIGS;
-  if (configJson) {
-    try {
-      const configs = JSON.parse(configJson);
-      for (const [tenantId, config] of Object.entries(configs)) {
-        tenantConfigs.set(tenantId, {
-          tenantId,
-          databaseUrl: config.databaseUrl,
-          elasticsearchNode: config.elasticsearchNode,
-          elasticsearchIndex: config.elasticsearchIndex,
-          baseUrl: config.baseUrl
-        });
-      }
-      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
-    } catch (error) {
-      console.error("Failed to parse TENANT_CONFIGS:", error);
-    }
-  }
-  for (const [key, value] of Object.entries(process.env)) {
-    const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
-    if (match && value) {
-      const tenantId = match[1].toLowerCase();
-      if (!tenantConfigs.has(tenantId)) {
-        tenantConfigs.set(tenantId, {
-          tenantId,
-          databaseUrl: value,
-          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
-          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
-          baseUrl: process.env[`TENANT_${match[1]}_BASE_URL`]
-        });
-      }
-    }
-  }
-  if (tenantConfigs.size === 0) {
-    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
-  }
-  return tenantConfigs;
-}
-function getTenantConfig(tenantId) {
-  const configs = loadTenantConfigs();
-  return configs.get(tenantId);
-}
-function createTenantPrismaClient(config) {
-  const client = new import_client2.PrismaClient({
-    datasources: {
-      db: {
-        url: config.databaseUrl
-      }
-    },
-    errorFormat: "pretty"
-  });
-  return client;
-}
-function getTenantPrismaClient(tenantId) {
-  reloadTenantConfigs();
-  const config = getTenantConfig(tenantId);
-  if (!config) {
-    throw new Error(`No configuration found for tenant: ${tenantId}`);
-  }
-  const cached = tenantClients.get(tenantId);
-  if (cached) {
-    if (cached.databaseUrl === config.databaseUrl) {
-      return cached.client;
-    } else {
-      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
-      cached.client.$disconnect().catch((err) => {
-        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
-      });
-      tenantClients.delete(tenantId);
-    }
-  }
-  const client = createTenantPrismaClient(config);
-  tenantClients.set(tenantId, { client, databaseUrl: config.databaseUrl });
-  console.log(`Created Prisma client for tenant: ${tenantId}`);
-  return client;
-}
-function getPrismaClientForJob(jobData) {
-  if (!isMultiTenantMode()) {
-    const { prisma: prisma2 } = (init_prismaBase(), __toCommonJS(prismaBase_exports));
-    return prisma2;
-  }
-  if (!jobData.tenantId) {
-    throw new Error("tenantId is required in multi-tenant mode");
-  }
-  return getTenantPrismaClient(jobData.tenantId);
-}
-async function disconnectAllTenantClients() {
-  const disconnectPromises = [];
-  for (const [tenantId, cached] of tenantClients) {
-    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
-    disconnectPromises.push(cached.client.$disconnect());
-  }
-  await Promise.all(disconnectPromises);
-  tenantClients.clear();
-  console.log("All tenant Prisma clients disconnected");
-}
-function validateMultiTenantJobData(jobData) {
-  if (isMultiTenantMode() && !jobData.tenantId) {
-    throw new Error("tenantId is required in multi-tenant mode");
-  }
-}
 
 // lib/integrations/services/SyncService.ts
 var SyncService = class {
@@ -4062,7 +4067,6 @@ var SyncService = class {
 var syncService = new SyncService();
 
 // workers/syncWorker.ts
-var import_node_url = require("node:url");
 var import_meta = {};
 var processor = async (job) => {
   console.log(

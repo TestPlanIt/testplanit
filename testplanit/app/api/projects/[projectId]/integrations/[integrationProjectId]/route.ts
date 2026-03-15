@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
-import { prisma } from "~/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { prisma } from "~/lib/prisma";
+import { authOptions } from "~/server/auth";
 
 const updateProjectIntegrationSchema = z.object({
   config: z.record(z.string(), z.any()),

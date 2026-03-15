@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auditAuthEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { createSAMLClient } from "~/server/saml-provider";
-import { auditAuthEvent } from "~/lib/services/auditLog";
 
 export async function POST(request: NextRequest) {
   try {

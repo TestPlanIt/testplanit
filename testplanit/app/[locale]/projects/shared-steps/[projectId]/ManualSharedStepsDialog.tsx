@@ -1,8 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,21 +8,23 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle } from "lucide-react";
-import { toast } from "sonner";
-import {
-  useCreateSharedStepGroup,
-  useCreateManySharedStepItem,
-} from "~/lib/hooks";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import StepsForm from "~/app/[locale]/projects/repository/[projectId]/StepsForm";
-import type { StepFormField } from "~/app/[locale]/projects/repository/[projectId]/StepsForm";
+import { toast } from "sonner";
 import { emptyEditorContent } from "~/app/constants";
+import type { StepFormField } from "~/app/[locale]/projects/repository/[projectId]/StepsForm";
+import StepsForm from "~/app/[locale]/projects/repository/[projectId]/StepsForm";
+import {
+  useCreateManySharedStepItem, useCreateSharedStepGroup
+} from "~/lib/hooks";
 
 interface ManualSharedStepsDialogProps {
   onComplete?: () => void;

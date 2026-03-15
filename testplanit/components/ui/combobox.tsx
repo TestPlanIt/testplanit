@@ -1,6 +1,4 @@
-import * as React from "react";
-import { Check, ChevronsUpDown, UserX } from "lucide-react";
-import { cn, type ClassValue } from "~/utils";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -8,15 +6,17 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
+  CommandList
 } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { UserNameCell } from "@/components/tables/UserNameCell";
+import { Check, ChevronsUpDown, UserX } from "lucide-react";
 import { useTranslations } from "next-intl";
+import * as React from "react";
+import { cn, type ClassValue } from "~/utils";
 
 interface User {
   id: string;

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 // Test the calculation logic directly
 function calculateMilestoneProgress(milestones: Array<{ isStarted: boolean; isCompleted: boolean; isDeleted: boolean }>) {

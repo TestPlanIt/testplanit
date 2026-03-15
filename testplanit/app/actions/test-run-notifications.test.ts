@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { notifyTestCaseAssignment, notifyBulkTestCaseAssignment } from "./test-run-notifications";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "~/lib/prisma";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";
+import { notifyBulkTestCaseAssignment, notifyTestCaseAssignment } from "./test-run-notifications";
 
 // Mock dependencies
 vi.mock("~/lib/prisma", () => ({

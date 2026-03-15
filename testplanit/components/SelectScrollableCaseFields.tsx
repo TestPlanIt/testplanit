@@ -1,12 +1,9 @@
-import * as React from "react";
 import {
   Select,
   SelectContent,
   SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
+  SelectItem, SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 
 import { DraggableField } from "./DraggableCaseFields";

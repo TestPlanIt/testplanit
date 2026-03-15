@@ -1,40 +1,34 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { parseISO } from "date-fns";
-import {
-  MilestonesWithTypes,
-  getStatus,
-  getStatusStyle,
-  ColorMap,
-} from "~/utils/milestoneUtils";
+import { CalendarDisplay } from "@/components/DateCalendarDisplay";
+import { DateTextDisplay } from "@/components/DateTextDisplay";
+import { ForecastDisplay } from "@/components/ForecastDisplay";
+import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
+import { MilestoneSummary } from "@/components/MilestoneSummary";
+import TextFromJson from "@/components/TextFromJson";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  MoreVertical,
-  SquarePlay,
-  StopCircle,
-  CheckCircle,
-  RotateCcw,
-  SquarePen,
-  Trash2,
-} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
-import { CalendarDisplay } from "@/components/DateCalendarDisplay";
-import { DateTextDisplay } from "@/components/DateTextDisplay";
-import TextFromJson from "@/components/TextFromJson";
-import { useTranslations } from "next-intl";
-import LoadingSpinner from "~/components/LoadingSpinner";
-import { ForecastDisplay } from "@/components/ForecastDisplay";
-import { MilestoneSummary } from "@/components/MilestoneSummary";
+import { parseISO } from "date-fns";
+import {
+  CheckCircle, MoreVertical, RotateCcw,
+  SquarePen, SquarePlay,
+  StopCircle, Trash2
+} from "lucide-react";
 import type { Session } from "next-auth";
+import { useTranslations } from "next-intl";
+import React, { useEffect, useState } from "react";
+import LoadingSpinner from "~/components/LoadingSpinner";
+import {
+  ColorMap, getStatus,
+  getStatusStyle, MilestonesWithTypes
+} from "~/utils/milestoneUtils";
 
 interface MilestoneForecastData {
   manualEstimate: number;

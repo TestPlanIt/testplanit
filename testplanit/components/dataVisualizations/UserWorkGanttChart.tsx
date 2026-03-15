@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from "react";
 import * as Plot from "@observablehq/plot";
-import useResponsiveSVG from "~/hooks/useResponsiveSVG"; // Import the hook
-import { toHumanReadable, toBusinessHours } from "~/utils/duration"; // Import the utility
 import { useTranslations } from "next-intl"; // Added import
+import React, { useEffect, useRef } from "react";
+import useResponsiveSVG from "~/hooks/useResponsiveSVG"; // Import the hook
+import { toBusinessHours } from "~/utils/duration"; // Import the utility
 
 // Define the new structure for a plottable item
 export type PlotTask = {

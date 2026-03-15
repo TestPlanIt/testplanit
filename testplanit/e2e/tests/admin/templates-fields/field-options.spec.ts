@@ -1,4 +1,4 @@
-import { test, expect } from "../../../fixtures";
+import { test } from "../../../fixtures";
 import { TemplatesFieldsPage } from "../../../page-objects/admin/templates-fields.page";
 
 /**

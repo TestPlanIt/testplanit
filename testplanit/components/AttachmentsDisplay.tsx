@@ -1,36 +1,36 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { Attachments } from "@prisma/client";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
 import { DateFormatter } from "@/components/DateFormatter";
-import { Separator } from "@/components/ui/separator";
 import { UserNameCell } from "@/components/tables/UserNameCell";
-import { Link } from "~/lib/navigation";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getStorageUrlClient } from "~/utils/storageUrl";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
+import { Attachments } from "@prisma/client";
+import { filesize } from "filesize";
 import {
   CircleSlash2,
   Download,
   Minus,
   Plus,
   Trash2,
-  Undo2,
+  Undo2
 } from "lucide-react";
-import { filesize } from "filesize";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { Badge } from "@/components/ui/badge";
+import React, { useCallback, useEffect, useState } from "react";
+import { Link } from "~/lib/navigation";
+import { getStorageUrlClient } from "~/utils/storageUrl";
 
 export interface AttachmentEdit {
   id: number;

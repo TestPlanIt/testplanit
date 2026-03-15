@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import jsonwebtoken from "jsonwebtoken";
+import { NextResponse } from "next/server";
 
 const JWT_SECRET = process.env?.TIPTAP_COLLAB_SECRET as string;
 

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { repositoryCaseMapping, REPOSITORY_CASE_INDEX } from "./elasticsearchService";
 
 describe("elasticsearchService", () => {

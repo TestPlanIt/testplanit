@@ -1,23 +1,23 @@
 "use client";
+import { useLocale, useTranslations } from "next-intl";
 import React from "react";
+import { useIssueColors } from "~/hooks/useIssueColors";
+import { toHumanReadable } from "~/utils/duration";
+import { stringToColorCode } from "~/utils/stringToColorCode";
+import { FlakyTestsBubbleChart } from "./FlakyTestsBubbleChart";
+import { IssueTestCoverageChart } from "./IssueTestCoverageChart";
+import RecentResultsDonut from "./RecentResultsDonut";
 import { ReportBarChart } from "./ReportBarChart";
-import { ReportLineChart } from "./ReportLineChart";
 import { ReportGroupedBarChart } from "./ReportGroupedBarChart";
-import { ReportSunburstChart } from "./ReportSunburstChart";
-import { ReportMultiMetricBarChart } from "./ReportMultiMetricBarChart";
+import { ReportLineChart } from "./ReportLineChart";
 import { ReportMultiLineChart } from "./ReportMultiLineChart";
+import { ReportMultiMetricBarChart } from "./ReportMultiMetricBarChart";
 import {
   ReportSmallMultiplesGroupedBar,
-  SmallMultipleData,
+  SmallMultipleData
 } from "./ReportSmallMultiplesGroupedBar";
-import RecentResultsDonut from "./RecentResultsDonut";
-import { FlakyTestsBubbleChart } from "./FlakyTestsBubbleChart";
+import { ReportSunburstChart } from "./ReportSunburstChart";
 import { TestCaseHealthChart } from "./TestCaseHealthChart";
-import { IssueTestCoverageChart } from "./IssueTestCoverageChart";
-import { stringToColorCode } from "~/utils/stringToColorCode";
-import { toHumanReadable } from "~/utils/duration";
-import { useLocale, useTranslations } from "next-intl";
-import { useIssueColors } from "~/hooks/useIssueColors";
 
 // Helper functions for report type matching
 /**

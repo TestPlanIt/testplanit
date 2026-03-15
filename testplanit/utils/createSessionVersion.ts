@@ -1,5 +1,5 @@
-import { Session } from "next-auth";
 import { CompletableSession } from "@/projects/sessions/[projectId]/[sessionId]/CompleteSessionDialog";
+import { Session } from "next-auth";
 
 interface CreateSessionVersionParams {
   sessionId: number;

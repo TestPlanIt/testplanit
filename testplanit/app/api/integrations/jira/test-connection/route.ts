@@ -1,7 +1,7 @@
-import { timingSafeEqual } from "crypto";
-import { NextRequest, NextResponse } from "next/server";
 import { prisma as db } from "@/lib/prisma";
 import { IntegrationProvider } from "@prisma/client";
+import { timingSafeEqual } from "crypto";
+import { NextRequest, NextResponse } from "next/server";
 
 function constantTimeCompare(a: string, b: string): boolean {
   try {

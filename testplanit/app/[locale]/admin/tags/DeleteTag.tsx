@@ -1,7 +1,7 @@
 "use client";
+import { Tags } from "@prisma/client";
 import { useState } from "react";
 import { useUpdateTags } from "~/lib/hooks";
-import { Tags } from "@prisma/client";
 
 import { useForm } from "react-hook-form";
 
@@ -13,12 +13,7 @@ import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogTitle,
+  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 
 import { useTranslations } from "next-intl";

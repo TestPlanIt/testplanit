@@ -1,9 +1,9 @@
-import React from "react";
+import { DateFormatter } from "@/components/DateFormatter";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { CardDescription, CardTitle } from "@/components/ui/card";
-import { DateFormatter } from "@/components/DateFormatter";
 import { Projects } from "@prisma/client";
 import { useTranslations } from "next-intl";
+import React from "react";
 
 interface ProjectHeaderProps {
   project: Projects;

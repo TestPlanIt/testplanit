@@ -1,23 +1,23 @@
-import React, { useState, useEffect, useRef } from "react";
+import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { ExternalLink, Loader2 } from "lucide-react";
-import { Link } from "~/lib/navigation";
-import { useTranslations } from "next-intl";
-import DOMPurify from "dompurify";
 import { useIssueColors } from "@/hooks/useIssueColors";
+import DOMPurify from "dompurify";
+import { ExternalLink, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { useEffect, useRef, useState } from "react";
+import { Link } from "~/lib/navigation";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
-import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 
 interface IssueDisplayProps {
   id: number;

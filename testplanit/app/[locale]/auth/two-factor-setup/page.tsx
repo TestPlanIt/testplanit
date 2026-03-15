@@ -1,28 +1,28 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
-import { useRouter } from "~/lib/navigation";
-import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot
+} from "@/components/ui/input-otp";
 import { Separator } from "@/components/ui/separator";
-import { Shield, Loader2, Copy, Check, AlertTriangle } from "lucide-react";
-import svgIcon from "~/public/tpi_logo.svg";
+import { AlertTriangle, Check, Copy, Loader2, Shield } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { Alert } from "~/components/ui/alert";
+import { useRouter } from "~/lib/navigation";
+import svgIcon from "~/public/tpi_logo.svg";
 
 export default function TwoFactorSetupPage() {
   const router = useRouter();

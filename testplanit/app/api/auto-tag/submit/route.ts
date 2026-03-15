@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { z } from "zod";
-import { authOptions } from "~/server/auth";
-import { getAutoTagQueue } from "~/lib/queues";
 import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
+import { getServerSession } from "next-auth";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { getAutoTagQueue } from "~/lib/queues";
+import { authOptions } from "~/server/auth";
 
 const submitSchema = z.object({
   entityIds: z.array(z.number()).min(1),

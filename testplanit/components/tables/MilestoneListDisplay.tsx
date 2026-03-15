@@ -1,28 +1,24 @@
-import React, { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 import {
-  Milestones,
-  MilestoneTypes,
-  FieldIcon,
-  ColorFamily,
-  Color,
+  Color, ColorFamily, FieldIcon, Milestones,
+  MilestoneTypes
 } from "@prisma/client";
-import DynamicIcon from "../DynamicIcon";
-import { IconName } from "~/types/globals";
-import { useTheme } from "next-themes";
-import { useFindManyColor } from "~/lib/hooks";
-import {
-  getStatus,
-  getStatusStyle,
-  createColorMap,
-} from "~/utils/milestoneUtils";
-import LoadingSpinner from "../LoadingSpinner";
 import { Milestone } from "lucide-react";
+import { useTheme } from "next-themes";
+import React, { useEffect, useState } from "react";
+import { useFindManyColor } from "~/lib/hooks";
+import { IconName } from "~/types/globals";
+import {
+  createColorMap, getStatus,
+  getStatusStyle
+} from "~/utils/milestoneUtils";
+import DynamicIcon from "../DynamicIcon";
+import LoadingSpinner from "../LoadingSpinner";
 
 type MilestoneTypesWithIcon = MilestoneTypes & {
   icon: FieldIcon | null;

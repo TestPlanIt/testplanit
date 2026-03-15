@@ -1,29 +1,26 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
 import {
-  usePagination,
-  PaginationProvider,
+  PaginationProvider, usePagination
 } from "~/lib/contexts/PaginationContext";
+import { useRouter } from "~/lib/navigation";
 
-import { useFindManyGroups } from "~/lib/hooks";
-import { DataTable } from "@/components/tables/DataTable";
-import { ExtendedGroups, getColumns } from "./columns";
 import { useDebounce } from "@/components/Debounce";
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
+import { DataTable } from "@/components/tables/DataTable";
+import { useFindManyGroups } from "~/lib/hooks";
+import { ExtendedGroups, getColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
+  Card, CardContent,
+  CardDescription, CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { AddGroupModal } from "./AddGroup";
 

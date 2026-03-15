@@ -1,7 +1,7 @@
-import { cn } from "~/utils";
-import { Bug } from "lucide-react";
 import { IntegrationProvider } from "@prisma/client";
-import { siJira, siGithub } from "simple-icons";
+import { Bug } from "lucide-react";
+import { siGithub, siJira } from "simple-icons";
+import { cn } from "~/utils";
 
 interface IntegrationIconProps {
   provider: IntegrationProvider;

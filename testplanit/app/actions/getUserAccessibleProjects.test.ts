@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Use vi.hoisted to ensure mocks are available before the vi.mock factory runs
 const { mockUser, mockProjects, mockUserProjectPermission, mockProjectAssignment } = vi.hoisted(() => ({

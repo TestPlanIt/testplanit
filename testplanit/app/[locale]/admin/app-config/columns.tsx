@@ -1,15 +1,15 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { useTranslations } from "next-intl";
-import { EditAppConfigModal } from "./EditAppConfig";
-import { DeleteAppConfigModal } from "./DeleteAppConfig";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import { ColumnDef } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
+import { DeleteAppConfigModal } from "./DeleteAppConfig";
+import { EditAppConfigModal } from "./EditAppConfig";
 import { AppConfigRow } from "./types";
 
 export function getColumns(

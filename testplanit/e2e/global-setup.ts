@@ -1,7 +1,7 @@
 import { chromium, FullConfig } from "@playwright/test";
-import path from "path";
-import fs from "fs";
 import { execSync } from "child_process";
+import fs from "fs";
+import path from "path";
 
 const AUTH_DIR = path.join(__dirname, ".auth");
 const ADMIN_AUTH_FILE = path.join(AUTH_DIR, "admin.json");

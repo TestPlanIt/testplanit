@@ -1,43 +1,38 @@
 "use client";
 
-import React, { use, useState, useRef } from "react";
-import { ImperativePanelHandle } from "react-resizable-panels";
-import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useFindFirstProjects } from "~/lib/hooks";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
+import { Loading } from "@/components/Loading";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
+  AccordionTrigger
 } from "@/components/ui/accordion";
-import {
-  ListTree,
-  PlayCircle,
-  Compass,
-  TagsIcon,
-  ChevronLeft,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  ResizableHandle, ResizablePanel, ResizablePanelGroup
+} from "@/components/ui/resizable";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import ProjectHeader from "./ProjectHeader";
+import {
+  ChevronLeft, Compass, ListTree,
+  PlayCircle, TagsIcon
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { use, useRef, useState } from "react";
+import { ImperativePanelHandle } from "react-resizable-panels";
+import { useRequireAuth } from "~/hooks/useRequireAuth";
+import { useFindFirstProjects } from "~/lib/hooks";
 import MilestonesSection from "./MilestonesSection";
+import ProjectHeader from "./ProjectHeader";
 import RepositoryCasesSection from "./RepositoryCasesSection";
 import SessionsSection from "./SessionsSection";
 import TagsSection from "./TagsSection";
 import TestRunsSection from "./TestRunsSection";
-import { Loading } from "@/components/Loading";
-import { useTranslations } from "next-intl";
 
 interface ProjectOverviewProps {
   params: Promise<{ projectId: string }>;

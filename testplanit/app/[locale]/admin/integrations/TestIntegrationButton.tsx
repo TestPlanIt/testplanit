@@ -1,15 +1,15 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
 import { Integration } from "@prisma/client";
+import { Activity } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface TestIntegrationButtonProps {
   integration: Integration;

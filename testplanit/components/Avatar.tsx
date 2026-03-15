@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import Image from "next/image";
+import React, { useEffect, useState } from "react";
 import { stringToColorCode } from "~/utils/stringToColorCode";
 
 interface AvatarProps {

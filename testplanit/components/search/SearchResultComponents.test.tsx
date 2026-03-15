@@ -1,18 +1,8 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "~/test/test-utils";
 import {
-  MetadataItem,
-  MetadataSeparator,
-  MetadataList,
-  StatusBadge,
-  TimeEstimate,
-  TagList,
-  BadgeList,
-  ExternalLink,
-  DateDisplay,
-  SearchHighlight,
+  BadgeList, DateDisplay, ExternalLink, MetadataItem, MetadataList, MetadataSeparator, SearchHighlight, StatusBadge, TagList, TimeEstimate
 } from "./SearchResultComponents";
-import React from "react";
 
 // Mock dependencies
 vi.mock("@/components/DateFormatter", () => ({

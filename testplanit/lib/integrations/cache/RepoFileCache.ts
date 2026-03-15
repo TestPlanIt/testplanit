@@ -1,6 +1,6 @@
 import { Redis } from "ioredis";
-import valkeyConnection from "../../valkey";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import valkeyConnection from "../../valkey";
 
 // RepoFileEntry is defined here (not imported from adapter layer) to avoid
 // circular dependency concerns in Phase 2. Both definitions must stay in sync.

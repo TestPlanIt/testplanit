@@ -1,9 +1,9 @@
 "use server";
 
-import { prisma } from "~/lib/prisma";
-import { getServerAuthSession } from "~/server/auth";
 import { revalidatePath } from "next/cache";
+import { prisma } from "~/lib/prisma";
 import { NotificationService } from "~/lib/services/notificationService";
+import { getServerAuthSession } from "~/server/auth";
 
 export async function markNotificationAsRead(notificationId: string) {
   const session = await getServerAuthSession();

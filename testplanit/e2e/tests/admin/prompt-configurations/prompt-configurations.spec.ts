@@ -1,4 +1,4 @@
-import { test, expect } from "../../../fixtures";
+import { expect, test } from "../../../fixtures";
 import { PromptConfigurationsPage } from "../../../page-objects/admin/prompt-configurations.page";
 
 /**

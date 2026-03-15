@@ -1,13 +1,13 @@
-import React from "react";
+import { DateFormatter } from "@/components/DateFormatter";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
 import { formatDistanceToNow, type Locale } from "date-fns";
-import { DateFormatter } from "@/components/DateFormatter";
 import { useSession } from "next-auth/react";
+import React from "react";
 import { cn, type ClassValue } from "~/utils";
 
 interface RelativeTimeTooltipProps {

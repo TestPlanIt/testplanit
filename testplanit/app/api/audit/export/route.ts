@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerAuthSession } from "~/server/auth";
-import { auditDataExport } from "~/lib/services/auditLog";
 import {
-  updateAuditContext,
   extractAuditContextFromRequest,
-  runWithAuditContext,
+  runWithAuditContext
 } from "~/lib/auditContext";
+import { auditDataExport } from "~/lib/services/auditLog";
+import { getServerAuthSession } from "~/server/auth";
 
 /**
  * POST /api/audit/export

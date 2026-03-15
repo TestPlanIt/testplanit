@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Search, ListTree, PlayCircle, Compass, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AlertTriangle, Compass, ListTree, PlayCircle, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn } from "~/utils";
+import { useMemo, useState } from "react";
 import type { EntityType } from "~/lib/llm/services/auto-tag/types";
-import type { AutoTagSuggestionEntity, AutoTagSelection } from "./types";
+import { cn } from "~/utils";
+import type { AutoTagSelection, AutoTagSuggestionEntity } from "./types";
 
 const ENTITY_TYPE_ICONS: Record<EntityType, typeof ListTree> = {
   repositoryCase: ListTree,

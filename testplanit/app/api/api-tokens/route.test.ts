@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { POST } from "./route";
 import { NextRequest } from "next/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { POST } from "./route";
 
 // Mock dependencies
 vi.mock("~/server/auth", () => ({
@@ -19,9 +19,9 @@ vi.mock("~/lib/api-tokens", () => ({
   generateApiToken: vi.fn(),
 }));
 
-import { getServerAuthSession } from "~/server/auth";
-import { prisma } from "~/lib/prisma";
 import { generateApiToken } from "~/lib/api-tokens";
+import { prisma } from "~/lib/prisma";
+import { getServerAuthSession } from "~/server/auth";
 
 describe("API Token Creation Endpoint", () => {
   const mockSession = {

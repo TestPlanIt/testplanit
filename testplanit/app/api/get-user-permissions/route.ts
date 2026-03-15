@@ -1,13 +1,12 @@
 "use server";
 
-import { NextResponse } from "next/server";
-import { z } from "zod/v4";
 import {
   ApplicationArea,
   ProjectAccessType,
-  Roles,
+  Roles
 } from "@prisma/client";
-import { getServerSession } from "next-auth/next";
+import { NextResponse } from "next/server";
+import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
 
 // Define the input schema using Zod

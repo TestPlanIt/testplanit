@@ -1,44 +1,37 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
-import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useRouter } from "~/lib/navigation";
-import { useParams, useSearchParams } from "next/navigation";
-import {
-  useFindManyIssue,
-  useFindFirstProjects,
-  useCountIssue,
-  useGroupByIssue,
-} from "~/lib/hooks";
-import { DataTable } from "@/components/tables/DataTable";
-import { useIssueColumns } from "./columns";
 import { useDebounce } from "@/components/Debounce";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
+  Card, CardContent,
+  CardDescription, CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { useTranslations } from "next-intl";
-import {
-  usePagination,
-  PaginationProvider,
-} from "~/lib/contexts/PaginationContext";
-import { ExtendedIssues } from "./columns";
 import type { VisibilityState } from "@tanstack/react-table";
-import { ProjectIcon } from "@/components/ProjectIcon";
+import { useTranslations } from "next-intl";
+import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Loading } from "~/components/Loading";
+import { useRequireAuth } from "~/hooks/useRequireAuth";
+import {
+  PaginationProvider, usePagination
+} from "~/lib/contexts/PaginationContext";
+import {
+  useCountIssue, useFindFirstProjects, useFindManyIssue, useGroupByIssue
+} from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import { ExtendedIssues, useIssueColumns } from "./columns";
 
 type PageSizeOption = number | "All";
 

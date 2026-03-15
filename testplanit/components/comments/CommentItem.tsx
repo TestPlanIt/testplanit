@@ -1,32 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
 import { JSONContent } from "@tiptap/core";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { formatDistanceToNow } from "date-fns";
+import { Edit, MoreVertical, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { UserNameCell } from "~/components/tables/UserNameCell";
 import { Button } from "~/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "~/components/ui/dialog";
-import { MoreVertical, Edit, Trash2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "~/components/ui/dropdown-menu";
+import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
 import { cn } from "~/utils";
 import { CommentEditor } from "./CommentEditor";
-import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
-import { useTranslations } from "next-intl";
-import { Avatar } from "~/components/Avatar";
-import { UserNameCell } from "~/components/tables/UserNameCell";
 
 interface CommentItemProps {
   comment: {

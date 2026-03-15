@@ -1,13 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  extractImportSpecifiers,
-  resolveSpecifier,
-  isBarrelFile,
-  bfsRank,
-  detectLanguage,
-  buildImportGraph,
-  BARREL_THRESHOLD,
-  BARREL_PENALTY,
+  BARREL_PENALTY, BARREL_THRESHOLD, bfsRank, buildImportGraph, detectLanguage, extractImportSpecifiers, isBarrelFile, resolveSpecifier
 } from "./import-analyzer";
 
 // ---------------------------------------------------------------------------

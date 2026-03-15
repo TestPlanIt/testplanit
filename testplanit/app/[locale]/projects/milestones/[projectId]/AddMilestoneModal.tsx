@@ -1,27 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import DynamicIcon from "@/components/DynamicIcon";
+import { DatePickerField } from "@/components/forms/DatePickerField";
 import {
-  useFindManyMilestoneTypes,
-  useFindManyMilestones,
-  useCreateMilestones,
-} from "~/lib/hooks";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller, useWatch } from "react-hook-form";
-import { z } from "zod/v4";
+  MilestoneSelect,
+  transformMilestones
+} from "@/components/forms/MilestoneSelect";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { CirclePlus } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import {
   Dialog,
   DialogContent,
@@ -29,27 +13,38 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
 import {
   Select,
-  SelectContent,
-  SelectItem,
+  SelectContent, SelectGroup, SelectItem,
   SelectTrigger,
-  SelectValue,
-  SelectGroup,
+  SelectValue
 } from "@/components/ui/select";
-import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
-import {
-  MilestoneSelect,
-  transformMilestones,
-} from "@/components/forms/MilestoneSelect";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Switch } from "@/components/ui/switch";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CirclePlus } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
-import { HelpPopover } from "@/components/ui/help-popover";
-import { DatePickerField } from "@/components/forms/DatePickerField";
+import {
+  useCreateMilestones, useFindManyMilestones, useFindManyMilestoneTypes
+} from "~/lib/hooks";
+import { IconName } from "~/types/globals";
 
 const FormSchema = z.object({
   name: z.string().min(2, {

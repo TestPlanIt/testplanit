@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from "~/test/test-utils";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "~/test/test-utils";
 import LoadingSpinner from "./LoadingSpinner";
 
 describe("LoadingSpinner", () => {

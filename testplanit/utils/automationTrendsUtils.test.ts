@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it } from "vitest";
 
 // We need to test the getPeriodDates function which is not exported
 // So we'll test it through the module internals or re-implement the logic for testing

@@ -1,9 +1,8 @@
-import {
-  testElasticsearchConnection,
-  createRepositoryCaseIndex,
-} from "../services/elasticsearchService";
 import { indexRepositoryCase } from "../services/elasticsearchIndexing";
 import type { RepositoryCaseDocument } from "../services/elasticsearchService";
+import {
+  createRepositoryCaseIndex, testElasticsearchConnection
+} from "../services/elasticsearchService";
 
 async function testElasticsearchIntegration() {
   console.log("Testing Elasticsearch integration...\n");

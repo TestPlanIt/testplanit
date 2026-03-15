@@ -1,71 +1,61 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useRouter } from "~/lib/navigation";
-import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
-import {
-  useFindFirstRepositoryCaseVersions,
-  useFindManyRepositoryCaseVersions,
-  useFindFirstWorkflows,
-  useFindManyTemplates,
-  useFindManyIssue,
-} from "~/lib/hooks";
+import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
+import { DateFormatter } from "@/components/DateFormatter";
+import { formatSeconds } from "@/components/DurationDisplay";
+import { Loading } from "@/components/Loading";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { TagsDisplay } from "@/components/tables/TagDisplay";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import { TemplateNameDisplay } from "@/components/TemplateNameDisplay";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { CaseDisplay } from "@/components/tables/CaseDisplay";
-import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import {
-  RepositoryCaseVersions,
-  Attachments,
-  Steps,
-  Prisma,
-} from "@prisma/client";
-import { TemplateNameDisplay } from "@/components/TemplateNameDisplay";
-import { Loading } from "@/components/Loading";
-import { emptyEditorContent } from "~/app/constants";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup,
+  ResizablePanelGroup
 } from "@/components/ui/resizable";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, LinkIcon, Minus, Plus } from "lucide-react";
+import {
+  Select, SelectContent,
+  SelectItem, SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { formatSeconds } from "@/components/DurationDisplay";
-import { DateFormatter } from "@/components/DateFormatter";
-import { UserNameCell } from "@/components/tables/UserNameCell";
-import { Separator } from "@/components/ui/separator";
-import { StepsDisplay } from "../StepsDisplay";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { IconName } from "~/types/globals";
-import { Link } from "~/lib/navigation";
-import FieldValueRenderer from "../FieldValueRenderer";
-import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
-import { TagsDisplay } from "@/components/tables/TagDisplay";
-import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
-import { determineTagDifferences } from "~/utils/determineTagDifferences";
-import { determineIssueDifferences } from "~/utils/determineIssueDifferences";
 import { VersionNavigation } from "@/components/VersionNavigation";
-import { useTranslations, useLocale } from "next-intl";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
+import {
+  Attachments, Prisma, RepositoryCaseVersions, Steps
+} from "@prisma/client";
+import { ChevronLeft, LinkIcon, Minus, Plus } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { emptyEditorContent } from "~/app/constants";
+import {
+  useFindFirstRepositoryCaseVersions, useFindFirstWorkflows, useFindManyIssue, useFindManyRepositoryCaseVersions, useFindManyTemplates
+} from "~/lib/hooks";
+import { Link, useRouter } from "~/lib/navigation";
+import { IconName } from "~/types/globals";
+import { determineIssueDifferences } from "~/utils/determineIssueDifferences";
+import { determineTagDifferences } from "~/utils/determineTagDifferences";
+import FieldValueRenderer from "../FieldValueRenderer";
+import { StepsDisplay } from "../StepsDisplay";
 
 interface VersionPageIssue {
   id: number;

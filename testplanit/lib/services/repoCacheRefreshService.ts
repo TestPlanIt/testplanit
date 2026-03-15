@@ -1,10 +1,10 @@
+import type { PrismaClient } from "@prisma/client";
 import micromatch from "micromatch";
 import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
 import {
   repoFileCache,
-  type RepoFileEntry,
+  type RepoFileEntry
 } from "~/lib/integrations/cache/RepoFileCache";
-import type { PrismaClient } from "@prisma/client";
 
 interface PathPattern {
   path: string;

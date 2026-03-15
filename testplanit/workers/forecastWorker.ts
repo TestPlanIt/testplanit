@@ -1,20 +1,16 @@
-import { Worker, Job } from "bullmq";
-import valkeyConnection from "../lib/valkey";
-import { FORECAST_QUEUE_NAME } from "../lib/queueNames";
-import {
-  updateRepositoryCaseForecast,
-  getUniqueCaseGroupIds,
-  updateTestRunForecast,
-} from "../services/forecastService";
+import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
 import {
-  getPrismaClientForJob,
+  disconnectAllTenantClients, getPrismaClientForJob,
   isMultiTenantMode,
-  MultiTenantJobData,
-  disconnectAllTenantClients,
-  validateMultiTenantJobData,
+  MultiTenantJobData, validateMultiTenantJobData
 } from "../lib/multiTenantPrisma";
+import { FORECAST_QUEUE_NAME } from "../lib/queueNames";
 import { NotificationService } from "../lib/services/notificationService";
+import valkeyConnection from "../lib/valkey";
+import {
+  getUniqueCaseGroupIds, updateRepositoryCaseForecast, updateTestRunForecast
+} from "../services/forecastService";
 
 // Define expected job data structures with multi-tenant support
 interface UpdateSingleCaseJobData extends MultiTenantJobData {

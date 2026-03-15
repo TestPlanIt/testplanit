@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { isAdmin, isProjectAdmin } from "./permissions";
 import { Session } from "next-auth";
+import { describe, expect, it } from "vitest";
+import { isAdmin, isProjectAdmin } from "./permissions";
 
 describe("permissions", () => {
   describe("isAdmin", () => {

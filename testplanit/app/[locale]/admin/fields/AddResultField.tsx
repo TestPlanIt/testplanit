@@ -1,25 +1,22 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import {
-  useCreateResultFields,
-  useFindManyCaseFieldTypes,
-  useFindManyCaseFields,
-  useFindManyResultFields,
-} from "~/lib/hooks";
 import { useTranslations } from "next-intl";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCreateResultFields, useFindManyCaseFields, useFindManyCaseFieldTypes, useFindManyResultFields
+} from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod/v4";
 import { FieldOptions } from "@prisma/client";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod/v4";
 
-import { Switch } from "@/components/ui/switch";
+import { DraggableList } from "@/components/DraggableFieldOptions";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DraggableList } from "@/components/DraggableFieldOptions";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Switch } from "@/components/ui/switch";
 import { emptyEditorContent } from "~/app/constants";
 
 import { CirclePlus, Ellipsis } from "lucide-react";
@@ -30,7 +27,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -40,7 +37,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 
 import {
@@ -48,7 +45,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
 
 import { HelpPopover } from "@/components/ui/help-popover";

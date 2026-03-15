@@ -1,8 +1,8 @@
 "use client";
 
+import { Loading } from "@/components/Loading";
 import { Suspense } from "react";
 import VerifyEmail from "./VerifyEmail";
-import { Loading } from "@/components/Loading";
 
 export default function VerifyEmailPage() {
   return (

@@ -1,25 +1,21 @@
 "use client";
-import { useState, useEffect } from "react";
+import DynamicIcon from "@/components/DynamicIcon";
+import { useEffect, useState } from "react";
 import {
-  useCreateStatus,
-  useFindFirstColor,
-  useFindManyStatusScope,
-  useCreateManyStatusScopeAssignment,
-  useFindManyProjects,
-  useCreateManyProjectStatusAssignment,
+  useCreateManyProjectStatusAssignment, useCreateManyStatusScopeAssignment, useCreateStatus,
+  useFindFirstColor, useFindManyProjects, useFindManyStatusScope
 } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
-import DynamicIcon from "@/components/DynamicIcon";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { CirclePlus } from "lucide-react";
 import { ColorPicker } from "@/components/ColorPicker";
+import { CirclePlus } from "lucide-react";
 
 import {
   Form,
@@ -27,7 +23,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -37,15 +33,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 
-import MultiSelect from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useTheme } from "next-themes";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
-import { HelpPopover } from "@/components/ui/help-popover";
+import { useTheme } from "next-themes";
+import MultiSelect from "react-select";
+import { getCustomStyles } from "~/styles/multiSelectStyles";
 
 const createAddStatusFormSchema = (
   t: ReturnType<typeof useTranslations<"admin.statuses.add">>

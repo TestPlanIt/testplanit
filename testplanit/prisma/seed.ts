@@ -1,9 +1,9 @@
-import { PrismaClient, WorkflowScope, ApplicationArea } from "@prisma/client";
-import { seedFieldIcons } from "./seedFieldIcons";
-import { seedTestData } from "./seedTestData";
-import { seedDemoProject } from "./seedDemoProject";
-import { seedDefaultPromptConfig } from "./seedPromptConfig";
+import { ApplicationArea, PrismaClient, WorkflowScope } from "@prisma/client";
 import bcrypt from "bcrypt";
+import { seedDemoProject } from "./seedDemoProject";
+import { seedFieldIcons } from "./seedFieldIcons";
+import { seedDefaultPromptConfig } from "./seedPromptConfig";
+import { seedTestData } from "./seedTestData";
 
 export const prisma = new PrismaClient();
 

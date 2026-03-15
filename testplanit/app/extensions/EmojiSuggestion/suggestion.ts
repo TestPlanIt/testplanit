@@ -1,5 +1,5 @@
-import { ReactRenderer } from "@tiptap/react";
 import { Editor } from "@tiptap/core";
+import { ReactRenderer } from "@tiptap/react";
 import { SuggestionKeyDownProps, SuggestionProps } from "@tiptap/suggestion";
 import tippy, { Instance } from "tippy.js";
 

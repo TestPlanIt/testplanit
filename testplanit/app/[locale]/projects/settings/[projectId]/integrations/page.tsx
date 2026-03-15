@@ -1,28 +1,25 @@
 "use client";
 
-import { useEffect } from "react";
-import { useParams } from "next/navigation";
-import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useTranslations } from "next-intl";
-import { Link } from "~/lib/navigation";
-import { ChevronRight } from "lucide-react";
-import {
-  useFindFirstProjects,
-  useFindManyIntegration,
-  useFindManyProjectIntegration,
-} from "~/lib/hooks";
+import { IntegrationsList } from "@/components/admin/integrations/integrations-list";
+import { Loading } from "@/components/Loading";
+import { ProjectIcon } from "@/components/ProjectIcon";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { IntegrationsList } from "@/components/admin/integrations/integrations-list";
+import { useTranslations } from "next-intl";
+import { notFound, useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useRequireAuth } from "~/hooks/useRequireAuth";
+import {
+  useFindFirstProjects,
+  useFindManyIntegration,
+  useFindManyProjectIntegration
+} from "~/lib/hooks";
 import { ProjectIntegrationSettings } from "./project-integration-settings";
-import { ProjectIcon } from "@/components/ProjectIcon";
-import { Loading } from "@/components/Loading";
-import { notFound } from "next/navigation";
 
 export default function ProjectIntegrationsPage() {
   const params = useParams();

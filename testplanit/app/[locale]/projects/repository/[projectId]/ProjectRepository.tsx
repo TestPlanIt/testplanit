@@ -1,83 +1,60 @@
 "use client";
 
-import * as React from "react";
-import {
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-  useDeferredValue,
-  useRef,
-} from "react";
-import { useSession } from "next-auth/react";
-import { useRouter, usePathname } from "~/lib/navigation";
-import { useParams, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import {
-  useFindFirstProjects,
-  useFindFirstRepositories,
-  useFindManyRepositoryCases,
-  useFindManyTestRunCases,
-} from "~/lib/hooks";
-import { useFolderStats } from "~/lib/useFolderStats";
-import TreeView from "./TreeView";
-import {
-  FolderTree,
-  ChevronRight,
-  ChevronLeft,
-  User,
-  LayoutTemplate,
-  Workflow,
-  Bot,
-  ListChecks,
-  Link,
-  ListOrdered,
-  ChevronsUpDown,
-  SquareCheckBig,
-  CircleCheckBig,
-  UserCog,
-  Tags,
-  Bug,
-  Hash,
-  Calendar,
-  Type,
-} from "lucide-react";
+import BreadcrumbComponent from "@/components/BreadcrumbComponent";
+import { UnifiedDragPreview } from "@/components/dnd/UnifiedDragPreview";
+import { PageFileDropOverlay } from "@/components/PageFileDropOverlay";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { ImperativePanelHandle } from "react-resizable-panels";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup,
+  ResizablePanelGroup
 } from "@/components/ui/resizable";
-import { AddFolderModal } from "./AddFolder";
-import { AddCaseModal } from "./AddCase";
-import { ImportCasesWizard } from "./ImportCasesWizard";
-import { usePageFileDrop } from "~/hooks/usePageFileDrop";
-import { PageFileDropOverlay } from "@/components/PageFileDropOverlay";
-import { GenerateTestCasesWizard } from "./GenerateTestCasesWizard";
-import Cases from "./Cases";
-import BreadcrumbComponent from "@/components/BreadcrumbComponent";
-import type { FolderNode } from "./TreeView";
-import { Button } from "@/components/ui/button";
-import { useTranslations } from "next-intl";
+import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { ViewSelector } from "@/components/ViewSelector";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { ApplicationArea } from "@prisma/client";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Bot, Bug, Calendar, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheckBig, FolderTree, Hash, LayoutTemplate, Link, ListChecks, ListOrdered, SquareCheckBig, Tags, Type, User, UserCog, Workflow
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useParams, useSearchParams } from "next/navigation";
+import * as React from "react";
+import {
+  useCallback, useDeferredValue, useEffect, useMemo, useRef, useState
+} from "react";
+import { ImperativePanelHandle } from "react-resizable-panels";
 import { emptyEditorContent } from "~/app/constants";
 import { ProjectIcon } from "~/components/ProjectIcon";
-import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
-import { UnifiedDragPreview } from "@/components/dnd/UnifiedDragPreview";
+import { usePageFileDrop } from "~/hooks/usePageFileDrop";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import {
+  PaginationProvider,
+  usePagination
+} from "~/lib/contexts/PaginationContext";
+import {
+  useFindFirstProjects,
+  useFindFirstRepositories,
+  useFindManyRepositoryCases,
+  useFindManyTestRunCases
+} from "~/lib/hooks";
+import { usePathname, useRouter } from "~/lib/navigation";
+import { useFolderStats } from "~/lib/useFolderStats";
+import { AddCaseModal } from "./AddCase";
+import { AddFolderModal } from "./AddFolder";
+import Cases from "./Cases";
+import { GenerateTestCasesWizard } from "./GenerateTestCasesWizard";
+import { ImportCasesWizard } from "./ImportCasesWizard";
+import type { FolderNode } from "./TreeView";
+import TreeView from "./TreeView";
 
 // Conditional wrapper to avoid nested DndProviders.
 // When skipDndProvider is true, we skip both the DndProvider and UnifiedDragPreview

@@ -1,41 +1,40 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import DynamicIcon from "@/components/DynamicIcon";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import {
-  useUpdateSessions,
-  useCreateSessionVersions,
-  useFindManyWorkflows,
-} from "~/lib/hooks";
-import { TriangleAlert, CalendarIcon, CircleCheckBig } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "~/utils";
-import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
+import { CalendarIcon, CircleCheckBig, TriangleAlert } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import {
+  useCreateSessionVersions,
+  useFindManyWorkflows, useUpdateSessions
+} from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import { IconName } from "~/types/globals";
+import { cn } from "~/utils";
 
 export interface CompletableSession {
   id: number;

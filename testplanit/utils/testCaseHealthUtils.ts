@@ -1,7 +1,7 @@
-import { NextRequest } from "next/server";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
+import { NextRequest } from "next/server";
 import { authOptions } from "~/server/auth";
 
 export type HealthStatus =

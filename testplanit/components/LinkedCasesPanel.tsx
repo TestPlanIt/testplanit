@@ -1,65 +1,47 @@
-import React, { useState, useMemo } from "react";
-import {
-  useFindManyRepositoryCaseLink,
-  useUpsertRepositoryCaseLink,
-  useUpdateRepositoryCaseLink,
-} from "~/lib/hooks";
-import {
-  LinkType,
-  RepositoryCaseLink,
-  RepositoryCaseSource,
-} from "@prisma/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { isAutomatedCaseSource } from "~/utils/testResultTypes";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { Link } from "~/lib/navigation";
-import {
-  X,
-  Plus,
-  Link2,
-  Bot,
-  ListChecks,
-  Trash2,
-  CircleSlash2,
-  Calendar,
-} from "lucide-react";
-import { useTranslations } from "next-intl";
-import { DateFormatter } from "./DateFormatter";
-import type { Session } from "next-auth";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { z } from "zod/v4";
-import { UserNameCell } from "./tables/UserNameCell";
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from "@/components/ui/table";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { TestCaseNameDisplay } from "@/components/TestCaseNameDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription, DialogFooter, DialogHeader,
+  DialogTitle, DialogTrigger
+} from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import {
+  Select, SelectContent,
+  SelectItem, SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import {
+  Table, TableBody,
+  TableCell, TableHead, TableHeader,
+  TableRow
+} from "@/components/ui/table";
+import {
+  LinkType,
+  RepositoryCaseLink,
+  RepositoryCaseSource
+} from "@prisma/client";
+import {
+  Bot, Calendar, CircleSlash2, Link2, ListChecks, Plus, Trash2, X
+} from "lucide-react";
+import type { Session } from "next-auth";
+import { useTranslations } from "next-intl";
+import React, { useMemo, useState } from "react";
+import { z } from "zod/v4";
+import {
+  useFindManyRepositoryCaseLink, useUpdateRepositoryCaseLink, useUpsertRepositoryCaseLink
+} from "~/lib/hooks";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import { DateFormatter } from "./DateFormatter";
+import { UserNameCell } from "./tables/UserNameCell";
 
 interface LinkedCasesPanelProps {
   caseId: number;

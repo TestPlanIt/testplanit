@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerAuthSession } from "~/server/auth";
-import { authenticateApiToken } from "~/lib/api-token-auth";
-import {
-  searchRepositoryCases,
-  countRepositoryCases,
-  getSearchSuggestions,
-  type SearchOptions,
-} from "~/services/repositoryCaseSearch";
 import { z } from "zod/v4";
+import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { getServerAuthSession } from "~/server/auth";
+import {
+  getSearchSuggestions, searchRepositoryCases, type SearchOptions
+} from "~/services/repositoryCaseSearch";
 
 // Search request schema
 const searchSchema = z.object({

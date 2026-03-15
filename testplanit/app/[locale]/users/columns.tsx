@@ -1,8 +1,8 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { User } from "@prisma/client";
-import { UserNameCell } from "@/components/tables/UserNameCell";
 import { EmailCell } from "@/components/EmailDisplay";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import { UserProjectsDisplay } from "@/components/tables/UserProjectsDisplay";
+import { User } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
 
 export interface ExtendedUser extends User {
   projects: {

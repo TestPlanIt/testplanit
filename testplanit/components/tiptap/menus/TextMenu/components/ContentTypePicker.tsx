@@ -1,10 +1,10 @@
+import { DropdownButton, DropdownCategoryTitle } from '@/components/tiptap/ui/Dropdown'
 import { Icon } from '@/components/tiptap/ui/Icon'
+import { Surface } from '@/components/tiptap/ui/Surface'
+import { Toolbar } from '@/components/tiptap/ui/Toolbar'
+import * as Dropdown from '@radix-ui/react-dropdown-menu'
 import { icons } from 'lucide-react'
 import { useMemo } from 'react'
-import * as Dropdown from '@radix-ui/react-dropdown-menu'
-import { Toolbar } from '@/components/tiptap/ui/Toolbar'
-import { Surface } from '@/components/tiptap/ui/Surface'
-import { DropdownButton, DropdownCategoryTitle } from '@/components/tiptap/ui/Dropdown'
 
 export type ContentTypePickerOption = {
   label: string

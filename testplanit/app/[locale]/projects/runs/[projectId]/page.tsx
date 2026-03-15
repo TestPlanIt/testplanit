@@ -1,82 +1,76 @@
 "use client";
 
-import * as React from "react";
-import { useEffect, useState, use, useMemo, useCallback } from "react";
-import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useRouter, usePathname } from "~/lib/navigation";
-import { useSearchParams } from "next/navigation";
-import {
-  useFindFirstProjects,
-  useFindManyTestRuns,
-  useFindManyMilestones,
-  useFindManyTestRunResults,
-  useFindFirstTestRunResults,
-  useFindManyJUnitTestResult,
-  useFindFirstJUnitTestResult,
-  useCreateTestRuns,
-} from "~/lib/hooks";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CompletedTestRunsResponse } from "~/app/api/test-runs/completed/route";
-import TestRunDisplay from "./TestRunDisplay";
+import CompletedRunsLineChart from "@/components/dataVisualizations/CompletedRunsLineChart";
+import RecentResultsDonut from "@/components/dataVisualizations/RecentResultsDonut";
+import SummarySunburstChart, {
+  SunburstHierarchyNode,
+  SunburstLegendItem
+} from "@/components/dataVisualizations/SummarySunburstChart";
+import { DateFormatter } from "@/components/DateFormatter";
+import { useDebounce } from "@/components/Debounce";
+import { PageFileDropOverlay } from "@/components/PageFileDropOverlay";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { Filter } from "@/components/tables/Filter";
+import { PaginationComponent } from "@/components/tables/Pagination";
+import { PaginationInfo } from "@/components/tables/PaginationControls";
+import TestResultsImportDialog from "@/components/TestResultsImportDialog";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProjectIcon } from "@/components/ProjectIcon";
-import AddTestRunModal from "./AddTestRunModal";
-import { Button } from "@/components/ui/button";
-import { CirclePlus, Maximize2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { useTranslations, useLocale } from "next-intl";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { ApplicationArea } from "@prisma/client";
-import SummarySunburstChart, {
-  SunburstHierarchyNode,
-  SunburstLegendItem,
-} from "@/components/dataVisualizations/SummarySunburstChart";
-import { toHumanReadable } from "~/utils/duration";
-import RecentResultsDonut from "@/components/dataVisualizations/RecentResultsDonut";
-import { DateFormatter } from "@/components/DateFormatter";
-import CompletedRunsLineChart from "@/components/dataVisualizations/CompletedRunsLineChart";
-import LoadingSpinner from "~/components/LoadingSpinner";
-import TestResultsImportDialog from "@/components/TestResultsImportDialog";
-import { usePageFileDrop } from "~/hooks/usePageFileDrop";
-import { PageFileDropOverlay } from "@/components/PageFileDropOverlay";
-import { isAutomatedTestRunType } from "~/utils/testResultTypes";
-import DuplicateTestRunDialog, {
-  AddTestRunModalInitProps,
-} from "./DuplicateTestRunDialog";
-import { Filter } from "@/components/tables/Filter";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { useDebounce } from "@/components/Debounce";
-import {
-  PaginationProvider,
-  usePagination,
-  defaultPageSizeOptions,
-} from "~/lib/contexts/PaginationContext";
-import { useTabState } from "~/hooks/useTabState";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { Loading } from "~/components/Loading";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ApplicationArea } from "@prisma/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CirclePlus, Maximize2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import * as React from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
+import type { CompletedTestRunsResponse } from "~/app/api/test-runs/completed/route";
+import { Loading } from "~/components/Loading";
+import LoadingSpinner from "~/components/LoadingSpinner";
+import { usePageFileDrop } from "~/hooks/usePageFileDrop";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useRequireAuth } from "~/hooks/useRequireAuth";
+import { useTabState } from "~/hooks/useTabState";
+import {
+  defaultPageSizeOptions, PaginationProvider,
+  usePagination
+} from "~/lib/contexts/PaginationContext";
+import {
+  useCreateTestRuns, useFindFirstJUnitTestResult, useFindFirstProjects, useFindFirstTestRunResults,
+  useFindManyJUnitTestResult, useFindManyMilestones,
+  useFindManyTestRunResults, useFindManyTestRuns
+} from "~/lib/hooks";
+import { usePathname, useRouter } from "~/lib/navigation";
+import { toHumanReadable } from "~/utils/duration";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
+import AddTestRunModal from "./AddTestRunModal";
+import DuplicateTestRunDialog, {
+  AddTestRunModalInitProps
+} from "./DuplicateTestRunDialog";
+import TestRunDisplay from "./TestRunDisplay";
 
 interface ProjectTestRunsProps {
   params: Promise<{ projectId: string }>;

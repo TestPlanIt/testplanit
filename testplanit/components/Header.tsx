@@ -1,45 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter, Link } from "~/lib/navigation";
-import { usePathname } from "~/lib/navigation";
-import { useParams } from "next/navigation";
-import { useFindUniqueProjects, useFindManyProjects } from "~/lib/hooks";
-import { useTheme } from "next-themes";
-import { useTranslations } from "next-intl";
-import Image from "next/image";
-import svgIcon from "~/public/tpi_logo.svg";
 import {
-  Search,
-  HelpCircle,
-  BookOpen,
-  Navigation,
-  Waypoints,
-  LucideWaypoints,
-  Clock,
-  MessageSquareHeart,
+  BookOpen, Clock, HelpCircle, LucideWaypoints, MessageSquareHeart, Navigation, Search, Waypoints
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
+import Image from "next/image";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useFindManyProjects, useFindUniqueProjects } from "~/lib/hooks";
+import { Link, usePathname, useRouter } from "~/lib/navigation";
+import svgIcon from "~/public/tpi_logo.svg";
 
-import { UserDropdownMenu } from "@/components/UserDropdownMenu";
-import { NotificationBell } from "@/components/NotificationBell";
-import { Separator } from "@/components/ui/separator";
-import { buttonVariants } from "@/components/ui/button";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { GlobalSearchSheet } from "@/components/GlobalSearchSheet";
 import {
   FeedbackBanner,
-  FeedbackSurveySheet,
+  FeedbackSurveySheet
 } from "@/components/FeedbackSurveySheet";
+import { GlobalSearchSheet } from "@/components/GlobalSearchSheet";
+import { NotificationBell } from "@/components/NotificationBell";
 import { ProjectQuickSelector } from "@/components/ProjectQuickSelector";
-import { getVersionString } from "~/lib/version";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
+import { UserDropdownMenu } from "@/components/UserDropdownMenu";
+import { getVersionString } from "~/lib/version";
 
 export const Header = () => {
   const router = useRouter();

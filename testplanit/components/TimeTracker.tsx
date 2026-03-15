@@ -1,16 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Play, Pause, Clock } from "lucide-react";
-import { useTranslations } from "next-intl";
 import {
-  Tooltip,
-  TooltipProvider,
-  TooltipTrigger,
-  TooltipContent,
+  Tooltip, TooltipContent, TooltipProvider,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import { Clock, Pause, Play } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 interface TimeTrackerProps {
   onTimeUpdate: (seconds: number) => void;

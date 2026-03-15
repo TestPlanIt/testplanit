@@ -1,16 +1,16 @@
-import { type MutableRefObject } from "react";
-import { ColumnDef } from "@tanstack/react-table";
-import { LlmIntegration, LlmProviderConfig } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { DateFormatter } from "@/components/DateFormatter";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { DateFormatter } from "@/components/DateFormatter";
-import { Sparkles, CheckCircle, XCircle } from "lucide-react";
+import { LlmIntegration, LlmProviderConfig } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
+import { CheckCircle, Sparkles, XCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { type MutableRefObject } from "react";
 import { getProviderColor } from "~/lib/llm/provider-styles";
-import { EditLlmIntegration } from "./EditLlmIntegration";
 import { DeleteLlmIntegration } from "./DeleteLlmIntegration";
+import { EditLlmIntegration } from "./EditLlmIntegration";
 import { TestLlmIntegration } from "./TestLlmIntegration";
-import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 
 export interface ExtendedLlmIntegration extends LlmIntegration {
   llmProviderConfig?: LlmProviderConfig | null;

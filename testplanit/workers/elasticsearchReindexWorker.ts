@@ -1,27 +1,24 @@
-import { Worker, Job } from "bullmq";
-import valkeyConnection from "../lib/valkey";
-import { ELASTICSEARCH_REINDEX_QUEUE_NAME } from "../lib/queueNames";
-import { syncProjectCasesToElasticsearch } from "~/services/repositoryCaseSync";
-import { syncProjectSharedStepsToElasticsearch } from "~/services/sharedStepSearch";
-import { syncProjectTestRunsToElasticsearch } from "~/services/testRunSearch";
-import { syncProjectSessionsToElasticsearch } from "~/services/sessionSearch";
+import { Job, Worker } from "bullmq";
+import { pathToFileURL } from "node:url";
+import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { syncProjectIssuesToElasticsearch } from "~/services/issueSearch";
 import { syncProjectMilestonesToElasticsearch } from "~/services/milestoneSearch";
 import { syncAllProjectsToElasticsearch } from "~/services/projectSearch";
-import { getElasticsearchClient } from "~/services/elasticsearchService";
+import { syncProjectCasesToElasticsearch } from "~/services/repositoryCaseSync";
+import { syncProjectSessionsToElasticsearch } from "~/services/sessionSearch";
+import { syncProjectSharedStepsToElasticsearch } from "~/services/sharedStepSearch";
+import { syncProjectTestRunsToElasticsearch } from "~/services/testRunSearch";
 import {
-  getEntityIndexName,
-  createAllEntityIndices,
+  createAllEntityIndices, getEntityIndexName
 } from "~/services/unifiedElasticsearchService";
 import { SearchableEntityType } from "~/types/search";
-import { pathToFileURL } from "node:url";
 import {
-  getPrismaClientForJob,
+  disconnectAllTenantClients, getPrismaClientForJob,
   isMultiTenantMode,
-  MultiTenantJobData,
-  disconnectAllTenantClients,
-  validateMultiTenantJobData,
+  MultiTenantJobData, validateMultiTenantJobData
 } from "../lib/multiTenantPrisma";
+import { ELASTICSEARCH_REINDEX_QUEUE_NAME } from "../lib/queueNames";
+import valkeyConnection from "../lib/valkey";
 
 export interface ReindexJobData extends MultiTenantJobData {
   entityType:

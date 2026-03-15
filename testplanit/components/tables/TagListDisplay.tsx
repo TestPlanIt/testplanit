@@ -1,11 +1,11 @@
-import React from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
 import { Tag, TagIcon } from "lucide-react";
+import React from "react";
 import { Link } from "~/lib/navigation";
 
 interface TagsListModel {

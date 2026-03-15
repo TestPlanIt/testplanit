@@ -1,20 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { useTheme } from "next-themes";
+import { DateFormatter } from "@/components/DateFormatter";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -22,30 +17,35 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { DateFormatter } from "@/components/DateFormatter";
-import { Circle, Moon, Sun, SunMoon } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   DateFormat,
   ItemsPerPage,
   Locale,
   NotificationMode,
   Theme,
-  TimeFormat,
+  TimeFormat
 } from "@prisma/client";
+import { Circle, Moon, Sun, SunMoon } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 import {
   useFindFirstUserPreferences,
-  useUpdateUserPreferences,
+  useUpdateUserPreferences
 } from "~/lib/hooks";
 
 type TimezoneOption = {

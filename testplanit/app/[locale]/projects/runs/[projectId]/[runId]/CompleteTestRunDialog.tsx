@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import DynamicIcon from "@/components/DynamicIcon";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -9,29 +10,28 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useTranslations } from "next-intl";
-import { useUpdateTestRuns, useFindManyWorkflows } from "~/lib/hooks";
-import { TriangleAlert, CalendarIcon, CircleCheckBig } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "~/utils";
-import DynamicIcon from "@/components/DynamicIcon";
+import { CalendarIcon, CircleCheckBig, TriangleAlert } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import React, { useEffect, useState } from "react";
+import { useFindManyWorkflows, useUpdateTestRuns } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
+import { cn } from "~/utils";
 
 interface CompleteTestRunDialogProps {
   trigger: React.ReactNode;

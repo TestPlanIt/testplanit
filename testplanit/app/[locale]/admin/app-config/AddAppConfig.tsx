@@ -1,26 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { useCreateAppConfig } from "~/lib/hooks";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
+  DialogDescription, DialogFooter, DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogFooter,
+  DialogTrigger
 } from "@/components/ui/dialog";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CirclePlus } from "lucide-react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CirclePlus } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
-import { HelpPopover } from "@/components/ui/help-popover";
+import { useCreateAppConfig } from "~/lib/hooks";
 
 export function AddAppConfigModal() {
   const t = useTranslations("admin.appConfig");

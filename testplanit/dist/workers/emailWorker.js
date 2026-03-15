@@ -59,95 +59,14 @@ __export(emailWorker_exports, {
 });
 module.exports = __toCommonJS(emailWorker_exports);
 var import_bullmq2 = require("bullmq");
-
-// lib/valkey.ts
-var import_ioredis = __toESM(require("ioredis"));
-var skipConnection = process.env.SKIP_VALKEY_CONNECTION === "true";
-var valkeyUrl = process.env.VALKEY_URL;
-var valkeySentinels = process.env.VALKEY_SENTINELS;
-var sentinelMasterName = process.env.VALKEY_SENTINEL_MASTER || "mymaster";
-var sentinelPassword = process.env.VALKEY_SENTINEL_PASSWORD;
-var baseOptions = {
-  maxRetriesPerRequest: null,
-  // Required by BullMQ
-  enableReadyCheck: false
-  // Helps with startup race conditions and Sentinel failover
-};
-function parseSentinels(sentinelStr) {
-  return sentinelStr.split(",").map((entry) => {
-    const trimmed = entry.trim();
-    const lastColon = trimmed.lastIndexOf(":");
-    if (lastColon === -1) {
-      return { host: trimmed, port: 26379 };
-    }
-    const host = trimmed.slice(0, lastColon);
-    const port = parseInt(trimmed.slice(lastColon + 1), 10);
-    return { host, port: Number.isNaN(port) ? 26379 : port };
-  });
-}
-function extractPasswordFromUrl(url) {
-  try {
-    const redisUrl = url.replace(/^valkey:\/\//, "redis://");
-    const parsed = new URL(redisUrl);
-    return parsed.password || void 0;
-  } catch {
-    return void 0;
-  }
-}
-var valkeyConnection = null;
-if (skipConnection) {
-  console.warn("Valkey connection skipped (SKIP_VALKEY_CONNECTION=true).");
-} else if (valkeySentinels) {
-  const sentinels = parseSentinels(valkeySentinels);
-  const masterPassword = valkeyUrl ? extractPasswordFromUrl(valkeyUrl) : void 0;
-  valkeyConnection = new import_ioredis.default({
-    sentinels,
-    name: sentinelMasterName,
-    ...masterPassword && { password: masterPassword },
-    ...sentinelPassword && { sentinelPassword },
-    ...baseOptions
-  });
-  console.log(
-    `Connecting to Valkey via Sentinel (master: "${sentinelMasterName}", sentinels: ${sentinels.map((s) => `${s.host}:${s.port}`).join(", ")})`
-  );
-  valkeyConnection.on("connect", () => {
-    console.log("Successfully connected to Valkey master via Sentinel.");
-  });
-  valkeyConnection.on("error", (err) => {
-    console.error("Valkey Sentinel connection error:", err);
-  });
-  valkeyConnection.on("reconnecting", () => {
-    console.log("Valkey Sentinel: reconnecting to master...");
-  });
-} else if (valkeyUrl) {
-  const connectionUrl = valkeyUrl.replace(/^valkey:\/\//, "redis://");
-  valkeyConnection = new import_ioredis.default(connectionUrl, baseOptions);
-  valkeyConnection.on("connect", () => {
-    console.log("Successfully connected to Valkey.");
-  });
-  valkeyConnection.on("error", (err) => {
-    console.error("Valkey connection error:", err);
-  });
-} else {
-  console.error(
-    "VALKEY_URL environment variable is not set. Background jobs may fail."
-  );
-  console.warn("Valkey URL not provided. Valkey connection not established.");
-}
-var valkey_default = valkeyConnection;
-
-// lib/queues.ts
-var import_bullmq = require("bullmq");
-
-// lib/queueNames.ts
-var EMAIL_QUEUE_NAME = "emails";
+var import_node_url = require("node:url");
 
 // lib/email/notificationTemplates.ts
 var import_nodemailer = __toESM(require("nodemailer"));
 
 // lib/email/template-service.ts
-var import_handlebars = __toESM(require("handlebars"));
 var import_promises = __toESM(require("fs/promises"));
+var import_handlebars = __toESM(require("handlebars"));
 var import_path = __toESM(require("path"));
 var import_url = require("url");
 
@@ -341,8 +260,233 @@ async function sendDigestEmail(data) {
   }
 }
 
-// workers/emailWorker.ts
-var import_node_url = require("node:url");
+// lib/multiTenantPrisma.ts
+var import_client2 = require("@prisma/client");
+var fs2 = __toESM(require("fs"));
+function isMultiTenantMode() {
+  return process.env.MULTI_TENANT_MODE === "true";
+}
+var tenantClients = /* @__PURE__ */ new Map();
+var tenantConfigs = null;
+var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+function loadTenantsFromFile(filePath) {
+  const configs = /* @__PURE__ */ new Map();
+  try {
+    if (fs2.existsSync(filePath)) {
+      const fileContent = fs2.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(fileContent);
+      for (const [tenantId, config] of Object.entries(parsed)) {
+        configs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl
+        });
+      }
+      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+    }
+  } catch (error) {
+    console.error(`Failed to load tenant configs from ${filePath}:`, error);
+  }
+  return configs;
+}
+function reloadTenantConfigs() {
+  tenantConfigs = null;
+  return loadTenantConfigs();
+}
+function loadTenantConfigs() {
+  if (tenantConfigs) {
+    return tenantConfigs;
+  }
+  tenantConfigs = /* @__PURE__ */ new Map();
+  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
+  for (const [tenantId, config] of fileConfigs) {
+    tenantConfigs.set(tenantId, config);
+  }
+  const configJson = process.env.TENANT_CONFIGS;
+  if (configJson) {
+    try {
+      const configs = JSON.parse(configJson);
+      for (const [tenantId, config] of Object.entries(configs)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl
+        });
+      }
+      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+    } catch (error) {
+      console.error("Failed to parse TENANT_CONFIGS:", error);
+    }
+  }
+  for (const [key, value] of Object.entries(process.env)) {
+    const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
+    if (match && value) {
+      const tenantId = match[1].toLowerCase();
+      if (!tenantConfigs.has(tenantId)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: value,
+          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
+          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
+          baseUrl: process.env[`TENANT_${match[1]}_BASE_URL`]
+        });
+      }
+    }
+  }
+  if (tenantConfigs.size === 0) {
+    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+  }
+  return tenantConfigs;
+}
+function getTenantConfig(tenantId) {
+  const configs = loadTenantConfigs();
+  return configs.get(tenantId);
+}
+function createTenantPrismaClient(config) {
+  const client = new import_client2.PrismaClient({
+    datasources: {
+      db: {
+        url: config.databaseUrl
+      }
+    },
+    errorFormat: "pretty"
+  });
+  return client;
+}
+function getTenantPrismaClient(tenantId) {
+  reloadTenantConfigs();
+  const config = getTenantConfig(tenantId);
+  if (!config) {
+    throw new Error(`No configuration found for tenant: ${tenantId}`);
+  }
+  const cached = tenantClients.get(tenantId);
+  if (cached) {
+    if (cached.databaseUrl === config.databaseUrl) {
+      return cached.client;
+    } else {
+      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
+      cached.client.$disconnect().catch((err) => {
+        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
+      });
+      tenantClients.delete(tenantId);
+    }
+  }
+  const client = createTenantPrismaClient(config);
+  tenantClients.set(tenantId, { client, databaseUrl: config.databaseUrl });
+  console.log(`Created Prisma client for tenant: ${tenantId}`);
+  return client;
+}
+function getPrismaClientForJob(jobData) {
+  if (!isMultiTenantMode()) {
+    const { prisma: prisma2 } = (init_prismaBase(), __toCommonJS(prismaBase_exports));
+    return prisma2;
+  }
+  if (!jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+  return getTenantPrismaClient(jobData.tenantId);
+}
+async function disconnectAllTenantClients() {
+  const disconnectPromises = [];
+  for (const [tenantId, cached] of tenantClients) {
+    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
+    disconnectPromises.push(cached.client.$disconnect());
+  }
+  await Promise.all(disconnectPromises);
+  tenantClients.clear();
+  console.log("All tenant Prisma clients disconnected");
+}
+function validateMultiTenantJobData(jobData) {
+  if (isMultiTenantMode() && !jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+}
+
+// lib/queues.ts
+var import_bullmq = require("bullmq");
+
+// lib/queueNames.ts
+var EMAIL_QUEUE_NAME = "emails";
+
+// lib/valkey.ts
+var import_ioredis = __toESM(require("ioredis"));
+var skipConnection = process.env.SKIP_VALKEY_CONNECTION === "true";
+var valkeyUrl = process.env.VALKEY_URL;
+var valkeySentinels = process.env.VALKEY_SENTINELS;
+var sentinelMasterName = process.env.VALKEY_SENTINEL_MASTER || "mymaster";
+var sentinelPassword = process.env.VALKEY_SENTINEL_PASSWORD;
+var baseOptions = {
+  maxRetriesPerRequest: null,
+  // Required by BullMQ
+  enableReadyCheck: false
+  // Helps with startup race conditions and Sentinel failover
+};
+function parseSentinels(sentinelStr) {
+  return sentinelStr.split(",").map((entry) => {
+    const trimmed = entry.trim();
+    const lastColon = trimmed.lastIndexOf(":");
+    if (lastColon === -1) {
+      return { host: trimmed, port: 26379 };
+    }
+    const host = trimmed.slice(0, lastColon);
+    const port = parseInt(trimmed.slice(lastColon + 1), 10);
+    return { host, port: Number.isNaN(port) ? 26379 : port };
+  });
+}
+function extractPasswordFromUrl(url) {
+  try {
+    const redisUrl = url.replace(/^valkey:\/\//, "redis://");
+    const parsed = new URL(redisUrl);
+    return parsed.password || void 0;
+  } catch {
+    return void 0;
+  }
+}
+var valkeyConnection = null;
+if (skipConnection) {
+  console.warn("Valkey connection skipped (SKIP_VALKEY_CONNECTION=true).");
+} else if (valkeySentinels) {
+  const sentinels = parseSentinels(valkeySentinels);
+  const masterPassword = valkeyUrl ? extractPasswordFromUrl(valkeyUrl) : void 0;
+  valkeyConnection = new import_ioredis.default({
+    sentinels,
+    name: sentinelMasterName,
+    ...masterPassword && { password: masterPassword },
+    ...sentinelPassword && { sentinelPassword },
+    ...baseOptions
+  });
+  console.log(
+    `Connecting to Valkey via Sentinel (master: "${sentinelMasterName}", sentinels: ${sentinels.map((s) => `${s.host}:${s.port}`).join(", ")})`
+  );
+  valkeyConnection.on("connect", () => {
+    console.log("Successfully connected to Valkey master via Sentinel.");
+  });
+  valkeyConnection.on("error", (err) => {
+    console.error("Valkey Sentinel connection error:", err);
+  });
+  valkeyConnection.on("reconnecting", () => {
+    console.log("Valkey Sentinel: reconnecting to master...");
+  });
+} else if (valkeyUrl) {
+  const connectionUrl = valkeyUrl.replace(/^valkey:\/\//, "redis://");
+  valkeyConnection = new import_ioredis.default(connectionUrl, baseOptions);
+  valkeyConnection.on("connect", () => {
+    console.log("Successfully connected to Valkey.");
+  });
+  valkeyConnection.on("error", (err) => {
+    console.error("Valkey connection error:", err);
+  });
+} else {
+  console.error(
+    "VALKEY_URL environment variable is not set. Background jobs may fail."
+  );
+  console.warn("Valkey URL not provided. Valkey connection not established.");
+}
+var valkey_default = valkeyConnection;
 
 // lib/server-translations.ts
 var import_promises2 = __toESM(require("fs/promises"));
@@ -553,152 +697,6 @@ function isTipTapContent(content) {
     return !!(parsed && typeof parsed === "object" && (parsed.type === "doc" || parsed.content));
   } catch {
     return false;
-  }
-}
-
-// lib/multiTenantPrisma.ts
-var import_client2 = require("@prisma/client");
-var fs3 = __toESM(require("fs"));
-function isMultiTenantMode() {
-  return process.env.MULTI_TENANT_MODE === "true";
-}
-var tenantClients = /* @__PURE__ */ new Map();
-var tenantConfigs = null;
-var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
-function loadTenantsFromFile(filePath) {
-  const configs = /* @__PURE__ */ new Map();
-  try {
-    if (fs3.existsSync(filePath)) {
-      const fileContent = fs3.readFileSync(filePath, "utf-8");
-      const parsed = JSON.parse(fileContent);
-      for (const [tenantId, config] of Object.entries(parsed)) {
-        configs.set(tenantId, {
-          tenantId,
-          databaseUrl: config.databaseUrl,
-          elasticsearchNode: config.elasticsearchNode,
-          elasticsearchIndex: config.elasticsearchIndex,
-          baseUrl: config.baseUrl
-        });
-      }
-      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
-    }
-  } catch (error) {
-    console.error(`Failed to load tenant configs from ${filePath}:`, error);
-  }
-  return configs;
-}
-function reloadTenantConfigs() {
-  tenantConfigs = null;
-  return loadTenantConfigs();
-}
-function loadTenantConfigs() {
-  if (tenantConfigs) {
-    return tenantConfigs;
-  }
-  tenantConfigs = /* @__PURE__ */ new Map();
-  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
-  for (const [tenantId, config] of fileConfigs) {
-    tenantConfigs.set(tenantId, config);
-  }
-  const configJson = process.env.TENANT_CONFIGS;
-  if (configJson) {
-    try {
-      const configs = JSON.parse(configJson);
-      for (const [tenantId, config] of Object.entries(configs)) {
-        tenantConfigs.set(tenantId, {
-          tenantId,
-          databaseUrl: config.databaseUrl,
-          elasticsearchNode: config.elasticsearchNode,
-          elasticsearchIndex: config.elasticsearchIndex,
-          baseUrl: config.baseUrl
-        });
-      }
-      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
-    } catch (error) {
-      console.error("Failed to parse TENANT_CONFIGS:", error);
-    }
-  }
-  for (const [key, value] of Object.entries(process.env)) {
-    const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
-    if (match && value) {
-      const tenantId = match[1].toLowerCase();
-      if (!tenantConfigs.has(tenantId)) {
-        tenantConfigs.set(tenantId, {
-          tenantId,
-          databaseUrl: value,
-          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
-          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
-          baseUrl: process.env[`TENANT_${match[1]}_BASE_URL`]
-        });
-      }
-    }
-  }
-  if (tenantConfigs.size === 0) {
-    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
-  }
-  return tenantConfigs;
-}
-function getTenantConfig(tenantId) {
-  const configs = loadTenantConfigs();
-  return configs.get(tenantId);
-}
-function createTenantPrismaClient(config) {
-  const client = new import_client2.PrismaClient({
-    datasources: {
-      db: {
-        url: config.databaseUrl
-      }
-    },
-    errorFormat: "pretty"
-  });
-  return client;
-}
-function getTenantPrismaClient(tenantId) {
-  reloadTenantConfigs();
-  const config = getTenantConfig(tenantId);
-  if (!config) {
-    throw new Error(`No configuration found for tenant: ${tenantId}`);
-  }
-  const cached = tenantClients.get(tenantId);
-  if (cached) {
-    if (cached.databaseUrl === config.databaseUrl) {
-      return cached.client;
-    } else {
-      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
-      cached.client.$disconnect().catch((err) => {
-        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
-      });
-      tenantClients.delete(tenantId);
-    }
-  }
-  const client = createTenantPrismaClient(config);
-  tenantClients.set(tenantId, { client, databaseUrl: config.databaseUrl });
-  console.log(`Created Prisma client for tenant: ${tenantId}`);
-  return client;
-}
-function getPrismaClientForJob(jobData) {
-  if (!isMultiTenantMode()) {
-    const { prisma: prisma2 } = (init_prismaBase(), __toCommonJS(prismaBase_exports));
-    return prisma2;
-  }
-  if (!jobData.tenantId) {
-    throw new Error("tenantId is required in multi-tenant mode");
-  }
-  return getTenantPrismaClient(jobData.tenantId);
-}
-async function disconnectAllTenantClients() {
-  const disconnectPromises = [];
-  for (const [tenantId, cached] of tenantClients) {
-    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
-    disconnectPromises.push(cached.client.$disconnect());
-  }
-  await Promise.all(disconnectPromises);
-  tenantClients.clear();
-  console.log("All tenant Prisma clients disconnected");
-}
-function validateMultiTenantJobData(jobData) {
-  if (isMultiTenantMode() && !jobData.tenantId) {
-    throw new Error("tenantId is required in multi-tenant mode");
   }
 }
 

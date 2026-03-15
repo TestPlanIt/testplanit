@@ -1,14 +1,10 @@
-import { BaseLlmAdapter } from "./base.adapter";
 import type {
-  LlmRequest,
+  LlmAdapterConfig, LlmModelInfo, LlmRequest,
   LlmResponse,
-  LlmStreamResponse,
-  LlmModelInfo,
-  RateLimitInfo,
-  LlmAdapterConfig,
-  OllamaModel,
-  OllamaPullProgress,
+  LlmStreamResponse, OllamaModel,
+  OllamaPullProgress, RateLimitInfo
 } from "../types";
+import { BaseLlmAdapter } from "./base.adapter";
 
 interface OllamaSettings {
   keepAlive?: string;

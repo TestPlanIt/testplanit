@@ -1,30 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import {
-  useUpdateConfigCategories,
-  useUpdateManyConfigVariants,
-  useUpdateManyConfigurations,
-  useFindManyConfigVariants,
-  useFindManyConfigurations,
-} from "~/lib/hooks";
-import { ConfigCategories } from "@prisma/client";
-import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Trash2, TriangleAlert } from "lucide-react";
 import { Form } from "@/components/ui/form";
+import { ConfigCategories } from "@prisma/client";
+import { Trash2, TriangleAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import {
+  useFindManyConfigurations, useFindManyConfigVariants, useUpdateConfigCategories, useUpdateManyConfigurations, useUpdateManyConfigVariants
+} from "~/lib/hooks";
 
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogTitle,
-  AlertDialogDescription,
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 
 interface DeleteConfigurationModalProps {

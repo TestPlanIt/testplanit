@@ -1,15 +1,14 @@
 "use client";
 
-import { useFindManyTags, useCreateTags, useUpdateTags } from "~/lib/hooks";
-import CreatableSelect from "react-select/creatable";
-import Select from "react-select";
-import { MultiValue } from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useTheme } from "next-themes";
 import { CirclePlus } from "lucide-react";
-import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { sanitizeName, replaceProblematicChars, type ClassValue } from "~/utils";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import Select, { MultiValue } from "react-select";
+import CreatableSelect from "react-select/creatable";
+import { useCreateTags, useFindManyTags, useUpdateTags } from "~/lib/hooks";
+import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { replaceProblematicChars, sanitizeName, type ClassValue } from "~/utils";
 
 interface TagOption {
   readonly label: string;

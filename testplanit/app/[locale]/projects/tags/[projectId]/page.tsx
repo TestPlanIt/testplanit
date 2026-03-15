@@ -1,38 +1,31 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useRouter } from "~/lib/navigation";
-import { useParams, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { Tags } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
-import {
-  usePagination,
-  PaginationProvider,
-} from "~/lib/contexts/PaginationContext";
-import {
-  useFindManyTags,
-  useFindManyRepositoryCases,
-  useFindFirstProjects,
-  useFindManySessions,
-  useFindManyTestRuns,
-} from "~/lib/hooks";
-import { DataTable } from "@/components/tables/DataTable";
-import { getColumns } from "./columns";
 import { useDebounce } from "@/components/Debounce";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
+  Card, CardContent,
+  CardDescription, CardHeader,
+  CardTitle
 } from "@/components/ui/card";
-import { ProjectIcon } from "@/components/ProjectIcon";
+import { Tags } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRequireAuth } from "~/hooks/useRequireAuth";
+import {
+  PaginationProvider, usePagination
+} from "~/lib/contexts/PaginationContext";
+import {
+  useFindFirstProjects, useFindManyRepositoryCases, useFindManySessions, useFindManyTags, useFindManyTestRuns
+} from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import { getColumns } from "./columns";
 
 type PageSizeOption = number | "All";
 

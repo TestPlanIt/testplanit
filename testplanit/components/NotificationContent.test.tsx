@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { NotificationContent } from "./NotificationContent";
 import { useTranslations } from "next-intl";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { NotificationContent } from "./NotificationContent";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({

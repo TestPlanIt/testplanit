@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useDebounce } from "@/components/Debounce";
 import { Input } from "@/components/ui/input";
 import { useTranslations } from "next-intl";
-import { useDebounce } from "@/components/Debounce";
+import React, { useEffect, useState } from "react";
 
 interface FilterProps {
   initialSearchString?: string;

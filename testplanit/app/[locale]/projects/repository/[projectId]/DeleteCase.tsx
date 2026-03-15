@@ -1,18 +1,14 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useUpdateRepositoryCases } from "~/lib/hooks";
-import { Button } from "@/components/ui/button";
-import { Trash2, TriangleAlert } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogContent,
-  AlertDialogTitle,
+  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Trash2, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { useUpdateRepositoryCases } from "~/lib/hooks";
 
 // Define a more specific type for the testcase prop
 interface DeleteModalTestCase {

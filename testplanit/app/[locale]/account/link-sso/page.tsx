@@ -1,21 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "~/lib/navigation";
+import { CheckCircle2, InfoIcon, Shield } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { siGoogle } from "simple-icons";
+import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "~/components/ui/card";
-import { Alert, AlertDescription } from "~/components/ui/alert";
-import { InfoIcon, CheckCircle2, Shield } from "lucide-react";
 import { useFindManySsoProvider } from "~/lib/hooks";
-import { siGoogle } from "simple-icons";
+import { useRouter } from "~/lib/navigation";
 
 const GoogleIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">

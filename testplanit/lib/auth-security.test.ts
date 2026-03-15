@@ -1,17 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  generateSecureState,
-  verifyState,
-  generateCSRFToken,
-  hashData,
+  checkRateLimit, generateCSRFToken, generateSecureState, getSecureCookieOptions, getSecurityHeaders, hashData,
   isValidRedirectUrl,
-  sanitizeCallbackUrl,
-  createTempSessionToken,
-  verifyTempSessionToken,
-  checkRateLimit,
-  getSecurityHeaders,
-  validateSAMLTimestamp,
-  getSecureCookieOptions,
+  sanitizeCallbackUrl, validateSAMLTimestamp, verifyState, verifyTempSessionToken
 } from "./auth-security";
 
 // Mock environment variables

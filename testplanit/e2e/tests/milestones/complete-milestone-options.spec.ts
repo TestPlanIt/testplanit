@@ -1,4 +1,4 @@
-import { test, expect } from "../../fixtures";
+import { expect, test } from "../../fixtures";
 
 /**
  * Complete Milestone Dialog - Optional Test Run/Session Completion

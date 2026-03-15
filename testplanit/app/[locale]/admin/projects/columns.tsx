@@ -1,26 +1,22 @@
-import { ColumnDef } from "@tanstack/react-table";
-import {
-  Projects,
-  User,
-  MilestoneTypesAssignment,
-  Integration,
-  ProjectIntegration,
-} from "@prisma/client";
-import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
-import { UserNameCell } from "@/components/tables/UserNameCell";
 import { DateFormatter } from "@/components/DateFormatter";
-import { Switch } from "@/components/ui/switch";
-import { DeleteProjectModal } from "./DeleteProject";
-import { UserListDisplay } from "@/components/tables/UserListDisplay";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { MilestoneTypeListDisplay } from "@/components/tables/MilestoneTypeListDisplay";
 import {
-  MilestonesWithTypes,
-  MilestoneListDisplay,
+  MilestoneListDisplay, MilestonesWithTypes
 } from "@/components/tables/MilestoneListDisplay";
-import { useTranslations } from "next-intl";
-import { Bug, SquarePen } from "lucide-react";
+import { MilestoneTypeListDisplay } from "@/components/tables/MilestoneTypeListDisplay";
+import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
+import { UserListDisplay } from "@/components/tables/UserListDisplay";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import {
+  Integration, MilestoneTypesAssignment, ProjectIntegration, Projects,
+  User
+} from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
+import { Bug, SquarePen } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { DeleteProjectModal } from "./DeleteProject";
 
 export interface ExtendedProjects extends Projects {
   creator: User;

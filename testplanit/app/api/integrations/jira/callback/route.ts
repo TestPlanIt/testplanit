@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { getEnhancedDb } from "@/lib/auth/utils";
 import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { AuthenticationService } from "~/lib/integrations/AuthenticationService";
 import { IntegrationManager } from "~/lib/integrations/IntegrationManager";
-import { getEnhancedDb } from "@/lib/auth/utils";
+import { authOptions } from "~/server/auth";
 
 export async function GET(request: NextRequest) {
   try {

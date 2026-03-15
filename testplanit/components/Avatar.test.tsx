@@ -1,7 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { Avatar } from "./Avatar";
+import { describe, expect, it } from "vitest";
 import { render, screen } from "~/test/test-utils";
-import React from "react";
+import { Avatar } from "./Avatar";
 
 describe("Avatar Component", () => {
   const defaultAlt = "User Name";

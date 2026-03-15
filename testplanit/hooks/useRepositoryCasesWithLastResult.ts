@@ -1,11 +1,10 @@
+import { Prisma } from "@prisma/client";
 import { useQuery, UseQueryOptions } from "@tanstack/react-query";
 import {
-  fetchRepositoryCasesWithLastResult,
   countRepositoryCasesWithLastResult,
   FetchCasesWithLastResultArgs,
-  FetchCasesWithLastResultResponse,
+  FetchCasesWithLastResultResponse, fetchRepositoryCasesWithLastResult
 } from "~/app/actions/repositoryCasesWithLastResult";
-import { Prisma } from "@prisma/client";
 
 /**
  * React Query hook for fetching repository cases with computed last test result.

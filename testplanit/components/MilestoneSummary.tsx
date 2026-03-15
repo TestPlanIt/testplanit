@@ -1,31 +1,24 @@
 "use client";
 
-import { useTranslations, useLocale } from "next-intl";
-import { useSession } from "next-auth/react";
-import { Link } from "~/lib/navigation";
+import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { cn, type ClassValue } from "~/utils";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  HelpCircle,
-  Clock,
-  ListChecks,
-  CalendarClock,
-  SquarePlay,
-  FlaskConical,
-  CheckCircle2,
-  MessageSquare,
-} from "lucide-react";
-import { useFindFirstStatus } from "~/lib/hooks";
-import { toHumanReadable } from "~/utils/duration";
-import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import { useQuery } from "@tanstack/react-query";
+import {
+  CalendarClock, CheckCircle2, Clock, FlaskConical, HelpCircle, ListChecks, MessageSquare, SquarePlay
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
 import type { MilestoneSummaryData } from "~/app/api/milestones/[milestoneId]/summary/route";
+import { useFindFirstStatus } from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
+import { cn, type ClassValue } from "~/utils";
+import { toHumanReadable } from "~/utils/duration";
 
 interface MilestoneSummaryProps {
   milestoneId: number;

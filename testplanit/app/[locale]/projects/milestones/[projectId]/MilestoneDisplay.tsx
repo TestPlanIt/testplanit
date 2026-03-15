@@ -1,18 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
-import {
-  MilestonesWithTypes,
-  createColorMap,
-  sortMilestones,
-} from "~/utils/milestoneUtils";
-import { useTheme } from "next-themes";
-import { useFindManyColor, useUpdateMilestones } from "~/lib/hooks";
-import { DeleteMilestoneModal } from "./DeleteMilestoneModal";
 import { Loading } from "@/components/Loading";
-import { useRouter } from "~/lib/navigation";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import MilestoneItemCard from "./MilestoneItemCard";
+import { useTheme } from "next-themes";
+import React, { useEffect, useState } from "react";
+import { useFindManyColor, useUpdateMilestones } from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import {
+  createColorMap, MilestonesWithTypes, sortMilestones
+} from "~/utils/milestoneUtils";
 import { CompleteMilestoneDialog } from "../CompleteMilestoneDialog";
+import { DeleteMilestoneModal } from "./DeleteMilestoneModal";
+import MilestoneItemCard from "./MilestoneItemCard";
 
 interface ColorMap {
   [key: string]: {

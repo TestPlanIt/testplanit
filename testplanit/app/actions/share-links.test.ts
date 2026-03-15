@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import bcrypt from "bcrypt";
+import { describe, expect, it } from "vitest";
 
 /**
  * Tests for password hashing used in share links

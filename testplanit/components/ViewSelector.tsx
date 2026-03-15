@@ -1,36 +1,27 @@
+import { DateFilterInput } from "@/components/DateFilterInput";
+import DynamicIcon from "@/components/DynamicIcon";
+import { LinkFilterInput } from "@/components/LinkFilterInput";
+import { NumericFilterInput } from "@/components/NumericFilterInput";
+import { StepsFilterInput } from "@/components/StepsFilterInput";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import { TextFilterInput } from "@/components/TextFilterInput";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { IconName } from "~/types/globals";
 import {
-  LucideIcon,
-  LayoutTemplate,
-  Link2 as LinkIcon,
-  Link2Off,
-  ListOrdered,
-  Users,
-  UserX,
-  Bot,
-  User,
-  CircleDashed,
-  CircleCheckBig,
+  Bot, CircleCheckBig, CircleDashed, LayoutTemplate, LucideIcon, User, Users,
+  UserX
 } from "lucide-react";
-import { cn } from "~/utils";
-import DynamicIcon from "@/components/DynamicIcon";
-import { useTranslations } from "next-intl";
-import { UserNameCell } from "@/components/tables/UserNameCell";
-import { useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { NumericFilterInput } from "@/components/NumericFilterInput";
-import { DateFilterInput } from "@/components/DateFilterInput";
-import { TextFilterInput } from "@/components/TextFilterInput";
-import { LinkFilterInput } from "@/components/LinkFilterInput";
-import { StepsFilterInput } from "@/components/StepsFilterInput";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useRef } from "react";
+import { IconName } from "~/types/globals";
+import { cn } from "~/utils";
 
 interface ViewItem {
   id: string;

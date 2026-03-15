@@ -1,6 +1,6 @@
+import { ApplicationArea } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
-import { ApplicationArea } from "@prisma/client";
 
 // Type for permissions of a single area
 export type AreaPermissions = {

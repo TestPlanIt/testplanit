@@ -1,21 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
-import { useSession } from "next-auth/react";
-import { useUpdateUserPreferences, useFindUniqueAppConfig } from "~/lib/hooks";
+import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
+  CardContent, CardDescription, CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { NotificationMode } from "@prisma/client";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useFindUniqueAppConfig, useUpdateUserPreferences } from "~/lib/hooks";
 
 interface NotificationPreferencesProps {
   userPreferences: any;

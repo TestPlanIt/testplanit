@@ -1,19 +1,19 @@
-import { useMemo } from "react";
-import { useTranslations } from "next-intl";
-import { createColumnHelper, ColumnDef } from "@tanstack/react-table";
+import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
+import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { format, formatDistanceToNow } from "date-fns";
-import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { RepositoryCaseSource } from "@prisma/client";
+import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
+import { format, formatDistanceToNow } from "date-fns";
+import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 import { cn } from "~/utils";
-import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
-import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
-import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 
 // Flat row structure for grouping
 interface IssueTestCoverageRow {

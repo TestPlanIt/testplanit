@@ -1,12 +1,11 @@
-import { Prisma } from "@prisma/client";
+import { encrypt } from "@/utils/encryption";
+import { syncIssueToElasticsearch } from "../services/issueSearch";
+import { syncChildMilestonesToElasticsearch, syncMilestoneToElasticsearch } from "../services/milestoneSearch";
+import { syncProjectToElasticsearch } from "../services/projectSearch";
 import { syncRepositoryCaseToElasticsearch } from "../services/repositoryCaseSync";
-import { syncTestRunToElasticsearch } from "../services/testRunSearch";
 import { syncSessionToElasticsearch } from "../services/sessionSearch";
 import { syncSharedStepToElasticsearch } from "../services/sharedStepSearch";
-import { syncIssueToElasticsearch } from "../services/issueSearch";
-import { syncMilestoneToElasticsearch, syncChildMilestonesToElasticsearch } from "../services/milestoneSearch";
-import { syncProjectToElasticsearch } from "../services/projectSearch";
-import { encrypt } from "@/utils/encryption";
+import { syncTestRunToElasticsearch } from "../services/testRunSearch";
 
 /**
  * Prisma middleware to sync repository cases with Elasticsearch

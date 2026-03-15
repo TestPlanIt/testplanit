@@ -1,14 +1,12 @@
-import React from "react";
 import {
   Select,
-  SelectContent,
-  SelectItem,
+  SelectContent, SelectGroup, SelectItem,
   SelectTrigger,
-  SelectValue,
-  SelectGroup,
+  SelectValue
 } from "@/components/ui/select";
 import { Combine } from "lucide-react";
 import { useTranslations } from "next-intl";
+import React from "react";
 
 // Utility function to transform configurations into configurationOptions
 export const transformConfigurations = (

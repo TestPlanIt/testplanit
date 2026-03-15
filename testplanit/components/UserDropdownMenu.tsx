@@ -1,25 +1,18 @@
-import { signOut, useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import { useTheme } from "next-themes";
-import { Theme, Locale } from "@prisma/client";
-import { useFindUniqueUser } from "~/lib/hooks";
-import { languageNames } from "~/lib/navigation";
-import { cn } from "~/utils";
-import { useRef, useState } from "react";
+import { Locale, Theme } from "@prisma/client";
 import {
-  Sun,
-  Moon,
-  SunMoon,
-  User,
-  Globe,
-  Circle,
-  LogOut,
-  Check,
+  Check, Circle, Globe, LogOut, Moon, Sun, SunMoon,
+  User
 } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
+import { useRef, useState } from "react";
+import { useFindUniqueUser } from "~/lib/hooks";
+import { languageNames, useRouter } from "~/lib/navigation";
+import { cn } from "~/utils";
 
-import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/Avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,7 +24,7 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
 export function UserDropdownMenu() {

@@ -1,52 +1,40 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  useCallback,
-} from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import {
-  useFindManyConfigCategories,
-  useCreateConfigCategories,
-  useCreateConfigVariants,
-  useUpdateConfigVariants,
-  useUpdateManyConfigurations,
-} from "~/lib/hooks";
-import { z } from "zod/v4";
+import { useDebounce } from "@/components/Debounce";
+import { Loading } from "@/components/Loading";
+import { CustomColumnMeta } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import { ConfigCategoryWithVariants, getColumns } from "./categoryColumns";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { PlusCircle } from "lucide-react";
+import { Filter } from "@/components/tables/Filter";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogContent,
-  AlertDialogTitle,
-  AlertDialogDescription,
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import {
+  Card, CardContent, CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { EditVariantModal } from "./EditVariantModal";
+import { Switch } from "@/components/ui/switch";
+import { PlusCircle } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import React, {
+  useEffect,
+  useMemo,
+  useRef, useState
+} from "react";
+import { z } from "zod/v4";
+import {
+  useCreateConfigCategories,
+  useCreateConfigVariants, useFindManyConfigCategories, useUpdateConfigVariants,
+  useUpdateManyConfigurations
+} from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import { ConfigCategoryWithVariants, getColumns } from "./categoryColumns";
 import { DeleteVariantModal } from "./DeleteVariantModal";
-import { useDebounce } from "@/components/Debounce";
-import { CustomColumnMeta } from "@/components/tables/ColumnSelection";
-import { Loading } from "@/components/Loading";
-import { Filter } from "@/components/tables/Filter";
+import { EditVariantModal } from "./EditVariantModal";
 
 export type Variant = {
   id?: number;

@@ -1,5 +1,4 @@
-import React from "react";
-import { Trash2, Bot, ListChecks } from "lucide-react";
+import { Bot, ListChecks, Trash2 } from "lucide-react";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
 
 interface TestCaseSearchResultProps {

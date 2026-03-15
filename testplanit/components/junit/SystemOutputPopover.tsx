@@ -1,9 +1,9 @@
-import React from "react";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
+import React from "react";
 
 interface SystemOutputPopoverProps {
   text: string;

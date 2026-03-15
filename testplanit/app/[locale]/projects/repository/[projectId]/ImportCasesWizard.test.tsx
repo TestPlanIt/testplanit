@@ -1,14 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ImportCasesWizard } from "./ImportCasesWizard";
-import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  useFindManyTemplates,
-  useFindManyRepositoryFolders,
-  useFindManyProjectLlmIntegration,
+  useFindManyProjectLlmIntegration, useFindManyRepositoryFolders, useFindManyTemplates
 } from "~/lib/hooks";
+import { ImportCasesWizard } from "./ImportCasesWizard";
 
 // Mock dependencies
 vi.mock("next/navigation", () => ({

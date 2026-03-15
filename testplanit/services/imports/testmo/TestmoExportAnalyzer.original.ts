@@ -1,15 +1,15 @@
+import { once } from "node:events";
 import { createReadStream, statSync } from "node:fs";
 import type { Readable } from "node:stream";
+import { fileURLToPath } from "node:url";
 import { chain } from "stream-chain";
 import { parser } from "stream-json";
 import Assembler from "stream-json/Assembler";
-import { fileURLToPath } from "node:url";
-import { once } from "node:events";
 import {
   TestmoDatasetSummary,
   TestmoExportAnalyzerOptions,
   TestmoExportSummary,
-  TestmoReadableSource,
+  TestmoReadableSource
 } from "./types";
 
 const DEFAULT_SAMPLE_ROW_LIMIT = 5;

@@ -1,8 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { useUpdateAppConfig } from "~/lib/hooks";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,12 +7,15 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Pencil } from "lucide-react";
-import { HelpPopover } from "@/components/ui/help-popover";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { useUpdateAppConfig } from "~/lib/hooks";
 
 type AppConfig = {
   key: string;

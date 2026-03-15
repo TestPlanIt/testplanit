@@ -1,25 +1,19 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  useFindManyCaseFieldTypes,
-  useFindManyCaseFields,
-  useFindManyResultFields,
-  useUpdateResultFields,
-  useUpdateFieldOptions,
-  useCreateFieldOptions,
-  useUpdateManyFieldOptions,
+  useCreateFieldOptions, useFindManyCaseFields, useFindManyCaseFieldTypes, useFindManyResultFields, useUpdateFieldOptions, useUpdateManyFieldOptions, useUpdateResultFields
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod/v4";
 import { FieldOptions } from "@prisma/client";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod/v4";
 import { ExtendedResultFields } from "./resultFieldColumns";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { DraggableList } from "@/components/DraggableFieldOptions";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { emptyEditorContent } from "~/app/constants";
 
 import { SquarePen } from "lucide-react";
@@ -30,7 +24,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -40,12 +34,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Select, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { HelpPopover } from "@/components/ui/help-popover";
 
 import { useTranslations } from "next-intl";
 

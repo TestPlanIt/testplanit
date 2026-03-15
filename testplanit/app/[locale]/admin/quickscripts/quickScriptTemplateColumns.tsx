@@ -1,11 +1,11 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { CaseExportTemplate } from "@prisma/client";
-import { Switch } from "@/components/ui/switch";
-import { EditQuickScriptTemplateModal } from "./EditQuickScriptTemplate";
-import { DeleteQuickScriptTemplateModal } from "./DeleteQuickScriptTemplate";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { CaseExportTemplate } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { DeleteQuickScriptTemplateModal } from "./DeleteQuickScriptTemplate";
+import { EditQuickScriptTemplateModal } from "./EditQuickScriptTemplate";
 
 export const getColumns = (
   t: ReturnType<typeof useTranslations<"admin.exportTemplates">>,

@@ -1,12 +1,11 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, beforeEach, vi } from "vitest";
-import { InitialPreferencesDialog } from "./InitialPreferencesDialog";
 import { useSession } from "next-auth/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   useFindFirstUserPreferences,
-  useUpdateUserPreferences,
+  useUpdateUserPreferences
 } from "~/lib/hooks";
-import { useTranslations } from "next-intl";
+import { InitialPreferencesDialog } from "./InitialPreferencesDialog";
 
 const mockSetTheme = vi.fn();
 

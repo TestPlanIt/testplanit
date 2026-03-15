@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useCallback, useMemo } from "react";
-import type { Prisma } from "@prisma/client";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { BoxesIcon } from "lucide-react";
-import { Link } from "~/lib/navigation";
 import { badgeVariants } from "@/components/ui/badge";
-import { cn } from "~/utils";
-import { useTranslations } from "next-intl";
-import { ProjectIcon } from "../ProjectIcon";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Prisma } from "@prisma/client";
+import { BoxesIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { useCallback, useMemo } from "react";
+import { Link } from "~/lib/navigation";
+import { cn } from "~/utils";
+import { ProjectIcon } from "../ProjectIcon";
 
 interface ProjectListProps {
   projects?: Array<{ projectId: number } | ProjectLike>;

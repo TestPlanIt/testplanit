@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies
 const mockUpdate = vi.fn();
@@ -33,12 +33,8 @@ vi.mock("~/lib/services/notificationService", () => ({
 }));
 
 import {
-  markNotificationAsRead,
-  markNotificationAsUnread,
-  deleteNotification,
-  markAllNotificationsAsRead,
-  getUnreadNotificationCount,
-  createUserRegistrationNotification,
+  createUserRegistrationNotification, deleteNotification, getUnreadNotificationCount, markAllNotificationsAsRead, markNotificationAsRead,
+  markNotificationAsUnread
 } from "./notifications";
 
 describe("notifications actions", () => {

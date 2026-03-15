@@ -1,78 +1,59 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import {
-  Search,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Folder,
-  Settings2,
-} from "lucide-react";
 import { useDebounce } from "@/components/Debounce";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import DynamicIcon from "@/components/DynamicIcon";
+import { EntityTypeSelector } from "@/components/EntityTypeSelector";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { CustomFieldDisplay } from "@/components/search/CustomFieldDisplay";
+import { FacetedSearchFilters } from "@/components/search/FacetedSearchFilters";
+import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
+import { SearchHelpContent } from "@/components/search/SearchHelpContent";
+import {
+  BadgeList, DateDisplay, ExternalLink, MetadataItem, MetadataList, SearchHighlight, StatusBadge, TagList, TimeEstimate
+} from "@/components/search/SearchResultComponents";
+import { TestCaseSearchResult } from "@/components/search/TestCaseSearchResult";
+import { UserDisplay } from "@/components/search/UserDisplay";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
+  SheetTrigger
 } from "@/components/ui/sheet";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import {
-  SearchableEntityType,
-  SearchOptions,
-  UnifiedSearchResult,
-  UnifiedSearchFilters,
-  SearchHit,
-} from "~/types/search";
-import {
-  useSearchContext,
-  getEntityLabel,
-  getEntityIcon,
-} from "~/hooks/useSearchContext";
-import DynamicIcon from "@/components/DynamicIcon";
-import { cn } from "~/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FacetedSearchFilters } from "@/components/search/FacetedSearchFilters";
-import { Filter } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useSearchState } from "~/lib/contexts/SearchStateContext";
-import {
-  MetadataList,
-  MetadataItem,
-  StatusBadge,
-  TimeEstimate,
-  TagList,
-  BadgeList,
-  ExternalLink,
-  DateDisplay,
-  SearchHighlight,
-} from "@/components/search/SearchResultComponents";
-import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
-import { ProjectIcon } from "@/components/ProjectIcon";
-import { UserDisplay } from "@/components/search/UserDisplay";
-import { TestCaseSearchResult } from "@/components/search/TestCaseSearchResult";
-import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import { IconName } from "~/types/globals";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { CustomFieldDisplay } from "@/components/search/CustomFieldDisplay";
-import { EntityTypeSelector } from "@/components/EntityTypeSelector";
-import { SearchHelpContent } from "@/components/search/SearchHelpContent";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight, Filter, Folder, Search, Settings2, X
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  getEntityIcon, getEntityLabel, useSearchContext
+} from "~/hooks/useSearchContext";
+import { useSearchState } from "~/lib/contexts/SearchStateContext";
+import { IconName } from "~/types/globals";
+import {
+  SearchableEntityType, SearchHit, SearchOptions, UnifiedSearchFilters, UnifiedSearchResult
+} from "~/types/search";
+import { cn } from "~/utils";
 
 interface UnifiedSearchProps {
   // Context overrides

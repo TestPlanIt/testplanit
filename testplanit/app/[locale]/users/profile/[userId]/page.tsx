@@ -1,77 +1,73 @@
 "use client";
 
-import * as React from "react";
-import { useEffect, useState, use, useMemo } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import { useTranslations } from "next-intl";
-import { useQueryClient } from "@tanstack/react-query";
+import { Avatar } from "@/components/Avatar";
+import { DateFormatter } from "@/components/DateFormatter";
+import { EmailCell } from "@/components/EmailDisplay";
+import { AccessLevelDisplay } from "@/components/tables/AccessLevelDisplay";
+import { GroupListDisplay } from "@/components/tables/GroupListDisplay";
+import { UserListDisplay } from "@/components/tables/UserListDisplay";
+import { UserProjectsDisplay } from "@/components/tables/UserProjectsDisplay";
 import {
-  useFindFirstUser,
-  useFindUniqueAppConfig,
-} from "~/lib/hooks";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from "@/components/ui/accordion";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { HelpPopover } from "@/components/ui/help-popover";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
-import { DateFormatter } from "@/components/DateFormatter";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { EditAvatarModal } from "./EditAvatar";
-import { RemoveAvatar } from "./RemoveAvatar";
-import { ChangePasswordModal } from "./ChangePasswordModal";
-import { TwoFactorSettings } from "./TwoFactorSettings";
-import { ApiTokenSettings } from "./ApiTokenSettings";
-import { Avatar } from "@/components/Avatar";
-import { AccessLevelDisplay } from "@/components/tables/AccessLevelDisplay";
-import { EmailCell } from "@/components/EmailDisplay";
-import { UserProjectsDisplay } from "@/components/tables/UserProjectsDisplay";
-import { GroupListDisplay } from "@/components/tables/GroupListDisplay";
-import { UserListDisplay } from "@/components/tables/UserListDisplay";
 import { UserMentionedComments } from "@/components/UserMentionedComments";
-import { PenSquare, Check, X, Sun, Moon, SunMoon, Circle } from "lucide-react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  DateFormat, ItemsPerPage, Locale, NotificationMode,
+  Theme, TimeFormat
+} from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { Check, Circle, Moon, PenSquare, Sun, SunMoon, X } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import * as React from "react";
+import { use, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import {
-  ItemsPerPage,
-  DateFormat,
-  TimeFormat,
-  NotificationMode,
-  Theme,
-  Locale,
-} from "@prisma/client";
+  useFindFirstUser,
+  useFindUniqueAppConfig
+} from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import { ApiTokenSettings } from "./ApiTokenSettings";
+import { ChangePasswordModal } from "./ChangePasswordModal";
+import { EditAvatarModal } from "./EditAvatar";
+import { RemoveAvatar } from "./RemoveAvatar";
+import { TwoFactorSettings } from "./TwoFactorSettings";
 
 interface UserProfileProps {
   params: Promise<{ userId: string }>;

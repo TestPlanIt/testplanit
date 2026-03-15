@@ -1,10 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  getMasterKey,
-  encrypt,
-  decrypt,
-  isEncrypted,
-  EncryptionService,
+  decrypt, encrypt, EncryptionService, getMasterKey, isEncrypted
 } from "./encryption";
 
 // Mock environment variables

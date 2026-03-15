@@ -1,30 +1,25 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  AlertCircle,
-  RefreshCw,
-  Sparkles,
-  CheckCircle2,
-  Settings2,
-  Info,
+  AlertCircle, CheckCircle2, Info, RefreshCw, Settings2, Sparkles
 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useState } from "react";
 
 interface MagicSelectDialogProps {
   open: boolean;

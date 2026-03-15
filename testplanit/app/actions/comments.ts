@@ -1,14 +1,14 @@
 "use server";
 
-import { getServerAuthSession } from "~/server/auth";
-import { db } from "~/server/db";
+import { JSONContent } from "@tiptap/core";
 import { revalidatePath } from "next/cache";
 import { CommentService } from "~/lib/services/commentService";
-import { JSONContent } from "@tiptap/core";
 import {
   extractMentionedUserIds,
-  isValidTipTapContent,
+  isValidTipTapContent
 } from "~/lib/utils/tiptapMentions";
+import { getServerAuthSession } from "~/server/auth";
+import { db } from "~/server/db";
 
 interface CreateCommentInput {
   content: JSONContent;

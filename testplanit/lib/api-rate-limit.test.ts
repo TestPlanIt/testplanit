@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock valkey module — null by default (no connection)
 const mockIncr = vi.fn();
@@ -11,7 +11,7 @@ vi.mock("./valkey", () => ({
 import {
   checkApiRateLimit,
   getTierLimit,
-  _resetForTesting,
+  _resetForTesting
 } from "./api-rate-limit";
 
 // Helper to enable the mock Valkey connection for specific tests

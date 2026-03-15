@@ -1,11 +1,11 @@
+import type { TestRuns } from "@prisma/client";
+import { prisma as defaultPrisma } from "~/lib/prismaBase";
+import { SearchableEntityType } from "~/types/search";
+import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import {
   getElasticsearchClient,
-  getEntityIndexName,
+  getEntityIndexName
 } from "./unifiedElasticsearchService";
-import { SearchableEntityType } from "~/types/search";
-import type { TestRuns, Prisma, PrismaClient } from "@prisma/client";
-import { prisma as defaultPrisma } from "~/lib/prismaBase";
-import { extractTextFromNode } from "~/utils/extractTextFromJson";
 
 /**
  * Type for test run with all required relations for indexing

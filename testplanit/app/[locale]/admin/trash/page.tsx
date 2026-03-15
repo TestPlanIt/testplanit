@@ -1,17 +1,17 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
+  AccordionTrigger
 } from "@/components/ui/accordion";
-import SoftDeletedDataTable from ".//SoftDeletedDataTable";
 import { Trash2 } from "lucide-react";
-import DynamicIcon from "~/components/DynamicIcon";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
+import { useTranslations } from "next-intl";
+import DynamicIcon from "~/components/DynamicIcon";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import SoftDeletedDataTable from ".//SoftDeletedDataTable";
 
 // Define the type for icon names based on the keys of dynamicIconImports
 type IconName = keyof typeof dynamicIconImports;

@@ -1,5 +1,3 @@
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
 import {
   Pagination,
   PaginationContent,
@@ -7,8 +5,10 @@ import {
   PaginationItem,
   PaginationLink,
   PaginationNext,
-  PaginationPrevious,
+  PaginationPrevious
 } from "@/components/ui/pagination";
+import { useTranslations } from "next-intl";
+import React, { useState } from "react";
 
 import {
   Select,
@@ -16,7 +16,7 @@ import {
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
 
 interface PaginationProps {

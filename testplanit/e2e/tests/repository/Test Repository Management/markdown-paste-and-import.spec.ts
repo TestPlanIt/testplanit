@@ -1,8 +1,8 @@
-import { test, expect } from "../../../fixtures";
+import type { APIRequestContext, Page } from "@playwright/test";
+import path from "path";
+import { expect, test } from "../../../fixtures";
 import { RepositoryPage } from "../../../page-objects/repository/repository.page";
 import { TestCasePage } from "../../../page-objects/repository/test-case.page";
-import path from "path";
-import type { Page, APIRequestContext } from "@playwright/test";
 
 /**
  * Markdown Paste & Import Tests

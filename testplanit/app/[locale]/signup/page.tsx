@@ -1,49 +1,43 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import type { NextPage } from "next";
-import { signIn } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import {
-  useFindManySsoProvider,
-  useFindFirstRegistrationSettings,
-} from "~/lib/hooks";
 import {
   generateEmailVerificationToken,
-  resendVerificationEmail,
+  resendVerificationEmail
 } from "@/components/EmailVerifications";
-import { createUserRegistrationNotification } from "~/app/actions/notifications";
+import type { NextPage } from "next";
+import { signIn } from "next-auth/react";
 import { notFound } from "next/navigation";
+import { useEffect, useState } from "react";
 import { isEmailDomainAllowed } from "~/app/actions/auth";
+import { createUserRegistrationNotification } from "~/app/actions/notifications";
+import {
+  useFindFirstRegistrationSettings, useFindManySsoProvider
+} from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
-import { Link } from "~/lib/navigation";
-import Image from "next/image";
-import { Input } from "@/components/ui/input";
-import svgIcon from "~/public/tpi_logo.svg";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
-import {
-  Card,
-  CardHeader,
-  CardDescription,
-  CardContent,
-  CardTitle,
-} from "@/components/ui/card";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
 import { LinkIcon, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { HelpPopover } from "@/components/ui/help-popover";
+import Image from "next/image";
+import { Link } from "~/lib/navigation";
+import svgIcon from "~/public/tpi_logo.svg";
 
 /**
  * Manually clear NextAuth session cookies via document.cookie

@@ -1,15 +1,13 @@
-import { Worker, Job } from "bullmq";
 import type { Prisma } from "@prisma/client";
-import valkeyConnection from "../lib/valkey";
-import { AUDIT_LOG_QUEUE_NAME } from "../lib/queues";
+import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
 import {
-  getPrismaClientForJob,
-  isMultiTenantMode,
-  disconnectAllTenantClients,
-  validateMultiTenantJobData,
+  disconnectAllTenantClients, getPrismaClientForJob,
+  isMultiTenantMode, validateMultiTenantJobData
 } from "../lib/multiTenantPrisma";
+import { AUDIT_LOG_QUEUE_NAME } from "../lib/queues";
 import type { AuditLogJobData } from "../lib/services/auditLog";
+import valkeyConnection from "../lib/valkey";
 
 /**
  * Process an audit log job.

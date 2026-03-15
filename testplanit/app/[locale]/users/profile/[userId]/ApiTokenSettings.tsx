@@ -1,19 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { DateFormatter } from "@/components/DateFormatter";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,29 +9,37 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  KeyRound,
-  Plus,
-  Trash2,
-  Copy,
-  Check,
-  Loader2,
-  AlertTriangle,
+  AlertTriangle, Check, Copy, KeyRound, Loader2, Plus,
+  Trash2
 } from "lucide-react";
-import { useFindManyApiToken, useDeleteApiToken } from "~/lib/hooks";
-import { DateFormatter } from "@/components/DateFormatter";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { useDeleteApiToken, useFindManyApiToken } from "~/lib/hooks";
 
 interface ApiTokenSettingsProps {
   userId: string;

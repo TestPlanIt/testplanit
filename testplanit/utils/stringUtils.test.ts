@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { sanitizeName, replaceProblematicChars } from "./stringUtils";
+import { describe, expect, it } from "vitest";
+import { replaceProblematicChars, sanitizeName } from "./stringUtils";
 
 describe("stringUtils", () => {
   describe("sanitizeName", () => {

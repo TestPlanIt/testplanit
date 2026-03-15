@@ -1,23 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { useDeleteAppConfig } from "~/lib/hooks";
-import { Button } from "@/components/ui/button";
-import { Trash2, TriangleAlert } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogTitle,
-  AlertDialogDescription,
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { Trash2, TriangleAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { useDeleteAppConfig } from "~/lib/hooks";
 import { AppConfigRow } from "./types";
 
 interface DeleteAppConfigModalProps {

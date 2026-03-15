@@ -1,12 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"; // Import vitest functions
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useSession } from "next-auth/react";
+import { beforeEach, describe, expect, it, vi } from "vitest"; // Import vitest functions
 import {
-  useProjectPermissions,
-  AreaPermissions,
-  AllAreaPermissions,
+  AllAreaPermissions, AreaPermissions, useProjectPermissions
 } from "./useProjectPermissions";
 // Use the enum definition from your schema
 enum ApplicationArea {

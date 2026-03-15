@@ -1,23 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { SearchableEntityType, CustomFieldFilter } from "~/types/search";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { CustomFieldFilter, SearchableEntityType } from "~/types/search";
 import {
-  getEntityTypeFromIndex,
-  stripNestedClauses,
-  buildCustomFieldQuery,
-  buildSearchAggregations,
-  processFacets,
-  buildSort,
-  addRepositoryCaseFilters,
-  addCustomFieldFilters,
-  addTestRunFilters,
-  addSessionFilters,
-  addSharedStepFilters,
-  addProjectFilters,
-  addIssueFilters,
-  addMilestoneFilters,
-  addDateRangeFilter,
-  buildElasticsearchQuery,
-  getEntityTypeCounts,
+  addCustomFieldFilters, addDateRangeFilter, addIssueFilters,
+  addMilestoneFilters, addProjectFilters, addRepositoryCaseFilters, addSessionFilters,
+  addSharedStepFilters, addTestRunFilters, buildCustomFieldQuery, buildElasticsearchQuery, buildSearchAggregations, buildSort, getEntityTypeCounts, getEntityTypeFromIndex, processFacets, stripNestedClauses
 } from "./searchQueryBuilder";
 
 // Mock the server/db module for buildElasticsearchQuery tests

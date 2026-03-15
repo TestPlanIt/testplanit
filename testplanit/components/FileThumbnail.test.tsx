@@ -1,10 +1,8 @@
-import React from "react";
-import { screen, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { describe, it, expect } from "vitest";
-import { FileThumbnail } from "./FileThumbnail";
-import { render } from "~/test/test-utils";
 import type { Attachments } from "@prisma/client";
+import { screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { render } from "~/test/test-utils";
+import { FileThumbnail } from "./FileThumbnail";
 
 describe("FileThumbnail", () => {
   // Removed beforeEach and afterEach blocks for fake timers

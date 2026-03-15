@@ -1,18 +1,17 @@
 "use client";
 
-import React from "react";
-import { useTranslations } from "next-intl";
-import { DurationDisplay, formatSeconds } from "@/components/DurationDisplay";
-import { CloudSunRain, Bot } from "lucide-react";
+import { DurationDisplay } from "@/components/DurationDisplay";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { toHumanReadable } from "~/utils/duration";
-import { useLocale } from "next-intl";
+import { Bot, CloudSunRain } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import React from "react";
 import { type ClassValue } from "~/utils";
+import { toHumanReadable } from "~/utils/duration";
 
 interface ForecastDisplayProps {
   seconds: number | null | undefined;

@@ -3,13 +3,9 @@
  */
 
 import type {
-  LlmRequest,
+  LlmAdapterConfig, LlmError, LlmModelInfo, LlmRequest,
   LlmResponse,
-  LlmStreamResponse,
-  LlmAdapterConfig,
-  LlmModelInfo,
-  LlmError,
-  RateLimitInfo,
+  LlmStreamResponse, RateLimitInfo
 } from "../types";
 
 /**

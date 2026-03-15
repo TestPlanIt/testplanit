@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
+import {
+  FolderSelect,
+  transformFolders
+} from "@/components/forms/FolderSelect";
+import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -11,57 +17,42 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Download, Star } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { toast } from "sonner";
-import {
-  useFindManyTemplates,
-  useFindManyRepositoryFolders,
-} from "~/lib/hooks";
-import {
-  FolderSelect,
-  transformFolders,
-} from "@/components/forms/FolderSelect";
 import UploadAttachments from "@/components/UploadAttachments";
-import Papa from "papaparse";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  CheckCircle2,
+  AlertCircle, CheckCircle2, ChevronLeft,
+  ChevronRight, Download, Star
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import Papa from "papaparse";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod/v4";
-import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
+import { useFindManyProjectLlmIntegration, useFindManyRepositoryFolders, useFindManyTemplates } from "~/lib/hooks";
+import {
+  convertMarkdownCasesToImportData, parseMarkdownTestCases, type ParsedMarkdownCase
+} from "~/utils/markdownTestCaseParser";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 import { generateHTMLFallback } from "~/utils/tiptapToHtml";
-import {
-  parseMarkdownTestCases,
-  convertMarkdownCasesToImportData,
-  type ParsedMarkdownCase,
-} from "~/utils/markdownTestCaseParser";
-import { useFindManyProjectLlmIntegration } from "~/lib/hooks";
 
 interface ImportCasesWizardProps {
   onImportComplete?: () => void;

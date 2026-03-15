@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,14 +8,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useTranslations } from "next-intl";
-import { useSession } from "next-auth/react";
-import { toast } from "sonner";
 import { Asterisk, UserLock } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import * as React from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export function ChangePasswordModal() {
   const t = useTranslations("users.profile.changePasswordModal");

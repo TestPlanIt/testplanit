@@ -1,27 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { UseFormReturn, Controller } from "react-hook-form";
-import { useTranslations } from "next-intl";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   FormControl,
   FormDescription,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
+import { useState } from "react";
+import { Controller, UseFormReturn } from "react-hook-form";
 import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useTheme } from "next-themes";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { HelpPopover } from "@/components/ui/help-popover";
 
 interface JiraField {
   key: string;

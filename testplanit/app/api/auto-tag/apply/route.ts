@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { NextResponse } from "next/server";
 import { z } from "zod";
-import { authOptions } from "~/server/auth";
 import { prisma } from "~/lib/prisma";
+import { authOptions } from "~/server/auth";
 
 const applySchema = z.object({
   suggestions: z

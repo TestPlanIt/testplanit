@@ -1,32 +1,25 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import {
-  useCreateTemplates,
-  useUpdateManyTemplates,
-  useFindManyProjects,
-  useCreateManyTemplateProjectAssignment,
-  useCreateManyTemplateCaseAssignment,
-  useCreateManyTemplateResultAssignment,
-  useFindManyCaseFields,
-  useFindManyResultFields,
-} from "~/lib/hooks";
 import { Projects, Templates } from "@prisma/client";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import {
+  useCreateManyTemplateCaseAssignment, useCreateManyTemplateProjectAssignment, useCreateManyTemplateResultAssignment, useCreateTemplates, useFindManyCaseFields, useFindManyProjects, useFindManyResultFields, useUpdateManyTemplates
+} from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
 import {
   DraggableField,
-  DraggableList,
+  DraggableList
 } from "@/components/DraggableCaseFields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useTheme } from "next-themes";
 import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useTheme } from "next-themes";
 
 import { CirclePlus } from "lucide-react";
 
@@ -36,7 +29,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -46,13 +39,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { SelectScrollable } from "@/components/SelectScrollableCaseFields";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
-import { HelpPopover } from "@/components/ui/help-popover";
 
 interface ExtendedTemplates extends Templates {
   projects: { projectId: number }[];

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render, screen } from "~/test/test-utils"; // Use custom render for component
-import { formatSeconds, DurationDisplay } from "./DurationDisplay";
+import { DurationDisplay, formatSeconds } from "./DurationDisplay";
 // Removed locale imports/mocks as humanize-duration handles it differently
 // import * as localeUtils from "~/utils/locales";
 // import { enUS, es } from "date-fns/locale";

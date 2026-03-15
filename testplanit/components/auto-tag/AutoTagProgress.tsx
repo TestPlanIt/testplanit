@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckCircle2, XCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { CheckCircle2, X, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { AutoTagJobState } from "./types";
 

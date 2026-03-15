@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
 import { NotificationType } from "@prisma/client";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 
 // Mock NotificationService before importing the service under test
 vi.mock("./notificationService", () => ({

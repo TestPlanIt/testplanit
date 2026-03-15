@@ -1,5 +1,5 @@
-import React from "react";
 import { useLocale, useTranslations } from "next-intl";
+import React from "react";
 import { toHumanReadable } from "~/utils/duration";
 
 /**

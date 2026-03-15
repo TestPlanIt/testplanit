@@ -1,95 +1,77 @@
 "use client";
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo,
-} from "react";
-import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
-import { useSearchParams } from "next/navigation";
-import { useRouter, usePathname } from "~/lib/navigation";
-import { useSession } from "next-auth/react";
-import MultiSelect from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { DraggableList } from "@/components/DraggableCaseFields";
 import { Button } from "@/components/ui/button";
 import { HelpPopover } from "@/components/ui/help-popover";
 import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
+  ResizableHandle, ResizablePanel, ResizablePanelGroup
 } from "@/components/ui/resizable";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  VisibilityState,
   ColumnDef,
-  ExpandedState,
+  ExpandedState, VisibilityState
 } from "@tanstack/react-table";
 import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
-import { DraggableList } from "@/components/DraggableCaseFields";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import {
-  AlertCircle,
-  LayoutTemplate,
-  CircleDashed,
-  Bot,
-  Filter,
-  FolderOpen,
-  ChevronDown,
-  Loader2,
+  Bot, ChevronDown, ChevronLeft, ChevronRight, CircleDashed, Filter,
+  FolderOpen, LayoutTemplate, Loader2
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
+import { useSearchParams } from "next/navigation";
+import React, {
+  useCallback, useEffect, useMemo, useRef, useState
+} from "react";
+import { DateRange } from "react-day-picker";
+import { useForm } from "react-hook-form";
+import MultiSelect from "react-select";
+import { z } from "zod/v4";
+import { DateFormatter } from "~/components/DateFormatter";
+import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
+import { DrillDownDrawer } from "~/components/reports/DrillDownDrawer";
+import { ReportFilterChips } from "~/components/reports/ReportFilterChips";
+import { ReportFilters } from "~/components/reports/ReportFilters";
+import { ReportRenderer } from "~/components/reports/ReportRenderer";
+import { ShareButton } from "~/components/reports/ShareButton";
+import { Card, CardContent } from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "~/components/ui/dropdown-menu";
-import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
-import {
-  getReportSummary,
-  dimensionToDraggableField,
-  draggableFieldToDimension,
-} from "~/utils/reportUtils";
-import { useReportColumns } from "~/hooks/useReportColumns";
-import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
-import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
-import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
-import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
-import {
-  getProjectReportTypes,
-  getCrossProjectReportTypes,
-} from "~/lib/config/reportTypes";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DateRange } from "react-day-picker";
-import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
-import { DateFormatter } from "~/components/DateFormatter";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod/v4";
 import { Form } from "~/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "~/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
 import { useDrillDown } from "~/hooks/useDrillDown";
-import { DrillDownDrawer } from "~/components/reports/DrillDownDrawer";
-import { ReportFilters } from "~/components/reports/ReportFilters";
-import { ReportFilterChips } from "~/components/reports/ReportFilterChips";
-import { ShareButton } from "~/components/reports/ShareButton";
-import { ReportRenderer } from "~/components/reports/ReportRenderer";
+import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
+import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
+import { useReportColumns } from "~/hooks/useReportColumns";
+import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
+import {
+  getCrossProjectReportTypes, getProjectReportTypes
+} from "~/lib/config/reportTypes";
+import {
+  PaginationProvider,
+  usePagination
+} from "~/lib/contexts/PaginationContext";
+import { usePathname, useRouter } from "~/lib/navigation";
+import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
 import type {
-  DrillDownContext,
-  DimensionFilters,
+  DimensionFilters, DrillDownContext
 } from "~/lib/types/reportDrillDown";
+import { getCustomStyles } from "~/styles/multiSelectStyles";
+import {
+  dimensionToDraggableField,
+  draggableFieldToDimension, getReportSummary
+} from "~/utils/reportUtils";
 
 interface ReportBuilderProps {
   mode: "project" | "cross-project";

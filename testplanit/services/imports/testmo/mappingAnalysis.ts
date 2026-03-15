@@ -1,39 +1,18 @@
 import type {
   Access,
   TestmoImportDataset,
-  TestmoImportJob,
+  TestmoImportJob
 } from "@prisma/client";
 import { db } from "~/server/db";
 import type {
-  TestmoConfigurationSuggestion,
-  TestmoExistingConfigCategory,
-  TestmoExistingConfigVariant,
-  TestmoExistingConfiguration,
-  TestmoExistingGroup,
-  TestmoExistingTag,
-  TestmoExistingIntegration,
-  TestmoExistingMilestoneType,
-  TestmoExistingRole,
-  TestmoExistingStatus,
-  TestmoExistingWorkflow,
-  TestmoGroupSuggestion,
-  TestmoTagSuggestion,
-  TestmoIssueTargetSuggestion,
+  TestmoCaseFieldType, TestmoConfigurationSuggestion, TestmoExistingCaseField, TestmoExistingConfigCategory, TestmoExistingConfiguration, TestmoExistingConfigVariant, TestmoExistingGroup, TestmoExistingMilestoneType, TestmoExistingResultField, TestmoExistingRole,
+  TestmoExistingStatus, TestmoExistingTag, TestmoExistingTemplate, TestmoExistingUser, TestmoExistingWorkflow, TestmoFieldOptionConfig, TestmoGroupSuggestion, TestmoIssueTargetSuggestion,
   TestmoMappingAnalysis,
   TestmoMilestoneTypeSuggestion,
   TestmoRolePermissions,
   TestmoRoleSuggestion,
-  TestmoStatusSuggestion,
-  TestmoExistingUser,
-  TestmoUserSuggestion,
-  TestmoWorkflowSuggestion,
-  TestmoTemplateFieldSuggestion,
-  TestmoExistingCaseField,
-  TestmoExistingResultField,
-  TestmoCaseFieldType,
-  TestmoTemplateSuggestion,
-  TestmoExistingTemplate,
-  TestmoFieldOptionConfig,
+  TestmoStatusSuggestion, TestmoTagSuggestion, TestmoTemplateFieldSuggestion, TestmoTemplateSuggestion, TestmoUserSuggestion,
+  TestmoWorkflowSuggestion
 } from "./types";
 
 const DATASETS_FOR_CONFIGURATION = [

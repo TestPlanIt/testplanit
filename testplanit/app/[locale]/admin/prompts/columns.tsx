@@ -1,14 +1,14 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { PromptConfig, PromptConfigPrompt, Projects } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { DateFormatter } from "@/components/DateFormatter";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { DateFormatter } from "@/components/DateFormatter";
+import { Projects, PromptConfig, PromptConfigPrompt } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
 import { MessageSquareCode } from "lucide-react";
-import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
+import { useTranslations } from "next-intl";
 import { useCountProjects } from "~/lib/hooks/projects";
-import { EditPromptConfig } from "./EditPromptConfig";
 import { DeletePromptConfig } from "./DeletePromptConfig";
+import { EditPromptConfig } from "./EditPromptConfig";
 
 export interface ExtendedPromptConfig extends PromptConfig {
   prompts?: PromptConfigPrompt[];

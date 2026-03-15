@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerAuthSession } from "~/server/auth";
-import { authenticateApiToken } from "~/lib/api-token-auth";
 import { prisma } from "@/lib/prisma";
-import { getElasticsearchClient } from "~/services/elasticsearchService";
+import { NextRequest, NextResponse } from "next/server";
+import { authenticateApiToken } from "~/lib/api-token-auth";
 import { auditSystemConfigChange } from "~/lib/services/auditLog";
+import { getServerAuthSession } from "~/server/auth";
+import { getElasticsearchClient } from "~/services/elasticsearchService";
 
 // Helper to check admin authentication (session or API token)
 async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextResponse; userId?: string }> {

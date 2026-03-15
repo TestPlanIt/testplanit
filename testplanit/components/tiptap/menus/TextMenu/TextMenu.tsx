@@ -1,18 +1,18 @@
-import { Icon } from "@/components/tiptap/ui/Icon";
-import { Toolbar } from "@/components/tiptap/ui/Toolbar";
-import { useTextmenuCommands } from "./hooks/useTextmenuCommands";
-import { useTextmenuStates } from "./hooks/useTextmenuStates";
-import { BubbleMenu } from "@tiptap/react/menus";
-import { Editor } from "@tiptap/react";
-import { memo } from "react";
-import * as Popover from "@radix-ui/react-popover";
-import { Surface } from "@/components/tiptap/ui/Surface";
 import { ColorPicker } from "@/components/tiptap/panels";
-import { FontFamilyPicker } from "./components/FontFamilyPicker";
-import { FontSizePicker } from "./components/FontSizePicker";
-import { useTextmenuContentTypes } from "./hooks/useTextmenuContentTypes";
+import { Icon } from "@/components/tiptap/ui/Icon";
+import { Surface } from "@/components/tiptap/ui/Surface";
+import { Toolbar } from "@/components/tiptap/ui/Toolbar";
+import * as Popover from "@radix-ui/react-popover";
+import { Editor } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
+import { memo } from "react";
 import { ContentTypePicker } from "./components/ContentTypePicker";
 import { EditLinkPopover } from "./components/EditLinkPopover";
+import { FontFamilyPicker } from "./components/FontFamilyPicker";
+import { FontSizePicker } from "./components/FontSizePicker";
+import { useTextmenuCommands } from "./hooks/useTextmenuCommands";
+import { useTextmenuContentTypes } from "./hooks/useTextmenuContentTypes";
+import { useTextmenuStates } from "./hooks/useTextmenuStates";
 
 // We memorize the button so each button is not rerendered
 // on every editor state change

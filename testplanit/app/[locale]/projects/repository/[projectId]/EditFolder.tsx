@@ -1,24 +1,6 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
-import {
-  useUpdateRepositoryFolders,
-  useFindFirstRepositoryFolders,
-} from "~/lib/hooks";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod/v4";
-import { Button } from "@/components/ui/button";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { emptyEditorContent } from "~/app/constants";
-import { SquarePen } from "lucide-react";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -26,10 +8,27 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { useTranslations } from "next-intl";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { SquarePen } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod/v4";
+import { emptyEditorContent } from "~/app/constants";
+import {
+  useFindFirstRepositoryFolders, useUpdateRepositoryFolders
+} from "~/lib/hooks";
 
 const parseTipTapContent = (content: any) => {
   if (!content) return emptyEditorContent;

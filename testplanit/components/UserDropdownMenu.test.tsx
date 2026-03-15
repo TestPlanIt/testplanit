@@ -1,16 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen } from "~/test/test-utils"; // Remove waitFor import
-import userEvent from "@testing-library/user-event";
-import { UserDropdownMenu } from "./UserDropdownMenu";
 import {
-  Theme,
-  Locale,
-  DateFormat,
-  TimeFormat,
-  ItemsPerPage,
-  NotificationMode,
+  DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat
 } from "@prisma/client";
+import userEvent from "@testing-library/user-event";
 import { Session } from "next-auth";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen } from "~/test/test-utils"; // Remove waitFor import
+import { UserDropdownMenu } from "./UserDropdownMenu";
 // Import the actual module
 import * as NextAuth from "next-auth/react";
 

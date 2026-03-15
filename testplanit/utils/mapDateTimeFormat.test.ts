@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { DateFormat, TimeFormat } from "@prisma/client";
+import { describe, expect, it } from "vitest";
 import { mapDateTimeFormatString } from "./mapDateTimeFormat";
 
 describe("mapDateTimeFormatString Utility", () => {

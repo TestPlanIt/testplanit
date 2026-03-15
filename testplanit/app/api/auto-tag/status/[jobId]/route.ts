@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
 import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
+import { NextResponse } from "next/server";
 import { getAutoTagQueue } from "~/lib/queues";
-import { isMultiTenantMode, getCurrentTenantId } from "@/lib/multiTenantPrisma";
+import { authOptions } from "~/server/auth";
 
 export async function GET(
   _request: Request,

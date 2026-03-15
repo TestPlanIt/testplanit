@@ -1,10 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
 import {
-  generateTOTPSecret,
-  generateQRCodeDataURL,
-  encryptSecret,
+  encryptSecret, generateQRCodeDataURL, generateTOTPSecret
 } from "~/lib/two-factor";
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";

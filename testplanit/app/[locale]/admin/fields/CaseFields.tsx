@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import { useFindManyCaseFields, useUpdateCaseFields } from "~/lib/hooks";
-import { DataTable } from "@/components/tables/DataTable";
-import { getColumns, ExtendedCaseFields } from "./caseFieldColumns";
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { AddCaseFieldModal } from "./AddCaseField";
+import { DataTable } from "@/components/tables/DataTable";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LayoutList } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFindManyCaseFields, useUpdateCaseFields } from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import { AddCaseFieldModal } from "./AddCaseField";
+import { ExtendedCaseFields, getColumns } from "./caseFieldColumns";
 
 export default function CaseFields() {
   const { data: session, status } = useSession();

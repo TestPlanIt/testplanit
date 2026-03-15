@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { EntityType } from "~/lib/llm/services/auto-tag/types";
 import type {
-  AutoTagSuggestionEntity,
-  AutoTagSelection,
-  AutoTagJobState,
-  UseAutoTagJobReturn,
+  AutoTagJobState, AutoTagSelection, AutoTagSuggestionEntity, UseAutoTagJobReturn
 } from "./types";
 
 const POLL_INTERVAL_MS = 2000;

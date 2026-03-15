@@ -1,35 +1,8 @@
-import { useState, useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
-import { useParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  useFindFirstRepositoryFolders,
-  useFindFirstRepositoryCases,
-  useFindManyTemplates,
-  useFindManyWorkflows,
-  useCreateRepositoryCases,
-  useCreateCaseFieldValues,
-  useCreateCaseFieldVersionValues,
-  useCreateAttachments,
-  useCreateSteps,
-  useFindManyTags,
-  useFindManySharedStepGroup,
-} from "~/lib/hooks";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod/v4";
+import DynamicIcon from "@/components/DynamicIcon";
+import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
+import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
+import { ManageTags } from "@/components/ManageTags";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ChevronLeft, ChevronRight, CirclePlus, Asterisk } from "lucide-react";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import {
   Dialog,
   DialogContent,
@@ -37,37 +10,53 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectGroup,
-} from "@/components/ui/select";
-import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
-import RenderField from "./RenderField";
-import parseDuration from "parse-duration";
-import UploadAttachments from "@/components/UploadAttachments";
-import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup,
+  ResizablePanelGroup
 } from "@/components/ui/resizable";
-import { ManageTags } from "@/components/ManageTags";
-import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
-import { emptyEditorContent } from "~/app/constants";
+import {
+  Select,
+  SelectContent, SelectGroup, SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
-import { useTranslations } from "next-intl";
-import { MAX_DURATION } from "~/app/constants";
+import UploadAttachments from "@/components/UploadAttachments";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ApplicationArea, Prisma } from "@prisma/client";
-import { HelpPopover } from "@/components/ui/help-popover";
+import { useQueryClient } from "@tanstack/react-query";
+import { Asterisk, ChevronLeft, ChevronRight, CirclePlus } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import parseDuration from "parse-duration";
+import { useEffect, useRef, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod/v4";
+import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import {
+  useCreateAttachments, useCreateCaseFieldValues,
+  useCreateCaseFieldVersionValues, useCreateRepositoryCases, useCreateSteps, useFindFirstRepositoryCases, useFindFirstRepositoryFolders, useFindManySharedStepGroup, useFindManyTags, useFindManyTemplates,
+  useFindManyWorkflows
+} from "~/lib/hooks";
+import { IconName } from "~/types/globals";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import RenderField from "./RenderField";
 
 interface SharedStepItemDetail {
   step: Prisma.JsonValue;

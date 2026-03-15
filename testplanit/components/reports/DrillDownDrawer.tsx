@@ -4,29 +4,25 @@
 
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import { useTranslations } from "next-intl";
-import { Circle, Dot, Download, X } from "lucide-react";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerClose,
-} from "@/components/ui/drawer";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "~/components/tables/DataTable";
+import {
+  Drawer, DrawerClose, DrawerContent, DrawerDescription,
+  DrawerFooter, DrawerHeader,
+  DrawerTitle
+} from "@/components/ui/drawer";
+import { Circle, Dot, Download, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useEffect, useRef } from "react";
 import LoadingSpinner from "~/components/LoadingSpinner";
+import { DataTable } from "~/components/tables/DataTable";
 import { useDrillDownColumns } from "~/hooks/useDrillDownColumns";
 import { useDrillDownExport } from "~/hooks/useDrillDownExport";
 import type {
   DrillDownContext,
   DrillDownRecord,
-  DrillDownResponse,
+  DrillDownResponse
 } from "~/lib/types/reportDrillDown";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DrillDownDrawerProps {
   /** Whether the drawer is open */

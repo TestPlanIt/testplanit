@@ -1,10 +1,10 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { useTranslations } from "next-intl";
-import { cn } from "~/utils";
-import { Badge } from "~/components/ui/badge";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { Avatar } from "~/components/Avatar";
+import { Badge } from "~/components/ui/badge";
+import { cn } from "~/utils";
 
 export interface MentionUser {
   id: string;

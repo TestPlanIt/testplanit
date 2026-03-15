@@ -1,4 +1,4 @@
-import { PlayCircle, ListTree, Users, Heart, Compass, Bug, TrendingUp, Shuffle, Activity, Link2 } from "lucide-react";
+import { Activity, Bug, Compass, Heart, Link2, ListTree, PlayCircle, Shuffle, TrendingUp, Users } from "lucide-react";
 
 export interface ReportType {
   id: string;

@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
-import { prisma } from "~/lib/prisma";
 
 export type TestRunSummaryData = {
   testRunType: string;

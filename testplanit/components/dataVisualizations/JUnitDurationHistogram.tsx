@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from "react";
 import * as d3 from "d3";
 import { useTranslations } from "next-intl";
+import React, { useEffect, useRef } from "react";
 
 interface JUnitDurationHistogramProps {
   jUnitSuites: Array<{

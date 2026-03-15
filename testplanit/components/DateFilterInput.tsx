@@ -1,25 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Check, X, CalendarDays } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { format } from "date-fns";
+import { CalendarDays, Check, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { getDateFnsLocale } from "~/utils/locales";
+import { useEffect, useState } from "react";
 import { cn } from "~/utils";
+import { getDateFnsLocale } from "~/utils/locales";
 
 type DateOperator = "on" | "before" | "after" | "between" | "last7" | "last30" | "last90" | "thisYear";
 

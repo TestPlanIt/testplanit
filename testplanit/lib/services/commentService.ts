@@ -1,6 +1,6 @@
+import { NotificationType } from "@prisma/client";
 import { JSONContent } from "@tiptap/core";
 import { extractMentionedUserIds } from "../utils/tiptapMentions";
-import { NotificationType } from "@prisma/client";
 import { NotificationService } from "./notificationService";
 
 export interface CreateCommentParams {

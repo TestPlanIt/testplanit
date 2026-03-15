@@ -1,6 +1,6 @@
-import React from "react";
-import Image from "next/image";
 import { BoxesIcon } from "lucide-react";
+import Image from "next/image";
+import React from "react";
 import { getStorageUrlClient } from "~/utils/storageUrl";
 
 interface ProjectIconProps {

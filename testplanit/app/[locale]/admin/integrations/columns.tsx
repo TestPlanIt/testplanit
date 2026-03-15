@@ -1,15 +1,15 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { Integration } from "@prisma/client";
-import { useTranslations } from "next-intl";
-import { Badge } from "@/components/ui/badge";
 import { DateFormatter } from "@/components/DateFormatter";
-import { Link, Plug } from "lucide-react";
-import { siJira, siGithub } from "simple-icons";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
-import { EditIntegrationButton } from "./EditIntegrationButton";
+import { Badge } from "@/components/ui/badge";
+import { Integration } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
+import { Link, Plug } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { siGithub, siJira } from "simple-icons";
 import { DeleteIntegrationButton } from "./DeleteIntegrationButton";
-import { TestIntegrationButton } from "./TestIntegrationButton";
+import { EditIntegrationButton } from "./EditIntegrationButton";
 import { SyncIntegrationButton } from "./SyncIntegrationButton";
+import { TestIntegrationButton } from "./TestIntegrationButton";
 
 const JiraIcon = ({ className }: { className: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">

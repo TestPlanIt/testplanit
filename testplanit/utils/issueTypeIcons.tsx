@@ -1,16 +1,8 @@
-import React from "react";
 import {
-  Bug,
-  CheckCircle2,
-  AlertCircle,
-  Lightbulb,
-  BookOpen,
-  Zap,
-  ListTodo,
-  Target,
-  Rocket,
-  type LucideIcon,
+  AlertCircle, BookOpen, Bug,
+  CheckCircle2, Lightbulb, ListTodo, Rocket, Target, Zap, type LucideIcon
 } from "lucide-react";
+import React from "react";
 
 /**
  * Maps Jira issue type names to Lucide React icons

@@ -1,46 +1,33 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import { useState, useEffect, useMemo } from "react";
-import {
-  useUpdateProjects,
-  useFindManyRoles,
-  useFindManyUserProjectPermission,
-  useFindManyGroupProjectPermission,
-  useFindManyUser,
-  useFindManyProjectAssignment,
-  useUpsertUserProjectPermission,
-  useDeleteManyUserProjectPermission,
-  useFindManyGroups,
-  useUpsertGroupProjectPermission,
-  useDeleteManyGroupProjectPermission,
-  useCreateManyProjectAssignment,
-  useDeleteManyProjectAssignment,
-} from "~/lib/hooks";
-import {
-  ProjectAccessType,
-  UserProjectPermission,
-  GroupProjectPermission,
-} from "@prisma/client";
-import { useTranslations, useLocale } from "next-intl";
 import type { Prisma } from "@prisma/client";
+import {
+  GroupProjectPermission, ProjectAccessType,
+  UserProjectPermission
+} from "@prisma/client";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import {
+  useCreateManyProjectAssignment, useDeleteManyGroupProjectPermission, useDeleteManyProjectAssignment, useDeleteManyUserProjectPermission, useFindManyGroupProjectPermission, useFindManyGroups, useFindManyProjectAssignment, useFindManyRoles, useFindManyUser, useFindManyUserProjectPermission, useUpdateProjects, useUpsertGroupProjectPermission, useUpsertUserProjectPermission
+} from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { optionalImageUrlSchema } from "~/lib/schemas/imageUrl";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { HelpPopover } from "@/components/ui/help-popover";
 
-import { SquarePen, Bug, Star } from "lucide-react";
+import { SquarePen, Star } from "lucide-react";
 
 import {
   Form,
@@ -49,9 +36,10 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
+import { DatePickerField } from "@/components/forms/DatePickerField";
 import {
   Dialog,
   DialogContent,
@@ -59,25 +47,22 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { DatePickerField } from "@/components/forms/DatePickerField";
 import {
   Select,
   SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectSeparator,
+  SelectItem, SelectSeparator, SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { ExtendedProjects } from "./columns";
-import { ProjectUserPermissions } from "./ProjectUserPermissions";
-import { ProjectGroupPermissions } from "./ProjectGroupPermissions";
-import { toast } from "sonner";
 import UploadProjectIcon from "@/components/UploadProjectIcon";
+import { toast } from "sonner";
+import { ExtendedProjects } from "./columns";
+import { ProjectGroupPermissions } from "./ProjectGroupPermissions";
+import { ProjectUserPermissions } from "./ProjectUserPermissions";
 
 interface EditProjectModalProps {
   project: ExtendedProjects;

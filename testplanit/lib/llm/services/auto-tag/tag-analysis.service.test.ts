@@ -1,7 +1,7 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createBatches } from "~/lib/llm/services/batch-processor";
 import type { BatchConfig } from "~/lib/llm/services/batch-processor";
+import { createBatches } from "~/lib/llm/services/batch-processor";
 
 import { TagAnalysisService } from "./tag-analysis.service";
 import type { EntityContent } from "./types";

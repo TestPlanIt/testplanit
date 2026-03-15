@@ -1,13 +1,12 @@
 "use client";
 
-import { useParams } from "next/navigation";
-import { usePathname } from "~/lib/navigation";
 import { useSession } from "next-auth/react";
+import { useParams } from "next/navigation";
 import { useMemo } from "react";
+import { usePathname } from "~/lib/navigation";
 import {
   SearchableEntityType,
-  SearchContext,
-  UnifiedSearchFilters,
+  SearchContext
 } from "~/types/search";
 
 /**

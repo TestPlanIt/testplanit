@@ -1,25 +1,25 @@
 "use client";
 
-import * as React from "react";
-import { useEffect, useState, use } from "react";
-import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useRouter } from "~/lib/navigation";
-import { useFindFirstProjects, useFindManyMilestones } from "~/lib/hooks";
-import { useTranslations } from "next-intl";
-import { AddMilestoneModal } from "@/projects/milestones/[projectId]/AddMilestoneModal";
-import MilestoneDisplay from "@/projects/milestones/[projectId]/MilestoneDisplay";
+import { Loading } from "@/components/Loading";
+import { ProjectIcon } from "@/components/ProjectIcon";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProjectIcon } from "@/components/ProjectIcon";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { AddMilestoneModal } from "@/projects/milestones/[projectId]/AddMilestoneModal";
+import MilestoneDisplay from "@/projects/milestones/[projectId]/MilestoneDisplay";
 import { ApplicationArea } from "@prisma/client";
-import { Loading } from "@/components/Loading";
+import { useTranslations } from "next-intl";
+import * as React from "react";
+import { use, useEffect, useState } from "react";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useRequireAuth } from "~/hooks/useRequireAuth";
+import { useFindFirstProjects, useFindManyMilestones } from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
 
 interface ProjectMilestonesProps {
   params: Promise<{ projectId: string }>;

@@ -1,20 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 import { Image } from "@tiptap/extension-image";
 import { NodeViewWrapper, ReactNodeViewRenderer } from "@tiptap/react";
-import React, { useRef, useState, useEffect } from "react";
 import {
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
+  AlignCenter, AlignLeft, AlignRight,
   Maximize,
-  Minimize,
-  RotateCw,
-  Trash2,
-  RectangleHorizontal,
-  Square,
-  Smartphone,
+  Minimize, RectangleHorizontal, RotateCw, Smartphone, Square, Trash2
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import React, { useEffect, useRef, useState } from "react";
 
 const ResizableImageComponent = (props: any) => {
   const { node, updateAttributes, deleteNode, editor } = props;

@@ -1,5 +1,5 @@
-import DynamicIcon from "./DynamicIcon";
 import { IconName } from "~/types/globals";
+import DynamicIcon from "./DynamicIcon";
 
 export interface WorkflowStateProps {
   state: {

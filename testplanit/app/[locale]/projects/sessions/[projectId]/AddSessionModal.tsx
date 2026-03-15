@@ -1,40 +1,14 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { useParams } from "next/navigation";
-import { toast } from "sonner";
+import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import DynamicIcon from "@/components/DynamicIcon";
 import {
-  useFindManyTemplates,
-  useFindManyConfigurations,
-  useFindManyWorkflows,
-  useFindManyMilestones,
-  useFindManyProjectAssignment,
-  useCreateSessions,
-  useFindManyTags,
-  useCreateSessionVersions,
-  useFindFirstProjects,
-  useCreateAttachments,
-  useFindManyIssue,
-} from "~/lib/hooks";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod/v4";
+  MilestoneSelect,
+  transformMilestones
+} from "@/components/forms/MilestoneSelect";
+import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
+import { ManageTags } from "@/components/ManageTags";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  CirclePlus,
-  LayoutList,
-  Combine,
-  AlertTriangle,
-  Asterisk,
-} from "lucide-react";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import {
   Dialog,
   DialogContent,
@@ -42,39 +16,52 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectGroup,
-} from "@/components/ui/select";
-import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
-import { Separator } from "@/components/ui/separator";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import parseDuration from "parse-duration";
-import { MAX_DURATION, emptyEditorContent } from "~/app/constants";
-import { UserNameCell } from "@/components/tables/UserNameCell";
-import {
-  MilestoneSelect,
-  transformMilestones,
-} from "@/components/forms/MilestoneSelect";
-import { ManageTags } from "@/components/ManageTags";
-import type { Attachments } from "@prisma/client";
-import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
-import UploadAttachments from "@/components/UploadAttachments";
-import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
-import { useTranslations, useLocale } from "next-intl";
-import { toHumanReadable } from "~/utils/duration";
-import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent, SelectGroup, SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import UploadAttachments from "@/components/UploadAttachments";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { Attachments } from "@prisma/client";
 import { ApplicationArea } from "@prisma/client";
+import {
+  AlertTriangle,
+  Asterisk, CirclePlus, Combine, LayoutList
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import parseDuration from "parse-duration";
+import React, { useCallback, useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod/v4";
 import { notifySessionAssignment } from "~/app/actions/session-notifications";
+import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import {
+  useCreateAttachments, useCreateSessions, useCreateSessionVersions,
+  useFindFirstProjects, useFindManyConfigurations, useFindManyIssue, useFindManyMilestones,
+  useFindManyProjectAssignment, useFindManyTags, useFindManyTemplates, useFindManyWorkflows
+} from "~/lib/hooks";
+import { IconName } from "~/types/globals";
+import { toHumanReadable } from "~/utils/duration";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 
 interface AddSessionModalProps {
   defaultMilestoneId?: number;

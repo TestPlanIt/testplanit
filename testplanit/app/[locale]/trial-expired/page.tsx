@@ -1,16 +1,16 @@
-import { useTranslations } from "next-intl";
-import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Link } from "~/lib/navigation";
 import {
   Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Link } from "~/lib/navigation";
 
 export default function TrialExpiredPage() {
   const t = useTranslations("TrialExpired");

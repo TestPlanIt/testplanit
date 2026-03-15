@@ -1,13 +1,12 @@
+import { prisma as defaultPrisma } from "@/lib/prismaBase";
+import type { PrismaClient } from "@prisma/client";
+import { Job, JobsOptions } from "bullmq";
+import { syncIssueToElasticsearch } from "~/services/issueSearch";
+import { getCurrentTenantId } from "../../multiTenantPrisma";
 import { getSyncQueue } from "../../queues";
+import type { IssueAdapter, IssueData } from "../adapters/IssueAdapter";
 import { issueCache } from "../cache/IssueCache";
 import { integrationManager } from "../IntegrationManager";
-import type { IssueData } from "../adapters/IssueAdapter";
-import type { IssueAdapter } from "../adapters/IssueAdapter";
-import { JobsOptions, Job } from "bullmq";
-import { prisma as defaultPrisma } from "@/lib/prismaBase";
-import { syncIssueToElasticsearch } from "~/services/issueSearch";
-import type { PrismaClient } from "@prisma/client";
-import { getCurrentTenantId } from "../../multiTenantPrisma";
 
 // Lazy-load zenstack enhance to reduce worker memory at startup
 let _enhance: typeof import("@zenstackhq/runtime").enhance | null = null;

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
-import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 import { useTranslations } from "next-intl";
+import React, { useEffect, useRef } from "react";
+import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 
 // Simplified data item for this chart
 export interface RecentResultStatusItem {

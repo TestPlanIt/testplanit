@@ -9,15 +9,15 @@
  * - mappings: JSON string - Array of { fileName, junitTestResultId }
  */
 
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { NextRequest, NextResponse } from "next/server";
-import { getServerAuthSession } from "~/server/auth";
+import { z } from "zod";
 import {
   authenticateApiToken,
-  extractBearerToken,
+  extractBearerToken
 } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { z } from "zod";
+import { getServerAuthSession } from "~/server/auth";
 
 const mappingSchema = z.array(
   z.object({

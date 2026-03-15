@@ -1,16 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
 import { enhance } from "@zenstackhq/runtime";
-import { db } from "~/server/db";
-import { prisma } from "~/lib/prisma";
+import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
 import { emptyEditorContent } from "~/app/constants/backend";
+import { prisma } from "~/lib/prisma";
+import { authOptions } from "~/server/auth";
+import { db } from "~/server/db";
+import { syncSharedStepToElasticsearch } from "~/services/sharedStepSearch";
 import {
   convertTextToTipTapJSON,
-  ensureTipTapJSON,
+  ensureTipTapJSON
 } from "~/utils/tiptapConversion";
-import { syncSharedStepToElasticsearch } from "~/services/sharedStepSearch";
 
 // Helper function to safely parse JSON
 const safeJsonParse = (jsonString: any, defaultValue: any = null): any => {

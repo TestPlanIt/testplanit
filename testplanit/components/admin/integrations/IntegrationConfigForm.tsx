@@ -1,22 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { IntegrationProvider, IntegrationAuthType } from "@prisma/client";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+  FormDescription, FormItem,
+  FormLabel
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { HelpPopover } from "@/components/ui/help-popover";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Lock, AlertTriangle, RefreshCw, Copy, Check } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { IntegrationAuthType, IntegrationProvider } from "@prisma/client";
+import { AlertTriangle, Check, Copy, Lock, RefreshCw } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 
 interface IntegrationConfigFormProps {
   provider: IntegrationProvider;

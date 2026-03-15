@@ -1,19 +1,19 @@
 "use client";
 
-import React from "react";
-import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Form, FormItem } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useTranslations } from "next-intl";
+import React from "react";
 import { useForm } from "react-hook-form";
 
 interface ConfirmationDialogProps {

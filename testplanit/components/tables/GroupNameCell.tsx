@@ -1,9 +1,9 @@
 "use client";
 
-import { useFindUniqueGroups } from "~/lib/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useFindUniqueGroups } from "~/lib/hooks";
 
 interface GroupNameCellProps {
   groupId: string;

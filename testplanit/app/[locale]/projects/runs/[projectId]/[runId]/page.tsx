@@ -1,89 +1,15 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { useRouter, usePathname } from "~/lib/navigation";
-import { useParams, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
-import {
-  useUpdateTestRuns,
-  useFindManyWorkflows,
-  useCreateAttachments,
-  useUpdateAttachments,
-  useFindManyConfigurations,
-  useFindManyMilestones,
-  useFindFirstRepositoryCases,
-  useDeleteManyTestRunResults,
-  useDeleteManyTestRunStepResults,
-  useFindFirstProjects,
-  useFindManyJUnitTestSuite,
-  useFindFirstStatusScope,
-  useFindUniqueTestRuns,
-} from "~/lib/hooks";
-import { AttachmentChanges } from "@/components/AttachmentsDisplay";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, FormProvider } from "react-hook-form";
-import { z } from "zod/v4";
-import { useQuery } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Loading } from "@/components/Loading";
-import { emptyEditorContent } from "~/app/constants";
-import {
-  CircleSlash2,
-  CircleCheckBig,
-  Trash2,
-  ArrowLeft,
-  TriangleAlert,
-  SquarePen,
-  Save,
-  ChevronLeft,
-  Maximize2,
-  Copy,
-} from "lucide-react";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { transformMilestones } from "@/components/forms/MilestoneSelect";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import type { Resolver } from "react-hook-form";
-import {
-  Attachments,
-  ApplicationArea,
-  RepositoryCases,
-  Tags,
-} from "@prisma/client";
-import type { JSONContent } from "@tiptap/react";
-import { IconName } from "~/types/globals";
-import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
-import { ImperativePanelHandle } from "react-resizable-panels";
-import { Badge } from "@/components/ui/badge";
-import { DateFormatter } from "@/components/DateFormatter";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
-import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
-import { Link } from "~/lib/navigation";
-import { useTranslations } from "next-intl";
-import { Separator } from "@/components/ui/separator";
-import { DeleteTestRunModal } from "./DeleteTestRun";
-import CompleteTestRunDialog from "./CompleteTestRunDialog";
-import DuplicateTestRunDialog, {
-  AddTestRunModalInitProps,
-} from "../DuplicateTestRunDialog";
-import {
-  TestCasesSection,
-  SelectedConfigurationInfo,
-} from "./TestCasesSection";
+import { AttachmentChanges } from "@/components/AttachmentsDisplay";
+import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsDonut";
+import { DateFormatter } from "@/components/DateFormatter";
+import { ForecastDisplay } from "@/components/ForecastDisplay";
+import { transformMilestones } from "@/components/forms/MilestoneSelect";
+import { Loading } from "@/components/Loading";
+import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
-import TestRunCasesSummary from "~/components/TestRunCasesSummary";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,44 +17,90 @@ import {
   AlertDialogContent,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import {
+  ResizableHandle, ResizablePanel, ResizablePanelGroup
+} from "@/components/ui/resizable";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
-  SheetTitle,
+  SheetTitle
 } from "@/components/ui/sheet";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { updateTestRunForecast } from "~/services/testRunService";
-import { isAutomatedTestRunType } from "~/utils/testResultTypes";
-import { PaginationProvider } from "~/lib/contexts/PaginationContext";
-import { CommentsSection } from "~/components/comments/CommentsSection";
-import TestRunFormControls from "./TestRunFormControls";
-import JunitTableSection from "./JunitTableSection";
-import { Button } from "@/components/ui/button";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { ForecastDisplay } from "@/components/ForecastDisplay";
-import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsDonut";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import AddTestRunModal from "../AddTestRunModal";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
+} from "@/components/ui/tooltip";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  ApplicationArea, Attachments, RepositoryCases,
+  Tags
+} from "@prisma/client";
+import { useQuery } from "@tanstack/react-query";
+import type { JSONContent } from "@tiptap/react";
+import {
+  ArrowLeft, ChevronLeft, CircleCheckBig, CircleSlash2, Copy, Maximize2, Save, SquarePen, Trash2, TriangleAlert
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useParams, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Resolver } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
+import { ImperativePanelHandle } from "react-resizable-panels";
+import { z } from "zod/v4";
+import { emptyEditorContent } from "~/app/constants";
+import { CommentsSection } from "~/components/comments/CommentsSection";
+import TestRunCasesSummary from "~/components/TestRunCasesSummary";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { PaginationProvider } from "~/lib/contexts/PaginationContext";
+import {
+  useCreateAttachments, useDeleteManyTestRunResults,
+  useDeleteManyTestRunStepResults,
+  useFindFirstProjects, useFindFirstRepositoryCases, useFindFirstStatusScope, useFindManyConfigurations, useFindManyJUnitTestSuite, useFindManyMilestones, useFindManyWorkflows, useFindUniqueTestRuns, useUpdateAttachments, useUpdateTestRuns
+} from "~/lib/hooks";
+import { Link, usePathname, useRouter } from "~/lib/navigation";
+import { updateTestRunForecast } from "~/services/testRunService";
+import { IconName } from "~/types/globals";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
+import AddTestRunModal from "../AddTestRunModal";
+import DuplicateTestRunDialog, {
+  AddTestRunModalInitProps
+} from "../DuplicateTestRunDialog";
+import CompleteTestRunDialog from "./CompleteTestRunDialog";
+import { DeleteTestRunModal } from "./DeleteTestRun";
+import JunitTableSection from "./JunitTableSection";
+import {
+  SelectedConfigurationInfo, TestCasesSection
+} from "./TestCasesSection";
+import TestRunFormControls from "./TestRunFormControls";
 
 // Form Values interface
 interface FormValues {

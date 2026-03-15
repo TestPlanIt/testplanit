@@ -1,18 +1,13 @@
-import React from "react";
-import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { SessionResultsSummary } from "./SessionResultsSummary";
 import {
-  Theme,
-  Locale,
-  DateFormat,
-  TimeFormat,
-  ItemsPerPage,
-  NotificationMode,
+  DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat
 } from "@prisma/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen } from "@testing-library/react";
 import { Session } from "next-auth";
 import * as NextAuth from "next-auth/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React from "react";
+import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
+import { SessionResultsSummary } from "./SessionResultsSummary";
 
 // --- Mocking Dependencies ---
 
@@ -69,7 +64,7 @@ vi.mock("~/lib/hooks", () => ({
 }));
 
 // Import the mocked hooks AFTER vi.mock
-import { useFindManySessionResults, useFindFirstStatus } from "~/lib/hooks";
+import { useFindFirstStatus, useFindManySessionResults } from "~/lib/hooks";
 
 // Mock next/navigation
 vi.mock("next/navigation", () => ({

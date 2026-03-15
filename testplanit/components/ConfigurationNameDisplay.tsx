@@ -1,12 +1,12 @@
-import { Combine } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { cn } from "~/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import { Combine } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { cn } from "~/utils";
 
 interface ConfigurationNameDisplayProps {
   configuration?: {

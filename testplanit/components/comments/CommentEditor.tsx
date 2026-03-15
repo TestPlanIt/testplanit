@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
 import { JSONContent } from "@tiptap/core";
-import { Button } from "~/components/ui/button";
-import { cn } from "~/utils";
-import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
-import { useTranslations } from "next-intl";
+import Placeholder from "@tiptap/extension-placeholder";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
+import { cn } from "~/utils";
 
 interface CommentEditorProps {
   projectId: number;

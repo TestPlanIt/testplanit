@@ -1,29 +1,28 @@
-import React from "react";
-import { SessionsWithDetails } from "./SessionDisplay";
+import { DateTextDisplay } from "@/components/DateTextDisplay";
+import DynamicIcon from "@/components/DynamicIcon";
+import { MemberList } from "@/components/MemberList";
+import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
+import TextFromJson from "@/components/TextFromJson";
 import { Button } from "@/components/ui/button";
-import { MoreVertical, CheckCircle, LinkIcon, Pencil } from "lucide-react";
-import type { IconName } from "~/types/globals";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import DynamicIcon from "@/components/DynamicIcon";
-import TextFromJson from "@/components/TextFromJson";
-import { MemberList } from "@/components/MemberList";
-import { Link } from "~/lib/navigation";
-import { useParams } from "next/navigation";
-import { useRouter } from "~/lib/navigation";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import { cn } from "~/utils";
-import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
-import { DateTextDisplay } from "@/components/DateTextDisplay";
+import { ApplicationArea } from "@prisma/client";
+import { CheckCircle, LinkIcon, MoreVertical, Pencil } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import React from "react";
 import { SessionResultsSummary } from "~/components/SessionResultsSummary";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { ApplicationArea } from "@prisma/client";
+import { Link, useRouter } from "~/lib/navigation";
+import type { IconName } from "~/types/globals";
+import { cn } from "~/utils";
+import { SessionsWithDetails } from "./SessionDisplay";
 
 interface SessionItemProps {
   testSession: SessionsWithDetails;

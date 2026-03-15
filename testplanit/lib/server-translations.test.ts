@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getServerTranslation, formatLocaleForUrl } from "./server-translations";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { formatLocaleForUrl, getServerTranslation } from "./server-translations";
 
 // Mock fs/promises with a factory function
 vi.mock('fs/promises', () => ({

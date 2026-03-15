@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { PrismaClient } from '@prisma/client';
-import { readFileSync } from 'fs';
 import { parse } from 'csv-parse/sync';
+import { readFileSync } from 'fs';
 import { performance } from 'perf_hooks';
 
 const prisma = new PrismaClient();

@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { groupRowsByKeys, flattenGroupedRows } from "./groupRows";
+import { describe, expect, it } from "vitest";
+import { flattenGroupedRows, groupRowsByKeys } from "./groupRows";
 
 describe("groupRowsByKeys", () => {
   describe("basic grouping", () => {

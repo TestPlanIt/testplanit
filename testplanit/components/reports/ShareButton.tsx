@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Share2 } from "lucide-react";
-import { ShareDialog } from "./ShareDialog";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { ShareDialog } from "./ShareDialog";
 
 interface ShareButtonProps {
   projectId?: number; // Optional for cross-project reports

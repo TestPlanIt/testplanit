@@ -1,6 +1,6 @@
+import { getAllTenantIds, isMultiTenantMode } from "../lib/multiTenantPrisma";
 import { getForecastQueue } from "../lib/queues";
 import { JOB_MILESTONE_DUE_NOTIFICATIONS } from "../workers/forecastWorker";
-import { isMultiTenantMode, getAllTenantIds } from "../lib/multiTenantPrisma";
 
 async function triggerMilestoneNotifications() {
   const forecastQueue = getForecastQueue();

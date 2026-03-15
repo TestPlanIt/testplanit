@@ -1,29 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
-import { Search, Loader2, AlertCircle, ExternalLink, Plus } from "lucide-react";
+import { useDebounce } from "@/components/Debounce";
+import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
+import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useFindManyProjectIntegration } from "@/lib/hooks/project-integration";
-import { useFindManyIssue } from "@/lib/hooks/issue";
-import { useDebounce } from "@/components/Debounce";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useFindManyIssue } from "@/lib/hooks/issue";
+import { useFindManyProjectIntegration } from "@/lib/hooks/project-integration";
+import { AlertCircle, ExternalLink, Loader2, Plus, Search } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { CreateIssueDialog } from "./create-issue-dialog";
 import { CreateIssueJiraForm } from "./create-issue-jira-form";
-import { toast } from "sonner";
-import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
-import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 
 interface ExternalIssue {
   id: string;

@@ -1,9 +1,8 @@
-import React from "react";
+import DynamicIcon from "@/components/DynamicIcon";
+import dynamicIconImports from "lucide-react/dynamicIconImports";
+import React, { CSSProperties } from "react";
 import { useDragLayer, XYCoord } from "react-dnd";
 import { ItemTypes } from "~/types/dndTypes";
-import DynamicIcon from "@/components/DynamicIcon";
-import { CSSProperties } from "react";
-import dynamicIconImports from "lucide-react/dynamicIconImports";
 
 // Define the structure of an individual workflow's essential info for preview
 interface PreviewWorkflowInfo {

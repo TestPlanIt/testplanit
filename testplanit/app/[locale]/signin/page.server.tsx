@@ -1,6 +1,5 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "~/lib/navigation";
-import { cookies } from "next/headers";
 
 export default async function SigninPage() {
   // Clear the NEXT_LOCALE cookie

@@ -1,19 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import {
-  useUpdateRepositoryCases,
-  useFindManyWorkflows,
-  useFindManyTags,
-  useUpdateCaseFieldValues,
-  useCreateCaseFieldValues,
-  useCreateSteps,
-  useDeleteManySteps,
-  useUpdateManyRepositoryCases,
-  useUpdateSteps,
-  useCreateRepositoryCaseVersions,
-  useCreateCaseFieldVersionValues,
-} from "~/lib/hooks";
+import { formatSeconds } from "@/components/DurationDisplay";
+import DynamicIcon from "@/components/DynamicIcon";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -21,49 +12,40 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { isAutomatedCaseSource } from "~/utils/testResultTypes";
-import {
-  Loader2,
-  AlertCircle,
-  Info,
-  LockIcon,
-  Trash2,
-  CircleSlash2,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useSession } from "next-auth/react";
-import { Prisma, CaseFields as PrismaCaseField } from "@prisma/client";
-import { isEqual } from "lodash";
-import { FieldValueInput } from "./FieldValueInput";
-import DynamicIcon from "@/components/DynamicIcon";
-import { Switch } from "@/components/ui/switch";
-import { emptyEditorContent } from "~/app/constants";
-import { IconName } from "~/types/globals";
-import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
-import { toast } from "sonner";
-import parseDuration from "parse-duration";
-import { formatSeconds } from "@/components/DurationDisplay";
-import { z } from "zod/v4";
-import { MAX_DURATION } from "~/app/constants";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { ApplicationArea } from "@prisma/client";
 import { HelpPopover } from "@/components/ui/help-popover";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { extractTextFromNode } from "~/utils/extractTextFromJson";
+import { Label } from "@/components/ui/label";
+import {
+  Popover, PopoverContent, PopoverTrigger
+} from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { ApplicationArea, CaseFields as PrismaCaseField, Prisma } from "@prisma/client";
+import { isEqual } from "lodash";
+import {
+  AlertCircle, ChevronLeft,
+  ChevronRight, CircleSlash2, Info, Loader2, LockIcon,
+  Trash2
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import parseDuration from "parse-duration";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { z } from "zod/v4";
+import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import {
+  useCreateCaseFieldValues, useCreateCaseFieldVersionValues, useCreateRepositoryCaseVersions, useCreateSteps,
+  useDeleteManySteps, useFindManyTags, useFindManyWorkflows, useUpdateCaseFieldValues, useUpdateManyRepositoryCases, useUpdateRepositoryCases, useUpdateSteps
+} from "~/lib/hooks";
+import { IconName } from "~/types/globals";
+import { extractTextFromNode } from "~/utils/extractTextFromJson";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import { FieldValueInput } from "./FieldValueInput";
+import FieldValueRenderer from "./[caseId]/FieldValueRenderer";
 
 // --- Type Definitions ---
 

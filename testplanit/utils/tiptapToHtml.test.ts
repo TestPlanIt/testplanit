@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { tiptapToHtml, isTipTapContent } from "./tiptapToHtml";
+import { describe, expect, it } from "vitest";
+import { isTipTapContent, tiptapToHtml } from "./tiptapToHtml";
 
 describe("tiptapToHtml", () => {
   describe("isTipTapContent", () => {

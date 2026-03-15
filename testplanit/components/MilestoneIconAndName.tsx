@@ -1,7 +1,7 @@
 import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
-import { Link } from "~/lib/navigation";
 import { LinkIcon } from "lucide-react";
+import { Link } from "~/lib/navigation";
+import { IconName } from "~/types/globals";
 
 interface MilestoneIconAndNameProps {
   milestone: {

@@ -1,17 +1,17 @@
+import { Prisma, PrismaClient } from "@prisma/client";
 import { createReadStream, statSync } from "node:fs";
 import type { Readable } from "node:stream";
 import { Transform } from "node:stream";
+import { fileURLToPath } from "node:url";
 import { chain } from "stream-chain";
 import { parser } from "stream-json";
 import Assembler from "stream-json/Assembler";
-import { fileURLToPath } from "node:url";
-import { PrismaClient, Prisma } from "@prisma/client";
 import { TestmoStagingService } from "./TestmoStagingService";
 import {
   TestmoDatasetSummary,
   TestmoExportAnalyzerOptions,
   TestmoExportSummary,
-  TestmoReadableSource,
+  TestmoReadableSource
 } from "./types";
 
 const DEFAULT_SAMPLE_ROW_LIMIT = 5;

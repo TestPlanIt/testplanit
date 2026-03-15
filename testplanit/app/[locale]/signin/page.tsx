@@ -1,36 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import type { NextPage } from "next";
 import { signIn } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "~/lib/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { SsoProviderType } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { useFindManySsoProvider } from "~/lib/hooks/sso-provider";
-import { SsoProviderType } from "@prisma/client";
 
-import Image from "next/image";
-import { Link } from "~/lib/navigation";
-import svgIcon from "~/public/tpi_logo.svg";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  DialogDescription, DialogFooter, DialogHeader,
+  DialogTitle
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -38,11 +27,20 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
-import { LinkIcon, Loader2, Shield, Mail } from "lucide-react";
 import { HelpPopover } from "@/components/ui/help-popover";
-import { siGoogle, siApple } from "simple-icons";
+import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot
+} from "@/components/ui/input-otp";
+import { LinkIcon, Loader2, Mail, Shield } from "lucide-react";
+import Image from "next/image";
+import { siApple, siGoogle } from "simple-icons";
+import { Link } from "~/lib/navigation";
+import svgIcon from "~/public/tpi_logo.svg";
 
 const GoogleIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor">

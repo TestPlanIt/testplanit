@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { prepareShareLinkData, auditShareLinkCreation, revokeShareLink } from "./share-links";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { auditShareLinkCreation, prepareShareLinkData, revokeShareLink } from "./share-links";
 
 // Mock dependencies
 vi.mock("~/lib/share-tokens", () => ({
@@ -34,10 +34,10 @@ vi.mock("~/lib/prisma", () => ({
   },
 }));
 
-import { generateShareKey } from "~/lib/share-tokens";
 import bcrypt from "bcrypt";
 import { getServerSession } from "next-auth";
 import { prisma } from "~/lib/prisma";
+import { generateShareKey } from "~/lib/share-tokens";
 
 describe("share-links server actions", () => {
   beforeEach(() => {

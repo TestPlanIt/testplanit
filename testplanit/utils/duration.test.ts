@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { toHumanReadable, toBusinessHours } from "./duration";
+import { describe, expect, it } from "vitest";
+import { toBusinessHours, toHumanReadable } from "./duration";
 
 describe("toHumanReadable", () => {
   // Basic milliseconds tests

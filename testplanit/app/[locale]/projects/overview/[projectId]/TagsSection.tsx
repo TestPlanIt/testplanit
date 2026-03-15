@@ -1,10 +1,10 @@
-import React, { useCallback } from "react";
-import { Link, useRouter } from "~/lib/navigation";
-import { LinkIcon, TagsIcon } from "lucide-react";
-import { useFindManyTags } from "~/lib/hooks";
-import { BubbleChart } from "~/components/dataVisualizations/BubbleChart";
-import { useTranslations } from "next-intl";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { LinkIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { useCallback } from "react";
+import { BubbleChart } from "~/components/dataVisualizations/BubbleChart";
+import { useFindManyTags } from "~/lib/hooks";
+import { Link, useRouter } from "~/lib/navigation";
 
 interface TagsSectionProps {
   projectId: number;

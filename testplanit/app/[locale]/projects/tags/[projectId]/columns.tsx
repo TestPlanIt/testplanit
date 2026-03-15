@@ -1,9 +1,9 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { Tags } from "@prisma/client";
-import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
+import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
+import { Tags } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
 
 export interface ExtendedTags extends Tags {
   repositoryCases: { id: number; name: string }[];

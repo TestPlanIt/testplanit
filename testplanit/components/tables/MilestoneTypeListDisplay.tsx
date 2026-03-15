@@ -1,15 +1,15 @@
-import React from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { useFindManyMilestoneTypes } from "~/lib/hooks";
-import { MilestoneTypes, FieldIcon } from "@prisma/client";
-import DynamicIcon from "../DynamicIcon";
-import { IconName } from "~/types/globals";
+import { FieldIcon, MilestoneTypes } from "@prisma/client";
 import { Milestone } from "lucide-react";
+import React from "react";
+import { useFindManyMilestoneTypes } from "~/lib/hooks";
+import { IconName } from "~/types/globals";
+import DynamicIcon from "../DynamicIcon";
 
 interface MilestoneTypeListProps {
   milestoneTypes: { milestoneTypeId: number }[];

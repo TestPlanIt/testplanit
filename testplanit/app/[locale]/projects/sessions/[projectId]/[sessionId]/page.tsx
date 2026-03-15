@@ -1,124 +1,98 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { useRouter } from "~/lib/navigation";
 import { useParams, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "~/lib/navigation";
 
-import { useSession } from "next-auth/react";
-import {
-  useFindFirstSessions,
-  useFindManyTemplates,
-  useUpdateSessions,
-  useFindManyWorkflows,
-  useCreateAttachments,
-  useUpdateAttachments,
-  useCreateSessionVersions,
-  useFindManyConfigurations,
-  useFindManyMilestones,
-  useFindManyProjectAssignment,
-  useFindManySessionVersions,
-  useFindManyTags,
-  useFindFirstProjects,
-} from "~/lib/hooks";
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { notifySessionAssignment } from "~/app/actions/session-notifications";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, FormProvider, useFormContext } from "react-hook-form";
-import { z } from "zod/v4";
+import { Loading } from "@/components/Loading";
 import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
-  CardDescription,
+  CardTitle
 } from "@/components/ui/card";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import { Loading } from "@/components/Loading";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useSession } from "next-auth/react";
+import { FormProvider, useForm, useFormContext } from "react-hook-form";
+import { z } from "zod/v4";
+import { notifySessionAssignment } from "~/app/actions/session-notifications";
 import { CommentsSection } from "~/components/comments/CommentsSection";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import {
+  useCreateAttachments, useCreateSessionVersions, useFindFirstProjects, useFindFirstSessions, useFindManyConfigurations,
+  useFindManyMilestones,
+  useFindManyProjectAssignment,
+  useFindManySessionVersions,
+  useFindManyTags, useFindManyTemplates, useFindManyWorkflows, useUpdateAttachments, useUpdateSessions
+} from "~/lib/hooks";
 
-import { emptyEditorContent } from "~/app/constants";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { Button } from "@/components/ui/button";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Save,
-  SquarePen,
-  CircleSlash2,
-  CircleCheckBig,
-  Trash2,
-  AlertTriangle,
-  ArrowLeft,
-} from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { ManageTags } from "@/components/ManageTags";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import parseDuration from "parse-duration";
-import { MAX_DURATION } from "~/app/constants";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectGroup,
-} from "@/components/ui/select";
+import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
+import { DateFormatter } from "@/components/DateFormatter";
+import DynamicIcon from "@/components/DynamicIcon";
+import { ForecastDisplay } from "@/components/ForecastDisplay";
 import {
   MilestoneSelect,
-  transformMilestones,
+  transformMilestones
 } from "@/components/forms/MilestoneSelect";
+import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
+import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
+import { ManageTags } from "@/components/ManageTags";
+import SessionResultForm from "@/components/SessionResultForm";
+import SessionResultsList from "@/components/SessionResultsList";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { UserNameCell } from "@/components/tables/UserNameCell";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup
+} from "@/components/ui/resizable";
+import {
+  Select,
+  SelectContent, SelectGroup, SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import type { Control, FieldErrors, Resolver } from "react-hook-form";
-import type { Sessions, Attachments } from "@prisma/client";
-import { ApplicationArea } from "@prisma/client";
-import type { JSONContent } from "@tiptap/react";
-import { IconName } from "~/types/globals";
-import DynamicIcon from "@/components/DynamicIcon";
-import { toHumanReadable } from "~/utils/duration";
-import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
-import { ImperativePanelHandle } from "react-resizable-panels";
-import { TagsDisplay } from "@/components/tables/TagDisplay";
-import { Badge } from "@/components/ui/badge";
-import { DateFormatter } from "@/components/DateFormatter";
-import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
-import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import UploadAttachments from "@/components/UploadAttachments";
 import { VersionSelect } from "@/components/VersionSelect";
-import { DeleteSessionModal } from "./DeleteSession";
+import type { Attachments, Sessions } from "@prisma/client";
+import { ApplicationArea } from "@prisma/client";
+import type { JSONContent } from "@tiptap/react";
 import {
-  CompleteSessionDialog,
-  CompletableSession,
-} from "./CompleteSessionDialog";
-import { Link } from "~/lib/navigation";
-import { useTranslations, useLocale } from "next-intl";
-import SessionResultForm from "@/components/SessionResultForm";
-import SessionResultsList from "@/components/SessionResultsList";
-import { Separator } from "@/components/ui/separator";
+  ArrowLeft, ChevronLeft,
+  ChevronRight, CircleCheckBig, CircleSlash2, Save,
+  SquarePen, Trash2
+} from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import parseDuration from "parse-duration";
+import type { Control, FieldErrors, Resolver } from "react-hook-form";
+import { ImperativePanelHandle } from "react-resizable-panels";
+import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import SessionResultsSummary from "~/components/SessionResultsSummary";
-import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
-import { ManageExternalIssues } from "@/components/issues/ManageExternalIssues";
-import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { Link } from "~/lib/navigation";
+import { IconName } from "~/types/globals";
+import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
-import { ForecastDisplay } from "@/components/ForecastDisplay";
+import {
+  CompletableSession, CompleteSessionDialog
+} from "./CompleteSessionDialog";
+import { DeleteSessionModal } from "./DeleteSession";
 
 // First, define the FormValues interface before the BaseFormSchema
 interface FormValues {

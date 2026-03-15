@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   extractEntityContent,
   extractFieldValue,
-  extractTiptapText,
+  extractTiptapText
 } from "./content-extractor";
 
 describe("extractTiptapText", () => {

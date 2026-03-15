@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { User } from "@prisma/client";
-import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -20,7 +20,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 
 const FormSchema = z.object({});

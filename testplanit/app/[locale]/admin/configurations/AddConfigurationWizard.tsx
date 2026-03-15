@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
-import {
-  useFindManyConfigCategories,
-  useCreateConfigurations,
-} from "~/lib/hooks";
-import VariantSelectionDialog from "./VariantSelectionDialog";
-import CombinationSelectionDialog from "./CombinationSelectionDialog";
-import ConfirmationDialog from "./ConfirmationDialog";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { useState } from "react";
+import {
+  useCreateConfigurations, useFindManyConfigCategories
+} from "~/lib/hooks";
+import CombinationSelectionDialog from "./CombinationSelectionDialog";
+import ConfirmationDialog from "./ConfirmationDialog";
+import VariantSelectionDialog from "./VariantSelectionDialog";
 
 const AddConfigurationWizard = (): React.ReactElement => {
   const [step, setStep] = useState(0); // Start with step 0 to prevent the initial dialog from showing

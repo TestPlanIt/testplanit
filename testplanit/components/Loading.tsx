@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import { div as MotionDiv } from "motion/react-client";
 import { Separator } from "@/components/ui/separator";
-import svgIcon from "~/public/tpi_logo.svg";
+import { div as MotionDiv } from "motion/react-client";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import svgIcon from "~/public/tpi_logo.svg";
 
 export function Loading({ delay = 300 }: { delay?: number }) {
   const tGlobal = useTranslations();

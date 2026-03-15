@@ -1,19 +1,16 @@
-import React from "react";
-import { useTranslations } from "next-intl";
-import { Badge } from "@/components/ui/badge";
-import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
-import {
-  MilestonesWithTypes,
-  sortMilestones,
-  getStatus,
-  getStatusStyle,
-  ColorMap,
-} from "./milestoneUtils";
 import DynamicIcon from "@/components/DynamicIcon";
-import { CirclePlus } from "lucide-react";
+import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CirclePlus } from "lucide-react";
+import React from "react";
 import { AddSessionModal } from "~/app/[locale]/projects/sessions/[projectId]/AddSessionModal";
+import {
+  getStatus,
+  getStatusStyle, MilestonesWithTypes,
+  sortMilestones
+} from "./milestoneUtils";
 
 interface HasMilestone {
   id: number;

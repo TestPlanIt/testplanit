@@ -1,20 +1,20 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { Issue } from "@prisma/client";
-import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
-import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
-import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
-import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
-import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
-import { Plug } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import DOMPurify from "dompurify";
 import { DateFormatter } from "@/components/DateFormatter";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
+import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
+import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
+import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { Issue } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
+import DOMPurify from "dompurify";
+import { Plug } from "lucide-react";
 
 // Helper function to strip HTML tags and get plain text
 function stripHtmlTags(html: string | null): string {

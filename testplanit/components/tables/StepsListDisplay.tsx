@@ -1,16 +1,16 @@
-import React from "react";
+import TextFromJson from "@/components/TextFromJson";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 import { Steps as PrismaSteps } from "@prisma/client";
-import { ListOrdered, SearchCheck, Layers } from "lucide-react";
-import TextFromJson from "@/components/TextFromJson";
-import { useFindManySharedStepItem } from "~/lib/hooks";
+import { Layers, ListOrdered, SearchCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
+import React from "react";
 import { emptyEditorContent } from "~/app/constants";
+import { useFindManySharedStepItem } from "~/lib/hooks";
 
 interface ListDisplayStep extends PrismaSteps {
   sharedStepGroupId: number | null;

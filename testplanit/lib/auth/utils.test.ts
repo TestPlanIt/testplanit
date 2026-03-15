@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Session } from "next-auth";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock prisma
 vi.mock("@/lib/prisma", () => ({
@@ -20,7 +20,7 @@ vi.mock("@zenstackhq/runtime", () => ({
 
 import { prisma } from "@/lib/prisma";
 import { enhance } from "@zenstackhq/runtime";
-import { getUserWithRole, getEnhancedDb } from "./utils";
+import { getEnhancedDb, getUserWithRole } from "./utils";
 
 const mockPrisma = prisma as unknown as {
   user: {

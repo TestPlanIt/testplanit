@@ -1,22 +1,18 @@
-import React, { useState, useEffect, useRef } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput,
+  CommandItem, CommandList
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import {
-  Command,
-  CommandInput,
-  CommandItem,
-  CommandGroup,
-  CommandEmpty,
-  CommandList,
-} from "@/components/ui/command";
+import { Check, ChevronsUpDown, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import React, { useEffect, useRef, useState } from "react";
 import { cn, type ClassValue } from "~/utils";
-import { Check, X, ChevronsUpDown } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 function Spinner() {
   return (

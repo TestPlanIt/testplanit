@@ -1,8 +1,8 @@
-import React, { useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { SquareArrowUpRight, X } from "lucide-react";
-import { cn } from "~/utils";
 import { useTranslations } from "next-intl";
+import React, { useState } from "react";
+import { cn } from "~/utils";
 
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;

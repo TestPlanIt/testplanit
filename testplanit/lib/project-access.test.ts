@@ -1,8 +1,7 @@
-import { describe, it, expect } from "vitest";
 import { ProjectAccessType } from "@prisma/client";
+import { describe, expect, it } from "vitest";
 import {
-  buildProjectAccessWhere,
-  buildProjectAccessCondition,
+  buildProjectAccessCondition, buildProjectAccessWhere
 } from "./project-access";
 
 // Type helper to access OR property when it exists

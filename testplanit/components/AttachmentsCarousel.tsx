@@ -1,40 +1,38 @@
-import React, { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { AttachmentPreview } from "@/components/AttachmentPreview";
+import { Button } from "@/components/ui/button";
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  type CarouselApi,
+  type CarouselApi
 } from "@/components/ui/carousel";
-import { Attachments } from "@prisma/client";
-import { useUpdateAttachments } from "~/lib/hooks";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Download,
-  SquarePen,
-  Trash2,
-  CircleSlash2,
-} from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { UserNameCell } from "./tables/UserNameCell";
+import { Attachments } from "@prisma/client";
+import { filesize } from "filesize";
+import {
+  ChevronLeft,
+  ChevronRight, CircleSlash2, Download,
+  SquarePen,
+  Trash2
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import React, { useEffect, useState } from "react";
+import { useUpdateAttachments } from "~/lib/hooks";
 import { getStorageUrlClient } from "~/utils/storageUrl";
 import { DateFormatter } from "./DateFormatter";
-import { filesize } from "filesize";
-import { Separator } from "./ui/separator";
-import { AttachmentPreview } from "@/components/AttachmentPreview";
-import { Textarea } from "./ui/textarea";
+import { UserNameCell } from "./tables/UserNameCell";
 import { Input } from "./ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { useTranslations } from "next-intl";
+import { Separator } from "./ui/separator";
+import { Textarea } from "./ui/textarea";
 
 interface AttachmentsCarouselProps {
   attachments: Attachments[];

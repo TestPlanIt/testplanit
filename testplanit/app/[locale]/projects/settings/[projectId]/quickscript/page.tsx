@@ -1,38 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod/v4";
-import { toast } from "sonner";
-import {
-  useFindManyCodeRepository,
-  useFindFirstProjectCodeRepositoryConfig,
-  useCreateProjectCodeRepositoryConfig,
-  useUpdateProjectCodeRepositoryConfig,
-  useDeleteProjectCodeRepositoryConfig,
-  useFindFirstProjects,
-  useUpdateProjects,
-} from "~/lib/hooks";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { DateFormatter } from "@/components/DateFormatter";
+import { Loading } from "@/components/Loading";
+import { ProjectIcon } from "@/components/ProjectIcon";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -42,38 +12,50 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import {
+  Form, FormControl, FormField,
+  FormItem,
+  FormLabel, FormMessage
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Plus,
-  Trash2,
-  RefreshCw,
-  Eye,
   AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Loader2,
-  GitBranch,
-  Unlink,
+  CheckCircle, Eye, GitBranch, Loader2, Plus, RefreshCw, Trash2, Unlink, XCircle
 } from "lucide-react";
-import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { DateFormatter } from "@/components/DateFormatter";
-import { Link } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
-import { ProjectIcon } from "@/components/ProjectIcon";
-import { Loading } from "@/components/Loading";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod/v4";
+import { useRequireAuth } from "~/hooks/useRequireAuth";
+import {
+  useCreateProjectCodeRepositoryConfig, useDeleteProjectCodeRepositoryConfig, useFindFirstProjectCodeRepositoryConfig, useFindFirstProjects, useFindManyCodeRepository, useUpdateProjectCodeRepositoryConfig, useUpdateProjects
+} from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
 
 interface PreviewFile {
   path: string;

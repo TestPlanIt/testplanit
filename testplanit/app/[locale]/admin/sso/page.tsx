@@ -1,59 +1,40 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import {
-  useFindManySsoProvider,
-  useCreateSsoProvider,
-  useUpdateSsoProvider,
-  useFindManyAllowedEmailDomain,
-  useCreateAllowedEmailDomain,
-  useUpdateAllowedEmailDomain,
-  useDeleteAllowedEmailDomain,
-  useFindFirstRegistrationSettings,
-  useUpsertRegistrationSettings,
-} from "~/lib/hooks";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardDescription,
-  CardContent,
-  CardHeader,
-  CardTitle,
+  Card, CardContent, CardDescription, CardHeader,
+  CardTitle
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  ShieldUser,
-  Settings,
-  Edit,
-  Plus,
-  X,
-  Mail,
-  KeyRound,
-  Shield,
-} from "lucide-react";
-import { toast } from "sonner";
-import { SsoProviderType, Access } from "@prisma/client";
+  Dialog,
+  DialogContent,
+  DialogDescription, DialogFooter, DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { useTranslations } from "next-intl";
-import { useState, useEffect } from "react";
+import { Access, SsoProviderType } from "@prisma/client";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Edit, KeyRound, Mail, Plus, Settings, Shield, ShieldUser, X
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import {
+  useCreateAllowedEmailDomain, useCreateSsoProvider, useDeleteAllowedEmailDomain,
+  useFindFirstRegistrationSettings, useFindManyAllowedEmailDomain, useFindManySsoProvider, useUpdateAllowedEmailDomain, useUpdateSsoProvider, useUpsertRegistrationSettings
+} from "~/lib/hooks";
 
 export default function SSOAdminPage() {
   const { data: session } = useSession();

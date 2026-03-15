@@ -1,22 +1,18 @@
 "use client";
-import { useUpdateSessions } from "~/lib/hooks";
-import { Sessions } from "@prisma/client";
-import { useForm } from "react-hook-form";
-import { TriangleAlert } from "lucide-react";
-import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogContent,
-  AlertDialogTitle,
+  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
-import { useRouter } from "~/lib/navigation";
-import { useTranslations } from "next-intl";
+import { Form } from "@/components/ui/form";
+import { Sessions } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { TriangleAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { useUpdateSessions } from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
 
 interface DeleteSessionProps {
   testSession?: Sessions;

@@ -1,8 +1,7 @@
-import { Prisma, ApplicationArea } from "@prisma/client";
+import { ApplicationArea, Prisma } from "@prisma/client";
 import type {
-  TestmoMappingConfiguration,
   TestmoConfigurationMappingConfig,
-  TestmoConfigVariantMappingConfig,
+  TestmoConfigVariantMappingConfig, TestmoMappingConfiguration
 } from "../../services/imports/testmo/types";
 import { toNumberValue } from "./helpers";
 import type { EntitySummaryResult } from "./types";

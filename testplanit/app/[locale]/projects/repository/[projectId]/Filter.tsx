@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input";
-import { useRef, memo, useCallback } from "react";
+import { memo, useCallback, useRef } from "react";
 
 interface FilterProps {
   placeholder: string;

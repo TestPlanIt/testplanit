@@ -1,10 +1,9 @@
 import { Prisma } from "@prisma/client";
 import type {
-  TestmoMappingConfiguration,
-  TestmoTemplateFieldTargetType,
-  TestmoFieldOptionConfig,
+  TestmoFieldOptionConfig, TestmoMappingConfiguration,
+  TestmoTemplateFieldTargetType
 } from "../../services/imports/testmo/types";
-import { toNumberValue, toStringValue, toBooleanValue } from "./helpers";
+import { toBooleanValue, toNumberValue, toStringValue } from "./helpers";
 import type { EntitySummaryResult } from "./types";
 
 const SYSTEM_NAME_REGEX = /^[A-Za-z][A-Za-z0-9_]*$/;

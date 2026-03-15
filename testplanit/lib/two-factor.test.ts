@@ -1,14 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { generateSecret, generate } from "otplib";
+import { generate, generateSecret } from "otplib";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  generateTOTPSecret,
-  generateQRCodeDataURL,
-  verifyTOTP,
-  generateBackupCodes,
-  hashBackupCode,
-  verifyBackupCode,
-  encryptSecret,
-  decryptSecret,
+  decryptSecret, encryptSecret, generateBackupCodes, generateQRCodeDataURL, generateTOTPSecret, hashBackupCode,
+  verifyBackupCode, verifyTOTP
 } from "./two-factor";
 
 // Mock QRCode

@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
-import { useUpdateTags, useFindManyTags } from "~/lib/hooks";
 import { Tags } from "@prisma/client";
+import { useEffect, useMemo, useState } from "react";
+import { useFindManyTags, useUpdateTags } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -18,7 +18,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -28,11 +28,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 
-import { useTranslations } from "next-intl";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { useTranslations } from "next-intl";
 
 // Create a simpler schema that works with form inference
 const EditTagSchema = z.object({

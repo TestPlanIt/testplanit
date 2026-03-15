@@ -1,47 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname } from "~/lib/navigation";
-import { useParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectDropdownMenu } from "@/components/ProjectDropdownMenu";
-import { Link } from "~/lib/navigation";
 import {
-  Home,
-  Milestone,
-  BookText as DocumentationIcon,
-  ListTree as RepositoryIcon,
-  PlayCircle as RunsIcon,
-  Tags as TagsIcon,
-  Compass as SessionsIcon,
-  Bug as IssuesIcon,
-  Layers,
-  ChartNoAxesCombined,
-  Plug,
-  Sparkles,
-  Share2,
-  ScrollText,
-  Settings,
-  FolderKanban,
-} from "lucide-react";
-import { cn } from "~/utils";
+  Accordion, AccordionContent, AccordionItem,
+  AccordionTrigger
+} from "@/components/ui/accordion";
 import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from "@/components/ui/accordion";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { ApplicationArea } from "@prisma/client";
+import {
+  BookText as DocumentationIcon, Bug as IssuesIcon, ChartNoAxesCombined, Compass as SessionsIcon, FolderKanban, Home, Layers, ListTree as RepositoryIcon, Milestone, PlayCircle as RunsIcon, Plug, ScrollText,
+  Settings, Share2, Sparkles, Tags as TagsIcon
+} from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { Link, usePathname } from "~/lib/navigation";
+import { cn } from "~/utils";
 
 type MenuSection = "project" | "management" | "settings";
 

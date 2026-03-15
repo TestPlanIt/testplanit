@@ -1,9 +1,9 @@
-import React, { useCallback, useState } from "react";
 import { BubbleMenu } from "@tiptap/react/menus";
+import React, { useCallback, useState } from "react";
 
-import { MenuProps } from "../types";
-import { LinkPreviewPanel } from "@/components/tiptap/panels/LinkPreviewPanel";
 import { LinkEditorPanel } from "@/components/tiptap/panels";
+import { LinkPreviewPanel } from "@/components/tiptap/panels/LinkPreviewPanel";
+import { MenuProps } from "../types";
 
 export const LinkMenu = ({
   editor,

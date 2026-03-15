@@ -1,22 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  DialogDescription, DialogFooter, DialogHeader,
+  DialogTitle
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useFindManyIssue, useUpsertIssue, useDeleteIssue } from "~/lib/hooks";
+import { ExternalLink, Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 import { toast } from "sonner";
+import { useDeleteIssue, useFindManyIssue, useUpsertIssue } from "~/lib/hooks";
 
 interface ManageSimpleUrlIssuesProps {
   projectId: number;

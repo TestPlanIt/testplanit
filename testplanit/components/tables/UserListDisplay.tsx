@@ -1,14 +1,14 @@
-import React from "react";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { useFindManyUser } from "~/lib/hooks";
 import { User } from "@prisma/client";
 import { UserRoundIcon } from "lucide-react";
-import { UserNameCell } from "@/components/tables/UserNameCell";
+import React from "react";
+import { useFindManyUser } from "~/lib/hooks";
 
 interface UserListProps {
   users: { userId: string }[];

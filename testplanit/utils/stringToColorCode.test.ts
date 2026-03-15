@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { stringToColorCode } from "./stringToColorCode"; // Import from the local util file
 
 describe("stringToColorCode Utility", () => {

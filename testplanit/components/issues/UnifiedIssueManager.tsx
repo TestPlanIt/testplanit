@@ -1,16 +1,15 @@
 "use client";
 
-import React from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { IntegrationProvider } from "@prisma/client";
+import { AlertCircle, Settings } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useFindFirstProjects } from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
+import { DeferredIssueManager } from "./DeferredIssueManager";
 import { ManageExternalIssues } from "./ManageExternalIssues";
 import { ManageSimpleUrlIssues } from "./ManageSimpleUrlIssues";
-import { DeferredIssueManager } from "./DeferredIssueManager";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Link } from "~/lib/navigation";
-import { useTranslations } from "next-intl";
-import { IntegrationProvider } from "@prisma/client";
 
 interface UnifiedIssueManagerProps {
   projectId: number;

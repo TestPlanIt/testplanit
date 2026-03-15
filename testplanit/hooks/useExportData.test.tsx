@@ -1,10 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import Papa from "papaparse";
-import { useExportData, TFunction } from "./useExportData";
+import { act, renderHook } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ExportOptions } from "../app/[locale]/projects/repository/[projectId]/ExportModal";
 import { CustomColumnDef } from "../components/tables/ColumnSelection";
-import { extractTextFromNode } from "../utils/extractTextFromJson";
+import { TFunction, useExportData } from "./useExportData";
 
 // --- Mocks ---
 

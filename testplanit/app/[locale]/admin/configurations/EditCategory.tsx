@@ -1,11 +1,11 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
-import { useUpdateConfigCategories } from "~/lib/hooks";
-import { ConfigCategories } from "@prisma/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { ConfigCategories } from "@prisma/client";
 import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
+import { useUpdateConfigCategories } from "~/lib/hooks";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -28,7 +28,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { HelpPopover } from "@/components/ui/help-popover";

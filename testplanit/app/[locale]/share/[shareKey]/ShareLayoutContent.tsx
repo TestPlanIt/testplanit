@@ -1,12 +1,12 @@
 "use client";
 
-import { ThemeProvider } from "~/components/theme-provider";
-import { Toaster } from "sonner";
 import { Session } from "next-auth";
-import { useFindUniqueUserPreferences } from "~/lib/hooks";
-import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { Toaster } from "sonner";
+import { ThemeProvider } from "~/components/theme-provider";
+import { useFindUniqueUserPreferences } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 
 interface ShareLayoutContentProps {

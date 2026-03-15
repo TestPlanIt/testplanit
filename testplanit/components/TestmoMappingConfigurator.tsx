@@ -1,16 +1,14 @@
 "use client";
 
-import { WorkflowType } from "@prisma/client";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useTranslations } from "next-intl";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { ColorPicker } from "@/components/ColorPicker";
+import { FieldIconPicker } from "@/components/FieldIconPicker";
+import StatusDotDisplay from "@/components/StatusDotDisplay";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -18,81 +16,58 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { FieldIconPicker } from "@/components/FieldIconPicker";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
-import { ColorPicker } from "@/components/ColorPicker";
-import { scopeDisplayData } from "~/app/constants";
-import { generateRandomPassword } from "~/utils/randomPassword";
 import {
-  AddCaseFieldModal,
-  type AddCaseFieldModalProps,
-  type FieldDraftOption,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
+import { WorkflowType } from "@prisma/client";
+import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { scopeDisplayData } from "~/app/constants";
+import {
+  AddCaseFieldModal, type FieldDraftOption
 } from "~/app/[locale]/admin/fields/AddCaseField";
 import {
-  AddResultFieldModal,
-  type AddResultFieldModalProps,
+  AddResultFieldModal
 } from "~/app/[locale]/admin/fields/AddResultField";
+import { generateRandomPassword } from "~/utils/randomPassword";
 
-import type {
-  TestmoConfigVariantMappingConfig,
-  TestmoConfigurationMappingConfig,
-  TestmoConfigurationSuggestion,
-  TestmoExistingConfigCategory,
-  TestmoExistingConfigVariant,
-  TestmoExistingConfiguration,
-  TestmoExistingStatus,
-  TestmoExistingWorkflow,
-  TestmoGroupMappingConfig,
-  TestmoGroupSuggestion,
-  TestmoIssueTargetMappingConfig,
-  TestmoIssueTargetSuggestion,
-  TestmoExistingIntegration,
-  TestmoMappingAnalysis,
-  TestmoMappingConfiguration,
-  TestmoFieldOptionConfig,
-  TestmoRoleMappingConfig,
-  TestmoRolePermissions,
-  TestmoRoleSuggestion,
-  TestmoMilestoneTypeMappingConfig,
-  TestmoMilestoneTypeSuggestion,
-  TestmoStatusMappingConfig,
-  TestmoStatusSuggestion,
-  TestmoUserMappingConfig,
-  TestmoUserSuggestion,
-  TestmoWorkflowMappingConfig,
-  TestmoWorkflowSuggestion,
-  TestmoTemplateFieldAction,
-  TestmoTemplateFieldMappingConfig,
-  TestmoTemplateFieldSuggestion,
-  TestmoExistingCaseField,
-  TestmoExistingResultField,
-  TestmoTemplateFieldTargetType,
-  TestmoTemplateSuggestion,
-  TestmoTemplateMappingConfig,
-  TestmoExistingTemplate,
-} from "~/services/imports/testmo/types";
-import { useFindManyColor, useFindManyStatusScope } from "~/lib/hooks";
 import DynamicIcon from "@/components/DynamicIcon";
 import { Access, ApplicationArea, type FieldOptions } from "@prisma/client";
-import { Separator } from "./ui/separator";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
   BetweenHorizontalStart,
   EqualNot,
   FilePlus2,
-  SquareDashed,
+  SquareDashed
 } from "lucide-react";
-import { IconName } from "~/types/globals";
+import { useFindManyColor, useFindManyStatusScope } from "~/lib/hooks";
+import type {
+  TestmoConfigurationMappingConfig,
+  TestmoConfigurationSuggestion, TestmoConfigVariantMappingConfig, TestmoExistingCaseField, TestmoExistingConfigCategory, TestmoExistingConfiguration, TestmoExistingConfigVariant, TestmoExistingResultField, TestmoExistingStatus, TestmoExistingTemplate, TestmoExistingWorkflow, TestmoFieldOptionConfig, TestmoGroupMappingConfig,
+  TestmoGroupSuggestion,
+  TestmoIssueTargetMappingConfig,
+  TestmoIssueTargetSuggestion, TestmoMappingAnalysis,
+  TestmoMappingConfiguration, TestmoMilestoneTypeMappingConfig,
+  TestmoMilestoneTypeSuggestion, TestmoRoleMappingConfig,
+  TestmoRolePermissions,
+  TestmoRoleSuggestion, TestmoStatusMappingConfig,
+  TestmoStatusSuggestion, TestmoTemplateFieldAction,
+  TestmoTemplateFieldMappingConfig,
+  TestmoTemplateFieldSuggestion, TestmoTemplateFieldTargetType, TestmoTemplateMappingConfig, TestmoTemplateSuggestion, TestmoUserMappingConfig,
+  TestmoUserSuggestion,
+  TestmoWorkflowMappingConfig,
+  TestmoWorkflowSuggestion
+} from "~/services/imports/testmo/types";
+import { Separator } from "./ui/separator";
 
 type Translator = (key: string, values?: Record<string, unknown>) => string;
 

@@ -1,6 +1,5 @@
 import {
-  SearchableEntityType,
-  CustomFieldFilter,
+  CustomFieldFilter, SearchableEntityType
 } from "~/types/search";
 
 /**

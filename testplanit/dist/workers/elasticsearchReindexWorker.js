@@ -59,85 +59,7 @@ __export(elasticsearchReindexWorker_exports, {
 });
 module.exports = __toCommonJS(elasticsearchReindexWorker_exports);
 var import_bullmq = require("bullmq");
-
-// lib/valkey.ts
-var import_ioredis = __toESM(require("ioredis"));
-var skipConnection = process.env.SKIP_VALKEY_CONNECTION === "true";
-var valkeyUrl = process.env.VALKEY_URL;
-var valkeySentinels = process.env.VALKEY_SENTINELS;
-var sentinelMasterName = process.env.VALKEY_SENTINEL_MASTER || "mymaster";
-var sentinelPassword = process.env.VALKEY_SENTINEL_PASSWORD;
-var baseOptions = {
-  maxRetriesPerRequest: null,
-  // Required by BullMQ
-  enableReadyCheck: false
-  // Helps with startup race conditions and Sentinel failover
-};
-function parseSentinels(sentinelStr) {
-  return sentinelStr.split(",").map((entry) => {
-    const trimmed = entry.trim();
-    const lastColon = trimmed.lastIndexOf(":");
-    if (lastColon === -1) {
-      return { host: trimmed, port: 26379 };
-    }
-    const host = trimmed.slice(0, lastColon);
-    const port = parseInt(trimmed.slice(lastColon + 1), 10);
-    return { host, port: Number.isNaN(port) ? 26379 : port };
-  });
-}
-function extractPasswordFromUrl(url) {
-  try {
-    const redisUrl = url.replace(/^valkey:\/\//, "redis://");
-    const parsed = new URL(redisUrl);
-    return parsed.password || void 0;
-  } catch {
-    return void 0;
-  }
-}
-var valkeyConnection = null;
-if (skipConnection) {
-  console.warn("Valkey connection skipped (SKIP_VALKEY_CONNECTION=true).");
-} else if (valkeySentinels) {
-  const sentinels = parseSentinels(valkeySentinels);
-  const masterPassword = valkeyUrl ? extractPasswordFromUrl(valkeyUrl) : void 0;
-  valkeyConnection = new import_ioredis.default({
-    sentinels,
-    name: sentinelMasterName,
-    ...masterPassword && { password: masterPassword },
-    ...sentinelPassword && { sentinelPassword },
-    ...baseOptions
-  });
-  console.log(
-    `Connecting to Valkey via Sentinel (master: "${sentinelMasterName}", sentinels: ${sentinels.map((s) => `${s.host}:${s.port}`).join(", ")})`
-  );
-  valkeyConnection.on("connect", () => {
-    console.log("Successfully connected to Valkey master via Sentinel.");
-  });
-  valkeyConnection.on("error", (err) => {
-    console.error("Valkey Sentinel connection error:", err);
-  });
-  valkeyConnection.on("reconnecting", () => {
-    console.log("Valkey Sentinel: reconnecting to master...");
-  });
-} else if (valkeyUrl) {
-  const connectionUrl = valkeyUrl.replace(/^valkey:\/\//, "redis://");
-  valkeyConnection = new import_ioredis.default(connectionUrl, baseOptions);
-  valkeyConnection.on("connect", () => {
-    console.log("Successfully connected to Valkey.");
-  });
-  valkeyConnection.on("error", (err) => {
-    console.error("Valkey connection error:", err);
-  });
-} else {
-  console.error(
-    "VALKEY_URL environment variable is not set. Background jobs may fail."
-  );
-  console.warn("Valkey URL not provided. Valkey connection not established.");
-}
-var valkey_default = valkeyConnection;
-
-// lib/queueNames.ts
-var ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
+var import_node_url = require("node:url");
 
 // services/elasticsearchService.ts
 var import_elasticsearch = require("@elastic/elasticsearch");
@@ -347,90 +269,20 @@ async function createRepositoryCaseIndex(prismaClient2, tenantId) {
   }
 }
 
-// services/elasticsearchIndexing.ts
-function buildCustomFieldSearchableText(customFields) {
-  if (!customFields || customFields.length === 0) return "";
-  return customFields.map((cf) => {
-    switch (cf.fieldType) {
-      case "Select":
-      case "Dropdown":
-        return cf.fieldOption?.name || "";
-      case "Multi-Select":
-        if (cf.valueArray && cf.fieldOptions) {
-          return cf.fieldOptions.filter((opt) => cf.valueArray?.includes(opt.id.toString()) || cf.valueArray?.includes(opt.id)).map((opt) => opt.name).join(" ");
-        }
-        return "";
-      case "Checkbox":
-        return cf.valueBoolean ? cf.fieldName : "";
-      case "Number":
-      case "Integer":
-        return cf.valueNumeric !== null && cf.valueNumeric !== void 0 ? cf.valueNumeric.toString() : "";
-      case "Text String":
-      case "Text Long":
-      case "Link":
-        return cf.value || cf.valueKeyword || "";
-      case "Date":
-        return cf.valueDate || "";
-      default:
-        return typeof cf.value === "string" ? cf.value : "";
-    }
-  }).filter(Boolean).join(" ");
-}
-function buildStepsSearchableText(steps) {
-  if (!steps || steps.length === 0) return "";
-  return steps.map((step) => {
-    return [
-      step.step,
-      step.expectedResult,
-      step.sharedStepGroupName
-    ].filter(Boolean).join(" ");
-  }).filter(Boolean).join(" ");
-}
-async function bulkIndexRepositoryCases(cases, tenantId) {
-  const client = getElasticsearchClient();
-  if (!client || cases.length === 0) return false;
-  const indexName = getRepositoryCaseIndexName(tenantId);
-  try {
-    const operations = cases.flatMap((caseData) => {
-      const searchableContent = [
-        caseData.name,
-        caseData.className,
-        caseData.tags?.map((t) => t.name).join(" "),
-        buildCustomFieldSearchableText(caseData.customFields),
-        buildStepsSearchableText(caseData.steps)
-      ].filter(Boolean).join(" ");
-      return [
-        {
-          index: { _index: indexName, _id: caseData.id.toString() }
-        },
-        { ...caseData, searchableContent }
-      ];
-    });
-    const bulkResponse = await client.bulk({
-      operations,
-      refresh: true
-    });
-    if (bulkResponse.errors) {
-      const errorItems = bulkResponse.items.filter((item) => item.index?.error);
-      console.error("Bulk indexing errors:", errorItems);
-      errorItems.forEach((item) => {
-        if (item.index?.error) {
-          console.error(`Failed to index document ${item.index._id}:`);
-          console.error(`  Error type: ${item.index.error.type}`);
-          console.error(`  Error reason: ${item.index.error.reason}`);
-        }
-      });
-      return false;
-    }
-    console.log(
-      `Bulk indexed ${cases.length} repository cases in Elasticsearch`
-    );
-    return true;
-  } catch (error) {
-    console.error("Failed to bulk index repository cases:", error);
-    return false;
-  }
-}
+// services/issueSearch.ts
+init_prismaBase();
+
+// types/search.ts
+var SearchableEntityType = /* @__PURE__ */ ((SearchableEntityType2) => {
+  SearchableEntityType2["REPOSITORY_CASE"] = "repository_case";
+  SearchableEntityType2["SHARED_STEP"] = "shared_step";
+  SearchableEntityType2["TEST_RUN"] = "test_run";
+  SearchableEntityType2["SESSION"] = "session";
+  SearchableEntityType2["PROJECT"] = "project";
+  SearchableEntityType2["ISSUE"] = "issue";
+  SearchableEntityType2["MILESTONE"] = "milestone";
+  return SearchableEntityType2;
+})(SearchableEntityType || {});
 
 // utils/extractTextFromJson.ts
 var extractTextFromNode = (node) => {
@@ -451,18 +303,6 @@ var extractTextFromNode = (node) => {
   }
   return "";
 };
-
-// types/search.ts
-var SearchableEntityType = /* @__PURE__ */ ((SearchableEntityType2) => {
-  SearchableEntityType2["REPOSITORY_CASE"] = "repository_case";
-  SearchableEntityType2["SHARED_STEP"] = "shared_step";
-  SearchableEntityType2["TEST_RUN"] = "test_run";
-  SearchableEntityType2["SESSION"] = "session";
-  SearchableEntityType2["PROJECT"] = "project";
-  SearchableEntityType2["ISSUE"] = "issue";
-  SearchableEntityType2["MILESTONE"] = "milestone";
-  return SearchableEntityType2;
-})(SearchableEntityType || {});
 
 // services/unifiedElasticsearchService.ts
 init_prismaBase();
@@ -983,572 +823,7 @@ function buildCustomFieldDocuments(fieldValues) {
   });
 }
 
-// services/repositoryCaseSync.ts
-init_prismaBase();
-function extractStepText(stepData) {
-  if (!stepData) return "";
-  try {
-    if (typeof stepData === "string") {
-      const parsed = JSON.parse(stepData);
-      return extractTextFromNode(parsed);
-    }
-    return extractTextFromNode(stepData);
-  } catch (error) {
-    return typeof stepData === "string" ? stepData : "";
-  }
-}
-async function buildRepositoryCaseDocument(caseId, prismaClient2) {
-  const prisma2 = prismaClient2 || prisma;
-  const repoCase = await prisma2.repositoryCases.findUnique({
-    where: { id: caseId },
-    include: {
-      project: true,
-      folder: true,
-      template: true,
-      state: {
-        include: {
-          icon: true,
-          color: true
-        }
-      },
-      creator: true,
-      tags: true,
-      steps: {
-        where: { isDeleted: false },
-        orderBy: { order: "asc" },
-        include: {
-          sharedStepGroup: {
-            include: {
-              items: {
-                orderBy: { order: "asc" }
-              }
-            }
-          }
-        }
-      },
-      caseFieldValues: {
-        include: {
-          field: {
-            include: {
-              type: true,
-              fieldOptions: {
-                include: {
-                  fieldOption: {
-                    include: {
-                      icon: true,
-                      iconColor: true
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  });
-  if (!repoCase) return null;
-  const folderPath = await buildFolderPath(repoCase.folderId, prisma2);
-  return {
-    id: repoCase.id,
-    projectId: repoCase.projectId,
-    projectName: repoCase.project.name,
-    projectIconUrl: repoCase.project.iconUrl,
-    repositoryId: repoCase.repositoryId,
-    folderId: repoCase.folderId,
-    folderPath,
-    templateId: repoCase.templateId,
-    templateName: repoCase.template.templateName,
-    name: repoCase.name,
-    className: repoCase.className,
-    source: repoCase.source,
-    stateId: repoCase.stateId,
-    stateName: repoCase.state.name,
-    stateIcon: repoCase.state.icon.name,
-    stateColor: repoCase.state.color.value,
-    estimate: repoCase.estimate,
-    forecastManual: repoCase.forecastManual,
-    forecastAutomated: repoCase.forecastAutomated,
-    automated: repoCase.automated,
-    isArchived: repoCase.isArchived,
-    isDeleted: repoCase.isDeleted,
-    createdAt: repoCase.createdAt,
-    creatorId: repoCase.creatorId,
-    creatorName: repoCase.creator.name,
-    creatorImage: repoCase.creator.image,
-    tags: repoCase.tags.map((tag) => ({
-      id: tag.id,
-      name: tag.name
-    })),
-    customFields: buildCustomFieldDocuments(
-      repoCase.caseFieldValues.map((cfv) => ({
-        fieldId: cfv.fieldId,
-        field: {
-          displayName: cfv.field.displayName,
-          systemName: cfv.field.systemName,
-          type: cfv.field.type ? { type: cfv.field.type.type } : void 0,
-          fieldOptions: cfv.field.fieldOptions?.map((fo) => ({
-            fieldOption: {
-              id: fo.fieldOption.id,
-              name: fo.fieldOption.name,
-              icon: fo.fieldOption.icon ? { name: fo.fieldOption.icon.name } : void 0,
-              iconColor: fo.fieldOption.iconColor ? { value: fo.fieldOption.iconColor.value } : void 0
-            }
-          }))
-        },
-        value: cfv.value
-      }))
-    ).filter(
-      (cf) => cf.value !== null && cf.value !== void 0 && cf.value !== ""
-    ),
-    steps: repoCase.steps.flatMap((step) => {
-      if (step.sharedStepGroupId && step.sharedStepGroup) {
-        return step.sharedStepGroup.items.map((item, index) => ({
-          id: step.id * 1e3 + index,
-          // Generate unique ID for each shared step item
-          order: step.order,
-          step: extractStepText(item.step),
-          expectedResult: extractStepText(item.expectedResult),
-          isSharedStep: true,
-          sharedStepGroupId: step.sharedStepGroupId,
-          sharedStepGroupName: step.sharedStepGroup?.name
-        }));
-      }
-      return [
-        {
-          id: step.id,
-          order: step.order,
-          step: extractStepText(step.step),
-          expectedResult: extractStepText(step.expectedResult),
-          isSharedStep: false,
-          sharedStepGroupId: void 0,
-          sharedStepGroupName: void 0
-        }
-      ];
-    })
-  };
-}
-async function buildFolderPath(folderId, prisma2 = prisma) {
-  const folder = await prisma2.repositoryFolders.findUnique({
-    where: { id: folderId },
-    include: { parent: true }
-  });
-  if (!folder) return "/";
-  const path = [folder.name];
-  let current = folder;
-  while (current.parent) {
-    path.unshift(current.parent.name);
-    const nextParent = await prisma2.repositoryFolders.findUnique({
-      where: { id: current.parent.id },
-      include: { parent: true }
-    });
-    if (!nextParent) break;
-    current = nextParent;
-  }
-  return "/" + path.join("/");
-}
-async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progressCallback, prismaClient2, tenantId) {
-  const prisma2 = prismaClient2 || prisma;
-  try {
-    await createRepositoryCaseIndex(prisma2, tenantId);
-    const totalCases = await prisma2.repositoryCases.count({
-      where: {
-        projectId,
-        isArchived: false
-        // Only exclude archived, include deleted items
-      }
-    });
-    const message = `Syncing ${totalCases} cases for project ${projectId}...`;
-    console.log(message);
-    if (progressCallback) {
-      await progressCallback(0, totalCases, message);
-    }
-    let processed = 0;
-    let hasMore = true;
-    while (hasMore) {
-      const cases = await prisma2.repositoryCases.findMany({
-        where: {
-          projectId,
-          isArchived: false
-          // Only exclude archived, include deleted items
-        },
-        skip: processed,
-        take: batchSize,
-        orderBy: { id: "asc" }
-      });
-      if (cases.length === 0) {
-        hasMore = false;
-        break;
-      }
-      const documents = [];
-      for (const caseItem of cases) {
-        const doc = await buildRepositoryCaseDocument(caseItem.id, prisma2);
-        if (doc) {
-          documents.push(doc);
-        }
-      }
-      if (documents.length > 0) {
-        const success = await bulkIndexRepositoryCases(documents, tenantId);
-        if (!success) {
-          console.error(`Failed to index batch starting at ${processed}`);
-          return false;
-        }
-      }
-      processed += cases.length;
-      const progressMessage = `Indexed ${processed}/${totalCases} cases...`;
-      console.log(progressMessage);
-      if (progressCallback) {
-        await progressCallback(processed, totalCases, progressMessage);
-      }
-    }
-    const finalMessage = `Successfully synced ${processed} cases to Elasticsearch`;
-    console.log(finalMessage);
-    if (progressCallback) {
-      await progressCallback(processed, totalCases, finalMessage);
-    }
-    return true;
-  } catch (error) {
-    console.error("Error syncing project cases to Elasticsearch:", error);
-    return false;
-  }
-}
-
-// services/sharedStepSearch.ts
-init_prismaBase();
-async function buildSharedStepDocument(stepGroupId, prismaClient2) {
-  const prisma2 = prismaClient2 || prisma;
-  const stepGroup = await prisma2.sharedStepGroup.findUnique({
-    where: { id: stepGroupId },
-    include: {
-      project: true,
-      createdBy: true,
-      items: {
-        orderBy: { order: "asc" }
-      }
-    }
-  });
-  if (!stepGroup) return null;
-  const searchableContent = [
-    stepGroup.name,
-    ...stepGroup.items.map((item) => {
-      let stepText = "";
-      let expectedResultText = "";
-      if (typeof item.step === "string") {
-        try {
-          const parsed = JSON.parse(item.step);
-          stepText = extractTextFromNode(parsed);
-        } catch {
-          stepText = item.step;
-        }
-      } else if (item.step) {
-        stepText = extractTextFromNode(item.step);
-      }
-      if (typeof item.expectedResult === "string") {
-        try {
-          const parsed = JSON.parse(item.expectedResult);
-          expectedResultText = extractTextFromNode(parsed);
-        } catch {
-          expectedResultText = item.expectedResult;
-        }
-      } else if (item.expectedResult) {
-        expectedResultText = extractTextFromNode(item.expectedResult);
-      }
-      return `${stepText} ${expectedResultText}`;
-    })
-  ].join(" ");
-  return {
-    id: stepGroup.id,
-    name: stepGroup.name,
-    projectId: stepGroup.projectId,
-    projectName: stepGroup.project.name,
-    projectIconUrl: stepGroup.project.iconUrl,
-    createdAt: stepGroup.createdAt,
-    createdById: stepGroup.createdById,
-    createdByName: stepGroup.createdBy.name,
-    createdByImage: stepGroup.createdBy.image,
-    isDeleted: stepGroup.isDeleted,
-    items: stepGroup.items.map((item) => ({
-      id: item.id,
-      order: item.order,
-      step: typeof item.step === "object" ? JSON.stringify(item.step) : String(item.step),
-      expectedResult: typeof item.expectedResult === "object" ? JSON.stringify(item.expectedResult) : String(item.expectedResult)
-    })),
-    searchableContent
-  };
-}
-async function indexSharedStep(stepData, tenantId) {
-  const client = getElasticsearchClient();
-  if (!client) return false;
-  const indexName = getEntityIndexName("shared_step" /* SHARED_STEP */, tenantId);
-  try {
-    await client.index({
-      index: indexName,
-      id: stepData.id.toString(),
-      document: stepData
-    });
-    console.log(`Indexed shared step ${stepData.id} in Elasticsearch index ${indexName}`);
-    return true;
-  } catch (error) {
-    console.error(`Failed to index shared step ${stepData.id}:`, error);
-    return false;
-  }
-}
-async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100, prismaClient2, tenantId) {
-  const prisma2 = prismaClient2 || prisma;
-  try {
-    await createEntityIndex("shared_step" /* SHARED_STEP */, prisma2, tenantId);
-    const totalSteps = await prisma2.sharedStepGroup.count({
-      where: {
-        projectId
-        // Include deleted items (filtering happens at search time based on admin permissions)
-      }
-    });
-    console.log(
-      `Syncing ${totalSteps} shared steps for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}...`
-    );
-    let processed = 0;
-    let hasMore = true;
-    while (hasMore) {
-      const steps = await prisma2.sharedStepGroup.findMany({
-        where: {
-          projectId
-          // Include deleted items (filtering happens at search time based on admin permissions)
-        },
-        skip: processed,
-        take: batchSize,
-        orderBy: { id: "asc" }
-      });
-      if (steps.length === 0) {
-        hasMore = false;
-        break;
-      }
-      for (const step of steps) {
-        const doc = await buildSharedStepDocument(step.id, prisma2);
-        if (doc) {
-          await indexSharedStep(doc, tenantId);
-        }
-      }
-      processed += steps.length;
-      console.log(`Indexed ${processed}/${totalSteps} shared steps...`);
-    }
-    console.log(
-      `Successfully synced ${processed} shared steps to Elasticsearch`
-    );
-    return true;
-  } catch (error) {
-    console.error(
-      "Error syncing project shared steps to Elasticsearch:",
-      error
-    );
-    return false;
-  }
-}
-
-// services/testRunSearch.ts
-init_prismaBase();
-async function syncProjectTestRunsToElasticsearch(projectId, db, tenantId) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    console.warn("Elasticsearch client not available");
-    return;
-  }
-  const indexName = getEntityIndexName("test_run" /* TEST_RUN */, tenantId);
-  console.log(`Starting test run sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
-  const testRuns = await db.testRuns.findMany({
-    where: {
-      projectId
-      // Include deleted items (filtering happens at search time based on admin permissions)
-    },
-    include: {
-      project: true,
-      createdBy: true,
-      state: true,
-      configuration: true,
-      milestone: true,
-      tags: true
-    }
-  });
-  if (testRuns.length === 0) {
-    console.log("No test runs to index");
-    return;
-  }
-  const bulkBody = [];
-  for (const testRun of testRuns) {
-    const noteText = testRun.note ? extractTextFromNode(testRun.note) : "";
-    const docsText = testRun.docs ? extractTextFromNode(testRun.docs) : "";
-    const searchableContent = [
-      testRun.name,
-      noteText,
-      docsText,
-      testRun.tags.map((t) => t.name).join(" ")
-    ].join(" ");
-    bulkBody.push({
-      index: {
-        _index: indexName,
-        _id: testRun.id.toString()
-      }
-    });
-    bulkBody.push({
-      id: testRun.id,
-      projectId: testRun.projectId,
-      projectName: testRun.project.name,
-      name: testRun.name,
-      note: noteText,
-      docs: docsText,
-      configId: testRun.configId,
-      configurationName: testRun.configuration?.name,
-      milestoneId: testRun.milestoneId,
-      milestoneName: testRun.milestone?.name,
-      stateId: testRun.stateId,
-      stateName: testRun.state.name,
-      forecastManual: testRun.forecastManual,
-      forecastAutomated: testRun.forecastAutomated,
-      elapsed: testRun.elapsed,
-      isCompleted: testRun.isCompleted,
-      isDeleted: testRun.isDeleted,
-      completedAt: testRun.completedAt,
-      testRunType: testRun.testRunType,
-      createdAt: testRun.createdAt,
-      createdById: testRun.createdById,
-      createdByName: testRun.createdBy.name,
-      tags: testRun.tags.map((tag) => ({ id: tag.id, name: tag.name })),
-      searchableContent
-    });
-  }
-  try {
-    const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
-    if (bulkResponse.errors) {
-      const errorItems = bulkResponse.items.filter(
-        (item) => item.index?.error
-      );
-      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
-      errorItems.slice(0, 10).forEach((item) => {
-        if (item.index?.error) {
-          console.error(`  Failed to index document ${item.index._id}:`);
-          console.error(`    Error type: ${item.index.error.type}`);
-          console.error(`    Error reason: ${item.index.error.reason}`);
-          if (item.index.error.caused_by) {
-            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
-          }
-        }
-      });
-      if (errorItems.length > 10) {
-        console.error(`  ... and ${errorItems.length - 10} more errors`);
-      }
-    } else {
-      console.log(`Successfully indexed ${testRuns.length} test runs`);
-    }
-  } catch (error) {
-    console.error("Failed to bulk index test runs:", error);
-    throw error;
-  }
-}
-
-// services/sessionSearch.ts
-init_prismaBase();
-async function syncProjectSessionsToElasticsearch(projectId, db, tenantId) {
-  const client = getElasticsearchClient();
-  if (!client) {
-    console.warn("Elasticsearch client not available");
-    return;
-  }
-  const sessions = await db.sessions.findMany({
-    where: {
-      projectId
-      // Include deleted items (filtering happens at search time based on admin permissions)
-    },
-    include: {
-      project: true,
-      createdBy: true,
-      assignedTo: true,
-      state: true,
-      template: true,
-      configuration: true,
-      milestone: true,
-      tags: true
-    }
-  });
-  if (sessions.length === 0) {
-    return;
-  }
-  const bulkBody = [];
-  for (const session of sessions) {
-    const noteText = session.note ? extractTextFromNode(session.note) : "";
-    const missionText = session.mission ? extractTextFromNode(session.mission) : "";
-    const searchableContent = [
-      session.name,
-      noteText,
-      missionText,
-      session.tags.map((t) => t.name).join(" ")
-    ].join(" ");
-    bulkBody.push({
-      index: {
-        _index: getEntityIndexName("session" /* SESSION */, tenantId),
-        _id: session.id.toString()
-      }
-    });
-    bulkBody.push({
-      id: session.id,
-      projectId: session.projectId,
-      projectName: session.project.name,
-      templateId: session.templateId,
-      templateName: session.template.templateName,
-      name: session.name,
-      note: noteText,
-      mission: missionText,
-      configId: session.configId,
-      configurationName: session.configuration?.name,
-      milestoneId: session.milestoneId,
-      milestoneName: session.milestone?.name,
-      stateId: session.stateId,
-      stateName: session.state.name,
-      assignedToId: session.assignedToId,
-      assignedToName: session.assignedTo?.name,
-      estimate: session.estimate,
-      forecastManual: session.forecastManual,
-      forecastAutomated: session.forecastAutomated,
-      elapsed: session.elapsed,
-      isCompleted: session.isCompleted,
-      isDeleted: session.isDeleted,
-      completedAt: session.completedAt,
-      createdAt: session.createdAt,
-      createdById: session.createdById,
-      createdByName: session.createdBy.name,
-      tags: session.tags.map((tag) => ({ id: tag.id, name: tag.name })),
-      searchableContent
-    });
-  }
-  try {
-    const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
-    if (bulkResponse.errors) {
-      const errorItems = bulkResponse.items.filter(
-        (item) => item.index?.error
-      );
-      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
-      errorItems.slice(0, 10).forEach((item) => {
-        if (item.index?.error) {
-          console.error(`  Failed to index document ${item.index._id}:`);
-          console.error(`    Error type: ${item.index.error.type}`);
-          console.error(`    Error reason: ${item.index.error.reason}`);
-          if (item.index.error.caused_by) {
-            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
-          }
-        }
-      });
-      if (errorItems.length > 10) {
-        console.error(`  ... and ${errorItems.length - 10} more errors`);
-      }
-    } else {
-      console.log(`Successfully indexed ${sessions.length} sessions`);
-    }
-  } catch (error) {
-    console.error("Failed to bulk index sessions:", error);
-    throw error;
-  }
-}
-
 // services/issueSearch.ts
-init_prismaBase();
 function getProjectFromIssue(issue) {
   if (issue.project) {
     return issue.project;
@@ -1897,8 +1172,656 @@ async function syncAllProjectsToElasticsearch(prismaClient2, tenantId) {
   }
 }
 
-// workers/elasticsearchReindexWorker.ts
-var import_node_url = require("node:url");
+// services/repositoryCaseSync.ts
+init_prismaBase();
+
+// services/elasticsearchIndexing.ts
+function buildCustomFieldSearchableText(customFields) {
+  if (!customFields || customFields.length === 0) return "";
+  return customFields.map((cf) => {
+    switch (cf.fieldType) {
+      case "Select":
+      case "Dropdown":
+        return cf.fieldOption?.name || "";
+      case "Multi-Select":
+        if (cf.valueArray && cf.fieldOptions) {
+          return cf.fieldOptions.filter((opt) => cf.valueArray?.includes(opt.id.toString()) || cf.valueArray?.includes(opt.id)).map((opt) => opt.name).join(" ");
+        }
+        return "";
+      case "Checkbox":
+        return cf.valueBoolean ? cf.fieldName : "";
+      case "Number":
+      case "Integer":
+        return cf.valueNumeric !== null && cf.valueNumeric !== void 0 ? cf.valueNumeric.toString() : "";
+      case "Text String":
+      case "Text Long":
+      case "Link":
+        return cf.value || cf.valueKeyword || "";
+      case "Date":
+        return cf.valueDate || "";
+      default:
+        return typeof cf.value === "string" ? cf.value : "";
+    }
+  }).filter(Boolean).join(" ");
+}
+function buildStepsSearchableText(steps) {
+  if (!steps || steps.length === 0) return "";
+  return steps.map((step) => {
+    return [
+      step.step,
+      step.expectedResult,
+      step.sharedStepGroupName
+    ].filter(Boolean).join(" ");
+  }).filter(Boolean).join(" ");
+}
+async function bulkIndexRepositoryCases(cases, tenantId) {
+  const client = getElasticsearchClient();
+  if (!client || cases.length === 0) return false;
+  const indexName = getRepositoryCaseIndexName(tenantId);
+  try {
+    const operations = cases.flatMap((caseData) => {
+      const searchableContent = [
+        caseData.name,
+        caseData.className,
+        caseData.tags?.map((t) => t.name).join(" "),
+        buildCustomFieldSearchableText(caseData.customFields),
+        buildStepsSearchableText(caseData.steps)
+      ].filter(Boolean).join(" ");
+      return [
+        {
+          index: { _index: indexName, _id: caseData.id.toString() }
+        },
+        { ...caseData, searchableContent }
+      ];
+    });
+    const bulkResponse = await client.bulk({
+      operations,
+      refresh: true
+    });
+    if (bulkResponse.errors) {
+      const errorItems = bulkResponse.items.filter((item) => item.index?.error);
+      console.error("Bulk indexing errors:", errorItems);
+      errorItems.forEach((item) => {
+        if (item.index?.error) {
+          console.error(`Failed to index document ${item.index._id}:`);
+          console.error(`  Error type: ${item.index.error.type}`);
+          console.error(`  Error reason: ${item.index.error.reason}`);
+        }
+      });
+      return false;
+    }
+    console.log(
+      `Bulk indexed ${cases.length} repository cases in Elasticsearch`
+    );
+    return true;
+  } catch (error) {
+    console.error("Failed to bulk index repository cases:", error);
+    return false;
+  }
+}
+
+// services/repositoryCaseSync.ts
+function extractStepText(stepData) {
+  if (!stepData) return "";
+  try {
+    if (typeof stepData === "string") {
+      const parsed = JSON.parse(stepData);
+      return extractTextFromNode(parsed);
+    }
+    return extractTextFromNode(stepData);
+  } catch (error) {
+    return typeof stepData === "string" ? stepData : "";
+  }
+}
+async function buildRepositoryCaseDocument(caseId, prismaClient2) {
+  const prisma2 = prismaClient2 || prisma;
+  const repoCase = await prisma2.repositoryCases.findUnique({
+    where: { id: caseId },
+    include: {
+      project: true,
+      folder: true,
+      template: true,
+      state: {
+        include: {
+          icon: true,
+          color: true
+        }
+      },
+      creator: true,
+      tags: true,
+      steps: {
+        where: { isDeleted: false },
+        orderBy: { order: "asc" },
+        include: {
+          sharedStepGroup: {
+            include: {
+              items: {
+                orderBy: { order: "asc" }
+              }
+            }
+          }
+        }
+      },
+      caseFieldValues: {
+        include: {
+          field: {
+            include: {
+              type: true,
+              fieldOptions: {
+                include: {
+                  fieldOption: {
+                    include: {
+                      icon: true,
+                      iconColor: true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+  if (!repoCase) return null;
+  const folderPath = await buildFolderPath(repoCase.folderId, prisma2);
+  return {
+    id: repoCase.id,
+    projectId: repoCase.projectId,
+    projectName: repoCase.project.name,
+    projectIconUrl: repoCase.project.iconUrl,
+    repositoryId: repoCase.repositoryId,
+    folderId: repoCase.folderId,
+    folderPath,
+    templateId: repoCase.templateId,
+    templateName: repoCase.template.templateName,
+    name: repoCase.name,
+    className: repoCase.className,
+    source: repoCase.source,
+    stateId: repoCase.stateId,
+    stateName: repoCase.state.name,
+    stateIcon: repoCase.state.icon.name,
+    stateColor: repoCase.state.color.value,
+    estimate: repoCase.estimate,
+    forecastManual: repoCase.forecastManual,
+    forecastAutomated: repoCase.forecastAutomated,
+    automated: repoCase.automated,
+    isArchived: repoCase.isArchived,
+    isDeleted: repoCase.isDeleted,
+    createdAt: repoCase.createdAt,
+    creatorId: repoCase.creatorId,
+    creatorName: repoCase.creator.name,
+    creatorImage: repoCase.creator.image,
+    tags: repoCase.tags.map((tag) => ({
+      id: tag.id,
+      name: tag.name
+    })),
+    customFields: buildCustomFieldDocuments(
+      repoCase.caseFieldValues.map((cfv) => ({
+        fieldId: cfv.fieldId,
+        field: {
+          displayName: cfv.field.displayName,
+          systemName: cfv.field.systemName,
+          type: cfv.field.type ? { type: cfv.field.type.type } : void 0,
+          fieldOptions: cfv.field.fieldOptions?.map((fo) => ({
+            fieldOption: {
+              id: fo.fieldOption.id,
+              name: fo.fieldOption.name,
+              icon: fo.fieldOption.icon ? { name: fo.fieldOption.icon.name } : void 0,
+              iconColor: fo.fieldOption.iconColor ? { value: fo.fieldOption.iconColor.value } : void 0
+            }
+          }))
+        },
+        value: cfv.value
+      }))
+    ).filter(
+      (cf) => cf.value !== null && cf.value !== void 0 && cf.value !== ""
+    ),
+    steps: repoCase.steps.flatMap((step) => {
+      if (step.sharedStepGroupId && step.sharedStepGroup) {
+        return step.sharedStepGroup.items.map((item, index) => ({
+          id: step.id * 1e3 + index,
+          // Generate unique ID for each shared step item
+          order: step.order,
+          step: extractStepText(item.step),
+          expectedResult: extractStepText(item.expectedResult),
+          isSharedStep: true,
+          sharedStepGroupId: step.sharedStepGroupId,
+          sharedStepGroupName: step.sharedStepGroup?.name
+        }));
+      }
+      return [
+        {
+          id: step.id,
+          order: step.order,
+          step: extractStepText(step.step),
+          expectedResult: extractStepText(step.expectedResult),
+          isSharedStep: false,
+          sharedStepGroupId: void 0,
+          sharedStepGroupName: void 0
+        }
+      ];
+    })
+  };
+}
+async function buildFolderPath(folderId, prisma2 = prisma) {
+  const folder = await prisma2.repositoryFolders.findUnique({
+    where: { id: folderId },
+    include: { parent: true }
+  });
+  if (!folder) return "/";
+  const path = [folder.name];
+  let current = folder;
+  while (current.parent) {
+    path.unshift(current.parent.name);
+    const nextParent = await prisma2.repositoryFolders.findUnique({
+      where: { id: current.parent.id },
+      include: { parent: true }
+    });
+    if (!nextParent) break;
+    current = nextParent;
+  }
+  return "/" + path.join("/");
+}
+async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progressCallback, prismaClient2, tenantId) {
+  const prisma2 = prismaClient2 || prisma;
+  try {
+    await createRepositoryCaseIndex(prisma2, tenantId);
+    const totalCases = await prisma2.repositoryCases.count({
+      where: {
+        projectId,
+        isArchived: false
+        // Only exclude archived, include deleted items
+      }
+    });
+    const message = `Syncing ${totalCases} cases for project ${projectId}...`;
+    console.log(message);
+    if (progressCallback) {
+      await progressCallback(0, totalCases, message);
+    }
+    let processed = 0;
+    let hasMore = true;
+    while (hasMore) {
+      const cases = await prisma2.repositoryCases.findMany({
+        where: {
+          projectId,
+          isArchived: false
+          // Only exclude archived, include deleted items
+        },
+        skip: processed,
+        take: batchSize,
+        orderBy: { id: "asc" }
+      });
+      if (cases.length === 0) {
+        hasMore = false;
+        break;
+      }
+      const documents = [];
+      for (const caseItem of cases) {
+        const doc = await buildRepositoryCaseDocument(caseItem.id, prisma2);
+        if (doc) {
+          documents.push(doc);
+        }
+      }
+      if (documents.length > 0) {
+        const success = await bulkIndexRepositoryCases(documents, tenantId);
+        if (!success) {
+          console.error(`Failed to index batch starting at ${processed}`);
+          return false;
+        }
+      }
+      processed += cases.length;
+      const progressMessage = `Indexed ${processed}/${totalCases} cases...`;
+      console.log(progressMessage);
+      if (progressCallback) {
+        await progressCallback(processed, totalCases, progressMessage);
+      }
+    }
+    const finalMessage = `Successfully synced ${processed} cases to Elasticsearch`;
+    console.log(finalMessage);
+    if (progressCallback) {
+      await progressCallback(processed, totalCases, finalMessage);
+    }
+    return true;
+  } catch (error) {
+    console.error("Error syncing project cases to Elasticsearch:", error);
+    return false;
+  }
+}
+
+// services/sessionSearch.ts
+init_prismaBase();
+async function syncProjectSessionsToElasticsearch(projectId, db, tenantId) {
+  const client = getElasticsearchClient();
+  if (!client) {
+    console.warn("Elasticsearch client not available");
+    return;
+  }
+  const sessions = await db.sessions.findMany({
+    where: {
+      projectId
+      // Include deleted items (filtering happens at search time based on admin permissions)
+    },
+    include: {
+      project: true,
+      createdBy: true,
+      assignedTo: true,
+      state: true,
+      template: true,
+      configuration: true,
+      milestone: true,
+      tags: true
+    }
+  });
+  if (sessions.length === 0) {
+    return;
+  }
+  const bulkBody = [];
+  for (const session of sessions) {
+    const noteText = session.note ? extractTextFromNode(session.note) : "";
+    const missionText = session.mission ? extractTextFromNode(session.mission) : "";
+    const searchableContent = [
+      session.name,
+      noteText,
+      missionText,
+      session.tags.map((t) => t.name).join(" ")
+    ].join(" ");
+    bulkBody.push({
+      index: {
+        _index: getEntityIndexName("session" /* SESSION */, tenantId),
+        _id: session.id.toString()
+      }
+    });
+    bulkBody.push({
+      id: session.id,
+      projectId: session.projectId,
+      projectName: session.project.name,
+      templateId: session.templateId,
+      templateName: session.template.templateName,
+      name: session.name,
+      note: noteText,
+      mission: missionText,
+      configId: session.configId,
+      configurationName: session.configuration?.name,
+      milestoneId: session.milestoneId,
+      milestoneName: session.milestone?.name,
+      stateId: session.stateId,
+      stateName: session.state.name,
+      assignedToId: session.assignedToId,
+      assignedToName: session.assignedTo?.name,
+      estimate: session.estimate,
+      forecastManual: session.forecastManual,
+      forecastAutomated: session.forecastAutomated,
+      elapsed: session.elapsed,
+      isCompleted: session.isCompleted,
+      isDeleted: session.isDeleted,
+      completedAt: session.completedAt,
+      createdAt: session.createdAt,
+      createdById: session.createdById,
+      createdByName: session.createdBy.name,
+      tags: session.tags.map((tag) => ({ id: tag.id, name: tag.name })),
+      searchableContent
+    });
+  }
+  try {
+    const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
+    if (bulkResponse.errors) {
+      const errorItems = bulkResponse.items.filter(
+        (item) => item.index?.error
+      );
+      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      errorItems.slice(0, 10).forEach((item) => {
+        if (item.index?.error) {
+          console.error(`  Failed to index document ${item.index._id}:`);
+          console.error(`    Error type: ${item.index.error.type}`);
+          console.error(`    Error reason: ${item.index.error.reason}`);
+          if (item.index.error.caused_by) {
+            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+          }
+        }
+      });
+      if (errorItems.length > 10) {
+        console.error(`  ... and ${errorItems.length - 10} more errors`);
+      }
+    } else {
+      console.log(`Successfully indexed ${sessions.length} sessions`);
+    }
+  } catch (error) {
+    console.error("Failed to bulk index sessions:", error);
+    throw error;
+  }
+}
+
+// services/sharedStepSearch.ts
+init_prismaBase();
+async function buildSharedStepDocument(stepGroupId, prismaClient2) {
+  const prisma2 = prismaClient2 || prisma;
+  const stepGroup = await prisma2.sharedStepGroup.findUnique({
+    where: { id: stepGroupId },
+    include: {
+      project: true,
+      createdBy: true,
+      items: {
+        orderBy: { order: "asc" }
+      }
+    }
+  });
+  if (!stepGroup) return null;
+  const searchableContent = [
+    stepGroup.name,
+    ...stepGroup.items.map((item) => {
+      let stepText = "";
+      let expectedResultText = "";
+      if (typeof item.step === "string") {
+        try {
+          const parsed = JSON.parse(item.step);
+          stepText = extractTextFromNode(parsed);
+        } catch {
+          stepText = item.step;
+        }
+      } else if (item.step) {
+        stepText = extractTextFromNode(item.step);
+      }
+      if (typeof item.expectedResult === "string") {
+        try {
+          const parsed = JSON.parse(item.expectedResult);
+          expectedResultText = extractTextFromNode(parsed);
+        } catch {
+          expectedResultText = item.expectedResult;
+        }
+      } else if (item.expectedResult) {
+        expectedResultText = extractTextFromNode(item.expectedResult);
+      }
+      return `${stepText} ${expectedResultText}`;
+    })
+  ].join(" ");
+  return {
+    id: stepGroup.id,
+    name: stepGroup.name,
+    projectId: stepGroup.projectId,
+    projectName: stepGroup.project.name,
+    projectIconUrl: stepGroup.project.iconUrl,
+    createdAt: stepGroup.createdAt,
+    createdById: stepGroup.createdById,
+    createdByName: stepGroup.createdBy.name,
+    createdByImage: stepGroup.createdBy.image,
+    isDeleted: stepGroup.isDeleted,
+    items: stepGroup.items.map((item) => ({
+      id: item.id,
+      order: item.order,
+      step: typeof item.step === "object" ? JSON.stringify(item.step) : String(item.step),
+      expectedResult: typeof item.expectedResult === "object" ? JSON.stringify(item.expectedResult) : String(item.expectedResult)
+    })),
+    searchableContent
+  };
+}
+async function indexSharedStep(stepData, tenantId) {
+  const client = getElasticsearchClient();
+  if (!client) return false;
+  const indexName = getEntityIndexName("shared_step" /* SHARED_STEP */, tenantId);
+  try {
+    await client.index({
+      index: indexName,
+      id: stepData.id.toString(),
+      document: stepData
+    });
+    console.log(`Indexed shared step ${stepData.id} in Elasticsearch index ${indexName}`);
+    return true;
+  } catch (error) {
+    console.error(`Failed to index shared step ${stepData.id}:`, error);
+    return false;
+  }
+}
+async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100, prismaClient2, tenantId) {
+  const prisma2 = prismaClient2 || prisma;
+  try {
+    await createEntityIndex("shared_step" /* SHARED_STEP */, prisma2, tenantId);
+    const totalSteps = await prisma2.sharedStepGroup.count({
+      where: {
+        projectId
+        // Include deleted items (filtering happens at search time based on admin permissions)
+      }
+    });
+    console.log(
+      `Syncing ${totalSteps} shared steps for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}...`
+    );
+    let processed = 0;
+    let hasMore = true;
+    while (hasMore) {
+      const steps = await prisma2.sharedStepGroup.findMany({
+        where: {
+          projectId
+          // Include deleted items (filtering happens at search time based on admin permissions)
+        },
+        skip: processed,
+        take: batchSize,
+        orderBy: { id: "asc" }
+      });
+      if (steps.length === 0) {
+        hasMore = false;
+        break;
+      }
+      for (const step of steps) {
+        const doc = await buildSharedStepDocument(step.id, prisma2);
+        if (doc) {
+          await indexSharedStep(doc, tenantId);
+        }
+      }
+      processed += steps.length;
+      console.log(`Indexed ${processed}/${totalSteps} shared steps...`);
+    }
+    console.log(
+      `Successfully synced ${processed} shared steps to Elasticsearch`
+    );
+    return true;
+  } catch (error) {
+    console.error(
+      "Error syncing project shared steps to Elasticsearch:",
+      error
+    );
+    return false;
+  }
+}
+
+// services/testRunSearch.ts
+init_prismaBase();
+async function syncProjectTestRunsToElasticsearch(projectId, db, tenantId) {
+  const client = getElasticsearchClient();
+  if (!client) {
+    console.warn("Elasticsearch client not available");
+    return;
+  }
+  const indexName = getEntityIndexName("test_run" /* TEST_RUN */, tenantId);
+  console.log(`Starting test run sync for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}`);
+  const testRuns = await db.testRuns.findMany({
+    where: {
+      projectId
+      // Include deleted items (filtering happens at search time based on admin permissions)
+    },
+    include: {
+      project: true,
+      createdBy: true,
+      state: true,
+      configuration: true,
+      milestone: true,
+      tags: true
+    }
+  });
+  if (testRuns.length === 0) {
+    console.log("No test runs to index");
+    return;
+  }
+  const bulkBody = [];
+  for (const testRun of testRuns) {
+    const noteText = testRun.note ? extractTextFromNode(testRun.note) : "";
+    const docsText = testRun.docs ? extractTextFromNode(testRun.docs) : "";
+    const searchableContent = [
+      testRun.name,
+      noteText,
+      docsText,
+      testRun.tags.map((t) => t.name).join(" ")
+    ].join(" ");
+    bulkBody.push({
+      index: {
+        _index: indexName,
+        _id: testRun.id.toString()
+      }
+    });
+    bulkBody.push({
+      id: testRun.id,
+      projectId: testRun.projectId,
+      projectName: testRun.project.name,
+      name: testRun.name,
+      note: noteText,
+      docs: docsText,
+      configId: testRun.configId,
+      configurationName: testRun.configuration?.name,
+      milestoneId: testRun.milestoneId,
+      milestoneName: testRun.milestone?.name,
+      stateId: testRun.stateId,
+      stateName: testRun.state.name,
+      forecastManual: testRun.forecastManual,
+      forecastAutomated: testRun.forecastAutomated,
+      elapsed: testRun.elapsed,
+      isCompleted: testRun.isCompleted,
+      isDeleted: testRun.isDeleted,
+      completedAt: testRun.completedAt,
+      testRunType: testRun.testRunType,
+      createdAt: testRun.createdAt,
+      createdById: testRun.createdById,
+      createdByName: testRun.createdBy.name,
+      tags: testRun.tags.map((tag) => ({ id: tag.id, name: tag.name })),
+      searchableContent
+    });
+  }
+  try {
+    const bulkResponse = await client.bulk({ body: bulkBody, refresh: true });
+    if (bulkResponse.errors) {
+      const errorItems = bulkResponse.items.filter(
+        (item) => item.index?.error
+      );
+      console.error(`Bulk indexing errors: ${errorItems.length} failed documents`);
+      errorItems.slice(0, 10).forEach((item) => {
+        if (item.index?.error) {
+          console.error(`  Failed to index document ${item.index._id}:`);
+          console.error(`    Error type: ${item.index.error.type}`);
+          console.error(`    Error reason: ${item.index.error.reason}`);
+          if (item.index.error.caused_by) {
+            console.error(`    Caused by: ${JSON.stringify(item.index.error.caused_by)}`);
+          }
+        }
+      });
+      if (errorItems.length > 10) {
+        console.error(`  ... and ${errorItems.length - 10} more errors`);
+      }
+    } else {
+      console.log(`Successfully indexed ${testRuns.length} test runs`);
+    }
+  } catch (error) {
+    console.error("Failed to bulk index test runs:", error);
+    throw error;
+  }
+}
 
 // lib/multiTenantPrisma.ts
 var import_client2 = require("@prisma/client");
@@ -2045,6 +1968,85 @@ function validateMultiTenantJobData(jobData) {
     throw new Error("tenantId is required in multi-tenant mode");
   }
 }
+
+// lib/queueNames.ts
+var ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
+
+// lib/valkey.ts
+var import_ioredis = __toESM(require("ioredis"));
+var skipConnection = process.env.SKIP_VALKEY_CONNECTION === "true";
+var valkeyUrl = process.env.VALKEY_URL;
+var valkeySentinels = process.env.VALKEY_SENTINELS;
+var sentinelMasterName = process.env.VALKEY_SENTINEL_MASTER || "mymaster";
+var sentinelPassword = process.env.VALKEY_SENTINEL_PASSWORD;
+var baseOptions = {
+  maxRetriesPerRequest: null,
+  // Required by BullMQ
+  enableReadyCheck: false
+  // Helps with startup race conditions and Sentinel failover
+};
+function parseSentinels(sentinelStr) {
+  return sentinelStr.split(",").map((entry) => {
+    const trimmed = entry.trim();
+    const lastColon = trimmed.lastIndexOf(":");
+    if (lastColon === -1) {
+      return { host: trimmed, port: 26379 };
+    }
+    const host = trimmed.slice(0, lastColon);
+    const port = parseInt(trimmed.slice(lastColon + 1), 10);
+    return { host, port: Number.isNaN(port) ? 26379 : port };
+  });
+}
+function extractPasswordFromUrl(url) {
+  try {
+    const redisUrl = url.replace(/^valkey:\/\//, "redis://");
+    const parsed = new URL(redisUrl);
+    return parsed.password || void 0;
+  } catch {
+    return void 0;
+  }
+}
+var valkeyConnection = null;
+if (skipConnection) {
+  console.warn("Valkey connection skipped (SKIP_VALKEY_CONNECTION=true).");
+} else if (valkeySentinels) {
+  const sentinels = parseSentinels(valkeySentinels);
+  const masterPassword = valkeyUrl ? extractPasswordFromUrl(valkeyUrl) : void 0;
+  valkeyConnection = new import_ioredis.default({
+    sentinels,
+    name: sentinelMasterName,
+    ...masterPassword && { password: masterPassword },
+    ...sentinelPassword && { sentinelPassword },
+    ...baseOptions
+  });
+  console.log(
+    `Connecting to Valkey via Sentinel (master: "${sentinelMasterName}", sentinels: ${sentinels.map((s) => `${s.host}:${s.port}`).join(", ")})`
+  );
+  valkeyConnection.on("connect", () => {
+    console.log("Successfully connected to Valkey master via Sentinel.");
+  });
+  valkeyConnection.on("error", (err) => {
+    console.error("Valkey Sentinel connection error:", err);
+  });
+  valkeyConnection.on("reconnecting", () => {
+    console.log("Valkey Sentinel: reconnecting to master...");
+  });
+} else if (valkeyUrl) {
+  const connectionUrl = valkeyUrl.replace(/^valkey:\/\//, "redis://");
+  valkeyConnection = new import_ioredis.default(connectionUrl, baseOptions);
+  valkeyConnection.on("connect", () => {
+    console.log("Successfully connected to Valkey.");
+  });
+  valkeyConnection.on("error", (err) => {
+    console.error("Valkey connection error:", err);
+  });
+} else {
+  console.error(
+    "VALKEY_URL environment variable is not set. Background jobs may fail."
+  );
+  console.warn("Valkey URL not provided. Valkey connection not established.");
+}
+var valkey_default = valkeyConnection;
 
 // workers/elasticsearchReindexWorker.ts
 var import_meta = {};

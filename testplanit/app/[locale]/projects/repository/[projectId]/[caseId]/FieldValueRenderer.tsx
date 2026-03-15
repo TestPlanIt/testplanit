@@ -1,32 +1,30 @@
-import React from "react";
-import DynamicIcon from "@/components/DynamicIcon";
 import { DateFormatter } from "@/components/DateFormatter";
-import { Switch } from "@/components/ui/switch";
-import { Controller } from "react-hook-form";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import MultiSelect from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useTheme } from "next-themes";
-import { IconName } from "~/types/globals";
+import DynamicIcon from "@/components/DynamicIcon";
+import { DatePickerField } from "@/components/forms/DatePickerField";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Input } from "@/components/ui/input";
+import {
+  Select, SelectContent,
+  SelectGroup,
+  SelectItem, SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
+import React from "react";
+import { Controller } from "react-hook-form";
+import MultiSelect from "react-select";
+import { emptyEditorContent } from "~/app/constants";
+import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { IconName } from "~/types/globals";
 import StepsForm from "../StepsForm";
 import { StepsDisplay } from "./StepsDisplay";
 import { StepsResults } from "./StepsResults";
-import { useTranslations } from "next-intl";
-import { DatePickerField } from "@/components/forms/DatePickerField";
-import { emptyEditorContent } from "~/app/constants";
 
-import { Link } from "~/lib/navigation";
-import { Minus, Plus } from "lucide-react";
 import { Steps as PrismaSteps } from "@prisma/client";
+import { Minus, Plus } from "lucide-react";
+import { Link } from "~/lib/navigation";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 
 // Re-defining DisplayStep here for clarity, assuming it's similar to StepsDisplay's internal type

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { POST } from "./route";
 import { NextRequest } from "next/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { POST } from "./route";
 
 // Mock dependencies
 vi.mock("next-auth", () => ({
@@ -44,7 +44,6 @@ vi.mock("~/lib/services/auditLog", () => ({
 import { getServerSession } from "next-auth";
 import { prisma } from "~/lib/prisma";
 import { auditBulkUpdate } from "~/lib/services/auditLog";
-import { ProjectAccessType } from "@prisma/client";
 
 describe("Bulk Edit API Route", () => {
   const mockSession = {

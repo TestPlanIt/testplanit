@@ -63,125 +63,6 @@ __export(notificationWorker_exports, {
 });
 module.exports = __toCommonJS(notificationWorker_exports);
 var import_bullmq2 = require("bullmq");
-
-// lib/valkey.ts
-var import_ioredis = __toESM(require("ioredis"));
-var skipConnection = process.env.SKIP_VALKEY_CONNECTION === "true";
-var valkeyUrl = process.env.VALKEY_URL;
-var valkeySentinels = process.env.VALKEY_SENTINELS;
-var sentinelMasterName = process.env.VALKEY_SENTINEL_MASTER || "mymaster";
-var sentinelPassword = process.env.VALKEY_SENTINEL_PASSWORD;
-var baseOptions = {
-  maxRetriesPerRequest: null,
-  // Required by BullMQ
-  enableReadyCheck: false
-  // Helps with startup race conditions and Sentinel failover
-};
-function parseSentinels(sentinelStr) {
-  return sentinelStr.split(",").map((entry) => {
-    const trimmed = entry.trim();
-    const lastColon = trimmed.lastIndexOf(":");
-    if (lastColon === -1) {
-      return { host: trimmed, port: 26379 };
-    }
-    const host = trimmed.slice(0, lastColon);
-    const port = parseInt(trimmed.slice(lastColon + 1), 10);
-    return { host, port: Number.isNaN(port) ? 26379 : port };
-  });
-}
-function extractPasswordFromUrl(url) {
-  try {
-    const redisUrl = url.replace(/^valkey:\/\//, "redis://");
-    const parsed = new URL(redisUrl);
-    return parsed.password || void 0;
-  } catch {
-    return void 0;
-  }
-}
-var valkeyConnection = null;
-if (skipConnection) {
-  console.warn("Valkey connection skipped (SKIP_VALKEY_CONNECTION=true).");
-} else if (valkeySentinels) {
-  const sentinels = parseSentinels(valkeySentinels);
-  const masterPassword = valkeyUrl ? extractPasswordFromUrl(valkeyUrl) : void 0;
-  valkeyConnection = new import_ioredis.default({
-    sentinels,
-    name: sentinelMasterName,
-    ...masterPassword && { password: masterPassword },
-    ...sentinelPassword && { sentinelPassword },
-    ...baseOptions
-  });
-  console.log(
-    `Connecting to Valkey via Sentinel (master: "${sentinelMasterName}", sentinels: ${sentinels.map((s) => `${s.host}:${s.port}`).join(", ")})`
-  );
-  valkeyConnection.on("connect", () => {
-    console.log("Successfully connected to Valkey master via Sentinel.");
-  });
-  valkeyConnection.on("error", (err) => {
-    console.error("Valkey Sentinel connection error:", err);
-  });
-  valkeyConnection.on("reconnecting", () => {
-    console.log("Valkey Sentinel: reconnecting to master...");
-  });
-} else if (valkeyUrl) {
-  const connectionUrl = valkeyUrl.replace(/^valkey:\/\//, "redis://");
-  valkeyConnection = new import_ioredis.default(connectionUrl, baseOptions);
-  valkeyConnection.on("connect", () => {
-    console.log("Successfully connected to Valkey.");
-  });
-  valkeyConnection.on("error", (err) => {
-    console.error("Valkey connection error:", err);
-  });
-} else {
-  console.error(
-    "VALKEY_URL environment variable is not set. Background jobs may fail."
-  );
-  console.warn("Valkey URL not provided. Valkey connection not established.");
-}
-var valkey_default = valkeyConnection;
-
-// lib/queues.ts
-var import_bullmq = require("bullmq");
-
-// lib/queueNames.ts
-var NOTIFICATION_QUEUE_NAME = "notifications";
-var EMAIL_QUEUE_NAME = "emails";
-
-// lib/queues.ts
-var _emailQueue = null;
-function getEmailQueue() {
-  if (_emailQueue) return _emailQueue;
-  if (!valkey_default) {
-    console.warn(
-      `Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`
-    );
-    return null;
-  }
-  _emailQueue = new import_bullmq.Queue(EMAIL_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 5,
-      backoff: {
-        type: "exponential",
-        delay: 1e4
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 30,
-        count: 5e3
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 30
-      }
-    }
-  });
-  console.log(`Queue "${EMAIL_QUEUE_NAME}" initialized.`);
-  _emailQueue.on("error", (error) => {
-    console.error(`Queue ${EMAIL_QUEUE_NAME} error:`, error);
-  });
-  return _emailQueue;
-}
-
-// workers/notificationWorker.ts
 var import_node_url = require("node:url");
 
 // lib/multiTenantPrisma.ts
@@ -328,6 +209,123 @@ function validateMultiTenantJobData(jobData) {
   if (isMultiTenantMode() && !jobData.tenantId) {
     throw new Error("tenantId is required in multi-tenant mode");
   }
+}
+
+// lib/queues.ts
+var import_bullmq = require("bullmq");
+
+// lib/queueNames.ts
+var NOTIFICATION_QUEUE_NAME = "notifications";
+var EMAIL_QUEUE_NAME = "emails";
+
+// lib/valkey.ts
+var import_ioredis = __toESM(require("ioredis"));
+var skipConnection = process.env.SKIP_VALKEY_CONNECTION === "true";
+var valkeyUrl = process.env.VALKEY_URL;
+var valkeySentinels = process.env.VALKEY_SENTINELS;
+var sentinelMasterName = process.env.VALKEY_SENTINEL_MASTER || "mymaster";
+var sentinelPassword = process.env.VALKEY_SENTINEL_PASSWORD;
+var baseOptions = {
+  maxRetriesPerRequest: null,
+  // Required by BullMQ
+  enableReadyCheck: false
+  // Helps with startup race conditions and Sentinel failover
+};
+function parseSentinels(sentinelStr) {
+  return sentinelStr.split(",").map((entry) => {
+    const trimmed = entry.trim();
+    const lastColon = trimmed.lastIndexOf(":");
+    if (lastColon === -1) {
+      return { host: trimmed, port: 26379 };
+    }
+    const host = trimmed.slice(0, lastColon);
+    const port = parseInt(trimmed.slice(lastColon + 1), 10);
+    return { host, port: Number.isNaN(port) ? 26379 : port };
+  });
+}
+function extractPasswordFromUrl(url) {
+  try {
+    const redisUrl = url.replace(/^valkey:\/\//, "redis://");
+    const parsed = new URL(redisUrl);
+    return parsed.password || void 0;
+  } catch {
+    return void 0;
+  }
+}
+var valkeyConnection = null;
+if (skipConnection) {
+  console.warn("Valkey connection skipped (SKIP_VALKEY_CONNECTION=true).");
+} else if (valkeySentinels) {
+  const sentinels = parseSentinels(valkeySentinels);
+  const masterPassword = valkeyUrl ? extractPasswordFromUrl(valkeyUrl) : void 0;
+  valkeyConnection = new import_ioredis.default({
+    sentinels,
+    name: sentinelMasterName,
+    ...masterPassword && { password: masterPassword },
+    ...sentinelPassword && { sentinelPassword },
+    ...baseOptions
+  });
+  console.log(
+    `Connecting to Valkey via Sentinel (master: "${sentinelMasterName}", sentinels: ${sentinels.map((s) => `${s.host}:${s.port}`).join(", ")})`
+  );
+  valkeyConnection.on("connect", () => {
+    console.log("Successfully connected to Valkey master via Sentinel.");
+  });
+  valkeyConnection.on("error", (err) => {
+    console.error("Valkey Sentinel connection error:", err);
+  });
+  valkeyConnection.on("reconnecting", () => {
+    console.log("Valkey Sentinel: reconnecting to master...");
+  });
+} else if (valkeyUrl) {
+  const connectionUrl = valkeyUrl.replace(/^valkey:\/\//, "redis://");
+  valkeyConnection = new import_ioredis.default(connectionUrl, baseOptions);
+  valkeyConnection.on("connect", () => {
+    console.log("Successfully connected to Valkey.");
+  });
+  valkeyConnection.on("error", (err) => {
+    console.error("Valkey connection error:", err);
+  });
+} else {
+  console.error(
+    "VALKEY_URL environment variable is not set. Background jobs may fail."
+  );
+  console.warn("Valkey URL not provided. Valkey connection not established.");
+}
+var valkey_default = valkeyConnection;
+
+// lib/queues.ts
+var _emailQueue = null;
+function getEmailQueue() {
+  if (_emailQueue) return _emailQueue;
+  if (!valkey_default) {
+    console.warn(
+      `Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _emailQueue = new import_bullmq.Queue(EMAIL_QUEUE_NAME, {
+    connection: valkey_default,
+    defaultJobOptions: {
+      attempts: 5,
+      backoff: {
+        type: "exponential",
+        delay: 1e4
+      },
+      removeOnComplete: {
+        age: 3600 * 24 * 30,
+        count: 5e3
+      },
+      removeOnFail: {
+        age: 3600 * 24 * 30
+      }
+    }
+  });
+  console.log(`Queue "${EMAIL_QUEUE_NAME}" initialized.`);
+  _emailQueue.on("error", (error) => {
+    console.error(`Queue ${EMAIL_QUEUE_NAME} error:`, error);
+  });
+  return _emailQueue;
 }
 
 // workers/notificationWorker.ts

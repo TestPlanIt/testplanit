@@ -1,101 +1,73 @@
-import { Worker, Job } from "bullmq";
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import {
-  PrismaClient,
-  Prisma,
-  type TestmoImportJob,
   Access,
-  ApplicationArea,
-  WorkflowScope,
-  WorkflowType,
+  ApplicationArea, Prisma, PrismaClient, WorkflowScope,
+  WorkflowType, type TestmoImportJob
 } from "@prisma/client";
 import { getSchema } from "@tiptap/core";
 import { DOMParser as PMDOMParser } from "@tiptap/pm/model";
-import { Window as HappyDOMWindow } from "happy-dom";
 import StarterKit from "@tiptap/starter-kit";
+import bcrypt from "bcrypt";
+import { Job, Worker } from "bullmq";
+import { Window as HappyDOMWindow } from "happy-dom";
 import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
-import bcrypt from "bcrypt";
-import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService.js";
+import { emptyEditorContent } from "../app/constants/backend";
 import {
-  isMultiTenantMode,
   disconnectAllTenantClients,
-  getPrismaClientForJob,
-  validateMultiTenantJobData,
-  type MultiTenantJobData,
+  getPrismaClientForJob, isMultiTenantMode, validateMultiTenantJobData,
+  type MultiTenantJobData
 } from "../lib/multiTenantPrisma";
+import {
+  getElasticsearchReindexQueue, TESTMO_IMPORT_QUEUE_NAME
+} from "../lib/queues";
+import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService.js";
 import valkeyConnection from "../lib/valkey";
 import {
-  TESTMO_IMPORT_QUEUE_NAME,
-  getElasticsearchReindexQueue,
-} from "../lib/queues";
-import type { ReindexJobData } from "./elasticsearchReindexWorker";
+  normalizeMappingConfiguration,
+  serializeMappingConfiguration
+} from "../services/imports/testmo/configuration";
 import { analyzeTestmoExport } from "../services/imports/testmo/TestmoExportAnalyzer";
 import type {
   TestmoDatasetSummary,
-  TestmoMappingConfiguration,
+  TestmoMappingConfiguration
 } from "../services/imports/testmo/types";
-import {
-  normalizeMappingConfiguration,
-  serializeMappingConfiguration,
-} from "../services/imports/testmo/configuration";
 import { generateRandomPassword } from "../utils/randomPassword";
-import { emptyEditorContent } from "../app/constants/backend";
+import type { ReindexJobData } from "./elasticsearchReindexWorker";
 import {
-  importWorkflows,
-  importGroups,
-  importTags,
-  importRoles,
-  importMilestoneTypes,
-  importConfigurations,
-  importUserGroups,
-} from "./testmoImport/configurationImports";
-import {
-  importAutomationCases,
-  importAutomationRuns,
-  importAutomationRunTests,
-  importAutomationRunFields,
-  importAutomationRunLinks,
-  importAutomationRunTestFields,
-  importAutomationRunTags,
-  clearAutomationImportCaches,
+  clearAutomationImportCaches, importAutomationCases, importAutomationRunFields,
+  importAutomationRunLinks, importAutomationRuns, importAutomationRunTags, importAutomationRunTestFields, importAutomationRunTests
 } from "./testmoImport/automationImports";
 import {
-  importRepositoryCaseTags,
-  importRunTags,
-  importSessionTags,
-} from "./testmoImport/tagImports";
+  importConfigurations, importGroups, importMilestoneTypes, importRoles, importTags, importUserGroups, importWorkflows
+} from "./testmoImport/configurationImports";
 import {
-  importProjectLinks,
-  importMilestoneLinks,
-  importRunLinks,
-} from "./testmoImport/linkImports";
+  buildNumberIdMap,
+  buildStringIdMap,
+  buildTemplateFieldMaps,
+  resolveUserId, toBooleanValue,
+  toDateValue, toInputJsonValue, toNumberValue,
+  toStringValue
+} from "./testmoImport/helpers";
 import {
-  importTemplates,
-  importTemplateFields,
-} from "./testmoImport/templateImports";
-import {
-  importIssueTargets,
-  importIssues,
-  importMilestoneIssues,
+  createProjectIntegrations, importIssues, importIssueTargets, importMilestoneIssues,
   importRepositoryCaseIssues,
   importRunIssues,
   importRunResultIssues,
   importSessionIssues,
-  importSessionResultIssues,
-  createProjectIntegrations,
+  importSessionResultIssues
 } from "./testmoImport/issueImports";
 import {
-  toNumberValue,
-  toStringValue,
-  toBooleanValue,
-  toDateValue,
-  buildNumberIdMap,
-  buildStringIdMap,
-  buildTemplateFieldMaps,
-  resolveUserId,
-  toInputJsonValue,
-} from "./testmoImport/helpers";
+  importMilestoneLinks, importProjectLinks, importRunLinks
+} from "./testmoImport/linkImports";
+import {
+  importRepositoryCaseTags,
+  importRunTags,
+  importSessionTags
+} from "./testmoImport/tagImports";
+import {
+  importTemplateFields, importTemplates
+} from "./testmoImport/templateImports";
 
 // TODO(testmo-import): Remaining datasets to implement:
 //

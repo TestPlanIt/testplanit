@@ -1,29 +1,21 @@
-import React from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import React from "react";
 
-import { Projects } from "@prisma/client";
-import { ProjectIcon } from "@/components/ProjectIcon";
 import { DateFormatter } from "@/components/DateFormatter";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { Projects } from "@prisma/client";
 
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Link } from "@/lib/navigation";
 import { MemberList } from "@/components/MemberList";
 import {
-  LinkIcon,
-  Milestone,
-  CirclePlay,
-  Compass,
-  ListChecks,
-  Bug,
+  Card, CardContent, CardDescription, CardFooter, CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Link } from "@/lib/navigation";
+import {
+  Bug, CirclePlay,
+  Compass, LinkIcon, ListChecks, Milestone
 } from "lucide-react";
 
 // Define the expected shape of the _count object

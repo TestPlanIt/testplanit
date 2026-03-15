@@ -1,33 +1,25 @@
-import { useTranslations, useLocale } from "next-intl";
-import { useSession } from "next-auth/react";
-import { Link } from "~/lib/navigation";
-import { useParams } from "next/navigation";
+import { DateFormatter } from "@/components/DateFormatter";
+import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { cn } from "~/utils";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  HelpCircle,
-  Clock,
-  User,
-  Calendar,
-  ListChecks,
-  CalendarClock,
-  MessageSquare,
-  CheckCircle2,
-  Loader2,
-} from "lucide-react";
-import { useFindFirstStatus } from "~/lib/hooks";
-import { DateFormatter } from "@/components/DateFormatter";
-import { isAutomatedTestRunType } from "~/utils/testResultTypes";
-import { toHumanReadable } from "~/utils/duration";
-import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Calendar, CalendarClock, CheckCircle2, Clock, HelpCircle, ListChecks, Loader2, MessageSquare, User
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
+import { useFindFirstStatus } from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
+import { cn } from "~/utils";
+import { toHumanReadable } from "~/utils/duration";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 
 interface TestRunCasesSummaryProps {
   testRunId: number;

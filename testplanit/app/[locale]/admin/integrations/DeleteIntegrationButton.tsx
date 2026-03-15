@@ -1,9 +1,9 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Integration } from "@prisma/client";
+import { Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface DeleteIntegrationButtonProps {
   integration: Integration;

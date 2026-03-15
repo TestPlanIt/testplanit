@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // vi.hoisted runs before vi.mock hoisting — safe to reference in factories
 const {
@@ -35,7 +35,7 @@ vi.mock("~/lib/llm/services/code-context.service", () => ({
   },
 }));
 
-import { stripMarkdownFences, formatAiError } from "~/utils/ai-export-helpers";
+import { formatAiError, stripMarkdownFences } from "~/utils/ai-export-helpers";
 import { checkAiExportAvailable } from "./aiExportActions";
 
 describe("stripMarkdownFences", () => {

@@ -1,11 +1,11 @@
-import React from "react";
-import { SearchCheck, Layers } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { Steps as PrismaSteps } from "@prisma/client";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Steps as PrismaSteps } from "@prisma/client";
+import { Layers, SearchCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React from "react";
 import { emptyEditorContent } from "~/app/constants";
-import { useFindManySharedStepItem } from "~/lib/hooks";
 import { Separator } from "~/components/ui/separator";
+import { useFindManySharedStepItem } from "~/lib/hooks";
 
 interface DisplayStep extends PrismaSteps {
   isShared?: boolean;

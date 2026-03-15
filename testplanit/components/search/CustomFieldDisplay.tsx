@@ -1,7 +1,7 @@
-import React from "react";
-import { Badge } from "@/components/ui/badge";
-import DynamicIcon from "@/components/DynamicIcon";
 import { DateFormatter } from "@/components/DateFormatter";
+import DynamicIcon from "@/components/DynamicIcon";
+import { Badge } from "@/components/ui/badge";
+import React from "react";
 import { IconName } from "~/types/globals";
 
 interface CustomFieldDisplayProps {

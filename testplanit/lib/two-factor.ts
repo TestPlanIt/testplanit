@@ -1,6 +1,6 @@
-import { generateSecret, generate, verify, generateURI } from "otplib";
+import { createHash, randomBytes } from "crypto";
+import { generateSecret, generateURI, verify } from "otplib";
 import QRCode from "qrcode";
-import { randomBytes, createHash } from "crypto";
 
 const APP_NAME = "TestPlanIt";
 

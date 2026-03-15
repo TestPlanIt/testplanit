@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { extractStepText } from "./extractStepText";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { extractTextFromNode } from "../../utils/extractTextFromJson";
+import { extractStepText } from "./extractStepText";
 
 // Mock extractTextFromNode
 vi.mock("../../utils/extractTextFromJson", () => ({

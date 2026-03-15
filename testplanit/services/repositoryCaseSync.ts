@@ -1,15 +1,13 @@
+import { prisma as defaultPrisma } from "../lib/prismaBase";
+import { extractTextFromNode } from "../utils/extractTextFromJson";
+import {
+  bulkIndexRepositoryCases, deleteRepositoryCase, indexRepositoryCase
+} from "./elasticsearchIndexing";
 import {
   createRepositoryCaseIndex,
-  RepositoryCaseDocument,
+  RepositoryCaseDocument
 } from "./elasticsearchService";
-import {
-  indexRepositoryCase,
-  deleteRepositoryCase,
-  bulkIndexRepositoryCases,
-} from "./elasticsearchIndexing";
-import { extractTextFromNode } from "../utils/extractTextFromJson";
 import { buildCustomFieldDocuments } from "./unifiedElasticsearchService";
-import { prisma as defaultPrisma } from "../lib/prismaBase";
 
 type PrismaClientType = typeof defaultPrisma;
 

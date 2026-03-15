@@ -1,30 +1,16 @@
 import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-  afterEach,
-  beforeAll,
-  afterAll,
+  Color,
+  ColorFamily, FieldIcon, Milestones,
+  MilestoneTypes
+} from "@prisma/client"; // Assuming types are available
+import {
+  afterAll, beforeAll, describe, expect, it, vi
 } from "vitest";
 import {
-  createColorMap,
-  getStatusStyle,
-  getCondition,
-  getStatus,
-  sortMilestones,
-  STATUS_KEYS,
-  ColorMap,
-  MilestonesWithTypes, // Import the exported type
+  ColorMap, createColorMap, getCondition,
+  getStatus, getStatusStyle, MilestonesWithTypes, sortMilestones,
+  STATUS_KEYS
 } from "./milestoneUtils";
-import {
-  Color,
-  ColorFamily,
-  Milestones,
-  MilestoneTypes,
-  FieldIcon,
-} from "@prisma/client"; // Assuming types are available
 
 // Define the combined type locally if not exported or easily importable
 interface ColorWithFamily extends Color {

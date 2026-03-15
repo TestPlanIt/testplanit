@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Job } from "bullmq";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock the sync service
 const mockPerformSync = vi.fn();

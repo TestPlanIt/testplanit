@@ -2,12 +2,12 @@
 import { useState } from "react";
 import {
   useUpdateConfigVariants,
-  useUpdateManyConfigurations,
+  useUpdateManyConfigurations
 } from "~/lib/hooks";
 import { Variant } from "./Categories";
 
-import { useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
+import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Trash, TriangleAlert } from "lucide-react";
@@ -16,13 +16,7 @@ import { Form } from "@/components/ui/form";
 
 import {
   AlertDialog,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogTitle,
-  AlertDialogDescription,
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 
 interface DeleteVariantModalProps {

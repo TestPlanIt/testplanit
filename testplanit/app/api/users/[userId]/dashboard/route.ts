@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
+import { authOptions } from "~/server/auth";
 
 export type UserDashboardData = {
   untestedStatusId: number | null;

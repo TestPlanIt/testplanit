@@ -1,5 +1,5 @@
-import Handlebars from 'handlebars';
 import fs from 'fs/promises';
+import Handlebars from 'handlebars';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { formatEmailDate, formatEmailDateTime } from '../server-date-formatter';

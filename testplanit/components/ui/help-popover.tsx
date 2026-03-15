@@ -1,8 +1,8 @@
 import { HelpCircle } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { useTranslations } from "next-intl";
-import Markdown from "react-markdown";
 import type { Components } from "react-markdown";
+import Markdown from "react-markdown";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
 interface HelpPopoverProps {
   helpKey: string;

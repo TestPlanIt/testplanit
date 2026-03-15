@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { searchRepositoryCases } from "./repositoryCaseSearch";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getElasticsearchClient } from "./elasticsearchService";
+import { searchRepositoryCases } from "./repositoryCaseSearch";
 
 // Mock Elasticsearch
 vi.mock("./elasticsearchService", () => ({

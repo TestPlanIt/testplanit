@@ -1,22 +1,22 @@
+import type { AuditAction } from "@prisma/client";
 import { enhance } from "@zenstackhq/runtime";
 import { NextRequestHandler } from "@zenstackhq/server/next";
-import { getServerAuthSession } from "~/server/auth";
-import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
-import { prisma } from "~/lib/prisma";
-import { setAuditContext, extractIpAddress } from "~/lib/auditContext";
-import { captureAuditEvent, type AuditEvent } from "~/lib/services/auditLog";
-import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
-import type { AuditAction } from "@prisma/client";
 import { AsyncLocalStorage } from "async_hooks";
-import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
-import { syncTestRunToElasticsearch } from "~/services/testRunSearch";
-import { syncSessionToElasticsearch } from "~/services/sessionSearch";
-import { syncSharedStepToElasticsearch } from "~/services/sharedStepSearch";
+import { headers } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
+import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
+import { extractIpAddress, setAuditContext } from "~/lib/auditContext";
+import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { prisma } from "~/lib/prisma";
+import { captureAuditEvent, type AuditEvent } from "~/lib/services/auditLog";
+import { getServerAuthSession } from "~/server/auth";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
 import { syncMilestoneToElasticsearch } from "~/services/milestoneSearch";
 import { syncProjectToElasticsearch } from "~/services/projectSearch";
-import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
+import { syncSessionToElasticsearch } from "~/services/sessionSearch";
+import { syncSharedStepToElasticsearch } from "~/services/sharedStepSearch";
+import { syncTestRunToElasticsearch } from "~/services/testRunSearch";
 
 // Use AsyncLocalStorage for request-scoped API token auth (thread-safe)
 type ApiAuthContext = { userId: string; email?: string; name?: string } | null;

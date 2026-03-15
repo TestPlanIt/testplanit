@@ -1,13 +1,13 @@
-import { CirclePlay, Trash2, Combine } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { cn } from "~/utils";
-import { Link } from "~/lib/navigation";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import { CirclePlay, Combine, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Link } from "~/lib/navigation";
+import { cn } from "~/utils";
 
 interface TestRunNameDisplayProps {
   testRun:

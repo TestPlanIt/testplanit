@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import type {
-  TestmoMappingConfiguration,
+  TestmoMappingConfiguration
 } from "../../services/imports/testmo/types";
 
 export const toNumberValue = (value: unknown): number | null => {

@@ -1,13 +1,10 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
-import {
-  useUpdateRoles,
-  useUpdateManyRoles,
-  useFindManyRolePermission,
-  useUpsertRolePermission,
-} from "~/lib/hooks";
-import { Roles, ApplicationArea } from "@prisma/client";
+import { ApplicationArea, Roles } from "@prisma/client";
 import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
+import {
+  useFindManyRolePermission, useUpdateManyRoles, useUpdateRoles, useUpsertRolePermission
+} from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -24,9 +21,10 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -34,13 +32,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@radix-ui/react-label";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@radix-ui/react-label";
 
 // Helper to get enum values safely
 const applicationAreaValues = Object.values(ApplicationArea);

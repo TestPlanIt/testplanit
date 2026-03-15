@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { parseSentinels, extractPasswordFromUrl } from "./valkey";
+import { describe, expect, it } from "vitest";
+import { extractPasswordFromUrl, parseSentinels } from "./valkey";
 
 describe("parseSentinels", () => {
   it("parses a single sentinel", () => {

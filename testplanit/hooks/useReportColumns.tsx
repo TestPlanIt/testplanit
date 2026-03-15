@@ -1,33 +1,31 @@
-import { useMemo } from "react";
-import { useTranslations, useLocale } from "next-intl";
 import { createColumnHelper } from "@tanstack/react-table";
 import { Compass } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useMemo } from "react";
 import {
-  DIMENSION_LABEL_KEYS,
-  getMetricHelpKey,
-  getDimensionHelpKey,
+  DIMENSION_LABEL_KEYS, getDimensionHelpKey, getMetricHelpKey
 } from "~/lib/constants/reportConstants";
-import { getUserIdFromRow } from "~/utils/reportUtils";
 import { toHumanReadable } from "~/utils/duration";
 import { getDateFnsLocale } from "~/utils/locales";
+import { getUserIdFromRow } from "~/utils/reportUtils";
 
 // Component imports - only using existing components
-import { HelpPopover } from "~/components/ui/help-popover";
-import StatusDotDisplay from "~/components/StatusDotDisplay";
-import { UserNameCell } from "~/components/tables/UserNameCell";
-import { GroupNameCell } from "~/components/tables/GroupNameCell";
-import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
-import { TemplateNameDisplay } from "~/components/TemplateNameDisplay";
-import { MilestoneIconAndName } from "~/components/MilestoneIconAndName";
-import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
-import { CaseDisplay } from "~/components/tables/CaseDisplay";
 import { ConfigurationNameDisplay } from "~/components/ConfigurationNameDisplay";
-import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
 import { FolderNameDisplay } from "~/components/FolderNameDisplay";
-import { RoleNameDisplay } from "~/components/RoleNameDisplay";
-import { IssueTypeNameDisplay } from "~/components/IssueTypeNameDisplay";
 import { IssuePriorityDisplay } from "~/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "~/components/IssueStatusDisplay";
+import { IssueTypeNameDisplay } from "~/components/IssueTypeNameDisplay";
+import { MilestoneIconAndName } from "~/components/MilestoneIconAndName";
+import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
+import { RoleNameDisplay } from "~/components/RoleNameDisplay";
+import StatusDotDisplay from "~/components/StatusDotDisplay";
+import { CaseDisplay } from "~/components/tables/CaseDisplay";
+import { GroupNameCell } from "~/components/tables/GroupNameCell";
+import { UserNameCell } from "~/components/tables/UserNameCell";
+import { TemplateNameDisplay } from "~/components/TemplateNameDisplay";
+import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
+import { HelpPopover } from "~/components/ui/help-popover";
+import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 
 // Generic helper to check if all subrows have the same dimension value
 function getAggregatedDimensionDisplay(

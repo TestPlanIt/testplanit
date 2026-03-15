@@ -1,15 +1,15 @@
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { Link } from "~/lib/navigation";
-import { useTranslations } from "next-intl";
 
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  DotsHorizontalIcon,
+  DotsHorizontalIcon
 } from "@radix-ui/react-icons";
 
-import { cn } from "~/utils";
 import { ButtonProps, buttonVariants } from "@/components/ui/button";
+import { cn } from "~/utils";
 
 const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
   <nav

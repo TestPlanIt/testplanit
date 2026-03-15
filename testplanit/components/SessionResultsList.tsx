@@ -1,44 +1,7 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import {
-  useFindManySessionResults,
-  useUpdateSessionResults,
-  useFindManyStatus,
-  useCreateAttachments,
-  useUpdateAttachments,
-  useFindManyTemplateResultAssignment,
-  useCreateResultFieldValues,
-  useUpdateResultFieldValues,
-  useFindFirstProjects,
-} from "~/lib/hooks";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DateFormatter } from "@/components/DateFormatter";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { toHumanReadable } from "~/utils/duration";
-import { useTranslations, useLocale } from "next-intl";
-import { getBackgroundStyle, getTextStyle } from "~/utils/colorUtils";
-import { emptyEditorContent } from "~/app/constants";
-import {
-  Clock,
-  Copy,
-  ChevronRight,
-  FileText,
-  Trash2,
-  LinkIcon,
-  Edit,
-} from "lucide-react";
-import { UserNameCell } from "./tables/UserNameCell";
-import LoadingSpinner from "./LoadingSpinner";
-import { AttachmentsDisplay, AttachmentChanges } from "./AttachmentsDisplay";
-import { AttachmentsCarousel } from "./AttachmentsCarousel";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,15 +10,22 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -63,31 +33,47 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { Attachments, SessionResults, User } from "@prisma/client";
+import {
+  ChevronRight, Clock,
+  Copy, Edit, FileText, LinkIcon, Trash2
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import parseDuration from "parse-duration";
+import React, { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import parseDuration from "parse-duration";
-import { MAX_DURATION } from "~/app/constants";
-import UploadAttachments from "./UploadAttachments";
-import type { Attachments, SessionResults, User } from "@prisma/client";
-import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
-import { usePathname, useRouter } from "~/lib/navigation";
-import { useParams } from "next/navigation";
-import { IssuesListDisplay } from "./tables/IssuesListDisplay";
-import { SimpleUnifiedIssueManager } from "./issues/UnifiedIssueManager";
+import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import {
+  useCreateAttachments, useCreateResultFieldValues, useFindFirstProjects, useFindManySessionResults, useFindManyStatus, useFindManyTemplateResultAssignment, useUpdateAttachments, useUpdateResultFieldValues, useUpdateSessionResults
+} from "~/lib/hooks";
+import { usePathname, useRouter } from "~/lib/navigation";
+import { getBackgroundStyle } from "~/utils/colorUtils";
+import { toHumanReadable } from "~/utils/duration";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { AttachmentsCarousel } from "./AttachmentsCarousel";
+import { AttachmentChanges, AttachmentsDisplay } from "./AttachmentsDisplay";
+import { SimpleUnifiedIssueManager } from "./issues/UnifiedIssueManager";
+import LoadingSpinner from "./LoadingSpinner";
+import { IssuesListDisplay } from "./tables/IssuesListDisplay";
+import { UserNameCell } from "./tables/UserNameCell";
+import UploadAttachments from "./UploadAttachments";
 
 // Define the ExtendedSessionResults interface to match the query structure
 interface ExtendedSessionResults extends SessionResults {

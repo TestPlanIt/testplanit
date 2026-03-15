@@ -3,13 +3,13 @@ import { Toolbar } from "@/components/tiptap/ui/Toolbar";
 import { DragHandle } from "@tiptap/extension-drag-handle-react";
 import { Editor } from "@tiptap/react";
 
-import * as Popover from "@radix-ui/react-popover";
-import { Surface } from "@/components/tiptap/ui/Surface";
 import { DropdownButton } from "@/components/tiptap/ui/Dropdown";
+import { Surface } from "@/components/tiptap/ui/Surface";
+import * as Popover from "@radix-ui/react-popover";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 import useContentItemActions from "./hooks/useContentItemActions";
 import { useData } from "./hooks/useData";
-import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
 
 export type ContentItemMenuProps = {
   editor: Editor;

@@ -1,7 +1,7 @@
-import { getNotificationQueue } from "../queues";
-import { JOB_CREATE_NOTIFICATION } from "../../workers/notificationWorker";
 import { NotificationType } from "@prisma/client";
+import { JOB_CREATE_NOTIFICATION } from "../../workers/notificationWorker";
 import { getCurrentTenantId } from "../multiTenantPrisma";
+import { getNotificationQueue } from "../queues";
 
 interface CreateNotificationParams {
   userId: string;

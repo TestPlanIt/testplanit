@@ -1,101 +1,71 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { useRouter, usePathname } from "~/lib/navigation";
-import { useSearchParams } from "next/navigation";
-import React, { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ColumnDef } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useCreateTestRunCases, useFindManyTestRuns } from "~/lib/hooks";
 import { getMaxOrderInTestRun } from "~/app/actions/test-run";
+import { useCreateTestRunCases, useFindManyTestRuns } from "~/lib/hooks";
+import { usePathname, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
-import {
-  RepositoryCases,
-  Color,
-  FieldIcon,
-  Workflows,
-  CaseFields,
-  Attachments,
-  Steps,
-  Projects,
-  RepositoryFolders,
-  User,
-  Status,
-  Issue,
-  Tags,
-  RepositoryCaseSource,
-} from "@prisma/client";
-import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
-import { DurationDisplay } from "@/components/DurationDisplay";
-import { Switch } from "@/components/ui/switch";
-import { UserNameCell } from "@/components/tables/UserNameCell";
+import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import { DateFormatter } from "@/components/DateFormatter";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { Separator } from "@/components/ui/separator";
+import { DurationDisplay } from "@/components/DurationDisplay";
+import DynamicIcon from "@/components/DynamicIcon";
+import StatusDotDisplay from "@/components/StatusDotDisplay";
+import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
+import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
+import { CommentsListDisplay } from "@/components/tables/CommentsListDisplay";
+import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
+import { StepsListDisplay } from "@/components/tables/StepsListDisplay";
+import { TagsListDisplay } from "@/components/tables/TagListDisplay";
+import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
+import PlainTextFromJson from "@/components/TextFromJson";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
-import { StepsListDisplay } from "@/components/tables/StepsListDisplay";
-import { DeleteCaseModal } from "./DeleteCase";
-import { TagsListDisplay } from "@/components/tables/TagListDisplay";
-import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
-import PlainTextFromJson from "@/components/TextFromJson";
-import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
-import { Link } from "~/lib/navigation";
-import {
-  LinkIcon,
-  ArrowRight,
-  Folder,
-  MoreVertical,
-  UserCog,
-  ExternalLink,
-  PlayCircle,
-  PlusSquare,
-  Check,
-  Plus,
-  GripVertical,
-  ListChecks,
-  Bot,
-  Trash2,
-  ScrollText,
-} from "lucide-react";
-import { useFindManyRepositoryFolders, useFindManyStatus } from "~/lib/hooks";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
+  DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { AssignTestCaseModal } from "./AssignTestCase";
-import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
-import { CommentsListDisplay } from "@/components/tables/CommentsListDisplay";
-import { AddResultModal } from "./AddResultModal";
-import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
-import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { useUpdateTestRunCases } from "~/lib/hooks";
-import LoadingSpinner from "~/components/LoadingSpinner";
-import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
-import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
-import { ForecastDisplay } from "~/components/ForecastDisplay";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
-import { isAutomatedCaseSource } from "~/utils/testResultTypes";
-import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
+import {
+  Attachments, CaseFields, Color,
+  FieldIcon, Issue, Projects, RepositoryCases, RepositoryCaseSource, RepositoryFolders, Status, Steps, Tags, User, Workflows
+} from "@prisma/client";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import {
+  ArrowRight, Bot, Check, ExternalLink, Folder, GripVertical, LinkIcon, ListChecks, MoreVertical, PlayCircle, Plus, PlusSquare, ScrollText, Trash2, UserCog
+} from "lucide-react";
 import { useSession } from "next-auth/react";
+import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
+import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
+import { ForecastDisplay } from "~/components/ForecastDisplay";
+import LoadingSpinner from "~/components/LoadingSpinner";
+import { useFindManyRepositoryFolders, useFindManyStatus, useUpdateTestRunCases } from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
+import { IconName } from "~/types/globals";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import { AssignTestCaseModal } from "./AssignTestCase";
+import { DeleteCaseModal } from "./DeleteCase";
 
 export interface ExtendedCases extends RepositoryCases {
   className: string | null;

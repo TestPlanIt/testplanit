@@ -1,23 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  captureAuditEvent,
-  auditCreate,
-  auditUpdate,
-  auditDelete,
-  auditRoleChange,
-  auditPermissionGrant,
-  auditPermissionRevoke,
-  auditAuthEvent,
-  auditPasswordChange,
-  auditSystemConfigChange,
-  auditSsoConfigChange,
-  auditDataExport,
-  auditBulkCreate,
-  auditBulkUpdate,
-  auditBulkDelete,
-  calculateDiff,
-  extractEntityName,
-  type AuditEvent,
+  auditAuthEvent, auditBulkCreate, auditBulkDelete, auditBulkUpdate, auditCreate, auditDataExport, auditDelete, auditPasswordChange, auditPermissionGrant,
+  auditPermissionRevoke, auditRoleChange, auditSsoConfigChange, auditSystemConfigChange, auditUpdate, calculateDiff, captureAuditEvent, extractEntityName,
+  type AuditEvent
 } from "./auditLog";
 
 // Mock the queue

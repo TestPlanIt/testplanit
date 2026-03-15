@@ -6,10 +6,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerAuthSession } from "~/server/auth";
+import { z } from "zod";
 import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
-import { z } from "zod";
+import { getServerAuthSession } from "~/server/auth";
 
 const attachmentSchema = z.object({
   junitTestResultId: z.number().int().positive(),

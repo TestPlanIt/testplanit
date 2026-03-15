@@ -1,12 +1,12 @@
-import React from "react";
-import { cn, type ClassValue } from "~/utils";
-import { useTranslations } from "next-intl";
 import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { useTranslations } from "next-intl";
+import React from "react";
+import { cn, type ClassValue } from "~/utils";
 
 interface LoadingSpinnerProps {
   className?: ClassValue;

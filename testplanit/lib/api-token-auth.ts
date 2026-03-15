@@ -6,8 +6,8 @@
  */
 
 import { NextRequest } from "next/server";
-import { prisma } from "./prisma";
 import { hashToken, isValidTokenFormat } from "./api-tokens";
+import { prisma } from "./prisma";
 
 export interface ApiTokenAuthResult {
   /** Whether authentication was successful */

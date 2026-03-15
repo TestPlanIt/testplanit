@@ -1,8 +1,8 @@
-import { ReactNodeViewRenderer } from "@tiptap/react";
 import { mergeAttributes, Range } from "@tiptap/core";
+import { ReactNodeViewRenderer } from "@tiptap/react";
 
-import { ImageBlockView } from "./components/ImageBlockView";
 import { Image } from "../Image";
+import { ImageBlockView } from "./components/ImageBlockView";
 
 type ImageBlockAttributes = {
   src: string;

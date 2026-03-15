@@ -1,33 +1,23 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import {
-  useFindManyTemplates,
-  useDeleteManyTemplateProjectAssignment,
-  useCreateManyTemplateProjectAssignment,
-  useFindManyProjects,
-  useUpdateTemplates,
-  useUpdateManyTemplates,
-} from "~/lib/hooks";
 import { DataTable } from "@/components/tables/DataTable";
-import { getColumns } from "./templateColumns";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { AddTemplateModal } from "./AddTemplate";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogContent,
-  AlertDialogTitle,
-  AlertDialogDescription,
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Templates } from "@prisma/client";
 import { LayoutTemplate } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCreateManyTemplateProjectAssignment, useDeleteManyTemplateProjectAssignment, useFindManyProjects, useFindManyTemplates, useUpdateManyTemplates, useUpdateTemplates
+} from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import { AddTemplateModal } from "./AddTemplate";
+import { getColumns } from "./templateColumns";
 
 export default function TemplateComponent() {
   const { data: session, status } = useSession();

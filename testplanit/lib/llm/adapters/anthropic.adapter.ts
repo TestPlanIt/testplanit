@@ -1,12 +1,9 @@
-import { BaseLlmAdapter } from "./base.adapter";
 import type {
-  LlmRequest,
+  LlmAdapterConfig, LlmModelInfo, LlmRequest,
   LlmResponse,
-  LlmStreamResponse,
-  LlmModelInfo,
-  RateLimitInfo,
-  LlmAdapterConfig,
+  LlmStreamResponse, RateLimitInfo
 } from "../types";
+import { BaseLlmAdapter } from "./base.adapter";
 
 interface AnthropicMessage {
   role: "user" | "assistant";

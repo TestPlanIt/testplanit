@@ -1,9 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { IntegrationManager } from "./IntegrationManager";
-import { JiraAdapter } from "./adapters/JiraAdapter";
-import { GitHubAdapter } from "./adapters/GitHubAdapter";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AzureDevOpsAdapter } from "./adapters/AzureDevOpsAdapter";
-import { SimpleUrlAdapter } from "./adapters/SimpleUrlAdapter";
+import { GitHubAdapter } from "./adapters/GitHubAdapter";
+import { JiraAdapter } from "./adapters/JiraAdapter";
+import { IntegrationManager } from "./IntegrationManager";
 
 // Mock prisma
 vi.mock("@/lib/prismaBase", () => ({

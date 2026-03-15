@@ -1,15 +1,15 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { ExtendedWorkflows } from "~/types/Workflows";
-import { EditWorkflowsModal } from "./EditWorkflow";
-import { DeleteWorkflowsModal } from "./DeleteWorkflow";
-import { Switch } from "@/components/ui/switch";
 import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
-import { WorkflowScope } from "@prisma/client";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Trash2, GripVertical } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { WorkflowScope } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
+import { GripVertical, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { IconName } from "~/types/globals";
+import { ExtendedWorkflows } from "~/types/Workflows";
+import { DeleteWorkflowsModal } from "./DeleteWorkflow";
+import { EditWorkflowsModal } from "./EditWorkflow";
 
 // Helper function to check if a workflow is the last of its type in its scope
 const isLastWorkflowOfType = (

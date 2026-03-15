@@ -1,24 +1,21 @@
 "use client";
-import { determineTagDifferences } from "~/utils/determineTagDifferences";
-import { DateFormatter } from "@/components/DateFormatter";
-import { UserNameCell } from "@/components/tables/UserNameCell";
-import { Badge } from "@/components/ui/badge";
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
-import {
-  Attachments,
-  SessionVersions,
-  Workflows,
-  FieldIcon,
-  Color,
-} from "@prisma/client";
-import { IconName } from "~/types/globals";
-import { toHumanReadable } from "~/utils/duration";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { DateFormatter } from "@/components/DateFormatter";
 import DynamicIcon from "@/components/DynamicIcon";
-import { useSession } from "next-auth/react";
-import { TagDiffDisplay } from "./TagDiffDisplay";
-import { useTranslations, useLocale } from "next-intl";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Badge } from "@/components/ui/badge";
+import {
+  Attachments, Color, FieldIcon, SessionVersions,
+  Workflows
+} from "@prisma/client";
 import { Minus, Plus } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
+import { IconName } from "~/types/globals";
+import { determineTagDifferences } from "~/utils/determineTagDifferences";
+import { toHumanReadable } from "~/utils/duration";
+import { TagDiffDisplay } from "./TagDiffDisplay";
 
 type FieldType =
   | "state"

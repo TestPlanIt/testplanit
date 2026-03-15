@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
+import React from "react";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "~/test/test-utils";
 import { ProjectNameDisplay } from "./ProjectNameDisplay";
-import React from "react";
 
 // Mock dependencies
 vi.mock("~/lib/navigation", () => ({

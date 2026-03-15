@@ -1,11 +1,11 @@
 "use server";
 
-import { z } from "zod/v4";
 import { ApplicationArea } from "@prisma/client";
+import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
+import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import { getServerAuthSession } from "~/server/auth";
 import { checkUserPermission } from "./permissions";
-import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 
 const CompleteMilestoneSchema = z.object({
   milestoneId: z.number(),

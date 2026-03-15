@@ -1,18 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Loader2, ExternalLink, Bug } from "lucide-react";
-import { toast } from "sonner";
-import { SearchIssuesDialog } from "./search-issues-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
+import { Bug, ExternalLink, Loader2, Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { Link } from "~/lib/navigation";
+import { SearchIssuesDialog } from "./search-issues-dialog";
 
 // Utility function to format provider names for display
 const formatProviderName = (provider: string): string => {

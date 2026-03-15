@@ -1,12 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  getReportSummary,
-  getUserIdFromRow,
-  dimensionToDraggableField,
-  draggableFieldToDimension,
-  getSortValue,
-  getSourceDisplayInfo,
-  buildDateFilter,
+  buildDateFilter, dimensionToDraggableField,
+  draggableFieldToDimension, getReportSummary, getSortValue,
+  getSourceDisplayInfo, getUserIdFromRow
 } from "./reportUtils";
 
 describe("reportUtils", () => {

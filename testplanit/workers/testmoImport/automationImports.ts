@@ -1,19 +1,15 @@
-import { Prisma, PrismaClient, JUnitResultType } from "@prisma/client";
+import { JUnitResultType, Prisma, PrismaClient } from "@prisma/client";
+import { createTestCaseVersionInTransaction } from "../../lib/services/testCaseVersionService.js";
 import type { TestmoMappingConfiguration } from "../../services/imports/testmo/types";
 import {
-  toNumberValue,
-  toStringValue,
-  toDateValue,
-  toBooleanValue,
-  resolveUserId,
-  buildNumberIdMap,
+  resolveUserId, toBooleanValue, toDateValue, toNumberValue,
+  toStringValue
 } from "./helpers";
 import type {
   EntitySummaryResult,
   ImportContext,
-  PersistProgressFn,
+  PersistProgressFn
 } from "./types";
-import { createTestCaseVersionInTransaction } from "../../lib/services/testCaseVersionService.js";
 
 type AutomationCaseGroup = {
   name: string;

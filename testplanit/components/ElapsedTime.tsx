@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { AlarmClockPlus, Clock, ClockAlert, Timer } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 import { useFindManySessionResults } from "~/lib/hooks";
-import { toHumanReadable } from "~/utils/duration";
-import { useTranslations, useLocale } from "next-intl";
-import { Clock, Timer, ClockAlert, AlarmClockPlus } from "lucide-react";
 import { cn, type ClassValue } from "~/utils";
+import { toHumanReadable } from "~/utils/duration";
 
 interface ElapsedTimeProps {
   sessionId: number;

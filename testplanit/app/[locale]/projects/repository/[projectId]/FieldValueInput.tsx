@@ -1,44 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import MultiSelect from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useTheme } from "next-themes";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { emptyEditorContent } from "~/app/constants";
-import {
-  CaseFields as PrismaCaseField,
-  Tags as PrismaTag,
-  Workflows as PrismaWorkflow,
-} from "@prisma/client";
-import { useTranslations, useLocale } from "next-intl";
-import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
-import { Label } from "@/components/ui/label";
-import { ManageTags } from "@/components/ManageTags";
-import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { CalendarDays } from "lucide-react";
-import { format } from "date-fns";
-import { getDateFnsLocale } from "~/utils/locales";
-import { cn } from "~/utils";
 import { formatSeconds } from "@/components/DurationDisplay";
+import DynamicIcon from "@/components/DynamicIcon";
+import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
+import { ManageTags } from "@/components/ManageTags";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogClose,
@@ -47,13 +15,44 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import StepsForm from "./StepsForm";
-import { FormProvider, useForm } from "react-hook-form";
-import { useSession } from "next-auth/react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  CaseFields as PrismaCaseField,
+  Tags as PrismaTag,
+  Workflows as PrismaWorkflow
+} from "@prisma/client";
+import { format } from "date-fns";
+import { CalendarDays } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import MultiSelect from "react-select";
 import { z } from "zod/v4";
+import { emptyEditorContent } from "~/app/constants";
+import { getCustomStyles } from "~/styles/multiSelectStyles";
+import { IconName } from "~/types/globals";
+import { cn } from "~/utils";
+import { getDateFnsLocale } from "~/utils/locales";
+import StepsForm from "./StepsForm";
 
 interface FieldValueInputProps {
   fieldDefinition?: FieldDefinition["field"];

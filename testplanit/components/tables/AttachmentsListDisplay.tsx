@@ -1,13 +1,13 @@
-import React, { useState } from "react";
+import { AttachmentPreview } from "@/components/AttachmentPreview";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 import { Attachments } from "@prisma/client";
-import { AttachmentPreview } from "@/components/AttachmentPreview";
 import { Paperclip } from "lucide-react";
+import React, { useState } from "react";
 
 interface AttachmentsListProps {
   attachments: Attachments[];

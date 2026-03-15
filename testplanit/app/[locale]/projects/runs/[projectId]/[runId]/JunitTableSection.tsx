@@ -1,83 +1,63 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { getJunitColumns } from "./junitColumns";
-import { FormProvider } from "react-hook-form";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Link } from "~/lib/navigation";
-import { Button } from "@/components/ui/button";
-import {
-  ArrowLeft,
-  CircleCheckBig,
-  Trash2,
-  SquarePen,
-  Save,
-  CircleSlash2,
-  ChevronLeft,
-  Maximize2,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import JUnitDurationHistogram from "@/components/dataVisualizations/JUnitDurationHistogram";
+import JUnitStatusTimeline from "@/components/dataVisualizations/JUnitStatusTimeline";
+import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsDonut";
 import { DateFormatter } from "@/components/DateFormatter";
-import { TestRunCasesSummary } from "~/components/TestRunCasesSummary";
-import {
-  ResizablePanelGroup,
-  ResizablePanel,
-  ResizableHandle,
-} from "@/components/ui/resizable";
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
+import DynamicIcon from "@/components/DynamicIcon";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
-import { Filter } from "@/components/tables/Filter";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
+import { DataTable } from "@/components/tables/DataTable";
+import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  usePagination,
-  defaultPageSizeOptions,
-} from "~/lib/contexts/PaginationContext";
-import { DataTable } from "@/components/tables/DataTable";
-import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
-import { DeleteTestRunModal } from "./DeleteTestRun";
-import TestRunFormControls from "./TestRunFormControls";
-import CompleteTestRunDialog from "./CompleteTestRunDialog";
-import DynamicIcon from "@/components/DynamicIcon";
+  Card, CardContent, CardDescription, CardHeader,
+  CardTitle
+} from "@/components/ui/card";
 import {
-  FormField,
-  FormItem,
-  FormControl,
-  FormLabel,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
-import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
-import TestRunResultsDonut from "@/components/dataVisualizations/TestRunResultsDonut";
-import { useFindManyJUnitTestResult } from "~/lib/hooks";
-import { isAutomatedTestRunType } from "~/utils/testResultTypes";
-import JUnitStatusTimeline from "@/components/dataVisualizations/JUnitStatusTimeline";
+  Carousel,
+  CarouselContent,
+  CarouselItem, CarouselNext, CarouselPrevious
+} from "@/components/ui/carousel";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
-import JUnitDurationHistogram from "@/components/dataVisualizations/JUnitDurationHistogram";
 import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselPrevious,
-  CarouselNext,
-} from "@/components/ui/carousel";
+  FormControl, FormField,
+  FormItem, FormLabel
+} from "@/components/ui/form";
+import {
+  ResizableHandle, ResizablePanel, ResizablePanelGroup
+} from "@/components/ui/resizable";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger
+} from "@/components/ui/tooltip";
+import {
+  ArrowLeft, ChevronLeft, CircleCheckBig, CircleSlash2, Maximize2, Save, SquarePen, Trash2
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormProvider } from "react-hook-form";
+import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
+import { TestRunCasesSummary } from "~/components/TestRunCasesSummary";
+import {
+  defaultPageSizeOptions, usePagination
+} from "~/lib/contexts/PaginationContext";
+import { useFindManyJUnitTestResult } from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
+import CompleteTestRunDialog from "./CompleteTestRunDialog";
+import { DeleteTestRunModal } from "./DeleteTestRun";
+import { getJunitColumns } from "./junitColumns";
+import TestRunFormControls from "./TestRunFormControls";
 
 function JunitTableSection({
   form,

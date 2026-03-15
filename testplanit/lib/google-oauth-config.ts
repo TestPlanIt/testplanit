@@ -1,5 +1,5 @@
-import { db } from "~/server/db";
 import { SsoProviderType } from "@prisma/client";
+import { db } from "~/server/db";
 
 export interface GoogleOAuthConfig {
   clientId: string;

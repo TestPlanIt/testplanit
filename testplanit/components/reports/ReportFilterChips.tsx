@@ -1,9 +1,9 @@
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { IconName } from "~/types/globals";
 
 interface FilterChip {
   filterType: string;

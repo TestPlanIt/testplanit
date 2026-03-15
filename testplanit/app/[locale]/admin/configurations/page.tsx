@@ -1,19 +1,17 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
+import { useRouter } from "~/lib/navigation";
 
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
+  Card, CardDescription, CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 
-import Configurations from "./Configurations";
-import Categories from "./Categories";
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";
+import Categories from "./Categories";
+import Configurations from "./Configurations";
 
 export default function FieldsPage() {
   return (

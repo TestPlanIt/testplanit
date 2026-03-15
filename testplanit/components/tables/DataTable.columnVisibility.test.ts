@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
 import { ColumnDef } from "@tanstack/react-table";
+import { describe, expect, it } from "vitest";
 
 interface TestData {
   id: number;

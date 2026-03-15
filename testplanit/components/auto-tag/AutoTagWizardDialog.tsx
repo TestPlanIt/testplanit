@@ -1,54 +1,43 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { useDebounce } from "@/components/Debounce";
+import { DataTable } from "@/components/tables/DataTable";
+import { PaginationComponent } from "@/components/tables/Pagination";
+import { PaginationInfo } from "@/components/tables/PaginationControls";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
 import {
-  Sparkles,
-  Tags,
-  Loader2,
-  XCircle,
-  CheckCircle2,
-  ListTree,
-  PlayCircle,
-  Compass,
-  Bot,
-  ListChecks,
-  Search,
-} from "lucide-react";
+  Dialog,
+  DialogContent, DialogDescription,
+  DialogFooter, DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
-import {
-  isAutomatedCaseSource,
-  isAutomatedTestRunType,
-} from "~/utils/testResultTypes";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useQueryClient } from "@tanstack/react-query";
+import type { ColumnDef } from "@tanstack/react-table";
+import {
+  Bot, CheckCircle2, Compass, ListChecks, ListTree, Loader2, PlayCircle, Search, Sparkles,
+  Tags, XCircle
+} from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
+import type { EntityType } from "~/lib/llm/services/auto-tag/types";
 import { cn } from "~/utils";
 import { invalidateModelQueries } from "~/utils/optimistic-updates";
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/tables/DataTable";
-import type { EntityType } from "~/lib/llm/services/auto-tag/types";
-import { useDebounce } from "@/components/Debounce";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { useSession } from "next-auth/react";
-import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
-import { useAutoTagJob } from "./useAutoTagJob";
-import { TagChip } from "./TagChip";
+import {
+  isAutomatedCaseSource,
+  isAutomatedTestRunType
+} from "~/utils/testResultTypes";
 import { EntityDetailPopover } from "./EntityDetailPopover";
+import { TagChip } from "./TagChip";
 import type { AutoTagSuggestionEntity, UseAutoTagJobReturn } from "./types";
+import { useAutoTagJob } from "./useAutoTagJob";
 
 type WizardStep = "configure" | "analyzing" | "review";
 

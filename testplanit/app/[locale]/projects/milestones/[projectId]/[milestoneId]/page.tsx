@@ -1,84 +1,64 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
-import { useForm, FormProvider } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "~/lib/navigation";
-import { useParams, useSearchParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import {
-  Save,
-  ArrowLeft,
-  SquarePen,
-  Trash2,
-  CircleSlash2,
-  Compass,
-  PlayCircle,
-  CircleCheckBig,
-} from "lucide-react";
+import { ForecastDisplay } from "@/components/ForecastDisplay";
 import LoadingSpinnerPage from "@/components/LoadingSpinnerAlert";
-import MilestoneFormControls from "./MilestoneFormControls";
+import { MilestoneSummary } from "@/components/MilestoneSummary";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  useFindFirstMilestones,
-  useUpdateMilestones,
-  useFindManyMilestones,
-  useFindManyMilestoneTypes,
-  useFindManyColor,
-  useFindManySessions,
-  useFindManyTestRuns,
-} from "~/lib/hooks";
-import { z } from "zod/v4";
-import { Link } from "~/lib/navigation";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  FormField,
-  FormItem,
-  FormControl,
-  FormMessage,
-  FormLabel,
+  FormControl, FormField,
+  FormItem, FormLabel, FormMessage
 } from "@/components/ui/form";
-import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
+import { Label } from "@/components/ui/label";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup,
+  ResizablePanelGroup
 } from "@/components/ui/resizable";
-import { Label } from "@/components/ui/label";
-import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
-import {
-  MilestonesWithTypes,
-  getStatus,
-  getStatusStyle,
-  createColorMap,
-  ColorMap,
-} from "~/utils/milestoneUtils";
-import { Badge } from "@/components/ui/badge";
-import { useTheme } from "next-themes";
-import { DateTextDisplay } from "@/components/DateTextDisplay";
-import SessionItem from "@/projects/sessions/[projectId]/SessionItem";
-import { SessionsWithDetails } from "@/projects/sessions/[projectId]/SessionDisplay";
-import {
-  CompleteSessionDialog,
-  CompletableSession,
-} from "@/projects/sessions/[projectId]/[sessionId]/CompleteSessionDialog";
-import { emptyEditorContent } from "~/app/constants";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { useTranslations } from "next-intl";
-import TestRunItem from "@/projects/runs/[projectId]/TestRunItem";
+import { Textarea } from "@/components/ui/textarea";
 import type { TestRunItemProps } from "@/projects/runs/[projectId]/TestRunItem";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import TestRunItem from "@/projects/runs/[projectId]/TestRunItem";
+import { SessionsWithDetails } from "@/projects/sessions/[projectId]/SessionDisplay";
+import SessionItem from "@/projects/sessions/[projectId]/SessionItem";
+import {
+  CompletableSession, CompleteSessionDialog
+} from "@/projects/sessions/[projectId]/[sessionId]/CompleteSessionDialog";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ApplicationArea } from "@prisma/client";
-import { useSession } from "next-auth/react";
-import LoadingSpinner from "~/components/LoadingSpinner";
-import ChildMilestoneItem from "./ChildMilestoneItem";
-import { ForecastDisplay } from "@/components/ForecastDisplay";
-import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
-import { MilestoneSummary } from "@/components/MilestoneSummary";
-import { CommentsSection } from "~/components/comments/CommentsSection";
-import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
 import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowLeft, CircleCheckBig, CircleSlash2,
+  Compass,
+  PlayCircle, Save, SquarePen,
+  Trash2
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
+import { useParams, useSearchParams } from "next/navigation";
+import React, { useEffect, useMemo, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod/v4";
+import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
+import { emptyEditorContent } from "~/app/constants";
+import { CommentsSection } from "~/components/comments/CommentsSection";
+import LoadingSpinner from "~/components/LoadingSpinner";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import {
+  useFindFirstMilestones, useFindManyColor, useFindManyMilestones,
+  useFindManyMilestoneTypes, useFindManySessions,
+  useFindManyTestRuns, useUpdateMilestones
+} from "~/lib/hooks";
+import { Link, useRouter } from "~/lib/navigation";
+import {
+  ColorMap, createColorMap, MilestonesWithTypes
+} from "~/utils/milestoneUtils";
+import { CompleteMilestoneDialog } from "../../CompleteMilestoneDialog";
+import { DeleteMilestoneModal } from "../DeleteMilestoneModal";
+import ChildMilestoneItem from "./ChildMilestoneItem";
+import MilestoneFormControls from "./MilestoneFormControls";
 
 interface MilestoneForecastData {
   manualEstimate: number;

@@ -5,7 +5,7 @@
  * which can come from multiple formats (JUnit, TestNG, xUnit, NUnit, MSTest, Mocha, Cucumber).
  */
 
-import { TestRunType, RepositoryCaseSource } from "@prisma/client";
+import { RepositoryCaseSource, TestRunType } from "@prisma/client";
 
 /**
  * All test run types that represent imported/automated test results

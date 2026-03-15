@@ -1,13 +1,13 @@
-import React from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { useFindManyTemplates } from "~/lib/hooks";
 import { Templates } from "@prisma/client";
 import { LayoutTemplate } from "lucide-react";
+import React from "react";
+import { useFindManyTemplates } from "~/lib/hooks";
 
 interface TemplateListProps {
   templates: { templateId: number; templateName: string }[];

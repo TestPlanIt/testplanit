@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import { Tag } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useCallback, useRef, useState } from "react";
 import { cn } from "~/utils";
 
 interface TagChipProps {

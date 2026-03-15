@@ -1,40 +1,31 @@
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
-import { useParams } from "next/navigation";
-import {
-  useFindManyRepositoryFolders,
-  useUpdateRepositoryFolders,
-  useUpdateRepositoryCases,
-} from "~/lib/hooks";
-import { Tree, NodeApi, TreeApi } from "react-arborist";
-import { useTranslations } from "next-intl";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import {
-  Folder,
-  FolderOpen,
-  ChevronRight,
-  MoreVertical,
-  SquarePenIcon,
-  Trash2Icon,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { EditFolderModal } from "./EditFolder";
-import { DeleteFolderModal } from "./DeleteFolderModal";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenu, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useDrop } from "react-dnd";
-import { ItemTypes } from "~/types/dndTypes";
-import { toast } from "sonner";
 import type { RepositoryFolders } from "@prisma/client";
+import {
+  ChevronRight, Folder,
+  FolderOpen, MoreVertical,
+  SquarePenIcon,
+  Trash2Icon
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import React, {
+  useCallback, useEffect, useMemo,
+  useRef, useState
+} from "react";
+import { NodeApi, Tree, TreeApi } from "react-arborist";
+import { useDrop } from "react-dnd";
+import { toast } from "sonner";
+import {
+  useFindManyRepositoryFolders, useUpdateRepositoryCases, useUpdateRepositoryFolders
+} from "~/lib/hooks";
+import { ItemTypes } from "~/types/dndTypes";
+import { DeleteFolderModal } from "./DeleteFolderModal";
+import { EditFolderModal } from "./EditFolder";
 
 interface ArboristNode {
   id: string;

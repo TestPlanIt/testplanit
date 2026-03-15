@@ -1,39 +1,31 @@
-import { useSession } from "next-auth/react";
-import { useTranslations, useLocale } from "next-intl";
+import { SessionResultsSummary } from "@/components/SessionResultsSummary";
+import { TestRunCasesSummary } from "@/components/TestRunCasesSummary";
 import {
-  useFindManyTestRuns,
-  useFindManyTestRunCases,
-  useFindManySessions,
-  useFindFirstStatus,
+  Card, CardContent,
+  CardDescription, CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import type {
+  Prisma, Projects, Sessions, TestRunCases,
+  TestRunResults,
+  TestRuns
+} from "@prisma/client";
+import { useQuery } from "@tanstack/react-query";
+import { CirclePlay, Compass, LinkIcon, Star } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
+import { useCallback, useMemo } from "react";
+import type { UserDashboardData } from "~/app/api/users/[userId]/dashboard/route";
+import { DateFormatter } from "~/components/DateFormatter";
+import {
+  useFindManySessions, useFindManyTestRunCases, useFindManyTestRuns
 } from "~/lib/hooks";
 import { Link, useRouter } from "~/lib/navigation";
-import { useQuery } from "@tanstack/react-query";
-import type { UserDashboardData } from "~/app/api/users/[userId]/dashboard/route";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
-} from "@/components/ui/card";
-import { TestRunCasesSummary } from "@/components/TestRunCasesSummary";
-import { SessionResultsSummary } from "@/components/SessionResultsSummary";
-import { CirclePlay, Compass, LinkIcon, Star } from "lucide-react";
-import { useMemo, useCallback } from "react";
-import type {
-  TestRunCases,
-  TestRunResults,
-  TestRuns,
-  Sessions,
-  Projects,
-  Prisma,
-} from "@prisma/client";
-import LoadingSpinner from "./LoadingSpinner";
-import UserWorkGanttChart, {
-  type PlotTask,
-} from "./dataVisualizations/UserWorkGanttChart";
-import { DateFormatter } from "~/components/DateFormatter";
 import { toHumanReadable } from "~/utils/duration";
+import UserWorkGanttChart, {
+  type PlotTask
+} from "./dataVisualizations/UserWorkGanttChart";
+import LoadingSpinner from "./LoadingSpinner";
 // import UserWorkChart from "./dataVisualizations/UserWorkChart"; // Will be replaced
 
 // Updated Helper type for TestRunCases

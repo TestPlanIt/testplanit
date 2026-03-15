@@ -1,15 +1,15 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { DateFormatter } from "@/components/DateFormatter";
-import { useTranslations } from "next-intl";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
+import { useTranslations } from "next-intl";
 
 interface Version {
   id: number;

@@ -1,8 +1,8 @@
 "use client";
-import { useState } from "react";
-import { useUpdateWorkflows } from "~/lib/hooks";
 import { Workflows } from "@prisma/client";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { useUpdateWorkflows } from "~/lib/hooks";
 
 import { useForm } from "react-hook-form";
 
@@ -14,13 +14,7 @@ import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogTitle,
-  AlertDialogDescription,
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 
 interface DeleteWorkflowsModalProps {

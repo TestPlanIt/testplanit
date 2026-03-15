@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "~/test/test-utils";
-import { UnifiedSearch } from "./UnifiedSearch";
-import { SearchableEntityType } from "~/types/search";
 import React from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "~/test/test-utils";
+import { SearchableEntityType } from "~/types/search";
+import { UnifiedSearch } from "./UnifiedSearch";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({

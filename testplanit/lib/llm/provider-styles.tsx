@@ -1,4 +1,4 @@
-import { Sparkles, Zap, Brain } from "lucide-react";
+import { Brain, Sparkles, Zap } from "lucide-react";
 
 /**
  * Shared LLM provider badge colors and icons.

@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { createSessionVersion } from "./createSessionVersion";
-import { Session } from "next-auth";
 import { CompletableSession } from "@/projects/sessions/[projectId]/[sessionId]/CompleteSessionDialog";
+import { Session } from "next-auth";
+import { describe, expect, it } from "vitest";
+import { createSessionVersion } from "./createSessionVersion";
 
 // Mock data setup adhering to CompletableSession type
 const mockSessionData: CompletableSession = {

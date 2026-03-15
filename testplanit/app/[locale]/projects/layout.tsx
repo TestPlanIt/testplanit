@@ -1,10 +1,9 @@
 "use client";
 
 import ProjectMenu from "@/components/ProjectMenu";
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRouter } from "~/lib/navigation";
+import { useEffect, useState } from "react";
 
 export default function ProjectsLayout(props: any) {
   const [isCollapsed, setIsCollapsed] = useState(false);

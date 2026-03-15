@@ -3,12 +3,10 @@
 import { PrismaClient } from "@prisma/client";
 import {
   getElasticsearchClient,
-  REPOSITORY_CASE_INDEX,
-  createRepositoryCaseIndex,
+  REPOSITORY_CASE_INDEX
 } from "../services/elasticsearchService";
 import {
-  syncProjectCasesToElasticsearch,
-  initializeElasticsearchIndexes,
+  initializeElasticsearchIndexes, syncProjectCasesToElasticsearch
 } from "../services/repositoryCaseSync";
 
 const prisma = new PrismaClient();

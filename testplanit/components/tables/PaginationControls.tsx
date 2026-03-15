@@ -1,14 +1,14 @@
-import React from "react";
-import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
+import React from "react";
 
 interface PaginationInfoProps {
   startIndex: number;

@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { db } from "~/server/db";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { db } from "~/server/db";
 
 const RequestBodySchema = z.object({
   caseIds: z.array(z.int().positive()).min(1),

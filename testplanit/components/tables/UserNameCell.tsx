@@ -1,16 +1,16 @@
-import React from "react";
-import { Link } from "~/lib/navigation";
 import { Avatar } from "@/components/Avatar";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { useFindFirstUser } from "~/lib/hooks";
 import { LinkIcon, Star } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import React from "react";
+import { useFindFirstUser } from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
 
 export interface UserNameCellProps {

@@ -1,8 +1,8 @@
 import { Editor, NodeViewWrapper } from "@tiptap/react";
 import { useCallback } from "react";
 
-import { ImageUploader } from "./ImageUploader";
 import { useUploader } from "./hooks";
+import { ImageUploader } from "./ImageUploader";
 
 export const ImageUpload = ({
   getPos,

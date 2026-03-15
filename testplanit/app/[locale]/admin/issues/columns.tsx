@@ -1,25 +1,24 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { Issue } from "@prisma/client";
-import { EditIssueModal } from "./EditIssue";
-import { DeleteIssueModal } from "./DeleteIssue";
-import { SyncIssue } from "./SyncIssue";
-import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
-import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
-import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
-import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
-import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
-import { useTranslations } from "next-intl";
-import { Plug } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import DOMPurify from "dompurify";
 import { DateFormatter } from "@/components/DateFormatter";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
+import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
+import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
+import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { Issue } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
+import DOMPurify from "dompurify";
+import { Plug } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { DeleteIssueModal } from "./DeleteIssue";
+import { EditIssueModal } from "./EditIssue";
+import { SyncIssue } from "./SyncIssue";
 
 // Helper function to strip HTML tags and get plain text
 function stripHtmlTags(html: string | null): string {

@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Prisma } from "@prisma/client";
-import { OllamaAdapter } from "./ollama.adapter";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LlmAdapterConfig, LlmRequest } from "../types";
+import { OllamaAdapter } from "./ollama.adapter";
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;

@@ -1,14 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  performOptimisticUpdate,
-  performOptimisticDelete,
-  performOptimisticReorder,
-  performOptimisticCreate,
-  useOptimisticMutation,
-  invalidateModelQueries,
-  performZenStackOptimisticDelete,
+  invalidateModelQueries, performOptimisticCreate, performOptimisticDelete,
+  performOptimisticReorder, performOptimisticUpdate, performZenStackOptimisticDelete, useOptimisticMutation
 } from "./optimistic-updates";
 
 // Mock sonner toast

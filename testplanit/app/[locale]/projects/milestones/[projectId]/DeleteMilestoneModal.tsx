@@ -1,18 +1,14 @@
 "use client";
-import { useState } from "react";
-import { useUpdateMilestones } from "~/lib/hooks";
+import {
+  AlertDialog,
+  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import { Milestones } from "@prisma/client";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogContent,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useUpdateMilestones } from "~/lib/hooks";
 
 interface DeleteMilestoneModalProps {
   milestone: Milestones;

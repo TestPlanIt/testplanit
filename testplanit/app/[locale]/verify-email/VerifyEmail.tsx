@@ -1,33 +1,32 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
-import { useRouter } from "~/lib/navigation";
-import { useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
+import { useRouter } from "~/lib/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { verifyEmail } from "~/lib/verifyEmail";
 
-import Image from "next/image";
-import svgIcon from "~/public/tpi_logo.svg";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { resendVerificationEmail } from "@/components/EmailVerifications";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
-import { toast } from "sonner";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
+import Image from "next/image";
+import { toast } from "sonner";
+import svgIcon from "~/public/tpi_logo.svg";
 
 const VerifyEmail = () => {
   const t = useTranslations("auth.verifyEmail");

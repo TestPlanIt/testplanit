@@ -1,25 +1,5 @@
-import { format } from "date-fns";
-import { useLocale, useTranslations } from "next-intl";
-import { CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn, type ClassValue } from "~/utils";
-import { getDateFnsLocale } from "~/utils/locales";
-import { Control } from "react-hook-form";
-import { HelpPopover } from "@/components/ui/help-popover";
-import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,25 +7,32 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { DateRange } from "react-day-picker";
 import {
-  startOfMonth,
-  endOfMonth,
-  subDays,
-  subMonths,
-  startOfQuarter,
-  endOfQuarter,
-  startOfYear,
-  endOfYear,
-  subYears,
-  startOfWeek,
-  endOfWeek,
-  subWeeks,
-  startOfDay,
-  endOfDay,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import { HelpPopover } from "@/components/ui/help-popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import {
+  endOfDay, endOfMonth, endOfQuarter, endOfWeek, endOfYear, format, startOfDay, startOfMonth, startOfQuarter, startOfWeek, startOfYear, subDays,
+  subMonths, subWeeks, subYears
 } from "date-fns";
+import { CalendarDays } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useState } from "react";
+import { DateRange } from "react-day-picker";
+import { Control } from "react-hook-form";
+import { cn, type ClassValue } from "~/utils";
+import { getDateFnsLocale } from "~/utils/locales";
 
 interface DateRangePickerFieldProps {
   control: Control<any>;

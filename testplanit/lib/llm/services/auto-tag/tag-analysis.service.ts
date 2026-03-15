@@ -3,7 +3,7 @@ import type { PrismaClient } from "@prisma/client";
 import { LLM_FEATURES } from "~/lib/llm/constants";
 import {
   createBatches,
-  executeBatches,
+  executeBatches
 } from "~/lib/llm/services/batch-processor";
 import type { LlmManager } from "~/lib/llm/services/llm-manager.service";
 import type { PromptResolver } from "~/lib/llm/services/prompt-resolver.service";
@@ -15,7 +15,7 @@ import type {
   EntityContent,
   EntityType,
   TagAnalysisResult,
-  TagSuggestion,
+  TagSuggestion
 } from "./types";
 
 interface AnalyzeTagsParams {

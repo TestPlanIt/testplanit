@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter, usePathname } from "~/lib/navigation";
-import { useCallback, useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "~/lib/navigation";
 
 /**
  * Custom hook to manage tab state via URL search parameters.

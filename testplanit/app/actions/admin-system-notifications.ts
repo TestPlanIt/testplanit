@@ -1,9 +1,9 @@
 "use server";
 
+import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";
-import { z } from "zod/v4";
 
 const createSystemNotificationSchema = z.object({
   title: z.string().min(1).max(100),

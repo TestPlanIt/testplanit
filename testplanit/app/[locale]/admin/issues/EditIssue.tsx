@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
-import { useUpdateIssue, useFindUniqueIntegration } from "~/lib/hooks";
-import { Issue, IntegrationProvider } from "@prisma/client";
+import { IntegrationProvider, Issue } from "@prisma/client";
+import { useEffect, useMemo, useState } from "react";
+import { useFindUniqueIntegration, useUpdateIssue } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -19,7 +19,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -29,11 +29,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 
-import { useTranslations } from "next-intl";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { useTranslations } from "next-intl";
 
 // Helper function to construct external URL based on integration provider
 const constructExternalUrl = (

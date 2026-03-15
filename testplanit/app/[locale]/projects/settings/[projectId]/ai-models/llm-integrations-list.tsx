@@ -1,18 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import {
-  LlmIntegration,
-  ProjectLlmIntegration,
-  LlmProviderConfig,
-} from "@prisma/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Check, Loader2, AlertTriangle, DollarSign, Zap } from "lucide-react";
-import { getProviderColor, getProviderIcon } from "~/lib/llm/provider-styles";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,19 +8,28 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
 import {
-  useCreateProjectLlmIntegration,
-  useUpdateProjectLlmIntegration,
-  useDeleteProjectLlmIntegration,
+  LlmIntegration, LlmProviderConfig, ProjectLlmIntegration
+} from "@prisma/client";
+import { AlertTriangle, Check, Loader2, Zap } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  useCreateProjectLlmIntegration, useDeleteProjectLlmIntegration, useUpdateProjectLlmIntegration
 } from "~/lib/hooks";
+import { getProviderColor, getProviderIcon } from "~/lib/llm/provider-styles";
 
 type LlmIntegrationWithConfig = LlmIntegration & {
   llmProviderConfig: LlmProviderConfig | null;

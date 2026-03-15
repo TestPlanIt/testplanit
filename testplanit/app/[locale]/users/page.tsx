@@ -1,24 +1,23 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
 import {
-  usePagination,
-  PaginationProvider,
+  PaginationProvider, usePagination
 } from "~/lib/contexts/PaginationContext";
+import { useRouter } from "~/lib/navigation";
 
-import { useFindManyUser } from "~/lib/hooks";
-import { DataTable } from "@/components/tables/DataTable";
-import { ExtendedUser, getColumns } from "./columns";
-import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { useDebounce } from "@/components/Debounce";
+import { ColumnSelection } from "@/components/tables/ColumnSelection";
+import { DataTable } from "@/components/tables/DataTable";
+import { useFindManyUser } from "~/lib/hooks";
+import { ExtendedUser, getColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type PageSizeOption = number | "All";
 

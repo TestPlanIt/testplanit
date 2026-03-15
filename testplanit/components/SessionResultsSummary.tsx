@@ -1,26 +1,26 @@
 "use client";
 
-import { useFindFirstStatus } from "~/lib/hooks";
-import { useTranslations, useLocale } from "next-intl";
-import { useSession } from "next-auth/react";
-import { useParams } from "next/navigation";
-import { Link } from "~/lib/navigation";
-import { ElapsedTime } from "./ElapsedTime";
+import { DateFormatter } from "@/components/DateFormatter";
+import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { cn } from "~/utils";
-import { DateFormatter } from "@/components/DateFormatter";
-import { Clock, Timer, MessageCircle } from "lucide-react";
-import { toHumanReadable } from "~/utils/duration";
-import { Skeleton } from "@/components/ui/skeleton";
-import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
-import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Clock, MessageCircle, Timer } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import { useMemo } from "react";
 import type { SessionSummaryData } from "~/app/api/sessions/[sessionId]/summary/route";
+import { useFindFirstStatus } from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
+import { cn } from "~/utils";
+import { toHumanReadable } from "~/utils/duration";
+import { ElapsedTime } from "./ElapsedTime";
 
 interface SessionResultsSummaryProps {
   sessionId: number;

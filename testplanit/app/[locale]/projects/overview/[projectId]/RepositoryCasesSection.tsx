@@ -1,17 +1,17 @@
-import React from "react";
-import { LinkIcon } from "lucide-react";
-import { Link } from "~/lib/navigation";
+import ProjectOverviewSunburstChart from "@/components/dataVisualizations/ProjectOverviewSunburstChart";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
+import { Separator } from "@/components/ui/separator";
+import { LinkIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React from "react";
+import LoadingSpinner from "~/components/LoadingSpinner";
 import {
   useFindManyRepositoryCases,
   useFindManyWorkflows,
-  useGroupByRepositoryCases,
+  useGroupByRepositoryCases
 } from "~/lib/hooks";
-import { useTranslations } from "next-intl";
-import ProjectOverviewSunburstChart from "@/components/dataVisualizations/ProjectOverviewSunburstChart";
-import { Separator } from "@/components/ui/separator";
-import LoadingSpinner from "~/components/LoadingSpinner";
+import { Link } from "~/lib/navigation";
 
 interface RepositoryCasesSectionProps {
   projectId: number;

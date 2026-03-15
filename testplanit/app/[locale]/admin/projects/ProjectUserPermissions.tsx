@@ -1,35 +1,29 @@
 "use client";
 
+import { ProjectAccessType, Roles, User } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import {
-  Control,
-  UseFormSetValue,
-  UseFormWatch,
-  UseFormGetValues,
+  Control, UseFormGetValues, UseFormSetValue,
+  UseFormWatch
 } from "react-hook-form";
-import { User, Roles, ProjectAccessType } from "@prisma/client";
-import { EditProjectFormData } from "./EditProject";
 import {
   getBatchUserEffectiveProjectAccess,
-  UserEffectiveAccess,
+  UserEffectiveAccess
 } from "~/app/actions/getUserEffectiveProjectAccess";
+import { EditProjectFormData } from "./EditProject";
 
 // UI Imports (Add as needed)
+import { RoleNameCell } from "@/components/tables/RoleNameCell";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectSeparator,
+  SelectItem, SelectSeparator, SelectTrigger
 } from "@/components/ui/select";
-import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { UserNameCell } from "@/components/tables/UserNameCell";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { RoleNameCell } from "@/components/tables/RoleNameCell";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 
 // Type for user data including their global role
 type UserWithRole = User & { role: Roles | null };

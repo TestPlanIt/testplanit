@@ -1,7 +1,6 @@
-import { cn } from "~/utils";
-import { Node } from "@tiptap/pm/model";
-import { Editor, NodeViewWrapper, ReactNodeViewProps } from "@tiptap/react";
+import { NodeViewWrapper, ReactNodeViewProps } from "@tiptap/react";
 import { useCallback, useRef } from "react";
+import { cn } from "~/utils";
 
 type ImageBlockAttributes = {
   src: string;

@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { determineIssueDifferences, cn } from "./determineIssueDifferences";
+import { describe, expect, it } from "vitest";
+import { cn, determineIssueDifferences } from "./determineIssueDifferences";
 
 describe("determineIssueDifferences", () => {
   describe("basic functionality", () => {

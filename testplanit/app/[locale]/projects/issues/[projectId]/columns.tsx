@@ -1,19 +1,18 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { Issue } from "@prisma/client";
-import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
-import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
-import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
-import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
-import { Badge } from "@/components/ui/badge";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import DOMPurify from "dompurify";
 import { DateFormatter } from "@/components/DateFormatter";
 import { IssuePriorityDisplay } from "@/components/IssuePriorityDisplay";
 import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
+import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
+import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { Issue } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
+import DOMPurify from "dompurify";
 
 // Helper function to strip HTML tags and get plain text
 function stripHtmlTags(html: string | null): string {

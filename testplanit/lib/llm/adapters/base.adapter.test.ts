@@ -1,14 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Prisma } from "@prisma/client";
-import { BaseLlmAdapter } from "./base.adapter";
+import { beforeEach, describe, expect, it } from "vitest";
 import type {
-  LlmRequest,
-  LlmResponse,
-  LlmStreamResponse,
   LlmAdapterConfig,
-  LlmModelInfo,
-  RateLimitInfo,
+  LlmModelInfo, LlmRequest,
+  LlmResponse,
+  LlmStreamResponse, RateLimitInfo
 } from "../types";
+import { BaseLlmAdapter } from "./base.adapter";
 
 // Create a concrete implementation for testing
 class TestAdapter extends BaseLlmAdapter {

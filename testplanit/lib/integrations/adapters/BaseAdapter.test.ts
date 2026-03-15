@@ -1,12 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BaseAdapter } from "./BaseAdapter";
 import type {
-  IssueAdapterCapabilities,
-  AuthenticationData,
-  IssueData,
-  CreateIssueData,
-  UpdateIssueData,
-  IssueSearchOptions,
+  AuthenticationData, CreateIssueData, IssueAdapterCapabilities, IssueData, IssueSearchOptions, UpdateIssueData
 } from "./IssueAdapter";
 
 // Create a concrete implementation for testing

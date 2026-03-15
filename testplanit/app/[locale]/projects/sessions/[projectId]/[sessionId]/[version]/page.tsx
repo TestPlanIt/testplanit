@@ -1,51 +1,48 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useRouter } from "~/lib/navigation";
-import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
-import {
-  useFindFirstSessionVersions,
-  useFindManySessionVersions,
-  useFindManyWorkflows,
-  useFindManyMilestones,
-} from "~/lib/hooks";
+import { DateFormatter } from "@/components/DateFormatter";
+import { Loading } from "@/components/Loading";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { Loading } from "@/components/Loading";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup,
+  ResizablePanelGroup
 } from "@/components/ui/resizable";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, LinkIcon, Minus, Plus } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Separator } from "@/components/ui/separator";
-import { Link } from "~/lib/navigation";
-import { SessionVersionRenderer } from "./SessionVersionRenderer";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { DateFormatter } from "@/components/DateFormatter";
+import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
 import { VersionNavigation } from "@/components/VersionNavigation";
-import { UserNameCell } from "@/components/tables/UserNameCell";
+import { ChevronLeft, LinkIcon, Minus, Plus } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import {
+  useFindFirstSessionVersions, useFindManyMilestones, useFindManySessionVersions,
+  useFindManyWorkflows
+} from "~/lib/hooks";
+import { Link, useRouter } from "~/lib/navigation";
+import { SessionVersionRenderer } from "./SessionVersionRenderer";
 
 // Helper functions for sorting version data
 const sortByName = (a: any, b: any) => {

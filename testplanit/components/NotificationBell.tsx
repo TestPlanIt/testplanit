@@ -1,32 +1,29 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Bell } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useFindManyNotification } from "~/lib/hooks";
-import {
-  markNotificationAsRead,
-  markNotificationAsUnread,
-  deleteNotification,
-  markAllNotificationsAsRead,
-} from "~/app/actions/notifications";
+import { DateFormatter } from "@/components/DateFormatter";
+import { NotificationContent } from "@/components/NotificationContent";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
+  DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { DateFormatter } from "@/components/DateFormatter";
-import { toast } from "sonner";
+import { Bell } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { cn } from "~/utils";
-import { NotificationContent } from "@/components/NotificationContent";
-import { useRouter, usePathname } from "~/lib/navigation";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import {
+  deleteNotification,
+  markAllNotificationsAsRead, markNotificationAsRead,
+  markNotificationAsUnread
+} from "~/app/actions/notifications";
+import { useFindManyNotification } from "~/lib/hooks";
+import { usePathname, useRouter } from "~/lib/navigation";
+import { cn } from "~/utils";
 
 interface NotificationItemProps {
   notification: any;

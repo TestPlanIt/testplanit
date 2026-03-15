@@ -1,7 +1,6 @@
-import { Client } from "@elastic/elasticsearch";
-import { SearchableEntityType, CustomFieldDocument } from "~/types/search";
-import { getElasticsearchClient } from "./elasticsearchService";
 import { prisma as defaultPrisma } from "~/lib/prismaBase";
+import { CustomFieldDocument, SearchableEntityType } from "~/types/search";
+import { getElasticsearchClient } from "./elasticsearchService";
 
 type PrismaClientType = typeof defaultPrisma;
 

@@ -1,13 +1,13 @@
-import React from "react";
-import { Link } from "~/lib/navigation";
 import DynamicIcon from "@/components/DynamicIcon";
-import { LinkIcon } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import { LinkIcon } from "lucide-react";
+import React from "react";
+import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 
 interface SessionDisplayProps {

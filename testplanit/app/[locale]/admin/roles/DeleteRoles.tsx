@@ -1,14 +1,12 @@
 "use client";
+import { Roles } from "@prisma/client";
 import { useState } from "react";
 import {
-  useUpdateRoles,
-  useUpdateManyUser,
-  useFindFirstRoles,
+  useFindFirstRoles, useUpdateManyUser, useUpdateRoles
 } from "~/lib/hooks";
-import { Roles } from "@prisma/client";
 
-import { useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
+import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Trash2, TriangleAlert } from "lucide-react";
@@ -18,12 +16,7 @@ import { Form } from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogTitle,
+  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 
 interface DeleteRoleModalProps {

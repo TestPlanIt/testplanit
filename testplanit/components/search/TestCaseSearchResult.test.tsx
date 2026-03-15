@@ -1,7 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { render, screen } from "~/test/test-utils";
 import { TestCaseSearchResult } from "./TestCaseSearchResult";
-import React from "react";
 
 describe("TestCaseSearchResult Component", () => {
   describe("Basic rendering", () => {

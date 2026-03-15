@@ -15,10 +15,10 @@
  * - Validate pagination totalCount matches filtered results
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
-import { useFindManyRepositoryCasesFiltered } from './useRepositoryCasesWithFilteredFields';
 import type { RepositoryCases } from '@prisma/client';
+import { renderHook, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useFindManyRepositoryCasesFiltered } from './useRepositoryCasesWithFilteredFields';
 
 // Mock the ZenStack hook
 vi.mock('~/lib/hooks/repository-cases', () => ({

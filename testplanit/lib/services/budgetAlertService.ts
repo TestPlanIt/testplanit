@@ -1,5 +1,5 @@
-import { NotificationService } from "./notificationService";
 import { NotificationType } from "@prisma/client";
+import { NotificationService } from "./notificationService";
 
 export const THRESHOLDS = [80, 90, 100] as const;
 

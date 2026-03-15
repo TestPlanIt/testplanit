@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,19 +9,19 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { useUpdateTestRunCases } from "~/lib/hooks";
-import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
-import { ExtendedCases } from "./columns";
-import { AsyncCombobox } from "@/components/ui/async-combobox";
-import {
-  notifyTestCaseAssignment,
-  notifyBulkTestCaseAssignment,
-} from "~/app/actions/test-run-notifications";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
-import { UserNameCell } from "@/components/tables/UserNameCell";
+import {
+  notifyBulkTestCaseAssignment, notifyTestCaseAssignment
+} from "~/app/actions/test-run-notifications";
+import { useUpdateTestRunCases } from "~/lib/hooks";
+import { ExtendedCases } from "./columns";
 
 interface AssignTestCaseModalProps {
   isOpen: boolean;

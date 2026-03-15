@@ -1,13 +1,13 @@
-import React from "react";
 import { Avatar } from "@/components/Avatar";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
 import { Star } from "lucide-react";
 import { useSession } from "next-auth/react";
+import React from "react";
 import { type ClassValue } from "~/utils";
 
 export interface UserDisplayProps {

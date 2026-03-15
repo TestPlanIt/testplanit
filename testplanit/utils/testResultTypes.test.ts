@@ -1,11 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  AUTOMATED_TEST_RUN_TYPES,
-  AUTOMATED_CASE_SOURCES,
-  isAutomatedTestRunType,
-  isAutomatedCaseSource,
-  getTestRunTypeLabel,
-  getCaseSourceLabel,
+  AUTOMATED_CASE_SOURCES, AUTOMATED_TEST_RUN_TYPES, getCaseSourceLabel, getTestRunTypeLabel, isAutomatedCaseSource, isAutomatedTestRunType
 } from "./testResultTypes";
 
 describe("testResultTypes", () => {

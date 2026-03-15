@@ -1,18 +1,15 @@
-import { Worker, Job } from "bullmq";
-import valkeyConnection from "../lib/valkey";
-import { SYNC_QUEUE_NAME } from "../lib/queueNames";
-import {
-  syncService,
-  SyncJobData,
-} from "../lib/integrations/services/SyncService";
+import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
 import {
-  getPrismaClientForJob,
+  SyncJobData, syncService
+} from "../lib/integrations/services/SyncService";
+import {
+  disconnectAllTenantClients, getPrismaClientForJob,
   isMultiTenantMode,
-  MultiTenantJobData,
-  disconnectAllTenantClients,
-  validateMultiTenantJobData,
+  MultiTenantJobData, validateMultiTenantJobData
 } from "../lib/multiTenantPrisma";
+import { SYNC_QUEUE_NAME } from "../lib/queueNames";
+import valkeyConnection from "../lib/valkey";
 
 // Extend SyncJobData with multi-tenant support
 interface MultiTenantSyncJobData extends SyncJobData, MultiTenantJobData {}

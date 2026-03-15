@@ -1,13 +1,13 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { Roles } from "@prisma/client";
-import { Switch } from "@/components/ui/switch";
-import { EditRoleModal } from "./EditRoles";
-import { DeleteRoleModal } from "./DeleteRoles";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Roles } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { RoleNameCell } from "~/components/tables/RoleNameCell";
 import { UserListDisplay } from "~/components/tables/UserListDisplay";
+import { DeleteRoleModal } from "./DeleteRoles";
+import { EditRoleModal } from "./EditRoles";
 
 export interface ExtendedRoles extends Roles {
   users: {

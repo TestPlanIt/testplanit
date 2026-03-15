@@ -1,8 +1,8 @@
 import type { AuditAction } from "@prisma/client";
-import { getAuditLogQueue } from "~/lib/queues";
 import { getAuditContext, type AuditContext } from "~/lib/auditContext";
 import type { MultiTenantJobData } from "~/lib/multiTenantPrisma";
 import { getCurrentTenantId, isMultiTenantMode } from "~/lib/multiTenantPrisma";
+import { getAuditLogQueue } from "~/lib/queues";
 
 /**
  * Represents an audit event to be logged.

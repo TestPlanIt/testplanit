@@ -5,11 +5,11 @@
  * Supports: projects, workflow states, configurations, milestones, tags, folders, test runs
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { getServerAuthSession } from "~/server/auth";
-import { authenticateApiToken } from "~/lib/api-token-auth";
 import { prisma } from "@/lib/prisma";
 import { WorkflowScope } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
+import { authenticateApiToken } from "~/lib/api-token-auth";
+import { getServerAuthSession } from "~/server/auth";
 
 interface LookupRequest {
   projectId?: number; // Not required for project lookup

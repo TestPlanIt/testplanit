@@ -1,22 +1,15 @@
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  PointerActivationConstraint,
-  useSensor,
-  useSensors,
+  closestCenter, DndContext, KeyboardSensor, PointerActivationConstraint, PointerSensor, useSensor,
+  useSensors
 } from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
   arrayMove,
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable,
+  SortableContext, useSortable, verticalListSortingStrategy
 } from "@dnd-kit/sortable";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
 import { Button } from "@/components/ui/button";
-import { Trash2, GripVertical } from "lucide-react";
+import { GripVertical, Trash2 } from "lucide-react";
 
 import { CSS } from "@dnd-kit/utilities";
 

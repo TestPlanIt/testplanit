@@ -1,13 +1,13 @@
-import React from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { useFindManyCaseFields } from "~/lib/hooks";
 import { CaseFields } from "@prisma/client";
 import { LayoutList } from "lucide-react";
+import React from "react";
+import { useFindManyCaseFields } from "~/lib/hooks";
 interface CaseFieldListProps {
   caseFields: { caseFieldId: number }[];
   usePopover?: boolean;

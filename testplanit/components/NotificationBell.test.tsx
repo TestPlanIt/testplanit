@@ -1,10 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
-import React from "react";
-import { NotificationBell } from "./NotificationBell";
-import { useSession } from "next-auth/react";
-import { useFindManyNotification } from "~/lib/hooks";
 import { NotificationType } from "@prisma/client";
+import { render, screen } from "@testing-library/react";
+import { useSession } from "next-auth/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { useFindManyNotification } from "~/lib/hooks";
+import { NotificationBell } from "./NotificationBell";
 
 // Mock dependencies
 vi.mock("next-auth/react");

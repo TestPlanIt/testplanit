@@ -1,16 +1,16 @@
-import { useRouter, usePathname } from "~/lib/navigation";
-import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
-import { useFindManyProjects } from "~/lib/hooks";
 import { ProjectIcon } from "@/components/ProjectIcon";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectTrigger,
+  SelectTrigger
 } from "@/components/ui/select";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import { useFindManyProjects } from "~/lib/hooks";
+import { usePathname, useRouter } from "~/lib/navigation";
 
 interface ProjectDropdownMenuProps {
   isCollapsed?: boolean;

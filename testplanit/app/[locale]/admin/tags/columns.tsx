@@ -1,12 +1,12 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { Tags } from "@prisma/client";
-import { EditTagModal } from "./EditTag";
-import { DeleteTagModal } from "./DeleteTag";
 import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { SessionsListDisplay } from "@/components/tables/SessionListDisplay";
 import { TestRunsListDisplay } from "@/components/tables/TestRunsListDisplay";
-import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
+import { Tags } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
+import { DeleteTagModal } from "./DeleteTag";
+import { EditTagModal } from "./EditTag";
 
 export interface ExtendedTags extends Tags {
   repositoryCases: { id: number }[];

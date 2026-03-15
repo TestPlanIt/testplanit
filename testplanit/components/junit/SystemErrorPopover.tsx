@@ -1,11 +1,10 @@
-import React from "react";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
+import React from "react";
 import { parse } from "stacktrace-parser";
-import { Separator } from "@/components/ui/separator";
 interface SystemErrorPopoverProps {
   text: string;
 }

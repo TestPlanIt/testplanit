@@ -1,6 +1,6 @@
-import { OAuthConfig, OAuthUserConfig } from "next-auth/providers/oauth";
-import { Profile as SAML2Profile } from "@node-saml/passport-saml";
 import { SAML } from "@node-saml/node-saml";
+import { Profile as SAML2Profile } from "@node-saml/passport-saml";
+import { OAuthConfig, OAuthUserConfig } from "next-auth/providers/oauth";
 
 export interface SAMLProfile extends Record<string, any> {
   id: string;

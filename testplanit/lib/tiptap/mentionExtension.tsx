@@ -1,11 +1,11 @@
-import { ReactRenderer } from "@tiptap/react";
-import tippy, { Instance as TippyInstance } from "tippy.js";
 import Mention from "@tiptap/extension-mention";
+import { ReactRenderer } from "@tiptap/react";
 import { SuggestionOptions } from "@tiptap/suggestion";
+import tippy, { Instance as TippyInstance } from "tippy.js";
 import {
   MentionSuggestion,
   MentionSuggestionRef,
-  MentionUser,
+  MentionUser
 } from "~/components/comments/MentionSuggestion";
 
 /**

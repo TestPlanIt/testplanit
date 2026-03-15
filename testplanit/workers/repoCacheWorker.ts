@@ -1,15 +1,13 @@
-import { Worker, Job } from "bullmq";
-import valkeyConnection from "../lib/valkey";
-import { REPO_CACHE_QUEUE_NAME } from "../lib/queueNames";
-import { repoFileCache } from "../lib/integrations/cache/RepoFileCache";
-import { refreshRepoCache } from "../lib/services/repoCacheRefreshService";
+import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
+import { repoFileCache } from "../lib/integrations/cache/RepoFileCache";
 import {
-  getPrismaClientForJob,
-  isMultiTenantMode,
-  disconnectAllTenantClients,
-  validateMultiTenantJobData,
+  disconnectAllTenantClients, getPrismaClientForJob,
+  isMultiTenantMode, validateMultiTenantJobData
 } from "../lib/multiTenantPrisma";
+import { REPO_CACHE_QUEUE_NAME } from "../lib/queueNames";
+import { refreshRepoCache } from "../lib/services/repoCacheRefreshService";
+import valkeyConnection from "../lib/valkey";
 
 export const JOB_REFRESH_EXPIRED_CACHES = "refresh-expired-repo-caches";
 

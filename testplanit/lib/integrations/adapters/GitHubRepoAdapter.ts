@@ -1,8 +1,5 @@
 import {
-  GitRepoAdapter,
-  RepoFileEntry,
-  ListFilesResult,
-  TestConnectionResult,
+  GitRepoAdapter, ListFilesResult, RepoFileEntry, TestConnectionResult
 } from "./GitRepoAdapter";
 
 export class GitHubRepoAdapter extends GitRepoAdapter {

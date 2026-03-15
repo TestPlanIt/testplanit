@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Prisma } from "@prisma/client";
-import { AzureOpenAIAdapter } from "./azure-openai.adapter";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LlmAdapterConfig, LlmRequest } from "../types";
+import { AzureOpenAIAdapter } from "./azure-openai.adapter";
 
 // Mock fetch globally
 const mockFetch = vi.fn();

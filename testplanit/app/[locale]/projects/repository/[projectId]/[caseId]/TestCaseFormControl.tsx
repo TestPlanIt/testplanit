@@ -1,28 +1,27 @@
+import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import {
+  AttachmentChanges, AttachmentsDisplay
+} from "@/components/AttachmentsDisplay";
+import { DateFormatter } from "@/components/DateFormatter";
+import { DurationDisplay } from "@/components/DurationDisplay";
+import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
+import { ManageTags } from "@/components/ManageTags";
+import { UserDisplay } from "@/components/search/UserDisplay";
+import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
+import { TagsDisplay } from "@/components/tables/TagDisplay";
+import { Badge } from "@/components/ui/badge";
+import { FormControl, FormField, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import UploadAttachments from "@/components/UploadAttachments";
+import { Attachments, Tags } from "@prisma/client";
+import { useTranslations } from "next-intl";
 import React from "react";
 import { useFormContext } from "react-hook-form";
-import { Attachments, Tags } from "@prisma/client";
-import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { FormField, FormControl, FormMessage } from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { ManageTags } from "@/components/ManageTags";
-import UploadAttachments from "@/components/UploadAttachments";
-import { TagsDisplay } from "@/components/tables/TagDisplay";
-import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
-import {
-  AttachmentsDisplay,
-  AttachmentChanges,
-} from "@/components/AttachmentsDisplay";
-import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
-import { DurationDisplay } from "@/components/DurationDisplay";
-import { useTranslations } from "next-intl";
-import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
+import { CommentsSection } from "~/components/comments/CommentsSection";
 import { ForecastDisplay } from "~/components/ForecastDisplay";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
-import { CommentsSection } from "~/components/comments/CommentsSection";
-import { UserDisplay } from "@/components/search/UserDisplay";
-import { DateFormatter } from "@/components/DateFormatter";
 
 interface TestCaseFormControlsProps {
   isEditMode: boolean;

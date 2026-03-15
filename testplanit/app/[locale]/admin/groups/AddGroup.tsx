@@ -1,14 +1,12 @@
 "use client";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { User } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
-  useCreateGroups,
-  useFindManyUser,
-  useCreateManyGroupAssignment,
+  useCreateGroups, useCreateManyGroupAssignment, useFindManyUser
 } from "~/lib/hooks";
-import { useTranslations } from "next-intl";
-import { User } from "@prisma/client";
-import { HelpPopover } from "@/components/ui/help-popover";
-import { useQueryClient } from "@tanstack/react-query";
 import { invalidateModelQueries } from "~/utils/optimistic-updates";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,9 +24,11 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -36,10 +36,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Combobox } from "@/components/ui/combobox";
-import { UserNameCell } from "@/components/tables/UserNameCell";
 import { toast } from "sonner";
 
 const AddGroupFormSchema = z.object({

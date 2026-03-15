@@ -1,7 +1,7 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import type { Adapter, AdapterUser } from "next-auth/adapters";
 import type { PrismaClient } from "@prisma/client";
 import { hash } from "bcrypt";
+import type { Adapter, AdapterUser } from "next-auth/adapters";
 import { NotificationService } from "~/lib/services/notificationService";
 
 /**

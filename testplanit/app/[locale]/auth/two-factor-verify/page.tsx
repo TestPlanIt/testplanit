@@ -1,25 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "~/lib/navigation";
-import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { Shield, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot
+} from "@/components/ui/input-otp";
+import { Loader2, Shield } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import Image from "next/image";
+import { useState } from "react";
+import { useRouter } from "~/lib/navigation";
 import svgIcon from "~/public/tpi_logo.svg";
 
 export default function TwoFactorVerifyPage() {

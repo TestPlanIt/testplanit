@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
 import { encode } from "next-auth/jwt";
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "~/server/db";
 
 // SAML completion handler - creates NextAuth session

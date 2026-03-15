@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
-import { prisma } from "~/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 import { getUserAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";
+import { prisma } from "~/lib/prisma";
+import { authOptions } from "~/server/auth";
 
 interface FolderStats {
   folderId: number;

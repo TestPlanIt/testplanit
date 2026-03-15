@@ -1,13 +1,5 @@
-import React from "react";
 import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-  beforeAll,
-  afterEach,
-  Mock,
+  afterEach, beforeAll, beforeEach, describe, expect, it, Mock, vi
 } from "vitest";
 
 // Mock the extractTextFromNode utility to prevent issues
@@ -165,45 +157,23 @@ vi.mock("~/lib/hooks/project-llm-integration", () => ({
 
 // Now import everything else after the mocks
 import {
-  render,
-  screen,
-  within,
-  waitFor,
-  fireEvent,
-  act,
+  DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat, WorkflowScope
+} from "@prisma/client";
+import {
+  act, fireEvent, render,
+  screen, waitFor, within
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { BulkEditModal } from "./BulkEditModal";
 import { Session } from "next-auth";
 import * as NextAuth from "next-auth/react";
-import {
-  useFindManyRepositoryCases,
-  useUpdateRepositoryCases,
-  useFindManyWorkflows,
-  useFindManyTags,
-  useFindManyIssue,
-  useUpdateCaseFieldValues,
-  useCreateCaseFieldValues,
-  useUpdateManyRepositoryCases,
-  useCreateSteps,
-  useDeleteManySteps,
-  useUpdateSteps,
-  useCreateRepositoryCaseVersions,
-  useCreateCaseFieldVersionValues,
-} from "~/lib/hooks";
+import { toast } from "sonner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindManyRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import {
-  ApplicationArea,
-  Theme,
-  Locale,
-  DateFormat,
-  TimeFormat,
-  ItemsPerPage,
-  WorkflowScope,
-  NotificationMode,
-} from "@prisma/client";
-import { toast } from "sonner";
+  useCreateCaseFieldValues, useCreateCaseFieldVersionValues, useCreateRepositoryCaseVersions, useCreateSteps,
+  useDeleteManySteps, useFindManyIssue, useFindManyRepositoryCases, useFindManyTags, useFindManyWorkflows, useUpdateCaseFieldValues, useUpdateManyRepositoryCases, useUpdateRepositoryCases, useUpdateSteps
+} from "~/lib/hooks";
+import { BulkEditModal } from "./BulkEditModal";
 
 // Setup to fix hasPointerCapture issue with Radix UI
 beforeAll(() => {

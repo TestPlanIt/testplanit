@@ -1,10 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { DateRangePickerField } from "./DateRangePickerField";
-import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod/v4";
+import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
+import { FormProvider, useForm } from "react-hook-form";
+import { describe, expect, it, vi } from "vitest";
+import { z } from "zod/v4";
+import { DateRangePickerField } from "./DateRangePickerField";
 
 // Mock next-intl
 vi.mock("next-intl", async () => {

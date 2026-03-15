@@ -1,34 +1,33 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import DynamicIcon from "@/components/DynamicIcon";
+import { DatePickerField } from "@/components/forms/DatePickerField";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-  DialogDescription,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { DatePickerField } from "@/components/forms/DatePickerField";
 import { Form } from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
+import { AlertTriangle, CalendarDays } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { CalendarDays, AlertTriangle } from "lucide-react";
-import type { MilestonesWithTypes } from "~/utils/milestoneUtils";
-import { completeMilestoneCascade } from "~/app/actions/milestoneActions";
+import { useEffect, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { completeMilestoneCascade } from "~/app/actions/milestoneActions";
 import { useFindManyWorkflows } from "~/lib/hooks";
-import DynamicIcon from "@/components/DynamicIcon";
 import { IconName } from "~/types/globals";
+import type { MilestonesWithTypes } from "~/utils/milestoneUtils";
 
 interface CompleteMilestoneDialogProps {
   open: boolean;

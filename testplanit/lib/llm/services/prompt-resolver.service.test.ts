@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { PromptResolver } from "./prompt-resolver.service";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LLM_FEATURES } from "../constants";
 import { FALLBACK_PROMPTS } from "./fallback-prompts";
+import { PromptResolver } from "./prompt-resolver.service";
 
 /**
  * Creates a mock PrismaClient with the methods used by PromptResolver.

@@ -1,22 +1,20 @@
 "use client";
-import React, { useEffect, useRef, useMemo, useCallback } from "react";
-import * as d3 from "d3";
-import useResponsiveSVG from "~/hooks/useResponsiveSVG";
-import { useTranslations } from "next-intl";
-import type { HealthStatus } from "~/utils/testCaseHealthUtils";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  Activity,
-  HelpCircle,
-} from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import * as d3 from "d3";
+import {
+  Activity, AlertTriangle,
+  CheckCircle2,
+  Clock, HelpCircle
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import useResponsiveSVG from "~/hooks/useResponsiveSVG";
+import type { HealthStatus } from "~/utils/testCaseHealthUtils";
 
 interface TestCaseHealthData {
   testCaseId: number;

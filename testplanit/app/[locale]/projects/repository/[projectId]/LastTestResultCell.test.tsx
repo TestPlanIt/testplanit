@@ -1,14 +1,9 @@
-import { describe, it, expect, vi, beforeAll } from "vitest";
+import {
+  DateFormat, ItemsPerPage, Locale, NotificationMode, Theme, TimeFormat
+} from "@prisma/client";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import {
-  Theme,
-  Locale,
-  DateFormat,
-  TimeFormat,
-  ItemsPerPage,
-  NotificationMode,
-} from "@prisma/client";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 // Mock server-side modules first (before any other imports)
 vi.mock("~/app/actions/test-run", () => ({

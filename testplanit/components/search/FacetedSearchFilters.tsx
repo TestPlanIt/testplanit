@@ -1,89 +1,50 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import DynamicIcon from "@/components/DynamicIcon";
 import {
-  SearchableEntityType,
-  UnifiedSearchFilters,
-  BaseEntityFilters,
-  RepositoryCaseFilters,
-  TestRunFilters,
-  SessionFilters,
-  IssueFilters,
-  MilestoneFilters,
-  SearchFacet,
-} from "~/types/search";
-import {
-  useFindManyProjects,
-  useFindManyWorkflows,
-  useFindManyTags,
-  useFindManyTemplates,
-  useFindManyMilestones,
-  useFindManyConfigurations,
-  useFindManyUser,
-  useFindManyRepositoryFolders,
-  useFindManyProjectAssignment,
-} from "~/lib/hooks";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Calendar } from "@/components/ui/calendar";
-import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "~/utils";
-import { format } from "date-fns";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { format } from "date-fns";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  CalendarIcon,
-  Search,
-  Boxes,
-  Tags,
-  User,
-  Workflow,
-  Settings,
-  FileText,
-  Clock,
-  CheckCircle,
-  Bot,
-  Timer,
-  GitBranch,
-  Hash,
-  Calendar as CalendarIcon2,
-  PlayCircle,
-  FolderTree,
-  Milestone,
-  Combine,
-  UserCheck,
-  LayoutTemplate,
-  Bug,
-  ListChecks,
-  Layers,
-  Compass,
-  Trash2,
+  Bot, Boxes, Bug, Calendar as CalendarIcon2, CalendarIcon, CheckCircle, Clock, Combine, Compass, FileText, FolderTree, GitBranch,
+  Hash, Layers, LayoutTemplate, ListChecks, Milestone, PlayCircle, Search, Settings, Tags, Timer, Trash2, User, UserCheck, Workflow
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import {
+  useFindManyConfigurations, useFindManyMilestones, useFindManyProjectAssignment, useFindManyProjects, useFindManyRepositoryFolders, useFindManyTags,
+  useFindManyTemplates, useFindManyUser, useFindManyWorkflows
+} from "~/lib/hooks";
+import {
+  BaseEntityFilters, IssueFilters,
+  MilestoneFilters, RepositoryCaseFilters, SearchableEntityType, SearchFacet, SessionFilters, TestRunFilters, UnifiedSearchFilters
+} from "~/types/search";
+import { cn, isAdmin } from "~/utils";
 import { CustomFieldFilters } from "./CustomFieldFilters";
-import DynamicIcon from "@/components/DynamicIcon";
-import { isAdmin } from "~/utils";
 
 interface FacetedSearchFiltersProps {
   entityTypes: SearchableEntityType[];

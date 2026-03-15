@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "~/server/db";
 import { hash } from "bcrypt";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { isEmailServerConfigured } from "~/lib/email/emailConfig";
+import { db } from "~/server/db";
 
 /**
  * Dedicated signup API endpoint that bypasses ZenStack access control.

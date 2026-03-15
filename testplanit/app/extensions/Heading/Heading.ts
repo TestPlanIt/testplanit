@@ -1,6 +1,6 @@
 import { mergeAttributes } from '@tiptap/core'
-import TiptapHeading from '@tiptap/extension-heading'
 import type { Level } from '@tiptap/extension-heading'
+import TiptapHeading from '@tiptap/extension-heading'
 
 export const Heading = TiptapHeading.extend({
   renderHTML({ node, HTMLAttributes }) {

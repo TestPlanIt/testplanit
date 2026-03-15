@@ -3,11 +3,11 @@
 import {
   ApplicationArea,
   ProjectAccessType,
-  Roles,
+  Roles
 } from "@prisma/client";
+import { Session } from "next-auth";
 import { prisma } from "~/lib/prisma";
 import { isAdmin, isProjectAdmin } from "~/utils/permissions";
-import { Session } from "next-auth";
 
 // Type for permissions of a single area
 export type AreaPermissions = {

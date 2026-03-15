@@ -1,6 +1,6 @@
 import {
   getElasticsearchClient,
-  getRepositoryCaseIndexName,
+  getRepositoryCaseIndexName
 } from "./elasticsearchService";
 
 export interface SearchFilters {

@@ -1,7 +1,7 @@
 import {
   getElasticsearchClient,
   getRepositoryCaseIndexName,
-  RepositoryCaseDocument,
+  RepositoryCaseDocument
 } from "./elasticsearchService";
 
 /**

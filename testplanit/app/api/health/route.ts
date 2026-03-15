@@ -1,9 +1,9 @@
+import { ListBucketsCommand, S3Client } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
+import valkeyConnection from "~/lib/valkey";
 import { getVersionInfo } from "~/lib/version";
 import { db } from "~/server/db";
-import valkeyConnection from "~/lib/valkey";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
-import { S3Client, ListBucketsCommand } from "@aws-sdk/client-s3";
 
 export const dynamic = "force-dynamic";
 

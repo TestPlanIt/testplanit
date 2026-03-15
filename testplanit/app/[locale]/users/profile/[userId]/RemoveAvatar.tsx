@@ -1,16 +1,14 @@
-import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { User } from "@prisma/client";
-import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
+  Popover, PopoverContent, PopoverTrigger
 } from "@/components/ui/popover";
-import { Trash2, X, CircleSlash2 } from "lucide-react";
+import { CircleSlash2, Trash2, X } from "lucide-react";
 
 interface RemoveAvatarProps {
   user: User;

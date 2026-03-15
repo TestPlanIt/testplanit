@@ -1,14 +1,14 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { MilestoneTypes, FieldIcon } from "@prisma/client";
-import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
-import { Switch } from "@/components/ui/switch";
-import { EditMilestoneTypeModal } from "./EditMilestoneTypes";
-import { DeleteMilestoneTypeModal } from "./DeleteMilestoneTypes";
 import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
-import { useTranslations } from "next-intl";
+import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { FieldIcon, MilestoneTypes } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { IconName } from "~/types/globals";
+import { DeleteMilestoneTypeModal } from "./DeleteMilestoneTypes";
+import { EditMilestoneTypeModal } from "./EditMilestoneTypes";
 
 export interface ExtendedMilestoneTypes extends MilestoneTypes {
   projects: {

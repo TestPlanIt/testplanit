@@ -1,57 +1,57 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { useFindManyCaseExportTemplate } from "~/lib/hooks";
-import {
-  fetchCasesForQuickScript,
-  type QuickScriptCaseData,
-} from "~/app/actions/quickScriptActions";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   checkAiExportAvailable,
   generateAiExport,
   generateAiExportBatch,
-  type AiExportResult,
+  type AiExportResult
 } from "~/app/actions/aiExportActions";
+import {
+  fetchCasesForQuickScript,
+  type QuickScriptCaseData
+} from "~/app/actions/quickScriptActions";
+import { useFindManyCaseExportTemplate } from "~/lib/hooks";
 import { logDataExport } from "~/lib/services/auditClient";
-import { useTranslations } from "next-intl";
-import { toast } from "sonner";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
+  CommandList
 } from "@/components/ui/command";
-import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { Check, ChevronsUpDown, Sparkles, Loader2, Star } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, Sparkles, Star } from "lucide-react";
 import { cn } from "~/utils";
-import { sanitizeFilename } from "./quickScriptUtils";
 import { ExportPreviewPane } from "./ExportPreviewPane";
+import { sanitizeFilename } from "./quickScriptUtils";
 
 /** Strip leading/trailing markdown code fences that some LLMs emit. */
 function stripFences(code: string): string {

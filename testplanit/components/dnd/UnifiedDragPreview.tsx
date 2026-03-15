@@ -1,8 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import { Folder, ListChecks } from "lucide-react";
+import React, { CSSProperties, useEffect, useRef } from "react";
 import { useDragLayer, XYCoord } from "react-dnd";
 import { ItemTypes } from "~/types/dndTypes";
-import { ListChecks, Folder } from "lucide-react";
-import { CSSProperties } from "react";
 
 // Define the structure for test case info
 interface PreviewTestCaseInfo {

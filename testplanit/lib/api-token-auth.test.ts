@@ -1,11 +1,9 @@
-import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
 import { NextRequest } from "next/server";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  extractBearerToken,
-  authenticateApiToken,
-  hasBearerToken,
+  authenticateApiToken, extractBearerToken, hasBearerToken
 } from "./api-token-auth";
-import { hashToken, generateApiToken } from "./api-tokens";
+import { generateApiToken } from "./api-tokens";
 
 // Mock prisma
 vi.mock("./prisma", () => ({

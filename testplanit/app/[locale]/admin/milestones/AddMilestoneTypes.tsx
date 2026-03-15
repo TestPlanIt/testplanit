@@ -1,19 +1,19 @@
 "use client";
-import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
 import {
   useCreateMilestoneTypes,
-  useUpdateManyMilestoneTypes,
+  useUpdateManyMilestoneTypes
 } from "~/lib/hooks";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
+import { FieldIconPicker } from "@/components/FieldIconPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CirclePlus } from "lucide-react";
-import { FieldIconPicker } from "@/components/FieldIconPicker";
 
 import {
   Form,
@@ -21,7 +21,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -31,10 +31,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { Switch } from "@/components/ui/switch";
 
 export function AddMilestoneTypeModal() {
   const t = useTranslations("admin.milestones.add");

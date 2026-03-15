@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies
 vi.mock("~/server/auth", () => ({
@@ -27,10 +27,10 @@ vi.mock("@/lib/multiTenantPrisma", () => ({
   isMultiTenantMode: vi.fn(),
 }));
 
-import { getServerAuthSession } from "~/server/auth";
-import { authenticateApiToken } from "~/lib/api-token-auth";
 import { prisma } from "@/lib/prisma";
 import { getAllQueues } from "@/lib/queues";
+import { authenticateApiToken } from "~/lib/api-token-auth";
+import { getServerAuthSession } from "~/server/auth";
 
 // Import the route handler after mocks are set up
 import { GET } from "./route";

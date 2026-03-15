@@ -1,9 +1,7 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  checkPasswordAttemptLimit,
-  recordPasswordAttempt,
-  clearPasswordAttempts,
-  getAttemptCount,
+  checkPasswordAttemptLimit, clearPasswordAttempts,
+  getAttemptCount, recordPasswordAttempt
 } from "./rate-limit";
 
 describe("rate-limit", () => {

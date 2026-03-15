@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import DynamicIcon from "@/components/DynamicIcon";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import DynamicIcon from "@/components/DynamicIcon";
-import { SearchableEntityType } from "~/types/search";
-import { getEntityLabel, getEntityIcon } from "~/hooks/useSearchContext";
-import { cn, type ClassValue } from "~/utils";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { getEntityIcon, getEntityLabel } from "~/hooks/useSearchContext";
+import { SearchableEntityType } from "~/types/search";
+import { cn, type ClassValue } from "~/utils";
 
 interface EntityTypeSelectorProps {
   availableEntities: SearchableEntityType[];

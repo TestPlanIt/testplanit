@@ -1,11 +1,11 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { ApiToken, User } from "@prisma/client";
-import { useTranslations } from "next-intl";
-import { UserNameCell } from "@/components/tables/UserNameCell";
 import { DateFormatter } from "@/components/DateFormatter";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ApiToken, User } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
 import { Ban } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export interface ExtendedApiToken extends ApiToken {
   user: Pick<User, "id" | "name" | "email" | "image">;

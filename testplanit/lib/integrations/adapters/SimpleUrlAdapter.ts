@@ -1,13 +1,8 @@
-import {
-  IssueAdapterCapabilities,
-  AuthenticationData,
-  IssueData,
-  CreateIssueData,
-  UpdateIssueData,
-  IssueSearchOptions,
-} from "./IssueAdapter";
-import { BaseAdapter } from "./BaseAdapter";
 import { prisma } from "@/lib/prismaBase";
+import { BaseAdapter } from "./BaseAdapter";
+import {
+  AuthenticationData, CreateIssueData, IssueAdapterCapabilities, IssueData, IssueSearchOptions, UpdateIssueData
+} from "./IssueAdapter";
 
 /**
  * Simple URL adapter for basic issue tracking integrations

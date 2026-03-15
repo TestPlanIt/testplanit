@@ -1,46 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, Link, useRouter } from "~/lib/navigation";
 import {
-  CircleCheckBig,
-  Combine,
-  Boxes,
-  Users,
-  User,
-  Drama,
-  Milestone,
-  LayoutList,
-  Workflow,
-  ScrollText,
-  Tags,
-  Settings,
-  Trash2,
-  ChartNoAxesCombined,
-  Bell,
-  Plug,
-  ShieldUser,
-  ShieldCheck,
-  Sparkles,
-  Search,
-  ImportIcon,
-  Bug,
-  Activity,
-  KeyRound,
-  Share2,
-  MessageSquareCode,
-  GitBranch,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { buttonVariants } from "@/components/ui/button";
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
+  Accordion, AccordionContent, AccordionItem,
+  AccordionTrigger
 } from "@/components/ui/accordion";
-import { cn } from "~/utils";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Activity, Bell, Boxes, Bug, ChartNoAxesCombined, CircleCheckBig,
+  Combine, Drama, GitBranch, ImportIcon, KeyRound, LayoutList, MessageSquareCode, Milestone, Plug, ScrollText, Search, Settings, Share2, ShieldCheck, ShieldUser, Sparkles, Tags, Trash2, User, Users, Workflow
+} from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { Link, usePathname, useRouter } from "~/lib/navigation";
+import { cn } from "~/utils";
 
 type MenuSection =
   | "testManagement"

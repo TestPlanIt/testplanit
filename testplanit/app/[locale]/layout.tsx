@@ -1,13 +1,13 @@
+import { Header } from "@/components/Header";
+import { UpgradeNotificationChecker } from "@/components/UpgradeNotificationChecker";
+import { NextIntlClientProvider } from "next-intl";
 import { Noto_Sans } from "next/font/google";
+import { headers } from "next/headers";
+import { Toaster } from "sonner";
+import { NextStepOnboarding } from "~/components/onboarding/NextStepOnboarding";
 import "~/styles/globals.css";
 import "~/styles/tiptap-mentions.css";
 import Providers from "../providers";
-import { Header } from "@/components/Header";
-import { Toaster } from "sonner";
-import { NextIntlClientProvider } from "next-intl";
-import { headers } from "next/headers";
-import { NextStepOnboarding } from "~/components/onboarding/NextStepOnboarding";
-import { UpgradeNotificationChecker } from "@/components/UpgradeNotificationChecker";
 
 const notoSans = Noto_Sans({
   subsets: ["latin"],

@@ -4,7 +4,7 @@ import React, {
   useCallback,
   useEffect,
   useImperativeHandle,
-  useState,
+  useState
 } from "react";
 
 import { Button } from "@/components/tiptap/ui/Button";

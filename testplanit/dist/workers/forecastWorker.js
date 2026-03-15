@@ -146,6 +146,171 @@ __export(forecastWorker_exports, {
 });
 module.exports = __toCommonJS(forecastWorker_exports);
 var import_bullmq3 = require("bullmq");
+var import_node_url2 = require("node:url");
+
+// lib/multiTenantPrisma.ts
+var import_client2 = require("@prisma/client");
+var fs = __toESM(require("fs"));
+function isMultiTenantMode() {
+  return process.env.MULTI_TENANT_MODE === "true";
+}
+function getCurrentTenantId() {
+  return process.env.INSTANCE_TENANT_ID;
+}
+var tenantClients = /* @__PURE__ */ new Map();
+var tenantConfigs = null;
+var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
+function loadTenantsFromFile(filePath) {
+  const configs = /* @__PURE__ */ new Map();
+  try {
+    if (fs.existsSync(filePath)) {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(fileContent);
+      for (const [tenantId, config] of Object.entries(parsed)) {
+        configs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl
+        });
+      }
+      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
+    }
+  } catch (error) {
+    console.error(`Failed to load tenant configs from ${filePath}:`, error);
+  }
+  return configs;
+}
+function reloadTenantConfigs() {
+  tenantConfigs = null;
+  return loadTenantConfigs();
+}
+function loadTenantConfigs() {
+  if (tenantConfigs) {
+    return tenantConfigs;
+  }
+  tenantConfigs = /* @__PURE__ */ new Map();
+  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
+  for (const [tenantId, config] of fileConfigs) {
+    tenantConfigs.set(tenantId, config);
+  }
+  const configJson = process.env.TENANT_CONFIGS;
+  if (configJson) {
+    try {
+      const configs = JSON.parse(configJson);
+      for (const [tenantId, config] of Object.entries(configs)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: config.databaseUrl,
+          elasticsearchNode: config.elasticsearchNode,
+          elasticsearchIndex: config.elasticsearchIndex,
+          baseUrl: config.baseUrl
+        });
+      }
+      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
+    } catch (error) {
+      console.error("Failed to parse TENANT_CONFIGS:", error);
+    }
+  }
+  for (const [key, value] of Object.entries(process.env)) {
+    const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
+    if (match && value) {
+      const tenantId = match[1].toLowerCase();
+      if (!tenantConfigs.has(tenantId)) {
+        tenantConfigs.set(tenantId, {
+          tenantId,
+          databaseUrl: value,
+          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
+          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
+          baseUrl: process.env[`TENANT_${match[1]}_BASE_URL`]
+        });
+      }
+    }
+  }
+  if (tenantConfigs.size === 0) {
+    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
+  }
+  return tenantConfigs;
+}
+function getTenantConfig(tenantId) {
+  const configs = loadTenantConfigs();
+  return configs.get(tenantId);
+}
+function createTenantPrismaClient(config) {
+  const client = new import_client2.PrismaClient({
+    datasources: {
+      db: {
+        url: config.databaseUrl
+      }
+    },
+    errorFormat: "pretty"
+  });
+  return client;
+}
+function getTenantPrismaClient(tenantId) {
+  reloadTenantConfigs();
+  const config = getTenantConfig(tenantId);
+  if (!config) {
+    throw new Error(`No configuration found for tenant: ${tenantId}`);
+  }
+  const cached = tenantClients.get(tenantId);
+  if (cached) {
+    if (cached.databaseUrl === config.databaseUrl) {
+      return cached.client;
+    } else {
+      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
+      cached.client.$disconnect().catch((err) => {
+        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
+      });
+      tenantClients.delete(tenantId);
+    }
+  }
+  const client = createTenantPrismaClient(config);
+  tenantClients.set(tenantId, { client, databaseUrl: config.databaseUrl });
+  console.log(`Created Prisma client for tenant: ${tenantId}`);
+  return client;
+}
+function getPrismaClientForJob(jobData) {
+  if (!isMultiTenantMode()) {
+    const { prisma: prisma2 } = (init_prismaBase(), __toCommonJS(prismaBase_exports));
+    return prisma2;
+  }
+  if (!jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+  return getTenantPrismaClient(jobData.tenantId);
+}
+async function disconnectAllTenantClients() {
+  const disconnectPromises = [];
+  for (const [tenantId, cached] of tenantClients) {
+    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
+    disconnectPromises.push(cached.client.$disconnect());
+  }
+  await Promise.all(disconnectPromises);
+  tenantClients.clear();
+  console.log("All tenant Prisma clients disconnected");
+}
+function validateMultiTenantJobData(jobData) {
+  if (isMultiTenantMode() && !jobData.tenantId) {
+    throw new Error("tenantId is required in multi-tenant mode");
+  }
+}
+
+// lib/queueNames.ts
+var FORECAST_QUEUE_NAME = "forecast-updates";
+var NOTIFICATION_QUEUE_NAME = "notifications";
+var EMAIL_QUEUE_NAME = "emails";
+
+// lib/services/notificationService.ts
+var import_client4 = require("@prisma/client");
+
+// workers/notificationWorker.ts
+var import_bullmq2 = require("bullmq");
+var import_node_url = require("node:url");
+
+// lib/queues.ts
+var import_bullmq = require("bullmq");
 
 // lib/valkey.ts
 var import_ioredis = __toESM(require("ioredis"));
@@ -223,13 +388,411 @@ if (skipConnection) {
 }
 var valkey_default = valkeyConnection;
 
-// lib/queueNames.ts
-var FORECAST_QUEUE_NAME = "forecast-updates";
-var NOTIFICATION_QUEUE_NAME = "notifications";
-var EMAIL_QUEUE_NAME = "emails";
+// lib/queues.ts
+var _notificationQueue = null;
+var _emailQueue = null;
+function getNotificationQueue() {
+  if (_notificationQueue) return _notificationQueue;
+  if (!valkey_default) {
+    console.warn(
+      `Valkey connection not available, Queue "${NOTIFICATION_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _notificationQueue = new import_bullmq.Queue(NOTIFICATION_QUEUE_NAME, {
+    connection: valkey_default,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 5e3
+      },
+      removeOnComplete: {
+        age: 3600 * 24 * 7,
+        count: 1e3
+      },
+      removeOnFail: {
+        age: 3600 * 24 * 14
+      }
+    }
+  });
+  console.log(`Queue "${NOTIFICATION_QUEUE_NAME}" initialized.`);
+  _notificationQueue.on("error", (error) => {
+    console.error(`Queue ${NOTIFICATION_QUEUE_NAME} error:`, error);
+  });
+  return _notificationQueue;
+}
+function getEmailQueue() {
+  if (_emailQueue) return _emailQueue;
+  if (!valkey_default) {
+    console.warn(
+      `Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _emailQueue = new import_bullmq.Queue(EMAIL_QUEUE_NAME, {
+    connection: valkey_default,
+    defaultJobOptions: {
+      attempts: 5,
+      backoff: {
+        type: "exponential",
+        delay: 1e4
+      },
+      removeOnComplete: {
+        age: 3600 * 24 * 30,
+        count: 5e3
+      },
+      removeOnFail: {
+        age: 3600 * 24 * 30
+      }
+    }
+  });
+  console.log(`Queue "${EMAIL_QUEUE_NAME}" initialized.`);
+  _emailQueue.on("error", (error) => {
+    console.error(`Queue ${EMAIL_QUEUE_NAME} error:`, error);
+  });
+  return _emailQueue;
+}
 
-// services/forecastService.ts
-init_prismaBase();
+// workers/notificationWorker.ts
+var import_meta = {};
+var JOB_CREATE_NOTIFICATION = "create-notification";
+var JOB_PROCESS_USER_NOTIFICATIONS = "process-user-notifications";
+var JOB_SEND_DAILY_DIGEST = "send-daily-digest";
+var processor = async (job) => {
+  console.log(`Processing notification job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
+  validateMultiTenantJobData(job.data);
+  const prisma2 = getPrismaClientForJob(job.data);
+  switch (job.name) {
+    case JOB_CREATE_NOTIFICATION:
+      const createData = job.data;
+      try {
+        const userPreferences = await prisma2.userPreferences.findUnique({
+          where: { userId: createData.userId }
+        });
+        const globalSettings = await prisma2.appConfig.findUnique({
+          where: { key: "notificationSettings" }
+        });
+        let notificationMode = userPreferences?.notificationMode || "USE_GLOBAL";
+        if (notificationMode === "USE_GLOBAL") {
+          const settingsValue = globalSettings?.value;
+          notificationMode = settingsValue?.defaultMode || "IN_APP";
+        }
+        if (notificationMode === "NONE") {
+          console.log(
+            `Skipping notification for user ${createData.userId} - notifications disabled`
+          );
+          return;
+        }
+        const notification = await prisma2.notification.create({
+          data: {
+            userId: createData.userId,
+            type: createData.type,
+            title: createData.title,
+            message: createData.message,
+            relatedEntityId: createData.relatedEntityId,
+            relatedEntityType: createData.relatedEntityType,
+            data: createData.data
+          }
+        });
+        if (notificationMode === "IN_APP_EMAIL_IMMEDIATE") {
+          await getEmailQueue()?.add("send-notification-email", {
+            notificationId: notification.id,
+            userId: createData.userId,
+            immediate: true,
+            tenantId: createData.tenantId
+            // Pass tenantId for multi-tenant support
+          });
+        }
+        console.log(
+          `Created notification ${notification.id} for user ${createData.userId} with mode ${notificationMode}`
+        );
+      } catch (error) {
+        console.error(`Failed to create notification:`, error);
+        throw error;
+      }
+      break;
+    case JOB_PROCESS_USER_NOTIFICATIONS:
+      const processData = job.data;
+      try {
+        const notifications = await prisma2.notification.findMany({
+          where: {
+            userId: processData.userId,
+            isRead: false,
+            isDeleted: false
+          },
+          orderBy: { createdAt: "desc" }
+        });
+        console.log(
+          `Processing ${notifications.length} notifications for user ${processData.userId}`
+        );
+      } catch (error) {
+        console.error(`Failed to process user notifications:`, error);
+        throw error;
+      }
+      break;
+    case JOB_SEND_DAILY_DIGEST:
+      const digestData = job.data;
+      try {
+        const globalSettings = await prisma2.appConfig.findUnique({
+          where: { key: "notificationSettings" }
+        });
+        const settingsValue = globalSettings?.value;
+        const globalDefaultMode = settingsValue?.defaultMode || "IN_APP";
+        const users = await prisma2.userPreferences.findMany({
+          where: {
+            OR: [
+              { notificationMode: "IN_APP_EMAIL_DAILY" },
+              {
+                notificationMode: "USE_GLOBAL",
+                ...globalDefaultMode === "IN_APP_EMAIL_DAILY" ? {} : { id: "none" }
+                // Only include if global is daily
+              }
+            ]
+          },
+          include: {
+            user: true
+          }
+        });
+        for (const userPref of users) {
+          const yesterday = /* @__PURE__ */ new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const notifications = await prisma2.notification.findMany({
+            where: {
+              userId: userPref.userId,
+              isRead: false,
+              isDeleted: false,
+              createdAt: { gte: yesterday }
+            },
+            orderBy: { createdAt: "desc" }
+          });
+          if (notifications.length > 0) {
+            await getEmailQueue()?.add("send-digest-email", {
+              userId: userPref.userId,
+              notifications: notifications.map((n) => ({
+                id: n.id,
+                title: n.title,
+                message: n.message,
+                createdAt: n.createdAt
+              })),
+              tenantId: digestData.tenantId
+              // Pass tenantId for multi-tenant support
+            });
+          }
+        }
+        console.log(`Processed daily digest for ${users.length} users`);
+      } catch (error) {
+        console.error(`Failed to send daily digest:`, error);
+        throw error;
+      }
+      break;
+    default:
+      throw new Error(`Unknown job type: ${job.name}`);
+  }
+};
+var worker = null;
+var startWorker = async () => {
+  if (isMultiTenantMode()) {
+    console.log("Notification worker starting in MULTI-TENANT mode");
+  } else {
+    console.log("Notification worker starting in SINGLE-TENANT mode");
+  }
+  if (valkey_default) {
+    worker = new import_bullmq2.Worker(NOTIFICATION_QUEUE_NAME, processor, {
+      connection: valkey_default,
+      concurrency: parseInt(process.env.NOTIFICATION_CONCURRENCY || "5", 10)
+    });
+    worker.on("completed", (job) => {
+      console.log(`Job ${job.id} completed successfully.`);
+    });
+    worker.on("failed", (job, err) => {
+      console.error(`Job ${job?.id} failed:`, err);
+    });
+    worker.on("error", (err) => {
+      console.error("Worker error:", err);
+    });
+    console.log(
+      `Notification worker started for queue "${NOTIFICATION_QUEUE_NAME}".`
+    );
+  } else {
+    console.warn(
+      "Valkey connection not available. Notification worker not started."
+    );
+  }
+  const shutdown = async () => {
+    console.log("Shutting down notification worker...");
+    if (worker) {
+      await worker.close();
+    }
+    if (isMultiTenantMode()) {
+      await disconnectAllTenantClients();
+    }
+    process.exit(0);
+  };
+  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", shutdown);
+};
+if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || (typeof import_meta === "undefined" || import_meta.url === void 0)) {
+  console.log("Notification worker running...");
+  startWorker().catch((err) => {
+    console.error("Failed to start notification worker:", err);
+    process.exit(1);
+  });
+}
+
+// lib/services/notificationService.ts
+var NotificationService = class {
+  /**
+   * Create a notification for a user
+   */
+  static async createNotification(params) {
+    const notificationQueue = getNotificationQueue();
+    if (!notificationQueue) {
+      console.warn("Notification queue not available, notification not created");
+      return;
+    }
+    try {
+      const jobData = {
+        ...params,
+        tenantId: params.tenantId ?? getCurrentTenantId()
+      };
+      const job = await notificationQueue.add(JOB_CREATE_NOTIFICATION, jobData, {
+        removeOnComplete: true,
+        removeOnFail: false
+      });
+      console.log(`Queued notification job ${job.id} for user ${params.userId}`);
+      return job.id;
+    } catch (error) {
+      console.error("Failed to queue notification:", error);
+      throw error;
+    }
+  }
+  /**
+   * Create a work assignment notification
+   */
+  static async createWorkAssignmentNotification(assignedToId, entityType, entityName, projectName, assignedById, assignedByName, entityId) {
+    const title = `New ${entityType === "TestRunCase" ? "Test Case" : "Session"} Assignment`;
+    const message = `${assignedByName} assigned you to ${entityType === "TestRunCase" ? "test case" : "session"} "${entityName}" in project "${projectName}"`;
+    return this.createNotification({
+      userId: assignedToId,
+      type: entityType === "TestRunCase" ? import_client4.NotificationType.WORK_ASSIGNED : import_client4.NotificationType.SESSION_ASSIGNED,
+      title,
+      message,
+      relatedEntityId: entityId,
+      relatedEntityType: entityType,
+      data: {
+        assignedById,
+        assignedByName,
+        projectName,
+        entityName
+      }
+    });
+  }
+  /**
+   * Mark notifications as read
+   */
+  static async markNotificationsAsRead(notificationIds, userId) {
+    return notificationIds;
+  }
+  /**
+   * Get unread notification count for a user
+   */
+  static async getUnreadCount(userId) {
+    return 0;
+  }
+  /**
+   * Create a milestone due reminder notification
+   */
+  static async createMilestoneDueNotification(userId, milestoneName, projectName, dueDate, milestoneId, projectId, isOverdue, tenantId) {
+    const title = isOverdue ? "Milestone Overdue" : "Milestone Due Soon";
+    const message = isOverdue ? `Milestone "${milestoneName}" in project "${projectName}" was due on ${dueDate.toLocaleDateString()}` : `Milestone "${milestoneName}" in project "${projectName}" is due on ${dueDate.toLocaleDateString()}`;
+    return this.createNotification({
+      userId,
+      type: import_client4.NotificationType.MILESTONE_DUE_REMINDER,
+      title,
+      message,
+      relatedEntityId: milestoneId.toString(),
+      relatedEntityType: "Milestone",
+      tenantId,
+      data: {
+        milestoneName,
+        projectName,
+        projectId,
+        milestoneId,
+        dueDate: dueDate.toISOString(),
+        isOverdue
+      }
+    });
+  }
+  /**
+   * Create a user registration notification for all System Admins
+   */
+  static async createUserRegistrationNotification(newUserName, newUserEmail, newUserId, registrationMethod) {
+    const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
+    try {
+      const systemAdmins = await db2.user.findMany({
+        where: {
+          access: "ADMIN",
+          isActive: true,
+          isDeleted: false
+        },
+        select: {
+          id: true
+        }
+      });
+      if (systemAdmins.length === 0) {
+        console.warn("No system administrators found to notify");
+        return;
+      }
+      const title = "New User Registration";
+      const method = registrationMethod === "sso" ? "SSO" : "registration form";
+      const message = `${newUserName} (${newUserEmail}) has registered via ${method}`;
+      const notificationPromises = systemAdmins.map(
+        (admin) => this.createNotification({
+          userId: admin.id,
+          type: import_client4.NotificationType.USER_REGISTERED,
+          title,
+          message,
+          relatedEntityId: newUserId,
+          relatedEntityType: "User",
+          data: {
+            newUserName,
+            newUserEmail,
+            newUserId,
+            registrationMethod
+          }
+        })
+      );
+      await Promise.all(notificationPromises);
+      console.log(`Created user registration notifications for ${systemAdmins.length} system administrators`);
+    } catch (error) {
+      console.error("Failed to create user registration notifications:", error);
+    }
+  }
+  /**
+   * Create a share link accessed notification
+   */
+  static async createShareLinkAccessedNotification(shareLinkOwnerId, shareTitle, viewerName, viewerEmail, shareLinkId, projectId) {
+    const title = "Shared Report Viewed";
+    const viewer = viewerName || viewerEmail || "Someone";
+    const message = `${viewer} viewed your shared report: "${shareTitle}"`;
+    return this.createNotification({
+      userId: shareLinkOwnerId,
+      type: import_client4.NotificationType.SHARE_LINK_ACCESSED,
+      title,
+      message,
+      relatedEntityId: shareLinkId,
+      relatedEntityType: "ShareLink",
+      data: {
+        shareLinkId,
+        ...projectId !== void 0 && { projectId },
+        viewerName,
+        viewerEmail,
+        viewedAt: (/* @__PURE__ */ new Date()).toISOString()
+      }
+    });
+  }
+};
 
 // utils/testResultTypes.ts
 var AUTOMATED_CASE_SOURCES = [
@@ -247,6 +810,7 @@ function isAutomatedCaseSource(source) {
 }
 
 // services/forecastService.ts
+init_prismaBase();
 async function updateRepositoryCaseForecast(repositoryCaseId, options = {}) {
   const prisma2 = options.prismaClient || prisma;
   if (process.env.DEBUG_FORECAST) {
@@ -541,568 +1105,6 @@ async function getUniqueCaseGroupIds(options = {}) {
     throw error;
   }
 }
-
-// workers/forecastWorker.ts
-var import_node_url2 = require("node:url");
-
-// lib/multiTenantPrisma.ts
-var import_client2 = require("@prisma/client");
-var fs = __toESM(require("fs"));
-function isMultiTenantMode() {
-  return process.env.MULTI_TENANT_MODE === "true";
-}
-function getCurrentTenantId() {
-  return process.env.INSTANCE_TENANT_ID;
-}
-var tenantClients = /* @__PURE__ */ new Map();
-var tenantConfigs = null;
-var TENANT_CONFIG_FILE = process.env.TENANT_CONFIG_FILE || "/config/tenants.json";
-function loadTenantsFromFile(filePath) {
-  const configs = /* @__PURE__ */ new Map();
-  try {
-    if (fs.existsSync(filePath)) {
-      const fileContent = fs.readFileSync(filePath, "utf-8");
-      const parsed = JSON.parse(fileContent);
-      for (const [tenantId, config] of Object.entries(parsed)) {
-        configs.set(tenantId, {
-          tenantId,
-          databaseUrl: config.databaseUrl,
-          elasticsearchNode: config.elasticsearchNode,
-          elasticsearchIndex: config.elasticsearchIndex,
-          baseUrl: config.baseUrl
-        });
-      }
-      console.log(`Loaded ${configs.size} tenant configurations from ${filePath}`);
-    }
-  } catch (error) {
-    console.error(`Failed to load tenant configs from ${filePath}:`, error);
-  }
-  return configs;
-}
-function reloadTenantConfigs() {
-  tenantConfigs = null;
-  return loadTenantConfigs();
-}
-function loadTenantConfigs() {
-  if (tenantConfigs) {
-    return tenantConfigs;
-  }
-  tenantConfigs = /* @__PURE__ */ new Map();
-  const fileConfigs = loadTenantsFromFile(TENANT_CONFIG_FILE);
-  for (const [tenantId, config] of fileConfigs) {
-    tenantConfigs.set(tenantId, config);
-  }
-  const configJson = process.env.TENANT_CONFIGS;
-  if (configJson) {
-    try {
-      const configs = JSON.parse(configJson);
-      for (const [tenantId, config] of Object.entries(configs)) {
-        tenantConfigs.set(tenantId, {
-          tenantId,
-          databaseUrl: config.databaseUrl,
-          elasticsearchNode: config.elasticsearchNode,
-          elasticsearchIndex: config.elasticsearchIndex,
-          baseUrl: config.baseUrl
-        });
-      }
-      console.log(`Loaded ${Object.keys(configs).length} tenant configurations from TENANT_CONFIGS env var`);
-    } catch (error) {
-      console.error("Failed to parse TENANT_CONFIGS:", error);
-    }
-  }
-  for (const [key, value] of Object.entries(process.env)) {
-    const match = key.match(/^TENANT_([A-Z0-9_]+)_DATABASE_URL$/);
-    if (match && value) {
-      const tenantId = match[1].toLowerCase();
-      if (!tenantConfigs.has(tenantId)) {
-        tenantConfigs.set(tenantId, {
-          tenantId,
-          databaseUrl: value,
-          elasticsearchNode: process.env[`TENANT_${match[1]}_ELASTICSEARCH_NODE`],
-          elasticsearchIndex: process.env[`TENANT_${match[1]}_ELASTICSEARCH_INDEX`],
-          baseUrl: process.env[`TENANT_${match[1]}_BASE_URL`]
-        });
-      }
-    }
-  }
-  if (tenantConfigs.size === 0) {
-    console.warn("No tenant configurations found. Multi-tenant mode will not work without configurations.");
-  }
-  return tenantConfigs;
-}
-function getTenantConfig(tenantId) {
-  const configs = loadTenantConfigs();
-  return configs.get(tenantId);
-}
-function createTenantPrismaClient(config) {
-  const client = new import_client2.PrismaClient({
-    datasources: {
-      db: {
-        url: config.databaseUrl
-      }
-    },
-    errorFormat: "pretty"
-  });
-  return client;
-}
-function getTenantPrismaClient(tenantId) {
-  reloadTenantConfigs();
-  const config = getTenantConfig(tenantId);
-  if (!config) {
-    throw new Error(`No configuration found for tenant: ${tenantId}`);
-  }
-  const cached = tenantClients.get(tenantId);
-  if (cached) {
-    if (cached.databaseUrl === config.databaseUrl) {
-      return cached.client;
-    } else {
-      console.log(`Credentials changed for tenant ${tenantId}, invalidating cached client...`);
-      cached.client.$disconnect().catch((err) => {
-        console.error(`Error disconnecting stale client for tenant ${tenantId}:`, err);
-      });
-      tenantClients.delete(tenantId);
-    }
-  }
-  const client = createTenantPrismaClient(config);
-  tenantClients.set(tenantId, { client, databaseUrl: config.databaseUrl });
-  console.log(`Created Prisma client for tenant: ${tenantId}`);
-  return client;
-}
-function getPrismaClientForJob(jobData) {
-  if (!isMultiTenantMode()) {
-    const { prisma: prisma2 } = (init_prismaBase(), __toCommonJS(prismaBase_exports));
-    return prisma2;
-  }
-  if (!jobData.tenantId) {
-    throw new Error("tenantId is required in multi-tenant mode");
-  }
-  return getTenantPrismaClient(jobData.tenantId);
-}
-async function disconnectAllTenantClients() {
-  const disconnectPromises = [];
-  for (const [tenantId, cached] of tenantClients) {
-    console.log(`Disconnecting Prisma client for tenant: ${tenantId}`);
-    disconnectPromises.push(cached.client.$disconnect());
-  }
-  await Promise.all(disconnectPromises);
-  tenantClients.clear();
-  console.log("All tenant Prisma clients disconnected");
-}
-function validateMultiTenantJobData(jobData) {
-  if (isMultiTenantMode() && !jobData.tenantId) {
-    throw new Error("tenantId is required in multi-tenant mode");
-  }
-}
-
-// lib/queues.ts
-var import_bullmq = require("bullmq");
-var _notificationQueue = null;
-var _emailQueue = null;
-function getNotificationQueue() {
-  if (_notificationQueue) return _notificationQueue;
-  if (!valkey_default) {
-    console.warn(
-      `Valkey connection not available, Queue "${NOTIFICATION_QUEUE_NAME}" not initialized.`
-    );
-    return null;
-  }
-  _notificationQueue = new import_bullmq.Queue(NOTIFICATION_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5e3
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        count: 1e3
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14
-      }
-    }
-  });
-  console.log(`Queue "${NOTIFICATION_QUEUE_NAME}" initialized.`);
-  _notificationQueue.on("error", (error) => {
-    console.error(`Queue ${NOTIFICATION_QUEUE_NAME} error:`, error);
-  });
-  return _notificationQueue;
-}
-function getEmailQueue() {
-  if (_emailQueue) return _emailQueue;
-  if (!valkey_default) {
-    console.warn(
-      `Valkey connection not available, Queue "${EMAIL_QUEUE_NAME}" not initialized.`
-    );
-    return null;
-  }
-  _emailQueue = new import_bullmq.Queue(EMAIL_QUEUE_NAME, {
-    connection: valkey_default,
-    defaultJobOptions: {
-      attempts: 5,
-      backoff: {
-        type: "exponential",
-        delay: 1e4
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 30,
-        count: 5e3
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 30
-      }
-    }
-  });
-  console.log(`Queue "${EMAIL_QUEUE_NAME}" initialized.`);
-  _emailQueue.on("error", (error) => {
-    console.error(`Queue ${EMAIL_QUEUE_NAME} error:`, error);
-  });
-  return _emailQueue;
-}
-
-// workers/notificationWorker.ts
-var import_bullmq2 = require("bullmq");
-var import_node_url = require("node:url");
-var import_meta = {};
-var JOB_CREATE_NOTIFICATION = "create-notification";
-var JOB_PROCESS_USER_NOTIFICATIONS = "process-user-notifications";
-var JOB_SEND_DAILY_DIGEST = "send-daily-digest";
-var processor = async (job) => {
-  console.log(`Processing notification job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`);
-  validateMultiTenantJobData(job.data);
-  const prisma2 = getPrismaClientForJob(job.data);
-  switch (job.name) {
-    case JOB_CREATE_NOTIFICATION:
-      const createData = job.data;
-      try {
-        const userPreferences = await prisma2.userPreferences.findUnique({
-          where: { userId: createData.userId }
-        });
-        const globalSettings = await prisma2.appConfig.findUnique({
-          where: { key: "notificationSettings" }
-        });
-        let notificationMode = userPreferences?.notificationMode || "USE_GLOBAL";
-        if (notificationMode === "USE_GLOBAL") {
-          const settingsValue = globalSettings?.value;
-          notificationMode = settingsValue?.defaultMode || "IN_APP";
-        }
-        if (notificationMode === "NONE") {
-          console.log(
-            `Skipping notification for user ${createData.userId} - notifications disabled`
-          );
-          return;
-        }
-        const notification = await prisma2.notification.create({
-          data: {
-            userId: createData.userId,
-            type: createData.type,
-            title: createData.title,
-            message: createData.message,
-            relatedEntityId: createData.relatedEntityId,
-            relatedEntityType: createData.relatedEntityType,
-            data: createData.data
-          }
-        });
-        if (notificationMode === "IN_APP_EMAIL_IMMEDIATE") {
-          await getEmailQueue()?.add("send-notification-email", {
-            notificationId: notification.id,
-            userId: createData.userId,
-            immediate: true,
-            tenantId: createData.tenantId
-            // Pass tenantId for multi-tenant support
-          });
-        }
-        console.log(
-          `Created notification ${notification.id} for user ${createData.userId} with mode ${notificationMode}`
-        );
-      } catch (error) {
-        console.error(`Failed to create notification:`, error);
-        throw error;
-      }
-      break;
-    case JOB_PROCESS_USER_NOTIFICATIONS:
-      const processData = job.data;
-      try {
-        const notifications = await prisma2.notification.findMany({
-          where: {
-            userId: processData.userId,
-            isRead: false,
-            isDeleted: false
-          },
-          orderBy: { createdAt: "desc" }
-        });
-        console.log(
-          `Processing ${notifications.length} notifications for user ${processData.userId}`
-        );
-      } catch (error) {
-        console.error(`Failed to process user notifications:`, error);
-        throw error;
-      }
-      break;
-    case JOB_SEND_DAILY_DIGEST:
-      const digestData = job.data;
-      try {
-        const globalSettings = await prisma2.appConfig.findUnique({
-          where: { key: "notificationSettings" }
-        });
-        const settingsValue = globalSettings?.value;
-        const globalDefaultMode = settingsValue?.defaultMode || "IN_APP";
-        const users = await prisma2.userPreferences.findMany({
-          where: {
-            OR: [
-              { notificationMode: "IN_APP_EMAIL_DAILY" },
-              {
-                notificationMode: "USE_GLOBAL",
-                ...globalDefaultMode === "IN_APP_EMAIL_DAILY" ? {} : { id: "none" }
-                // Only include if global is daily
-              }
-            ]
-          },
-          include: {
-            user: true
-          }
-        });
-        for (const userPref of users) {
-          const yesterday = /* @__PURE__ */ new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          const notifications = await prisma2.notification.findMany({
-            where: {
-              userId: userPref.userId,
-              isRead: false,
-              isDeleted: false,
-              createdAt: { gte: yesterday }
-            },
-            orderBy: { createdAt: "desc" }
-          });
-          if (notifications.length > 0) {
-            await getEmailQueue()?.add("send-digest-email", {
-              userId: userPref.userId,
-              notifications: notifications.map((n) => ({
-                id: n.id,
-                title: n.title,
-                message: n.message,
-                createdAt: n.createdAt
-              })),
-              tenantId: digestData.tenantId
-              // Pass tenantId for multi-tenant support
-            });
-          }
-        }
-        console.log(`Processed daily digest for ${users.length} users`);
-      } catch (error) {
-        console.error(`Failed to send daily digest:`, error);
-        throw error;
-      }
-      break;
-    default:
-      throw new Error(`Unknown job type: ${job.name}`);
-  }
-};
-var worker = null;
-var startWorker = async () => {
-  if (isMultiTenantMode()) {
-    console.log("Notification worker starting in MULTI-TENANT mode");
-  } else {
-    console.log("Notification worker starting in SINGLE-TENANT mode");
-  }
-  if (valkey_default) {
-    worker = new import_bullmq2.Worker(NOTIFICATION_QUEUE_NAME, processor, {
-      connection: valkey_default,
-      concurrency: parseInt(process.env.NOTIFICATION_CONCURRENCY || "5", 10)
-    });
-    worker.on("completed", (job) => {
-      console.log(`Job ${job.id} completed successfully.`);
-    });
-    worker.on("failed", (job, err) => {
-      console.error(`Job ${job?.id} failed:`, err);
-    });
-    worker.on("error", (err) => {
-      console.error("Worker error:", err);
-    });
-    console.log(
-      `Notification worker started for queue "${NOTIFICATION_QUEUE_NAME}".`
-    );
-  } else {
-    console.warn(
-      "Valkey connection not available. Notification worker not started."
-    );
-  }
-  const shutdown = async () => {
-    console.log("Shutting down notification worker...");
-    if (worker) {
-      await worker.close();
-    }
-    if (isMultiTenantMode()) {
-      await disconnectAllTenantClients();
-    }
-    process.exit(0);
-  };
-  process.on("SIGINT", shutdown);
-  process.on("SIGTERM", shutdown);
-};
-if (typeof import_meta !== "undefined" && import_meta.url === (0, import_node_url.pathToFileURL)(process.argv[1]).href || (typeof import_meta === "undefined" || import_meta.url === void 0)) {
-  console.log("Notification worker running...");
-  startWorker().catch((err) => {
-    console.error("Failed to start notification worker:", err);
-    process.exit(1);
-  });
-}
-
-// lib/services/notificationService.ts
-var import_client4 = require("@prisma/client");
-var NotificationService = class {
-  /**
-   * Create a notification for a user
-   */
-  static async createNotification(params) {
-    const notificationQueue = getNotificationQueue();
-    if (!notificationQueue) {
-      console.warn("Notification queue not available, notification not created");
-      return;
-    }
-    try {
-      const jobData = {
-        ...params,
-        tenantId: params.tenantId ?? getCurrentTenantId()
-      };
-      const job = await notificationQueue.add(JOB_CREATE_NOTIFICATION, jobData, {
-        removeOnComplete: true,
-        removeOnFail: false
-      });
-      console.log(`Queued notification job ${job.id} for user ${params.userId}`);
-      return job.id;
-    } catch (error) {
-      console.error("Failed to queue notification:", error);
-      throw error;
-    }
-  }
-  /**
-   * Create a work assignment notification
-   */
-  static async createWorkAssignmentNotification(assignedToId, entityType, entityName, projectName, assignedById, assignedByName, entityId) {
-    const title = `New ${entityType === "TestRunCase" ? "Test Case" : "Session"} Assignment`;
-    const message = `${assignedByName} assigned you to ${entityType === "TestRunCase" ? "test case" : "session"} "${entityName}" in project "${projectName}"`;
-    return this.createNotification({
-      userId: assignedToId,
-      type: entityType === "TestRunCase" ? import_client4.NotificationType.WORK_ASSIGNED : import_client4.NotificationType.SESSION_ASSIGNED,
-      title,
-      message,
-      relatedEntityId: entityId,
-      relatedEntityType: entityType,
-      data: {
-        assignedById,
-        assignedByName,
-        projectName,
-        entityName
-      }
-    });
-  }
-  /**
-   * Mark notifications as read
-   */
-  static async markNotificationsAsRead(notificationIds, userId) {
-    return notificationIds;
-  }
-  /**
-   * Get unread notification count for a user
-   */
-  static async getUnreadCount(userId) {
-    return 0;
-  }
-  /**
-   * Create a milestone due reminder notification
-   */
-  static async createMilestoneDueNotification(userId, milestoneName, projectName, dueDate, milestoneId, projectId, isOverdue, tenantId) {
-    const title = isOverdue ? "Milestone Overdue" : "Milestone Due Soon";
-    const message = isOverdue ? `Milestone "${milestoneName}" in project "${projectName}" was due on ${dueDate.toLocaleDateString()}` : `Milestone "${milestoneName}" in project "${projectName}" is due on ${dueDate.toLocaleDateString()}`;
-    return this.createNotification({
-      userId,
-      type: import_client4.NotificationType.MILESTONE_DUE_REMINDER,
-      title,
-      message,
-      relatedEntityId: milestoneId.toString(),
-      relatedEntityType: "Milestone",
-      tenantId,
-      data: {
-        milestoneName,
-        projectName,
-        projectId,
-        milestoneId,
-        dueDate: dueDate.toISOString(),
-        isOverdue
-      }
-    });
-  }
-  /**
-   * Create a user registration notification for all System Admins
-   */
-  static async createUserRegistrationNotification(newUserName, newUserEmail, newUserId, registrationMethod) {
-    const { db: db2 } = await Promise.resolve().then(() => (init_db(), db_exports));
-    try {
-      const systemAdmins = await db2.user.findMany({
-        where: {
-          access: "ADMIN",
-          isActive: true,
-          isDeleted: false
-        },
-        select: {
-          id: true
-        }
-      });
-      if (systemAdmins.length === 0) {
-        console.warn("No system administrators found to notify");
-        return;
-      }
-      const title = "New User Registration";
-      const method = registrationMethod === "sso" ? "SSO" : "registration form";
-      const message = `${newUserName} (${newUserEmail}) has registered via ${method}`;
-      const notificationPromises = systemAdmins.map(
-        (admin) => this.createNotification({
-          userId: admin.id,
-          type: import_client4.NotificationType.USER_REGISTERED,
-          title,
-          message,
-          relatedEntityId: newUserId,
-          relatedEntityType: "User",
-          data: {
-            newUserName,
-            newUserEmail,
-            newUserId,
-            registrationMethod
-          }
-        })
-      );
-      await Promise.all(notificationPromises);
-      console.log(`Created user registration notifications for ${systemAdmins.length} system administrators`);
-    } catch (error) {
-      console.error("Failed to create user registration notifications:", error);
-    }
-  }
-  /**
-   * Create a share link accessed notification
-   */
-  static async createShareLinkAccessedNotification(shareLinkOwnerId, shareTitle, viewerName, viewerEmail, shareLinkId, projectId) {
-    const title = "Shared Report Viewed";
-    const viewer = viewerName || viewerEmail || "Someone";
-    const message = `${viewer} viewed your shared report: "${shareTitle}"`;
-    return this.createNotification({
-      userId: shareLinkOwnerId,
-      type: import_client4.NotificationType.SHARE_LINK_ACCESSED,
-      title,
-      message,
-      relatedEntityId: shareLinkId,
-      relatedEntityType: "ShareLink",
-      data: {
-        shareLinkId,
-        ...projectId !== void 0 && { projectId },
-        viewerName,
-        viewerEmail,
-        viewedAt: (/* @__PURE__ */ new Date()).toISOString()
-      }
-    });
-  }
-};
 
 // workers/forecastWorker.ts
 var import_meta2 = {};

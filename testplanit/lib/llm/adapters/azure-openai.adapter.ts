@@ -1,5 +1,5 @@
-import { OpenAIAdapter } from "./openai.adapter";
 import type { LlmAdapterConfig, LlmModelInfo } from "../types";
+import { OpenAIAdapter } from "./openai.adapter";
 
 interface AzureOpenAISettings {
   deploymentName?: string;

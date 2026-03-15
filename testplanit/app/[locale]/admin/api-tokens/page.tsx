@@ -1,35 +1,23 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  usePagination,
-  PaginationProvider,
+  PaginationProvider, usePagination
 } from "~/lib/contexts/PaginationContext";
+import { useRouter } from "~/lib/navigation";
 
-import { useFindManyApiToken, useUpdateApiToken } from "~/lib/hooks";
-import { DataTable } from "@/components/tables/DataTable";
-import { ExtendedApiToken, getColumns } from "./columns";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
+import { DataTable } from "@/components/tables/DataTable";
+import { useFindManyApiToken, useUpdateApiToken } from "~/lib/hooks";
+import { ExtendedApiToken, getColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 
-import { Label } from "@/components/ui/label";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
-} from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,9 +26,18 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { Ban, Loader2, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card, CardContent,
+  CardDescription, CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { AlertTriangle, Ban, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 type PageSizeOption = number | "All";

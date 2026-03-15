@@ -1,14 +1,12 @@
-import { Worker, Job } from "bullmq";
-import valkeyConnection from "../lib/valkey";
-import { NOTIFICATION_QUEUE_NAME, getEmailQueue } from "../lib/queues";
+import { Job, Worker } from "bullmq";
 import { pathToFileURL } from "node:url";
 import {
-  getPrismaClientForJob,
+  disconnectAllTenantClients, getPrismaClientForJob,
   isMultiTenantMode,
-  MultiTenantJobData,
-  disconnectAllTenantClients,
-  validateMultiTenantJobData,
+  MultiTenantJobData, validateMultiTenantJobData
 } from "../lib/multiTenantPrisma";
+import { getEmailQueue, NOTIFICATION_QUEUE_NAME } from "../lib/queues";
+import valkeyConnection from "../lib/valkey";
 
 // Define job data structures with multi-tenant support
 interface CreateNotificationJobData extends MultiTenantJobData {

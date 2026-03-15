@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "~/lib/navigation";
-import { Badge } from "@/components/ui/badge";
-import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
-import { getStatus, getStatusStyle, ColorMap } from "~/utils/milestoneUtils";
+import { ForecastDisplay } from "@/components/ForecastDisplay";
+import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
+import { Badge } from "@/components/ui/badge";
 import { useTranslations } from "next-intl";
+import React, { useEffect, useState } from "react";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import type { MilestonesWithTypes } from "~/utils/milestoneUtils"; // Assuming this type exists and is relevant
-import { ForecastDisplay } from "@/components/ForecastDisplay";
+import { ColorMap, getStatus, getStatusStyle } from "~/utils/milestoneUtils";
 
 interface MilestoneForecastData {
   manualEstimate: number;

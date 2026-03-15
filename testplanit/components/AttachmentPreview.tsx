@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react";
-import Image from "next/image";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { Attachments } from "@prisma/client";
 import { File } from "lucide-react";
-import { Link } from "~/lib/navigation";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import { getStorageUrlClient } from "~/utils/storageUrl";
-import Markdown from "react-markdown";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import type { Components } from "react-markdown";
+import Markdown from "react-markdown";
+import { Link } from "~/lib/navigation";
+import { getStorageUrlClient } from "~/utils/storageUrl";
 
 interface AttachmentPreviewProps {
   attachment: Attachments;

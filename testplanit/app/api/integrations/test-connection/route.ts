@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
-import { IntegrationProvider } from "@prisma/client";
 import { decrypt, isEncrypted } from "@/utils/encryption";
+import { IntegrationProvider } from "@prisma/client";
+import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
+import { authOptions } from "~/server/auth";
 
 interface TestConnectionRequest {
   integrationId?: number;

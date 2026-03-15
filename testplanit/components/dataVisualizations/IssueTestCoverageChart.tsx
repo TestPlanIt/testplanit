@@ -1,21 +1,18 @@
 "use client";
-import React, { useEffect, useRef, useMemo, useCallback } from "react";
-import * as d3 from "d3";
-import useResponsiveSVG from "~/hooks/useResponsiveSVG";
-import { useTranslations } from "next-intl";
-import {
-  Bug,
-  CheckCircle2,
-  XCircle,
-  HelpCircle,
-  FileQuestion,
-} from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import * as d3 from "d3";
+import {
+  Bug,
+  CheckCircle2, FileQuestion, HelpCircle, XCircle
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { useEffect, useMemo, useRef } from "react";
+import useResponsiveSVG from "~/hooks/useResponsiveSVG";
 
 interface IssueTestCoverageData {
   issueId: number;

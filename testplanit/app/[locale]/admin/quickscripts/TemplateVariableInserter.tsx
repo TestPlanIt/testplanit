@@ -1,8 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useFindManyCaseFields } from "~/lib/hooks";
-import { CaseFields } from "@prisma/client";
 import {
   Select,
   SelectContent,
@@ -10,10 +7,13 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { Badge } from "~/components/ui/badge";
+import { CaseFields } from "@prisma/client";
 import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Badge } from "~/components/ui/badge";
+import { useFindManyCaseFields } from "~/lib/hooks";
 
 const CASE_VARIABLES = [
   { label: "name", value: "{{name}}", type: "Text" },

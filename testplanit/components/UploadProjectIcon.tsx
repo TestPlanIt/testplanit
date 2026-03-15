@@ -1,15 +1,15 @@
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
+import React, { useState } from "react";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 
 interface UploadProjectIconProps {
   onUpload: (url: string) => void;

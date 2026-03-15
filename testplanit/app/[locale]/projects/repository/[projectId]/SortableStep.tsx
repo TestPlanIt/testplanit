@@ -1,6 +1,6 @@
-import React, { HTMLAttributes } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import React, { HTMLAttributes } from "react";
 
 export interface SortableStepProps {
   id: string;

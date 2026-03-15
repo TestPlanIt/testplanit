@@ -1,8 +1,8 @@
 "use server";
 
 import type { PrismaClient } from "@prisma/client";
-import { prisma as defaultPrisma } from "../lib/prismaBase";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import { prisma as defaultPrisma } from "../lib/prismaBase";
 
 type UpdateRepositoryCaseForecastOptions = {
   skipTestRunUpdate?: boolean;

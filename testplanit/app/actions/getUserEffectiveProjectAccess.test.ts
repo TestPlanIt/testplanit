@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Use vi.hoisted to ensure mocks are available before the vi.mock factory runs
 const { mockProjects, mockUser, mockUserProjectPermission, mockGroupProjectPermission, mockProjectAssignment } = vi.hoisted(() => ({
@@ -33,8 +33,7 @@ vi.mock("@prisma/client", () => ({
 // Import after mocking
 import { ProjectAccessType } from "@prisma/client";
 import {
-  getUserEffectiveProjectAccess,
-  getBatchUserEffectiveProjectAccess,
+  getBatchUserEffectiveProjectAccess, getUserEffectiveProjectAccess
 } from "./getUserEffectiveProjectAccess";
 
 describe("getUserEffectiveProjectAccess", () => {

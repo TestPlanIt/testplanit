@@ -1,14 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
-import React from "react";
-import NotificationSettingsPage from "./page";
-import { useSession } from "next-auth/react";
-import {
-  useFindUniqueAppConfig,
-  useCreateAppConfig,
-  useUpdateAppConfig,
-} from "~/lib/hooks";
 import { NotificationMode } from "@prisma/client";
+import { render, screen, waitFor } from "@testing-library/react";
+import { useSession } from "next-auth/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  useCreateAppConfig, useFindUniqueAppConfig, useUpdateAppConfig
+} from "~/lib/hooks";
+import NotificationSettingsPage from "./page";
 
 // Mock dependencies
 vi.mock("next-auth/react");

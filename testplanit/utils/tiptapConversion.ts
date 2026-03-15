@@ -1,10 +1,10 @@
 import { JSONContent } from "@tiptap/core";
-import { generateJSON } from "@tiptap/html";
-import { StarterKit } from "@tiptap/starter-kit";
-import { Underline } from "@tiptap/extension-underline";
+import { Color } from "@tiptap/extension-color";
 import { Link } from "@tiptap/extension-link";
 import { TextStyle } from "@tiptap/extension-text-style";
-import { Color } from "@tiptap/extension-color";
+import { Underline } from "@tiptap/extension-underline";
+import { generateJSON } from "@tiptap/html";
+import { StarterKit } from "@tiptap/starter-kit";
 import { marked } from "marked";
 import { emptyEditorContent } from "~/app/constants/backend";
 

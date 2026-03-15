@@ -1,7 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "~/test/test-utils";
 import { CustomFieldDisplay } from "./CustomFieldDisplay";
-import React from "react";
 
 // Mock dependencies
 vi.mock("@/components/DynamicIcon", () => ({

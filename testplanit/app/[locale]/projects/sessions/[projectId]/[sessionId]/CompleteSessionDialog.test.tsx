@@ -1,13 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, beforeEach, vi } from "vitest";
-import { CompleteSessionDialog, CompletableSession } from "./CompleteSessionDialog";
 import { useSession } from "next-auth/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  useFindManyWorkflows,
-  useUpdateSessions,
-  useCreateSessionVersions,
+  useCreateSessionVersions, useFindManyWorkflows,
+  useUpdateSessions
 } from "~/lib/hooks";
-import { useTranslations } from "next-intl";
+import { CompletableSession, CompleteSessionDialog } from "./CompleteSessionDialog";
 
 // Mock the router
 const mockPush = vi.fn();

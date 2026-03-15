@@ -1,15 +1,15 @@
-import React from "react";
-import { formatDistanceToNow } from "date-fns";
-import { useSession } from "next-auth/react";
-import { useLocale } from "next-intl";
-import { getDateFnsLocale } from "~/utils/locales";
 import { DateFormatter } from "@/components/DateFormatter";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import { formatDistanceToNow } from "date-fns";
+import { useSession } from "next-auth/react";
+import { useLocale } from "next-intl";
+import React from "react";
+import { getDateFnsLocale } from "~/utils/locales";
 
 type LastActiveDisplayProps = {
   date: Date | string | null | undefined;

@@ -1,6 +1,6 @@
 import { DragHandleDots2Icon } from "@radix-ui/react-icons";
-import * as ResizablePrimitive from "react-resizable-panels";
 import { useEffect } from "react";
+import * as ResizablePrimitive from "react-resizable-panels";
 
 import { cn } from "~/utils";
 

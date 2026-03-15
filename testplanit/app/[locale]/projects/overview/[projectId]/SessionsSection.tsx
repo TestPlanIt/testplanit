@@ -1,11 +1,11 @@
-import React from "react";
-import { Link } from "~/lib/navigation";
-import { Compass, LinkIcon } from "lucide-react";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
-import { useFindManySessions } from "~/lib/hooks";
-import { useTranslations } from "next-intl";
-import SessionResultsSummary from "~/components/SessionResultsSummary";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { Compass, LinkIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React from "react";
+import SessionResultsSummary from "~/components/SessionResultsSummary";
+import { useFindManySessions } from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
 
 interface SessionsSectionProps {
   projectId: number;

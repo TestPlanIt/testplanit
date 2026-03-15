@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Prisma } from "@prisma/client";
-import { AnthropicAdapter } from "./anthropic.adapter";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { LlmAdapterConfig, LlmRequest } from "../types";
+import { AnthropicAdapter } from "./anthropic.adapter";
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;

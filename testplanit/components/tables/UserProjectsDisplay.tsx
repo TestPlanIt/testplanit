@@ -1,19 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { Link } from "~/lib/navigation";
-import { Badge } from "@/components/ui/badge";
-import { useFindManyProjects } from "~/lib/hooks";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Projects } from "@prisma/client";
 import { BoxesIcon } from "lucide-react";
-import { ProjectIcon } from "../ProjectIcon";
+import React, { useEffect, useState } from "react";
 import { getUserAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useFindManyProjects } from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
+import { ProjectIcon } from "../ProjectIcon";
 
 interface UserProjectsDisplayProps {
   userId: string;

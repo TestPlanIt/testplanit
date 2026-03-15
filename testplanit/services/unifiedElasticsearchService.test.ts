@@ -1,13 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import {
-  ENTITY_MAPPINGS,
-  ENTITY_INDICES,
-  createEntityIndex,
-  createAllEntityIndices,
-  transformCustomFieldValue,
-} from "./unifiedElasticsearchService";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SearchableEntityType } from "../types/search";
 import { getElasticsearchClient } from "./elasticsearchService";
+import {
+  createAllEntityIndices, createEntityIndex, ENTITY_INDICES, ENTITY_MAPPINGS, transformCustomFieldValue
+} from "./unifiedElasticsearchService";
 
 // Mock dependencies
 vi.mock("./elasticsearchService", () => ({

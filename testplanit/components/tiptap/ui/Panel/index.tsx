@@ -1,6 +1,6 @@
+import { Slot } from "@radix-ui/react-slot";
 import { forwardRef } from "react";
 import { cn } from "~/utils";
-import { Slot } from "@radix-ui/react-slot";
 import { Surface } from "../Surface";
 
 export type PanelProps = {

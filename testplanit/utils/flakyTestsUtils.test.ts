@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 // Re-implement countStatusFlips for testing to avoid server-side dependencies
 // This mirrors the implementation in flakyTestsUtils.ts

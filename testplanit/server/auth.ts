@@ -1,21 +1,21 @@
 import type { PrismaClient, UserPreferences } from "@prisma/client";
 import { compare } from "bcrypt";
+import jwt from "jsonwebtoken";
 import {
   getServerSession,
   type DefaultSession,
-  type NextAuthOptions,
+  type NextAuthOptions
 } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
 import AppleProvider from "next-auth/providers/apple";
 import AzureADProvider from "next-auth/providers/azure-ad";
+import CredentialsProvider from "next-auth/providers/credentials";
 import EmailProvider from "next-auth/providers/email";
-import jwt from "jsonwebtoken";
+import GoogleProvider from "next-auth/providers/google";
 
+import { auditAuthEvent } from "~/lib/services/auditLog";
+import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { db } from "~/server/db";
 import { createCustomPrismaAdapter } from "./auth-adapter";
-import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
-import { auditAuthEvent } from "~/lib/services/auditLog";
 
 /**
  * Helper function to generate Apple client secret from database config

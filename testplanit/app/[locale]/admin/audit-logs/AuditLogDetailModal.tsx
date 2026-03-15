@@ -1,16 +1,16 @@
 "use client";
 
+import { DateFormatter } from "@/components/DateFormatter";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useTranslations } from "next-intl";
-import { DateFormatter } from "@/components/DateFormatter";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import type { ExtendedAuditLog } from "./columns";
 
 interface AuditLogDetailModalProps {

@@ -1,23 +1,20 @@
-import React, { useEffect, useId, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import {
-  CloudUpload,
-  Loader2,
-  XCircle,
-  FileText,
-  FileStack,
-} from "lucide-react";
-import { filesize } from "filesize";
-import Image from "next/image";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { filesize } from "filesize";
+import {
+  CloudUpload, FileStack, FileText, Loader2,
+  XCircle
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import Image from "next/image";
+import React, { useEffect, useId, useRef, useState } from "react";
 
 interface UploadAttachmentsProps {
   onFileSelect: (files: File[]) => void;

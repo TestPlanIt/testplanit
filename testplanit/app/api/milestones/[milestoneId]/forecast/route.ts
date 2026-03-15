@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { db } from "~/server/db";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
+import { db } from "~/server/db";
 
 export async function GET(
   request: NextRequest,

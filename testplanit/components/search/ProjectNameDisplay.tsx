@@ -1,12 +1,12 @@
-import React from "react";
-import { Link } from "~/lib/navigation";
+import { ProjectIcon } from "@/components/ProjectIcon";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { ProjectIcon } from "@/components/ProjectIcon";
+import React from "react";
+import { Link } from "~/lib/navigation";
 import { type ClassValue } from "~/utils";
 
 interface ProjectNameDisplayProps {

@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "~/server/auth";
 import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { authOptions } from "~/server/auth";
 
 const createIssueSchema = z.object({
   title: z.string(),

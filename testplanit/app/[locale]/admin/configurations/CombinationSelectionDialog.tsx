@@ -1,19 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import { Form, FormControl } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
+import { useTranslations } from "next-intl";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useFindManyConfigurations } from "~/lib/hooks";
 

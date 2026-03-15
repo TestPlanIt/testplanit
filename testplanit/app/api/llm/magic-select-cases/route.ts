@@ -1,21 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
-import { prisma } from "@/lib/prisma";
-import { LlmManager } from "@/lib/llm/services/llm-manager.service";
-import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import { LLM_FEATURES } from "@/lib/llm/constants";
+import type { BatchableItem } from "@/lib/llm/services/batch-processor";
 import {
   createBatches,
-  executeBatches,
+  executeBatches
 } from "@/lib/llm/services/batch-processor";
-import type { BatchableItem } from "@/lib/llm/services/batch-processor";
+import { LlmManager } from "@/lib/llm/services/llm-manager.service";
+import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
 import type { LlmRequest } from "@/lib/llm/types";
+import { prisma } from "@/lib/prisma";
 import { ProjectAccessType } from "@prisma/client";
+import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { authOptions } from "~/server/auth";
 import {
   getElasticsearchClient,
-  getRepositoryCaseIndexName,
+  getRepositoryCaseIndexName
 } from "~/services/elasticsearchService";
 
 // Allow up to 5 minutes for LLM requests with large test case repositories

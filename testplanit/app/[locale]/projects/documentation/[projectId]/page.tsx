@@ -1,28 +1,25 @@
 "use client";
 
-import React, { useState, useEffect, use, useRef, useCallback } from "react";
 import { ApplicationArea } from "@prisma/client";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 
-import { useRouter } from "~/lib/navigation";
-import {
-  useFindFirstProjects,
-  useUpdateProjects,
-  useFindFirstAppConfig,
-} from "~/lib/hooks";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-
-import { useSession } from "next-auth/react";
-import { ProjectIcon } from "@/components/ProjectIcon";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { SquarePen, Save, CircleSlash2 } from "lucide-react";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
+  useFindFirstAppConfig, useFindFirstProjects,
+  useUpdateProjects
+} from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+
 import { Loading } from "@/components/Loading";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Button } from "@/components/ui/button";
+import {
+  Card, CardDescription, CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { CircleSlash2, Save, SquarePen } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 
 type JsonArray = any[];

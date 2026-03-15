@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
-import { vi, beforeAll, afterAll } from "vitest";
 import React from "react";
+import { afterAll, beforeAll, vi } from "vitest";
 
 // Suppress React's contentEditable warnings in tests
 // TipTap editor triggers these warnings, which can cause worker crashes in CI

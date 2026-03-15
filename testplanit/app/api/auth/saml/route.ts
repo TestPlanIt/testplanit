@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSAMLClient } from "~/server/saml-provider";
-import { db } from "~/server/db";
 import {
-  generateSecureState,
-  sanitizeCallbackUrl,
-  getSecureCookieOptions,
-  checkRateLimit,
+  checkRateLimit, generateSecureState, getSecureCookieOptions, sanitizeCallbackUrl
 } from "~/lib/auth-security";
+import { db } from "~/server/db";
+import { createSAMLClient } from "~/server/saml-provider";
 
 // SAML login initiation
 export async function GET(request: NextRequest) {

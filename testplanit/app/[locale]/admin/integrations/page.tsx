@@ -1,26 +1,12 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import { useTranslations } from "next-intl";
-import {
-  usePagination,
-  PaginationProvider,
-} from "~/lib/contexts/PaginationContext";
-import { Integration } from "@prisma/client";
-import {
-  useFindManyIntegration,
-  useDeleteIntegration,
-} from "@/lib/hooks/integration";
-import { DataTable } from "@/components/tables/DataTable";
-import { ExtendedIntegration, getColumns } from "./columns";
+import { IntegrationModal } from "@/components/admin/integrations/IntegrationModal";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,18 +15,30 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
+import {
+  useDeleteIntegration, useFindManyIntegration
+} from "@/lib/hooks/integration";
+import { Integration } from "@prisma/client";
+import { CirclePlus, Plug, Trash2 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Trash2, CirclePlus, Plug } from "lucide-react";
-import { IntegrationModal } from "@/components/admin/integrations/IntegrationModal";
+import {
+  PaginationProvider, usePagination
+} from "~/lib/contexts/PaginationContext";
+import { useRouter } from "~/lib/navigation";
+import { ExtendedIntegration, getColumns } from "./columns";
 
 type PageSizeOption = number | "All";
 

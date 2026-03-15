@@ -1,40 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from "react";
-import { useFieldArray, Control, useFormContext } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { FormControl, FormLabel, FormMessage } from "@/components/ui/form";
-import {
-  PlusCircle,
-  Trash2,
-  MoveVertical,
-  SearchCheck,
-  ListOrdered,
-  CircleSlash2,
-  Layers,
-} from "lucide-react";
-import {
-  DndContext,
-  useSensor,
-  useSensors,
-  PointerSensor,
-  closestCenter,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import SortableStep from "./SortableStep";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import type { Editor } from "@tiptap/core";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Steps as PrismaSteps, SharedStepGroup, Prisma } from "@prisma/client";
-import { useTranslations } from "next-intl";
-import { emptyEditorContent } from "~/app/constants";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,20 +7,46 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
-import {
-  useCreateSharedStepGroup,
-  useCreateManySharedStepItem,
-  useFindManySharedStepGroup,
-  useFindManySharedStepItem,
-} from "~/lib/hooks";
-import { useSession } from "next-auth/react";
-import { toast } from "sonner";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FormControl, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import {
+  closestCenter, DndContext, PointerSensor, useSensor,
+  useSensors
+} from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+  SortableContext,
+  verticalListSortingStrategy
+} from "@dnd-kit/sortable";
+import { Prisma, SharedStepGroup, Steps as PrismaSteps } from "@prisma/client";
+import type { Editor } from "@tiptap/core";
+import {
+  CircleSlash2,
+  Layers, ListOrdered, MoveVertical, PlusCircle, SearchCheck, Trash2
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Control, useFieldArray, useFormContext } from "react-hook-form";
+import { toast } from "sonner";
+import { emptyEditorContent } from "~/app/constants";
+import {
+  useCreateManySharedStepItem, useCreateSharedStepGroup, useFindManySharedStepGroup,
+  useFindManySharedStepItem
+} from "~/lib/hooks";
+import SortableStep from "./SortableStep";
 
 // Define a type that includes the count for AsyncCombobox
 interface SharedStepGroupWithCount extends SharedStepGroup {

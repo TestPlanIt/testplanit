@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
+import { authOptions } from "~/server/auth";
 
 export type MilestoneSummaryData = {
   milestoneId: number;

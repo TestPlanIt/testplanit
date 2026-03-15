@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
 import { prisma } from "@/lib/prisma"; // Use raw prisma client (no enhance) for cross-project admin queries
-import { Prisma } from "@prisma/client";
+import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
+import { authOptions } from "~/server/auth";
 
 interface RequestBody {
   // Filter parameters for automation trends

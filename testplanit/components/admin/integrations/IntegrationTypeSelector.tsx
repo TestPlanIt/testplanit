@@ -1,16 +1,16 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { IntegrationProvider } from "@prisma/client";
 import {
   Card,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { cn } from "~/utils";
+import { IntegrationProvider } from "@prisma/client";
 import { Check, Link } from "lucide-react";
-import { siJira, siGithub } from "simple-icons";
+import { useTranslations } from "next-intl";
+import { siGithub, siJira } from "simple-icons";
+import { cn } from "~/utils";
 
 interface IntegrationTypeSelectorProps {
   selectedType: IntegrationProvider | null;

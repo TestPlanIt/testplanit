@@ -1,32 +1,26 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
-import {
-  useUpdateStatus,
-  useFindManyStatusScope,
-  useFindManyProjects,
-  useCreateManyStatusScopeAssignment,
-  useDeleteManyStatusScopeAssignment,
-  useCreateManyProjectStatusAssignment,
-  useDeleteManyProjectStatusAssignment,
-} from "~/lib/hooks";
 import { Status } from "@prisma/client";
+import { useEffect, useMemo, useState } from "react";
+import {
+  useCreateManyProjectStatusAssignment, useCreateManyStatusScopeAssignment, useDeleteManyProjectStatusAssignment, useDeleteManyStatusScopeAssignment, useFindManyProjects, useFindManyStatusScope, useUpdateStatus
+} from "~/lib/hooks";
 
 import DynamicIcon from "@/components/DynamicIcon";
 import { IconName } from "~/types/globals";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { SquarePen } from "lucide-react";
 import { ColorPicker } from "@/components/ColorPicker";
+import { SquarePen } from "lucide-react";
 
+import { useTheme } from "next-themes";
 import MultiSelect from "react-select";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useTheme } from "next-themes";
 
 import {
   Form,
@@ -34,7 +28,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -44,11 +38,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
-import { HelpPopover } from "@/components/ui/help-popover";
 
 const createEditStatusFormSchema = (
   t: ReturnType<typeof useTranslations<"admin.statuses.edit">>,

@@ -1,6 +1,5 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import UserWorkGanttChart from "./UserWorkGanttChart";
 
 // Mock Plot.plot to avoid actual SVG rendering

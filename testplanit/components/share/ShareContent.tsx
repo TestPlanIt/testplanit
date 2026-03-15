@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { Session } from "next-auth";
+import { useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { PasswordGate } from "./PasswordGate";
 import { SharedReportViewer } from "./SharedReportViewer";
-import { Loader2, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useTranslations } from "next-intl";
-import { toast } from "sonner";
 
 interface ShareContentProps {
   shareKey: string;

@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
+import micromatch from "micromatch";
+import { getServerSession } from "next-auth/next";
+import { NextRequest, NextResponse } from "next/server";
 import {
   createGitRepoAdapter,
-  RepoFileEntry,
+  RepoFileEntry
 } from "~/lib/integrations/adapters/GitRepoAdapter";
-import micromatch from "micromatch";
+import { authOptions } from "~/server/auth";
 
 const MAX_CONTEXT_BYTES = 500_000; // 500KB — Phase 2 will derive from LLM token budget
 

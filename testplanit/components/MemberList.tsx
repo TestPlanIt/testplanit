@@ -1,14 +1,14 @@
 import React from "react";
 
 import { Avatar } from "@/components/Avatar";
-import { useFindManyUser } from "~/lib/hooks";
-import { cn, type ClassValue } from "~/utils";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { UserNameCell } from "@/components/tables/UserNameCell";
+import { useFindManyUser } from "~/lib/hooks";
+import { cn, type ClassValue } from "~/utils";
 
 interface MemberListProps {
   users: { userId: string; prependText?: string }[];

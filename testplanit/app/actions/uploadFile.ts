@@ -1,6 +1,6 @@
 "use server";
 
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 // Supported upload types and their configurations
 const UPLOAD_CONFIGS = {

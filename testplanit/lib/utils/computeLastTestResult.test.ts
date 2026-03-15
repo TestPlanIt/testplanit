@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { computeLastTestResult, LastTestResult } from "./computeLastTestResult";
+import { describe, expect, it } from "vitest";
+import { computeLastTestResult } from "./computeLastTestResult";
 
 describe("computeLastTestResult", () => {
   const createStatus = (id: number, name: string, colorValue?: string) => ({

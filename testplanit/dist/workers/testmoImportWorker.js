@@ -53,121 +53,26 @@ var init_prismaBase = __esm({
 });
 
 // workers/testmoImportWorker.ts
-var import_bullmq2 = require("bullmq");
 var import_client_s3 = require("@aws-sdk/client-s3");
 var import_client6 = require("@prisma/client");
 var import_core2 = require("@tiptap/core");
 var import_model2 = require("@tiptap/pm/model");
-var import_happy_dom2 = require("happy-dom");
 var import_starter_kit2 = __toESM(require("@tiptap/starter-kit"));
-var import_node_url2 = require("node:url");
 var import_bcrypt = __toESM(require("bcrypt"));
+var import_bullmq2 = require("bullmq");
+var import_happy_dom2 = require("happy-dom");
+var import_node_url2 = require("node:url");
 
-// lib/services/testCaseVersionService.ts
-async function createTestCaseVersionInTransaction(tx, caseId, options) {
-  const testCase = await tx.repositoryCases.findUnique({
-    where: { id: caseId },
-    include: {
-      project: true,
-      folder: true,
-      template: true,
-      state: true,
-      creator: true,
-      tags: { select: { name: true } },
-      issues: {
-        select: { id: true, name: true, externalId: true }
-      },
-      steps: {
-        orderBy: { order: "asc" },
-        select: { step: true, expectedResult: true }
-      }
+// app/constants/backend.ts
+var emptyEditorContent = {
+  type: "doc",
+  content: [
+    {
+      type: "paragraph"
     }
-  });
-  if (!testCase) {
-    throw new Error(`Test case ${caseId} not found`);
-  }
-  const versionNumber = options.version ?? testCase.currentVersion;
-  const creatorId = options.creatorId ?? testCase.creatorId;
-  const creatorName = options.creatorName ?? testCase.creator.name ?? "";
-  const createdAt = options.createdAt ?? /* @__PURE__ */ new Date();
-  const overrides = options.overrides ?? {};
-  let stepsJson = null;
-  if (overrides.steps !== void 0) {
-    stepsJson = overrides.steps;
-  } else if (testCase.steps && testCase.steps.length > 0) {
-    stepsJson = testCase.steps.map((step) => ({
-      step: step.step,
-      expectedResult: step.expectedResult
-    }));
-  }
-  const tagsArray = overrides.tags ?? testCase.tags.map((tag) => tag.name);
-  const issuesArray = overrides.issues ?? testCase.issues;
-  const versionData = {
-    repositoryCaseId: testCase.id,
-    staticProjectId: testCase.projectId,
-    staticProjectName: testCase.project.name,
-    projectId: testCase.projectId,
-    repositoryId: testCase.repositoryId,
-    folderId: testCase.folderId,
-    folderName: testCase.folder.name,
-    templateId: testCase.templateId,
-    templateName: testCase.template.templateName,
-    name: overrides.name ?? testCase.name,
-    stateId: overrides.stateId ?? testCase.stateId,
-    stateName: overrides.stateName ?? testCase.state.name,
-    estimate: overrides.estimate !== void 0 ? overrides.estimate : testCase.estimate,
-    forecastManual: overrides.forecastManual !== void 0 ? overrides.forecastManual : testCase.forecastManual,
-    forecastAutomated: overrides.forecastAutomated !== void 0 ? overrides.forecastAutomated : testCase.forecastAutomated,
-    order: overrides.order ?? testCase.order,
-    createdAt,
-    creatorId,
-    creatorName,
-    automated: overrides.automated ?? testCase.automated,
-    isArchived: overrides.isArchived ?? testCase.isArchived,
-    isDeleted: false,
-    // Versions should never be marked as deleted
-    version: versionNumber,
-    steps: stepsJson,
-    tags: tagsArray,
-    issues: issuesArray,
-    links: overrides.links ?? [],
-    attachments: overrides.attachments ?? []
-  };
-  let newVersion;
-  let retryCount = 0;
-  const maxRetries = 3;
-  const baseDelay = 100;
-  while (retryCount <= maxRetries) {
-    try {
-      newVersion = await tx.repositoryCaseVersions.create({
-        data: versionData
-      });
-      break;
-    } catch (error) {
-      if (error.code === "P2002" && retryCount < maxRetries) {
-        retryCount++;
-        const delay = baseDelay * Math.pow(2, retryCount - 1);
-        console.log(
-          `Unique constraint violation on version creation (attempt ${retryCount}/${maxRetries}). Retrying after ${delay}ms...`
-        );
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        const refetchedCase = await tx.repositoryCases.findUnique({
-          where: { id: caseId },
-          select: { currentVersion: true }
-        });
-        if (refetchedCase) {
-          versionData.version = options.version ?? refetchedCase.currentVersion;
-        }
-      } else {
-        throw error;
-      }
-    }
-  }
-  if (!newVersion) {
-    throw new Error(`Failed to create version for case ${caseId} after retries`);
-  }
-  return newVersion;
-}
+  ]
+};
+var MAX_DURATION = 60 * 60 * 24 * 366 - 18 * 60 * 60;
 
 // lib/multiTenantPrisma.ts
 var import_client2 = require("@prisma/client");
@@ -315,6 +220,13 @@ function validateMultiTenantJobData(jobData) {
   }
 }
 
+// lib/queues.ts
+var import_bullmq = require("bullmq");
+
+// lib/queueNames.ts
+var TESTMO_IMPORT_QUEUE_NAME = "testmo-imports";
+var ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
+
 // lib/valkey.ts
 var import_ioredis = __toESM(require("ioredis"));
 var skipConnection = process.env.SKIP_VALKEY_CONNECTION === "true";
@@ -392,13 +304,6 @@ if (skipConnection) {
 var valkey_default = valkeyConnection;
 
 // lib/queues.ts
-var import_bullmq = require("bullmq");
-
-// lib/queueNames.ts
-var TESTMO_IMPORT_QUEUE_NAME = "testmo-imports";
-var ELASTICSEARCH_REINDEX_QUEUE_NAME = "elasticsearch-reindex";
-
-// lib/queues.ts
 var _elasticsearchReindexQueue = null;
 function getElasticsearchReindexQueue() {
   if (_elasticsearchReindexQueue) return _elasticsearchReindexQueue;
@@ -428,13 +333,912 @@ function getElasticsearchReindexQueue() {
   return _elasticsearchReindexQueue;
 }
 
+// lib/services/testCaseVersionService.ts
+async function createTestCaseVersionInTransaction(tx, caseId, options) {
+  const testCase = await tx.repositoryCases.findUnique({
+    where: { id: caseId },
+    include: {
+      project: true,
+      folder: true,
+      template: true,
+      state: true,
+      creator: true,
+      tags: { select: { name: true } },
+      issues: {
+        select: { id: true, name: true, externalId: true }
+      },
+      steps: {
+        orderBy: { order: "asc" },
+        select: { step: true, expectedResult: true }
+      }
+    }
+  });
+  if (!testCase) {
+    throw new Error(`Test case ${caseId} not found`);
+  }
+  const versionNumber = options.version ?? testCase.currentVersion;
+  const creatorId = options.creatorId ?? testCase.creatorId;
+  const creatorName = options.creatorName ?? testCase.creator.name ?? "";
+  const createdAt = options.createdAt ?? /* @__PURE__ */ new Date();
+  const overrides = options.overrides ?? {};
+  let stepsJson = null;
+  if (overrides.steps !== void 0) {
+    stepsJson = overrides.steps;
+  } else if (testCase.steps && testCase.steps.length > 0) {
+    stepsJson = testCase.steps.map((step) => ({
+      step: step.step,
+      expectedResult: step.expectedResult
+    }));
+  }
+  const tagsArray = overrides.tags ?? testCase.tags.map((tag) => tag.name);
+  const issuesArray = overrides.issues ?? testCase.issues;
+  const versionData = {
+    repositoryCaseId: testCase.id,
+    staticProjectId: testCase.projectId,
+    staticProjectName: testCase.project.name,
+    projectId: testCase.projectId,
+    repositoryId: testCase.repositoryId,
+    folderId: testCase.folderId,
+    folderName: testCase.folder.name,
+    templateId: testCase.templateId,
+    templateName: testCase.template.templateName,
+    name: overrides.name ?? testCase.name,
+    stateId: overrides.stateId ?? testCase.stateId,
+    stateName: overrides.stateName ?? testCase.state.name,
+    estimate: overrides.estimate !== void 0 ? overrides.estimate : testCase.estimate,
+    forecastManual: overrides.forecastManual !== void 0 ? overrides.forecastManual : testCase.forecastManual,
+    forecastAutomated: overrides.forecastAutomated !== void 0 ? overrides.forecastAutomated : testCase.forecastAutomated,
+    order: overrides.order ?? testCase.order,
+    createdAt,
+    creatorId,
+    creatorName,
+    automated: overrides.automated ?? testCase.automated,
+    isArchived: overrides.isArchived ?? testCase.isArchived,
+    isDeleted: false,
+    // Versions should never be marked as deleted
+    version: versionNumber,
+    steps: stepsJson,
+    tags: tagsArray,
+    issues: issuesArray,
+    links: overrides.links ?? [],
+    attachments: overrides.attachments ?? []
+  };
+  let newVersion;
+  let retryCount = 0;
+  const maxRetries = 3;
+  const baseDelay = 100;
+  while (retryCount <= maxRetries) {
+    try {
+      newVersion = await tx.repositoryCaseVersions.create({
+        data: versionData
+      });
+      break;
+    } catch (error) {
+      if (error.code === "P2002" && retryCount < maxRetries) {
+        retryCount++;
+        const delay = baseDelay * Math.pow(2, retryCount - 1);
+        console.log(
+          `Unique constraint violation on version creation (attempt ${retryCount}/${maxRetries}). Retrying after ${delay}ms...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        const refetchedCase = await tx.repositoryCases.findUnique({
+          where: { id: caseId },
+          select: { currentVersion: true }
+        });
+        if (refetchedCase) {
+          versionData.version = options.version ?? refetchedCase.currentVersion;
+        }
+      } else {
+        throw error;
+      }
+    }
+  }
+  if (!newVersion) {
+    throw new Error(`Failed to create version for case ${caseId} after retries`);
+  }
+  return newVersion;
+}
+
+// utils/randomPassword.ts
+var DEFAULT_LENGTH = 16;
+var CHARSET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789!@#$%^&*()-_=+";
+function getUnbiasedIndex(randomValue, max) {
+  const limit = Math.floor(4294967296 / max) * max;
+  if (randomValue < limit) {
+    return randomValue % max;
+  }
+  return -1;
+}
+var generateRandomPassword = (length = DEFAULT_LENGTH) => {
+  const targetLength = Math.max(8, length);
+  const hasCrypto = typeof globalThis !== "undefined" && globalThis.crypto?.getRandomValues;
+  const result = [];
+  if (hasCrypto) {
+    const charsetLength = CHARSET.length;
+    while (result.length < targetLength) {
+      const needed = targetLength - result.length;
+      const values = globalThis.crypto.getRandomValues(new Uint32Array(needed));
+      for (let i = 0; i < needed && result.length < targetLength; i += 1) {
+        const index = getUnbiasedIndex(values[i], charsetLength);
+        if (index >= 0) {
+          result.push(CHARSET[index]);
+        }
+      }
+    }
+    return result.join("");
+  }
+  for (let i = 0; i < targetLength; i += 1) {
+    const index = Math.floor(Math.random() * CHARSET.length);
+    result.push(CHARSET[index]);
+  }
+  return result.join("");
+};
+
+// services/imports/testmo/configuration.ts
+var ACTION_MAP = /* @__PURE__ */ new Set(["map", "create"]);
+var CONFIG_VARIANT_ACTIONS = /* @__PURE__ */ new Set([
+  "map-variant",
+  "create-variant-existing-category",
+  "create-category-variant"
+]);
+var toNumber = (value) => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "bigint") {
+    return Number(value);
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+};
+var toBoolean = (value, fallback = false) => {
+  if (value === null || value === void 0) {
+    return fallback;
+  }
+  if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "number") {
+    return value !== 0;
+  }
+  if (typeof value === "string") {
+    const normalized = value.toLowerCase();
+    return normalized === "1" || normalized === "true" || normalized === "yes";
+  }
+  return fallback;
+};
+var toStringValue = (value) => {
+  if (typeof value !== "string") {
+    return void 0;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : void 0;
+};
+var toAccessValue = (value) => {
+  if (typeof value !== "string") {
+    return void 0;
+  }
+  const normalized = value.trim().toUpperCase();
+  switch (normalized) {
+    case "ADMIN":
+    case "USER":
+    case "PROJECTADMIN":
+    case "NONE":
+      return normalized;
+    default:
+      return void 0;
+  }
+};
+var createEmptyMappingConfiguration = () => ({
+  workflows: {},
+  statuses: {},
+  roles: {},
+  milestoneTypes: {},
+  groups: {},
+  tags: {},
+  issueTargets: {},
+  users: {},
+  configurations: {},
+  templateFields: {},
+  templates: {},
+  customFields: {}
+});
+var normalizeWorkflowConfig = (value) => {
+  const base = {
+    action: "map",
+    mappedTo: null,
+    workflowType: null,
+    name: null,
+    scope: null,
+    iconId: null,
+    colorId: null
+  };
+  if (!value || typeof value !== "object") {
+    return base;
+  }
+  const record = value;
+  const actionValue = typeof record.action === "string" ? record.action : "map";
+  const action = ACTION_MAP.has(actionValue) ? actionValue : "map";
+  const mappedTo = toNumber(record.mappedTo);
+  const workflowType = typeof record.workflowType === "string" ? record.workflowType : typeof record.suggestedWorkflowType === "string" ? record.suggestedWorkflowType : null;
+  const name = typeof record.name === "string" ? record.name : base.name;
+  const scope = typeof record.scope === "string" ? record.scope : base.scope;
+  const iconId = toNumber(record.iconId);
+  const colorId = toNumber(record.colorId);
+  return {
+    action,
+    mappedTo: action === "map" ? mappedTo ?? null : void 0,
+    workflowType,
+    name: action === "create" ? name : void 0,
+    scope: action === "create" ? scope : void 0,
+    iconId: action === "create" ? iconId ?? null : void 0,
+    colorId: action === "create" ? colorId ?? null : void 0
+  };
+};
+var normalizeStatusConfig = (value) => {
+  const base = {
+    action: "create",
+    mappedTo: null,
+    name: void 0,
+    systemName: void 0,
+    colorHex: void 0,
+    colorId: null,
+    aliases: void 0,
+    isSuccess: false,
+    isFailure: false,
+    isCompleted: false,
+    isEnabled: true,
+    scopeIds: []
+  };
+  if (!value || typeof value !== "object") {
+    return base;
+  }
+  const record = value;
+  const actionValue = typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
+  const mappedTo = toNumber(record.mappedTo);
+  const colorId = toNumber(record.colorId);
+  const scopeIds = Array.isArray(record.scopeIds) ? record.scopeIds.map((value2) => toNumber(value2)).filter((value2) => value2 !== null) : void 0;
+  return {
+    action,
+    mappedTo: action === "map" ? mappedTo ?? null : void 0,
+    name: typeof record.name === "string" ? record.name : base.name,
+    systemName: typeof record.systemName === "string" ? record.systemName : typeof record.system_name === "string" ? record.system_name : base.systemName,
+    colorHex: typeof record.colorHex === "string" ? record.colorHex : base.colorHex,
+    colorId: action === "create" ? colorId ?? null : void 0,
+    aliases: typeof record.aliases === "string" ? record.aliases : base.aliases,
+    isSuccess: toBoolean(record.isSuccess, base.isSuccess ?? false),
+    isFailure: toBoolean(record.isFailure, base.isFailure ?? false),
+    isCompleted: toBoolean(record.isCompleted, base.isCompleted ?? false),
+    isEnabled: toBoolean(record.isEnabled, base.isEnabled ?? true),
+    scopeIds: action === "create" ? scopeIds ?? [] : void 0
+  };
+};
+var normalizeGroupConfig = (value) => {
+  const base = {
+    action: "create",
+    mappedTo: null,
+    name: void 0,
+    note: void 0
+  };
+  if (!value || typeof value !== "object") {
+    return base;
+  }
+  const record = value;
+  const actionValue = typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
+  const mappedTo = toNumber(record.mappedTo);
+  return {
+    action,
+    mappedTo: action === "map" ? mappedTo ?? null : void 0,
+    name: typeof record.name === "string" ? record.name : base.name,
+    note: typeof record.note === "string" ? record.note : base.note
+  };
+};
+var normalizeTagConfig = (value) => {
+  const base = {
+    action: "create",
+    mappedTo: null,
+    name: void 0
+  };
+  if (!value || typeof value !== "object") {
+    return base;
+  }
+  const record = value;
+  const actionValue = typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
+  const mappedTo = toNumber(record.mappedTo);
+  return {
+    action,
+    mappedTo: action === "map" ? mappedTo ?? null : void 0,
+    name: typeof record.name === "string" ? record.name : base.name
+  };
+};
+var normalizeIssueTargetConfig = (value) => {
+  const base = {
+    action: "create",
+    mappedTo: null,
+    name: void 0,
+    provider: null,
+    testmoType: null
+  };
+  if (!value || typeof value !== "object") {
+    return base;
+  }
+  const record = value;
+  const actionValue = typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
+  const mappedTo = toNumber(record.mappedTo);
+  const testmoType = toNumber(record.testmoType ?? record.type);
+  return {
+    action,
+    mappedTo: action === "map" ? mappedTo ?? null : void 0,
+    name: typeof record.name === "string" ? record.name : base.name,
+    provider: typeof record.provider === "string" ? record.provider : base.provider,
+    testmoType: action === "create" ? testmoType ?? null : void 0
+  };
+};
+var normalizeUserConfig = (value) => {
+  const base = {
+    action: "map",
+    mappedTo: null,
+    name: void 0,
+    email: void 0,
+    password: void 0,
+    access: void 0,
+    roleId: null,
+    isActive: true,
+    isApi: false
+  };
+  if (!value || typeof value !== "object") {
+    return base;
+  }
+  const record = value;
+  const actionValue = typeof record.action === "string" ? record.action : "map";
+  const action = ACTION_MAP.has(actionValue) ? actionValue : "map";
+  const mappedTo = typeof record.mappedTo === "string" ? record.mappedTo : null;
+  const name = toStringValue(record.name);
+  const email = toStringValue(record.email);
+  const passwordValue = toStringValue(record.password);
+  const password = typeof passwordValue === "string" && passwordValue.length > 0 ? passwordValue : null;
+  const access = toAccessValue(record.access);
+  const roleId = toNumber(record.roleId);
+  const isActive = toBoolean(record.isActive, true);
+  const isApi = toBoolean(record.isApi, false);
+  return {
+    action,
+    mappedTo: action === "map" ? mappedTo : void 0,
+    name: action === "create" ? name : void 0,
+    email: action === "create" ? email : void 0,
+    password: action === "create" ? password ?? generateRandomPassword() : void 0,
+    access: action === "create" ? access : void 0,
+    roleId: action === "create" ? roleId ?? null : void 0,
+    isActive: action === "create" ? isActive : void 0,
+    isApi: action === "create" ? isApi : void 0
+  };
+};
+var normalizeStringArray = (value) => {
+  if (!value) {
+    return void 0;
+  }
+  if (Array.isArray(value)) {
+    const entries = value.map((entry) => {
+      if (typeof entry === "string") {
+        const trimmed = entry.trim();
+        return trimmed.length > 0 ? trimmed : null;
+      }
+      if (typeof entry === "object" && entry && "name" in entry) {
+        const raw = entry.name;
+        if (typeof raw === "string") {
+          const trimmed = raw.trim();
+          return trimmed.length > 0 ? trimmed : null;
+        }
+      }
+      return null;
+    }).filter((entry) => entry !== null);
+    return entries.length > 0 ? entries : void 0;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return void 0;
+    }
+    const segments = trimmed.split(/[\n,]+/).map((segment) => segment.trim()).filter((segment) => segment.length > 0);
+    return segments.length > 0 ? segments : void 0;
+  }
+  return void 0;
+};
+var normalizeOptionConfigList = (value) => {
+  const coerceFromStringArray = (entries) => {
+    if (entries.length === 0) {
+      return void 0;
+    }
+    return entries.map((name, index) => ({
+      name,
+      iconId: null,
+      iconColorId: null,
+      isEnabled: true,
+      isDefault: index === 0,
+      order: index
+    }));
+  };
+  if (!value) {
+    return void 0;
+  }
+  if (Array.isArray(value)) {
+    const normalized = [];
+    let defaultAssigned = false;
+    value.forEach((entry, index) => {
+      if (typeof entry === "string") {
+        const trimmed = entry.trim();
+        if (trimmed.length === 0) {
+          return;
+        }
+        normalized.push({
+          name: trimmed,
+          iconId: null,
+          iconColorId: null,
+          isEnabled: true,
+          isDefault: !defaultAssigned && index === 0,
+          order: index
+        });
+        defaultAssigned = defaultAssigned || index === 0;
+        return;
+      }
+      if (!entry || typeof entry !== "object") {
+        return;
+      }
+      const record = entry;
+      const name = toStringValue(
+        record.name ?? record.label ?? record.value ?? record.displayName ?? record.display_name
+      ) ?? null;
+      if (!name) {
+        return;
+      }
+      const iconId = toNumber(
+        record.iconId ?? record.icon_id ?? record.icon ?? record.iconID
+      ) ?? null;
+      const iconColorId = toNumber(
+        record.iconColorId ?? record.icon_color_id ?? record.colorId ?? record.color_id ?? record.color
+      ) ?? null;
+      const isEnabled = toBoolean(
+        record.isEnabled ?? record.enabled ?? record.is_enabled,
+        true
+      );
+      const isDefault = toBoolean(
+        record.isDefault ?? record.default ?? record.is_default ?? record.defaultOption,
+        false
+      );
+      const order = toNumber(
+        record.order ?? record.position ?? record.ordinal ?? record.index ?? record.sort
+      ) ?? index;
+      if (isDefault && !defaultAssigned) {
+        defaultAssigned = true;
+      }
+      normalized.push({
+        name,
+        iconId,
+        iconColorId,
+        isEnabled,
+        isDefault,
+        order
+      });
+    });
+    if (normalized.length === 0) {
+      return void 0;
+    }
+    const sorted = normalized.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    let defaultSeen = false;
+    sorted.forEach((entry) => {
+      if (entry.isDefault && !defaultSeen) {
+        defaultSeen = true;
+        return;
+      }
+      if (entry.isDefault && defaultSeen) {
+        entry.isDefault = false;
+      }
+    });
+    if (!defaultSeen) {
+      sorted[0].isDefault = true;
+    }
+    return sorted.map((entry, index) => ({
+      name: entry.name,
+      iconId: entry.iconId ?? null,
+      iconColorId: entry.iconColorId ?? null,
+      isEnabled: entry.isEnabled ?? true,
+      isDefault: entry.isDefault ?? false,
+      order: entry.order ?? index
+    }));
+  }
+  if (typeof value === "string") {
+    const normalizedStrings = normalizeStringArray(value);
+    return normalizedStrings ? coerceFromStringArray(normalizedStrings) : void 0;
+  }
+  return void 0;
+};
+var normalizeTemplateFieldTarget = (value, fallback) => {
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "result" || normalized === "results") {
+      return "result";
+    }
+    if (normalized === "case" || normalized === "cases") {
+      return "case";
+    }
+  }
+  return fallback;
+};
+var normalizeTemplateFieldConfig = (value) => {
+  const base = {
+    action: "create",
+    targetType: "case",
+    mappedTo: null,
+    displayName: void 0,
+    systemName: void 0,
+    typeId: null,
+    typeName: null,
+    hint: void 0,
+    isRequired: false,
+    isRestricted: false,
+    defaultValue: void 0,
+    isChecked: void 0,
+    minValue: void 0,
+    maxValue: void 0,
+    minIntegerValue: void 0,
+    maxIntegerValue: void 0,
+    initialHeight: void 0,
+    dropdownOptions: void 0,
+    templateName: void 0,
+    order: void 0
+  };
+  if (!value || typeof value !== "object") {
+    return base;
+  }
+  const record = value;
+  const actionValue = typeof record.action === "string" ? record.action : base.action;
+  const action = actionValue === "map" ? "map" : "create";
+  const targetSource = record.targetType ?? record.target_type ?? record.fieldTarget ?? record.field_target ?? record.scope ?? record.assignment ?? record.fieldCategory ?? record.field_category;
+  const targetType = normalizeTemplateFieldTarget(targetSource, base.targetType);
+  const mappedTo = toNumber(record.mappedTo);
+  const typeId = toNumber(record.typeId ?? record.type_id ?? record.fieldTypeId);
+  const typeName = typeof record.typeName === "string" ? record.typeName : typeof record.type_name === "string" ? record.type_name : typeof record.fieldType === "string" ? record.fieldType : typeof record.field_type === "string" ? record.field_type : base.typeName;
+  const dropdownOptions = normalizeOptionConfigList(
+    record.dropdownOptions ?? record.dropdown_options ?? record.options ?? record.choices
+  ) ?? base.dropdownOptions;
+  return {
+    action,
+    targetType,
+    mappedTo: action === "map" ? mappedTo ?? null : void 0,
+    displayName: typeof record.displayName === "string" ? record.displayName : typeof record.display_name === "string" ? record.display_name : typeof record.label === "string" ? record.label : base.displayName,
+    systemName: typeof record.systemName === "string" ? record.systemName : typeof record.system_name === "string" ? record.system_name : typeof record.name === "string" ? record.name : base.systemName,
+    typeId: typeId ?? null,
+    typeName: typeName ?? null,
+    hint: typeof record.hint === "string" ? record.hint : typeof record.description === "string" ? record.description : base.hint,
+    isRequired: toBoolean(record.isRequired ?? record.is_required ?? base.isRequired),
+    isRestricted: toBoolean(record.isRestricted ?? record.is_restricted ?? base.isRestricted),
+    defaultValue: typeof record.defaultValue === "string" ? record.defaultValue : typeof record.default_value === "string" ? record.default_value : base.defaultValue,
+    isChecked: typeof record.isChecked === "boolean" ? record.isChecked : base.isChecked,
+    minValue: toNumber(record.minValue ?? record.min_value) ?? base.minValue,
+    maxValue: toNumber(record.maxValue ?? record.max_value) ?? base.maxValue,
+    minIntegerValue: toNumber(record.minIntegerValue ?? record.min_integer_value) ?? base.minIntegerValue,
+    maxIntegerValue: toNumber(record.maxIntegerValue ?? record.max_integer_value) ?? base.maxIntegerValue,
+    initialHeight: toNumber(record.initialHeight ?? record.initial_height) ?? base.initialHeight,
+    dropdownOptions,
+    templateName: typeof record.templateName === "string" ? record.templateName : typeof record.template_name === "string" ? record.template_name : base.templateName,
+    order: toNumber(record.order ?? record.position ?? record.ordinal) ?? base.order
+  };
+};
+var normalizeTemplateConfig = (value) => {
+  const base = {
+    action: "map",
+    mappedTo: null,
+    name: void 0
+  };
+  if (!value || typeof value !== "object") {
+    return base;
+  }
+  const record = value;
+  const actionValue = typeof record.action === "string" ? record.action : base.action;
+  const action = ACTION_MAP.has(actionValue) ? actionValue : base.action;
+  const mappedTo = toNumber(record.mappedTo);
+  const name = typeof record.name === "string" ? record.name : base.name;
+  return {
+    action,
+    mappedTo: action === "map" ? mappedTo ?? null : void 0,
+    name: action === "create" ? name ?? void 0 : void 0
+  };
+};
+var normalizeRolePermissions = (value) => {
+  if (!value || typeof value !== "object") {
+    return {};
+  }
+  const result = {};
+  const assignPermission = (area, source) => {
+    const perm = {
+      canAddEdit: toBoolean(source.canAddEdit ?? false),
+      canDelete: toBoolean(source.canDelete ?? false),
+      canClose: toBoolean(source.canClose ?? false)
+    };
+    result[area] = perm;
+  };
+  if (Array.isArray(value)) {
+    value.forEach((entry) => {
+      if (entry && typeof entry === "object") {
+        const record = entry;
+        const area = typeof record.area === "string" ? record.area : void 0;
+        if (area) {
+          assignPermission(area, record);
+        }
+      }
+    });
+    return result;
+  }
+  for (const [area, entry] of Object.entries(value)) {
+    if (entry && typeof entry === "object") {
+      assignPermission(area, entry);
+    }
+  }
+  return result;
+};
+var normalizeRoleConfig = (value) => {
+  const base = {
+    action: "create",
+    mappedTo: null,
+    name: void 0,
+    isDefault: false,
+    permissions: {}
+  };
+  if (!value || typeof value !== "object") {
+    return base;
+  }
+  const record = value;
+  const actionValue = typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
+  const mappedTo = toNumber(record.mappedTo);
+  const permissions = normalizeRolePermissions(record.permissions);
+  return {
+    action,
+    mappedTo: action === "map" ? mappedTo ?? null : void 0,
+    name: typeof record.name === "string" ? record.name : base.name,
+    isDefault: action === "create" ? toBoolean(record.isDefault ?? false) : void 0,
+    permissions: action === "create" ? permissions : void 0
+  };
+};
+var normalizeMilestoneTypeConfig = (value) => {
+  const base = {
+    action: "create",
+    mappedTo: null,
+    name: void 0,
+    iconId: null,
+    isDefault: false
+  };
+  if (!value || typeof value !== "object") {
+    return base;
+  }
+  const record = value;
+  const actionValue = typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
+  const mappedTo = toNumber(record.mappedTo);
+  const iconId = toNumber(record.iconId);
+  return {
+    action,
+    mappedTo: action === "map" ? mappedTo ?? null : void 0,
+    name: typeof record.name === "string" ? record.name : base.name,
+    iconId: action === "create" ? iconId ?? null : void 0,
+    isDefault: action === "create" ? toBoolean(record.isDefault ?? false) : void 0
+  };
+};
+var normalizeConfigVariantConfig = (key, value) => {
+  const base = {
+    token: key,
+    action: "create-category-variant",
+    mappedVariantId: void 0,
+    categoryId: void 0,
+    categoryName: null,
+    variantName: null
+  };
+  if (!value || typeof value !== "object") {
+    return base;
+  }
+  const record = value;
+  const actionValue = typeof record.action === "string" ? record.action : base.action;
+  const action = CONFIG_VARIANT_ACTIONS.has(actionValue) ? actionValue : base.action;
+  const token = typeof record.token === "string" ? record.token : base.token;
+  const mappedVariantId = toNumber(record.mappedVariantId);
+  const categoryId = toNumber(record.categoryId);
+  const categoryName = typeof record.categoryName === "string" ? record.categoryName : base.categoryName;
+  const variantName = typeof record.variantName === "string" ? record.variantName : base.variantName;
+  return {
+    token,
+    action,
+    mappedVariantId: action === "map-variant" ? mappedVariantId ?? null : void 0,
+    categoryId: action === "create-variant-existing-category" ? categoryId ?? null : void 0,
+    categoryName: action === "create-category-variant" ? categoryName : void 0,
+    variantName: action === "map-variant" ? void 0 : variantName ?? token
+  };
+};
+var normalizeConfigurationConfig = (value) => {
+  const base = {
+    action: "create",
+    mappedTo: null,
+    name: void 0,
+    variants: {}
+  };
+  if (!value || typeof value !== "object") {
+    return base;
+  }
+  const record = value;
+  const actionValue = typeof record.action === "string" ? record.action : "create";
+  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
+  const mappedTo = toNumber(record.mappedTo);
+  const name = typeof record.name === "string" ? record.name : base.name;
+  const variants = {};
+  if (record.variants && typeof record.variants === "object") {
+    for (const [variantKey, entry] of Object.entries(
+      record.variants
+    )) {
+      const index = Number(variantKey);
+      if (!Number.isFinite(index)) {
+        continue;
+      }
+      variants[index] = normalizeConfigVariantConfig(variantKey, entry);
+    }
+  }
+  return {
+    action,
+    mappedTo: action === "map" ? mappedTo ?? null : void 0,
+    name: action === "create" ? name : void 0,
+    variants
+  };
+};
+var normalizeMappingConfiguration = (value) => {
+  const configuration = createEmptyMappingConfiguration();
+  if (!value || typeof value !== "object") {
+    return configuration;
+  }
+  const record = value;
+  if (record.workflows && typeof record.workflows === "object") {
+    for (const [key, entry] of Object.entries(
+      record.workflows
+    )) {
+      const id = Number(key);
+      if (!Number.isFinite(id)) {
+        continue;
+      }
+      configuration.workflows[id] = normalizeWorkflowConfig(entry);
+    }
+  }
+  if (record.statuses && typeof record.statuses === "object") {
+    for (const [key, entry] of Object.entries(
+      record.statuses
+    )) {
+      const id = Number(key);
+      if (!Number.isFinite(id)) {
+        continue;
+      }
+      configuration.statuses[id] = normalizeStatusConfig(entry);
+    }
+  }
+  if (record.groups && typeof record.groups === "object") {
+    for (const [key, entry] of Object.entries(
+      record.groups
+    )) {
+      const id = Number(key);
+      if (!Number.isFinite(id)) {
+        continue;
+      }
+      configuration.groups[id] = normalizeGroupConfig(entry);
+    }
+  }
+  if (record.tags && typeof record.tags === "object") {
+    for (const [key, entry] of Object.entries(
+      record.tags
+    )) {
+      const id = Number(key);
+      if (!Number.isFinite(id)) {
+        continue;
+      }
+      configuration.tags[id] = normalizeTagConfig(entry);
+    }
+  }
+  if (record.issueTargets && typeof record.issueTargets === "object") {
+    for (const [key, entry] of Object.entries(
+      record.issueTargets
+    )) {
+      const id = Number(key);
+      if (!Number.isFinite(id)) {
+        continue;
+      }
+      configuration.issueTargets[id] = normalizeIssueTargetConfig(entry);
+    }
+  }
+  if (record.roles && typeof record.roles === "object") {
+    for (const [key, entry] of Object.entries(
+      record.roles
+    )) {
+      const id = Number(key);
+      if (!Number.isFinite(id)) {
+        continue;
+      }
+      configuration.roles[id] = normalizeRoleConfig(entry);
+    }
+  }
+  if (record.users && typeof record.users === "object") {
+    for (const [key, entry] of Object.entries(
+      record.users
+    )) {
+      const id = Number(key);
+      if (!Number.isFinite(id)) {
+        continue;
+      }
+      configuration.users[id] = normalizeUserConfig(entry);
+    }
+  }
+  if (record.configurations && typeof record.configurations === "object") {
+    for (const [key, entry] of Object.entries(
+      record.configurations
+    )) {
+      const id = Number(key);
+      if (!Number.isFinite(id)) {
+        continue;
+      }
+      configuration.configurations[id] = normalizeConfigurationConfig(entry);
+    }
+  }
+  if (record.templateFields && typeof record.templateFields === "object") {
+    for (const [key, entry] of Object.entries(
+      record.templateFields
+    )) {
+      const id = Number(key);
+      if (!Number.isFinite(id)) {
+        continue;
+      }
+      configuration.templateFields[id] = normalizeTemplateFieldConfig(entry);
+    }
+  }
+  if (record.milestoneTypes && typeof record.milestoneTypes === "object") {
+    for (const [key, entry] of Object.entries(
+      record.milestoneTypes
+    )) {
+      const id = Number(key);
+      if (!Number.isFinite(id)) {
+        continue;
+      }
+      configuration.milestoneTypes[id] = normalizeMilestoneTypeConfig(entry);
+    }
+  }
+  if (record.templates && typeof record.templates === "object") {
+    for (const [key, entry] of Object.entries(
+      record.templates
+    )) {
+      const id = Number(key);
+      if (!Number.isFinite(id)) {
+        continue;
+      }
+      configuration.templates[id] = normalizeTemplateConfig(entry);
+    }
+  }
+  if (record.customFields && typeof record.customFields === "object") {
+    configuration.customFields = JSON.parse(
+      JSON.stringify(record.customFields)
+    );
+  }
+  return configuration;
+};
+var serializeMappingConfiguration = (configuration) => JSON.parse(JSON.stringify(configuration));
+
 // services/imports/testmo/TestmoExportAnalyzer.ts
 var import_node_fs = require("node:fs");
 var import_node_stream = require("node:stream");
+var import_node_url = require("node:url");
 var import_stream_chain = require("stream-chain");
 var import_stream_json = require("stream-json");
 var import_Assembler = __toESM(require("stream-json/Assembler"));
-var import_node_url = require("node:url");
 
 // services/imports/testmo/TestmoStagingService.ts
 var TestmoStagingService = class {
@@ -1431,809 +2235,8 @@ var analyzeTestmoExport = async (source, jobId, prisma2, options) => {
   });
 };
 
-// utils/randomPassword.ts
-var DEFAULT_LENGTH = 16;
-var CHARSET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789!@#$%^&*()-_=+";
-function getUnbiasedIndex(randomValue, max) {
-  const limit = Math.floor(4294967296 / max) * max;
-  if (randomValue < limit) {
-    return randomValue % max;
-  }
-  return -1;
-}
-var generateRandomPassword = (length = DEFAULT_LENGTH) => {
-  const targetLength = Math.max(8, length);
-  const hasCrypto = typeof globalThis !== "undefined" && globalThis.crypto?.getRandomValues;
-  const result = [];
-  if (hasCrypto) {
-    const charsetLength = CHARSET.length;
-    while (result.length < targetLength) {
-      const needed = targetLength - result.length;
-      const values = globalThis.crypto.getRandomValues(new Uint32Array(needed));
-      for (let i = 0; i < needed && result.length < targetLength; i += 1) {
-        const index = getUnbiasedIndex(values[i], charsetLength);
-        if (index >= 0) {
-          result.push(CHARSET[index]);
-        }
-      }
-    }
-    return result.join("");
-  }
-  for (let i = 0; i < targetLength; i += 1) {
-    const index = Math.floor(Math.random() * CHARSET.length);
-    result.push(CHARSET[index]);
-  }
-  return result.join("");
-};
-
-// services/imports/testmo/configuration.ts
-var ACTION_MAP = /* @__PURE__ */ new Set(["map", "create"]);
-var CONFIG_VARIANT_ACTIONS = /* @__PURE__ */ new Set([
-  "map-variant",
-  "create-variant-existing-category",
-  "create-category-variant"
-]);
-var toNumber = (value) => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-  if (typeof value === "bigint") {
-    return Number(value);
-  }
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
-  }
-  return null;
-};
-var toBoolean = (value, fallback = false) => {
-  if (value === null || value === void 0) {
-    return fallback;
-  }
-  if (typeof value === "boolean") {
-    return value;
-  }
-  if (typeof value === "number") {
-    return value !== 0;
-  }
-  if (typeof value === "string") {
-    const normalized = value.toLowerCase();
-    return normalized === "1" || normalized === "true" || normalized === "yes";
-  }
-  return fallback;
-};
-var toStringValue = (value) => {
-  if (typeof value !== "string") {
-    return void 0;
-  }
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : void 0;
-};
-var toAccessValue = (value) => {
-  if (typeof value !== "string") {
-    return void 0;
-  }
-  const normalized = value.trim().toUpperCase();
-  switch (normalized) {
-    case "ADMIN":
-    case "USER":
-    case "PROJECTADMIN":
-    case "NONE":
-      return normalized;
-    default:
-      return void 0;
-  }
-};
-var createEmptyMappingConfiguration = () => ({
-  workflows: {},
-  statuses: {},
-  roles: {},
-  milestoneTypes: {},
-  groups: {},
-  tags: {},
-  issueTargets: {},
-  users: {},
-  configurations: {},
-  templateFields: {},
-  templates: {},
-  customFields: {}
-});
-var normalizeWorkflowConfig = (value) => {
-  const base = {
-    action: "map",
-    mappedTo: null,
-    workflowType: null,
-    name: null,
-    scope: null,
-    iconId: null,
-    colorId: null
-  };
-  if (!value || typeof value !== "object") {
-    return base;
-  }
-  const record = value;
-  const actionValue = typeof record.action === "string" ? record.action : "map";
-  const action = ACTION_MAP.has(actionValue) ? actionValue : "map";
-  const mappedTo = toNumber(record.mappedTo);
-  const workflowType = typeof record.workflowType === "string" ? record.workflowType : typeof record.suggestedWorkflowType === "string" ? record.suggestedWorkflowType : null;
-  const name = typeof record.name === "string" ? record.name : base.name;
-  const scope = typeof record.scope === "string" ? record.scope : base.scope;
-  const iconId = toNumber(record.iconId);
-  const colorId = toNumber(record.colorId);
-  return {
-    action,
-    mappedTo: action === "map" ? mappedTo ?? null : void 0,
-    workflowType,
-    name: action === "create" ? name : void 0,
-    scope: action === "create" ? scope : void 0,
-    iconId: action === "create" ? iconId ?? null : void 0,
-    colorId: action === "create" ? colorId ?? null : void 0
-  };
-};
-var normalizeStatusConfig = (value) => {
-  const base = {
-    action: "create",
-    mappedTo: null,
-    name: void 0,
-    systemName: void 0,
-    colorHex: void 0,
-    colorId: null,
-    aliases: void 0,
-    isSuccess: false,
-    isFailure: false,
-    isCompleted: false,
-    isEnabled: true,
-    scopeIds: []
-  };
-  if (!value || typeof value !== "object") {
-    return base;
-  }
-  const record = value;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
-  const mappedTo = toNumber(record.mappedTo);
-  const colorId = toNumber(record.colorId);
-  const scopeIds = Array.isArray(record.scopeIds) ? record.scopeIds.map((value2) => toNumber(value2)).filter((value2) => value2 !== null) : void 0;
-  return {
-    action,
-    mappedTo: action === "map" ? mappedTo ?? null : void 0,
-    name: typeof record.name === "string" ? record.name : base.name,
-    systemName: typeof record.systemName === "string" ? record.systemName : typeof record.system_name === "string" ? record.system_name : base.systemName,
-    colorHex: typeof record.colorHex === "string" ? record.colorHex : base.colorHex,
-    colorId: action === "create" ? colorId ?? null : void 0,
-    aliases: typeof record.aliases === "string" ? record.aliases : base.aliases,
-    isSuccess: toBoolean(record.isSuccess, base.isSuccess ?? false),
-    isFailure: toBoolean(record.isFailure, base.isFailure ?? false),
-    isCompleted: toBoolean(record.isCompleted, base.isCompleted ?? false),
-    isEnabled: toBoolean(record.isEnabled, base.isEnabled ?? true),
-    scopeIds: action === "create" ? scopeIds ?? [] : void 0
-  };
-};
-var normalizeGroupConfig = (value) => {
-  const base = {
-    action: "create",
-    mappedTo: null,
-    name: void 0,
-    note: void 0
-  };
-  if (!value || typeof value !== "object") {
-    return base;
-  }
-  const record = value;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
-  const mappedTo = toNumber(record.mappedTo);
-  return {
-    action,
-    mappedTo: action === "map" ? mappedTo ?? null : void 0,
-    name: typeof record.name === "string" ? record.name : base.name,
-    note: typeof record.note === "string" ? record.note : base.note
-  };
-};
-var normalizeTagConfig = (value) => {
-  const base = {
-    action: "create",
-    mappedTo: null,
-    name: void 0
-  };
-  if (!value || typeof value !== "object") {
-    return base;
-  }
-  const record = value;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
-  const mappedTo = toNumber(record.mappedTo);
-  return {
-    action,
-    mappedTo: action === "map" ? mappedTo ?? null : void 0,
-    name: typeof record.name === "string" ? record.name : base.name
-  };
-};
-var normalizeIssueTargetConfig = (value) => {
-  const base = {
-    action: "create",
-    mappedTo: null,
-    name: void 0,
-    provider: null,
-    testmoType: null
-  };
-  if (!value || typeof value !== "object") {
-    return base;
-  }
-  const record = value;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
-  const mappedTo = toNumber(record.mappedTo);
-  const testmoType = toNumber(record.testmoType ?? record.type);
-  return {
-    action,
-    mappedTo: action === "map" ? mappedTo ?? null : void 0,
-    name: typeof record.name === "string" ? record.name : base.name,
-    provider: typeof record.provider === "string" ? record.provider : base.provider,
-    testmoType: action === "create" ? testmoType ?? null : void 0
-  };
-};
-var normalizeUserConfig = (value) => {
-  const base = {
-    action: "map",
-    mappedTo: null,
-    name: void 0,
-    email: void 0,
-    password: void 0,
-    access: void 0,
-    roleId: null,
-    isActive: true,
-    isApi: false
-  };
-  if (!value || typeof value !== "object") {
-    return base;
-  }
-  const record = value;
-  const actionValue = typeof record.action === "string" ? record.action : "map";
-  const action = ACTION_MAP.has(actionValue) ? actionValue : "map";
-  const mappedTo = typeof record.mappedTo === "string" ? record.mappedTo : null;
-  const name = toStringValue(record.name);
-  const email = toStringValue(record.email);
-  const passwordValue = toStringValue(record.password);
-  const password = typeof passwordValue === "string" && passwordValue.length > 0 ? passwordValue : null;
-  const access = toAccessValue(record.access);
-  const roleId = toNumber(record.roleId);
-  const isActive = toBoolean(record.isActive, true);
-  const isApi = toBoolean(record.isApi, false);
-  return {
-    action,
-    mappedTo: action === "map" ? mappedTo : void 0,
-    name: action === "create" ? name : void 0,
-    email: action === "create" ? email : void 0,
-    password: action === "create" ? password ?? generateRandomPassword() : void 0,
-    access: action === "create" ? access : void 0,
-    roleId: action === "create" ? roleId ?? null : void 0,
-    isActive: action === "create" ? isActive : void 0,
-    isApi: action === "create" ? isApi : void 0
-  };
-};
-var normalizeStringArray = (value) => {
-  if (!value) {
-    return void 0;
-  }
-  if (Array.isArray(value)) {
-    const entries = value.map((entry) => {
-      if (typeof entry === "string") {
-        const trimmed = entry.trim();
-        return trimmed.length > 0 ? trimmed : null;
-      }
-      if (typeof entry === "object" && entry && "name" in entry) {
-        const raw = entry.name;
-        if (typeof raw === "string") {
-          const trimmed = raw.trim();
-          return trimmed.length > 0 ? trimmed : null;
-        }
-      }
-      return null;
-    }).filter((entry) => entry !== null);
-    return entries.length > 0 ? entries : void 0;
-  }
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return void 0;
-    }
-    const segments = trimmed.split(/[\n,]+/).map((segment) => segment.trim()).filter((segment) => segment.length > 0);
-    return segments.length > 0 ? segments : void 0;
-  }
-  return void 0;
-};
-var normalizeOptionConfigList = (value) => {
-  const coerceFromStringArray = (entries) => {
-    if (entries.length === 0) {
-      return void 0;
-    }
-    return entries.map((name, index) => ({
-      name,
-      iconId: null,
-      iconColorId: null,
-      isEnabled: true,
-      isDefault: index === 0,
-      order: index
-    }));
-  };
-  if (!value) {
-    return void 0;
-  }
-  if (Array.isArray(value)) {
-    const normalized = [];
-    let defaultAssigned = false;
-    value.forEach((entry, index) => {
-      if (typeof entry === "string") {
-        const trimmed = entry.trim();
-        if (trimmed.length === 0) {
-          return;
-        }
-        normalized.push({
-          name: trimmed,
-          iconId: null,
-          iconColorId: null,
-          isEnabled: true,
-          isDefault: !defaultAssigned && index === 0,
-          order: index
-        });
-        defaultAssigned = defaultAssigned || index === 0;
-        return;
-      }
-      if (!entry || typeof entry !== "object") {
-        return;
-      }
-      const record = entry;
-      const name = toStringValue(
-        record.name ?? record.label ?? record.value ?? record.displayName ?? record.display_name
-      ) ?? null;
-      if (!name) {
-        return;
-      }
-      const iconId = toNumber(
-        record.iconId ?? record.icon_id ?? record.icon ?? record.iconID
-      ) ?? null;
-      const iconColorId = toNumber(
-        record.iconColorId ?? record.icon_color_id ?? record.colorId ?? record.color_id ?? record.color
-      ) ?? null;
-      const isEnabled = toBoolean(
-        record.isEnabled ?? record.enabled ?? record.is_enabled,
-        true
-      );
-      const isDefault = toBoolean(
-        record.isDefault ?? record.default ?? record.is_default ?? record.defaultOption,
-        false
-      );
-      const order = toNumber(
-        record.order ?? record.position ?? record.ordinal ?? record.index ?? record.sort
-      ) ?? index;
-      if (isDefault && !defaultAssigned) {
-        defaultAssigned = true;
-      }
-      normalized.push({
-        name,
-        iconId,
-        iconColorId,
-        isEnabled,
-        isDefault,
-        order
-      });
-    });
-    if (normalized.length === 0) {
-      return void 0;
-    }
-    const sorted = normalized.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    let defaultSeen = false;
-    sorted.forEach((entry) => {
-      if (entry.isDefault && !defaultSeen) {
-        defaultSeen = true;
-        return;
-      }
-      if (entry.isDefault && defaultSeen) {
-        entry.isDefault = false;
-      }
-    });
-    if (!defaultSeen) {
-      sorted[0].isDefault = true;
-    }
-    return sorted.map((entry, index) => ({
-      name: entry.name,
-      iconId: entry.iconId ?? null,
-      iconColorId: entry.iconColorId ?? null,
-      isEnabled: entry.isEnabled ?? true,
-      isDefault: entry.isDefault ?? false,
-      order: entry.order ?? index
-    }));
-  }
-  if (typeof value === "string") {
-    const normalizedStrings = normalizeStringArray(value);
-    return normalizedStrings ? coerceFromStringArray(normalizedStrings) : void 0;
-  }
-  return void 0;
-};
-var normalizeTemplateFieldTarget = (value, fallback) => {
-  if (typeof value === "string") {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === "result" || normalized === "results") {
-      return "result";
-    }
-    if (normalized === "case" || normalized === "cases") {
-      return "case";
-    }
-  }
-  return fallback;
-};
-var normalizeTemplateFieldConfig = (value) => {
-  const base = {
-    action: "create",
-    targetType: "case",
-    mappedTo: null,
-    displayName: void 0,
-    systemName: void 0,
-    typeId: null,
-    typeName: null,
-    hint: void 0,
-    isRequired: false,
-    isRestricted: false,
-    defaultValue: void 0,
-    isChecked: void 0,
-    minValue: void 0,
-    maxValue: void 0,
-    minIntegerValue: void 0,
-    maxIntegerValue: void 0,
-    initialHeight: void 0,
-    dropdownOptions: void 0,
-    templateName: void 0,
-    order: void 0
-  };
-  if (!value || typeof value !== "object") {
-    return base;
-  }
-  const record = value;
-  const actionValue = typeof record.action === "string" ? record.action : base.action;
-  const action = actionValue === "map" ? "map" : "create";
-  const targetSource = record.targetType ?? record.target_type ?? record.fieldTarget ?? record.field_target ?? record.scope ?? record.assignment ?? record.fieldCategory ?? record.field_category;
-  const targetType = normalizeTemplateFieldTarget(targetSource, base.targetType);
-  const mappedTo = toNumber(record.mappedTo);
-  const typeId = toNumber(record.typeId ?? record.type_id ?? record.fieldTypeId);
-  const typeName = typeof record.typeName === "string" ? record.typeName : typeof record.type_name === "string" ? record.type_name : typeof record.fieldType === "string" ? record.fieldType : typeof record.field_type === "string" ? record.field_type : base.typeName;
-  const dropdownOptions = normalizeOptionConfigList(
-    record.dropdownOptions ?? record.dropdown_options ?? record.options ?? record.choices
-  ) ?? base.dropdownOptions;
-  return {
-    action,
-    targetType,
-    mappedTo: action === "map" ? mappedTo ?? null : void 0,
-    displayName: typeof record.displayName === "string" ? record.displayName : typeof record.display_name === "string" ? record.display_name : typeof record.label === "string" ? record.label : base.displayName,
-    systemName: typeof record.systemName === "string" ? record.systemName : typeof record.system_name === "string" ? record.system_name : typeof record.name === "string" ? record.name : base.systemName,
-    typeId: typeId ?? null,
-    typeName: typeName ?? null,
-    hint: typeof record.hint === "string" ? record.hint : typeof record.description === "string" ? record.description : base.hint,
-    isRequired: toBoolean(record.isRequired ?? record.is_required ?? base.isRequired),
-    isRestricted: toBoolean(record.isRestricted ?? record.is_restricted ?? base.isRestricted),
-    defaultValue: typeof record.defaultValue === "string" ? record.defaultValue : typeof record.default_value === "string" ? record.default_value : base.defaultValue,
-    isChecked: typeof record.isChecked === "boolean" ? record.isChecked : base.isChecked,
-    minValue: toNumber(record.minValue ?? record.min_value) ?? base.minValue,
-    maxValue: toNumber(record.maxValue ?? record.max_value) ?? base.maxValue,
-    minIntegerValue: toNumber(record.minIntegerValue ?? record.min_integer_value) ?? base.minIntegerValue,
-    maxIntegerValue: toNumber(record.maxIntegerValue ?? record.max_integer_value) ?? base.maxIntegerValue,
-    initialHeight: toNumber(record.initialHeight ?? record.initial_height) ?? base.initialHeight,
-    dropdownOptions,
-    templateName: typeof record.templateName === "string" ? record.templateName : typeof record.template_name === "string" ? record.template_name : base.templateName,
-    order: toNumber(record.order ?? record.position ?? record.ordinal) ?? base.order
-  };
-};
-var normalizeTemplateConfig = (value) => {
-  const base = {
-    action: "map",
-    mappedTo: null,
-    name: void 0
-  };
-  if (!value || typeof value !== "object") {
-    return base;
-  }
-  const record = value;
-  const actionValue = typeof record.action === "string" ? record.action : base.action;
-  const action = ACTION_MAP.has(actionValue) ? actionValue : base.action;
-  const mappedTo = toNumber(record.mappedTo);
-  const name = typeof record.name === "string" ? record.name : base.name;
-  return {
-    action,
-    mappedTo: action === "map" ? mappedTo ?? null : void 0,
-    name: action === "create" ? name ?? void 0 : void 0
-  };
-};
-var normalizeRolePermissions = (value) => {
-  if (!value || typeof value !== "object") {
-    return {};
-  }
-  const result = {};
-  const assignPermission = (area, source) => {
-    const perm = {
-      canAddEdit: toBoolean(source.canAddEdit ?? false),
-      canDelete: toBoolean(source.canDelete ?? false),
-      canClose: toBoolean(source.canClose ?? false)
-    };
-    result[area] = perm;
-  };
-  if (Array.isArray(value)) {
-    value.forEach((entry) => {
-      if (entry && typeof entry === "object") {
-        const record = entry;
-        const area = typeof record.area === "string" ? record.area : void 0;
-        if (area) {
-          assignPermission(area, record);
-        }
-      }
-    });
-    return result;
-  }
-  for (const [area, entry] of Object.entries(value)) {
-    if (entry && typeof entry === "object") {
-      assignPermission(area, entry);
-    }
-  }
-  return result;
-};
-var normalizeRoleConfig = (value) => {
-  const base = {
-    action: "create",
-    mappedTo: null,
-    name: void 0,
-    isDefault: false,
-    permissions: {}
-  };
-  if (!value || typeof value !== "object") {
-    return base;
-  }
-  const record = value;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
-  const mappedTo = toNumber(record.mappedTo);
-  const permissions = normalizeRolePermissions(record.permissions);
-  return {
-    action,
-    mappedTo: action === "map" ? mappedTo ?? null : void 0,
-    name: typeof record.name === "string" ? record.name : base.name,
-    isDefault: action === "create" ? toBoolean(record.isDefault ?? false) : void 0,
-    permissions: action === "create" ? permissions : void 0
-  };
-};
-var normalizeMilestoneTypeConfig = (value) => {
-  const base = {
-    action: "create",
-    mappedTo: null,
-    name: void 0,
-    iconId: null,
-    isDefault: false
-  };
-  if (!value || typeof value !== "object") {
-    return base;
-  }
-  const record = value;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
-  const mappedTo = toNumber(record.mappedTo);
-  const iconId = toNumber(record.iconId);
-  return {
-    action,
-    mappedTo: action === "map" ? mappedTo ?? null : void 0,
-    name: typeof record.name === "string" ? record.name : base.name,
-    iconId: action === "create" ? iconId ?? null : void 0,
-    isDefault: action === "create" ? toBoolean(record.isDefault ?? false) : void 0
-  };
-};
-var normalizeConfigVariantConfig = (key, value) => {
-  const base = {
-    token: key,
-    action: "create-category-variant",
-    mappedVariantId: void 0,
-    categoryId: void 0,
-    categoryName: null,
-    variantName: null
-  };
-  if (!value || typeof value !== "object") {
-    return base;
-  }
-  const record = value;
-  const actionValue = typeof record.action === "string" ? record.action : base.action;
-  const action = CONFIG_VARIANT_ACTIONS.has(actionValue) ? actionValue : base.action;
-  const token = typeof record.token === "string" ? record.token : base.token;
-  const mappedVariantId = toNumber(record.mappedVariantId);
-  const categoryId = toNumber(record.categoryId);
-  const categoryName = typeof record.categoryName === "string" ? record.categoryName : base.categoryName;
-  const variantName = typeof record.variantName === "string" ? record.variantName : base.variantName;
-  return {
-    token,
-    action,
-    mappedVariantId: action === "map-variant" ? mappedVariantId ?? null : void 0,
-    categoryId: action === "create-variant-existing-category" ? categoryId ?? null : void 0,
-    categoryName: action === "create-category-variant" ? categoryName : void 0,
-    variantName: action === "map-variant" ? void 0 : variantName ?? token
-  };
-};
-var normalizeConfigurationConfig = (value) => {
-  const base = {
-    action: "create",
-    mappedTo: null,
-    name: void 0,
-    variants: {}
-  };
-  if (!value || typeof value !== "object") {
-    return base;
-  }
-  const record = value;
-  const actionValue = typeof record.action === "string" ? record.action : "create";
-  const action = ACTION_MAP.has(actionValue) ? actionValue : "create";
-  const mappedTo = toNumber(record.mappedTo);
-  const name = typeof record.name === "string" ? record.name : base.name;
-  const variants = {};
-  if (record.variants && typeof record.variants === "object") {
-    for (const [variantKey, entry] of Object.entries(
-      record.variants
-    )) {
-      const index = Number(variantKey);
-      if (!Number.isFinite(index)) {
-        continue;
-      }
-      variants[index] = normalizeConfigVariantConfig(variantKey, entry);
-    }
-  }
-  return {
-    action,
-    mappedTo: action === "map" ? mappedTo ?? null : void 0,
-    name: action === "create" ? name : void 0,
-    variants
-  };
-};
-var normalizeMappingConfiguration = (value) => {
-  const configuration = createEmptyMappingConfiguration();
-  if (!value || typeof value !== "object") {
-    return configuration;
-  }
-  const record = value;
-  if (record.workflows && typeof record.workflows === "object") {
-    for (const [key, entry] of Object.entries(
-      record.workflows
-    )) {
-      const id = Number(key);
-      if (!Number.isFinite(id)) {
-        continue;
-      }
-      configuration.workflows[id] = normalizeWorkflowConfig(entry);
-    }
-  }
-  if (record.statuses && typeof record.statuses === "object") {
-    for (const [key, entry] of Object.entries(
-      record.statuses
-    )) {
-      const id = Number(key);
-      if (!Number.isFinite(id)) {
-        continue;
-      }
-      configuration.statuses[id] = normalizeStatusConfig(entry);
-    }
-  }
-  if (record.groups && typeof record.groups === "object") {
-    for (const [key, entry] of Object.entries(
-      record.groups
-    )) {
-      const id = Number(key);
-      if (!Number.isFinite(id)) {
-        continue;
-      }
-      configuration.groups[id] = normalizeGroupConfig(entry);
-    }
-  }
-  if (record.tags && typeof record.tags === "object") {
-    for (const [key, entry] of Object.entries(
-      record.tags
-    )) {
-      const id = Number(key);
-      if (!Number.isFinite(id)) {
-        continue;
-      }
-      configuration.tags[id] = normalizeTagConfig(entry);
-    }
-  }
-  if (record.issueTargets && typeof record.issueTargets === "object") {
-    for (const [key, entry] of Object.entries(
-      record.issueTargets
-    )) {
-      const id = Number(key);
-      if (!Number.isFinite(id)) {
-        continue;
-      }
-      configuration.issueTargets[id] = normalizeIssueTargetConfig(entry);
-    }
-  }
-  if (record.roles && typeof record.roles === "object") {
-    for (const [key, entry] of Object.entries(
-      record.roles
-    )) {
-      const id = Number(key);
-      if (!Number.isFinite(id)) {
-        continue;
-      }
-      configuration.roles[id] = normalizeRoleConfig(entry);
-    }
-  }
-  if (record.users && typeof record.users === "object") {
-    for (const [key, entry] of Object.entries(
-      record.users
-    )) {
-      const id = Number(key);
-      if (!Number.isFinite(id)) {
-        continue;
-      }
-      configuration.users[id] = normalizeUserConfig(entry);
-    }
-  }
-  if (record.configurations && typeof record.configurations === "object") {
-    for (const [key, entry] of Object.entries(
-      record.configurations
-    )) {
-      const id = Number(key);
-      if (!Number.isFinite(id)) {
-        continue;
-      }
-      configuration.configurations[id] = normalizeConfigurationConfig(entry);
-    }
-  }
-  if (record.templateFields && typeof record.templateFields === "object") {
-    for (const [key, entry] of Object.entries(
-      record.templateFields
-    )) {
-      const id = Number(key);
-      if (!Number.isFinite(id)) {
-        continue;
-      }
-      configuration.templateFields[id] = normalizeTemplateFieldConfig(entry);
-    }
-  }
-  if (record.milestoneTypes && typeof record.milestoneTypes === "object") {
-    for (const [key, entry] of Object.entries(
-      record.milestoneTypes
-    )) {
-      const id = Number(key);
-      if (!Number.isFinite(id)) {
-        continue;
-      }
-      configuration.milestoneTypes[id] = normalizeMilestoneTypeConfig(entry);
-    }
-  }
-  if (record.templates && typeof record.templates === "object") {
-    for (const [key, entry] of Object.entries(
-      record.templates
-    )) {
-      const id = Number(key);
-      if (!Number.isFinite(id)) {
-        continue;
-      }
-      configuration.templates[id] = normalizeTemplateConfig(entry);
-    }
-  }
-  if (record.customFields && typeof record.customFields === "object") {
-    configuration.customFields = JSON.parse(
-      JSON.stringify(record.customFields)
-    );
-  }
-  return configuration;
-};
-var serializeMappingConfiguration = (configuration) => JSON.parse(JSON.stringify(configuration));
-
-// app/constants/backend.ts
-var emptyEditorContent = {
-  type: "doc",
-  content: [
-    {
-      type: "paragraph"
-    }
-  ]
-};
-var MAX_DURATION = 60 * 60 * 24 * 366 - 18 * 60 * 60;
+// workers/testmoImport/automationImports.ts
+var import_client3 = require("@prisma/client");
 
 // workers/testmoImport/helpers.ts
 var toNumberValue = (value) => {
@@ -2362,658 +2365,7 @@ var toInputJsonValue = (value) => {
   return JSON.parse(JSON.stringify(value));
 };
 
-// workers/testmoImport/configurationImports.ts
-var ensureWorkflowType = (value) => {
-  if (value === "NOT_STARTED" || value === "IN_PROGRESS" || value === "DONE") {
-    return value;
-  }
-  return "NOT_STARTED";
-};
-var ensureWorkflowScope = (value) => {
-  if (value === "CASES" || value === "RUNS" || value === "SESSIONS") {
-    return value;
-  }
-  return "CASES";
-};
-async function importWorkflows(tx, configuration) {
-  const summary = {
-    entity: "workflows",
-    total: 0,
-    created: 0,
-    mapped: 0
-  };
-  for (const [key, config] of Object.entries(configuration.workflows ?? {})) {
-    const workflowId = Number(key);
-    if (!Number.isFinite(workflowId) || !config) {
-      continue;
-    }
-    summary.total += 1;
-    if (config.action === "map") {
-      if (config.mappedTo === null || config.mappedTo === void 0) {
-        throw new Error(
-          `Workflow ${workflowId} is configured to map but no target workflow was provided.`
-        );
-      }
-      const existing = await tx.workflows.findUnique({
-        where: { id: config.mappedTo }
-      });
-      if (!existing) {
-        throw new Error(
-          `Workflow ${config.mappedTo} selected for mapping was not found.`
-        );
-      }
-      config.mappedTo = existing.id;
-      summary.mapped += 1;
-      continue;
-    }
-    const name = (config.name ?? "").trim();
-    if (!name) {
-      throw new Error(
-        `Workflow ${workflowId} requires a name before it can be created.`
-      );
-    }
-    const iconId = config.iconId ?? null;
-    const colorId = config.colorId ?? null;
-    if (iconId === null || colorId === null) {
-      throw new Error(
-        `Workflow "${name}" must include both an icon and a color before creation.`
-      );
-    }
-    const workflowType = ensureWorkflowType(config.workflowType);
-    const scope = ensureWorkflowScope(config.scope);
-    const existingByName = await tx.workflows.findFirst({
-      where: {
-        name,
-        isDeleted: false
-      }
-    });
-    if (existingByName) {
-      config.action = "map";
-      config.mappedTo = existingByName.id;
-      summary.mapped += 1;
-      continue;
-    }
-    const created = await tx.workflows.create({
-      data: {
-        name,
-        workflowType,
-        scope,
-        iconId,
-        colorId,
-        isEnabled: true
-      }
-    });
-    config.action = "map";
-    config.mappedTo = created.id;
-    summary.created += 1;
-  }
-  return summary;
-}
-async function importGroups(tx, configuration) {
-  const summary = {
-    entity: "groups",
-    total: 0,
-    created: 0,
-    mapped: 0
-  };
-  for (const [key, config] of Object.entries(configuration.groups ?? {})) {
-    const groupId = Number(key);
-    if (!Number.isFinite(groupId) || !config) {
-      continue;
-    }
-    summary.total += 1;
-    if (config.action === "map") {
-      if (config.mappedTo === null || config.mappedTo === void 0) {
-        throw new Error(
-          `Group ${groupId} is configured to map but no target group was provided.`
-        );
-      }
-      const existing2 = await tx.groups.findUnique({
-        where: { id: config.mappedTo }
-      });
-      if (!existing2) {
-        throw new Error(
-          `Group ${config.mappedTo} selected for mapping was not found.`
-        );
-      }
-      config.mappedTo = existing2.id;
-      summary.mapped += 1;
-      continue;
-    }
-    const name = (config.name ?? "").trim();
-    if (!name) {
-      throw new Error(
-        `Group ${groupId} requires a name before it can be created.`
-      );
-    }
-    const existing = await tx.groups.findFirst({
-      where: {
-        name,
-        isDeleted: false
-      }
-    });
-    if (existing) {
-      config.action = "map";
-      config.mappedTo = existing.id;
-      config.name = existing.name;
-      summary.mapped += 1;
-      continue;
-    }
-    const created = await tx.groups.create({
-      data: {
-        name,
-        note: (config.note ?? "").trim() || null
-      }
-    });
-    config.action = "map";
-    config.mappedTo = created.id;
-    config.name = created.name;
-    config.note = created.note ?? null;
-    summary.created += 1;
-  }
-  return summary;
-}
-async function importTags(tx, configuration) {
-  const summary = {
-    entity: "tags",
-    total: 0,
-    created: 0,
-    mapped: 0
-  };
-  for (const [key, config] of Object.entries(configuration.tags ?? {})) {
-    const tagId = Number(key);
-    if (!Number.isFinite(tagId) || !config) {
-      continue;
-    }
-    summary.total += 1;
-    if (config.action === "map") {
-      if (config.mappedTo === null || config.mappedTo === void 0) {
-        throw new Error(
-          `Tag ${tagId} is configured to map but no target tag was provided.`
-        );
-      }
-      const existing2 = await tx.tags.findUnique({
-        where: { id: config.mappedTo }
-      });
-      if (!existing2) {
-        throw new Error(
-          `Tag ${config.mappedTo} selected for mapping was not found.`
-        );
-      }
-      config.mappedTo = existing2.id;
-      summary.mapped += 1;
-      continue;
-    }
-    const name = (config.name ?? "").trim();
-    if (!name) {
-      throw new Error(`Tag ${tagId} requires a name before it can be created.`);
-    }
-    const existing = await tx.tags.findFirst({
-      where: {
-        name,
-        isDeleted: false
-      }
-    });
-    if (existing) {
-      config.action = "map";
-      config.mappedTo = existing.id;
-      config.name = existing.name;
-      summary.mapped += 1;
-      continue;
-    }
-    const created = await tx.tags.create({
-      data: {
-        name
-      }
-    });
-    config.action = "map";
-    config.mappedTo = created.id;
-    config.name = created.name;
-    summary.created += 1;
-  }
-  return summary;
-}
-async function importRoles(tx, configuration) {
-  const summary = {
-    entity: "roles",
-    total: 0,
-    created: 0,
-    mapped: 0
-  };
-  for (const [key, config] of Object.entries(configuration.roles ?? {})) {
-    const roleId = Number(key);
-    if (!Number.isFinite(roleId) || !config) {
-      continue;
-    }
-    summary.total += 1;
-    if (config.action === "map") {
-      if (config.mappedTo === null || config.mappedTo === void 0) {
-        throw new Error(
-          `Role ${roleId} is configured to map but no target role was provided.`
-        );
-      }
-      const existing2 = await tx.roles.findUnique({
-        where: { id: config.mappedTo }
-      });
-      if (!existing2) {
-        throw new Error(
-          `Role ${config.mappedTo} selected for mapping was not found.`
-        );
-      }
-      config.mappedTo = existing2.id;
-      summary.mapped += 1;
-      continue;
-    }
-    const name = (config.name ?? "").trim();
-    if (!name) {
-      throw new Error(
-        `Role ${roleId} requires a name before it can be created.`
-      );
-    }
-    const existing = await tx.roles.findFirst({
-      where: {
-        name,
-        isDeleted: false
-      }
-    });
-    if (existing) {
-      config.action = "map";
-      config.mappedTo = existing.id;
-      config.name = existing.name;
-      summary.mapped += 1;
-      continue;
-    }
-    if (config.isDefault) {
-      await tx.roles.updateMany({
-        data: { isDefault: false },
-        where: { isDefault: true }
-      });
-    }
-    const created = await tx.roles.create({
-      data: {
-        name,
-        isDefault: config.isDefault ?? false
-      }
-    });
-    const permissions = config.permissions ?? {};
-    const permissionEntries = Object.entries(permissions).map(
-      ([area, permission]) => ({
-        roleId: created.id,
-        area,
-        canAddEdit: permission?.canAddEdit ?? false,
-        canDelete: permission?.canDelete ?? false,
-        canClose: permission?.canClose ?? false
-      })
-    );
-    if (permissionEntries.length > 0) {
-      await tx.rolePermission.createMany({
-        data: permissionEntries,
-        skipDuplicates: true
-      });
-    }
-    config.action = "map";
-    config.mappedTo = created.id;
-    config.name = created.name;
-    summary.created += 1;
-  }
-  return summary;
-}
-async function importMilestoneTypes(tx, configuration) {
-  const summary = {
-    entity: "milestoneTypes",
-    total: 0,
-    created: 0,
-    mapped: 0
-  };
-  for (const [key, config] of Object.entries(
-    configuration.milestoneTypes ?? {}
-  )) {
-    const milestoneId = Number(key);
-    if (!Number.isFinite(milestoneId) || !config) {
-      continue;
-    }
-    summary.total += 1;
-    if (config.action === "map") {
-      if (config.mappedTo === null || config.mappedTo === void 0) {
-        throw new Error(
-          `Milestone type ${milestoneId} is configured to map but no target type was provided.`
-        );
-      }
-      const existing2 = await tx.milestoneTypes.findUnique({
-        where: { id: config.mappedTo }
-      });
-      if (!existing2) {
-        throw new Error(
-          `Milestone type ${config.mappedTo} selected for mapping was not found.`
-        );
-      }
-      config.mappedTo = existing2.id;
-      summary.mapped += 1;
-      continue;
-    }
-    const name = (config.name ?? "").trim();
-    if (!name) {
-      throw new Error(
-        `Milestone type ${milestoneId} requires a name before it can be created.`
-      );
-    }
-    const existing = await tx.milestoneTypes.findFirst({
-      where: {
-        name,
-        isDeleted: false
-      }
-    });
-    if (existing) {
-      config.action = "map";
-      config.mappedTo = existing.id;
-      config.name = existing.name;
-      summary.mapped += 1;
-      continue;
-    }
-    if (config.isDefault) {
-      await tx.milestoneTypes.updateMany({
-        data: { isDefault: false },
-        where: { isDefault: true }
-      });
-    }
-    if (config.iconId !== null && config.iconId !== void 0) {
-      const iconExists = await tx.fieldIcon.findUnique({
-        where: { id: config.iconId }
-      });
-      if (!iconExists) {
-        throw new Error(
-          `Icon ${config.iconId} configured for milestone type "${name}" does not exist.`
-        );
-      }
-    }
-    const created = await tx.milestoneTypes.create({
-      data: {
-        name,
-        iconId: config.iconId ?? null,
-        isDefault: config.isDefault ?? false
-      }
-    });
-    config.action = "map";
-    config.mappedTo = created.id;
-    config.name = created.name;
-    summary.created += 1;
-  }
-  return summary;
-}
-var resolveConfigurationVariants = async (tx, mapping) => {
-  const variantIds = [];
-  let createdCount = 0;
-  for (const [tokenIndex, variantConfig] of Object.entries(
-    mapping.variants ?? {}
-  )) {
-    const index = Number(tokenIndex);
-    if (!Number.isFinite(index) || !variantConfig) {
-      continue;
-    }
-    const entry = variantConfig;
-    if (entry.action === "map-variant") {
-      if (entry.mappedVariantId === null || entry.mappedVariantId === void 0) {
-        throw new Error(
-          `Configuration variant ${entry.token} is configured to map but no variant was selected.`
-        );
-      }
-      const existing = await tx.configVariants.findUnique({
-        where: { id: entry.mappedVariantId },
-        include: { category: true }
-      });
-      if (!existing) {
-        throw new Error(
-          `Configuration variant ${entry.mappedVariantId} selected for mapping was not found.`
-        );
-      }
-      entry.mappedVariantId = existing.id;
-      entry.categoryId = existing.categoryId;
-      entry.categoryName = existing.category.name;
-      entry.variantName = existing.name;
-      variantIds.push(existing.id);
-      continue;
-    }
-    if (entry.action === "create-variant-existing-category") {
-      if (entry.categoryId === null || entry.categoryId === void 0) {
-        throw new Error(
-          `Configuration variant ${entry.token} requires a category to be selected before creation.`
-        );
-      }
-      const category = await tx.configCategories.findUnique({
-        where: { id: entry.categoryId }
-      });
-      if (!category) {
-        throw new Error(
-          `Configuration category ${entry.categoryId} associated with variant ${entry.token} was not found.`
-        );
-      }
-      const variantName = (entry.variantName ?? entry.token).trim();
-      if (!variantName) {
-        throw new Error(
-          `Configuration variant ${entry.token} requires a name before it can be created.`
-        );
-      }
-      const existingVariant = await tx.configVariants.findFirst({
-        where: {
-          categoryId: category.id,
-          name: variantName,
-          isDeleted: false
-        }
-      });
-      if (existingVariant) {
-        entry.action = "map-variant";
-        entry.mappedVariantId = existingVariant.id;
-        entry.categoryId = category.id;
-        entry.categoryName = category.name;
-        entry.variantName = existingVariant.name;
-        variantIds.push(existingVariant.id);
-        continue;
-      }
-      const createdVariant = await tx.configVariants.create({
-        data: {
-          name: variantName,
-          categoryId: category.id
-        }
-      });
-      entry.action = "map-variant";
-      entry.mappedVariantId = createdVariant.id;
-      entry.categoryId = category.id;
-      entry.categoryName = category.name;
-      entry.variantName = createdVariant.name;
-      variantIds.push(createdVariant.id);
-      createdCount += 1;
-      continue;
-    }
-    if (entry.action === "create-category-variant") {
-      const categoryName = (entry.categoryName ?? entry.token).trim();
-      const variantName = (entry.variantName ?? entry.token).trim();
-      if (!categoryName) {
-        throw new Error(
-          `Configuration variant ${entry.token} requires a category name before it can be created.`
-        );
-      }
-      if (!variantName) {
-        throw new Error(
-          `Configuration variant ${entry.token} requires a variant name before it can be created.`
-        );
-      }
-      let category = await tx.configCategories.findFirst({
-        where: { name: categoryName, isDeleted: false }
-      });
-      if (!category) {
-        category = await tx.configCategories.create({
-          data: { name: categoryName }
-        });
-      }
-      let variant = await tx.configVariants.findFirst({
-        where: {
-          categoryId: category.id,
-          name: variantName,
-          isDeleted: false
-        }
-      });
-      if (!variant) {
-        variant = await tx.configVariants.create({
-          data: {
-            name: variantName,
-            categoryId: category.id
-          }
-        });
-        createdCount += 1;
-      }
-      entry.action = "map-variant";
-      entry.mappedVariantId = variant.id;
-      entry.categoryId = category.id;
-      entry.categoryName = category.name;
-      entry.variantName = variant.name;
-      variantIds.push(variant.id);
-      continue;
-    }
-    throw new Error(
-      `Unsupported configuration variant action "${entry.action}" for token ${entry.token}.`
-    );
-  }
-  return { variantIds: Array.from(new Set(variantIds)), createdCount };
-};
-async function importConfigurations(tx, configuration) {
-  const summary = {
-    entity: "configurations",
-    total: 0,
-    created: 0,
-    mapped: 0,
-    details: {
-      variantsCreated: 0
-    }
-  };
-  for (const [key, configEntry] of Object.entries(
-    configuration.configurations ?? {}
-  )) {
-    const configId = Number(key);
-    if (!Number.isFinite(configId) || !configEntry) {
-      continue;
-    }
-    summary.total += 1;
-    const entry = configEntry;
-    if (entry.action === "map") {
-      if (entry.mappedTo === null || entry.mappedTo === void 0) {
-        throw new Error(
-          `Configuration ${configId} is configured to map but no target configuration was provided.`
-        );
-      }
-      const existing = await tx.configurations.findUnique({
-        where: { id: entry.mappedTo }
-      });
-      if (!existing) {
-        throw new Error(
-          `Configuration ${entry.mappedTo} selected for mapping was not found.`
-        );
-      }
-      entry.mappedTo = existing.id;
-      const { variantIds: variantIds2, createdCount: createdCount2 } = await resolveConfigurationVariants(
-        tx,
-        entry
-      );
-      if (variantIds2.length > 0) {
-        await tx.configurationConfigVariant.createMany({
-          data: variantIds2.map((variantId) => ({
-            configurationId: existing.id,
-            variantId
-          })),
-          skipDuplicates: true
-        });
-      }
-      summary.details.variantsCreated = summary.details.variantsCreated + createdCount2;
-      summary.mapped += 1;
-      continue;
-    }
-    const name = (entry.name ?? "").trim();
-    if (!name) {
-      throw new Error(
-        `Configuration ${configId} requires a name before it can be created.`
-      );
-    }
-    let configurationRecord = await tx.configurations.findFirst({
-      where: {
-        name,
-        isDeleted: false
-      }
-    });
-    if (!configurationRecord) {
-      configurationRecord = await tx.configurations.create({ data: { name } });
-      summary.created += 1;
-    } else {
-      summary.mapped += 1;
-    }
-    entry.action = "map";
-    entry.mappedTo = configurationRecord.id;
-    entry.name = configurationRecord.name;
-    const { variantIds, createdCount } = await resolveConfigurationVariants(
-      tx,
-      entry
-    );
-    if (variantIds.length > 0) {
-      await tx.configurationConfigVariant.createMany({
-        data: variantIds.map((variantId) => ({
-          configurationId: configurationRecord.id,
-          variantId
-        })),
-        skipDuplicates: true
-      });
-    }
-    summary.details.variantsCreated = summary.details.variantsCreated + createdCount;
-  }
-  return summary;
-}
-async function importUserGroups(tx, configuration, datasetRows) {
-  const summary = {
-    entity: "userGroups",
-    total: 0,
-    created: 0,
-    mapped: 0
-  };
-  const userGroupRows = datasetRows.get("user_groups") ?? [];
-  for (const row of userGroupRows) {
-    summary.total += 1;
-    const testmoUserId = toNumberValue(row.user_id);
-    const testmoGroupId = toNumberValue(row.group_id);
-    if (!testmoUserId || !testmoGroupId) {
-      continue;
-    }
-    const userConfig = configuration.users?.[testmoUserId];
-    if (!userConfig || userConfig.action !== "map" || !userConfig.mappedTo) {
-      continue;
-    }
-    const groupConfig = configuration.groups?.[testmoGroupId];
-    if (!groupConfig || groupConfig.action !== "map" || !groupConfig.mappedTo) {
-      continue;
-    }
-    const userId = userConfig.mappedTo;
-    const groupId = groupConfig.mappedTo;
-    const existing = await tx.groupAssignment.findUnique({
-      where: {
-        userId_groupId: {
-          userId,
-          groupId
-        }
-      }
-    });
-    if (existing) {
-      summary.mapped += 1;
-      continue;
-    }
-    await tx.groupAssignment.create({
-      data: {
-        userId,
-        groupId
-      }
-    });
-    summary.created += 1;
-  }
-  return summary;
-}
-
 // workers/testmoImport/automationImports.ts
-var import_client3 = require("@prisma/client");
 var projectNameCache = /* @__PURE__ */ new Map();
 var templateNameCache = /* @__PURE__ */ new Map();
 var workflowNameCache = /* @__PURE__ */ new Map();
@@ -4663,1007 +4015,670 @@ var importAutomationRunTags = async (prisma2, configuration, datasetRows, testRu
   return summary;
 };
 
-// workers/testmoImport/tagImports.ts
-async function importRepositoryCaseTags(tx, configuration, datasetRows, caseIdMap) {
+// workers/testmoImport/configurationImports.ts
+var ensureWorkflowType = (value) => {
+  if (value === "NOT_STARTED" || value === "IN_PROGRESS" || value === "DONE") {
+    return value;
+  }
+  return "NOT_STARTED";
+};
+var ensureWorkflowScope = (value) => {
+  if (value === "CASES" || value === "RUNS" || value === "SESSIONS") {
+    return value;
+  }
+  return "CASES";
+};
+async function importWorkflows(tx, configuration) {
   const summary = {
-    entity: "repositoryCaseTags",
+    entity: "workflows",
     total: 0,
     created: 0,
     mapped: 0
   };
-  const repositoryCaseTagRows = datasetRows.get("repository_case_tags") ?? [];
-  for (const row of repositoryCaseTagRows) {
-    summary.total += 1;
-    const testmoCaseId = toNumberValue(row.case_id);
-    const testmoTagId = toNumberValue(row.tag_id);
-    if (!testmoCaseId || !testmoTagId) {
-      continue;
-    }
-    const caseId = caseIdMap.get(testmoCaseId);
-    if (!caseId) {
-      continue;
-    }
-    const tagConfig = configuration.tags?.[testmoTagId];
-    if (!tagConfig || tagConfig.action !== "map" || !tagConfig.mappedTo) {
-      continue;
-    }
-    const tagId = tagConfig.mappedTo;
-    const existing = await tx.repositoryCases.findFirst({
-      where: {
-        id: caseId,
-        tags: {
-          some: {
-            id: tagId
-          }
-        }
-      }
-    });
-    if (existing) {
-      summary.mapped += 1;
-      continue;
-    }
-    await tx.repositoryCases.update({
-      where: { id: caseId },
-      data: {
-        tags: {
-          connect: { id: tagId }
-        }
-      }
-    });
-    summary.created += 1;
-  }
-  return summary;
-}
-async function importRunTags(tx, configuration, datasetRows, testRunIdMap) {
-  const summary = {
-    entity: "runTags",
-    total: 0,
-    created: 0,
-    mapped: 0
-  };
-  const runTagRows = datasetRows.get("run_tags") ?? [];
-  for (const row of runTagRows) {
-    summary.total += 1;
-    const testmoRunId = toNumberValue(row.run_id);
-    const testmoTagId = toNumberValue(row.tag_id);
-    if (!testmoRunId || !testmoTagId) {
-      continue;
-    }
-    const runId = testRunIdMap.get(testmoRunId);
-    if (!runId) {
-      continue;
-    }
-    const tagConfig = configuration.tags?.[testmoTagId];
-    if (!tagConfig || tagConfig.action !== "map" || !tagConfig.mappedTo) {
-      continue;
-    }
-    const tagId = tagConfig.mappedTo;
-    const existing = await tx.testRuns.findFirst({
-      where: {
-        id: runId,
-        tags: {
-          some: {
-            id: tagId
-          }
-        }
-      }
-    });
-    if (existing) {
-      summary.mapped += 1;
-      continue;
-    }
-    await tx.testRuns.update({
-      where: { id: runId },
-      data: {
-        tags: {
-          connect: { id: tagId }
-        }
-      }
-    });
-    summary.created += 1;
-  }
-  return summary;
-}
-async function importSessionTags(tx, configuration, datasetRows, sessionIdMap) {
-  const summary = {
-    entity: "sessionTags",
-    total: 0,
-    created: 0,
-    mapped: 0
-  };
-  const sessionTagRows = datasetRows.get("session_tags") ?? [];
-  for (const row of sessionTagRows) {
-    summary.total += 1;
-    const testmoSessionId = toNumberValue(row.session_id);
-    const testmoTagId = toNumberValue(row.tag_id);
-    if (!testmoSessionId || !testmoTagId) {
-      continue;
-    }
-    const sessionId = sessionIdMap.get(testmoSessionId);
-    if (!sessionId) {
-      continue;
-    }
-    const tagConfig = configuration.tags?.[testmoTagId];
-    if (!tagConfig || tagConfig.action !== "map" || !tagConfig.mappedTo) {
-      continue;
-    }
-    const tagId = tagConfig.mappedTo;
-    const existing = await tx.sessions.findFirst({
-      where: {
-        id: sessionId,
-        tags: {
-          some: {
-            id: tagId
-          }
-        }
-      }
-    });
-    if (existing) {
-      summary.mapped += 1;
-      continue;
-    }
-    await tx.sessions.update({
-      where: { id: sessionId },
-      data: {
-        tags: {
-          connect: { id: tagId }
-        }
-      }
-    });
-    summary.created += 1;
-  }
-  return summary;
-}
-
-// workers/testmoImport/linkImports.ts
-var import_core = require("@tiptap/core");
-var import_model = require("@tiptap/pm/model");
-var import_starter_kit = __toESM(require("@tiptap/starter-kit"));
-var import_happy_dom = require("happy-dom");
-var TIPTAP_EXTENSIONS = [
-  import_starter_kit.default.configure({
-    dropcursor: false,
-    gapcursor: false,
-    undoRedo: false,
-    trailingNode: false,
-    heading: {
-      levels: [1, 2, 3, 4]
-    }
-  })
-];
-var TIPTAP_SCHEMA = (0, import_core.getSchema)(TIPTAP_EXTENSIONS);
-var sharedHappyDOMWindow = null;
-var sharedDOMParser = null;
-var getSharedHappyDOM = () => {
-  if (!sharedHappyDOMWindow || !sharedDOMParser) {
-    if (sharedHappyDOMWindow) {
-      try {
-        sharedHappyDOMWindow.close();
-      } catch (error) {
-      }
-    }
-    sharedHappyDOMWindow = new import_happy_dom.Window();
-    sharedDOMParser = new sharedHappyDOMWindow.DOMParser();
-  }
-  return { window: sharedHappyDOMWindow, parser: sharedDOMParser };
-};
-var escapeHtml = (value) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-var escapeAttribute = (value) => escapeHtml(value).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-var buildLinkHtml = (name, url, note) => {
-  const safeLabel = escapeHtml(name);
-  const safeUrl = escapeAttribute(url);
-  const noteFragment = note ? ` (${escapeHtml(note)})` : "";
-  return `<p><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeLabel}</a>${noteFragment}</p>`;
-};
-var convertHtmlToTipTapDoc = (html) => {
-  const { parser: parser2 } = getSharedHappyDOM();
-  if (!parser2) {
-    throw new Error("Failed to initialize DOM parser");
-  }
-  const htmlString = `<!DOCTYPE html><html><body>${html}</body></html>`;
-  const document = parser2.parseFromString(htmlString, "text/html");
-  if (!document?.body) {
-    throw new Error("Failed to parse HTML content for TipTap conversion");
-  }
-  return import_model.DOMParser.fromSchema(TIPTAP_SCHEMA).parse(document.body).toJSON();
-};
-var sanitizeLinkMarks = (node) => {
-  if (Array.isArray(node.marks)) {
-    for (const mark of node.marks) {
-      if (mark?.type === "link" && mark.attrs) {
-        const { href, target } = mark.attrs;
-        mark.attrs = {
-          href,
-          ...target ? { target } : {}
-        };
-      }
-    }
-  }
-  if (Array.isArray(node.content)) {
-    for (const child of node.content) {
-      if (child && typeof child === "object") {
-        sanitizeLinkMarks(child);
-      }
-    }
-  }
-};
-function createTipTapLink(name, url, note) {
-  try {
-    const html = buildLinkHtml(name, url, note);
-    const doc = convertHtmlToTipTapDoc(html);
-    if (doc && Array.isArray(doc.content) && doc.content.length > 0) {
-      for (const node of doc.content) {
-        if (node && typeof node === "object") {
-          sanitizeLinkMarks(node);
-        }
-      }
-      return doc.content[0];
-    }
-  } catch (error) {
-  }
-  const linkContent = [
-    {
-      type: "text",
-      marks: [
-        {
-          type: "link",
-          attrs: {
-            href: url,
-            target: "_blank"
-          }
-        }
-      ],
-      text: name
-    }
-  ];
-  if (note) {
-    linkContent.push({
-      type: "text",
-      text: ` (${note})`
-    });
-  }
-  return {
-    type: "paragraph",
-    content: linkContent
-  };
-}
-function parseExistingDocs(existingDocs) {
-  if (!existingDocs) {
-    return {
-      type: "doc",
-      content: []
-    };
-  }
-  if (typeof existingDocs === "object" && existingDocs.type === "doc") {
-    return existingDocs;
-  }
-  if (typeof existingDocs === "string") {
-    try {
-      const parsed = JSON.parse(existingDocs);
-      if (parsed && typeof parsed === "object" && parsed.type === "doc") {
-        return parsed;
-      }
-    } catch (e) {
-    }
-  }
-  return {
-    type: "doc",
-    content: []
-  };
-}
-function appendLinksToDoc(doc, links) {
-  if (!Array.isArray(doc.content)) {
-    doc.content = [];
-  }
-  for (const link of links) {
-    doc.content.push(link);
-  }
-  return doc;
-}
-var prepareDocsForUpdate = (existingDocs, updatedDocs) => {
-  if (typeof existingDocs === "string") {
-    return JSON.stringify(updatedDocs);
-  }
-  return toInputJsonValue(updatedDocs);
-};
-var importProjectLinks = async (tx, configuration, datasetRows, projectIdMap, context) => {
-  const summary = {
-    entity: "projectLinks",
-    total: 0,
-    created: 0,
-    mapped: 0
-  };
-  const projectLinkRows = datasetRows.get("project_links") ?? [];
-  summary.total = projectLinkRows.length;
-  const linksByProjectId = /* @__PURE__ */ new Map();
-  for (const row of projectLinkRows) {
-    const testmoProjectId = toNumberValue(row.project_id);
-    const name = toStringValue2(row.name);
-    const url = toStringValue2(row.url);
-    const note = toStringValue2(row.note);
-    if (!testmoProjectId || !name || !url) {
-      continue;
-    }
-    const projectId = projectIdMap.get(testmoProjectId);
-    if (!projectId) {
-      continue;
-    }
-    const linkJson = createTipTapLink(name, url, note);
-    if (!linksByProjectId.has(projectId)) {
-      linksByProjectId.set(projectId, []);
-    }
-    linksByProjectId.get(projectId).push(linkJson);
-  }
-  for (const [projectId, links] of linksByProjectId.entries()) {
-    const project = await tx.projects.findUnique({
-      where: { id: projectId },
-      select: { docs: true }
-    });
-    if (!project) {
-      continue;
-    }
-    const doc = parseExistingDocs(project.docs);
-    const updatedDocs = appendLinksToDoc(doc, links);
-    const docsValue = JSON.stringify(updatedDocs);
-    await tx.projects.update({
-      where: { id: projectId },
-      data: { docs: docsValue }
-    });
-    summary.created += links.length;
-  }
-  return summary;
-};
-var importMilestoneLinks = async (tx, configuration, datasetRows, milestoneIdMap, context) => {
-  const summary = {
-    entity: "milestoneLinks",
-    total: 0,
-    created: 0,
-    mapped: 0
-  };
-  const milestoneLinkRows = datasetRows.get("milestone_links") ?? [];
-  summary.total = milestoneLinkRows.length;
-  const linksByMilestoneId = /* @__PURE__ */ new Map();
-  for (const row of milestoneLinkRows) {
-    const testmoMilestoneId = toNumberValue(row.milestone_id);
-    const name = toStringValue2(row.name);
-    const url = toStringValue2(row.url);
-    const note = toStringValue2(row.note);
-    if (!testmoMilestoneId || !name || !url) {
-      continue;
-    }
-    const milestoneId = milestoneIdMap.get(testmoMilestoneId);
-    if (!milestoneId) {
-      continue;
-    }
-    const linkJson = createTipTapLink(name, url, note);
-    if (!linksByMilestoneId.has(milestoneId)) {
-      linksByMilestoneId.set(milestoneId, []);
-    }
-    linksByMilestoneId.get(milestoneId).push(linkJson);
-  }
-  for (const [milestoneId, links] of linksByMilestoneId.entries()) {
-    const milestone = await tx.milestones.findUnique({
-      where: { id: milestoneId },
-      select: { docs: true }
-    });
-    if (!milestone) {
-      continue;
-    }
-    const doc = parseExistingDocs(milestone.docs);
-    const updatedDocs = appendLinksToDoc(doc, links);
-    const docsValue = prepareDocsForUpdate(milestone.docs, updatedDocs);
-    await tx.milestones.update({
-      where: { id: milestoneId },
-      data: { docs: docsValue }
-    });
-    summary.created += links.length;
-  }
-  return summary;
-};
-var importRunLinks = async (tx, configuration, datasetRows, testRunIdMap, context) => {
-  const summary = {
-    entity: "runLinks",
-    total: 0,
-    created: 0,
-    mapped: 0
-  };
-  const runLinkRows = datasetRows.get("run_links") ?? [];
-  summary.total = runLinkRows.length;
-  const linksByRunId = /* @__PURE__ */ new Map();
-  for (const row of runLinkRows) {
-    const testmoRunId = toNumberValue(row.run_id);
-    const name = toStringValue2(row.name);
-    const url = toStringValue2(row.url);
-    const note = toStringValue2(row.note);
-    if (!testmoRunId || !name || !url) {
-      continue;
-    }
-    const runId = testRunIdMap.get(testmoRunId);
-    if (!runId) {
-      continue;
-    }
-    const linkJson = createTipTapLink(name, url, note);
-    if (!linksByRunId.has(runId)) {
-      linksByRunId.set(runId, []);
-    }
-    linksByRunId.get(runId).push(linkJson);
-  }
-  for (const [runId, links] of linksByRunId.entries()) {
-    const run = await tx.testRuns.findUnique({
-      where: { id: runId },
-      select: { docs: true }
-    });
-    if (!run) {
-      continue;
-    }
-    const doc = parseExistingDocs(run.docs);
-    const updatedDocs = appendLinksToDoc(doc, links);
-    const docsValue = prepareDocsForUpdate(run.docs, updatedDocs);
-    await tx.testRuns.update({
-      where: { id: runId },
-      data: { docs: docsValue }
-    });
-    summary.created += links.length;
-  }
-  return summary;
-};
-
-// workers/testmoImport/templateImports.ts
-var import_client4 = require("@prisma/client");
-var SYSTEM_NAME_REGEX = /^[A-Za-z][A-Za-z0-9_]*$/;
-var generateSystemName = (value) => {
-  const normalized = value.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").replace(/^[^a-z]+/, "");
-  return normalized || "status";
-};
-async function importTemplates(tx, configuration) {
-  const summary = {
-    entity: "templates",
-    total: 0,
-    created: 0,
-    mapped: 0
-  };
-  const templateMap = /* @__PURE__ */ new Map();
-  for (const [key, config] of Object.entries(configuration.templates ?? {})) {
-    const templateKey = Number(key);
-    if (!Number.isFinite(templateKey) || !config) {
+  for (const [key, config] of Object.entries(configuration.workflows ?? {})) {
+    const workflowId = Number(key);
+    if (!Number.isFinite(workflowId) || !config) {
       continue;
     }
     summary.total += 1;
     if (config.action === "map") {
       if (config.mappedTo === null || config.mappedTo === void 0) {
         throw new Error(
-          `Template ${templateKey} is configured to map but no target template was provided.`
+          `Workflow ${workflowId} is configured to map but no target workflow was provided.`
         );
       }
-      const existing2 = await tx.templates.findUnique({
+      const existing = await tx.workflows.findUnique({
         where: { id: config.mappedTo }
       });
-      if (!existing2) {
+      if (!existing) {
         throw new Error(
-          `Template ${config.mappedTo} selected for mapping was not found.`
+          `Workflow ${config.mappedTo} selected for mapping was not found.`
         );
       }
-      config.mappedTo = existing2.id;
-      config.name = config.name ?? existing2.templateName;
-      templateMap.set(existing2.templateName, existing2.id);
+      config.mappedTo = existing.id;
       summary.mapped += 1;
       continue;
     }
     const name = (config.name ?? "").trim();
     if (!name) {
       throw new Error(
-        `Template ${templateKey} requires a name before it can be created.`
+        `Workflow ${workflowId} requires a name before it can be created.`
       );
     }
-    const existing = await tx.templates.findFirst({
+    const iconId = config.iconId ?? null;
+    const colorId = config.colorId ?? null;
+    if (iconId === null || colorId === null) {
+      throw new Error(
+        `Workflow "${name}" must include both an icon and a color before creation.`
+      );
+    }
+    const workflowType = ensureWorkflowType(config.workflowType);
+    const scope = ensureWorkflowScope(config.scope);
+    const existingByName = await tx.workflows.findFirst({
       where: {
-        templateName: name,
+        name,
+        isDeleted: false
+      }
+    });
+    if (existingByName) {
+      config.action = "map";
+      config.mappedTo = existingByName.id;
+      summary.mapped += 1;
+      continue;
+    }
+    const created = await tx.workflows.create({
+      data: {
+        name,
+        workflowType,
+        scope,
+        iconId,
+        colorId,
+        isEnabled: true
+      }
+    });
+    config.action = "map";
+    config.mappedTo = created.id;
+    summary.created += 1;
+  }
+  return summary;
+}
+async function importGroups(tx, configuration) {
+  const summary = {
+    entity: "groups",
+    total: 0,
+    created: 0,
+    mapped: 0
+  };
+  for (const [key, config] of Object.entries(configuration.groups ?? {})) {
+    const groupId = Number(key);
+    if (!Number.isFinite(groupId) || !config) {
+      continue;
+    }
+    summary.total += 1;
+    if (config.action === "map") {
+      if (config.mappedTo === null || config.mappedTo === void 0) {
+        throw new Error(
+          `Group ${groupId} is configured to map but no target group was provided.`
+        );
+      }
+      const existing2 = await tx.groups.findUnique({
+        where: { id: config.mappedTo }
+      });
+      if (!existing2) {
+        throw new Error(
+          `Group ${config.mappedTo} selected for mapping was not found.`
+        );
+      }
+      config.mappedTo = existing2.id;
+      summary.mapped += 1;
+      continue;
+    }
+    const name = (config.name ?? "").trim();
+    if (!name) {
+      throw new Error(
+        `Group ${groupId} requires a name before it can be created.`
+      );
+    }
+    const existing = await tx.groups.findFirst({
+      where: {
+        name,
         isDeleted: false
       }
     });
     if (existing) {
       config.action = "map";
       config.mappedTo = existing.id;
-      config.name = existing.templateName;
-      templateMap.set(existing.templateName, existing.id);
+      config.name = existing.name;
       summary.mapped += 1;
       continue;
     }
-    const created = await tx.templates.create({
+    const created = await tx.groups.create({
       data: {
-        templateName: name,
-        isEnabled: true,
-        isDefault: false
+        name,
+        note: (config.note ?? "").trim() || null
       }
     });
     config.action = "map";
     config.mappedTo = created.id;
-    config.name = created.templateName;
-    templateMap.set(created.templateName, created.id);
+    config.name = created.name;
+    config.note = created.note ?? null;
     summary.created += 1;
   }
-  const processedNames = new Set(templateMap.keys());
-  for (const entry of Object.values(configuration.templateFields ?? {})) {
-    if (!entry) {
+  return summary;
+}
+async function importTags(tx, configuration) {
+  const summary = {
+    entity: "tags",
+    total: 0,
+    created: 0,
+    mapped: 0
+  };
+  for (const [key, config] of Object.entries(configuration.tags ?? {})) {
+    const tagId = Number(key);
+    if (!Number.isFinite(tagId) || !config) {
       continue;
     }
-    const rawName = typeof entry.templateName === "string" ? entry.templateName : null;
-    const templateName = rawName?.trim();
-    if (!templateName || processedNames.has(templateName)) {
-      continue;
-    }
-    processedNames.add(templateName);
     summary.total += 1;
-    const existing = await tx.templates.findFirst({
-      where: { templateName, isDeleted: false }
-    });
-    if (existing) {
-      templateMap.set(templateName, existing.id);
+    if (config.action === "map") {
+      if (config.mappedTo === null || config.mappedTo === void 0) {
+        throw new Error(
+          `Tag ${tagId} is configured to map but no target tag was provided.`
+        );
+      }
+      const existing2 = await tx.tags.findUnique({
+        where: { id: config.mappedTo }
+      });
+      if (!existing2) {
+        throw new Error(
+          `Tag ${config.mappedTo} selected for mapping was not found.`
+        );
+      }
+      config.mappedTo = existing2.id;
       summary.mapped += 1;
       continue;
     }
-    const created = await tx.templates.create({
-      data: {
-        templateName,
-        isEnabled: true,
-        isDefault: false
+    const name = (config.name ?? "").trim();
+    if (!name) {
+      throw new Error(`Tag ${tagId} requires a name before it can be created.`);
+    }
+    const existing = await tx.tags.findFirst({
+      where: {
+        name,
+        isDeleted: false
       }
     });
-    templateMap.set(templateName, created.id);
+    if (existing) {
+      config.action = "map";
+      config.mappedTo = existing.id;
+      config.name = existing.name;
+      summary.mapped += 1;
+      continue;
+    }
+    const created = await tx.tags.create({
+      data: {
+        name
+      }
+    });
+    config.action = "map";
+    config.mappedTo = created.id;
+    config.name = created.name;
     summary.created += 1;
   }
-  return { summary, templateMap };
+  return summary;
 }
-async function importTemplateFields(tx, configuration, templateMap, datasetRows) {
+async function importRoles(tx, configuration) {
   const summary = {
-    entity: "templateFields",
+    entity: "roles",
+    total: 0,
+    created: 0,
+    mapped: 0
+  };
+  for (const [key, config] of Object.entries(configuration.roles ?? {})) {
+    const roleId = Number(key);
+    if (!Number.isFinite(roleId) || !config) {
+      continue;
+    }
+    summary.total += 1;
+    if (config.action === "map") {
+      if (config.mappedTo === null || config.mappedTo === void 0) {
+        throw new Error(
+          `Role ${roleId} is configured to map but no target role was provided.`
+        );
+      }
+      const existing2 = await tx.roles.findUnique({
+        where: { id: config.mappedTo }
+      });
+      if (!existing2) {
+        throw new Error(
+          `Role ${config.mappedTo} selected for mapping was not found.`
+        );
+      }
+      config.mappedTo = existing2.id;
+      summary.mapped += 1;
+      continue;
+    }
+    const name = (config.name ?? "").trim();
+    if (!name) {
+      throw new Error(
+        `Role ${roleId} requires a name before it can be created.`
+      );
+    }
+    const existing = await tx.roles.findFirst({
+      where: {
+        name,
+        isDeleted: false
+      }
+    });
+    if (existing) {
+      config.action = "map";
+      config.mappedTo = existing.id;
+      config.name = existing.name;
+      summary.mapped += 1;
+      continue;
+    }
+    if (config.isDefault) {
+      await tx.roles.updateMany({
+        data: { isDefault: false },
+        where: { isDefault: true }
+      });
+    }
+    const created = await tx.roles.create({
+      data: {
+        name,
+        isDefault: config.isDefault ?? false
+      }
+    });
+    const permissions = config.permissions ?? {};
+    const permissionEntries = Object.entries(permissions).map(
+      ([area, permission]) => ({
+        roleId: created.id,
+        area,
+        canAddEdit: permission?.canAddEdit ?? false,
+        canDelete: permission?.canDelete ?? false,
+        canClose: permission?.canClose ?? false
+      })
+    );
+    if (permissionEntries.length > 0) {
+      await tx.rolePermission.createMany({
+        data: permissionEntries,
+        skipDuplicates: true
+      });
+    }
+    config.action = "map";
+    config.mappedTo = created.id;
+    config.name = created.name;
+    summary.created += 1;
+  }
+  return summary;
+}
+async function importMilestoneTypes(tx, configuration) {
+  const summary = {
+    entity: "milestoneTypes",
+    total: 0,
+    created: 0,
+    mapped: 0
+  };
+  for (const [key, config] of Object.entries(
+    configuration.milestoneTypes ?? {}
+  )) {
+    const milestoneId = Number(key);
+    if (!Number.isFinite(milestoneId) || !config) {
+      continue;
+    }
+    summary.total += 1;
+    if (config.action === "map") {
+      if (config.mappedTo === null || config.mappedTo === void 0) {
+        throw new Error(
+          `Milestone type ${milestoneId} is configured to map but no target type was provided.`
+        );
+      }
+      const existing2 = await tx.milestoneTypes.findUnique({
+        where: { id: config.mappedTo }
+      });
+      if (!existing2) {
+        throw new Error(
+          `Milestone type ${config.mappedTo} selected for mapping was not found.`
+        );
+      }
+      config.mappedTo = existing2.id;
+      summary.mapped += 1;
+      continue;
+    }
+    const name = (config.name ?? "").trim();
+    if (!name) {
+      throw new Error(
+        `Milestone type ${milestoneId} requires a name before it can be created.`
+      );
+    }
+    const existing = await tx.milestoneTypes.findFirst({
+      where: {
+        name,
+        isDeleted: false
+      }
+    });
+    if (existing) {
+      config.action = "map";
+      config.mappedTo = existing.id;
+      config.name = existing.name;
+      summary.mapped += 1;
+      continue;
+    }
+    if (config.isDefault) {
+      await tx.milestoneTypes.updateMany({
+        data: { isDefault: false },
+        where: { isDefault: true }
+      });
+    }
+    if (config.iconId !== null && config.iconId !== void 0) {
+      const iconExists = await tx.fieldIcon.findUnique({
+        where: { id: config.iconId }
+      });
+      if (!iconExists) {
+        throw new Error(
+          `Icon ${config.iconId} configured for milestone type "${name}" does not exist.`
+        );
+      }
+    }
+    const created = await tx.milestoneTypes.create({
+      data: {
+        name,
+        iconId: config.iconId ?? null,
+        isDefault: config.isDefault ?? false
+      }
+    });
+    config.action = "map";
+    config.mappedTo = created.id;
+    config.name = created.name;
+    summary.created += 1;
+  }
+  return summary;
+}
+var resolveConfigurationVariants = async (tx, mapping) => {
+  const variantIds = [];
+  let createdCount = 0;
+  for (const [tokenIndex, variantConfig] of Object.entries(
+    mapping.variants ?? {}
+  )) {
+    const index = Number(tokenIndex);
+    if (!Number.isFinite(index) || !variantConfig) {
+      continue;
+    }
+    const entry = variantConfig;
+    if (entry.action === "map-variant") {
+      if (entry.mappedVariantId === null || entry.mappedVariantId === void 0) {
+        throw new Error(
+          `Configuration variant ${entry.token} is configured to map but no variant was selected.`
+        );
+      }
+      const existing = await tx.configVariants.findUnique({
+        where: { id: entry.mappedVariantId },
+        include: { category: true }
+      });
+      if (!existing) {
+        throw new Error(
+          `Configuration variant ${entry.mappedVariantId} selected for mapping was not found.`
+        );
+      }
+      entry.mappedVariantId = existing.id;
+      entry.categoryId = existing.categoryId;
+      entry.categoryName = existing.category.name;
+      entry.variantName = existing.name;
+      variantIds.push(existing.id);
+      continue;
+    }
+    if (entry.action === "create-variant-existing-category") {
+      if (entry.categoryId === null || entry.categoryId === void 0) {
+        throw new Error(
+          `Configuration variant ${entry.token} requires a category to be selected before creation.`
+        );
+      }
+      const category = await tx.configCategories.findUnique({
+        where: { id: entry.categoryId }
+      });
+      if (!category) {
+        throw new Error(
+          `Configuration category ${entry.categoryId} associated with variant ${entry.token} was not found.`
+        );
+      }
+      const variantName = (entry.variantName ?? entry.token).trim();
+      if (!variantName) {
+        throw new Error(
+          `Configuration variant ${entry.token} requires a name before it can be created.`
+        );
+      }
+      const existingVariant = await tx.configVariants.findFirst({
+        where: {
+          categoryId: category.id,
+          name: variantName,
+          isDeleted: false
+        }
+      });
+      if (existingVariant) {
+        entry.action = "map-variant";
+        entry.mappedVariantId = existingVariant.id;
+        entry.categoryId = category.id;
+        entry.categoryName = category.name;
+        entry.variantName = existingVariant.name;
+        variantIds.push(existingVariant.id);
+        continue;
+      }
+      const createdVariant = await tx.configVariants.create({
+        data: {
+          name: variantName,
+          categoryId: category.id
+        }
+      });
+      entry.action = "map-variant";
+      entry.mappedVariantId = createdVariant.id;
+      entry.categoryId = category.id;
+      entry.categoryName = category.name;
+      entry.variantName = createdVariant.name;
+      variantIds.push(createdVariant.id);
+      createdCount += 1;
+      continue;
+    }
+    if (entry.action === "create-category-variant") {
+      const categoryName = (entry.categoryName ?? entry.token).trim();
+      const variantName = (entry.variantName ?? entry.token).trim();
+      if (!categoryName) {
+        throw new Error(
+          `Configuration variant ${entry.token} requires a category name before it can be created.`
+        );
+      }
+      if (!variantName) {
+        throw new Error(
+          `Configuration variant ${entry.token} requires a variant name before it can be created.`
+        );
+      }
+      let category = await tx.configCategories.findFirst({
+        where: { name: categoryName, isDeleted: false }
+      });
+      if (!category) {
+        category = await tx.configCategories.create({
+          data: { name: categoryName }
+        });
+      }
+      let variant = await tx.configVariants.findFirst({
+        where: {
+          categoryId: category.id,
+          name: variantName,
+          isDeleted: false
+        }
+      });
+      if (!variant) {
+        variant = await tx.configVariants.create({
+          data: {
+            name: variantName,
+            categoryId: category.id
+          }
+        });
+        createdCount += 1;
+      }
+      entry.action = "map-variant";
+      entry.mappedVariantId = variant.id;
+      entry.categoryId = category.id;
+      entry.categoryName = category.name;
+      entry.variantName = variant.name;
+      variantIds.push(variant.id);
+      continue;
+    }
+    throw new Error(
+      `Unsupported configuration variant action "${entry.action}" for token ${entry.token}.`
+    );
+  }
+  return { variantIds: Array.from(new Set(variantIds)), createdCount };
+};
+async function importConfigurations(tx, configuration) {
+  const summary = {
+    entity: "configurations",
     total: 0,
     created: 0,
     mapped: 0,
     details: {
-      optionsCreated: 0,
-      assignmentsCreated: 0
+      variantsCreated: 0
     }
   };
-  const details = summary.details;
-  const ensureFieldTypeExists = async (typeId) => {
-    try {
-      const existing = await tx.caseFieldTypes.findUnique({
-        where: { id: typeId }
-      });
-      if (!existing) {
-        console.error(
-          `[ERROR] Field type ${typeId} referenced by a template field was not found.`
-        );
-        const availableTypes = await tx.caseFieldTypes.findMany({
-          select: { id: true, type: true }
-        });
-        console.error(`[ERROR] Available field types:`, availableTypes);
-        throw new Error(
-          `Field type ${typeId} referenced by a template field was not found. Available types: ${availableTypes.map((t) => `${t.id}:${t.type}`).join(", ")}`
-        );
-      }
-    } catch (error) {
-      console.error(`[ERROR] Failed to check field type ${typeId}:`, error);
-      throw error;
-    }
-  };
-  const toNumberOrNull = (value) => {
-    if (typeof value === "number" && Number.isFinite(value)) {
-      return value;
-    }
-    return null;
-  };
-  const normalizeOptionConfigs = (input) => {
-    if (!Array.isArray(input)) {
-      return [];
-    }
-    const normalized = [];
-    input.forEach((entry, index) => {
-      if (typeof entry === "string") {
-        const trimmed = entry.trim();
-        if (!trimmed) {
-          return;
-        }
-        normalized.push({
-          name: trimmed,
-          iconId: null,
-          iconColorId: null,
-          isEnabled: true,
-          isDefault: index === 0,
-          order: index
-        });
-        return;
-      }
-      if (!entry || typeof entry !== "object") {
-        return;
-      }
-      const record = entry;
-      const rawName = typeof record.name === "string" ? record.name : typeof record.label === "string" ? record.label : typeof record.value === "string" ? record.value : typeof record.displayName === "string" ? record.displayName : typeof record.display_name === "string" ? record.display_name : null;
-      const name = rawName?.trim();
-      if (!name) {
-        return;
-      }
-      const iconId = toNumberOrNull(
-        record.iconId ?? record.icon_id ?? record.icon ?? record.iconID
-      ) ?? null;
-      const iconColorId = toNumberOrNull(
-        record.iconColorId ?? record.icon_color_id ?? record.colorId ?? record.color_id ?? record.color
-      ) ?? null;
-      const isEnabled = toBooleanValue(
-        record.isEnabled ?? record.enabled ?? record.is_enabled,
-        true
-      );
-      const isDefault = toBooleanValue(
-        record.isDefault ?? record.is_default ?? record.default ?? record.defaultOption,
-        false
-      );
-      const order = toNumberOrNull(
-        record.order ?? record.position ?? record.ordinal ?? record.index ?? record.sort
-      ) ?? index;
-      normalized.push({
-        name,
-        iconId,
-        iconColorId,
-        isEnabled,
-        isDefault,
-        order
-      });
-    });
-    if (normalized.length === 0) {
-      return [];
-    }
-    const sorted = normalized.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    let defaultSeen = false;
-    sorted.forEach((entry) => {
-      if (entry.isDefault) {
-        if (!defaultSeen) {
-          defaultSeen = true;
-        } else {
-          entry.isDefault = false;
-        }
-      }
-    });
-    if (!defaultSeen) {
-      sorted[0].isDefault = true;
-    }
-    return sorted.map((entry, index) => ({
-      name: entry.name,
-      iconId: entry.iconId ?? null,
-      iconColorId: entry.iconColorId ?? null,
-      isEnabled: entry.isEnabled ?? true,
-      isDefault: entry.isDefault ?? false,
-      order: index
-    }));
-  };
-  const templateIdBySourceId = /* @__PURE__ */ new Map();
-  for (const [templateKey, templateConfig] of Object.entries(
-    configuration.templates ?? {}
+  for (const [key, configEntry] of Object.entries(
+    configuration.configurations ?? {}
   )) {
-    const sourceId = Number(templateKey);
-    if (Number.isFinite(sourceId) && templateConfig && templateConfig.mappedTo !== null && templateConfig.mappedTo !== void 0) {
-      templateIdBySourceId.set(sourceId, templateConfig.mappedTo);
-    }
-  }
-  const fieldIdBySourceId = /* @__PURE__ */ new Map();
-  const fieldTargetTypeBySourceId = /* @__PURE__ */ new Map();
-  const templateSourceNameById = /* @__PURE__ */ new Map();
-  const templateDatasetRows = datasetRows.get("templates") ?? [];
-  for (const row of templateDatasetRows) {
-    const record = row;
-    const sourceId = toNumberValue(record.id);
-    const name = toStringValue2(record.name);
-    if (sourceId !== null && name) {
-      templateSourceNameById.set(sourceId, name);
-    }
-  }
-  const appliedAssignments = /* @__PURE__ */ new Set();
-  const makeAssignmentKey = (fieldId, templateId, targetType) => `${targetType}:${templateId}:${fieldId}`;
-  const resolveTemplateIdForName = async (templateName) => {
-    const trimmed = templateName.trim();
-    if (!trimmed) {
-      return null;
-    }
-    const templateId = templateMap.get(trimmed);
-    if (templateId) {
-      return templateId;
-    }
-    const existing = await tx.templates.findFirst({
-      where: { templateName: trimmed, isDeleted: false }
-    });
-    if (existing) {
-      templateMap.set(existing.templateName, existing.id);
-      return existing.id;
-    }
-    const created = await tx.templates.create({
-      data: {
-        templateName: trimmed,
-        isEnabled: true,
-        isDefault: false
-      }
-    });
-    templateMap.set(created.templateName, created.id);
-    return created.id;
-  };
-  const assignFieldToTemplate = async (fieldId, templateId, targetType, order) => {
-    const assignmentKey = makeAssignmentKey(fieldId, templateId, targetType);
-    if (appliedAssignments.has(assignmentKey)) {
-      return;
-    }
-    try {
-      if (targetType === "case") {
-        await tx.templateCaseAssignment.create({
-          data: {
-            caseFieldId: fieldId,
-            templateId,
-            order: order ?? 0
-          }
-        });
-      } else {
-        await tx.templateResultAssignment.create({
-          data: {
-            resultFieldId: fieldId,
-            templateId,
-            order: order ?? 0
-          }
-        });
-      }
-      appliedAssignments.add(assignmentKey);
-      details.assignmentsCreated += 1;
-    } catch (error) {
-      if (!(error instanceof import_client4.Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
-        throw error;
-      }
-      appliedAssignments.add(assignmentKey);
-    }
-  };
-  for (const [key, config] of Object.entries(
-    configuration.templateFields ?? {}
-  )) {
-    const fieldId = Number(key);
-    if (!Number.isFinite(fieldId) || !config) {
+    const configId = Number(key);
+    if (!Number.isFinite(configId) || !configEntry) {
       continue;
     }
     summary.total += 1;
-    const targetType = config.targetType === "result" ? "result" : "case";
-    config.targetType = targetType;
-    fieldTargetTypeBySourceId.set(fieldId, targetType);
-    const templateName = (config.templateName ?? "").trim();
-    if (config.action === "map") {
-      if (config.mappedTo === null || config.mappedTo === void 0) {
+    const entry = configEntry;
+    if (entry.action === "map") {
+      if (entry.mappedTo === null || entry.mappedTo === void 0) {
         throw new Error(
-          `Template field ${fieldId} is configured to map but no target field was provided.`
+          `Configuration ${configId} is configured to map but no target configuration was provided.`
         );
       }
-      if (targetType === "case") {
-        const existing = await tx.caseFields.findUnique({
-          where: { id: config.mappedTo }
-        });
-        if (!existing) {
-          throw new Error(
-            `Case field ${config.mappedTo} selected for mapping was not found.`
-          );
-        }
-      } else {
-        const existing = await tx.resultFields.findUnique({
-          where: { id: config.mappedTo }
-        });
-        if (!existing) {
-          throw new Error(
-            `Result field ${config.mappedTo} selected for mapping was not found.`
-          );
-        }
+      const existing = await tx.configurations.findUnique({
+        where: { id: entry.mappedTo }
+      });
+      if (!existing) {
+        throw new Error(
+          `Configuration ${entry.mappedTo} selected for mapping was not found.`
+        );
       }
+      entry.mappedTo = existing.id;
+      const { variantIds: variantIds2, createdCount: createdCount2 } = await resolveConfigurationVariants(
+        tx,
+        entry
+      );
+      if (variantIds2.length > 0) {
+        await tx.configurationConfigVariant.createMany({
+          data: variantIds2.map((variantId) => ({
+            configurationId: existing.id,
+            variantId
+          })),
+          skipDuplicates: true
+        });
+      }
+      summary.details.variantsCreated = summary.details.variantsCreated + createdCount2;
       summary.mapped += 1;
-      fieldIdBySourceId.set(fieldId, config.mappedTo);
-      if (templateName) {
-        const templateId = await resolveTemplateIdForName(templateName);
-        if (templateId) {
-          await assignFieldToTemplate(
-            config.mappedTo,
-            templateId,
-            targetType,
-            config.order ?? 0
-          );
-        }
-      }
       continue;
     }
-    const displayName = (config.displayName ?? config.systemName ?? `Field ${fieldId}`).trim();
-    let systemName = (config.systemName ?? "").trim();
-    if (!systemName) {
-      systemName = generateSystemName(displayName);
-    }
-    if (!SYSTEM_NAME_REGEX.test(systemName)) {
+    const name = (entry.name ?? "").trim();
+    if (!name) {
       throw new Error(
-        `Template field "${displayName}" requires a valid system name (letters, numbers, underscore, starting with a letter).`
+        `Configuration ${configId} requires a name before it can be created.`
       );
     }
-    const typeId = config.typeId ?? null;
-    if (typeId === null) {
-      throw new Error(
-        `Template field "${displayName}" requires a field type before it can be created.`
-      );
-    }
-    console.log(
-      `[DEBUG] Processing field "${displayName}" (${systemName}) with typeId ${typeId}, action: ${config.action}`
-    );
-    await ensureFieldTypeExists(typeId);
-    if (targetType === "case") {
-      const existing = await tx.caseFields.findFirst({
-        where: {
-          systemName,
-          isDeleted: false
-        }
-      });
-      if (existing) {
-        config.action = "map";
-        config.mappedTo = existing.id;
-        config.systemName = existing.systemName;
-        config.displayName = existing.displayName;
-        summary.mapped += 1;
-        continue;
+    let configurationRecord = await tx.configurations.findFirst({
+      where: {
+        name,
+        isDeleted: false
       }
+    });
+    if (!configurationRecord) {
+      configurationRecord = await tx.configurations.create({ data: { name } });
+      summary.created += 1;
     } else {
-      const existing = await tx.resultFields.findFirst({
-        where: {
-          systemName,
-          isDeleted: false
-        }
-      });
-      if (existing) {
-        config.action = "map";
-        config.mappedTo = existing.id;
-        config.systemName = existing.systemName;
-        config.displayName = existing.displayName;
-        summary.mapped += 1;
-        continue;
-      }
+      summary.mapped += 1;
     }
-    const fieldData = {
-      displayName,
-      systemName,
-      hint: (config.hint ?? "").trim() || null,
-      typeId,
-      isRequired: config.isRequired ?? false,
-      isRestricted: config.isRestricted ?? false,
-      defaultValue: config.defaultValue ?? null,
-      isChecked: config.isChecked ?? null,
-      minValue: toNumberOrNull(config.minValue ?? config.minIntegerValue) ?? null,
-      maxValue: toNumberOrNull(config.maxValue ?? config.maxIntegerValue) ?? null,
-      initialHeight: toNumberOrNull(config.initialHeight) ?? null,
-      isEnabled: true
-    };
-    const createdField = targetType === "case" ? await tx.caseFields.create({ data: fieldData }) : await tx.resultFields.create({ data: fieldData });
-    config.action = "map";
-    config.mappedTo = createdField.id;
-    config.displayName = createdField.displayName;
-    config.systemName = createdField.systemName;
-    config.typeId = createdField.typeId;
-    fieldIdBySourceId.set(fieldId, createdField.id);
-    const dropdownOptionConfigs = normalizeOptionConfigs(
-      config.dropdownOptions ?? []
+    entry.action = "map";
+    entry.mappedTo = configurationRecord.id;
+    entry.name = configurationRecord.name;
+    const { variantIds, createdCount } = await resolveConfigurationVariants(
+      tx,
+      entry
     );
-    if (dropdownOptionConfigs.length > 0) {
-      const defaultIcon = await tx.fieldIcon.findFirst({
-        orderBy: { id: "asc" },
-        select: { id: true }
+    if (variantIds.length > 0) {
+      await tx.configurationConfigVariant.createMany({
+        data: variantIds.map((variantId) => ({
+          configurationId: configurationRecord.id,
+          variantId
+        })),
+        skipDuplicates: true
       });
-      const defaultColor = await tx.color.findFirst({
-        orderBy: { id: "asc" },
-        select: { id: true }
-      });
-      if (!defaultIcon || !defaultColor) {
-        throw new Error(
-          "Default icon or color not found. Please ensure the database is properly seeded with FieldIcon and Color records."
-        );
-      }
-      const createdOptions = [];
-      for (const optionConfig of dropdownOptionConfigs) {
-        const option = await tx.fieldOptions.create({
-          data: {
-            name: optionConfig.name,
-            iconId: optionConfig.iconId ?? defaultIcon.id,
-            iconColorId: optionConfig.iconColorId ?? defaultColor.id,
-            isEnabled: optionConfig.isEnabled ?? true,
-            isDefault: optionConfig.isDefault ?? false,
-            isDeleted: false,
-            order: optionConfig.order ?? 0
-          }
-        });
-        createdOptions.push({
-          id: option.id,
-          order: optionConfig.order ?? 0
-        });
-      }
-      if (targetType === "case") {
-        await tx.caseFieldAssignment.createMany({
-          data: createdOptions.map((option) => ({
-            fieldOptionId: option.id,
-            caseFieldId: createdField.id
-          })),
-          skipDuplicates: true
-        });
-      } else {
-        await tx.resultFieldAssignment.createMany({
-          data: createdOptions.map((option) => ({
-            fieldOptionId: option.id,
-            resultFieldId: createdField.id,
-            order: option.order
-          })),
-          skipDuplicates: true
-        });
-      }
-      details.optionsCreated += createdOptions.length;
-      config.dropdownOptions = dropdownOptionConfigs;
-    } else {
-      config.dropdownOptions = void 0;
     }
-    if (templateName) {
-      const templateId = await resolveTemplateIdForName(templateName);
-      if (templateId) {
-        await assignFieldToTemplate(
-          createdField.id,
-          templateId,
-          targetType,
-          config.order ?? 0
-        );
-      }
+    summary.details.variantsCreated = summary.details.variantsCreated + createdCount;
+  }
+  return summary;
+}
+async function importUserGroups(tx, configuration, datasetRows) {
+  const summary = {
+    entity: "userGroups",
+    total: 0,
+    created: 0,
+    mapped: 0
+  };
+  const userGroupRows = datasetRows.get("user_groups") ?? [];
+  for (const row of userGroupRows) {
+    summary.total += 1;
+    const testmoUserId = toNumberValue(row.user_id);
+    const testmoGroupId = toNumberValue(row.group_id);
+    if (!testmoUserId || !testmoGroupId) {
+      continue;
     }
+    const userConfig = configuration.users?.[testmoUserId];
+    if (!userConfig || userConfig.action !== "map" || !userConfig.mappedTo) {
+      continue;
+    }
+    const groupConfig = configuration.groups?.[testmoGroupId];
+    if (!groupConfig || groupConfig.action !== "map" || !groupConfig.mappedTo) {
+      continue;
+    }
+    const userId = userConfig.mappedTo;
+    const groupId = groupConfig.mappedTo;
+    const existing = await tx.groupAssignment.findUnique({
+      where: {
+        userId_groupId: {
+          userId,
+          groupId
+        }
+      }
+    });
+    if (existing) {
+      summary.mapped += 1;
+      continue;
+    }
+    await tx.groupAssignment.create({
+      data: {
+        userId,
+        groupId
+      }
+    });
     summary.created += 1;
   }
-  const templateFieldRows = datasetRows.get("template_fields") ?? [];
-  for (const row of templateFieldRows) {
-    const record = row;
-    const templateSourceId = toNumberValue(record.template_id);
-    const fieldSourceId = toNumberValue(record.field_id);
-    if (templateSourceId === null || fieldSourceId === null) {
-      continue;
-    }
-    let templateId = templateIdBySourceId.get(templateSourceId);
-    const fieldId = fieldIdBySourceId.get(fieldSourceId);
-    const targetType = fieldTargetTypeBySourceId.get(fieldSourceId);
-    if (!fieldId || !targetType) {
-      continue;
-    }
-    if (!templateId) {
-      const templateName = templateSourceNameById.get(templateSourceId);
-      if (!templateName) {
-        continue;
-      }
-      const resolvedTemplateId = await resolveTemplateIdForName(templateName);
-      if (!resolvedTemplateId) {
-        continue;
-      }
-      templateIdBySourceId.set(templateSourceId, resolvedTemplateId);
-      templateId = resolvedTemplateId;
-    }
-    await assignFieldToTemplate(fieldId, templateId, targetType, void 0);
-  }
-  templateDatasetRows.length = 0;
-  templateFieldRows.length = 0;
-  templateSourceNameById.clear();
-  templateIdBySourceId.clear();
-  fieldIdBySourceId.clear();
-  fieldTargetTypeBySourceId.clear();
-  appliedAssignments.clear();
   return summary;
 }
 
 // workers/testmoImport/issueImports.ts
-var import_client5 = require("@prisma/client");
+var import_client4 = require("@prisma/client");
 var PROGRESS_UPDATE_INTERVAL = 500;
 var mapIssueTargetType = (testmoType) => {
   switch (testmoType) {
     case 1:
     case 4:
-      return import_client5.IntegrationProvider.JIRA;
+      return import_client4.IntegrationProvider.JIRA;
     case 2:
-      return import_client5.IntegrationProvider.GITHUB;
+      return import_client4.IntegrationProvider.GITHUB;
     case 3:
-      return import_client5.IntegrationProvider.AZURE_DEVOPS;
+      return import_client4.IntegrationProvider.AZURE_DEVOPS;
     default:
-      return import_client5.IntegrationProvider.SIMPLE_URL;
+      return import_client4.IntegrationProvider.SIMPLE_URL;
   }
 };
 var importIssueTargets = async (tx, configuration, context, persistProgress) => {
@@ -5711,7 +4726,7 @@ var importIssueTargets = async (tx, configuration, context, persistProgress) => 
         `Issue target ${sourceId} requires a name before it can be created.`
       );
     }
-    const provider = config.provider ? config.provider : config.testmoType ? mapIssueTargetType(config.testmoType) : import_client5.IntegrationProvider.SIMPLE_URL;
+    const provider = config.provider ? config.provider : config.testmoType ? mapIssueTargetType(config.testmoType) : import_client4.IntegrationProvider.SIMPLE_URL;
     const existing = await tx.integration.findFirst({
       where: {
         name,
@@ -5729,8 +4744,8 @@ var importIssueTargets = async (tx, configuration, context, persistProgress) => 
         data: {
           name,
           provider,
-          authType: import_client5.IntegrationAuthType.NONE,
-          status: import_client5.IntegrationStatus.INACTIVE,
+          authType: import_client4.IntegrationAuthType.NONE,
+          status: import_client4.IntegrationStatus.INACTIVE,
           credentials: {},
           // Empty credentials for now
           settings: {
@@ -5763,13 +4778,13 @@ var constructExternalUrl = (provider, baseUrl, externalKey) => {
   }
   const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
   switch (provider) {
-    case import_client5.IntegrationProvider.JIRA:
+    case import_client4.IntegrationProvider.JIRA:
       return `${cleanBaseUrl}/browse/${externalKey}`;
-    case import_client5.IntegrationProvider.GITHUB:
+    case import_client4.IntegrationProvider.GITHUB:
       return `${cleanBaseUrl}/issues/${externalKey}`;
-    case import_client5.IntegrationProvider.AZURE_DEVOPS:
+    case import_client4.IntegrationProvider.AZURE_DEVOPS:
       return `${cleanBaseUrl}/_workitems/edit/${externalKey}`;
-    case import_client5.IntegrationProvider.SIMPLE_URL:
+    case import_client4.IntegrationProvider.SIMPLE_URL:
       if (baseUrl.includes("{issueId}")) {
         return baseUrl.replace("{issueId}", externalKey);
       }
@@ -6201,6 +5216,993 @@ var createProjectIntegrations = async (tx, datasetRows, projectIdMap, integratio
   }
   return summary;
 };
+
+// workers/testmoImport/linkImports.ts
+var import_core = require("@tiptap/core");
+var import_model = require("@tiptap/pm/model");
+var import_starter_kit = __toESM(require("@tiptap/starter-kit"));
+var import_happy_dom = require("happy-dom");
+var TIPTAP_EXTENSIONS = [
+  import_starter_kit.default.configure({
+    dropcursor: false,
+    gapcursor: false,
+    undoRedo: false,
+    trailingNode: false,
+    heading: {
+      levels: [1, 2, 3, 4]
+    }
+  })
+];
+var TIPTAP_SCHEMA = (0, import_core.getSchema)(TIPTAP_EXTENSIONS);
+var sharedHappyDOMWindow = null;
+var sharedDOMParser = null;
+var getSharedHappyDOM = () => {
+  if (!sharedHappyDOMWindow || !sharedDOMParser) {
+    if (sharedHappyDOMWindow) {
+      try {
+        sharedHappyDOMWindow.close();
+      } catch (error) {
+      }
+    }
+    sharedHappyDOMWindow = new import_happy_dom.Window();
+    sharedDOMParser = new sharedHappyDOMWindow.DOMParser();
+  }
+  return { window: sharedHappyDOMWindow, parser: sharedDOMParser };
+};
+var escapeHtml = (value) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+var escapeAttribute = (value) => escapeHtml(value).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+var buildLinkHtml = (name, url, note) => {
+  const safeLabel = escapeHtml(name);
+  const safeUrl = escapeAttribute(url);
+  const noteFragment = note ? ` (${escapeHtml(note)})` : "";
+  return `<p><a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeLabel}</a>${noteFragment}</p>`;
+};
+var convertHtmlToTipTapDoc = (html) => {
+  const { parser: parser2 } = getSharedHappyDOM();
+  if (!parser2) {
+    throw new Error("Failed to initialize DOM parser");
+  }
+  const htmlString = `<!DOCTYPE html><html><body>${html}</body></html>`;
+  const document = parser2.parseFromString(htmlString, "text/html");
+  if (!document?.body) {
+    throw new Error("Failed to parse HTML content for TipTap conversion");
+  }
+  return import_model.DOMParser.fromSchema(TIPTAP_SCHEMA).parse(document.body).toJSON();
+};
+var sanitizeLinkMarks = (node) => {
+  if (Array.isArray(node.marks)) {
+    for (const mark of node.marks) {
+      if (mark?.type === "link" && mark.attrs) {
+        const { href, target } = mark.attrs;
+        mark.attrs = {
+          href,
+          ...target ? { target } : {}
+        };
+      }
+    }
+  }
+  if (Array.isArray(node.content)) {
+    for (const child of node.content) {
+      if (child && typeof child === "object") {
+        sanitizeLinkMarks(child);
+      }
+    }
+  }
+};
+function createTipTapLink(name, url, note) {
+  try {
+    const html = buildLinkHtml(name, url, note);
+    const doc = convertHtmlToTipTapDoc(html);
+    if (doc && Array.isArray(doc.content) && doc.content.length > 0) {
+      for (const node of doc.content) {
+        if (node && typeof node === "object") {
+          sanitizeLinkMarks(node);
+        }
+      }
+      return doc.content[0];
+    }
+  } catch (error) {
+  }
+  const linkContent = [
+    {
+      type: "text",
+      marks: [
+        {
+          type: "link",
+          attrs: {
+            href: url,
+            target: "_blank"
+          }
+        }
+      ],
+      text: name
+    }
+  ];
+  if (note) {
+    linkContent.push({
+      type: "text",
+      text: ` (${note})`
+    });
+  }
+  return {
+    type: "paragraph",
+    content: linkContent
+  };
+}
+function parseExistingDocs(existingDocs) {
+  if (!existingDocs) {
+    return {
+      type: "doc",
+      content: []
+    };
+  }
+  if (typeof existingDocs === "object" && existingDocs.type === "doc") {
+    return existingDocs;
+  }
+  if (typeof existingDocs === "string") {
+    try {
+      const parsed = JSON.parse(existingDocs);
+      if (parsed && typeof parsed === "object" && parsed.type === "doc") {
+        return parsed;
+      }
+    } catch (e) {
+    }
+  }
+  return {
+    type: "doc",
+    content: []
+  };
+}
+function appendLinksToDoc(doc, links) {
+  if (!Array.isArray(doc.content)) {
+    doc.content = [];
+  }
+  for (const link of links) {
+    doc.content.push(link);
+  }
+  return doc;
+}
+var prepareDocsForUpdate = (existingDocs, updatedDocs) => {
+  if (typeof existingDocs === "string") {
+    return JSON.stringify(updatedDocs);
+  }
+  return toInputJsonValue(updatedDocs);
+};
+var importProjectLinks = async (tx, configuration, datasetRows, projectIdMap, context) => {
+  const summary = {
+    entity: "projectLinks",
+    total: 0,
+    created: 0,
+    mapped: 0
+  };
+  const projectLinkRows = datasetRows.get("project_links") ?? [];
+  summary.total = projectLinkRows.length;
+  const linksByProjectId = /* @__PURE__ */ new Map();
+  for (const row of projectLinkRows) {
+    const testmoProjectId = toNumberValue(row.project_id);
+    const name = toStringValue2(row.name);
+    const url = toStringValue2(row.url);
+    const note = toStringValue2(row.note);
+    if (!testmoProjectId || !name || !url) {
+      continue;
+    }
+    const projectId = projectIdMap.get(testmoProjectId);
+    if (!projectId) {
+      continue;
+    }
+    const linkJson = createTipTapLink(name, url, note);
+    if (!linksByProjectId.has(projectId)) {
+      linksByProjectId.set(projectId, []);
+    }
+    linksByProjectId.get(projectId).push(linkJson);
+  }
+  for (const [projectId, links] of linksByProjectId.entries()) {
+    const project = await tx.projects.findUnique({
+      where: { id: projectId },
+      select: { docs: true }
+    });
+    if (!project) {
+      continue;
+    }
+    const doc = parseExistingDocs(project.docs);
+    const updatedDocs = appendLinksToDoc(doc, links);
+    const docsValue = JSON.stringify(updatedDocs);
+    await tx.projects.update({
+      where: { id: projectId },
+      data: { docs: docsValue }
+    });
+    summary.created += links.length;
+  }
+  return summary;
+};
+var importMilestoneLinks = async (tx, configuration, datasetRows, milestoneIdMap, context) => {
+  const summary = {
+    entity: "milestoneLinks",
+    total: 0,
+    created: 0,
+    mapped: 0
+  };
+  const milestoneLinkRows = datasetRows.get("milestone_links") ?? [];
+  summary.total = milestoneLinkRows.length;
+  const linksByMilestoneId = /* @__PURE__ */ new Map();
+  for (const row of milestoneLinkRows) {
+    const testmoMilestoneId = toNumberValue(row.milestone_id);
+    const name = toStringValue2(row.name);
+    const url = toStringValue2(row.url);
+    const note = toStringValue2(row.note);
+    if (!testmoMilestoneId || !name || !url) {
+      continue;
+    }
+    const milestoneId = milestoneIdMap.get(testmoMilestoneId);
+    if (!milestoneId) {
+      continue;
+    }
+    const linkJson = createTipTapLink(name, url, note);
+    if (!linksByMilestoneId.has(milestoneId)) {
+      linksByMilestoneId.set(milestoneId, []);
+    }
+    linksByMilestoneId.get(milestoneId).push(linkJson);
+  }
+  for (const [milestoneId, links] of linksByMilestoneId.entries()) {
+    const milestone = await tx.milestones.findUnique({
+      where: { id: milestoneId },
+      select: { docs: true }
+    });
+    if (!milestone) {
+      continue;
+    }
+    const doc = parseExistingDocs(milestone.docs);
+    const updatedDocs = appendLinksToDoc(doc, links);
+    const docsValue = prepareDocsForUpdate(milestone.docs, updatedDocs);
+    await tx.milestones.update({
+      where: { id: milestoneId },
+      data: { docs: docsValue }
+    });
+    summary.created += links.length;
+  }
+  return summary;
+};
+var importRunLinks = async (tx, configuration, datasetRows, testRunIdMap, context) => {
+  const summary = {
+    entity: "runLinks",
+    total: 0,
+    created: 0,
+    mapped: 0
+  };
+  const runLinkRows = datasetRows.get("run_links") ?? [];
+  summary.total = runLinkRows.length;
+  const linksByRunId = /* @__PURE__ */ new Map();
+  for (const row of runLinkRows) {
+    const testmoRunId = toNumberValue(row.run_id);
+    const name = toStringValue2(row.name);
+    const url = toStringValue2(row.url);
+    const note = toStringValue2(row.note);
+    if (!testmoRunId || !name || !url) {
+      continue;
+    }
+    const runId = testRunIdMap.get(testmoRunId);
+    if (!runId) {
+      continue;
+    }
+    const linkJson = createTipTapLink(name, url, note);
+    if (!linksByRunId.has(runId)) {
+      linksByRunId.set(runId, []);
+    }
+    linksByRunId.get(runId).push(linkJson);
+  }
+  for (const [runId, links] of linksByRunId.entries()) {
+    const run = await tx.testRuns.findUnique({
+      where: { id: runId },
+      select: { docs: true }
+    });
+    if (!run) {
+      continue;
+    }
+    const doc = parseExistingDocs(run.docs);
+    const updatedDocs = appendLinksToDoc(doc, links);
+    const docsValue = prepareDocsForUpdate(run.docs, updatedDocs);
+    await tx.testRuns.update({
+      where: { id: runId },
+      data: { docs: docsValue }
+    });
+    summary.created += links.length;
+  }
+  return summary;
+};
+
+// workers/testmoImport/tagImports.ts
+async function importRepositoryCaseTags(tx, configuration, datasetRows, caseIdMap) {
+  const summary = {
+    entity: "repositoryCaseTags",
+    total: 0,
+    created: 0,
+    mapped: 0
+  };
+  const repositoryCaseTagRows = datasetRows.get("repository_case_tags") ?? [];
+  for (const row of repositoryCaseTagRows) {
+    summary.total += 1;
+    const testmoCaseId = toNumberValue(row.case_id);
+    const testmoTagId = toNumberValue(row.tag_id);
+    if (!testmoCaseId || !testmoTagId) {
+      continue;
+    }
+    const caseId = caseIdMap.get(testmoCaseId);
+    if (!caseId) {
+      continue;
+    }
+    const tagConfig = configuration.tags?.[testmoTagId];
+    if (!tagConfig || tagConfig.action !== "map" || !tagConfig.mappedTo) {
+      continue;
+    }
+    const tagId = tagConfig.mappedTo;
+    const existing = await tx.repositoryCases.findFirst({
+      where: {
+        id: caseId,
+        tags: {
+          some: {
+            id: tagId
+          }
+        }
+      }
+    });
+    if (existing) {
+      summary.mapped += 1;
+      continue;
+    }
+    await tx.repositoryCases.update({
+      where: { id: caseId },
+      data: {
+        tags: {
+          connect: { id: tagId }
+        }
+      }
+    });
+    summary.created += 1;
+  }
+  return summary;
+}
+async function importRunTags(tx, configuration, datasetRows, testRunIdMap) {
+  const summary = {
+    entity: "runTags",
+    total: 0,
+    created: 0,
+    mapped: 0
+  };
+  const runTagRows = datasetRows.get("run_tags") ?? [];
+  for (const row of runTagRows) {
+    summary.total += 1;
+    const testmoRunId = toNumberValue(row.run_id);
+    const testmoTagId = toNumberValue(row.tag_id);
+    if (!testmoRunId || !testmoTagId) {
+      continue;
+    }
+    const runId = testRunIdMap.get(testmoRunId);
+    if (!runId) {
+      continue;
+    }
+    const tagConfig = configuration.tags?.[testmoTagId];
+    if (!tagConfig || tagConfig.action !== "map" || !tagConfig.mappedTo) {
+      continue;
+    }
+    const tagId = tagConfig.mappedTo;
+    const existing = await tx.testRuns.findFirst({
+      where: {
+        id: runId,
+        tags: {
+          some: {
+            id: tagId
+          }
+        }
+      }
+    });
+    if (existing) {
+      summary.mapped += 1;
+      continue;
+    }
+    await tx.testRuns.update({
+      where: { id: runId },
+      data: {
+        tags: {
+          connect: { id: tagId }
+        }
+      }
+    });
+    summary.created += 1;
+  }
+  return summary;
+}
+async function importSessionTags(tx, configuration, datasetRows, sessionIdMap) {
+  const summary = {
+    entity: "sessionTags",
+    total: 0,
+    created: 0,
+    mapped: 0
+  };
+  const sessionTagRows = datasetRows.get("session_tags") ?? [];
+  for (const row of sessionTagRows) {
+    summary.total += 1;
+    const testmoSessionId = toNumberValue(row.session_id);
+    const testmoTagId = toNumberValue(row.tag_id);
+    if (!testmoSessionId || !testmoTagId) {
+      continue;
+    }
+    const sessionId = sessionIdMap.get(testmoSessionId);
+    if (!sessionId) {
+      continue;
+    }
+    const tagConfig = configuration.tags?.[testmoTagId];
+    if (!tagConfig || tagConfig.action !== "map" || !tagConfig.mappedTo) {
+      continue;
+    }
+    const tagId = tagConfig.mappedTo;
+    const existing = await tx.sessions.findFirst({
+      where: {
+        id: sessionId,
+        tags: {
+          some: {
+            id: tagId
+          }
+        }
+      }
+    });
+    if (existing) {
+      summary.mapped += 1;
+      continue;
+    }
+    await tx.sessions.update({
+      where: { id: sessionId },
+      data: {
+        tags: {
+          connect: { id: tagId }
+        }
+      }
+    });
+    summary.created += 1;
+  }
+  return summary;
+}
+
+// workers/testmoImport/templateImports.ts
+var import_client5 = require("@prisma/client");
+var SYSTEM_NAME_REGEX = /^[A-Za-z][A-Za-z0-9_]*$/;
+var generateSystemName = (value) => {
+  const normalized = value.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").replace(/^[^a-z]+/, "");
+  return normalized || "status";
+};
+async function importTemplates(tx, configuration) {
+  const summary = {
+    entity: "templates",
+    total: 0,
+    created: 0,
+    mapped: 0
+  };
+  const templateMap = /* @__PURE__ */ new Map();
+  for (const [key, config] of Object.entries(configuration.templates ?? {})) {
+    const templateKey = Number(key);
+    if (!Number.isFinite(templateKey) || !config) {
+      continue;
+    }
+    summary.total += 1;
+    if (config.action === "map") {
+      if (config.mappedTo === null || config.mappedTo === void 0) {
+        throw new Error(
+          `Template ${templateKey} is configured to map but no target template was provided.`
+        );
+      }
+      const existing2 = await tx.templates.findUnique({
+        where: { id: config.mappedTo }
+      });
+      if (!existing2) {
+        throw new Error(
+          `Template ${config.mappedTo} selected for mapping was not found.`
+        );
+      }
+      config.mappedTo = existing2.id;
+      config.name = config.name ?? existing2.templateName;
+      templateMap.set(existing2.templateName, existing2.id);
+      summary.mapped += 1;
+      continue;
+    }
+    const name = (config.name ?? "").trim();
+    if (!name) {
+      throw new Error(
+        `Template ${templateKey} requires a name before it can be created.`
+      );
+    }
+    const existing = await tx.templates.findFirst({
+      where: {
+        templateName: name,
+        isDeleted: false
+      }
+    });
+    if (existing) {
+      config.action = "map";
+      config.mappedTo = existing.id;
+      config.name = existing.templateName;
+      templateMap.set(existing.templateName, existing.id);
+      summary.mapped += 1;
+      continue;
+    }
+    const created = await tx.templates.create({
+      data: {
+        templateName: name,
+        isEnabled: true,
+        isDefault: false
+      }
+    });
+    config.action = "map";
+    config.mappedTo = created.id;
+    config.name = created.templateName;
+    templateMap.set(created.templateName, created.id);
+    summary.created += 1;
+  }
+  const processedNames = new Set(templateMap.keys());
+  for (const entry of Object.values(configuration.templateFields ?? {})) {
+    if (!entry) {
+      continue;
+    }
+    const rawName = typeof entry.templateName === "string" ? entry.templateName : null;
+    const templateName = rawName?.trim();
+    if (!templateName || processedNames.has(templateName)) {
+      continue;
+    }
+    processedNames.add(templateName);
+    summary.total += 1;
+    const existing = await tx.templates.findFirst({
+      where: { templateName, isDeleted: false }
+    });
+    if (existing) {
+      templateMap.set(templateName, existing.id);
+      summary.mapped += 1;
+      continue;
+    }
+    const created = await tx.templates.create({
+      data: {
+        templateName,
+        isEnabled: true,
+        isDefault: false
+      }
+    });
+    templateMap.set(templateName, created.id);
+    summary.created += 1;
+  }
+  return { summary, templateMap };
+}
+async function importTemplateFields(tx, configuration, templateMap, datasetRows) {
+  const summary = {
+    entity: "templateFields",
+    total: 0,
+    created: 0,
+    mapped: 0,
+    details: {
+      optionsCreated: 0,
+      assignmentsCreated: 0
+    }
+  };
+  const details = summary.details;
+  const ensureFieldTypeExists = async (typeId) => {
+    try {
+      const existing = await tx.caseFieldTypes.findUnique({
+        where: { id: typeId }
+      });
+      if (!existing) {
+        console.error(
+          `[ERROR] Field type ${typeId} referenced by a template field was not found.`
+        );
+        const availableTypes = await tx.caseFieldTypes.findMany({
+          select: { id: true, type: true }
+        });
+        console.error(`[ERROR] Available field types:`, availableTypes);
+        throw new Error(
+          `Field type ${typeId} referenced by a template field was not found. Available types: ${availableTypes.map((t) => `${t.id}:${t.type}`).join(", ")}`
+        );
+      }
+    } catch (error) {
+      console.error(`[ERROR] Failed to check field type ${typeId}:`, error);
+      throw error;
+    }
+  };
+  const toNumberOrNull = (value) => {
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+    return null;
+  };
+  const normalizeOptionConfigs = (input) => {
+    if (!Array.isArray(input)) {
+      return [];
+    }
+    const normalized = [];
+    input.forEach((entry, index) => {
+      if (typeof entry === "string") {
+        const trimmed = entry.trim();
+        if (!trimmed) {
+          return;
+        }
+        normalized.push({
+          name: trimmed,
+          iconId: null,
+          iconColorId: null,
+          isEnabled: true,
+          isDefault: index === 0,
+          order: index
+        });
+        return;
+      }
+      if (!entry || typeof entry !== "object") {
+        return;
+      }
+      const record = entry;
+      const rawName = typeof record.name === "string" ? record.name : typeof record.label === "string" ? record.label : typeof record.value === "string" ? record.value : typeof record.displayName === "string" ? record.displayName : typeof record.display_name === "string" ? record.display_name : null;
+      const name = rawName?.trim();
+      if (!name) {
+        return;
+      }
+      const iconId = toNumberOrNull(
+        record.iconId ?? record.icon_id ?? record.icon ?? record.iconID
+      ) ?? null;
+      const iconColorId = toNumberOrNull(
+        record.iconColorId ?? record.icon_color_id ?? record.colorId ?? record.color_id ?? record.color
+      ) ?? null;
+      const isEnabled = toBooleanValue(
+        record.isEnabled ?? record.enabled ?? record.is_enabled,
+        true
+      );
+      const isDefault = toBooleanValue(
+        record.isDefault ?? record.is_default ?? record.default ?? record.defaultOption,
+        false
+      );
+      const order = toNumberOrNull(
+        record.order ?? record.position ?? record.ordinal ?? record.index ?? record.sort
+      ) ?? index;
+      normalized.push({
+        name,
+        iconId,
+        iconColorId,
+        isEnabled,
+        isDefault,
+        order
+      });
+    });
+    if (normalized.length === 0) {
+      return [];
+    }
+    const sorted = normalized.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    let defaultSeen = false;
+    sorted.forEach((entry) => {
+      if (entry.isDefault) {
+        if (!defaultSeen) {
+          defaultSeen = true;
+        } else {
+          entry.isDefault = false;
+        }
+      }
+    });
+    if (!defaultSeen) {
+      sorted[0].isDefault = true;
+    }
+    return sorted.map((entry, index) => ({
+      name: entry.name,
+      iconId: entry.iconId ?? null,
+      iconColorId: entry.iconColorId ?? null,
+      isEnabled: entry.isEnabled ?? true,
+      isDefault: entry.isDefault ?? false,
+      order: index
+    }));
+  };
+  const templateIdBySourceId = /* @__PURE__ */ new Map();
+  for (const [templateKey, templateConfig] of Object.entries(
+    configuration.templates ?? {}
+  )) {
+    const sourceId = Number(templateKey);
+    if (Number.isFinite(sourceId) && templateConfig && templateConfig.mappedTo !== null && templateConfig.mappedTo !== void 0) {
+      templateIdBySourceId.set(sourceId, templateConfig.mappedTo);
+    }
+  }
+  const fieldIdBySourceId = /* @__PURE__ */ new Map();
+  const fieldTargetTypeBySourceId = /* @__PURE__ */ new Map();
+  const templateSourceNameById = /* @__PURE__ */ new Map();
+  const templateDatasetRows = datasetRows.get("templates") ?? [];
+  for (const row of templateDatasetRows) {
+    const record = row;
+    const sourceId = toNumberValue(record.id);
+    const name = toStringValue2(record.name);
+    if (sourceId !== null && name) {
+      templateSourceNameById.set(sourceId, name);
+    }
+  }
+  const appliedAssignments = /* @__PURE__ */ new Set();
+  const makeAssignmentKey = (fieldId, templateId, targetType) => `${targetType}:${templateId}:${fieldId}`;
+  const resolveTemplateIdForName = async (templateName) => {
+    const trimmed = templateName.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const templateId = templateMap.get(trimmed);
+    if (templateId) {
+      return templateId;
+    }
+    const existing = await tx.templates.findFirst({
+      where: { templateName: trimmed, isDeleted: false }
+    });
+    if (existing) {
+      templateMap.set(existing.templateName, existing.id);
+      return existing.id;
+    }
+    const created = await tx.templates.create({
+      data: {
+        templateName: trimmed,
+        isEnabled: true,
+        isDefault: false
+      }
+    });
+    templateMap.set(created.templateName, created.id);
+    return created.id;
+  };
+  const assignFieldToTemplate = async (fieldId, templateId, targetType, order) => {
+    const assignmentKey = makeAssignmentKey(fieldId, templateId, targetType);
+    if (appliedAssignments.has(assignmentKey)) {
+      return;
+    }
+    try {
+      if (targetType === "case") {
+        await tx.templateCaseAssignment.create({
+          data: {
+            caseFieldId: fieldId,
+            templateId,
+            order: order ?? 0
+          }
+        });
+      } else {
+        await tx.templateResultAssignment.create({
+          data: {
+            resultFieldId: fieldId,
+            templateId,
+            order: order ?? 0
+          }
+        });
+      }
+      appliedAssignments.add(assignmentKey);
+      details.assignmentsCreated += 1;
+    } catch (error) {
+      if (!(error instanceof import_client5.Prisma.PrismaClientKnownRequestError && error.code === "P2002")) {
+        throw error;
+      }
+      appliedAssignments.add(assignmentKey);
+    }
+  };
+  for (const [key, config] of Object.entries(
+    configuration.templateFields ?? {}
+  )) {
+    const fieldId = Number(key);
+    if (!Number.isFinite(fieldId) || !config) {
+      continue;
+    }
+    summary.total += 1;
+    const targetType = config.targetType === "result" ? "result" : "case";
+    config.targetType = targetType;
+    fieldTargetTypeBySourceId.set(fieldId, targetType);
+    const templateName = (config.templateName ?? "").trim();
+    if (config.action === "map") {
+      if (config.mappedTo === null || config.mappedTo === void 0) {
+        throw new Error(
+          `Template field ${fieldId} is configured to map but no target field was provided.`
+        );
+      }
+      if (targetType === "case") {
+        const existing = await tx.caseFields.findUnique({
+          where: { id: config.mappedTo }
+        });
+        if (!existing) {
+          throw new Error(
+            `Case field ${config.mappedTo} selected for mapping was not found.`
+          );
+        }
+      } else {
+        const existing = await tx.resultFields.findUnique({
+          where: { id: config.mappedTo }
+        });
+        if (!existing) {
+          throw new Error(
+            `Result field ${config.mappedTo} selected for mapping was not found.`
+          );
+        }
+      }
+      summary.mapped += 1;
+      fieldIdBySourceId.set(fieldId, config.mappedTo);
+      if (templateName) {
+        const templateId = await resolveTemplateIdForName(templateName);
+        if (templateId) {
+          await assignFieldToTemplate(
+            config.mappedTo,
+            templateId,
+            targetType,
+            config.order ?? 0
+          );
+        }
+      }
+      continue;
+    }
+    const displayName = (config.displayName ?? config.systemName ?? `Field ${fieldId}`).trim();
+    let systemName = (config.systemName ?? "").trim();
+    if (!systemName) {
+      systemName = generateSystemName(displayName);
+    }
+    if (!SYSTEM_NAME_REGEX.test(systemName)) {
+      throw new Error(
+        `Template field "${displayName}" requires a valid system name (letters, numbers, underscore, starting with a letter).`
+      );
+    }
+    const typeId = config.typeId ?? null;
+    if (typeId === null) {
+      throw new Error(
+        `Template field "${displayName}" requires a field type before it can be created.`
+      );
+    }
+    console.log(
+      `[DEBUG] Processing field "${displayName}" (${systemName}) with typeId ${typeId}, action: ${config.action}`
+    );
+    await ensureFieldTypeExists(typeId);
+    if (targetType === "case") {
+      const existing = await tx.caseFields.findFirst({
+        where: {
+          systemName,
+          isDeleted: false
+        }
+      });
+      if (existing) {
+        config.action = "map";
+        config.mappedTo = existing.id;
+        config.systemName = existing.systemName;
+        config.displayName = existing.displayName;
+        summary.mapped += 1;
+        continue;
+      }
+    } else {
+      const existing = await tx.resultFields.findFirst({
+        where: {
+          systemName,
+          isDeleted: false
+        }
+      });
+      if (existing) {
+        config.action = "map";
+        config.mappedTo = existing.id;
+        config.systemName = existing.systemName;
+        config.displayName = existing.displayName;
+        summary.mapped += 1;
+        continue;
+      }
+    }
+    const fieldData = {
+      displayName,
+      systemName,
+      hint: (config.hint ?? "").trim() || null,
+      typeId,
+      isRequired: config.isRequired ?? false,
+      isRestricted: config.isRestricted ?? false,
+      defaultValue: config.defaultValue ?? null,
+      isChecked: config.isChecked ?? null,
+      minValue: toNumberOrNull(config.minValue ?? config.minIntegerValue) ?? null,
+      maxValue: toNumberOrNull(config.maxValue ?? config.maxIntegerValue) ?? null,
+      initialHeight: toNumberOrNull(config.initialHeight) ?? null,
+      isEnabled: true
+    };
+    const createdField = targetType === "case" ? await tx.caseFields.create({ data: fieldData }) : await tx.resultFields.create({ data: fieldData });
+    config.action = "map";
+    config.mappedTo = createdField.id;
+    config.displayName = createdField.displayName;
+    config.systemName = createdField.systemName;
+    config.typeId = createdField.typeId;
+    fieldIdBySourceId.set(fieldId, createdField.id);
+    const dropdownOptionConfigs = normalizeOptionConfigs(
+      config.dropdownOptions ?? []
+    );
+    if (dropdownOptionConfigs.length > 0) {
+      const defaultIcon = await tx.fieldIcon.findFirst({
+        orderBy: { id: "asc" },
+        select: { id: true }
+      });
+      const defaultColor = await tx.color.findFirst({
+        orderBy: { id: "asc" },
+        select: { id: true }
+      });
+      if (!defaultIcon || !defaultColor) {
+        throw new Error(
+          "Default icon or color not found. Please ensure the database is properly seeded with FieldIcon and Color records."
+        );
+      }
+      const createdOptions = [];
+      for (const optionConfig of dropdownOptionConfigs) {
+        const option = await tx.fieldOptions.create({
+          data: {
+            name: optionConfig.name,
+            iconId: optionConfig.iconId ?? defaultIcon.id,
+            iconColorId: optionConfig.iconColorId ?? defaultColor.id,
+            isEnabled: optionConfig.isEnabled ?? true,
+            isDefault: optionConfig.isDefault ?? false,
+            isDeleted: false,
+            order: optionConfig.order ?? 0
+          }
+        });
+        createdOptions.push({
+          id: option.id,
+          order: optionConfig.order ?? 0
+        });
+      }
+      if (targetType === "case") {
+        await tx.caseFieldAssignment.createMany({
+          data: createdOptions.map((option) => ({
+            fieldOptionId: option.id,
+            caseFieldId: createdField.id
+          })),
+          skipDuplicates: true
+        });
+      } else {
+        await tx.resultFieldAssignment.createMany({
+          data: createdOptions.map((option) => ({
+            fieldOptionId: option.id,
+            resultFieldId: createdField.id,
+            order: option.order
+          })),
+          skipDuplicates: true
+        });
+      }
+      details.optionsCreated += createdOptions.length;
+      config.dropdownOptions = dropdownOptionConfigs;
+    } else {
+      config.dropdownOptions = void 0;
+    }
+    if (templateName) {
+      const templateId = await resolveTemplateIdForName(templateName);
+      if (templateId) {
+        await assignFieldToTemplate(
+          createdField.id,
+          templateId,
+          targetType,
+          config.order ?? 0
+        );
+      }
+    }
+    summary.created += 1;
+  }
+  const templateFieldRows = datasetRows.get("template_fields") ?? [];
+  for (const row of templateFieldRows) {
+    const record = row;
+    const templateSourceId = toNumberValue(record.template_id);
+    const fieldSourceId = toNumberValue(record.field_id);
+    if (templateSourceId === null || fieldSourceId === null) {
+      continue;
+    }
+    let templateId = templateIdBySourceId.get(templateSourceId);
+    const fieldId = fieldIdBySourceId.get(fieldSourceId);
+    const targetType = fieldTargetTypeBySourceId.get(fieldSourceId);
+    if (!fieldId || !targetType) {
+      continue;
+    }
+    if (!templateId) {
+      const templateName = templateSourceNameById.get(templateSourceId);
+      if (!templateName) {
+        continue;
+      }
+      const resolvedTemplateId = await resolveTemplateIdForName(templateName);
+      if (!resolvedTemplateId) {
+        continue;
+      }
+      templateIdBySourceId.set(templateSourceId, resolvedTemplateId);
+      templateId = resolvedTemplateId;
+    }
+    await assignFieldToTemplate(fieldId, templateId, targetType, void 0);
+  }
+  templateDatasetRows.length = 0;
+  templateFieldRows.length = 0;
+  templateSourceNameById.clear();
+  templateIdBySourceId.clear();
+  fieldIdBySourceId.clear();
+  fieldTargetTypeBySourceId.clear();
+  appliedAssignments.clear();
+  return summary;
+}
 
 // workers/testmoImportWorker.ts
 var import_meta = {};

@@ -1,47 +1,41 @@
-import React from "react";
-import { useRouter } from "~/lib/navigation";
-import { Button } from "@/components/ui/button";
-import { useTranslations } from "next-intl";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import {
-  CheckCircle,
-  LinkIcon,
-  MoreVertical,
-  Bot,
-  Copy,
-  Pencil,
-  Combine,
-} from "lucide-react";
-import { cn } from "~/utils";
-import DynamicIcon from "@/components/DynamicIcon";
-import TextFromJson from "@/components/TextFromJson";
-import { MemberList } from "@/components/MemberList";
-import { Link } from "~/lib/navigation";
-import { useParams } from "next/navigation";
-import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
+import DynamicIcon from "@/components/DynamicIcon";
+import { ForecastDisplay } from "@/components/ForecastDisplay";
+import { MemberList } from "@/components/MemberList";
+import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { TestRunCasesSummary } from "@/components/TestRunCasesSummary";
-import type { IconName } from "~/types/globals";
+import TextFromJson from "@/components/TextFromJson";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useFindManyTestRunCases } from "~/lib/hooks";
-import { ForecastDisplay } from "@/components/ForecastDisplay";
-import { ApplicationArea, Configurations } from "@prisma/client";
-import CompleteTestRunDialog from "./[runId]/CompleteTestRunDialog";
-import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
+import { ApplicationArea, Configurations } from "@prisma/client";
+import {
+  Bot, CheckCircle, Combine, Copy, LinkIcon,
+  MoreVertical, Pencil
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import React from "react";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useFindManyTestRunCases } from "~/lib/hooks";
+import { Link, useRouter } from "~/lib/navigation";
+import type { IconName } from "~/types/globals";
+import { cn } from "~/utils";
+import { isAutomatedTestRunType } from "~/utils/testResultTypes";
+import CompleteTestRunDialog from "./[runId]/CompleteTestRunDialog";
 
 export interface TestRunItemProps {
   testRun: {

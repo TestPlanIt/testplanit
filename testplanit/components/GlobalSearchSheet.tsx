@@ -1,25 +1,25 @@
 "use client";
 
-import { useRouter } from "~/lib/navigation";
-import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { SearchHelpContent } from "@/components/search/SearchHelpContent";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
-  SheetTitle,
+  SheetTitle
 } from "@/components/ui/sheet";
 import { UnifiedSearch } from "@/components/UnifiedSearch";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { HelpCircle } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useRouter } from "~/lib/navigation";
 import { SearchableEntityType, SearchHit } from "~/types/search";
 import { isAdmin } from "~/utils/permissions";
-import { SearchHelpContent } from "@/components/search/SearchHelpContent";
 
 interface GlobalSearchSheetProps {
   isOpen: boolean;

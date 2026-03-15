@@ -1,33 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import {
-  useCreateRepositoryFolders,
-  useFindFirstRepositoryFolders,
-  useFindManyRepositoryFolders,
-} from "~/lib/hooks";
-import { useQueryClient } from "@tanstack/react-query";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod/v4";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { emptyEditorContent } from "~/app/constants";
-import { FolderPlus, CircleX, Undo2 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -35,11 +8,38 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
+import { CircleX, FolderPlus, Undo2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { HelpPopover } from "@/components/ui/help-popover";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod/v4";
+import { emptyEditorContent } from "~/app/constants";
+import {
+  useCreateRepositoryFolders,
+  useFindFirstRepositoryFolders,
+  useFindManyRepositoryFolders
+} from "~/lib/hooks";
 
 const FormSchema = z.object({
   name: z.string().min(2, {

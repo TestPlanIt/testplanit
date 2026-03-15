@@ -1,17 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import { JSONContent } from "@tiptap/core";
-import { CommentEditor } from "./CommentEditor";
-import { CommentItem } from "./CommentItem";
-import { useTranslations } from "next-intl";
 import { MessageSquare } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 import {
-  createComment,
-  updateComment,
-  deleteComment,
+  createComment, deleteComment, updateComment
 } from "~/app/actions/comments";
 import { Separator } from "~/components/ui/separator";
+import { CommentEditor } from "./CommentEditor";
+import { CommentItem } from "./CommentItem";
 
 interface Comment {
   id: string;

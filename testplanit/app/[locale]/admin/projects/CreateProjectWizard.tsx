@@ -1,126 +1,78 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Prisma, ProjectAccessType, WorkflowScope } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod/v4";
-import { ProjectAccessType, Prisma, WorkflowScope } from "@prisma/client";
-import { optionalImageUrlSchema } from "~/lib/schemas/imageUrl";
 import { toast } from "sonner";
+import { z } from "zod/v4";
 import {
-  useCreateProjects,
-  useFindManyTemplates,
-  useFindManyMilestoneTypes,
-  useFindManyWorkflows,
-  useCreateTemplateProjectAssignment,
-  useCreateMilestoneTypesAssignment,
-  useCreateManyProjectWorkflowAssignment,
-  useFindManyStatus,
-  useCreateManyProjectStatusAssignment,
-  useFindManyUser,
-  useCreateManyProjectAssignment,
-  useCreateRepositories,
-  useFindManyRoles,
-  useFindManyGroups,
-  useUpsertUserProjectPermission,
-  useUpsertGroupProjectPermission,
-  useFindManyIntegration,
-  useFindManyLlmIntegration,
-  useCreateProjectIntegration,
-  useCreateProjectLlmIntegration,
+  useCreateManyProjectAssignment, useCreateManyProjectStatusAssignment, useCreateManyProjectWorkflowAssignment, useCreateMilestoneTypesAssignment, useCreateProjectIntegration,
+  useCreateProjectLlmIntegration, useCreateProjects, useCreateRepositories, useCreateTemplateProjectAssignment, useFindManyGroups, useFindManyIntegration,
+  useFindManyLlmIntegration, useFindManyMilestoneTypes, useFindManyRoles, useFindManyStatus, useFindManyTemplates, useFindManyUser, useFindManyWorkflows, useUpsertGroupProjectPermission, useUpsertUserProjectPermission
 } from "~/lib/hooks";
+import { optionalImageUrlSchema } from "~/lib/schemas/imageUrl";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { HelpPopover } from "@/components/ui/help-popover";
-import UploadProjectIcon from "@/components/UploadProjectIcon";
-import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import StatusDotDisplay from "@/components/StatusDotDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
+import { DatePickerField } from "@/components/forms/DatePickerField";
+import StatusDotDisplay from "@/components/StatusDotDisplay";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from "@/components/ui/form";
+  Card,
+  CardContent, CardDescription, CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
-  DialogContent,
-  DialogFooter,
+  DialogContent, DialogDescription, DialogFooter,
   DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { DatePickerField } from "@/components/forms/DatePickerField";
+import {
+  Form,
+  FormControl, FormDescription, FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectSeparator,
+  SelectItem, SelectSeparator, SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import UploadProjectIcon from "@/components/UploadProjectIcon";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  CheckCircle2,
-  CirclePlus,
-  Workflow,
-  Plug,
-  Users,
-  Boxes,
-  LayoutList,
-  CircleCheckBig,
-  Shield,
-  Building,
-  Bot,
-  ExternalLink,
-  PlayCircle,
-  Compass,
-  ListChecks,
-  Asterisk,
-  Check,
-  Milestone,
-  Star,
-  ScrollText,
+  AlertCircle, Asterisk, Bot, Boxes, Building, Check, CheckCircle2, ChevronLeft,
+  ChevronRight, CircleCheckBig, CirclePlus, Compass, ExternalLink, LayoutList, ListChecks, Milestone, PlayCircle, Plug, ScrollText, Shield, Star, Users, Workflow
 } from "lucide-react";
+import { IconName } from "~/types/globals";
 
 import {
-  ProjectUserPermissions,
-  UserPermissionFormState,
-} from "./ProjectUserPermissions";
-import {
-  ProjectGroupPermissions,
-  GroupPermissionFormState,
+  GroupPermissionFormState, ProjectGroupPermissions
 } from "./ProjectGroupPermissions";
+import {
+  ProjectUserPermissions,
+  UserPermissionFormState
+} from "./ProjectUserPermissions";
 
 enum WizardStep {
   PROJECT_DETAILS = 0,

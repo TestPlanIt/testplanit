@@ -1,7 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  parseMarkdownTestCases,
-  convertMarkdownCasesToImportData,
+  convertMarkdownCasesToImportData, parseMarkdownTestCases
 } from "./markdownTestCaseParser";
 
 describe("parseMarkdownTestCases", () => {

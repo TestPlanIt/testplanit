@@ -2,9 +2,9 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SessionProvider } from "next-auth/react";
-import { ThemeProvider } from "~/components/theme-provider";
-import { useState, useEffect, useMemo, useRef } from "react";
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
+import { ThemeProvider } from "~/components/theme-provider";
 import { SearchStateProvider } from "~/lib/contexts/SearchStateContext";
 const queryClient = new QueryClient({
   defaultOptions: {

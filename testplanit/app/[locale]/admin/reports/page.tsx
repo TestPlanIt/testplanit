@@ -1,18 +1,16 @@
 "use client";
-import React, { useEffect } from "react";
-import { ReportBuilder } from "~/components/reports/ReportBuilder";
-import { useTranslations } from "next-intl";
-import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import { Globe } from "lucide-react";
-import LoadingSpinner from "~/components/LoadingSpinner";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
+  Card, CardContent,
+  CardDescription, CardHeader,
+  CardTitle
 } from "@/components/ui/card";
+import { Globe } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useEffect } from "react";
+import LoadingSpinner from "~/components/LoadingSpinner";
+import { ReportBuilder } from "~/components/reports/ReportBuilder";
+import { useRouter } from "~/lib/navigation";
 
 export default function AdminReportsPage() {
   const tReports = useTranslations("reports.ui");

@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 // Create a minimal test component that just tests the empty state logic
 const EmptyStateComponent = ({ 

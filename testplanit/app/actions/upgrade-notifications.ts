@@ -1,9 +1,9 @@
 "use server";
 
 import { prisma } from "~/lib/prisma";
-import { getServerAuthSession } from "~/server/auth";
 import { getUpgradeNotificationsBetweenVersions } from "~/lib/upgrade-notifications";
 import packageJson from "~/package.json";
+import { getServerAuthSession } from "~/server/auth";
 
 /**
  * Check for upgrade notifications and create a batched notification if needed.

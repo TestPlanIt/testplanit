@@ -1,22 +1,18 @@
 #!/usr/bin/env tsx
 
 import { PrismaClient } from "@prisma/client";
-import {
-  getElasticsearchClient,
-  ENTITY_INDICES,
-  createAllEntityIndices,
-} from "../services/unifiedElasticsearchService";
-import { SearchableEntityType } from "../types/search";
-import {
-  syncProjectCasesToElasticsearch,
-  initializeElasticsearchIndexes,
-} from "../services/repositoryCaseSync";
-import { syncProjectSharedStepsToElasticsearch } from "../services/sharedStepSearch";
-import { syncProjectTestRunsToElasticsearch } from "../services/testRunSearch";
-import { syncProjectSessionsToElasticsearch } from "../services/sessionSearch";
 import { syncProjectIssuesToElasticsearch } from "../services/issueSearch";
 import { syncProjectMilestonesToElasticsearch } from "../services/milestoneSearch";
 import { syncAllProjectsToElasticsearch } from "../services/projectSearch";
+import {
+  initializeElasticsearchIndexes, syncProjectCasesToElasticsearch
+} from "../services/repositoryCaseSync";
+import { syncProjectSessionsToElasticsearch } from "../services/sessionSearch";
+import { syncProjectSharedStepsToElasticsearch } from "../services/sharedStepSearch";
+import { syncProjectTestRunsToElasticsearch } from "../services/testRunSearch";
+import {
+  createAllEntityIndices, ENTITY_INDICES, getElasticsearchClient
+} from "../services/unifiedElasticsearchService";
 
 const prisma = new PrismaClient();
 

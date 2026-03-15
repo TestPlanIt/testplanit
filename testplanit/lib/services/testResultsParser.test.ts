@@ -1,16 +1,10 @@
-import { describe, it, expect } from "vitest";
+import type { ITestCase, ITestResult, ITestSuite } from "test-results-parser";
+import { describe, expect, it } from "vitest";
 import {
-  detectFormat,
-  detectFormatFromFiles,
-  normalizeStatus,
-  extractClassName,
-  isValidFormat,
-  countTotalTestCases,
-  TEST_RESULT_FORMATS,
-  FORMAT_TO_RUN_TYPE,
-  FORMAT_TO_SOURCE,
+  countTotalTestCases, detectFormat,
+  detectFormatFromFiles, extractClassName, FORMAT_TO_RUN_TYPE,
+  FORMAT_TO_SOURCE, isValidFormat, normalizeStatus, TEST_RESULT_FORMATS
 } from "./testResultsParser";
-import type { ITestResult, ITestSuite, ITestCase } from "test-results-parser";
 
 describe("testResultsParser", () => {
   describe("detectFormat", () => {

@@ -2,25 +2,25 @@
  * Hook for generating table columns for drill-down data
  */
 
-import { useMemo } from "react";
-import { useTranslations, useLocale } from "next-intl";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
+import { useLocale, useTranslations } from "next-intl";
+import { useMemo } from "react";
 import type { DrillDownRecord } from "~/lib/types/reportDrillDown";
 import { toHumanReadable } from "~/utils/duration";
-import { format } from "date-fns";
 import { getDateFnsLocale } from "~/utils/locales";
 
 // Component imports
+import { ConfigurationNameDisplay } from "~/components/ConfigurationNameDisplay";
+import { IssuePriorityDisplay } from "~/components/IssuePriorityDisplay";
+import { IssueStatusDisplay } from "~/components/IssueStatusDisplay";
+import { MilestoneIconAndName } from "~/components/MilestoneIconAndName";
+import { SessionNameDisplay } from "~/components/SessionNameDisplay";
 import StatusDotDisplay from "~/components/StatusDotDisplay";
 import { UserNameCell } from "~/components/tables/UserNameCell";
 import { TestCaseNameDisplay } from "~/components/TestCaseNameDisplay";
 import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
-import { ConfigurationNameDisplay } from "~/components/ConfigurationNameDisplay";
-import { MilestoneIconAndName } from "~/components/MilestoneIconAndName";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
-import { SessionNameDisplay } from "~/components/SessionNameDisplay";
-import { IssuePriorityDisplay } from "~/components/IssuePriorityDisplay";
-import { IssueStatusDisplay } from "~/components/IssueStatusDisplay";
 import { Link } from "~/lib/navigation";
 
 interface UseDrillDownColumnsProps {

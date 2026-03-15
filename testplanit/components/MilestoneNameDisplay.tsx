@@ -1,7 +1,6 @@
-import React from "react";
+import DynamicIcon from "@/components/DynamicIcon";
 import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import DynamicIcon from "@/components/DynamicIcon";
 import { IconName } from "~/types/globals";
 
 interface MilestoneNameDisplayProps {

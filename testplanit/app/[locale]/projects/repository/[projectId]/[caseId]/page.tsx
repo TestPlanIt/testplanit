@@ -1,118 +1,84 @@
 "use client";
 
-import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { useRouter } from "~/lib/navigation";
-import { useParams } from "next/navigation";
-import { useRequireAuth } from "~/hooks/useRequireAuth";
-import {
-  useFindManyRepositoryCaseVersions,
-  useFindManyTemplates,
-  useUpdateRepositoryCases,
-  useFindManyWorkflows,
-  useUpdateCaseFieldValues,
-  useCreateAttachments,
-  useUpdateAttachments,
-  useCreateSteps,
-  useUpdateManySteps,
-  useCreateCaseFieldVersionValues,
-  useCreateCaseFieldValues,
-  useDeleteManyCaseFieldValues,
-  useFindManyTags,
-  useFindManyRepositoryFolders,
-  useFindFirstProjects,
-  useFindUniqueProjects,
-  useFindManyJUnitTestSuite,
-  useFindManyJUnitTestStep,
-  useFindManyJUnitAttachment,
-  useFindManyJUnitProperty,
-  useFindManySharedStepGroup,
-} from "~/lib/hooks";
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
-import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller, FormProvider } from "react-hook-form";
-import { z } from "zod/v4";
-import { Attachments, Prisma } from "@prisma/client";
+import BreadcrumbComponent from "@/components/BreadcrumbComponent";
+import { formatSeconds } from "@/components/DurationDisplay";
+import DynamicIcon from "@/components/DynamicIcon";
+import {
+  FolderSelect,
+  transformFolders
+} from "@/components/forms/FolderSelect";
+import LinkedCasesPanel from "@/components/LinkedCasesPanel";
+import { Loading } from "@/components/Loading";
+import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { TemplateNameDisplay } from "@/components/TemplateNameDisplay";
+import TestResultHistory from "@/components/TestResultHistory";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import FieldValueRenderer from "./FieldValueRenderer";
-import { CaseDisplay } from "@/components/tables/CaseDisplay";
-import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import { ExtendedCases } from "../columns";
-import { TemplateNameDisplay } from "@/components/TemplateNameDisplay";
-import { Loading } from "@/components/Loading";
-import { emptyEditorContent } from "~/app/constants";
-import { IconName } from "~/types/globals";
-import { ImperativePanelHandle } from "react-resizable-panels";
+import {
+  FormControl, FormField,
+  FormItem,
+  FormLabel, FormMessage
+} from "@/components/ui/form";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup,
+  ResizablePanelGroup
 } from "@/components/ui/resizable";
-import { Button } from "@/components/ui/button";
 import {
-  ChevronLeft,
-  CircleSlash2,
-  Save,
-  SquarePen,
-  ArrowLeft,
-  LockIcon,
-  Asterisk,
-  AlertCircle,
-  ScrollText,
-} from "lucide-react";
+  Select, SelectContent,
+  SelectGroup,
+  SelectItem, SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { formatSeconds } from "@/components/DurationDisplay";
-import { DeleteCaseModal } from "../DeleteCase";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-} from "@/components/ui/select";
-import DynamicIcon from "@/components/DynamicIcon";
-import parseDuration from "parse-duration";
-import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
-import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
-import BreadcrumbComponent from "@/components/BreadcrumbComponent";
-import { FolderNode } from "../TreeView";
-import TestCaseFormControls from "./TestCaseFormControl";
 import { VersionSelect } from "@/components/VersionSelect";
-import { Link } from "~/lib/navigation";
-import { useTranslations } from "next-intl";
-import TestResultHistory from "@/components/TestResultHistory";
-import { MAX_DURATION } from "~/app/constants";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { ApplicationArea } from "@prisma/client";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
+import { ApplicationArea, Attachments, Prisma } from "@prisma/client";
 import {
-  FolderSelect,
-  transformFolders,
-} from "@/components/forms/FolderSelect";
-import LinkedCasesPanel from "@/components/LinkedCasesPanel";
+  AlertCircle, ArrowLeft, Asterisk, ChevronLeft,
+  CircleSlash2, LockIcon, Save, ScrollText, SquarePen
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import parseDuration from "parse-duration";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Controller, FormProvider, useForm } from "react-hook-form";
+import { ImperativePanelHandle } from "react-resizable-panels";
+import { z } from "zod/v4";
+import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
+import { useRequireAuth } from "~/hooks/useRequireAuth";
+import {
+  useCreateAttachments, useCreateCaseFieldValues, useCreateCaseFieldVersionValues, useCreateSteps, useDeleteManyCaseFieldValues, useFindFirstProjects, useFindManyJUnitAttachment,
+  useFindManyJUnitProperty, useFindManyJUnitTestStep, useFindManyJUnitTestSuite, useFindManyRepositoryCaseVersions, useFindManyRepositoryFolders, useFindManySharedStepGroup, useFindManyTags, useFindManyTemplates, useFindManyWorkflows, useFindUniqueProjects, useUpdateAttachments, useUpdateCaseFieldValues, useUpdateManySteps, useUpdateRepositoryCases
+} from "~/lib/hooks";
+import { Link, useRouter } from "~/lib/navigation";
+import { IconName } from "~/types/globals";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import { ExtendedCases } from "../columns";
+import { DeleteCaseModal } from "../DeleteCase";
 import { QuickScriptModal } from "../QuickScriptModal";
+import { FolderNode } from "../TreeView";
+import FieldValueRenderer from "./FieldValueRenderer";
 import { StepsDisplay } from "./StepsDisplay";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import TestCaseFormControls from "./TestCaseFormControl";
 
 // Type Definitions (ensure these are present and correct)
 interface SharedStepItemDetail {

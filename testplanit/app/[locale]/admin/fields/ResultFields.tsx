@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import { useFindManyResultFields, useUpdateResultFields } from "~/lib/hooks";
-import { DataTable } from "@/components/tables/DataTable";
-import { getColumns, ExtendedResultFields } from "./resultFieldColumns";
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { AddResultFieldModal } from "./AddResultField";
+import { DataTable } from "@/components/tables/DataTable";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SquareCheck } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFindManyResultFields, useUpdateResultFields } from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import { AddResultFieldModal } from "./AddResultField";
+import { ExtendedResultFields, getColumns } from "./resultFieldColumns";
 
 export default function ResultFields() {
   const { data: session, status } = useSession();

@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useCallback } from "react";
 import * as d3 from "d3";
+import React, { useCallback, useEffect, useRef } from "react";
 
 // Type for the raw tag data input
 type TagData = {

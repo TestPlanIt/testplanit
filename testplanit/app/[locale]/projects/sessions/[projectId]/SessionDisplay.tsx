@@ -1,36 +1,23 @@
-import React, { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useTheme } from "next-themes";
-import {
-  Sessions,
-  Templates,
-  Configurations,
-  Workflows,
-  User,
-  Color,
-  FieldIcon,
-} from "@prisma/client";
-import { useFindManyColor } from "~/lib/hooks";
-import { Button } from "@/components/ui/button";
-import { CirclePlus } from "lucide-react";
-import SessionItem from "./SessionItem";
-import DynamicIcon from "@/components/DynamicIcon";
-import { sortMilestones } from "~/utils/milestoneUtils";
-import {
-  getStatus,
-  getCondition,
-  getStatusStyle,
-  createColorMap,
-  ColorMap,
-} from "~/utils/milestoneUtils";
-import { Badge } from "@/components/ui/badge";
-import { Loading } from "@/components/Loading";
-import { AddSessionModal } from "./AddSessionModal";
-import { CompleteSessionDialog } from "./[sessionId]/CompleteSessionDialog";
-import { MilestonesWithTypes } from "~/utils/milestoneUtils";
-import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
 import { DateTextDisplay } from "@/components/DateTextDisplay";
+import DynamicIcon from "@/components/DynamicIcon";
+import { Loading } from "@/components/Loading";
+import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Color, Configurations, FieldIcon, Sessions,
+  Templates, User, Workflows
+} from "@prisma/client";
+import { CirclePlus } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
+import React, { useEffect, useState } from "react";
+import { useFindManyColor } from "~/lib/hooks";
+import { ColorMap, createColorMap, getCondition, getStatus, getStatusStyle, MilestonesWithTypes, sortMilestones } from "~/utils/milestoneUtils";
+import { AddSessionModal } from "./AddSessionModal";
+import SessionItem from "./SessionItem";
+import { CompleteSessionDialog } from "./[sessionId]/CompleteSessionDialog";
 
 export type SessionsWithDetails = Sessions & {
   template: Templates;

@@ -1,25 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "~/lib/navigation";
-import { useTranslations } from "next-intl";
-import { Boxes, ExternalLink, ChevronDown } from "lucide-react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
-  CommandItem,
+  CommandItem
 } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { cn } from "~/utils";
+import { Boxes, ChevronDown, ExternalLink } from "lucide-react";
+import { useTranslations } from "next-intl";
+import Image from "next/image";
+import { useState } from "react";
 import { useFindManyProjects } from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import { cn } from "~/utils";
 
 export const ProjectQuickSelector = () => {
   const router = useRouter();

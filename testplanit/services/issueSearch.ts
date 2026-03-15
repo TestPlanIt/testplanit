@@ -1,11 +1,11 @@
-import {
-  getElasticsearchClient,
-  getEntityIndexName,
-} from "./unifiedElasticsearchService";
-import { SearchableEntityType } from "~/types/search";
 import type { Issue, PrismaClient } from "@prisma/client";
 import { prisma as defaultPrisma } from "~/lib/prismaBase";
+import { SearchableEntityType } from "~/types/search";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
+import {
+  getElasticsearchClient,
+  getEntityIndexName
+} from "./unifiedElasticsearchService";
 
 /**
  * Type for issue with all required relations for indexing

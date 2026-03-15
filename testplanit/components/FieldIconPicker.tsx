@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
+import { ColorPicker } from "@/components/ColorPicker";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
-  SelectTrigger,
+  SelectTrigger
 } from "@/components/ui/select";
-import { useFindManyFieldIcon, useFindManyColor } from "~/lib/hooks";
+import { Ellipsis } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { useFindManyColor, useFindManyFieldIcon } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import DynamicIcon from "./DynamicIcon";
-import { Input } from "@/components/ui/input";
-import { ColorPicker } from "@/components/ColorPicker";
-import { Ellipsis } from "lucide-react";
 
 interface FieldIconPickerProps {
   onIconSelect: (iconId: number) => void;

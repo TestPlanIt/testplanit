@@ -1,17 +1,17 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { Configurations } from "@prisma/client";
-import { useTranslations } from "next-intl";
-import { EditConfigurationModal } from "./EditConfig";
-import { DeleteConfigurationModal } from "./DeleteConfig";
-import { CircleCheckBig, CircleSlash2, Component } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Configurations } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
+import { CircleCheckBig, CircleSlash2, Component } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { DeleteConfigurationModal } from "./DeleteConfig";
+import { EditConfigurationModal } from "./EditConfig";
 
 export type ConfigWithVariants = Configurations & {
   variants: {

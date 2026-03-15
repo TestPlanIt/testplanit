@@ -1,21 +1,19 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "~/lib/navigation";
 
-import { useFindManyStatus, useUpdateStatus } from "~/lib/hooks";
-import { DataTable } from "@/components/tables/DataTable";
-import { getColumns } from "./columns";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
+import { DataTable } from "@/components/tables/DataTable";
+import { useFindManyStatus, useUpdateStatus } from "~/lib/hooks";
+import { getColumns } from "./columns";
 
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
+  Card, CardContent,
+  CardDescription, CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { AddStatusModal } from "./AddStatus";
 

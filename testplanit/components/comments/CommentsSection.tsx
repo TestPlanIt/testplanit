@@ -1,13 +1,13 @@
 "use client";
 
-import { CommentList } from "./CommentList";
-import { getCommentsForEntity } from "~/app/actions/comments";
-import { useEffect, useState } from "react";
-import { Skeleton } from "~/components/ui/skeleton";
-import { Alert, AlertDescription } from "~/components/ui/alert";
+import { JSONContent } from "@tiptap/core";
 import { AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { JSONContent } from "@tiptap/core";
+import { useEffect, useState } from "react";
+import { getCommentsForEntity } from "~/app/actions/comments";
+import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Skeleton } from "~/components/ui/skeleton";
+import { CommentList } from "./CommentList";
 
 interface Comment {
   id: string;

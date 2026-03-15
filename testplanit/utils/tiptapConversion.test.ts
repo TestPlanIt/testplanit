@@ -1,11 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  convertHtmlToTipTapJSON,
-  convertTextToTipTapJSON,
-  convertMarkdownToTipTapJSON,
-  ensureTipTapJSON,
+  convertHtmlToTipTapJSON, convertMarkdownToTipTapJSON, convertTextToTipTapJSON, ensureTipTapJSON,
   isLikelyMarkdown,
-  serializeTipTapJSON,
+  serializeTipTapJSON
 } from "./tiptapConversion";
 
 describe("convertTextToTipTapJSON", () => {

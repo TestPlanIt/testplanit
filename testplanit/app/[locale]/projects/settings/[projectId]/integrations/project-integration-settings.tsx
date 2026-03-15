@@ -1,31 +1,31 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "next-intl";
-import { ProjectIntegration, Integration } from "@prisma/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Integration, ProjectIntegration } from "@prisma/client";
+import { AlertCircle, Loader2, RefreshCw, Save } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Save, RefreshCw, AlertCircle } from "lucide-react";
-import { useRouter } from "~/lib/navigation";
-import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { HelpPopover } from "@/components/ui/help-popover";
 import { useUpdateProjectIntegration } from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
 
 interface ProjectIntegrationSettingsProps {
   projectIntegration: ProjectIntegration;

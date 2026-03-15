@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerAuthSession } from "~/server/auth";
-import { authenticateApiToken } from "~/lib/api-token-auth";
+import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
 import { prisma } from "@/lib/prisma";
 import { getElasticsearchReindexQueue } from "@/lib/queues";
-import { isMultiTenantMode, getCurrentTenantId } from "@/lib/multiTenantPrisma";
+import { NextRequest, NextResponse } from "next/server";
+import { authenticateApiToken } from "~/lib/api-token-auth";
+import { getServerAuthSession } from "~/server/auth";
 
 // Helper to check admin authentication (session or API token)
 async function checkAdminAuth(request: NextRequest): Promise<{ error?: NextResponse; userId?: string }> {

@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,14 +8,16 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { Loader2, Trash2 } from "lucide-react";
-import { useUpdatePromptConfig } from "~/lib/hooks/prompt-config";
-import { useUpdateManyProjects } from "~/lib/hooks";
 import type { PromptConfig } from "@prisma/client";
+import { Loader2, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useUpdateManyProjects } from "~/lib/hooks";
+import { useUpdatePromptConfig } from "~/lib/hooks/prompt-config";
 
 interface DeletePromptConfigProps {
   config: PromptConfig;

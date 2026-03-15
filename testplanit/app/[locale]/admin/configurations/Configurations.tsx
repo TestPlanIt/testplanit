@@ -1,21 +1,21 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useRouter } from "~/lib/navigation";
-import { useTranslations } from "next-intl";
-import { usePagination } from "~/lib/contexts/PaginationContext";
-import {
-  useFindManyConfigurations,
-  useUpdateConfigurations,
-} from "~/lib/hooks";
-import { DataTable } from "@/components/tables/DataTable";
-import { getColumns, ConfigWithVariants } from "./configColumns";
 import { useDebounce } from "@/components/Debounce";
+import { CustomColumnMeta } from "@/components/tables/ColumnSelection";
+import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRequireAuth } from "~/hooks/useRequireAuth";
+import { usePagination } from "~/lib/contexts/PaginationContext";
+import {
+  useFindManyConfigurations,
+  useUpdateConfigurations
+} from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
 import AddConfigurationWizard from "./AddConfigurationWizard";
-import { CustomColumnMeta } from "@/components/tables/ColumnSelection";
+import { ConfigWithVariants, getColumns } from "./configColumns";
 
 type PageSizeOption = number | "All";
 

@@ -1,9 +1,9 @@
 "use client";
-import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
-import { toHumanReadable } from "~/utils/duration";
+import { useLocale, useTranslations } from "next-intl";
+import React, { useEffect, useRef } from "react";
 import useResponsiveSVG from "~/hooks/useResponsiveSVG";
-import { useTranslations, useLocale } from "next-intl";
+import { toHumanReadable } from "~/utils/duration";
 
 export interface SunburstHierarchyNode {
   name: string;

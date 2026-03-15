@@ -1,35 +1,32 @@
-import { useState, useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
-import { useParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  useFindFirstRepositoryFolders,
-  useFindFirstRepositoryCases,
-  useFindFirstTemplates,
-  useFindManyWorkflows,
-  useCreateRepositoryCases,
-  useCreateRepositoryCaseVersions,
-} from "~/lib/hooks";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
-import { z } from "zod/v4";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { PlusSquare } from "lucide-react";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod/v4";
+import {
+  useCreateRepositoryCases,
+  useCreateRepositoryCaseVersions, useFindFirstRepositoryCases, useFindFirstRepositoryFolders, useFindFirstTemplates,
+  useFindManyWorkflows
+} from "~/lib/hooks";
+import { IconName } from "~/types/globals";
 
 const FormSchema = z.object({
   name: z.string().min(2, {

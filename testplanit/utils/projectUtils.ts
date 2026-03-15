@@ -1,10 +1,7 @@
-import {
-  Prisma,
-  Projects,
-  User,
-  MilestoneTypesAssignment,
-} from "@prisma/client";
 import { MilestonesWithTypes } from "@/components/tables/MilestoneListDisplay";
+import {
+  MilestoneTypesAssignment, Prisma, User
+} from "@prisma/client";
 
 // Define the expected input type based on the Prisma query includes
 // Make this more comprehensive based on admin/projects/page.tsx includes

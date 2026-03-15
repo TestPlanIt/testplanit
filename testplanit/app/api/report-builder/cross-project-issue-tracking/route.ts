@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
+import { handleReportGET, handleReportPOST } from "~/utils/reportApiUtils";
 import {
   createIssueTrackingDimensionRegistry,
-  createIssueTrackingMetricRegistry,
+  createIssueTrackingMetricRegistry
 } from "~/utils/reportUtils";
-import { handleReportGET, handleReportPOST } from "~/utils/reportApiUtils";
 
 const config = {
   reportType: "cross-project-issue-tracking",

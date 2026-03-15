@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { NextRequest, NextResponse } from "next/server";
+import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
+import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
-import { prisma } from "~/lib/prisma";
-import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
 
 export type BatchTestRunSummaryResponse = {
   summaries: Record<number, TestRunSummaryData>;

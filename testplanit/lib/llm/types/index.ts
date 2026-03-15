@@ -4,9 +4,7 @@
 
 // Import all types from Prisma - it generates them for us!
 import type {
-  LlmIntegration as Integration,
-  LlmProviderConfig,
-  LlmProvider
+  LlmIntegration as Integration, LlmProvider, LlmProviderConfig
 } from "@prisma/client";
 
 // Re-export the Prisma types

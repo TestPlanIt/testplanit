@@ -1,8 +1,8 @@
 "use server";
 
-import { db } from "~/server/db";
-import nodemailer from "nodemailer";
 import { randomBytes } from "crypto";
+import nodemailer from "nodemailer";
+import { db } from "~/server/db";
 
 export const generateEmailVerificationToken = async () => {
   return randomBytes(32).toString("hex");

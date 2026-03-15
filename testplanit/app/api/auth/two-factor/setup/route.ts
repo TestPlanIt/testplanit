@@ -1,12 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "~/lib/prisma";
 import {
-  generateTOTPSecret,
-  generateQRCodeDataURL,
-  encryptSecret,
+  encryptSecret, generateQRCodeDataURL, generateTOTPSecret
 } from "~/lib/two-factor";
+import { authOptions } from "~/server/auth";
 
 /**
  * GET /api/auth/two-factor/setup

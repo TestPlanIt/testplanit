@@ -1,45 +1,40 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useTranslations } from "next-intl";
-import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import {
-  useFindUniqueAppConfig,
-  useCreateAppConfig,
-  useUpdateAppConfig,
-} from "~/lib/hooks";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
-} from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner"; // cspell:ignore sonner
-import { NotificationMode } from "@prisma/client";
 import { Loading } from "@/components/Loading";
-import { Input } from "@/components/ui/input";
-import { Bell, Megaphone, Send } from "lucide-react";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { emptyEditorContent } from "~/app/constants";
-import { extractTextFromNode } from "~/utils/extractTextFromJson";
-import {
-  createSystemNotification,
-  getSystemNotificationHistory,
-} from "~/app/actions/admin-system-notifications";
 import { DataTable } from "@/components/tables/DataTable";
-import { getColumns, NotificationHistoryItem } from "./columns";
-import { Separator } from "@/components/ui/separator";
-import {
-  usePagination,
-  PaginationProvider,
-} from "~/lib/contexts/PaginationContext";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Button } from "@/components/ui/button";
+import {
+  Card, CardContent,
+  CardDescription, CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
+import { NotificationMode } from "@prisma/client";
+import { Bell, Megaphone, Send } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner"; // cspell:ignore sonner
+import {
+  createSystemNotification,
+  getSystemNotificationHistory
+} from "~/app/actions/admin-system-notifications";
+import { emptyEditorContent } from "~/app/constants";
+import {
+  PaginationProvider, usePagination
+} from "~/lib/contexts/PaginationContext";
+import {
+  useCreateAppConfig, useFindUniqueAppConfig, useUpdateAppConfig
+} from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import { extractTextFromNode } from "~/utils/extractTextFromJson";
+import { getColumns, NotificationHistoryItem } from "./columns";
 
 export default function NotificationSettingsPage() {
   return (

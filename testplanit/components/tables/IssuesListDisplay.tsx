@@ -1,12 +1,12 @@
-import React from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { IssuesDisplay } from "./IssuesDisplay"; // Assuming IssuesDisplay is in the same folder or adjust path
 import { Bug } from "lucide-react";
+import React from "react";
+import { IssuesDisplay } from "./IssuesDisplay"; // Assuming IssuesDisplay is in the same folder or adjust path
 
 // Define the expected structure for an issue object
 interface Issue {

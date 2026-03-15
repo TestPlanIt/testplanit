@@ -1,94 +1,47 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import styles from "~/styles/TipTapEditor.module.css";
 import { Button } from "@/components/ui/button";
-import { StarterKit } from "@tiptap/starter-kit";
-import { Underline } from "@tiptap/extension-underline";
 import { Color } from "@tiptap/extension-color";
-import { TextStyle } from "@tiptap/extension-text-style";
-import { Link } from "@tiptap/extension-link";
 import { Emoji, EmojiItem, gitHubEmojis } from "@tiptap/extension-emoji";
-import { Video } from "./video";
 import { FileHandler } from "@tiptap/extension-file-handler";
-import { ContentItemMenu } from "./menus/ContentItemMenu";
-import {
-  Table,
-  TableRow,
-  TableCell,
-  TableHeader,
-} from "~/app/extensions/Table";
-import { findTable } from "~/app/extensions/Table/utils";
-import { TableColumnMenu, TableRowMenu } from "~/app/extensions/Table/menus";
 import Focus from "@tiptap/extension-focus";
+import { Link } from "@tiptap/extension-link";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Underline } from "@tiptap/extension-underline";
+import { EditorContent, useEditor } from "@tiptap/react";
+import { StarterKit } from "@tiptap/starter-kit";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Table, TableCell,
+  TableHeader, TableRow
+} from "~/app/extensions/Table";
+import { TableColumnMenu, TableRowMenu } from "~/app/extensions/Table/menus";
+import { findTable } from "~/app/extensions/Table/utils";
+import styles from "~/styles/TipTapEditor.module.css";
+import { ContentItemMenu } from "./menus/ContentItemMenu";
+import { Video } from "./video";
 // import { Image } from "@tiptap/extension-image";
 // import ImageResize from "tiptap-extension-resize-image";
-import { ImageWithResize } from "./ImageWithResize";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { Markdown } from "@tiptap/markdown";
 import { Slice } from "@tiptap/pm/model";
+import { ImageWithResize } from "./ImageWithResize";
 // Import browser-compatible generateJSON from core
-import { generateJSON } from "@tiptap/core";
 import {
   convertMarkdownToTipTapJSON,
-  isLikelyMarkdown,
+  isLikelyMarkdown
 } from "~/utils/tiptapConversion";
 
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-
 import {
-  Bold,
-  Italic,
-  Underline as UnderlineIcon,
-  StrikethroughIcon,
-  Heading1,
-  Heading2,
-  List,
-  ListOrdered,
-  LinkIcon,
-  QuoteIcon,
-  Code as CodeIcon,
-  Code2 as CodeBlockIcon,
-  Trash2,
-  Upload,
-  Undo2,
-  Redo2,
-  Smile,
-  Check,
-  Pilcrow,
-  Heading3,
-  Wand2,
-  Loader2,
-  Table2,
-  Rows3,
-  Columns3,
-  BetweenVerticalStart,
-  BetweenVerticalEnd,
-  BetweenHorizontalStart,
-  BetweenHorizontalEnd,
-  PanelTop,
-} from "lucide-react";
-import LoadingSpinnerAlert from "../LoadingSpinnerAlert";
-import { Separator } from "../ui/separator";
-import { cn } from "~/utils";
-import { useTranslations } from "next-intl";
-import { emptyEditorContent } from "~/app/constants";
-import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
-import { useFindManyProjectLlmIntegration } from "~/lib/hooks/project-llm-integration";
-import { tiptapToHtml } from "~/utils/tiptapToHtml";
+  Popover, PopoverContent, PopoverTrigger
+} from "@/components/ui/popover";
+
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  DialogDescription, DialogFooter, DialogHeader,
+  DialogTitle
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -98,8 +51,22 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import {
+  BetweenHorizontalEnd, BetweenHorizontalStart, BetweenVerticalEnd, BetweenVerticalStart, Bold, Check, Code as CodeIcon,
+  Code2 as CodeBlockIcon, Columns3, Heading1,
+  Heading2, Heading3, Italic, LinkIcon, List,
+  ListOrdered, Loader2, PanelTop, Pilcrow, QuoteIcon, Redo2, Rows3, Smile, StrikethroughIcon, Table2, Trash2, Underline as UnderlineIcon, Undo2, Upload, Wand2
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+import { emptyEditorContent } from "~/app/constants";
+import { useFindManyProjectLlmIntegration } from "~/lib/hooks/project-llm-integration";
+import { cn } from "~/utils";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { tiptapToHtml } from "~/utils/tiptapToHtml";
+import LoadingSpinnerAlert from "../LoadingSpinnerAlert";
+import { Separator } from "../ui/separator";
 
 interface TipTapEditorProps {
   content: object;

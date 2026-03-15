@@ -1,14 +1,14 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { Templates } from "@prisma/client";
-import { Switch } from "@/components/ui/switch";
-import { EditTemplateModal } from "./EditTemplate";
-import { DeleteTemplateModal } from "./DeleteTemplate";
 import { CaseFieldListDisplay } from "@/components/tables/CaseFieldListDisplay";
-import { ResultFieldListDisplay } from "@/components/tables/ResultFieldListDisplay";
 import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
-import { useTranslations } from "next-intl";
+import { ResultFieldListDisplay } from "@/components/tables/ResultFieldListDisplay";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Templates } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { DeleteTemplateModal } from "./DeleteTemplate";
+import { EditTemplateModal } from "./EditTemplate";
 
 export interface ExtendedTemplates extends Templates {
   projects: {

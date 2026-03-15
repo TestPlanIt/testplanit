@@ -1,11 +1,9 @@
-import { parseISO, isBefore, isAfter } from "date-fns";
 import {
-  Milestones,
   Color,
   ColorFamily,
-  FieldIcon,
-  MilestoneTypes,
+  FieldIcon, Milestones, MilestoneTypes
 } from "@prisma/client";
+import { isAfter, isBefore, parseISO } from "date-fns";
 
 type MilestoneTypesWithIcon = MilestoneTypes & {
   icon: FieldIcon | null;

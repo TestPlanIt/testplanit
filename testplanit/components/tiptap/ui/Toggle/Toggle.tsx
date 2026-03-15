@@ -1,5 +1,5 @@
-import { cn } from "~/utils";
 import { useCallback } from "react";
+import { cn } from "~/utils";
 
 export type ToggleProps = {
   active?: boolean;

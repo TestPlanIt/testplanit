@@ -9,8 +9,7 @@
  * filter to Preconditions (Text) view would show "Filter active: 1" incorrectly.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 /**
  * Mock the handleViewChange function behavior since we're testing the logic,

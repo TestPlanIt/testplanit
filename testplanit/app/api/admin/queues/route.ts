@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerAuthSession } from "~/server/auth";
-import { authenticateApiToken } from "~/lib/api-token-auth";
+import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
 import { prisma } from "@/lib/prisma";
 import { getAllQueues } from "@/lib/queues";
-import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
+import { NextRequest, NextResponse } from "next/server";
+import { authenticateApiToken } from "~/lib/api-token-auth";
+import { getServerAuthSession } from "~/server/auth";
 
 // GET: Get all queues with their stats
 export async function GET(request: NextRequest) {

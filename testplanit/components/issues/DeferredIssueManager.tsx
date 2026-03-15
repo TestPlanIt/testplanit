@@ -1,18 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, Bug } from "lucide-react";
-import { SearchIssuesDialog } from "./search-issues-dialog";
-import {
-  useUpsertIssue,
-  useFindManyIssue,
-  useFindManyProjectIntegration,
-} from "~/lib/hooks";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Bug, Plus, X } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  useFindManyIssue,
+  useFindManyProjectIntegration, useUpsertIssue
+} from "~/lib/hooks";
+import { SearchIssuesDialog } from "./search-issues-dialog";
 
 interface DeferredIssueManagerProps {
   projectId: number;

@@ -1,39 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  CustomFieldFilter,
-  CustomFieldOperator,
-  SearchableEntityType,
-} from "~/types/search";
-import {
-  useFindManyCaseFields,
-  useFindManyCaseFieldTypes,
-  useFindManyFieldOptions,
-} from "~/lib/hooks";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Calendar } from "@/components/ui/calendar";
-import { Switch } from "@/components/ui/switch";
-import { cn } from "~/utils";
-import { format } from "date-fns";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon, X, Plus } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { format } from "date-fns";
+import { CalendarIcon, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import {
+  useFindManyCaseFields,
+  useFindManyCaseFieldTypes
+} from "~/lib/hooks";
+import {
+  CustomFieldFilter,
+  CustomFieldOperator,
+  SearchableEntityType
+} from "~/types/search";
+import { cn } from "~/utils";
 
 // Define custom field operators as constants
 const CustomFieldOperators = {

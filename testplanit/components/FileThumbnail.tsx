@@ -1,12 +1,12 @@
-import React from "react";
-import { Attachments } from "@prisma/client";
-import Image from "next/image";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import { Attachments } from "@prisma/client";
+import Image from "next/image";
+import React from "react";
 
 interface FileThumbnailProps {
   attachment: Attachments;

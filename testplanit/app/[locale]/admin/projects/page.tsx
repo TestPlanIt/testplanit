@@ -1,58 +1,47 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
 import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  usePagination,
-  PaginationProvider,
-  defaultPageSizeOptions,
+  defaultPageSizeOptions, PaginationProvider, usePagination
 } from "~/lib/contexts/PaginationContext";
+import { useRouter } from "~/lib/navigation";
 
-import { useFindManyProjects, useFindManyUser, useUpdateProjects } from "~/lib/hooks";
-import { DataTable } from "@/components/tables/DataTable";
-import { ExtendedProjects, getColumns } from "./columns";
 import { useDebounce } from "@/components/Debounce";
 import {
   ColumnSelection,
-  CustomColumnDef,
+  CustomColumnDef
 } from "@/components/tables/ColumnSelection";
+import { DataTable } from "@/components/tables/DataTable";
+import { useFindManyProjects, useFindManyUser, useUpdateProjects } from "~/lib/hooks";
+import { ExtendedProjects, getColumns } from "./columns";
 
-import { Filter } from "@/components/tables/Filter";
-import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { PaginationComponent } from "@/components/tables/Pagination";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { EditProjectModal } from "./EditProject";
 import { CreateProjectWizard } from "@/admin/projects/CreateProjectWizard";
+import { Filter } from "@/components/tables/Filter";
+import { PaginationComponent } from "@/components/tables/Pagination";
+import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EditProjectModal } from "./EditProject";
 
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogContent,
-  AlertDialogTitle,
-  AlertDialogDescription,
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 
-import { z } from "zod/v4";
-import { useForm, SubmitHandler, Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarDays, CirclePlus } from "lucide-react";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { Prisma } from "@prisma/client";
 import {
-  processProjectsWithEffectiveMembers,
-  ProcessedProject,
+  Popover, PopoverContent, PopoverTrigger
+} from "@/components/ui/popover";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { CalendarDays, CirclePlus } from "lucide-react";
+import { Resolver, SubmitHandler, useForm } from "react-hook-form";
+import { z } from "zod/v4";
+import {
+  ProcessedProject, processProjectsWithEffectiveMembers
 } from "~/utils/projectUtils";
 
 type PageSizeOption = number | "All";

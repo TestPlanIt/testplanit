@@ -1,19 +1,19 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { User } from "@prisma/client";
-import { useTranslations } from "next-intl";
-import { UserNameCell } from "@/components/tables/UserNameCell";
+import { DateFormatter } from "@/components/DateFormatter";
 import { EmailCell } from "@/components/EmailDisplay";
 import { AccessLevelDisplay } from "@/components/tables/AccessLevelDisplay";
-import { UserProjectsDisplay } from "@/components/tables/UserProjectsDisplay";
 import { GroupListDisplay } from "@/components/tables/GroupListDisplay";
-import { DateFormatter } from "@/components/DateFormatter";
-import { Switch } from "@/components/ui/switch";
-import { EditUserModal } from "./EditUser";
-import { DeleteUserModal } from "./DeleteUser";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
 import { RoleNameCell } from "@/components/tables/RoleNameCell";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import { UserProjectsDisplay } from "@/components/tables/UserProjectsDisplay";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { User } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
+import { Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { LastActiveDisplay } from "~/components/LastActiveDisplay";
+import { DeleteUserModal } from "./DeleteUser";
+import { EditUserModal } from "./EditUser";
 export interface ExtendedUser extends User {
   createdBy: {
     name: string;

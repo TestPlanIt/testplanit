@@ -1,5 +1,5 @@
-import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { NextRequest } from "next/server";
 
 // Note: Project health uses custom milestone and issue-based logic
 // This doesn't fit the existing shared patterns but could be a candidate

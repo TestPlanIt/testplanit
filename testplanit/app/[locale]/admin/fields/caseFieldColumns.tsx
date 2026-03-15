@@ -1,10 +1,10 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { CaseFields, FieldIcon, FieldOptions, Color } from "@prisma/client";
-import { Switch } from "@/components/ui/switch";
-import { EditCaseFieldModal } from "./EditCaseField";
-import { DeleteCaseFieldModal } from "./DeleteCaseField";
 import { TemplateListDisplay } from "@/components/tables/TemplateListDisplay";
+import { Switch } from "@/components/ui/switch";
+import { CaseFields, Color, FieldIcon, FieldOptions } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
+import { DeleteCaseFieldModal } from "./DeleteCaseField";
+import { EditCaseFieldModal } from "./EditCaseField";
 
 interface ExtendedFieldOptions extends FieldOptions {
   icon?: FieldIcon;

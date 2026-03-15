@@ -1,4 +1,3 @@
-import React from "react";
 import { Compass, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 

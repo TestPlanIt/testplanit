@@ -2,29 +2,28 @@
 
 import { type NextPage } from "next";
 import { useSession } from "next-auth/react";
-import { useRouter, redirect } from "~/lib/navigation";
-import { useTranslations, useLocale } from "next-intl";
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { redirect, useRouter } from "~/lib/navigation";
 import {
-  processProjectsWithEffectiveMembers,
-  ProcessedProject,
+  ProcessedProject, processProjectsWithEffectiveMembers
 } from "~/utils/projectUtils";
 
-import { useFindManyUser, useFindManyProjects } from "~/lib/hooks";
+import { useFindManyProjects, useFindManyUser } from "~/lib/hooks";
 
 import { Loading } from "@/components/Loading";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ProjectCard } from "@/components/ProjectCard";
 import { NoProjectsCard } from "@/components/NoProjectsCard";
-import { Boxes, ChevronLeft, ChevronRight } from "lucide-react";
-import { UserDashboard } from "@/components/UserDashboard";
 import { InitialPreferencesDialog } from "@/components/onboarding/InitialPreferencesDialog";
+import { ProjectCard } from "@/components/ProjectCard";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ResizableHandle,
   ResizablePanel,
-  ResizablePanelGroup,
+  ResizablePanelGroup
 } from "@/components/ui/resizable";
-import { Button } from "@/components/ui/button";
+import { UserDashboard } from "@/components/UserDashboard";
+import { Boxes, ChevronLeft, ChevronRight } from "lucide-react";
 
 type AuthUser = {
   id: string;

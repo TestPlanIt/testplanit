@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { cn, type ClassValue } from "~/utils";
 import { useTranslations } from "next-intl";
+import React, { useEffect, useState } from "react";
+import { cn, type ClassValue } from "~/utils";
 
 interface LoadingSpinnerProps {
   className?: ClassValue;

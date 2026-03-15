@@ -1,10 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useCallback, useContext, useState } from "react";
 import {
-  SearchableEntityType,
-  UnifiedSearchResult,
-  UnifiedSearchFilters,
+  SearchableEntityType, UnifiedSearchFilters, UnifiedSearchResult
 } from "~/types/search";
 
 interface SearchState {

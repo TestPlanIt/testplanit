@@ -1,22 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { Integration, ProjectIntegration } from "@prisma/client";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Check, Loader2, AlertTriangle } from "lucide-react";
-import { useRouter } from "~/lib/navigation";
-import { toast } from "sonner";
-import { IntegrationIcon } from "./integration-icon";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,13 +8,26 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  useDeleteProjectIntegration,
-  useUpsertProjectIntegration,
-  useUpdateManyProjectIntegration,
+  Card,
+  CardContent, CardFooter,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import { Integration, ProjectIntegration } from "@prisma/client";
+import { AlertTriangle, Check, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  useDeleteProjectIntegration, useUpdateManyProjectIntegration, useUpsertProjectIntegration
 } from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import { IntegrationIcon } from "./integration-icon";
 
 interface IntegrationsListProps {
   integrations: Integration[];

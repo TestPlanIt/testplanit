@@ -1,23 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
-import { MessageCircle } from "lucide-react";
-import { Link } from "~/lib/navigation";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import { badgeVariants } from "@/components/ui/badge";
-import { cn } from "~/utils";
-import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useFindManyComment } from "~/lib/hooks";
-import { formatDistanceToNow } from "date-fns";
-import { UserNameCell } from "@/components/tables/UserNameCell";
-import { Button } from "@/components/ui/button";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { formatDistanceToNow } from "date-fns";
+import { MessageCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { useState } from "react";
+import { useFindManyComment } from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
+import { cn } from "~/utils";
 
 interface CommentsListDisplayProps {
   repositoryCaseId: number;

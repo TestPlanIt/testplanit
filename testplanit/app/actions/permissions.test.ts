@@ -1,10 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ApplicationArea, ProjectAccessType } from "@prisma/client";
 import type { Session } from "next-auth";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  getUserProjectPermissions,
-  checkUserPermission,
-  type UserProjectPermissionsResult,
+  checkUserPermission, getUserProjectPermissions
 } from "./permissions";
 
 // Mock prisma

@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { getDateFnsLocale } from "./locales";
 import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es";
 import { fr } from "date-fns/locale/fr";
+import { describe, expect, it } from "vitest";
+import { getDateFnsLocale } from "./locales";
 
 describe("getDateFnsLocale", () => {
   it("should return the correct locale object for known locales", () => {

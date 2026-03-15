@@ -1,83 +1,69 @@
-import React, { useState, useCallback } from "react";
+import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { DateFormatter } from "@/components/DateFormatter";
+import { formatSeconds } from "@/components/DurationDisplay";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { RelativeTimeTooltip } from "@/components/RelativeTimeTooltip";
+import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
+import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
+import { UserNameCell } from "@/components/tables/UserNameCell";
+import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
+import TextFromJson from "@/components/TextFromJson";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from "@/components/ui/table";
-import { useTranslations, useLocale } from "next-intl";
-import { Badge } from "@/components/ui/badge";
-import { formatSeconds } from "@/components/DurationDisplay";
-import { Link } from "~/lib/navigation";
-import { isAutomatedCaseSource } from "~/utils/testResultTypes";
-import { getDateFnsLocale } from "~/utils/locales";
-import { UserNameCell } from "@/components/tables/UserNameCell";
-import {
-  LinkIcon,
-  PlusSquare,
-  ChevronDown,
-  ChevronRight,
-  PlayCircle,
-  Bot,
-  Pencil,
-  History,
-  Layers,
-  SearchCheck,
-  ListOrdered,
-  Trash2,
-  Combine,
-} from "lucide-react";
-import { TestRunNameDisplay } from "@/components/TestRunNameDisplay";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
-import LoadingSpinner from "@/components/LoadingSpinner";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import {
-  useFindManyTestRuns,
-  useCreateTestRunCases,
-  useFindFirstRepositoryCases,
-  useFindManyResultFieldValues,
-  useFindManyAppConfig,
-  useFindManySharedStepItem,
-} from "~/lib/hooks";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
-import FieldValueRenderer from "~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
-import TipTapEditor from "./tiptap/TipTapEditor";
-import { JsonValue } from "@prisma/client/runtime/library";
-import type { Attachments, Issue } from "@prisma/client";
-import { emptyEditorContent } from "~/app/constants";
-import { AttachmentsListDisplay } from "@/components/tables/AttachmentsListDisplay";
-import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import type { Attachments, Issue } from "@prisma/client";
+import { JsonValue } from "@prisma/client/runtime/library";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  Bot, ChevronDown,
+  ChevronRight, Combine, History,
+  Layers, LinkIcon, ListOrdered, Pencil, PlayCircle, PlusSquare, SearchCheck, Trash2
+} from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import React, { useCallback, useState } from "react";
+import { toast } from "sonner";
+import { emptyEditorContent } from "~/app/constants";
 import { EditResultModal } from "~/app/[locale]/projects/repository/[projectId]/EditResultModal";
-import { DateFormatter } from "@/components/DateFormatter";
-import { RelativeTimeTooltip } from "@/components/RelativeTimeTooltip";
-import { IssuesListDisplay } from "@/components/tables/IssuesListDisplay";
+import FieldValueRenderer from "~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import TextFromJson from "@/components/TextFromJson";
+import {
+  useCreateTestRunCases,
+  useFindFirstRepositoryCases, useFindManyAppConfig, useFindManyResultFieldValues, useFindManySharedStepItem, useFindManyTestRuns
+} from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
+import { getDateFnsLocale } from "~/utils/locales";
+import { isAutomatedCaseSource } from "~/utils/testResultTypes";
+import TipTapEditor from "./tiptap/TipTapEditor";
 
 // Define unified result types
 interface UnifiedTestResultBase {

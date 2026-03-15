@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "~/lib/prisma";
 import { getServerSession } from "next-auth/next";
+import { NextRequest, NextResponse } from "next/server";
+import { getCrossProjectReportTypes, getProjectReportTypes } from "~/lib/config/reportTypes";
+import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
-import { getProjectReportTypes, getCrossProjectReportTypes } from "~/lib/config/reportTypes";
 
 export const dynamic = "force-dynamic";
 

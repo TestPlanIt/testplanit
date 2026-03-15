@@ -1,12 +1,12 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { ApplicationArea } from "@prisma/client";
+import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
 import {
   useCreateRoles,
   useUpdateManyRoles,
-  useUpsertRolePermission,
+  useUpsertRolePermission
 } from "~/lib/hooks";
-import { useTranslations } from "next-intl";
-import { ApplicationArea } from "@prisma/client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -15,8 +15,8 @@ import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { CirclePlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { CirclePlus } from "lucide-react";
 
 import {
   Form,
@@ -24,7 +24,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -34,11 +34,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@radix-ui/react-label";
-import { HelpPopover } from "@/components/ui/help-popover";
 
 // Helper to get enum values safely (copied from EditRoles)
 const applicationAreaValues = Object.values(ApplicationArea);

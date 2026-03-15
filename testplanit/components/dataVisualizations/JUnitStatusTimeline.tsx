@@ -1,6 +1,6 @@
-import React, { useRef, useEffect, useState } from "react";
 import * as d3 from "d3";
 import { useTranslations } from "next-intl";
+import React, { useEffect, useRef, useState } from "react";
 
 interface JUnitStatusTimelineProps {
   jUnitSuites: Array<{

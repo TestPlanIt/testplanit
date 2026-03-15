@@ -1,46 +1,41 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef } from "react";
-import { useSession } from "next-auth/react";
-import {
-  useFindManyCaseExportTemplate,
-  useUpdateCaseExportTemplate,
-  useUpdateManyCaseExportTemplate,
-} from "~/lib/hooks";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { AddQuickScriptTemplateModal } from "./AddQuickScriptTemplate";
-import { EditQuickScriptTemplateModal } from "./EditQuickScriptTemplate";
-import { DeleteQuickScriptTemplateModal } from "./DeleteQuickScriptTemplate";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogContent,
-  AlertDialogTitle,
-  AlertDialogDescription,
-} from "@/components/ui/alert-dialog";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
+  AccordionTrigger
 } from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { CaseExportTemplate } from "@prisma/client";
 import { ScrollText, Search, Trash2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  useFindManyCaseExportTemplate,
+  useUpdateCaseExportTemplate,
+  useUpdateManyCaseExportTemplate
+} from "~/lib/hooks";
+import { AddQuickScriptTemplateModal } from "./AddQuickScriptTemplate";
+import { DeleteQuickScriptTemplateModal } from "./DeleteQuickScriptTemplate";
+import { EditQuickScriptTemplateModal } from "./EditQuickScriptTemplate";
 
 export default function QuickScriptTemplates() {
   const { data: session, status } = useSession();

@@ -1,7 +1,7 @@
+import { Icon } from "@/components/tiptap/ui/Icon";
+import { icons } from "lucide-react";
 import { forwardRef } from "react";
 import { cn } from "~/utils";
-import { icons } from "lucide-react";
-import { Icon } from "@/components/tiptap/ui/Icon";
 
 export type CommandButtonProps = {
   active?: boolean;

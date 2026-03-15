@@ -1,65 +1,43 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useTranslations, useLocale } from "next-intl";
-import { useSession } from "next-auth/react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod/v4";
-import { toHumanReadable } from "~/utils/duration";
-import parseDuration from "parse-duration";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
-import UploadAttachments from "@/components/UploadAttachments";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
+import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { HelpPopover } from "@/components/ui/help-popover";
+import UploadAttachments from "@/components/UploadAttachments";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Attachments,
-  Steps,
-  SharedStepGroup as PrismaSharedStepGroup,
+  ApplicationArea, Attachments, Color as PrismaColor, SharedStepGroup as PrismaSharedStepGroup,
   SharedStepItem as PrismaSharedStepItem,
-  Status as PrismaStatus,
-  Color as PrismaColor,
+  Status as PrismaStatus, Steps
 } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import {
-  useFindManyStatus,
-  useCreateTestRunResults,
-  useCreateAttachments,
-  useUpdateTestRunCases,
-  useFindManyTestRunResults,
-  useFindFirstRepositoryCases,
-  useFindManyTemplateResultAssignment,
-  useCreateResultFieldValues,
-  useCreateTestRunStepResults,
-  useFindFirstWorkflows,
-  useUpdateTestRuns,
-  useFindFirstProjects,
-  useFindManySharedStepItem,
-  useCreateIssue,
-  useDeleteIssue,
-  useFindManyIssue,
-} from "~/lib/hooks";
-import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
-import {
-  ListChecks,
-  SearchCheck,
-  Bug,
-  LockIcon,
-  Layers,
-  Combine,
+  Bug, Combine, Layers, ListChecks, LockIcon, SearchCheck
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
+import parseDuration from "parse-duration";
+import React, { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
-import { ExtendedCases } from "./columns";
-import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { ApplicationArea } from "@prisma/client";
-import { HelpPopover } from "@/components/ui/help-popover";
+import {
+  useCreateAttachments, useCreateIssue, useCreateResultFieldValues, useCreateTestRunResults, useCreateTestRunStepResults, useDeleteIssue, useFindFirstProjects, useFindFirstRepositoryCases, useFindFirstWorkflows, useFindManyIssue, useFindManySharedStepItem, useFindManyStatus, useFindManyTemplateResultAssignment, useFindManyTestRunResults, useUpdateTestRunCases, useUpdateTestRuns
+} from "~/lib/hooks";
+import { toHumanReadable } from "~/utils/duration";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import { ExtendedCases } from "./columns";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -67,18 +45,16 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 import { MAX_DURATION } from "~/app/constants";
 
@@ -2125,7 +2101,7 @@ type StatusForSelect = Pick<PrismaStatus, "id" | "name" | "isFailure"> & {
 };
 
 // More specific types for react-hook-form functions
-import { UseFormSetValue, UseFormGetValues } from "react-hook-form";
+import { UseFormGetValues, UseFormSetValue } from "react-hook-form";
 import LoadingSpinner from "~/components/LoadingSpinner";
 
 // New component for Shared Step Group Inputs

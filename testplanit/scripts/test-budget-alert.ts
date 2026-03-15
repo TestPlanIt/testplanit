@@ -13,8 +13,8 @@
  */
 
 import { Queue } from "bullmq";
-import valkeyConnection from "../lib/valkey";
 import { BUDGET_ALERT_QUEUE_NAME } from "../lib/queueNames";
+import valkeyConnection from "../lib/valkey";
 
 const BUDGET_ALERT_JOB_CHECK = "check-budget";
 

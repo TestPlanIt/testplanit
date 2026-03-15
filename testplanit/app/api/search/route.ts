@@ -1,23 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "~/server/auth";
-import { getElasticsearchClient } from "~/services/elasticsearchService";
-import { getIndicesForEntityTypes } from "~/services/unifiedElasticsearchService";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
-import {
-  SearchOptions,
-  UnifiedSearchResult,
-  SearchableEntityType,
-  SearchHit,
-} from "~/types/search";
 import {
   buildElasticsearchQuery,
   buildSearchAggregations,
-  buildSort,
-  getEntityTypeFromIndex,
-  getEntityTypeCounts,
-  processFacets,
+  buildSort, getEntityTypeCounts, getEntityTypeFromIndex, processFacets
 } from "~/lib/services/searchQueryBuilder";
+import { authOptions } from "~/server/auth";
+import { getElasticsearchClient } from "~/services/elasticsearchService";
+import { getIndicesForEntityTypes } from "~/services/unifiedElasticsearchService";
+import {
+  SearchHit, SearchOptions,
+  UnifiedSearchResult
+} from "~/types/search";
 
 /**
  * POST /api/search

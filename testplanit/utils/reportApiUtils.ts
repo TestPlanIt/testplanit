@@ -1,9 +1,8 @@
-import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
+import { NextRequest } from "next/server";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
-import type { PrismaClient } from "@prisma/client";
+import { authOptions } from "~/server/auth";
 
 // Type for Prisma client
 type Prisma = typeof prisma;

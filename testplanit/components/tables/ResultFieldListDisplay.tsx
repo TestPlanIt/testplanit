@@ -1,13 +1,13 @@
-import React from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { useFindManyResultFields } from "~/lib/hooks";
 import { ResultFields } from "@prisma/client";
 import { SquareCheck } from "lucide-react";
+import React from "react";
+import { useFindManyResultFields } from "~/lib/hooks";
 
 interface ResultFieldListProps {
   resultFields: { resultFieldId: number }[];

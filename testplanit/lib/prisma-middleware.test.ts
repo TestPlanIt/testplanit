@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { elasticsearchSyncMiddleware } from "./prisma-middleware";
-import * as repositoryCaseSync from "../services/repositoryCaseSync";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as elasticsearchIndexing from "../services/elasticsearchIndexing";
+import * as repositoryCaseSync from "../services/repositoryCaseSync";
+import { elasticsearchSyncMiddleware } from "./prisma-middleware";
 
 // Mock the sync functions
 vi.mock("../services/repositoryCaseSync", () => ({

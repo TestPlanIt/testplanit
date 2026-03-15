@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it } from "vitest";
 
 // Since we can't directly import private functions from route.ts,
 // we'll test the audit interception logic by replicating the pure functions

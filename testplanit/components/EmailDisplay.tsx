@@ -1,12 +1,12 @@
-import React from "react";
-import { Link } from "~/lib/navigation";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
 import { ExternalLink } from "lucide-react";
+import React from "react";
+import { Link } from "~/lib/navigation";
 
 interface EmailCellProps {
   email: string;

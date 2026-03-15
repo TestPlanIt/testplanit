@@ -1,42 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod/v4";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
 import {
   Form,
-  FormControl,
-  FormDescription,
-  FormField,
+  FormControl, FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { HelpPopover } from "@/components/ui/help-popover";
-import { toast } from "sonner";
-import { Activity, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   useCreateIntegration,
-  useUpdateIntegration,
+  useUpdateIntegration
 } from "@/lib/hooks/integration";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Integration,
-  IntegrationProvider,
-  IntegrationAuthType,
+  Integration, IntegrationAuthType, IntegrationProvider
 } from "@prisma/client";
-import { IntegrationTypeSelector } from "./IntegrationTypeSelector";
+import { Activity, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod/v4";
 import { IntegrationConfigForm } from "./IntegrationConfigForm";
+import { IntegrationTypeSelector } from "./IntegrationTypeSelector";
 
 interface IntegrationModalProps {
   isOpen: boolean;

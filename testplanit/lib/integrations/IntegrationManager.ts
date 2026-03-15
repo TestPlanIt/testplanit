@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prismaBase";
+import { EncryptionService, getMasterKey } from "@/utils/encryption";
 import type { Integration, IntegrationProvider } from "@prisma/client";
+import { AzureDevOpsAdapter } from "./adapters/AzureDevOpsAdapter";
+import { GitHubAdapter } from "./adapters/GitHubAdapter";
 import { IssueAdapter } from "./adapters/IssueAdapter";
 import { JiraAdapter } from "./adapters/JiraAdapter";
-import { GitHubAdapter } from "./adapters/GitHubAdapter";
-import { AzureDevOpsAdapter } from "./adapters/AzureDevOpsAdapter";
 import { SimpleUrlAdapter } from "./adapters/SimpleUrlAdapter";
-import { EncryptionService, getMasterKey } from "@/utils/encryption";
 
 /**
  * Central service for managing integrations and their adapters

@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { ChevronDownCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ChevronDownCircle } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 
 interface TextFromJsonProps {

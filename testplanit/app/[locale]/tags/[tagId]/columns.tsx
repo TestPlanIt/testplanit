@@ -1,16 +1,16 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { CaseDisplay } from "@/components/tables/CaseDisplay";
-import { SessionTableDisplay } from "@/components/tables/SessionTableDisplay";
-import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
 import { ProjectIcon } from "@/components/ProjectIcon";
-import { Link } from "~/lib/navigation";
-import { PlayCircle } from "lucide-react";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
+import { ProjectNameCell } from "@/components/tables/ProjectNameCell";
+import { SessionTableDisplay } from "@/components/tables/SessionTableDisplay";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import { ColumnDef } from "@tanstack/react-table";
+import { PlayCircle } from "lucide-react";
+import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 
 export const getCaseColumns = (translations: {

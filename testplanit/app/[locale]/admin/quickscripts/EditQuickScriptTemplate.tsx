@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { CaseExportTemplate } from "@prisma/client";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useFindManyCaseExportTemplate,
   useFindManyCaseFields,
   useUpdateCaseExportTemplate,
-  useUpdateManyCaseExportTemplate,
+  useUpdateManyCaseExportTemplate
 } from "~/lib/hooks";
-import { CaseExportTemplate } from "@prisma/client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -17,12 +17,12 @@ import { Button } from "@/components/ui/button";
 import { ComboboxInput } from "@/components/ui/combobox-input";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { TemplateVariableInserter } from "./TemplateVariableInserter";
-import { SAMPLE_CASE_BASE, buildSampleFields } from "./sampleCaseData";
-import { mapLanguageToPrism, highlightCode } from "~/lib/utils/codeHighlight";
-import "prismjs/themes/prism-tomorrow.css";
 import { Pencil } from "lucide-react";
 import Mustache from "mustache";
+import "prismjs/themes/prism-tomorrow.css";
+import { highlightCode, mapLanguageToPrism } from "~/lib/utils/codeHighlight";
+import { buildSampleFields, SAMPLE_CASE_BASE } from "./sampleCaseData";
+import { TemplateVariableInserter } from "./TemplateVariableInserter";
 
 import {
   Form,
@@ -30,7 +30,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -40,7 +40,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 
 import { Switch } from "@/components/ui/switch";

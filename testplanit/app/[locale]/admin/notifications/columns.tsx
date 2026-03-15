@@ -1,20 +1,19 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { useTranslations } from "next-intl";
 import { DateFormatter } from "@/components/DateFormatter";
-import TextFromJson from "@/components/TextFromJson";
 import { UserDisplay } from "@/components/search/UserDisplay";
+import TextFromJson from "@/components/TextFromJson";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ColumnDef } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 
 export interface NotificationHistoryItem {
   id: number | string;

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies
 const mockAggregate = vi.fn();
@@ -22,7 +22,7 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-import { getMaxOrderInTestRun, addToTestRun } from "./test-run";
+import { addToTestRun, getMaxOrderInTestRun } from "./test-run";
 
 describe("test-run actions", () => {
   beforeEach(() => {

@@ -1,11 +1,11 @@
-import React from "react";
-import MilestoneDisplay from "@/projects/milestones/[projectId]/MilestoneDisplay";
-import { Link } from "~/lib/navigation";
-import { LinkIcon, Milestone } from "lucide-react";
-import { useFindManyMilestones } from "~/lib/hooks";
-import { MilestonesWithTypes } from "~/utils/milestoneUtils";
-import { useTranslations } from "next-intl";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import MilestoneDisplay from "@/projects/milestones/[projectId]/MilestoneDisplay";
+import { LinkIcon, Milestone } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React from "react";
+import { useFindManyMilestones } from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
+import { MilestonesWithTypes } from "~/utils/milestoneUtils";
 
 interface MilestonesSectionProps {
   projectId: number;

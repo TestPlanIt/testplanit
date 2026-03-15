@@ -1,13 +1,11 @@
-import React, { useState } from "react";
 import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
+  Select, SelectContent,
+  SelectItem, SelectTrigger
 } from "@/components/ui/select";
-import { useFindManyColor } from "~/lib/hooks";
 import { Color } from "@prisma/client";
 import { Ellipsis } from "lucide-react";
+import React, { useState } from "react";
+import { useFindManyColor } from "~/lib/hooks";
 
 interface ColorPickerProps {
   onColorSelect: (colorId: number) => void;

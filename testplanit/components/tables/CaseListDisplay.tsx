@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useCallback, useMemo } from "react";
-import type { Prisma, RepositoryCaseSource } from "@prisma/client";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
-import { CaseDisplay } from "./CaseDisplay";
-import { ListChecks } from "lucide-react";
 import { badgeVariants } from "@/components/ui/badge";
-import { cn } from "~/utils";
-import { useTranslations } from "next-intl";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Prisma, RepositoryCaseSource } from "@prisma/client";
+import { ListChecks } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { useCallback, useMemo } from "react";
+import { cn } from "~/utils";
+import { CaseDisplay } from "./CaseDisplay";
 
 interface CasesListProps {
   caseIds?: number[];

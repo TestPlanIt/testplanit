@@ -1,80 +1,72 @@
-import * as React from "react";
-import { useState, useEffect, useMemo } from "react";
-import { useSession } from "next-auth/react";
-import { useParams } from "next/navigation";
-import {
-  useFindManyConfigurations,
-  useFindManyWorkflows,
-  useCreateTestRuns,
-  useFindManyMilestones,
-  useFindManyProjectAssignment,
-  useFindManyTags,
-  useFindFirstProjects,
-  useCreateAttachments,
-} from "~/lib/hooks";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod/v4";
+import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
+import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
+import DynamicIcon from "@/components/DynamicIcon";
+import { ForecastDisplay } from "@/components/ForecastDisplay";
+import { MilestoneSelect } from "@/components/forms/MilestoneSelect";
+import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
+import { ManageTags } from "@/components/ManageTags";
+import { MagicSelectButton } from "@/components/runs/MagicSelectButton";
+import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectGroup,
-} from "@/components/ui/select";
-import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { emptyEditorContent } from "~/app/constants";
-import { MilestoneSelect } from "@/components/forms/MilestoneSelect";
-import { ManageTags } from "@/components/ManageTags";
-import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
-import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
-import { ApplicationArea, Attachments, TestRunType } from "@prisma/client";
-import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
-import UploadAttachments from "@/components/UploadAttachments";
-import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
-import { useTranslations, useLocale } from "next-intl";
-import ProjectRepository from "../../repository/[projectId]/ProjectRepository";
-import { useRouter } from "~/lib/navigation";
-import { toast } from "sonner";
-import { PlusCircle } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
-import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
-import { DialogDescription } from "@radix-ui/react-dialog";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { updateTestRunForecast } from "~/services/testRunService";
+import { Input } from "@/components/ui/input";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
-import { Combine } from "lucide-react";
-import LoadingSpinner from "~/components/LoadingSpinner";
-import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
+import {
+  Select,
+  SelectContent, SelectGroup, SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import UploadAttachments from "@/components/UploadAttachments";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ApplicationArea, Attachments, TestRunType } from "@prisma/client";
+import { DialogDescription } from "@radix-ui/react-dialog";
+import { Combine, PlusCircle } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+import * as React from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
-import { ForecastDisplay } from "@/components/ForecastDisplay";
+import { z } from "zod/v4";
 import {
   getAssignmentsForRunCases,
-  type GetAssignmentsResponse,
+  type GetAssignmentsResponse
 } from "~/app/actions/getAssignmentsForRunCases";
-import { MagicSelectButton } from "@/components/runs/MagicSelectButton";
+import { emptyEditorContent } from "~/app/constants";
+import LoadingSpinner from "~/components/LoadingSpinner";
+import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import {
+  useCreateAttachments, useCreateTestRuns, useFindFirstProjects, useFindManyConfigurations, useFindManyMilestones,
+  useFindManyProjectAssignment,
+  useFindManyTags, useFindManyWorkflows
+} from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
+import { updateTestRunForecast } from "~/services/testRunService";
+import { IconName } from "~/types/globals";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
+import ProjectRepository from "../../repository/[projectId]/ProjectRepository";
 
 interface WorkflowOption {
   value: string;

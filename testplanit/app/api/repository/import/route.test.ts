@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { POST } from "./route";
-import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
 import { enhance } from "@zenstackhq/runtime";
+import { getServerSession } from "next-auth";
+import { NextRequest } from "next/server";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { POST } from "./route";
 
 // Mock dependencies
 vi.mock("next-auth", () => ({

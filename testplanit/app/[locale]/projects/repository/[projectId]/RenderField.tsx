@@ -1,31 +1,29 @@
-import { useState } from "react";
-import {
-  FormControl,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormField,
-} from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
 import DynamicIcon from "@/components/DynamicIcon";
-import MultiSelect from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useTheme } from "next-themes";
+import { DatePickerField } from "@/components/forms/DatePickerField";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import {
+  FormControl, FormField, FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
-import StepsForm from "./StepsForm";
+import { Switch } from "@/components/ui/switch";
+import { Asterisk, LockIcon } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useState } from "react";
 import { Control } from "react-hook-form";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { HelpPopover } from "@/components/ui/help-popover";
-import { DatePickerField } from "@/components/forms/DatePickerField";
+import MultiSelect from "react-select";
 import { emptyEditorContent } from "~/app/constants";
-import { LockIcon, Asterisk } from "lucide-react";
+import { getCustomStyles } from "~/styles/multiSelectStyles";
+import StepsForm from "./StepsForm";
 
 interface RenderFieldProps {
   field: any;

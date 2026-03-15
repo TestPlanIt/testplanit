@@ -1,32 +1,24 @@
-import React, { useState, useEffect, useCallback } from "react";
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  PointerActivationConstraint,
-  useSensor,
-  useSensors,
+  closestCenter, DndContext, KeyboardSensor, PointerActivationConstraint, PointerSensor, useSensor,
+  useSensors
 } from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
   arrayMove,
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable,
-  sortableKeyboardCoordinates,
+  SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy
 } from "@dnd-kit/sortable";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { useTranslations } from "next-intl";
+import React, { useCallback, useEffect, useState } from "react";
 
+import { FieldIconPicker } from "@/components/FieldIconPicker";
 import { CSS } from "@dnd-kit/utilities";
 import { FieldOptions } from "@prisma/client";
-import { FieldIconPicker } from "@/components/FieldIconPicker";
 
-import { Trash2, GripVertical, Edit3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { Edit3, GripVertical, Trash2 } from "lucide-react";
 
 const columns =
   "grid grid-cols-[30px_120px_auto_70px_70px_50px] items-center py-1 px-4 bg-muted text-sm";

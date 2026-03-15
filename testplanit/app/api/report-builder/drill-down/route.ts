@@ -3,17 +3,16 @@
  * Fetches underlying records for a clicked metric value
  */
 
-import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
+import { NextRequest } from "next/server";
 import type {
   DrillDownRequest,
-  DrillDownResponse,
+  DrillDownResponse
 } from "~/lib/types/reportDrillDown";
+import { authOptions } from "~/server/auth";
 import {
-  getQueryBuilderForMetric,
-  getModelForMetric,
+  getModelForMetric, getQueryBuilderForMetric
 } from "~/utils/drillDownQueryBuilders";
 
 export async function POST(req: NextRequest) {

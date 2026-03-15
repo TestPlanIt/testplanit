@@ -1,41 +1,35 @@
 "use client";
 
+import {
+  Groups as PrismaGroups, ProjectAccessType, Roles
+} from "@prisma/client";
 import { useTranslations } from "next-intl";
 import {
-  Control,
-  UseFormSetValue,
-  UseFormWatch,
-  UseFormGetValues,
+  Control, UseFormGetValues, UseFormSetValue,
+  UseFormWatch
 } from "react-hook-form";
-import {
-  Groups as PrismaGroups,
-  Roles,
-  ProjectAccessType,
-} from "@prisma/client";
 import { EditProjectFormData } from "./EditProject"; // Removed GroupPermissionFormState import
 
 // UI Imports
+import { GroupNameCell } from "@/components/tables/GroupNameCell"; // Corrected import path
+import { RoleNameCell } from "@/components/tables/RoleNameCell"; // Import RoleNameCell
+import { UserListDisplay } from "@/components/tables/UserListDisplay"; // Import UserListDisplay
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectSeparator,
+  SelectItem, SelectSeparator, SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
 import { Star } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { GroupNameCell } from "@/components/tables/GroupNameCell"; // Corrected import path
-import { RoleNameCell } from "@/components/tables/RoleNameCell"; // Import RoleNameCell
-import { UserListDisplay } from "@/components/tables/UserListDisplay"; // Import UserListDisplay
 
 // Define the type for Group with included users
 type GroupWithUsers = PrismaGroups & {

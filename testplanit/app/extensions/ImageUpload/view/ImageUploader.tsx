@@ -1,9 +1,9 @@
-import { Spinner } from "@/components/tiptap/ui/Spinner";
-import { useDropZone, useFileUpload } from "./hooks";
 import { Button } from "@/components/tiptap/ui/Button";
 import { Icon } from "@/components/tiptap/ui/Icon";
-import { cn } from "~/utils";
+import { Spinner } from "@/components/tiptap/ui/Spinner";
 import { ChangeEvent, useCallback } from "react";
+import { cn } from "~/utils";
+import { useDropZone, useFileUpload } from "./hooks";
 
 export const ImageUploader = ({
   onUpload,

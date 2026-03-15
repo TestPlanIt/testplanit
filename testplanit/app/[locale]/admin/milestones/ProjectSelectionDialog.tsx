@@ -1,23 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
-import { useTranslations } from "next-intl";
-import { useFindManyProjects } from "~/lib/hooks";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { ProjectIcon } from "@/components/ProjectIcon";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Search } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { useState } from "react";
+import { useFindManyProjects } from "~/lib/hooks";
 
 interface ProjectSelectionDialogProps {
   open: boolean;

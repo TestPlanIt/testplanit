@@ -1,23 +1,18 @@
 "use client";
-import { useState } from "react";
-import { useTranslations } from "next-intl";
 import { User } from "@prisma/client";
-import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 
-import { Form } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { Trash2, TriangleAlert } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogTitle,
+  AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { Trash2, TriangleAlert } from "lucide-react";
 
 interface DeleteUserModalProps {
   user: User;

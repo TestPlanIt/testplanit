@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
-import useResponsiveSVG from "~/hooks/useResponsiveSVG"; // Assuming this hook is available and works as in SummarySunburstChart
 import { useTranslations } from "next-intl";
+import React, { useEffect, useRef } from "react";
+import useResponsiveSVG from "~/hooks/useResponsiveSVG"; // Assuming this hook is available and works as in SummarySunburstChart
 
 // Define the structure for a sunburst chart node
 export interface SunburstNode {

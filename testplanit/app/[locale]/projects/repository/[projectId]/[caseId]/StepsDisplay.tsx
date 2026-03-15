@@ -1,20 +1,16 @@
-import React, { useState } from "react";
-import {
-  SearchCheck,
-  ChevronRightCircle,
-  Plus,
-  Minus,
-  Layers,
-} from "lucide-react";
 import TextFromJson from "@/components/TextFromJson";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
+import {
+  ChevronRightCircle, Layers, Minus, Plus, SearchCheck
+} from "lucide-react";
 import { useTranslations } from "next-intl";
+import React, { useState } from "react";
 import { emptyEditorContent } from "~/app/constants";
 import { useFindManySharedStepItem } from "~/lib/hooks";
 

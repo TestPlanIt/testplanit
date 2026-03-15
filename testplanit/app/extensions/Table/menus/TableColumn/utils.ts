@@ -1,9 +1,9 @@
-import { Editor } from '@tiptap/react'
 import { EditorState } from '@tiptap/pm/state'
 import { EditorView } from '@tiptap/pm/view'
+import { Editor } from '@tiptap/react'
 
-import { isTableSelected } from '../../utils'
 import { Table } from '../..'
+import { isTableSelected } from '../../utils'
 
 export const isColumnGripSelected = ({
   editor,

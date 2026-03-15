@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "~/server/auth";
 import { prisma } from "@/lib/prisma";
-import { encrypt, decrypt } from "@/utils/encryption";
+import { decrypt, encrypt } from "@/utils/encryption";
+import { getServerSession } from "next-auth/next";
+import { NextRequest, NextResponse } from "next/server";
+import { authOptions } from "~/server/auth";
 
 export async function GET(
   request: NextRequest,

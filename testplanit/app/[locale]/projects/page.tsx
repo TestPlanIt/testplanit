@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import { useFindManyProjects, useFindManyUser } from "~/lib/hooks";
 import { useTranslations } from "next-intl";
+import { useEffect, useMemo, useState } from "react";
+import { useFindManyProjects, useFindManyUser } from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
 import {
-  processProjectsWithEffectiveMembers,
-  ProcessedProject,
+  ProcessedProject, processProjectsWithEffectiveMembers
 } from "~/utils/projectUtils";
 
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ProjectCard } from "@/components/ProjectCard";
-import { NoProjectsCard } from "@/components/NoProjectsCard";
-import { Boxes } from "lucide-react";
 import { Loading as LoadingComponent } from "@/components/Loading";
+import { NoProjectsCard } from "@/components/NoProjectsCard";
+import { ProjectCard } from "@/components/ProjectCard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Boxes } from "lucide-react";
 
 const Projects = () => {
   const { data: session, status: sessionStatus } = useSession();

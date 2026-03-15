@@ -1,13 +1,13 @@
-import React from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { useFindManyGroups } from "~/lib/hooks";
 import { Groups } from "@prisma/client";
 import { UsersRound, UsersRoundIcon } from "lucide-react";
+import React from "react";
+import { useFindManyGroups } from "~/lib/hooks";
 
 interface GroupListProps {
   groups: { groupId: number }[];

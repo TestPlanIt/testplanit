@@ -1,15 +1,13 @@
 "use client";
 
-import { UseFormReturn } from "react-hook-form";
 import {
-  FormField,
+  FormControl, FormField,
   FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
+  FormLabel, FormMessage
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
+import { UseFormReturn } from "react-hook-form";
 
 interface FieldConfig {
   name: string;

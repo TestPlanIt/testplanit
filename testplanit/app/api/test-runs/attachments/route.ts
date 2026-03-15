@@ -9,15 +9,14 @@
  * - testRunId: string - The test run ID to attach files to
  */
 
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { NextRequest, NextResponse } from "next/server";
-import { getServerAuthSession } from "~/server/auth";
 import {
   authenticateApiToken,
-  extractBearerToken,
+  extractBearerToken
 } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { z } from "zod";
+import { getServerAuthSession } from "~/server/auth";
 
 interface UploadResult {
   fileName: string;

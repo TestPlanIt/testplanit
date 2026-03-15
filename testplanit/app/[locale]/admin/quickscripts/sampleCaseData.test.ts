@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { SAMPLE_CASE_BASE, buildSampleFields } from "./sampleCaseData";
+import { describe, expect, it } from "vitest";
+import { buildSampleFields, SAMPLE_CASE_BASE } from "./sampleCaseData";
 
 describe("SAMPLE_CASE_BASE", () => {
   it("should have expected base fields", () => {

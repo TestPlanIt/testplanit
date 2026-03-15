@@ -1,47 +1,45 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
-import { useFindManyMilestoneTypes } from "~/lib/hooks";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller, useWatch } from "react-hook-form";
-import { z } from "zod/v4";
+import DynamicIcon from "@/components/DynamicIcon";
+import { DatePickerField } from "@/components/forms/DatePickerField";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import { HelpPopover } from "@/components/ui/help-popover";
+import { Input } from "@/components/ui/input";
 import {
   Select,
-  SelectContent,
-  SelectItem,
+  SelectContent, SelectGroup, SelectItem,
   SelectTrigger,
-  SelectValue,
-  SelectGroup,
+  SelectValue
 } from "@/components/ui/select";
-import DynamicIcon from "@/components/DynamicIcon";
-import { IconName } from "~/types/globals";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { emptyEditorContent } from "~/app/constants";
-import { HelpPopover } from "@/components/ui/help-popover";
-import { DatePickerField } from "@/components/forms/DatePickerField";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import React, { useEffect, useMemo, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { z } from "zod/v4";
+import { emptyEditorContent } from "~/app/constants";
+import { useFindManyMilestoneTypes } from "~/lib/hooks";
+import { IconName } from "~/types/globals";
 import { MilestoneFormData } from "./AddMilestonesToProjectsWizard";
 
 const FormSchema = z.object({

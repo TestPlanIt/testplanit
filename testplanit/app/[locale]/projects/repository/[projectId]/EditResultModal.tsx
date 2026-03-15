@@ -1,67 +1,30 @@
-import { useState, useRef, useEffect } from "react";
-import { useTranslations, useLocale } from "next-intl";
-import { useSession } from "next-auth/react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod/v4";
-import { toHumanReadable } from "~/utils/duration";
-import parseDuration from "parse-duration";
-import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
-import UploadAttachments from "@/components/UploadAttachments";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
-import { Attachments } from "@prisma/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import {
-  useFindManyStatus,
-  useUpdateTestRunResults,
-  useCreateAttachments,
-  useFindManyTestRunResults,
-  useFindFirstRepositoryCases,
-  useFindManyTemplateResultAssignment,
-  useCreateResultFieldValues,
-  useUpdateResultFieldValues,
-  useUpdateTestRunStepResults,
-  useCreateTestRunStepResults,
-  useFindFirstWorkflows,
-  useFindFirstProjects,
-} from "~/lib/hooks";
-import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
-import { ListChecks, SearchCheck, Trash2, LockIcon } from "lucide-react";
-import { emptyEditorContent } from "~/app/constants";
-import { JsonValue } from "@prisma/client/runtime/library";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
-import { Bug } from "lucide-react";
-import type { Issue } from "@prisma/client";
-import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { ApplicationArea } from "@prisma/client";
+import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
+import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { HelpPopover } from "@/components/ui/help-popover";
+import UploadAttachments from "@/components/UploadAttachments";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { Issue } from "@prisma/client";
+import { ApplicationArea, Attachments } from "@prisma/client";
+import { JsonValue } from "@prisma/client/runtime/library";
+import { useQueryClient } from "@tanstack/react-query";
+import { Bug, ListChecks, LockIcon, SearchCheck, Trash2 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
+import parseDuration from "parse-duration";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import * as z from "zod/v4";
+import { emptyEditorContent } from "~/app/constants";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import {
+  useCreateAttachments, useCreateResultFieldValues, useCreateTestRunStepResults, useFindFirstProjects, useFindFirstRepositoryCases, useFindFirstWorkflows, useFindManyStatus, useFindManyTemplateResultAssignment, useFindManyTestRunResults, useUpdateResultFieldValues, useUpdateTestRunResults, useUpdateTestRunStepResults
+} from "~/lib/hooks";
+import { toHumanReadable } from "~/utils/duration";
+import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,11 +34,35 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
-import { MAX_DURATION } from "~/app/constants";
 import type { useTranslations as useTranslationsType } from "next-intl";
+import { MAX_DURATION } from "~/app/constants";
 
 interface StepsWithExpectedResult {
   id: number;

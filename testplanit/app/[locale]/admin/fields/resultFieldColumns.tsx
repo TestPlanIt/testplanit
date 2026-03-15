@@ -1,10 +1,10 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { ResultFields, FieldIcon, FieldOptions, Color } from "@prisma/client";
-import { Switch } from "@/components/ui/switch";
-import { EditResultFieldModal } from "./EditResultField";
-import { DeleteResultFieldModal } from "./DeleteResultField";
 import { TemplateListDisplay } from "@/components/tables/TemplateListDisplay";
+import { Switch } from "@/components/ui/switch";
+import { Color, FieldIcon, FieldOptions, ResultFields } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
+import { DeleteResultFieldModal } from "./DeleteResultField";
+import { EditResultFieldModal } from "./EditResultField";
 
 interface ExtendedFieldOptions extends FieldOptions {
   icon?: FieldIcon;

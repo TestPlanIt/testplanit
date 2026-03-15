@@ -1,29 +1,28 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "~/lib/navigation";
-import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  usePagination,
-  PaginationProvider,
+  PaginationProvider, usePagination
 } from "~/lib/contexts/PaginationContext";
+import { useRouter } from "~/lib/navigation";
 
-import { useFindManyUser } from "~/lib/hooks";
-import { DataTable } from "@/components/tables/DataTable";
-import { ExtendedUser, getColumns } from "./columns";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
+import { DataTable } from "@/components/tables/DataTable";
+import { useFindManyUser } from "~/lib/hooks";
+import { ExtendedUser, getColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 
-import { Label } from "@/components/ui/label";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { AddUserModal } from "./AddUser";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { AddUserModal } from "./AddUser";
 
 type PageSizeOption = number | "All";
 

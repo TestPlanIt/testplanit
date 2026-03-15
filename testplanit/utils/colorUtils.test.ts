@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { hexToRgb, getBackgroundStyle, getTextStyle } from "./colorUtils";
+import { describe, expect, it } from "vitest";
+import { getBackgroundStyle, getTextStyle, hexToRgb } from "./colorUtils";
 
 describe("hexToRgb", () => {
   it("should convert a valid 6-digit hex code with #", () => {

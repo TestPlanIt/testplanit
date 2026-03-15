@@ -1,34 +1,30 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
-  useCreateWorkflows,
+  useCreateManyProjectWorkflowAssignment, useCreateWorkflows,
   useFindFirstColor,
   useFindFirstFieldIcon,
-  useFindManyProjects,
-  useCreateManyProjectWorkflowAssignment,
-  useUpdateManyWorkflows,
+  useFindManyProjects, useUpdateManyWorkflows
 } from "~/lib/hooks";
 
 import { Projects, WorkflowType } from "@prisma/client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { CirclePlus } from "lucide-react";
 import { FieldIconPicker } from "@/components/FieldIconPicker";
+import { CirclePlus } from "lucide-react";
 
 import {
   Select,
-  SelectContent,
-  SelectItem,
+  SelectContent, SelectGroup, SelectItem,
   SelectTrigger,
-  SelectValue,
-  SelectGroup,
+  SelectValue
 } from "@/components/ui/select";
 
 import {
@@ -37,7 +33,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 
 import {
@@ -47,16 +43,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from "@/components/ui/dialog";
 
-import MultiSelect from "react-select";
-import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useTheme } from "next-themes";
-import { scopeDisplayData } from "~/app/constants";
+import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
-import { HelpPopover } from "@/components/ui/help-popover";
+import { useTheme } from "next-themes";
+import MultiSelect from "react-select";
+import { scopeDisplayData } from "~/app/constants";
+import { getCustomStyles } from "~/styles/multiSelectStyles";
 
 const scopeKeys = Object.keys(scopeDisplayData) as [
   keyof typeof scopeDisplayData,

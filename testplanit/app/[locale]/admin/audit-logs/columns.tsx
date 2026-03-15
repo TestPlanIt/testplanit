@@ -1,16 +1,16 @@
-import { ColumnDef } from "@tanstack/react-table";
-import { AuditLog, AuditAction } from "@prisma/client";
-import { useTranslations } from "next-intl";
 import { DateFormatter } from "@/components/DateFormatter";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
+  TooltipTrigger
 } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
+import { AuditAction, AuditLog } from "@prisma/client";
+import { ColumnDef } from "@tanstack/react-table";
 import { Eye } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export interface ExtendedAuditLog extends AuditLog {
   project?: {

@@ -1,27 +1,20 @@
 // Main exports for the integrations module
-export { IntegrationManager, integrationManager } from "./IntegrationManager";
-export { AuthenticationService } from "./AuthenticationService";
-export { SyncService, syncService } from "./services/SyncService";
-export { IssueCache, issueCache } from "./cache/IssueCache";
-
+export { AzureDevOpsAdapter } from "./adapters/AzureDevOpsAdapter";
 // Adapter exports
 export { BaseAdapter } from "./adapters/BaseAdapter";
-export { JiraAdapter } from "./adapters/JiraAdapter";
 export { GitHubAdapter } from "./adapters/GitHubAdapter";
-export { AzureDevOpsAdapter } from "./adapters/AzureDevOpsAdapter";
-
 // Types
 export type {
-  IssueAdapter,
-  IssueAdapterCapabilities,
-  IssueSearchOptions,
-  IssueData,
-  CreateIssueData,
-  UpdateIssueData,
-  AuthenticationData,
-  WebhookData,
-  FieldMapping,
+  AuthenticationData, CreateIssueData, FieldMapping, IssueAdapter,
+  IssueAdapterCapabilities, IssueData, IssueSearchOptions, UpdateIssueData, WebhookData
 } from "./adapters/IssueAdapter";
+export { JiraAdapter } from "./adapters/JiraAdapter";
+export { AuthenticationService } from "./AuthenticationService";
+export { IssueCache, issueCache } from "./cache/IssueCache";
+export { IntegrationManager, integrationManager } from "./IntegrationManager";
+export { SyncService, syncService } from "./services/SyncService";
+
+
 
 // Helper function to get an integration client
 export async function getIntegrationClient(
