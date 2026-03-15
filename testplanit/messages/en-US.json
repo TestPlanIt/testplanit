@@ -5872,6 +5872,8 @@
       "selectEntity": "Select an entity to view tag suggestions.",
       "noTagsSelected": "No tags selected",
       "footerSummary": "{assignCount, plural, one {# tag} other {# tags}} will be assigned, {newCount, plural, one {# new tag} other {# new tags}} will be created",
+      "footerAssignCount": "{assignCount, plural, one {# tag} other {# tags}} will be assigned",
+      "footerNewCount": "{newCount, plural, one {# new tag} other {# new tags}} will be created",
       "applying": "Applying...",
       "applySuccess": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}",
       "applySuccessNewTags": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}, {newCount, plural, one {# new tag} other {# new tags}} created",

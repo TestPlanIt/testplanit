@@ -38,7 +38,7 @@ export const AttachmentsListDisplay: React.FC<AttachmentsListProps> = ({
         </Badge>
       </PopoverTrigger>
       <PopoverContent key={attachments.length}>
-        <div className="flex items-center flex-wrap overflow-auto max-h-[calc(100vh-400px)]">
+        <div className="flex items-center flex-wrap overflow-auto max-h-[calc(100vh-400px)]" onWheel={(e) => e.stopPropagation()}>
           {attachments.map((attachment, index) => (
             <div
               key={attachment.id}

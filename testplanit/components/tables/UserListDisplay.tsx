@@ -49,7 +49,7 @@ export const UserListDisplay: React.FC<UserListProps> = ({ users }) => {
           </Badge>
         </button>
       </PopoverTrigger>
-      <PopoverContent className="border-2 bg-background text-foreground max-h-[300px] overflow-y-auto w-auto">
+      <PopoverContent className="border-2 bg-background text-foreground max-h-[300px] overflow-y-auto w-auto" onWheel={(e) => e.stopPropagation()}>
         <div className="flex flex-col gap-2 min-w-[200px]">
           {allUsers.map((user: User) => (
             <UserNameCell key={user.id} userId={user.id} hideLink={true} />

@@ -110,7 +110,7 @@ export const StepsListDisplay: React.FC<StepsListProps> = ({ steps }) => {
           {sortedSteps.length}
         </Badge>
       </PopoverTrigger>
-      <PopoverContent className="flex items-center flex-wrap overflow-auto max-h-[calc(100vh-400px)] lg:w-[400px]">
+      <PopoverContent className="flex items-center flex-wrap overflow-auto max-h-[calc(100vh-400px)] lg:w-[400px]" onWheel={(e) => e.stopPropagation()}>
         <ol className="pl-6 overflow-hidden w-full list-decimal">
           {sortedSteps.map((step, index) => {
             if (step.sharedStepGroupId) {

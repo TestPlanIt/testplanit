@@ -20,7 +20,7 @@ const SystemOutputPopover: React.FC<SystemOutputPopoverProps> = ({ text }) => {
           {text}
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-[700px] max-h-[500px] overflow-y-auto">
+      <PopoverContent className="w-[700px] max-h-[500px] overflow-y-auto" onWheel={(e) => e.stopPropagation()}>
         <pre className="whitespace-pre-wrap wrap-break-word text-sm">
           {lines.map((line, idx) => {
             if (line.startsWith("COMMAND:")) {

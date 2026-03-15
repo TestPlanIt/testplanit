@@ -23,7 +23,7 @@ const SystemErrorPopover: React.FC<SystemErrorPopoverProps> = ({ text }) => {
           {text}
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-[500px] max-h-[400px] overflow-y-auto focus:outline-none">
+      <PopoverContent className="w-[500px] max-h-[400px] overflow-y-auto focus:outline-none" onWheel={(e) => e.stopPropagation()}>
         <div className="font-semibold text-destructive-foreground bg-destructive rounded-md rounded-b-none mb-2 p-2 -mx-4 -mt-4">
           {message}
         </div>

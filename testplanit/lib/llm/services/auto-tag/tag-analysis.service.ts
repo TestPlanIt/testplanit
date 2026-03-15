@@ -136,18 +136,35 @@ export class TagAnalysisService {
     ): Promise<void> => {
       const userPrompt = this.buildUserPrompt(batch, existingTagNames);
 
-      const response = await this.llmManager.chat(integrationId, {
-        messages: [
-          { role: "system", content: resolvedPrompt.systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: resolvedPrompt.temperature,
-        maxTokens: resolvedPrompt.maxOutputTokens,
-        userId,
-        projectId,
-        feature: LLM_FEATURES.AUTO_TAG,
-        disableThinking: false,
-      });
+      let response;
+      try {
+        response = await this.llmManager.chat(integrationId, {
+          messages: [
+            { role: "system", content: resolvedPrompt.systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: resolvedPrompt.temperature,
+          maxTokens: resolvedPrompt.maxOutputTokens,
+          userId,
+          projectId,
+          feature: LLM_FEATURES.AUTO_TAG,
+          disableThinking: false,
+        });
+      } catch (error: any) {
+        // If the LLM timed out, back off on batch size (same as truncated response)
+        const isTimeout = error?.code === "TIMEOUT" || error?.message?.includes("timeout") || error?.message?.includes("Timeout");
+        if (isTimeout && batch.length > 1) {
+          const mid = Math.ceil(batch.length / 2);
+          console.warn(
+            `[auto-tag] Timeout for batch of ${batch.length}, retrying as 2 sub-batches of ${mid} and ${batch.length - mid} (depth ${depth + 1})`,
+          );
+          await processWithRetry(batch.slice(0, mid), depth + 1);
+          await processWithRetry(batch.slice(mid), depth + 1);
+          return;
+        }
+        // Not a timeout or single entity — let it propagate to batch error handler
+        throw error;
+      }
 
       totalTokensUsed += response.totalTokens;
 

@@ -115,6 +115,7 @@ export function EntityDetailPopover({
       </PopoverTrigger>
       <PopoverContent
         className="w-105 max-h-100 overflow-y-auto p-0"
+        onWheel={(e) => e.stopPropagation()}
         side="right"
         align="start"
         collisionPadding={16}

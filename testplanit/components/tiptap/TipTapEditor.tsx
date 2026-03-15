@@ -1098,7 +1098,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 <Smile className="w-4 h-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="p-2 w-60 max-h-80 flex flex-col gap-2 overflow-auto">
+            <PopoverContent className="p-2 w-60 max-h-80 flex flex-col gap-2 overflow-auto" onWheel={(e) => e.stopPropagation()}>
               <div className="grid grid-cols-8 gap-2">
                 {gitHubEmojis.map((emoji) => (
                   <button

@@ -5872,6 +5872,8 @@
       "selectEntity": "Seleccione una entidad para ver sugerencias de etiquetas.",
       "noTagsSelected": "No hay etiquetas seleccionadas",
       "footerSummary": "{assignCount, plural, one {# etiqueta} other {# etiquetas}} serán asignadas, {newCount, plural, one {# nueva etiqueta} other {# nuevas etiquetas}} serán creadas",
+      "footerAssignCount": "{assignCount, plural, one {# etiqueta} other {# etiquetas}} se asignarán",
+      "footerNewCount": "{newCount, plural, one {# nueva etiqueta} other {# se crearán nuevas etiquetas}}",
       "applying": "Aplicando...",
       "applySuccess": "{tagCount, plural, one {# etiqueta} other {# etiquetas}} aplicadas a {entityCount, plural, one {# entidad} other {# entidades}}",
       "applySuccessNewTags": "{tagCount, plural, one {# etiqueta} other {# etiquetas}} aplicadas a {entityCount, plural, one {# entidad} other {# entidades}}, {newCount, plural, one {# nueva etiqueta} other {# nuevas etiquetas}} creadas",

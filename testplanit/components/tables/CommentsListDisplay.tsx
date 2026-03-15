@@ -152,7 +152,7 @@ export const CommentsListDisplay: React.FC<CommentsListDisplayProps> = ({
               <Skeleton className="h-16 w-full" />
             </div>
           ) : comments && comments.length > 0 ? (
-            <div className="space-y-3 max-h-[300px] overflow-y-auto">
+            <div className="space-y-3 max-h-[300px] overflow-y-auto" onWheel={(e) => e.stopPropagation()}>
               {comments.map((comment) => (
                 <CommentItem key={comment.id} comment={comment} />
               ))}

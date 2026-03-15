@@ -4,14 +4,22 @@ import { useDebounce } from "@/components/Debounce";
 import { DataTable } from "@/components/tables/DataTable";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
-  DialogContent, DialogDescription,
-  DialogFooter, DialogHeader,
-  DialogTitle
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
@@ -19,8 +27,18 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
-  Bot, CheckCircle2, Compass, ListChecks, ListTree, Loader2, PlayCircle, Search, Sparkles,
-  Tags, XCircle
+  Bot,
+  CheckCircle2,
+  Compass,
+  ListChecks,
+  ListTree,
+  Loader2,
+  PlayCircle,
+  Search,
+  Sparkles,
+  Tag,
+  Tags,
+  XCircle,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -32,7 +50,7 @@ import { cn } from "~/utils";
 import { invalidateModelQueries } from "~/utils/optimistic-updates";
 import {
   isAutomatedCaseSource,
-  isAutomatedTestRunType
+  isAutomatedTestRunType,
 } from "~/utils/testResultTypes";
 import { EntityDetailPopover } from "./EntityDetailPopover";
 import { TagChip } from "./TagChip";
@@ -398,6 +416,24 @@ export function AutoTagWizardDialog({
   }, [allJobs]);
 
   const totalSelected = mergedSummary.assignCount;
+
+  // Compute list of new tag names that will be created
+  const newTagNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const job of allJobs) {
+      if (!job.suggestions) continue;
+      for (const entity of job.suggestions) {
+        const accepted = job.selections.get(entity.entityId);
+        if (!accepted) continue;
+        for (const tag of entity.tags) {
+          if (accepted.has(tag.tagName) && !tag.isExisting) {
+            names.add(tag.tagName);
+          }
+        }
+      }
+    }
+    return Array.from(names).sort();
+  }, [allJobs]);
 
   // Find which job owns a given entity for toggle/edit/apply
   const findJobForEntity = useCallback(
@@ -1082,12 +1118,59 @@ export function AutoTagWizardDialog({
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {totalSelected > 0
-                    ? t("review.footerSummary", {
+                  {totalSelected > 0 ? (
+                    <>
+                      {t("review.footerAssignCount", {
                         assignCount: mergedSummary.assignCount,
-                        newCount: mergedSummary.newCount,
-                      })
-                    : t("review.noTagsSelected")}
+                      })}
+                      {mergedSummary.newCount > 0 && (
+                        <>
+                          {", "}
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                className="cursor-pointer underline decoration-dotted underline-offset-4"
+                              >
+                                {t("review.footerNewCount", {
+                                  newCount: mergedSummary.newCount,
+                                })}
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              side="top"
+                              className="w-auto max-w-80 p-3"
+                            >
+                              <p className="mb-2 text-xs font-medium">
+                                {t("review.footerNewCount", {
+                                  newCount: mergedSummary.newCount,
+                                })}
+                              </p>
+                              <div
+                                className="max-h-96 overflow-y-auto p-1"
+                                onWheel={(e) => e.stopPropagation()}
+                              >
+                                <div className="flex flex-wrap gap-2">
+                                  {newTagNames.map((name) => (
+                                    <Badge
+                                      key={name}
+                                      variant="outline"
+                                      className="outline-2 outline-offset-1 outline-primary/50"
+                                    >
+                                      <Tag className="mr-1 h-3 w-3 shrink-0" />
+                                      {name}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    t("review.noTagsSelected")
+                  )}
                 </p>
               </div>
             </DialogFooter>

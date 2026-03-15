@@ -82,7 +82,7 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
           {milestones.length}
         </Badge>
       </PopoverTrigger>
-      <PopoverContent className="flex flex-wrap items-center min-w-[400px] max-w-[600px] overflow-auto max-h-[calc(100vh-400px)]">
+      <PopoverContent className="flex flex-wrap items-center min-w-[400px] max-w-[600px] overflow-auto max-h-[calc(100vh-400px)]" onWheel={(e) => e.stopPropagation()}>
         {milestones.map((milestone) => {
           const status = getStatus(milestone);
           const { badge } = getStatusStyle(status, resolvedTheme || "light", colorMap);
