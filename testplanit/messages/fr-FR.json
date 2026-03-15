@@ -4930,7 +4930,7 @@
         },
         "overview": {
           "title": "Aperçu du projet",
-          "content": "La vue d'ensemble correspond au tableau de bord de votre projet. Elle affiche la progression des étapes clés à gauche et des résumés des cas de test, des exécutions en cours, des sessions et des étiquettes à droite."
+          "content": "La vue d'ensemble est le tableau de bord de votre projet. Elle affiche la progression des étapes clés et des résumés des cas de test, des exécutions en cours, des sessions et des étiquettes."
         },
         "documentation": {
           "title": "Documentation",
@@ -4946,11 +4946,11 @@
         },
         "milestonesPage": {
           "title": "Chronologie des étapes clés",
-          "content": "Ce projet comporte trois étapes clés : le sprint 1 (terminé), le sprint 2 (en cours) et une future version 1.0."
+          "content": "Consultez toutes les étapes clés de ce projet. Chaque étape indique son statut et son avancement vers la réalisation."
         },
         "repository": {
           "title": "Référentiel de cas de test",
-          "content": "Organisez les cas de test dans des dossiers avec des champs, des étapes et des priorités personnalisés. Les cas sont ici regroupés sous Authentification et Tableau de bord."
+          "content": "Organisez vos cas de test dans des dossiers avec des champs, des étapes et des priorités personnalisés. Consultez les exemples de dossiers pour voir comment les cas sont structurés."
         },
         "repositoryPanels": {
           "title": "Chemises et étuis",
@@ -4962,7 +4962,7 @@
         },
         "sharedSteps": {
           "title": "Étapes partagées",
-          "content": "Définissez des groupes d'étapes réutilisables pouvant être référencés dans plusieurs cas de test. Le groupe « Prérequis de connexion » est utilisé dans tous les cas d'authentification."
+          "content": "Définissez des groupes d'étapes réutilisables pouvant être référencés dans plusieurs cas de test. Cela garantit la cohérence des étapes communes et facilite la maintenance."
         },
         "sharedStepsPage": {
           "title": "Groupes de pas partagés",
@@ -4974,7 +4974,7 @@
         },
         "testRunsPage": {
           "title": "Résultats des essais",
-          "content": "Ce projet a un test de fumée Sprint 1 terminé et un test de régression Sprint 2 en cours avec des résultats mitigés."
+          "content": "Consultez les résultats et la progression des tests. Chaque test affiche son statut, l'étape assignée et le détail des réussites et des échecs."
         },
         "sessions": {
           "title": "Séances exploratoires",
@@ -4982,11 +4982,11 @@
         },
         "sessionsPage": {
           "title": "Résultats de la session",
-          "content": "Chaque session comprend des résultats détaillés, un statut et des notes. Consultez la session « Flux de connexion » pour voir des exemples de résultats."
+          "content": "Chaque session comprend des résultats détaillés, un état d'avancement et des notes. Cliquez sur une session pour consulter ses résultats."
         },
         "tags": {
           "title": "Étiquettes",
-          "content": "Les balises permettent d'organiser et de filtrer les cas de test, les exécutions et les sessions. Ce projet utilise les balises Smoke, Regression et UI."
+          "content": "Les balises permettent d'organiser et de filtrer les cas de test, les exécutions et les sessions. Consultez les exemples de balises pour voir comment elles catégorisent le contenu."
         },
         "tagsPage": {
           "title": "Gestion des balises",
@@ -4998,7 +4998,7 @@
         },
         "issuesPage": {
           "title": "Suivi des problèmes",
-          "content": "Ce projet présente des exemples de problèmes liés à des résultats infructueux. Le bogue 1 provient d'un test de réinitialisation de mot de passe ayant échoué, et le bogue 2 d'une découverte lors d'une session exploratoire."
+          "content": "Consultez des exemples de problèmes liés à des résultats infructueux. Ces problèmes peuvent être attribués à l'exécution de test ou à la session qui les a mis en évidence."
         },
         "reports": {
           "title": "Rapports et analyses",

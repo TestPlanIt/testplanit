@@ -4930,7 +4930,7 @@
         },
         "overview": {
           "title": "Project Overview",
-          "content": "The overview is your project dashboard. It shows milestone progress on the left and summaries of test cases, active runs, sessions, and tags on the right."
+          "content": "The overview is your project dashboard. It shows milestone progress and summaries of test cases, active runs, sessions, and tags."
         },
         "documentation": {
           "title": "Documentation",
@@ -4946,11 +4946,11 @@
         },
         "milestonesPage": {
           "title": "Milestone Timeline",
-          "content": "This project has three milestones: Sprint 1 (completed), Sprint 2 (in progress), and a future v1.0 Release."
+          "content": "View all milestones for this project. Each milestone shows its status and progress toward completion."
         },
         "repository": {
           "title": "Test Case Repository",
-          "content": "Organize test cases in folders with custom fields, steps, and priorities. Cases here are grouped under Authentication and Dashboard."
+          "content": "Organize test cases in folders with custom fields, steps, and priorities. Browse the sample folders to see how cases are structured."
         },
         "repositoryPanels": {
           "title": "Folders & Cases",
@@ -4962,7 +4962,7 @@
         },
         "sharedSteps": {
           "title": "Shared Steps",
-          "content": "Define reusable step groups that can be referenced from multiple test cases. The 'Login Prerequisites' group is used across all Authentication cases."
+          "content": "Define reusable step groups that can be referenced from multiple test cases. This keeps common steps consistent and easy to maintain."
         },
         "sharedStepsPage": {
           "title": "Shared Step Groups",
@@ -4974,7 +4974,7 @@
         },
         "testRunsPage": {
           "title": "Test Run Results",
-          "content": "This project has a completed Sprint 1 smoke test and an in-progress Sprint 2 regression run with mixed results."
+          "content": "View test run results and progress. Each run shows its status, assigned milestone, and pass/fail breakdown."
         },
         "sessions": {
           "title": "Exploratory Sessions",
@@ -4982,11 +4982,11 @@
         },
         "sessionsPage": {
           "title": "Session Results",
-          "content": "Each session includes detailed findings with status and notes. Review the Login Flows session to see example results."
+          "content": "Each session includes detailed findings with status and notes. Click into a session to see its results."
         },
         "tags": {
           "title": "Tags",
-          "content": "Tags help organize and filter test cases, runs, and sessions. This project uses Smoke, Regression, and UI tags."
+          "content": "Tags help organize and filter test cases, runs, and sessions. Browse the sample tags to see how they categorize content."
         },
         "tagsPage": {
           "title": "Tag Management",
@@ -4998,7 +4998,7 @@
         },
         "issuesPage": {
           "title": "Issue Tracker",
-          "content": "This project has sample issues linked to failed results. BUG-1 is from a failed password reset test, and BUG-2 is from an exploratory session finding."
+          "content": "View sample issues linked to failed results. Issues can be traced back to the test run or session finding that uncovered them."
         },
         "reports": {
           "title": "Reports & Analytics",

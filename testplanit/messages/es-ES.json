@@ -4930,7 +4930,7 @@
         },
         "overview": {
           "title": "Descripción general del proyecto",
-          "content": "La vista general es el panel de control de tu proyecto. Muestra el progreso de los hitos a la izquierda y resúmenes de casos de prueba, ejecuciones activas, sesiones y etiquetas a la derecha."
+          "content": "La vista general es el panel de control de tu proyecto. Muestra el progreso de los hitos y resúmenes de los casos de prueba, las ejecuciones activas, las sesiones y las etiquetas."
         },
         "documentation": {
           "title": "Documentación",
@@ -4946,11 +4946,11 @@
         },
         "milestonesPage": {
           "title": "Cronología de hitos",
-          "content": "Este proyecto tiene tres hitos: Sprint 1 (completado), Sprint 2 (en progreso) y una futura versión v1.0."
+          "content": "Consulta todos los hitos de este proyecto. Cada hito muestra su estado y el progreso hacia su finalización."
         },
         "repository": {
           "title": "Repositorio de casos de prueba",
-          "content": "Organice los casos de prueba en carpetas con campos, pasos y prioridades personalizados. Los casos se agrupan en Autenticación y Panel de Control."
+          "content": "Organiza los casos de prueba en carpetas con campos, pasos y prioridades personalizados. Consulta las carpetas de ejemplo para ver cómo están estructurados los casos."
         },
         "repositoryPanels": {
           "title": "Carpetas y estuches",
@@ -4962,7 +4962,7 @@
         },
         "sharedSteps": {
           "title": "Pasos compartidos",
-          "content": "Defina grupos de pasos reutilizables a los que se pueda hacer referencia desde varios casos de prueba. El grupo \"Requisitos de inicio de sesión\" se utiliza en todos los casos de autenticación."
+          "content": "Defina grupos de pasos reutilizables a los que se pueda hacer referencia desde varios casos de prueba. Esto mantiene la coherencia y la facilidad de mantenimiento de los pasos comunes."
         },
         "sharedStepsPage": {
           "title": "Grupos de pasos compartidos",
@@ -4974,7 +4974,7 @@
         },
         "testRunsPage": {
           "title": "Resultados de la prueba de funcionamiento",
-          "content": "Este proyecto tiene una prueba de humo Sprint 1 completada y una ejecución de regresión Sprint 2 en curso con resultados mixtos."
+          "content": "Consulta los resultados y el progreso de las pruebas. Cada prueba muestra su estado, el hito asignado y el desglose de aprobados/reprobados."
         },
         "sessions": {
           "title": "Sesiones exploratorias",
@@ -4982,11 +4982,11 @@
         },
         "sessionsPage": {
           "title": "Resultados de la sesión",
-          "content": "Cada sesión incluye hallazgos detallados con su estado y notas. Revise la sesión de Flujos de Inicio de Sesión para ver ejemplos de resultados."
+          "content": "Cada sesión incluye resultados detallados con su estado y notas. Haga clic en una sesión para ver sus resultados."
         },
         "tags": {
           "title": "Etiquetas",
-          "content": "Las etiquetas ayudan a organizar y filtrar casos de prueba, ejecuciones y sesiones. Este proyecto utiliza etiquetas Smoke, Regression y UI."
+          "content": "Las etiquetas ayudan a organizar y filtrar los casos de prueba, las ejecuciones y las sesiones. Consulta las etiquetas de ejemplo para ver cómo categorizan el contenido."
         },
         "tagsPage": {
           "title": "Gestión de etiquetas",
@@ -4998,7 +4998,7 @@
         },
         "issuesPage": {
           "title": "Rastreador de problemas",
-          "content": "Este proyecto presenta ejemplos de problemas relacionados con resultados fallidos. El error 1 se debe a una prueba de restablecimiento de contraseña fallida, y el error 2 a un hallazgo de sesión exploratoria."
+          "content": "Consulte ejemplos de problemas relacionados con resultados fallidos. Los problemas pueden rastrearse hasta la ejecución de la prueba o la sesión que los detectó."
         },
         "reports": {
           "title": "Informes y análisis",
