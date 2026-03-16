@@ -226,12 +226,8 @@ export function useReportColumns(
                   );
                 }
 
-                return userId ? (
+                return (
                   <UserNameCell userId={userId} hideLink={true} />
-                ) : (
-                  <span>
-                    {userName || userEmail || tCommon("labels.unknown")}
-                  </span>
                 );
               }
               case "status": {

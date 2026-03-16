@@ -70,10 +70,6 @@ export const MilestoneListDisplay: React.FC<MilestoneListProps> = ({
       </div>
     );
 
-  if (!milestones || milestones.length === 0) {
-    milestones = [];
-  }
-
   return (
     <Popover>
       <PopoverTrigger>

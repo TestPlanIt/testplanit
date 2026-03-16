@@ -429,24 +429,21 @@ export function CreateIssueDialog({
           testplanitProjectId: projectId,
         };
 
-        if (useIntegration && activeIntegration) {
-          // Use the project's configured external project ID from config
-          const integrationConfig =
-            (activeIntegration.config as Record<string, any>) || {};
-          // projectId is the external project identifier (e.g., "owner/repo" for GitHub)
-          payload.projectId =
-            integrationConfig.externalProjectId ||
-            integrationConfig.externalProjectKey ||
-            "";
-          // Use the selected issue type (only for providers that support it)
-          if (selectedIssueType) {
-            payload.issueType = selectedIssueType.id;
-          } else if (activeIntegration.integration?.provider !== "GITHUB") {
-            // Try common issue type IDs as fallback (for Jira, Azure DevOps, etc.)
-            const commonTypes = ["10001", "10002", "10003", "10004", "10005"];
-            payload.issueType = commonTypes[0];
-          }
-          // For GitHub, we don't need issue type - it doesn't have that concept
+        // Use the project's configured external project ID from config
+        const integrationConfig =
+          (activeIntegration.config as Record<string, any>) || {};
+        // projectId is the external project identifier (e.g., "owner/repo" for GitHub)
+        payload.projectId =
+          integrationConfig.externalProjectId ||
+          integrationConfig.externalProjectKey ||
+          "";
+        // Use the selected issue type (only for providers that support it)
+        if (selectedIssueType) {
+          payload.issueType = selectedIssueType.id;
+        } else if (activeIntegration.integration?.provider !== "GITHUB") {
+          // Try common issue type IDs as fallback (for Jira, Azure DevOps, etc.)
+          const commonTypes = ["10001", "10002", "10003", "10004", "10005"];
+          payload.issueType = commonTypes[0];
         }
 
         // Add entity linking information

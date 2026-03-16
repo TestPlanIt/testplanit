@@ -56,7 +56,7 @@ export const SessionsListDisplay: React.FC<SessionsListProps> = ({
       conditions.push(filter);
     } else if (sessionIds && sessionIds.length > 0) {
       conditions.push({ id: { in: sessionIds } });
-    } else if (!filter && (!sessionIds || sessionIds.length === 0)) {
+    } else {
       return null;
     }
 

@@ -1137,7 +1137,6 @@ var processor2 = async (job) => {
           `Job ${job.id} completed: Updated forecast for case ${singleData.repositoryCaseId}`
         );
       } catch (error) {
-        failCount = 1;
         console.error(
           `Job ${job.id} failed for case ${singleData.repositoryCaseId}`,
           error

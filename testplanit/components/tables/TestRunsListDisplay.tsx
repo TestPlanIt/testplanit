@@ -207,7 +207,7 @@ export const TestRunsListDisplay: React.FC<TestRunsListDisplayProps> = ({
       conditions.push(filter);
     } else if (testRunIds && testRunIds.length > 0) {
       conditions.push({ id: { in: testRunIds } });
-    } else if (!filter && (!testRunIds || testRunIds.length === 0)) {
+    } else {
       return null;
     }
 

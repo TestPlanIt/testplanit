@@ -1073,13 +1073,6 @@ export function TestmoImportPanel() {
       return false;
     }
 
-    if (!storageKey) {
-      setProcessingState("idle");
-      setUploadProgress({ state: "idle", percent: 0 });
-      setErrorKey("upload-failed");
-      return false;
-    }
-
     let success = false;
     try {
       setProcessingState("analyzing");

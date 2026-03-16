@@ -420,7 +420,7 @@ export function ReportRenderer({
           <CardContent className="h-[calc(100%-4rem)] overflow-y-auto p-6 pt-0">
             <DataTable
               columns={columns as ColumnDef<any>[]}
-              data={results || []}
+              data={results}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={onColumnVisibilityChange}
               sortConfig={sortConfig || undefined}

@@ -63,10 +63,6 @@ export async function POST(request: NextRequest) {
       authenticated = true;
     }
 
-    if (!authenticated) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     // Parse and validate request body
     const body = await request.json();
     const validatedData = countSchema.parse(body);

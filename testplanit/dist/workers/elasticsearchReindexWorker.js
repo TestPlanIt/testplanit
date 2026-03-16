@@ -1440,8 +1440,7 @@ async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progr
       await progressCallback(0, totalCases, message);
     }
     let processed = 0;
-    let hasMore = true;
-    while (hasMore) {
+    while (true) {
       const cases = await prisma2.repositoryCases.findMany({
         where: {
           projectId,
@@ -1453,7 +1452,6 @@ async function syncProjectCasesToElasticsearch(projectId, batchSize = 100, progr
         orderBy: { id: "asc" }
       });
       if (cases.length === 0) {
-        hasMore = false;
         break;
       }
       const documents = [];
@@ -1686,8 +1684,7 @@ async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100,
       `Syncing ${totalSteps} shared steps for project ${projectId}${tenantId ? ` (tenant: ${tenantId})` : ""}...`
     );
     let processed = 0;
-    let hasMore = true;
-    while (hasMore) {
+    while (true) {
       const steps = await prisma2.sharedStepGroup.findMany({
         where: {
           projectId
@@ -1698,7 +1695,6 @@ async function syncProjectSharedStepsToElasticsearch(projectId, batchSize = 100,
         orderBy: { id: "asc" }
       });
       if (steps.length === 0) {
-        hasMore = false;
         break;
       }
       for (const step of steps) {

@@ -343,7 +343,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
   if (!open) return null;
   if (
     isLoadingOriginalRun ||
-    (open && !testRunCasesDataForStatusList && isLoadingCasesForStatusList)
+    (!testRunCasesDataForStatusList && isLoadingCasesForStatusList)
   ) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>

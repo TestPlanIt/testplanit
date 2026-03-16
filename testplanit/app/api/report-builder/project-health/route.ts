@@ -730,7 +730,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate metrics
-    if (!metrics || metrics.length === 0) {
+    if (metrics.length === 0) {
       return Response.json(
         { error: "At least one metric must be specified" },
         { status: 400 }

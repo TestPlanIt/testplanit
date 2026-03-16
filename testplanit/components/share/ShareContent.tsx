@@ -67,7 +67,7 @@ export function ShareContent({ shareKey, shareData, session }: ShareContentProps
         setAccessGranted(true);
 
         // Show toast notification for auth bypass
-        if (session && shareData.projectName) {
+        if (shareData.projectName) {
           const userName = session.user.name || session.user.email || "User";
 
           // Build full report URL with configuration

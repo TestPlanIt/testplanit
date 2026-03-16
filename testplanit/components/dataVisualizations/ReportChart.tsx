@@ -462,7 +462,6 @@ export const ReportChart: React.FC<ReportChartProps> = ({
   const chartType = getChartType(dimensions, chartMetrics);
 
   if (
-    !results ||
     results.length === 0 ||
     chartType === ChartType.None ||
     chartMetrics.length === 0

@@ -1313,7 +1313,7 @@ export async function buildMappingAnalysis(
       return result;
     }
 
-    if (value && typeof value === "object") {
+    if (typeof value === "object") {
       for (const [area, entry] of Object.entries(
         value as Record<string, unknown>
       )) {

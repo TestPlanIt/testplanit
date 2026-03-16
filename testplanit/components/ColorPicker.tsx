@@ -40,7 +40,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
     );
   }
 
-  const colorGroups = (colors || []).reduce<{ [key: string]: Color[] }>(
+  const colorGroups = colors.reduce<{ [key: string]: Color[] }>(
     (groups, color) => {
       const groupName = color.colorFamily.name;
       groups[groupName] = groups[groupName] || [];

@@ -447,7 +447,7 @@ function ApiTokensList() {
             {tokens && tokens.length > 0 ? (
               <DataTable<ExtendedApiToken, unknown>
                 columns={columns}
-                data={tokens || []}
+                data={tokens}
                 onSortChange={handleSortChange}
                 sortConfig={sortConfig}
                 columnVisibility={columnVisibility}

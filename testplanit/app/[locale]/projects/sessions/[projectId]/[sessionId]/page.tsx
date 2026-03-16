@@ -1687,7 +1687,7 @@ export default function SessionPage() {
                   <>
                     {versions && versions.length > 1 && (
                       <VersionSelect
-                        versions={versions || []}
+                        versions={versions}
                         currentVersion={
                           sessionData?.versions.length.toString() || "latest"
                         }
@@ -1989,53 +1989,49 @@ export default function SessionPage() {
                 }
               >
                 <div className="p-4 space-y-4">
-                  {sessionData && (
+                  <SessionFormControls
+                    isEditMode={isEditMode}
+                    isSubmitting={isSubmitting}
+                    testSession={sessionData}
+                    control={control}
+                    errors={errors}
+                    templates={templates}
+                    configurations={configurations}
+                    workflows={workflows}
+                    milestones={milestones || []}
+                    projectAssignments={projectAssignments}
+                    selectedTags={selectedTags}
+                    setSelectedTags={setSelectedTags}
+                    projectId={safeProjectId}
+                    handleFileSelect={handleFileSelect}
+                    handleSelect={handleSelect}
+                    issues={sessionData.issues}
+                    projectIntegration={
+                      projectData?.projectIntegrations?.[0]
+                    }
+                    canAddEditTags={showAddEditTagsPerm}
+                    onAttachmentPendingChanges={setPendingAttachmentChanges}
+                  />
+                  {selectedAttachmentIndex !== null && (
+                    <AttachmentsCarousel
+                      attachments={selectedAttachments}
+                      initialIndex={selectedAttachmentIndex}
+                      onClose={handleClose}
+                      canEdit={canAddEditSession || isSuperAdmin}
+                    />
+                  )}
+                  {!isEditMode && session?.user && (
                     <>
-                      <SessionFormControls
-                        isEditMode={isEditMode}
-                        isSubmitting={isSubmitting}
-                        testSession={sessionData}
-                        control={control}
-                        errors={errors}
-                        templates={templates}
-                        configurations={configurations}
-                        workflows={workflows}
-                        milestones={milestones || []}
-                        projectAssignments={projectAssignments}
-                        selectedTags={selectedTags}
-                        setSelectedTags={setSelectedTags}
-                        projectId={safeProjectId}
-                        handleFileSelect={handleFileSelect}
-                        handleSelect={handleSelect}
-                        issues={sessionData.issues}
-                        projectIntegration={
-                          projectData?.projectIntegrations?.[0]
-                        }
-                        canAddEditTags={showAddEditTagsPerm}
-                        onAttachmentPendingChanges={setPendingAttachmentChanges}
-                      />
-                      {selectedAttachmentIndex !== null && (
-                        <AttachmentsCarousel
-                          attachments={selectedAttachments}
-                          initialIndex={selectedAttachmentIndex}
-                          onClose={handleClose}
-                          canEdit={canAddEditSession || isSuperAdmin}
+                      <Separator className="my-4" />
+                      <div id="comments">
+                        <CommentsSection
+                          projectId={Number(projectId)}
+                          entityType="session"
+                          entityId={sessionData.id}
+                          currentUserId={session.user.id}
+                          isAdmin={session.user.access === "ADMIN"}
                         />
-                      )}
-                      {!isEditMode && session?.user && (
-                        <>
-                          <Separator className="my-4" />
-                          <div id="comments">
-                            <CommentsSection
-                              projectId={Number(projectId)}
-                              entityType="session"
-                              entityId={sessionData.id}
-                              currentUserId={session.user.id}
-                              isAdmin={session.user.access === "ADMIN"}
-                            />
-                          </div>
-                        </>
-                      )}
+                      </div>
                     </>
                   )}
                   <CompleteSessionDialog

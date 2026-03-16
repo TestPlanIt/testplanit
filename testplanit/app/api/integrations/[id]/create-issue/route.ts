@@ -267,8 +267,8 @@ export async function POST(
           //   console.log(`[CREATE-ISSUE] Email User ${index + 1}: ${user.displayName} - Email: ${user.emailAddress || 'NO EMAIL'} - AccountId: ${user.accountId}`);
           // });
 
-          // Try to find match in the additional email search results if not already found
-          if (!reporterId && emailUsers.length > 0) {
+          // Try to find match in the additional email search results
+          if (emailUsers.length > 0) {
             // Try exact email match
             matchingUser = emailUsers.find(
               (user: any) =>

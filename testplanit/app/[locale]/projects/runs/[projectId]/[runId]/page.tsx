@@ -1192,7 +1192,7 @@ export default function TestRunPage() {
   >({ column: "executedAt", direction: "desc" });
   const junitTestCases = useMemo(() => {
     if (!jUnitSuites) return [];
-    const mapped = (jUnitSuites || []).flatMap((suite) =>
+    const mapped = jUnitSuites.flatMap((suite) =>
       (suite.results || []).map((result) => ({
         id: result.repositoryCaseId,
         name: result.repositoryCase?.name || String(result.repositoryCaseId),
@@ -1875,7 +1875,7 @@ export default function TestRunPage() {
                   <TestRunFormControls
                     isEditMode={isEditMode}
                     isSubmitting={isSubmitting}
-                    testRun={testRunData ?? undefined}
+                    testRun={testRunData}
                     control={control}
                     errors={errors}
                     configurations={configurations}

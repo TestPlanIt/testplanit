@@ -406,7 +406,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
     return null;
   }
 
-  if (user && session)
+  if (user)
     user.createdUsers = user.createdUsers.map((user) => ({
       ...user,
       userId: user.id,
@@ -417,10 +417,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ params, searchParams }) => {
   }
 
   // Allow users with NONE access to view their own profile, but not other users' profiles
-  const canViewProfile = session && (session.user.access !== "NONE" || user?.id === session?.user?.id);
+  const canViewProfile = session.user.access !== "NONE" || user?.id === session?.user?.id;
 
   // Redirect to 404 if user doesn't have permission to view this profile
-  if (session && !canViewProfile) {
+  if (!canViewProfile) {
     router.push("/404");
     return null;
   }

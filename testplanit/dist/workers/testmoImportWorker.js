@@ -10425,13 +10425,11 @@ async function processImportMode(importJob, jobId, prisma2, tenantId) {
     );
     recordEntitySummary(context, templateSummary);
     await persistProgress("templates", formatSummaryStatus(templateSummary));
-    let caseFieldMap = /* @__PURE__ */ new Map();
-    let resultFieldMap = /* @__PURE__ */ new Map();
     const initialFieldMaps = buildTemplateFieldMaps(
       normalizedConfiguration.templateFields ?? {}
     );
-    caseFieldMap = initialFieldMaps.caseFields;
-    resultFieldMap = initialFieldMaps.resultFields;
+    let caseFieldMap = initialFieldMaps.caseFields;
+    let resultFieldMap = initialFieldMaps.resultFields;
     logMessage(context, "Processing template field mappings");
     await persistProgress(
       "templateFields",

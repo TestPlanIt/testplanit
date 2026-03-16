@@ -409,7 +409,7 @@ function TestRunFormControls({
                     issueTypeIconUrl={issue.issueTypeIconUrl}
                   />
                 ))
-              : !isEditMode && (
+              : (
                   <span className="text-muted-foreground text-sm">
                     {t("common.access.none")}
                   </span>

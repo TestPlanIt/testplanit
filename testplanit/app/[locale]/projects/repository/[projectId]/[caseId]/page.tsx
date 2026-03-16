@@ -1756,7 +1756,7 @@ export default function TestCaseDetails() {
                           type="button"
                           variant="outline"
                           onClick={handleCancel}
-                          disabled={isSubmitting || isLoadingSharedStepGroups}
+                          disabled={isLoadingSharedStepGroups}
                         >
                           <div className="flex items-center">
                             <CircleSlash2 className="w-5 h-5 mr-2" />

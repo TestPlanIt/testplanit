@@ -815,8 +815,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
     }
     const lowerCaseQuery = query.toLowerCase();
     // Correctly treat allSharedStepGroupsData as a direct array
-    const typedData = (allSharedStepGroupsData ||
-      []) as SharedStepGroupWithCount[];
+    const typedData = allSharedStepGroupsData as SharedStepGroupWithCount[];
 
     const filtered = typedData.filter((group) =>
       group.name.toLowerCase().includes(lowerCaseQuery)
@@ -910,7 +909,7 @@ const StepsForm: React.FC<StepsFormProps> = ({
               >
                 <Layers className="h-5 w-5" />
                 {tRepoSteps("createSharedSteps", {
-                  number: selectedStepIndices.length || 0,
+                  number: selectedStepIndices.length,
                 })}
               </Button>
             )}

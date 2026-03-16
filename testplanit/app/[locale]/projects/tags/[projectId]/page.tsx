@@ -610,12 +610,6 @@ function TagList() {
               sortConfig={sortConfig}
               columnVisibility={columnVisibility}
               onColumnVisibilityChange={setColumnVisibility}
-              isLoading={
-                isLoadingTags ||
-                isLoadingCases ||
-                isLoadingSessions ||
-                isLoadingRuns
-              }
               pageSize={effectivePageSize}
             />
           </div>

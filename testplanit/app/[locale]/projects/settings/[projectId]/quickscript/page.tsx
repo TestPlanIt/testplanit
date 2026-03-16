@@ -558,7 +558,7 @@ export default function QuickScriptPage() {
         </CardContent>
       </Card>
 
-      {!repositoriesLoading && repositories?.length === 0 ? (
+      {repositories?.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
             <GitBranch className="h-10 w-10 text-muted-foreground/40" />
@@ -587,8 +587,7 @@ export default function QuickScriptPage() {
           </CardContent>
         </Card>
       ) : (
-        !repositoriesLoading && (
-          <Form {...(form as any)}>
+        <Form {...(form as any)}>
             <form
               onSubmit={(form as any).handleSubmit(onSubmit)}
               className="space-y-6"
@@ -1036,7 +1035,6 @@ export default function QuickScriptPage() {
               </div>
             </form>
           </Form>
-        )
       )}
         </CardContent>
       </Card>
