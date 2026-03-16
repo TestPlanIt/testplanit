@@ -4,7 +4,7 @@ import CompletedRunsLineChart from "@/components/dataVisualizations/CompletedRun
 import RecentResultsDonut from "@/components/dataVisualizations/RecentResultsDonut";
 import SummarySunburstChart, {
   SunburstHierarchyNode,
-  SunburstLegendItem
+  SunburstLegendItem,
 } from "@/components/dataVisualizations/SummarySunburstChart";
 import { DateFormatter } from "@/components/DateFormatter";
 import { useDebounce } from "@/components/Debounce";
@@ -21,14 +21,14 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -36,7 +36,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -55,20 +55,26 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useTabState } from "~/hooks/useTabState";
 import {
-  defaultPageSizeOptions, PaginationProvider,
-  usePagination
+  defaultPageSizeOptions,
+  PaginationProvider,
+  usePagination,
 } from "~/lib/contexts/PaginationContext";
 import {
-  useCreateTestRuns, useFindFirstJUnitTestResult, useFindFirstProjects, useFindFirstTestRunResults,
-  useFindManyJUnitTestResult, useFindManyMilestones,
-  useFindManyTestRunResults, useFindManyTestRuns
+  useCreateTestRuns,
+  useFindFirstJUnitTestResult,
+  useFindFirstProjects,
+  useFindFirstTestRunResults,
+  useFindManyJUnitTestResult,
+  useFindManyMilestones,
+  useFindManyTestRunResults,
+  useFindManyTestRuns,
 } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 import AddTestRunModal from "./AddTestRunModal";
 import DuplicateTestRunDialog, {
-  AddTestRunModalInitProps
+  AddTestRunModalInitProps,
 } from "./DuplicateTestRunDialog";
 import TestRunDisplay from "./TestRunDisplay";
 
@@ -741,7 +747,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
           testRun: { projectId: numericProjectId ?? undefined },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { executedAt: "desc" },
       select: {
         executedAt: true,
         createdAt: true,
@@ -771,9 +777,10 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
           testSuite: {
             testRun: { projectId: numericProjectId ?? undefined },
           },
-          createdAt: { gte: sevenDaysBeforeLatestAutomated },
+          executedAt: { gte: sevenDaysBeforeLatestAutomated },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { executedAt: "desc" },
+        take: 10000,
         select: {
           id: true,
           executedAt: true,
@@ -1029,9 +1036,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                             if (!v) setDroppedFiles([]);
                           }}
                           initialFiles={
-                            droppedFiles.length > 0
-                              ? droppedFiles
-                              : undefined
+                            droppedFiles.length > 0 ? droppedFiles : undefined
                           }
                         />
                         <AddTestRunModal
