@@ -888,19 +888,15 @@ export default class TestPlanItReporter extends WDIOReporter {
       }
 
       // Get or create test run case
-      let testRunCaseId: number | undefined;
       const runCaseKey = `${this.state.testRunId}_${repositoryCaseId}`;
 
-      if (this.state.testRunCaseMap.has(runCaseKey)) {
-        testRunCaseId = this.state.testRunCaseMap.get(runCaseKey);
-      } else {
+      if (!this.state.testRunCaseMap.has(runCaseKey)) {
         const testRunCase = await this.client.findOrAddTestCaseToRun({
           testRunId: this.state.testRunId,
           repositoryCaseId,
         });
-        testRunCaseId = testRunCase.id;
-        this.state.testRunCaseMap.set(runCaseKey, testRunCaseId);
-        this.log('Added case to run:', testRunCaseId);
+        this.state.testRunCaseMap.set(runCaseKey, testRunCase.id);
+        this.log('Added case to run:', testRunCase.id);
       }
 
       // Get status ID for the JUnit result

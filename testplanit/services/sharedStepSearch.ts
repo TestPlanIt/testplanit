@@ -237,7 +237,6 @@ export async function syncProjectSharedStepsToElasticsearch(
       });
 
       if (steps.length === 0) {
-        hasMore = false;
         break;
       }
 

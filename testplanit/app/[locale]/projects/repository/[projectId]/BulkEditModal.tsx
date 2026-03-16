@@ -1155,11 +1155,9 @@ export function BulkEditModal({
             schema = strSchema.nullable(); // Allow null/empty string if not required
             break;
           case "Text Long":
-            // Start with string, apply nullability/parsing later
-            let textSchema: z.ZodTypeAny = z.string();
-
             if (isRequired) {
-              textSchema = textSchema.refine(
+              // If required, it must be a non-empty, valid JSON string.
+              schema = z.string().refine(
                 (val) => {
                   if (!val) return false;
                   try {
@@ -1173,8 +1171,6 @@ export function BulkEditModal({
                 },
                 { message: "Content is required" }
               );
-              // If required, it must be a non-empty, valid JSON string.
-              // Nullable is handled separately.
             } else {
               // If not required, allow null/undefined, OR valid JSON string (can be empty)
               schema = z

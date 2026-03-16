@@ -5764,16 +5764,12 @@ async function processImportMode(importJob: TestmoImportJob, jobId: string, pris
     recordEntitySummary(context, templateSummary);
     await persistProgress("templates", formatSummaryStatus(templateSummary));
 
-    // Initialize field maps - will be populated from template fields configuration
-    let caseFieldMap = new Map<string, number>();
-    let resultFieldMap = new Map<string, number>();
-
-    // Build initial maps from configuration (includes only mapped fields at this point)
+    // Build field maps from configuration (includes only mapped fields at this point)
     const initialFieldMaps = buildTemplateFieldMaps(
       normalizedConfiguration.templateFields ?? {}
     );
-    caseFieldMap = initialFieldMaps.caseFields;
-    resultFieldMap = initialFieldMaps.resultFields;
+    let caseFieldMap = initialFieldMaps.caseFields;
+    let resultFieldMap = initialFieldMaps.resultFields;
 
     logMessage(context, "Processing template field mappings");
     await persistProgress(

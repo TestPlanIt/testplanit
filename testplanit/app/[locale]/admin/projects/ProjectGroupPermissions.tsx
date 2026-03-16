@@ -152,7 +152,6 @@ export function ProjectGroupPermissions({
                 return null;
               }
 
-              let effectiveAccessDisplay = "";
               let combinedValue = ""; // For the Select component value
 
               const currentAccessType = permission.accessType;
@@ -161,27 +160,22 @@ export function ProjectGroupPermissions({
               // Determine the current combined value for the select dropdown
               if (currentAccessType === "PROJECT_DEFAULT") {
                 combinedValue = "PROJECT_DEFAULT";
-                effectiveAccessDisplay = tGlobal("common.labels.access.projectDefault");
               } else if (currentAccessType === ProjectAccessType.NO_ACCESS) {
                 combinedValue = "NO_ACCESS";
-                effectiveAccessDisplay = tGlobal("common.labels.access.noAccess");
               } else if (currentAccessType === ProjectAccessType.GLOBAL_ROLE) {
                 combinedValue = "GLOBAL_ROLE";
-                effectiveAccessDisplay = tGlobal("common.labels.access.usersGlobalRole");
               } else if (
                 currentAccessType === ProjectAccessType.SPECIFIC_ROLE &&
                 currentRoleId &&
                 currentRoleId !== "NONE"
               ) {
                 combinedValue = `ROLE_${currentRoleId}`;
-                effectiveAccessDisplay = tGlobal("common.labels.access.specificRole");
               } else {
                 // Fallback or inconsistent state - default to Project Default display
                 console.warn(
                   `Inconsistent permission state for group ${groupIdStr}: accessType=${currentAccessType}, roleId=${currentRoleId}`
                 );
                 combinedValue = "PROJECT_DEFAULT";
-                effectiveAccessDisplay = tGlobal("common.labels.access.projectDefault");
               }
 
               return (

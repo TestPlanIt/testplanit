@@ -148,7 +148,6 @@ async function removeJob(
       // Force removal: Try multiple times with delays
       let attempts = 0;
       const maxAttempts = 3;
-      let lastError = error;
 
       while (attempts < maxAttempts) {
         attempts++;
@@ -158,7 +157,6 @@ async function removeJob(
           await job.remove();
           return true; // Success!
         } catch (retryError: any) {
-          lastError = retryError;
           if (!retryError.message?.includes("locked")) {
             throw retryError; // Different error, throw it
           }

@@ -432,10 +432,10 @@ export function FieldValueInput({
       );
 
     case "Text Long":
-      let initialTextContent = emptyEditorContent;
+      let initialTextContent;
       try {
         initialTextContent = value ? JSON.parse(value) : emptyEditorContent;
-      } catch (error) {
+      } catch {
         initialTextContent = emptyEditorContent;
       }
 

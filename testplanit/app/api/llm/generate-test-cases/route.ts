@@ -696,8 +696,8 @@ export async function POST(request: NextRequest) {
       );
 
       // Analyze the error to provide specific user guidance
-      let userError = "Failed to parse AI response";
-      let userSuggestions: string[] = [];
+      let userError: string;
+      let userSuggestions: string[];
       const errorMessage =
         parseError instanceof Error ? parseError.message : String(parseError);
 

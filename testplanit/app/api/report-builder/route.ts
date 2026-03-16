@@ -1324,16 +1324,6 @@ export async function POST(req: NextRequest) {
       resultMap.set(key, row);
     }
 
-    // 6. For passRate, get passing status IDs
-    let passStatusIds: number[] = [];
-    if (mets.includes("passRate")) {
-      const statuses = await prisma.status.findMany({
-        where: { isSuccess: true },
-        select: { id: true },
-      });
-      passStatusIds = statuses.map((s) => s.id);
-    }
-
     // 7. Generate all combinations
     const combos = cartesianProduct(allDimensionValues);
 

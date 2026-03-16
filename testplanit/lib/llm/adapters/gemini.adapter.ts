@@ -503,8 +503,8 @@ export class GeminiAdapter extends BaseLlmAdapter {
   }
 
   protected async handleErrorResponse(response: Response): Promise<never> {
-    let errorMessage = `HTTP ${response.status}`;
-    
+    let errorMessage: string;
+
     try {
       const errorData = await response.json();
       errorMessage = this.extractErrorMessage(errorData);

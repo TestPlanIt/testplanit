@@ -115,11 +115,6 @@ export async function POST(request: Request) {
     }
 
     let effectiveRole: RoleWithPermissions | null | undefined = null;
-    let finalPermissions = {
-      canAddEdit: false,
-      canDelete: false,
-      canClose: false,
-    };
     let accessDenied = false;
 
     // Check if user is a System ADMIN or PROJECTADMIN
@@ -232,8 +227,7 @@ export async function POST(request: Request) {
     } else if (!accessDenied && effectiveRole) {
       if (area) {
         // Area provided: Return permissions for the specific area
-        finalPermissions = getPermissionsForArea(effectiveRole, area);
-        // Final permissions for area determined
+        const finalPermissions = getPermissionsForArea(effectiveRole, area);
         resultData = finalPermissions;
       } else {
         // Area not provided: Return permissions for all areas

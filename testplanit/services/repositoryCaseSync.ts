@@ -282,7 +282,6 @@ export async function syncProjectCasesToElasticsearch(
       });
 
       if (cases.length === 0) {
-        hasMore = false;
         break;
       }
 

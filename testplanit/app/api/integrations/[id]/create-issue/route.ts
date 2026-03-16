@@ -66,29 +66,13 @@ export async function POST(
     });
 
     // If no user auth, check if the integration supports API key auth
-    let integration;
     if (!userIntegrationAuth) {
-      // console.log(
-      //   `No user auth found for user ${session.user.id} and integration ${integrationId}`
-      // );
-
-      integration = await prisma.integration.findUnique({
+      const integration = await prisma.integration.findUnique({
         where: {
           id: parseInt(integrationId),
           status: "ACTIVE",
         },
       });
-
-      // console.log(
-      //   `Found integration:`,
-      //   integration
-      //     ? {
-      //         id: integration.id,
-      //         authType: integration.authType,
-      //         status: integration.status,
-      //       }
-      //     : null
-      // );
 
       if (!integration) {
         return NextResponse.json(
@@ -111,11 +95,6 @@ export async function POST(
       }
 
       // API_KEY and PERSONAL_ACCESS_TOKEN integrations can proceed
-      // console.log(
-      //   `Using ${integration.authType} authentication for integration ${integrationId}`
-      // );
-    } else {
-      integration = userIntegrationAuth.integration;
     }
 
     // Get the internal TestPlanIt project ID from the request or from linked entities

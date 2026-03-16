@@ -208,7 +208,6 @@ function calculateScheduledEndDate(
     // Adjust if current time is before workday starts or after it ends
     if (currentHour < WORKDAY_START_HOUR) {
       currentWorkTime.setHours(WORKDAY_START_HOUR, 0, 0, 0);
-      currentHour = WORKDAY_START_HOUR;
     } else if (currentHour >= WORKDAY_END_HOUR) {
       currentWorkTime.setDate(currentWorkTime.getDate() + 1); // Move to next day
       currentWorkTime.setHours(WORKDAY_START_HOUR, 0, 0, 0);

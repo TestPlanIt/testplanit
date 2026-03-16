@@ -242,28 +242,8 @@ test.describe("Custom Fields - Repository View and Filter", () => {
     const options = page.locator('[role="option"]');
     const optionCount = await options.count();
 
-    // Look for any dynamic field options (they have icons for different types)
-    // Dynamic fields could be: Dropdown, Multi-Select, Link, Checkbox, Steps
-    let hasDynamicField = false;
-    for (let i = 0; i < optionCount; i++) {
-      const optionText = await options.nth(i).textContent();
-      // Dynamic fields are custom named fields that aren't the standard views
-      const standardViews = [
-        "folders",
-        "templates",
-        "states",
-        "creators",
-        "automation",
-        "tags",
-      ];
-      const isStandard = standardViews.some((view) =>
-        optionText?.toLowerCase().includes(view)
-      );
-      if (!isStandard && optionText) {
-        hasDynamicField = true;
-        break;
-      }
-    }
+    // Verify that there are options available (standard views + any dynamic fields)
+    expect(optionCount).toBeGreaterThan(0);
 
     await page.keyboard.press("Escape");
   });

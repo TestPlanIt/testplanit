@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
 
       if (!isConnected) {
         // Try to provide more specific error messages
-        let errorMessage = "Failed to connect to the provider";
+        let errorMessage: string;
 
         if (provider === "OPENAI" && !apiKey) {
           errorMessage = "API key is required for OpenAI";
