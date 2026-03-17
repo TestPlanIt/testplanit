@@ -16,7 +16,7 @@ export class TestCasePage extends BasePage {
 
     // Main elements
     this.caseDetail = page.locator('[data-testid="case-detail"]');
-    this.editButton = page.locator('button:has-text("Edit")').first();
+    this.editButton = page.getByTestId("edit-test-case-button");
     this.saveButton = page.locator('button:has-text("Save"), button[type="submit"]').first();
     this.cancelButton = page.locator('button:has-text("Cancel")').first();
   }
@@ -41,8 +41,11 @@ export class TestCasePage extends BasePage {
    * Click edit button to enter edit mode
    */
   async clickEdit(): Promise<void> {
+    await expect(this.editButton).toBeVisible({ timeout: 10000 });
     await this.editButton.click();
     await this.page.waitForLoadState("networkidle");
+    // Wait for TipTap editors to mount in edit mode
+    await this.page.locator(".tiptap").first().waitFor({ state: "attached", timeout: 10000 }).catch(() => {});
   }
 
   /**

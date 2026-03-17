@@ -147,9 +147,9 @@ test.describe("Share Management", () => {
     await page.goto(`/en-US/projects/settings/${projectId}/shares`);
     await page.waitForLoadState("networkidle");
 
-    // Verify page title
-    const pageTitle = page.locator('h1:has-text("Manage Shares")');
-    await expect(pageTitle).toBeVisible({ timeout: 5000 });
+    // Verify page title (CardTitle renders as div, not h1)
+    const pageTitle = page.locator('text="Manage Shares"').first();
+    await expect(pageTitle).toBeVisible({ timeout: 10000 });
 
     // Verify all three shares are listed
     await expect(page.locator(`text=Public Share 1 ${timestamp}`)).toBeVisible({

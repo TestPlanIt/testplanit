@@ -540,33 +540,22 @@ test.describe("View Selector - Repository Views", () => {
     await issueFilter.click();
     await page.waitForLoadState("networkidle");
 
-    // Search for the linked case to verify it's visible
-    const searchInput = page.locator('input[placeholder="Filter cases..."]');
-    await searchInput.fill(linkedCaseName);
-    await page.waitForLoadState("networkidle");
+    // After clicking the specific issue filter, only the linked case should appear
+    // Wait for the table to update
+    await page.waitForTimeout(1000);
 
-    // The linked case should be visible
-    await expect(page.locator(`text="${linkedCaseName}"`).first()).toBeVisible({
-      timeout: 10000,
-    });
+    // Use polling assertion to handle async table updates
+    await expect(async () => {
+      // The linked case should be visible in the table
+      const linkedCaseLocator = page.locator(`text="${linkedCaseName}"`);
+      const linkedCount = await linkedCaseLocator.count();
+      expect(linkedCount).toBeGreaterThan(0);
 
-    // Search for the unlinked case - it should NOT appear with this specific issue filter
-    await searchInput.fill(unlinkedCaseName);
-    await page.waitForTimeout(1000); // Give time for search to filter
-    await page.waitForLoadState("networkidle");
-
-    // The unlinked case should NOT be visible (it doesn't have this issue)
-    // Check for either the case not being visible OR a "no results" message
-    const unlinkedCase = page.locator(`text="${unlinkedCaseName}"`);
-    const noResults = page.locator("text=/no.*cases.*found|no.*results/i");
-
-    // Either the case should not exist in DOM, or we should see "no results"
-    const isUnlinkedHidden = await unlinkedCase
-      .count()
-      .then((count) => count === 0);
-    const hasNoResults = await noResults.isVisible().catch(() => false);
-
-    expect(isUnlinkedHidden || hasNoResults).toBeTruthy();
+      // The unlinked case should NOT be visible in the table
+      const unlinkedCaseLocator = page.locator(`text="${unlinkedCaseName}"`);
+      const unlinkedCount = await unlinkedCaseLocator.count();
+      expect(unlinkedCount).toBe(0);
+    }).toPass({ timeout: 10000 });
   });
 
   // ============================================================

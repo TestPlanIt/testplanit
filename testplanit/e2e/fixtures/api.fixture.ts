@@ -405,6 +405,18 @@ export class ApiHelper {
     for (const [fieldIdStr, value] of Object.entries(fieldValues)) {
       const fieldId = parseInt(fieldIdStr, 10);
 
+      // For Json? fields, the REST API needs the actual JSON value (not a stringified string).
+      // If value is a string that looks like JSON, parse it to store as a JSON object.
+      let storedValue: unknown = value;
+      if (typeof value === "string") {
+        try {
+          storedValue = JSON.parse(value);
+        } catch {
+          // Not valid JSON - store as-is (plain string value)
+          storedValue = value;
+        }
+      }
+
       const valueResponse = await this.request.post(
         `${this.baseURL}/api/model/caseFieldValues/create`,
         {
@@ -412,7 +424,7 @@ export class ApiHelper {
             data: {
               testCaseId: caseId,
               fieldId: fieldId,
-              value: typeof value === "string" ? value : JSON.stringify(value),
+              value: storedValue,
             },
           },
         }

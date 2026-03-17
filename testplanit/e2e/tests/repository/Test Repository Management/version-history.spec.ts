@@ -113,15 +113,16 @@ test.describe("Version History", () => {
     const versionCreatedText = page.locator('text=/Version.*Created/i').first();
     await expect(versionCreatedText).toBeVisible({ timeout: 10000 });
 
-    // Version page should show diff indicators (green for added, red for removed)
-    // Use stable test-id selectors instead of CSS class selectors
-    const addedDiff = page.getByTestId("diff-added").first();
-    const removedDiff = page.getByTestId("diff-removed").first();
+    // Version page should show the name change as a diff
+    // The old name and new name should both be visible in the diff display
+    const oldNameDisplay = page.locator(`text="${originalName}"`).first();
+    const newNameDisplay = page.locator(`text="${updatedName}"`).first();
 
-    // At least one of the diffs should be visible (name changed)
-    const hasAddedDiff = await addedDiff.isVisible().catch(() => false);
-    const hasRemovedDiff = await removedDiff.isVisible().catch(() => false);
-    expect(hasAddedDiff || hasRemovedDiff).toBe(true);
+    const hasOldName = await oldNameDisplay.isVisible({ timeout: 5000 }).catch(() => false);
+    const hasNewName = await newNameDisplay.isVisible({ timeout: 5000 }).catch(() => false);
+
+    // Both old and new names should be visible in the diff view
+    expect(hasOldName && hasNewName).toBe(true);
   });
 
   test("Version Navigation Buttons Work", async ({ api, page }) => {

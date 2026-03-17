@@ -8,6 +8,25 @@ import { expect, test } from "../../fixtures";
  * and Manage Shares links, and that navigation works correctly.
  */
 
+/**
+ * Helper to expand the Settings accordion section in the project menu.
+ * The Settings section is collapsed by default (accordion state from localStorage).
+ */
+async function expandSettingsSection(page: import("@playwright/test").Page) {
+  const settingsSection = page.getByTestId("project-menu-section-settings");
+  await expect(settingsSection).toBeVisible({ timeout: 10000 });
+
+  // Check if the settings section is already expanded by looking for a link inside
+  const integrationsLink = page.locator("#settings-integrations-link");
+  if (!(await integrationsLink.isVisible({ timeout: 1000 }).catch(() => false))) {
+    // Click the accordion trigger to expand
+    const trigger = settingsSection.getByRole("button", { name: "Settings" });
+    await trigger.click();
+    // Wait for the links to appear
+    await expect(integrationsLink).toBeVisible({ timeout: 5000 });
+  }
+}
+
 test.describe("Project Menu - Settings Section", () => {
   let testProjectId: number;
 
@@ -23,9 +42,8 @@ test.describe("Project Menu - Settings Section", () => {
     await page.goto(`/en-US/projects/overview/${testProjectId}`);
     await page.waitForLoadState("networkidle");
 
-    // Verify the Settings accordion section exists
-    const settingsSection = page.getByTestId("project-menu-section-settings");
-    await expect(settingsSection).toBeVisible({ timeout: 10000 });
+    // Expand the Settings section (collapsed by default)
+    await expandSettingsSection(page);
 
     // Verify all three settings menu items are visible
     const integrationsLink = page.locator("#settings-integrations-link");
@@ -43,9 +61,8 @@ test.describe("Project Menu - Settings Section", () => {
     await page.goto(`/en-US/projects/overview/${testProjectId}`);
     await page.waitForLoadState("networkidle");
 
-    // Open the settings section if collapsed
-    const settingsSection = page.getByTestId("project-menu-section-settings");
-    await expect(settingsSection).toBeVisible({ timeout: 10000 });
+    // Expand the Settings section
+    await expandSettingsSection(page);
 
     const integrationsLink = page.locator("#settings-integrations-link");
     await integrationsLink.click();
@@ -59,8 +76,8 @@ test.describe("Project Menu - Settings Section", () => {
     await page.goto(`/en-US/projects/overview/${testProjectId}`);
     await page.waitForLoadState("networkidle");
 
-    const settingsSection = page.getByTestId("project-menu-section-settings");
-    await expect(settingsSection).toBeVisible({ timeout: 10000 });
+    // Expand the Settings section
+    await expandSettingsSection(page);
 
     const aiModelsLink = page.locator("#settings-ai-models-link");
     await aiModelsLink.click();
@@ -74,8 +91,8 @@ test.describe("Project Menu - Settings Section", () => {
     await page.goto(`/en-US/projects/overview/${testProjectId}`);
     await page.waitForLoadState("networkidle");
 
-    const settingsSection = page.getByTestId("project-menu-section-settings");
-    await expect(settingsSection).toBeVisible({ timeout: 10000 });
+    // Expand the Settings section
+    await expandSettingsSection(page);
 
     const sharesLink = page.locator("#settings-shares-link");
     await sharesLink.click();
@@ -105,6 +122,7 @@ test.describe("Project Menu - Settings Section", () => {
 
   test("Settings sub-page highlights correct menu item", async ({ page }) => {
     // Navigate directly to integrations settings page
+    // This should auto-expand the Settings section since the active page is in it
     await page.goto(
       `/en-US/projects/settings/${testProjectId}/integrations`
     );

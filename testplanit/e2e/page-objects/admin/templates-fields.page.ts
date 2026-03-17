@@ -1035,8 +1035,13 @@ export class TemplatesFieldsPage extends BasePage {
    * Get the templates count for a case field
    */
   async getCaseFieldTemplatesCount(name: string): Promise<number> {
+    // Scroll the case fields section into view first
+    await this.caseFieldsSection.scrollIntoViewIfNeeded();
+    await this.caseFieldsTable.waitFor({ state: "visible", timeout: 10000 });
+
     const row = this.getCaseFieldRow(name);
-    const templatesCell = row.locator("td").nth(3); // Assuming 4th column
+    await row.waitFor({ state: "visible", timeout: 10000 });
+    const templatesCell = row.locator("td").nth(3); // 4th column: Templates count
     const text = await templatesCell.textContent() || "";
     const match = text.match(/\d+/);
     return match ? parseInt(match[0], 10) : 0;

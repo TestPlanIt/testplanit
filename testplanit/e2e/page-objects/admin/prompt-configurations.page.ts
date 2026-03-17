@@ -89,9 +89,27 @@ export class PromptConfigurationsPage extends BasePage {
   }
 
   async getTableRowCount(): Promise<number> {
-    await this.page.waitForTimeout(500);
+    // Wait for the pagination info to appear, indicating data has loaded
+    const paginationInfo = this.page.locator(
+      'text=/Showing \\d+-\\d+ of \\d+ item|No items found/i'
+    );
+    await paginationInfo.first().waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
+
+    // Wait for any loading skeletons to disappear
+    const skeleton = this.dataTable.locator('[data-slot="skeleton"]');
+    await skeleton.first().waitFor({ state: "hidden", timeout: 5000 }).catch(() => {});
+
     const rows = this.dataTable.locator("tbody tr");
-    return rows.count();
+    const count = await rows.count();
+
+    // If the single row contains "No results" or similar empty state, return 0
+    if (count === 1) {
+      const text = await rows.first().textContent();
+      if (text && /no.*results|no.*items|no.*data/i.test(text)) {
+        return 0;
+      }
+    }
+    return count;
   }
 
   async expectConfigInTable(name: string): Promise<void> {
