@@ -2735,12 +2735,16 @@ export class ApiHelper {
     }
   ): Promise<number> {
     const userId = await this.getCurrentUserId();
-    const stateId = options?.stateId || await this.getStateId(projectId);
+    const [stateId, templateId] = await Promise.all([
+      options?.stateId ? Promise.resolve(options.stateId) : this.getStateId(projectId),
+      this.getTemplateId(projectId),
+    ]);
 
     const data: Record<string, unknown> = {
       name,
       project: { connect: { id: projectId } },
       state: { connect: { id: stateId } },
+      template: { connect: { id: templateId } },
       createdBy: { connect: { id: userId } },
       isCompleted: options?.isCompleted ?? false,
       isDeleted: false,
