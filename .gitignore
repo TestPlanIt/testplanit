@@ -65,6 +65,6 @@ testplanit/test-data/tpi*test*
 testplanit/backups/*
 
 *cases/*
-.planning/
+**/.planning/*
 demo/
-.planning/*
+.planning/**
