@@ -98,7 +98,7 @@ test.describe("Prompt Configurations - Create Operations", () => {
     // The accordion may be inside a scrollable container, so scroll to find it
     const accordion = promptsPage.dialog.locator(
       '[data-orientation="vertical"]'
-    );
+    ).first();
     await expect(accordion).toBeVisible({ timeout: 10000 });
 
     // Verify at least one feature section exists (e.g., "Test Case Generation")
@@ -161,7 +161,7 @@ test.describe("Prompt Configurations - Edit Operations", () => {
 
     // Create a config via API for editing
     const apiBase = baseURL || "http://localhost:3002";
-    await api["request"].post(
+    const response = await api["request"].post(
       `${apiBase}/api/model/promptConfig/create`,
       {
         data: {
@@ -175,18 +175,27 @@ test.describe("Prompt Configurations - Edit Operations", () => {
       }
     );
 
+    if (!response.ok()) {
+      const errorText = await response.text();
+      console.error(`Failed to create prompt config: ${response.status()} - ${errorText}`);
+    }
+
     await promptsPage.goto();
   });
 
-  test("Edit config description", async () => {
+  test("Edit config description", async ({ page }) => {
     await promptsPage.clickEditOnRow(configName);
 
     const newDescription = `Updated description ${Date.now()}`;
     await promptsPage.fillDescription(newDescription);
-    await promptsPage.submitForm();
 
-    // Wait for dialog to close
-    await expect(promptsPage.dialog).not.toBeVisible({ timeout: 10000 });
+    // Scroll the Save button into view and click it
+    const saveButton = promptsPage.dialog.locator('button:has-text("Save")');
+    await saveButton.scrollIntoViewIfNeeded();
+    await saveButton.click();
+
+    // Wait for dialog to close (the save may take time due to prompt feature updates)
+    await expect(promptsPage.dialog).not.toBeVisible({ timeout: 30000 });
 
     // Verify the update persisted by reloading
     await promptsPage.goto();
@@ -206,7 +215,7 @@ test.describe("Prompt Configurations - Delete Operations", () => {
 
     // Create a config via API
     const apiBase = baseURL || "http://localhost:3002";
-    await api["request"].post(
+    const response = await api["request"].post(
       `${apiBase}/api/model/promptConfig/create`,
       {
         data: {
@@ -219,6 +228,11 @@ test.describe("Prompt Configurations - Delete Operations", () => {
         },
       }
     );
+
+    if (!response.ok()) {
+      const errorText = await response.text();
+      console.error(`Failed to create prompt config: ${response.status()} - ${errorText}`);
+    }
 
     await promptsPage.goto();
     await promptsPage.expectConfigInTable(configName);

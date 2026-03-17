@@ -30,6 +30,26 @@ test.describe("Markdown Paste & Import", () => {
   }
 
   /**
+   * Ensure the Description (Text Long) field is assigned to the project's template.
+   * Other E2E tests can change which template is the default, so the template
+   * assigned to a freshly-created project may not include the Description field.
+   * Without it, TipTap editors won't render on the case detail page.
+   */
+  async function ensureDescriptionFieldOnTemplate(
+    api: import("../../../fixtures/api.fixture").ApiHelper,
+    projectId: number
+  ): Promise<void> {
+    const caseFields = await api.getCaseFields();
+    const descriptionField = caseFields.find(
+      (f: { displayName: string }) => f.displayName === "Description"
+    );
+    if (!descriptionField) return; // Skip if no Description field exists
+
+    const templateId = await api.getTemplateId(projectId);
+    await api.assignFieldToTemplate(templateId, descriptionField.id);
+  }
+
+  /**
    * Simulate pasting text into the currently focused element via ClipboardEvent
    */
   async function pasteTextIntoFocusedEditor(
@@ -89,6 +109,8 @@ test.describe("Markdown Paste & Import", () => {
     baseURL,
   }) => {
     const projectId = await getTestProjectId(api, "MD");
+    // Ensure the template has a Description (Text Long) field so TipTap renders
+    await ensureDescriptionFieldOnTemplate(api, projectId);
     const uniqueId = Date.now();
     const folderId = await api.createFolder(
       projectId,
@@ -180,6 +202,8 @@ test.describe("Markdown Paste & Import", () => {
     baseURL,
   }) => {
     const projectId = await getTestProjectId(api, "Plain");
+    // Ensure the template has a Description (Text Long) field so TipTap renders
+    await ensureDescriptionFieldOnTemplate(api, projectId);
     const uniqueId = Date.now();
     const folderId = await api.createFolder(
       projectId,
@@ -273,6 +297,8 @@ test.describe("Markdown Paste & Import", () => {
     baseURL,
   }) => {
     const projectId = await getTestProjectId(api, "Import");
+    // Ensure the template has a Description (Text Long) field for import mapping
+    await ensureDescriptionFieldOnTemplate(api, projectId);
     const uniqueId = Date.now();
     const folderName = `MD CSV Import Folder ${uniqueId}`;
     const folderId = await api.createFolder(projectId, folderName);

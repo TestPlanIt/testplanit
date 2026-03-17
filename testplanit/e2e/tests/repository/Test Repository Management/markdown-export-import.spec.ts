@@ -20,6 +20,41 @@ test.describe("Markdown Export & Import", () => {
     return await api.createProject(`E2E Markdown Test ${Date.now()}`);
   }
 
+  /**
+   * Ensure the Description field is assigned to the project's template.
+   * Other E2E tests can change which template is the default, so the
+   * template assigned to a freshly-created project may not include
+   * the Description field. This helper guarantees it is present.
+   */
+  async function ensureDescriptionFieldOnTemplate(
+    api: import("../../../fixtures/api.fixture").ApiHelper,
+    projectId: number
+  ): Promise<{ descriptionFieldId: number; templateId: number }> {
+    const caseFields = await api.getCaseFields();
+    const descriptionField = caseFields.find(
+      (f: { displayName: string }) => f.displayName === "Description"
+    );
+    if (!descriptionField) {
+      throw new Error("No Description case field found in database");
+    }
+
+    const templateId = await api.getTemplateId(projectId);
+    await api.assignFieldToTemplate(templateId, descriptionField.id);
+
+    // Also ensure Steps and Expected Result fields are on the template
+    // (needed for step markdown export tests)
+    const stepsField = caseFields.find(
+      (f: { displayName: string }) => f.displayName === "Steps"
+    );
+    const expectedField = caseFields.find(
+      (f: { displayName: string }) => f.displayName === "Expected Result"
+    );
+    if (stepsField) await api.assignFieldToTemplate(templateId, stepsField.id);
+    if (expectedField) await api.assignFieldToTemplate(templateId, expectedField.id);
+
+    return { descriptionFieldId: descriptionField.id, templateId };
+  }
+
   // Rich TipTap JSON with heading, bold, italic, and bullet list
   const RICH_TIPTAP_JSON = {
     type: "doc",
@@ -203,16 +238,8 @@ test.describe("Markdown Export & Import", () => {
       `MD Export Folder ${uniqueId}`
     );
 
-    // Get the Description field ID
-    const caseFields = await api.getCaseFields();
-    const descriptionField = caseFields.find(
-      (f: { displayName: string }) => f.displayName === "Description"
-    );
-
-    if (!descriptionField) {
-      test.skip(true, "No Description field found in template");
-      return;
-    }
+    // Ensure the Description field is on the project's template
+    const { descriptionFieldId } = await ensureDescriptionFieldOnTemplate(api, projectId);
 
     // Create test case with rich TipTap JSON content in the Description field
     const caseName = `MD Export Case ${uniqueId}`;
@@ -220,7 +247,7 @@ test.describe("Markdown Export & Import", () => {
       projectId,
       folderId,
       caseName,
-      { [descriptionField.id]: JSON.stringify(RICH_TIPTAP_JSON) }
+      { [descriptionFieldId]: JSON.stringify(RICH_TIPTAP_JSON) }
     );
 
     // Add steps with rich TipTap content
@@ -310,20 +337,12 @@ test.describe("Markdown Export & Import", () => {
       `JSON Export Folder ${uniqueId}`
     );
 
-    // Get the Description field ID
-    const caseFields = await api.getCaseFields();
-    const descriptionField = caseFields.find(
-      (f: { displayName: string }) => f.displayName === "Description"
-    );
-
-    if (!descriptionField) {
-      test.skip(true, "No Description field found in template");
-      return;
-    }
+    // Ensure the Description field is on the project's template
+    const { descriptionFieldId } = await ensureDescriptionFieldOnTemplate(api, projectId);
 
     const caseName = `JSON Export Case ${uniqueId}`;
     await api.createTestCaseWithFieldValues(projectId, folderId, caseName, {
-      [descriptionField.id]: JSON.stringify(RICH_TIPTAP_JSON),
+      [descriptionFieldId]: JSON.stringify(RICH_TIPTAP_JSON),
     });
 
     await repositoryPage.goto(projectId);
@@ -381,6 +400,8 @@ test.describe("Markdown Export & Import", () => {
     baseURL,
   }) => {
     const projectId = await getTestProjectId(api);
+    // Ensure the template has a Description field for import mapping
+    await ensureDescriptionFieldOnTemplate(api, projectId);
     const uniqueId = Date.now();
     const folderName = `MD Import Folder ${uniqueId}`;
     const folderId = await api.createFolder(projectId, folderName);
@@ -541,6 +562,8 @@ test.describe("Markdown Export & Import", () => {
     baseURL,
   }) => {
     const projectId = await getTestProjectId(api);
+    // Ensure the template has a Description field for import mapping
+    await ensureDescriptionFieldOnTemplate(api, projectId);
     const uniqueId = Date.now();
     const folderName = `Plain Import Folder ${uniqueId}`;
     const folderId = await api.createFolder(projectId, folderName);
@@ -700,22 +723,15 @@ test.describe("Markdown Export & Import", () => {
     const sourceFolderName = `RT Source Folder ${uniqueId}`;
     const sourceFolderId = await api.createFolder(projectId, sourceFolderName);
 
-    const caseFields = await api.getCaseFields();
-    const descriptionField = caseFields.find(
-      (f: { displayName: string }) => f.displayName === "Description"
-    );
-
-    if (!descriptionField) {
-      test.skip(true, "No Description field found in template");
-      return;
-    }
+    // Ensure the Description field is on the project's template
+    const { descriptionFieldId } = await ensureDescriptionFieldOnTemplate(api, projectId);
 
     const originalCaseName = `RT Original Case ${uniqueId}`;
     await api.createTestCaseWithFieldValues(
       projectId,
       sourceFolderId,
       originalCaseName,
-      { [descriptionField.id]: JSON.stringify(RICH_TIPTAP_JSON) }
+      { [descriptionFieldId]: JSON.stringify(RICH_TIPTAP_JSON) }
     );
 
     // Create target folder for re-import

@@ -84,8 +84,11 @@ export class PromptConfigurationsPage extends BasePage {
   async filterByText(text: string): Promise<void> {
     await this.filterInput.clear();
     await this.filterInput.fill(text);
-    // Wait for debounce
-    await this.page.waitForTimeout(600);
+    // The Filter component has a 300ms debounce, and the page adds another 500ms debounce
+    // on the search string before it hits the API query. Wait for both plus network time.
+    await this.page.waitForTimeout(1200);
+    // Wait for any in-flight network requests to settle
+    await this.page.waitForLoadState("networkidle");
   }
 
   async getTableRowCount(): Promise<number> {
@@ -124,7 +127,7 @@ export class PromptConfigurationsPage extends BasePage {
 
   async clickEditOnRow(name: string): Promise<void> {
     const row = this.dataTable.locator("tbody tr", { hasText: name });
-    const editButton = row.locator('button:has([class*="lucide-pencil"])');
+    const editButton = row.locator('button:has(svg.lucide-square-pen), button:has(svg[class*="lucide-pencil"]), button:has(svg[class*="edit"])').first();
     await editButton.click();
     await expect(this.dialog).toBeVisible();
   }

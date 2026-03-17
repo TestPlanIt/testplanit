@@ -122,21 +122,25 @@ test.describe("Project Menu - Settings Section", () => {
 
   test("Settings sub-page highlights correct menu item", async ({ page }) => {
     // Navigate directly to integrations settings page
-    // This should auto-expand the Settings section since the active page is in it
     await page.goto(
       `/en-US/projects/settings/${testProjectId}/integrations`
     );
     await page.waitForLoadState("networkidle");
 
+    // The Settings section should auto-expand since we're on a settings sub-page,
+    // but permissions may load async. Expand manually if needed.
+    await expandSettingsSection(page);
+
     // The integrations link should have the active styling
     const integrationsLink = page.locator("#settings-integrations-link");
     await expect(integrationsLink).toBeVisible({ timeout: 10000 });
 
-    // Check it has the active class (bg-primary)
-    await expect(integrationsLink).toHaveClass(/bg-primary/);
+    // Check it has the active class (text-primary-foreground is applied to active links)
+    await expect(integrationsLink).toHaveClass(/text-primary-foreground/);
 
-    // The other settings links should NOT have the active class
+    // The other settings links should NOT have the active styling
+    // The active link has "bg-primary text-primary-foreground" (not just "hover:bg-primary/10")
     const aiModelsLink = page.locator("#settings-ai-models-link");
-    await expect(aiModelsLink).not.toHaveClass(/bg-primary/);
+    await expect(aiModelsLink).not.toHaveClass(/text-primary-foreground/);
   });
 });
