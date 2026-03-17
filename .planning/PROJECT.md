@@ -1,58 +1,67 @@
-# TestPlanIt - AI Bulk Auto-Tagging
+# TestPlanIt - ZenStack Upgrade Regression Tests
 
 ## What This Is
 
-An AI-powered bulk tagging feature for TestPlanIt that lets users automatically suggest and apply tags to test cases, test runs, and sessions. Uses the existing LLM integration infrastructure to analyze entity content and recommend both existing and new tags.
+API-level regression test suite for TestPlanIt that exercises the ZenStack data layer through the REST API (`/api/model/`). Designed to be run before and after the ZenStack v2→v3 upgrade to verify that all core application workflows continue to function correctly.
 
 ## Core Value
 
-Users can quickly organize large numbers of test artifacts with meaningful tags without manual effort, while retaining full control through a review step before any tags are applied.
+Confidence that the ZenStack v2→v3 upgrade does not break any existing frontend-backend communication — CRUD operations, access control, relation queries, and error handling all behave the same way.
+
+## Current Milestone: v1.1 ZenStack Upgrade Regression Tests
+
+**Goal:** Comprehensive API-level test suite covering all critical data operations so the ZenStack v3 upgrade can be validated.
+
+**Target features:**
+- CRUD regression tests for core models (Projects, Cases, TestRuns, etc.)
+- Access control tests across user contexts (admin, project user, no-access)
+- Relation/nested include tests for complex queries
+- Error response format tests (unique constraints, foreign keys, validation)
+- Batch operation tests (createMany, updateMany, deleteMany)
 
 ## Requirements
 
 ### Validated
 
-(None yet -- ship to validate)
+- ✓ AI bulk tagging for test cases, test runs, and sessions — v1.0
+- ✓ Smart batching to balance cost and accuracy — v1.0
+- ✓ Review dialog before applying suggested tags — v1.0
+- ✓ New tag creation when AI suggests tags that don't exist — v1.0
+- ✓ Entry points: bulk actions on list views + tags management page — v1.0
 
 ### Active
 
-- [ ] AI bulk tagging for test cases, test runs, and sessions
-- [ ] Smart batching to balance cost and accuracy
-- [ ] Review dialog before applying suggested tags
-- [ ] New tag creation when AI suggests tags that don't exist
-- [ ] Entry points: bulk actions on list views + tags management page
+- [ ] API regression tests for ZenStack v3 upgrade validation
 
 ### Out of Scope
 
-- Individual entity "suggest tags" button -- not needed for v1, focused on bulk
-- Auto-apply without review -- always require user confirmation
-- Cross-project tagging -- scoped to single project
+- Testing ZenStack internals — we test app behavior, not the ORM
+- UI-level E2E tests — using Playwright API tests for speed
+- Performance/load testing — functional correctness only
+- Testing custom API routes that don't use ZenStack (auth, integrations, reports)
 
 ## Context
 
-- Existing LLM infrastructure: adapters for OpenAI, Anthropic, Gemini, Azure, Ollama, Custom
-- Prompt resolution chain: project-specific > system default > hard-coded fallback
-- LLM feature registry in `lib/llm/constants.ts`, usage tracking, rate limiting
-- Tags model (`Tags`) with many-to-many relations to `RepositoryCases`, `Sessions`, `TestRuns`
-- BullMQ + Redis/Valkey worker infrastructure for background jobs
-- Tags management page at `app/[locale]/tags/page.tsx`
+- ZenStack v2→v3 upgrade planned
+- Known v3 issues: PostgreSQL 63-char alias limit with deep nesting, error format changes, orderBy bugs
+- 98 models with auto-generated hooks, 139 custom API routes
+- Existing E2E suite (51 specs) covers UI workflows but not API correctness
+- Tests should use Playwright API testing (existing infrastructure)
 
 ## Constraints
 
-- **LLM context window**: Entities must be smart-batched to fit within model limits
-- **Existing patterns**: Must follow established LLM feature patterns (constants, fallback prompts, prompt resolver)
-- **ZenStack**: Data access must respect existing access control policies
-- **i18n**: UI strings must use en-US.json translation keys
+- **Playwright API tests**: Use existing E2E fixtures and api.fixture.ts helper
+- **All user contexts**: Tests must cover admin, regular user, and no-access scenarios
+- **Speed**: API-only tests, no browser UI interactions
+- **Idempotent**: Tests create and clean up their own data
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Review before apply | Users need control over AI suggestions; prevents bad tags | -- Pending |
-| Smart batching | Balance between cost (fewer calls) and accuracy (enough context per entity) | -- Pending |
-| New tag creation | AI shouldn't be limited to existing tags; new tags shown with "new" badge | -- Pending |
-| Project-scoped | Tags are meaningful within project context; cross-project adds complexity | -- Pending |
-| BullMQ for bulk | Large selections (50+ entities) need background processing with progress | -- Pending |
+| Playwright API tests over Vitest | Reuses existing infra, tests against real running app | — Pending |
+| Focus on core models | 98 models total, ~15 are critical for user workflows | — Pending |
+| Test all access contexts | Access control is the highest-risk area for ORM changes | — Pending |
 
 ---
-*Last updated: 2026-03-07 after milestone initialization*
+*Last updated: 2026-03-16 after milestone v1.1 initialization*

@@ -1,11 +1,9 @@
-# Requirements: AI Bulk Auto-Tagging
+# Requirements: TestPlanIt
 
 **Defined:** 2026-03-07
-**Core Value:** Users can quickly organize large numbers of test artifacts with meaningful tags without manual effort
+**Core Value:** Confidence that the ZenStack v2→v3 upgrade does not break any existing frontend-backend communication
 
-## v1 Requirements
-
-Requirements for initial release. Each maps to roadmap phases.
+## v1.0 Requirements (Complete)
 
 ### LLM Feature (Backend)
 
@@ -17,7 +15,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### API
 
 - [x] **API-01**: User can request AI tag suggestions for a set of entity IDs within a project
-- [x] **API-02**: System processes large batches (50+) as background jobs with progress tracking; user can navigate away and return to check status
+- [x] **API-02**: System processes large batches (50+) as background jobs with progress tracking
 - [x] **API-03**: User can apply accepted tag suggestions (including creating new tags) in bulk
 
 ### UI - Review Dialog
@@ -34,27 +32,64 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **EP-03**: User can trigger AI tagging from bulk action menu on sessions list
 - [x] **EP-04**: User can trigger AI tagging from tags management page with entity type selection
 
-## v2 Requirements
+## v1.1 Requirements
 
-Deferred to future release. Tracked but not in current roadmap.
+Requirements for ZenStack upgrade regression test suite. Each maps to roadmap phases.
 
-### Enhancements
+### CRUD Operations
 
-- **ENH-01**: User can trigger AI tag suggestions for a single entity from entity detail view
-- **ENH-02**: System learns from user's accept/reject patterns to improve suggestions over time
-- **ENH-03**: Cross-project tagging support
+- [ ] **CRUD-01**: API test verifies create, read, update, delete for Projects
+- [ ] **CRUD-02**: API test verifies create, read, update, delete for RepositoryCases (test cases)
+- [ ] **CRUD-03**: API test verifies create, read, update, delete for Steps
+- [ ] **CRUD-04**: API test verifies create, read, update, delete for TestRuns and TestRunCases
+- [ ] **CRUD-05**: API test verifies create, read, update, delete for Templates and field assignments
+- [ ] **CRUD-06**: API test verifies create, read, update, delete for CaseFields and CaseFieldValues
+- [ ] **CRUD-07**: API test verifies create, read, update, delete for Tags (including many-to-many linking)
+- [ ] **CRUD-08**: API test verifies create, read, update, delete for Sessions
+
+### Relations & Queries
+
+- [ ] **REL-01**: API test verifies nested includes on RepositoryCases (steps, fieldValues, tags, template)
+- [ ] **REL-02**: API test verifies nested includes on TestRuns (testRunCases, results, stepResults)
+- [ ] **REL-03**: API test verifies findFirst and findMany with where filters, orderBy, and pagination (skip/take)
+- [ ] **REL-04**: API test verifies count and aggregate operations on core models
+
+### Access Control
+
+- [ ] **ACL-01**: API test verifies admin user has full CRUD access to all models
+- [ ] **ACL-02**: API test verifies regular project user can read but not delete projects
+- [ ] **ACL-03**: API test verifies user with NO_ACCESS permission is denied read access to project data
+- [ ] **ACL-04**: API test verifies unauthenticated requests are rejected
+- [ ] **ACL-05**: API test verifies role-based permissions (TestCaseRepository area, TestRuns area)
+
+### Error Handling & Batch Operations
+
+- [ ] **ERR-01**: API test verifies unique constraint violation returns identifiable error
+- [ ] **ERR-02**: API test verifies foreign key violation returns identifiable error
+- [ ] **ERR-03**: API test verifies validation errors (missing required fields) return identifiable error
+- [ ] **ERR-04**: API test verifies not-found responses for nonexistent records
+- [ ] **BATCH-01**: API test verifies createMany for Steps (bulk step creation)
+- [ ] **BATCH-02**: API test verifies updateMany for RepositoryCases (bulk state change)
+- [ ] **BATCH-03**: API test verifies deleteMany for Tags (bulk tag removal)
+
+## Future Requirements
+
+Deferred to future. Not in current roadmap.
+
+- **PERF-01**: Load test for concurrent API operations under ZenStack v3
+- **AUDIT-01**: Verify audit logging still triggers correctly for all entity types
+- **SEARCH-01**: Verify Elasticsearch sync still triggers on mutations
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Auto-apply without review | Users must always confirm before tags are applied |
-| Cross-project tagging | Tags are meaningful within project context; adds complexity |
-| Tag hierarchy/taxonomy | Separate feature, not related to AI suggestion |
+| Testing ZenStack internals | We test app behavior, not the ORM |
+| UI-level E2E tests for upgrade | API tests for speed; existing E2E suite covers UI |
+| Custom API routes (auth, integrations, reports) | Not affected by ZenStack upgrade |
+| Performance/load testing | Functional correctness only for v1.1 |
 
 ## Traceability
-
-Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
@@ -73,12 +108,37 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EP-02 | Phase 4 | Complete |
 | EP-03 | Phase 4 | Complete |
 | EP-04 | Phase 4 | Complete |
+| CRUD-01 | Phase 5 | Pending |
+| CRUD-02 | Phase 5 | Pending |
+| CRUD-03 | Phase 5 | Pending |
+| CRUD-04 | Phase 5 | Pending |
+| CRUD-05 | Phase 5 | Pending |
+| CRUD-06 | Phase 5 | Pending |
+| CRUD-07 | Phase 5 | Pending |
+| CRUD-08 | Phase 5 | Pending |
+| REL-01 | Phase 6 | Pending |
+| REL-02 | Phase 6 | Pending |
+| REL-03 | Phase 6 | Pending |
+| REL-04 | Phase 6 | Pending |
+| ACL-01 | Phase 7 | Pending |
+| ACL-02 | Phase 7 | Pending |
+| ACL-03 | Phase 7 | Pending |
+| ACL-04 | Phase 7 | Pending |
+| ACL-05 | Phase 7 | Pending |
+| ERR-01 | Phase 8 | Pending |
+| ERR-02 | Phase 8 | Pending |
+| ERR-03 | Phase 8 | Pending |
+| ERR-04 | Phase 8 | Pending |
+| BATCH-01 | Phase 8 | Pending |
+| BATCH-02 | Phase 8 | Pending |
+| BATCH-03 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 15 total
-- Mapped to phases: 15
-- Unmapped: 0
+- v1.0 requirements: 15 total (all complete)
+- v1.1 requirements: 24 total
+- Mapped to phases: 24
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-07*
-*Last updated: 2026-03-07 after roadmap creation*
+*Last updated: 2026-03-16 after milestone v1.1 definition*

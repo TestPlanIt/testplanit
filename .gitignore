@@ -67,3 +67,4 @@ testplanit/backups/*
 *cases/*
 .planning/
 demo/
+.planning/*
