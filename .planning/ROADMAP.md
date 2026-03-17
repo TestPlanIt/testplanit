@@ -1,23 +1,14 @@
-# Roadmap: AI Bulk Auto-Tagging
+# Roadmap: TestPlanIt ZenStack Regression Tests
 
-## Overview
+## Milestones
 
-Deliver AI-powered bulk tagging for test cases, test runs, and sessions. The build progresses from backend LLM analysis logic, through API/background processing, to the review UI, and finally wiring entry points into existing list views and the tags management page. Each phase delivers a coherent, testable capability that the next phase builds on.
+- ✅ **v1.0 AI Bulk Auto-Tagging** - Phases 1-4 (shipped 2026-03-08)
+- 🚧 **v1.1 ZenStack Upgrade Regression Tests** - Phases 5-8 (in progress)
 
 ## Phases
 
-**Phase Numbering:**
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
-
-Decimal phases appear between their surrounding integers in numeric order.
-
-- [x] **Phase 1: LLM Tag Analysis** - Backend service that analyzes entity content and produces tag suggestions with smart batching (completed 2026-03-07)
-- [x] **Phase 2: API and Background Processing** - API routes for requesting suggestions, background job processing for large batches, and bulk apply endpoint (completed 2026-03-07)
-- [x] **Phase 3: Review Dialog** - UI component for reviewing, accepting/rejecting, and applying AI-suggested tags (completed 2026-03-08)
-- [x] **Phase 4: Entry Point Integrations** - Wire AI tagging into bulk action menus on list views and the tags management page (completed 2026-03-08)
-
-## Phase Details
+<details>
+<summary>✅ v1.0 AI Bulk Auto-Tagging (Phases 1-4) - SHIPPED 2026-03-08</summary>
 
 ### Phase 1: LLM Tag Analysis
 **Goal**: The system can analyze entity content and produce meaningful tag suggestions using the existing LLM infrastructure
@@ -79,14 +70,84 @@ Plans:
 - [x] 04-02-PLAN.md — Tag All buttons for test runs and sessions pages
 - [x] 04-03-PLAN.md — AI Auto-Tag popover on tags management page
 
+</details>
+
+### 🚧 v1.1 ZenStack Upgrade Regression Tests (In Progress)
+
+**Milestone Goal:** Comprehensive API-level test suite that verifies CRUD, relations, access control, error handling, and batch operations all behave correctly after the ZenStack v2→v3 upgrade.
+
+- [ ] **Phase 5: CRUD Operations** - API tests verifying create, read, update, delete for all core models
+- [ ] **Phase 6: Relations and Queries** - API tests verifying nested includes, filters, ordering, pagination, and aggregates
+- [ ] **Phase 7: Access Control** - API tests verifying per-user permission enforcement across all access levels
+- [ ] **Phase 8: Error Handling and Batch Operations** - API tests verifying error response formats and bulk write operations
+
+## Phase Details
+
+### Phase 5: CRUD Operations
+**Goal**: Every core model can be created, read, updated, and deleted through the REST API and responses are correct
+**Depends on**: Phase 4
+**Requirements**: CRUD-01, CRUD-02, CRUD-03, CRUD-04, CRUD-05, CRUD-06, CRUD-07, CRUD-08
+**Success Criteria** (what must be TRUE):
+  1. A test creates a Project and reads it back with matching fields, updates a field, then deletes it — all return expected HTTP status codes
+  2. A test creates a RepositoryCase with Steps and reads back the correct step count and content
+  3. A test creates a TestRun and TestRunCase pair, updates state, and deletes both — no orphan records remain
+  4. A test creates a CaseField with CaseFieldValues and a Template with field assignments, then tears them down cleanly
+  5. A test links Tags to entities via many-to-many relations and a Session through its full lifecycle
+**Plans:** 4 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Projects, RepositoryCases, and Steps CRUD tests
+- [ ] 05-02-PLAN.md — TestRuns and TestRunCases CRUD tests
+- [ ] 05-03-PLAN.md — Templates, CaseFields, and CaseFieldValues CRUD tests
+- [ ] 05-04-PLAN.md — Tags (with many-to-many linking) and Sessions CRUD tests
+
+### Phase 6: Relations and Queries
+**Goal**: Nested includes, filtered queries, pagination, and aggregate operations return correct data without alias or ordering errors
+**Depends on**: Phase 5
+**Requirements**: REL-01, REL-02, REL-03, REL-04
+**Success Criteria** (what must be TRUE):
+  1. A findMany on RepositoryCases with nested includes (steps, fieldValues, tags, template) returns all related data correctly structured
+  2. A findMany on TestRuns with nested includes (testRunCases, results, stepResults) returns data without PostgreSQL alias errors
+  3. A findMany with where filters, orderBy, skip, and take returns only the expected subset of records in the expected order
+  4. Count and aggregate queries on core models return numerically correct results matching actual row counts
+**Plans**: TBD
+
+### Phase 7: Access Control
+**Goal**: The API enforces the correct permissions for each user role — admins see everything, scoped users see their projects, and unauthorized requests are blocked
+**Depends on**: Phase 5
+**Requirements**: ACL-01, ACL-02, ACL-03, ACL-04, ACL-05
+**Success Criteria** (what must be TRUE):
+  1. An admin user can create, read, update, and delete records across all models without receiving a 403 or access-denied error
+  2. A regular project member can read project data but receives a 403 when attempting to delete the project itself
+  3. A user with NO_ACCESS permission receives a 403 or empty result when reading any data within that project
+  4. An unauthenticated request (no session cookie or token) receives a 401 for any model endpoint
+  5. A user without TestCaseRepository area access cannot create or modify RepositoryCases in a project where they lack that role
+**Plans**: TBD
+
+### Phase 8: Error Handling and Batch Operations
+**Goal**: Error responses are identifiable by type (unique constraint, foreign key, validation, not found) and bulk write operations complete atomically
+**Depends on**: Phase 5
+**Requirements**: ERR-01, ERR-02, ERR-03, ERR-04, BATCH-01, BATCH-02, BATCH-03
+**Success Criteria** (what must be TRUE):
+  1. Creating a record with a duplicate unique field returns an error response that can be identified as a unique constraint violation (via message text pattern or error code)
+  2. Creating a record with a nonexistent foreign key returns an error response identifiable as a foreign key violation
+  3. Creating a record missing required fields returns an error response identifiable as a validation error
+  4. Reading a nonexistent record ID returns a 404 or empty result, not a 500
+  5. A createMany for Steps, updateMany for RepositoryCases, and deleteMany for Tags each apply to all targeted records or none (no partial writes)
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 > 2 > 3 > 4
+Phases execute in numeric order: 5 → 6 → 7 → 8
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. LLM Tag Analysis | 2/2 | Complete | 2026-03-07 |
-| 2. API and Background Processing | 2/2 | Complete | 2026-03-07 |
-| 3. Review Dialog | 2/2 | Complete | 2026-03-08 |
-| 4. Entry Point Integrations | 3/3 | Complete | 2026-03-08 |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. LLM Tag Analysis | v1.0 | 2/2 | Complete | 2026-03-07 |
+| 2. API and Background Processing | v1.0 | 2/2 | Complete | 2026-03-07 |
+| 3. Review Dialog | v1.0 | 2/2 | Complete | 2026-03-08 |
+| 4. Entry Point Integrations | v1.0 | 3/3 | Complete | 2026-03-08 |
+| 5. CRUD Operations | v1.1 | 0/4 | Planning complete | - |
+| 6. Relations and Queries | v1.1 | 0/TBD | Not started | - |
+| 7. Access Control | v1.1 | 0/TBD | Not started | - |
+| 8. Error Handling and Batch Operations | v1.1 | 0/TBD | Not started | - |
