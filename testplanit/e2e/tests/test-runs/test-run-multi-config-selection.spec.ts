@@ -177,7 +177,7 @@ test.describe("Multi-Config Test Run Selection", () => {
     // In edit mode with selected test cases, the SelectedTestCasesDrawer button
     // should be visible. It shows the count of selected cases.
     // The drawer trigger is typically a button with the case count
-    const drawerTrigger = page.locator(
+    const _drawerTrigger = page.locator(
       'button:has-text("Selected"), button:has-text("case"), [data-testid="selected-cases-drawer"]'
     ).first();
 

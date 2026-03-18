@@ -21,7 +21,7 @@ test.describe("Test Run Edit Configuration", () => {
       `E2E Edit Config ${Date.now()}`
     );
     const configName = `Edit Config ${Date.now()}`;
-    const configId = await api.createConfiguration(configName);
+    const _configId = await api.createConfiguration(configName);
 
     // Create a test run with the configuration
     const testRunId = await api.createTestRun(

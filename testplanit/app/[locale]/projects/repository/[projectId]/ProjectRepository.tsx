@@ -382,8 +382,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const [esSearchQuery, setEsSearchQuery] = useState("");
   const debouncedEsSearchQuery = useDebounce(esSearchQuery, 300);
   const [esSearchResultIds, setEsSearchResultIds] = useState<number[] | null>(null);
-  const [esSearchLoading, setEsSearchLoading] = useState(false);
-  const [esSearchTotal, setEsSearchTotal] = useState<number>(0);
+  const [_esSearchLoading, setEsSearchLoading] = useState(false);
+  const [_esSearchTotal, setEsSearchTotal] = useState<number>(0);
   // Tracks whether the panel was already collapsed before search started.
   // null = not currently in a search-initiated collapse.
   const wasCollapsedBeforeSearchRef = useRef<boolean | null>(null);
