@@ -13,7 +13,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger
+  SheetTrigger,
 } from "@/components/ui/sheet";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { RepositoryCaseSource } from "@prisma/client";
@@ -157,7 +157,7 @@ export function SelectedTestCasesDrawer({
     return (
       <div
         key={testCase.id}
-        className={`w-full hover:bg-accent rounded-md pb-2 group ${
+        className={`w-full hover:bg-accent hover:text-accent-foreground rounded-md pb-2 group ${
           useCheckboxes && !isSelected ? "opacity-50" : ""
         }`}
       >
@@ -174,7 +174,7 @@ export function SelectedTestCasesDrawer({
           )}
           {/* Index column (when not using checkboxes) */}
           {!useCheckboxes && (
-            <div className="shrink-0 w-8 text-right text-muted-foreground text-sm">
+            <div className="shrink-0 w-8 text-right text-muted-foreground group-hover:text-accent-foreground text-sm">
               {globalIndex}
             </div>
           )}
@@ -230,72 +230,74 @@ export function SelectedTestCasesDrawer({
             </div>
           )}
         </div>
-        {(typeof testCase.estimate === "number" ||
-          testCase.estimate === null ||
-          typeof testCase.forecastManual === "number" ||
-          testCase.forecastManual === null ||
-          typeof testCase.forecastAutomated === "number" ||
-          testCase.forecastAutomated === null) && (
-          <div className="w-full pl-10 pb-1 text-xs text-muted-foreground flex flex-row items-center group divide-x divide-current">
-            {(() => {
-              const elements = [];
-              if (typeof testCase.estimate === "number") {
-                elements.push(
-                  <span key="estimate" className="py-1">
-                    <Label className="mr-1 text-xs">
-                      {t("common.fields.estimate")}:
-                    </Label>
-                    <span>
-                      {toHumanReadable(testCase.estimate, {
-                        isSeconds: true,
-                      })}
+        <div className="text-right pr-8">
+          {(typeof testCase.estimate === "number" ||
+            testCase.estimate === null ||
+            typeof testCase.forecastManual === "number" ||
+            testCase.forecastManual === null ||
+            typeof testCase.forecastAutomated === "number" ||
+            testCase.forecastAutomated === null) && (
+            <div className="w-full pl-10 pb-1 text-xs text-muted-foreground group-hover:text-accent-foreground flex flex-row items-center justify-end group divide-x divide-current">
+              {(() => {
+                const elements = [];
+                if (typeof testCase.estimate === "number") {
+                  elements.push(
+                    <span key="estimate" className="py-1">
+                      <Label className="mr-1 text-xs">
+                        {t("common.fields.estimate")}:
+                      </Label>
+                      <span>
+                        {toHumanReadable(testCase.estimate, {
+                          isSeconds: true,
+                        })}
+                      </span>
                     </span>
-                  </span>
-                );
-              }
-              if (typeof testCase.forecastManual === "number") {
-                elements.push(
-                  <span key="forecastManual" className="py-1">
-                    <Label className="mr-1 text-xs">
-                      {t("common.fields.forecastManual")}:
-                    </Label>
-                    <span>
-                      {toHumanReadable(testCase.forecastManual, {
-                        isSeconds: true,
-                      })}
+                  );
+                }
+                if (typeof testCase.forecastManual === "number") {
+                  elements.push(
+                    <span key="forecastManual" className="py-1">
+                      <Label className="mr-1 text-xs">
+                        {t("common.fields.forecastManual")}:
+                      </Label>
+                      <span>
+                        {toHumanReadable(testCase.forecastManual, {
+                          isSeconds: true,
+                        })}
+                      </span>
                     </span>
-                  </span>
-                );
-              }
-              if (typeof testCase.forecastAutomated === "number") {
-                elements.push(
-                  <span key="forecastAutomated" className="py-1">
-                    <Label className="mr-1 text-xs">
-                      {t("common.fields.forecastAutomated")}:
-                    </Label>
-                    <span>
-                      {toHumanReadable(testCase.forecastAutomated, {
-                        isSeconds: true,
-                        round: false,
-                      })}
+                  );
+                }
+                if (typeof testCase.forecastAutomated === "number") {
+                  elements.push(
+                    <span key="forecastAutomated" className="py-1">
+                      <Label className="mr-1 text-xs">
+                        {t("common.fields.forecastAutomated")}:
+                      </Label>
+                      <span>
+                        {toHumanReadable(testCase.forecastAutomated, {
+                          isSeconds: true,
+                          round: false,
+                        })}
+                      </span>
                     </span>
-                  </span>
-                );
-              }
-              return elements.map((el, idx) => (
-                <div
-                  key={idx}
-                  className={`
-                    ${idx === 0 ? "pr-2" : "px-2"}
-                    ${idx === elements.length - 1 ? "pl-2" : "px-2"}
+                  );
+                }
+                return elements.map((el, idx) => (
+                  <div
+                    key={idx}
+                    className={`
+                  ${idx === 0 ? "pr-2" : "px-2"}
+                  ${idx === elements.length - 1 ? "pl-2" : "px-2"}
                   `}
-                >
-                  {el}
-                </div>
-              ));
-            })()}
-          </div>
-        )}
+                  >
+                    {el}
+                  </div>
+                ));
+              })()}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
