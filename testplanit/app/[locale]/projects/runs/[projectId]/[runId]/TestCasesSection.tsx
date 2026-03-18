@@ -1,3 +1,4 @@
+import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
 import { ApplicationArea, RepositoryCaseSource } from "@prisma/client";
 import { CirclePlay, Combine } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -120,7 +121,10 @@ export function TestCasesSection({
   const configurationsFromUrl = useMemo(() => {
     const configsParam = searchParams.get("configs");
     if (!configsParam) return null;
-    return configsParam.split(",").map((id) => parseInt(id)).filter((id) => !isNaN(id));
+    return configsParam
+      .split(",")
+      .map((id) => parseInt(id))
+      .filter((id) => !isNaN(id));
   }, [searchParams]);
 
   const [selectedTestCases, setSelectedTestCases] = useState<number[]>(
@@ -221,7 +225,12 @@ export function TestCasesSection({
         setSelectedConfigurations([currentRun]);
       }
     }
-  }, [siblingTestRuns, testRunData, selectedConfigurations.length, configurationsFromUrl]);
+  }, [
+    siblingTestRuns,
+    testRunData,
+    selectedConfigurations.length,
+    configurationsFromUrl,
+  ]);
 
   // Compute the selected run IDs for multi-config runs
   const selectedRunIds = useMemo(() => {
@@ -311,7 +320,9 @@ export function TestCasesSection({
         // Same run, just update URL to remove configs param if present
         const currentConfigs = searchParams.get("configs");
         if (currentConfigs) {
-          router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
+          router.replace(`${pathname}?${newSearchParams.toString()}`, {
+            scroll: false,
+          });
         }
       }
     } else {
@@ -321,7 +332,9 @@ export function TestCasesSection({
 
       if (currentConfigs !== configIds) {
         newSearchParams.set("configs", configIds);
-        router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
+        router.replace(`${pathname}?${newSearchParams.toString()}`, {
+          scroll: false,
+        });
       }
     }
   }, [
@@ -455,17 +468,28 @@ export function TestCasesSection({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <span className="text-md font-semibold">
-          {isMultiConfigRun && selectedConfigurations.length > 1
-            ? t("common.labels.casesInRunMultiConfig", {
-                uniqueCount: uniqueTestCasesCount,
-                configCount: selectedConfigurations.length,
-                totalCount: combinedTestCasesCount,
-              })
-            : t("common.labels.casesInRun", {
-                count: testRunData.testCases.length,
-              })}
-        </span>
+        <div className="flex items-center justify-between w-full gap-2">
+          <span className="text-md font-semibold">
+            {isMultiConfigRun && selectedConfigurations.length > 1
+              ? t("common.labels.casesInRunMultiConfig", {
+                  uniqueCount: uniqueTestCasesCount,
+                  configCount: selectedConfigurations.length,
+                  totalCount: combinedTestCasesCount,
+                })
+              : t("common.labels.casesInRun", {
+                  count: isEditMode
+                    ? selectedTestCases.length
+                    : testRunData.testCases.length,
+                })}
+          </span>
+          {isEditMode && canAddEdit && selectedTestCases.length > 0 && (
+            <SelectedTestCasesDrawer
+              selectedTestCases={selectedTestCases}
+              onSelectionChange={setSelectedTestCases}
+              projectId={Number(params.projectId)}
+            />
+          )}
+        </div>
         {!isEditMode &&
           !testRunData.isCompleted &&
           testRunData.testCases.length > 0 &&

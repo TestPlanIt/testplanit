@@ -2644,7 +2644,29 @@ export default function Cases({
           (index) => rowSelection[index.toString()]
         );
 
-        if (allSelectableSelected) {
+        if (searchResultIds) {
+          // When ES search is active, use searchResultIds directly instead of querying DB
+          if (allSelectableSelected) {
+            if (isSelectionMode && onSelectionChange) {
+              onSelectionChange([]);
+            } else {
+              setSelectedCaseIdsForBulkEdit([]);
+            }
+            setRowSelection({});
+            toast.success(t("repository.deselectedAllCases"));
+          } else {
+            if (isSelectionMode && onSelectionChange) {
+              onSelectionChange(searchResultIds);
+            } else {
+              setSelectedCaseIdsForBulkEdit(searchResultIds);
+            }
+            toast.success(
+              t("repository.selectedAllCases", {
+                count: searchResultIds.length,
+              })
+            );
+          }
+        } else if (allSelectableSelected) {
           // Deselect all cases across all pages
           setFetchAllIdsForSelection(true);
           setSelectAllAction("deselect");
@@ -2725,6 +2747,8 @@ export default function Cases({
       selectedTestCases,
       selectedCaseIdsForBulkEdit,
       setSelectedCaseIdsForBulkEdit,
+      searchResultIds,
+      t,
     ]
   );
 

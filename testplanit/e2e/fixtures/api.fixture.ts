@@ -19,6 +19,7 @@ export class ApiHelper {
   private createdTemplateIds: number[] = [];
   private createdFieldOptionIds: number[] = [];
   private createdShareLinkIds: string[] = [];
+  private createdConfigurationIds: number[] = [];
   private cachedTemplateIds: Map<number, number> = new Map(); // projectId -> templateId
   private cachedStateIds: Map<number, number> = new Map(); // projectId -> stateId
   private cachedRepositoryIds: Map<number, number> = new Map(); // projectId -> repositoryId
@@ -1249,6 +1250,53 @@ export class ApiHelper {
     }
 
     return result.data.map((s: { id: number }) => s.id);
+  }
+
+  /**
+   * Create a configuration via API
+   */
+  async createConfiguration(name: string): Promise<number> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/configurations/create`,
+      {
+        data: {
+          data: {
+            name,
+            isEnabled: true,
+            isDeleted: false,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create configuration: ${error}`);
+    }
+
+    const result = await response.json();
+    const configId = result.data.id;
+    this.createdConfigurationIds.push(configId);
+    return configId;
+  }
+
+  /**
+   * Delete a configuration via API (soft delete)
+   */
+  private async deleteConfiguration(configId: number): Promise<void> {
+    try {
+      await this.request.put(
+        `${this.baseURL}/api/model/configurations/update`,
+        {
+          data: {
+            where: { id: configId },
+            data: { isDeleted: true },
+          },
+        }
+      );
+    } catch {
+      // Ignore cleanup errors
+    }
   }
 
   /**
@@ -2934,6 +2982,12 @@ export class ApiHelper {
       await this.deleteResultField(fieldId);
     }
     this.createdResultFieldIds = [];
+
+    // Delete configurations
+    for (const configId of this.createdConfigurationIds) {
+      await this.deleteConfiguration(configId);
+    }
+    this.createdConfigurationIds = [];
   }
 
   /**
