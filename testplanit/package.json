@@ -57,7 +57,7 @@
     "release:info": "echo 'Releases are now managed by release-please. Push to main and a Release PR will be created automatically.'"
   },
   "dependencies": {
-    "@atlaskit/editor-jira-transformer": "^15.0.1",
+    "@atlaskit/editor-jira-transformer": "^16.0.0",
     "@auth/prisma-adapter": "^2.11.1",
     "@aws-sdk/client-s3": "^3.1011.0",
     "@aws-sdk/s3-request-presigner": "^3.1011.0",
