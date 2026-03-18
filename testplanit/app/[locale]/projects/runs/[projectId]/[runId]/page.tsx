@@ -83,7 +83,7 @@ import { PaginationProvider } from "~/lib/contexts/PaginationContext";
 import {
   useCreateAttachments, useDeleteManyTestRunResults,
   useDeleteManyTestRunStepResults,
-  useFindFirstProjects, useFindFirstRepositoryCases, useFindFirstStatusScope, useFindManyConfigurations, useFindManyJUnitTestSuite, useFindManyMilestones, useFindManyWorkflows, useFindUniqueTestRuns, useUpdateAttachments, useUpdateTestRuns
+  useFindFirstProjects, useFindFirstRepositoryCases, useFindFirstStatusScope, useFindManyJUnitTestSuite, useFindManyMilestones, useFindManyWorkflows, useFindUniqueTestRuns, useUpdateAttachments, useUpdateTestRuns
 } from "~/lib/hooks";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
 import { updateTestRunForecast } from "~/services/testRunService";
@@ -526,16 +526,6 @@ export default function TestRunPage() {
   });
 
   // Add data fetching queries
-  const { data: configurations } = useFindManyConfigurations({
-    where: {
-      isDeleted: false,
-      isEnabled: true,
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
-
   const { data: workflows } = useFindManyWorkflows({
     where: {
       isDeleted: false,
@@ -1402,7 +1392,7 @@ export default function TestRunPage() {
           setNoteContent={setNoteContent}
           contentLoaded={contentLoaded}
           handleCancel={handleCancel}
-          configurations={configurations}
+
           workflows={workflows}
           milestones={milestoneOptions}
           statusScope={statusScope}
@@ -1877,7 +1867,7 @@ export default function TestRunPage() {
                     testRun={testRunData}
                     control={control}
                     errors={errors}
-                    configurations={configurations}
+          
                     workflows={workflows}
                     milestones={milestoneOptions}
                     selectedTags={selectedTags}

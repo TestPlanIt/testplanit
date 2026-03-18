@@ -1,8 +1,10 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import DynamicIcon from "@/components/DynamicIcon";
+import { ConfigurationSelect } from "@/components/forms/ConfigurationSelect";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
 import {
   MilestoneSelect,
-  transformMilestones
+  transformMilestones,
 } from "@/components/forms/MilestoneSelect";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
@@ -16,7 +18,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -24,25 +26,24 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import {
   Select,
-  SelectContent, SelectGroup, SelectItem,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import UploadAttachments from "@/components/UploadAttachments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Attachments } from "@prisma/client";
 import { ApplicationArea } from "@prisma/client";
-import {
-  AlertTriangle,
-  Asterisk, CirclePlus, Combine, LayoutList
-} from "lucide-react";
+import { AlertTriangle, Asterisk, CirclePlus, LayoutList } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -52,12 +53,19 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import { notifySessionAssignment } from "~/app/actions/session-notifications";
+import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useCreateAttachments, useCreateSessions, useCreateSessionVersions,
-  useFindFirstProjects, useFindManyConfigurations, useFindManyIssue, useFindManyMilestones,
-  useFindManyProjectAssignment, useFindManyTags, useFindManyTemplates, useFindManyWorkflows
+  useCreateAttachments,
+  useCreateSessions,
+  useCreateSessionVersions,
+  useFindFirstProjects,
+  useFindManyIssue,
+  useFindManyMilestones,
+  useFindManyTags,
+  useFindManyTemplates,
+  useFindManyWorkflows,
 } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { toHumanReadable } from "~/utils/duration";
@@ -126,16 +134,6 @@ export function AddSessionModal({
     },
   });
 
-  const { data: configurations } = useFindManyConfigurations({
-    where: {
-      isDeleted: false,
-      isEnabled: true,
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
-
   const { data: workflows } = useFindManyWorkflows({
     where: {
       isDeleted: false,
@@ -168,24 +166,6 @@ export function AddSessionModal({
     orderBy: [{ startedAt: "asc" }, { isStarted: "asc" }],
   });
 
-  const { data: projectAssignments } = useFindManyProjectAssignment({
-    where: {
-      projectId: Number(projectId),
-      user: {
-        isActive: true,
-        isDeleted: false,
-      },
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
-  });
-
   const { data: tags } = useFindManyTags({
     where: {
       isDeleted: false,
@@ -204,12 +184,6 @@ export function AddSessionModal({
       label: template.templateName,
     })) || [];
 
-  const configurationsOptions =
-    configurations?.map((configuration) => ({
-      value: configuration.id.toString(),
-      label: configuration.name,
-    })) || [];
-
   const workflowsOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
@@ -219,12 +193,6 @@ export function AddSessionModal({
     })) || [];
 
   const milestonesOptions = transformMilestones(milestones || []);
-
-  const assignedToOptions =
-    projectAssignments?.map((assignment) => ({
-      value: assignment.user.id,
-      label: assignment.user.name,
-    })) || [];
 
   const handleCancel = () => setOpen(false);
 
@@ -379,8 +347,6 @@ export function AddSessionModal({
 
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
 
-  const assignedUsers = projectAssignments;
-
   const userName = session?.user?.name || t("common.labels.unknownUser");
 
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
@@ -453,8 +419,10 @@ export function AddSessionModal({
   };
 
   // --- Fetch Permissions ---
-  const { permissions: tagsPermissions } =
-    useProjectPermissions(numericProjectId, ApplicationArea.Tags);
+  const { permissions: tagsPermissions } = useProjectPermissions(
+    numericProjectId,
+    ApplicationArea.Tags
+  );
   const canAddEditTags = tagsPermissions?.canAddEdit ?? false;
   const isSuperAdmin = session?.user?.access === "ADMIN";
   const showAddEditTagsPerm = canAddEditTags || isSuperAdmin;
@@ -552,8 +520,7 @@ export function AddSessionModal({
             templates?.find((template) => template.id === data.templateId)
               ?.templateName || "",
           configId: data.configId || null,
-          configurationName:
-            configurations?.find((c) => c.id === data.configId)?.name || null,
+          configurationName: null,
           milestoneId: data.milestoneId || null,
           milestoneName:
             milestones?.find((m) => m.id === data.milestoneId)?.name || null,
@@ -562,9 +529,7 @@ export function AddSessionModal({
             workflows?.find((workflow) => workflow.id === data.stateId)?.name ||
             "",
           assignedToId: data.assignedToId || null,
-          assignedToName:
-            assignedUsers?.find((u) => u.userId === data.assignedToId)?.user
-              .name || null,
+          assignedToName: null,
           createdById: session.user.id,
           createdByName: userName,
           estimate: estimateInSeconds,
@@ -708,83 +673,6 @@ export function AddSessionModal({
                 />
                 <FormField
                   control={control}
-                  name="configId"
-                  render={({ field: _field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center">
-                        {t("common.fields.configuration")}
-                        <HelpPopover helpKey="session.configuration" />
-                      </FormLabel>
-                      <FormControl>
-                        <Controller
-                          control={control}
-                          name="configId"
-                          render={({ field: { onChange, value } }) => (
-                            <Select
-                              onValueChange={(val) =>
-                                onChange(val === "0" ? null : Number(val))
-                              }
-                              value={value ? value.toString() : "0"}
-                            >
-                              <SelectTrigger>
-                                <SelectValue
-                                  placeholder={t("common.access.none")}
-                                />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectGroup>
-                                  <SelectItem value="0">
-                                    {t("common.access.none")}
-                                  </SelectItem>
-                                  {configurationsOptions.map(
-                                    (configuration) => (
-                                      <SelectItem
-                                        key={configuration.value}
-                                        value={configuration.value}
-                                      >
-                                        <div className="flex items-center gap-1">
-                                          <Combine className="w-4 h-4" />
-                                          {configuration.label}
-                                        </div>
-                                      </SelectItem>
-                                    )
-                                  )}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={control}
-                  name="milestoneId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center">
-                        {t("common.fields.milestone")}
-                        <HelpPopover helpKey="session.milestone" />
-                      </FormLabel>
-                      <FormControl>
-                        <MilestoneSelect
-                          value={field.value}
-                          onChange={(value) => {
-                            const numericValue = value ? Number(value) : null;
-                            field.onChange(numericValue);
-                          }}
-                          milestones={milestonesOptions}
-                          placeholder={t("common.access.none")}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={control}
                   name="mission"
                   render={({ field: _field }) => (
                     <FormItem>
@@ -838,7 +726,7 @@ export function AddSessionModal({
               <div className="flex items-center justify-center">
                 <Separator orientation="vertical" className="h-full" />
               </div>
-              <div className="space-y-4 mr-6">
+              <div className="space-y-4 mr-6 max-w-[265px]">
                 <FormField
                   control={control}
                   name="templateId"
@@ -947,6 +835,55 @@ export function AddSessionModal({
                 />
                 <FormField
                   control={control}
+                  name="configId"
+                  render={({ field: _field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        {t("common.fields.configuration")}
+                        <HelpPopover helpKey="session.configuration" />
+                      </FormLabel>
+                      <FormControl>
+                        <Controller
+                          control={control}
+                          name="configId"
+                          render={({ field: { onChange, value } }) => (
+                            <ConfigurationSelect
+                              value={value}
+                              onChange={(val) => onChange(val)}
+                            />
+                          )}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="milestoneId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        {t("common.fields.milestone")}
+                        <HelpPopover helpKey="session.milestone" />
+                      </FormLabel>
+                      <FormControl>
+                        <MilestoneSelect
+                          value={field.value}
+                          onChange={(value) => {
+                            const numericValue = value ? Number(value) : null;
+                            field.onChange(numericValue);
+                          }}
+                          milestones={milestonesOptions}
+                          placeholder={t("common.access.none")}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
                   name="assignedToId"
                   render={({ field: _field }) => (
                     <FormItem>
@@ -959,36 +896,40 @@ export function AddSessionModal({
                           control={control}
                           name="assignedToId"
                           render={({ field: { onChange, value } }) => (
-                            <Select
-                              onValueChange={(val) =>
-                                onChange(val === "none" ? null : val)
+                            <AsyncCombobox
+                              value={
+                                value
+                                  ? {
+                                      id: value,
+                                      name: value,
+                                      email: null as string | null,
+                                      image: null as string | null,
+                                    }
+                                  : null
                               }
-                              value={value ? value.toString() : "none"}
-                            >
-                              <SelectTrigger>
-                                <SelectValue
-                                  placeholder={t("common.access.none")}
-                                />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectGroup>
-                                  <SelectItem value="none">
-                                    {t("common.access.none")}
-                                  </SelectItem>
-                                  {assignedToOptions.map((user) => (
-                                    <SelectItem
-                                      key={user.value}
-                                      value={user.value}
-                                    >
-                                      <UserNameCell
-                                        userId={user.value}
-                                        hideLink
-                                      />
-                                    </SelectItem>
-                                  ))}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
+                              onValueChange={(user) => {
+                                onChange(user ? user.id : null);
+                              }}
+                              fetchOptions={(query, page, pageSize) =>
+                                searchProjectMembers(
+                                  Number(projectId),
+                                  query,
+                                  page,
+                                  pageSize
+                                )
+                              }
+                              renderOption={(user) => (
+                                <UserNameCell userId={user.id} hideLink />
+                              )}
+                              getOptionValue={(user) => user.id}
+                              placeholder={t(
+                                "sessions.placeholders.selectUser"
+                              )}
+                              className="w-full"
+                              pageSize={20}
+                              showTotal={true}
+                              showUnassigned={true}
+                            />
                           )}
                         />
                       </FormControl>

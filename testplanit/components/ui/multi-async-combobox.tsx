@@ -1,15 +1,19 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Command, CommandEmpty, CommandGroup, CommandInput,
-  CommandItem, CommandList
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { Check, ChevronsUpDown, PackagePlus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
 import { cn, type ClassValue } from "~/utils";
@@ -209,7 +213,7 @@ export function MultiAsyncCombobox<T>({
                     title={getOptionLabel(v)}
                     role="button"
                     tabIndex={0}
-                    className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
+                    className="ml-1 rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background cursor-pointer hover:bg-destructive/20"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         removeOption(v, e as unknown as React.MouseEvent);
@@ -221,7 +225,7 @@ export function MultiAsyncCombobox<T>({
                     }}
                     onClick={(e) => removeOption(v, e)}
                   >
-                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                    <X className="h-3 w-3 text-foreground/70 hover:text-destructive" />
                   </span>
                 </Badge>
               ))
@@ -308,7 +312,8 @@ export function MultiAsyncCombobox<T>({
                           }}
                           className="border-b mb-1"
                         >
-                          <div className="flex items-center w-full text-primary font-medium">
+                          <div className="flex items-center w-full text-foreground-background font-medium gap-2">
+                            <PackagePlus className="h-3 w-3 shrink-0" />
                             {tCommon("actions.selectAll")} {"("}
                             {visibleCount}
                             {")"}

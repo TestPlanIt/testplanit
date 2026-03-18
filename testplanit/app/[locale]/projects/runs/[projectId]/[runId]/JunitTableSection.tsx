@@ -82,7 +82,6 @@ function JunitTableSection({
   isJUnitLoading,
   handleEditClick,
   handleCancel,
-  configurations,
   workflows,
   milestones,
   statusScope,
@@ -702,7 +701,6 @@ function JunitTableSection({
                     testRun={testRunData ?? undefined}
                     control={form.control}
                     errors={form.formState.errors}
-                    configurations={configurations}
                     workflows={workflows}
                     milestones={milestones}
                     selectedTags={[]}

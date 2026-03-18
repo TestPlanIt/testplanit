@@ -38,7 +38,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import {
-  useFindManyConfigurations,
   useFindManyMilestones,
   useFindManyTags,
   useFindManyTemplates,
@@ -47,8 +46,7 @@ import {
 import { useFindManyRepositoryFolders } from "~/lib/hooks/repository-folders";
 import { IconName } from "~/types/globals";
 import {
-  ConfigurationSelect,
-  transformConfigurations
+  ConfigurationSelect
 } from "./forms/ConfigurationSelect";
 import { FolderSelect, transformFolders } from "./forms/FolderSelect";
 import { MilestoneSelect, transformMilestones } from "./forms/MilestoneSelect";
@@ -107,11 +105,7 @@ export default function TestResultsImportDialog({
   const [importProgress, setImportProgress] = useState(0);
   const [importStatus, setImportStatus] = useState<string>("");
 
-  // Fetch configurations, milestones, tags, workflows
-  const { data: configurations } = useFindManyConfigurations({
-    where: { isDeleted: false, isEnabled: true },
-    orderBy: { name: "asc" },
-  });
+  // Fetch milestones, tags, workflows
   const { data: milestones } = useFindManyMilestones({
     where: { projectId, isDeleted: false, isCompleted: false },
     orderBy: { startedAt: "asc" },
@@ -489,14 +483,10 @@ export default function TestResultsImportDialog({
                       </FormLabel>
                       <FormControl>
                         <ConfigurationSelect
-                          value={field.value ? field.value : null}
+                          value={field.value ? Number(field.value) : null}
                           onChange={(val) =>
                             field.onChange(val ? val.toString() : "")
                           }
-                          configurations={transformConfigurations(
-                            configurations || []
-                          )}
-                          isLoading={!configurations}
                           disabled={isImporting}
                         />
                       </FormControl>

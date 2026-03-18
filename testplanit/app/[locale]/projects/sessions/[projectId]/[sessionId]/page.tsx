@@ -18,16 +18,18 @@ import { useSession } from "next-auth/react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { z } from "zod/v4";
 import { notifySessionAssignment } from "~/app/actions/session-notifications";
+import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useCreateAttachments, useCreateSessionVersions, useFindFirstProjects, useFindFirstSessions, useFindManyConfigurations,
+  useCreateAttachments, useCreateSessionVersions, useFindFirstProjects, useFindFirstSessions,
   useFindManyMilestones,
-  useFindManyProjectAssignment,
   useFindManySessionVersions,
   useFindManyTemplates, useFindManyWorkflows, useUpdateAttachments, useUpdateSessions
 } from "~/lib/hooks";
 
+import { ConfigurationSelect } from "@/components/forms/ConfigurationSelect";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
 import { DateFormatter } from "@/components/DateFormatter";
@@ -208,15 +210,10 @@ interface SessionFormControlsProps {
   control: Control<FormValues>;
   errors: FieldErrors<FormValues>;
   templates: Template[] | undefined;
-  configurations: { id: number; name: string }[] | undefined;
+
   workflows: WorkflowState[] | undefined;
   milestones: Milestone[];
-  projectAssignments:
-    | {
-        userId: string;
-        user: { id: string; name: string };
-      }[]
-    | undefined;
+  numericProjectId: number;
   selectedTags: number[];
   setSelectedTags: (tags: number[]) => void;
   projectId: string | string[];
@@ -254,10 +251,9 @@ function SessionFormControls({
   control,
   errors: _errors,
   templates,
-  configurations,
   workflows,
   milestones,
-  projectAssignments,
+  numericProjectId,
   selectedTags,
   setSelectedTags,
   projectId,
@@ -408,62 +404,18 @@ function SessionFormControls({
       <FormField
         control={control}
         name="configId"
-        render={({ field }) => {
-          // Check if current value exists in configurations
-          const currentValueExists = configurations?.some(
-            (c) => c.id.toString() === field.value?.toString()
-          );
-
-          // For configuration, we allow null/0 as a valid value ("None")
-          if (field.value && !currentValueExists) {
-            field.onChange(null);
-          }
-
-          return (
+        render={({ field }) => (
             <FormItem>
               <FormLabel>{tGlobal("common.fields.configuration")}</FormLabel>
               <FormControl>
                 {isEditMode ? (
-                  <Select
-                    onValueChange={(val) =>
-                      field.onChange(val === "0" ? null : Number(val))
-                    }
-                    value={field.value?.toString() || "0"}
+                  <ConfigurationSelect
+                    value={field.value}
+                    onChange={(val) => field.onChange(val)}
                     disabled={isSubmitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={tCommon(
-                          "placeholders.selectConfiguration"
-                        )}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="0">
-                          <div className="flex items-center gap-2">
-                            {tCommon("access.none")}
-                          </div>
-                        </SelectItem>
-                        {configurations?.map((config) => (
-                          <SelectItem
-                            key={config.id}
-                            value={config.id.toString()}
-                          >
-                            <div className="flex items-center gap-1">
-                              <DynamicIcon
-                                name="combine"
-                                className="h-4 w-4 shrink-0"
-                              />
-                              {config.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                  />
                 ) : (
-                  <div className="flex items- gap-1">
+                  <div className="flex items-center gap-1">
                     <DynamicIcon
                       name="combine"
                       className="h-4 w-4 shrink-0 mt-1"
@@ -474,8 +426,7 @@ function SessionFormControls({
               </FormControl>
               <FormMessage />
             </FormItem>
-          );
-        }}
+        )}
       />
 
       {/* Milestone */}
@@ -524,41 +475,44 @@ function SessionFormControls({
             <FormLabel>{tGlobal("common.fields.assignedTo")}</FormLabel>
             <FormControl>
               {isEditMode ? (
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value || "none"}
+                <AsyncCombobox
+                  value={
+                    field.value && field.value !== "none"
+                      ? {
+                          id: field.value,
+                          name:
+                            testSession?.assignedTo?.id === field.value
+                              ? testSession.assignedTo.name
+                              : field.value,
+                          email: null as string | null,
+                          image: null as string | null,
+                        }
+                      : null
+                  }
+                  onValueChange={(user) => {
+                    field.onChange(user ? user.id : "none");
+                  }}
+                  fetchOptions={(query, page, pageSize) =>
+                    searchProjectMembers(
+                      numericProjectId,
+                      query,
+                      page,
+                      pageSize
+                    )
+                  }
+                  renderOption={(user) => (
+                    <UserNameCell userId={user.id} hideLink />
+                  )}
+                  getOptionValue={(user) => user.id}
+                  placeholder={tGlobal(
+                    "sessions.placeholders.selectUser"
+                  )}
                   disabled={isSubmitting}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("placeholders.selectUser")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="none">
-                        <div className="flex items-center gap-2">
-                          <DynamicIcon
-                            name="user-round-x"
-                            className="h-4 w-4"
-                          />
-                          {tGlobal("common.access.none")}
-                        </div>
-                      </SelectItem>
-                      {projectAssignments?.map((assignment) => (
-                        <SelectItem
-                          key={assignment.userId}
-                          value={assignment.userId}
-                        >
-                          <div className="flex items-center gap-2">
-                            <UserNameCell
-                              userId={assignment.userId}
-                              hideLink={true}
-                            />
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
+                  className="w-full"
+                  pageSize={20}
+                  showTotal={true}
+                  showUnassigned={true}
+                />
               ) : (
                 <div className="w-fit">
                   {testSession?.assignedTo ? (
@@ -1037,17 +991,6 @@ export default function SessionPage() {
       },
     });
 
-  const { data: configurations, isLoading: isLoadingConfigurations } =
-    useFindManyConfigurations({
-      where: {
-        isDeleted: false,
-        isEnabled: true,
-      },
-      orderBy: {
-        name: "asc",
-      },
-    });
-
   const { data: workflows, isLoading: isLoadingWorkflows } =
     useFindManyWorkflows({
       where: {
@@ -1086,24 +1029,6 @@ export default function SessionPage() {
       orderBy: [{ startedAt: "asc" }, { isStarted: "asc" }],
     }) as { data: Milestone[]; isLoading: boolean };
 
-  const { data: projectAssignments, isLoading: isLoadingAssignments } =
-    useFindManyProjectAssignment({
-      where: {
-        projectId: numericProjectId ?? undefined,
-        user: {
-          isActive: true,
-          isDeleted: false,
-        },
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
 
   // Update form initialization
   useEffect(() => {
@@ -1158,9 +1083,7 @@ export default function SessionPage() {
     setIsLoading(
       isLoadingSession ||
         isLoadingTemplates ||
-        isLoadingConfigurations ||
         isLoadingWorkflows ||
-        isLoadingAssignments ||
         isLoadingMilestones ||
         isLoadingPermissions ||
         isLoadingClosedPermissions ||
@@ -1172,9 +1095,7 @@ export default function SessionPage() {
   }, [
     isLoadingSession,
     isLoadingTemplates,
-    isLoadingConfigurations,
     isLoadingWorkflows,
-    isLoadingAssignments,
     isLoadingMilestones,
     isLoadingPermissions,
     isLoadingClosedPermissions,
@@ -1373,8 +1294,9 @@ export default function SessionPage() {
               ?.templateName || "",
           configId: transformedData.configId || null,
           configurationName:
-            configurations?.find((c) => c.id === transformedData.configId)
-              ?.name || null,
+            sessionData?.configuration?.id === transformedData.configId
+              ? sessionData.configuration.name
+              : null,
           milestoneId: transformedData.milestoneId || null,
           milestoneName:
             milestones?.find((m) => m.id === transformedData.milestoneId)
@@ -1385,9 +1307,9 @@ export default function SessionPage() {
             "",
           assignedToId: transformedData.assignedToId || null,
           assignedToName:
-            projectAssignments?.find(
-              (u) => u.userId === transformedData.assignedToId
-            )?.user.name || null,
+            sessionData?.assignedTo?.id === transformedData.assignedToId
+              ? sessionData?.assignedTo?.name ?? null
+              : null,
           createdById: session!.user.id,
           createdByName: session!.user.name || "Unknown User",
           estimate: transformedData.estimate,
@@ -1989,10 +1911,9 @@ export default function SessionPage() {
                     control={control}
                     errors={errors}
                     templates={templates}
-                    configurations={configurations}
                     workflows={workflows}
                     milestones={milestones || []}
-                    projectAssignments={projectAssignments}
+                    numericProjectId={numericProjectId!}
                     selectedTags={selectedTags}
                     setSelectedTags={setSelectedTags}
                     projectId={safeProjectId}

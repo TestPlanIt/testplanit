@@ -59,7 +59,6 @@ import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   useCreateAttachments, useCreateTestRuns, useFindManyConfigurations, useFindManyMilestones,
-  useFindManyProjectAssignment,
   useFindManyTags, useFindManyWorkflows
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
@@ -863,13 +862,6 @@ export default function AddTestRunModal({
       children: { include: { milestoneType: { include: { icon: true } } } },
     },
   });
-  const { data: projectAssignments } = useFindManyProjectAssignment({
-    where: {
-      projectId: Number(projectId),
-      user: { isActive: true, isDeleted: false },
-    },
-    include: { user: { select: { id: true, name: true } } },
-  });
   useFindManyTags({
     where: { isDeleted: false },
     orderBy: { name: "asc" },
@@ -900,11 +892,6 @@ export default function AddTestRunModal({
       : undefined,
     parentId: m.parentId,
   }));
-  const _assignedToOptions =
-    projectAssignments?.map((a) => ({
-      value: a.user.id,
-      label: a.user.name,
-    })) || [];
 
   const mainDialogOnOpenChange = (newOpenState: boolean) => {
     const actualOpenerOrCloser = controlledOnOpenChange ?? setInternalOpen;

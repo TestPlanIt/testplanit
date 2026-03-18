@@ -39,6 +39,7 @@ interface AsyncComboboxProps<T> {
   showTotal?: boolean;
   showUnassigned?: boolean;
   unassignedLabel?: string;
+  unassignedIcon?: React.ReactNode;
   renderTrigger?: (args: {
     value: T | null;
     open: boolean;
@@ -63,6 +64,7 @@ export function AsyncCombobox<T>({
   showTotal = false,
   showUnassigned = false,
   unassignedLabel,
+  unassignedIcon,
   renderTrigger,
 }: AsyncComboboxProps<T>) {
   const tCommon = useTranslations("common");
@@ -162,7 +164,7 @@ export function AsyncCombobox<T>({
     renderOption(value)
   ) : showUnassigned ? (
     <div className="flex items-center text-start">
-      <UserX className="mr-2 h-4 w-4" />
+      {unassignedIcon ?? <UserX className="mr-2 h-4 w-4" />}
       <span>{unassignedLabel || tCommon("labels.unassigned")}</span>
     </div>
   ) : (
@@ -281,7 +283,7 @@ export function AsyncCombobox<T>({
                     }}
                   >
                     <div className="flex items-center w-full">
-                      <UserX className="mr-2 h-4 w-4" />
+                      {unassignedIcon ?? <UserX className="mr-2 h-4 w-4" />}
                       <span>
                         {unassignedLabel || tCommon("labels.unassigned")}
                       </span>

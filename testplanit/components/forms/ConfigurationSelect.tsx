@@ -1,80 +1,61 @@
-import {
-  Select,
-  SelectContent, SelectGroup, SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { Combine } from "lucide-react";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { CircleSlash2, Combine } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React from "react";
+import { searchConfigurations } from "~/app/actions/searchConfigurations";
+import { useFindFirstConfigurations } from "~/lib/hooks";
+import { cn, type ClassValue } from "~/utils";
 
-// Utility function to transform configurations into configurationOptions
-export const transformConfigurations = (
-  configurations: {
-    id: number;
-    name: string;
-  }[]
-) => {
-  return (
-    configurations?.map((configuration) => ({
-      value: configuration.id.toString(),
-      label: configuration.name,
-    })) || []
-  );
-};
+type ConfigOption = { id: number; name: string };
 
 export interface ConfigurationSelectProps {
-  value: string | number | null | undefined;
-  onChange: (value: string | number | null | undefined) => void;
-  configurations: {
-    value: string;
-    label: string;
-  }[];
-  isLoading?: boolean;
-  placeholder?: string;
+  value: number | null | undefined;
+  onChange: (value: number | null) => void;
   disabled?: boolean;
+  className?: ClassValue;
 }
 
 export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
   value,
   onChange,
-  configurations,
-  isLoading = false,
-  placeholder: _placeholder = "Select Configuration",
   disabled = false,
+  className,
 }) => {
   const tCommon = useTranslations("common");
 
+  // Resolve the current value's name for display
+  const { data: currentConfig } = useFindFirstConfigurations(
+    {
+      where: { id: value ?? undefined },
+      select: { id: true, name: true },
+    },
+  );
+
+  const resolvedValue: ConfigOption | null =
+    value && currentConfig ? { id: currentConfig.id, name: currentConfig.name } : null;
+
   return (
-    <Select
-      onValueChange={(val) => onChange(val === "0" ? null : Number(val))}
-      value={value ? value.toString() : "0"}
-      disabled={
-        disabled || isLoading || !configurations || configurations.length === 0
+    <AsyncCombobox<ConfigOption>
+      value={resolvedValue}
+      onValueChange={(opt) => onChange(opt ? opt.id : null)}
+      fetchOptions={(query, page, pageSize) =>
+        searchConfigurations(query, page, pageSize)
       }
-    >
-      <SelectTrigger>
-        <SelectValue
-          placeholder={tCommon("placeholders.selectConfiguration")}
-        />
-      </SelectTrigger>
-      <SelectContent>
-        {isLoading ? (
-          <SelectItem value="loading">{tCommon("loading")}</SelectItem>
-        ) : (
-          <SelectGroup>
-            <SelectItem value="0">{tCommon("access.none")}</SelectItem>
-            {configurations.map((configuration) => (
-              <SelectItem key={configuration.value} value={configuration.value}>
-                <div className="flex items-center gap-1">
-                  <Combine className="w-4 h-4" />
-                  {configuration.label}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        )}
-      </SelectContent>
-    </Select>
+      renderOption={(opt) => (
+        <div className="flex items-center gap-1 min-w-0">
+          <Combine className="w-4 h-4 shrink-0" />
+          <span className="truncate">{opt.name}</span>
+        </div>
+      )}
+      getOptionValue={(opt) => opt.id}
+      placeholder=""
+      disabled={disabled}
+      className={cn("w-full overflow-hidden", className)}
+      pageSize={20}
+      showTotal={true}
+      showUnassigned={true}
+      unassignedLabel={tCommon("access.none")}
+      unassignedIcon={<CircleSlash2 className="mr-2 h-4 w-4" />}
+    />
   );
 };

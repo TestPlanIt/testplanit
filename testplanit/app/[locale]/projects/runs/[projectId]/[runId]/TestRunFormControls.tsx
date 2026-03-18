@@ -3,6 +3,7 @@ import {
 } from "@/components/AttachmentsDisplay";
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
+import { ConfigurationSelect } from "@/components/forms/ConfigurationSelect";
 import { MilestoneSelect } from "@/components/forms/MilestoneSelect";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
@@ -140,7 +141,6 @@ interface TestRunFormControlsProps {
   testRun: TestRunWithRelations | null;
   control: any;
   errors: any;
-  configurations: { id: number; name: string }[] | undefined;
   workflows: WorkflowStateWithRelations[] | undefined;
   milestones: MilestoneOption[];
   selectedTags: number[];
@@ -163,7 +163,6 @@ function TestRunFormControls({
   testRun,
   control,
   errors: _errors,
-  configurations,
   workflows,
   milestones,
   selectedTags,
@@ -256,18 +255,7 @@ function TestRunFormControls({
       <FormField
         control={control}
         name="configId"
-        render={({ field }) => {
-          // Check if current value exists in configurations
-          const currentValueExists = configurations?.some(
-            (c) => c.id.toString() === field.value?.toString()
-          );
-
-          // For configuration, we allow null/0 as a valid value ("None")
-          if (field.value && !currentValueExists) {
-            field.onChange(null);
-          }
-
-          return (
+        render={({ field }) => (
             <FormItem>
               <FormLabel>
                 {!isEditMode && selectedConfigurationsForDisplay.length > 1
@@ -276,44 +264,11 @@ function TestRunFormControls({
               </FormLabel>
               <FormControl>
                 {isEditMode ? (
-                  <Select
-                    onValueChange={(val) =>
-                      field.onChange(val === "0" ? null : Number(val))
-                    }
-                    value={field.value?.toString() || "0"}
+                  <ConfigurationSelect
+                    value={field.value}
+                    onChange={(val) => field.onChange(val)}
                     disabled={isSubmitting || !canAddEdit}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={t(
-                          "common.placeholders.selectConfiguration"
-                        )}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="0">
-                          <div className="flex items-center gap-2">
-                            {t("common.access.none")}
-                          </div>
-                        </SelectItem>
-                        {configurations?.map((config) => (
-                          <SelectItem
-                            key={config.id}
-                            value={config.id.toString()}
-                          >
-                            <div className="flex items-start gap-1">
-                              <DynamicIcon
-                                name="combine"
-                                className="h-4 w-4 shrink-0 mt-0.5"
-                              />
-                              {config.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                  />
                 ) : selectedConfigurationsForDisplay.length > 1 ? (
                   <div className="flex flex-col gap-1">
                     {selectedConfigurationsForDisplay.map((config) => (
@@ -335,8 +290,7 @@ function TestRunFormControls({
               </FormControl>
               <FormMessage />
             </FormItem>
-          );
-        }}
+        )}
       />
       {/* Milestone */}
       <FormField
