@@ -1,10 +1,12 @@
 "use client";
 
 import BreadcrumbComponent from "@/components/BreadcrumbComponent";
+import { useDebounce } from "@/components/Debounce";
 import { UnifiedDragPreview } from "@/components/dnd/UnifiedDragPreview";
 import { PageFileDropOverlay } from "@/components/PageFileDropOverlay";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -22,7 +24,7 @@ import { ViewSelector } from "@/components/ViewSelector";
 import { ApplicationArea } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Bot, Bug, Calendar, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheckBig, FolderTree, Hash, LayoutTemplate, Link, ListChecks, ListOrdered, SquareCheckBig, Tags, Type, User, UserCog, Workflow
+  Bot, Bug, Calendar, ChevronLeft, ChevronRight, ChevronsUpDown, CircleCheckBig, FolderTree, Hash, LayoutTemplate, Link, ListChecks, ListOrdered, Search, SquareCheckBig, Tags, Type, User, UserCog, Workflow, X
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -375,6 +377,16 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   const refetchFoldersRef = useRef<(() => Promise<unknown>) | null>(null);
   // Ref for scoping DnD events when used in portaled contexts (modals)
   const dndContainerRef = useRef<HTMLDivElement>(null);
+
+  // Elasticsearch-powered search state (for selection mode)
+  const [esSearchQuery, setEsSearchQuery] = useState("");
+  const debouncedEsSearchQuery = useDebounce(esSearchQuery, 300);
+  const [esSearchResultIds, setEsSearchResultIds] = useState<number[] | null>(null);
+  const [esSearchLoading, setEsSearchLoading] = useState(false);
+  const [esSearchTotal, setEsSearchTotal] = useState<number>(0);
+  // Tracks whether the panel was already collapsed before search started.
+  // null = not currently in a search-initiated collapse.
+  const wasCollapsedBeforeSearchRef = useRef<boolean | null>(null);
 
   const t = useTranslations();
 
@@ -931,6 +943,131 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     [handleSelectFolder]
   );
 
+  // Elasticsearch search effect - search for test cases in this project.
+  // Fetches all matching IDs by paginating through ES results.
+  // IDs are passed to Cases which uses a POST-based fetch (not ZenStack GET hooks)
+  // to avoid URL length limits.
+  useEffect(() => {
+    if (!debouncedEsSearchQuery.trim()) {
+      setEsSearchResultIds(null);
+      setEsSearchTotal(0);
+      return;
+    }
+
+    let cancelled = false;
+    const PAGE_SIZE = 500;
+
+    const doSearch = async () => {
+      setEsSearchLoading(true);
+      try {
+        // First page
+        const response = await fetch("/api/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filters: {
+              query: debouncedEsSearchQuery,
+              entityTypes: ["repository_case"],
+              repositoryCase: {
+                projectIds: [numericProjectId],
+              },
+            },
+            pagination: { page: 1, size: PAGE_SIZE },
+            highlight: false,
+          }),
+        });
+
+        if (cancelled) return;
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const total = data.total as number;
+        const allIds: number[] = data.hits.map((hit: any) => hit.source.id);
+
+        // Fetch remaining pages if needed
+        const totalPages = Math.ceil(total / PAGE_SIZE);
+        if (totalPages > 1) {
+          const remainingPages = Array.from(
+            { length: totalPages - 1 },
+            (_, i) => i + 2
+          );
+          const pageResults = await Promise.all(
+            remainingPages.map((page) =>
+              fetch("/api/search", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  filters: {
+                    query: debouncedEsSearchQuery,
+                    entityTypes: ["repository_case"],
+                    repositoryCase: {
+                      projectIds: [numericProjectId],
+                    },
+                  },
+                  pagination: { page, size: PAGE_SIZE },
+                  highlight: false,
+                }),
+              }).then((r) => (r.ok ? r.json() : { hits: [] }))
+            )
+          );
+
+          if (cancelled) return;
+
+          for (const pageData of pageResults) {
+            for (const hit of pageData.hits) {
+              allIds.push(hit.source.id);
+            }
+          }
+        }
+
+        setEsSearchResultIds(allIds);
+        setEsSearchTotal(total);
+      } catch (err) {
+        console.error("ES search error:", err);
+      } finally {
+        if (!cancelled) setEsSearchLoading(false);
+      }
+    };
+
+    doSearch();
+    return () => { cancelled = true; };
+  }, [debouncedEsSearchQuery, numericProjectId]);
+
+  // Auto-collapse left panel when ES search is active
+  useEffect(() => {
+    if (esSearchQuery.trim()) {
+      // Only capture pre-search state on the first transition into search
+      if (wasCollapsedBeforeSearchRef.current === null) {
+        wasCollapsedBeforeSearchRef.current = isCollapsed;
+        if (!isCollapsed && panelRef.current) {
+          setIsTransitioning(true);
+          panelRef.current.collapse();
+          setIsCollapsed(true);
+          setTimeout(() => setIsTransitioning(false), 300);
+        }
+      }
+    } else {
+      // Search cleared — restore panel if it wasn't collapsed before search
+      if (wasCollapsedBeforeSearchRef.current === false && panelRef.current) {
+        setIsTransitioning(true);
+        panelRef.current.expand();
+        setIsCollapsed(false);
+        setTimeout(() => setIsTransitioning(false), 300);
+      }
+      wasCollapsedBeforeSearchRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [esSearchQuery]);
+
+  const cancelEsSearch = useCallback(() => {
+    setEsSearchQuery("");
+    setEsSearchResultIds(null);
+    setEsSearchTotal(0);
+    // Panel restore is handled by the effect above via setEsSearchQuery("")
+  }, []);
+
+  const isEsSearchActive = esSearchQuery.trim().length > 0;
+
   const toggleCollapse = () => {
     setIsTransitioning(true);
     if (panelRef.current) {
@@ -1272,13 +1409,14 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                       </div>
                     </div>
                   </ResizablePanel>
-                  <ResizableHandle withHandle className="w-1" />
+                  <ResizableHandle withHandle className="w-1" disabled={isEsSearchActive} />
                   <div className="shrink-0 pt-0.5">
                     <Button
                       type="button"
                       onClick={toggleCollapse}
                       variant="secondary"
                       className="p-0 -ml-1 rounded-l-none"
+                      disabled={isEsSearchActive}
                     >
                       {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
                     </Button>
@@ -1292,13 +1430,36 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                     {/* Empty state is now handled by TreeView component */}
                     <>
                       <div data-testid="repository-right-panel-header">
-                        <div className="flex items-center justify-between mx-2 pt-0.5">
-                          <div className="text-primary text-lg md:text-xl font-extrabold">
+                        <div className="flex items-center justify-between mx-2 pt-0.5 gap-2">
+                          <div className="text-primary text-lg md:text-xl font-extrabold shrink-0">
                             <div className="flex items-center space-x-1">
                               <ListChecks className="w-5 h-5 min-w-5 min-h-5" />
                               <div>{t("common.fields.testCases")}</div>
                             </div>
                           </div>
+                          {/* Elasticsearch search bar for selection mode */}
+                          {isSelectionMode && (
+                            <div className="relative flex-1 max-w-md">
+                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                              <Input
+                                type="text"
+                                placeholder={t("search.placeholder.thisProject")}
+                                value={esSearchQuery}
+                                onChange={(e) => setEsSearchQuery(e.target.value)}
+                                className="pl-10 pr-10 h-8"
+                              />
+                              {esSearchQuery && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6"
+                                  onClick={cancelEsSearch}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          )}
                           {!isSelectionMode && !isRunMode && canAddEdit && (
                             <div className="flex gap-2 items-center">
                               <ImportCasesWizard
@@ -1319,7 +1480,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                             </div>
                           )}
                         </div>
-                        {selectedItem === "folders" && !isRunMode && (
+
+                        {selectedItem === "folders" && !isRunMode && !isEsSearchActive && (
                           <>
                             <BreadcrumbComponent
                               breadcrumbItems={getBreadcrumbItems}
@@ -1366,9 +1528,9 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                         )}
                       </div>
                       <Cases
-                        folderId={selectedFolderId}
-                        viewType={selectedItem}
-                        filterId={selectedFilter}
+                        folderId={isEsSearchActive ? null : selectedFolderId}
+                        viewType={isEsSearchActive ? "folders" : selectedItem}
+                        filterId={isEsSearchActive ? null : selectedFilter}
                         isSelectionMode={isSelectionMode}
                         selectedTestCases={selectedTestCases}
                         selectedRunIds={selectedRunIds}
@@ -1383,6 +1545,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                         canDelete={canDelete}
                         selectedFolderCaseCount={selectedFolderCaseCount}
                         overridePagination={overridePagination}
+                        searchResultIds={esSearchResultIds}
                       />
                     </>
                   </ResizablePanel>

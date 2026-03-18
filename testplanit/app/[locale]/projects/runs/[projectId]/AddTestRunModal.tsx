@@ -15,7 +15,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -23,16 +23,18 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   Select,
-  SelectContent, SelectGroup, SelectItem,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import UploadAttachments from "@/components/UploadAttachments";
@@ -51,15 +53,19 @@ import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
 import {
   getAssignmentsForRunCases,
-  type GetAssignmentsResponse
+  type GetAssignmentsResponse,
 } from "~/app/actions/getAssignmentsForRunCases";
 import { emptyEditorContent } from "~/app/constants";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
-  useCreateAttachments, useCreateTestRuns, useFindManyConfigurations, useFindManyMilestones,
-  useFindManyTags, useFindManyWorkflows
+  useCreateAttachments,
+  useCreateTestRuns,
+  useFindManyConfigurations,
+  useFindManyMilestones,
+  useFindManyTags,
+  useFindManyWorkflows,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { updateTestRunForecast } from "~/services/testRunService";
@@ -1123,9 +1129,7 @@ export default function AddTestRunModal({
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null
   >(null);
-  const [, setSelectedAttachments] = useState<Attachments[]>(
-    []
-  );
+  const [, setSelectedAttachments] = useState<Attachments[]>([]);
 
   const handleSelect = (attachments: Attachments[], index: number) => {
     setSelectedAttachments(attachments);

@@ -77,6 +77,8 @@ interface CasesProps {
     totalItems: number;
     setTotalItems: (total: number) => void;
   };
+  /** When provided, restricts displayed cases to these IDs (from Elasticsearch search) */
+  searchResultIds?: number[] | null;
 }
 
 export default function Cases({
@@ -97,6 +99,7 @@ export default function Cases({
   canDelete,
   selectedFolderCaseCount,
   overridePagination,
+  searchResultIds,
 }: CasesProps) {
   const t = useTranslations();
 
@@ -469,6 +472,7 @@ export default function Cases({
 
   // Build repository case where clause (used for filtering by folder, view, template, etc.)
   // This excludes test run-specific filters like assignedTo and status
+  // NOTE: When searchResultIds is active, ZenStack hooks are disabled and data comes from POST fetch instead
   const repositoryCaseWhereClause: Prisma.RepositoryCasesWhereInput =
     useMemo(() => {
       const baseConditions: Prisma.RepositoryCasesWhereInput[] = [
@@ -1668,12 +1672,15 @@ export default function Cases({
       },
       {
         enabled: Boolean(
-          // Skip query if we know the selected folder has 0 cases
-          viewType === "folders" && selectedFolderCaseCount === 0
+          // Disable when ES search is active (data comes from POST fetch instead)
+          searchResultIds
             ? false
-            : !isRunMode && // Don't run this in run mode
-                ((!!session?.user && deferredSearchString.length === 0) ||
-                  deferredSearchString.length > 0)
+            : // Skip query if we know the selected folder has 0 cases
+              viewType === "folders" && selectedFolderCaseCount === 0
+              ? false
+              : !isRunMode && // Don't run this in run mode
+                  ((!!session?.user && deferredSearchString.length === 0) ||
+                    deferredSearchString.length > 0)
         ),
         refetchOnWindowFocus: false,
         // Keep previous data to prevent count from dropping to 0 during refetch
@@ -2006,12 +2013,15 @@ export default function Cases({
     postFetchFilters.length > 0 ? postFetchFilters : undefined,
     {
       enabled: Boolean(
-        // Skip query if we know the selected folder has 0 cases
-        viewType === "folders" && selectedFolderCaseCount === 0
+        // Disable when ES search is active (data comes from POST fetch instead)
+        searchResultIds
           ? false
-          : !isRunMode && // Don't run this query in run mode - we use testRunCasesData instead
-              ((!!session?.user && deferredSearchString.length === 0) ||
-                deferredSearchString.length > 0)
+          : // Skip query if we know the selected folder has 0 cases
+            viewType === "folders" && selectedFolderCaseCount === 0
+            ? false
+            : !isRunMode && // Don't run this query in run mode - we use testRunCasesData instead
+                ((!!session?.user && deferredSearchString.length === 0) ||
+                  deferredSearchString.length > 0)
       ),
       refetchOnWindowFocus: false,
     },
@@ -2219,8 +2229,59 @@ export default function Cases({
     refetch: refetchData,
   } = result;
 
+  // --- ES search POST-based data fetching ---
+  // When searchResultIds is active, fetch case data via POST to avoid URL length limits.
+  const [searchData, setSearchData] = useState<any[] | null>(null);
+  const [searchDataLoading, setSearchDataLoading] = useState(false);
+
+  useEffect(() => {
+    if (!searchResultIds || searchResultIds.length === 0) {
+      setSearchData(searchResultIds?.length === 0 ? [] : null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchSearchData = async () => {
+      setSearchDataLoading(true);
+      try {
+        // Paginate the IDs client-side, then fetch the page via POST
+        const skip = (currentPage - 1) * (typeof pageSize === "number" ? pageSize : 0);
+        const take = typeof pageSize === "number" ? pageSize : undefined;
+
+        const response = await fetch(`/api/projects/${projectId}/cases/fetch-many`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            caseIds: searchResultIds,
+            skip,
+            take,
+          }),
+        });
+
+        if (cancelled) return;
+
+        if (response.ok) {
+          const result = await response.json();
+          setSearchData(result.cases);
+        }
+      } catch (err) {
+        console.error("Search data fetch error:", err);
+      } finally {
+        if (!cancelled) setSearchDataLoading(false);
+      }
+    };
+
+    fetchSearchData();
+    return () => { cancelled = true; };
+  }, [searchResultIds, currentPage, pageSize, projectId]);
+
   // Calculate total count based on mode
   const totalRepositoryCases = useMemo(() => {
+    // When ES search is active, use the search result count
+    if (searchResultIds) {
+      return searchResultIds.length;
+    }
     // If we know the selected folder has 0 cases, return 0 immediately
     if (viewType === "folders" && selectedFolderCaseCount === 0) {
       return 0;
@@ -2242,6 +2303,7 @@ export default function Cases({
     postFetchFilters,
     viewType,
     selectedFolderCaseCount,
+    searchResultIds,
   ]);
 
   // Update total items in pagination context
@@ -2280,6 +2342,14 @@ export default function Cases({
       return optimisticReorder.cases;
     }
 
+    // When ES search is active, use POST-fetched data
+    if (searchResultIds && searchData) {
+      return searchData.map((caseItem: any) => ({
+        ...caseItem,
+        lastTestResult: computeLastTestResult(caseItem),
+      }));
+    }
+
     if (isRunMode && testRunCasesData) {
       // In run mode, testRunCasesData is already filtered and paginated server-side
       // Just map it to include all the test run-specific fields
@@ -2308,7 +2378,7 @@ export default function Cases({
       }));
     }
     return [];
-  }, [isRunMode, testRunCasesData, data, optimisticReorder]);
+  }, [isRunMode, testRunCasesData, data, optimisticReorder, searchResultIds, searchData]);
 
   const uniqueCaseFieldList = useMemo(() => {
     const caseFieldMap = new Map();
@@ -3304,7 +3374,8 @@ export default function Cases({
       <CardContent>
         {(() => {
           // Handle preliminary states first (where DataTable might not be relevant)
-          if (!folderId && viewType === "folders") {
+          // Skip folder check when ES search results are active
+          if (!folderId && viewType === "folders" && !searchResultIds) {
             return (
               <div className="text-muted-foreground text-pretty m-2">
                 {t("repository.cases.selectFolder")}
@@ -3314,7 +3385,7 @@ export default function Cases({
 
           // If loading or column visibility not initialized, DataTable will show its own skeleton
           if (
-            isLoading ||
+            (searchResultIds ? searchDataLoading : isLoading) ||
             isTotalLoading ||
             isTemplatesLoading ||
             Object.keys(columnVisibility).length === 0
