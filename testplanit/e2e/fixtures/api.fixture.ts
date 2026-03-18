@@ -1310,6 +1310,7 @@ export class ApiHelper {
       stateId?: number;
       milestoneId?: number;
       configId?: number;
+      configurationGroupId?: string;
       testRunType?: "REGULAR" | "JUNIT" | "TESTNG" | "XUNIT" | "NUNIT" | "MSTEST" | "MOCHA" | "CUCUMBER";
     }
   ): Promise<number> {
@@ -1332,6 +1333,10 @@ export class ApiHelper {
 
     if (options?.configId) {
       data.config = { connect: { id: options.configId } };
+    }
+
+    if (options?.configurationGroupId) {
+      data.configurationGroupId = options.configurationGroupId;
     }
 
     const response = await this.request.post(
