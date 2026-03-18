@@ -161,7 +161,7 @@ export function SelectedTestCasesDrawer({
           useCheckboxes && !isSelected ? "opacity-50" : ""
         }`}
       >
-        <div className="flex items-start w-full px-2 pt-1 group">
+        <div className="flex items-center w-full px-2 pt-1 group">
           {/* Checkbox column (when using checkboxes) */}
           {isEditMode && useCheckboxes && (
             <div className="shrink-0 w-8 flex items-center justify-center pt-1">
@@ -189,7 +189,7 @@ export function SelectedTestCasesDrawer({
             />
           </div>
           {/* Workflow state column */}
-          <div className="shrink-0 w-24 flex items-center justify-start ml-2">
+          <div className="shrink-0 w-24 flex items-center justify-end ml-2">
             {testCase.state.icon &&
             testCase.state.icon.name &&
             testCase.state.color &&
@@ -217,7 +217,7 @@ export function SelectedTestCasesDrawer({
             <div className="shrink-0 w-10 flex justify-end items-center ml-2">
               <Button
                 type="button"
-                variant="ghost"
+                variant="destructive"
                 size="icon"
                 onClick={() => {
                   onSelectionChange(
@@ -230,7 +230,7 @@ export function SelectedTestCasesDrawer({
             </div>
           )}
         </div>
-        <div className="text-right pr-8">
+        <div className="text-right pr-12 mt-1">
           {(typeof testCase.estimate === "number" ||
             testCase.estimate === null ||
             typeof testCase.forecastManual === "number" ||
