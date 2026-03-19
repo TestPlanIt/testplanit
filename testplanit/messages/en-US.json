@@ -2012,7 +2012,8 @@
       "outputModeSingle": "Single file ({count, plural, one {# case} other {all # cases}})",
       "outputModeIndividual": "{count, plural, one {Individual file (.zip)} other {Individual files (.zip)}}",
       "casesToExport": "{count, plural, one {# case} other {# cases}} to export",
-      "exportSuccess": "Export completed successfully."
+      "exportSuccess": "Export completed successfully.",
+      "noAvailableTemplates": "No available templates. Contact your admin."
     },
     "aiExport": {
       "toggleLabel": "Generate with AI",
