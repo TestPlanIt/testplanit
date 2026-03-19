@@ -406,4 +406,184 @@ describe("useProjectPermissions", () => {
 
   // TODO: Add test cases for caching/staleTime/gcTime if needed
   // TODO: Add test cases for the `enabled` logic variations if needed
+
+  // -----------------------------------------------------------------------
+  // EXTENDED TESTS (PROJ-09) — new edge cases not covered above
+  // -----------------------------------------------------------------------
+
+  it("should return default permissions if projectId is 0 (edge case — zero is falsy)", async () => {
+    const wrapper = createWrapper();
+    const { result } = renderHook(
+      () => useProjectPermissions(0, mockArea),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // 0 is falsy → isEnabled = false → returns default permissions without fetching
+    expect(result.current.permissions).toEqual(defaultFalseSingleAreaPermissions);
+    expect(result.current.error).toBeNull();
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("should refetch when projectId changes", async () => {
+    const firstPermissions: AreaPermissions = {
+      canAddEdit: true,
+      canDelete: false,
+      canClose: false,
+    };
+    const secondPermissions: AreaPermissions = {
+      canAddEdit: false,
+      canDelete: true,
+      canClose: true,
+    };
+
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => firstPermissions,
+        text: async () => "",
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => secondPermissions,
+        text: async () => "",
+      });
+
+    const wrapper = createWrapper();
+    let projectIdRef = { current: 1 };
+
+    const { result, rerender } = renderHook(
+      () => useProjectPermissions(projectIdRef.current, mockArea),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.permissions).toEqual(firstPermissions);
+
+    // Change projectId and rerender
+    projectIdRef.current = 2;
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.permissions).toEqual(secondPermissions);
+    });
+
+    // Should have fetched twice — once per projectId
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      1,
+      "/api/get-user-permissions",
+      expect.objectContaining({
+        body: JSON.stringify({ userId: mockUserId, projectId: 1, area: mockArea }),
+      })
+    );
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
+      "/api/get-user-permissions",
+      expect.objectContaining({
+        body: JSON.stringify({ userId: mockUserId, projectId: 2, area: mockArea }),
+      })
+    );
+  });
+
+  it("should refetch when area changes", async () => {
+    const runsPermissions: AreaPermissions = {
+      canAddEdit: true,
+      canDelete: false,
+      canClose: true,
+    };
+    const sessionPermissions: AreaPermissions = {
+      canAddEdit: false,
+      canDelete: true,
+      canClose: false,
+    };
+
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => runsPermissions,
+        text: async () => "",
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => sessionPermissions,
+        text: async () => "",
+      });
+
+    const wrapper = createWrapper();
+    let areaRef = { current: ApplicationArea.TestRuns as ApplicationArea };
+
+    const { result, rerender } = renderHook(
+      () => useProjectPermissions(mockProjectId, areaRef.current),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.permissions).toEqual(runsPermissions);
+
+    // Change area and rerender
+    areaRef.current = ApplicationArea.Sessions;
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.permissions).toEqual(sessionPermissions);
+    });
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("should handle fetch throwing a network exception (not just non-ok response)", async () => {
+    mockFetch.mockClear();
+    mockFetch.mockRejectedValue(new TypeError("Failed to fetch"));
+
+    const wrapper = createWrapper();
+    const { result } = renderHook(
+      () => useProjectPermissions(mockProjectId, mockArea),
+      { wrapper }
+    );
+
+    await waitFor(
+      () => {
+        expect(result.current.error).not.toBeNull();
+      },
+      { timeout: 4000 }
+    );
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.permissions).toBeNull();
+    expect(result.current.error).toBeInstanceOf(TypeError);
+    // retry: 1 means 2 total calls
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("should use the same cached result for a repeated call with the same args", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ ...mockSingleAreaPermissions }),
+      text: async () => "",
+    });
+
+    const wrapper = createWrapper();
+
+    // First render — fetches
+    const { result: result1 } = renderHook(
+      () => useProjectPermissions(mockProjectId, mockArea),
+      { wrapper }
+    );
+    await waitFor(() => expect(result1.current.isLoading).toBe(false));
+    expect(result1.current.permissions).toEqual(mockSingleAreaPermissions);
+    const callCountAfterFirst = mockFetch.mock.calls.length;
+
+    // Second render in the same wrapper reuses the query cache — no new fetch
+    const { result: result2 } = renderHook(
+      () => useProjectPermissions(mockProjectId, mockArea),
+      { wrapper }
+    );
+    await waitFor(() => expect(result2.current.isLoading).toBe(false));
+    expect(result2.current.permissions).toEqual(mockSingleAreaPermissions);
+
+    // Cache hit: no additional fetch calls
+    expect(mockFetch.mock.calls.length).toBe(callCountAfterFirst);
+  });
 });
