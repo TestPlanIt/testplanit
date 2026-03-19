@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-03-19T14:33:43.970Z"
+stopped_at: Completed 17-01-PLAN.md
+last_updated: "2026-03-19T15:12:57.950Z"
 last_activity: 2026-03-19 — completed plan 13-03 (session component tests and session hooks integration tests)
 progress:
   total_phases: 16
   completed_phases: 8
-  total_plans: 20
-  completed_plans: 20
+  total_plans: 24
+  completed_plans: 21
   percent: 27
 ---
 
@@ -68,6 +68,7 @@ Progress: [███░░░░░░░] 27%
 | Phase 15-ai-feature-e2e-and-api-tests P01 | 40 | 2 tasks | 3 files |
 | Phase 16-ai-component-tests P02 | 4 | 2 tasks | 2 files |
 | Phase 16-ai-component-tests P01 | 9 | 2 tasks | 4 files |
+| Phase 17-administration-e2e-tests P01 | 23 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -121,6 +122,9 @@ Progress: [███░░░░░░░] 27%
 - [Phase 16-ai-component-tests]: AI toggle visibility gated on both aiAvailable=true AND aiCheckLoading=false — use waitFor to assert after async checkAiExportAvailable resolves
 - [Phase 16]: fireEvent over userEvent for fake-timer click tests in TagChip — prevents 30s timeout with vi.useFakeTimers()
 - [Phase 16]: vi.hoisted() for AutoTagWizardDialog useAutoTagJob mocks — mutable job objects per entity type prevent infinite useEffect re-renders
+- [Phase 17-administration-e2e-tests]: Group/role title selector: use broad element filter with exact text match rather than class selectors in E2E tests
+- [Phase 17-administration-e2e-tests]: Group API setup in E2E: use POST /api/model/groups/create directly since ApiHelper has no createGroup method
+- [Phase 17-administration-e2e-tests]: 2FA reset E2E: admin viewing another user profile sees read-only disabled switch — no admin-level force-reset UI exists
 
 ### Pending Todos
 
@@ -133,6 +137,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T14:32:51.862Z
-Stopped at: Completed 16-01-PLAN.md
+Last session: 2026-03-19T15:12:57.948Z
+Stopped at: Completed 17-01-PLAN.md
 Resume file: None

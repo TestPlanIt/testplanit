@@ -106,9 +106,9 @@
 
 ### Administration
 
-- [ ] **ADM-01**: E2E test verifies user management (list, edit, deactivate, reset 2FA, revoke API keys)
-- [ ] **ADM-02**: E2E test verifies group management (create, edit, assign users, assign to projects)
-- [ ] **ADM-03**: E2E test verifies role management (create, edit permissions per application area)
+- [x] **ADM-01**: E2E test verifies user management (list, edit, deactivate, reset 2FA, revoke API keys)
+- [x] **ADM-02**: E2E test verifies group management (create, edit, assign users, assign to projects)
+- [x] **ADM-03**: E2E test verifies role management (create, edit permissions per application area)
 - [ ] **ADM-04**: E2E test verifies SSO configuration (add/edit providers, force SSO, email domain restrictions)
 - [ ] **ADM-05**: E2E test verifies workflow management (create, edit, reorder states, assign to projects)
 - [ ] **ADM-06**: E2E test verifies status management (create, edit, configure flags, scope assignment)
@@ -271,9 +271,9 @@ Deferred to future. Not in current roadmap.
 | AI-07 | Phase 16 | Complete |
 | AI-08 | Phase 15 | Complete |
 | AI-09 | Phase 15 | Complete |
-| ADM-01 | Phase 17 | Pending |
-| ADM-02 | Phase 17 | Pending |
-| ADM-03 | Phase 17 | Pending |
+| ADM-01 | Phase 17 | Complete |
+| ADM-02 | Phase 17 | Complete |
+| ADM-03 | Phase 17 | Complete |
 | ADM-04 | Phase 17 | Pending |
 | ADM-05 | Phase 17 | Pending |
 | ADM-06 | Phase 17 | Pending |
