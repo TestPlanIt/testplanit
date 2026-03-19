@@ -41,22 +41,24 @@ export async function POST(
     }
 
     // Update the issue with the entity link
+    // Relation field names must match the Issue model in schema.zmodel:
+    // repositoryCases, sessions, testRuns, testRunResults, testRunStepResults
     const updateData: any = {};
     switch (entityType) {
       case "testCase":
-        updateData.testCase = { connect: { id: parseInt(entityId) } };
+        updateData.repositoryCases = { connect: { id: parseInt(entityId) } };
         break;
       case "session":
-        updateData.session = { connect: { id: parseInt(entityId) } };
+        updateData.sessions = { connect: { id: parseInt(entityId) } };
         break;
       case "testRun":
-        updateData.testRun = { connect: { id: parseInt(entityId) } };
+        updateData.testRuns = { connect: { id: parseInt(entityId) } };
         break;
       case "testRunResult":
-        updateData.testRunResult = { connect: { id: parseInt(entityId) } };
+        updateData.testRunResults = { connect: { id: parseInt(entityId) } };
         break;
       case "testRunStepResult":
-        updateData.testRunStepResult = { connect: { id: parseInt(entityId) } };
+        updateData.testRunStepResults = { connect: { id: parseInt(entityId) } };
         break;
       default:
         return NextResponse.json(

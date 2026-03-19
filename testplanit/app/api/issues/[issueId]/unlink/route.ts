@@ -41,22 +41,24 @@ export async function POST(
     }
 
     // Disconnect the entity link
+    // Relation field names must match the Issue model in schema.zmodel:
+    // repositoryCases, sessions, testRuns, testRunResults, testRunStepResults
     const updateData: any = {};
     switch (entityType) {
       case "testCase":
-        updateData.testCase = { disconnect: true };
+        updateData.repositoryCases = { disconnect: { id: parseInt(entityId) } };
         break;
       case "session":
-        updateData.session = { disconnect: true };
+        updateData.sessions = { disconnect: { id: parseInt(entityId) } };
         break;
       case "testRun":
-        updateData.testRun = { disconnect: true };
+        updateData.testRuns = { disconnect: { id: parseInt(entityId) } };
         break;
       case "testRunResult":
-        updateData.testRunResult = { disconnect: true };
+        updateData.testRunResults = { disconnect: { id: parseInt(entityId) } };
         break;
       case "testRunStepResult":
-        updateData.testRunStepResult = { disconnect: true };
+        updateData.testRunStepResults = { disconnect: { id: parseInt(entityId) } };
         break;
       default:
         return NextResponse.json(
