@@ -331,7 +331,11 @@ Plans:
   2. Admin can assign an export template to a project and the assignment is reflected immediately in the UI
   3. Admin can unassign an export template from a project and it no longer appears in the project's assigned list
   4. Admin can mark one assigned template as the project default, and the selection persists across page reloads
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 26-01-PLAN.md -- Update ZenStack access rules for project admin write access
+- [ ] 26-02-PLAN.md -- Build ExportTemplateAssignmentSection and integrate into quickscript page
 
 ### Phase 27: Export Dialog Filtering
 **Goal**: The export dialog shows only the templates relevant to the current project, with the project default pre-selected, while gracefully falling back when no assignments exist
@@ -377,5 +381,5 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 23. General Components | v2.0 | 0/TBD | Not started | - |
 | 24. Hooks, Notifications, and Workers | v2.0 | 0/TBD | Not started | - |
 | 25. Default Template Schema | 1/1 | Complete    | 2026-03-19 | - |
-| 26. Admin Assignment UI | v2.1 | 0/TBD | Not started | - |
+| 26. Admin Assignment UI | v2.1 | 0/2 | Planning complete | - |
 | 27. Export Dialog Filtering | v2.1 | 0/TBD | Not started | - |
