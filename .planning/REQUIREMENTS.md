@@ -175,9 +175,9 @@
 ### Hooks
 
 - [x] **HOOK-01**: Tests for data fetching hooks (ZenStack generated: useFindMany*, useCreate*, useUpdate*, useDelete*)
-- [ ] **HOOK-02**: Tests for permission hooks (useProjectPermissions, useUserAccess, role-based hooks)
-- [ ] **HOOK-03**: Tests for UI state hooks (useExportData, useReportColumns, filter/sort hooks)
-- [ ] **HOOK-04**: Tests for form hooks (useForm integrations, validation hooks)
+- [x] **HOOK-02**: Tests for permission hooks (useProjectPermissions, useUserAccess, role-based hooks)
+- [x] **HOOK-03**: Tests for UI state hooks (useExportData, useReportColumns, filter/sort hooks)
+- [x] **HOOK-04**: Tests for form hooks (useForm integrations, validation hooks)
 - [x] **HOOK-05**: Tests for integration hooks (useAutoTagJob, useIntegration, useLlm hooks)
 
 ### Notifications & Collaboration
@@ -322,9 +322,9 @@ Deferred to future. Not in current roadmap.
 | COMP-07 | Phase 23 | Complete |
 | COMP-08 | Phase 23 | Complete |
 | HOOK-01 | Phase 24 | Complete |
-| HOOK-02 | Phase 24 | Pending |
-| HOOK-03 | Phase 24 | Pending |
-| HOOK-04 | Phase 24 | Pending |
+| HOOK-02 | Phase 24 | Complete |
+| HOOK-03 | Phase 24 | Complete |
+| HOOK-04 | Phase 24 | Complete |
 | HOOK-05 | Phase 24 | Complete |
 | NOTIF-01 | Phase 24 | Complete |
 | NOTIF-02 | Phase 24 | Complete |
