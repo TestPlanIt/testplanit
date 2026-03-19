@@ -52,7 +52,7 @@
 
 **Milestone Goal:** Allow admins to assign specific Case Export Templates to individual projects and set a per-project default, so users only see relevant templates when exporting.
 
-- [ ] **Phase 25: Default Template Schema** - Project model extended with optional default export template relation
+- [x] **Phase 25: Default Template Schema** - Project model extended with optional default export template relation (completed 2026-03-19)
 - [ ] **Phase 26: Admin Assignment UI** - Admin can assign, unassign, and set a default export template per project
 - [ ] **Phase 27: Export Dialog Filtering** - Export dialog shows only project-assigned templates with project default pre-selected
 
@@ -376,6 +376,6 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 22. Custom API Route Tests | v2.0 | 0/TBD | Not started | - |
 | 23. General Components | v2.0 | 0/TBD | Not started | - |
 | 24. Hooks, Notifications, and Workers | v2.0 | 0/TBD | Not started | - |
-| 25. Default Template Schema | v2.1 | 0/1 | Planning complete | - |
+| 25. Default Template Schema | 1/1 | Complete   | 2026-03-19 | - |
 | 26. Admin Assignment UI | v2.1 | 0/TBD | Not started | - |
 | 27. Export Dialog Filtering | v2.1 | 0/TBD | Not started | - |
