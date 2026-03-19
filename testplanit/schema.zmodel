@@ -374,8 +374,10 @@ model Projects {
     comments                Comment[]
     auditLogs               AuditLog[]
     shareLinks              ShareLink[]
-    assignedExportTemplates CaseExportTemplateProjectAssignment[]
-    quickScriptEnabled      Boolean                               @default(false)
+    assignedExportTemplates             CaseExportTemplateProjectAssignment[]
+    defaultCaseExportTemplateId         Int?
+    defaultCaseExportTemplate           CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
+    quickScriptEnabled                  Boolean                               @default(false)
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -798,7 +800,8 @@ model CaseExportTemplate {
     isDeleted     Boolean                               @default(false)
     createdAt     DateTime                              @default(now()) @db.Timestamptz(6)
     updatedAt     DateTime                              @updatedAt
-    projects      CaseExportTemplateProjectAssignment[]
+    projects           CaseExportTemplateProjectAssignment[]
+    defaultForProjects Projects[]                            @relation("ProjectDefaultExportTemplate")
 
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')
