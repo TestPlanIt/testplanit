@@ -143,4 +143,97 @@ test.describe("Test Case Management", () => {
     const buttonCount = await actionButtons.count();
     expect(buttonCount).toBeGreaterThan(0);
   });
+
+  test("Edit Test Case Name via Detail Page", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder and test case via API
+    const folderName = `Edit TC Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    const originalName = `Edit TC Original ${Date.now()}`;
+    const testCaseId = await api.createTestCase(projectId, folderId, originalName);
+
+    // Navigate directly to the case detail page
+    await page.goto(`/en-US/projects/repository/${projectId}/${testCaseId}`);
+    await page.waitForLoadState("networkidle");
+
+    // Verify we are on the detail page
+    await expect(page).toHaveURL(
+      new RegExp(`/projects/repository/${projectId}/${testCaseId}`)
+    );
+
+    // Click the Edit button to enter edit mode
+    const editButton = page.getByTestId("edit-test-case-button");
+    await expect(editButton).toBeVisible({ timeout: 10000 });
+    await editButton.click();
+    await page.waitForLoadState("networkidle");
+
+    // Find the case name textarea (rendered in edit mode)
+    // The textarea is the first visible textarea in the card header area
+    const nameTextarea = page.locator('textarea').first();
+    await expect(nameTextarea).toBeVisible({ timeout: 10000 });
+
+    // Clear and type new name
+    const newName = `Edit TC Renamed ${Date.now()}`;
+    await nameTextarea.clear();
+    await nameTextarea.fill(newName);
+
+    // Click the Save (submit) button
+    const saveButton = page.locator('button[type="submit"]').first();
+    await expect(saveButton).toBeVisible({ timeout: 5000 });
+    await saveButton.click();
+
+    // Wait for save to complete — edit button reappears in view mode
+    await expect(editButton).toBeVisible({ timeout: 15000 });
+    await page.waitForLoadState("networkidle");
+
+    // Verify the new name is visible on the page
+    await expect(page.locator(`text="${newName}"`).first()).toBeVisible({ timeout: 10000 });
+
+    // Reload and confirm the name persists
+    await page.reload();
+    await page.waitForLoadState("networkidle");
+    await expect(page.locator(`text="${newName}"`).first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test("Delete Test Case via Row Action", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create a folder and test case via API
+    const folderName = `Delete TC Folder ${Date.now()}`;
+    const folderId = await api.createFolder(projectId, folderName);
+    const testCaseName = `Delete TC Case ${Date.now()}`;
+    const testCaseId = await api.createTestCase(projectId, folderId, testCaseName);
+
+    await repositoryPage.goto(projectId);
+
+    // Select the folder
+    await repositoryPage.selectFolder(folderId);
+    await page.waitForLoadState("networkidle");
+
+    // Wait for the test case row to be visible
+    const testCaseRow = page.locator(`[data-row-id="${testCaseId}"]`).first();
+    await expect(testCaseRow).toBeVisible({ timeout: 10000 });
+
+    // Find the delete button in the row (Trash2 icon, destructive variant)
+    const deleteButton = testCaseRow.locator('button:has(svg.lucide-trash-2)').first();
+    await expect(deleteButton).toBeVisible({ timeout: 5000 });
+    await deleteButton.click();
+
+    // Wait for the AlertDialog confirmation dialog
+    const alertDialog = page.getByRole('alertdialog');
+    await expect(alertDialog).toBeVisible({ timeout: 5000 });
+
+    // Click the confirm delete button inside the dialog
+    const confirmDeleteButton = alertDialog.locator('button').filter({ hasText: /Delete|Confirm/i }).first();
+    await expect(confirmDeleteButton).toBeVisible({ timeout: 5000 });
+    await confirmDeleteButton.click();
+
+    // Wait for modal to close and network to settle
+    await expect(alertDialog).not.toBeVisible({ timeout: 10000 });
+    await page.waitForLoadState("networkidle");
+
+    // Verify the test case row is no longer visible
+    await expect(page.locator(`[data-row-id="${testCaseId}"]`)).not.toBeVisible({ timeout: 10000 });
+  });
 });
