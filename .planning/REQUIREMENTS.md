@@ -128,7 +128,7 @@
 - [ ] **RPT-04**: E2E test verifies share links (create, access public/password-protected/authenticated)
 - [x] **RPT-05**: E2E test verifies forecasting (milestone forecast, test case duration estimates)
 - [x] **RPT-06**: Component tests for ReportBuilder, ReportChart, DrillDownDrawer, ReportFilters
-- [ ] **RPT-07**: Component tests for data visualizations (donut, gantt, bubble, sunburst, line, bar charts)
+- [x] **RPT-07**: Component tests for data visualizations (donut, gantt, bubble, sunburst, line, bar charts)
 - [x] **RPT-08**: Component tests for share link components (ShareDialog, PasswordGate, SharedReportViewer)
 
 ### Search
@@ -290,7 +290,7 @@ Deferred to future. Not in current roadmap.
 | RPT-04 | Phase 19 | Pending |
 | RPT-05 | Phase 19 | Complete |
 | RPT-06 | Phase 19 | Complete |
-| RPT-07 | Phase 19 | Pending |
+| RPT-07 | Phase 19 | Complete |
 | RPT-08 | Phase 19 | Complete |
 | SRCH-01 | Phase 20 | Pending |
 | SRCH-02 | Phase 20 | Pending |
