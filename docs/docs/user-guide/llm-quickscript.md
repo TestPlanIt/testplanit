@@ -33,6 +33,7 @@ Navigate to **Administration > Code Repositories** and add a connection to your 
 
 In your project, go to **Settings > QuickScript** to configure:
 
+- **Export Templates** — Assign which QuickScript templates are available for this project and set a project-specific default. See [Per-Project Template Assignment](./quickscript-templates.md#per-project-template-assignment) for details.
 - **Repository** — Select which code repository to connect
 - **Path Patterns** — Define glob patterns to select the files the AI should reference. Add patterns that point to your test infrastructure:
   - `tests/e2e` with `**/*.ts` — Include all TypeScript files in your E2E test directory

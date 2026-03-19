@@ -72,7 +72,23 @@ You can filter templates by searching across name, category, framework, language
 
 ### Setting a Default Template
 
-Click the **Default** toggle for any template. The previous default is unset automatically. The default template is pre-selected when users open the QuickScript dialog from the Repository.
+Click the **Default** toggle for any template. The previous default is unset automatically. This global default is pre-selected when users open the QuickScript dialog — unless a project-specific default has been configured (see below).
+
+### Per-Project Template Assignment
+
+By default, all enabled templates are available in every project's QuickScript dialog. Project administrators can restrict which templates appear for their project and set a project-specific default:
+
+1. Navigate to the project's **Settings > QuickScript** page.
+2. In the **Export Templates** section, use the combobox to assign templates to the project.
+3. Optionally select a **Default Template** from the assigned templates.
+4. Click **Save Template Assignments**.
+
+**Behavior:**
+
+- When templates are assigned to a project, only those templates appear in the QuickScript dialog for that project.
+- The project default (if set) is pre-selected, overriding the global default.
+- If no templates are assigned to a project, all enabled templates are shown (backward compatible).
+- If all assigned templates have been disabled or deleted, the QuickScript dialog shows a message indicating no templates are available.
 
 ## Template Syntax
 

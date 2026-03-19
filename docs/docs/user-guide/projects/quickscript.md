@@ -36,7 +36,18 @@ The dialog has two settings:
 
 Choose a template from the dropdown. Templates are grouped by category (e.g., Browser E2E, Unit Testing, API Testing). You can search by name, category, or framework.
 
-If an administrator has set a default template, it will be pre-selected automatically.
+The templates shown depend on whether a project administrator has assigned specific templates to the project:
+
+- **Templates assigned** — Only the assigned templates appear in the dropdown.
+- **No templates assigned** — All enabled templates are shown (default behavior).
+
+A default template is pre-selected automatically using this priority:
+
+1. **Project default** — If a project-specific default has been set in **Settings > QuickScript**.
+2. **Global default** — If a system-wide default template exists and is available in the current list.
+3. **First available** — The first template in the list.
+
+To configure which templates are available for your project, see [Per-Project Template Assignment](../quickscript-templates.md#per-project-template-assignment).
 
 ### Output Mode
 
