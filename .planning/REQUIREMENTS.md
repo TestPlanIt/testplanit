@@ -60,8 +60,8 @@
 
 ### Test Execution (Runs)
 
-- [ ] **RUN-01**: E2E test verifies test run creation wizard (name, milestone, configuration, case selection)
-- [ ] **RUN-02**: E2E test verifies test case execution (step-by-step result recording, status updates, attachments)
+- [x] **RUN-01**: E2E test verifies test run creation wizard (name, milestone, configuration, case selection)
+- [x] **RUN-02**: E2E test verifies test case execution (step-by-step result recording, status updates, attachments)
 - [x] **RUN-03**: E2E test verifies bulk status updates and case assignment
 - [x] **RUN-04**: E2E test verifies test run completion workflow with status enforcement
 - [x] **RUN-05**: E2E test verifies multi-configuration test runs (configuration groups)
@@ -237,8 +237,8 @@ Deferred to future. Not in current roadmap.
 | REPO-12 | Phase 11 | Complete |
 | REPO-13 | Phase 11 | Complete |
 | REPO-14 | Phase 11 | Complete |
-| RUN-01 | Phase 12 | Pending |
-| RUN-02 | Phase 12 | Pending |
+| RUN-01 | Phase 12 | Complete |
+| RUN-02 | Phase 12 | Complete |
 | RUN-03 | Phase 12 | Complete |
 | RUN-04 | Phase 12 | Complete |
 | RUN-05 | Phase 12 | Complete |

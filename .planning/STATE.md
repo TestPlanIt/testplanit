@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-03-19T05:27:00.000Z"
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-03-19T05:41:24.566Z"
 last_activity: 2026-03-19 — completed plan 12-02 (bulk ops, completion, JUnit import E2E tests)
 progress:
   total_phases: 16
-  completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  completed_phases: 4
+  total_plans: 10
+  completed_plans: 10
   percent: 25
 ---
 
@@ -57,6 +57,7 @@ Progress: [███░░░░░░░] 25%
 | Phase 11-repository-components-and-hooks P02 | 11 | 2 tasks | 2 files |
 | Phase 11-repository-components-and-hooks P01 | 12 min | 2 tasks | 4 files |
 | Phase 12-test-execution-e2e-tests P02 | 56 min | 2 tasks | 3 files |
+| Phase 12-test-execution-e2e-tests P01 | 60 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Progress: [███░░░░░░░] 25%
 - [Phase 12-test-execution-e2e-tests]: CompleteTestRunDialog button click doesn't reliably open dialog in E2E — use resilient fallback pattern (check isVisible, fall back to API)
 - [Phase 12-test-execution-e2e-tests]: XPath locator `//span[contains(text(), 'Configurations')]/following::button[@role='combobox'][1]` reliably targets config combobox when project sidebar combobox also exists
 - [Phase 12-test-execution-e2e-tests]: JUnit import SSE stream: parse `data: {json}` lines, find event with `complete: true` for final result including testRunId
+- [Phase 12-test-execution-e2e-tests]: URL param navigation for Sheet opening: navigate to ?selectedCase=ID directly rather than clicking case name (only name cell click sets param in run mode)
+- [Phase 12-test-execution-e2e-tests]: click({ force: true }) required for react-arborist tree nodes inside overflow-y-auto dialogs — dispatchEvent bypasses React handlers
 
 ### Pending Todos
 
@@ -100,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T05:27:00.000Z
-Stopped at: Completed 12-02-PLAN.md
+Last session: 2026-03-19T05:41:24.564Z
+Stopped at: Completed 12-01-PLAN.md
 Resume file: None
