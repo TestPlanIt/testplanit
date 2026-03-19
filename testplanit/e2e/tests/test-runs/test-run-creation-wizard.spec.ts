@@ -82,8 +82,10 @@ test.describe("Test Run Creation Wizard", () => {
       .first();
 
     if (await folderNode.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await folderNode.dispatchEvent("click");
-      await page.waitForTimeout(800);
+      // Use force: true to click even if pointer events are intercepted
+      await folderNode.click({ force: true });
+      // Wait for the Cases table to reload with the new folder's data
+      await page.waitForTimeout(1500);
     }
 
     // Find the case in the table and click its checkbox to select it
@@ -184,8 +186,8 @@ test.describe("Test Run Creation Wizard", () => {
     if (
       await configFolderNode.isVisible({ timeout: 5000 }).catch(() => false)
     ) {
-      await configFolderNode.dispatchEvent("click");
-      await page.waitForTimeout(800);
+      await configFolderNode.click({ force: true });
+      await page.waitForTimeout(1500);
     }
 
     // Select a test case
@@ -312,8 +314,8 @@ test.describe("Test Run Creation Wizard", () => {
     if (
       await stepsFolderNode.isVisible({ timeout: 5000 }).catch(() => false)
     ) {
-      await stepsFolderNode.dispatchEvent("click");
-      await page.waitForTimeout(800);
+      await stepsFolderNode.click({ force: true });
+      await page.waitForTimeout(1500);
     }
 
     // The case we created should now be visible in the repository
