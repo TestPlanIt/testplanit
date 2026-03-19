@@ -82,12 +82,12 @@
 
 ### Project Management
 
-- [ ] **PROJ-01**: E2E test verifies project creation wizard (5-step: name, description, template, members, configs)
-- [ ] **PROJ-02**: E2E test verifies project settings (general, integrations, AI models, quickscript, shares)
+- [x] **PROJ-01**: E2E test verifies project creation wizard (5-step: name, description, template, members, configs)
+- [x] **PROJ-02**: E2E test verifies project settings (general, integrations, AI models, quickscript, shares)
 - [x] **PROJ-03**: E2E test verifies milestone CRUD (create, edit, nest, complete, cascade delete)
 - [x] **PROJ-04**: E2E test verifies project documentation editor (TipTap wiki, AI writing assistant mocked)
-- [ ] **PROJ-05**: E2E test verifies member management (add, remove, change roles, group assignment)
-- [ ] **PROJ-06**: E2E test verifies project overview dashboard (stats, recent activity, assignments)
+- [x] **PROJ-05**: E2E test verifies member management (add, remove, change roles, group assignment)
+- [x] **PROJ-06**: E2E test verifies project overview dashboard (stats, recent activity, assignments)
 - [ ] **PROJ-07**: Component tests for ProjectCard, ProjectMenu, ProjectQuickSelector, project settings forms
 - [ ] **PROJ-08**: Component tests for milestone components (list, detail, hierarchy, progress tracking)
 - [ ] **PROJ-09**: Hook tests for project-related hooks (useProjectPermissions and related)
@@ -253,12 +253,12 @@ Deferred to future. Not in current roadmap.
 | SESS-04 | Phase 13 | Complete |
 | SESS-05 | Phase 13 | Complete |
 | SESS-06 | Phase 13 | Complete |
-| PROJ-01 | Phase 14 | Pending |
-| PROJ-02 | Phase 14 | Pending |
+| PROJ-01 | Phase 14 | Complete |
+| PROJ-02 | Phase 14 | Complete |
 | PROJ-03 | Phase 14 | Complete |
 | PROJ-04 | Phase 14 | Complete |
-| PROJ-05 | Phase 14 | Pending |
-| PROJ-06 | Phase 14 | Pending |
+| PROJ-05 | Phase 14 | Complete |
+| PROJ-06 | Phase 14 | Complete |
 | PROJ-07 | Phase 14 | Pending |
 | PROJ-08 | Phase 14 | Pending |
 | PROJ-09 | Phase 14 | Pending |
