@@ -94,11 +94,11 @@
 
 ### AI Features
 
-- [ ] **AI-01**: E2E test verifies AI test case generation wizard (source input, template, configure, review) with mocked LLM
-- [ ] **AI-02**: E2E test verifies auto-tag flow (configure, analyze, review suggestions, apply) with mocked LLM
-- [ ] **AI-03**: E2E test verifies magic select for test runs with mocked LLM
-- [ ] **AI-04**: E2E test verifies QuickScript generation (template-based and AI-based) with mocked LLM
-- [ ] **AI-05**: E2E test verifies writing assistant in TipTap editor with mocked LLM
+- [x] **AI-01**: E2E test verifies AI test case generation wizard (source input, template, configure, review) with mocked LLM
+- [x] **AI-02**: E2E test verifies auto-tag flow (configure, analyze, review suggestions, apply) with mocked LLM
+- [x] **AI-03**: E2E test verifies magic select for test runs with mocked LLM
+- [x] **AI-04**: E2E test verifies QuickScript generation (template-based and AI-based) with mocked LLM
+- [x] **AI-05**: E2E test verifies writing assistant in TipTap editor with mocked LLM
 - [ ] **AI-06**: Component tests for AutoTagWizardDialog, AutoTagReviewDialog, AutoTagProgress, TagChip
 - [ ] **AI-07**: Component tests for QuickScript dialog, template selector, AI preview pane
 - [x] **AI-08**: API tests for LLM endpoints (generate-test-cases, magic-select, chat, parse-markdown) with mocked providers
@@ -262,11 +262,11 @@ Deferred to future. Not in current roadmap.
 | PROJ-07 | Phase 14 | Complete |
 | PROJ-08 | Phase 14 | Complete |
 | PROJ-09 | Phase 14 | Complete |
-| AI-01 | Phase 15 | Pending |
-| AI-02 | Phase 15 | Pending |
-| AI-03 | Phase 15 | Pending |
-| AI-04 | Phase 15 | Pending |
-| AI-05 | Phase 15 | Pending |
+| AI-01 | Phase 15 | Complete |
+| AI-02 | Phase 15 | Complete |
+| AI-03 | Phase 15 | Complete |
+| AI-04 | Phase 15 | Complete |
+| AI-05 | Phase 15 | Complete |
 | AI-06 | Phase 16 | Pending |
 | AI-07 | Phase 16 | Pending |
 | AI-08 | Phase 15 | Complete |
