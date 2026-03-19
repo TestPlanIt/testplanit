@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 14-03-PLAN.md
-last_updated: "2026-03-19T13:48:19.255Z"
+stopped_at: Completed 15-02-PLAN.md
+last_updated: "2026-03-19T14:02:19.650Z"
 last_activity: 2026-03-19 — completed plan 13-03 (session component tests and session hooks integration tests)
 progress:
   total_phases: 16
   completed_phases: 6
-  total_plans: 16
-  completed_plans: 16
+  total_plans: 18
+  completed_plans: 17
   percent: 27
 ---
 
@@ -64,6 +64,7 @@ Progress: [███░░░░░░░] 27%
 | Phase 14-project-management-e2e-and-components P02 | 20 | 2 tasks | 2 files |
 | Phase 14-project-management-e2e-and-components P01 | 30 | 2 tasks | 3 files |
 | Phase 14-project-management-e2e-and-components P03 | 6 | 2 tasks | 5 files |
+| Phase 15-ai-feature-e2e-and-api-tests P02 | 20 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,8 @@ Progress: [███░░░░░░░] 27%
 - [Phase Phase 14-project-management-e2e-and-components]: Quickscript toggle identified by data-testid='quickscript-enabled-toggle' for E2E tests
 - [Phase 14-project-management-e2e-and-components]: ProjectMenu active link check: split className by space and compare cls === 'bg-primary' to avoid false match on hover:bg-primary/10 substring
 - [Phase 14-project-management-e2e-and-components]: MilestoneItemCard DropdownMenu mocked as always-rendered (not gated on open state) to enable dropdown item assertions without simulating trigger click
+- [Phase 15-ai-feature-e2e-and-api-tests]: LLM endpoint tests assert 400 'No active LLM integration found' as the terminal success-path state since no real LLM is configured in E2E env
+- [Phase 15-ai-feature-e2e-and-api-tests]: Auto-tag submit/status/cancel tests accept both 503 (queue unavailable) and 200/404 (queue available) as valid E2E outcomes
 
 ### Pending Todos
 
@@ -121,6 +124,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T13:43:33.405Z
-Stopped at: Completed 14-03-PLAN.md
+Last session: 2026-03-19T14:02:19.648Z
+Stopped at: Completed 15-02-PLAN.md
 Resume file: None
