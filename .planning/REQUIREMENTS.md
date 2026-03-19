@@ -122,11 +122,11 @@
 
 ### Reporting & Analytics
 
-- [ ] **RPT-01**: E2E test verifies report builder (create report, select dimensions/metrics, generate chart)
-- [ ] **RPT-02**: E2E test verifies pre-built reports (automation trends, flaky tests, test case health, issue coverage)
-- [ ] **RPT-03**: E2E test verifies report drill-down and filtering
+- [x] **RPT-01**: E2E test verifies report builder (create report, select dimensions/metrics, generate chart)
+- [x] **RPT-02**: E2E test verifies pre-built reports (automation trends, flaky tests, test case health, issue coverage)
+- [x] **RPT-03**: E2E test verifies report drill-down and filtering
 - [ ] **RPT-04**: E2E test verifies share links (create, access public/password-protected/authenticated)
-- [ ] **RPT-05**: E2E test verifies forecasting (milestone forecast, test case duration estimates)
+- [x] **RPT-05**: E2E test verifies forecasting (milestone forecast, test case duration estimates)
 - [x] **RPT-06**: Component tests for ReportBuilder, ReportChart, DrillDownDrawer, ReportFilters
 - [ ] **RPT-07**: Component tests for data visualizations (donut, gantt, bubble, sunburst, line, bar charts)
 - [x] **RPT-08**: Component tests for share link components (ShareDialog, PasswordGate, SharedReportViewer)
@@ -284,11 +284,11 @@ Deferred to future. Not in current roadmap.
 | ADM-11 | Phase 17 | Complete |
 | ADM-12 | Phase 18 | Complete |
 | ADM-13 | Phase 18 | Complete |
-| RPT-01 | Phase 19 | Pending |
-| RPT-02 | Phase 19 | Pending |
-| RPT-03 | Phase 19 | Pending |
+| RPT-01 | Phase 19 | Complete |
+| RPT-02 | Phase 19 | Complete |
+| RPT-03 | Phase 19 | Complete |
 | RPT-04 | Phase 19 | Pending |
-| RPT-05 | Phase 19 | Pending |
+| RPT-05 | Phase 19 | Complete |
 | RPT-06 | Phase 19 | Complete |
 | RPT-07 | Phase 19 | Pending |
 | RPT-08 | Phase 19 | Complete |
