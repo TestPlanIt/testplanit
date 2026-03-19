@@ -44,15 +44,15 @@
 ### Test Case Repository
 
 - [x] **REPO-01**: E2E test verifies test case CRUD (create, view, edit, delete) including all field types
-- [ ] **REPO-02**: E2E test verifies folder operations (create, rename, move, delete, nested hierarchy)
+- [x] **REPO-02**: E2E test verifies folder operations (create, rename, move, delete, nested hierarchy)
 - [x] **REPO-03**: E2E test verifies bulk operations (multi-select, bulk edit, bulk delete, bulk move)
-- [ ] **REPO-04**: E2E test verifies search and filtering (text search, custom field filters, tag filters, state filters)
-- [ ] **REPO-05**: E2E test verifies import/export (CSV, JSON, markdown import and export)
+- [x] **REPO-04**: E2E test verifies search and filtering (text search, custom field filters, tag filters, state filters)
+- [x] **REPO-05**: E2E test verifies import/export (CSV, JSON, markdown import and export)
 - [x] **REPO-06**: E2E test verifies shared steps (create, use in test cases, edit, version history)
-- [ ] **REPO-07**: E2E test verifies version history (view versions, diff, restore previous version)
-- [ ] **REPO-08**: E2E test verifies tag management (create, assign, remove, case-insensitive matching)
-- [ ] **REPO-09**: E2E test verifies issue linking (attach, navigate, unlink) with mocked integrations
-- [ ] **REPO-10**: E2E test verifies drag-and-drop reordering and folder tree navigation
+- [x] **REPO-07**: E2E test verifies version history (view versions, diff, restore previous version)
+- [x] **REPO-08**: E2E test verifies tag management (create, assign, remove, case-insensitive matching)
+- [x] **REPO-09**: E2E test verifies issue linking (attach, navigate, unlink) with mocked integrations
+- [x] **REPO-10**: E2E test verifies drag-and-drop reordering and folder tree navigation
 - [x] **REPO-11**: Component tests for test case editor (TipTap rich text, custom fields, steps, attachments)
 - [x] **REPO-12**: Component tests for repository table (sorting, pagination, column visibility, view switching)
 - [x] **REPO-13**: Component tests for folder tree, breadcrumbs, and navigation components
@@ -125,7 +125,7 @@
 - [x] **RPT-01**: E2E test verifies report builder (create report, select dimensions/metrics, generate chart)
 - [x] **RPT-02**: E2E test verifies pre-built reports (automation trends, flaky tests, test case health, issue coverage)
 - [x] **RPT-03**: E2E test verifies report drill-down and filtering
-- [ ] **RPT-04**: E2E test verifies share links (create, access public/password-protected/authenticated)
+- [x] **RPT-04**: E2E test verifies share links (create, access public/password-protected/authenticated)
 - [x] **RPT-05**: E2E test verifies forecasting (milestone forecast, test case duration estimates)
 - [x] **RPT-06**: Component tests for ReportBuilder, ReportChart, DrillDownDrawer, ReportFilters
 - [x] **RPT-07**: Component tests for data visualizations (donut, gantt, bubble, sunburst, line, bar charts)
@@ -134,10 +134,10 @@
 ### Search
 
 - [x] **SRCH-01**: E2E test verifies global search (Cmd+K, cross-entity search, result navigation)
-- [ ] **SRCH-02**: E2E test verifies advanced search operators (exact phrase, required/excluded terms, wildcards, field:value)
+- [x] **SRCH-02**: E2E test verifies advanced search operators (exact phrase, required/excluded terms, wildcards, field:value)
 - [x] **SRCH-03**: E2E test verifies faceted search filters (custom field values, tags, states, dates)
 - [x] **SRCH-04**: Component tests for UnifiedSearch, GlobalSearchSheet, SearchResultComponents, FacetedSearchFilters
-- [ ] **SRCH-05**: Component tests for search result display (CustomFieldDisplay, DateTimeDisplay, UserDisplay)
+- [x] **SRCH-05**: Component tests for search result display (CustomFieldDisplay, DateTimeDisplay, UserDisplay)
 
 ### Integrations
 
