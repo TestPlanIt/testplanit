@@ -13,7 +13,11 @@ import {
   fetchCasesForQuickScript,
   type QuickScriptCaseData
 } from "~/app/actions/quickScriptActions";
-import { useFindManyCaseExportTemplate } from "~/lib/hooks";
+import {
+  useFindManyCaseExportTemplate,
+  useFindManyCaseExportTemplateProjectAssignment,
+  useFindUniqueProjects,
+} from "~/lib/hooks";
 import { logDataExport } from "~/lib/services/auditClient";
 
 import { Badge } from "@/components/ui/badge";
@@ -220,19 +224,75 @@ export function QuickScriptModal({
     orderBy: [{ isDefault: "desc" }, { name: "asc" }],
   });
 
-  // Auto-select the default template when templates load
-  const defaultTemplate = templates?.find((t) => t.isDefault);
+  // Fetch project template assignments (EXPORT-01, EXPORT-03)
+  const { data: assignments } = useFindManyCaseExportTemplateProjectAssignment({
+    where: { projectId },
+  });
+
+  // Fetch project for defaultCaseExportTemplateId (EXPORT-02)
+  const { data: project } = useFindUniqueProjects({
+    where: { id: projectId },
+    select: { defaultCaseExportTemplateId: true },
+  });
+
+  // Determine whether the project has any template assignments at all
+  const hasAssignments =
+    assignments !== undefined &&
+    assignments !== null &&
+    assignments.length > 0;
+
+  // Build the filtered template list:
+  // - No assignments exist → show all enabled templates (backward compatible, EXPORT-03)
+  // - Assignments exist → show only assigned templates that are enabled and not deleted (EXPORT-01)
+  const filteredTemplates = useMemo(() => {
+    if (!hasAssignments) {
+      return templates ?? [];
+    }
+    const assignedTemplateIds = new Set(
+      assignments!.map((a) => a.templateId)
+    );
+    return (templates ?? []).filter((t) => assignedTemplateIds.has(t.id));
+  }, [hasAssignments, assignments, templates]);
+
+  // Detect the "assignments exist but all are unavailable" empty state
+  const assignmentsExistButEmpty =
+    hasAssignments && filteredTemplates.length === 0;
+
+  // Template pre-selection priority (EXPORT-02):
+  // 1. User's explicit selection (selectedTemplateId)
+  // 2. Project default (defaultCaseExportTemplateId) — if it's in the filtered list
+  // 3. Global isDefault — if it's in the filtered list
+  // 4. First available template
+  const defaultTemplate = useMemo(() => {
+    if (!filteredTemplates || filteredTemplates.length === 0) return undefined;
+
+    // Project default takes precedence
+    if (project?.defaultCaseExportTemplateId) {
+      const projectDefault = filteredTemplates.find(
+        (t) => t.id === project.defaultCaseExportTemplateId
+      );
+      if (projectDefault) return projectDefault;
+    }
+
+    // Fall back to global isDefault
+    const globalDefault = filteredTemplates.find((t) => t.isDefault);
+    if (globalDefault) return globalDefault;
+
+    // Fall back to first available
+    return filteredTemplates[0];
+  }, [filteredTemplates, project?.defaultCaseExportTemplateId]);
+
   const effectiveTemplateId =
     selectedTemplateId || (defaultTemplate ? String(defaultTemplate.id) : "");
 
-  const selectedTemplate = templates?.find(
+  const selectedTemplate = filteredTemplates?.find(
     (tmpl) => String(tmpl.id) === effectiveTemplateId
   );
 
   const groupedTemplates = useMemo(() => {
-    if (!templates) return [];
-    const groups = new Map<string, typeof templates>();
-    for (const tmpl of templates) {
+    if (!filteredTemplates || filteredTemplates.length === 0) return [];
+    const groups = new Map<string, typeof filteredTemplates>();
+    for (const tmpl of filteredTemplates) {
       const category = tmpl.category || "Other";
       if (!groups.has(category)) groups.set(category, []);
       groups.get(category)!.push(tmpl);
@@ -244,7 +304,7 @@ export function QuickScriptModal({
       if (b === defaultCategory) return 1;
       return a.localeCompare(b);
     });
-  }, [templates, defaultTemplate]);
+  }, [filteredTemplates, defaultTemplate]);
 
   // Check AI availability when modal opens (GEN-02)
   useEffect(() => {
@@ -425,7 +485,7 @@ export function QuickScriptModal({
   const handleExport = useCallback(async () => {
     if (!effectiveTemplateId || selectedCaseIds.length === 0) return;
 
-    const template = templates?.find(
+    const template = filteredTemplates?.find(
       (t) => t.id === parseInt(effectiveTemplateId)
     );
     if (!template) return;
@@ -674,7 +734,7 @@ export function QuickScriptModal({
   }, [
     effectiveTemplateId,
     selectedCaseIds,
-    templates,
+    filteredTemplates,
     aiEnabled,
     projectId,
     outputMode,
@@ -728,90 +788,96 @@ export function QuickScriptModal({
             <div className="space-y-6 py-4">
               <div className="space-y-2">
                 <Label>{tCommon("fields.template")}</Label>
-                <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={comboboxOpen}
-                      className="w-full justify-between font-normal"
-                      data-testid="quickscript-template-select"
-                    >
-                      <span className="flex items-center gap-1.5">
-                        {selectedTemplate
-                          ? selectedTemplate.name
-                          : t("templatePlaceholder")}
-                        {selectedTemplate?.isDefault && (
-                          <TooltipProvider delayDuration={300}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge variant="secondary">
-                                  <Star className="h-3 w-3 fill-current text-primary-background" />
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {tCommon("defaultOption")}
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                    <Command>
-                      <CommandInput
-                        placeholder={t("searchPlaceholder")}
-                        data-testid="quickscript-template-search"
-                      />
-                      <CommandList onWheel={(e) => e.stopPropagation()}>
-                        <CommandEmpty>{t("noTemplatesFound")}</CommandEmpty>
-                        {groupedTemplates.map(
-                          ([category, categoryTemplates]) => (
-                            <CommandGroup heading={category} key={category}>
-                              {categoryTemplates.map((tmpl) => (
-                                <CommandItem
-                                  key={tmpl.id}
-                                  value={`${tmpl.name} ${tmpl.category} ${tmpl.framework}`}
-                                  onSelect={() => {
-                                    setSelectedTemplateId(String(tmpl.id));
-                                    setComboboxOpen(false);
-                                  }}
-                                  data-testid={`template-option-${tmpl.id}`}
-                                >
-                                  <Check
-                                    className={cn(
-                                      "mr-2 h-4 w-4",
-                                      effectiveTemplateId === String(tmpl.id)
-                                        ? "opacity-100"
-                                        : "opacity-0"
+                {assignmentsExistButEmpty ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    {t("noAvailableTemplates")}
+                  </p>
+                ) : (
+                  <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={comboboxOpen}
+                        className="w-full justify-between font-normal"
+                        data-testid="quickscript-template-select"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          {selectedTemplate
+                            ? selectedTemplate.name
+                            : t("templatePlaceholder")}
+                          {selectedTemplate?.isDefault && (
+                            <TooltipProvider delayDuration={300}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="secondary">
+                                    <Star className="h-3 w-3 fill-current text-primary-background" />
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {tCommon("defaultOption")}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder={t("searchPlaceholder")}
+                          data-testid="quickscript-template-search"
+                        />
+                        <CommandList onWheel={(e) => e.stopPropagation()}>
+                          <CommandEmpty>{t("noTemplatesFound")}</CommandEmpty>
+                          {groupedTemplates.map(
+                            ([category, categoryTemplates]) => (
+                              <CommandGroup heading={category} key={category}>
+                                {categoryTemplates.map((tmpl) => (
+                                  <CommandItem
+                                    key={tmpl.id}
+                                    value={`${tmpl.name} ${tmpl.category} ${tmpl.framework}`}
+                                    onSelect={() => {
+                                      setSelectedTemplateId(String(tmpl.id));
+                                      setComboboxOpen(false);
+                                    }}
+                                    data-testid={`template-option-${tmpl.id}`}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        effectiveTemplateId === String(tmpl.id)
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                    {tmpl.name}
+                                    {tmpl.isDefault && (
+                                      <TooltipProvider delayDuration={300}>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Badge variant="secondary">
+                                              <Star className="h-3 w-3 fill-current text-primary-background" />
+                                            </Badge>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            {tCommon("defaultOption")}
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
                                     )}
-                                  />
-                                  {tmpl.name}
-                                  {tmpl.isDefault && (
-                                    <TooltipProvider delayDuration={300}>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Badge variant="secondary">
-                                            <Star className="h-3 w-3 fill-current text-primary-background" />
-                                          </Badge>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          {tCommon("defaultOption")}
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  )}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          )
-                        )}
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            )
+                          )}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -896,7 +962,7 @@ export function QuickScriptModal({
               <Button
                 type="button"
                 onClick={handleExport}
-                disabled={isExporting || !effectiveTemplateId}
+                disabled={isExporting || !effectiveTemplateId || assignmentsExistButEmpty}
                 data-testid="quickscript-button"
               >
                 {isExporting ? (
