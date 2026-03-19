@@ -300,6 +300,75 @@ test.describe("Bulk Operations", () => {
     await expect(page.locator(`text="${case2Name}"`).first()).toBeVisible({ timeout: 5000 });
   });
 
+  test("Move Test Cases to Different Folder via Detail Page", async ({ api, page }) => {
+    const projectId = await getTestProjectId(api);
+
+    // Create source and target folders via API
+    const uniqueId = Date.now();
+    const sourceFolderName = `Source Folder ${uniqueId}`;
+    const targetFolderName = `Target Folder ${uniqueId}`;
+    const sourceFolderId = await api.createFolder(projectId, sourceFolderName);
+    const targetFolderId = await api.createFolder(projectId, targetFolderName);
+
+    // Create a test case in the source folder via API
+    const caseName = `Move Case ${uniqueId}`;
+    const caseId = await api.createTestCase(projectId, sourceFolderId, caseName);
+
+    // Navigate to the case detail page
+    await page.goto(`/en-US/projects/repository/${projectId}/${caseId}`);
+    await page.waitForLoadState("networkidle");
+
+    // Verify we are on the detail page
+    await expect(page).toHaveURL(
+      new RegExp(`/projects/repository/${projectId}/${caseId}`)
+    );
+
+    // Click Edit to enter edit mode
+    const editButton = page.getByTestId("edit-test-case-button");
+    await expect(editButton).toBeVisible({ timeout: 10000 });
+    await editButton.click();
+    await page.waitForLoadState("networkidle");
+
+    // The FolderSelect (a Radix Select) should be visible in the card title area
+    // It renders as a SelectTrigger with role="combobox", showing the current folder name
+    // We need to find the one that shows the source folder name (not the project selector)
+    const folderSelect = page.locator('[role="combobox"]').filter({
+      hasText: sourceFolderName
+    }).first();
+    await expect(folderSelect).toBeVisible({ timeout: 10000 });
+    await folderSelect.click();
+
+    // Wait for select options to appear and click the target folder
+    const targetFolderOption = page.locator(`[role="option"]:has-text("${targetFolderName}")`).first();
+    await expect(targetFolderOption).toBeVisible({ timeout: 5000 });
+    await targetFolderOption.click();
+
+    // Save the changes
+    const saveButton = page.locator('button[type="submit"]').first();
+    await expect(saveButton).toBeVisible({ timeout: 5000 });
+    await saveButton.click();
+
+    // Wait for save to complete — edit button reappears
+    await expect(editButton).toBeVisible({ timeout: 15000 });
+    await page.waitForLoadState("networkidle");
+
+    // Navigate to the repository page and verify the case appears in the target folder
+    const repositoryPage2 = new RepositoryPage(page);
+    await repositoryPage2.goto(projectId);
+    await repositoryPage2.selectFolder(targetFolderId);
+    await page.waitForLoadState("networkidle");
+
+    // The case should now be in the target folder
+    await expect(page.locator(`[data-row-id="${caseId}"]`).first()).toBeVisible({ timeout: 10000 });
+
+    // Navigate to the source folder and verify the case is no longer there
+    await repositoryPage2.selectFolder(sourceFolderId);
+    await page.waitForLoadState("networkidle");
+
+    // The case should NOT be in the source folder anymore
+    await expect(page.locator(`[data-row-id="${caseId}"]`)).not.toBeVisible({ timeout: 5000 });
+  });
+
   test("Select All Checkbox in Table Header", async ({ api, page }) => {
     const projectId = await getTestProjectId(api);
 
