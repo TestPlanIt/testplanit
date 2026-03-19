@@ -182,9 +182,9 @@
 
 ### Notifications & Collaboration
 
-- [ ] **NOTIF-01**: Component tests for NotificationBell, NotificationContent with all notification types
-- [ ] **NOTIF-02**: Component tests for NotificationPreferences with all delivery mode options
-- [ ] **NOTIF-03**: API tests for notification dispatch (work assigned, comment mentions, system announcements, milestone reminders)
+- [x] **NOTIF-01**: Component tests for NotificationBell, NotificationContent with all notification types
+- [x] **NOTIF-02**: Component tests for NotificationPreferences with all delivery mode options
+- [x] **NOTIF-03**: API tests for notification dispatch (work assigned, comment mentions, system announcements, milestone reminders)
 
 ### Workers & Background Jobs
 
@@ -326,9 +326,9 @@ Deferred to future. Not in current roadmap.
 | HOOK-03 | Phase 24 | Pending |
 | HOOK-04 | Phase 24 | Pending |
 | HOOK-05 | Phase 24 | Complete |
-| NOTIF-01 | Phase 24 | Pending |
-| NOTIF-02 | Phase 24 | Pending |
-| NOTIF-03 | Phase 24 | Pending |
+| NOTIF-01 | Phase 24 | Complete |
+| NOTIF-02 | Phase 24 | Complete |
+| NOTIF-03 | Phase 24 | Complete |
 | WORK-01 | Phase 24 | Pending |
 | WORK-02 | Phase 24 | Pending |
 | WORK-03 | Phase 24 | Pending |
