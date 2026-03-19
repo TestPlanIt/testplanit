@@ -466,3 +466,4 @@ if (
 }
 
 export default worker;
+export { processor, startWorker };
