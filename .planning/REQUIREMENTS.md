@@ -109,9 +109,9 @@
 - [x] **ADM-01**: E2E test verifies user management (list, edit, deactivate, reset 2FA, revoke API keys)
 - [x] **ADM-02**: E2E test verifies group management (create, edit, assign users, assign to projects)
 - [x] **ADM-03**: E2E test verifies role management (create, edit permissions per application area)
-- [ ] **ADM-04**: E2E test verifies SSO configuration (add/edit providers, force SSO, email domain restrictions)
-- [ ] **ADM-05**: E2E test verifies workflow management (create, edit, reorder states, assign to projects)
-- [ ] **ADM-06**: E2E test verifies status management (create, edit, configure flags, scope assignment)
+- [x] **ADM-04**: E2E test verifies SSO configuration (add/edit providers, force SSO, email domain restrictions)
+- [x] **ADM-05**: E2E test verifies workflow management (create, edit, reorder states, assign to projects)
+- [x] **ADM-06**: E2E test verifies status management (create, edit, configure flags, scope assignment)
 - [ ] **ADM-07**: E2E test verifies configuration management (categories, variants, configuration groups)
 - [ ] **ADM-08**: E2E test verifies audit log viewing, filtering, and CSV export
 - [x] **ADM-09**: E2E test verifies Elasticsearch admin (settings, reindex operations)
@@ -274,9 +274,9 @@ Deferred to future. Not in current roadmap.
 | ADM-01 | Phase 17 | Complete |
 | ADM-02 | Phase 17 | Complete |
 | ADM-03 | Phase 17 | Complete |
-| ADM-04 | Phase 17 | Pending |
-| ADM-05 | Phase 17 | Pending |
-| ADM-06 | Phase 17 | Pending |
+| ADM-04 | Phase 17 | Complete |
+| ADM-05 | Phase 17 | Complete |
+| ADM-06 | Phase 17 | Complete |
 | ADM-07 | Phase 17 | Pending |
 | ADM-08 | Phase 17 | Pending |
 | ADM-09 | Phase 17 | Complete |

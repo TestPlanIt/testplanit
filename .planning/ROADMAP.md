@@ -187,7 +187,7 @@ Plans:
   3. E2E tests pass for workflow management (create, edit, reorder states) and status management (create, edit flags, scope assignment)
   4. E2E tests pass for configuration management (categories, variants, groups) and audit log (view, filter, CSV export)
   5. E2E tests pass for Elasticsearch admin (settings, reindex), LLM integration management, and app config management
-**Plans:** 2/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
 - [ ] 17-01-PLAN.md -- User management gaps, group management, and role management E2E tests
@@ -327,7 +327,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 14. Project Management E2E and Components | 3/3 | Complete    | 2026-03-19 | - |
 | 15. AI Feature E2E and API Tests | 2/2 | Complete    | 2026-03-19 | - |
 | 16. AI Component Tests | 2/2 | Complete    | 2026-03-19 | - |
-| 17. Administration E2E Tests | 2/4 | In Progress|  | - |
+| 17. Administration E2E Tests | 3/4 | In Progress|  | - |
 | 18. Administration Component Tests | v2.0 | 0/TBD | Not started | - |
 | 19. Reporting E2E and Component Tests | v2.0 | 0/TBD | Not started | - |
 | 20. Search E2E and Component Tests | v2.0 | 0/TBD | Not started | - |
