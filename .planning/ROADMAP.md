@@ -59,7 +59,7 @@
   3. E2E test passes for 2FA (setup, code entry, backup code recovery) with mocked authenticator
   4. E2E tests pass for magic link, SSO (Google/Microsoft/SAML), and password change with session persistence
   5. Component tests pass for all auth pages covering error states, and API tests confirm token auth, creation, revocation, and scope enforcement
-**Plans:** 4 plans
+**Plans:** 2/4 plans executed
 
 Plans:
 - [ ] 09-01-PLAN.md -- Sign-in/sign-out and sign-up with email verification E2E tests
@@ -255,7 +255,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 6. Relations and Queries | v1.1 | 2/2 | Complete | 2026-03-17 |
 | 7. Access Control | v1.1 | 2/2 | Complete | 2026-03-17 |
 | 8. Error Handling and Batch Operations | v1.1 | 2/2 | Complete | 2026-03-17 |
-| 9. Authentication E2E and API Tests | v2.0 | 0/4 | Planning complete | - |
+| 9. Authentication E2E and API Tests | 2/4 | In Progress|  | - |
 | 10. Test Case Repository E2E Tests | v2.0 | 0/TBD | Not started | - |
 | 11. Repository Components and Hooks | v2.0 | 0/TBD | Not started | - |
 | 12. Test Execution E2E Tests | v2.0 | 0/TBD | Not started | - |

@@ -32,8 +32,8 @@
 
 ### Authentication & Account Management
 
-- [ ] **AUTH-01**: E2E test verifies complete sign-in and sign-out flow with valid and invalid credentials
-- [ ] **AUTH-02**: E2E test verifies sign-up flow including email verification
+- [x] **AUTH-01**: E2E test verifies complete sign-in and sign-out flow with valid and invalid credentials
+- [x] **AUTH-02**: E2E test verifies sign-up flow including email verification
 - [ ] **AUTH-03**: E2E test verifies 2FA setup, verification, and backup code recovery
 - [ ] **AUTH-04**: E2E test verifies SSO flows (Google, Microsoft, SAML) with mocked providers
 - [ ] **AUTH-05**: E2E test verifies magic link passwordless authentication
@@ -215,8 +215,8 @@ Deferred to future. Not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 9 | Pending |
-| AUTH-02 | Phase 9 | Pending |
+| AUTH-01 | Phase 9 | Complete |
+| AUTH-02 | Phase 9 | Complete |
 | AUTH-03 | Phase 9 | Pending |
 | AUTH-04 | Phase 9 | Pending |
 | AUTH-05 | Phase 9 | Pending |
