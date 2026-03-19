@@ -188,9 +188,9 @@
 
 ### Workers & Background Jobs
 
-- [ ] **WORK-01**: Unit tests for emailWorker (template rendering, delivery, error handling)
-- [ ] **WORK-02**: Unit tests for repoCacheWorker (file cache refresh, TTL handling)
-- [ ] **WORK-03**: Unit tests for autoTagWorker (job processing, progress tracking, cancellation)
+- [x] **WORK-01**: Unit tests for emailWorker (template rendering, delivery, error handling)
+- [x] **WORK-02**: Unit tests for repoCacheWorker (file cache refresh, TTL handling)
+- [x] **WORK-03**: Unit tests for autoTagWorker (job processing, progress tracking, cancellation)
 
 ## Future Requirements
 
@@ -329,9 +329,9 @@ Deferred to future. Not in current roadmap.
 | NOTIF-01 | Phase 24 | Complete |
 | NOTIF-02 | Phase 24 | Complete |
 | NOTIF-03 | Phase 24 | Complete |
-| WORK-01 | Phase 24 | Pending |
-| WORK-02 | Phase 24 | Pending |
-| WORK-03 | Phase 24 | Pending |
+| WORK-01 | Phase 24 | Complete |
+| WORK-02 | Phase 24 | Complete |
+| WORK-03 | Phase 24 | Complete |
 
 **Coverage:**
 
