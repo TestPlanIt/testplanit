@@ -53,7 +53,7 @@
 **Milestone Goal:** Allow admins to assign specific Case Export Templates to individual projects and set a per-project default, so users only see relevant templates when exporting.
 
 - [x] **Phase 25: Default Template Schema** - Project model extended with optional default export template relation (completed 2026-03-19)
-- [ ] **Phase 26: Admin Assignment UI** - Admin can assign, unassign, and set a default export template per project
+- [x] **Phase 26: Admin Assignment UI** - Admin can assign, unassign, and set a default export template per project (completed 2026-03-19)
 - [ ] **Phase 27: Export Dialog Filtering** - Export dialog shows only project-assigned templates with project default pre-selected
 
 ## Phase Details
@@ -381,5 +381,5 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 23. General Components | v2.0 | 0/TBD | Not started | - |
 | 24. Hooks, Notifications, and Workers | v2.0 | 0/TBD | Not started | - |
 | 25. Default Template Schema | 1/1 | Complete    | 2026-03-19 | - |
-| 26. Admin Assignment UI | 1/2 | In Progress|  | - |
+| 26. Admin Assignment UI | 2/2 | Complete   | 2026-03-19 | - |
 | 27. Export Dialog Filtering | v2.1 | 0/TBD | Not started | - |
