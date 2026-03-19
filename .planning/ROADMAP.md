@@ -385,4 +385,4 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 24. Hooks, Notifications, and Workers | v2.0 | 0/TBD | Not started | - |
 | 25. Default Template Schema | 1/1 | Complete    | 2026-03-19 | - |
 | 26. Admin Assignment UI | 2/2 | Complete    | 2026-03-19 | - |
-| 27. Export Dialog Filtering | 1/1 | Complete   | 2026-03-19 | - |
+| 27. Export Dialog Filtering | 1/1 | Complete    | 2026-03-19 | - |
