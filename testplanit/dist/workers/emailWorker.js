@@ -55,7 +55,9 @@ var init_prismaBase = __esm({
 // workers/emailWorker.ts
 var emailWorker_exports = {};
 __export(emailWorker_exports, {
-  default: () => emailWorker_default
+  default: () => emailWorker_default,
+  processor: () => processor,
+  startWorker: () => startWorker
 });
 module.exports = __toCommonJS(emailWorker_exports);
 var import_bullmq2 = require("bullmq");
@@ -1038,4 +1040,9 @@ if (typeof import_meta3 !== "undefined" && import_meta3.url === (0, import_node_
   });
 }
 var emailWorker_default = worker;
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  processor,
+  startWorker
+});
 //# sourceMappingURL=emailWorker.js.map
