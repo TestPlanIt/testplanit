@@ -1332,7 +1332,7 @@ export class ApiHelper {
     }
 
     if (options?.configId) {
-      data.config = { connect: { id: options.configId } };
+      data.configuration = { connect: { id: options.configId } };
     }
 
     if (options?.configurationGroupId) {
