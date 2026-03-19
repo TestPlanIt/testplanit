@@ -146,7 +146,7 @@
 - [ ] **INTG-03**: E2E test verifies code repository setup and QuickScript file context with mocked APIs
 - [ ] **INTG-04**: Component tests for issue management components (UnifiedIssueManager, CreateIssueDialog, SearchIssuesDialog)
 - [ ] **INTG-05**: Component tests for integration configuration forms
-- [ ] **INTG-06**: API tests for integration endpoints (test-connection, create-issue, search, sync) with mocked externals
+- [x] **INTG-06**: API tests for integration endpoints (test-connection, create-issue, search, sync) with mocked externals
 
 ### Custom API Routes
 
@@ -302,7 +302,7 @@ Deferred to future. Not in current roadmap.
 | INTG-03 | Phase 21 | Pending |
 | INTG-04 | Phase 21 | Pending |
 | INTG-05 | Phase 21 | Pending |
-| INTG-06 | Phase 21 | Pending |
+| INTG-06 | Phase 21 | Complete |
 | CAPI-01 | Phase 22 | Pending |
 | CAPI-02 | Phase 22 | Pending |
 | CAPI-03 | Phase 22 | Pending |
