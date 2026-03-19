@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 10-01-PLAN.md
-last_updated: "2026-03-19T04:23:05.583Z"
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-03-19T04:40:37.319Z"
 last_activity: 2026-03-19 — completed plan 10-02 (shared steps management E2E tests)
 progress:
   total_phases: 16
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
   percent: 25
 ---
 
@@ -54,6 +54,7 @@ Progress: [███░░░░░░░] 25%
 | Phase 09-authentication-e2e-and-api-tests P02 | 75 | 2 tasks | 4 files |
 | Phase 10-test-case-repository-e2e-tests P02 | ~35 min | 1 task | 1 file |
 | Phase 10-test-case-repository-e2e-tests P01 | 90 | 2 tasks | 2 files |
+| Phase 11-repository-components-and-hooks P02 | 11 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Progress: [███░░░░░░░] 25%
 - [Phase 10-test-case-repository-e2e-tests]: BulkEditModal has no folder field — bulk move is only available via individual case detail page FolderSelect
 - [Phase 10-test-case-repository-e2e-tests]: FolderSelect is Radix Select (role=combobox); must filter by hasText(sourceFolderName) to avoid project navigation dropdown
 - [Phase 10-test-case-repository-e2e-tests]: Turbopack BUILD_ID race condition: use pnpm exec next build (exits 0 despite ENOENT), then write BUILD_ID manually from .next/static hash dir name
+- [Phase 11-repository-components-and-hooks]: Mock getColumns to return at least one column so columnVisibility initializes non-empty in Cases component tests
+- [Phase 11-repository-components-and-hooks]: useFindManyRepositoryCasesFiltered mock must include totalCount and refetch fields
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T04:18:39.986Z
-Stopped at: Completed 10-01-PLAN.md
+Last session: 2026-03-19T04:40:32.910Z
+Stopped at: Completed 11-02-PLAN.md
 Resume file: None
