@@ -4,7 +4,7 @@ milestone: v2.1
 milestone_name: Per-Project Export Template Assignment
 status: planning
 stopped_at: Completed 26-admin-assignment-ui-02-PLAN.md
-last_updated: "2026-03-19T05:11:26.296Z"
+last_updated: "2026-03-19T05:14:18.068Z"
 last_activity: 2026-03-18 — Roadmap created for v2.1 (Phases 25-27)
 progress:
   total_phases: 19
