@@ -43,9 +43,9 @@
 
 ### Test Case Repository
 
-- [ ] **REPO-01**: E2E test verifies test case CRUD (create, view, edit, delete) including all field types
+- [x] **REPO-01**: E2E test verifies test case CRUD (create, view, edit, delete) including all field types
 - [ ] **REPO-02**: E2E test verifies folder operations (create, rename, move, delete, nested hierarchy)
-- [ ] **REPO-03**: E2E test verifies bulk operations (multi-select, bulk edit, bulk delete, bulk move)
+- [x] **REPO-03**: E2E test verifies bulk operations (multi-select, bulk edit, bulk delete, bulk move)
 - [ ] **REPO-04**: E2E test verifies search and filtering (text search, custom field filters, tag filters, state filters)
 - [ ] **REPO-05**: E2E test verifies import/export (CSV, JSON, markdown import and export)
 - [x] **REPO-06**: E2E test verifies shared steps (create, use in test cases, edit, version history)
@@ -223,9 +223,9 @@ Deferred to future. Not in current roadmap.
 | AUTH-06 | Phase 9 | Complete |
 | AUTH-07 | Phase 9 | Complete |
 | AUTH-08 | Phase 9 | Complete |
-| REPO-01 | Phase 10 | Pending |
+| REPO-01 | Phase 10 | Complete |
 | REPO-02 | Phase 10 | Pending |
-| REPO-03 | Phase 10 | Pending |
+| REPO-03 | Phase 10 | Complete |
 | REPO-04 | Phase 10 | Pending |
 | REPO-05 | Phase 10 | Pending |
 | REPO-06 | Phase 10 | Complete |

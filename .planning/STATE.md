@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 10-02-PLAN.md
-last_updated: "2026-03-19T03:11:00Z"
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-03-19T04:18:39.988Z"
 last_activity: 2026-03-19 — completed plan 10-02 (shared steps management E2E tests)
 progress:
   total_phases: 16
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 2
+  total_plans: 6
+  completed_plans: 6
   percent: 25
 ---
 
@@ -53,6 +53,7 @@ Progress: [███░░░░░░░] 25%
 | Phase 09 P01 | 9m 27s | 2 tasks | 2 files |
 | Phase 09-authentication-e2e-and-api-tests P02 | 75 | 2 tasks | 4 files |
 | Phase 10-test-case-repository-e2e-tests P02 | ~35 min | 1 task | 1 file |
+| Phase 10-test-case-repository-e2e-tests P01 | 90 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Progress: [███░░░░░░░] 25%
 - [Phase 09-authentication-e2e-and-api-tests]: page.evaluate() for browser-context fetch when session cookies must be shared (not page.request which is isolated)
 - [Phase 10-test-case-repository-e2e-tests]: AsyncCombobox requires clicking [role="combobox"] trigger first to open Popover, then type in [cmdk-input] — not a native input[type="text"]
 - [Phase 10-test-case-repository-e2e-tests]: Shared steps page edit mode needs networkidle + 1000ms wait after group selection before entering edit mode to avoid race condition with items query
+- [Phase 10-test-case-repository-e2e-tests]: BulkEditModal has no folder field — bulk move is only available via individual case detail page FolderSelect
+- [Phase 10-test-case-repository-e2e-tests]: FolderSelect is Radix Select (role=combobox); must filter by hasText(sourceFolderName) to avoid project navigation dropdown
+- [Phase 10-test-case-repository-e2e-tests]: Turbopack BUILD_ID race condition: use pnpm exec next build (exits 0 despite ENOENT), then write BUILD_ID manually from .next/static hash dir name
 
 ### Pending Todos
 
@@ -85,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T03:11:00Z
-Stopped at: Completed 10-02-PLAN.md
+Last session: 2026-03-19T04:18:39.986Z
+Stopped at: Completed 10-01-PLAN.md
 Resume file: None
