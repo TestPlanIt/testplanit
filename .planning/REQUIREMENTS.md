@@ -169,8 +169,8 @@
 - [ ] **COMP-04**: Component tests for DataTable with sorting, filtering, column visibility, row selection
 - [ ] **COMP-05**: Component tests for form components (ConfigurationSelect, FolderSelect, MilestoneSelect, DatePickerField)
 - [ ] **COMP-06**: Component tests for onboarding (InitialPreferencesDialog, NextStepOnboarding)
-- [ ] **COMP-07**: Component tests for TipTap editor extensions (image resize, formatting, tables, code blocks)
-- [ ] **COMP-08**: Component tests for DnD components (TestCaseDragPreview, WorkflowDragPreview, drag interactions)
+- [x] **COMP-07**: Component tests for TipTap editor extensions (image resize, formatting, tables, code blocks)
+- [x] **COMP-08**: Component tests for DnD components (TestCaseDragPreview, WorkflowDragPreview, drag interactions)
 
 ### Hooks
 
@@ -319,8 +319,8 @@ Deferred to future. Not in current roadmap.
 | COMP-04 | Phase 23 | Pending |
 | COMP-05 | Phase 23 | Pending |
 | COMP-06 | Phase 23 | Pending |
-| COMP-07 | Phase 23 | Pending |
-| COMP-08 | Phase 23 | Pending |
+| COMP-07 | Phase 23 | Complete |
+| COMP-08 | Phase 23 | Complete |
 | HOOK-01 | Phase 24 | Pending |
 | HOOK-02 | Phase 24 | Pending |
 | HOOK-03 | Phase 24 | Pending |

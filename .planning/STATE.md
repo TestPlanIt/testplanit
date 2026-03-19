@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 22-01-PLAN.md
-last_updated: "2026-03-19T18:54:36.215Z"
+stopped_at: Completed 23-03-PLAN.md
+last_updated: "2026-03-19T19:07:07.010Z"
 last_activity: 2026-03-19 — completed plan 13-03 (session component tests and session hooks integration tests)
 progress:
   total_phases: 16
   completed_phases: 14
-  total_plans: 39
-  completed_plans: 39
+  total_plans: 42
+  completed_plans: 40
   percent: 27
 ---
 
@@ -87,6 +87,7 @@ Progress: [███░░░░░░░] 27%
 | Phase 22-custom-api-route-tests P04 | 4 | 2 tasks | 8 files |
 | Phase 22-custom-api-route-tests P05 | 5 | 2 tasks | 9 files |
 | Phase 22-custom-api-route-tests P01 | 727 | 2 tasks | 8 files |
+| Phase 23-general-components P03 | 4 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -179,6 +180,9 @@ Progress: [███░░░░░░░] 27%
 - [Phase 22-custom-api-route-tests]: get-attachment-url and get-avatar-url generate presigned PUT URLs (not GET) via PutObjectCommand + getSignedUrl from s3-request-presigner
 - [Phase 22]: S3Client vitest mock requires class keyword syntax to satisfy new MockConstructor check in Vitest
 - [Phase 22]: auditBulkCreate mock must return a Promise since route.ts calls .catch() on return value
+- [Phase 23-general-components]: ReactNodeViewRenderer mocked as identity to extract ResizableImageComponent from addNodeView for testing unexported component
+- [Phase 23-general-components]: act() required with vi.advanceTimersByTime() when fake timers drive React state updates in component tests
+- [Phase 23-general-components]: img with empty alt has ARIA role 'presentation' not 'img' - use non-empty alt when testing by role
 
 ### Pending Todos
 
@@ -191,6 +195,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T18:53:50.884Z
-Stopped at: Completed 22-01-PLAN.md
+Last session: 2026-03-19T19:07:01.202Z
+Stopped at: Completed 23-03-PLAN.md
 Resume file: None
