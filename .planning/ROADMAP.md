@@ -250,11 +250,12 @@ Plans:
   2. E2E test passes for code repository setup and QuickScript file context with mocked APIs
   3. Component tests pass for UnifiedIssueManager, CreateIssueDialog, SearchIssuesDialog, and integration configuration forms
   4. API tests pass for integration endpoints (test-connection, create-issue, search, sync) with mocked external services
-**Plans:** 2 plans
+**Plans:** 3 plans
 
 Plans:
-- [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
-- [ ] 10-02-PLAN.md -- Gap-fill: shared steps CRUD and versioning
+- [ ] 21-01-PLAN.md -- Integration setup E2E and issue operations E2E tests
+- [ ] 21-02-PLAN.md -- Issue management and integration config form component tests
+- [ ] 21-03-PLAN.md -- Integration API route unit tests (test-connection, create-issue, search, sync)
 
 ### Phase 22: Custom API Route Tests
 **Goal**: All custom API endpoints are verified with correct behavior, auth enforcement, and error handling
@@ -332,7 +333,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 18. Administration Component Tests | 2/2 | Complete    | 2026-03-19 | - |
 | 19. Reporting E2E and Component Tests | 3/3 | Complete    | 2026-03-19 | - |
 | 20. Search E2E and Component Tests | 2/2 | Complete    | 2026-03-19 | - |
-| 21. Integrations E2E, Components, and API Tests | v2.0 | 0/TBD | Not started | - |
+| 21. Integrations E2E, Components, and API Tests | v2.0 | 0/3 | Not started | - |
 | 22. Custom API Route Tests | v2.0 | 0/TBD | Not started | - |
 | 23. General Components | v2.0 | 0/TBD | Not started | - |
 | 24. Hooks, Notifications, and Workers | v2.0 | 0/TBD | Not started | - |
