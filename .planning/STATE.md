@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 20-02-PLAN.md
-last_updated: "2026-03-19T17:02:57.000Z"
+stopped_at: Completed 20-01-PLAN.md
+last_updated: "2026-03-19T17:05:22.710Z"
 last_activity: 2026-03-19 — completed plan 13-03 (session component tests and session hooks integration tests)
 progress:
   total_phases: 16
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 31
-  completed_plans: 30
+  completed_plans: 31
   percent: 27
 ---
 
@@ -78,6 +78,7 @@ Progress: [███░░░░░░░] 27%
 | Phase 19-reporting-e2e-and-component-tests P01 | 35 | 2 tasks | 2 files |
 | Phase 19-reporting-e2e-and-component-tests P03 | 25 | 2 tasks | 6 files |
 | Phase 20-search-e2e-and-component-tests P02 | 635 | 2 tasks | 2 files |
+| Phase 20-search-e2e-and-component-tests P01 | 12 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -152,6 +153,8 @@ Progress: [███░░░░░░░] 27%
 - [Phase 19-reporting-e2e-and-component-tests]: ReportChart bar dispatch requires non-categorical dim (e.g. testCaseId) — 'source'/'folder' are categorical and dispatch to Donut/GroupedBar
 - [Phase 20-search-e2e-and-component-tests]: Mocked Sheet/SheetContent for open-conditional rendering in jsdom
 - [Phase 20-search-e2e-and-component-tests]: Mocked Accordion to always-expanded for jsdom compatibility in FacetedSearchFilters tests
+- [Phase 20-search-e2e-and-component-tests]: Use data-testid='global-search-sheet' scoping to avoid strict mode violation when Advanced Filters panel is also open as role=dialog simultaneously
+- [Phase 20-search-e2e-and-component-tests]: Parallel E2E project uniqueness: use timestamp+random suffix (Date.now()-Math.random().toString(36).slice(2,7)) for unique project names across parallel workers
 
 ### Pending Todos
 
@@ -164,6 +167,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T17:02:56.998Z
-Stopped at: Completed 20-02-PLAN.md
+Last session: 2026-03-19T17:05:22.708Z
+Stopped at: Completed 20-01-PLAN.md
 Resume file: None
