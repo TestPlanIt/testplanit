@@ -55,6 +55,7 @@ import { useRequireAuth } from "~/hooks/useRequireAuth";
 import {
   useCreateProjectCodeRepositoryConfig, useDeleteProjectCodeRepositoryConfig, useFindFirstProjectCodeRepositoryConfig, useFindFirstProjects, useFindManyCodeRepository, useUpdateProjectCodeRepositoryConfig, useUpdateProjects
 } from "~/lib/hooks";
+import { ExportTemplateAssignmentSection } from "./ExportTemplateAssignmentSection";
 import { Link } from "~/lib/navigation";
 
 interface PreviewFile {
@@ -155,6 +156,7 @@ export default function QuickScriptPage() {
         name: true,
         iconUrl: true,
         quickScriptEnabled: true,
+        defaultCaseExportTemplateId: true,
         assignedUsers: {
           where: {
             user: {
@@ -557,6 +559,12 @@ export default function QuickScriptPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Export Template Assignment */}
+      <ExportTemplateAssignmentSection
+        projectId={projectId}
+        currentDefaultId={project?.defaultCaseExportTemplateId ?? null}
+      />
 
       {repositories?.length === 0 ? (
         <Card>
