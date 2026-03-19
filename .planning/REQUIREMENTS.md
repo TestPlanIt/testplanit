@@ -15,7 +15,7 @@ Requirements for per-project export template assignment. Each maps to roadmap ph
 
 ### Admin UI
 
-- [ ] **ADMIN-01**: Admin can assign/unassign export templates to a project in project settings
+- [x] **ADMIN-01**: Admin can assign/unassign export templates to a project in project settings
 - [ ] **ADMIN-02**: Admin can set a default export template for a project
 
 ### Export Dialog
@@ -44,7 +44,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|----------|------------------|
 | SCHEMA-01   | —        | Complete (exists) |
 | SCHEMA-02   | Phase 25 | Complete |
-| ADMIN-01    | Phase 26 | Pending          |
+| ADMIN-01    | Phase 26 | Complete |
 | ADMIN-02    | Phase 26 | Pending          |
 | EXPORT-01   | Phase 27 | Pending          |
 | EXPORT-02   | Phase 27 | Pending          |

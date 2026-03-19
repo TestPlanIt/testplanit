@@ -381,5 +381,5 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 23. General Components | v2.0 | 0/TBD | Not started | - |
 | 24. Hooks, Notifications, and Workers | v2.0 | 0/TBD | Not started | - |
 | 25. Default Template Schema | 1/1 | Complete    | 2026-03-19 | - |
-| 26. Admin Assignment UI | v2.1 | 0/2 | Planning complete | - |
+| 26. Admin Assignment UI | 1/2 | In Progress|  | - |
 | 27. Export Dialog Filtering | v2.1 | 0/TBD | Not started | - |
