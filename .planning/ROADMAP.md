@@ -345,7 +345,10 @@ Plans:
   1. When a project has assigned templates, the export dialog lists only those templates (not all global templates)
   2. When a project has a default template set, the export dialog opens with that template pre-selected
   3. When a project has no assigned templates, the export dialog shows all enabled templates (backward compatible fallback)
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 27-01-PLAN.md -- Filter QuickScript dialog templates by project assignment and pre-select project default
 
 ---
 
