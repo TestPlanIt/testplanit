@@ -156,8 +156,8 @@
 - [x] **CAPI-04**: API tests for milestone endpoints (descendants, forecast, summary)
 - [x] **CAPI-05**: API tests for share link endpoints (access, password-verify, report data)
 - [x] **CAPI-06**: API tests for report builder endpoints (all report types, drill-down queries)
-- [ ] **CAPI-07**: API tests for admin endpoints (elasticsearch, queues, trash, user management)
-- [ ] **CAPI-08**: API tests for search endpoint and tag/issue count aggregation endpoints
+- [x] **CAPI-07**: API tests for admin endpoints (elasticsearch, queues, trash, user management)
+- [x] **CAPI-08**: API tests for search endpoint and tag/issue count aggregation endpoints
 - [ ] **CAPI-09**: API tests for file upload/download endpoints (attachments, avatars, doc images, project icons)
 - [ ] **CAPI-10**: API tests for health, metadata, and OpenAPI documentation endpoints
 
@@ -309,8 +309,8 @@ Deferred to future. Not in current roadmap.
 | CAPI-04 | Phase 22 | Complete |
 | CAPI-05 | Phase 22 | Complete |
 | CAPI-06 | Phase 22 | Complete |
-| CAPI-07 | Phase 22 | Pending |
-| CAPI-08 | Phase 22 | Pending |
+| CAPI-07 | Phase 22 | Complete |
+| CAPI-08 | Phase 22 | Complete |
 | CAPI-09 | Phase 22 | Pending |
 | CAPI-10 | Phase 22 | Pending |
 | COMP-01 | Phase 23 | Pending |

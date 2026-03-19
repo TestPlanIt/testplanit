@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 22-03-PLAN.md
-last_updated: "2026-03-19T18:45:11.967Z"
+stopped_at: Completed 22-04-PLAN.md
+last_updated: "2026-03-19T18:46:26.669Z"
 last_activity: 2026-03-19 — completed plan 13-03 (session component tests and session hooks integration tests)
 progress:
   total_phases: 16
   completed_phases: 13
   total_plans: 39
-  completed_plans: 36
+  completed_plans: 37
   percent: 27
 ---
 
@@ -84,6 +84,7 @@ Progress: [███░░░░░░░] 27%
 | Phase 21-integrations-e2e-components-and-api-tests P02 | 27 | 2 tasks | 5 files |
 | Phase 22-custom-api-route-tests P03 | 3 | 2 tasks | 6 files |
 | Phase 22-custom-api-route-tests P02 | 4 | 2 tasks | 6 files |
+| Phase 22-custom-api-route-tests P04 | 4 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -170,6 +171,8 @@ Progress: [███░░░░░░░] 27%
 - [Phase 22-custom-api-route-tests]: share/[shareKey]/report/route.ts uses next-auth/next not next-auth — mock the /next subpath
 - [Phase 22-custom-api-route-tests]: Pre-built report route testing: mock utility handlers to verify delegation and config; test isCrossProject flag and response shapes
 - [Phase 22-custom-api-route-tests]: Drill-down dynamic model pattern: inject mockModel via (prisma as any).modelName in beforeEach for dynamic model access tests
+- [Phase 22-custom-api-route-tests]: vi.hoisted() required for ~/server/db mock in trash route — db model map object referenced in vi.mock() factory causes ReferenceError without hoisting
+- [Phase 22-custom-api-route-tests]: @prisma/client ProjectAccessType must be vi.mock'd in tags/counts and issues/counts route tests — enum used at module evaluation time
 
 ### Pending Todos
 
@@ -182,6 +185,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T18:45:11.964Z
-Stopped at: Completed 22-03-PLAN.md
+Last session: 2026-03-19T18:46:21.208Z
+Stopped at: Completed 22-04-PLAN.md
 Resume file: None
