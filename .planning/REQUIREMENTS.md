@@ -118,7 +118,7 @@
 - [x] **ADM-10**: E2E test verifies LLM integration management (add provider, test connection, per-project assignment)
 - [x] **ADM-11**: E2E test verifies app config management (edit_results_duration, project_docs_default)
 - [x] **ADM-12**: Component tests for admin pages (QueueManagement, ElasticsearchAdmin, audit log viewer)
-- [ ] **ADM-13**: Component tests for admin forms (user edit, group edit, role permissions matrix)
+- [x] **ADM-13**: Component tests for admin forms (user edit, group edit, role permissions matrix)
 
 ### Reporting & Analytics
 
@@ -283,7 +283,7 @@ Deferred to future. Not in current roadmap.
 | ADM-10 | Phase 17 | Complete |
 | ADM-11 | Phase 17 | Complete |
 | ADM-12 | Phase 18 | Complete |
-| ADM-13 | Phase 18 | Pending |
+| ADM-13 | Phase 18 | Complete |
 | RPT-01 | Phase 19 | Pending |
 | RPT-02 | Phase 19 | Pending |
 | RPT-03 | Phase 19 | Pending |
