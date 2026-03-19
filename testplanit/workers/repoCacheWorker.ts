@@ -172,3 +172,5 @@ if (
     process.exit(1);
   });
 }
+
+export { processor, startWorker };
