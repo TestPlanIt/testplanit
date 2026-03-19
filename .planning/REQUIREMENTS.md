@@ -53,9 +53,9 @@
 - [ ] **REPO-08**: E2E test verifies tag management (create, assign, remove, case-insensitive matching)
 - [ ] **REPO-09**: E2E test verifies issue linking (attach, navigate, unlink) with mocked integrations
 - [ ] **REPO-10**: E2E test verifies drag-and-drop reordering and folder tree navigation
-- [ ] **REPO-11**: Component tests for test case editor (TipTap rich text, custom fields, steps, attachments)
+- [x] **REPO-11**: Component tests for test case editor (TipTap rich text, custom fields, steps, attachments)
 - [x] **REPO-12**: Component tests for repository table (sorting, pagination, column visibility, view switching)
-- [ ] **REPO-13**: Component tests for folder tree, breadcrumbs, and navigation components
+- [x] **REPO-13**: Component tests for folder tree, breadcrumbs, and navigation components
 - [x] **REPO-14**: Hook tests for repository-related hooks (useRepositoryCasesWithFilteredFields, field hooks, filter hooks)
 
 ### Test Execution (Runs)
@@ -233,9 +233,9 @@ Deferred to future. Not in current roadmap.
 | REPO-08 | Phase 10 | Pending |
 | REPO-09 | Phase 10 | Pending |
 | REPO-10 | Phase 10 | Pending |
-| REPO-11 | Phase 11 | Pending |
+| REPO-11 | Phase 11 | Complete |
 | REPO-12 | Phase 11 | Complete |
-| REPO-13 | Phase 11 | Pending |
+| REPO-13 | Phase 11 | Complete |
 | REPO-14 | Phase 11 | Complete |
 | RUN-01 | Phase 12 | Pending |
 | RUN-02 | Phase 12 | Pending |
