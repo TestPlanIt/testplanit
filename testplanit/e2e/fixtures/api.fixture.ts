@@ -20,6 +20,8 @@ export class ApiHelper {
   private createdFieldOptionIds: number[] = [];
   private createdShareLinkIds: string[] = [];
   private createdConfigurationIds: number[] = [];
+  private createdLlmIntegrationIds: number[] = [];
+  private createdProjectLlmIntegrationIds: string[] = [];
   private cachedTemplateIds: Map<number, number> = new Map(); // projectId -> templateId
   private cachedStateIds: Map<number, number> = new Map(); // projectId -> stateId
   private cachedRepositoryIds: Map<number, number> = new Map(); // projectId -> repositoryId
@@ -2913,6 +2915,85 @@ export class ApiHelper {
   }
 
   /**
+   * Create an LLM integration record (ADMIN only).
+   * Uses fake credentials — tests mock the actual LLM API routes.
+   */
+  async createLlmIntegration(name: string): Promise<number> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/llmIntegration/create`,
+      {
+        data: {
+          data: {
+            name,
+            provider: "OPENAI",
+            status: "ACTIVE",
+            credentials: { apiKey: "sk-fake-e2e-test-key" },
+            settings: {},
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create LLM integration: ${error}`);
+    }
+
+    const result = await response.json();
+    const id = result.data.id;
+    this.createdLlmIntegrationIds.push(id);
+    return id;
+  }
+
+  /**
+   * Link an LLM integration to a project via ProjectLlmIntegration.
+   */
+  async linkLlmToProject(projectId: number, llmIntegrationId: number): Promise<string> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/projectLlmIntegration/create`,
+      {
+        data: {
+          data: {
+            projectId,
+            llmIntegrationId,
+            isActive: true,
+          },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to link LLM to project: ${error}`);
+    }
+
+    const result = await response.json();
+    const id = result.data.id;
+    this.createdProjectLlmIntegrationIds.push(id);
+    return id;
+  }
+
+  /**
+   * Enable QuickScript on a project.
+   */
+  async enableQuickScript(projectId: number): Promise<void> {
+    const response = await this.request.patch(
+      `${this.baseURL}/api/model/projects/update`,
+      {
+        data: {
+          where: { id: projectId },
+          data: { quickScriptEnabled: true },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to enable QuickScript: ${error}`);
+    }
+  }
+
+  /**
    * Clean up all test data created during tests
    */
   async cleanup(): Promise<void> {
@@ -2951,6 +3032,26 @@ export class ApiHelper {
       await this.deleteIssue(issueId);
     }
     this.createdIssueIds = [];
+
+    // Delete project LLM integrations (they reference projects and LLM integrations)
+    for (const pliId of this.createdProjectLlmIntegrationIds) {
+      this.request
+        .delete(`${this.baseURL}/api/model/projectLlmIntegration/delete`, {
+          data: { where: { id: pliId } },
+        })
+        .catch(() => {});
+    }
+    this.createdProjectLlmIntegrationIds = [];
+
+    // Delete LLM integrations
+    for (const llmId of this.createdLlmIntegrationIds) {
+      this.request
+        .delete(`${this.baseURL}/api/model/llmIntegration/delete`, {
+          data: { where: { id: llmId } },
+        })
+        .catch(() => {});
+    }
+    this.createdLlmIntegrationIds = [];
 
     // Delete share links (they reference projects)
     for (const shareLinkId of this.createdShareLinkIds) {

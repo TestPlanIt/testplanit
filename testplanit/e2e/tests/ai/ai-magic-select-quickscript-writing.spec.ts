@@ -4,25 +4,22 @@ import { expect, test } from "../../fixtures";
  * Magic Select, QuickScript, and Writing Assistant E2E tests
  * Covers: AI-03, AI-04, AI-05
  *
- * Uses Playwright route interception to mock LLM API responses so tests
- * do not require real LLM integrations.
+ * Uses Playwright route interception to mock LLM API responses.
+ * An LlmIntegration record is seeded per test so AI-gated features render.
  *
  * === Magic Select (AI-03) ===
  * MagicSelectButton is rendered in AddTestRunModal step 2 (case selection).
- * It is gated by project having an active LLM integration. When no integration
- * exists, the button is rendered disabled with a tooltip. Tests verify the
+ * When LLM integration exists, the button is enabled. Tests verify the
  * button presence and the mock route behavior.
  *
  * === QuickScript (AI-04) ===
- * The QuickScript modal (data-testid="quickscript-dialog") is opened from:
- *   - The per-row action button in the Cases table (data-testid="quickscript-cases-button")
- *   - The bulk action toolbar when cases are selected
- * It is gated by project.quickScriptEnabled. Tests verify the dialog
- * and mock the SSE stream endpoint.
+ * The QuickScript button (data-testid="quickscript-cases-button") appears
+ * when project.quickScriptEnabled is true and cases are selected.
+ * Tests enable QuickScript via API and verify the dialog and SSE mocks.
  *
  * === Writing Assistant (AI-05) ===
- * The AI writing assistant button is in the TipTap toolbar in edit mode.
- * Tests are lenient — pass even if the button is absent (AI is optional/configurable).
+ * The AI writing assistant button is in the TipTap toolbar in edit mode,
+ * gated on the project having an active LLM integration.
  */
 
 // ============================================================
@@ -30,12 +27,14 @@ import { expect, test } from "../../fixtures";
 // ============================================================
 
 test.describe("Magic Select in Test Run Creation (AI-03)", () => {
-  test("should show magic select button in test run creation step 2", async ({
+  test("should show enabled magic select button in test run creation step 2", async ({
     page,
     api,
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E Magic Select ${ts}`);
+    const llmId = await api.createLlmIntegration(`E2E LLM Magic ${ts}`);
+    await api.linkLlmToProject(projectId, llmId);
     const folderId = await api.createFolder(projectId, `Magic Folder ${ts}`);
     await api.createTestCase(projectId, folderId, `Magic Case 1 ${ts}`);
     await api.createTestCase(projectId, folderId, `Magic Case 2 ${ts}`);
@@ -107,46 +106,21 @@ test.describe("Magic Select in Test Run Creation (AI-03)", () => {
       timeout: 15000,
     });
 
-    // The MagicSelectButton should appear in the dialog header description area.
-    // When no LLM integration is configured, it renders as a disabled button with text "Magic Select".
-    // When LLM integration is configured, it renders as an enabled button that opens the MagicSelectDialog.
-    //
-    // Scope to the "Select Test Cases" dialog heading to avoid matching other elements.
-    // The button is in the dialog description area alongside the "Selected Test Cases" counter.
+    // The MagicSelectButton should appear in the "Select Test Cases" dialog
     const selectCasesDialog = page.locator('[role="dialog"]').filter({ hasText: "Select Test Cases" }).last();
-    const dialogVisible = await selectCasesDialog.isVisible({ timeout: 5000 }).catch(() => false);
+    await expect(selectCasesDialog).toBeVisible({ timeout: 5000 });
 
-    if (dialogVisible) {
-      // Look for the Magic Select button within the dialog
-      // Use role=button with exact name to avoid partial text matches on project name
-      const magicSelectButton = selectCasesDialog.getByRole("button", { name: "Magic Select" }).first();
-      const magicSelectExists = await magicSelectButton.count();
+    // Magic Select button should be visible and enabled with LLM integration
+    const magicSelectButton = selectCasesDialog.getByRole("button", { name: "Magic Select" }).first();
+    await expect(magicSelectButton).toBeVisible({ timeout: 5000 });
+    await expect(magicSelectButton).toBeEnabled();
 
-      if (magicSelectExists > 0) {
-        // Button is rendered — verify it is visible
-        await expect(magicSelectButton).toBeVisible({ timeout: 5000 });
+    // Click to open the MagicSelectDialog
+    await magicSelectButton.dispatchEvent("click");
 
-        // Check if it's enabled (LLM integration active) or disabled (no integration)
-        const isDisabled = await magicSelectButton.isDisabled();
-
-        if (!isDisabled) {
-          // Click to open the MagicSelectDialog
-          await magicSelectButton.dispatchEvent("click");
-
-          // The dialog should open and start counting cases
-          const magicDialog = page.locator('[role="dialog"]').filter({ hasText: "Magic Select" }).last();
-          const magicDialogVisible = await magicDialog.isVisible({ timeout: 5000 }).catch(() => false);
-
-          if (magicDialogVisible) {
-            await expect(magicDialog).toBeVisible({ timeout: 5000 });
-          }
-        } else {
-          // Expected: disabled button when no LLM integration is configured
-          await expect(magicSelectButton).toBeDisabled();
-        }
-      }
-      // If no magic select button found, it may be gated on LLM integration — pass gracefully
-    }
+    // The magic select dialog should open
+    const magicDialog = page.locator('[role="dialog"]').filter({ hasText: "Magic Select" }).last();
+    await expect(magicDialog).toBeVisible({ timeout: 10000 });
   });
 
   test("should mock error response for magic select and verify error handling", async ({
@@ -155,6 +129,8 @@ test.describe("Magic Select in Test Run Creation (AI-03)", () => {
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E Magic Error ${ts}`);
+    const llmId = await api.createLlmIntegration(`E2E LLM MagicErr ${ts}`);
+    await api.linkLlmToProject(projectId, llmId);
 
     // Mock the magic-select API to return an error
     await page.route("**/api/llm/magic-select-cases", async (route) => {
@@ -167,7 +143,6 @@ test.describe("Magic Select in Test Run Creation (AI-03)", () => {
       });
     });
 
-    // Navigate to test runs list
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
 
@@ -191,13 +166,17 @@ test.describe("Magic Select in Test Run Creation (AI-03)", () => {
     await expect(nextButton).toBeVisible({ timeout: 5000 });
     await nextButton.dispatchEvent("click");
 
-    // Step 2 should render
+    // Step 2 should render with save button
     await expect(page.getByTestId("run-save-button").first()).toBeVisible({
       timeout: 15000,
     });
 
-    // Route mock is registered — any call to magic-select-cases will return our error
-    // The MagicSelectDialog will show the error when opened (if LLM integration is configured)
+    // Magic Select button should still be visible (error only surfaces when clicked)
+    const selectCasesDialog = page.locator('[role="dialog"]').filter({ hasText: "Select Test Cases" }).last();
+    await expect(selectCasesDialog).toBeVisible({ timeout: 5000 });
+
+    const magicSelectButton = selectCasesDialog.getByRole("button", { name: "Magic Select" }).first();
+    await expect(magicSelectButton).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -212,52 +191,40 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E QuickScript ${ts}`);
+    const llmId = await api.createLlmIntegration(`E2E LLM QS ${ts}`);
+    await api.linkLlmToProject(projectId, llmId);
+    await api.enableQuickScript(projectId);
     const folderId = await api.createFolder(projectId, `QS Folder ${ts}`);
     await api.createTestCase(projectId, folderId, `QS Case ${ts}`);
 
-    // Navigate to project settings to enable QuickScript
-    // QuickScript is gated on projectSettings.quickScriptEnabled
-    // The E2E test checks for the button with data-testid="quickscript-cases-button"
-    // which is only visible when quickScriptEnabled is true.
-
-    // Navigate to repository
     await page.goto(`/en-US/projects/repository/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    // Click a folder to load cases
     const folderNode = page.locator('[data-testid^="folder-node-"]').first();
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
-    await page.waitForTimeout(2000);
-
-    // Try selecting cases to check if QuickScript bulk action button appears
+    // Select all cases
     const headerCheckbox = page
       .locator('thead input[type="checkbox"], thead [role="checkbox"]')
       .first();
-    const checkboxExists = await headerCheckbox.count();
+    await expect(headerCheckbox).toBeVisible({ timeout: 10000 });
+    await headerCheckbox.click();
+    await page.waitForTimeout(500);
 
-    if (checkboxExists > 0) {
-      await headerCheckbox.click();
-      await page.waitForTimeout(500);
+    // QuickScript button should be visible
+    const qsButton = page.getByTestId("quickscript-cases-button");
+    await expect(qsButton).toBeVisible({ timeout: 5000 });
 
-      // Check if the QuickScript cases button is visible
-      const qsButton = page.getByTestId("quickscript-cases-button");
-      const qsButtonVisible = await qsButton.isVisible();
+    // Click to open the QuickScript modal
+    await qsButton.click();
 
-      if (qsButtonVisible) {
-        // QuickScript is enabled — click to open the modal
-        await qsButton.click();
+    const qsDialog = page.getByTestId("quickscript-dialog");
+    await expect(qsDialog).toBeVisible({ timeout: 10000 });
 
-        const qsDialog = page.getByTestId("quickscript-dialog");
-        await expect(qsDialog).toBeVisible({ timeout: 10000 });
-
-        // Verify dialog renders the template selector
-        const templateSelect = qsDialog.getByTestId("quickscript-template-select");
-        await expect(templateSelect).toBeVisible({ timeout: 5000 });
-      }
-      // If button not visible, quickScriptEnabled is false at project level — pass gracefully
-    }
+    // Verify dialog renders the template selector
+    const templateSelect = qsDialog.getByTestId("quickscript-template-select");
+    await expect(templateSelect).toBeVisible({ timeout: 5000 });
   });
 
   test("should mock SSE stream for QuickScript AI export", async ({
@@ -266,6 +233,9 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E QS SSE ${ts}`);
+    const llmId = await api.createLlmIntegration(`E2E LLM QS SSE ${ts}`);
+    await api.linkLlmToProject(projectId, llmId);
+    await api.enableQuickScript(projectId);
     const folderId = await api.createFolder(projectId, `QS SSE Folder ${ts}`);
     await api.createTestCase(projectId, folderId, `QS SSE Case ${ts}`);
 
@@ -288,12 +258,6 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
       });
     });
 
-    // Also mock the AI export availability check (server action checkAiExportAvailable)
-    await page.route("**/api/llm/**", async (route) => {
-      // Let other LLM routes pass through
-      await route.continue();
-    });
-
     await page.goto(`/en-US/projects/repository/${projectId}`);
     await page.waitForLoadState("networkidle");
 
@@ -301,53 +265,40 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
-    await page.waitForTimeout(2000);
-
     const headerCheckbox = page
       .locator('thead input[type="checkbox"], thead [role="checkbox"]')
       .first();
-    const checkboxExists = await headerCheckbox.count();
+    await expect(headerCheckbox).toBeVisible({ timeout: 10000 });
+    await headerCheckbox.click();
+    await page.waitForTimeout(500);
 
-    if (checkboxExists > 0) {
-      await headerCheckbox.click();
-      await page.waitForTimeout(500);
+    const qsButton = page.getByTestId("quickscript-cases-button");
+    await expect(qsButton).toBeVisible({ timeout: 5000 });
+    await qsButton.click();
 
-      const qsButton = page.getByTestId("quickscript-cases-button");
-      const qsButtonVisible = await qsButton.isVisible();
+    const qsDialog = page.getByTestId("quickscript-dialog");
+    await expect(qsDialog).toBeVisible({ timeout: 10000 });
 
-      if (qsButtonVisible) {
-        await qsButton.click();
+    // Check for AI export toggle
+    const aiToggle = qsDialog.getByTestId("ai-export-toggle");
+    const aiToggleVisible = await aiToggle.isVisible({ timeout: 3000 }).catch(() => false);
 
-        const qsDialog = page.getByTestId("quickscript-dialog");
-        await expect(qsDialog).toBeVisible({ timeout: 10000 });
+    if (aiToggleVisible) {
+      // Enable AI export
+      await aiToggle.click();
 
-        // Check for AI export toggle if AI is available
-        const aiToggle = qsDialog.getByTestId("ai-export-toggle");
-        const aiToggleVisible = await aiToggle.isVisible({ timeout: 3000 }).catch(() => false);
+      // Click the QuickScript generate button
+      const qsGenerateButton = qsDialog.getByTestId("quickscript-button");
+      await expect(qsGenerateButton).toBeVisible({ timeout: 3000 });
+      await qsGenerateButton.click();
 
-        if (aiToggleVisible) {
-          // Enable AI export
-          await aiToggle.click();
-
-          // Click the QuickScript generate button
-          const qsGenerateButton = qsDialog.getByTestId("quickscript-button");
-          if (await qsGenerateButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-            await qsGenerateButton.click();
-
-            // Wait for SSE streaming to complete — preview should show generated code
-            await page.waitForTimeout(3000);
-
-            // Check if preview pane is showing
-            const previewContent = qsDialog.locator('[data-testid="preview-pane"], pre, code').first();
-            const hasPreview = await previewContent.count();
-            if (hasPreview > 0) {
-              await expect(previewContent).toBeVisible({ timeout: 10000 });
-            }
-          }
-        }
-      }
-      // If QS button not visible, feature is disabled at project level — pass gracefully
+      // Wait for SSE streaming to complete — preview should show generated code
+      const previewContent = qsDialog.locator('[data-testid="preview-pane"], pre, code').first();
+      await expect(previewContent).toBeVisible({ timeout: 10000 });
     }
+
+    // Template selector should always be visible regardless of AI toggle
+    await expect(qsDialog.getByTestId("quickscript-template-select")).toBeVisible({ timeout: 5000 });
   });
 
   test("should mock template-only fallback for QuickScript when no LLM available", async ({
@@ -356,6 +307,8 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E QS Fallback ${ts}`);
+    // Enable QuickScript but do NOT add LLM integration — tests fallback path
+    await api.enableQuickScript(projectId);
     const folderId = await api.createFolder(projectId, `QS Fallback Folder ${ts}`);
     await api.createTestCase(projectId, folderId, `QS Fallback Case ${ts}`);
 
@@ -382,33 +335,23 @@ test.describe("QuickScript AI Generation (AI-04)", () => {
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
-    await page.waitForTimeout(2000);
-
     const headerCheckbox = page
       .locator('thead input[type="checkbox"], thead [role="checkbox"]')
       .first();
-    const checkboxExists = await headerCheckbox.count();
+    await expect(headerCheckbox).toBeVisible({ timeout: 10000 });
+    await headerCheckbox.click();
+    await page.waitForTimeout(500);
 
-    if (checkboxExists > 0) {
-      await headerCheckbox.click();
-      await page.waitForTimeout(500);
+    const qsButton = page.getByTestId("quickscript-cases-button");
+    await expect(qsButton).toBeVisible({ timeout: 5000 });
+    await qsButton.click();
 
-      const qsButton = page.getByTestId("quickscript-cases-button");
-      const qsButtonVisible = await qsButton.isVisible();
+    const qsDialog = page.getByTestId("quickscript-dialog");
+    await expect(qsDialog).toBeVisible({ timeout: 10000 });
 
-      if (qsButtonVisible) {
-        await qsButton.click();
-
-        const qsDialog = page.getByTestId("quickscript-dialog");
-        await expect(qsDialog).toBeVisible({ timeout: 10000 });
-
-        // The SSE fallback mock is set up and will return template-only code
-        // The dialog should render with template selector visible
-        const templateSelect = qsDialog.getByTestId("quickscript-template-select");
-        await expect(templateSelect).toBeVisible({ timeout: 5000 });
-      }
-      // If QS button not visible, feature is disabled at project level — pass gracefully
-    }
+    // The dialog should render with template selector visible (fallback path)
+    const templateSelect = qsDialog.getByTestId("quickscript-template-select");
+    await expect(templateSelect).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -437,12 +380,14 @@ test.describe("TipTap Writing Assistant (AI-05)", () => {
     await expect(page.getByTestId("tiptap-italic")).toBeVisible({ timeout: 5000 });
   });
 
-  test("should check for AI writing assistant button in TipTap toolbar", async ({
+  test("should show AI writing assistant button in TipTap toolbar when LLM configured", async ({
     page,
     api,
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E Writing AI ${ts}`);
+    const llmId = await api.createLlmIntegration(`E2E LLM Write ${ts}`);
+    await api.linkLlmToProject(projectId, llmId);
 
     // Mock the chat API for writing assistant
     await page.route("**/api/llm/chat", async (route) => {
@@ -476,50 +421,23 @@ test.describe("TipTap Writing Assistant (AI-05)", () => {
       page.locator('[contenteditable="true"]')
     ).toBeVisible({ timeout: 5000 });
 
-    // Look for AI writing assistant button in the TipTap toolbar.
-    // The button may use data-testid^="tiptap-ai", contain "AI", "Magic", or "Write".
+    // AI writing assistant button should be present with LLM integration
     const aiButton = page
       .locator(
         '[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic"), button:has-text("Write")'
       )
       .first();
-
-    const aiButtonExists = await aiButton.count();
-
-    if (aiButtonExists > 0) {
-      // AI button is present — verify it is visible
-      await expect(aiButton).toBeVisible({ timeout: 5000 });
-
-      // Try clicking the AI button — it will invoke the mocked chat API
-      const isDisabled = await aiButton.isDisabled();
-      if (!isDisabled) {
-        await aiButton.click();
-
-        // After clicking, the writing assistant may show a dialog, popover, or
-        // insert content directly. Wait briefly and check for expected outcomes.
-        await page.waitForTimeout(2000);
-
-        // Check for any dialog/popover that opened
-        const dialog = page.locator('[role="dialog"], [role="tooltip"], [data-radix-popper-content-wrapper]').first();
-        const dialogOpened = await dialog.count();
-
-        if (dialogOpened > 0) {
-          await expect(dialog).toBeVisible({ timeout: 5000 });
-        }
-        // If no dialog, the content may have been inserted directly — both are valid
-      }
-    }
-    // If no AI button found, it may require LLM integration — the absence is acceptable.
-    // See decision [Phase 14-project-management-e2e-and-components]: Documentation AI
-    // assistant test is lenient — passes if button absent since AI requires LLM integration
+    await expect(aiButton).toBeVisible({ timeout: 5000 });
   });
 
-  test("should mock chat API and verify writing assistant flow on documentation page", async ({
+  test("should invoke AI writing assistant and verify mock chat response flow", async ({
     page,
     api,
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E Writing Chat ${ts}`);
+    const llmId = await api.createLlmIntegration(`E2E LLM WriteChat ${ts}`);
+    await api.linkLlmToProject(projectId, llmId);
 
     // Mock the chat API
     await page.route("**/api/llm/chat", async (route) => {
@@ -543,7 +461,6 @@ test.describe("TipTap Writing Assistant (AI-05)", () => {
     await page.goto(`/en-US/projects/documentation/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    // Verify the documentation page loads with the project
     await expect(page.getByRole("button", { name: /Edit Documentation/i })).toBeVisible({
       timeout: 15000,
     });
@@ -562,21 +479,19 @@ test.describe("TipTap Writing Assistant (AI-05)", () => {
     // The TipTap toolbar should be visible with standard formatting options
     await expect(page.getByTestId("tiptap-bold")).toBeVisible({ timeout: 5000 });
 
-    // Check for AI button
+    // AI button should be present
     const aiButton = page
       .locator('[data-testid^="tiptap-ai"], button:has-text("AI"), button:has-text("Magic")')
       .first();
+    await expect(aiButton).toBeVisible({ timeout: 5000 });
 
-    const aiButtonExists = await aiButton.count();
-    if (aiButtonExists > 0) {
-      await expect(aiButton).toBeVisible({ timeout: 5000 });
-      // AI button present — mock is set up for when it's triggered
-    }
-    // Lenient test: passes regardless of AI button presence
+    // Click the AI button to invoke the writing assistant
+    await aiButton.click();
 
-    // Cancel edit mode
-    const cancelButton = page.getByRole("button", { name: /Cancel/i });
-    await expect(cancelButton).toBeVisible({ timeout: 5000 });
-    await cancelButton.click();
+    // After clicking, the writing assistant should show a dialog, popover, or dropdown
+    const assistantUI = page.locator(
+      '[role="dialog"], [role="tooltip"], [data-radix-popper-content-wrapper], [role="menu"]'
+    ).first();
+    await expect(assistantUI).toBeVisible({ timeout: 5000 });
   });
 });

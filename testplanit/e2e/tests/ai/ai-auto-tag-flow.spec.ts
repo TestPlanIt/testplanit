@@ -6,27 +6,22 @@ import { expect, test } from "../../fixtures";
  * Tests the AutoTagWizardDialog bulk action flow using Playwright route
  * interception to mock the auto-tag API endpoints.
  *
- * The auto-tag button (data-testid="auto-tag-cases-button") is only visible
- * when:
- *   1. The user has edit permissions (canAddEdit)
- *   2. The project has an active LLM integration (hasLlmIntegration)
- *   3. Test cases are selected (selectedCaseIdsForBulkEdit.length > 0)
- *
- * Since we cannot configure a real LLM integration in E2E, tests verify:
- *   - The auto-tag button is absent when no LLM integration exists (expected behavior)
- *   - With mocked API routes, the dialog interaction behaves correctly
+ * An LlmIntegration record is seeded per test so the auto-tag button
+ * (data-testid="auto-tag-cases-button") is rendered when cases are selected.
  *
  * The AutoTagWizardDialog has `autoStart` prop set, which means it skips the
  * configure step and immediately starts analysis when opened.
  */
 
 test.describe("Auto-Tag Flow", () => {
-  test("should show auto-tag button when cases are selected (with LLM integration absent it should not appear)", async ({
+  test("should show auto-tag button when cases are selected and LLM integration exists", async ({
     page,
     api,
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E AutoTag ${ts}`);
+    const llmId = await api.createLlmIntegration(`E2E LLM AutoTag ${ts}`);
+    await api.linkLlmToProject(projectId, llmId);
     const folderId = await api.createFolder(projectId, `AutoTag Folder ${ts}`);
     await api.createTestCase(projectId, folderId, `AutoTag Case A ${ts}`);
     await api.createTestCase(projectId, folderId, `AutoTag Case B ${ts}`);
@@ -34,50 +29,30 @@ test.describe("Auto-Tag Flow", () => {
     await page.goto(`/en-US/projects/repository/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    // Click the folder to load cases
     const folderNode = page.locator('[data-testid^="folder-node-"]').first();
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
-    // Wait for cases to load — there should be checkboxes in the table
-    await page.waitForTimeout(2000);
-
-    // Select all cases using the select-all checkbox (first checkbox in header)
+    // Wait for cases to load
     const headerCheckbox = page
       .locator('thead input[type="checkbox"], thead [role="checkbox"]')
       .first();
-    const headerCheckboxExists = await headerCheckbox.count();
+    await expect(headerCheckbox).toBeVisible({ timeout: 10000 });
+    await headerCheckbox.click();
 
-    if (headerCheckboxExists > 0) {
-      await headerCheckbox.click();
-
-      // Check if auto-tag button becomes visible (requires LLM integration)
-      const autoTagButton = page.getByTestId("auto-tag-cases-button");
-      const autoTagButtonVisible = await autoTagButton.isVisible();
-
-      if (autoTagButtonVisible) {
-        // LLM integration is configured — button is visible
-        await expect(autoTagButton).toBeVisible();
-      } else {
-        // Expected: auto-tag button hidden when no LLM integration is active
-        // The bulk-edit button should still appear since it does not require LLM
-        const bulkEditButton = page.getByTestId("bulk-edit-button");
-        const bulkEditVisible = await bulkEditButton.isVisible();
-        if (bulkEditVisible) {
-          await expect(bulkEditButton).toBeVisible();
-        }
-        // Pass: the absence of auto-tag button is correct behavior without LLM integration
-      }
-    }
-    // If no checkbox found, the table may still be loading — test passes gracefully
+    // Auto-tag button should be visible with LLM integration configured
+    const autoTagButton = page.getByTestId("auto-tag-cases-button");
+    await expect(autoTagButton).toBeVisible({ timeout: 5000 });
   });
 
-  test("should mock auto-tag submit and verify the dialog is opened via programmatic trigger", async ({
+  test("should open auto-tag dialog and show analysis progress with mocked API", async ({
     page,
     api,
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E AutoTag Mock ${ts}`);
+    const llmId = await api.createLlmIntegration(`E2E LLM AutoTag Mock ${ts}`);
+    await api.linkLlmToProject(projectId, llmId);
     const folderId = await api.createFolder(projectId, `Mock Folder ${ts}`);
     const caseId = await api.createTestCase(
       projectId,
@@ -141,67 +116,46 @@ test.describe("Auto-Tag Flow", () => {
     await page.goto(`/en-US/projects/repository/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    // Click the folder to load cases
     const folderNode = page.locator('[data-testid^="folder-node-"]').first();
     await expect(folderNode).toBeVisible({ timeout: 15000 });
     await folderNode.click();
 
-    await page.waitForTimeout(2000);
-
-    // Check if auto-tag button is accessible (requires LLM integration)
+    // Select cases
     const headerCheckbox = page
       .locator('thead input[type="checkbox"], thead [role="checkbox"]')
       .first();
-    const checkboxExists = await headerCheckbox.count();
+    await expect(headerCheckbox).toBeVisible({ timeout: 10000 });
+    await headerCheckbox.click();
+    await page.waitForTimeout(500);
 
-    if (checkboxExists > 0) {
-      await headerCheckbox.click();
-      await page.waitForTimeout(500);
+    // Click the auto-tag button
+    const autoTagButton = page.getByTestId("auto-tag-cases-button");
+    await expect(autoTagButton).toBeVisible({ timeout: 5000 });
+    await autoTagButton.click();
 
-      const autoTagButton = page.getByTestId("auto-tag-cases-button");
-      const isVisible = await autoTagButton.isVisible();
+    // The dialog should open in "analyzing" state (autoStart skips configure)
+    const dialog = page.locator('[role="dialog"]').first();
+    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-      if (isVisible) {
-        // Click the auto-tag button — this opens AutoTagWizardDialog with autoStart
-        await autoTagButton.click();
+    // Wait for the analysis to show progress or complete
+    // Either a spinner is visible (in-progress) or results are shown (completed)
+    const spinnerOrResults = dialog.locator(
+      'svg.lucide-loader-2, [class*="animate-spin"], table, [data-testid*="tag"]'
+    ).first();
+    await expect(spinnerOrResults).toBeVisible({ timeout: 10000 });
 
-        // The dialog should open in "analyzing" state (autoStart skips configure)
-        const dialog = page.locator('[role="dialog"]').first();
-        await expect(dialog).toBeVisible({ timeout: 10000 });
-
-        // The dialog should show progress during analysis (Loader2 spinner)
-        const spinner = dialog.locator('svg.lucide-loader-2, [class*="animate-spin"]').first();
-        const spinnerExists = await spinner.count();
-
-        // Either analysis is in progress or already complete
-        if (spinnerExists > 0) {
-          await expect(spinner).toBeVisible({ timeout: 5000 });
-        }
-
-        // Wait for the review step (when analysis completes)
-        // Look for a table or review content
-        await page.waitForTimeout(3000);
-
-        // Check if the dialog is still open
-        const dialogVisible = await dialog.isVisible();
-        expect(dialogVisible).toBe(true);
-      } else {
-        // Expected behavior: no auto-tag button when LLM integration is absent
-        // Mocks are set up but button is gated on LLM integration being active
-        // This is expected and the test passes
-      }
-    }
+    // Dialog should remain open during/after analysis
+    await expect(dialog).toBeVisible();
   });
 
-  test("should have auto-tag mock routes configured and ready for API interception", async ({
+  test("should verify auto-tag mock routes intercept correctly", async ({
     page,
     api,
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E AutoTag Routes ${ts}`);
-
-    // Verify the route mocking infrastructure works by checking mock routes respond correctly
-    // This confirms our mock setup is valid even when the UI button is gated on LLM integration
+    const llmId = await api.createLlmIntegration(`E2E LLM Routes ${ts}`);
+    await api.linkLlmToProject(projectId, llmId);
 
     let submitIntercepted = false;
 
@@ -243,16 +197,12 @@ test.describe("Auto-Tag Flow", () => {
       });
     });
 
-    // Navigate to the project repository — just verify the page loads
+    // Navigate to the project repository and verify the page loads
     await page.goto(`/en-US/projects/repository/${projectId}`);
     await page.waitForLoadState("networkidle");
 
-    // Verify the repository page loaded correctly
     await expect(
       page.locator('[data-testid="repository-layout"]')
     ).toBeVisible({ timeout: 15000 });
-
-    // The route mocks are registered and ready — they will intercept calls when
-    // the auto-tag flow is triggered through the UI
   });
 });
