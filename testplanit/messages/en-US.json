@@ -1231,6 +1231,18 @@
           "repositoryRequired": "Repository is required",
           "pathPatternRequired": "At least one path pattern is required"
         },
+        "exportTemplates": {
+          "title": "Export Templates",
+          "description": "Assign export templates to this project. Only assigned templates will appear in the export dialog.",
+          "noTemplates": "No export templates are enabled. Contact your system administrator.",
+          "defaultLabel": "Default Template",
+          "defaultPlaceholder": "None (use global default)",
+          "assigned": "Assigned",
+          "save": "Save Template Assignments",
+          "saving": "Saving...",
+          "saved": "Template assignments saved",
+          "saveError": "Failed to save template assignments"
+        },
         "disconnect": "Disconnect Repository",
         "confirmDisconnect": "Are you sure you want to disconnect \"{name}\" from this project?",
         "disconnectWarningTitle": "Disconnecting this repository will:",
