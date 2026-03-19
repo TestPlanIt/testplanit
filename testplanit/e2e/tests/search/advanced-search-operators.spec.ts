@@ -17,8 +17,9 @@ test.describe("Advanced Search Operators", () => {
     unifiedSearch = new UnifiedSearchPage(page);
     repositoryPage = new RepositoryPage(page);
 
-    // Create a test project
-    projectId = await api.createProject(`Search Operators Test ${Date.now()}`);
+    // Create a test project — combine timestamp + random suffix for uniqueness across parallel workers
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    projectId = await api.createProject(`Search Operators Test ${uniqueId}`);
   });
 
   test("Wildcard search with asterisk (*)", async ({ api, page }) => {
