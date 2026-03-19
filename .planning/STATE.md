@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Per-Project Export Template Assignment
 status: planning
-stopped_at: Completed 26-admin-assignment-ui-02-PLAN.md
-last_updated: "2026-03-19T05:14:18.068Z"
+stopped_at: Completed 27-export-dialog-filtering/27-01-PLAN.md
+last_updated: "2026-03-19T05:35:21.839Z"
 last_activity: 2026-03-18 — Roadmap created for v2.1 (Phases 25-27)
 progress:
   total_phases: 19
-  completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 3
+  total_plans: 4
+  completed_plans: 4
   percent: 0
 ---
 
@@ -50,6 +50,7 @@ Progress: [░░░░░░░░░░] 0% (v2.1 phases)
 | Phase 26-admin-assignment-ui P01 | 5 | 1 tasks | 1 files |
 | Phase 26 P02 | 15min | 2 tasks | 3 files |
 | Phase 26-admin-assignment-ui P02 | 45min | 3 tasks | 4 files |
+| Phase 27-export-dialog-filtering P01 | 15min | 2 tasks | 2 files |
 
 ### Decisions
 
@@ -63,6 +64,8 @@ Progress: [░░░░░░░░░░] 0% (v2.1 phases)
 - [Phase 26-admin-assignment-ui]: Added translation keys in Task 1 commit because TypeScript validates next-intl keys against en-US.json at compile time
 - [Phase 26-admin-assignment-ui]: MultiAsyncCombobox chosen over checkbox list for better UX with large template lists
 - [Phase 26-admin-assignment-ui]: selectedTemplates stored as TemplateOption[] objects so badge data available without re-lookup
+- [Phase 27-export-dialog-filtering]: Used templateId (not caseExportTemplateId) — join model field name per schema.zmodel
+- [Phase 27-export-dialog-filtering]: filteredTemplates pattern: fetch global templates + assignment filter in useMemo for project-scoped template display
 
 ### Pending Todos
 
@@ -74,6 +77,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T05:11:26.293Z
-Stopped at: Completed 26-admin-assignment-ui-02-PLAN.md
+Last session: 2026-03-19T05:35:21.836Z
+Stopped at: Completed 27-export-dialog-filtering/27-01-PLAN.md
 Resume file: None

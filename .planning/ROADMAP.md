@@ -54,7 +54,7 @@
 
 - [x] **Phase 25: Default Template Schema** - Project model extended with optional default export template relation (completed 2026-03-19)
 - [x] **Phase 26: Admin Assignment UI** - Admin can assign, unassign, and set a default export template per project (completed 2026-03-19)
-- [ ] **Phase 27: Export Dialog Filtering** - Export dialog shows only project-assigned templates with project default pre-selected
+- [x] **Phase 27: Export Dialog Filtering** - Export dialog shows only project-assigned templates with project default pre-selected (completed 2026-03-19)
 
 ## Phase Details
 
@@ -385,4 +385,4 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 24. Hooks, Notifications, and Workers | v2.0 | 0/TBD | Not started | - |
 | 25. Default Template Schema | 1/1 | Complete    | 2026-03-19 | - |
 | 26. Admin Assignment UI | 2/2 | Complete    | 2026-03-19 | - |
-| 27. Export Dialog Filtering | v2.1 | 0/TBD | Not started | - |
+| 27. Export Dialog Filtering | 1/1 | Complete   | 2026-03-19 | - |

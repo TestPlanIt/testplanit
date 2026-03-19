@@ -20,9 +20,9 @@ Requirements for per-project export template assignment. Each maps to roadmap ph
 
 ### Export Dialog
 
-- [ ] **EXPORT-01**: Export dialog only shows templates assigned to the current project
-- [ ] **EXPORT-02**: Project default template is pre-selected in the export dialog
-- [ ] **EXPORT-03**: If no templates are assigned to a project, all enabled templates are shown (backward compatible)
+- [x] **EXPORT-01**: Export dialog only shows templates assigned to the current project
+- [x] **EXPORT-02**: Project default template is pre-selected in the export dialog
+- [x] **EXPORT-03**: If no templates are assigned to a project, all enabled templates are shown (backward compatible)
 
 ## Future Requirements
 
@@ -46,9 +46,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCHEMA-02   | Phase 25 | Complete |
 | ADMIN-01    | Phase 26 | Complete |
 | ADMIN-02    | Phase 26 | Complete |
-| EXPORT-01   | Phase 27 | Pending          |
-| EXPORT-02   | Phase 27 | Pending          |
-| EXPORT-03   | Phase 27 | Pending          |
+| EXPORT-01   | Phase 27 | Complete |
+| EXPORT-02   | Phase 27 | Complete |
+| EXPORT-03   | Phase 27 | Complete |
 
 **Coverage:**
 
