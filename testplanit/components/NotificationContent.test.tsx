@@ -43,6 +43,10 @@ vi.mock("@/components/TextFromJson", () => ({
   },
 }));
 
+vi.mock("@/components/MilestoneNameDisplay", () => ({
+  MilestoneNameDisplay: ({ milestone }: any) => <span>{milestone.name}</span>,
+}));
+
 describe("NotificationContent", () => {
   beforeEach(() => {
     const mockT = vi.fn((key: string, params?: any) => {
@@ -247,6 +251,242 @@ describe("NotificationContent", () => {
       // Check link
       const link = screen.getByRole("link");
       expect(link).toHaveAttribute("href", "/projects/sessions/456/789");
+    });
+  });
+
+  describe("Milestone Due Reminders", () => {
+    it("should render milestone due soon notification", () => {
+      const notification = {
+        id: "9",
+        type: "MILESTONE_DUE_REMINDER",
+        title: "Milestone Due Soon",
+        message: "Milestone is due soon",
+        data: {
+          projectId: 100,
+          milestoneId: 42,
+          milestoneName: "Release 2.0",
+          projectName: "Test Project",
+          dueDate: new Date("2025-12-15").toISOString(),
+          isOverdue: false,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("milestoneDueSoonTitle")).toBeInTheDocument();
+      expect(screen.getByText("Release 2.0")).toBeInTheDocument();
+      // Check link to milestone
+      const link = screen.getByRole("link");
+      expect(link).toHaveAttribute("href", "/projects/milestones/100/42");
+    });
+
+    it("should render overdue milestone notification", () => {
+      const notification = {
+        id: "10",
+        type: "MILESTONE_DUE_REMINDER",
+        title: "Milestone Overdue",
+        message: "Milestone is overdue",
+        data: {
+          projectId: 200,
+          milestoneId: 99,
+          milestoneName: "Sprint 5",
+          projectName: "Mobile App",
+          dueDate: new Date("2025-01-01").toISOString(),
+          isOverdue: true,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("milestoneOverdueTitle")).toBeInTheDocument();
+      expect(screen.getByText("Sprint 5")).toBeInTheDocument();
+      // Check link to milestone
+      const link = screen.getByRole("link");
+      expect(link).toHaveAttribute("href", "/projects/milestones/200/99");
+    });
+
+    it("should fall back to basic rendering for milestone without full data", () => {
+      const notification = {
+        id: "11",
+        type: "MILESTONE_DUE_REMINDER",
+        title: "Milestone Due",
+        message: "A milestone is due",
+        data: {}, // Missing required projectId and milestoneId
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("Milestone Due")).toBeInTheDocument();
+      expect(screen.getByText("A milestone is due")).toBeInTheDocument();
+    });
+  });
+
+  describe("Share Link Accessed", () => {
+    it("should render share link accessed notification with project info", () => {
+      const viewedAt = new Date("2025-06-15T10:30:00Z").toISOString();
+      const notification = {
+        id: "12",
+        type: "SHARE_LINK_ACCESSED",
+        title: "Shared Report Viewed",
+        message: "John viewed your shared report",
+        data: {
+          shareLinkId: "link-abc",
+          projectId: 100,
+          viewerName: "John",
+          viewedAt,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("Shared Report Viewed")).toBeInTheDocument();
+      expect(screen.getByText("John viewed your shared report")).toBeInTheDocument();
+    });
+
+    it("should render share link accessed notification without viewedAt", () => {
+      const notification = {
+        id: "13",
+        type: "SHARE_LINK_ACCESSED",
+        title: "Shared Report Viewed",
+        message: "Someone viewed your report",
+        data: {
+          shareLinkId: "link-xyz",
+          projectId: 200,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("Shared Report Viewed")).toBeInTheDocument();
+      expect(screen.getByText("Someone viewed your report")).toBeInTheDocument();
+      // viewedAt label should not appear when viewedAt is absent
+      expect(screen.queryByText(/Viewed at/i)).not.toBeInTheDocument();
+    });
+
+    it("should fall back to basic rendering for share link without complete data", () => {
+      const notification = {
+        id: "14",
+        type: "SHARE_LINK_ACCESSED",
+        title: "Report Viewed",
+        message: "Your report was viewed",
+        data: {}, // Missing shareLinkId
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("Report Viewed")).toBeInTheDocument();
+      expect(screen.getByText("Your report was viewed")).toBeInTheDocument();
+    });
+  });
+
+  describe("Comment Mentions", () => {
+    it("should render comment mention on a repository case", () => {
+      const notification = {
+        id: "15",
+        type: "COMMENT_MENTION",
+        title: "Comment Mention",
+        message: "You were mentioned",
+        data: {
+          projectId: 100,
+          hasProjectAccess: true,
+          creatorId: "user2",
+          entityType: "RepositoryCase",
+          repositoryCaseId: "case-55",
+          testCaseName: "Login Flow Test",
+          projectName: "Test Project",
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("commentMentionTitle")).toBeInTheDocument();
+      expect(screen.getByText("mentionedYouInComment")).toBeInTheDocument();
+      expect(screen.getByText("Login Flow Test")).toBeInTheDocument();
+      const link = screen.getByRole("link");
+      expect(link).toHaveAttribute("href", "/projects/repository/100/case-55");
+    });
+
+    it("should render comment mention on a session", () => {
+      const notification = {
+        id: "16",
+        type: "COMMENT_MENTION",
+        title: "Comment Mention",
+        message: "You were mentioned in a session",
+        data: {
+          projectId: 100,
+          hasProjectAccess: true,
+          creatorId: "user3",
+          entityType: "Session",
+          sessionId: "session-77",
+          sessionName: "Exploratory Session",
+          projectName: "Test Project",
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("commentMentionTitle")).toBeInTheDocument();
+      expect(screen.getByText("Exploratory Session")).toBeInTheDocument();
+      const link = screen.getByRole("link");
+      expect(link).toHaveAttribute("href", "/projects/sessions/100/session-77");
+    });
+
+    it("should fall back for comment mention without project access", () => {
+      const notification = {
+        id: "17",
+        type: "COMMENT_MENTION",
+        title: "Comment Mention",
+        message: "You were mentioned",
+        data: {
+          projectId: 100,
+          hasProjectAccess: false,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("Comment Mention")).toBeInTheDocument();
+      expect(screen.getByText("You were mentioned")).toBeInTheDocument();
+    });
+  });
+
+  describe("User Registration (USER_REGISTERED)", () => {
+    it("should render user registered notification using fallback", () => {
+      const notification = {
+        id: "18",
+        type: "USER_REGISTERED",
+        title: "New User Registration",
+        message: "John Doe (john@example.com) has registered via registration form",
+        data: {
+          newUserName: "John Doe",
+          newUserEmail: "john@example.com",
+          registrationMethod: "form",
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("New User Registration")).toBeInTheDocument();
+      expect(screen.getByText("John Doe (john@example.com) has registered via registration form")).toBeInTheDocument();
+    });
+  });
+
+  describe("LLM Budget Alert", () => {
+    it("should render LLM budget alert notification", () => {
+      const notification = {
+        id: "19",
+        type: "LLM_BUDGET_ALERT",
+        title: "Budget Alert",
+        message: "You have reached 90% of your LLM budget",
+        data: {},
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("Budget Alert")).toBeInTheDocument();
+      expect(screen.getByText("You have reached 90% of your LLM budget")).toBeInTheDocument();
+      // Disclaimer text
+      expect(screen.getByText("budgetDisclaimer")).toBeInTheDocument();
     });
   });
 
