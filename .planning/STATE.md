@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 21-03-PLAN.md
-last_updated: "2026-03-19T18:27:51.016Z"
+stopped_at: Completed 21-01-PLAN.md
+last_updated: "2026-03-19T18:30:49.301Z"
 last_activity: 2026-03-19 — completed plan 13-03 (session component tests and session hooks integration tests)
 progress:
   total_phases: 16
-  completed_phases: 12
+  completed_phases: 13
   total_plans: 34
-  completed_plans: 32
+  completed_plans: 34
   percent: 27
 ---
 
@@ -80,6 +80,7 @@ Progress: [███░░░░░░░] 27%
 | Phase 20-search-e2e-and-component-tests P02 | 635 | 2 tasks | 2 files |
 | Phase 20-search-e2e-and-component-tests P01 | 12 | 2 tasks | 3 files |
 | Phase 21-integrations-e2e-components-and-api-tests P03 | 757 | 2 tasks | 4 files |
+| Phase 21-integrations-e2e-components-and-api-tests P01 | 60 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -158,6 +159,8 @@ Progress: [███░░░░░░░] 27%
 - [Phase 20-search-e2e-and-component-tests]: Parallel E2E project uniqueness: use timestamp+random suffix (Date.now()-Math.random().toString(36).slice(2,7)) for unique project names across parallel workers
 - [Phase 21-integrations-e2e-components-and-api-tests]: vi.hoisted() for SyncService mock refs prevents ReferenceError when factory variables used in vi.mock()
 - [Phase 21-integrations-e2e-components-and-api-tests]: vi.resetAllMocks() instead of vi.clearAllMocks() required when beforeEach queues mockResolvedValueOnce values that individual tests need to override
+- [Phase 21-integrations-e2e-components-and-api-tests]: Integration E2E tests use /api/integrations custom endpoint for CRUD (handles encryption) and ZenStack REST API for relational linking setup
+- [Phase 21-integrations-e2e-components-and-api-tests]: Issue link/unlink routes must use schema plural relation names (repositoryCases, sessions, testRuns) not singular camelCase — ZenStack v3 rejects mismatched names
 
 ### Pending Todos
 
@@ -170,6 +173,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T18:27:51.013Z
-Stopped at: Completed 21-03-PLAN.md
+Last session: 2026-03-19T18:30:49.299Z
+Stopped at: Completed 21-01-PLAN.md
 Resume file: None
