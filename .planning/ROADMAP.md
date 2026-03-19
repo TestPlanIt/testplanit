@@ -117,7 +117,7 @@ Plans:
 
 Plans:
 - [ ] 12-01-PLAN.md -- Test run creation wizard and case execution E2E tests
-- [ ] 12-02-PLAN.md -- Bulk status, completion, multi-config, and JUnit import E2E tests
+- [x] 12-02-PLAN.md -- Bulk status, completion, multi-config, and JUnit import E2E tests
 
 ### Phase 13: Run Components, Sessions E2E, and Session Components
 **Goal**: Test run UI components and all exploratory session workflows are verified

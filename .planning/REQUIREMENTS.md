@@ -62,10 +62,10 @@
 
 - [ ] **RUN-01**: E2E test verifies test run creation wizard (name, milestone, configuration, case selection)
 - [ ] **RUN-02**: E2E test verifies test case execution (step-by-step result recording, status updates, attachments)
-- [ ] **RUN-03**: E2E test verifies bulk status updates and case assignment
-- [ ] **RUN-04**: E2E test verifies test run completion workflow with status enforcement
-- [ ] **RUN-05**: E2E test verifies multi-configuration test runs (configuration groups)
-- [ ] **RUN-06**: E2E test verifies test result import (JUnit XML, automation frameworks) via API
+- [x] **RUN-03**: E2E test verifies bulk status updates and case assignment
+- [x] **RUN-04**: E2E test verifies test run completion workflow with status enforcement
+- [x] **RUN-05**: E2E test verifies multi-configuration test runs (configuration groups)
+- [x] **RUN-06**: E2E test verifies test result import (JUnit XML, automation frameworks) via API
 - [ ] **RUN-07**: Component tests for test run detail view (case list, execution panel, result recording)
 - [ ] **RUN-08**: Component tests for TestRunCaseDetails, TestResultHistory, result recording forms
 - [ ] **RUN-09**: Component tests for MagicSelectButton/Dialog (AI-assisted case selection, mocked LLM)
@@ -239,10 +239,10 @@ Deferred to future. Not in current roadmap.
 | REPO-14 | Phase 11 | Complete |
 | RUN-01 | Phase 12 | Pending |
 | RUN-02 | Phase 12 | Pending |
-| RUN-03 | Phase 12 | Pending |
-| RUN-04 | Phase 12 | Pending |
-| RUN-05 | Phase 12 | Pending |
-| RUN-06 | Phase 12 | Pending |
+| RUN-03 | Phase 12 | Complete |
+| RUN-04 | Phase 12 | Complete |
+| RUN-05 | Phase 12 | Complete |
+| RUN-06 | Phase 12 | Complete |
 | RUN-07 | Phase 13 | Pending |
 | RUN-08 | Phase 13 | Pending |
 | RUN-09 | Phase 13 | Pending |

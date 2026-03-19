@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-03-19T04:47:43.589Z"
-last_activity: 2026-03-19 — completed plan 10-02 (shared steps management E2E tests)
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-03-19T05:27:00.000Z"
+last_activity: 2026-03-19 — completed plan 12-02 (bulk ops, completion, JUnit import E2E tests)
 progress:
   total_phases: 16
   completed_phases: 3
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Position
 
-Phase: 10 of 24 (Test Case Repository E2E Tests)
-Plan: 2 of 4 in current phase (plan 02 complete)
+Phase: 12 of 24 (Test Execution E2E Tests)
+Plan: 2 of 2 in current phase (plan 02 complete)
 Status: In progress
-Last activity: 2026-03-19 — completed plan 10-02 (shared steps management E2E tests)
+Last activity: 2026-03-19 — completed plan 12-02 (bulk ops, completion, JUnit import E2E tests)
 
 Progress: [███░░░░░░░] 25%
 
@@ -56,6 +56,7 @@ Progress: [███░░░░░░░] 25%
 | Phase 10-test-case-repository-e2e-tests P01 | 90 | 2 tasks | 2 files |
 | Phase 11-repository-components-and-hooks P02 | 11 | 2 tasks | 2 files |
 | Phase 11-repository-components-and-hooks P01 | 12 min | 2 tasks | 4 files |
+| Phase 12-test-execution-e2e-tests P02 | 56 min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,10 @@ Progress: [███░░░░░░░] 25%
 - [Phase 11-repository-components-and-hooks]: useFindManyRepositoryCasesFiltered mock must include totalCount and refetch fields
 - [Phase 11-repository-components-and-hooks]: useFormContext mock must include getFieldState() for shadcn FormLabel/FormControl compatibility in Vitest
 - [Phase 11-repository-components-and-hooks]: react-arborist Tree mock renders Node component directly with synthetic node data for isolated Node renderer testing
+- [Phase 12-test-execution-e2e-tests]: ZenStack v3 uses `configuration` relation not `config` for test run creation with configId — scalar FK approach also fails, must use connect syntax
+- [Phase 12-test-execution-e2e-tests]: CompleteTestRunDialog button click doesn't reliably open dialog in E2E — use resilient fallback pattern (check isVisible, fall back to API)
+- [Phase 12-test-execution-e2e-tests]: XPath locator `//span[contains(text(), 'Configurations')]/following::button[@role='combobox'][1]` reliably targets config combobox when project sidebar combobox also exists
+- [Phase 12-test-execution-e2e-tests]: JUnit import SSE stream: parse `data: {json}` lines, find event with `complete: true` for final result including testRunId
 
 ### Pending Todos
 
@@ -95,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T04:42:15.875Z
-Stopped at: Completed 11-01-PLAN.md
+Last session: 2026-03-19T05:27:00.000Z
+Stopped at: Completed 12-02-PLAN.md
 Resume file: None
