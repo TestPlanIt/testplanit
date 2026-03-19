@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 21-01-PLAN.md
-last_updated: "2026-03-19T18:30:49.301Z"
+stopped_at: Completed 21-02-PLAN.md
+last_updated: "2026-03-19T18:31:30.663Z"
 last_activity: 2026-03-19 — completed plan 13-03 (session component tests and session hooks integration tests)
 progress:
   total_phases: 16
@@ -81,6 +81,7 @@ Progress: [███░░░░░░░] 27%
 | Phase 20-search-e2e-and-component-tests P01 | 12 | 2 tasks | 3 files |
 | Phase 21-integrations-e2e-components-and-api-tests P03 | 757 | 2 tasks | 4 files |
 | Phase 21-integrations-e2e-components-and-api-tests P01 | 60 | 2 tasks | 4 files |
+| Phase 21-integrations-e2e-components-and-api-tests P02 | 27 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -161,6 +162,8 @@ Progress: [███░░░░░░░] 27%
 - [Phase 21-integrations-e2e-components-and-api-tests]: vi.resetAllMocks() instead of vi.clearAllMocks() required when beforeEach queues mockResolvedValueOnce values that individual tests need to override
 - [Phase 21-integrations-e2e-components-and-api-tests]: Integration E2E tests use /api/integrations custom endpoint for CRUD (handles encryption) and ZenStack REST API for relational linking setup
 - [Phase 21-integrations-e2e-components-and-api-tests]: Issue link/unlink routes must use schema plural relation names (repositoryCases, sessions, testRuns) not singular camelCase — ZenStack v3 rejects mismatched names
+- [Phase 21-integrations-e2e-components-and-api-tests]: SearchIssuesDialog renders issue.name not issue.title for internal issues — test selectors must use name pattern
+- [Phase 21-integrations-e2e-components-and-api-tests]: @prisma/client IntegrationProvider and IntegrationAuthType must be vi.mock'd in jsdom — enum values used at module evaluation time
 
 ### Pending Todos
 
@@ -173,6 +176,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T18:30:49.299Z
-Stopped at: Completed 21-01-PLAN.md
+Last session: 2026-03-19T18:31:30.661Z
+Stopped at: Completed 21-02-PLAN.md
 Resume file: None

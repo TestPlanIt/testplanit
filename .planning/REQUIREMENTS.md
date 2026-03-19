@@ -144,8 +144,8 @@
 - [x] **INTG-01**: E2E test verifies issue tracker setup (add Jira/GitHub/Azure DevOps integration) with mocked APIs
 - [x] **INTG-02**: E2E test verifies issue operations (create issue, link to test case, sync status) with mocked APIs
 - [x] **INTG-03**: E2E test verifies code repository setup and QuickScript file context with mocked APIs
-- [ ] **INTG-04**: Component tests for issue management components (UnifiedIssueManager, CreateIssueDialog, SearchIssuesDialog)
-- [ ] **INTG-05**: Component tests for integration configuration forms
+- [x] **INTG-04**: Component tests for issue management components (UnifiedIssueManager, CreateIssueDialog, SearchIssuesDialog)
+- [x] **INTG-05**: Component tests for integration configuration forms
 - [x] **INTG-06**: API tests for integration endpoints (test-connection, create-issue, search, sync) with mocked externals
 
 ### Custom API Routes
@@ -300,8 +300,8 @@ Deferred to future. Not in current roadmap.
 | INTG-01 | Phase 21 | Complete |
 | INTG-02 | Phase 21 | Complete |
 | INTG-03 | Phase 21 | Complete |
-| INTG-04 | Phase 21 | Pending |
-| INTG-05 | Phase 21 | Pending |
+| INTG-04 | Phase 21 | Complete |
+| INTG-05 | Phase 21 | Complete |
 | INTG-06 | Phase 21 | Complete |
 | CAPI-01 | Phase 22 | Pending |
 | CAPI-02 | Phase 22 | Pending |
