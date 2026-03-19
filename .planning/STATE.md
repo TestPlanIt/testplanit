@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 23-02-PLAN.md
-last_updated: "2026-03-19T19:16:27.657Z"
+stopped_at: Completed 23-01-PLAN.md
+last_updated: "2026-03-19T19:24:19.301Z"
 last_activity: 2026-03-19 — completed plan 13-03 (session component tests and session hooks integration tests)
 progress:
   total_phases: 16
-  completed_phases: 14
+  completed_phases: 15
   total_plans: 42
-  completed_plans: 41
+  completed_plans: 42
   percent: 27
 ---
 
@@ -89,6 +89,7 @@ Progress: [███░░░░░░░] 27%
 | Phase 22-custom-api-route-tests P01 | 727 | 2 tasks | 8 files |
 | Phase 23-general-components P03 | 4 | 2 tasks | 5 files |
 | Phase 23-general-components P02 | 13 | 2 tasks | 6 files |
+| Phase 23-general-components P01 | 20 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -186,6 +187,8 @@ Progress: [███░░░░░░░] 27%
 - [Phase 23-general-components]: img with empty alt has ARIA role 'presentation' not 'img' - use non-empty alt when testing by role
 - [Phase 23-general-components]: NextStepOnboarding is a named export — always use named import syntax, not default import
 - [Phase 23-general-components]: nextstepjs NextStep mock captures cardComponent via vi.hoisted() ref for TourCard isolation testing
+- [Phase 23-general-components]: DataTable columnResizeMode 'onChange' OOM: use DataTableTestDouble with enableColumnResizing: false + logic extraction for jsdom tests
+- [Phase 23-general-components]: Form component wrappers: wrap DatePickerField in FormProvider + useForm for react-hook-form compatibility in tests
 
 ### Pending Todos
 
@@ -198,6 +201,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T19:16:27.653Z
-Stopped at: Completed 23-02-PLAN.md
+Last session: 2026-03-19T19:24:19.299Z
+Stopped at: Completed 23-01-PLAN.md
 Resume file: None

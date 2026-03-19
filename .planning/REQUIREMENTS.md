@@ -163,11 +163,11 @@
 
 ### Components (General)
 
-- [ ] **COMP-01**: Component tests for Header, UserDropdownMenu, NotificationBell with all states
+- [x] **COMP-01**: Component tests for Header, UserDropdownMenu, NotificationBell with all states
 - [x] **COMP-02**: Component tests for comment system (CommentEditor, CommentList, MentionSuggestion)
 - [x] **COMP-03**: Component tests for attachment components (AttachmentsDisplay, UploadAttachments, preview/carousel)
-- [ ] **COMP-04**: Component tests for DataTable with sorting, filtering, column visibility, row selection
-- [ ] **COMP-05**: Component tests for form components (ConfigurationSelect, FolderSelect, MilestoneSelect, DatePickerField)
+- [x] **COMP-04**: Component tests for DataTable with sorting, filtering, column visibility, row selection
+- [x] **COMP-05**: Component tests for form components (ConfigurationSelect, FolderSelect, MilestoneSelect, DatePickerField)
 - [x] **COMP-06**: Component tests for onboarding (InitialPreferencesDialog, NextStepOnboarding)
 - [x] **COMP-07**: Component tests for TipTap editor extensions (image resize, formatting, tables, code blocks)
 - [x] **COMP-08**: Component tests for DnD components (TestCaseDragPreview, WorkflowDragPreview, drag interactions)
@@ -313,11 +313,11 @@ Deferred to future. Not in current roadmap.
 | CAPI-08 | Phase 22 | Complete |
 | CAPI-09 | Phase 22 | Complete |
 | CAPI-10 | Phase 22 | Complete |
-| COMP-01 | Phase 23 | Pending |
+| COMP-01 | Phase 23 | Complete |
 | COMP-02 | Phase 23 | Complete |
 | COMP-03 | Phase 23 | Complete |
-| COMP-04 | Phase 23 | Pending |
-| COMP-05 | Phase 23 | Pending |
+| COMP-04 | Phase 23 | Complete |
+| COMP-05 | Phase 23 | Complete |
 | COMP-06 | Phase 23 | Complete |
 | COMP-07 | Phase 23 | Complete |
 | COMP-08 | Phase 23 | Complete |
