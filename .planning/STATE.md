@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Comprehensive Test Coverage
 status: executing
-stopped_at: Completed 21-02-PLAN.md
-last_updated: "2026-03-19T18:32:11.443Z"
+stopped_at: Completed 22-03-PLAN.md
+last_updated: "2026-03-19T18:45:11.967Z"
 last_activity: 2026-03-19 — completed plan 13-03 (session component tests and session hooks integration tests)
 progress:
   total_phases: 16
   completed_phases: 13
-  total_plans: 34
-  completed_plans: 34
+  total_plans: 39
+  completed_plans: 36
   percent: 27
 ---
 
@@ -82,6 +82,8 @@ Progress: [███░░░░░░░] 27%
 | Phase 21-integrations-e2e-components-and-api-tests P03 | 757 | 2 tasks | 4 files |
 | Phase 21-integrations-e2e-components-and-api-tests P01 | 60 | 2 tasks | 4 files |
 | Phase 21-integrations-e2e-components-and-api-tests P02 | 27 | 2 tasks | 5 files |
+| Phase 22-custom-api-route-tests P03 | 3 | 2 tasks | 6 files |
+| Phase 22-custom-api-route-tests P02 | 4 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -164,6 +166,10 @@ Progress: [███░░░░░░░] 27%
 - [Phase 21-integrations-e2e-components-and-api-tests]: Issue link/unlink routes must use schema plural relation names (repositoryCases, sessions, testRuns) not singular camelCase — ZenStack v3 rejects mismatched names
 - [Phase 21-integrations-e2e-components-and-api-tests]: SearchIssuesDialog renders issue.name not issue.title for internal issues — test selectors must use name pattern
 - [Phase 21-integrations-e2e-components-and-api-tests]: @prisma/client IntegrationProvider and IntegrationAuthType must be vi.mock'd in jsdom — enum values used at module evaluation time
+- [Phase 22-custom-api-route-tests]: forecast/route.ts uses ~/server/db not ~/lib/prisma — mock ~/server/db separately
+- [Phase 22-custom-api-route-tests]: share/[shareKey]/report/route.ts uses next-auth/next not next-auth — mock the /next subpath
+- [Phase 22-custom-api-route-tests]: Pre-built report route testing: mock utility handlers to verify delegation and config; test isCrossProject flag and response shapes
+- [Phase 22-custom-api-route-tests]: Drill-down dynamic model pattern: inject mockModel via (prisma as any).modelName in beforeEach for dynamic model access tests
 
 ### Pending Todos
 
@@ -176,6 +182,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T18:31:30.661Z
-Stopped at: Completed 21-02-PLAN.md
+Last session: 2026-03-19T18:45:11.964Z
+Stopped at: Completed 22-03-PLAN.md
 Resume file: None

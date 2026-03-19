@@ -153,9 +153,9 @@
 - [ ] **CAPI-01**: API tests for project endpoints (cases/bulk-edit, cases/fetch-many, folders/stats)
 - [ ] **CAPI-02**: API tests for test run endpoints (summary, attachments, import, completed, summaries)
 - [ ] **CAPI-03**: API tests for session endpoints (summary)
-- [ ] **CAPI-04**: API tests for milestone endpoints (descendants, forecast, summary)
-- [ ] **CAPI-05**: API tests for share link endpoints (access, password-verify, report data)
-- [ ] **CAPI-06**: API tests for report builder endpoints (all report types, drill-down queries)
+- [x] **CAPI-04**: API tests for milestone endpoints (descendants, forecast, summary)
+- [x] **CAPI-05**: API tests for share link endpoints (access, password-verify, report data)
+- [x] **CAPI-06**: API tests for report builder endpoints (all report types, drill-down queries)
 - [ ] **CAPI-07**: API tests for admin endpoints (elasticsearch, queues, trash, user management)
 - [ ] **CAPI-08**: API tests for search endpoint and tag/issue count aggregation endpoints
 - [ ] **CAPI-09**: API tests for file upload/download endpoints (attachments, avatars, doc images, project icons)
@@ -306,9 +306,9 @@ Deferred to future. Not in current roadmap.
 | CAPI-01 | Phase 22 | Pending |
 | CAPI-02 | Phase 22 | Pending |
 | CAPI-03 | Phase 22 | Pending |
-| CAPI-04 | Phase 22 | Pending |
-| CAPI-05 | Phase 22 | Pending |
-| CAPI-06 | Phase 22 | Pending |
+| CAPI-04 | Phase 22 | Complete |
+| CAPI-05 | Phase 22 | Complete |
+| CAPI-06 | Phase 22 | Complete |
 | CAPI-07 | Phase 22 | Pending |
 | CAPI-08 | Phase 22 | Pending |
 | CAPI-09 | Phase 22 | Pending |
