@@ -66,16 +66,16 @@
 - [x] **RUN-04**: E2E test verifies test run completion workflow with status enforcement
 - [x] **RUN-05**: E2E test verifies multi-configuration test runs (configuration groups)
 - [x] **RUN-06**: E2E test verifies test result import (JUnit XML, automation frameworks) via API
-- [ ] **RUN-07**: Component tests for test run detail view (case list, execution panel, result recording)
-- [ ] **RUN-08**: Component tests for TestRunCaseDetails, TestResultHistory, result recording forms
-- [ ] **RUN-09**: Component tests for MagicSelectButton/Dialog (AI-assisted case selection, mocked LLM)
-- [ ] **RUN-10**: Hook tests for test run related hooks
+- [x] **RUN-07**: Component tests for test run detail view (case list, execution panel, result recording)
+- [x] **RUN-08**: Component tests for TestRunCaseDetails, TestResultHistory, result recording forms
+- [x] **RUN-09**: Component tests for MagicSelectButton/Dialog (AI-assisted case selection, mocked LLM)
+- [x] **RUN-10**: Hook tests for test run related hooks
 
 ### Exploratory Sessions
 
-- [ ] **SESS-01**: E2E test verifies session creation with template, configuration, and milestone selection
-- [ ] **SESS-02**: E2E test verifies session execution (add results with status, notes, attachments)
-- [ ] **SESS-03**: E2E test verifies session completion and session summary view
+- [x] **SESS-01**: E2E test verifies session creation with template, configuration, and milestone selection
+- [x] **SESS-02**: E2E test verifies session execution (add results with status, notes, attachments)
+- [x] **SESS-03**: E2E test verifies session completion and session summary view
 - [ ] **SESS-04**: Component tests for SessionResultForm, SessionResultsList, SessionResultsSummary
 - [ ] **SESS-05**: Component tests for CompleteSessionDialog with edge cases
 - [ ] **SESS-06**: Hook tests for session-related hooks
@@ -243,13 +243,13 @@ Deferred to future. Not in current roadmap.
 | RUN-04 | Phase 12 | Complete |
 | RUN-05 | Phase 12 | Complete |
 | RUN-06 | Phase 12 | Complete |
-| RUN-07 | Phase 13 | Pending |
-| RUN-08 | Phase 13 | Pending |
-| RUN-09 | Phase 13 | Pending |
-| RUN-10 | Phase 13 | Pending |
-| SESS-01 | Phase 13 | Pending |
-| SESS-02 | Phase 13 | Pending |
-| SESS-03 | Phase 13 | Pending |
+| RUN-07 | Phase 13 | Complete |
+| RUN-08 | Phase 13 | Complete |
+| RUN-09 | Phase 13 | Complete |
+| RUN-10 | Phase 13 | Complete |
+| SESS-01 | Phase 13 | Complete |
+| SESS-02 | Phase 13 | Complete |
+| SESS-03 | Phase 13 | Complete |
 | SESS-04 | Phase 13 | Pending |
 | SESS-05 | Phase 13 | Pending |
 | SESS-06 | Phase 13 | Pending |
