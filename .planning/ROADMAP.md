@@ -116,8 +116,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
-- [ ] 10-02-PLAN.md -- Gap-fill: shared steps CRUD and versioning
+- [ ] 12-01-PLAN.md -- Test run creation wizard and case execution E2E tests
+- [ ] 12-02-PLAN.md -- Bulk status, completion, multi-config, and JUnit import E2E tests
 
 ### Phase 13: Run Components, Sessions E2E, and Session Components
 **Goal**: Test run UI components and all exploratory session workflows are verified
@@ -323,7 +323,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 9. Authentication E2E and API Tests | 4/4 | Complete   | 2026-03-19 | - |
 | 10. Test Case Repository E2E Tests | 2/2 | Complete    | 2026-03-19 | - |
 | 11. Repository Components and Hooks | 2/2 | Complete    | 2026-03-19 | - |
-| 12. Test Execution E2E Tests | v2.0 | 0/TBD | Not started | - |
+| 12. Test Execution E2E Tests | v2.0 | 0/2 | In progress | - |
 | 13. Run Components, Sessions E2E, and Session Components | v2.0 | 0/TBD | Not started | - |
 | 14. Project Management E2E and Components | v2.0 | 0/TBD | Not started | - |
 | 15. AI Feature E2E and API Tests | v2.0 | 0/TBD | Not started | - |
