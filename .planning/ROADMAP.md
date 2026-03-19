@@ -102,7 +102,6 @@ Plans:
 
 
 
-
 ### Phase 12: Test Execution E2E Tests
 **Goal**: All test run creation and execution workflows are verified end-to-end
 **Depends on**: Phase 10
@@ -146,11 +145,12 @@ Plans:
   3. E2E tests pass for milestone CRUD (create, edit, nest, complete, cascade delete) and project documentation editor with mocked AI writing assistant
   4. E2E tests pass for member management (add, remove, role changes) and project overview dashboard (stats, activity, assignments)
   5. Component and hook tests pass for ProjectCard, ProjectMenu, milestone components, and project permission hooks
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 10-01-PLAN.md -- Gap-fill: test case edit/delete and bulk move to folder
-- [ ] 10-02-PLAN.md -- Gap-fill: shared steps CRUD and versioning
+- [ ] 14-01-PLAN.md -- Project creation wizard, settings, member management, and overview dashboard E2E tests
+- [ ] 14-02-PLAN.md -- Milestone CRUD and project documentation editor E2E tests
+- [ ] 14-03-PLAN.md -- ProjectCard, ProjectMenu, ProjectQuickSelector, MilestoneItemCard component tests and useProjectPermissions hook tests
 
 ### Phase 15: AI Feature E2E and API Tests
 **Goal**: All AI-powered features are verified end-to-end and via API with mocked LLM providers
@@ -326,7 +326,7 @@ Phases execute in numeric order: 9 → 10 → 11 → 12 → 13 → 14 → 15 →
 | 11. Repository Components and Hooks | 2/2 | Complete    | 2026-03-19 | - |
 | 12. Test Execution E2E Tests | 2/2 | Complete    | 2026-03-19 | - |
 | 13. Run Components, Sessions E2E, and Session Components | 3/3 | Complete    | 2026-03-19 | - |
-| 14. Project Management E2E and Components | v2.0 | 0/TBD | Not started | - |
+| 14. Project Management E2E and Components | v2.0 | 0/3 | Not started | - |
 | 15. AI Feature E2E and API Tests | v2.0 | 0/TBD | Not started | - |
 | 16. AI Component Tests | v2.0 | 0/TBD | Not started | - |
 | 17. Administration E2E Tests | v2.0 | 0/TBD | Not started | - |
