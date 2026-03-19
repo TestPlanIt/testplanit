@@ -48,7 +48,7 @@
 - [ ] **REPO-03**: E2E test verifies bulk operations (multi-select, bulk edit, bulk delete, bulk move)
 - [ ] **REPO-04**: E2E test verifies search and filtering (text search, custom field filters, tag filters, state filters)
 - [ ] **REPO-05**: E2E test verifies import/export (CSV, JSON, markdown import and export)
-- [ ] **REPO-06**: E2E test verifies shared steps (create, use in test cases, edit, version history)
+- [x] **REPO-06**: E2E test verifies shared steps (create, use in test cases, edit, version history)
 - [ ] **REPO-07**: E2E test verifies version history (view versions, diff, restore previous version)
 - [ ] **REPO-08**: E2E test verifies tag management (create, assign, remove, case-insensitive matching)
 - [ ] **REPO-09**: E2E test verifies issue linking (attach, navigate, unlink) with mocked integrations
@@ -228,7 +228,7 @@ Deferred to future. Not in current roadmap.
 | REPO-03 | Phase 10 | Pending |
 | REPO-04 | Phase 10 | Pending |
 | REPO-05 | Phase 10 | Pending |
-| REPO-06 | Phase 10 | Pending |
+| REPO-06 | Phase 10 | Complete |
 | REPO-07 | Phase 10 | Pending |
 | REPO-08 | Phase 10 | Pending |
 | REPO-09 | Phase 10 | Pending |
