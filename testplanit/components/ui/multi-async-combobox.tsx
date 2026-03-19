@@ -213,7 +213,7 @@ export function MultiAsyncCombobox<T>({
                     title={getOptionLabel(v)}
                     role="button"
                     tabIndex={0}
-                    className="ml-1 rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background cursor-pointer hover:bg-destructive/20"
+                    className="ml-1 rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ring-offset-background cursor-pointer opacity-70 hover:opacity-100 hover:bg-destructive/20 flex items-center"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         removeOption(v, e as unknown as React.MouseEvent);
@@ -225,7 +225,7 @@ export function MultiAsyncCombobox<T>({
                     }}
                     onClick={(e) => removeOption(v, e)}
                   >
-                    <X className="h-3 w-3 text-foreground/70 hover:text-destructive" />
+                    <X className="h-3 w-3 hover:text-destructive" />
                   </span>
                 </Badge>
               ))
@@ -328,8 +328,10 @@ export function MultiAsyncCombobox<T>({
                         >
                           <div className="flex items-center w-full">
                             {renderOption(option)}
-                            {!hideSelected && isSelected(option) && (
-                              <Check className="ml-auto h-4 w-4 text-muted-foreground" />
+                            {!hideSelected && isSelected(option) ? (
+                              <Check className="ml-auto h-4 w-4" />
+                            ) : (
+                              <Check className="text-transparent" />
                             )}
                           </div>
                         </CommandItem>

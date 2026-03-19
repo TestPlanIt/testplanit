@@ -1235,6 +1235,8 @@
           "title": "Export Templates",
           "description": "Assign export templates to this project. Only assigned templates will appear in the export dialog.",
           "noTemplates": "No export templates are enabled. Contact your system administrator.",
+          "assignedLabel": "Assigned Templates",
+          "selectPlaceholder": "Select templates to assign...",
           "defaultLabel": "Default Template",
           "defaultPlaceholder": "None (use global default)",
           "assigned": "Assigned",

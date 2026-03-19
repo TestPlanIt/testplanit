@@ -9,8 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
 import {
   Select,
   SelectContent,
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   useCreateManyCaseExportTemplateProjectAssignment,
@@ -40,6 +40,14 @@ export function ExportTemplateAssignmentSection({
   currentDefaultId,
 }: ExportTemplateAssignmentSectionProps) {
   const t = useTranslations("projects.settings.quickScript");
+
+  type TemplateOption = {
+    id: number;
+    name: string;
+    category: string;
+    framework: string;
+    language: string;
+  };
 
   const { data: templates, isLoading: templatesLoading } =
     useFindManyCaseExportTemplate({
@@ -65,42 +73,66 @@ export function ExportTemplateAssignmentSection({
     useCreateManyCaseExportTemplateProjectAssignment();
   const updateProject = useUpdateProjects();
 
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedTemplates, setSelectedTemplates] = useState<TemplateOption[]>(
+    []
+  );
   const [selectedDefaultId, setSelectedDefaultId] = useState<number | null>(
     currentDefaultId
   );
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Initialize selectedIds from server data once loaded
+  // Initialize selectedTemplates from server data once loaded
   useEffect(() => {
-    if (assignments) {
-      setSelectedIds(new Set(assignments.map((a) => a.templateId)));
+    if (assignments && templates) {
+      const assignedIds = new Set(assignments.map((a) => a.templateId));
+      setSelectedTemplates(templates.filter((tpl) => assignedIds.has(tpl.id)));
       setIsDirty(false);
     }
-  }, [assignments]);
+  }, [assignments, templates]);
 
   // Initialize selectedDefaultId from prop
   useEffect(() => {
     setSelectedDefaultId(currentDefaultId);
   }, [currentDefaultId]);
 
-  const handleCheckboxChange = (templateId: number, checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(templateId);
-      } else {
-        next.delete(templateId);
-        // Clear default if unchecking the default template
-        if (templateId === selectedDefaultId) {
-          setSelectedDefaultId(null);
-        }
+  const selectedIds = useMemo(
+    () => new Set(selectedTemplates.map((t) => t.id)),
+    [selectedTemplates]
+  );
+
+  const handleTemplatesChange = useCallback(
+    (newSelected: TemplateOption[]) => {
+      setSelectedTemplates(newSelected);
+      // Clear default if it's no longer in the selected set
+      const newIds = new Set(newSelected.map((t) => t.id));
+      if (selectedDefaultId != null && !newIds.has(selectedDefaultId)) {
+        setSelectedDefaultId(null);
       }
-      return next;
-    });
-    setIsDirty(true);
-  };
+      setIsDirty(true);
+    },
+    [selectedDefaultId]
+  );
+
+  const sortedTemplates = useMemo(
+    () => [...(templates ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
+    [templates]
+  );
+
+  const fetchTemplateOptions = useCallback(
+    async (query: string) => {
+      if (!query) return sortedTemplates;
+      const lower = query.toLowerCase();
+      return sortedTemplates.filter(
+        (tpl) =>
+          tpl.name.toLowerCase().includes(lower) ||
+          tpl.category.toLowerCase().includes(lower) ||
+          tpl.framework.toLowerCase().includes(lower) ||
+          tpl.language.toLowerCase().includes(lower)
+      );
+    },
+    [sortedTemplates]
+  );
 
   const handleDefaultChange = (value: string) => {
     setSelectedDefaultId(value === "none" ? null : parseInt(value));
@@ -144,10 +176,6 @@ export function ExportTemplateAssignmentSection({
 
   const isLoading = templatesLoading || assignmentsLoading;
 
-  const assignedTemplates = (templates ?? []).filter((tpl) =>
-    selectedIds.has(tpl.id)
-  );
-
   return (
     <Card data-testid="export-template-assignment-section">
       <CardHeader>
@@ -166,45 +194,40 @@ export function ExportTemplateAssignmentSection({
         ) : (
           <>
             <div className="space-y-2">
-              {templates.map((template) => {
-                const isChecked = selectedIds.has(template.id);
-                const isDefault = template.id === selectedDefaultId;
-                return (
-                  <div
-                    key={template.id}
-                    className="flex items-center gap-3 rounded-md border p-3"
-                  >
-                    <Checkbox
-                      id={`template-${template.id}`}
-                      checked={isChecked}
-                      onCheckedChange={(checked) =>
-                        handleCheckboxChange(template.id, !!checked)
-                      }
-                    />
-                    <Label
-                      htmlFor={`template-${template.id}`}
-                      className="flex flex-1 items-center gap-2 cursor-pointer font-medium"
-                    >
-                      {template.name}
-                      {template.category && (
-                        <Badge variant="secondary" className="text-xs">
-                          {template.category}
+              <Label className="text-sm font-medium">
+                {t("exportTemplates.assignedLabel")}
+              </Label>
+              <MultiAsyncCombobox<TemplateOption>
+                value={selectedTemplates}
+                onValueChange={handleTemplatesChange}
+                fetchOptions={fetchTemplateOptions}
+                getOptionValue={(tpl) => tpl.id}
+                getOptionLabel={(tpl) => tpl.name}
+                renderOption={(tpl) => (
+                  <span className="flex items-center w-full">
+                    <span>{tpl.name}</span>
+                    <span className="flex items-center gap-1.5 ml-auto mr-2">
+                      {tpl.category && (
+                        <Badge
+                          variant="secondary"
+                          className="border-primary-foreground text-xs"
+                        >
+                          {tpl.category}
                         </Badge>
                       )}
-                      {template.language && (
-                        <Badge variant="outline" className="text-xs">
-                          {template.language}
+                      {tpl.language && (
+                        <Badge
+                          variant="secondary"
+                          className="border-primary-foreground text-xs"
+                        >
+                          {tpl.language}
                         </Badge>
                       )}
-                      {isChecked && isDefault && (
-                        <Badge variant="default" className="text-xs">
-                          {t("exportTemplates.assigned")}
-                        </Badge>
-                      )}
-                    </Label>
-                  </div>
-                );
-              })}
+                    </span>
+                  </span>
+                )}
+                placeholder={t("exportTemplates.selectPlaceholder")}
+              />
             </div>
 
             {/* Default template selector */}
@@ -213,9 +236,11 @@ export function ExportTemplateAssignmentSection({
                 {t("exportTemplates.defaultLabel")}
               </Label>
               <Select
-                value={selectedDefaultId != null ? String(selectedDefaultId) : "none"}
+                value={
+                  selectedDefaultId != null ? String(selectedDefaultId) : "none"
+                }
                 onValueChange={handleDefaultChange}
-                disabled={assignedTemplates.length === 0}
+                disabled={selectedTemplates.length === 0}
               >
                 <SelectTrigger>
                   <SelectValue
@@ -226,7 +251,7 @@ export function ExportTemplateAssignmentSection({
                   <SelectItem value="none">
                     {t("exportTemplates.defaultPlaceholder")}
                   </SelectItem>
-                  {assignedTemplates.map((template) => (
+                  {selectedTemplates.map((template) => (
                     <SelectItem key={template.id} value={String(template.id)}>
                       {template.name}
                     </SelectItem>
@@ -236,10 +261,7 @@ export function ExportTemplateAssignmentSection({
             </div>
 
             <div className="flex justify-end">
-              <Button
-                onClick={handleSave}
-                disabled={!isDirty || isSaving}
-              >
+              <Button onClick={handleSave} disabled={!isDirty || isSaving}>
                 {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isSaving
                   ? t("exportTemplates.saving")
