@@ -150,9 +150,9 @@
 
 ### Custom API Routes
 
-- [ ] **CAPI-01**: API tests for project endpoints (cases/bulk-edit, cases/fetch-many, folders/stats)
-- [ ] **CAPI-02**: API tests for test run endpoints (summary, attachments, import, completed, summaries)
-- [ ] **CAPI-03**: API tests for session endpoints (summary)
+- [x] **CAPI-01**: API tests for project endpoints (cases/bulk-edit, cases/fetch-many, folders/stats)
+- [x] **CAPI-02**: API tests for test run endpoints (summary, attachments, import, completed, summaries)
+- [x] **CAPI-03**: API tests for session endpoints (summary)
 - [x] **CAPI-04**: API tests for milestone endpoints (descendants, forecast, summary)
 - [x] **CAPI-05**: API tests for share link endpoints (access, password-verify, report data)
 - [x] **CAPI-06**: API tests for report builder endpoints (all report types, drill-down queries)
@@ -303,9 +303,9 @@ Deferred to future. Not in current roadmap.
 | INTG-04 | Phase 21 | Complete |
 | INTG-05 | Phase 21 | Complete |
 | INTG-06 | Phase 21 | Complete |
-| CAPI-01 | Phase 22 | Pending |
-| CAPI-02 | Phase 22 | Pending |
-| CAPI-03 | Phase 22 | Pending |
+| CAPI-01 | Phase 22 | Complete |
+| CAPI-02 | Phase 22 | Complete |
+| CAPI-03 | Phase 22 | Complete |
 | CAPI-04 | Phase 22 | Complete |
 | CAPI-05 | Phase 22 | Complete |
 | CAPI-06 | Phase 22 | Complete |
