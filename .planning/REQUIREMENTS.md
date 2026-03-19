@@ -38,7 +38,7 @@
 - [ ] **AUTH-04**: E2E test verifies SSO flows (Google, Microsoft, SAML) with mocked providers
 - [ ] **AUTH-05**: E2E test verifies magic link passwordless authentication
 - [ ] **AUTH-06**: E2E test verifies password change and session persistence across browser refresh
-- [ ] **AUTH-07**: Component tests for sign-in page, sign-up page, 2FA setup/verify pages with error states
+- [x] **AUTH-07**: Component tests for sign-in page, sign-up page, 2FA setup/verify pages with error states
 - [x] **AUTH-08**: API tests verify API token authentication, creation, revocation, and scope enforcement
 
 ### Test Case Repository
@@ -221,7 +221,7 @@ Deferred to future. Not in current roadmap.
 | AUTH-04 | Phase 9 | Pending |
 | AUTH-05 | Phase 9 | Pending |
 | AUTH-06 | Phase 9 | Pending |
-| AUTH-07 | Phase 9 | Pending |
+| AUTH-07 | Phase 9 | Complete |
 | AUTH-08 | Phase 9 | Complete |
 | REPO-01 | Phase 10 | Pending |
 | REPO-02 | Phase 10 | Pending |
